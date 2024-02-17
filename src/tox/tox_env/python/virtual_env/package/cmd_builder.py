@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import glob
 import tarfile
+from abc import ABC
 from functools import partial
 from io import TextIOWrapper
 from pathlib import Path
@@ -35,14 +36,10 @@ if TYPE_CHECKING:
 from importlib.metadata import Distribution
 
 
-class VirtualEnvCmdBuilder(PythonPackageToxEnv, VirtualEnv):
+class VenvCmdBuilder(PythonPackageToxEnv, ABC):
     def __init__(self, create_args: ToxEnvCreateArgs) -> None:
         super().__init__(create_args)
         self._sdist_meta_tox_env: Pep517VirtualEnvPackager | None = None
-
-    @staticmethod
-    def id() -> str:
-        return "virtualenv-cmd-builder"
 
     def register_config(self) -> None:
         super().register_config()
@@ -131,6 +128,12 @@ class VirtualEnvCmdBuilder(PythonPackageToxEnv, VirtualEnv):
             yield self._sdist_meta_tox_env
 
 
+class VirtualEnvCmdBuilder(VenvCmdBuilder, VirtualEnv):
+    @staticmethod
+    def id() -> str:
+        return "virtualenv-cmd-builder"
+
+
 class WheelDistribution(Distribution):  # cannot subclass has type Any
     def __init__(self, wheel: Path) -> None:
         self._wheel = wheel
@@ -165,3 +168,9 @@ class WheelDistribution(Distribution):  # cannot subclass has type Any
 @impl
 def tox_register_tox_env(register: ToxEnvRegister) -> None:
     register.add_package_env(VirtualEnvCmdBuilder)
+
+
+__all__ = [
+    "VenvCmdBuilder",
+    "VirtualEnvCmdBuilder",
+]
