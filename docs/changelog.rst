@@ -9,7 +9,7 @@ v4.13.0 (2024-02-16)
 
 Features - 4.13.0
 ~~~~~~~~~~~~~~~~~
-- Extract virtual environment packaging code to its own base class not tied to ``virtualenv`` - by :user:`gaborbernat`. (:issue:`3200`)
+- Extract virtual environment packaging code to its own base class not tied to ``virtualenv`` - by :user:`gaborbernat`. (:issue:`3221`)
 
 Improved Documentation - 4.13.0
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
