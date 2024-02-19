@@ -27,7 +27,7 @@ def test_quickstart_ok(tox_project: ToxProjectCreator) -> None:
     text = f"""
             [tox]
             env_list =
-                py{''.join(str(i) for i in sys.version_info[0:2])}
+                py{"".join(str(i) for i in sys.version_info[0:2])}
             minversion = {version}
 
             [testenv]
