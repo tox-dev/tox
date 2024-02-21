@@ -26,57 +26,6 @@ if TYPE_CHECKING:
 
 
 @pytest.fixture()
-def exhaustive_ini(tmp_path: Path, monkeypatch: MonkeyPatch) -> Path:
-    to = tmp_path / "tox.ini"
-    to.write_text(
-        textwrap.dedent(
-            """
-        [tox]
-        colored = yes
-        verbose = 5
-        quiet = 1
-        command = run-parallel
-        env = py37, py36
-        default_runner = virtualenv
-        recreate = true
-        no_test = true
-        parallel = 3
-        parallel_live = True
-        override =
-            a=b
-            c=d
-        """,
-        ),
-    )
-    monkeypatch.setenv("TOX_USER_CONFIG_FILE", str(to))
-    return to
-
-
-@pytest.mark.parametrize("content", ["[tox]", ""])
-def test_ini_empty(  # noqa: PLR0913
-    tmp_path: Path,
-    core_handlers: dict[str, Callable[[State], int]],
-    default_options: dict[str, Any],
-    mocker: MockerFixture,
-    monkeypatch: MonkeyPatch,
-    content: str,
-) -> None:
-    to = tmp_path / "tox.ini"
-    monkeypatch.setenv("TOX_USER_CONFIG_FILE", str(to))
-    to.write_text(content)
-    mocker.patch("tox.config.cli.parse.discover_source", return_value=mocker.MagicMock(path=Path()))
-    options = get_options("r")
-    assert vars(options.parsed) == default_options
-    assert options.parsed.verbosity == 2
-    assert options.cmd_handlers == core_handlers
-
-    to.unlink()
-    missing_options = get_options("r")
-    missing_options.parsed.hash_seed = ANY
-    assert vars(missing_options.parsed) == vars(options.parsed)
-
-
-@pytest.fixture()
 def default_options() -> dict[str, Any]:
     return {
         "colored": "no",
@@ -110,55 +59,28 @@ def default_options() -> dict[str, Any]:
     }
 
 
-def test_ini_help(exhaustive_ini: Path, capfd: CaptureFixture) -> None:
-    with pytest.raises(SystemExit) as context:
-        get_options("-h")
-    assert context.value.code == 0
-    out, err = capfd.readouterr()
-    assert not err
-    res = out.splitlines()[-1]
-    msg = f"config file {str(exhaustive_ini)!r} active (changed via env var TOX_USER_CONFIG_FILE)"
-    assert res == msg
-
-
-@pytest.mark.usefixtures("exhaustive_ini")
-def test_ini_exhaustive_parallel_values(core_handlers: dict[str, Callable[[State], int]]) -> None:
-    options = get_options("p")
-    assert vars(options.parsed) == {
-        "colored": "yes",
-        "command": "p",
-        "default_runner": "virtualenv",
-        "develop": False,
-        "discover": [],
-        "env": CliEnv(["py37", "py36"]),
-        "hash_seed": ANY,
-        "install_pkg": None,
-        "no_test": True,
-        "override": [Override("a=b"), Override("c=d")],
-        "package_only": False,
-        "no_recreate_pkg": False,
-        "parallel": 3,
-        "parallel_live": True,
-        "parallel_no_spinner": False,
-        "quiet": 1,
-        "no_provision": False,
-        "recreate": True,
-        "no_recreate_provision": False,
-        "result_json": None,
-        "skip_missing_interpreters": "config",
-        "skip_pkg_install": False,
-        "verbose": 5,
-        "work_dir": None,
-        "root_dir": None,
-        "config_file": None,
-        "factors": [],
-        "labels": [],
-        "exit_and_dump_after": 0,
-        "skip_env": "",
-        "list_dependencies": is_ci(),
-    }
-    assert options.parsed.verbosity == 4
+@pytest.mark.parametrize("content", ["[tox]", ""])
+def test_ini_empty(  # noqa: PLR0913
+    tmp_path: Path,
+    core_handlers: dict[str, Callable[[State], int]],
+    default_options: dict[str, Any],
+    mocker: MockerFixture,
+    monkeypatch: MonkeyPatch,
+    content: str,
+) -> None:
+    to = tmp_path / "tox.ini"
+    monkeypatch.setenv("TOX_USER_CONFIG_FILE", str(to))
+    to.write_text(content)
+    mocker.patch("tox.config.cli.parse.discover_source", return_value=mocker.MagicMock(path=Path()))
+    options = get_options("r")
+    assert vars(options.parsed) == default_options
+    assert options.parsed.verbosity == 2
     assert options.cmd_handlers == core_handlers
+
+    to.unlink()
+    missing_options = get_options("r")
+    missing_options.parsed.hash_seed = ANY
+    assert vars(missing_options.parsed) == vars(options.parsed)
 
 
 def test_bad_cli_ini(
@@ -244,3 +166,81 @@ def test_conf_arg(tmp_path: Path, conf_arg: str, filename: str, content: str) ->
         pos_args=[],
         source=source,
     )
+
+
+@pytest.fixture()
+def exhaustive_ini(tmp_path: Path, monkeypatch: MonkeyPatch) -> Path:
+    to = tmp_path / "tox.ini"
+    to.write_text(
+        textwrap.dedent(
+            """
+        [tox]
+        colored = yes
+        verbose = 5
+        quiet = 1
+        command = run-parallel
+        env = py37, py36
+        default_runner = virtualenv
+        recreate = true
+        no_test = true
+        parallel = 3
+        parallel_live = True
+        override =
+            a=b
+            c=d
+        """,
+        ),
+    )
+    monkeypatch.setenv("TOX_USER_CONFIG_FILE", str(to))
+    return to
+
+
+@pytest.mark.usefixtures("exhaustive_ini")
+def test_ini_exhaustive_parallel_values(core_handlers: dict[str, Callable[[State], int]]) -> None:
+    options = get_options("p")
+    assert vars(options.parsed) == {
+        "colored": "yes",
+        "command": "p",
+        "default_runner": "virtualenv",
+        "develop": False,
+        "discover": [],
+        "env": CliEnv(["py37", "py36"]),
+        "hash_seed": ANY,
+        "install_pkg": None,
+        "no_test": True,
+        "override": [Override("a=b"), Override("c=d")],
+        "package_only": False,
+        "no_recreate_pkg": False,
+        "parallel": 3,
+        "parallel_live": True,
+        "parallel_no_spinner": False,
+        "quiet": 1,
+        "no_provision": False,
+        "recreate": True,
+        "no_recreate_provision": False,
+        "result_json": None,
+        "skip_missing_interpreters": "config",
+        "skip_pkg_install": False,
+        "verbose": 5,
+        "work_dir": None,
+        "root_dir": None,
+        "config_file": None,
+        "factors": [],
+        "labels": [],
+        "exit_and_dump_after": 0,
+        "skip_env": "",
+        "list_dependencies": is_ci(),
+    }
+    assert options.parsed.verbosity == 4
+    assert options.cmd_handlers == core_handlers
+
+
+def test_ini_help(exhaustive_ini: Path, capfd: CaptureFixture) -> None:
+    with pytest.raises(SystemExit) as context:
+        get_options("-h")
+    assert context.value.code == 0
+    out, err = capfd.readouterr()
+    assert not err
+    res = out.splitlines()[-1]
+    msg = f"config file {str(exhaustive_ini)!r} active (changed via env var TOX_USER_CONFIG_FILE)"
+    assert res == msg

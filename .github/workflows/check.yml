@@ -2,7 +2,7 @@ name: check
 on:
   workflow_dispatch:
   push:
-    branches: "main"
+    branches: ["main"]
     tags-ignore: [ "**" ]
   pull_request:
   schedule:

@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 import os
 import sys
+from abc import ABC
 from collections import defaultdict
 from contextlib import contextmanager
 from itertools import chain
@@ -94,8 +95,8 @@ class ToxCmdStatus(CmdStatus):
         return status.outcome.out_err()
 
 
-class Pep517VirtualEnvPackager(PythonPackageToxEnv, VirtualEnv):
-    """local file system python virtual environment via the virtualenv package."""
+class Pep517VenvPackager(PythonPackageToxEnv, ABC):
+    """local file system python virtual environment package builder."""
 
     def __init__(self, create_args: ToxEnvCreateArgs) -> None:
         super().__init__(create_args)
@@ -360,8 +361,16 @@ class Pep517VirtualEnvPackager(PythonPackageToxEnv, VirtualEnv):
         return self._frontend.requires
 
 
+class Pep517VirtualEnvPackager(Pep517VenvPackager, VirtualEnv):
+    """local file system python virtual environment via the virtualenv package."""
+
+    @staticmethod
+    def id() -> str:
+        return "virtualenv-pep-517"
+
+
 class Pep517VirtualEnvFrontend(Frontend):
-    def __init__(self, root: Path, env: Pep517VirtualEnvPackager) -> None:
+    def __init__(self, root: Path, env: Pep517VenvPackager) -> None:
         super().__init__(*Frontend.create_args_from_folder(root))
         self._tox_env = env
         self._backend_executor_: LocalSubProcessPep517Executor | None = None
@@ -454,3 +463,9 @@ class Pep517VirtualEnvFrontend(Frontend):
 @impl
 def tox_register_tox_env(register: ToxEnvRegister) -> None:
     register.add_package_env(Pep517VirtualEnvPackager)
+
+
+__all__ = [
+    "Pep517VenvPackager",
+    "Pep517VirtualEnvPackager",
+]

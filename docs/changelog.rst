@@ -4,6 +4,19 @@ Release History
 
 .. towncrier release notes start
 
+v4.13.0 (2024-02-16)
+--------------------
+
+Features - 4.13.0
+~~~~~~~~~~~~~~~~~
+- Extract virtual environment packaging code to its own base class not tied to ``virtualenv`` - by :user:`gaborbernat`. (:issue:`3221`)
+
+Improved Documentation - 4.13.0
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+- Documented usage of ``pytest`` with ``tox run-parallel`` - by :user:`faph`. (:issue:`3187`)
+- Configuration: state in config directive sections their ini file sections - by :user:`0cjs`. (:issue:`3194`)
+- Development: summarize important points experienced developers need to know - by :user:`0cjs`. (:issue:`3197`)
+
 v4.12.1 (2024-01-16)
 --------------------
 
@@ -559,8 +572,8 @@ v4.1.2 (2022-12-30)
 
 Bugfixes - 4.1.2
 ~~~~~~~~~~~~~~~~
-- Fix ``--skip-missing-interpreters`` behaviour - by :user:`q0w`. (:issue:`2649`)
-- Restore tox 3 behaviour of showing the output of pip freeze, however now only active when running inside a CI
+- Fix ``--skip-missing-interpreters`` behavior - by :user:`q0w`. (:issue:`2649`)
+- Restore tox 3 behavior of showing the output of pip freeze, however now only active when running inside a CI
   environment - by :user:`gaborbernat`. (:issue:`2685`)
 - Fix extracting extras from markers with many extras - by :user:`q0w`. (:issue:`2791`)
 
@@ -614,7 +627,7 @@ Features - 4.0.17
 
 Bugfixes - 4.0.17
 ~~~~~~~~~~~~~~~~~
-- Fix ``--sdistonly`` behaviour. (:issue:`2653`)
+- Fix ``--sdistonly`` behavior. (:issue:`2653`)
 - Override toxworkdir with --workdir. (:issue:`2654`)
 
 
