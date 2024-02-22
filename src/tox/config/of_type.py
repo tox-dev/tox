@@ -96,7 +96,8 @@ class ConfigDynamicDefinition(ConfigDefinition[T]):  # noqa: PLW1641
             for key, loader in product(self.keys, loaders):
                 chain_key = f"{loader.section.key}.{key}"
                 if chain_key in args.chain:
-                    msg = f"circular chain detected {', '.join(args.chain[args.chain.index(chain_key):])}"
+                    values = args.chain[args.chain.index(chain_key) :]
+                    msg = f"circular chain detected {', '.join(values)}"
                     raise ValueError(msg)
                 args.chain.append(chain_key)
                 try:

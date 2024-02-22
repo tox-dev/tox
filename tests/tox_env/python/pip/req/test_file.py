@@ -423,7 +423,7 @@ def test_req_path_with_space_escape(tmp_path: Path) -> None:
     dep_requirements_file = tmp_path / "a b"
     dep_requirements_file.write_text("c")
     path = f"-r {dep_requirements_file!s}"
-    path = f'{path[:-len("a b")]}a\\ b'
+    path = f'{path[: -len("a b")]}a\\ b'
 
     requirements_file = tmp_path / "req.txt"
     requirements_file.write_text(path)
