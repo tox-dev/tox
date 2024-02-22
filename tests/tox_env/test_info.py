@@ -8,4 +8,4 @@ from tox.tox_env.info import Info
 def test_info_repr() -> None:
     at_loc = Path().absolute()
     info_object = Info(at_loc)
-    assert repr(info_object) == f"Info(path={ at_loc / '.tox-info.json' })"
+    assert repr(info_object) == f"Info(path={at_loc / '.tox-info.json'})"

@@ -84,13 +84,14 @@ class PythonDeps(RequirementsFile):
             None,
         )
         if arg_match is not None:
-            line = f"{arg_match} {line[len(arg_match):]}"
+            values = line[len(arg_match) :]
+            line = f"{arg_match} {values}"
         # escape spaces
         escape_match = next((e for e in ONE_ARG_ESCAPE if line.startswith(e) and line[len(e)].isspace()), None)
         if escape_match is not None:
             # escape not already escaped spaces
             escaped = re.sub(r"(?<!\\)(\s)", r"\\\1", line[len(escape_match) + 1 :])
-            line = f"{line[:len(escape_match)]} {escaped}"
+            line = f"{line[: len(escape_match)]} {escaped}"
         return line
 
     def _parse_requirements(self, opt: Namespace, recurse: bool) -> list[ParsedRequirement]:  # noqa: FBT001
