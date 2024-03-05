@@ -117,7 +117,8 @@ class Pep517VenvPackager(PythonPackageToxEnv, ABC):
     @property
     def _frontend(self) -> Pep517VirtualEnvFrontend:
         if self._frontend_ is None:
-            self._frontend_ = Pep517VirtualEnvFrontend(self.root, self)
+            fresh = cast(bool, self.conf["fresh_subprocess"])
+            self._frontend_ = Pep517VirtualEnvFrontend(self.root, self, fresh_subprocess=fresh)
         return self._frontend_
 
     def register_config(self) -> None:
@@ -136,6 +137,12 @@ class Pep517VenvPackager(PythonPackageToxEnv, ABC):
         )
         for key in ("sdist", "wheel", "editable"):
             self._add_config_settings(key)
+        self.conf.add_config(
+            keys=["fresh_subprocess"],
+            of_type=bool,
+            default=False,
+            desc="create a fresh subprocess for every backend request",
+        )
 
     def _add_config_settings(self, build_type: str) -> None:
         # config settings passed to PEP-517-compliant build backend https://peps.python.org/pep-0517/#config-settings
@@ -370,9 +377,10 @@ class Pep517VirtualEnvPackager(Pep517VenvPackager, VirtualEnv):
 
 
 class Pep517VirtualEnvFrontend(Frontend):
-    def __init__(self, root: Path, env: Pep517VenvPackager) -> None:
+    def __init__(self, root: Path, env: Pep517VenvPackager, *, fresh_subprocess: bool) -> None:
         super().__init__(*Frontend.create_args_from_folder(root))
         self._tox_env = env
+        self._fresh_subprocess = fresh_subprocess
         self._backend_executor_: LocalSubProcessPep517Executor | None = None
         into: dict[str, Any] = {}
 
@@ -412,19 +420,23 @@ class Pep517VirtualEnvFrontend(Frontend):
         result_file: Path,  # noqa: ARG002
         msg: str,
     ) -> Iterator[ToxCmdStatus]:
-        with self._tox_env.execute_async(
-            cmd=self.backend_cmd,
-            cwd=self._root,
-            stdin=StdinSource.API,
-            show=None,
-            run_id=cmd,
-            executor=self.backend_executor,
-        ) as execute_status:
-            execute_status.write_stdin(f"{msg}{os.linesep}")
-            yield ToxCmdStatus(execute_status)
-        outcome = execute_status.outcome
-        if outcome is not None:  # pragma: no branch
-            outcome.assert_success()
+        try:
+            with self._tox_env.execute_async(
+                cmd=self.backend_cmd,
+                cwd=self._root,
+                stdin=StdinSource.API,
+                show=None,
+                run_id=cmd,
+                executor=self.backend_executor,
+            ) as execute_status:
+                execute_status.write_stdin(f"{msg}{os.linesep}")
+                yield ToxCmdStatus(execute_status)
+            outcome = execute_status.outcome
+            if outcome is not None:  # pragma: no branch
+                outcome.assert_success()
+        finally:
+            if self._fresh_subprocess:
+                self.backend_executor.close()
 
     def _unexpected_response(  # noqa: PLR0913
         self,
