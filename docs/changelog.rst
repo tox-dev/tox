@@ -4,6 +4,15 @@ Release History
 
 .. towncrier release notes start
 
+v4.14.0 (2024-03-05)
+--------------------
+
+Features - 4.14.0
+~~~~~~~~~~~~~~~~~
+- Support enabling fresh subprocess for packaging build backends via :ref:`fresh_subprocess` - by :user:`gaborbernat`. (:issue:`3227`)
+- Allow plugins attaching additional information to ``--version`` via ``tox_append_version_info`` method in the plugin
+  module - by :user:`gaborbernat`. (:issue:`3234`)
+
 v4.13.0 (2024-02-16)
 --------------------
 
