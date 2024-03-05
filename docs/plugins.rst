@@ -14,6 +14,15 @@ Extensions points
 .. automodule:: tox.plugin.spec
    :members:
 
+A plugin can define its plugin module a:
+
+.. code-block:: python
+
+   def tox_append_version_info() -> str:
+       return "magic"
+
+and this message will be appended to the output of the ``--version`` flag.
+
 Adoption of a plugin under tox-dev Github organization
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
