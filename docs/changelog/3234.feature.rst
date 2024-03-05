@@ -1,0 +1,2 @@
+Allow plugins attaching additional information to ``--version`` via ``tox_append_version_info`` method in the plugin
+module - by :user:`gaborbernat`.

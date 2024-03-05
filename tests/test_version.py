@@ -26,10 +26,13 @@ def test_version_without_plugin(tox_project: ToxProjectCreator) -> None:
 def test_version_with_plugin(tox_project: ToxProjectCreator, mocker: MockFixture) -> None:
     dist = [
         (
-            mocker.create_autospec("types.ModuleType", __file__=f"{i}-path"),
-            SimpleNamespace(project_name=i, version=v),
-        )
-        for i, v in (("B", "1.0"), ("A", "2.0"))
+            mocker.create_autospec("types.ModuleType", __file__="B-path", tox_append_version_info=lambda: "magic"),
+            SimpleNamespace(project_name="B", version="1.0"),
+        ),
+        (
+            mocker.create_autospec("types.ModuleType", __file__="A-path"),
+            SimpleNamespace(project_name="A", version="2.0"),
+        ),
     ]
     mocker.patch.object(MANAGER.manager, "list_plugin_distinfo", return_value=dist)
 
@@ -42,6 +45,6 @@ def test_version_with_plugin(tox_project: ToxProjectCreator, mocker: MockFixture
 
     assert lines[1:] == [
         "registered plugins:",
-        "    B-1.0 at B-path",
+        "    B-1.0 at B-path magic",
         "    A-2.0 at A-path",
     ]
