@@ -94,8 +94,7 @@ def test_result_json_sequential(
     assert "result" not in log_report["testenvs"][".pkg"]
 
     assert packaging_setup[-1][0] in {0, None}
-    assert packaging_setup[-1][1] == "_exit"
-    assert packaging_setup[:-1] == [
+    assert packaging_setup == [
         (0, "install_requires"),
         (None, "_optional_hooks"),
         (None, "get_requires_for_build_wheel"),
@@ -303,7 +302,6 @@ def test_skip_develop_mode(tox_project: ToxProjectCreator, demo_pkg_setuptools: 
         (".pkg", "install_requires_for_build_editable"),
         (".pkg", "build_editable"),
         ("py", "install_package"),
-        (".pkg", "_exit"),
     ]
     assert calls == expected
 

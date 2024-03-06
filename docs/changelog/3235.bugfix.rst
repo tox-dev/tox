@@ -1,0 +1,2 @@
+Fix crash with fresh subprocess, if the build backend is setuptools automatically enable fresh subprocesses for
+build backend calls - by :user:`gaborbernat`.

@@ -40,7 +40,7 @@ class Config:
             self._overrides[override.namespace].append(override)
 
         self._src = config_source
-        self._key_to_conf_set: dict[tuple[str, str], ConfigSet] = OrderedDict()
+        self._key_to_conf_set: dict[tuple[str, str, str], ConfigSet] = OrderedDict()
         self._core_set: CoreConfigSet | None = None
         self.memory_seed_loaders: defaultdict[str, list[MemoryLoader]] = defaultdict(list)
 
@@ -131,7 +131,7 @@ class Config:
         for_env: str | None,
         loaders: Sequence[Loader[Any]] | None = None,
     ) -> T:
-        key = section.key, for_env or ""
+        key = section.key, for_env or "", "-".join(base or [])
         try:
             return self._key_to_conf_set[key]  # type: ignore[return-value] # expected T but found ConfigSet
         except KeyError:
@@ -154,7 +154,7 @@ class Config:
         """
         Return the configuration for a given tox environment (will create if not exist yet).
 
-        :param item: the name of the environment
+        :param item: the name of the environment is
         :param package: a flag indicating if the environment is of type packaging or not (only used for creation)
         :param loaders: loaders to use for this configuration (only used for creation)
         :return: the tox environments config
@@ -170,7 +170,7 @@ class Config:
 
     def clear_env(self, name: str) -> None:
         section, _, __ = self._src.get_tox_env_section(name)
-        del self._key_to_conf_set[(section.key, name)]
+        self._key_to_conf_set = {k: v for k, v in self._key_to_conf_set.items() if k[0] == section.key and k[1] == name}
 
 
 ___all__ = [

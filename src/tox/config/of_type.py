@@ -58,6 +58,10 @@ class ConfigConstantDefinition(ConfigDefinition[T]):  # noqa: PLW1641
     def __eq__(self, o: object) -> bool:
         return type(self) == type(o) and super().__eq__(o) and self.value == o.value  # type: ignore[attr-defined]
 
+    def __repr__(self) -> str:
+        values = ((k, v) for k, v in vars(self).items() if v is not None)
+        return f"{type(self).__name__}({', '.join(f'{k}={v}' for k, v in values)})"
+
 
 _PLACE_HOLDER = object()
 
@@ -111,7 +115,7 @@ class ConfigDynamicDefinition(ConfigDefinition[T]):  # noqa: PLW1641
         return cast(T, self._cache)
 
     def __repr__(self) -> str:
-        values = ((k, v) for k, v in vars(self).items() if k != "post_process" and v is not None)
+        values = ((k, v) for k, v in vars(self).items() if k not in {"post_process", "_cache"} and v is not None)
         return f"{type(self).__name__}({', '.join(f'{k}={v}' for k, v in values)})"
 
     def __eq__(self, o: object) -> bool:
