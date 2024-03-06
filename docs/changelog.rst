@@ -4,6 +4,14 @@ Release History
 
 .. towncrier release notes start
 
+v4.14.1 (2024-03-06)
+--------------------
+
+Bugfixes - 4.14.1
+~~~~~~~~~~~~~~~~~
+- Fix crash with fresh subprocess, if the build backend is setuptools automatically enable fresh subprocesses for
+  build backend calls - by :user:`gaborbernat`. (:issue:`3235`)
+
 v4.14.0 (2024-03-05)
 --------------------
 
