@@ -94,19 +94,17 @@ class ConfigSet(ABC):
         key = keys[0]
         if key in self._defined:
             self._on_duplicate_conf(key, definition)
-        else:
-            self._keys[key] = None
-            for item in keys:
-                self._alias[item] = key
-            for key in keys:
-                self._defined[key] = definition
+
+        self._keys[key] = None
+        for item in keys:
+            self._alias[item] = key
+        for key in keys:
+            self._defined[key] = definition
         return definition
 
     def _on_duplicate_conf(self, key: str, definition: ConfigDefinition[V]) -> None:
-        earlier = self._defined[key]
-        if definition != earlier:  # pragma: no branch
-            msg = f"config {key} already defined"
-            raise ValueError(msg)
+        msg = f"duplicate configuration definition for {self.name}:\nhas: {self._defined[key]}\nnew: {definition}"
+        raise ValueError(msg)
 
     def __getitem__(self, item: str) -> Any:
         """

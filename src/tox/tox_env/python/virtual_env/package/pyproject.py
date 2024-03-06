@@ -107,8 +107,19 @@ class Pep517VenvPackager(PythonPackageToxEnv, ABC):
         self._package_dependencies: list[Requirement] | None = None
         self._package_name: str | None = None
         self._pkg_lock = RLock()  # can build only one package at a time
-        self.root = self.conf["package_root"]
         self._package_paths: set[Path] = set()
+        self._root: Path | None = None
+
+    @property
+    def root(self) -> Path:
+        if self._root is None:
+            self._root = self.conf["package_root"]
+        return self._root
+
+    @root.setter
+    def root(self, value: Path) -> None:
+        self._root = value
+        self._frontend_ = None  # force recreating the frontend with new root
 
     @staticmethod
     def id() -> str:
@@ -117,8 +128,7 @@ class Pep517VenvPackager(PythonPackageToxEnv, ABC):
     @property
     def _frontend(self) -> Pep517VirtualEnvFrontend:
         if self._frontend_ is None:
-            fresh = cast(bool, self.conf["fresh_subprocess"])
-            self._frontend_ = Pep517VirtualEnvFrontend(self.root, self, fresh_subprocess=fresh)
+            self._frontend_ = Pep517VirtualEnvFrontend(self.root, self)
         return self._frontend_
 
     def register_config(self) -> None:
@@ -140,7 +150,7 @@ class Pep517VenvPackager(PythonPackageToxEnv, ABC):
         self.conf.add_config(
             keys=["fresh_subprocess"],
             of_type=bool,
-            default=False,
+            default=self._frontend.backend.split(".")[0] == "setuptools",
             desc="create a fresh subprocess for every backend request",
         )
 
@@ -377,10 +387,9 @@ class Pep517VirtualEnvPackager(Pep517VenvPackager, VirtualEnv):
 
 
 class Pep517VirtualEnvFrontend(Frontend):
-    def __init__(self, root: Path, env: Pep517VenvPackager, *, fresh_subprocess: bool) -> None:
+    def __init__(self, root: Path, env: Pep517VenvPackager) -> None:
         super().__init__(*Frontend.create_args_from_folder(root))
         self._tox_env = env
-        self._fresh_subprocess = fresh_subprocess
         self._backend_executor_: LocalSubProcessPep517Executor | None = None
         into: dict[str, Any] = {}
 
@@ -435,7 +444,7 @@ class Pep517VirtualEnvFrontend(Frontend):
             if outcome is not None:  # pragma: no branch
                 outcome.assert_success()
         finally:
-            if self._fresh_subprocess:
+            if self._tox_env.conf["fresh_subprocess"]:
                 self.backend_executor.close()
 
     def _unexpected_response(  # noqa: PLR0913

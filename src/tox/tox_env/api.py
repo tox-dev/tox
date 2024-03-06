@@ -68,8 +68,6 @@ class ToxEnv(ABC):
         self._interrupted = False
         self._log_id = 0
 
-        self.register_config()
-
     @property
     def cache(self) -> Info:
         return Info(self.env_dir)

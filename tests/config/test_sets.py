@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from collections import OrderedDict
 from pathlib import Path
 from typing import TYPE_CHECKING, Callable, Dict, Optional, Set, TypeVar
@@ -125,14 +126,24 @@ def test_config_dynamic_repr(conf_builder: ConfBuilder) -> None:
 def test_config_redefine_constant_fail(conf_builder: ConfBuilder) -> None:
     config_set = conf_builder("path = path")
     config_set.add_constant(keys="path", desc="desc", value="value")
-    with pytest.raises(ValueError, match="config path already defined"):
+    msg = (
+        "duplicate configuration definition for py39:\n"
+        "has: ConfigConstantDefinition(keys=('path',), desc=desc, value=value)\n"
+        "new: ConfigConstantDefinition(keys=('path',), desc=desc2, value=value)"
+    )
+    with pytest.raises(ValueError, match=re.escape(msg)):
         config_set.add_constant(keys="path", desc="desc2", value="value")
 
 
 def test_config_redefine_dynamic_fail(conf_builder: ConfBuilder) -> None:
     config_set = conf_builder("path = path")
     config_set.add_config(keys="path", of_type=str, default="default_1", desc="path")
-    with pytest.raises(ValueError, match="config path already defined"):
+    msg = (
+        "duplicate configuration definition for py39:\n"
+        "has: ConfigDynamicDefinition(keys=('path',), desc=path, of_type=<class 'str'>, default=default_1)\n"
+        "new: ConfigDynamicDefinition(keys=('path',), desc=path, of_type=<class 'str'>, default=default_2)"
+    )
+    with pytest.raises(ValueError, match=re.escape(msg)):
         config_set.add_config(keys="path", of_type=str, default="default_2", desc="path")
 
 

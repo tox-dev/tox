@@ -239,12 +239,12 @@ class EnvSelector:
     def _defined_envs(self) -> dict[str, _ToxEnvInfo]:  # noqa: C901, PLR0912
         # The problem of classifying run/package environments:
         # There can be two type of tox environments: run or package. Given a tox environment name there's no easy way to
-        # find out which it is.  Intuitively a run environment is any environment that's not used for packaging by
-        # another run environment. To find out what are the packaging environments for a run environment you have to
-        # first construct it. This implies a two phase solution: construct all environments and query their packaging
-        # environments. The run environments are the ones not marked as of packaging type. This requires being able
-        # to change tox environments type, if it was earlier discovered as a run environment and is marked as packaging
-        # we need to redefine it, e.g. when it shows up in config as [testenv:.package] and afterwards by a run env is
+        # find out which it is.  Intuitively, a run environment is any environment not used for packaging by another run
+        # environment. To find out what are the packaging environments for a run environment, you have to first
+        # construct it. This implies a two-phase solution: construct all environments and query their packaging
+        # environments. The run environments are the ones not marked as of packaging type. This requires being able to
+        # change tox environments types, if it was earlier discovered as a run environment and is marked as packaging,
+        # we need to redefine it. E.g., when it shows up in config as [testenv:.package] and afterward by a run env is
         # marked as package_env.
 
         if self._defined_envs_ is None:  # noqa: PLR1702
@@ -267,7 +267,7 @@ class EnvSelector:
                     try:
                         run_env.package_env = self._build_pkg_env(pkg_name_type, name, env_name_to_active)
                     except Exception as exception:  # noqa: BLE001
-                        # if it's not a run environment,  wait to see if ends up being a packaging one -> rollback
+                        # if it's not a run environment, wait to see if ends up being a packaging one -> rollback
                         failed[name] = exception
                         for key in self._pkg_env_counter - start_package_env_use_counter:
                             del self._defined_envs_[key]
@@ -320,6 +320,7 @@ class EnvSelector:
         journal = self._journal.get_env_journal(name)
         args = ToxEnvCreateArgs(env_conf, self._state.conf.core, self._state.conf.options, journal, self._log_handler)
         run_env = runner(args)
+        run_env.register_config()
         self._manager.tox_add_env_config(env_conf, self._state)
         return run_env
 
@@ -363,6 +364,7 @@ class EnvSelector:
         journal = self._journal.get_env_journal(name)
         args = ToxEnvCreateArgs(pkg_conf, self._state.conf.core, self._state.conf.options, journal, self._log_handler)
         pkg_env: PackageToxEnv = package_type(args)
+        pkg_env.register_config()
         self._defined_envs_[name] = _ToxEnvInfo(pkg_env, is_active)
         self._manager.tox_add_env_config(pkg_conf, self._state)
         return pkg_env
