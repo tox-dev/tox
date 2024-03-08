@@ -802,7 +802,6 @@ Python virtual environment packaging
    A flag controlling if each call to the build backend should be done in a fresh subprocess or not (especially older
    build backends such as ``setuptools`` might require this to discover newly provisioned dependencies).
 
-   Directory where to put the project metadata files.
 
 Pip installer
 ~~~~~~~~~~~~~
