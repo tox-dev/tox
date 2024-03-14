@@ -546,7 +546,7 @@ Disallow command line environments which are not explicitly specified in the con
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Previously, any environment would be implicitly created even if no such environment was specified in the configuration
-file.For example, given this config:
+file. For example, given this config:
 
 .. code-block:: ini
 
