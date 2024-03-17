@@ -229,3 +229,10 @@ def test_provision_conf_file(tox_project: ToxProjectCreator, tmp_path: Path, rel
     conf_path = str(Path(project.path.name) / "tox.ini") if relative_path else str(project.path / "tox.ini")
     result = project.run("c", "--conf", conf_path, "-e", "py", from_cwd=tmp_path)
     result.assert_success()
+
+
+def test_provision_default_arguments_exists(tox_project: ToxProjectCreator) -> None:
+    ini = "[tox]\nrequires = tox<4"
+    outcome = tox_project({"tox.ini": ini}).run()
+    for argument in ["result_json", "hash_seed", "discover", "list_dependencies"]:
+        assert hasattr(outcome.state.conf.options, argument)

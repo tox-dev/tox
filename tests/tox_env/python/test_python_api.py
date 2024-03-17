@@ -255,7 +255,7 @@ def test_python_hash_seed_from_env_and_disable(tox_project: ToxProjectCreator) -
 
 @pytest.mark.parametrize("in_ci", [True, False])
 def test_list_installed_deps(in_ci: bool, tox_project: ToxProjectCreator, mocker: MockerFixture) -> None:
-    mocker.patch("tox.session.cmd.run.common.is_ci", return_value=in_ci)
+    mocker.patch("tox.config.cli.parser.is_ci", return_value=in_ci)
     result = tox_project({"tox.ini": "[testenv]\nskip_install = true"}).run("r", "-e", "py")
     if in_ci:
         assert "pip==" in result.out
@@ -271,7 +271,7 @@ def test_list_installed_deps_explicit_cli(
     tox_project: ToxProjectCreator,
     mocker: MockerFixture,
 ) -> None:
-    mocker.patch("tox.session.cmd.run.common.is_ci", return_value=in_ci)
+    mocker.patch("tox.config.cli.parser.is_ci", return_value=in_ci)
     result = tox_project({"tox.ini": "[testenv]\nskip_install = true"}).run(list_deps, "r", "-e", "py")
     if list_deps == "--list-dependencies":
         assert "pip==" in result.out
