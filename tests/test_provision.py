@@ -231,8 +231,9 @@ def test_provision_conf_file(tox_project: ToxProjectCreator, tmp_path: Path, rel
     result.assert_success()
 
 
-def test_provision_default_arguments_exists(tox_project: ToxProjectCreator) -> None:
+@pytest.mark.parametrize("subcommand", ["r", "p", "de", "l", "d", "c", "q", "e", "le"])
+def test_provision_default_arguments_exists(tox_project: ToxProjectCreator, subcommand: str) -> None:
     ini = "[tox]\nrequires = tox<4"
-    outcome = tox_project({"tox.ini": ini}).run()
+    outcome = tox_project({"tox.ini": ini}).run(subcommand)
     for argument in ["result_json", "hash_seed", "discover", "list_dependencies"]:
         assert hasattr(outcome.state.conf.options, argument)
