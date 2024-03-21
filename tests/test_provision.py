@@ -233,7 +233,15 @@ def test_provision_conf_file(tox_project: ToxProjectCreator, tmp_path: Path, rel
 
 @pytest.mark.parametrize("subcommand", ["r", "p", "de", "l", "d", "c", "q", "e", "le"])
 def test_provision_default_arguments_exists(tox_project: ToxProjectCreator, subcommand: str) -> None:
-    ini = "[tox]\nrequires = tox<4"
-    outcome = tox_project({"tox.ini": ini}).run(subcommand)
+    ini = r"""
+    [tox]
+    requires =
+        tox<4.14
+    [testenv]
+    package = skip
+    """
+    project = tox_project({"tox.ini": ini})
+    project.patch_execute(lambda r: 0 if "install" in r.run_id else None)
+    outcome = project.run(subcommand)
     for argument in ["result_json", "hash_seed", "discover", "list_dependencies"]:
         assert hasattr(outcome.state.conf.options, argument)
