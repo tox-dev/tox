@@ -5,13 +5,15 @@ from __future__ import annotations
 import argparse
 import logging
 import os
+import random
 import sys
-from argparse import SUPPRESS, Action, ArgumentDefaultsHelpFormatter, ArgumentParser, Namespace
+from argparse import SUPPRESS, Action, ArgumentDefaultsHelpFormatter, ArgumentError, ArgumentParser, Namespace
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Callable, Dict, List, Literal, Optional, Sequence, Tuple, Type, TypeVar, cast
 
 from tox.config.loader.str_convert import StrConvert
 from tox.plugin import NAME
+from tox.util.ci import is_ci
 
 from .env_var import get_env_var
 from .ini import IniConfig
@@ -178,7 +180,74 @@ class ToxParser(ArgumentParserWithEnvAndConfig):
                 excl_group = group.add_mutually_exclusive_group(**e_kwargs)
                 for a_args, _, a_kwargs in arguments:
                     excl_group.add_argument(*a_args, **a_kwargs)
+        self._add_provision_arguments(sub_parser)
         return sub_parser
+
+    def _add_provision_arguments(self, sub_parser: ToxParser) -> None:  # noqa: PLR6301
+        sub_parser.add_argument(
+            "--result-json",
+            dest="result_json",
+            metavar="path",
+            of_type=Path,
+            default=None,
+            help="write a JSON file with detailed information about all commands and results involved",
+        )
+
+        class SeedAction(Action):
+            def __call__(
+                self,
+                parser: ArgumentParser,  # noqa: ARG002
+                namespace: Namespace,
+                values: str | Sequence[Any] | None,
+                option_string: str | None = None,  # noqa: ARG002
+            ) -> None:
+                if values == "notset":
+                    result = None
+                else:
+                    try:
+                        result = int(cast(str, values))
+                        if result <= 0:
+                            msg = "must be greater than zero"
+                            raise ValueError(msg)  # noqa: TRY301
+                    except ValueError as exc:
+                        raise ArgumentError(self, str(exc)) from exc
+                setattr(namespace, self.dest, result)
+
+        if os.environ.get("PYTHONHASHSEED", "random") != "random":
+            hashseed_default = int(os.environ["PYTHONHASHSEED"])
+        else:
+            hashseed_default = random.randint(1, 1024 if sys.platform == "win32" else 4294967295)  # noqa: S311
+        sub_parser.add_argument(
+            "--hashseed",
+            metavar="SEED",
+            help="set PYTHONHASHSEED to SEED before running commands. Defaults to a random integer in the range "
+            "[1, 4294967295] ([1, 1024] on Windows). Passing 'notset' suppresses this behavior.",
+            action=SeedAction,
+            of_type=Optional[int],  # type: ignore[arg-type]
+            default=hashseed_default,
+            dest="hash_seed",
+        )
+        sub_parser.add_argument(
+            "--discover",
+            dest="discover",
+            nargs="+",
+            metavar="path",
+            help="for Python discovery first try the Python executables under these paths",
+            default=[],
+        )
+        list_deps = sub_parser.add_mutually_exclusive_group()
+        list_deps.add_argument(
+            "--list-dependencies",
+            action="store_true",
+            default=is_ci(),
+            help="list the dependencies installed during environment setup",
+        )
+        list_deps.add_argument(
+            "--no-list-dependencies",
+            action="store_false",
+            dest="list_dependencies",
+            help="never list the dependencies installed during environment setup",
+        )
 
     def add_argument_group(self, *args: Any, **kwargs: Any) -> Any:
         result = super().add_argument_group(*args, **kwargs)

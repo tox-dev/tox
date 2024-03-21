@@ -1,6 +1,6 @@
 """
 tox uses `pluggy <https://pluggy.readthedocs.io/en/stable/>`_ to customize the default behavior. It provides an
-extension mechanism for plugin management an calling hooks.
+extension mechanism for plugin management by calling hooks.
 
 Pluggy discovers a plugin by looking up for entry-points named ``tox``, for example in a pyproject.toml:
 
