@@ -4,6 +4,17 @@ Release History
 
 .. towncrier release notes start
 
+v4.14.2 (2024-03-22)
+--------------------
+
+Bugfixes - 4.14.2
+~~~~~~~~~~~~~~~~~
+- Add provision arguments to ToxParser to fix crash when provisioning new tox environment without list-dependencies by :user:`seyidaniels` (:issue:`3190`)
+
+Improved Documentation - 4.14.2
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+- Removed unused line from the 'fresh_subprocess' documentation. (:issue:`3241`)
+
 v4.14.1 (2024-03-06)
 --------------------
 

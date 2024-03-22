@@ -1,1 +1,0 @@
-Add provision arguments to ToxParser to fix crash when provisioning new tox environment without list-dependencies by :user:`seyidaniels`
