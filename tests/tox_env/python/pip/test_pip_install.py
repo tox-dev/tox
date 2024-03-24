@@ -309,8 +309,8 @@ def constrained_mock_project(
         "build.py": (demo_pkg_inline / "build.py").read_text(),
     }
     exp_constraints: list[str] = []
-    requirement = "foo==1.2.3"
-    constraint = "foo<2"
+    requirement = "coo==1.2.3"
+    constraint = "coo<2"
     if request.param == "explicit":
         deps = requirement
         exp_constraints.append(requirement)
