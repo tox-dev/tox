@@ -519,15 +519,6 @@ Run
 
    tox package type used to package.
 
-Packaging
-~~~~~~~~~
-.. conf::
-   :keys: package_root, setupdir
-   :default: {package_root}
-   :ref_suffix: env
-
-   Indicates where the packaging root file exists (historically setup.py file or pyproject.toml now).
-
 .. _python-options:
 
 Python options
