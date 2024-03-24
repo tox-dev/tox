@@ -107,7 +107,7 @@ class Pip(Installer[Python]):
     def use_frozen_constraints(self) -> bool:
         return bool(self._env.conf["use_frozen_constraints"])
 
-    def _install_requirement_file(self, arguments: PythonDeps, section: str, of_type: str) -> None:
+    def _install_requirement_file(self, arguments: PythonDeps, section: str, of_type: str) -> None:  # noqa: C901
         try:
             new_options, new_reqs = arguments.unroll()
         except ValueError as exception:
@@ -145,7 +145,15 @@ class Pip(Installer[Python]):
                 if args:  # pragma: no branch
                     self._execute_installer(args, of_type)
                     if self.constrain_package_deps and not self.use_frozen_constraints:
-                        combined_constraints = new_requirements + [c.lstrip("-c ") for c in new_constraints]
+                        # when we drop Python 3.8 we can use the builtin `.removeprefix`
+                        def remove_prefix(text: str, prefix: str) -> str:
+                            if text.startswith(prefix):
+                                return text[len(prefix) :]
+                            return text
+
+                        combined_constraints = new_requirements + [
+                            remove_prefix(text=c, prefix="-c ") for c in new_constraints
+                        ]
                         self.constraints_file().write_text("\n".join(combined_constraints))
 
     @staticmethod
