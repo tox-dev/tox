@@ -67,3 +67,10 @@ def test_opt_only_req_file(tmp_path: Path) -> None:
     python_deps = PythonDeps(raw="-rr.txt", root=tmp_path)
     assert not python_deps.requirements
     assert python_deps.options == Namespace(features_enabled=["fast-deps"])
+
+
+def test_req_iadd(tmp_path: Path) -> None:
+    a = PythonDeps(raw="foo", root=tmp_path)
+    b = PythonDeps(raw="bar", root=tmp_path)
+    a += b
+    assert a.lines() == ["foo", "bar"]

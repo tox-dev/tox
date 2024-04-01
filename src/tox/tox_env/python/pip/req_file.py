@@ -118,6 +118,10 @@ class PythonDeps(RequirementsFile):
             self._unroll = result_opts, result_req
         return self._unroll
 
+    def __iadd__(self, other: PythonDeps) -> PythonDeps:  # noqa: PYI034
+        self._raw += "\n" + other._raw
+        return self
+
     @classmethod
     def factory(cls, root: Path, raw: object) -> PythonDeps:
         if not isinstance(raw, str):
