@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+from functools import partial
 from pathlib import Path
 from typing import TYPE_CHECKING, List
 
@@ -9,6 +10,7 @@ import pytest
 from tox.config.loader.api import Override
 from tox.config.loader.memory import MemoryLoader
 from tox.config.sets import ConfigSet
+from tox.tox_env.python.pip.req_file import PythonDeps
 
 if TYPE_CHECKING:
     from tests.conftest import ToxIniCreator
@@ -96,6 +98,37 @@ def test_config_override_appends_to_setenv(tox_ini_conf: ToxIniCreator) -> None:
 def test_config_override_appends_to_empty_setenv(tox_ini_conf: ToxIniCreator) -> None:
     conf = tox_ini_conf("[testenv]", override=[Override("testenv.setenv+=foo=bar")]).get_env("testenv")
     assert conf["setenv"].load("foo") == "bar"
+
+
+def test_config_override_appends_to_pythondeps(tox_ini_conf: ToxIniCreator, tmp_path: Path) -> None:
+    example = """
+    [testenv]
+    deps = foo
+    """
+    conf = tox_ini_conf(example, override=[Override("testenv.deps+=bar")]).get_env("testenv")
+    conf.add_config(
+        "deps",
+        of_type=PythonDeps,
+        factory=partial(PythonDeps.factory, tmp_path),
+        default=PythonDeps("", root=tmp_path),
+        desc="desc",
+    )
+    assert conf["deps"].lines() == ["foo", "bar"]
+
+
+def test_config_override_appends_to_empty_pythondeps(tox_ini_conf: ToxIniCreator, tmp_path: Path) -> None:
+    example = """
+    [testenv]
+    """
+    conf = tox_ini_conf(example, override=[Override("testenv.deps+=bar")]).get_env("testenv")
+    conf.add_config(
+        "deps",
+        of_type=PythonDeps,
+        factory=partial(PythonDeps.factory, tmp_path),
+        default=PythonDeps("", root=tmp_path),
+        desc="desc",
+    )
+    assert conf["deps"].lines() == ["bar"]
 
 
 def test_config_override_cannot_append(tox_ini_conf: ToxIniCreator) -> None:
