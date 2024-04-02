@@ -5,6 +5,7 @@ from argparse import ArgumentTypeError
 from typing import TYPE_CHECKING, Any, List, Mapping, TypeVar
 
 from tox.plugin import impl
+from tox.tox_env.python.pip.req_file import PythonDeps
 
 from .convert import Convert, Factory
 from .str_convert import StrConvert
@@ -148,6 +149,8 @@ class Loader(Convert[T]):
                 converted.update(converted_override)
             elif isinstance(converted, SetEnv) and isinstance(converted_override, SetEnv):
                 converted.update(converted_override, override=True)
+            elif isinstance(converted, PythonDeps) and isinstance(converted_override, PythonDeps):
+                converted += converted_override
             else:
                 msg = "Only able to append to lists and dicts"
                 raise ValueError(msg)
