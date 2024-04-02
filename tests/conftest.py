@@ -19,6 +19,7 @@ from tox.tox_env.python.api import PythonInfo, VersionInfo
 from tox.tox_env.python.virtual_env.api import VirtualEnv
 
 if TYPE_CHECKING:
+    from build import DistributionType
     from pytest_mock import MockerFixture
 
     from tox.config.loader.api import Override
@@ -135,7 +136,7 @@ def demo_pkg_inline_wheel(tmp_path_factory: pytest.TempPathFactory, demo_pkg_inl
     return build_pkg(tmp_path_factory.mktemp("dist"), demo_pkg_inline, ["wheel"])
 
 
-def build_pkg(dist_dir: Path, of: Path, distributions: list[str], isolation: bool = True) -> Path:
+def build_pkg(dist_dir: Path, of: Path, distributions: Sequence[DistributionType], isolation: bool = True) -> Path:
     from build.__main__ import build_package  # noqa: PLC0415,PLC2701
 
     build_package(str(of), str(dist_dir), distributions=distributions, isolation=isolation)
@@ -143,5 +144,5 @@ def build_pkg(dist_dir: Path, of: Path, distributions: list[str], isolation: boo
 
 
 @pytest.fixture(scope="session")
-def pkg_builder() -> Callable[[Path, Path, list[str], bool], Path]:
+def pkg_builder() -> Callable[[Path, Path, Sequence[DistributionType], bool], Path]:
     return build_pkg
