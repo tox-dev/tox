@@ -81,7 +81,9 @@ class Loader(Convert[T]):
 
     def __init__(self, section: Section, overrides: list[Override]) -> None:
         self._section = section
-        self.overrides: dict[str, Override] = {o.key: o for o in overrides}
+        self.overrides: dict[str, list[Override]] = {}
+        for override in overrides:
+            self.overrides.setdefault(override.key, []).append(override)
         self.parent: Loader[Any] | None = None
 
     @property
@@ -130,31 +132,35 @@ class Loader(Convert[T]):
         """
         from tox.config.set_env import SetEnv  # noqa: PLC0415
 
-        override = self.overrides.get(key)
-        if override:
-            converted_override = _STR_CONVERT.to(override.value, of_type, factory)
-            if not override.append:
-                return converted_override
+        overrides = self.overrides.get(key, [])
+
         try:
             raw = self.load_raw(key, conf, args.env_name)
         except KeyError:
-            if override:
-                return converted_override
-            raise
-        converted = self.build(key, of_type, factory, conf, raw, args)
-        if override and override.append:
-            if isinstance(converted, list) and isinstance(converted_override, list):
-                converted += converted_override
-            elif isinstance(converted, dict) and isinstance(converted_override, dict):
-                converted.update(converted_override)
-            elif isinstance(converted, SetEnv) and isinstance(converted_override, SetEnv):
-                converted.update(converted_override, override=True)
-            elif isinstance(converted, PythonDeps) and isinstance(converted_override, PythonDeps):
-                converted += converted_override
+            converted = None
+            if not overrides:
+                raise
+        else:
+            converted = self.build(key, of_type, factory, conf, raw, args)
+
+        for override in overrides:
+            converted_override = _STR_CONVERT.to(override.value, of_type, factory)
+            if override.append and converted is not None:
+                if isinstance(converted, list) and isinstance(converted_override, list):
+                    converted += converted_override
+                elif isinstance(converted, dict) and isinstance(converted_override, dict):
+                    converted.update(converted_override)
+                elif isinstance(converted, SetEnv) and isinstance(converted_override, SetEnv):
+                    converted.update(converted_override, override=True)
+                elif isinstance(converted, PythonDeps) and isinstance(converted_override, PythonDeps):
+                    converted += converted_override
+                else:
+                    msg = "Only able to append to lists and dicts"
+                    raise ValueError(msg)
             else:
-                msg = "Only able to append to lists and dicts"
-                raise ValueError(msg)
-        return converted
+                converted = converted_override
+
+        return converted  # type: ignore[return-value]
 
     def build(  # noqa: PLR0913
         self,

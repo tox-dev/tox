@@ -42,6 +42,12 @@ def test_override_append(flag: str) -> None:
     assert value.append is True
 
 
+@pytest.mark.parametrize("flag", ["-x", "--override"])
+def test_override_multiple(flag: str) -> None:
+    parsed, _, __, ___, ____ = get_options(flag, "magic+=1", flag, "magic+=2")
+    assert len(parsed.override) == 2
+
+
 def test_override_equals() -> None:
     assert Override("a=b") == Override("a=b")
 

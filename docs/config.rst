@@ -1037,13 +1037,26 @@ You could add additional dependencies by running:
 
 .. code-block:: bash
 
-   tox --override testenv.deps+=pytest-xdist,pytest-cov
+   tox --override testenv.deps+=pytest-xdist
 
 You could set additional environment variables by running:
 
 .. code-block:: bash
 
    tox --override testenv.setenv+=baz=quux
+
+You can specify overrides multiple times on the command line to append multiple items:
+
+.. code-block:: bash
+
+   tox -x testenv.seteenv+=foo=bar -x testenv.setenv+=baz=quux
+   tox -x testenv.deps+=pytest-xdist -x testenv.deps+=pytest-cov
+
+Or reset override and append to that (note the first override is ``=`` and not ``+=``):
+
+.. code-block:: bash
+
+   tox -x testenv.deps=pytest-xdist -x testenv.deps+=pytest-cov
 
 Set CLI flags via environment variables
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

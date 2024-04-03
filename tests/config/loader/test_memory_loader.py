@@ -18,7 +18,7 @@ def test_memory_loader_repr() -> None:
 
 def test_memory_loader_override() -> None:
     loader = MemoryLoader(a=1)
-    loader.overrides["a"] = Override("a=2")
+    loader.overrides["a"] = [Override("a=2")]
     args = ConfigLoadArgs([], "name", None)
     loaded = loader.load("a", of_type=int, conf=None, factory=None, args=args)
     assert loaded == 2

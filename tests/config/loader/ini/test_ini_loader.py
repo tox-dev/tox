@@ -21,7 +21,7 @@ def test_ini_loader_keys(mk_ini_conf: Callable[[str], ConfigParser]) -> None:
 def test_ini_loader_repr(mk_ini_conf: Callable[[str], ConfigParser]) -> None:
     core = IniSection(None, "tox")
     loader = IniLoader(core, mk_ini_conf("\n[tox]\n\na=b\nc=d\n\n"), [Override("tox.a=1")], core_section=core)
-    assert repr(loader) == "IniLoader(section=tox, overrides={'a': Override('tox.a=1')})"
+    assert repr(loader) == "IniLoader(section=tox, overrides={'a': [Override('tox.a=1')]})"
 
 
 def test_ini_loader_has_section(mk_ini_conf: Callable[[str], ConfigParser]) -> None:
