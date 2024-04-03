@@ -78,6 +78,17 @@ def test_config_override_appends_to_list(tox_ini_conf: ToxIniCreator) -> None:
     assert conf["passenv"] == ["foo", "bar"]
 
 
+def test_config_override_sequence(tox_ini_conf: ToxIniCreator) -> None:
+    example = """
+    [testenv]
+    passenv = foo
+    """
+    overrides = [Override("testenv.passenv=bar"), Override("testenv.passenv+=baz")]
+    conf = tox_ini_conf(example, override=overrides).get_env("testenv")
+    conf.add_config("passenv", of_type=List[str], default=[], desc="desc")
+    assert conf["passenv"] == ["bar", "baz"]
+
+
 def test_config_override_appends_to_empty_list(tox_ini_conf: ToxIniCreator) -> None:
     conf = tox_ini_conf("[testenv]", override=[Override("testenv.passenv+=bar")]).get_env("testenv")
     conf.add_config("passenv", of_type=List[str], default=[], desc="desc")
@@ -93,6 +104,35 @@ def test_config_override_appends_to_setenv(tox_ini_conf: ToxIniCreator) -> None:
     conf = tox_ini_conf(example, override=[Override("testenv.setenv+=baz=quux")]).get_env("testenv")
     assert conf["setenv"].load("foo") == "bar"
     assert conf["setenv"].load("baz") == "quux"
+
+
+def test_config_override_appends_to_setenv_multiple(tox_ini_conf: ToxIniCreator) -> None:
+    example = """
+    [testenv]
+    setenv =
+      foo = bar
+    """
+    overrides = [Override("testenv.setenv+=baz=quux"), Override("testenv.setenv+=less=more")]
+    conf = tox_ini_conf(example, override=overrides).get_env("testenv")
+    assert conf["setenv"].load("foo") == "bar"
+    assert conf["setenv"].load("baz") == "quux"
+    assert conf["setenv"].load("less") == "more"
+
+
+def test_config_override_sequential_processing(tox_ini_conf: ToxIniCreator) -> None:
+    example = """
+    [testenv]
+    setenv =
+      foo = bar
+    """
+    overrides = [Override("testenv.setenv+=a=b"), Override("testenv.setenv=c=d"), Override("testenv.setenv+=e=f")]
+    conf = tox_ini_conf(example, override=overrides).get_env("testenv")
+    with pytest.raises(KeyError):
+        assert conf["setenv"].load("foo") == "bar"
+    with pytest.raises(KeyError):
+        assert conf["setenv"].load("a") == "b"
+    assert conf["setenv"].load("c") == "d"
+    assert conf["setenv"].load("e") == "f"
 
 
 def test_config_override_appends_to_empty_setenv(tox_ini_conf: ToxIniCreator) -> None:
@@ -114,6 +154,23 @@ def test_config_override_appends_to_pythondeps(tox_ini_conf: ToxIniCreator, tmp_
         desc="desc",
     )
     assert conf["deps"].lines() == ["foo", "bar"]
+
+
+def test_config_multiple_overrides(tox_ini_conf: ToxIniCreator, tmp_path: Path) -> None:
+    example = """
+    [testenv]
+    deps = foo
+    """
+    overrides = [Override("testenv.deps+=bar"), Override("testenv.deps+=baz")]
+    conf = tox_ini_conf(example, override=overrides).get_env("testenv")
+    conf.add_config(
+        "deps",
+        of_type=PythonDeps,
+        factory=partial(PythonDeps.factory, tmp_path),
+        default=PythonDeps("", root=tmp_path),
+        desc="desc",
+    )
+    assert conf["deps"].lines() == ["foo", "bar", "baz"]
 
 
 def test_config_override_appends_to_empty_pythondeps(tox_ini_conf: ToxIniCreator, tmp_path: Path) -> None:
