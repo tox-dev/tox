@@ -41,6 +41,7 @@ class Config:
 
         self._src = config_source
         self._key_to_conf_set: dict[tuple[str, str, str], ConfigSet] = OrderedDict()
+        self._key_to_env_conf: dict[str, EnvConfigSet] = {}
         self._core_set: CoreConfigSet | None = None
         self.memory_seed_loaders: defaultdict[str, list[MemoryLoader]] = defaultdict(list)
 
@@ -159,18 +160,21 @@ class Config:
         :param loaders: loaders to use for this configuration (only used for creation)
         :return: the tox environments config
         """
-        section, base_test, base_pkg = self._src.get_tox_env_section(item)
-        return self.get_section_config(
-            section,
-            base=base_pkg if package else base_test,
-            of_type=EnvConfigSet,
-            for_env=item,
-            loaders=loaders,
-        )
+        if item not in self._key_to_env_conf:
+            section, base_test, base_pkg = self._src.get_tox_env_section(item)
+            self._key_to_env_conf[item] = self.get_section_config(
+                section,
+                base=base_pkg if package else base_test,
+                of_type=EnvConfigSet,
+                for_env=item,
+                loaders=loaders,
+            )
+        return self._key_to_env_conf[item]
 
     def clear_env(self, name: str) -> None:
         section, _, __ = self._src.get_tox_env_section(name)
         self._key_to_conf_set = {k: v for k, v in self._key_to_conf_set.items() if k[0] == section.key and k[1] == name}
+        self._key_to_env_conf.pop(name)
 
 
 ___all__ = [
