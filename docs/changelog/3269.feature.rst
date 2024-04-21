@@ -1,1 +1,1 @@
-Fix `skip_missing_interpreters` option for `package = wheel` 
+Fix `skip_missing_interpreters` option for `package = wheel`
