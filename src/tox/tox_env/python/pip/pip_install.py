@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import operator
 from collections import defaultdict
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Callable, Sequence
@@ -132,7 +133,9 @@ class Pip(Installer[Python]):
             if not eq:  # pragma: no branch
                 if old is not None:
                     self._recreate_if_diff("install flag(s)", new_options, old["options"], lambda i: i)
-                    self._recreate_if_diff("constraint(s)", new_constraints, old["constraints"], lambda i: i[3:])
+                    self._recreate_if_diff(
+                        "constraint(s)", new_constraints, old["constraints"], operator.itemgetter(slice(3, None))
+                    )
                     missing_requirement = set(old["requirements"]) - set(new_requirements)
                     if missing_requirement:
                         msg = f"requirements removed: {' '.join(missing_requirement)}"

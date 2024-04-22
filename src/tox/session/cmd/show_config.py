@@ -95,7 +95,7 @@ def print_key_value(is_colored: bool, key: str, value: str, multi_line: bool = F
 
 
 def print_conf(is_colored: bool, conf: ConfigSet, keys: Iterable[str]) -> None:  # noqa: FBT001
-    for key in keys if keys else conf:
+    for key in keys or conf:
         if key not in conf:
             continue
         key = conf.primary_key(key)  # noqa: PLW2901
