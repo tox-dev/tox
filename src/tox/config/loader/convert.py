@@ -64,7 +64,7 @@ class Convert(ABC, Generic[T]):
         elif origin == Union:  # handle Optional values
             args: list[type[Any]] = of_type.__args__  # type: ignore[attr-defined]
             none = type(None)
-            if len(args) == 2 and none in args: # noqa: PLR2004
+            if len(args) == 2 and none in args:  # noqa: PLR2004
                 if isinstance(raw, str):
                     raw = raw.strip()  # type: ignore[assignment]
                 if not raw:
