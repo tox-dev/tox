@@ -1,1 +1,1 @@
-Add support for inverting exit code success critera using bang (!)
+Add support for inverting exit code success criteria using bang (!)
