@@ -232,6 +232,7 @@ class ToxParser(ArgumentParserWithEnvAndConfig):
             dest="discover",
             nargs="+",
             metavar="path",
+            of_type=list[str],
             help="for Python discovery first try the Python executables under these paths",
             default=[],
         )
