@@ -232,7 +232,8 @@ class ToxParser(ArgumentParserWithEnvAndConfig):
             dest="discover",
             nargs="+",
             metavar="path",
-            help="for Python discovery first try the Python executables under these paths",
+            of_type=List[str],
+            help="for Python discovery first try these Python executables",
             default=[],
         )
         list_deps = sub_parser.add_mutually_exclusive_group()
