@@ -187,11 +187,21 @@ a given command add a ``-`` prefix to that line (similar syntax to how the GNU `
 
 .. code-block:: ini
 
-
    [testenv]
    commands =
      - python -c 'import sys; sys.exit(1)'
      python --version
+
+You can also choose to provide a ``!`` prefix instead to purposely invert the exit code, making the line fail if the
+command returned exit code 0. Any other exit code is considered a success.
+
+.. code-block:: ini
+
+   [testenv]
+   commands =
+     ! python -c 'import sys; sys.exit(1)'
+     python --version
+
 
 Customizing virtual environment creation
 ----------------------------------------

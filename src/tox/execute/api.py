@@ -252,6 +252,12 @@ class Outcome:
             self._assert_fail()
         self.log_run_done(logging.INFO)
 
+    def assert_failure(self) -> None:
+        """Assert that the execution failed."""
+        if self.exit_code is not None and self.exit_code == self.OK:
+            self._assert_fail()
+        self.log_run_done(logging.INFO)
+
     def _assert_fail(self) -> NoReturn:
         if self.show_on_standard is False:
             if self.out:
