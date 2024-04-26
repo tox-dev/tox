@@ -1,1 +1,0 @@
-Fix non-existing branch ``rewrite`` in the documentation to ``main``.

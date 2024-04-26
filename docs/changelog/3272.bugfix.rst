@@ -1,1 +1,0 @@
-Fix broken input parsing for ``--discover`` flag. - by :user:`mimre25`

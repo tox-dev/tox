@@ -1,1 +1,0 @@
-Add support for multiple appending override options (-x, --override) on command line - by :user:`amitschang`.

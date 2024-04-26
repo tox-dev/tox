@@ -1,1 +1,0 @@
-Rephrase ``--discover`` flag's description to avoid confusion between paths and executables. - by :user:`mimre25`

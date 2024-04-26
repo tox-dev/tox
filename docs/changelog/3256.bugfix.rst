@@ -1,1 +1,0 @@
-Allow appending to ``deps`` with ``--override testenv.deps+=foo`` - by :user:`stefanor`.
