@@ -35,18 +35,18 @@ def test_depends_wheel(tox_project: ToxProjectCreator, patch_prev_py: Callable[[
        py ~ .pkg
        {py} ~ .pkg
        {prev_py} ~ .pkg | .pkg-{impl}{prev_ver}
-       py31 ~ .pkg | ... (could not find python interpreter with spec(s): py31)
+       py31 ~ .pkg
        cov2
           cov
              py ~ .pkg
              {py} ~ .pkg
              {prev_py} ~ .pkg | .pkg-{impl}{prev_ver}
-             py31 ~ .pkg | ... (could not find python interpreter with spec(s): py31)
+             py31 ~ .pkg
        cov
           py ~ .pkg
           {py} ~ .pkg
           {prev_py} ~ .pkg | .pkg-{impl}{prev_ver}
-          py31 ~ .pkg | ... (could not find python interpreter with spec(s): py31)
+          py31 ~ .pkg
     """
     assert outcome.out == dedent(expected).lstrip()
 
