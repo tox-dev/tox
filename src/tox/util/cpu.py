@@ -10,7 +10,7 @@ def auto_detect_cpus() -> int:
         n: int | None = multiprocessing.cpu_count()
     except NotImplementedError:
         n = None
-    return n if n else 1
+    return n or 1
 
 
 __all__ = ("auto_detect_cpus",)

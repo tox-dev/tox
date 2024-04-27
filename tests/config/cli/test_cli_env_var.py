@@ -84,6 +84,7 @@ def test_env_var_exhaustive_parallel_values(
     monkeypatch.setenv("TOX_PARALLEL", "3")
     monkeypatch.setenv("TOX_PARALLEL_LIVE", "no")
     monkeypatch.setenv("TOX_OVERRIDE", "a=b;c=d")
+    monkeypatch.setenv("TOX_DISCOVER", "/foo/bar;/bar/baz;/baz/foo")
 
     options = get_options()
     assert vars(options.parsed) == {
@@ -93,7 +94,7 @@ def test_env_var_exhaustive_parallel_values(
         "default_runner": "virtualenv",
         "develop": False,
         "devenv_path": None,
-        "discover": [],
+        "discover": ["/foo/bar", "/bar/baz", "/baz/foo"],
         "env": CliEnv(["py37", "py36"]),
         "force_dep": [],
         "hash_seed": ANY,

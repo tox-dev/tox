@@ -4,6 +4,26 @@ Release History
 
 .. towncrier release notes start
 
+v4.15.0 (2024-04-26)
+--------------------
+
+Features - 4.15.0
+~~~~~~~~~~~~~~~~~
+- Add support for multiple appending override options (-x, --override) on command line - by :user:`amitschang`. (:issue:`3261`)
+- Add support for inverting exit code success criteria using bang (!) (:issue:`3271`)
+
+Bugfixes - 4.15.0
+~~~~~~~~~~~~~~~~~
+- Fix issue that the leading character ``c`` was dropped from packages in constraints files - by :user:`jugmac00`. (:issue:`3247`)
+- Allow appending to ``deps`` with ``--override testenv.deps+=foo`` - by :user:`stefanor`. (:issue:`3256`)
+- Fix non-existing branch ``rewrite`` in the documentation to ``main``. (:issue:`3257`)
+- Update test typing for build 1.2.0, which has an explicit ``Distribution`` type - by :user:`stefanor`. (:issue:`3260`)
+- Fix broken input parsing for ``--discover`` flag. - by :user:`mimre25` (:issue:`3272`)
+
+Improved Documentation - 4.15.0
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+- Rephrase ``--discover`` flag's description to avoid confusion between paths and executables. - by :user:`mimre25` (:issue:`3274`)
+
 v4.14.2 (2024-03-22)
 --------------------
 

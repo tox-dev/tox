@@ -1,1 +1,0 @@
-Update test typing for build 1.2.0, which has an explicit ``Distribution`` type - by :user:`stefanor`.

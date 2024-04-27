@@ -1,1 +1,0 @@
-Fix issue that the leading character ``c`` was dropped from packages in constraints files - by :user:`jugmac00`.

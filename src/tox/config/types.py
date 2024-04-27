@@ -16,15 +16,20 @@ class Command:  # noqa: PLW1641
         :param args: the command line arguments (first value can be ``-`` to indicate ignore the exit code)
         """
         self.ignore_exit_code: bool = args[0] == "-"  #: a flag indicating if the exit code should be ignored
-        self.args: list[str] = args[1:] if self.ignore_exit_code else args  #: the command line arguments
+        self.invert_exit_code: bool = args[0] == "!"  #: a flag for flipped exit code (non-zero = success, 0 = error)
+        self.args: list[str] = (
+            args[1:] if self.ignore_exit_code or self.invert_exit_code else args
+        )  #: the command line arguments
 
     def __repr__(self) -> str:
-        return f"{type(self).__name__}(args={(['-'] if self.ignore_exit_code else []) + self.args!r})"
+        args = (["-"] if self.ignore_exit_code else ["!"] if self.invert_exit_code else []) + self.args
+        return f"{type(self).__name__}(args={args!r})"
 
     def __eq__(self, other: object) -> bool:
-        return type(self) == type(other) and (self.args, self.ignore_exit_code) == (
+        return type(self) == type(other) and (self.args, self.ignore_exit_code, self.invert_exit_code) == (
             other.args,  # type: ignore[attr-defined]
             other.ignore_exit_code,  # type: ignore[attr-defined]
+            other.invert_exit_code,  # type: ignore[attr-defined]
         )
 
     def __ne__(self, other: object) -> bool:
