@@ -73,7 +73,7 @@ class IniLoader(StrConvert, Loader[str]):
             else:
                 try:
                     replaced = replace(conf, self, raw_, args_)  # do replacements
-                except Exception as exception:  # noqa: BLE001
+                except Exception as exception:
                     if isinstance(exception, HandledError):
                         raise
                     name = self.core_section.key if args_.env_name is None else args_.env_name

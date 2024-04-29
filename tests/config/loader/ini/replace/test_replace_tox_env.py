@@ -60,7 +60,7 @@ def test_replace_within_section_chain_deep(caplog: LogCaptureFixture, tox_ini_co
                 "a0 = 1",
                 *(f"a{ix} = {{[vars]a{ix - 1}}}" for ix in range(1, depth + 1)),
                 "[testenv:a]",
-                "b = {[vars]a%s}" % depth,
+                f"b = {{[vars]a{depth}}}",
             ],
         ),
     )
