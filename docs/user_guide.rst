@@ -171,7 +171,7 @@ invocation, for example if we'd want to run ``pytest tests -v`` as a one off, in
 ``tox run -e py310 -- -v``. The ``--`` delimits flags for the tox tool and what should be forwarded to the tool within.
 
 tox, by default, always creates a fresh virtual environment for every run environment. The Python version to use for a
-given environment can be controlled via the :ref:`base_python` configuration, however if not set will try to use the
+given environment can be controlled via the :ref:`base_python` configuration, however if not set tox will try to use the
 environment name to determine something sensible: if the name is in the format of ``pyxy`` then tox will create an environment with CPython
 with version ``x.y`` (for example ``py310`` means CPython ``3.10``). If the name does not match this pattern it will
 use a virtual environment with the same Python version as the one tox is installed into (this is the case for
