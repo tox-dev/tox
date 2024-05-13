@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import locale
 import logging
 import sys
 from importlib.metadata import PackageNotFoundError, distribution
@@ -116,7 +117,7 @@ def provision(state: State) -> int | bool:
                 "minversion": min_version[1] if len(min_version) >= 2 else None,  # noqa: PLR2004
                 "requires": [str(i) for i in requires],
             }
-            Path(no_provision).write_text(json.dumps(requires_dict, indent=4))
+            Path(no_provision).write_text(json.dumps(requires_dict, indent=4), encoding=locale.getpreferredencoding(False))
         raise HandledError(msg)
 
     logging.warning("will run in automatically provisioned tox, host %s %s", sys.executable, miss_msg)
