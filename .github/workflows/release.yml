@@ -8,7 +8,7 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: release
-      url: https://pypi.org/p/tox
+      url: https://pypi.org/project/tox/${{ github.ref_name }}
     permissions:
       id-token: write
     steps:
