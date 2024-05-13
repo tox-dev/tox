@@ -229,7 +229,7 @@ class ToxSpinner(Spinner):
         done(result.name)
 
 
-def _queue_and_wait(  # noqa: C901, PLR0913, PLR0915
+def _queue_and_wait(  # noqa: C901, PLR0913, PLR0915, PLR0912
     state: State,
     to_run_list: list[str],
     results: list[ToxEnvRunResult],

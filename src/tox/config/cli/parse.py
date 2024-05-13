@@ -47,7 +47,9 @@ def _get_base(args: Sequence[str]) -> tuple[int, ToxHandler, Source]:
     tox_parser = ToxParser.base()
     parsed = Parsed()
     try:
-        with Path(os.devnull).open("w", encoding=locale.getpreferredencoding(False)) as file_handler, redirect_stderr(file_handler):
+        with Path(os.devnull).open(
+            "w", encoding=locale.getpreferredencoding(do_setlocale=False)
+        ) as file_handler, redirect_stderr(file_handler):
             tox_parser.parse_known_args(args, namespace=parsed)
     except SystemExit:
         ...  # ignore parse errors, such as -va raises ignored explicit argument 'a'
