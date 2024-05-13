@@ -22,6 +22,6 @@ jobs:
         with:
           fetch-depth: 0
       - name: Build package
-        run: pyproject-build -s -w . -o dist
+        run: pyproject-build
       - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@v1.8.14
