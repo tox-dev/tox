@@ -3,14 +3,12 @@ on:
   push:
     tags: ["*"]
 
+env:
+  dists-artifact-name: python-package-distributions
+
 jobs:
-  release:
+  build:
     runs-on: ubuntu-latest
-    environment:
-      name: release
-      url: https://pypi.org/project/tox/${{ github.ref_name }}
-    permissions:
-      id-token: write
     steps:
       - name: Setup python to build package
         uses: actions/setup-python@v5
@@ -23,5 +21,26 @@ jobs:
           fetch-depth: 0
       - name: Build package
         run: pyproject-build
+      - name: Store the distribution packages
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.dists-artifact-name }}
+          path: dist/*
+
+  release:
+    needs:
+    - build
+    runs-on: ubuntu-latest
+    environment:
+      name: release
+      url: https://pypi.org/project/tox/${{ github.ref_name }}
+    permissions:
+      id-token: write
+    steps:
+      - name: Download all the dists
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ env.dists-artifact-name }}
+          path: dist/
       - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@v1.8.14
