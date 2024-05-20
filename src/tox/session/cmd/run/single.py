@@ -52,7 +52,7 @@ def _evaluate(tox_env: RunToxEnv, no_test: bool) -> tuple[bool, int, list[Outcom
             skipped = True
         except ToxBackendFailed as exception:
             LOGGER.error("%s", exception)  # noqa: TRY400
-            raise SystemExit(exception.code)  # noqa: B904, TRY200
+            raise SystemExit(exception.code)  # noqa: B904
         except Fail as exception:
             LOGGER.error("failed with %s", exception)  # noqa: TRY400
             code = 1

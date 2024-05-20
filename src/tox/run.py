@@ -18,7 +18,7 @@ def run(args: Sequence[str] | None = None) -> None:
     try:
         with ToxHandler.patch_thread():
             result = main(sys.argv[1:] if args is None else args)
-    except Exception as exception:  # noqa: BLE001
+    except Exception as exception:
         if isinstance(exception, HandledError):
             logging.error("%s| %s", type(exception).__name__, str(exception))  # noqa: TRY400
             result = -2
