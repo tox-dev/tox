@@ -1,0 +1,1 @@
+Allow ``ConfigSet.add_config`` to receive parameterized generics for ``of_type``.
