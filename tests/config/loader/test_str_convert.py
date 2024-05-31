@@ -59,6 +59,7 @@ def test_str_convert_ok(raw: str, value: Any, of_type: type[Any]) -> None:
 
 # Tests that can work only with py39 or newer due to type not being subscriptible before
 if sys.version_info >= (3, 9):
+
     @pytest.mark.parametrize(
         ("raw", "value", "of_type"),
         [
@@ -69,6 +70,7 @@ if sys.version_info >= (3, 9):
     def test_str_convert_ok_py39(raw: str, value: Any, of_type: type[Any]) -> None:
         result = StrConvert().to(raw, of_type, None)
         assert result == value
+
 
 @pytest.mark.parametrize(
     ("raw", "of_type", "exc_type", "msg"),
