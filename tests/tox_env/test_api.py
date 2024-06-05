@@ -21,3 +21,14 @@ def test_dont_cleanup_temp_dir(tox_project: ToxProjectCreator, tmp_path: Path) -
     result = project.run()
     result.assert_success()
     assert (tmp_path / "foo" / "bar").exists()
+
+
+def test_setenv_section_substitution(tox_project: ToxProjectCreator) -> None:
+    ini = """[variables]
+    var = VAR = val
+    [testenv]
+    setenv = {[variables]var}
+    commands = python -c 'import os; os.environ["VAR"]'"""
+    project = tox_project({"tox.ini": ini})
+    result = project.run()
+    result.assert_success()
