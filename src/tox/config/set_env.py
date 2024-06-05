@@ -93,6 +93,7 @@ class SetEnv:
             expanded_line = self._replacer(line, ConfigLoadArgs([], self._name, self._env_name))
             sub_raw = dict(self._extract_key_value(sub_line) for sub_line in expanded_line.splitlines() if sub_line)
             self._raw.update(sub_raw)
+            self.changed = True  # loading while iterating can cause these values to be missed
             yield from sub_raw.keys()
 
     def update(self, param: Mapping[str, str] | SetEnv, *, override: bool = True) -> None:
