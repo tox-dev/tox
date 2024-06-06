@@ -4,6 +4,18 @@ Release History
 
 .. towncrier release notes start
 
+v4.15.1 (2024-06-05)
+--------------------
+
+Features - 4.15.1
+~~~~~~~~~~~~~~~~~
+- Fix ``skip_missing_interpreters`` option for ``package = wheel`` (:issue:`3269`)
+
+Bugfixes - 4.15.1
+~~~~~~~~~~~~~~~~~
+- Fix section substitution with setenv. (:issue:`3262`)
+- Allow ``ConfigSet.add_config`` to receive parameterized generics for ``of_type``. (:issue:`3288`)
+
 v4.15.0 (2024-04-26)
 --------------------
 
