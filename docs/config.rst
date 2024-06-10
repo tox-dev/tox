@@ -289,6 +289,75 @@ Base options
    tox invocation environment it is ignored. The list of environment variable names is not case sensitive, for example:
    passing ``A`` or ``a`` will pass through both ``A`` and ``a``.
 
+   Some variables are always passed through to ensure the basic functionality of standard library functions or tooling like 
+   pip. This is also not case sensitive on all platforms except Windows.
+
+    .. list-table:: Environment Variables per Operating System
+        :widths: 25 25 25 25
+        :header-rows: 1
+
+        *   - Environment Variable
+            - Linux
+            - MacOS
+            - Windows
+        *   - https_proxy
+            - ✅
+            - ✅
+            - ❌
+        *   - http_proxy
+            - ✅
+            - ✅
+            - ❌
+        *   - no_proxy
+            - ✅
+            - ✅
+            - ❌
+        *   - LANG
+            - ✅
+            - ✅
+            - ❌
+        *   - LANGUAGE
+            - ✅
+            - ✅
+            - ❌
+        *   - CURL_CA_BUNDLE
+            - ✅
+            - ✅
+            - ❌
+        *   - SSL_CERT_FILE
+            - ✅
+            - ✅
+            - ❌
+        *   - LD_LIBRARY_PATH
+            - ✅
+            - ✅
+            - ❌
+        *   - TMPDIR
+            - ✅
+            - ✅
+            - ❌
+        *   - TEMP
+            - ❌
+            - ❌
+            - ✅
+        *   - TMP
+            - ❌
+            - ❌
+            - ✅
+        *   - USERPROFILE
+            - ❌
+            - ❌
+            - ✅
+        *   - PATHEXT
+            - ❌
+            - ❌
+            - ✅
+        *   - MSYSTEM
+            - ❌
+            - ❌
+            - ✅
+
+
    More environment variable-related information
    can be found in :ref:`environment variable substitutions`.
 
