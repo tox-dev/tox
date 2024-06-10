@@ -289,7 +289,7 @@ Base options
    tox invocation environment it is ignored. The list of environment variable names is not case sensitive, for example:
    passing ``A`` or ``a`` will pass through both ``A`` and ``a``.
 
-   Some variables are always passed through to ensure the basic functionality of standard library functions or tooling like 
+   Some variables are always passed through to ensure the basic functionality of standard library functions or tooling like
    pip. This is also not case sensitive on all platforms except Windows.
 
     .. list-table:: Environment Variables per Operating System
