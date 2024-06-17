@@ -322,7 +322,6 @@ def _pty(key: str) -> tuple[int, int] | None:
 
 
 __all__ = (
-    "CREATION_FLAGS",
     "SIG_INTERRUPT",
     "LocalSubProcessExecuteInstance",
     "LocalSubProcessExecutor",

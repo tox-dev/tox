@@ -97,7 +97,7 @@ class StrConvert(Convert[str]):
                     # on Windows quoted arguments will remain quoted, strip it
                     arg = arg[1:-1]  # noqa: PLW2901
                 args.append(arg)
-                pos = splitter.instream.tell()
+                pos = splitter.instream.tell()  # type: ignore[attr-defined]
         except ValueError:
             args.append(value[pos:])
         if len(args) == 0:

@@ -161,7 +161,7 @@ class WheelDistribution(Distribution):  # cannot subclass has type Any
             except KeyError:
                 return None
 
-    def locate_file(self, path: str | PathLike[str]) -> PathLike[str]:
+    def locate_file(self, path: str | PathLike[str]) -> Path:
         return self._wheel / path  # pragma: no cover # not used by us, but part of the ABC
 
 
