@@ -1,0 +1,1 @@
+- Fix typo in configuration example and fix broken link to code style guide. - by :user:`srenfo`
