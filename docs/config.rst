@@ -1061,7 +1061,7 @@ Or reset override and append to that (note the first override is ``=`` and not `
 Set CLI flags via environment variables
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 All CLI flags can be set via environment variables too, the naming convention here is ``TOX_<option>``. E.g.
-``TOX_WORKDIR`` sets the ``--workdir`` flag, or ``TOX_OVERRIDE`` sets the ``--override`` flag. For flags accepting more
+``TOX_WORK_DIR`` sets the ``--workdir`` flag, or ``TOX_OVERRIDE`` sets the ``--override`` flag. For flags accepting more
 than one argument, use the ``;`` character to separate these values:
 
 .. code-block:: bash
