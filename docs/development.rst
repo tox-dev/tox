@@ -8,7 +8,7 @@ If you're already experienced with submitting GitHub PRs to open-source Python p
 points you need to know about this project. (If you're not, you should carefully read all the documentation after this
 section. This section contains only highlights; it's not a substitute for reading this entire file.)
 
-- Check the `style guide <#style-guide>`_ below. Note that ``tox -e fix`` will not catch the following:
+- Check the `style guide <#code-style-guide>`_ below. Note that ``tox -e fix`` will not catch the following:
 
   - Lines wrapped at less than 120 characters. Lines should be wrapped at 120 characters, not the PEP-8 standard of 79.
   - Variable names should be at least two characters long.
