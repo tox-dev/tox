@@ -233,7 +233,7 @@ def _replace_ref(env: str | None) -> Pattern[str]:
     )
 
 
-def replace_reference(  # noqa: PLR0912, C901
+def replace_reference(  # noqa: C901
     conf: Config,
     loader: IniLoader,
     value: str,
