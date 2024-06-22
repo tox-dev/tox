@@ -67,7 +67,6 @@ def test_tox_install_pkg_sdist(tox_project: ToxProjectCreator, pkg_with_extras_p
         (".pkg_external_sdist_meta", "_optional_hooks", []),
         (".pkg_external_sdist_meta", "get_requires_for_build_sdist", []),
         (".pkg_external_sdist_meta", "get_requires_for_build_wheel", []),  # required before prepare_metadata*
-        (".pkg_external_sdist_meta", "install_requires_for_build_wheel", ["wheel"]),
         (".pkg_external_sdist_meta", "prepare_metadata_for_build_wheel", []),
         ("py", "install_package_deps", deps),
         ("py", "install_package", ["--force-reinstall", "--no-deps", str(pkg_with_extras_project_sdist)]),

@@ -98,7 +98,6 @@ def test_result_json_sequential(
         (0, "install_requires"),
         (None, "_optional_hooks"),
         (None, "get_requires_for_build_wheel"),
-        (0, "install_requires_for_build_wheel"),
         (0, "freeze"),
     ]
     packaging_test = get_cmd_exit_run_id(log_report, ".pkg", "test")
@@ -299,7 +298,6 @@ def test_skip_develop_mode(tox_project: ToxProjectCreator, demo_pkg_setuptools: 
         (".pkg", "install_requires"),
         (".pkg", "_optional_hooks"),
         (".pkg", "get_requires_for_build_editable"),
-        (".pkg", "install_requires_for_build_editable"),
         (".pkg", "build_editable"),
         ("py", "install_package"),
     ]

@@ -32,7 +32,7 @@ DEFAULT_INDEX_URL = "https://pypi.org/simple"
 
 
 class ParsedRequirement:
-    def __init__(self, req: str, options: dict[str, Any], from_file: str, lineno: int) -> None:  # noqa: PLR0912
+    def __init__(self, req: str, options: dict[str, Any], from_file: str, lineno: int) -> None:
         req = req.encode("utf-8").decode("utf-8")
         try:
             self._requirement: Requirement | Path | str = Requirement(req)
