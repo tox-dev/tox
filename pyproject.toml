@@ -54,13 +54,11 @@ dependencies = [
   "chardet>=5.2",
   "colorama>=0.4.6",
   "filelock>=3.15.4",
-  "importlib-metadata>=7.2; python_version<'3.8'",
   "packaging>=24.1",
   "platformdirs>=4.2.2",
   "pluggy>=1.5",
   "pyproject-api>=1.7.1",
   "tomli>=2.0.1; python_version<'3.11'",
-  "typing-extensions>=4.12.2; python_version<'3.8'",
   "virtualenv>=20.26.3",
 ]
 optional-dependencies.docs = [
@@ -78,7 +76,7 @@ optional-dependencies.testing = [
   "covdefaults>=2.3",
   "detect-test-pollution>=1.2",
   "devpi-process>=1",
-  "diff-cover>=9",
+  "diff-cover>=9.1",
   "distlib>=0.3.8",
   "flaky>=3.8.1",
   "hatch-vcs>=0.4",
@@ -89,8 +87,8 @@ optional-dependencies.testing = [
   "pytest-mock>=3.14",
   "pytest-xdist>=3.6.1",
   "re-assert>=1.1",
-  "setuptools>=70.1",
-  "time-machine>=2.14.1; implementation_name!='pypy'",
+  "setuptools>=70.2",
+  "time-machine>=2.14.2; implementation_name!='pypy'",
   "wheel>=0.43",
 ]
 urls.Documentation = "https://tox.wiki"
@@ -136,6 +134,7 @@ lint.ignore = [
   "PLR0917", ## Too many positional arguments
   "S104",    # Possible binding to all interfaces
   "S404",    # Using subprocess is alright.
+  "S603",    # Using subprocess is alright.
 ]
 lint.per-file-ignores."tests/**/*.py" = [
   "D",       # don't care about documentation in tests
