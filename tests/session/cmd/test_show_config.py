@@ -137,7 +137,9 @@ def test_pass_env_config_default(tox_project: ToxProjectCreator, stdout_is_atty:
         + (["SYSTEMDRIVE", "SYSTEMROOT", "TEMP"] if is_win else [])
         + (["TERM"] if stdout_is_atty else [])
         + (["TMP", "USERPROFILE"] if is_win else ["TMPDIR"])
-        + ["VIRTUALENV_*", "http_proxy", "https_proxy", "no_proxy"]
+        + ["VIRTUALENV_*"]
+        + (["WINDIR"] if is_win else [])
+        + ["http_proxy", "https_proxy", "no_proxy"]
     )
     assert pass_env == expected
 
