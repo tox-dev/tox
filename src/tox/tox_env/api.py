@@ -231,6 +231,7 @@ class ToxEnv(ABC):
                     "USERPROFILE",  # needed for `os.path.expanduser()`
                     "PATHEXT",  # needed for discovering executables
                     "MSYSTEM",  # controls paths printed format
+                    "WINDIR",  # base path to system executables and DLLs
                 ],
             )
         else:  # pragma: win32 no cover
