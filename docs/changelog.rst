@@ -4,6 +4,17 @@ Release History
 
 .. towncrier release notes start
 
+v4.16.0 (2024-07-02)
+--------------------
+
+Bugfixes - 4.16.0
+~~~~~~~~~~~~~~~~~
+- - Add ``windir`` to the default list of Windows ``pass_env`` environment variables. - by :user:`kurtmckee` (:issue:`3302`)
+
+Improved Documentation - 4.16.0
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+- - Fix typo in configuration example and fix broken link to code style guide. - by :user:`srenfo` (:issue:`3297`)
+
 v4.15.1 (2024-06-05)
 --------------------
 
