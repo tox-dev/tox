@@ -303,35 +303,71 @@ Base options
         *   - https_proxy
             - ✅
             - ✅
-            - ❌
+            - ✅
         *   - http_proxy
             - ✅
             - ✅
-            - ❌
+            - ✅
         *   - no_proxy
             - ✅
             - ✅
-            - ❌
+            - ✅
         *   - LANG
             - ✅
             - ✅
-            - ❌
+            - ✅
         *   - LANGUAGE
             - ✅
             - ✅
-            - ❌
+            - ✅
         *   - CURL_CA_BUNDLE
             - ✅
             - ✅
-            - ❌
+            - ✅
         *   - SSL_CERT_FILE
             - ✅
             - ✅
-            - ❌
+            - ✅
+        *   - CC
+            - ✅
+            - ✅
+            - ✅
+        *   - CFLAGS
+            - ✅
+            - ✅
+            - ✅
+        *   - CCSHARED
+            - ✅
+            - ✅
+            - ✅
+        *   - CXX
+            - ✅
+            - ✅
+            - ✅
+        *   - CPPFLAGS
+            - ✅
+            - ✅
+            - ✅
         *   - LD_LIBRARY_PATH
             - ✅
             - ✅
-            - ❌
+            - ✅
+        *   - LDFLAGS
+            - ✅
+            - ✅
+            - ✅
+        *   - HOME
+            - ✅
+            - ✅
+            - ✅
+        *   - FORCE_COLOR
+            - ✅
+            - ✅
+            - ✅
+        *   - NO_COLOR
+            - ✅
+            - ✅
+            - ✅
         *   - TMPDIR
             - ✅
             - ✅
@@ -355,6 +391,46 @@ Base options
         *   - MSYSTEM
             - ❌
             - ❌
+            - ✅
+        *   - APPDATA
+            - ❌
+            - ❌
+            - ✅
+        *   - PROGRAMDATA
+            - ❌
+            - ❌
+            - ✅
+        *   - PROGRAMFILES(x86)
+            - ❌
+            - ❌
+            - ✅
+        *   - SYSTEMDRIVE
+            - ❌
+            - ❌
+            - ✅
+        *   - SYSTEMROOT
+            - ❌
+            - ❌
+            - ✅
+        *   - COMSPEC
+            - ❌
+            - ❌
+            - ✅
+        *   - PROCESSOR_ARCHITECTURE
+            - ❌
+            - ❌
+            - ✅
+        *   - NUMBER_OF_PROCESSORS
+            - ❌
+            - ❌
+            - ✅
+        *   - PIP_*
+            - ✅
+            - ✅
+            - ✅
+        *   - VIRTUALENV_*
+            - ✅
+            - ✅
             - ✅
 
 
