@@ -206,7 +206,7 @@ class LocalSubProcessExecuteInstance(ExecuteInstance):
         stdout, stderr = self.get_stream_file_no("stdout"), self.get_stream_file_no("stderr")
         try:
             self.process = process = Popen(
-                self.cmd,  # noqa: S603
+                self.cmd,
                 stdout=next(stdout),
                 stderr=next(stderr),
                 stdin={StdinSource.USER: None, StdinSource.OFF: DEVNULL, StdinSource.API: PIPE}[self.request.stdin],

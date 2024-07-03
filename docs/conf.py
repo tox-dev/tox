@@ -98,7 +98,7 @@ def setup(app: Sphinx) -> None:
     root, exe = here.parent, Path(sys.executable)
     towncrier = exe.with_name(f"towncrier{exe.suffix}")
     cmd = [str(towncrier), "build", "--draft", "--version", "NEXT"]
-    new = check_output(cmd, cwd=root, text=True, stderr=subprocess.DEVNULL)  # noqa: S603
+    new = check_output(cmd, cwd=root, text=True, stderr=subprocess.DEVNULL)
     (root / "docs" / "_draft.rst").write_text("" if "No significant changes" in new else new)
 
     class PatchedPythonDomain(PythonDomain):
