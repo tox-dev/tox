@@ -1,1 +1,0 @@
-- Add ``windir`` to the default list of Windows ``pass_env`` environment variables. - by :user:`kurtmckee`
