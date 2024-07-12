@@ -392,6 +392,10 @@ Base options
             - ❌
             - ❌
             - ✅
+        *   - WINDIR
+            - ❌
+            - ❌
+            - ✅
         *   - APPDATA
             - ❌
             - ❌
