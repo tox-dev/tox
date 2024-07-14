@@ -48,10 +48,38 @@ class ToxIniCreator(Protocol):
 
 @pytest.fixture
 def tox_ini_conf(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> ToxIniCreator:
+    """Return a factory for INI config files."""
+
     def func(conf: str, override: Sequence[Override] | None = None) -> Config:
         dest = tmp_path / "c"
         dest.mkdir()
         config_file = dest / "tox.ini"
+        config_file.write_bytes(conf.encode("utf-8"))
+        with monkeypatch.context() as context:
+            context.chdir(tmp_path)
+        source = discover_source(config_file, None)
+
+        return Config.make(
+            Parsed(work_dir=dest, override=override or [], config_file=config_file, root_dir=None),
+            pos_args=[],
+            source=source,
+        )
+
+    return func
+
+
+class ToxTomlCreator(Protocol):
+    def __call__(self, conf: str, override: Sequence[Override] | None = None) -> Config: ...
+
+
+@pytest.fixture()
+def tox_toml_conf(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> ToxTomlCreator:
+    """Return a factory for TOML config files."""
+
+    def func(conf: str, override: Sequence[Override] | None = None) -> Config:
+        dest = tmp_path / "c"
+        dest.mkdir()
+        config_file = dest / "tox.toml"
         config_file.write_bytes(conf.encode("utf-8"))
         with monkeypatch.context() as context:
             context.chdir(tmp_path)
