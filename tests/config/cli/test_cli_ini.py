@@ -145,10 +145,16 @@ def test_cli_ini_with_interpolated(tmp_path: Path, monkeypatch: MonkeyPatch) -> 
     [
         pytest.param("", "tox.ini", "[tox]", id="ini-dir"),
         pytest.param("tox.ini", "tox.ini", "[tox]", id="ini"),
+        pytest.param("", "tox.toml", "[tox]", id="toml-dir"),
+        pytest.param("tox.toml", "tox.toml", "[tox]", id="toml"),
         pytest.param("", "setup.cfg", "[tox:tox]", id="cfg-dir"),
         pytest.param("setup.cfg", "setup.cfg", "[tox:tox]", id="cfg"),
-        pytest.param("", "pyproject.toml", '[tool.tox]\nlegacy_tox_ini = """\n[tox]\n"""\n', id="toml-dir"),
-        pytest.param("pyproject.toml", "pyproject.toml", '[tool.tox]\nlegacy_tox_ini = """\n[tox]\n"""\n', id="toml"),
+        # pytest.param("", "pyproject.toml", '[tool.tox]', id="toml-dir"),
+        # pytest.param("pyproject.toml", "pyproject.toml", '[tool.tox]', id="toml"),
+        pytest.param("", "pyproject.toml", '[tool.tox]\nlegacy_tox_ini = """\n[tox]\n"""\n', id="toml-legacy-dir"),
+        pytest.param(
+            "pyproject.toml", "pyproject.toml", '[tool.tox]\nlegacy_tox_ini = """\n[tox]\n"""\n', id="toml-legacy"
+        ),
     ],
 )
 def test_conf_arg(tmp_path: Path, conf_arg: str, filename: str, content: str) -> None:
