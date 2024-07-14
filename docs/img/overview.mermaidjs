@@ -1,5 +1,5 @@
 stateDiagram-v2
-%%{init:{'state':{'nodeSpacing': 0, 'rankSpacing': 20}}}%%
+%%{init:{'state':{'nodeSpacing': 250, 'rankSpacing': 30}}}%%
 
 [*] --> conf
 conf --> tox_env
@@ -31,7 +31,7 @@ report --> report :for each tox environment
 report --> [*]
 
 conf: build configuration (CLI + files) <br> identify environments to run
-create: create an isolated tox environment <br> the other steps executed within this
+create: create an isolated tox environment <br> the other steps are executed within this
 deps: install project dependencies (if has deps)
 package: build package
 install: install package without dependencies
