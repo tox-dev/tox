@@ -34,11 +34,11 @@ def exec_(state: State) -> int:
         msg = f"exactly one target environment allowed in exec mode but found {', '.join(envs)}"
         raise HandledError(msg)
     loader = MemoryLoader(  # these configuration values are loaded from in-memory always (no file conf)
-        dict(
-            commands_pre=[],
-            commands=[],
-            commands_post=[],
-        )
+        {
+            "commands_pre": [],
+            "commands": [],
+            "commands_post": [],
+        }
     )
     conf = state.envs[envs[0]].conf
     conf.loaders.insert(0, loader)

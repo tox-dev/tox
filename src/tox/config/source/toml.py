@@ -12,8 +12,8 @@ from typing import TYPE_CHECKING, Iterable, Iterator
 import tomllib
 
 from tox.config.loader.ini.factor import find_envs
-from tox.config.loader.section import Section
 from tox.config.loader.memory import MemoryLoader
+from tox.config.loader.section import Section
 
 from .api import Source
 from .ini_section import CORE, PKG_ENV_PREFIX, TEST_ENV_PREFIX, IniSection

@@ -35,10 +35,10 @@ def devenv(state: State) -> int:
     opt.skip_pkg_install = False  # always install a package in this case
     opt.no_test = True  # do not run the test phase
     loader = MemoryLoader(  # these configuration values are loaded from in-memory always (no file conf)
-        dict(
-            usedevelop=True,  # dev environments must be of type dev
-            env_dir=opt.devenv_path,  # move it in source
-        )
+        {
+            "usedevelop": True,  # dev environments must be of type dev
+            "env_dir": opt.devenv_path,  # move it in source
+        }
     )
     state.conf.memory_seed_loaders[next(iter(opt.env))].append(loader)
 

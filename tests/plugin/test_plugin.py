@@ -186,7 +186,7 @@ def test_plugin_can_read_sections(tox_project: ToxProjectCreator, mocker: Mocker
 def test_plugin_injects_invalid_python_run(tox_project: ToxProjectCreator, mocker: MockerFixture) -> None:
     @impl
     def tox_add_env_config(env_conf: EnvConfigSet, state: State) -> None:  # noqa: ARG001
-        env_conf.loaders.insert(0, MemoryLoader({'deps': [1]}))
+        env_conf.loaders.insert(0, MemoryLoader({"deps": [1]}))
         with pytest.raises(TypeError, match="1"):
             assert env_conf["deps"]
 
