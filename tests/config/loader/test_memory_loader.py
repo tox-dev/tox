@@ -8,16 +8,18 @@ import pytest
 
 from tox.config.loader.api import ConfigLoadArgs, Override
 from tox.config.loader.memory import MemoryLoader
+from tox.config.loader.section import Section
 from tox.config.types import Command, EnvList
 
 
 def test_memory_loader_repr() -> None:
-    loader = MemoryLoader(a=1)
-    assert repr(loader) == "MemoryLoader"
+    core = Section(None, "tox")
+    loader = MemoryLoader({'a': 1}, section=core)
+    assert repr(loader) == "MemoryLoader(section=tox, overrides={})"
 
 
 def test_memory_loader_override() -> None:
-    loader = MemoryLoader(a=1)
+    loader = MemoryLoader({'a': 1})
     loader.overrides["a"] = [Override("a=2")]
     args = ConfigLoadArgs([], "name", None)
     loaded = loader.load("a", of_type=int, conf=None, factory=None, args=args)
@@ -48,11 +50,12 @@ def test_memory_loader_override() -> None:
         (os.getcwd(), Path, Path.cwd()),  # noqa: PTH109
         ("pip list", Command, Command(["pip", "list"])),
         ("a\nb", EnvList, EnvList(["a", "b"])),
+        (["a", "b"], EnvList, EnvList(["a", "b"])),
         ("1", Optional[int], 1),
     ],
 )
 def test_memory_loader(value: Any, of_type: type[Any], outcome: Any) -> None:
-    loader = MemoryLoader(a=value, kwargs={})
+    loader = MemoryLoader({'a': value, 'kwargs': {}})
     args = ConfigLoadArgs([], "name", None)
     loaded = loader.load("a", of_type=of_type, conf=None, factory=None, args=args)
     assert loaded == outcome
@@ -72,18 +75,18 @@ def test_memory_loader(value: Any, of_type: type[Any], outcome: Any) -> None:
     ],
 )
 def test_memory_loader_fails_invalid(value: Any, of_type: type[Any], exception: Exception, msg: str) -> None:
-    loader = MemoryLoader(a=value, kwargs={})
+    loader = MemoryLoader({'a': value, 'kwargs': {}})
     args = ConfigLoadArgs([], "name", None)
     with pytest.raises(exception, match=msg):  # type: ignore[call-overload]
         loader.load("a", of_type=of_type, conf=None, factory=None, args=args)
 
 
 def test_memory_found_keys() -> None:
-    loader = MemoryLoader(a=1, c=2)
+    loader = MemoryLoader({'a': 1, 'c': 2})
     assert loader.found_keys() == {"a", "c"}
 
 
 def test_memory_loader_contains() -> None:
-    loader = MemoryLoader(a=1)
+    loader = MemoryLoader({'a': 1})
     assert "a" in loader
     assert "b" not in loader
