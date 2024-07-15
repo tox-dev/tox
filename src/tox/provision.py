@@ -91,14 +91,14 @@ def provision(state: State) -> int | bool:
 
     deps = ", ".join(f"{p}{'' if v is None else f' ({v})'}" for p, v in missing)
     loader = MemoryLoader(  # these configuration values are loaded from in-memory always (no file conf)
-        dict(
-            base=[],  # disable inheritance for provision environments
-            package="skip",  # no packaging for this please
+        {
+            "base": [],  # disable inheritance for provision environments
+            "package": "skip",  # no packaging for this please
             # use our own dependency specification
-            deps=PythonDeps("\n".join(str(r) for r in requires), root=state.conf.core["tox_root"]),
-            pass_env=["*"],  # do not filter environment variables, will be handled by provisioned tox
-            recreate=state.conf.options.recreate and not state.conf.options.no_recreate_provision,
-        )
+            "deps": PythonDeps("\n".join(str(r) for r in requires), root=state.conf.core["tox_root"]),
+            "pass_env": ["*"],  # do not filter environment variables, will be handled by provisioned tox
+            "recreate": state.conf.options.recreate and not state.conf.options.no_recreate_provision,
+        }
     )
     provision_tox_env: str = state.conf.core["provision_tox_env"]
     state.conf.memory_seed_loaders[provision_tox_env].append(loader)

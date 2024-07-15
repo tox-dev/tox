@@ -14,8 +14,13 @@ if TYPE_CHECKING:
 
 
 class MemoryLoader(Loader[Any]):
-    def __init__(self, raw: dict[str, Any], *, section: Section | None = None, overrides: list[Override] | None = None,
-                 ) -> None:
+    def __init__(
+        self,
+        raw: dict[str, Any],
+        *,
+        section: Section | None = None,
+        overrides: list[Override] | None = None,
+    ) -> None:
         section = section or Section(prefix="<memory>", name=str(id(self)))
         super().__init__(section, overrides or [])
         self.raw = raw
