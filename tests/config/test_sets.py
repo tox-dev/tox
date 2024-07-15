@@ -181,7 +181,7 @@ def test_do_not_allow_create_config_set(mocker: MockerFixture) -> None:
 
 def test_set_env_raises_on_non_str(mocker: MockerFixture) -> None:
     env_set = EnvConfigSet(mocker.create_autospec(Config), Section("a", "b"), "b")
-    env_set.loaders.insert(0, MemoryLoader(set_env=1))
+    env_set.loaders.insert(0, MemoryLoader({'set_env': 1}))
     with pytest.raises(TypeError, match="1"):
         assert env_set["set_env"]
 

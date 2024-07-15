@@ -13,7 +13,7 @@ import tomllib
 
 from tox.config.loader.ini.factor import find_envs
 from tox.config.loader.section import Section
-from tox.config.loader.toml import TomlLoader
+from tox.config.loader.memory import MemoryLoader
 
 from .api import Source
 from .ini_section import CORE, PKG_ENV_PREFIX, TEST_ENV_PREFIX, IniSection
@@ -48,7 +48,7 @@ class TomlSource(Source):
     def transform_section(self, section: Section) -> Section:  # noqa: PLR6301
         return IniSection(section.prefix, section.name)
 
-    def get_loader(self, section: Section, override_map: OverrideMap) -> TomlLoader | None:
+    def get_loader(self, section: Section, override_map: OverrideMap) -> MemoryLoader | None:
         # look up requested section name in the generative testenv mapping to find the real config source
         for key in self._section_mapping.get(section.name) or []:
             if section.prefix is None or Section.from_key(key).prefix == section.prefix:
@@ -57,12 +57,10 @@ class TomlSource(Source):
             # if no matching section/prefix is found, use the requested section key as-is (for custom prefixes)
             key = section.key
         if key in self._raw:
-            return TomlLoader(
+            return MemoryLoader(
+                self._raw[key],
                 section=section,
-                raw=self._raw,
                 overrides=override_map.get(section.key, []),
-                core_section=self.CORE_SECTION,
-                section_key=key,
             )
         return None
 

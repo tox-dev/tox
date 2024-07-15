@@ -102,7 +102,7 @@ def test_config_overrides(tox_ini_conf: ToxIniCreator) -> None:
 
 def test_config_override_wins_memory_loader(tox_ini_conf: ToxIniCreator) -> None:
     main_conf = tox_ini_conf("[testenv]", override=[Override("testenv.c=ok")])
-    conf = main_conf.get_env("py", loaders=[MemoryLoader(c="something_else")])
+    conf = main_conf.get_env("py", loaders=[MemoryLoader({'c': "something_else"})])
     conf.add_config("c", of_type=str, default="d", desc="desc")
     assert conf["c"] == "ok"
 
