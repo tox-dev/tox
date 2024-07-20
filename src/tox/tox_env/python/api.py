@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import os
 import re
 import sys
 from abc import ABC, abstractmethod
@@ -164,6 +165,8 @@ class Python(ToxEnv, ABC):
         if env_base_python is not None:
             spec_name = PythonSpec.from_string_spec(env_base_python)
             for base_python in base_pythons:
+                if os.path.isabs(base_python):  # noqa: PTH117
+                    return [base_python]
                 spec_base = PythonSpec.from_string_spec(base_python)
                 if any(
                     getattr(spec_base, key) != getattr(spec_name, key)
