@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from abc import ABC
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -11,7 +12,7 @@ if TYPE_CHECKING:
         from typing_extensions import Self
 
 
-class Section:  # noqa: PLW1641
+class Section(ABC):  # noqa: PLW1641
     """tox configuration section."""
 
     SEP = ":"  #: string used to separate the prefix and the section in the key

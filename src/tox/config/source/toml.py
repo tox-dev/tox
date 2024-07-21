@@ -13,15 +13,15 @@ import tomllib
 
 from tox.config.loader.ini.factor import find_envs
 from tox.config.loader.memory import MemoryLoader
-from tox.config.loader.section import Section
 
 from .api import Source
-from .ini_section import CORE, PKG_ENV_PREFIX, TEST_ENV_PREFIX, IniSection
+from .toml_section import CORE, PKG_ENV_PREFIX, TEST_ENV_PREFIX, TomlSection
 
 if TYPE_CHECKING:
     from pathlib import Path
 
     from tox.config.loader.api import OverrideMap
+    from tox.config.loader.section import Section
     from tox.config.sets import ConfigSet
 
 
@@ -45,13 +45,13 @@ class TomlSource(Source):
     def __repr__(self) -> str:
         return f"{type(self).__name__}(path={self.path})"
 
-    def transform_section(self, section: Section) -> Section:  # noqa: PLR6301
-        return IniSection(section.prefix, section.name)
+    def transform_section(self, section: Section) -> Section:
+        return TomlSection(section.prefix, section.name)
 
     def get_loader(self, section: Section, override_map: OverrideMap) -> MemoryLoader | None:
         # look up requested section name in the generative testenv mapping to find the real config source
         for key in self._section_mapping.get(section.name) or []:
-            if section.prefix is None or Section.from_key(key).prefix == section.prefix:
+            if section.prefix is None or TomlSection.from_key(key).prefix == section.prefix:
                 break
         else:
             # if no matching section/prefix is found, use the requested section key as-is (for custom prefixes)
@@ -66,14 +66,14 @@ class TomlSource(Source):
 
     def get_base_sections(self, base: list[str], in_section: Section) -> Iterator[Section]:  # noqa: PLR6301
         for a_base in base:
-            section = IniSection.from_key(a_base)
+            section = TomlSection.from_key(a_base)
             yield section  # the base specifier is explicit
             if in_section.prefix is not None:  # no prefix specified, so this could imply our own prefix
-                yield IniSection(in_section.prefix, a_base)
+                yield TomlSection(in_section.prefix, a_base)
 
-    def sections(self) -> Iterator[IniSection]:
+    def sections(self) -> Iterator[Section]:
         for key in self._raw:
-            yield IniSection.from_key(key)
+            yield TomlSection.from_key(key)
 
     def envs(self, core_config: ConfigSet) -> Iterator[str]:
         seen = set()
@@ -102,7 +102,7 @@ class TomlSource(Source):
         for section in self.sections():
             yield from self._discover_from_section(section, known_factors)
 
-    def _discover_from_section(self, section: IniSection, known_factors: set[str]) -> Iterator[str]:
+    def _discover_from_section(self, section: Section, known_factors: set[str]) -> Iterator[str]:
         for value in self._raw[section.key].values():
             if isinstance(value, bool):
                 # It's not a value with env definition.
@@ -114,9 +114,9 @@ class TomlSource(Source):
                     yield env
 
     def get_tox_env_section(self, item: str) -> tuple[Section, list[str], list[str]]:  # noqa: PLR6301
-        return IniSection.test_env(item), [TEST_ENV_PREFIX], [PKG_ENV_PREFIX]
+        return TomlSection.test_env(item), [TEST_ENV_PREFIX], [PKG_ENV_PREFIX]
 
-    def get_core_section(self) -> Section:
+    def get_core_section(self) -> TomlSection:
         return self.CORE_SECTION
 
 
