@@ -84,6 +84,8 @@ def test_diff_msg_no_diff() -> None:
         ("py3.12", "py3.12"),
         ("pypy2", "pypy2"),
         ("rustpython3", "rustpython3"),
+        ("graalpy", "graalpy"),
+        ("jython", "jython"),
         ("cpython3.8", "cpython3.8"),
         ("ironpython2.7", "ironpython2.7"),
         ("functional-py310", "py310"),

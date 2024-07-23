@@ -51,7 +51,7 @@ class PythonInfo(NamedTuple):
 PY_FACTORS_RE = re.compile(
     r"""
     ^(?!py$)                                               # don't match 'py' as it doesn't provide any info
-    (?P<impl>py|pypy|cpython|jython|rustpython|ironpython) # the interpreter; most users will simply use 'py'
+    (?P<impl>py|pypy|cpython|jython|graalpy|rustpython|ironpython) # the interpreter; most users will simply use 'py'
     (?P<version>[2-9]\.?[0-9]?[0-9]?)?$                    # the version; one of: MAJORMINOR, MAJOR.MINOR
     """,
     re.VERBOSE,
