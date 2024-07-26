@@ -116,6 +116,7 @@ implementations of Python and provide default values for ``base_python``:
 - ``cpythonNM``: configures ``basepython = cpythonN.M``
 - ``ironpythonNM``: configures ``basepython = ironpythonN.M``
 - ``rustpythonNM``: configures ``basepython = rustpythonN.M``
+- ``graalpyNM``: configures ``basepython = graalpyN.M``
 
 You can also specify these factors with a period between the major and minor versions (e.g. ``pyN.M``), without a minor
 version (e.g. ``pyN``), or without any version information whatsoever (e.g. ``py``)
