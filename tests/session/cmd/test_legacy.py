@@ -65,9 +65,7 @@ def test_legacy_list_env_with_no_tox_file(tox_project: ToxProjectCreator) -> Non
     project = tox_project({})
     outcome = project.run("le", "-l")
     outcome.assert_success()
-    out = (
-        f"ROOT: No tox.ini or tox.toml or pyproject.toml or setup.cfg or pyproject.toml found, assuming empty tox.ini at {project.path}\n"
-    )
+    out = f"ROOT: No tox.ini or tox.toml or pyproject.toml or setup.cfg or pyproject.toml found, assuming empty tox.ini at {project.path}\n"
     assert not outcome.err
     assert outcome.out == out
 
