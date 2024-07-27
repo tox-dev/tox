@@ -77,12 +77,12 @@ def test_toml_config_some_envs(tox_toml_conf: ToxTomlCreator) -> None:
     example = """
     [tox]
     env_list = ['py38', 'py37']
-    [testenv]
+    [tox.env.testenv]
     deps = [
         '1',
         'other: 2',
     ]
-    ['testenv:magic']
+    [tox.env.magic]
     """
     config = tox_toml_conf(example)
     tox_env_keys = list(config)
