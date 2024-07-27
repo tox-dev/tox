@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from abc import ABC
-from typing import TYPE_CHECKING
+from abc import ABC, abstractmethod
+from typing import TYPE_CHECKING, Generic, TypeVar
 
 if TYPE_CHECKING:
     import sys
@@ -12,14 +12,59 @@ if TYPE_CHECKING:
         from typing_extensions import Self
 
 
-class Section(ABC):  # noqa: PLW1641
-    """tox configuration section."""
+X = TypeVar("X")
+
+
+class BaseSection(ABC, Generic[X]):
+    """Base class for tox configuration section."""
 
     SEP = ":"  #: string used to separate the prefix and the section in the key
 
-    def __init__(self, prefix: str | None, name: str) -> None:
+    def __init__(self, prefix: X, name: str) -> None:
         self._prefix = prefix
         self._name = name
+
+    @classmethod
+    @abstractmethod
+    def from_key(cls: type[Self], key: str) -> Self:
+        """
+        Create a section from a section key.
+
+        :param key: the section key
+        :return: the constructed section
+        """
+
+    @property
+    def prefix(self) -> X:
+        """:return: the prefix of the section"""
+        return self._prefix
+
+    @property
+    def name(self) -> str:
+        """:return: the name of the section"""
+        return self._name
+
+    @property
+    @abstractmethod
+    def key(self) -> str:
+        """:return: the section key"""
+
+    def __str__(self) -> str:
+        return self.key
+
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}(prefix={self._prefix!r}, name={self._name!r})"
+
+    def __eq__(self, other: object) -> bool:
+        return isinstance(other, self.__class__) and (self._prefix, self._name) == (
+            other._prefix,
+            other.name,
+        )
+
+
+# TODO: Merge this with IniSection?
+class Section(BaseSection[str | None]):
+    """tox configuration section."""
 
     @classmethod
     def from_key(cls: type[Self], key: str) -> Self:
@@ -37,31 +82,9 @@ class Section(ABC):  # noqa: PLW1641
         return cls(prefix, name)
 
     @property
-    def prefix(self) -> str | None:
-        """:return: the prefix of the section"""
-        return self._prefix
-
-    @property
-    def name(self) -> str:
-        """:return: the name of the section"""
-        return self._name
-
-    @property
     def key(self) -> str:
         """:return: the section key"""
         return self.SEP.join(i for i in (self._prefix, self._name) if i is not None)
-
-    def __str__(self) -> str:
-        return self.key
-
-    def __repr__(self) -> str:
-        return f"{self.__class__.__name__}(prefix={self._prefix!r}, name={self._name!r})"
-
-    def __eq__(self, other: object) -> bool:
-        return isinstance(other, self.__class__) and (self._prefix, self._name) == (
-            other._prefix,
-            other.name,
-        )
 
 
 __all__ = [

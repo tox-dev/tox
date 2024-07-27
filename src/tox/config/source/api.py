@@ -14,6 +14,8 @@ if TYPE_CHECKING:
     from tox.config.sets import ConfigSet, CoreConfigSet
 
 
+# TODO: Generic in Section class?
+# TODO: Use BaseSection instead of Section?
 class Source(ABC):
     """Source is able to return a configuration value (for either the core or per environment source)."""
 

@@ -9,8 +9,9 @@ if TYPE_CHECKING:
 
 
 def out_no_src(path: Path) -> str:
+    # TODO: Deduplicate file names.
     return (
-        f"ROOT: No tox.ini or tox.toml or setup.cfg or pyproject.toml found, assuming empty tox.ini at {path}\n"
+        f"ROOT: No tox.ini or tox.toml or pyproject.toml or setup.cfg or pyproject.toml found, assuming empty tox.ini at {path}\n"
         f"default environments:\npy -> [no description]\n"
     )
 
