@@ -54,7 +54,7 @@ class Spinner:
     UNICODE_OUTCOME = Outcome(ok="✔", fail="✖", skip="⚠")
     ASCII_OUTCOME = Outcome(ok="+", fail="!", skip="?")
 
-    def __init__(  # noqa: PLR0913
+    def __init__(
         self,
         enabled: bool = True,  # noqa: FBT001, FBT002
         refresh_rate: float = 0.1,

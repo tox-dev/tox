@@ -111,7 +111,7 @@ class ParsedRequirement:
 
 
 class ParsedLine:
-    def __init__(  # noqa: PLR0913
+    def __init__(
         self,
         filename: str,
         lineno: int,

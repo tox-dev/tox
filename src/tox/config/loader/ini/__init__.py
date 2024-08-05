@@ -25,7 +25,7 @@ _COMMENTS = re.compile(r"(\s)*(?<!\\)#.*")
 class IniLoader(StrConvert, Loader[str]):
     """Load configuration from an ini section (ini file is a string to string dictionary)."""
 
-    def __init__(  # noqa: PLR0913
+    def __init__(
         self,
         section: Section,
         parser: ConfigParser,

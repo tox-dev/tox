@@ -45,7 +45,7 @@ def pkg_with_sdist(
     return next(dist.iterdir())
 
 
-@pytest.fixture()
+@pytest.fixture
 def pkg_with_extras_project_sdist(
     pkg_with_extras_project: Path,
     pkg_builder: Callable[[Path, Path, list[str], bool], Path],

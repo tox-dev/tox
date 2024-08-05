@@ -16,7 +16,7 @@ if TYPE_CHECKING:
     from tox.pytest import ToxProjectCreator
 
 
-@pytest.mark.integration()
+@pytest.mark.integration
 def test_setuptools_package(
     tox_project: ToxProjectCreator,
     demo_pkg_setuptools: Path,

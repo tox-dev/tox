@@ -194,7 +194,7 @@ class ToxProject:
                 return None  # pragma: no cover
 
         class MockExecuteInstance(ExecuteInstance):
-            def __init__(  # noqa: PLR0913
+            def __init__(
                 self,
                 request: ExecuteRequest,
                 options: ExecuteOptions,
@@ -424,7 +424,7 @@ def init_fixture(
     return _init
 
 
-@pytest.fixture()
+@pytest.fixture
 def empty_project(tox_project: ToxProjectCreator, monkeypatch: pytest.MonkeyPatch) -> ToxProject:
     project = tox_project({"tox.ini": ""})
     monkeypatch.chdir(project.path)

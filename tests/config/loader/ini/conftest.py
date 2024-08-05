@@ -9,7 +9,7 @@ if TYPE_CHECKING:
     from pathlib import Path
 
 
-@pytest.fixture()
+@pytest.fixture
 def mk_ini_conf(tmp_path: Path) -> Callable[[str], ConfigParser]:
     def _func(raw: str) -> ConfigParser:
         filename = tmp_path / "demo.ini"

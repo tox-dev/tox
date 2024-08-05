@@ -25,7 +25,7 @@ if TYPE_CHECKING:
     from tox.session.state import State
 
 
-@pytest.fixture()
+@pytest.fixture
 def default_options() -> dict[str, Any]:
     return {
         "colored": "no",
@@ -168,7 +168,7 @@ def test_conf_arg(tmp_path: Path, conf_arg: str, filename: str, content: str) ->
     )
 
 
-@pytest.fixture()
+@pytest.fixture
 def exhaustive_ini(tmp_path: Path, monkeypatch: MonkeyPatch) -> Path:
     to = tmp_path / "tox.ini"
     to.write_text(

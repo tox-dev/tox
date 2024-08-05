@@ -18,7 +18,7 @@ if TYPE_CHECKING:
     from tox.session.state import State
 
 
-@pytest.fixture()
+@pytest.fixture
 def core_handlers() -> dict[str, Callable[[State], int]]:
     return {
         "config": show_config,
