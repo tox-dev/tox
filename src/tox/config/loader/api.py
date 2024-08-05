@@ -112,7 +112,7 @@ class Loader(Convert[T]):
     def __contains__(self, item: str) -> bool:
         return item in self.found_keys()
 
-    def load(  # noqa: PLR0913
+    def load(
         self,
         key: str,
         of_type: type[V],

@@ -153,7 +153,7 @@ class LocalSubprocessExecuteFailedStatus(ExecuteStatus):
 
 
 class LocalSubProcessExecuteInstance(ExecuteInstance):
-    def __init__(  # noqa: PLR0913
+    def __init__(
         self,
         request: ExecuteRequest,
         options: ExecuteOptions,

@@ -8,7 +8,7 @@ if TYPE_CHECKING:
     from tox.pytest import ToxProject, ToxProjectCreator
 
 
-@pytest.fixture()
+@pytest.fixture
 def project(tox_project: ToxProjectCreator) -> ToxProject:
     ini = """
     [tox]

@@ -10,7 +10,7 @@ from tox import __version__
 from tox.journal.main import Journal
 
 
-@pytest.fixture()
+@pytest.fixture
 def base_info() -> dict[str, Any]:
     return {
         "reportversion": "1",

@@ -19,7 +19,7 @@ class ReplaceOne(Protocol):
     def __call__(self, conf: str, pos_args: list[str] | None = None) -> str: ...
 
 
-@pytest.fixture()
+@pytest.fixture
 def replace_one(tmp_path: Path) -> ReplaceOne:
     def example(conf: str, pos_args: list[str] | None = None) -> str:
         tox_ini_file = tmp_path / "tox.ini"
