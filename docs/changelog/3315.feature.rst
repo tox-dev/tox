@@ -1,0 +1,2 @@
+Add :ref:`on_platform` core configuration holding the tox platform and do not install package when exec an environment
+- by :user:`gaborbernat`.
