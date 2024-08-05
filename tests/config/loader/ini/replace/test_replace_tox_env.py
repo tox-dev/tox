@@ -17,7 +17,7 @@ if TYPE_CHECKING:
 EnvConfigCreator = Callable[[str], ConfigSet]
 
 
-@pytest.fixture()
+@pytest.fixture
 def example(tox_ini_conf: ToxIniCreator) -> EnvConfigCreator:
     def func(conf: str) -> ConfigSet:
         config = tox_ini_conf(f"""[tox]\nenv_list = a\n[testenv]\n{conf}\n""")

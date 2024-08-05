@@ -60,7 +60,7 @@ class EvalSetEnv(Protocol):
     ) -> SetEnv: ...
 
 
-@pytest.fixture()
+@pytest.fixture
 def eval_set_env(tox_project: ToxProjectCreator) -> EvalSetEnv:
     def func(tox_ini: str, extra_files: dict[str, Any] | None = None, from_cwd: Path | None = None) -> SetEnv:
         prj = tox_project({"tox.ini": tox_ini, **(extra_files or {})})

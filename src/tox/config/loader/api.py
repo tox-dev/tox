@@ -40,7 +40,7 @@ class Override:  # noqa: PLW1641
         return f"{self.namespace}{'.' if self.namespace else ''}{self.key}={self.value}"
 
     def __eq__(self, other: object) -> bool:
-        if type(self) != type(other):
+        if type(self) != type(other):  # noqa: E721
             return False
         return (self.namespace, self.key, self.value) == (
             other.namespace,  # type: ignore[attr-defined]
@@ -112,7 +112,7 @@ class Loader(Convert[T]):
     def __contains__(self, item: str) -> bool:
         return item in self.found_keys()
 
-    def load(  # noqa: PLR0913
+    def load(
         self,
         key: str,
         of_type: type[V],

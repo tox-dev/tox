@@ -98,7 +98,7 @@ class LocalSubProcessPep517Executor(Execute):
 class LocalSubProcessPep517ExecuteInstance(ExecuteInstance):
     """A backend invocation."""
 
-    def __init__(  # noqa: PLR0913
+    def __init__(
         self,
         request: ExecuteRequest,
         options: ExecuteOptions,

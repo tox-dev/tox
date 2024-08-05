@@ -16,7 +16,7 @@ if TYPE_CHECKING:
     from tox.pytest import MonkeyPatch, ToxProject, ToxProjectCreator
 
 
-@pytest.fixture()
+@pytest.fixture
 def virtualenv_opt(monkeypatch: MonkeyPatch, mocker: MockerFixture) -> VirtualEnvOptions:
     for key in os.environ:
         if key.startswith("VIRTUALENV_"):  # pragma: no cover

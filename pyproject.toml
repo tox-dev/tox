@@ -128,6 +128,8 @@ lint.ignore = [
   "D",       # ignore documentation for now
   "D203",    # `one-blank-line-before-class` (D203) and `no-blank-line-before-class` (D211) are incompatible
   "D212",    # `multi-line-summary-first-line` (D212) and `multi-line-summary-second-line` (D213) are incompatible
+  "DOC201",  # broken with sphinx docs
+  "DOC501",  # broken with sphinx docs
   "INP001",  # no implicit namespaces here
   "ISC001",  # conflicts with formatter
   "PLR0914", ## Too many local variables

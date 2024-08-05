@@ -1,4 +1,4 @@
-from __future__ import annotations
+from __future__ import annotations  # noqa: A005
 
 from collections import OrderedDict
 from typing import Iterator, Sequence
@@ -26,7 +26,7 @@ class Command:  # noqa: PLW1641
         return f"{type(self).__name__}(args={args!r})"
 
     def __eq__(self, other: object) -> bool:
-        return type(self) == type(other) and (self.args, self.ignore_exit_code, self.invert_exit_code) == (
+        return type(self) == type(other) and (self.args, self.ignore_exit_code, self.invert_exit_code) == (  # noqa: E721
             other.args,  # type: ignore[attr-defined]
             other.ignore_exit_code,  # type: ignore[attr-defined]
             other.invert_exit_code,  # type: ignore[attr-defined]
@@ -56,7 +56,7 @@ class EnvList:  # noqa: PLW1641
         return f"{type(self).__name__}({self.envs!r})"
 
     def __eq__(self, other: object) -> bool:
-        return type(self) == type(other) and self.envs == other.envs  # type: ignore[attr-defined]
+        return type(self) == type(other) and self.envs == other.envs  # type: ignore[attr-defined]  # noqa: E721
 
     def __ne__(self, other: object) -> bool:
         return not (self == other)

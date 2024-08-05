@@ -107,7 +107,7 @@ def pypi_index_self(pypi_server: IndexServer, tox_wheels: list[Path], demo_pkg_i
     return self_index
 
 
-@pytest.fixture()
+@pytest.fixture
 def _pypi_index_self(pypi_index_self: Index, monkeypatch: MonkeyPatch) -> None:
     pypi_index_self.use()
     monkeypatch.setenv("PIP_INDEX_URL", pypi_index_self.url)
@@ -127,7 +127,7 @@ def test_provision_requires_nok(tox_project: ToxProjectCreator) -> None:
     )
 
 
-@pytest.mark.integration()
+@pytest.mark.integration
 @pytest.mark.usefixtures("_pypi_index_self")
 def test_provision_requires_ok(tox_project: ToxProjectCreator, tmp_path: Path) -> None:
     proj = tox_project({"tox.ini": "[tox]\nrequires=demo-pkg-inline\n[testenv]\npackage=skip"})
@@ -160,7 +160,7 @@ def test_provision_requires_ok(tox_project: ToxProjectCreator, tmp_path: Path) -
     assert f"ROOT: remove tox env folder {provision_env}" in result_recreate.out, result_recreate.out
 
 
-@pytest.mark.integration()
+@pytest.mark.integration
 @pytest.mark.usefixtures("_pypi_index_self")
 def test_provision_platform_check(tox_project: ToxProjectCreator) -> None:
     ini = "[tox]\nrequires=demo-pkg-inline\n[testenv]\npackage=skip\n[testenv:.tox]\nplatform=wrong_platform"
@@ -194,7 +194,7 @@ def test_provision_no_recreate_json(tox_project: ToxProjectCreator) -> None:
     assert requires == {"minversion": None, "requires": ["p", "tox"]}
 
 
-@pytest.mark.integration()
+@pytest.mark.integration
 @pytest.mark.usefixtures("_pypi_index_self")
 @pytest.mark.parametrize("plugin_testenv", ["testenv", "testenv:a"])
 def test_provision_plugin_runner(tox_project: ToxProjectCreator, tmp_path: Path, plugin_testenv: str) -> None:
@@ -217,7 +217,7 @@ def test_provision_plugin_runner(tox_project: ToxProjectCreator, tmp_path: Path,
     assert prov_msg in result_label.out
 
 
-@pytest.mark.integration()
+@pytest.mark.integration
 def test_provision_plugin_runner_in_provision(tox_project: ToxProjectCreator, tmp_path: Path) -> None:
     """Ensure that provision environment can be explicitly configured."""
     log = tmp_path / "out.log"
@@ -226,7 +226,7 @@ def test_provision_plugin_runner_in_provision(tox_project: ToxProjectCreator, tm
         proj.run("r", "-e", "py", "--result-json", str(log))
 
 
-@pytest.mark.integration()
+@pytest.mark.integration
 @pytest.mark.usefixtures("_pypi_index_self")
 @pytest.mark.parametrize("relative_path", [True, False], ids=["relative", "absolute"])
 def test_provision_conf_file(tox_project: ToxProjectCreator, tmp_path: Path, relative_path: bool) -> None:
