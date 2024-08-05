@@ -4,6 +4,19 @@ Release History
 
 .. towncrier release notes start
 
+v4.17.0 (2024-08-05)
+--------------------
+
+Features - 4.17.0
+~~~~~~~~~~~~~~~~~
+- Add "graalpy" prefix as a supported base python (:issue:`3312`)
+- Add :ref:`on_platform` core configuration holding the tox platform and do not install package when exec an environment
+  - by :user:`gaborbernat`. (:issue:`3315`)
+
+Bugfixes - 4.17.0
+~~~~~~~~~~~~~~~~~
+- Add table with default environment variables per OS (:issue:`2753`)
+
 v4.16.0 (2024-07-02)
 --------------------
 
