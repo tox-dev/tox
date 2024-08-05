@@ -66,7 +66,7 @@ class CliEnv:  # noqa: PLW1641
         return f"{self.__class__.__name__}({'' if self.is_default_list else repr(str(self))})"
 
     def __eq__(self, other: object) -> bool:
-        return type(self) == type(other) and self._names == other._names  # type: ignore[attr-defined]
+        return type(self) == type(other) and self._names == other._names  # type: ignore[attr-defined]  # noqa: E721
 
     def __ne__(self, other: object) -> bool:
         return not (self == other)

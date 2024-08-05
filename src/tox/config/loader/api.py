@@ -40,7 +40,7 @@ class Override:  # noqa: PLW1641
         return f"{self.namespace}{'.' if self.namespace else ''}{self.key}={self.value}"
 
     def __eq__(self, other: object) -> bool:
-        if type(self) != type(other):
+        if type(self) != type(other):  # noqa: E721
             return False
         return (self.namespace, self.key, self.value) == (
             other.namespace,  # type: ignore[attr-defined]
