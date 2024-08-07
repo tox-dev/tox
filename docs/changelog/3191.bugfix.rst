@@ -1,0 +1,1 @@
+``base_python`` now accepts absolute paths to interpreter executable - by :user:`paveldikov`.

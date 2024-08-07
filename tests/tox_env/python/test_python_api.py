@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import sys
 from typing import TYPE_CHECKING, Callable
 from unittest.mock import patch
@@ -123,6 +124,24 @@ def test_extract_base_python(env: str, base_python: str | None) -> None:
 def test_base_python_env_no_conflict(env: str, base_python: list[str], ignore_conflict: bool) -> None:
     result = Python._validate_base_python(env, base_python, ignore_conflict)  # noqa: SLF001
     assert result is base_python
+
+
+@pytest.mark.parametrize(
+    ("env", "base_python", "platform"),
+    [
+        ("py312-unix", ["/opt/python312/bin/python"], "posix"),
+        ("py312-win", [r"C:\Program Files\Python312\python.exe"], "nt"),
+        ("py311-win", [r"\\a\python311\python.exe"], "nt"),
+        ("py310-win", [r"\\?\UNC\a\python310\python.exe"], "nt"),
+        ("py310", ["//a/python310/bin/python"], None),
+    ],
+    ids=lambda a: "|".join(a) if isinstance(a, list) else str(a),
+)
+def test_base_python_absolute(env: str, base_python: list[str], platform: str | None) -> None:
+    if platform and platform != os.name:
+        pytest.skip(f"Not applicable to this platform. ({platform} != {os.name})")
+    result = Python._validate_base_python(env, base_python, False)  # noqa: SLF001
+    assert result == base_python
 
 
 @pytest.mark.parametrize("ignore_conflict", [True, False])
