@@ -1,1 +1,0 @@
-Support for running ``-e <major>.<minor>`` has been lost, fixing it - by :user:`gaborbernat`.

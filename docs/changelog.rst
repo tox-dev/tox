@@ -4,6 +4,14 @@ Release History
 
 .. towncrier release notes start
 
+v4.17.1 (2024-08-07)
+--------------------
+
+Bugfixes - 4.17.1
+~~~~~~~~~~~~~~~~~
+- Support for running ``-e <major>.<minor>`` has been lost, fixing it - by :user:`gaborbernat`. (:issue:`2849`)
+- ``base_python`` now accepts absolute paths to interpreter executable - by :user:`paveldikov`. (:issue:`3191`)
+
 v4.17.0 (2024-08-05)
 --------------------
 
