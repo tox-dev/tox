@@ -3,10 +3,10 @@
 from __future__ import annotations
 
 import logging
-import os
 import re
 import sys
 from abc import ABC, abstractmethod
+from pathlib import Path
 from typing import TYPE_CHECKING, Any, List, NamedTuple, cast
 
 from virtualenv.discovery.py_spec import PythonSpec
@@ -15,7 +15,6 @@ from tox.tox_env.api import ToxEnv, ToxEnvCreateArgs
 from tox.tox_env.errors import Fail, Recreate, Skip
 
 if TYPE_CHECKING:
-    from pathlib import Path
 
     from tox.config.main import Config
 
@@ -170,7 +169,7 @@ class Python(ToxEnv, ABC):
         if env_base_python is not None:
             spec_name = PythonSpec.from_string_spec(env_base_python)
             for base_python in base_pythons:
-                if os.path.isabs(base_python):  # noqa: PTH117
+                if Path(base_python).is_absolute():
                     return [base_python]
                 spec_base = PythonSpec.from_string_spec(base_python)
                 if any(
