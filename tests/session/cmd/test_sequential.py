@@ -56,7 +56,7 @@ def test_run_sequential_quiet(tox_project: ToxProjectCreator) -> None:
     assert Matches(r"  a: OK \([\d.]+ seconds\)") == reports[-2]
 
 
-@pytest.mark.integration()
+@pytest.mark.integration
 def test_result_json_sequential(
     tox_project: ToxProjectCreator,
     enable_pip_pypi_access: str | None,  # noqa: ARG001
@@ -156,7 +156,7 @@ def test_rerun_sequential_wheel(tox_project: ToxProjectCreator, demo_pkg_inline:
     result_rerun.assert_success()
 
 
-@pytest.mark.integration()
+@pytest.mark.integration
 def test_rerun_sequential_sdist(tox_project: ToxProjectCreator, demo_pkg_inline: Path) -> None:
     proj = tox_project(
         {"tox.ini": "[testenv]\npackage=sdist\ncommands=python -c 'from demo_pkg_inline import do; do()'"},

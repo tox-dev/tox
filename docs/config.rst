@@ -215,6 +215,12 @@ The following options are set in the ``[tox]`` section of ``tox.ini`` or the ``[
            test = py310, py39
            static = flake8, mypy
 
+.. conf::
+   :keys: on_platform
+   :constant:
+
+   A constant holding the platform of the tox runtime environment.
+
 Python language core options
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

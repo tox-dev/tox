@@ -29,7 +29,7 @@ class ConfigDefinition(ABC, Generic[T]):  # noqa: PLW1641
         raise NotImplementedError
 
     def __eq__(self, o: object) -> bool:
-        return type(self) == type(o) and (self.keys, self.desc) == (o.keys, o.desc)  # type: ignore[attr-defined]
+        return type(self) == type(o) and (self.keys, self.desc) == (o.keys, o.desc)  # type: ignore[attr-defined]  # noqa: E721
 
     def __ne__(self, o: object) -> bool:
         return not (self == o)
@@ -56,7 +56,7 @@ class ConfigConstantDefinition(ConfigDefinition[T]):  # noqa: PLW1641
         return self.value() if callable(self.value) else self.value
 
     def __eq__(self, o: object) -> bool:
-        return type(self) == type(o) and super().__eq__(o) and self.value == o.value  # type: ignore[attr-defined]
+        return type(self) == type(o) and super().__eq__(o) and self.value == o.value  # type: ignore[attr-defined]  # noqa: E721
 
     def __repr__(self) -> str:
         values = ((k, v) for k, v in vars(self).items() if v is not None)
@@ -120,7 +120,7 @@ class ConfigDynamicDefinition(ConfigDefinition[T]):  # noqa: PLW1641
 
     def __eq__(self, o: object) -> bool:
         return (
-            type(self) == type(o)
+            type(self) == type(o)  # noqa: E721
             and super().__eq__(o)
             and (self.of_type, self.default, self.post_process) == (o.of_type, o.default, o.post_process)  # type: ignore[attr-defined]
         )

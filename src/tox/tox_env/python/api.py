@@ -57,6 +57,7 @@ PY_FACTORS_RE = re.compile(
     """,
     re.VERBOSE,
 )
+PY_FACTORS_RE_EXPLICIT_VERSION = re.compile(r"^(?P<version>[2-9]\.[0-9]+)$")
 
 
 class Python(ToxEnv, ABC):
@@ -143,10 +144,14 @@ class Python(ToxEnv, ABC):
     @classmethod
     def extract_base_python(cls, env_name: str) -> str | None:
         candidates: list[str] = []
-        for factor in env_name.split("-"):
-            match = PY_FACTORS_RE.match(factor)
-            if match:
-                candidates.append(factor)
+        match = PY_FACTORS_RE_EXPLICIT_VERSION.match(env_name)
+        if match:
+            candidates.append(env_name)
+        else:
+            for factor in env_name.split("-"):
+                match = PY_FACTORS_RE.match(factor)
+                if match:
+                    candidates.append(factor)
         if candidates:
             if len(candidates) > 1:
                 msg = f"conflicting factors {', '.join(candidates)} in {env_name}"

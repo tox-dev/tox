@@ -101,6 +101,9 @@ def test_diff_msg_no_diff() -> None:
         ("5", None),
         ("2000", None),
         ("4000", None),
+        ("3.10", "3.10"),
+        ("3.9", "3.9"),
+        ("2.7", "2.7"),
     ],
     ids=lambda a: "|".join(a) if isinstance(a, list) else str(a),
 )

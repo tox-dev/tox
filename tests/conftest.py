@@ -46,7 +46,7 @@ class ToxIniCreator(Protocol):
     def __call__(self, conf: str, override: Sequence[Override] | None = None) -> Config: ...
 
 
-@pytest.fixture()
+@pytest.fixture
 def tox_ini_conf(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> ToxIniCreator:
     def func(conf: str, override: Sequence[Override] | None = None) -> Config:
         dest = tmp_path / "c"
@@ -78,7 +78,7 @@ def demo_pkg_inline() -> Iterator[Path]:
         yield demo_path
 
 
-@pytest.fixture()
+@pytest.fixture
 def patch_prev_py(mocker: MockerFixture) -> Callable[[bool], tuple[str, str]]:
     def _func(has_prev: bool) -> tuple[str, str]:
         ver = sys.version_info[0:2]

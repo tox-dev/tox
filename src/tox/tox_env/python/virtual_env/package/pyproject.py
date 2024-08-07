@@ -447,7 +447,7 @@ class Pep517VirtualEnvFrontend(Frontend):
             if self._tox_env.conf["fresh_subprocess"]:
                 self.backend_executor.close()
 
-    def _unexpected_response(  # noqa: PLR0913
+    def _unexpected_response(
         self,
         cmd: str,
         got: Any,

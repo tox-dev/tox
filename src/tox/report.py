@@ -9,7 +9,8 @@ import sys
 from contextlib import contextmanager
 from io import BytesIO, TextIOWrapper
 from pathlib import Path
-from threading import Thread, current_thread, enumerate, local
+from threading import Thread, current_thread, local
+from threading import enumerate as enumerate_threads
 from typing import IO, ClassVar, Iterator, Tuple
 
 from colorama import Fore, Style, init
@@ -58,7 +59,7 @@ class _LogThreadLocal(local):
     def name(self, value: str) -> None:
         self._name = value
 
-        for ident in self._ident_to_data.keys() - {t.ident for t in enumerate()}:
+        for ident in self._ident_to_data.keys() - {t.ident for t in enumerate_threads()}:
             self._ident_to_data.pop(ident)
         self._ident_to_data[current_thread().ident] = value
 

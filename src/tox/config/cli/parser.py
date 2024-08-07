@@ -1,4 +1,4 @@
-"""Customize argparse logic for tox (also contains the base options)."""
+"""Customize argparse logic for tox (also contains the base options)."""  # noqa: A005
 
 from __future__ import annotations
 

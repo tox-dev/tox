@@ -50,7 +50,7 @@ dynamic = [
   "version",
 ]
 dependencies = [
-  "cachetools>=5.3.3",
+  "cachetools>=5.4",
   "chardet>=5.2",
   "colorama>=0.4.6",
   "filelock>=3.15.4",
@@ -62,10 +62,10 @@ dependencies = [
   "virtualenv>=20.26.3",
 ]
 optional-dependencies.docs = [
-  "furo>=2024.5.6",
-  "sphinx>=7.3.7",
+  "furo>=2024.7.18",
+  "sphinx>=7.4.7",
   "sphinx-argparse-cli>=1.16",
-  "sphinx-autodoc-typehints!=1.23.4,>=2.2.2",
+  "sphinx-autodoc-typehints>=2.2.3",
   "sphinx-copybutton>=0.5.2",
   "sphinx-inline-tabs>=2023.4.21",
   "sphinxcontrib-towncrier>=0.2.1a0",
@@ -76,18 +76,18 @@ optional-dependencies.testing = [
   "covdefaults>=2.3",
   "detect-test-pollution>=1.2",
   "devpi-process>=1",
-  "diff-cover>=9.1",
+  "diff-cover>=9.1.1",
   "distlib>=0.3.8",
   "flaky>=3.8.1",
   "hatch-vcs>=0.4",
   "hatchling>=1.25",
   "psutil>=6",
-  "pytest>=8.2.2",
+  "pytest>=8.3.2",
   "pytest-cov>=5",
   "pytest-mock>=3.14",
   "pytest-xdist>=3.6.1",
   "re-assert>=1.1",
-  "setuptools>=70.2",
+  "setuptools>=70.3",
   "time-machine>=2.14.2; implementation_name!='pypy'",
   "wheel>=0.43",
 ]
@@ -128,6 +128,8 @@ lint.ignore = [
   "D",       # ignore documentation for now
   "D203",    # `one-blank-line-before-class` (D203) and `no-blank-line-before-class` (D211) are incompatible
   "D212",    # `multi-line-summary-first-line` (D212) and `multi-line-summary-second-line` (D213) are incompatible
+  "DOC201",  # broken with sphinx docs
+  "DOC501",  # broken with sphinx docs
   "INP001",  # no implicit namespaces here
   "ISC001",  # conflicts with formatter
   "PLR0914", ## Too many local variables

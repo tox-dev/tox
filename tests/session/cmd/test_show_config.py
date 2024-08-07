@@ -283,3 +283,10 @@ def test_package_env_inherits_from_pkgenv(tox_project: ToxProjectCreator, demo_p
     """
     exp = dedent(exp)
     assert exp in outcome.out
+
+
+def test_core_on_platform(tox_project: ToxProjectCreator) -> None:
+    project = tox_project({"tox.ini": "[tox]\nno_package = true"})
+    result = project.run("c", "-e", "py", "--core", "-k", "on_platform")
+    result.assert_success()
+    assert result.out == f"[testenv:py]\n\n[tox]\non_platform = {sys.platform}\n"

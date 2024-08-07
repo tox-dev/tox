@@ -4,6 +4,19 @@ Release History
 
 .. towncrier release notes start
 
+v4.17.0 (2024-08-05)
+--------------------
+
+Features - 4.17.0
+~~~~~~~~~~~~~~~~~
+- Add ``graalpy`` prefix as a supported base python (:issue:`3312`)
+- Add :ref:`on_platform` core configuration holding the tox platform and do not install package when exec an environment
+  - by :user:`gaborbernat`. (:issue:`3315`)
+
+Bugfixes - 4.17.0
+~~~~~~~~~~~~~~~~~
+- Add table with default environment variables per OS (:issue:`2753`)
+
 v4.16.0 (2024-07-02)
 --------------------
 
@@ -56,7 +69,7 @@ Bugfixes - 4.14.2
 
 Improved Documentation - 4.14.2
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-- Removed unused line from the 'fresh_subprocess' documentation. (:issue:`3241`)
+- Removed unused line from the ``fresh_subprocess`` documentation. (:issue:`3241`)
 
 v4.14.1 (2024-03-06)
 --------------------
@@ -203,9 +216,9 @@ v4.7.0 (2023-08-08)
 
 Features - 4.7.0
 ~~~~~~~~~~~~~~~~
-- Make --hashseed default to PYTHONHASHSEED, if defined - by :user:`paravoid`.
+- Make ``--hashseed`` default to ``PYTHONHASHSEED``, if defined - by :user:`paravoid`.
   The main motivation for this is to able to set the hash seed when building the
-  documentation with "tox -e docs", and thus avoid embedding a random value in
+  documentation with ``tox -e docs``, and thus avoid embedding a random value in
   the tox documentation for --help. This caused documentation builds to fail to
   build reproducibly. (:issue:`2942`)
 

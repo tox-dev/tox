@@ -1,1 +1,0 @@
-Add table with default environment variables per OS

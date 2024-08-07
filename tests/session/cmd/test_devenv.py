@@ -15,7 +15,7 @@ def test_devenv_fail_multiple_target(tox_project: ToxProjectCreator) -> None:
     outcome.assert_out_err(msg, "")
 
 
-@pytest.mark.integration()
+@pytest.mark.integration
 def test_devenv_ok(tox_project: ToxProjectCreator, enable_pip_pypi_access: str | None) -> None:  # noqa: ARG001
     content = {
         "setup.py": "from setuptools import setup\nsetup(name='demo', version='1.0')",
