@@ -129,7 +129,7 @@ def _handle_legacy_only_flags(option: Parsed, envs: EnvSelector) -> None:  # noq
         for env in envs.iter(only_active=True, package=False):
             env_conf = envs[env].conf
             if override:
-                env_conf.loaders.insert(0, MemoryLoader(**override))
+                env_conf.loaders.insert(0, MemoryLoader(override))
             if set_env:
                 cast(SetEnv, env_conf["set_env"]).update(set_env, override=True)
             if forced:

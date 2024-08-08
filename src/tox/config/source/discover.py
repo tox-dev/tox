@@ -9,12 +9,13 @@ from tox.report import HandledError
 
 from .legacy_toml import LegacyToml
 from .setup_cfg import SetupCfg
+from .toml import PyProjectToml, ToxToml
 from .tox_ini import ToxIni
 
 if TYPE_CHECKING:
     from .api import Source
 
-SOURCE_TYPES: tuple[type[Source], ...] = (ToxIni, SetupCfg, LegacyToml)
+SOURCE_TYPES: tuple[type[Source], ...] = (ToxIni, ToxToml, PyProjectToml, SetupCfg, LegacyToml)
 
 
 def discover_source(config_file: Path | None, root_dir: Path | None) -> Source:

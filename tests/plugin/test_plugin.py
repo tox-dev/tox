@@ -131,7 +131,7 @@ def test_plugin_can_set_core_conf(
 ) -> None:
     @impl
     def tox_add_core_config(core_conf: CoreConfigSet, state: State) -> None:  # noqa: ARG001
-        core_conf.loaders.insert(0, MemoryLoader(**{dir_name: tmp_path}))
+        core_conf.loaders.insert(0, MemoryLoader({dir_name: tmp_path}))
 
     register_inline_plugin(mocker, tox_add_core_config)
 
@@ -186,7 +186,7 @@ def test_plugin_can_read_sections(tox_project: ToxProjectCreator, mocker: Mocker
 def test_plugin_injects_invalid_python_run(tox_project: ToxProjectCreator, mocker: MockerFixture) -> None:
     @impl
     def tox_add_env_config(env_conf: EnvConfigSet, state: State) -> None:  # noqa: ARG001
-        env_conf.loaders.insert(0, MemoryLoader(deps=[1]))
+        env_conf.loaders.insert(0, MemoryLoader({"deps": [1]}))
         with pytest.raises(TypeError, match="1"):
             assert env_conf["deps"]
 
