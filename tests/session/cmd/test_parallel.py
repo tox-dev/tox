@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import sys
 from argparse import ArgumentTypeError
 from signal import SIGINT
@@ -177,6 +178,19 @@ def test_parallel_no_spinner(tox_project: ToxProjectCreator) -> None:
     """Ensure passing `--parallel-no-spinner` implies `--parallel`."""
     with mock.patch.object(parallel, "execute") as mocked:
         tox_project({"tox.ini": ""}).run("p", "--parallel-no-spinner")
+
+    mocked.assert_called_once_with(
+        mock.ANY,
+        max_workers=None,
+        has_spinner=False,
+        live=False,
+    )
+
+
+def test_parallel_no_spinner_ci(tox_project: ToxProjectCreator) -> None:
+    """Ensure spinner is disabled by default in CI."""
+    with mock.patch.object(parallel, "execute") as mocked, mock.patch.dict(os.environ, {"CI": "1"}):
+        tox_project({"tox.ini": ""}).run("p")
 
     mocked.assert_called_once_with(
         mock.ANY,

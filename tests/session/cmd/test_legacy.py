@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import os
 from typing import TYPE_CHECKING
+from unittest.mock import patch
 
 import pytest
 
@@ -117,6 +119,16 @@ def test_legacy_run_sequential(tox_project: ToxProjectCreator, mocker: MockerFix
     run_sequential = mocker.patch("tox.session.cmd.legacy.run_sequential")
 
     tox_project({"tox.ini": ""}).run("le", "-e", "py")
+
+    assert run_sequential.call_count == 1
+
+
+def test_legacy_run_sequential_ci(tox_project: ToxProjectCreator, mocker: MockerFixture) -> None:
+    """Test legacy run sequential in CI by default."""
+    run_sequential = mocker.patch("tox.session.cmd.legacy.run_sequential")
+
+    with patch.dict(os.environ, {"CI": "1"}):
+        tox_project({"tox.ini": ""}).run("le", "-e", "py")
 
     assert run_sequential.call_count == 1
 

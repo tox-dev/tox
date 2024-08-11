@@ -1,0 +1,1 @@
+Suppress spinner in parallel runs in CI - by :user:`ziima`.
