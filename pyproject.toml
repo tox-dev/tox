@@ -169,6 +169,8 @@ testpaths = [
   "tests",
 ]
 addopts = "--tb=auto -ra --showlocals --no-success-flaky-report"
+# Keep temporary directories only for failed or errored tests.
+tmp_path_retention_policy = "failed"
 
 [tool.coverage]
 html.show_contexts = true

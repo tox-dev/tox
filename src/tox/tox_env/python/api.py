@@ -15,7 +15,6 @@ from tox.tox_env.api import ToxEnv, ToxEnvCreateArgs
 from tox.tox_env.errors import Fail, Recreate, Skip
 
 if TYPE_CHECKING:
-
     from tox.config.main import Config
 
 
