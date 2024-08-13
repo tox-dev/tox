@@ -168,9 +168,14 @@ class Python(ToxEnv, ABC):
         if env_base_python is not None:
             spec_name = PythonSpec.from_string_spec(env_base_python)
             for base_python in base_pythons:
-                if Path(base_python).is_absolute():
-                    return [base_python]
                 spec_base = PythonSpec.from_string_spec(base_python)
+                if spec_base.path is not None:
+                    path = Path(spec_base.path).absolute()
+                    if str(spec_base.path) == sys.executable:
+                        ver, is_64 = sys.version_info, sys.maxsize != 2**32
+                        spec_base = PythonSpec.from_string_spec(f"{sys.implementation}{ver.major}{ver.minor}-{is_64}")
+                    else:
+                        spec_base = cls.python_spec_for_path(path)
                 if any(
                     getattr(spec_base, key) != getattr(spec_name, key)
                     for key in ("implementation", "major", "minor", "micro", "architecture")
@@ -182,6 +187,17 @@ class Python(ToxEnv, ABC):
                         return [env_base_python]
                     raise Fail(msg)
         return base_pythons
+
+    @classmethod
+    @abstractmethod
+    def python_spec_for_path(cls, path: Path) -> PythonSpec:
+        """
+        Get the spec for an absolute path to a Python executable.
+
+        :param path: the path investigated
+        :return: the found spec
+        """
+        raise NotImplementedError
 
     @abstractmethod
     def env_site_package_dir(self) -> Path:

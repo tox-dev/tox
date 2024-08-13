@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
   push:
     branches: ["main"]
-    tags-ignore: [ "**" ]
+    tags-ignore: ["**"]
   pull_request:
   schedule:
     - cron: "0 8 * * *"
@@ -76,6 +76,7 @@ jobs:
           - windows-latest
         exclude:
           - { os: windows-latest, tox_env: pkg_meta }
+          - { os: windows-latest, tox_env: docs }
     steps:
       - uses: actions/checkout@v4
         with:
