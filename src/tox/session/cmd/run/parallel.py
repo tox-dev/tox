@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING
 
 from tox.plugin import impl
 from tox.session.env_select import CliEnv, register_env_select_flags
+from tox.util.ci import is_ci
 from tox.util.cpu import auto_detect_cpus
 
 from .common import env_run_create_flags, execute
@@ -28,7 +29,7 @@ def tox_add_option(parser: ToxParser) -> None:
     our = parser.add_command("run-parallel", ["p"], "run environments in parallel", run_parallel)
     register_env_select_flags(our, default=CliEnv())
     env_run_create_flags(our, mode="run-parallel")
-    parallel_flags(our, default_parallel=DEFAULT_PARALLEL)
+    parallel_flags(our, default_parallel=DEFAULT_PARALLEL, default_spinner=is_ci())
 
 
 def parse_num_processes(str_value: str) -> int | None:
@@ -51,6 +52,8 @@ def parallel_flags(
     our: ArgumentParser,
     default_parallel: int | str,
     no_args: bool = False,  # noqa: FBT001, FBT002
+    *,
+    default_spinner: bool = False,
 ) -> None:
     our.add_argument(
         "-p",
@@ -75,7 +78,11 @@ def parallel_flags(
         "--parallel-no-spinner",
         action="store_true",
         dest="parallel_no_spinner",
-        help="run tox environments in parallel, but don't show the spinner, implies --parallel",
+        default=default_spinner,
+        help=(
+            "run tox environments in parallel, but don't show the spinner, implies --parallel. "
+            "Disabled by default if CI is detected (not in legacy API)."
+        ),
     )
 
 

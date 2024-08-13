@@ -121,6 +121,18 @@ def test_legacy_run_sequential(tox_project: ToxProjectCreator, mocker: MockerFix
     assert run_sequential.call_count == 1
 
 
+def test_legacy_run_sequential_ci(
+    tox_project: ToxProjectCreator, mocker: MockerFixture, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Test legacy run sequential in CI by default."""
+    run_sequential = mocker.patch("tox.session.cmd.legacy.run_sequential")
+    monkeypatch.setenv("CI", "1")
+
+    tox_project({"tox.ini": ""}).run("le", "-e", "py")
+
+    assert run_sequential.call_count == 1
+
+
 def test_legacy_help(tox_project: ToxProjectCreator) -> None:
     outcome = tox_project({"tox.ini": ""}).run("le", "-h")
     outcome.assert_success()
