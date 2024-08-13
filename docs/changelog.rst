@@ -7,11 +7,11 @@ Release History
 v4.18.0 (2024-08-13)
 --------------------
 
-Features - 4.17.2
+Features - 4.18.0
 ~~~~~~~~~~~~~~~~~
 - Suppress spinner in parallel runs in CI - by :user:`ziima`. (:issue:`3318`)
 
-Bugfixes - 4.17.2
+Bugfixes - 4.18.0
 ~~~~~~~~~~~~~~~~~
 - Boost temporary directories cleanup in tests - by :user:`ziima`. (:issue:`3278`)
 - Fix absolute base python paths conflicting - by :user:`gaborbernat`. (:issue:`3325`)
