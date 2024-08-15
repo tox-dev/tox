@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import sys
+from types import SimpleNamespace
 from typing import TYPE_CHECKING, Callable
 from unittest.mock import patch
 
@@ -289,3 +290,29 @@ def test_usedevelop_with_nonexistent_basepython(tox_project: ToxProjectCreator) 
     project = tox_project({"tox.ini": ini})
     result = project.run()
     assert result.code == 0
+
+
+@pytest.mark.parametrize(
+    ("impl", "major", "minor", "arch"),
+    [
+        ("cpython", 3, 12, 64),
+        ("pypy", 3, 9, 32),
+    ],
+)
+def test_python_spec_for_sys_executable(impl: str, major: int, minor: int, arch: int, mocker: MockerFixture) -> None:
+    version_info = SimpleNamespace(major=major, minor=minor, micro=5, releaselevel="final", serial=0)
+    implementation = SimpleNamespace(
+        name=impl,
+        cache_tag=f"{impl}-{major}{minor}",
+        version=version_info,
+        hexversion=...,
+        _multiarch=...,
+    )
+    mocker.patch.object(sys, "version_info", version_info)
+    mocker.patch.object(sys, "implementation", implementation)
+    mocker.patch.object(sys, "maxsize", 2**arch // 2 - 1)
+    spec = Python.python_spec_for_sys_executable()
+    assert spec.implementation == impl
+    assert spec.major == major
+    assert spec.minor == minor
+    assert spec.architecture == arch

@@ -158,6 +158,14 @@ class Python(ToxEnv, ABC):
         return None
 
     @classmethod
+    def python_spec_for_sys_executable(cls) -> PythonSpec:
+        implementation = sys.implementation.name
+        version = sys.version_info
+        bits = "64" if sys.maxsize > 2**32 else "32"
+        string_spec = f"{implementation}{version.major}{version.minor}-{bits}"
+        return PythonSpec.from_string_spec(string_spec)
+
+    @classmethod
     def _validate_base_python(
         cls,
         env_name: str,
@@ -172,8 +180,7 @@ class Python(ToxEnv, ABC):
                 if spec_base.path is not None:
                     path = Path(spec_base.path).absolute()
                     if str(spec_base.path) == sys.executable:
-                        ver, is_64 = sys.version_info, sys.maxsize != 2**32
-                        spec_base = PythonSpec.from_string_spec(f"{sys.implementation}{ver.major}{ver.minor}-{is_64}")
+                        spec_base = cls.python_spec_for_sys_executable()
                     else:
                         spec_base = cls.python_spec_for_path(path)
                 if any(
