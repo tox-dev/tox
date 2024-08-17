@@ -311,7 +311,7 @@ def test_python_spec_for_sys_executable(impl: str, major: int, minor: int, arch:
     mocker.patch.object(sys, "version_info", version_info)
     mocker.patch.object(sys, "implementation", implementation)
     mocker.patch.object(sys, "maxsize", 2**arch // 2 - 1)
-    spec = Python._python_spec_for_sys_executable()
+    spec = Python._python_spec_for_sys_executable()  # noqa: SLF001
     assert spec.implementation == impl
     assert spec.major == major
     assert spec.minor == minor
