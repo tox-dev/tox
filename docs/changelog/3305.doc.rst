@@ -1,1 +1,1 @@
-Changes the `tox_env_teardown` docstring to explain the hook is called after a tox env was teared down.
+Changes the ``tox_env_teardown`` docstring to explain the hook is called after a tox env was teared down.
