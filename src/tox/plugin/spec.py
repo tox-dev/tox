@@ -94,7 +94,7 @@ def tox_on_install(tox_env: ToxEnv, arguments: Any, section: str, of_type: str) 
 @_spec
 def tox_env_teardown(tox_env: ToxEnv) -> None:  # noqa: ARG001
     """
-    Called before executing an installation command.
+    Called after a tox environment has been teared down.
 
     :param tox_env: the tox environment
     """
