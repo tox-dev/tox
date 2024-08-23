@@ -133,7 +133,7 @@ v4.12.0 (2024-01-11)
 
 Features - 4.12.0
 ~~~~~~~~~~~~~~~~~
-- Always pass ``FORCE_COLOR`` and ``NO_COLOR`` to the environment (:issue:`3171`)
+- Always pass ``FORCE_COLOR`` and ``NO_COLOR`` to the environment (:issue:`3172`)
 
 Bugfixes - 4.12.0
 ~~~~~~~~~~~~~~~~~
