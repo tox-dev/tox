@@ -53,7 +53,7 @@ if fs_supports_symlink():  # pragma: no cover # used to speed up test suite run 
 
 
 @pytest.fixture(autouse=True)
-def ensure_logging_framework_not_altered() -> Iterator[None]:  # noqa: PT004
+def ensure_logging_framework_not_altered() -> Iterator[None]:
     before_handlers = list(LOGGER.handlers)
     yield
     LOGGER.handlers = before_handlers
@@ -109,14 +109,14 @@ def check_os_environ() -> Iterator[None]:
 
 
 @pytest.fixture(autouse=True)
-def check_os_environ_stable(monkeypatch: pytest.MonkeyPatch) -> Iterator[None]:  # noqa: PT004
+def check_os_environ_stable(monkeypatch: pytest.MonkeyPatch) -> Iterator[None]:
     with check_os_environ():
         yield
         monkeypatch.undo()
 
 
 @pytest.fixture(autouse=True)
-def no_color(monkeypatch: pytest.MonkeyPatch, check_os_environ_stable: None) -> None:  # noqa: ARG001, PT004
+def no_color(monkeypatch: pytest.MonkeyPatch, check_os_environ_stable: None) -> None:  # noqa: ARG001
     monkeypatch.setenv("NO_COLOR", "yes")
 
 
@@ -295,7 +295,7 @@ class ToxProject:
 
 
 @pytest.fixture(autouse=True, scope="session")
-def enable_pep517_backend_coverage() -> Iterator[None]:  # noqa: PT004
+def enable_pep517_backend_coverage() -> Iterator[None]:
     try:
         import coverage  # noqa: F401, PLC0415
     except ImportError:  # pragma: no cover
@@ -482,7 +482,7 @@ def pypi_server(tmp_path_factory: pytest.TempPathFactory) -> Iterator[IndexServe
 
 
 @pytest.fixture(scope="session")
-def _invalid_index_fake_port() -> int:  # noqa: PT005
+def _invalid_index_fake_port() -> int:
     with closing(socket.socket(socket.AF_INET, socket.SOCK_STREAM)) as socket_handler:
         socket_handler.bind(("", 0))
         return cast(int, socket_handler.getsockname()[1])

@@ -23,7 +23,7 @@ ConfBuilder = Callable[[str], ConfigSet]
 
 
 @pytest.fixture(name="conf_builder")
-def _conf_builder(tox_ini_conf: ToxIniCreator) -> ConfBuilder:  # noqa: PT005
+def _conf_builder(tox_ini_conf: ToxIniCreator) -> ConfBuilder:
     def _make(conf_str: str) -> ConfigSet:
         return tox_ini_conf(f"[tox]\nenvlist=py39\n[testenv]\n{conf_str}").get_env("py39")
 

@@ -9,7 +9,7 @@ from tox.config.sets import ConfigSet
 
 class EnvDockerConfigSet(ConfigSet):
     def register_config(self) -> None:
-        def factory(container_name: object) -> str:  # noqa: ARG001
+        def factory(container_name: object) -> str:
             raise NotImplementedError
 
         self.add_config(
