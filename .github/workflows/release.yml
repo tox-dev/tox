@@ -43,4 +43,4 @@ jobs:
           name: ${{ env.dists-artifact-name }}
           path: dist/
       - name: Publish to PyPI
-        uses: pypa/gh-action-pypi-publish@v1.9.0
+        uses: pypa/gh-action-pypi-publish@v1.10.0
