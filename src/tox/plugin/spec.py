@@ -18,7 +18,7 @@ _spec = pluggy.HookspecMarker(NAME)
 
 
 @_spec
-def tox_register_tox_env(register: ToxEnvRegister) -> None:  # noqa: ARG001
+def tox_register_tox_env(register: ToxEnvRegister) -> None:
     """
     Register new tox environment type. You can register:
 
@@ -30,7 +30,7 @@ def tox_register_tox_env(register: ToxEnvRegister) -> None:  # noqa: ARG001
 
 
 @_spec
-def tox_add_option(parser: ToxParser) -> None:  # noqa: ARG001
+def tox_add_option(parser: ToxParser) -> None:
     """
     Add a command line argument. This is the first hook to be called, right after the logging setup and config source
     discovery.
@@ -40,7 +40,7 @@ def tox_add_option(parser: ToxParser) -> None:  # noqa: ARG001
 
 
 @_spec
-def tox_add_core_config(core_conf: ConfigSet, state: State) -> None:  # noqa: ARG001
+def tox_add_core_config(core_conf: ConfigSet, state: State) -> None:
     """
     Called when the core configuration is built for a tox environment.
 
@@ -50,7 +50,7 @@ def tox_add_core_config(core_conf: ConfigSet, state: State) -> None:  # noqa: AR
 
 
 @_spec
-def tox_add_env_config(env_conf: EnvConfigSet, state: State) -> None:  # noqa: ARG001
+def tox_add_env_config(env_conf: EnvConfigSet, state: State) -> None:
     """
     Called when configuration is built for a tox environment.
 
@@ -60,7 +60,7 @@ def tox_add_env_config(env_conf: EnvConfigSet, state: State) -> None:  # noqa: A
 
 
 @_spec
-def tox_before_run_commands(tox_env: ToxEnv) -> None:  # noqa: ARG001
+def tox_before_run_commands(tox_env: ToxEnv) -> None:
     """
     Called before the commands set is executed.
 
@@ -69,7 +69,7 @@ def tox_before_run_commands(tox_env: ToxEnv) -> None:  # noqa: ARG001
 
 
 @_spec
-def tox_after_run_commands(tox_env: ToxEnv, exit_code: int, outcomes: list[Outcome]) -> None:  # noqa: ARG001
+def tox_after_run_commands(tox_env: ToxEnv, exit_code: int, outcomes: list[Outcome]) -> None:
     """
     Called after the commands set is executed.
 
@@ -80,7 +80,7 @@ def tox_after_run_commands(tox_env: ToxEnv, exit_code: int, outcomes: list[Outco
 
 
 @_spec
-def tox_on_install(tox_env: ToxEnv, arguments: Any, section: str, of_type: str) -> None:  # noqa: ARG001
+def tox_on_install(tox_env: ToxEnv, arguments: Any, section: str, of_type: str) -> None:
     """
     Called before executing an installation command.
 
@@ -92,7 +92,7 @@ def tox_on_install(tox_env: ToxEnv, arguments: Any, section: str, of_type: str) 
 
 
 @_spec
-def tox_env_teardown(tox_env: ToxEnv) -> None:  # noqa: ARG001
+def tox_env_teardown(tox_env: ToxEnv) -> None:
     """
     Called after a tox environment has been teared down.
 
