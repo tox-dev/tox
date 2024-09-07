@@ -20,6 +20,7 @@ jobs:
       fail-fast: false
       matrix:
         py:
+          - "3.13"
           - "3.12"
           - "3.11"
           - "3.10"
@@ -43,6 +44,7 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.py }}
+          allow-prereleases: true
       - name: Pick environment to run
         run: |
           import os; import platform; import sys; from pathlib import Path
@@ -52,7 +54,7 @@ jobs:
               file_handler.write(env)
         shell: python
       - name: Setup test suite
-        run: tox r -vv --notest
+        run: tox r -vv --notest --skip-missing-interpreters false
       - name: Run test suite
         run: tox r --skip-pkg-install
         env:
@@ -87,7 +89,7 @@ jobs:
           python-version: "3.12"
       - name: Install self-tox
         run: python -m pip install .
+      - name: Setup check suite
+        run: tox r -vv --notest --skip-missing-interpreters false -e  ${{ matrix.tox_env }}
       - name: Run check for ${{ matrix.tox_env }}
-        run: tox r -e ${{ matrix.tox_env }}
-        env:
-          UPGRADE_ADVISORY: "yes"
+        run: tox r --skip-pkg-install -e ${{ matrix.tox_env }}

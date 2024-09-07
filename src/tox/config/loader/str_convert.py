@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import shlex
 import sys
+from inspect import isclass
 from itertools import chain
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Iterator
@@ -28,7 +29,7 @@ class StrConvert(Convert[str]):
 
     @staticmethod
     def to_list(value: str, of_type: type[Any]) -> Iterator[str]:
-        splitter = "\n" if issubclass(of_type, Command) or "\n" in value else ","
+        splitter = "\n" if (isclass(of_type) and issubclass(of_type, Command)) or "\n" in value else ","
         splitter = splitter.replace("\r", "")
         for token in value.split(splitter):
             value = token.strip()

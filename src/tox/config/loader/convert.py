@@ -3,6 +3,7 @@ from __future__ import annotations
 import typing
 from abc import ABC, abstractmethod
 from collections import OrderedDict
+from inspect import isclass
 from pathlib import Path
 from typing import Any, Callable, Dict, Generic, Iterator, List, Literal, Optional, Set, TypeVar, Union, cast
 
@@ -18,7 +19,7 @@ Factory = Optional[Callable[[object], T]]  # note the argument is anything, due 
 class Convert(ABC, Generic[T]):
     """A class that converts a raw type to a given tox (python) type."""
 
-    def to(self, raw: T, of_type: type[V], factory: Factory[V]) -> V:  # noqa: PLR0911
+    def to(self, raw: T, of_type: type[V], factory: Factory[V]) -> V:  # noqa: PLR0911, C901
         """
         Convert given raw type to python type.
 
@@ -30,26 +31,26 @@ class Convert(ABC, Generic[T]):
         from_module = getattr(of_type, "__module__", None)
         if from_module in {"typing", "typing_extensions"}:
             return self._to_typing(raw, of_type, factory)
-        if issubclass(of_type, Path):
-            return self.to_path(raw)  # type: ignore[return-value]
-        if issubclass(of_type, bool):
-            return self.to_bool(raw)  # type: ignore[return-value]
-        if issubclass(of_type, Command):
-            return self.to_command(raw)  # type: ignore[return-value]
-        if issubclass(of_type, EnvList):
-            return self.to_env_list(raw)  # type: ignore[return-value]
-        if issubclass(of_type, str):
-            return self.to_str(raw)  # type: ignore[return-value]
-        # python does not allow use of parametrized generics with isinstance,
-        # so we need to check for them.
+        if isclass(of_type):
+            if issubclass(of_type, Path):
+                return self.to_path(raw)  # type: ignore[return-value]
+            if issubclass(of_type, bool):
+                return self.to_bool(raw)  # type: ignore[return-value]
+            if issubclass(of_type, Command):
+                return self.to_command(raw)  # type: ignore[return-value]
+            if issubclass(of_type, EnvList):
+                return self.to_env_list(raw)  # type: ignore[return-value]
+            if issubclass(of_type, str):
+                return self.to_str(raw)  # type: ignore[return-value]
+        # python does not allow use of parametrized generics with isinstance, so we need to check for them.
         if hasattr(typing, "GenericAlias") and isinstance(of_type, typing.GenericAlias):
             return list(self.to_list(raw, of_type=of_type))  # type: ignore[return-value]
         if isinstance(raw, of_type):  # already target type no need to transform it
             # do it this late to allow normalization - e.g. string strip
-            return raw
+            return raw  # type: ignore[no-any-return]
         if factory:
             return factory(raw)
-        return of_type(raw)  # type: ignore[call-arg]
+        return of_type(raw)  # type: ignore[no-any-return]
 
     def _to_typing(self, raw: T, of_type: type[V], factory: Factory[V]) -> V:  # noqa: C901
         origin = getattr(of_type, "__origin__", of_type.__class__)
