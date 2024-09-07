@@ -50,7 +50,7 @@ dynamic = [
   "version",
 ]
 dependencies = [
-  "cachetools>=5.4",
+  "cachetools>=5.5",
   "chardet>=5.2",
   "colorama>=0.4.6",
   "filelock>=3.15.4",
@@ -62,17 +62,17 @@ dependencies = [
   "virtualenv>=20.26.3",
 ]
 optional-dependencies.docs = [
-  "furo>=2024.7.18",
-  "sphinx>=7.4.7",
-  "sphinx-argparse-cli>=1.16",
-  "sphinx-autodoc-typehints>=2.2.3",
+  "furo>=2024.8.6",
+  "sphinx>=8.0.2",
+  "sphinx-argparse-cli>=1.17",
+  "sphinx-autodoc-typehints>=2.4",
   "sphinx-copybutton>=0.5.2",
   "sphinx-inline-tabs>=2023.4.21",
   "sphinxcontrib-towncrier>=0.2.1a0",
-  "towncrier>=23.11",
+  "towncrier>=24.8",
 ]
 optional-dependencies.testing = [
-  "build[virtualenv]>=1.2.1",
+  "build[virtualenv]>=1.2.2",
   "covdefaults>=2.3",
   "detect-test-pollution>=1.2",
   "devpi-process>=1",
@@ -87,9 +87,9 @@ optional-dependencies.testing = [
   "pytest-mock>=3.14",
   "pytest-xdist>=3.6.1",
   "re-assert>=1.1",
-  "setuptools>=70.3",
-  "time-machine>=2.14.2; implementation_name!='pypy'",
-  "wheel>=0.43",
+  "setuptools>=74.1.2",
+  "time-machine>=2.15; implementation_name!='pypy'",
+  "wheel>=0.44",
 ]
 urls.Documentation = "https://tox.wiki"
 urls.Homepage = "http://tox.readthedocs.org"
@@ -141,10 +141,10 @@ lint.ignore = [
 ]
 lint.per-file-ignores."tests/**/*.py" = [
   "D",       # don't care about documentation in tests
-  "FBT",     # don"t care about booleans as positional arguments in tests
+  "FBT",     # don't care about booleans as positional arguments in tests
   "INP001",  # no implicit namespace
   "PLR2004", # Magic value used in comparison, consider replacing with a constant variable
-  "S101",    # asserts allowed in tests...
+  "S101",    # asserts allowed in tests
   "S603",    # `subprocess` call: check for execution of untrusted input
 ]
 lint.isort = { known-first-party = [
