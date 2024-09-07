@@ -4,6 +4,18 @@ Release History
 
 .. towncrier release notes start
 
+v4.18.1 (2024-09-07)
+--------------------
+
+Bugfixes - 4.18.1
+~~~~~~~~~~~~~~~~~
+- Fix and test the string spec for the ``sys.executable`` interpreter (introduced in :pull:`3325`)
+  - by :user:`hroncok` (:issue:`3327`)
+
+Improved Documentation - 4.18.1
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+- Changes the ``tox_env_teardown`` docstring to explain the hook is called after a tox env was teared down. (:issue:`3305`)
+
 v4.18.0 (2024-08-13)
 --------------------
 

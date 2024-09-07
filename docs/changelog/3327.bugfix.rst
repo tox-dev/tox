@@ -1,2 +1,0 @@
-Fix and test the string spec for the ``sys.executable`` interpreter (introduced in :pull:`3325`)
-- by :user:`hroncok`
