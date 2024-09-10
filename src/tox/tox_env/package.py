@@ -10,6 +10,8 @@ from typing import TYPE_CHECKING, Any, Callable, Generator, Iterator, cast
 
 from filelock import FileLock
 
+from tox.util.path import ensure_cachedir_dir
+
 from .api import ToxEnv, ToxEnvCreateArgs
 
 if TYPE_CHECKING:
@@ -67,9 +69,12 @@ class PackageToxEnv(ToxEnv, ABC):
 
     def register_config(self) -> None:
         super().register_config()
-        file_lock_path: Path = self.env_dir / "file.lock"
+        env_dir = self.env_dir
+        if env_dir.parent == self.work_dir:
+            self._maybe_ensure_workdir()
+        ensure_cachedir_dir(env_dir)
+        file_lock_path: Path = env_dir / "file.lock"
         self._file_lock = FileLock(file_lock_path)
-        file_lock_path.parent.mkdir(parents=True, exist_ok=True)
         self.core.add_config(
             keys=["package_root", "setupdir"],
             of_type=Path,

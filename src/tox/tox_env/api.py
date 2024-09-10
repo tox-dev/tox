@@ -17,7 +17,7 @@ from typing import TYPE_CHECKING, Any, Iterator, List, NamedTuple, Sequence, Set
 from tox.execute.request import ExecuteRequest
 from tox.tox_env.errors import Fail, Recreate, Skip
 from tox.tox_env.info import Info
-from tox.util.path import ensure_empty_dir
+from tox.util.path import ensure_cachedir_dir, ensure_empty_dir
 
 if TYPE_CHECKING:
     from tox.config.cli.parser import Parsed
@@ -315,16 +315,27 @@ class ToxEnv(ABC):  # noqa: PLR0904
     def _done_with_setup(self) -> None:  # noqa: B027 # empty abstract base class
         """Called when setup is done."""
 
+    def _maybe_ensure_workdir(self) -> None:
+        if not self.work_dir.is_dir():
+            # Populate the workdir with a CACHEDIR.TAG file only if we would
+            # be creating it now. If it already exists, do not touch it.
+            ensure_cachedir_dir(self.work_dir)
+
     def _handle_env_tmp_dir(self) -> None:
         """Ensure exists and empty."""
         env_tmp_dir = self.env_tmp_dir
         if env_tmp_dir.exists() and next(env_tmp_dir.iterdir(), None) is not None:
             LOGGER.debug("clear env temp folder %s", env_tmp_dir)
             ensure_empty_dir(env_tmp_dir)
-        env_tmp_dir.mkdir(parents=True, exist_ok=True)
+        if env_tmp_dir.parent == self.work_dir:
+            self._maybe_ensure_workdir()
+        ensure_cachedir_dir(env_tmp_dir)
 
     def _handle_core_tmp_dir(self) -> None:
-        self.temp_dir.mkdir(parents=True, exist_ok=True)
+        temp_dir = self.temp_dir
+        if temp_dir.parent == self.work_dir:
+            self._maybe_ensure_workdir()
+        ensure_cachedir_dir(temp_dir)
 
     def _clean(self, transitive: bool = False) -> None:  # noqa: ARG002, FBT001, FBT002
         if self._run_state["clean"]:  # pragma: no branch
@@ -333,6 +344,7 @@ class ToxEnv(ABC):  # noqa: PLR0904
         if env_dir.exists():
             LOGGER.warning("remove tox env folder %s", env_dir)
             ensure_empty_dir(env_dir, except_filename="file.lock")
+            ensure_cachedir_dir(env_dir)
         self._log_id = 0  # we deleted logs, so start over counter
         self.cache.reset()
         self._run_state.update({"setup": False, "clean": True})

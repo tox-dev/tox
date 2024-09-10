@@ -13,6 +13,7 @@ from virtualenv.discovery.py_spec import PythonSpec
 
 from tox.tox_env.api import ToxEnv, ToxEnvCreateArgs
 from tox.tox_env.errors import Fail, Recreate, Skip
+from tox.util.path import ensure_cachedir_dir
 
 if TYPE_CHECKING:
     from tox.config.main import Config
@@ -236,6 +237,7 @@ class Python(ToxEnv, ABC):
         with self.cache.compare(conf, Python.__name__) as (eq, old):
             if old is None:  # does not exist -> create
                 self.create_python_env()
+                ensure_cachedir_dir(self.env_dir)
             elif eq is False:  # pragma: no branch # exists but changed -> recreate
                 raise Recreate(self._diff_msg(conf, old))
 
