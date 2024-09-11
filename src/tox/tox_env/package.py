@@ -67,7 +67,7 @@ class PackageToxEnv(ToxEnv, ABC):
 
     def register_config(self) -> None:
         super().register_config()
-        file_lock_path: Path = self.conf["env_dir"] / "file.lock"
+        file_lock_path: Path = self.env_dir / "file.lock"
         self._file_lock = FileLock(file_lock_path)
         file_lock_path.parent.mkdir(parents=True, exist_ok=True)
         self.core.add_config(
