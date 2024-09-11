@@ -200,6 +200,11 @@ class ToxEnv(ABC):  # noqa: PLR0904
         return cast(Path, self.core["work_dir"])
 
     @property
+    def temp_dir(self) -> Path:
+        """:return: the tox work dir folder"""
+        return cast(Path, self.core["temp_dir"])
+
+    @property
     def name(self) -> str:
         return cast(str, self.conf["env_name"])
 
@@ -319,7 +324,7 @@ class ToxEnv(ABC):  # noqa: PLR0904
         env_tmp_dir.mkdir(parents=True, exist_ok=True)
 
     def _handle_core_tmp_dir(self) -> None:
-        self.core["temp_dir"].mkdir(parents=True, exist_ok=True)
+        self.temp_dir.mkdir(parents=True, exist_ok=True)
 
     def _clean(self, transitive: bool = False) -> None:  # noqa: ARG002, FBT001, FBT002
         if self._run_state["clean"]:  # pragma: no branch
