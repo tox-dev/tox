@@ -43,6 +43,7 @@ def test_memory_loader_override() -> None:
         (os.getcwd(), Path, Path.cwd()),  # noqa: PTH109
         ("pip list", Command, Command(["pip", "list"])),
         ("a\nb", EnvList, EnvList(["a", "b"])),
+        (["a", "b"], EnvList, EnvList(["a", "b"])),
         ("1", Optional[int], 1),
     ],
 )

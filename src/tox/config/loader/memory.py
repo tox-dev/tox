@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Iterator
+from typing import TYPE_CHECKING, Any, Iterator, Sequence
 
 from tox.config.types import Command, EnvList
 
@@ -62,4 +62,6 @@ class MemoryLoader(Loader[Any]):
             return value
         if isinstance(value, str):
             return StrConvert.to_env_list(value)
+        if isinstance(value, Sequence):
+            return EnvList(value)
         raise TypeError(value)
