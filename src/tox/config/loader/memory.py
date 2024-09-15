@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, Any, Iterator, Sequence
 
 from tox.config.types import Command, EnvList
 
-from .api import Loader
+from .api import Loader, Override
 from .section import Section
 from .str_convert import StrConvert
 
@@ -14,9 +14,16 @@ if TYPE_CHECKING:
 
 
 class MemoryLoader(Loader[Any]):
-    def __init__(self, **kwargs: Any) -> None:
-        super().__init__(Section(prefix="<memory>", name=str(id(self))), [])
-        self.raw: dict[str, Any] = {**kwargs}
+    def __init__(
+        self,
+        raw: dict[str, Any],
+        *,
+        section: Section | None = None,
+        overrides: list[Override] | None = None,
+    ) -> None:
+        section = section or Section(prefix="<memory>", name=str(id(self)))
+        super().__init__(section, overrides or [])
+        self.raw = raw
 
     def load_raw(self, key: Any, conf: Config | None, env_name: str | None) -> Any:  # noqa: ARG002
         return self.raw[key]
