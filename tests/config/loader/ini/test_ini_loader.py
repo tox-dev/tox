@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING, Callable
 
 import pytest
 
-from tox.config.loader.api import ConfigLoadArgs, Override
+from tox.config.loader.api import ConfigLoadArgs
 from tox.config.loader.ini import IniLoader
 from tox.config.source.ini_section import IniSection
 
@@ -16,12 +16,6 @@ def test_ini_loader_keys(mk_ini_conf: Callable[[str], ConfigParser]) -> None:
     core = IniSection(None, "tox")
     loader = IniLoader(core, mk_ini_conf("\n[tox]\n\na=b\nc=d\n\n"), [], core_section=core)
     assert loader.found_keys() == {"a", "c"}
-
-
-def test_ini_loader_repr(mk_ini_conf: Callable[[str], ConfigParser]) -> None:
-    core = IniSection(None, "tox")
-    loader = IniLoader(core, mk_ini_conf("\n[tox]\n\na=b\nc=d\n\n"), [Override("tox.a=1")], core_section=core)
-    assert repr(loader) == "IniLoader(section=tox, overrides={'a': [Override('tox.a=1')]})"
 
 
 def test_ini_loader_has_section(mk_ini_conf: Callable[[str], ConfigParser]) -> None:

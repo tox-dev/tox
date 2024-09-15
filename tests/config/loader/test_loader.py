@@ -5,9 +5,12 @@ from typing import TYPE_CHECKING
 import pytest
 
 from tox.config.cli.parse import get_options
-from tox.config.loader.api import Override
+from tox.config.loader.api import Loader, Override
+from tox.config.loader.section import Section
+from tox.config.loader.str_convert import StrConvert
 
 if TYPE_CHECKING:
+    from tox.config.main import Config
     from tox.pytest import CaptureFixture
 
 
@@ -62,3 +65,19 @@ def test_override_not_equals_different_type() -> None:
 
 def test_override_repr() -> None:
     assert repr(Override("b.a=c")) == "Override('b.a=c')"
+
+
+class SimpleLoader(StrConvert, Loader[str]):
+    """Simple loader for tests."""
+
+    def load_raw(self, key: str, conf: Config | None, env_name: str | None) -> str:  # type: ignore[empty-body]
+        pass
+
+    def found_keys(self) -> set[str]:  # type: ignore[empty-body]
+        pass
+
+
+def test_loader_repr() -> None:
+    core = Section(None, "tox")
+    loader = SimpleLoader(core, [Override("tox.a=1")])
+    assert repr(loader) == "SimpleLoader(section=tox, overrides={'a': [Override('tox.a=1')]})"

@@ -107,7 +107,7 @@ class Loader(Convert[T]):
         raise NotImplementedError
 
     def __repr__(self) -> str:
-        return f"{type(self).__name__}"
+        return f"{self.__class__.__name__}(section={self._section.key}, overrides={self.overrides!r})"
 
     def __contains__(self, item: str) -> bool:
         return item in self.found_keys()

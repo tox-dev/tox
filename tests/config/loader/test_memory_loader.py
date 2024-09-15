@@ -11,11 +11,6 @@ from tox.config.loader.memory import MemoryLoader
 from tox.config.types import Command, EnvList
 
 
-def test_memory_loader_repr() -> None:
-    loader = MemoryLoader(a=1)
-    assert repr(loader) == "MemoryLoader"
-
-
 def test_memory_loader_override() -> None:
     loader = MemoryLoader(a=1)
     loader.overrides["a"] = [Override("a=2")]

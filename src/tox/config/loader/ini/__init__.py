@@ -95,6 +95,3 @@ class IniLoader(StrConvert, Loader[str]):
         if self._parser.has_section(name):
             return self._parser[name]
         return None
-
-    def __repr__(self) -> str:
-        return f"{self.__class__.__name__}(section={self._section.key}, overrides={self.overrides!r})"
