@@ -114,12 +114,11 @@ def setup(app: Sphinx) -> None:
         ) -> Element:
             # fixup some wrongly resolved mappings
             mapping = {
-                "_io.TextIOWrapper": "io.TextIOWrapper",
                 "tox.config.of_type.T": "typing.TypeVar",  # used by Sphinx bases
                 "tox.config.loader.api.T": "typing.TypeVar",  # used by Sphinx bases
                 "tox.config.loader.convert.T": "typing.TypeVar",  # used by Sphinx bases
                 "tox.tox_env.installer.T": "typing.TypeVar",  # used by Sphinx bases
-                "concurrent.futures._base.Future": "concurrent.futures.Future",
+                "pathlib._local.Path": "pathlib.Path",
             }
             if target in mapping:
                 target = node["reftarget"] = mapping[target]

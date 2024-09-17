@@ -104,6 +104,7 @@ def test_diff_msg_no_diff() -> None:
         ("3.10", "3.10"),
         ("3.9", "3.9"),
         ("2.7", "2.7"),
+        ("pypy-3.10", "pypy3.10"),
     ],
     ids=lambda a: "|".join(a) if isinstance(a, list) else str(a),
 )
