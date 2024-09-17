@@ -55,7 +55,7 @@ PY_FACTORS_RE = re.compile(
     """,
     re.VERBOSE,
 )
-PY_FACTORS_RE_EXPLICIT_VERSION = re.compile(r"^(?P<version>[2-9]\.[0-9]+)$")
+PY_FACTORS_RE_EXPLICIT_VERSION = re.compile(r"^((?P<impl>cpython|pypy)-)?(?P<version>[2-9]\.[0-9]+)$")
 
 
 class Python(ToxEnv, ABC):
@@ -144,7 +144,8 @@ class Python(ToxEnv, ABC):
         candidates: list[str] = []
         match = PY_FACTORS_RE_EXPLICIT_VERSION.match(env_name)
         if match:
-            candidates.append(env_name)
+            found = match.groupdict()
+            candidates.append(f'{"pypy" if found["impl"] == "pypy" else ""}{found["version"]}')
         else:
             for factor in env_name.split("-"):
                 match = PY_FACTORS_RE.match(factor)
