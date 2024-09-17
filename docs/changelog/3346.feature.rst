@@ -1,1 +1,0 @@
-Support ``pypy-<major>.<minor>`` environment names for PyPy environments - by :user:`gaborbernat`.

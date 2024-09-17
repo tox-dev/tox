@@ -4,6 +4,13 @@ Release History
 
 .. towncrier release notes start
 
+v4.19.0 (2024-09-17)
+--------------------
+
+Features - 4.19.0
+~~~~~~~~~~~~~~~~~
+- Support ``pypy-<major>.<minor>`` environment names for PyPy environments - by :user:`gaborbernat`. (:issue:`3346`)
+
 v4.18.1 (2024-09-07)
 --------------------
 
