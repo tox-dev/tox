@@ -1,0 +1,2 @@
+Separate the list dependencies functionality to a separate abstract class allowing code reuse in plugins (such as
+``tox-uv``) - by :gaborbernat`.
