@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from abc import ABC
 from functools import partial
 from typing import TYPE_CHECKING, Set
 
@@ -16,11 +17,13 @@ from tox.tox_env.runner import RunToxEnv
 from .api import Python
 
 if TYPE_CHECKING:
+    from tox.config.cli.parser import Parsed
+    from tox.config.sets import CoreConfigSet, EnvConfigSet
     from tox.tox_env.api import ToxEnvCreateArgs
     from tox.tox_env.package import Package
 
 
-class PythonRun(Python, RunToxEnv):
+class PythonRun(Python, RunToxEnv, ABC):
     def __init__(self, create_args: ToxEnvCreateArgs) -> None:
         super().__init__(create_args)
 
@@ -34,19 +37,7 @@ class PythonRun(Python, RunToxEnv):
             default=PythonDeps("", root),
             desc="Name of the python dependencies as specified by PEP-440",
         )
-
-        def skip_missing_interpreters_post_process(value: bool) -> bool:  # noqa: FBT001
-            if getattr(self.options, "skip_missing_interpreters", "config") != "config":
-                return StrConvert().to_bool(self.options.skip_missing_interpreters)
-            return value
-
-        self.core.add_config(
-            keys=["skip_missing_interpreters"],
-            default=True,
-            of_type=bool,
-            post_process=skip_missing_interpreters_post_process,
-            desc="skip running missing interpreters",
-        )
+        add_skip_missing_interpreters_to_core(self.core, self.options)
 
     @property
     def _package_types(self) -> tuple[str, ...]:
@@ -77,18 +68,7 @@ class PythonRun(Python, RunToxEnv):
         if pkg_type == "skip":
             return False
 
-        def _normalize_extras(values: set[str]) -> set[str]:
-            # although _ and . is allowed this will be normalized during packaging to -
-            # https://packaging.python.org/en/latest/specifications/dependency-specifiers/#grammar
-            return {canonicalize_name(v) for v in values}
-
-        self.conf.add_config(
-            keys=["extras"],
-            of_type=Set[str],
-            default=set(),
-            desc="extras to install of the target package",
-            post_process=_normalize_extras,
-        )
+        add_extras_to_env(self.conf)
         return True
 
     @property
@@ -122,3 +102,40 @@ class PythonRun(Python, RunToxEnv):
                 msg = f"{exception.args[0]} for package environment {package_env.conf['env_name']}"
                 raise Skip(msg) from exception
         return packages
+
+
+def add_skip_missing_interpreters_to_core(core: CoreConfigSet, options: Parsed) -> None:
+    def skip_missing_interpreters_post_process(value: bool) -> bool:  # noqa: FBT001
+        if getattr(options, "skip_missing_interpreters", "config") != "config":
+            return StrConvert().to_bool(options.skip_missing_interpreters)
+        return value
+
+    core.add_config(
+        keys=["skip_missing_interpreters"],
+        default=True,
+        of_type=bool,
+        post_process=skip_missing_interpreters_post_process,
+        desc="skip running missing interpreters",
+    )
+
+
+def add_extras_to_env(conf: EnvConfigSet) -> None:
+    def _normalize_extras(values: set[str]) -> set[str]:
+        # although _ and . is allowed this will be normalized during packaging to -
+        # https://packaging.python.org/en/latest/specifications/dependency-specifiers/#grammar
+        return {canonicalize_name(v) for v in values}
+
+    conf.add_config(
+        keys=["extras"],
+        of_type=Set[str],
+        default=set(),
+        desc="extras to install of the target package",
+        post_process=_normalize_extras,
+    )
+
+
+__all__ = [
+    "PythonRun",
+    "add_extras_to_env",
+    "add_skip_missing_interpreters_to_core",
+]
