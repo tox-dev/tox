@@ -4,6 +4,14 @@ Release History
 
 .. towncrier release notes start
 
+v4.20.0 (2024-09-18)
+--------------------
+
+Features - 4.20.0
+~~~~~~~~~~~~~~~~~
+- Separate the list dependencies functionality to a separate abstract class allowing code reuse in plugins (such as
+  ``tox-uv``) - by :gaborbernat`. (:issue:`3347`)
+
 v4.19.0 (2024-09-17)
 --------------------
 
