@@ -60,7 +60,11 @@ def expand_factors(value: str) -> Iterator[tuple[list[list[tuple[str, bool]]] | 
 
 
 def find_factor_groups(value: str) -> Iterator[list[tuple[str, bool]]]:
-    """Transform '{py,!pi}-{a,b},c' to [{'py', 'a'}, {'py', 'b'}, {'pi', 'a'}, {'pi', 'b'}, {'c'}]."""
+    """Transform '{py,!pi}-{a,b},c' to [[('py', False), ('a', False)],
+    [('py', False), ('b', False)],
+    [('pi', True), ('a', False)],
+    [('pi', False), ('b', True)],
+    [('c', False)]]."""
     for env in expand_env_with_negation(value):
         result = [name_with_negate(f) for f in env.split("-")]
         yield result

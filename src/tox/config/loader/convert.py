@@ -4,9 +4,11 @@ import typing
 from abc import ABC, abstractmethod
 from collections import OrderedDict
 from inspect import isclass
+from itertools import chain
 from pathlib import Path
-from typing import Any, Callable, Dict, Generic, Iterator, List, Literal, Optional, Set, TypeVar, Union, cast
+from typing import Any, Callable, Dict, Generic, Iterable, Iterator, List, Literal, Optional, Set, TypeVar, Union, cast
 
+from tox.config.loader.ini.factor import find_factor_groups
 from tox.config.types import Command, EnvList
 
 _NO_MAPPING = object()
@@ -14,6 +16,44 @@ T = TypeVar("T")
 V = TypeVar("V")
 
 Factory = Optional[Callable[[object], T]]  # note the argument is anything, due e.g. memory loader can inject anything
+
+
+class ConditionalValue(Generic[T]):
+    """Value with a condition."""
+
+    def __init__(self, value: T, condition: str | None) -> None:
+        self.value = value
+        self.condition = condition
+        self._groups = tuple(find_factor_groups(condition)) if condition is not None else ()
+
+    def matches(self, env_name: str) -> bool:
+        """Return whether the value matches the environment name."""
+        if self.condition is None:
+            return True
+
+        # Split env_name to factors.
+        env_factors = set(chain.from_iterable([(i for i, _ in a) for a in find_factor_groups(env_name)]))
+
+        matches = []
+        for group in self._groups:
+            group_matches = []
+            for factor, negate in group:
+                group_matches.append((factor in env_factors) ^ negate)
+            matches.append(all(group_matches))
+        return any(matches)
+
+
+class ConditionalSetting(Generic[T]):
+    """Setting whose value depends on various conditions."""
+
+    def __init__(self, values: typing.Iterable[ConditionalValue[T]]) -> None:
+        self.values = tuple(values)
+
+    def filter(self, env_name: str) -> Iterable[T]:
+        """Filter values for the environment."""
+        for value in self.values:
+            if value.matches(env_name):
+                yield value.value
 
 
 class Convert(ABC, Generic[T]):
