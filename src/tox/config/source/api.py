@@ -23,6 +23,9 @@ class Source(ABC):
         self.path: Path = path  #: the path to the configuration source
         self._section_to_loaders: dict[str, list[Loader[Any]]] = {}
 
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}(path={self.path})"
+
     def get_loaders(
         self,
         section: Section,
