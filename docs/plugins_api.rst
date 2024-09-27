@@ -63,6 +63,9 @@ config
 .. autoclass:: tox.config.loader.api.Loader
    :members:
 
+.. autoclass:: tox.config.loader.memory.MemoryLoader
+   :members:
+
 .. autoclass:: tox.config.loader.convert.Convert
    :members:
 
