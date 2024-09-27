@@ -77,7 +77,10 @@ V = TypeVar("V")
 
 
 class Loader(Convert[T]):
-    """Loader loads a configuration value and converts it."""
+    """Loader loads configuration values and converts it.
+
+    :param overrides: A list of overrides to be applied.
+    """
 
     def __init__(self, section: Section, overrides: list[Override]) -> None:
         self._section = section
@@ -88,6 +91,7 @@ class Loader(Convert[T]):
 
     @property
     def section(self) -> Section:
+        """Return the section of the configuration from where the values are extracted."""
         return self._section
 
     @abstractmethod
