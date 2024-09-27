@@ -15,7 +15,7 @@ def empty_config(tox_ini_conf: ToxIniCreator) -> Config:
     return tox_ini_conf("")
 
 
-@pytest.fixture()
+@pytest.fixture
 def empty_toml_config(tox_toml_conf: ToxTomlCreator) -> Config:
     """Make and return an empty TOML config file."""
     return tox_toml_conf("")

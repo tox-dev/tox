@@ -72,7 +72,7 @@ class ToxTomlCreator(Protocol):
     def __call__(self, conf: str, override: Sequence[Override] | None = None) -> Config: ...
 
 
-@pytest.fixture()
+@pytest.fixture
 def tox_toml_conf(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> ToxTomlCreator:
     """Return a factory for TOML config files."""
 

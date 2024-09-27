@@ -9,7 +9,7 @@ if TYPE_CHECKING:
     from pathlib import Path
 
 
-@pytest.fixture()
+@pytest.fixture
 def mk_toml_conf(tmp_path: Path) -> Callable[[str], dict[str, Any]]:
     def _func(raw: str) -> dict[str, Any]:
         filename = tmp_path / "demo.toml"
