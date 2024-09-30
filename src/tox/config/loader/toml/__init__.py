@@ -3,13 +3,15 @@ from __future__ import annotations
 from pathlib import Path
 from typing import TYPE_CHECKING, Dict, Iterator, List, Mapping, Set, TypeVar, cast
 
-from tox.config.loader.api import Loader, Override
+from tox.config.loader.api import ConfigLoadArgs, Loader, Override
 from tox.config.types import Command, EnvList
 
 from ._api import TomlTypes
+from ._replace import unroll_refs_and_apply_substitutions
 from ._validate import validate
 
 if TYPE_CHECKING:
+    from tox.config.loader.convert import Factory
     from tox.config.loader.section import Section
     from tox.config.main import Config
 
@@ -36,6 +38,18 @@ class TomlLoader(Loader[TomlTypes]):
 
     def load_raw(self, key: str, conf: Config | None, env_name: str | None) -> TomlTypes:  # noqa: ARG002
         return self.content[key]
+
+    def build(  # noqa: PLR0913
+        self,
+        key: str,  # noqa: ARG002
+        of_type: type[_T],
+        factory: Factory[_T],
+        conf: Config | None,
+        raw: TomlTypes,
+        args: ConfigLoadArgs,
+    ) -> _T:
+        raw = unroll_refs_and_apply_substitutions(conf=conf, loader=self, value=raw, args=args)
+        return self.to(raw, of_type, factory)
 
     def found_keys(self) -> set[str]:
         return set(self.content.keys()) - self._unused_exclude

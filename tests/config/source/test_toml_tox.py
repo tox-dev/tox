@@ -63,5 +63,5 @@ def test_config_in_toml_extra(tox_project: ToxProjectCreator) -> None:
 
 def test_config_in_toml_replace(tox_project: ToxProjectCreator) -> None:
     project = tox_project({"tox.toml": '[env_run_base]\ndescription = "Magic in {env_name}"'})
-    outcome = project.run("c", "-k", "commands")
+    outcome = project.run("c", "-k", "description")
     outcome.assert_success()
