@@ -4,11 +4,11 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from tox.config.loader.ini.replace import MatchExpression, find_replace_expr
+from tox.config.loader.replacer import MatchExpression, find_replace_expr
 from tox.report import HandledError
 
 if TYPE_CHECKING:
-    from tests.config.loader.ini.replace.conftest import ReplaceOne
+    from tests.config.loader.conftest import ReplaceOne
 
 
 @pytest.mark.parametrize(

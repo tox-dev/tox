@@ -1,13 +1,14 @@
 from __future__ import annotations
 
+import logging
 from pathlib import Path
-from typing import TYPE_CHECKING, Dict, Iterator, List, Mapping, Set, TypeVar, cast
+from typing import TYPE_CHECKING, Dict, Iterator, List, Mapping, TypeVar, cast
 
 from tox.config.loader.api import ConfigLoadArgs, Loader, Override
 from tox.config.types import Command, EnvList
 
 from ._api import TomlTypes
-from ._replace import unroll_refs_and_apply_substitutions
+from ._replace import Unroll
 from ._validate import validate
 
 if TYPE_CHECKING:
@@ -27,9 +28,11 @@ class TomlLoader(Loader[TomlTypes]):
         section: Section,
         overrides: list[Override],
         content: Mapping[str, TomlTypes],
+        root_content: Mapping[str, TomlTypes],
         unused_exclude: set[str],
     ) -> None:
         self.content = content
+        self._root_content = root_content
         self._unused_exclude = unused_exclude
         super().__init__(section, overrides)
 
@@ -38,6 +41,17 @@ class TomlLoader(Loader[TomlTypes]):
 
     def load_raw(self, key: str, conf: Config | None, env_name: str | None) -> TomlTypes:  # noqa: ARG002
         return self.content[key]
+
+    def load_raw_from_root(self, path: str) -> TomlTypes:
+        current = cast(TomlTypes, self._root_content)
+        for key in path.split(self.section.SEP):
+            if isinstance(current, dict):
+                current = current[key]
+            else:
+                msg = f"Failed to load key {key} as not dictionary {current!r}"
+                logging.warning(msg)
+                raise KeyError(msg)
+        return current
 
     def build(  # noqa: PLR0913
         self,
@@ -48,8 +62,8 @@ class TomlLoader(Loader[TomlTypes]):
         raw: TomlTypes,
         args: ConfigLoadArgs,
     ) -> _T:
-        raw = unroll_refs_and_apply_substitutions(conf=conf, loader=self, value=raw, args=args)
-        return self.to(raw, of_type, factory)
+        exploded = Unroll(conf=conf, loader=self, args=args)(raw)
+        return self.to(exploded, of_type, factory)
 
     def found_keys(self) -> set[str]:
         return set(self.content.keys()) - self._unused_exclude
@@ -69,7 +83,7 @@ class TomlLoader(Loader[TomlTypes]):
 
     @staticmethod
     def to_set(value: TomlTypes, of_type: type[_T]) -> Iterator[_T]:
-        of = Set[of_type]  # type: ignore[valid-type] # no mypy support
+        of = List[of_type]  # type: ignore[valid-type] # no mypy support
         return iter(validate(value, of))  # type: ignore[call-overload,no-any-return]
 
     @staticmethod

@@ -15,8 +15,6 @@ class TomlTox(TomlPyProject):
     FILENAME = "tox.toml"
     _Section = TomlToxSection
 
-    def _post_validate(self) -> None: ...
-
 
 __all__ = [
     "TomlTox",

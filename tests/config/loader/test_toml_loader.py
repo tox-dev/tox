@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any, Dict, List, Literal, Optional, Set, TypeVar
+from typing import Any, Dict, List, Literal, Optional, TypeVar
 
 import pytest
 
@@ -12,17 +12,17 @@ from tox.config.types import Command, EnvList
 
 
 def test_toml_loader_load_raw() -> None:
-    loader = TomlLoader(TomlPyProjectSection.from_key("tox.env.A"), [], {"a": 1, "c": False}, set())
+    loader = TomlLoader(TomlPyProjectSection.from_key("tox.env.A"), [], {"a": 1, "c": False}, {}, set())
     assert loader.load_raw("a", None, "A") == 1
 
 
 def test_toml_loader_load_repr() -> None:
-    loader = TomlLoader(TomlPyProjectSection.from_key("tox.env.A"), [], {"a": 1}, set())
+    loader = TomlLoader(TomlPyProjectSection.from_key("tox.env.A"), [], {"a": 1}, {}, set())
     assert repr(loader) == "TomlLoader(env.A, {'a': 1})"
 
 
 def test_toml_loader_found_keys() -> None:
-    loader = TomlLoader(TomlPyProjectSection.from_key("tox.env.A"), [], {"a": 1, "c": False}, set())
+    loader = TomlLoader(TomlPyProjectSection.from_key("tox.env.A"), [], {"a": 1, "c": False}, {}, set())
     assert loader.found_keys() == {"a", "c"}
 
 
@@ -35,7 +35,7 @@ V = TypeVar("V")
 
 def perform_load(value: Any, of_type: type[V]) -> V:
     env_name, key = "A", "k"
-    loader = TomlLoader(TomlPyProjectSection.from_key(f"tox.env.{env_name}"), [], {key: value}, set())
+    loader = TomlLoader(TomlPyProjectSection.from_key(f"tox.env.{env_name}"), [], {key: value}, {}, set())
     args = ConfigLoadArgs(None, env_name, env_name)
     return loader.load(key, of_type, factory_na, None, args)  # type: ignore[arg-type]
 
@@ -70,20 +70,6 @@ def test_toml_loader_list_nok() -> None:
 def test_toml_loader_list_nok_element() -> None:
     with pytest.raises(TypeError, match="2 is not of type 'str'"):
         perform_load(["a", 2], List[str])
-
-
-def test_toml_loader_set_ok() -> None:
-    assert perform_load({"a"}, Set[str]) == {"a"}
-
-
-def test_toml_loader_set_nok() -> None:
-    with pytest.raises(TypeError, match="{} is not set"):
-        perform_load({}, Set[str])
-
-
-def test_toml_loader_set_nok_element() -> None:
-    with pytest.raises(TypeError, match="2 is not of type 'str'"):
-        perform_load({"a", 2}, Set[str])
 
 
 def test_toml_loader_dict_ok() -> None:

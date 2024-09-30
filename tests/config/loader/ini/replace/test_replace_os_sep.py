@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 import pytest
 
 if TYPE_CHECKING:
-    from tests.config.loader.ini.replace.conftest import ReplaceOne
+    from tests.config.loader.conftest import ReplaceOne
     from tox.pytest import MonkeyPatch
 
 

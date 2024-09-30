@@ -7,7 +7,6 @@ from typing import (
     Dict,
     List,
     Literal,
-    Set,
     TypeVar,
     Union,
     cast,
@@ -41,13 +40,6 @@ def validate(val: TomlTypes, of_type: type[T]) -> TypeGuard[T]:  # noqa: C901, P
     elif isclass(of_type) and issubclass(of_type, Command):
         # first we cast it to list then create commands, so for now validate it as a nested list
         validate(val, List[str])
-    elif casting_to in {set, Set}:
-        entry_type = of_type.__args__[0]  # type: ignore[attr-defined]
-        if isinstance(val, set):
-            for va in val:
-                validate(va, entry_type)
-        else:
-            msg = f"{val!r} is not set"
     elif casting_to in {dict, Dict}:
         key_type, value_type = of_type.__args__[0], of_type.__args__[1]  # type: ignore[attr-defined]
         if isinstance(val, dict):
