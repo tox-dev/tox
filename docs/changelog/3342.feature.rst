@@ -1,0 +1,7 @@
+Tox now creates ``CACHEDIR.TAG`` files in work directories it creates,
+so that tools like ``tar`` can exclude them from e.g. backups where
+ephemeral directories are not desired.
+
+Tag files are not created in directories Tox does not itself create.
+
+- by :user:`akx`
