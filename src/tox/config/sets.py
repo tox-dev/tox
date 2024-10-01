@@ -232,7 +232,10 @@ class EnvConfigSet(ConfigSet):
             return values
 
         def set_env_factory(raw: object) -> SetEnv:
-            if not isinstance(raw, str):
+            if not (
+                isinstance(raw, str)
+                or (isinstance(raw, dict) and all(isinstance(k, str) and isinstance(v, str) for k, v in raw.items()))
+            ):
                 raise TypeError(raw)
             return SetEnv(raw, self.name, self.env_name, root)
 

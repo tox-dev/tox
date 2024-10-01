@@ -10,7 +10,7 @@ Replacer = Callable[[str, ConfigLoadArgs], str]
 
 
 class SetEnv:
-    def __init__(self, raw: str, name: str, env_name: str | None, root: Path) -> None:
+    def __init__(self, raw: str | dict[str, str], name: str, env_name: str | None, root: Path) -> None:
         self.changed = False
         self._materialized: dict[str, str] = {}  # env vars we already loaded
         self._raw: dict[str, str] = {}  # could still need replacement
@@ -18,8 +18,11 @@ class SetEnv:
         self._env_files: list[str] = []
         self._replacer: Replacer = lambda s, c: s  # noqa: ARG005
         self._name, self._env_name, self._root = name, env_name, root
-        from .loader.ini.replace import MatchExpression, find_replace_expr  # noqa: PLC0415
+        from .loader.replacer import MatchExpression, find_replace_expr  # noqa: PLC0415
 
+        if isinstance(raw, dict):
+            self._raw = raw
+            return
         for line in raw.splitlines():  # noqa: PLR1702
             if line.strip():
                 if line.startswith("file|"):

@@ -39,12 +39,9 @@ repos:
     hooks:
       - id: rst-backticks
   - repo: https://github.com/rbubley/mirrors-prettier
-    rev: "v3.3.3" # Use the sha / tag you want to point at
+    rev: "v3.3.3"
     hooks:
       - id: prettier
-        additional_dependencies:
-          - prettier@3.3.3
-          - "@prettier/plugin-xml@3.4.1"
   - repo: local
     hooks:
       - id: changelogs-rst

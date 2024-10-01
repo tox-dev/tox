@@ -21,8 +21,10 @@ def stringify(value: Any) -> tuple[str, bool]:  # noqa: PLR0911
         return str(value), False
     if isinstance(value, Mapping):
         return "\n".join(f"{stringify(k)[0]}={stringify(v)[0]}" for k, v in value.items()), True
-    if isinstance(value, (Sequence, Set)):
+    if isinstance(value, Sequence):
         return "\n".join(stringify(i)[0] for i in value), True
+    if isinstance(value, Set):  # sort it to make it stable
+        return "\n".join(sorted(stringify(i)[0] for i in value)), True
     if isinstance(value, EnvList):
         return "\n".join(e for e in value.envs), True
     if isinstance(value, Command):

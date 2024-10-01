@@ -8,7 +8,7 @@ import pytest
 if TYPE_CHECKING:
     from pytest_mock import MockFixture
 
-    from tests.config.loader.ini.replace.conftest import ReplaceOne
+    from tests.config.loader.conftest import ReplaceOne
 
 
 @pytest.mark.parametrize("is_atty", [True, False])

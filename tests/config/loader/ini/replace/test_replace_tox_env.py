@@ -5,12 +5,12 @@ from typing import TYPE_CHECKING, Callable
 
 import pytest
 
-from tox.config.loader.ini.replace import MAX_REPLACE_DEPTH
+from tox.config.loader.replacer import MAX_REPLACE_DEPTH
 from tox.config.sets import ConfigSet
 from tox.report import HandledError
 
 if TYPE_CHECKING:
-    from tests.config.loader.ini.replace.conftest import ReplaceOne
+    from tests.config.loader.conftest import ReplaceOne
     from tests.conftest import ToxIniCreator
     from tox.pytest import LogCaptureFixture
 

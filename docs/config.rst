@@ -9,33 +9,47 @@ be set once and used for all tox environments, while environment options are app
 Discovery and file types
 ------------------------
 
-Out of box tox supports three configuration locations prioritized in the following order:
+With regards to the configuration format, at the moment we support the following formats:
 
-1. ``tox.ini``,
-2. ``pyproject.toml``,
-3. ``setup.cfg``.
+- `INI <https://en.wikipedia.org/wiki/INI_file>`_.
+- `TOML <https://toml.io/en/v1.0.0>`_.
 
-With regards to the configuration format, at the moment we only support *ini-style*. ``tox.ini`` and ``setup.cfg`` are
-by nature such files, while in ``pyproject.toml`` currently you can only inline the *ini-style* config.
+Out of box tox supports five configuration locations prioritized in the following order:
 
-Note that ``setup.cfg`` requires the content to be under the ``tox:tox`` and ``testenv`` sections and is otherwise
-ignored. ``pyproject.toml`` on the other hand is in TOML format. However, one can inline the *ini-style* format under
-the ``tool.tox.legacy_tox_ini`` key as a multi-line string.
+1. ``tox.ini`` (INI),
+2. ``setup.cfg`` (INI),
+3. ``pyproject.toml`` with the ``tool.tox`` table, having ``legacy_tox_ini`` key (containing INI),
+4. Native ``pyproject.toml`` under the ``tool.tox`` table (TOML),
+5. ``tox.toml`` (TOML).
+
+Historically, the INI format was created first, and TOML was added in 2024. The TOML format generally is more robust,
+however is less powerful and more verbose. You should use TOML unless you need some of the more advanced features
+that TOML does not support (such as conditional factors, generative environments to name a few -- however, PRs to
+add support for these in TOML is welcome).
+
+.. _tox-ini:
 
 ``tox.ini``
 ~~~~~~~~~~~
-The core settings are under the ``tox`` section while the environment sections are under the ``testenv:{env_name}``
-section. All tox environments by default inherit setting from the ``testenv`` section. This means if tox needs an option
-and is not available under ``testenv:{env_name}`` will first try to use the value from ``testenv``, before falling back
-to the default value for that setting. For example:
+
+This configuration file uses:
+
+- ``tox`` section to host core configuration,
+- ``testenv:{env_name}`` section to host environment configuration,
+- ``testenv`` section as base configuration for run environments (fallback location for missing values for a test/run
+  environment),
+- ``pkgenv`` section as base configuration for package environments (fallback location for missing values for a package
+  environment).
+
+For example:
 
 .. code-block:: ini
 
     [tox]
-    min_version = 4.0
+    min_version = 4.20
     env_list =
-        py310
-        py39
+        3.13
+        3.12
         type
 
     [testenv]
@@ -48,18 +62,22 @@ to the default value for that setting. For example:
 
 ``setup.cfg``
 ~~~~~~~~~~~~~
-The core settings are under the ``tox:tox`` section while the environment sections are under the ``testenv:{env_name}``
-section. All tox environments by default inherit setting from the ``testenv`` section. This means if tox needs an option
-and is not available under ``testenv:{env_name}`` will first try to use the value from ``testenv``, before falling back
-to the default value for that setting. For example:
+This configuration file uses:
+
+- ``tox:tox`` section to host core configuration,
+- ``testenv:{env_name}`` section to host environment configuration,
+- ``testenv`` section as base configuration for run environments (fallback location for missing values for a test/run
+  environment),
+- ``pkgenv`` section as base configuration for package environments (fallback location for missing values for a package
+  environment).
 
 .. code-block:: ini
 
     [tox:tox]
     min_version = 4.0
     env_list =
-        py310
-        py39
+        3.13
+        3.12
         type
 
     [testenv]
@@ -70,12 +88,10 @@ to the default value for that setting. For example:
     deps = mypy
     commands = mypy src
 
-``pyproject.toml``
-~~~~~~~~~~~~~~~~~~
-You can inline a ``tox.ini`` style configuration under the ``tool.tox`` section and ``legacy_tox_ini`` key.
-
-Below you find the specification for the *ini-style* format, but you might want to skim some
-examples first and use this page as a reference.
+``pyproject.toml`` - INI
+~~~~~~~~~~~~~~~~~~~~~~~~
+This configuration file is equivalent to :ref:`tox.ini <tox-ini>` format, with the difference that the text is stored
+instead inside the ``pyproject.toml`` file under the ``tool.tox`` table and ``legacy_tox_ini`` key:
 
 .. code-block:: toml
 
@@ -97,6 +113,58 @@ examples first and use this page as a reference.
         commands = mypy src
     """
 
+
+.. _pyproject-toml-native:
+
+``pyproject.toml`` - native
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+We support native TOML configuration via the ``pyproject.toml`` files ``tool.tox`` table. This configuration file uses:
+
+- ``tool.tox`` table to host core configuration,
+- ``tool.tox.env.{env_name}`` table to host environment configuration,
+- ``tool.tox.env_run_base`` table as base configuration for run environments (fallback location for missing values for
+  a test/run environment),
+- ``tool.tox.env_pkg_base`` table as base configuration for package environments (fallback location for missing values
+  for a package environment).
+
+.. code-block:: toml
+
+    [tool.tox]
+    requires = ["tox>=4.19"]
+    env_list = ["3.13", "3.12", "type"]
+
+    [tool.tox.env_run_base]
+    description = "Run test under {base_python}"
+    commands = [["pytest"]]
+
+    [tool.tox.env.type]
+    description = "run type check on code base"
+    deps = ["mypy==1.11.2", "types-cachetools>=5.5.0.20240820", "types-chardet>=5.0.4.6"]
+    commands = [["mypy", "src{/}tox"], ["mypy", "tests"]]
+
+``tox.toml``
+~~~~~~~~~~~~
+
+This configuration file is equivalent to :ref:`pyproject.toml - native <pyproject-toml-native>` with the difference
+that it lives in a separate dedicated files and accordingly the ``tool.tox`` sub-table is no longer required.
+
+For example:
+
+.. code-block:: toml
+
+    requires = ["tox>=4.19"]
+    env_list = ["3.13", "3.12", "type"]
+
+    [env_run_base]
+    description = "Run test under {base_python}"
+    commands = [["pytest"]]
+
+    [env.type]
+    description = "run type check on code base"
+    deps = ["mypy==1.11.2", "types-cachetools>=5.5.0.20240820", "types-chardet>=5.0.4.6"]
+    commands = [["mypy", "src{/}tox"], ["mypy", "tests"]]
+
 .. _conf-core:
 
 Core
@@ -114,13 +182,24 @@ The following options are set in the ``[tox]`` section of ``tox.ini`` or the ``[
    environment that does not have this issue, and run the tox command within that environment. See
    :ref:`provision_tox_env` for more details.
 
-   .. code-block:: ini
+    .. tab:: TOML
+
+       .. code-block:: toml
+
+          [tool.tox.pyproject]
+          requires = [
+            "tox>=4",
+            "virtualenv>20.2",
+          ]
+
+    .. tab:: INI
+
+       .. code-block:: ini
 
         [tox]
         requires =
             tox>=4
             virtualenv>20.2
-
 .. conf::
    :keys: min_version, minversion
    :default: <current version of tox>
@@ -208,12 +287,21 @@ The following options are set in the ``[tox]`` section of ``tox.ini`` or the ``[
 
    A mapping of label names to environments it applies too. For example:
 
-   .. code-block:: ini
+    .. tab:: TOML
 
-      [tox]
-      labels =
-           test = py310, py39
-           static = flake8, mypy
+       .. code-block:: toml
+
+          [tool.pyproject]
+          labels = { test = ["3.13", "3.12"], static = ["ruff", "mypy"] }
+
+    .. tab:: INI
+
+       .. code-block:: ini
+
+          [tox]
+          labels =
+               test = 3.13, 3.12
+               static = ruff, mypy
 
 .. conf::
    :keys: on_platform
@@ -230,7 +318,7 @@ Python language core options
 
     .. versionadded:: 3.1.0
 
-    tox allows setting the Python version for an environment via the :ref:`basepython` setting. If that's not set tox
+    tox allows setting the Python version for an environment via the :ref:`base_python` setting. If that's not set tox
     can set a default value from the environment name (e.g. ``py310`` implies Python 3.10). Matching up the Python
     version with the environment name has became expected at this point, leading to surprises when some configs don't
     do so. To help with sanity of users, an error will be raised whenever the environment name version does not match
@@ -245,7 +333,7 @@ Python language core options
 tox environment
 ---------------
 
-The following options are set in the ``[testenv]`` or ``[testenv:*]`` sections of ``tox.ini`` or ``setup.cfg``.
+These are configuration for the tox environments (either packaging or run type).
 
 Base options
 ~~~~~~~~~~~~
@@ -494,12 +582,23 @@ Base options
 
    A list of labels to apply for this environment. For example:
 
-   .. code-block:: ini
+    .. tab:: TOML
 
-      [testenv]
-      labels = test, core
-      [testenv:flake8]
-      labels = mypy
+       .. code-block:: toml
+
+          [tool.pyproject.env_run_base]
+          labels = ["test", "core"]
+          [tool.pyproject.env.flake8]
+          labels = ["mypy"]
+
+    .. tab:: INI
+
+       .. code-block:: ini
+
+          [testenv]
+          labels = test, core
+          [testenv:flake8]
+          labels = mypy
 
 Execute
 ~~~~~~~
@@ -736,8 +835,20 @@ Python run
      ``-c`` (followed by a file path).
 
    For example:
+    .. tab:: TOML
 
-    .. code-block:: ini
+       .. code-block:: toml
+
+          [tool.pyproject.env_run_base]
+          deps = [
+            "pytest>=8",
+            "-r requirements.txt",
+            "-c constraints.txt",
+          ]
+
+    .. tab:: INI
+
+       .. code-block:: ini
 
         [testenv]
         deps =
@@ -1019,116 +1130,243 @@ changed via ``TOX_USER_CONFIG_FILE`` environment variable. Example configuration
     [tox]
     skip_missing_interpreters = true
 
-Substitutions
--------------
 
-Any ``key=value`` setting in an ini-file can make use of **value substitution**
-through the ``{...}`` string-substitution pattern.
+Set CLI flags via environment variables
+---------------------------------------
+All configuration can be overridden via environment variables too, the naming convention here is ``TOX_<option>``. E.g.
+``TOX_WORK_DIR`` sets the ``--workdir`` flag, or ``TOX_OVERRIDE`` sets the ``--override`` flag. For flags accepting more
+than one argument, use the ``;`` character to separate these values:
 
-The string inside the curly braces may reference a global or per-environment config key as described above.
+All configuration inside the configuration file may be overwritten via the ``TOX_OVERRIDE``, note in this case the
+configuration file and its access (section/table + key) are needed. Here we demonstrate with a ``tox.ini`` file:
 
-In substitutions, the backslash character ``\`` will act as an escape when preceding
-``{``, ``}``, ``:``, ``[``, or ``]``, otherwise the backslash will be
-reproduced literally::
+.. code-block:: bash
 
-    commands =
-        python -c 'print("\{posargs} = \{}".format("{posargs}"))'
-        python -c 'print("host: \{}".format("{env:HOSTNAME:host\: not set}")'
+   # set FOO and bar as passed environment variable
+   $ env 'TOX_OVERRIDE=testenv.pass_env=FOO,BAR' tox c -k pass_env -e py
+   [testenv:py]
+   pass_env =
+     BAR
+     FOO
+     <default pass_envs>
 
-Note that any backslashes remaining after substitution may be processed by ``shlex`` during command parsing. On POSIX
-platforms, the backslash will escape any following character; on windows, the backslash will escape any following quote,
-whitespace, or backslash character (since it normally acts as a path delimiter).
+.. code-block:: bash
 
-Special substitutions that accept additional colon-delimited ``:`` parameters
-cannot have a space after the ``:`` at the beginning of line (e.g.  ``{posargs:
-magic}`` would be parsed as factorial ``{posargs``, having value magic).
+   # append FOO and bar as passed environment variable to the list already defined in
+   # the tox configuration
+   $ env 'TOX_OVERRIDE=testenv.pass_env+=FOO,BAR' tox c -k pass_env -e py
+   [testenv:py]
+   pass_env =
+     BAR
+     FOO
+     <pass_envs defined in configuration>
+     <default pass_envs>
 
-.. _`environment variable substitutions`:
+.. code-block:: bash
 
-Environment variable substitutions
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   # set httpx and deps to and 3.12 as base_python
+   $ env 'TOX_OVERRIDE=testenv.deps=httpx;testenv.base_python=3.12' .tox/dev/bin/tox c \
+         -k deps base_python -e py
+   [testenv:py]
+   deps = httpx
+   base_python = 3.12
 
-If you specify a substitution string like this::
+Overriding configuration from the command line
+----------------------------------------------
 
-    {env:KEY}
+You can override options in the configuration file, from the command line. For example, given this config:
 
-then the value will be retrieved as ``os.environ['KEY']``
-and raise an Error if the environment variable
-does not exist.
+.. tab:: TOML
+
+   .. code-block:: toml
+
+       # tox.toml
+      [env_run_base]
+      deps = ["pytest"]
+      set_env = { foo = "bar" }
+      commands = [[ "pytest", "tests" ]]
+
+.. tab:: INI
+
+   .. code-block:: ini
+
+    [testenv]
+    deps = pytest
+    set_env =
+      foo=bar
+    commands = pytest tests
+
+You could enable ``ignore_errors`` by running:
+
+.. tab:: TOML
+
+    .. code-block:: bash
+
+       tox --override env_run_base.ignore_errors=True
+
+.. tab:: INI
+
+    .. code-block:: bash
+
+       tox --override testenv.ignore_errors=True
 
 
-Environment variable substitutions with default values
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+You could add additional dependencies by running:
 
-If you specify a substitution string like this::
+.. tab:: TOML
 
-    {env:KEY:DEFAULTVALUE}
+    .. code-block:: bash
 
-then the value will be retrieved as ``os.environ['KEY']``
-and replace with DEFAULTVALUE if the environment variable does not
-exist.
+       tox --override env_run_base.deps+=pytest-xdist
 
-If you specify a substitution string like this::
+.. tab:: INI
 
-    {env:KEY:}
+    .. code-block:: bash
 
-then the value will be retrieved as ``os.environ['KEY']``
-and replace with an empty string if the environment variable does not
-exist.
+       tox --override testenv.deps+=pytest-xdist
 
-Substitutions can also be nested. In that case they are expanded starting
-from the innermost expression::
+You could set additional environment variables by running:
 
-    {env:KEY:{env:DEFAULT_OF_KEY}}
+.. tab:: TOML
 
-the above example is roughly equivalent to
-``os.environ.get('KEY', os.environ['DEFAULT_OF_KEY'])``
+    .. code-block:: bash
 
-Interactive shell substitution
+       tox --override env_run_base.set_env+=baz=quux
+
+.. tab:: INI
+
+    .. code-block:: bash
+
+       tox --override testenv.set_env+=baz=quux
+
+You can specify overrides multiple times on the command line to append multiple items:
+
+.. tab:: TOML
+
+    .. code-block:: bash
+
+       tox -x env_run_base.set_env+=foo=bar -x env_run_base.set_env+=baz=quux
+       tox -x testenv_run_baseenv.deps+=pytest-xdist -x env_run_base.deps+=pytest-covt
+
+.. tab:: INI
+
+    .. code-block:: bash
+
+       tox -x testenv.set_env+=foo=bar -x testenv.set_env+=baz=quux
+       tox -x testenv.deps+=pytest-xdist -x testenv.deps+=pytest-covt
+
+Or reset override and append to that (note the first override is ``=`` and not ``+=``):
+
+.. tab:: TOML
+
+    .. code-block:: bash
+
+       tox -x env_run_base.deps=pytest-xdist -x env_run_base.deps+=pytest-cov
+
+.. tab:: INI
+
+    .. code-block:: bash
+
+       tox -x testenv.deps=pytest-xdist -x testenv.deps+=pytest-cov
+
+TOML only
+---------
+
+These additional rules are active for native TOML configuration files.
+
+String elements (excluding keys) will be transformed according to the :ref:`Substitutions <substitution>` section.
+
+String substitution references
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. versionadded:: 3.4.0
+.. versionadded:: 4.21
 
-It's possible to inject a config value only when tox is running in interactive shell (standard input)::
+Within strings values from other sections can be referred to via ``{[<table>]<key>}``:
 
-    {tty:ON_VALUE:OFF_VALUE}
+which you can use to avoid repetition of config values. You can put default values in one section and reference them in
+others to avoid repeating the same values:
 
-The first value is the value to inject when the interactive terminal is
-available, the second value is the value to use when it's not (optional). A good
-use case for this is e.g. passing in the ``--pdb`` flag for pytest.
+.. code-block:: toml
 
-.. _`command positional substitution`:
-.. _`positional substitution`:
+    [extra]
+    ok = "o"
+    [.env.B]
+    description = "{[extra]ok}"
 
-Substitutions for positional arguments in commands
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+If the target table is one of the tox environments variable substitution will be applied on the replaced value,
+otherwise the text will be inserted as is (e.g., here with extra).
 
-.. versionadded:: 1.0
+Positional argument reference
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. versionadded:: 4.21
 
-If you specify a substitution string like this::
+You can reference positional arguments via the ``posargs`` replacement:
 
-    {posargs:DEFAULTS}
+.. code-block:: toml
 
-then the value will be replaced with positional arguments as provided
-to the tox command::
+    [env.A]
+    commands = [["python", { replace = "posargs", default = ["a", "b"] } ]]
 
-    tox arg1 arg2
+If the positional arguments are not set commands will become ``python a b``, otherwise will be ``python posarg-set``.
+Note that:
 
-In this instance, the positional argument portion will be replaced with
-``arg1 arg2``. If no positional arguments were specified, the value of
-DEFAULTS will be used instead. If DEFAULTS contains other substitution
-strings, such as ``{env:*}``, they will be interpreted.,
+.. code-block:: toml
 
-Use a double ``--`` if you also want to pass options to an underlying
-test command, for example::
+    [env.A]
+    commands = [["python", "{posargs}" ]]
 
-    tox -- --opt1 ARG1
+Differs in sense that the positional arguments will be set as a single argument, while in the original example they are
+passed through as separate.
 
-will make the ``--opt1 ARG1`` appear in all test commands where ``[]`` or
-``{posargs}`` was specified.  By default (see ``args_are_paths``
-setting), ``tox`` rewrites each positional argument if it is a relative
-path and exists on the filesystem to become a path relative to the
-``changedir`` setting.
+Environment variable reference
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. versionadded:: 4.21
+
+You can reference environment variables via the ``env`` replacement:
+
+.. code-block:: toml
+
+    [env.A]
+    set_env.COVERAGE_FILE = { replace = "env", name = "COVERAGE_FILE", default = "ok" }
+
+If the environment variable is set the the ``COVERAGE_FILE`` will become that, otherwise will default to ``ok``.
+
+Other configuration reference
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. versionadded:: 4.21
+
+You can reference environment variables via the ``env`` replacement:
+
+.. code-block:: toml
+
+    [env_run_base]
+    extras = ["A", "{env_name}"]
+    [env.ab]
+    extras = [{ replace = "ref", raw = ["env_run_base", "extras"] }, "B"]
+
+In this case the ``extras`` for ``ab`` will be ``A``, ``B`` and ``ab``.
+
+Reference replacement rules
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+When the replacement happens within a list and the returned value is also of type list the content will be extending the
+list rather than replacing it. For example:
+
+.. code-block:: toml
+
+    [env_run_base]
+    extras = ["A"]
+    [env.ab]
+    extras = [{ replace = "ref", raw = ["env_run_base", "extras"] }, "B"]
+
+In this case the ``extras`` will be ``'A', 'B'`` rather than ``['A'], 'B'``.  Otherwise the replacement is in-place.
+
+INI only
+--------
+These additional rules are active for native INI configuration.
+
+The value for each setting in an INI configuration will be transformed according to the
+:ref:`Substitutions <substitution>` section.
 
 Substitution for values from other sections
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1139,8 +1377,8 @@ Values from other sections can be referred to via::
 
    {[sectionname]valuename}
 
-which you can use to avoid repetition of config values.
-You can put default values in one section and reference them in others to avoid repeating the same values:
+which you can use to avoid repetition of config values. You can put default values in one section and reference them in
+others to avoid repeating the same values:
 
 .. code-block:: ini
 
@@ -1160,88 +1398,210 @@ You can put default values in one section and reference them in others to avoid 
         mercurial
         {[base]deps}
 
+Conditional settings
+~~~~~~~~~~~~~~~~~~~~
+
+- Configurations may be set conditionally within the ``tox.ini`` file. If a line starts with an environment name
+  or names, separated by a comma, followed by ``:`` the configuration will only be used if the
+  environment name(s) matches the executed tox environment. For example:
+
+  .. code-block:: ini
+
+     [testenv]
+     deps =
+        pip
+        format: black
+        py310,py39: pytest
+
+  Here pip will be always installed as the configuration value is not conditional. black is only used for the ``format``
+  environment, while ``pytest`` is only installed for the ``py310`` and ``py39`` environments.
+
+Generative environment list
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+If you have a large matrix of dependencies, python versions and/or environments you can use a generative
+:ref:`env_list` and conditional settings to express that in a concise form:
+
+.. code-block:: ini
+
+    [tox]
+    env_list = py{311,310,39}-django{41,40}-{sqlite,mysql}
+
+    [testenv]
+    deps =
+        django41: Django>=4.1,<4.2
+        django40: Django>=4.0,<4.1
+        # use PyMySQL if factors "py311" and "mysql" are present in env name
+        py311-mysql: PyMySQL
+        # use urllib3 if any of "py311" or "py310" are present in env name
+        py311,py310: urllib3
+        # mocking sqlite on 3.11 and 3.10 if factor "sqlite" is present
+        py{311,310}-sqlite: mock
+
+This will generate the following tox environments:
+
+.. code-block:: shell
+
+    > tox l
+    default environments:
+    py311-django41-sqlite -> [no description]
+    py311-django41-mysql  -> [no description]
+    py311-django40-sqlite -> [no description]
+    py311-django40-mysql  -> [no description]
+    py310-django41-sqlite -> [no description]
+    py310-django41-mysql  -> [no description]
+    py310-django40-sqlite -> [no description]
+    py310-django40-mysql  -> [no description]
+    py39-django41-sqlite  -> [no description]
+    py39-django41-mysql   -> [no description]
+    py39-django40-sqlite  -> [no description]
+    py39-django40-mysql   -> [no description]
+
+Generative section names
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+Suppose you have some binary packages, and need to run tests both in 32 and 64 bits. You also want an environment to
+create your virtual env for the developers.
+
+.. code-block:: ini
+
+    [testenv]
+    base_python =
+        py311-x86: python3.11-32
+        py311-x64: python3.11-64
+    commands = pytest
+
+    [testenv:py311-{x86,x64}-venv]
+    envdir =
+        x86: .venv-x86
+        x64: .venv-x64
+
+.. code-block:: shell
+
+    > tox l
+    default environments:
+    py          -> [no description]
+
+    additional environments:
+    py310-black -> [no description]
+    py310-lint  -> [no description]
+    py311-black -> [no description]
+    py311-lint  -> [no description]
+
+.. _substitution:
+
+Substitutions
+-------------
+
+**Value substitution** operates through the ``{...}`` string-substitution pattern. The string inside the curly braces
+may reference a global or per-environment config key as described above.
+
+In substitutions, the backslash character ``\`` will act as an escape when preceding
+``{``, ``}``, ``:``, ``[``, or ``]``, otherwise the backslash will be reproduced literally:
+
+.. tab:: TOML
+
+    .. code-block:: toml
+
+        commands = [
+          ["python", "-c", 'print("\{posargs} = \{}".format("{posargs}"))'],
+          ["python", "-c", 'print("host: \{}".format("{env:HOSTNAME:host\: not set}")'],
+        ]
+
+.. tab:: INI
+
+    .. code-block:: ini
+
+        commands =
+          python -c 'print("\{posargs} = \{}".format("{posargs}"))'
+          python -c 'print("host: \{}".format("{env:HOSTNAME:host\: not set}")'
+
+
+Note that any backslashes remaining after substitution may be processed by ``shlex`` during command parsing. On POSIX
+platforms, the backslash will escape any following character; on windows, the backslash will escape any following quote,
+whitespace, or backslash character (since it normally acts as a path delimiter).
+
+Special substitutions that accept additional colon-delimited ``:`` parameters
+cannot have a space after the ``:`` at the beginning of line (e.g.  ``{posargs:
+magic}`` would be parsed as factorial ``{posargs``, having value magic).
+
+.. _`environment variable substitutions`:
+
+Environment variable substitutions
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+If you specify a substitution string like this::
+
+    {env:KEY}
+
+then the value will be retrieved as ``os.environ['KEY']`` and raise an Error if the environment variable does not exist.
+
+
+Environment variable substitutions with default values
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+If you specify a substitution string like this::
+
+    {env:KEY:DEFAULTVALUE}
+
+then the value will be retrieved as ``os.environ['KEY']`` and replace with DEFAULTVALUE if the environment variable does
+not exist.
+
+If you specify a substitution string like this::
+
+    {env:KEY:}
+
+then the value will be retrieved as ``os.environ['KEY']`` and replace with an empty string if the environment variable
+does not exist.
+
+Substitutions can also be nested. In that case they are expanded starting from the innermost expression::
+
+    {env:KEY:{env:DEFAULT_OF_KEY}}
+
+the above example is roughly equivalent to ``os.environ.get('KEY', os.environ['DEFAULT_OF_KEY'])``
+
+Interactive shell substitution
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. versionadded:: 3.4.0
+
+It's possible to inject a config value only when tox is running in interactive shell (standard input)::
+
+    {tty:ON_VALUE:OFF_VALUE}
+
+The first value is the value to inject when the interactive terminal is available, the second value is the value to use
+when it's not (optional). A good use case for this is e.g. passing in the ``--pdb`` flag for pytest.
+
+.. _`command positional substitution`:
+.. _`positional substitution`:
+
+Substitutions for positional arguments in commands
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. versionadded:: 1.0
+
+If you specify a substitution string like this::
+
+    {posargs:DEFAULTS}
+
+then the value will be replaced with positional arguments as provided to the tox command::
+
+    tox arg1 arg2
+
+In this instance, the positional argument portion will be replaced with ``arg1 arg2``. If no positional arguments were
+specified, the value of DEFAULTS will be used instead. If DEFAULTS contains other substitution strings, such as
+``{env:*}``, they will be interpreted.,
+
+Use a double ``--`` if you also want to pass options to an underlying test command, for example::
+
+    tox run -e 3.13 -- --opt1 ARG1
+
+will make the ``--opt1 ARG1`` appear in all test commands where ``[]`` or ``{posargs}`` was specified.  By default (see
+``args_are_paths`` setting), ``tox`` rewrites each positional argument if it is a relative path and exists on the
+filesystem to become a path relative to the ``changedir`` setting.
+
 Other Substitutions
 ~~~~~~~~~~~~~~~~~~~
 
 * ``{}`` - replaced as ``os.pathsep``
 * ``{/}`` - replaced as ``os.sep``
-
-Overriding configuration from the command line
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-You can override options in the configuration file, from the command
-line.
-
-For example, given this config:
-
-.. code-block:: ini
-
-    [testenv]
-    deps = pytest
-    setenv =
-      foo=bar
-    commands = pytest tests
-
-You could enable ``ignore_errors`` by running:
-
-.. code-block:: bash
-
-   tox --override testenv.ignore_errors=True
-
-You could add additional dependencies by running:
-
-.. code-block:: bash
-
-   tox --override testenv.deps+=pytest-xdist
-
-You could set additional environment variables by running:
-
-.. code-block:: bash
-
-   tox --override testenv.setenv+=baz=quux
-
-You can specify overrides multiple times on the command line to append multiple items:
-
-.. code-block:: bash
-
-   tox -x testenv.seteenv+=foo=bar -x testenv.setenv+=baz=quux
-   tox -x testenv.deps+=pytest-xdist -x testenv.deps+=pytest-cov
-
-Or reset override and append to that (note the first override is ``=`` and not ``+=``):
-
-.. code-block:: bash
-
-   tox -x testenv.deps=pytest-xdist -x testenv.deps+=pytest-cov
-
-Set CLI flags via environment variables
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-All CLI flags can be set via environment variables too, the naming convention here is ``TOX_<option>``. E.g.
-``TOX_WORK_DIR`` sets the ``--workdir`` flag, or ``TOX_OVERRIDE`` sets the ``--override`` flag. For flags accepting more
-than one argument, use the ``;`` character to separate these values:
-
-.. code-block:: bash
-
-   # set FOO and bar as passed environment variable
-   $ env 'TOX_OVERRIDE=testenv.pass_env=FOO,BAR' tox c -k pass_env -e py
-   [testenv:py]
-   pass_env =
-     BAR
-     FOO
-     <default pass_envs>
-
-   # append FOO and bar as passed environment variable to the list already defined in
-   # the tox configuration
-   $ env 'TOX_OVERRIDE=testenv.pass_env+=FOO,BAR' tox c -k pass_env -e py
-   [testenv:py]
-   pass_env =
-     BAR
-     FOO
-     <pass_envs defined in configuration>
-     <default pass_envs>
-
-   # set httpx and deps to and 3.12 as base_python
-   $ env 'TOX_OVERRIDE=testenv.deps=httpx;testenv.base_python=3.12' .tox/dev/bin/tox c \
-         -k deps base_python -e py
-   [testenv:py]
-   deps = httpx
-   base_python = 3.12

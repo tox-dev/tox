@@ -18,57 +18,98 @@ Configuration
 -------------
 
 *tox* needs a configuration file where you define what tools you need to run and how to provision a test environment for
-these. The canonical file for this is the ``tox.ini`` file. For example:
+these. The canonical file for this is either a ``tox.toml`` or ``tox.ini`` file. For example:
 
-.. code-block:: ini
+    .. tab:: TOML
 
-    [tox]
-    requires =
-        tox>=4
-    env_list = lint, type, py{38,39,310,311}
+       .. code-block:: toml
 
-    [testenv]
-    description = run unit tests
-    deps =
-        pytest>=7
-        pytest-sugar
-    commands =
-        pytest {posargs:tests}
+            requires = ["tox>=4"]
+            env_list = ["lint", "type", "3.13", "3.12", "3.11"]
 
-    [testenv:lint]
-    description = run linters
-    skip_install = true
-    deps =
-        black==22.12
-    commands = black {posargs:.}
+            [env_run_base]
+            description = "run unit tests"
+            deps = [
+                "pytest>=8",
+                "pytest-sugar"
+            ]
+            commands = [["pytest", { replace = "posargs", default = ["tests"] }]]
 
-    [testenv:type]
-    description = run type checks
-    deps =
-        mypy>=0.991
-    commands =
-        mypy {posargs:src tests}
+            [env.lint]
+            description = "run linters"
+            skip_install = true
+            deps = ["black"]
+            commands = [["black", { replace = "posargs", default = ["."]} ]]
+
+            [env.type]
+            description = "run type checks"
+            deps = ["mypy"]
+            commands = [["mypy", { replace = "posargs", default = ["src", "tests"]} ]]
+
+
+    .. tab:: INI
+
+       .. code-block:: ini
+
+           [tox]
+            requires =
+                tox>=4
+            env_list = lint, type, 3.{3,2,1}
+
+            [testenv]
+            description = run unit tests
+            deps =
+                pytest>=8
+                pytest-sugar
+            commands =
+                pytest {posargs:tests}
+
+            [testenv:lint]
+            description = run linters
+            skip_install = true
+            deps =
+                black
+            commands = black {posargs:.}
+
+            [testenv:type]
+            description = run type checks
+            deps =
+                mypy
+            commands =
+                mypy {posargs:src tests}
 
 .. tip::
 
    You can also generate a ``tox.ini`` file automatically by running ``tox quickstart`` and then answering a few
    questions.
 
-The configuration is split into two type of configuration: core settings are hosted under a core ``tox`` section while
-per run environment settings hosted under ``testenv`` and ``testenv:<env_name>`` sections.
+The configuration is split into two types:
+
+- core settings
+- tox environment settings.
 
 Core settings
 ~~~~~~~~~~~~~
 
-Core settings that affect all test environments or configure how tox itself is invoked are defined under the ``tox``
-section.
+Core settings that affect all test environments or configure how tox itself is invoked are defined under the root table
+in ``tox.toml`` and ``tox`` table in ``tox.ini`` section.
 
-.. code-block:: ini
+    .. tab:: TOML
 
-    [tox]
-    requires =
-        tox>=4
-    env_list = lint, type, py{38,39,310,311}
+       .. code-block:: toml
+
+          requires = ["tox>=4"]
+          env_list = ["lint", "type", "3.13", "3.12", "3.11"]
+
+    .. tab:: INI
+
+       .. code-block:: ini
+
+        [tox]
+        requires =
+            tox>=4
+        env_list = lint, type, 3.{3,2,1}
+
 
 We can use it to specify things such as the minimum version of *tox* required or the location of the package under test.
 A list of all supported configuration options for the ``tox`` section can be found in the :ref:`configuration guide
@@ -77,15 +118,42 @@ A list of all supported configuration options for the ``tox`` section can be fou
 Test environments
 ~~~~~~~~~~~~~~~~~
 
-Test environments are defined under the ``testenv`` section and individual ``testenv:<env_name>`` sections, where
-``<env_name>`` is the name of a specific environment.
+When ``<env_name>`` is the name of a specific environment, test environment configurations are defined:
 
-.. code-block:: ini
+- ``testenv`` section and individual ``testenv:<env_name>`` for ``tox.ini``,
+- ``env_run_base`` table and individual ``env.<env_name>`` for ``tox.toml``.
+
+.. tab:: TOML
+
+   .. code-block:: toml
+
+        [env_run_base]
+        description = "run unit tests"
+        deps = [
+            "pytest>=8",
+            "pytest-sugar"
+        ]
+        commands = [["pytest", { replace = "posargs", default = ["tests"] }]]
+
+        [env.lint]
+        description = "run linters"
+        skip_install = true
+        deps = ["black"]
+        commands = [["black", { replace = "posargs", default = ["."]} ]]
+
+        [env.type]
+        description = "run type checks"
+        deps = ["mypy"]
+        commands = [["mypy", { replace = "posargs", default = ["src", "tests"]} ]]
+
+.. tab:: INI
+
+   .. code-block:: ini
 
     [testenv]
     description = run unit tests
     deps =
-        pytest>=7
+        pytest>=8
         pytest-sugar
     commands =
         pytest {posargs:tests}
@@ -94,21 +162,22 @@ Test environments are defined under the ``testenv`` section and individual ``tes
     description = run linters
     skip_install = true
     deps =
-        black==22.12
+        black
     commands = black {posargs:.}
 
     [testenv:type]
     description = run type checks
     deps =
-        mypy>=0.991
+        mypy
     commands =
         mypy {posargs:src tests}
 
-Settings defined in the top-level ``testenv`` section are automatically inherited by individual environments unless
-overridden. Test environment names can consist of alphanumeric characters and dashes; for example: ``py311-django42``.
-The name will be split on dashes into multiple factors, meaning ``py311-django42`` will be split into two factors:
-``py311`` and ``django42``. *tox* defines a number of default factors, which correspond to various versions and
-implementations of Python and provide default values for ``base_python``:
+Settings defined at the top-level (``env_run_base`` table in TOML and ``testenv`` section in INI configuration files)
+are automatically inherited by individual environments unless overridden. Test environment names can consist of
+alphanumeric characters and dashes; for example: ``py311-django42``. The name will be split on dashes into multiple
+factors, meaning ``py311-django42`` will be split into two factors: ``py311`` and ``django42``. *tox* defines a number
+of default factors, which correspond to various versions and implementations of Python and provide default values for
+``base_python``:
 
 - ``pyNM``: configures ``basepython = pythonN.M``
 - ``pypyNM``: configures ``basepython = pypyN.M``
@@ -121,38 +190,64 @@ implementations of Python and provide default values for ``base_python``:
 You can also specify these factors with a period between the major and minor versions (e.g. ``pyN.M``), without a minor
 version (e.g. ``pyN``), or without any version information whatsoever (e.g. ``py``)
 
-A list of all supported configuration options for the ``testenv`` and ``testenv:<env_name>`` sections can be found in
-the :ref:`configuration guide <conf-testenv>`.
+A list of all supported configuration options for the tox environments can be found in the
+:ref:`configuration guide <conf-testenv>`.
 
 Basic example
 -------------
 
-.. code-block:: ini
+.. tab:: TOML
 
-    [tox]
-    env_list =
-        format
-        py310
+   .. code-block:: toml
 
-    [testenv:format]
-    description = install black in a virtual environment and invoke it on the current folder
-    deps = black==22.3.0
-    skip_install = true
-    commands = black .
 
-    [testenv:py310]
-    description = install pytest in a virtual environment and invoke it on the tests folder
-    deps =
-        pytest>=7
-        pytest-sugar
-    commands = pytest tests {posargs}
+        env_list =  ["format", "3.13"]
+            format
+            py310
 
-This example contains a global ``tox`` section as well as two test environments. Taking the core section first, we use
-the :ref:`env_list` setting to indicate that this project has two run environments named ``format`` and ``py310`` that
-should be run by default when ``tox run`` is invoked without a specific environment.
+        [env.format]
+        description = "install black in a virtual environment and invoke it on the current folder"
+        deps = ["black==22.3.0"]
+        skip_install = true
+        commands = [[ "black", "." ]]
 
-The formatting environment and test environment are defined separately via the ``testenv:format`` and ``testenv:py310``
-sections, respectively. For example to format the project we:
+        [env."3.13"]
+        description = "install pytest in a virtual environment and invoke it on the tests folder"
+        deps = [
+            "pytest>=7",
+            "pytest-sugar",
+        ]
+        commands = [[ "pytest", "tests", { replace = "posargs"} ]]
+
+.. tab:: INI
+
+   .. code-block:: ini
+
+        [tox]
+        env_list =
+            format
+            3.13
+
+        [testenv:format]
+        description = install black in a virtual environment and invoke it on the current folder
+        deps = black==22.3.0
+        skip_install = true
+        commands = black .
+
+        [testenv:3.13]
+        description = install pytest in a virtual environment and invoke it on the tests folder
+        deps =
+            pytest>=7
+            pytest-sugar
+        commands = pytest tests {posargs}
+
+This example contains a core configuration (root table in TOML and ``tox`` in INI) section as well as two
+test environments. Taking the core section first, we use the :ref:`env_list` setting to indicate that this project has
+two run environments named ``format`` and ``3.13`` that should be run by default when ``tox run`` is invoked without a
+specific environment.
+
+The formatting environment and test environment are defined separately (via the ``env.format`` and ``env."3.13"`` in
+TOML file; ``testenv:format`` and ``testenv:py310`` in INI file). For example to format the project we:
 
 - add a description (visible when you type ``tox list`` into the command line) via the :ref:`description` setting
 - define that it requires the :pypi:`black` dependency with version ``22.3.0`` via the :ref:`deps` setting
@@ -160,25 +255,26 @@ sections, respectively. For example to format the project we:
   ``black`` does not need it installed
 - indicate the commands to be run via the :ref:`commands` setting
 
-For testing the project we use the ``py310`` environment. For this environment we:
+For testing the project we use the ``3.13`` environment. For this environment we:
 
 - define a text description of the environment via the :ref:`description` setting
 - specify that we should install :pypi:`pytest` v7.0 or later together with the :pypi:`pytest-sugar` project via the
   :ref:`deps` setting
 - indicate the command(s) to be run - in this case ``pytest tests`` - via the :ref:`commands` setting
 
-``{posargs}`` is a place holder part for the CLI command that allows us to pass additional flags to the pytest
-invocation, for example if we'd want to run ``pytest tests -v`` as a one off, instead of ``tox run -e py310`` we'd type
-``tox run -e py310 -- -v``. The ``--`` delimits flags for the tox tool and what should be forwarded to the tool within.
+``{ replace = "posargs"}`` in TOML and ``{posargs}`` in INI is a place holder part for the CLI command that allows us to
+pass additional flags to the pytest invocation, for example if we'd want to run ``pytest tests -v`` as a one off,
+instead of ``tox run -e 3.13`` we'd type ``tox run -e py310 -- -v``. The ``--`` delimits flags for the tox tool and
+what should be forwarded to the tool within.
 
 tox, by default, always creates a fresh virtual environment for every run environment. The Python version to use for a
 given environment can be controlled via the :ref:`base_python` configuration, however if not set tox will try to use the
-environment name to determine something sensible: if the name is in the format of ``pyxy`` then tox will create an environment with CPython
-with version ``x.y`` (for example ``py310`` means CPython ``3.10``). If the name does not match this pattern it will
-use a virtual environment with the same Python version as the one tox is installed into (this is the case for
-``format``).
+environment name to determine something sensible: if the name is in the format of ``pyxy`` (or ``x.y``) then tox will
+create an environment with CPython with version ``x.y`` (for example ``py310`` means CPython ``3.10``). If the name does
+not match this pattern it will use a virtual environment with the same Python version as the one tox is installed into
+(this is the case for ``format``).
 
-tox environments are reused between runs, so while the first ``tox run -e py310`` will take a while as tox needs to
+tox environments are reused between runs, so while the first ``tox run -e 3.13`` will take a while as tox needs to
 create a virtual environment and install ``pytest`` and ``pytest-sugar`` in it, subsequent runs only need to reinstall
 your project, as long as the environments dependency list does not change.
 
@@ -297,15 +393,25 @@ given you have at least version ``3.8.0`` of tox.
 
 For example given:
 
-.. code-block:: ini
+.. tab:: TOML
 
-    [tox]
-    min_version = 4
-    requires = tox-docker>=1
+   .. code-block:: toml
+
+        min_version = "4"
+        requires = ["tox-uv>=1"]
+
+.. tab:: INI
+
+   .. code-block:: ini
+
+        [tox]
+        min_version = 4
+        requires = tox-uv>=1
+
 
 if the user runs it with tox ``3.8`` or later the installed tox application will automatically ensure that both the minimum version and
 requires constraints are satisfied, by creating a virtual environment under ``.tox`` folder, and then installing into it
-``tox>=4`` and ``tox-docker>=1``. Afterwards all tox invocations are forwarded to the tox installed inside ``.tox\.tox``
+``tox>=4`` and ``tox-uv>=1``. Afterwards all tox invocations are forwarded to the tox installed inside ``.tox\.tox``
 folder (referred to as meta-tox or auto-provisioned tox).
 
 This allows tox to automatically setup itself with all its plugins for the current project.  If the host tox satisfies
@@ -339,21 +445,21 @@ CLI
 Config files
 ~~~~~~~~~~~~
 
-- Every tox environment has its own configuration section (e.g. in case of ``tox.ini`` configuration method the
-  ``py310`` tox environments configuration is read from the ``testenv:py310`` section). If the section is missing or does
-  not contain that configuration value, it will fall back to the section defined by the :ref:`base` configuration (for
-  ``tox.ini`` this is the ``testenv`` section). For example:
+- Every tox environment has its own configuration section (e.g. in case of ``tox.toml`` configuration method the
+  ``3.13`` tox environments configuration is read from the ``env_run_base."3.13"`` table). If the table is missing or
+  does not contain that configuration value, it will fall back to the section defined by the :ref:`base` configuration
+  (for ``tox.toml`` this is the ``env_run_base`` table). For example:
 
-  .. code-block:: ini
+  .. code-block:: toml
 
-    [testenv]
-    commands = pytest tests
+    [env_run_base]
+    commands = [["pytest", "tests"]]
 
-    [testenv:test]
-    description = run the test suite with pytest
+    [env.test]
+    description = "run the test suite with pytest"
 
-  Here the environment description for ``test`` is taken from ``testenv:test``. As ``commands`` is not specified,
-  the value defined under the ``testenv`` section will be used. If the base environment is also missing a
+  Here the environment description for ``test`` is taken from ``env_run_base``. As ``commands`` is not specified,
+  the value defined under the ``env_run_base`` section will be used. If the base environment is also missing a
   configuration value then the configuration default will be used (e.g. in case of the ``pass_env`` configuration here).
 
 - To change the current working directory for the commands run use :ref:`change_dir` (note this will make the change for
@@ -365,21 +471,6 @@ Config files
   - To set environment variables use :ref:`set_env`.
 
 - Setup operation can be configured via the :ref:`commands_pre`, while teardown commands via the :ref:`commands_post`.
-
-- Configurations may be set conditionally within the ``tox.ini`` file. If a line starts with an environment name
-  or names, separated by a comma, followed by ``:`` the configuration will only be used if the
-  environment name(s) matches the executed tox environment. For example:
-
-  .. code-block:: ini
-
-     [testenv]
-     deps =
-        pip
-        format: black
-        py310,py39: pytest
-
-  Here pip will be always installed as the configuration value is not conditional. black is only used for the ``format``
-  environment, while ``pytest`` is only installed for the ``py310`` and ``py39`` environments.
 
 .. _`parallel_mode`:
 
@@ -466,94 +557,27 @@ For pure Python projects (non C-Extension ones) it's recommended to set :ref:`wh
 Advanced features
 -----------------
 
-tox supports these features that 90 percent of the time you'll not need, but are very useful the other ten percent.
-
-Generative environments
-~~~~~~~~~~~~~~~~~~~~~~~
-
-Generative environment list
-+++++++++++++++++++++++++++
-
-If you have a large matrix of dependencies, python versions and/or environments you can use a generative
-:ref:`env_list` and conditional settings to express that in a concise form:
-
-.. code-block:: ini
-
-    [tox]
-    env_list = py{311,310,39}-django{41,40}-{sqlite,mysql}
-
-    [testenv]
-    deps =
-        django41: Django>=4.1,<4.2
-        django40: Django>=4.0,<4.1
-        # use PyMySQL if factors "py311" and "mysql" are present in env name
-        py311-mysql: PyMySQL
-        # use urllib3 if any of "py311" or "py310" are present in env name
-        py311,py310: urllib3
-        # mocking sqlite on 3.11 and 3.10 if factor "sqlite" is present
-        py{311,310}-sqlite: mock
-
-This will generate the following tox environments:
-
-.. code-block:: shell
-
-    > tox l
-    default environments:
-    py311-django41-sqlite -> [no description]
-    py311-django41-mysql  -> [no description]
-    py311-django40-sqlite -> [no description]
-    py311-django40-mysql  -> [no description]
-    py310-django41-sqlite -> [no description]
-    py310-django41-mysql  -> [no description]
-    py310-django40-sqlite -> [no description]
-    py310-django40-mysql  -> [no description]
-    py39-django41-sqlite  -> [no description]
-    py39-django41-mysql   -> [no description]
-    py39-django40-sqlite  -> [no description]
-    py39-django40-mysql   -> [no description]
-
-Generative section names
-++++++++++++++++++++++++
-
-Suppose you have some binary packages, and need to run tests both in 32 and 64 bits. You also want an environment to
-create your virtual env for the developers.
-
-.. code-block:: ini
-
-    [testenv]
-    base_python =
-        py311-x86: python3.11-32
-        py311-x64: python3.11-64
-    commands = pytest
-
-    [testenv:py311-{x86,x64}-venv]
-    envdir =
-        x86: .venv-x86
-        x64: .venv-x64
-
-.. code-block:: shell
-
-    > tox l
-    default environments:
-    py          -> [no description]
-
-    additional environments:
-    py310-black -> [no description]
-    py310-lint  -> [no description]
-    py311-black -> [no description]
-    py311-lint  -> [no description]
-
 Disallow command line environments which are not explicitly specified in the config file
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Previously, any environment would be implicitly created even if no such environment was specified in the configuration
 file. For example, given this config:
 
-.. code-block:: ini
+.. tab:: TOML
 
-    [testenv:unit]
-    deps = pytest
-    commands = pytest
+   .. code-block:: toml
+
+        [env.unit]
+        deps = [ "pytest" ]
+        commands = [[ "pytest" ]]
+
+.. tab:: INI
+
+   .. code-block:: ini
+
+        [testenv:unit]
+        deps = pytest
+        commands = pytest
 
 Running ``tox -e unit`` would run our tests but running ``tox -e unt`` or ``tox -e unti`` would ultimately succeed
 without running any tests. A special exception is made for environments starting in ``py*``. In the above example

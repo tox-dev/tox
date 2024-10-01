@@ -6,7 +6,8 @@ from typing import TYPE_CHECKING, TypeVar
 
 from tox.config.loader.api import ConfigLoadArgs, Loader, Override
 from tox.config.loader.ini.factor import filter_for_env
-from tox.config.loader.ini.replace import replace
+from tox.config.loader.ini.replace import ReplaceReferenceIni
+from tox.config.loader.replacer import replace
 from tox.config.loader.str_convert import StrConvert
 from tox.config.set_env import SetEnv
 from tox.report import HandledError
@@ -71,8 +72,9 @@ class IniLoader(StrConvert, Loader[str]):
             if conf is None:
                 replaced = raw_  # no replacement supported in the core section
             else:
+                reference_replacer = ReplaceReferenceIni(conf, self)
                 try:
-                    replaced = replace(conf, self, raw_, args_)  # do replacements
+                    replaced = replace(conf, reference_replacer, raw_, args_)  # do replacements
                 except Exception as exception:
                     if isinstance(exception, HandledError):
                         raise

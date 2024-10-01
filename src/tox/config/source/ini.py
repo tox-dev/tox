@@ -107,9 +107,6 @@ class IniSource(Source):
                 if set(env.split("-")) - known_factors:
                     yield env
 
-    def __repr__(self) -> str:
-        return f"{type(self).__name__}(path={self.path})"
-
 
 __all__ = [
     "IniSource",

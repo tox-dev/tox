@@ -13,6 +13,10 @@ if TYPE_CHECKING:
     from tox.config.main import Config  # pragma: no cover
 
 
+class CircularChainError(ValueError):
+    """circular chain in config"""
+
+
 T = TypeVar("T")
 V = TypeVar("V")
 
@@ -94,11 +98,13 @@ class ConfigDynamicDefinition(ConfigDefinition[T]):  # noqa: PLW1641
         if self._cache is _PLACE_HOLDER:
             for key, loader in product(self.keys, loaders):
                 chain_key = f"{loader.section.key}.{key}"
-                if chain_key in args.chain:
-                    values = args.chain[args.chain.index(chain_key) :]
-                    msg = f"circular chain detected {', '.join(values)}"
-                    raise ValueError(msg)
-                args.chain.append(chain_key)
+                try:
+                    if chain_key in args.chain:
+                        values = args.chain[args.chain.index(chain_key) :]
+                        msg = f"circular chain detected {', '.join(values)}"
+                        raise CircularChainError(msg)
+                finally:
+                    args.chain.append(chain_key)
                 try:
                     value = loader.load(key, self.of_type, self.factory, conf, args)
                 except KeyError:
