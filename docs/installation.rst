@@ -5,7 +5,7 @@ As tool
 --------
 
 :pypi:`tox` is a CLI tool that needs a Python interpreter (version 3.7 or higher) to run. We recommend either
-:pypi:`pipx` or  :pypi:`ruff` to install tox into an isolated environment. This has the added benefit that later you'll
+:pypi:`pipx` or  :pypi:`uv` to install tox into an isolated environment. This has the added benefit that later you'll
 be able to upgrade tox without affecting other parts of the system. We provide method for ``pip`` too here but we
 discourage that path if you can:
 
