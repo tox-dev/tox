@@ -4,6 +4,17 @@ Release History
 
 .. towncrier release notes start
 
+v4.21.0 (2024-09-30)
+--------------------
+
+Features - 4.21.0
+~~~~~~~~~~~~~~~~~
+- Native TOML configuration support - by :user:`gaborbernat`. (:issue:`999`)
+
+Improved Documentation - 4.21.0
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+- Update Loader docs - by :user:ziima (:issue:`3352`)
+
 v4.20.0 (2024-09-18)
 --------------------
 

@@ -1,1 +1,0 @@
-Native TOML configuration support - by :user:`gaborbernat`.
