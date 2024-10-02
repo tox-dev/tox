@@ -88,7 +88,7 @@ def test_tox_env_pass_env_literal_miss() -> None:
 def test_tox_env_pass_env_fails_on_whitespace(tox_project: ToxProjectCreator) -> None:
     first, second = "A B", "C D"
     prj = tox_project({"tox.ini": f"[testenv]\npackage=skip\npass_env = {first}\n {second}\n  E"})
-    result = prj.run("c", "-k", "pass_env")
+    result = prj.run("c", "-k", "pass_env", raise_on_config_fail=False)
     result.assert_success()
     msg = (
         '[testenv:py]\npass_env = # Exception: Fail("pass_env values cannot contain whitespace, use comma to have '

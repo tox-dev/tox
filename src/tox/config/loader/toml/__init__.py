@@ -96,8 +96,10 @@ class TomlLoader(Loader[TomlTypes]):
         return Path(TomlLoader.to_str(value))
 
     @staticmethod
-    def to_command(value: TomlTypes) -> Command:
-        return Command(args=cast(List[str], value))  # validated during load in _ensure_type_correct
+    def to_command(value: TomlTypes) -> Command | None:
+        if value:
+            return Command(args=cast(List[str], value))  # validated during load in _ensure_type_correct
+        return None
 
     @staticmethod
     def to_env_list(value: TomlTypes) -> EnvList:

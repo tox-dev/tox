@@ -259,7 +259,10 @@ class ToxProject:
         finally:
             os.chdir(cur_dir)
 
-    def run(self, *args: str, from_cwd: Path | None = None) -> ToxRunOutcome:
+    def run(self, *args: str, from_cwd: Path | None = None, raise_on_config_fail: bool = True) -> ToxRunOutcome:
+        if raise_on_config_fail and args and args[0] in {"c", "config"}:
+            self.monkeypatch.setenv("_TOX_SHOW_CONFIG_RAISE", "1")
+
         with self.chdir(from_cwd):
             state = None
             self._capfd.readouterr()  # start with a clean state - drain

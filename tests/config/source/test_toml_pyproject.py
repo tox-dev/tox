@@ -140,7 +140,7 @@ def test_config_in_toml_replace_posargs_default(tox_project: ToxProjectCreator) 
     project = tox_project({
         "pyproject.toml": """
         [tool.tox.env.A]
-        commands = [["python", { replace = "posargs", default = ["a", "b"] } ]]
+        commands = [["python", { replace = "posargs", default = ["a", "b"], extend = true } ]]
         """
     })
     outcome = project.run("c", "-e", "A", "-k", "commands")
@@ -148,11 +148,35 @@ def test_config_in_toml_replace_posargs_default(tox_project: ToxProjectCreator) 
     outcome.assert_out_err("[testenv:A]\ncommands = python a b\n", "")
 
 
+def test_config_in_toml_replace_posargs_empty(tox_project: ToxProjectCreator) -> None:
+    project = tox_project({
+        "pyproject.toml": """
+        [tool.tox.env.A]
+        commands = [["python", { replace = "posargs", default = ["a", "b"], extend = true } ]]
+        """
+    })
+    outcome = project.run("c", "-e", "A", "-k", "commands", "--")
+    outcome.assert_success()
+    outcome.assert_out_err("[testenv:A]\ncommands = python\n", "")
+
+
+def test_config_in_toml_replace_posargs_empty_optional(tox_project: ToxProjectCreator) -> None:
+    project = tox_project({
+        "pyproject.toml": """
+        [tool.tox.env.A]
+        commands = [{ replace = "posargs", default = ["a", "b"] }, ["python"]]
+        """
+    })
+    outcome = project.run("c", "-e", "A", "-k", "commands", "--")
+    outcome.assert_success()
+    outcome.assert_out_err("[testenv:A]\ncommands = python\n", "")
+
+
 def test_config_in_toml_replace_posargs_set(tox_project: ToxProjectCreator) -> None:
     project = tox_project({
         "pyproject.toml": """
         [tool.tox.env.A]
-        commands = [["python", { replace = "posargs", default = ["a", "b"] } ]]
+        commands = [["python", { replace = "posargs", default = ["a", "b"], extend = true } ]]
         """
     })
     outcome = project.run("c", "-e", "A", "-k", "commands", "--", "c", "d")
@@ -188,20 +212,20 @@ def test_config_in_toml_replace_env_set(tox_project: ToxProjectCreator, monkeypa
     outcome.assert_out_err("[testenv:A]\ndescription = OK2\n", "")
 
 
-def test_config_in_toml_replace_ref_raw(tox_project: ToxProjectCreator, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_config_in_toml_replace_ref_of(tox_project: ToxProjectCreator, monkeypatch: pytest.MonkeyPatch) -> None:
     project = tox_project({
         "pyproject.toml": """
         [tool.tox.env_run_base]
         extras = ["A", "{env_name}"]
-        [tool.tox.env.a]
-        extras = [{ replace = "ref", raw = ["tool", "tox", "env_run_base", "extras"] }, "B"]
+        [tool.tox.env.c]
+        extras = [{ replace = "ref", of = ["tool", "tox", "env_run_base", "extras"], extend = true}, "B"]
         """
     })
     monkeypatch.setenv("NAME", "OK2")
 
-    outcome = project.run("c", "-e", "a", "-k", "extras")
+    outcome = project.run("c", "-e", "c", "-k", "extras")
     outcome.assert_success()
-    outcome.assert_out_err("[testenv:a]\nextras =\n  a\n  b\n  {env-name}\n", "")
+    outcome.assert_out_err("[testenv:c]\nextras =\n  a\n  b\n  c\n", "")
 
 
 def test_config_in_toml_replace_ref_env(tox_project: ToxProjectCreator, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -210,7 +234,7 @@ def test_config_in_toml_replace_ref_env(tox_project: ToxProjectCreator, monkeypa
         [tool.tox.env.b]
         extras = ["{env_name}"]
         [tool.tox.env.a]
-        extras = [{ replace = "ref", env = "b", "key" = "extras" }, "a"]
+        extras = [{ replace = "ref", env = "b", "key" = "extras", extend = true }, "a"]
         """
     })
     monkeypatch.setenv("NAME", "OK2")
@@ -313,3 +337,67 @@ def test_config_in_toml_bad_type_env(tox_project: ToxProjectCreator) -> None:
     outcome = project.run("l")
     outcome.assert_failed()
     outcome.assert_out_err("ROOT: HandledError| tool.tox.env.a must be a table, is 'int'\n", "")
+
+
+def test_config_deps(tox_project: ToxProjectCreator) -> None:
+    project = tox_project({
+        "pyproject.toml": """
+        [tool.tox.env_run_base]
+        deps = ['mypy>=1', 'ruff==1']
+        """
+    })
+    outcome = project.run("c", "-k", "deps")
+    outcome.assert_success()
+    outcome.assert_out_err("[testenv:py]\ndeps =\n  mypy>=1\n  ruff==1\n", "")
+
+
+def test_config_deps_req(tox_project: ToxProjectCreator) -> None:
+    project = tox_project({
+        "pyproject.toml": """
+        [tool.tox.env_run_base]
+        deps = ['-r requirements.txt']
+        """
+    })
+    outcome = project.run("c", "-k", "deps")
+    outcome.assert_success()
+    outcome.assert_out_err("[testenv:py]\ndeps = -r requirements.txt\n", "")
+
+
+def test_config_requires(tox_project: ToxProjectCreator) -> None:
+    project = tox_project({
+        "pyproject.toml": """
+        [tool.tox]
+        requires = ['tox>=4']
+        """
+    })
+    outcome = project.run("c", "-k", "requires", "--core")
+    outcome.assert_success()
+    outcome.assert_out_err("[testenv:py]\n\n[tox]\nrequires =\n  tox>=4\n  tox\n", "")
+
+
+def test_config_set_env_ref(tox_project: ToxProjectCreator) -> None:
+    project = tox_project({
+        "pyproject.toml": """
+        [tool.tox.env_run_base]
+        set_env = { A = "1", B = "2"}
+        [tool.tox.env.t]
+        set_env = [
+            { replace = "ref", of = ["tool", "tox", "env_run_base", "set_env"]},
+            { C = "3", D = "4"},
+        ]
+        """
+    })
+    outcome = project.run("c", "-e" "t", "-k", "set_env", "--hashseed", "1")
+    outcome.assert_success()
+    out = (
+        "[testenv:t]\n"
+        "set_env =\n"
+        "  A=1\n"
+        "  B=2\n"
+        "  C=3\n"
+        "  D=4\n"
+        "  PIP_DISABLE_PIP_VERSION_CHECK=1\n"
+        "  PYTHONHASHSEED=1\n"
+        "  PYTHONIOENCODING=utf-8\n"
+    )
+    outcome.assert_out_err(out, "")

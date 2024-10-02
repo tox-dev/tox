@@ -3,6 +3,8 @@ from __future__ import annotations
 import re
 from typing import TYPE_CHECKING
 
+from packaging.requirements import Requirement
+
 from .req.file import ParsedRequirement, ReqFileLines, RequirementsFile
 
 if TYPE_CHECKING:
@@ -16,9 +18,10 @@ class PythonDeps(RequirementsFile):
     # thus cannot be used in the testenv `deps` list
     _illegal_options: Final[list[str]] = ["hash"]
 
-    def __init__(self, raw: str, root: Path) -> None:
+    def __init__(self, raw: str | list[str] | list[Requirement], root: Path) -> None:
         super().__init__(root / "tox.ini", constraint=False)
-        self._raw = self._normalize_raw(raw)
+        got = raw if isinstance(raw, str) else "\n".join(str(i) for i in raw)
+        self._raw = self._normalize_raw(got)
         self._unroll: tuple[list[str], list[str]] | None = None
         self._req_parser_: RequirementsFile | None = None
 
@@ -124,7 +127,13 @@ class PythonDeps(RequirementsFile):
 
     @classmethod
     def factory(cls, root: Path, raw: object) -> PythonDeps:
-        if not isinstance(raw, str):
+        if not (
+            isinstance(raw, str)
+            or (
+                isinstance(raw, list)
+                and (all(isinstance(i, str) for i in raw) or all(isinstance(i, Requirement) for i in raw))
+            )
+        ):
             raise TypeError(raw)
         return cls(raw, root)
 

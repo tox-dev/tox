@@ -1,0 +1,1 @@
+Fix error when using ``requires`` within a TOML configuration file - by :user:`gaborbernat`.

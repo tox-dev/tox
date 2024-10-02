@@ -1296,6 +1296,39 @@ others to avoid repeating the same values:
 If the target table is one of the tox environments variable substitution will be applied on the replaced value,
 otherwise the text will be inserted as is (e.g., here with extra).
 
+Configuration reference
+~~~~~~~~~~~~~~~~~~~~~~~
+.. versionadded:: 4.21
+
+You can reference other configurations via the ``ref`` replacement. This can either be of type:
+
+
+- ``env``, in this case the configuration is loaded from another tox environment, where string substitution will happen
+  in that environments scope:
+
+    .. code-block:: toml
+
+        [env.src]
+        extras = ["A", "{env_name}"]
+        [env.dest]
+        extras = [{ replace = "ref", env = "src", key = "extras", extend = true }, "B"
+
+  In this case ``dest`` environments ``extras`` will be ``A``, ``src``, ``B``.
+
+- ``raw``, in this case the configuration is loaded as raw, and substitution executed in the current environments scope:
+
+    .. code-block:: toml
+
+        [env.src]
+        extras = ["A", "{env_name}"]
+        [env.dest]
+        extras = [{ replace = "ref", of = ["env", "extras"], extend = true }, "B"]
+
+  In this case ``dest`` environments ``extras`` will be ``A``, ``dest``, ``B``.
+
+The ``extend`` flag controls if after replacement the value should be replaced as is in the host structure (when flag is
+false -- by default) or be extended into. This flag only operates when the host is a list.
+
 Positional argument reference
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. versionadded:: 4.21
@@ -1305,9 +1338,12 @@ You can reference positional arguments via the ``posargs`` replacement:
 .. code-block:: toml
 
     [env.A]
-    commands = [["python", { replace = "posargs", default = ["a", "b"] } ]]
+    commands = [["python", { replace = "posargs", default = ["a", "b"], extend = true } ]]
 
 If the positional arguments are not set commands will become ``python a b``, otherwise will be ``python posarg-set``.
+The ``extend`` option instructs tox to unroll the positional arguments within the host structure. Without it the result
+would become ``["python", ["a", "b"]`` which would be invalid.
+
 Note that:
 
 .. code-block:: toml
@@ -1317,6 +1353,28 @@ Note that:
 
 Differs in sense that the positional arguments will be set as a single argument, while in the original example they are
 passed through as separate.
+
+Empty commands groups will be ignored:
+
+.. code-block:: toml
+
+    [env.A]
+    commands = [[], ["pytest]]
+
+will only invoke pytest. This is especially useful together with posargs allowing you to opt out of running a set of
+commands:
+
+  .. code-block:: toml
+
+    [env.A]
+    commands = [
+        { replace = "posargs", default = ["python", "patch.py"]},
+        ["pytest"]
+    ]
+
+When running ``tox run -e A`` it will invoke ``python patch.py`` followed by pytest. When running ``tox run -e A --`` it
+will invoke only pytest.
+
 
 Environment variable reference
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1331,35 +1389,25 @@ You can reference environment variables via the ``env`` replacement:
 
 If the environment variable is set the the ``COVERAGE_FILE`` will become that, otherwise will default to ``ok``.
 
-Other configuration reference
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.. versionadded:: 4.21
+References within set_env
+~~~~~~~~~~~~~~~~~~~~~~~~~
+.. versionadded:: 4.21.1
 
-You can reference environment variables via the ``env`` replacement:
-
-.. code-block:: toml
-
-    [env_run_base]
-    extras = ["A", "{env_name}"]
-    [env.ab]
-    extras = [{ replace = "ref", raw = ["env_run_base", "extras"] }, "B"]
-
-In this case the ``extras`` for ``ab`` will be ``A``, ``B`` and ``ab``.
-
-Reference replacement rules
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-When the replacement happens within a list and the returned value is also of type list the content will be extending the
-list rather than replacing it. For example:
+When you want to inherit ``set_env`` from another environment you can use the feature that if you pass a list of
+dictionaries to ``set_env`` they will be merged together, for example:
 
 .. code-block:: toml
 
-    [env_run_base]
-    extras = ["A"]
-    [env.ab]
-    extras = [{ replace = "ref", raw = ["env_run_base", "extras"] }, "B"]
+        [tool.tox.env_run_base]
+        set_env = { A = "1", B = "2"}
 
-In this case the ``extras`` will be ``'A', 'B'`` rather than ``['A'], 'B'``.  Otherwise the replacement is in-place.
+        [tool.tox.env.magic]
+        set_env = [
+            { replace = "ref", of = ["tool", "tox", "env_run_base", "set_env"]},
+            { C = "3", D = "4"},
+        ]
+
+Here the ``magic`` tox environment will have both ``A``, ``B``, ``C`` and ``D`` environments set.
 
 INI only
 --------

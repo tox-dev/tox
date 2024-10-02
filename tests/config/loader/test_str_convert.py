@@ -94,8 +94,9 @@ def test_str_convert_nok(raw: str, of_type: type[Any], msg: str, exc_type: type[
     ],
 )
 def test_invalid_shell_expression(value: str, expected: list[str]) -> None:
-    result = StrConvert().to_command(value).args
-    assert result == expected
+    result = StrConvert().to_command(value)
+    assert result is not None
+    assert result.args == expected
 
 
 SIMPLE_ARGS = [
@@ -180,8 +181,9 @@ def test_shlex_platform_specific(sys_platform: str, value: str, expected: list[s
     if sys_platform != "win32" and value.startswith("SPECIAL:"):
         # on non-windows platform, backslash is always an escape, not path separator
         expected = [exp.replace("\\", "") for exp in expected]
-    result = StrConvert().to_command(value).args
-    assert result == expected
+    result = StrConvert().to_command(value)
+    assert result is not None
+    assert result.args == expected
 
 
 @pytest.mark.parametrize(

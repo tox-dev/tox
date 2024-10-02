@@ -64,7 +64,16 @@ def validate(val: TomlTypes, of_type: type[T]) -> TypeGuard[T]:  # noqa: C901, P
         if val not in choice:
             msg = f"{val!r} is not one of literal {','.join(repr(i) for i in choice)}"
     elif not isinstance(val, of_type):
-        msg = f"{val!r} is not of type {of_type.__name__!r}"
+        if issubclass(of_type, (bool, str, int)):
+            fail = not isinstance(val, of_type)
+        else:
+            try:  # check if it can be converted
+                of_type(val)  # type: ignore[call-arg]
+                fail = False
+            except Exception:  # noqa: BLE001
+                fail = True
+        if fail:
+            msg = f"{val!r} is not of type {of_type.__name__!r}"
     if msg:
         raise TypeError(msg)
     return cast(T, val)  # type: ignore[return-value] # logic too complicated for mypy

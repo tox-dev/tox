@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 from textwrap import indent
 from typing import TYPE_CHECKING, Iterable
 
@@ -102,7 +103,9 @@ def print_conf(is_colored: bool, conf: ConfigSet, keys: Iterable[str]) -> None: 
         try:
             value = conf[key]
             as_str, multi_line = stringify(value)
-        except Exception as exception:  # because e.g. the interpreter cannot be found  # noqa: BLE001
+        except Exception as exception:  # because e.g. the interpreter cannot be found
+            if os.environ.get("_TOX_SHOW_CONFIG_RAISE"):  # pragma: no branch
+                raise  # pragma: no cover
             as_str, multi_line = _colored(is_colored, Fore.LIGHTRED_EX, f"# Exception: {exception!r}"), False
         if multi_line and "\n" not in as_str:
             multi_line = False

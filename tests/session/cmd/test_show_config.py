@@ -94,7 +94,7 @@ def test_show_config_exception(tox_project: ToxProjectCreator) -> None:
         """,
         },
     )
-    outcome = project.run("c", "-e", "a", "-k", "env_site_packages_dir")
+    outcome = project.run("c", "-e", "a", "-k", "env_site_packages_dir", raise_on_config_fail=False)
     outcome.assert_success()
     txt = (
         "\nenv_site_packages_dir = # Exception: "
@@ -105,7 +105,7 @@ def test_show_config_exception(tox_project: ToxProjectCreator) -> None:
 
 def test_show_config_empty_install_command_exception(tox_project: ToxProjectCreator) -> None:
     project = tox_project({"tox.ini": "[testenv:a]\ninstall_command="})
-    outcome = project.run("c", "-e", "a", "-k", "install_command")
+    outcome = project.run("c", "-e", "a", "-k", "install_command", raise_on_config_fail=False)
     outcome.assert_success()
     txt = "\ninstall_command = # Exception: ValueError(\"attempting to parse '' into a command failed\")"
     assert txt in outcome.out
@@ -151,7 +151,7 @@ def test_show_config_pkg_env_once(
     prev_ver, impl = patch_prev_py(True)
     ini = f"[tox]\nenv_list=py{prev_ver},py\n[testenv]\npackage=wheel"
     project = tox_project({"tox.ini": ini, "pyproject.toml": ""})
-    result = project.run("c", "-e", "ALL")
+    result = project.run("c", "-e", "ALL", raise_on_config_fail=False)
     result.assert_success()
     parser = ConfigParser(interpolation=None)
     parser.read_string(result.out)
@@ -166,7 +166,7 @@ def test_show_config_pkg_env_skip(
     prev_ver, _impl = patch_prev_py(False)
     ini = f"[tox]\nenv_list=py{prev_ver},py\n[testenv]\npackage=wheel"
     project = tox_project({"tox.ini": ini, "pyproject.toml": ""})
-    result = project.run("c", "-e", "ALL")
+    result = project.run("c", "-e", "ALL", raise_on_config_fail=False)
     result.assert_success()
     parser = ConfigParser(interpolation=None)
     parser.read_string(result.out)

@@ -72,7 +72,7 @@ class StrConvert(Convert[str]):
         return "".join(result)
 
     @staticmethod
-    def to_command(value: str) -> Command:
+    def to_command(value: str) -> Command | None:
         """
         At this point, ``value`` has already been substituted out, and all punctuation / escapes are final.
 

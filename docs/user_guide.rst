@@ -33,18 +33,18 @@ these. The canonical file for this is either a ``tox.toml`` or ``tox.ini`` file.
                 "pytest>=8",
                 "pytest-sugar"
             ]
-            commands = [["pytest", { replace = "posargs", default = ["tests"] }]]
+            commands = [["pytest", { replace = "posargs", default = ["tests"], extend = true }]]
 
             [env.lint]
             description = "run linters"
             skip_install = true
             deps = ["black"]
-            commands = [["black", { replace = "posargs", default = ["."]} ]]
+            commands = [["black", { replace = "posargs", default = ["."], extend = true} ]]
 
             [env.type]
             description = "run type checks"
             deps = ["mypy"]
-            commands = [["mypy", { replace = "posargs", default = ["src", "tests"]} ]]
+            commands = [["mypy", { replace = "posargs", default = ["src", "tests"], extend = true} ]]
 
 
     .. tab:: INI
@@ -133,18 +133,18 @@ When ``<env_name>`` is the name of a specific environment, test environment conf
             "pytest>=8",
             "pytest-sugar"
         ]
-        commands = [["pytest", { replace = "posargs", default = ["tests"] }]]
+        commands = [["pytest", { replace = "posargs", default = ["tests"], extend = true }]]
 
         [env.lint]
         description = "run linters"
         skip_install = true
         deps = ["black"]
-        commands = [["black", { replace = "posargs", default = ["."]} ]]
+        commands = [["black", { replace = "posargs", default = ["."], extend = true} ]]
 
         [env.type]
         description = "run type checks"
         deps = ["mypy"]
-        commands = [["mypy", { replace = "posargs", default = ["src", "tests"]} ]]
+        commands = [["mypy", { replace = "posargs", default = ["src", "tests"], extend = true} ]]
 
 .. tab:: INI
 
@@ -217,7 +217,7 @@ Basic example
             "pytest>=7",
             "pytest-sugar",
         ]
-        commands = [[ "pytest", "tests", { replace = "posargs"} ]]
+        commands = [[ "pytest", "tests", { replace = "posargs", extend = true} ]]
 
 .. tab:: INI
 
