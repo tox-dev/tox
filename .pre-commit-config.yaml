@@ -14,11 +14,6 @@ repos:
     hooks:
       - id: codespell
         additional_dependencies: ["tomli>=2.0.1"]
-  - repo: https://github.com/tox-dev/tox-ini-fmt
-    rev: "1.4.1"
-    hooks:
-      - id: tox-ini-fmt
-        args: ["-p", "fix"]
   - repo: https://github.com/tox-dev/pyproject-fmt
     rev: "2.2.4"
     hooks:

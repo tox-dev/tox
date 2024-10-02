@@ -167,7 +167,7 @@ def test_base_python_env_conflict_show_conf(tox_project: ToxProjectCreator, igno
     if ignore_conflict is not None:
         ini += f"\n[tox]\nignore_base_python_conflict={ignore_conflict}"
     project = tox_project({"tox.ini": ini})
-    result = project.run("c", "-e", f"py{py_ver}", "-k", "base_python")
+    result = project.run("c", "-e", f"py{py_ver}", "-k", "base_python", raise_on_config_fail=False)
     result.assert_success()
     if ignore_conflict:
         out = f"[testenv:py{py_ver}]\nbase_python = py{py_ver}\n"

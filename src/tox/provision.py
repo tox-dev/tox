@@ -94,7 +94,7 @@ def provision(state: State) -> int | bool:
         base=[],  # disable inheritance for provision environments
         package="skip",  # no packaging for this please
         # use our own dependency specification
-        deps=PythonDeps("\n".join(str(r) for r in requires), root=state.conf.core["tox_root"]),
+        deps=PythonDeps(requires, root=state.conf.core["tox_root"]),
         pass_env=["*"],  # do not filter environment variables, will be handled by provisioned tox
         recreate=state.conf.options.recreate and not state.conf.options.no_recreate_provision,
     )

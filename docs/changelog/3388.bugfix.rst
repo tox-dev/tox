@@ -1,0 +1,7 @@
+Multiple fixes for the TOML configuration by :user:`gaborbernat`.:
+
+- Do not fail when there is an empty command within ``commands``.
+- Allow references for ``set_env`` by accepting list of dictionaries for it.
+- Do not try to be smart about reference unrolling, instead allow the user to control it via the ``extend`` flag,
+  available both for ``posargs`` and ``ref`` replacements.
+- The ``ref`` replacements ``raw`` key has been renamed to ``of``.

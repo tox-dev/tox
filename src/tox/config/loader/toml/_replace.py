@@ -38,8 +38,8 @@ class Unroll:
             res_list: list[TomlTypes] = []
             for val in value:  # apply replacement for every entry
                 got = self(val, depth)
-                if isinstance(val, dict) and val.get("replace") in {"posargs", "ref"} and isinstance(got, (list, set)):
-                    res_list.extend(got)
+                if isinstance(val, dict) and val.get("replace") and val.get("extend"):
+                    res_list.extend(cast(List[Any], got))
                 else:
                     res_list.append(got)
             value = res_list
@@ -63,16 +63,21 @@ class Unroll:
                         self.args,
                     )
                 if replace_type == "ref":  # pragma: no branch
-                    if of := value.get("raw"):
-                        validated_of = cast(List[str], validate(of, List[str]))
-                        return self.loader.load_raw_from_root(self.loader.section.SEP.join(validated_of))
-                    if self.conf is not None:  # pragma: no branch # noqa: SIM102
-                        if (env := value.get("env")) and (key := value.get("key")):  # pragma: no branch
-                            return cast(TomlTypes, self.conf.get_env(cast(str, env))[cast(str, key)])
+                    return self._replace_ref(value, depth)
+
             res_dict: dict[str, TomlTypes] = {}
             for key, val in value.items():  # apply replacement for every entry
                 res_dict[key] = self(val, depth)
             value = res_dict
+        return value
+
+    def _replace_ref(self, value: dict[str, TomlTypes], depth: int) -> TomlTypes:
+        if self.conf is not None and (env := value.get("env")) and (key := value.get("key")):
+            return cast(TomlTypes, self.conf.get_env(cast(str, env))[cast(str, key)])
+        if of := value.get("of"):
+            validated_of = cast(List[str], validate(of, List[str]))
+            loaded = self.loader.load_raw_from_root(self.loader.section.SEP.join(validated_of))
+            return self(loaded, depth)
         return value
 
 

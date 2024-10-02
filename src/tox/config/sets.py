@@ -235,6 +235,13 @@ class EnvConfigSet(ConfigSet):
             if not (
                 isinstance(raw, str)
                 or (isinstance(raw, dict) and all(isinstance(k, str) and isinstance(v, str) for k, v in raw.items()))
+                or (
+                    isinstance(raw, list)
+                    and all(
+                        isinstance(e, dict) and all(isinstance(k, str) and isinstance(v, str) for k, v in e.items())
+                        for e in raw
+                    )
+                )
             ):
                 raise TypeError(raw)
             return SetEnv(raw, self.name, self.env_name, root)

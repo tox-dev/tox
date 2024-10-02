@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from functools import reduce
 from pathlib import Path
 from typing import Callable, Iterator, Mapping
 
@@ -10,7 +11,9 @@ Replacer = Callable[[str, ConfigLoadArgs], str]
 
 
 class SetEnv:
-    def __init__(self, raw: str | dict[str, str], name: str, env_name: str | None, root: Path) -> None:
+    def __init__(  # noqa: C901
+        self, raw: str | dict[str, str] | list[dict[str, str]], name: str, env_name: str | None, root: Path
+    ) -> None:
         self.changed = False
         self._materialized: dict[str, str] = {}  # env vars we already loaded
         self._raw: dict[str, str] = {}  # could still need replacement
@@ -22,6 +25,9 @@ class SetEnv:
 
         if isinstance(raw, dict):
             self._raw = raw
+            return
+        if isinstance(raw, list):
+            self._raw = reduce(lambda a, b: {**a, **b}, raw)
             return
         for line in raw.splitlines():  # noqa: PLR1702
             if line.strip():

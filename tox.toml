@@ -13,27 +13,29 @@ set_env.COVERAGE_FILECOVERAGE_PROCESS_START = "{tox_root}{/}pyproject.toml"
 commands = [
   [
     "pytest",
-    { replace = "posargs", default = [
+    { replace = "posargs", extend = true, default = [
+      "--durations",
+      "15",
+      "-n",
+      { replace = "env", name = "PYTEST_XDIST_AUTO_NUM_WORKERS", default = "auto" },
       "--junitxml",
       "{work_dir}{/}junit.{env_name}.xml",
+      "--no-cov-on-fail",
       "--cov",
       "{env_site_packages_dir}{/}tox",
       "--cov",
       "{tox_root}{/}tests",
-      "--cov-config={tox_root}{/}pyproject.toml",
-      "-no-cov-on-fail",
+      "--cov-config",
+      "{tox_root}{/}pyproject.toml",
+      "--cov-context",
+      "test",
       "--cov-report",
       "term-missing:skip-covered",
-      "--cov-context=test",
       "--cov-report",
       "html:{env_tmp_dir}{/}htmlcov",
       "--cov-report",
       "xml:{work_dir}{/}coverage.{env_name}.xml",
-      "-n",
-      { replace = "env", name = "PYTEST_XDIST_AUTO_NUM_WORKERS", default = "auto" },
       "tests",
-      "--durations",
-      "15",
       "--run-integration",
     ] },
   ],
@@ -49,7 +51,7 @@ commands = [
 description = "format the code base to adhere to our styles, and complain about what we cannot do automatically"
 skip_install = true
 deps = ["pre-commit-uv>=4.1.3"]
-pass_env = [{ replace = "ref", of = ["env_run_base", "pass_env"] }, "PROGRAMDATA"]
+pass_env = [{ replace = "ref", of = ["env_run_base", "pass_env"], extend = true }, "PROGRAMDATA"]
 commands = [["pre-commit", "run", "--all-files", "--show-diff-on-failure", { replace = "posargs" }]]
 
 [env.type]
@@ -125,7 +127,7 @@ commands = [["python", "{tox_root}/tasks/release.py", "--version", "{posargs}"]]
 [env.dev]
 description = "dev environment with all deps at {envdir}"
 package = "editable"
-deps = { replace = "ref", of = ["env", "release", "deps"] }
+deps = { replace = "ref", of = ["env", "release", "deps"], extend = true }
 extras = ["docs", "testing"]
 commands = [["python", "-m", "pip", "list", "--format=columns"], ["python", "-c", 'print(r"{env_python}")']]
 uv_seed = true
