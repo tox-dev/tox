@@ -54,7 +54,7 @@ these. The canonical file for this is either a ``tox.toml`` or ``tox.ini`` file.
            [tox]
             requires =
                 tox>=4
-            env_list = lint, type, 3.{3,2,1}
+            env_list = lint, type, 3.1{3,2,1}
 
             [testenv]
             description = run unit tests
@@ -108,7 +108,7 @@ in ``tox.toml`` and ``tox`` table in ``tox.ini`` section.
         [tox]
         requires =
             tox>=4
-        env_list = lint, type, 3.{3,2,1}
+        env_list = lint, type, 3.1{3,2,1}
 
 
 We can use it to specify things such as the minimum version of *tox* required or the location of the package under test.
