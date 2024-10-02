@@ -4,6 +4,21 @@ Release History
 
 .. towncrier release notes start
 
+v4.21.1 (2024-10-02)
+--------------------
+
+Bugfixes - 4.21.1
+~~~~~~~~~~~~~~~~~
+- Fix error when using ``requires`` within a TOML configuration file - by :user:`gaborbernat`. (:issue:`3386`)
+- Fix error when using ``deps`` within a TOML configuration file - by :user:`gaborbernat`. (:issue:`3387`)
+- Multiple fixes for the TOML configuration by :user:`gaborbernat`.:
+
+  - Do not fail when there is an empty command within ``commands``.
+  - Allow references for ``set_env`` by accepting list of dictionaries for it.
+  - Do not try to be smart about reference unrolling, instead allow the user to control it via the ``extend`` flag,
+    available both for ``posargs`` and ``ref`` replacements.
+  - The ``ref`` replacements ``raw`` key has been renamed to ``of``. (:issue:`3388`)
+
 v4.21.0 (2024-09-30)
 --------------------
 
