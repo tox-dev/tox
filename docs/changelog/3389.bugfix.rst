@@ -1,2 +1,0 @@
-Include ``tox.toml`` in sdist archives to fix test failures resulting from its lack.
-- by :user:`mgorny`

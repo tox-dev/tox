@@ -4,6 +4,14 @@ Release History
 
 .. towncrier release notes start
 
+v4.21.2 (2024-10-03)
+--------------------
+
+Bugfixes - 4.21.2
+~~~~~~~~~~~~~~~~~
+- Include ``tox.toml`` in sdist archives to fix test failures resulting from its lack.
+  - by :user:`mgorny` (:issue:`3389`)
+
 v4.21.1 (2024-10-02)
 --------------------
 
