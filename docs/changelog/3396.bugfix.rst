@@ -1,0 +1,1 @@
+Fix a bug, that prevented the installation of extra dependencies, which contain an underscore in their identifier.

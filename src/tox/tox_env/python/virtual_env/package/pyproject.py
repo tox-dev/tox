@@ -13,6 +13,7 @@ from typing import TYPE_CHECKING, Any, Dict, Generator, Iterator, Literal, NoRet
 
 from cachetools import cached
 from packaging.requirements import Requirement
+from packaging.utils import canonicalize_name
 from pyproject_api import (
     BackendFailed,
     CmdStatus,
@@ -313,7 +314,7 @@ class Pep517VenvPackager(PythonPackageToxEnv, ABC):
         ]
         optional_deps = project.get("optional-dependencies", {})
         for extra, reqs in optional_deps.items():
-            deps_with_markers.extend((Requirement(req), {extra}) for req in (reqs or []))
+            deps_with_markers.extend((Requirement(req), {canonicalize_name(extra)}) for req in (reqs or []))
         return dependencies_with_extras_from_markers(
             deps_with_markers=deps_with_markers,
             extras=extras,
