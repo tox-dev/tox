@@ -56,7 +56,7 @@ commands = [["pre-commit", "run", "--all-files", "--show-diff-on-failure", { rep
 
 [env.type]
 description = "run type check on code base"
-deps = ["mypy==1.11.2", "types-cachetools>=5.5.0.20240820", "types-chardet>=5.0.4.6"]
+extras = ["testing", "type"]
 commands = [["mypy", "src{/}tox"], ["mypy", "tests"]]
 
 [env.docs]
