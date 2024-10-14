@@ -52,7 +52,7 @@ description = "format the code base to adhere to our styles, and complain about 
 skip_install = true
 deps = ["pre-commit-uv>=4.1.3"]
 pass_env = [{ replace = "ref", of = ["env_run_base", "pass_env"], extend = true }, "PROGRAMDATA"]
-commands = [["pre-commit", "run", "--all-files", "--show-diff-on-failure", { replace = "posargs" }]]
+commands = [["pre-commit", "run", "--all-files", "--show-diff-on-failure", { replace = "posargs", extend = true }]]
 
 [env.type]
 description = "run type check on code base"
