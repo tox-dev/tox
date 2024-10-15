@@ -4,6 +4,13 @@ Release History
 
 .. towncrier release notes start
 
+v4.22.0 (2024-10-15)
+--------------------
+
+Features - 4.22.0
+~~~~~~~~~~~~~~~~~
+- Implement dependency group support as defined in :pep:`735` - see :ref:`dependency_groups` - by :user:`gaborbernat`. (:issue:`3408`)
+
 v4.21.2 (2024-10-03)
 --------------------
 
