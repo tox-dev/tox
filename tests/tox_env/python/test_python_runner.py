@@ -176,3 +176,229 @@ def test_skip_missing_interpreters_specified_env(
         args += ["-e", env]
     result = project.run(*args)
     assert result.code == retcode
+
+
+def test_dependency_groups_single(tox_project: ToxProjectCreator) -> None:
+    project = tox_project(
+        {
+            "tox.toml": """
+            [env_run_base]
+            skip_install = true
+            dependency_groups = ["test"]
+            """,
+            "pyproject.toml": """
+            [dependency-groups]
+            test = [
+              "furo>=2024.8.6",
+              "sphinx>=8.0.2",
+            ]
+            """,
+        },
+    )
+    execute_calls = project.patch_execute()
+    result = project.run("r", "-e", "py")
+
+    result.assert_success()
+
+    found_calls = [(i[0][0].conf.name, i[0][3].run_id, i[0][3].cmd) for i in execute_calls.call_args_list]
+    assert found_calls == [
+        ("py", "install_dependency-groups", ["python", "-I", "-m", "pip", "install", "furo>=2024.8.6", "sphinx>=8.0.2"])
+    ]
+
+
+def test_dependency_groups_multiple(tox_project: ToxProjectCreator) -> None:
+    project = tox_project(
+        {
+            "tox.toml": """
+            [env_run_base]
+            skip_install = true
+            dependency_groups = ["test", "type"]
+            """,
+            "pyproject.toml": """
+            [dependency-groups]
+            test = [
+              "furo>=2024.8.6",
+              "sphinx>=8.0.2",
+            ]
+            type = [
+              "furo>=2024.8.6",
+              "mypy>=1",
+            ]
+            """,
+        },
+    )
+    execute_calls = project.patch_execute()
+    result = project.run("r", "-e", "py")
+
+    result.assert_success()
+
+    found_calls = [(i[0][0].conf.name, i[0][3].run_id, i[0][3].cmd) for i in execute_calls.call_args_list]
+    assert found_calls == [
+        (
+            "py",
+            "install_dependency-groups",
+            ["python", "-I", "-m", "pip", "install", "furo>=2024.8.6", "mypy>=1", "sphinx>=8.0.2"],
+        )
+    ]
+
+
+def test_dependency_groups_include(tox_project: ToxProjectCreator) -> None:
+    project = tox_project(
+        {
+            "tox.toml": """
+            [env_run_base]
+            skip_install = true
+            dependency_groups = ["test", "type"]
+            """,
+            "pyproject.toml": """
+            [dependency-groups]
+            test = [
+              "furo>=2024.8.6",
+              "sphinx>=8.0.2",
+            ]
+            type = [
+              {include-group = "test"},
+              "mypy>=1",
+            ]
+            """,
+        },
+    )
+    execute_calls = project.patch_execute()
+    result = project.run("r", "-e", "py")
+
+    result.assert_success()
+
+    found_calls = [(i[0][0].conf.name, i[0][3].run_id, i[0][3].cmd) for i in execute_calls.call_args_list]
+    assert found_calls == [
+        (
+            "py",
+            "install_dependency-groups",
+            ["python", "-I", "-m", "pip", "install", "furo>=2024.8.6", "mypy>=1", "sphinx>=8.0.2"],
+        )
+    ]
+
+
+def test_dependency_groups_not_table(tox_project: ToxProjectCreator) -> None:
+    project = tox_project(
+        {
+            "tox.toml": """
+            [env_run_base]
+            skip_install = true
+            dependency_groups = ["test"]
+            """,
+            "pyproject.toml": """
+            dependency-groups = 1
+            """,
+        },
+    )
+    result = project.run("r", "-e", "py")
+
+    result.assert_failed()
+    assert "py: failed with dependency-groups is int instead of table\n" in result.out
+
+
+def test_dependency_groups_missing(tox_project: ToxProjectCreator) -> None:
+    project = tox_project(
+        {
+            "tox.toml": """
+            [env_run_base]
+            skip_install = true
+            dependency_groups = ["type"]
+            """,
+            "pyproject.toml": """
+            [dependency-groups]
+            test = [
+              "furo>=2024.8.6",
+            ]
+            """,
+        },
+    )
+    result = project.run("r", "-e", "py")
+
+    result.assert_failed()
+    assert "py: failed with dependency group 'type' not found\n" in result.out
+
+
+def test_dependency_groups_not_list(tox_project: ToxProjectCreator) -> None:
+    project = tox_project(
+        {
+            "tox.toml": """
+            [env_run_base]
+            skip_install = true
+            dependency_groups = ["test"]
+            """,
+            "pyproject.toml": """
+            [dependency-groups]
+            test = 1
+            """,
+        },
+    )
+    result = project.run("r", "-e", "py")
+
+    result.assert_failed()
+    assert "py: failed with dependency group 'test' is not a list\n" in result.out
+
+
+def test_dependency_groups_bad_requirement(tox_project: ToxProjectCreator) -> None:
+    project = tox_project(
+        {
+            "tox.toml": """
+            [env_run_base]
+            skip_install = true
+            dependency_groups = ["test"]
+            """,
+            "pyproject.toml": """
+            [dependency-groups]
+            test = [ "whatever --" ]
+            """,
+        },
+    )
+    result = project.run("r", "-e", "py")
+
+    result.assert_failed()
+    assert (
+        "py: failed with 'whatever --' is not valid requirement due to "
+        "Expected end or semicolon (after name and no valid version specifier)\n    whatever --\n             ^\n"
+        in result.out
+    )
+
+
+def test_dependency_groups_bad_entry(tox_project: ToxProjectCreator) -> None:
+    project = tox_project(
+        {
+            "tox.toml": """
+            [env_run_base]
+            skip_install = true
+            dependency_groups = ["test"]
+            """,
+            "pyproject.toml": """
+            [dependency-groups]
+            test = [ { magic = "ok" } ]
+            """,
+        },
+    )
+    result = project.run("r", "-e", "py")
+
+    result.assert_failed()
+    assert "py: failed with invalid dependency group item: {'magic': 'ok'}\n" in result.out
+
+
+def test_dependency_groups_cyclic(tox_project: ToxProjectCreator) -> None:
+    project = tox_project(
+        {
+            "tox.toml": """
+            [env_run_base]
+            skip_install = true
+            dependency_groups = ["test"]
+            """,
+            "pyproject.toml": """
+            [dependency-groups]
+            test = [ { include-group = "type" } ]
+            type = [ { include-group = "test" } ]
+            """,
+        },
+    )
+    result = project.run("r", "-e", "py")
+
+    result.assert_failed()
+    assert "py: failed with Cyclic dependency group include: 'test' -> ('test', 'type')\n" in result.out

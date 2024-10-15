@@ -15,8 +15,11 @@ from tox.tox_env.python.pip.req_file import PythonDeps
 from tox.tox_env.runner import RunToxEnv
 
 from .api import Python
+from .dependency_groups import resolve
 
 if TYPE_CHECKING:
+    from pathlib import Path
+
     from tox.config.cli.parser import Parsed
     from tox.config.sets import CoreConfigSet, EnvConfigSet
     from tox.tox_env.api import ToxEnvCreateArgs
@@ -36,6 +39,13 @@ class PythonRun(Python, RunToxEnv, ABC):
             factory=partial(PythonDeps.factory, root),
             default=PythonDeps("", root),
             desc="Name of the python dependencies as specified by PEP-440",
+        )
+        self.conf.add_config(
+            keys=["dependency_groups"],
+            of_type=Set[str],
+            default=set(),
+            desc="dependency groups to install of the target package",
+            post_process=_normalize_extras,
         )
         add_skip_missing_interpreters_to_core(self.core, self.options)
 
@@ -87,10 +97,22 @@ class PythonRun(Python, RunToxEnv, ABC):
     def _setup_env(self) -> None:
         super()._setup_env()
         self._install_deps()
+        self._install_dependency_groups()
 
     def _install_deps(self) -> None:
         requirements_file: PythonDeps = self.conf["deps"]
         self._install(requirements_file, PythonRun.__name__, "deps")
+
+    def _install_dependency_groups(self) -> None:
+        groups: set[str] = self.conf["dependency_groups"]
+        if not groups:
+            return
+        try:
+            root: Path = self.core["package_root"]
+        except KeyError:
+            root = self.core["tox_root"]
+        requirements = resolve(root, groups)
+        self._install(list(requirements), PythonRun.__name__, "dependency-groups")
 
     def _build_packages(self) -> list[Package]:
         package_env = self.package_env
@@ -120,11 +142,6 @@ def add_skip_missing_interpreters_to_core(core: CoreConfigSet, options: Parsed) 
 
 
 def add_extras_to_env(conf: EnvConfigSet) -> None:
-    def _normalize_extras(values: set[str]) -> set[str]:
-        # although _ and . is allowed this will be normalized during packaging to -
-        # https://packaging.python.org/en/latest/specifications/dependency-specifiers/#grammar
-        return {canonicalize_name(v) for v in values}
-
     conf.add_config(
         keys=["extras"],
         of_type=Set[str],
@@ -132,6 +149,12 @@ def add_extras_to_env(conf: EnvConfigSet) -> None:
         desc="extras to install of the target package",
         post_process=_normalize_extras,
     )
+
+
+def _normalize_extras(values: set[str]) -> set[str]:
+    # although _ and . is allowed this will be normalized during packaging to -
+    # https://packaging.python.org/en/latest/specifications/dependency-specifiers/#grammar
+    return {canonicalize_name(v) for v in values}
 
 
 __all__ = [

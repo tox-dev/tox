@@ -160,7 +160,7 @@ class ToxProject:
                 msg = f"could not handle {at_path / key} with content {value!r}"  # pragma: no cover
                 raise TypeError(msg)  # pragma: no cover
 
-    def patch_execute(self, handle: Callable[[ExecuteRequest], int | None]) -> MagicMock:  # noqa: C901
+    def patch_execute(self, handle: Callable[[ExecuteRequest], int | None] | None = None) -> MagicMock:  # noqa: C901
         class MockExecute(Execute):
             def __init__(self, colored: bool, exit_code: int) -> None:  # noqa: FBT001
                 self.exit_code = exit_code
@@ -228,7 +228,7 @@ class ToxProject:
             request: ExecuteRequest,
             show: bool,  # noqa: FBT001
         ) -> Iterator[ExecuteStatus]:
-            exit_code = handle(request)
+            exit_code = 0 if handle is None else handle(request)
             if exit_code is not None:
                 executor = MockExecute(colored=executor._colored, exit_code=exit_code)  # noqa: SLF001
             with original_execute_call(self, executor, out_err, request, show) as status:
