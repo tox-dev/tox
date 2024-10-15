@@ -840,7 +840,7 @@ Python run
           ]
 
           [tool.pyproject.env_run_base]
-          dependency_groups = [
+          dependency-groups = [
             "test",
           ]
 
@@ -854,7 +854,7 @@ Python run
 
        .. code-block:: toml
 
-          [dependency_groups]
+          [dependency-groups]
           test = [
              "pytest>=8",
           ]
