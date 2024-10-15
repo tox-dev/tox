@@ -1,0 +1,1 @@
+Implement dependency group support as defined in :pep:`735` - see :ref:`dependency_groups` - by :user:`gaborbernat`.

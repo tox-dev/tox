@@ -1,4 +1,4 @@
-requires = ["tox>=4.19"]
+requires = ["tox>=4.21"]
 env_list = ["fix", "3.13", "3.12", "3.11", "3.10", "3.9", "3.8", "cov", "type", "docs", "pkg_meta"]
 skip_missing_interpreters = true
 
@@ -6,7 +6,7 @@ skip_missing_interpreters = true
 description = "run the tests with pytest under {env_name}"
 package = "wheel"
 wheel_build_env = ".pkg"
-extras = ["testing"]
+dependency_groups = ["test"]
 pass_env = ["PYTEST_*", "SSL_CERT_FILE"]
 set_env.COVERAGE_FILE = { replace = "env", name = "COVERAGE_FILE", default = "{work_dir}{/}.coverage.{env_name}" }
 set_env.COVERAGE_FILECOVERAGE_PROCESS_START = "{tox_root}{/}pyproject.toml"
@@ -50,38 +50,32 @@ commands = [
 [env.fix]
 description = "format the code base to adhere to our styles, and complain about what we cannot do automatically"
 skip_install = true
-deps = ["pre-commit-uv>=4.1.3"]
+dependency_groups = ["fix"]
 pass_env = [{ replace = "ref", of = ["env_run_base", "pass_env"], extend = true }, "PROGRAMDATA"]
 commands = [["pre-commit", "run", "--all-files", "--show-diff-on-failure", { replace = "posargs", extend = true }]]
 
 [env.type]
 description = "run type check on code base"
-extras = ["testing", "type"]
+dependency_groups = ["type"]
 commands = [["mypy", "src{/}tox"], ["mypy", "tests"]]
 
 [env.docs]
 description = "build documentation"
-extras = ["docs"]
+dependency_groups = ["docs"]
 commands = [
-  { replace = "posargs", default = [
-    "sphinx-build",
-    "-d",
-    "{env_tmp_dir}{/}docs_tree",
-    "docs",
-    "{work_dir}{/}docs_out",
-    "--color",
-    "-b",
-    "linkcheck",
-  ] },
   [
     "sphinx-build",
     "-d",
     "{env_tmp_dir}{/}docs_tree",
     "docs",
-    "{work_dir}{/}docs_out",
+    "{env:READTHEDOCS_OUTPUT:{work_dir}{/}docs_out}/html",
     "--color",
     "-b",
     "html",
+    { replace = "posargs", default = [
+      "-b",
+      "linkcheck",
+    ], extend = true },
     "-W",
   ],
   [
@@ -91,11 +85,10 @@ commands = [
   ],
 ]
 
-
 [env.pkg_meta]
 description = "check that the long description is valid"
 skip_install = true
-deps = ["check-wheel-contents>=0.6", "twine>=5.1.1", "uv>=0.4.17"]
+dependency_groups = ["pkg_meta"]
 commands = [
   [
     "uv",
@@ -121,13 +114,12 @@ commands = [
 [env.release]
 description = "do a release, required posargs of the version number"
 skip_install = true
-deps = ["gitpython>=3.1.43", "packaging>=24.1", "towncrier>=24.8"]
+dependency_groups = ["release"]
 commands = [["python", "{tox_root}/tasks/release.py", "--version", "{posargs}"]]
 
 [env.dev]
 description = "dev environment with all deps at {envdir}"
 package = "editable"
-deps = { replace = "ref", of = ["env", "release", "deps"], extend = true }
-extras = ["docs", "testing"]
+dependency_groups = ["dev"]
 commands = [["python", "-m", "pip", "list", "--format=columns"], ["python", "-c", 'print(r"{env_python}")']]
 uv_seed = true

@@ -821,6 +821,45 @@ Python options
 Python run
 ~~~~~~~~~~
 .. conf::
+   :keys: dependency_groups
+   :default: <empty list>
+   :version_added: 4.22
+
+   A list of names of dependency groups (as defined by :pep:`735`) to install into this Python environment. The
+   installation will happen before installing the package or any of its dependencies.
+
+   For example:
+
+    .. tab:: TOML
+
+       .. code-block:: toml
+
+          [dependency_groups]
+          test = [
+             "pytest>=8",
+          ]
+
+          [tool.pyproject.env_run_base]
+          dependency_groups = [
+            "test",
+          ]
+
+    .. tab:: INI
+
+       .. code-block:: ini
+
+        [testenv]
+        dependency_groups =
+            test
+
+       .. code-block:: toml
+
+          [dependency_groups]
+          test = [
+             "pytest>=8",
+          ]
+
+.. conf::
    :keys: deps
    :default: <empty list>
 
@@ -833,6 +872,9 @@ Python run
      ``-r`` (followed by a file path),
    - a `constraint file <https://pip.pypa.io/en/stable/user_guide/#constraints-files>`_ when the value starts with
      ``-c`` (followed by a file path).
+
+   If you are only defining :pep:`508` requirements (aka no pip requirement files), you should use
+   :ref:`dependency_groups` instead.
 
    For example:
     .. tab:: TOML

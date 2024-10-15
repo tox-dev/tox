@@ -1,0 +1,10 @@
+version: 2
+build:
+  os: ubuntu-lts-latest
+  tools:
+    python: "3"
+  commands:
+    - pip install uv
+    - uv venv
+    - uv pip install tox-uv tox@.
+    - .venv/bin/tox run -e docs --
