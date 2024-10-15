@@ -92,6 +92,11 @@ optional-dependencies.testing = [
   "time-machine>=2.15; implementation_name!='pypy'",
   "wheel>=0.44",
 ]
+optional-dependencies.type = [
+  "mypy==1.11.2",
+  "types-cachetools>=5.5.0.20240820",
+  "types-chardet>=5.0.4.6",
+]
 urls.Documentation = "https://tox.wiki"
 urls.Homepage = "http://tox.readthedocs.org"
 urls."Release Notes" = "https://tox.wiki/en/latest/changelog.html"
