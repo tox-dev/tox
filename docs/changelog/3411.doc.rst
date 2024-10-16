@@ -1,0 +1,1 @@
+replace ``[tool.pyproject]`` and ``[tool.tox.pyproject]`` with ``[tool.tox]`` in config.rst
