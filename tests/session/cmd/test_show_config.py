@@ -124,9 +124,9 @@ def test_pass_env_config_default(tox_project: ToxProjectCreator, stdout_is_atty:
         + ["CC", "CCSHARED", "CFLAGS"]
         + (["COMSPEC"] if is_win else [])
         + ["CPPFLAGS", "CURL_CA_BUNDLE", "CXX", "FORCE_COLOR", "HOME", "LANG"]
-        + ["LANGUAGE", "LDFLAGS", "LD_LIBRARY_PATH", "NETRC"]
+        + ["LANGUAGE", "LDFLAGS", "LD_LIBRARY_PATH"]
         + (["MSYSTEM"] if is_win else [])
-        + ["NO_COLOR"]
+        + ["NETRC", "NO_COLOR"]
         + (["NUMBER_OF_PROCESSORS", "PATHEXT"] if is_win else [])
         + ["PIP_*", "PKG_CONFIG", "PKG_CONFIG_PATH", "PKG_CONFIG_SYSROOT_DIR"]
         + (["PROCESSOR_ARCHITECTURE"] if is_win else [])
