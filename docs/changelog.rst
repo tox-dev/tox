@@ -4,6 +4,17 @@ Release History
 
 .. towncrier release notes start
 
+v4.23.0 (2024-10-16)
+--------------------
+
+Features - 4.23.0
+~~~~~~~~~~~~~~~~~
+- Add ``NETRC`` to the list of environment variables always passed through. (:issue:`3410`)
+
+Improved Documentation - 4.23.0
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+- replace ``[tool.pyproject]`` and ``[tool.tox.pyproject]`` with ``[tool.tox]`` in config.rst (:issue:`3411`)
+
 v4.22.0 (2024-10-15)
 --------------------
 
