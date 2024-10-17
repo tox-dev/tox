@@ -1,1 +1,1 @@
-Add `NETRC` to the list of environment variables always passed through.
+Add ``NETRC`` to the list of environment variables always passed through.
