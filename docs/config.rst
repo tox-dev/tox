@@ -530,6 +530,11 @@ Base options
             - ✅
             - ✅
             - ✅
+        *   - NETRC
+            - ✅
+            - ✅
+            - ✅
+
 
 
    More environment variable-related information
