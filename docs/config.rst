@@ -186,7 +186,7 @@ The following options are set in the ``[tox]`` section of ``tox.ini`` or the ``[
 
        .. code-block:: toml
 
-          [tool.tox.pyproject]
+          [tool.tox]
           requires = [
             "tox>=4",
             "virtualenv>20.2",
@@ -291,7 +291,7 @@ The following options are set in the ``[tox]`` section of ``tox.ini`` or the ``[
 
        .. code-block:: toml
 
-          [tool.pyproject]
+          [tool.tox]
           labels = { test = ["3.13", "3.12"], static = ["ruff", "mypy"] }
 
     .. tab:: INI
@@ -591,9 +591,9 @@ Base options
 
        .. code-block:: toml
 
-          [tool.pyproject.env_run_base]
+          [tool.tox.env_run_base]
           labels = ["test", "core"]
-          [tool.pyproject.env.flake8]
+          [tool.tox.env.flake8]
           labels = ["mypy"]
 
     .. tab:: INI
@@ -844,7 +844,7 @@ Python run
              "pytest>=8",
           ]
 
-          [tool.pyproject.env_run_base]
+          [tool.tox.env_run_base]
           dependency-groups = [
             "test",
           ]
@@ -886,7 +886,7 @@ Python run
 
        .. code-block:: toml
 
-          [tool.pyproject.env_run_base]
+          [tool.tox.env_run_base]
           deps = [
             "pytest>=8",
             "-r requirements.txt",
