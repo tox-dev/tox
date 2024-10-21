@@ -359,6 +359,8 @@ Just make sure you switch the user to ``root`` when needed and switch back to ``
     USER tox
 
 
+.. _eol-version-support:
+
 Testing end-of-life Python versions
 -----------------------------------
 
@@ -376,6 +378,9 @@ If you need to test against e.g. Python 2.7, 3.5 or 3.6, you need to add the fol
 
 In case you need to do this for many repositories, we recommend to use
 `all-repos <https://github.com/asottile/all-repos>`_.
+
+Support for Python 3.7 was dropped in `virtualenv 20.27.0 <https://virtualenv.pypa.io/en/latest/changelog.html#v20-27-0-2024-10-17>`_.
+In order to test against Python 3.7, you can limit the version with ``requires = virtualenv<20.27.0`` instead.
 
 
 Testing with Pytest
