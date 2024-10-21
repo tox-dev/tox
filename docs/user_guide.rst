@@ -361,7 +361,8 @@ Main features
 
 * ``plugin system`` to modify tox execution with simple hooks.
 * uses :pypi:`pip` and :pypi:`virtualenv` by default. Support for plugins replacing it with their own.
-* **cross-Python compatible**: tox requires CPython 3.7 and higher, but it can create environments 2.7 or later
+* **cross-Python compatible**: tox requires CPython 3.7 and higher, but it can create environments 2.7 or later.
+  Special configuration might be required: :ref:`eol-version-support`.
 * **cross-platform**: Windows, macOS and Unix style environments
 * **full interoperability with devpi**: is integrated with and is used for testing in the :pypi:`devpi` system, a
   versatile PyPI index server and release managing tool
