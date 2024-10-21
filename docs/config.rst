@@ -826,7 +826,7 @@ Python options
 Python run
 ~~~~~~~~~~
 .. conf::
-   :keys: dependency_groups
+   :keys: dependency-groups
    :default: <empty list>
    :version_added: 4.22
 
@@ -839,7 +839,7 @@ Python run
 
        .. code-block:: toml
 
-          [dependency_groups]
+          [dependency-groups]
           test = [
              "pytest>=8",
           ]
