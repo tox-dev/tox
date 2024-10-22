@@ -839,13 +839,13 @@ Python run
 
        .. code-block:: toml
 
-          [dependency_groups]
+          [dependency-groups]
           test = [
              "pytest>=8",
           ]
 
           [tool.tox.env_run_base]
-          dependency-groups = [
+          dependency_groups = [
             "test",
           ]
 
