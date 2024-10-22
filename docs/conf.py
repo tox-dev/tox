@@ -72,10 +72,11 @@ linkcheck_ignore = [
     re.escape(i)
     for i in (
         r"https://github.com/tox-dev/tox/issues/new?title=Trouble+with+development+environment",
-        r"https://www.unix.org/version2/sample/abort.html",
         r"https://porkbun.com/",  # has captcha on it that makes it return with 405
+        r"https://opensource.org/license/mit",
     )
 ]
+linkcheck_allowed_redirects = {r"https://github.com/tox-dev/tox/issues/\d+": r"https://github.com/tox-dev/tox/pull/\d+"}
 extlinks_detect_hardcoded_links = True
 
 
