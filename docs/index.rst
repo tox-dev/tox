@@ -22,7 +22,7 @@ and `devpi <https://www.devpi.net>`_).
   :target: https://pypistats.org/packages/tox
   :alt: PyPI - Downloads
 .. image:: https://img.shields.io/pypi/l/tox?style=flat-square
-  :target: https://opensource.org/blog/license/mit
+  :target: https://opensource.org/license/mit
   :alt: PyPI - License
 .. image:: https://img.shields.io/github/issues/tox-dev/tox?style=flat-square
   :target: https://github.com/tox-dev/tox/issues
