@@ -1,0 +1,1 @@
+Provide ``test`` extra to support plugin authors using ``tox.pytest``.
