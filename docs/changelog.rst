@@ -4,6 +4,13 @@ Release History
 
 .. towncrier release notes start
 
+v4.23.1 (2024-10-21)
+--------------------
+
+Improved Documentation - 4.23.1
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+- Fix bad example in documentation for dependency groups - by :user:`gaborbernat`. (:issue:`3240`)
+
 v4.23.0 (2024-10-16)
 --------------------
 
