@@ -1698,5 +1698,5 @@ filesystem to become a path relative to the ``changedir`` setting.
 Other Substitutions
 ~~~~~~~~~~~~~~~~~~~
 
-* ``{}`` - replaced as ``os.pathsep``
+* ``{:}`` - replaced as ``os.pathsep``
 * ``{/}`` - replaced as ``os.sep``
