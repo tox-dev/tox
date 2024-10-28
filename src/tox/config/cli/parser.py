@@ -11,6 +11,8 @@ from argparse import SUPPRESS, Action, ArgumentDefaultsHelpFormatter, ArgumentEr
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Callable, Dict, List, Literal, Optional, Sequence, Tuple, Type, TypeVar, cast
 
+from colorama import Fore
+
 from tox.config.loader.str_convert import StrConvert
 from tox.plugin import NAME
 from tox.util.ci import is_ci
@@ -365,6 +367,12 @@ def add_color_flags(parser: ArgumentParser) -> None:
         default=color,
         choices=["yes", "no"],
         help="should output be enriched with colors, default is yes unless TERM=dumb or NO_COLOR is defined.",
+    )
+    parser.add_argument(
+        "--stderr-color",
+        default="RED",
+        choices=[*Fore.__dict__.keys()],
+        help="color for stderr output, use RESET for terminal defaults.",
     )
 
 
