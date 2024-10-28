@@ -43,9 +43,9 @@ def test_custom_work_dir(tox_project: ToxProjectCreator, tmp_path: Path) -> None
     assert outcome.state.conf.core["work_dir"], f"should set work_dir to {expected_work_dir}"
 
     assert outcome.state.conf.core["tox_root"] == expected_tox_root, "should not update the value of tox_root"
-    assert outcome.state.conf.core["work_dir"] != (
-        expected_tox_root / ".tox"
-    ), "should explicitly demonstrate that tox_root and work_dir are decoupled"
+    assert outcome.state.conf.core["work_dir"] != (expected_tox_root / ".tox"), (
+        "should explicitly demonstrate that tox_root and work_dir are decoupled"
+    )
 
     # should update config values that depend on work_dir
     assert outcome.state.conf.core["temp_dir"] == expected_work_dir / ".tmp"
