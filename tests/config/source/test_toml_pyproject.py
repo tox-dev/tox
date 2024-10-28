@@ -387,7 +387,7 @@ def test_config_set_env_ref(tox_project: ToxProjectCreator) -> None:
         ]
         """
     })
-    outcome = project.run("c", "-e" "t", "-k", "set_env", "--hashseed", "1")
+    outcome = project.run("c", "-et", "-k", "set_env", "--hashseed", "1")
     outcome.assert_success()
     out = (
         "[testenv:t]\n"

@@ -145,7 +145,7 @@ class Python(ToxEnv, ABC):
         match = PY_FACTORS_RE_EXPLICIT_VERSION.match(env_name)
         if match:
             found = match.groupdict()
-            candidates.append(f'{"pypy" if found["impl"] == "pypy" else ""}{found["version"]}')
+            candidates.append(f"{'pypy' if found['impl'] == 'pypy' else ''}{found['version']}")
         else:
             for factor in env_name.split("-"):
                 match = PY_FACTORS_RE.match(factor)
@@ -251,7 +251,7 @@ class Python(ToxEnv, ABC):
         changed = [f"{k}={old[k]!r}->{v!r}" for k, v in conf.items() if k in old and v != old[k]]
         if changed:
             result.append(f"changed {' | '.join(changed)}")
-        return f'python {", ".join(result)}'
+        return f"python {', '.join(result)}"
 
     @abstractmethod
     def prepend_env_var_path(self) -> list[Path]:

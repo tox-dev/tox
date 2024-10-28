@@ -79,7 +79,7 @@ class ArgumentParserWithEnvAndConfig(ArgumentParser):
         res, argv = self.parse_known_args(args, namespace)
         if argv:
             self.error(
-                f'unrecognized arguments: {" ".join(argv)}\n'
+                f"unrecognized arguments: {' '.join(argv)}\n"
                 "hint: if you tried to pass arguments to a command use -- to separate them from tox ones",
             )
         return res

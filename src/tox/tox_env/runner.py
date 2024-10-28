@@ -100,7 +100,7 @@ class RunToxEnv(ToxEnv, ABC):
             self.conf.add_config(
                 keys=["package_env"],
                 of_type=str,
-                default=f'{self.core["package_env"]}{"_external" if has_external_pkg else ""}',
+                default=f"{self.core['package_env']}{'_external' if has_external_pkg else ''}",
                 desc="tox environment used to package",
             )
             is_external = self.conf["package"] == "external"
