@@ -236,7 +236,13 @@ class ToxEnv(ABC):
                 ],
             )
         else:  # pragma: win32 no cover
-            env.append("TMPDIR")  # temporary file location
+            env.extend(
+                [
+                    "TMPDIR",  # temporary file location
+                    "NIX_LD",  # nix-ld loader
+                    "NIX_LD_LIBRARY_PATH",  # nix-ld library path
+                ],
+            )
         return env
 
     def setup(self) -> None:

@@ -534,6 +534,14 @@ Base options
             - ✅
             - ✅
             - ✅
+        *   - NIX_LD*
+            - ✅
+            - ✅
+            - ❌
+        *   - NIX_LD_LIBRARY_PATH
+            - ✅
+            - ✅
+            - ❌
 
 
 
