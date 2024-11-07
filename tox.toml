@@ -72,10 +72,7 @@ commands = [
     "--color",
     "-b",
     "html",
-    { replace = "posargs", default = [
-      "-b",
-      "linkcheck",
-    ], extend = true },
+    { replace = "posargs", default = [], extend = true },
     "-W",
   ],
   [
