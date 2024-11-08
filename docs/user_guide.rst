@@ -92,7 +92,7 @@ Core settings
 ~~~~~~~~~~~~~
 
 Core settings that affect all test environments or configure how tox itself is invoked are defined under the root table
-in ``tox.toml`` and ``tox`` table in ``tox.ini`` section.
+in ``tox.toml`` and ``tox`` section in ``tox.ini``.
 
     .. tab:: TOML
 
@@ -202,8 +202,6 @@ Basic example
 
 
         env_list =  ["format", "3.13"]
-            format
-            py310
 
         [env.format]
         description = "install black in a virtual environment and invoke it on the current folder"
@@ -247,7 +245,7 @@ two run environments named ``format`` and ``3.13`` that should be run by default
 specific environment.
 
 The formatting environment and test environment are defined separately (via the ``env.format`` and ``env."3.13"`` in
-TOML file; ``testenv:format`` and ``testenv:py310`` in INI file). For example to format the project we:
+TOML file; ``testenv:format`` and ``testenv:py313`` in INI file). For example to format the project we:
 
 - add a description (visible when you type ``tox list`` into the command line) via the :ref:`description` setting
 - define that it requires the :pypi:`black` dependency with version ``22.3.0`` via the :ref:`deps` setting
