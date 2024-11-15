@@ -123,6 +123,9 @@ class Config:
         self._core_set = core
         return core
 
+    def all_section_configs(self) -> Iterator[tuple[tuple[str, str, str], ConfigSet]]:
+        yield from self._key_to_conf_set.items()
+
     def get_section_config(
         self,
         section: Section,
