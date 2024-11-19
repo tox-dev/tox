@@ -4,6 +4,7 @@ import json
 import locale
 import logging
 import os
+import re
 import shutil
 import stat
 import subprocess
@@ -264,7 +265,11 @@ def test_command_does_not_exist(caplog: LogCaptureFixture, os_env: dict[str, str
     assert outcome.exit_code != Outcome.OK
     assert not outcome.out
     assert not outcome.err
-    assert not caplog.records
+    assert len(caplog.records) == 1
+    assert caplog.records[0].levelname == "ERROR"
+    assert re.match(
+        r".*(No such file or directory|The system cannot find the file specified).*", caplog.records[0].message
+    )
 
 
 @pytest.mark.skipif(sys.platform == "win32", reason="You need a conhost shell for keyboard interrupt")
