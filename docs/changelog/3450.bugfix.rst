@@ -1,0 +1,3 @@
+Log exception name when subprocess execution produces one.
+
+- by :user:`ssbarnea`
