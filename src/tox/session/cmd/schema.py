@@ -99,9 +99,12 @@ def gen_schema(state: State) -> int:
 
     properties = _get_schema(core, path="#/properties")
 
+    # This accesses plugins that register new sections (like tox-gh)
+    # Accessing a private member since this is not exposed yet and the
+    # interface includes the internal storage tuple
     sections = {
         key: conf
-        for s, conf in state.conf.all_section_configs()
+        for s, conf in state.conf._key_to_conf_set.items()  # noqa: SLF001
         if (key := s[0].split(".")[0]) not in {"env_run_base", "env_pkg_base", "env"}
     }
     for key, conf in sections.items():
