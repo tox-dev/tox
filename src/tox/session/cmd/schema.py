@@ -6,7 +6,6 @@ import json
 import sys
 import typing
 from pathlib import Path
-from types import NoneType
 from typing import TYPE_CHECKING
 
 import packaging.requirements
@@ -39,7 +38,7 @@ def _process_type(of_type: typing.Any) -> dict[str, typing.Any]:  # noqa: C901, 
     }:
         return {"type": "string"}
     if typing.get_origin(of_type) is typing.Union:
-        types = [x for x in typing.get_args(of_type) if x is not NoneType]
+        types = [x for x in typing.get_args(of_type) if x is not type(None)]
         if len(types) == 1:
             return _process_type(types[0])
         msg = f"Union types are not supported: {of_type}"
@@ -95,7 +94,7 @@ def gen_schema(state: State) -> int:
     strict = state.conf.options.strict
 
     # Accessing this adds extra stuff to core, so we need to do it first
-    env_properties = _get_schema(state.envs["3.13"].conf, path="#/properties/env_run_base/properties")
+    env_properties = _get_schema(state.envs["py"].conf, path="#/properties/env_run_base/properties")
 
     properties = _get_schema(core, path="#/properties")
 
