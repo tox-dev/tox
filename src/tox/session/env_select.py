@@ -46,7 +46,7 @@ class CliEnv:  # noqa: PLW1641
       as ``<env_list>``.
     """
 
-    def __init__(self, value: None | list[str] | str = None) -> None:
+    def __init__(self, value: list[str] | str | None = None) -> None:
         if isinstance(value, str):
             value = StrConvert().to(value, of_type=List[str], factory=None)
         self._names: list[str] | None = value
@@ -148,14 +148,14 @@ class EnvSelector:
         self.on_empty_fallback_py = True
         self._warned_about: set[str] = set()  #: shared set of skipped environments that were already warned about
         self._state = state
-        self._defined_envs_: None | dict[str, _ToxEnvInfo] = None
+        self._defined_envs_: dict[str, _ToxEnvInfo] | None = None
         self._pkg_env_counter: Counter[str] = Counter()
         from tox.plugin.manager import MANAGER  # noqa: PLC0415
 
         self._manager = MANAGER
         self._log_handler = self._state._options.log_handler  # noqa: SLF001
         self._journal = self._state._journal  # noqa: SLF001
-        self._provision: None | tuple[bool, str] = None
+        self._provision: tuple[bool, str] | None = None
 
         self._state.conf.core.add_config("labels", Dict[str, EnvList], {}, "core labels")
         tox_env_filter_regex = getattr(state.conf.options, "skip_env", "").strip()

@@ -153,8 +153,6 @@ lint.select = [
   "ALL",
 ]
 lint.ignore = [
-  "ANN101",  # Missing type annotation for `self` in method
-  "ANN102",  # Missing type annotation for `cls` in classmethod"
   "ANN401",  # Dynamically typed expressions (typing.Any) are disallowed in `arg`"
   "COM812",  # conflicts with formatter
   "CPY",     # No copyright header
@@ -166,6 +164,7 @@ lint.ignore = [
   "DOC501",  # broken with sphinx docs
   "INP001",  # no implicit namespaces here
   "ISC001",  # conflicts with formatter
+  "LOG015",  # we require use of the root logger for reporting
   "PLR0914", ## Too many local variables
   "PLR0917", ## Too many positional arguments
   "S104",    # Possible binding to all interfaces
