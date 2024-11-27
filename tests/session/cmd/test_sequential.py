@@ -117,7 +117,7 @@ def test_result_json_sequential(
     expected_pkg = {"pip", "setuptools", "wheel", "a"}
     assert {i[: i.find("==")] if "@" not in i else "a" for i in packaging_installed} == expected_pkg
     install_package = log_report["testenvs"]["py"].pop("installpkg")
-    assert re.match("^[a-fA-F0-9]{64}$", install_package.pop("sha256"))
+    assert re.match(r"^[a-fA-F0-9]{64}$", install_package.pop("sha256"))
     assert install_package == {"basename": "a-1.0-py3-none-any.whl", "type": "file"}
 
     expected = {

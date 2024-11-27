@@ -88,7 +88,7 @@ def process_signature(  # noqa: PLR0913
     options: Options,
     args: str,  # noqa: ARG001
     retann: str | None,  # noqa: ARG001
-) -> None | tuple[None, None]:
+) -> tuple[None, None] | None:
     # skip-member is not checked for class level docs, so disable via signature processing
     return (None, None) if objtype == "class" and "__init__" in options.get("exclude-members", set()) else None
 
