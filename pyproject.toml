@@ -2,7 +2,7 @@
 build-backend = "hatchling.build"
 requires = [
   "hatch-vcs>=0.4",
-  "hatchling>=1.25",
+  "hatchling>=1.26.3",
 ]
 
 [project]
@@ -54,13 +54,13 @@ dependencies = [
   "chardet>=5.2",
   "colorama>=0.4.6",
   "filelock>=3.16.1",
-  "packaging>=24.1",
+  "packaging>=24.2",
   "platformdirs>=4.3.6",
   "pluggy>=1.5",
   "pyproject-api>=1.8",
-  "tomli>=2.0.1; python_version<'3.11'",
+  "tomli>=2.1; python_version<'3.11'",
   "typing-extensions>=4.12.2; python_version<'3.11'",
-  "virtualenv>=20.26.6",
+  "virtualenv>=20.27.1",
 ]
 optional-dependencies.test = [
   "devpi-process>=1.0.2",
@@ -81,52 +81,53 @@ dev = [
   { include-group = "type" },
 ]
 test = [
-  "build[virtualenv]>=1.2.2",
+  "build[virtualenv]>=1.2.2.post1",
   "covdefaults>=2.3",
   "detect-test-pollution>=1.2",
   "devpi-process>=1.0.2",
   "diff-cover>=9.2",
-  "distlib>=0.3.8",
+  "distlib>=0.3.9",
   "flaky>=3.8.1",
   "hatch-vcs>=0.4",
-  "hatchling>=1.25",
-  "psutil>=6",
+  "hatchling>=1.26.3",
+  "psutil>=6.1",
   "pytest>=8.3.3",
   "pytest-cov>=5",
   "pytest-mock>=3.14",
   "pytest-xdist>=3.6.1",
   "re-assert>=1.1",
-  "setuptools>=75.1",
+  "setuptools>=75.1; python_version<='3.8'",
+  "setuptools>=75.6; python_version>'3.8'",
   "time-machine>=2.15; implementation_name!='pypy'",
-  "wheel>=0.44",
+  "wheel>=0.45",
 ]
 type = [
-  "mypy==1.11.2",
+  "mypy==1.13",
   "types-cachetools>=5.5.0.20240820",
   "types-chardet>=5.0.4.6",
   { include-group = "test" },
 ]
 docs = [
   "furo>=2024.8.6",
-  "sphinx>=8.0.2",
+  "sphinx>=8.1.3",
   "sphinx-argparse-cli>=1.18.2",
-  "sphinx-autodoc-typehints>=2.4.4",
+  "sphinx-autodoc-typehints>=2.5",
   "sphinx-copybutton>=0.5.2",
   "sphinx-inline-tabs>=2023.4.21",
   "sphinxcontrib-towncrier>=0.2.1a0",
   "towncrier>=24.8",
 ]
 fix = [
-  "pre-commit-uv>=4.1.3",
+  "pre-commit-uv>=4.1.4",
 ]
 pkg-meta = [
   "check-wheel-contents>=0.6",
   "twine>=5.1.1",
-  "uv>=0.4.17",
+  "uv>=0.5.3",
 ]
 release = [
   "gitpython>=3.1.43",
-  "packaging>=24.1",
+  "packaging>=24.2",
   "towncrier>=24.8",
 ]
 

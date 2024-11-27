@@ -125,8 +125,15 @@ class Execute(ABC):
         try:
             # collector is what forwards the content from the file streams to the standard streams
             out, err = out_err[0].buffer, out_err[1].buffer
-            out_sync = SyncWrite(out.name, out if show else None)
-            err_sync = SyncWrite(err.name, err if show else None, Fore.RED if self._colored else None)
+            out_sync = SyncWrite(
+                out.name,
+                out if show else None,  # type: ignore[arg-type]
+            )
+            err_sync = SyncWrite(
+                err.name,
+                err if show else None,  # type: ignore[arg-type]
+                Fore.RED if self._colored else None,
+            )
             with out_sync, err_sync:
                 instance = self.build_instance(request, self._option_class(env), out_sync, err_sync)
                 with instance as status:
