@@ -40,8 +40,8 @@ class FakeOutErr:
         )
 
     def read_out_err(self) -> tuple[str, str]:
-        out_got = self.out_err[0].buffer.getvalue().decode(self.out_err[0].encoding)  # type: ignore[attr-defined]
-        err_got = self.out_err[1].buffer.getvalue().decode(self.out_err[1].encoding)  # type: ignore[attr-defined]
+        out_got = self.out_err[0].buffer.getvalue().decode(self.out_err[0].encoding)
+        err_got = self.out_err[1].buffer.getvalue().decode(self.out_err[1].encoding)
         return out_got, err_got
 
 
