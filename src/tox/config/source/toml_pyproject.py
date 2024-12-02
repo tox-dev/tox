@@ -92,7 +92,7 @@ class TomlPyProject(Source):
 
     def get_loader(self, section: Section, override_map: OverrideMap) -> Loader[Any] | None:
         current = self._our_content
-        sec = cast(TomlSection, section)
+        sec = cast("TomlSection", section)
         for key in sec.keys:
             if key in current:
                 current = current[key]

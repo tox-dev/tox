@@ -10,7 +10,6 @@ import string
 import sys
 from abc import ABC, abstractmethod
 from contextlib import contextmanager
-from io import BytesIO
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Iterator, List, NamedTuple, Sequence, Set, cast
 
@@ -20,6 +19,8 @@ from tox.tox_env.info import Info
 from tox.util.path import ensure_empty_dir
 
 if TYPE_CHECKING:
+    from io import BytesIO
+
     from tox.config.cli.parser import Parsed
     from tox.config.main import Config
     from tox.config.set_env import SetEnv
@@ -111,19 +112,19 @@ class ToxEnv(ABC):
         self.conf.add_config(
             keys=["env_dir", "envdir"],
             of_type=Path,
-            default=lambda conf, name: cast(Path, conf.core["work_dir"]) / self.name,  # noqa: ARG005
+            default=lambda conf, name: cast("Path", conf.core["work_dir"]) / self.name,  # noqa: ARG005
             desc="directory assigned to the tox environment",
         )
         self.conf.add_config(
             keys=["env_tmp_dir", "envtmpdir"],
             of_type=Path,
-            default=lambda conf, name: cast(Path, conf.core["work_dir"]) / self.name / "tmp",  # noqa: ARG005
+            default=lambda conf, name: cast("Path", conf.core["work_dir"]) / self.name / "tmp",  # noqa: ARG005
             desc="a folder that is always reset at the start of the run",
         )
         self.conf.add_config(
             keys=["env_log_dir", "envlogdir"],
             of_type=Path,
-            default=lambda conf, name: cast(Path, conf.core["work_dir"]) / self.name / "log",  # noqa: ARG005
+            default=lambda conf, name: cast("Path", conf.core["work_dir"]) / self.name / "log",  # noqa: ARG005
             desc="a folder for logging where tox will put logs of tool invocation",
         )
         self.executor.register_conf(self)
@@ -177,26 +178,26 @@ class ToxEnv(ABC):
         assert self.installer is not None  # noqa: S101 # trigger installer creation to allow config registration
 
     def _recreate_default(self, conf: Config, value: str | None) -> bool:  # noqa: ARG002
-        return cast(bool, self.options.recreate)
+        return cast("bool", self.options.recreate)
 
     @property
     def env_dir(self) -> Path:
         """:return: the tox environments environment folder"""
-        return cast(Path, self.conf["env_dir"])
+        return cast("Path", self.conf["env_dir"])
 
     @property
     def env_tmp_dir(self) -> Path:
         """:return: the tox environments temp folder"""
-        return cast(Path, self.conf["env_tmp_dir"])
+        return cast("Path", self.conf["env_tmp_dir"])
 
     @property
     def env_log_dir(self) -> Path:
         """:return: the tox environments log folder"""
-        return cast(Path, self.conf["env_log_dir"])
+        return cast("Path", self.conf["env_log_dir"])
 
     @property
     def name(self) -> str:
-        return cast(str, self.conf["env_name"])
+        return cast("str", self.conf["env_name"])
 
     def _default_set_env(self) -> dict[str, str]:  # noqa: PLR6301
         return {}
@@ -249,7 +250,7 @@ class ToxEnv(ABC):
         """Setup the tox environment."""
         if self._run_state["setup"] is False:  # pragma: no branch
             self._platform_check()
-            recreate = cast(bool, self.conf["recreate"])
+            recreate = cast("bool", self.conf["recreate"])
             if recreate:
                 self._clean(transitive=True)
             try:
@@ -504,7 +505,7 @@ class ToxEnv(ABC):
         if self._suspended_out_err is None:  # pragma: no branch
             return None  # pragma: no cover
         (out, err), self._suspended_out_err = self._suspended_out_err, None
-        out_b, err_b = cast(BytesIO, out.buffer).getvalue(), cast(BytesIO, err.buffer).getvalue()
+        out_b, err_b = cast("BytesIO", out.buffer).getvalue(), cast("BytesIO", err.buffer).getvalue()
         out.close()
         err.close()
         return out_b, err_b

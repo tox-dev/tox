@@ -46,7 +46,7 @@ def _lock_method(thread_lock: RLock, file_lock: FileLock | None, meth: Callable[
                 return meth(*args, **kwargs)
             finally:
                 if file_locks:
-                    cast(FileLock, file_lock).release()
+                    cast("FileLock", file_lock).release()
 
     return _func
 
@@ -73,13 +73,13 @@ class PackageToxEnv(ToxEnv, ABC):
         self.core.add_config(
             keys=["package_root", "setupdir"],
             of_type=Path,
-            default=cast(Path, self.core["tox_root"]),
+            default=cast("Path", self.core["tox_root"]),
             desc="indicates where the packaging root file exists (historically setup.py file or pyproject.toml now)",
         )
         self.conf.add_config(
             keys=["package_root", "setupdir"],
             of_type=Path,
-            default=cast(Path, self.core["package_root"]),
+            default=cast("Path", self.core["package_root"]),
             desc="indicates where the packaging root file exists (historically setup.py file or pyproject.toml now)",
         )
 

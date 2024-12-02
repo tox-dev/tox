@@ -290,7 +290,7 @@ class Python(ToxEnv, ABC):
                 raise Skip(msg)
             raise NoInterpreter(base_pythons)
 
-        return cast(PythonInfo, self._base_python)
+        return cast("PythonInfo", self._base_python)
 
     def _get_env_journal_python(self) -> dict[str, Any]:
         return {

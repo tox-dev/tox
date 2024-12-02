@@ -171,7 +171,7 @@ class Pep517VenvPackager(PythonPackageToxEnv, ABC):
 
     @property
     def pkg_dir(self) -> Path:
-        return cast(Path, self.conf["pkg_dir"])
+        return cast("Path", self.conf["pkg_dir"])
 
     @property
     def meta_folder(self) -> Path:
@@ -238,7 +238,7 @@ class Pep517VenvPackager(PythonPackageToxEnv, ABC):
                 "package config for %s is editable, however the build backend %s does not support PEP-660, falling "
                 "back to editable-legacy - change your configuration to it",
                 names,
-                cast(Pep517VirtualEnvFrontend, self._frontend_).backend,
+                cast("Pep517VirtualEnvFrontend", self._frontend_).backend,
             )
             for env in targets:
                 env._defined["package"].value = "editable-legacy"  # type: ignore[attr-defined]  # noqa: SLF001
@@ -285,7 +285,7 @@ class Pep517VenvPackager(PythonPackageToxEnv, ABC):
 
     @property
     def _package_temp_path(self) -> Path:
-        return cast(Path, self.core["temp_dir"]) / "package"
+        return cast("Path", self.core["temp_dir"]) / "package"
 
     def _load_deps(self, for_env: EnvConfigSet) -> list[Requirement]:
         # first check if this is statically available via PEP-621
@@ -344,7 +344,7 @@ class Pep517VenvPackager(PythonPackageToxEnv, ABC):
         with self._pkg_lock:
             if self._package_dependencies is None:  # pragma: no branch
                 self._ensure_meta_present(for_env)
-                requires: list[str] = cast(PathDistribution, self._distribution_meta).requires or []
+                requires: list[str] = cast("PathDistribution", self._distribution_meta).requires or []
                 self._package_dependencies = [Requirement(i) for i in requires]  # pragma: no branch
         return self._package_dependencies
 
@@ -352,7 +352,7 @@ class Pep517VenvPackager(PythonPackageToxEnv, ABC):
         with self._pkg_lock:
             if self._package_name is None:  # pragma: no branch
                 self._ensure_meta_present(for_env)
-                self._package_name = cast(PathDistribution, self._distribution_meta).metadata["Name"]
+                self._package_name = cast("PathDistribution", self._distribution_meta).metadata["Name"]
         return self._package_name
 
     def _ensure_meta_present(self, for_env: EnvConfigSet) -> None:

@@ -3,9 +3,8 @@ from __future__ import annotations
 from copy import deepcopy
 from typing import TYPE_CHECKING, Optional, Set, cast
 
-from packaging.markers import Marker, Op, Variable  # type: ignore[attr-defined]
-
 if TYPE_CHECKING:
+    from packaging.markers import Marker, Op, Variable
     from packaging.requirements import Requirement
 
 
@@ -67,10 +66,10 @@ def _extract_extra_markers(req: Requirement) -> tuple[Requirement, set[str | Non
             new_markers.append(marker)
             marker = markers.pop(0) if markers else None
     if new_markers:
-        cast(Marker, req.marker)._markers = new_markers  # noqa: SLF001
+        cast("Marker", req.marker)._markers = new_markers  # noqa: SLF001
     else:
         req.marker = None
-    return req, cast(Set[Optional[str]], extra_markers) or {None}
+    return req, cast("Set[Optional[str]]", extra_markers) or {None}
 
 
 def _get_extra(_marker: str | tuple[Variable, Op, Variable]) -> str | None:

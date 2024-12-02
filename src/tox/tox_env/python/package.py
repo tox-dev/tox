@@ -90,7 +90,7 @@ class PythonPackageToxEnv(Python, PackageToxEnv, ABC):
             # c-extension codes are trickier, but as of today both poetry/setuptools uses pypa/wheels logic
             # https://github.com/pypa/wheel/blob/master/src/wheel/bdist_wheel.py#L234-L280
             try:
-                run_py = cast(Python, run_env).base_python
+                run_py = cast("Python", run_env).base_python
             except NoInterpreter:
                 run_py = None
 
@@ -116,7 +116,7 @@ class PythonPackageToxEnv(Python, PackageToxEnv, ABC):
         )
         pkg_env = run_env.conf["wheel_build_env"]
         result = yield pkg_env, run_env.conf["package_tox_env_type"]
-        self._wheel_build_envs[pkg_env] = cast(PythonPackageToxEnv, result)
+        self._wheel_build_envs[pkg_env] = cast("PythonPackageToxEnv", result)
 
     def child_pkg_envs(self, run_conf: EnvConfigSet) -> Iterator[PackageToxEnv]:
         if run_conf["package"] == "wheel":

@@ -7,20 +7,20 @@ from packaging.requirements import InvalidRequirement, Requirement
 
 from tox.config.cli.parser import DEFAULT_VERBOSITY, Parsed, ToxParser
 from tox.config.loader.memory import MemoryLoader
-from tox.config.set_env import SetEnv
 from tox.plugin import impl
 from tox.session.cmd.run.common import env_run_create_flags
 from tox.session.cmd.run.parallel import OFF_VALUE, parallel_flags, run_parallel
 from tox.session.cmd.run.sequential import run_sequential
 from tox.session.env_select import CliEnv, EnvSelector, register_env_select_flags
-from tox.tox_env.python.pip.req_file import PythonDeps
 
 from .devenv import devenv
 from .list_env import list_env
 from .show_config import show_config
 
 if TYPE_CHECKING:
+    from tox.config.set_env import SetEnv
     from tox.session.state import State
+    from tox.tox_env.python.pip.req_file import PythonDeps
 
 
 @impl
@@ -131,10 +131,10 @@ def _handle_legacy_only_flags(option: Parsed, envs: EnvSelector) -> None:  # noq
             if override:
                 env_conf.loaders.insert(0, MemoryLoader(**override))
             if set_env:
-                cast(SetEnv, env_conf["set_env"]).update(set_env, override=True)
+                cast("SetEnv", env_conf["set_env"]).update(set_env, override=True)
             if forced:
                 to_force = forced.copy()
-                deps = cast(PythonDeps, env_conf["deps"])
+                deps = cast("PythonDeps", env_conf["deps"])
                 as_root_args = deps.as_root_args
                 for at, entry in enumerate(as_root_args):
                     try:

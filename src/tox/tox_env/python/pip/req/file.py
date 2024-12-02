@@ -168,7 +168,7 @@ class RequirementsFile:
     @property
     def requirements(self) -> list[ParsedRequirement]:
         self._ensure_requirements_parsed()
-        return cast(List[ParsedRequirement], self._requirements)
+        return cast("List[ParsedRequirement]", self._requirements)
 
     @property
     def _parser(self) -> ArgumentParser:
