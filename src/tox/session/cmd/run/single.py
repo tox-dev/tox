@@ -62,7 +62,7 @@ def _evaluate(tox_env: RunToxEnv, no_test: bool) -> tuple[bool, int, list[Outcom
         finally:
             tox_env.teardown()
     except SystemExit as exception:  # setup command fails (interrupted or via invocation)
-        code = cast(int, exception.code)
+        code = cast("int", exception.code)
     return skipped, code, outcomes
 
 
@@ -122,9 +122,9 @@ def run_command_set(
                 continue
             if ignore_errors:
                 if exit_code == Outcome.OK:
-                    exit_code = cast(int, exception.code)  # ignore errors continues ahead but saves the exit code
+                    exit_code = cast("int", exception.code)  # ignore errors continues ahead but saves the exit code
                 continue
-            return cast(int, exception.code)
+            return cast("int", exception.code)
     return exit_code
 
 

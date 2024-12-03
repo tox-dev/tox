@@ -4,11 +4,11 @@ from typing import TYPE_CHECKING, cast
 
 from tox.plugin import impl
 from tox.session.cmd.run.common import env_run_create_flags, run_order
-from tox.tox_env.runner import RunToxEnv
 
 if TYPE_CHECKING:
     from tox.config.cli.parser import ToxParser
     from tox.session.state import State
+    from tox.tox_env.runner import RunToxEnv
 
 
 @impl
@@ -34,7 +34,7 @@ def depends(state: State) -> int:
         print("   " * at, end="")  # noqa: T201
         print(env, end="")  # noqa: T201
         if env != "ALL":
-            run_env = cast(RunToxEnv, state.envs[env])
+            run_env = cast("RunToxEnv", state.envs[env])
             packager_list: list[str] = []
             try:
                 for pkg_env in run_env.package_envs:

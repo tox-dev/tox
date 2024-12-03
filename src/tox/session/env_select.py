@@ -205,7 +205,7 @@ class EnvSelector:
                 invalid_envs[env] = (
                     None
                     if any(i is None for i in factors.values())
-                    else "-".join(cast(Iterable[str], factors.values()))
+                    else "-".join(cast("Iterable[str]", factors.values()))
                 )
         if invalid_envs:
             msg = "provided environments not found in configuration file:\n"
@@ -316,7 +316,7 @@ class EnvSelector:
         env_conf = self._state.conf.get_env(name, package=False)
         desc = "the tox execute used to evaluate this environment"
         env_conf.add_config(keys="runner", desc=desc, of_type=str, default=self._state.conf.options.default_runner)
-        runner = REGISTER.runner(cast(str, env_conf["runner"]))
+        runner = REGISTER.runner(cast("str", env_conf["runner"]))
         journal = self._journal.get_env_journal(name)
         args = ToxEnvCreateArgs(env_conf, self._state.conf.core, self._state.conf.options, journal, self._log_handler)
         run_env = runner(args)

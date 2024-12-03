@@ -291,7 +291,7 @@ class ToxProject:
                     msg = "exit code not set"
                     raise RuntimeError(msg)
             out, err = self._capfd.readouterr()
-            return ToxRunOutcome(args, self.path, cast(int, code), out, err, state)
+            return ToxRunOutcome(args, self.path, cast("int", code), out, err, state)
 
     def __repr__(self) -> str:
         return f"{type(self).__name__}(path={self.path}) at {id(self)}"
@@ -488,7 +488,7 @@ def pypi_server(tmp_path_factory: pytest.TempPathFactory) -> Iterator[IndexServe
 def _invalid_index_fake_port() -> int:
     with closing(socket.socket(socket.AF_INET, socket.SOCK_STREAM)) as socket_handler:
         socket_handler.bind(("", 0))
-        return cast(int, socket_handler.getsockname()[1])
+        return cast("int", socket_handler.getsockname()[1])
 
 
 @pytest.fixture(autouse=True)

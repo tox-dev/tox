@@ -6,7 +6,6 @@ from typing import TYPE_CHECKING, Any, Iterator, List, cast
 from tox.config.loader.replacer import MatchRecursionError, ReplaceReference, load_posargs, replace, replace_env
 from tox.config.loader.stringify import stringify
 
-from ._api import TomlTypes
 from ._validate import validate
 
 if TYPE_CHECKING:
@@ -15,6 +14,8 @@ if TYPE_CHECKING:
     from tox.config.main import Config
     from tox.config.sets import ConfigSet
     from tox.config.source.toml_pyproject import TomlSection
+
+    from ._api import TomlTypes
 
 
 class Unroll:
@@ -39,7 +40,7 @@ class Unroll:
             for val in value:  # apply replacement for every entry
                 got = self(val, depth)
                 if isinstance(val, dict) and val.get("replace") and val.get("extend"):
-                    res_list.extend(cast(List[Any], got))
+                    res_list.extend(cast("List[Any]", got))
                 else:
                     res_list.append(got)
             value = res_list
@@ -49,7 +50,7 @@ class Unroll:
                 if replace_type == "posargs" and self.conf is not None:
                     got_posargs = load_posargs(self.conf, self.args)
                     return (
-                        [self(v, depth) for v in cast(List[str], value.get("default", []))]
+                        [self(v, depth) for v in cast("List[str]", value.get("default", []))]
                         if got_posargs is None
                         else list(got_posargs)
                     )
@@ -57,8 +58,8 @@ class Unroll:
                     return replace_env(
                         self.conf,
                         [
-                            cast(str, validate(value["name"], str)),
-                            cast(str, validate(self(value.get("default", ""), depth), str)),
+                            cast("str", validate(value["name"], str)),
+                            cast("str", validate(self(value.get("default", ""), depth), str)),
                         ],
                         self.args,
                     )
@@ -73,9 +74,9 @@ class Unroll:
 
     def _replace_ref(self, value: dict[str, TomlTypes], depth: int) -> TomlTypes:
         if self.conf is not None and (env := value.get("env")) and (key := value.get("key")):
-            return cast(TomlTypes, self.conf.get_env(cast(str, env))[cast(str, key)])
+            return cast("TomlTypes", self.conf.get_env(cast("str", env))[cast("str", key)])
         if of := value.get("of"):
-            validated_of = cast(List[str], validate(of, List[str]))
+            validated_of = cast("List[str]", validate(of, List[str]))
             loaded = self.loader.load_raw_from_root(self.loader.section.SEP.join(validated_of))
             return self(loaded, depth)
         return value

@@ -52,15 +52,15 @@ class ExecuteOptions:
 
     @property
     def suicide_timeout(self) -> float:
-        return cast(float, self._env.conf["suicide_timeout"])
+        return cast("float", self._env.conf["suicide_timeout"])
 
     @property
     def interrupt_timeout(self) -> float:
-        return cast(float, self._env.conf["interrupt_timeout"])
+        return cast("float", self._env.conf["interrupt_timeout"])
 
     @property
     def terminate_timeout(self) -> float:
-        return cast(float, self._env.conf["terminate_timeout"])
+        return cast("float", self._env.conf["terminate_timeout"])
 
 
 class ExecuteStatus(ABC):

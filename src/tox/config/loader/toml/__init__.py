@@ -43,7 +43,7 @@ class TomlLoader(Loader[TomlTypes]):
         return self.content[key]
 
     def load_raw_from_root(self, path: str) -> TomlTypes:
-        current = cast(TomlTypes, self._root_content)
+        current = cast("TomlTypes", self._root_content)
         for key in path.split(self.section.SEP):
             if isinstance(current, dict):
                 current = current[key]
@@ -98,7 +98,7 @@ class TomlLoader(Loader[TomlTypes]):
     @staticmethod
     def to_command(value: TomlTypes) -> Command | None:
         if value:
-            return Command(args=cast(List[str], value))  # validated during load in _ensure_type_correct
+            return Command(args=cast("List[str]", value))  # validated during load in _ensure_type_correct
         return None
 
     @staticmethod

@@ -5,7 +5,6 @@ from typing import TYPE_CHECKING, Any, ClassVar, cast
 from docutils.nodes import Element, Node, Text, container, fully_normalize_name, literal, paragraph, reference, strong
 from docutils.parsers.rst.directives import flag, unchanged, unchanged_required
 from docutils.statemachine import StringList, string2lines
-from sphinx.domains.std import StandardDomain
 from sphinx.locale import __
 from sphinx.util.docutils import SphinxDirective
 from sphinx.util.logging import getLogger
@@ -14,6 +13,7 @@ if TYPE_CHECKING:
     from typing import Final
 
     from docutils.parsers.rst.states import RSTState, RSTStateMachine
+    from sphinx.domains.std import StandardDomain
 
 LOGGER = getLogger(__name__)
 
@@ -53,7 +53,7 @@ class ToxConfig(SphinxDirective):
             state,
             state_machine,
         )
-        self._std_domain: StandardDomain = cast(StandardDomain, self.env.get_domain("std"))
+        self._std_domain: StandardDomain = cast("StandardDomain", self.env.get_domain("std"))
 
     def run(self) -> list[Node]:
         self.env.note_reread()  # this document needs to be always updated

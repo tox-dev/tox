@@ -72,7 +72,7 @@ class VenvCmdBuilder(PythonPackageToxEnv, ABC):
         )
 
     def requires(self) -> PythonDeps:
-        return cast(PythonDeps, self.conf["deps"])
+        return cast("PythonDeps", self.conf["deps"])
 
     def perform_packaging(self, for_env: EnvConfigSet) -> list[Package]:
         self.setup()
@@ -121,7 +121,7 @@ class VenvCmdBuilder(PythonPackageToxEnv, ABC):
         yield from super().register_run_env(run_env)
         # in case the outcome is a sdist we'll use this to find out its metadata
         result = yield f"{self.conf.name}_sdist_meta", Pep517VirtualEnvPackager.id()
-        self._sdist_meta_tox_env = cast(Pep517VirtualEnvPackager, result)
+        self._sdist_meta_tox_env = cast("Pep517VirtualEnvPackager", result)
 
     def child_pkg_envs(self, run_conf: EnvConfigSet) -> Iterator[PackageToxEnv]:  # noqa: ARG002
         if self._sdist_meta_tox_env is not None:  # pragma: no branch

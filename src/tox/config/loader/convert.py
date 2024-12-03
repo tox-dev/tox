@@ -87,7 +87,7 @@ class Convert(ABC, Generic[T]):
                 raise ValueError(msg)
             result = raw
         if result is not _NO_MAPPING:
-            return cast(V, result)
+            return cast("V", result)
         msg = f"{raw} cannot cast to {of_type!r}"
         raise TypeError(msg)
 

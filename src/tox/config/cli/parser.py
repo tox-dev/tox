@@ -123,7 +123,7 @@ class Parsed(Namespace):
     @property
     def is_colored(self) -> bool:
         """:return: flag indicating if the output is colored or not"""
-        return cast(bool, self.colored == "yes")
+        return cast("bool", self.colored == "yes")
 
     exit_and_dump_after: int
 
@@ -205,7 +205,7 @@ class ToxParser(ArgumentParserWithEnvAndConfig):
                     result = None
                 else:
                     try:
-                        result = int(cast(str, values))
+                        result = int(cast("str", values))
                         if result <= 0:
                             msg = "must be greater than zero"
                             raise ValueError(msg)  # noqa: TRY301
