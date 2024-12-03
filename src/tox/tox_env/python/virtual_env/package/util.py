@@ -4,7 +4,8 @@ from copy import deepcopy
 from typing import TYPE_CHECKING, Optional, Set, cast
 
 if TYPE_CHECKING:
-    from packaging.markers import Marker, Op, Variable
+    from packaging._parser import Op, Variable
+    from packaging.markers import Marker
     from packaging.requirements import Requirement
 
 
