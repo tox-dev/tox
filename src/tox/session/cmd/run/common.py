@@ -14,17 +14,17 @@ from typing import TYPE_CHECKING, Any, Iterator, Optional, Sequence, cast
 
 from colorama import Fore
 
-from tox.config.types import EnvList
 from tox.execute import Outcome
 from tox.journal import write_journal
 from tox.session.cmd.run.single import ToxEnvRunResult, run_one
-from tox.tox_env.runner import RunToxEnv
 from tox.util.graph import stable_topological_sort
 from tox.util.spinner import MISS_DURATION, Spinner
 
 if TYPE_CHECKING:
+    from tox.config.types import EnvList
     from tox.session.state import State
     from tox.tox_env.api import ToxEnv
+    from tox.tox_env.runner import RunToxEnv
 
 
 class SkipMissingInterpreterAction(Action):
@@ -51,7 +51,7 @@ class InstallPackageAction(Action):
     ) -> None:
         if not values:
             raise ArgumentError(self, "cannot be empty")
-        path = Path(cast(str, values)).absolute()
+        path = Path(cast("str", values)).absolute()
         if not path.exists():
             raise ArgumentError(self, f"{path} does not exist")
         if not path.is_file():
@@ -167,7 +167,7 @@ def execute(state: State, max_workers: int | None, has_spinner: bool, live: bool
     state.envs.ensure_only_run_env_is_active()
     to_run_list: list[str] = list(state.envs.iter())
     for name in to_run_list:
-        cast(RunToxEnv, state.envs[name]).mark_active()
+        cast("RunToxEnv", state.envs[name]).mark_active()
     previous, has_previous = None, False
     try:
         spinner = ToxSpinner(has_spinner, state, len(to_run_list))
@@ -260,7 +260,7 @@ def _queue_and_wait(  # noqa: C901, PLR0913, PLR0915, PLR0912
                 env_list: list[str] = []
                 while True:
                     for env in env_list:  # queue all available
-                        tox_env_to_run = cast(RunToxEnv, state.envs[env])
+                        tox_env_to_run = cast("RunToxEnv", state.envs[env])
                         if interrupt.is_set():  # queue the rest as failed upfront
                             tox_env_to_run.teardown()
                             future: Future[ToxEnvRunResult] = Future()
@@ -322,7 +322,7 @@ def _handle_one_run_done(
 ) -> None:
     success = result.code == Outcome.OK
     spinner.update_spinner(result, success)
-    tox_env = cast(RunToxEnv, state.envs[result.name])
+    tox_env = cast("RunToxEnv", state.envs[result.name])
     if tox_env.journal:  # add overall journal entry
         tox_env.journal["result"] = {
             "success": success,
@@ -362,8 +362,8 @@ def run_order(state: State, to_run: list[str]) -> tuple[list[str], dict[str, set
     to_run_set = set(to_run)
     todo: dict[str, set[str]] = {}
     for env in to_run:
-        run_env = cast(RunToxEnv, state.envs[env])
-        depends = set(cast(EnvList, run_env.conf["depends"]).envs)
+        run_env = cast("RunToxEnv", state.envs[env])
+        depends = set(cast("EnvList", run_env.conf["depends"]).envs)
         todo[env] = to_run_set & depends
     order = stable_topological_sort(todo)
     return order, todo

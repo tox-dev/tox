@@ -16,7 +16,7 @@ def add_change_dir_conf(config: EnvConfigSet, core: CoreConfigSet) -> None:
     config.add_config(
         keys=["change_dir", "changedir"],
         of_type=Path,
-        default=lambda conf, name: cast(Path, conf.core["tox_root"]),  # noqa: ARG005
+        default=lambda conf, name: cast("Path", conf.core["tox_root"]),  # noqa: ARG005
         desc="change to this working directory when executing the test command",
         post_process=_post_process_change_dir,
     )

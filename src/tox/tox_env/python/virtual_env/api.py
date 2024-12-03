@@ -154,13 +154,13 @@ class VirtualEnv(Python, ABC):
         return list(dict.fromkeys((self.creator.bin_dir, self.creator.script_dir)))
 
     def env_site_package_dir(self) -> Path:
-        return cast(Path, self.creator.purelib)
+        return cast("Path", self.creator.purelib)
 
     def env_python(self) -> Path:
-        return cast(Path, self.creator.exe)
+        return cast("Path", self.creator.exe)
 
     def env_bin_dir(self) -> Path:
-        return cast(Path, self.creator.script_dir)
+        return cast("Path", self.creator.script_dir)
 
     @property
     def runs_on_platform(self) -> str:

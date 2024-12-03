@@ -20,12 +20,12 @@ from tox.plugin import impl
 from tox.report import HandledError
 from tox.tox_env.errors import Skip
 from tox.tox_env.python.pip.req_file import PythonDeps
-from tox.tox_env.python.runner import PythonRun
 
 if TYPE_CHECKING:
     from argparse import ArgumentParser
 
     from tox.session.state import State
+    from tox.tox_env.python.runner import PythonRun
 
 
 @impl
@@ -141,7 +141,7 @@ def _get_missing(requires: list[Requirement]) -> list[tuple[Requirement, str | N
 
 
 def run_provision(name: str, state: State) -> int:
-    tox_env: PythonRun = cast(PythonRun, state.envs[name])
+    tox_env: PythonRun = cast("PythonRun", state.envs[name])
     env_python = tox_env.env_python()
     logging.info("will run in a automatically provisioned python environment under %s", env_python)
     try:
@@ -152,4 +152,4 @@ def run_provision(name: str, state: State) -> int:
     args: list[str] = [str(env_python), "-m", "tox"]
     args.extend(state.args)
     outcome = tox_env.execute(cmd=args, stdin=StdinSource.user_only(), show=True, run_id="provision", cwd=Path.cwd())
-    return cast(int, outcome.exit_code)
+    return cast("int", outcome.exit_code)

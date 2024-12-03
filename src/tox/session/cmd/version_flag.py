@@ -5,13 +5,15 @@ from __future__ import annotations
 import sys
 from argparse import SUPPRESS, Action, ArgumentParser, Namespace
 from pathlib import Path
-from typing import Any, Sequence, cast
+from typing import TYPE_CHECKING, Any, Sequence, cast
 
 import tox
-from tox.config.cli.parser import HelpFormatter, ToxParser
 from tox.plugin import impl
 from tox.plugin.manager import MANAGER
 from tox.version import version
+
+if TYPE_CHECKING:
+    from tox.config.cli.parser import HelpFormatter, ToxParser
 
 
 @impl
@@ -28,7 +30,7 @@ def tox_add_option(parser: ToxParser) -> None:
             values: str | Sequence[Any] | None,  # noqa: ARG002
             option_string: str | None = None,  # noqa: ARG002
         ) -> None:
-            formatter = cast(HelpFormatter, parser._get_formatter())  # noqa: SLF001
+            formatter = cast("HelpFormatter", parser._get_formatter())  # noqa: SLF001
             formatter.add_raw_text(get_version_info())
             parser._print_message(formatter.format_help(), sys.stdout)  # noqa: SLF001
             parser.exit()

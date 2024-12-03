@@ -67,7 +67,7 @@ class ConfigSet(ABC):
         keys_ = self._make_keys(keys)
         definition = ConfigDynamicDefinition(keys_, desc, of_type, default, post_process, factory)
         result = self._add_conf(keys_, definition)
-        return cast(ConfigDynamicDefinition[V], result)
+        return cast("ConfigDynamicDefinition[V]", result)
 
     def add_constant(self, keys: str | Sequence[str], desc: str, value: V) -> ConfigConstantDefinition[V]:
         """
@@ -84,7 +84,7 @@ class ConfigSet(ABC):
         keys_ = self._make_keys(keys)
         definition = ConfigConstantDefinition(keys_, desc, value)
         result = self._add_conf(keys_, definition)
-        return cast(ConfigConstantDefinition[V], result)
+        return cast("ConfigConstantDefinition[V]", result)
 
     @staticmethod
     def _make_keys(keys: str | Sequence[str]) -> Sequence[str]:
@@ -182,10 +182,10 @@ class CoreConfigSet(ConfigSet):
         self.add_config(keys=["env_list", "envlist"], of_type=EnvList, default=EnvList([]), desc=desc)
 
     def _default_work_dir(self, conf: Config, env_name: str | None) -> Path:  # noqa: ARG002
-        return cast(Path, self["tox_root"] / ".tox")
+        return cast("Path", self["tox_root"] / ".tox")
 
     def _default_temp_dir(self, conf: Config, env_name: str | None) -> Path:  # noqa: ARG002
-        return cast(Path, self["work_dir"] / ".tmp")
+        return cast("Path", self["work_dir"] / ".tmp")
 
     def _work_dir_post_process(self, folder: Path) -> Path:
         return self._conf.work_dir if self._conf.options.work_dir else folder

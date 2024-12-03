@@ -76,7 +76,7 @@ def validate(val: TomlTypes, of_type: type[T]) -> TypeGuard[T]:  # noqa: C901, P
             msg = f"{val!r} is not of type {of_type.__name__!r}"
     if msg:
         raise TypeError(msg)
-    return cast(T, val)  # type: ignore[return-value] # logic too complicated for mypy
+    return cast("T", val)  # type: ignore[return-value] # logic too complicated for mypy
 
 
 __all__ = [

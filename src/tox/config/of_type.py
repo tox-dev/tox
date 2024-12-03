@@ -118,7 +118,7 @@ class ConfigDynamicDefinition(ConfigDefinition[T]):  # noqa: PLW1641
             if self.post_process is not None:
                 value = self.post_process(value)
             self._cache = value
-        return cast(T, self._cache)
+        return cast("T", self._cache)
 
     def __repr__(self) -> str:
         values = ((k, v) for k, v in vars(self).items() if k not in {"post_process", "_cache"} and v is not None)
