@@ -492,10 +492,10 @@ def _invalid_index_fake_port() -> int:
 
 
 @pytest.fixture(autouse=True)
-def disable_pip_pypi_access(_invalid_index_fake_port: int, monkeypatch: pytest.MonkeyPatch) -> tuple[str, str | None]:
+def disable_pip_pypi_access(invalid_index_fake_port: int, monkeypatch: pytest.MonkeyPatch) -> tuple[str, str | None]:
     """Set a fake pip index url, tests that want to use a pypi server should create and overwrite this."""
     previous_url = os.environ.get("PIP_INDEX_URL")
-    new_url = f"http://localhost:{_invalid_index_fake_port}/bad-pypi-server"
+    new_url = f"http://localhost:{invalid_index_fake_port}/bad-pypi-server"
     monkeypatch.setenv("PIP_INDEX_URL", new_url)
     monkeypatch.setenv("PIP_RETRIES", str(0))
     monkeypatch.setenv("PIP_TIMEOUT", str(0.001))

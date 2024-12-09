@@ -59,9 +59,9 @@ class ExecuteRequest:
             exe = str(Path(self.cmd[0]).relative_to(self.cwd))
         except ValueError:
             exe = self.cmd[0]
-        _cmd = [exe]
-        _cmd.extend(self.cmd[1:])
-        return shell_cmd(_cmd)
+        cmd = [exe]
+        cmd.extend(self.cmd[1:])
+        return shell_cmd(cmd)
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}(cmd={self.cmd!r}, cwd={self.cwd!r}, env=..., stdin={self.stdin!r})"
