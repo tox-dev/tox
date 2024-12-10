@@ -27,7 +27,7 @@ jobs:
           - "3.9"
           - "3.8"
         os:
-          - ubuntu-latest
+          - ubuntu-24.04
           - windows-latest
           - macos-latest
     steps:
@@ -67,7 +67,7 @@ jobs:
           - docs
           - pkg_meta
         os:
-          - ubuntu-latest
+          - ubuntu-24.04
           - windows-latest
         exclude:
           - { os: windows-latest, tox_env: docs }
