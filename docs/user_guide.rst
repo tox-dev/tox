@@ -51,7 +51,7 @@ these. The canonical file for this is either a ``tox.toml`` or ``tox.ini`` file.
 
        .. code-block:: ini
 
-           [tox]
+            [tox]
             requires =
                 tox>=4
             env_list = lint, type, 3.1{3,2,1}
