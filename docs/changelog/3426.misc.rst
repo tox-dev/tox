@@ -1,0 +1,2 @@
+Adds ability to configure the stderr color for output received from external
+commands.

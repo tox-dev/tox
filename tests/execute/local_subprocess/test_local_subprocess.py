@@ -48,6 +48,11 @@ class FakeOutErr:
 @pytest.mark.parametrize("color", [True, False], ids=["color", "no_color"])
 @pytest.mark.parametrize(("out", "err"), [("out", "err"), ("", "")], ids=["simple", "nothing"])
 @pytest.mark.parametrize("show", [True, False], ids=["show", "no_show"])
+@pytest.mark.parametrize(
+    "stderr_color",
+    ["RED", "YELLOW", "RESET"],
+    ids=["stderr_color_default", "stderr_color_yellow", "stderr_color_reset"],
+)
 def test_local_execute_basic_pass(  # noqa: PLR0913
     caplog: LogCaptureFixture,
     os_env: dict[str, str],
@@ -55,13 +60,18 @@ def test_local_execute_basic_pass(  # noqa: PLR0913
     err: str,
     show: bool,
     color: bool,
+    stderr_color: str,
 ) -> None:
     caplog.set_level(logging.NOTSET)
     executor = LocalSubProcessExecutor(colored=color)
+
+    tox_env = MagicMock()
+    tox_env.conf._conf.options.stderr_color = stderr_color  # noqa: SLF001
     code = f"import sys; print({out!r}, end=''); print({err!r}, end='', file=sys.stderr)"
     request = ExecuteRequest(cmd=[sys.executable, "-c", code], cwd=Path(), env=os_env, stdin=StdinSource.OFF, run_id="")
     out_err = FakeOutErr()
-    with executor.call(request, show=show, out_err=out_err.out_err, env=MagicMock()) as status:
+
+    with executor.call(request, show=show, out_err=out_err.out_err, env=tox_env) as status:
         while status.exit_code is None:  # pragma: no branch
             status.wait()
     assert status.out == out.encode()
@@ -77,7 +87,7 @@ def test_local_execute_basic_pass(  # noqa: PLR0913
     out_got, err_got = out_err.read_out_err()
     if show:
         assert out_got == out
-        expected = (f"{Fore.RED}{err}{Fore.RESET}" if color else err) if err else ""
+        expected = f"{Fore.__dict__[stderr_color]}{err}{Fore.RESET}" if color and err else err
         assert err_got == expected
     else:
         assert not out_got
