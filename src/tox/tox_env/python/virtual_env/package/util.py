@@ -73,12 +73,12 @@ def _extract_extra_markers(req: Requirement) -> tuple[Requirement, set[str | Non
     return req, cast("Set[Optional[str]]", extra_markers) or {None}
 
 
-def _get_extra(_marker: str | tuple[Variable, Op, Variable]) -> str | None:
+def _get_extra(marker: str | tuple[Variable, Op, Variable]) -> str | None:
     if (
-        isinstance(_marker, tuple)
-        and len(_marker) == 3  # noqa: PLR2004
-        and _marker[0].value == "extra"
-        and _marker[1].value == "=="
+        isinstance(marker, tuple)
+        and len(marker) == 3  # noqa: PLR2004
+        and marker[0].value == "extra"
+        and marker[1].value == "=="
     ):
-        return _marker[2].value
+        return marker[2].value
     return None

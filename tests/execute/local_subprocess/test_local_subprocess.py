@@ -234,14 +234,14 @@ def test_local_execute_basic_fail(capsys: CaptureFixture, caplog: LogCaptureFixt
     assert record.levelno == logging.CRITICAL
     assert record.msg == "exit %s (%.2f seconds) %s> %s%s"
     assert record.args is not None
-    _code, _duration, _cwd, _cmd, _metadata = record.args
-    assert _code == 3
-    assert _cwd == cwd
-    assert _cmd == request.shell_cmd
-    assert isinstance(_duration, float)
-    assert _duration > 0
-    assert isinstance(_metadata, str)
-    assert _metadata.startswith(" pid=")
+    code, duration, cwd_, cmd_, metadata = record.args
+    assert code == 3
+    assert cwd_ == cwd
+    assert cmd_ == request.shell_cmd
+    assert isinstance(duration, float)
+    assert duration > 0
+    assert isinstance(metadata, str)
+    assert metadata.startswith(" pid=")
 
 
 def test_command_does_not_exist(caplog: LogCaptureFixture, os_env: dict[str, str]) -> None:
