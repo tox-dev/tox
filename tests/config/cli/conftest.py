@@ -12,6 +12,7 @@ from tox.session.cmd.list_env import list_env
 from tox.session.cmd.quickstart import quickstart
 from tox.session.cmd.run.parallel import run_parallel
 from tox.session.cmd.run.sequential import run_sequential
+from tox.session.cmd.schema import gen_schema
 from tox.session.cmd.show_config import show_config
 
 if TYPE_CHECKING:
@@ -23,6 +24,7 @@ def core_handlers() -> dict[str, Callable[[State], int]]:
     return {
         "config": show_config,
         "c": show_config,
+        "schema": gen_schema,
         "list": list_env,
         "l": list_env,
         "run": run_sequential,
