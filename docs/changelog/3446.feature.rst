@@ -1,0 +1,3 @@
+Add a ``schema`` command to produce a JSON Schema for tox and the current plugins.
+
+- by :user:`henryiii`

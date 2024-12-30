@@ -42,6 +42,7 @@ class Plugin:
             legacy,
             list_env,
             quickstart,
+            schema,
             show_config,
             version_flag,
         )
@@ -60,6 +61,7 @@ class Plugin:
             exec_,
             quickstart,
             show_config,
+            schema,
             devenv,
             list_env,
             depends,
