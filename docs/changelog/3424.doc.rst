@@ -1,3 +1,0 @@
-Fix typo in ``docs/config.rst`` from ``{}`` to ``{:}``.
-
-- by :user:`wooshaun53`

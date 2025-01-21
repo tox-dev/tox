@@ -4,6 +4,30 @@ Release History
 
 .. towncrier release notes start
 
+v4.24.0 (2025-01-21)
+--------------------
+
+Features - 4.24.0
+~~~~~~~~~~~~~~~~~
+- Add a ``schema`` command to produce a JSON Schema for tox and the current plugins.
+
+  - by :user:`henryiii` (:issue:`3446`)
+
+Bugfixes - 4.24.0
+~~~~~~~~~~~~~~~~~
+- Log exception name when subprocess execution produces one.
+
+  - by :user:`ssbarnea` (:issue:`3450`)
+
+Improved Documentation - 4.24.0
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+- Fix typo in ``docs/config.rst`` from ``{}`` to ``{:}``.
+
+  - by :user:`wooshaun53` (:issue:`3424`)
+- Pass ``NIX_LD`` and ``NIX_LD_LIBRARY_PATH`` variables by default in ``pass_env`` to make generic binaries work under Nix/NixOS.
+
+  - by :user:`albertodonato` (:issue:`3425`)
+
 v4.23.2 (2024-10-22)
 --------------------
 
