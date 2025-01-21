@@ -29,6 +29,7 @@ if TYPE_CHECKING:
 def default_options() -> dict[str, Any]:
     return {
         "colored": "no",
+        "stderr_color": "RED",
         "command": "r",
         "default_runner": "virtualenv",
         "develop": False,
@@ -200,6 +201,7 @@ def test_ini_exhaustive_parallel_values(core_handlers: dict[str, Callable[[State
     options = get_options("p")
     assert vars(options.parsed) == {
         "colored": "yes",
+        "stderr_color": "RED",
         "command": "p",
         "default_runner": "virtualenv",
         "develop": False,

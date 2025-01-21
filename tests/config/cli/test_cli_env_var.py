@@ -31,6 +31,7 @@ def test_verbose_no_test() -> None:
         "verbose": 4,
         "quiet": 0,
         "colored": "no",
+        "stderr_color": "RED",
         "work_dir": None,
         "root_dir": None,
         "config_file": None,
@@ -90,6 +91,7 @@ def test_env_var_exhaustive_parallel_values(
     assert vars(options.parsed) == {
         "always_copy": False,
         "colored": "no",
+        "stderr_color": "RED",
         "command": "legacy",
         "default_runner": "virtualenv",
         "develop": False,
