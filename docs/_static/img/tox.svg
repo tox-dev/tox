@@ -14,6 +14,11 @@
   style="enable-background:new"
 >
   <defs id="defs2">
+    <style>
+    .backgroundImageFilterWithLuminocityMode {
+      filter: url(.#backgroundImageFilterWithLuminocityModeBlend);
+    }
+    </style>
     <linearGradient id="linearGradient6236">
       <stop id="stop6232" offset="0" style="stop-color:#ffff00;stop-opacity:1;" />
       <stop id="stop6234" offset="1" style="stop-color:#ffff00;stop-opacity:0;" />
@@ -44,7 +49,7 @@
         style="opacity:0.244;fill:#1144a7;fill-opacity:1;stroke:none;stroke-width:0.26499999;stroke-miterlimit:4;stroke-dasharray:0, 0.26499999, 0.52999997, 0.795, 1.05999998, 1.32499997, 1.58999996, 1.85499998, 2.11999997, 2.38499996, 2.64999994, 2.91499997, 3.17999995, 3.44499994, 3.70999993;stroke-dashoffset:0;stroke-opacity:1"
       />
     </clipPath>
-    <filter id="filter2753" style="color-interpolation-filters:sRGB">
+    <filter id="backgroundImageFilterWithLuminocityModeBlend" style="color-interpolation-filters:sRGB">
       <feBlend id="feBlend2755" in2="BackgroundImage" mode="luminosity" />
     </filter>
     <linearGradient
@@ -73,7 +78,12 @@
       id="path815"
     />
   </g>
-  <g transform="translate(164.42213,271.42459)" style="display:inline;filter:url(#filter2753)" id="layer2">
+  <g
+    transform="translate(164.42213,271.42459)"
+    style="display: inline"
+    id="layer2"
+    class="backgroundImageFilterWithLuminocityMode"
+  >
     <g
       style="opacity:1;stroke-width:1.67443275"
       clip-path="url(#clipPath1762)"

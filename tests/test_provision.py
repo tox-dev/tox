@@ -62,12 +62,12 @@ def _make_tox_wheel(
         into = tmp_path_factory.mktemp("dist")  # pragma: no cover
         from tox.version import version_tuple  # noqa: PLC0415
 
-        _patch_version = version_tuple[2]
-        if isinstance(_patch_version, str) and _patch_version[:3] == "dev":
+        patch_version = version_tuple[2]
+        if isinstance(patch_version, str) and patch_version[:3] == "dev":
             # Version is in the form of 1.23.dev456, we need to increment the 456 part
-            version = f"{version_tuple[0]}.{version_tuple[1]}.dev{int(_patch_version[3:]) + 1}"
+            version = f"{version_tuple[0]}.{version_tuple[1]}.dev{int(patch_version[3:]) + 1}"
         else:
-            version = f"{version_tuple[0]}.{version_tuple[1]}.{int(_patch_version) + 1}"
+            version = f"{version_tuple[0]}.{version_tuple[1]}.{int(patch_version) + 1}"
 
         with mock.patch.dict(os.environ, {"SETUPTOOLS_SCM_PRETEND_VERSION": version}):
             return pkg_builder(into, Path(__file__).parents[1], ["wheel"], False)  # pragma: no cover

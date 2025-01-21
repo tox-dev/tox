@@ -3,7 +3,7 @@ from __future__ import annotations
 import sys
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Callable, Iterator, Mapping, Sequence, TypeVar, cast
+from typing import TYPE_CHECKING, Any, Callable, Generator, Iterator, Mapping, Sequence, TypeVar, cast
 
 from .of_type import ConfigConstantDefinition, ConfigDefinition, ConfigDynamicDefinition, ConfigLoadArgs
 from .set_env import SetEnv
@@ -32,6 +32,12 @@ class ConfigSet(ABC):
         self._alias: dict[str, str] = {}
         self._final = False
         self.register_config()
+
+    def get_configs(self) -> Generator[ConfigDefinition[Any], None, None]:
+        """:return: a mapping of config keys to their definitions"""
+        for k, v in self._defined.items():
+            if k == next(iter(v.keys)):
+                yield v
 
     @abstractmethod
     def register_config(self) -> None:
