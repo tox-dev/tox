@@ -87,7 +87,7 @@ def test_local_execute_basic_pass(  # noqa: PLR0913
     out_got, err_got = out_err.read_out_err()
     if show:
         assert out_got == out
-        expected = f"{Fore.__dict__[stderr_color]}{err}{Fore.RESET}" if color and err else err
+        expected = f"{getattr(Fore, stderr_color)}{err}{Fore.RESET}" if color and err else err
         assert err_got == expected
     else:
         assert not out_got
