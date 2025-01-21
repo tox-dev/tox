@@ -63,7 +63,7 @@ def test_toml_loader_list_ok() -> None:
 
 
 def test_toml_loader_list_nok() -> None:
-    with pytest.raises(TypeError, match="{} is not list"):
+    with pytest.raises(TypeError, match=r"{} is not list"):
         perform_load({}, List[str])
 
 
@@ -77,7 +77,7 @@ def test_toml_loader_dict_ok() -> None:
 
 
 def test_toml_loader_dict_nok() -> None:
-    with pytest.raises(TypeError, match="{'a'} is not dictionary"):
+    with pytest.raises(TypeError, match=r"{'a'} is not dictionary"):
         perform_load({"a"}, Dict[str, str])
 
 

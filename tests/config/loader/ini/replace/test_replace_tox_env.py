@@ -189,7 +189,7 @@ def test_replace_from_tox_section_missing_value(tox_ini_conf: ToxIniCreator) -> 
 def test_replace_from_section_bad_type(tox_ini_conf: ToxIniCreator) -> None:
     conf_a = tox_ini_conf("[testenv:e]\nx = {[m]a}\n[m]\na=w\n").get_env("e")
     conf_a.add_config(keys="x", of_type=int, default=1, desc="d")
-    with pytest.raises(ValueError, match="invalid literal.*w.*"):
+    with pytest.raises(ValueError, match=r"invalid literal.*w.*"):
         assert conf_a["x"]
 
 
