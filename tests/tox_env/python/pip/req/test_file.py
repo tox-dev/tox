@@ -401,7 +401,7 @@ def test_requirements_file_missing(tmp_path: Path) -> None:
     requirements_file = tmp_path / "req.txt"
     requirements_file.write_text("-r one.txt")
     req_file = RequirementsFile(requirements_file, constraint=False)
-    with pytest.raises(ValueError, match="No such file or directory: .*one.txt"):
+    with pytest.raises(ValueError, match=r"No such file or directory: .*one.txt"):
         assert req_file.options
 
 
