@@ -64,6 +64,22 @@ def test_config_in_toml_extra(tox_project: ToxProjectCreator) -> None:
     assert "# !!! unused: " not in outcome.out, outcome.out
 
 
+def test_config_in_toml_explicit_mentioned(tox_project: ToxProjectCreator) -> None:
+    project = tox_project({
+        "pyproject.toml": """
+    [tool.tox.env_run_base]
+    description = "Do magical things"
+    commands = [
+        ["python", "--version"]
+    ]
+    """
+    })
+
+    outcome = project.run("l", "-c", "pyproject.toml")
+    outcome.assert_success()
+    assert "could not recognize config file pyproject.toml" not in outcome.out, outcome.out
+
+
 def test_config_in_toml_replace_default(tox_project: ToxProjectCreator) -> None:
     project = tox_project({"pyproject.toml": '[tool.tox.env_run_base]\ndescription = "{missing:miss}"'})
     outcome = project.run("c", "-k", "description")
