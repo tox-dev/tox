@@ -305,7 +305,7 @@ The primary tox states are:
       :ref:`runner`. For `virtualenv` tox will use the `virtualenv discovery logic
       <https://virtualenv.pypa.io/en/latest/user_guide.html#python-discovery>`_ where the python specification is
       defined by the tox environments :ref:`base_python` (if not set will default to the environments name). This is
-      created at first run only to be re-used at subsequent runs. If certain aspects of the project change (python
+      created at first run only to be reused at subsequent runs. If certain aspects of the project change (python
       version, dependencies removed, etc.), a re-creation of the environment is automatically triggered. To force the
       recreation tox can be invoked with the :ref:`recreate` flag (``-r``).
 
