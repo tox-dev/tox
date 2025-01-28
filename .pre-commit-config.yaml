@@ -10,7 +10,7 @@ repos:
       - id: check-github-workflows
         args: ["--verbose"]
   - repo: https://github.com/codespell-project/codespell
-    rev: v2.3.0
+    rev: v2.4.0
     hooks:
       - id: codespell
         additional_dependencies: ["tomli>=2.1"]
@@ -23,7 +23,7 @@ repos:
     hooks:
       - id: validate-pyproject
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: "v0.9.2"
+    rev: "v0.9.3"
     hooks:
       - id: ruff-format
       - id: ruff
