@@ -1,11 +1,14 @@
 from __future__ import annotations
 
+import inspect
 import logging
 from pathlib import Path
 from typing import TYPE_CHECKING, Dict, Iterator, List, Mapping, TypeVar, cast
 
 from tox.config.loader.api import ConfigLoadArgs, Loader, Override
+from tox.config.set_env import SetEnv
 from tox.config.types import Command, EnvList
+from tox.report import HandledError
 
 from ._api import TomlTypes
 from ._replace import Unroll
@@ -55,15 +58,34 @@ class TomlLoader(Loader[TomlTypes]):
 
     def build(  # noqa: PLR0913
         self,
-        key: str,  # noqa: ARG002
+        key: str,
         of_type: type[_T],
         factory: Factory[_T],
         conf: Config | None,
         raw: TomlTypes,
         args: ConfigLoadArgs,
     ) -> _T:
+        delay_replace = inspect.isclass(of_type) and issubclass(of_type, SetEnv)
+
+        def replacer(raw_: str, args_: ConfigLoadArgs) -> str:
+            if conf is None:
+                replaced = raw_  # no replacement supported in the core section
+            else:
+                reference_replacer = Unroll(conf, self, args)
+                try:
+                    replaced = str(reference_replacer(raw_))  # do replacements
+                except Exception as exception:
+                    if isinstance(exception, HandledError):
+                        raise
+                    msg = f"replace failed in {args_.env_name}.{key} with {exception!r}"
+                    raise HandledError(msg) from exception
+            return replaced
+
         exploded = Unroll(conf=conf, loader=self, args=args)(raw)
-        return self.to(exploded, of_type, factory)
+        refactoried = self.to(exploded, of_type, factory)
+        if delay_replace:
+            refactoried.use_replacer(replacer, args=args)  # type: ignore[attr-defined] # issubclass(to_type, SetEnv)
+        return refactoried
 
     def found_keys(self) -> set[str]:
         return set(self.content.keys()) - self._unused_exclude
