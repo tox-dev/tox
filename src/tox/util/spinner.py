@@ -11,7 +11,11 @@ from collections import OrderedDict
 from typing import IO, TYPE_CHECKING, NamedTuple, Sequence, TypeVar
 
 from colorama import Fore
-from typing_extensions import Self
+
+if sys.version_info >= (3, 11):  # pragma: >=3.11 cover
+    from typing import Self
+else:  # pragma: <3.11 cover
+    from typing_extensions import Self
 
 if TYPE_CHECKING:
     from types import TracebackType

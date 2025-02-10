@@ -12,7 +12,6 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, Callable, Dict, List, Literal, Optional, Sequence, Tuple, Type, TypeVar, cast
 
 from colorama import Fore
-from typing_extensions import Self
 
 from tox.config.loader.str_convert import StrConvert
 from tox.plugin import NAME
@@ -20,6 +19,11 @@ from tox.util.ci import is_ci
 
 from .env_var import get_env_var
 from .ini import IniConfig
+
+if sys.version_info >= (3, 11):  # pragma: >=3.11 cover
+    from typing import Self
+else:  # pragma: <3.11 cover
+    from typing_extensions import Self
 
 if TYPE_CHECKING:
     from tox.session.state import State
