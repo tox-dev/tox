@@ -1,4 +1,4 @@
-"""Customize argparse logic for tox (also contains the base options)."""  # noqa: A005
+"""Customize argparse logic for tox (also contains the base options)."""
 
 from __future__ import annotations
 
@@ -19,6 +19,11 @@ from tox.util.ci import is_ci
 
 from .env_var import get_env_var
 from .ini import IniConfig
+
+if sys.version_info >= (3, 11):  # pragma: >=3.11 cover
+    from typing import Self
+else:  # pragma: <3.11 cover
+    from typing_extensions import Self
 
 if TYPE_CHECKING:
     from tox.session.state import State
@@ -287,11 +292,11 @@ class ToxParser(ArgumentParserWithEnvAndConfig):
         return result
 
     @classmethod
-    def base(cls: type[ToxParserT]) -> ToxParserT:
+    def base(cls) -> Self:
         return cls(add_help=False, root=True)
 
     @classmethod
-    def core(cls: type[ToxParserT]) -> ToxParserT:
+    def core(cls) -> Self:
         return cls(
             prog=NAME,
             formatter_class=HelpFormatter,

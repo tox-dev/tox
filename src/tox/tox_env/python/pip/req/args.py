@@ -3,13 +3,20 @@ from __future__ import annotations
 import bisect
 import re
 from argparse import Action, ArgumentParser, ArgumentTypeError, Namespace
-from typing import IO, Any, NoReturn, Sequence
+from typing import Any, NoReturn, Protocol, Sequence, TypeVar
 
 from tox.tox_env.python.pip.req.util import handle_binary_option
 
+_T_contra = TypeVar("_T_contra", contravariant=True)
+
+
+# stable
+class _SupportsWrite(Protocol[_T_contra]):
+    def write(self, s: _T_contra, /) -> object: ...
+
 
 class _OurArgumentParser(ArgumentParser):
-    def print_usage(self, file: IO[str] | None = None) -> None:
+    def print_usage(self, file: _SupportsWrite[str] | None = None) -> None:
         """ """
 
     def exit(self, status: int = 0, message: str | None = None) -> NoReturn:  # noqa: ARG002, PLR6301
