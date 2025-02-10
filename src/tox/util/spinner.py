@@ -11,6 +11,7 @@ from collections import OrderedDict
 from typing import IO, TYPE_CHECKING, NamedTuple, Sequence, TypeVar
 
 from colorama import Fore
+from typing_extensions import Self
 
 if TYPE_CHECKING:
     from types import TracebackType
@@ -104,7 +105,7 @@ class Spinner:
         text_frame = textwrap.shorten(text_frame, width=self.max_width - 1, placeholder="...")
         return f"{frame} {text_frame}"
 
-    def __enter__(self: T) -> T:
+    def __enter__(self) -> Self:
         if self.enabled:
             self.disable_cursor()
         self.render_frame()

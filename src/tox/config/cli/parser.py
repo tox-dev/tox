@@ -1,4 +1,4 @@
-"""Customize argparse logic for tox (also contains the base options)."""  # noqa: A005
+"""Customize argparse logic for tox (also contains the base options)."""
 
 from __future__ import annotations
 
@@ -12,6 +12,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, Callable, Dict, List, Literal, Optional, Sequence, Tuple, Type, TypeVar, cast
 
 from colorama import Fore
+from typing_extensions import Self
 
 from tox.config.loader.str_convert import StrConvert
 from tox.plugin import NAME
@@ -287,11 +288,11 @@ class ToxParser(ArgumentParserWithEnvAndConfig):
         return result
 
     @classmethod
-    def base(cls: type[ToxParserT]) -> ToxParserT:
+    def base(cls) -> Self:
         return cls(add_help=False, root=True)
 
     @classmethod
-    def core(cls: type[ToxParserT]) -> ToxParserT:
+    def core(cls) -> Self:
         return cls(
             prog=NAME,
             formatter_class=HelpFormatter,
