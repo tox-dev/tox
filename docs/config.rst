@@ -1586,10 +1586,8 @@ create your virtual env for the developers.
     py          -> [no description]
 
     additional environments:
-    py310-black -> [no description]
-    py310-lint  -> [no description]
-    py311-black -> [no description]
-    py311-lint  -> [no description]
+    py311-x86-venv -> [no description]
+    py311-x64-venv -> [no description]
 
 .. _substitution:
 
