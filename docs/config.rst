@@ -1366,7 +1366,7 @@ You can reference other configurations via the ``ref`` replacement. This can eit
         [env.src]
         extras = ["A", "{env_name}"]
         [env.dest]
-        extras = [{ replace = "ref", env = "src", key = "extras", extend = true }, "B"
+        extras = [{ replace = "ref", env = "src", key = "extras", extend = true }, "B"]
 
   In this case ``dest`` environments ``extras`` will be ``A``, ``src``, ``B``.
 
