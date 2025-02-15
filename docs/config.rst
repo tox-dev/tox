@@ -1635,7 +1635,8 @@ If you specify a substitution string like this::
 
     {env:KEY}
 
-then the value will be retrieved as ``os.environ['KEY']`` and raise an Error if the environment variable does not exist.
+then the value will be retrieved as ``os.environ['KEY']`` and replaced with an empty string if the environment variable
+does not exist.
 
 
 Environment variable substitutions with default values
