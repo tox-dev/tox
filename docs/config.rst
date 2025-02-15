@@ -1635,7 +1635,8 @@ If you specify a substitution string like this::
 
     {env:KEY}
 
-then the value will be retrieved as ``os.environ['KEY']`` and raise an Error if the environment variable does not exist.
+then the value will be retrieved as ``os.environ['KEY']`` and replaced with an empty string if the environment variable
+does not exist.
 
 
 Environment variable substitutions with default values
@@ -1645,14 +1646,14 @@ If you specify a substitution string like this::
 
     {env:KEY:DEFAULTVALUE}
 
-then the value will be retrieved as ``os.environ['KEY']`` and replace with DEFAULTVALUE if the environment variable does
+then the value will be retrieved as ``os.environ['KEY']`` and replaced with DEFAULTVALUE if the environment variable does
 not exist.
 
 If you specify a substitution string like this::
 
     {env:KEY:}
 
-then the value will be retrieved as ``os.environ['KEY']`` and replace with an empty string if the environment variable
+then the value will be retrieved as ``os.environ['KEY']`` and replaced with an empty string if the environment variable
 does not exist.
 
 Substitutions can also be nested. In that case they are expanded starting from the innermost expression::
