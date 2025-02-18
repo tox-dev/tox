@@ -165,10 +165,10 @@ def test_set_env_honor_override(eval_set_env: EvalSetEnv) -> None:
     ("conf_type", "config"),
     [
         ("ini", "[testenv]\npackage=skip\nset_env=file|A{/}a.txt\nchange_dir=C"),
-        ("toml", '[env_run_base]\npackage="skip"\nset_env="file|A{/}a.txt"\nchange_dir="C"'),
+        ("toml", '[env_run_base]\npackage="skip"\nset_env={file="A{/}a.txt"}\nchange_dir="C"'),
         # Using monkeypatched env setting as a reference
         ("ini", "[testenv]\npackage=skip\nset_env=file|{env:myenvfile}\nchange_dir=C"),
-        ("toml", '[env_run_base]\npackage="skip"\nset_env="file|{env:myenvfile}"\nchange_dir="C"'),
+        ("toml", '[env_run_base]\npackage="skip"\nset_env={file="{env:myenvfile}"}\nchange_dir="C"'),
     ],
 )
 def test_set_env_environment_file(
@@ -196,6 +196,37 @@ def test_set_env_environment_file(
         "C": "1",
         "E": '"1"',
         "F": "",
+        "PYTHONIOENCODING": "utf-8",
+    }
+
+
+@pytest.mark.parametrize(
+    ("conf_type", "config"),
+    [
+        ("ini", "[testenv]\npackage=skip\nset_env=file|A{/}a.txt\n X=y\nchange_dir=C"),
+        ("toml", '[env_run_base]\npackage="skip"\nset_env={file="A{/}a.txt", X="y"}\nchange_dir="C"'),
+        # Using monkeypatched env setting as a reference
+        ("ini", "[testenv]\npackage=skip\nset_env=file|{env:myenvfile}\n X=y\nchange_dir=C"),
+        ("toml", '[env_run_base]\npackage="skip"\nset_env={file="{env:myenvfile}", X="y"}\nchange_dir="C"'),
+    ],
+)
+def test_set_env_environment_file_combined_with_normal_setting(
+    conf_type: _ConfType, config: str, eval_set_env: EvalSetEnv, monkeypatch: MonkeyPatch
+) -> None:
+    env_file = """
+    A=1
+    """
+    # Monkeypatch only used for some of the parameters
+    monkeypatch.setenv("myenvfile", "A{/}a.txt")
+
+    extra = {"A": {"a.txt": env_file}, "B": None, "C": None}
+    set_env = eval_set_env(config, conf_type=conf_type, extra_files=extra, from_cwd=Path("B"))
+    content = {k: set_env.load(k) for k in set_env}
+    assert content == {
+        "PIP_DISABLE_PIP_VERSION_CHECK": "1",
+        "PYTHONHASHSEED": ANY,
+        "A": "1",
+        "X": "y",
         "PYTHONIOENCODING": "utf-8",
     }
 
