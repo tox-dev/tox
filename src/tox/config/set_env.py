@@ -11,7 +11,7 @@ Replacer = Callable[[str, ConfigLoadArgs], str]
 
 
 class SetEnv:
-    def __init__(  # noqa: C901
+    def __init__(  # noqa: C901, PLR0912
         self, raw: str | dict[str, str] | list[dict[str, str]], name: str, env_name: str | None, root: Path
     ) -> None:
         self.changed = False
@@ -24,13 +24,21 @@ class SetEnv:
         from .loader.replacer import MatchExpression, find_replace_expr  # noqa: PLC0415
 
         if isinstance(raw, dict):
-            self._raw = raw
+            # TOML 'file' attribute is to be handled separately later
+            self._raw = dict(raw)
+            if "file" in raw:
+                self._env_files.append(raw["file"])
+                self._raw.pop("file")
+
             return
+
         if isinstance(raw, list):
             self._raw = reduce(lambda a, b: {**a, **b}, raw)
             return
+
         for line in raw.splitlines():  # noqa: PLR1702
             if line.strip():
+                # INI 'file|' attribute is to be handled separately later
                 if line.startswith("file|"):
                     self._env_files.append(line[len("file|") :])
                 else:
