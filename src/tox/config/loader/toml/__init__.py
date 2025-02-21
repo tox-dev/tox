@@ -68,17 +68,14 @@ class TomlLoader(Loader[TomlTypes]):
         delay_replace = inspect.isclass(of_type) and issubclass(of_type, SetEnv)
 
         def replacer(raw_: str, args_: ConfigLoadArgs) -> str:
-            if conf is None:
-                replaced = raw_  # no replacement supported in the core section
-            else:
-                reference_replacer = Unroll(conf, self, args)
-                try:
-                    replaced = str(reference_replacer(raw_))  # do replacements
-                except Exception as exception:
-                    if isinstance(exception, HandledError):
-                        raise
-                    msg = f"replace failed in {args_.env_name}.{key} with {exception!r}"
-                    raise HandledError(msg) from exception
+            reference_replacer = Unroll(conf, self, args)
+            try:
+                replaced = str(reference_replacer(raw_))  # do replacements
+            except Exception as exception:
+                if isinstance(exception, HandledError):
+                    raise
+                msg = f"replace failed in {args_.env_name}.{key} with {exception!r}"
+                raise HandledError(msg) from exception
             return replaced
 
         exploded = Unroll(conf=conf, loader=self, args=args)(raw)
