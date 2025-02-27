@@ -551,8 +551,43 @@ Base options
 .. conf::
    :keys: set_env, setenv
 
-   A dictionary of environment variables to set when running commands in the tox environment. Lines starting with a
-   ``file|`` prefix define the location of environment file.
+   A dictionary of environment variables to set when running commands in the tox environment.
+
+   In addition, there is an option to include an existing environment file. See the different syntax for TOML and INI below.
+
+    .. tab:: TOML
+
+       .. code-block:: toml
+
+          [tool.tox.env_run_base]
+          set_env = { file = "conf{/}local.env", TEST_TIMEOUT = 30 }
+
+    .. tab:: INI
+
+       .. code-block:: ini
+
+          [testenv]
+          set_env = file|conf{/}local.env
+               TEST_TIMEOUT = 30
+
+
+    The env file path may include previously defined tox variables:
+
+
+    .. tab:: TOML
+
+       .. code-block:: toml
+
+          [tool.tox.env_run_base]
+          set_env = { file = "{env:variable}" }
+
+    .. tab:: INI
+
+       .. code-block:: ini
+
+          [testenv]
+          set_env = file|{env:variable}
+
 
     .. note::
 
