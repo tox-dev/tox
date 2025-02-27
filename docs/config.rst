@@ -564,12 +564,29 @@ Base options
 
     .. tab:: INI
 
-
        .. code-block:: ini
 
           [testenv]
           set_env = file|conf{/}local.env
                TEST_TIMEOUT = 30
+
+
+    The env file path may include previously defined tox variables:
+
+
+    .. tab:: TOML
+
+       .. code-block:: toml
+
+          [tool.tox.env_run_base]
+          set_env = { file = "{env:variable}" }
+
+    .. tab:: INI
+
+       .. code-block:: ini
+
+          [testenv]
+          set_env = file|{env:variable}
 
 
     .. note::
