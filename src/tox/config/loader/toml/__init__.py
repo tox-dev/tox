@@ -58,31 +58,18 @@ class TomlLoader(Loader[TomlTypes]):
 
     def build(  # noqa: PLR0913
         self,
-        key: str,
+        key: str,  # noqa: ARG002
         of_type: type[_T],
         factory: Factory[_T],
         conf: Config | None,
         raw: TomlTypes,
         args: ConfigLoadArgs,
     ) -> _T:
-        delay_replace = inspect.isclass(of_type) and issubclass(of_type, SetEnv)
-
-        def replacer(raw_: str, args_: ConfigLoadArgs) -> str:
-            reference_replacer = Unroll(conf, self, args)
-            try:
-                replaced = str(reference_replacer(raw_))  # do replacements
-            except Exception as exception:
-                if isinstance(exception, HandledError):
-                    raise
-                msg = f"replace failed in {args_.env_name}.{key} with {exception!r}"
-                raise HandledError(msg) from exception
-            return replaced
-
         exploded = Unroll(conf=conf, loader=self, args=args)(raw)
-        refactoried = self.to(exploded, of_type, factory)
-        if delay_replace:
-            refactoried.use_replacer(replacer, args=args)  # type: ignore[attr-defined] # issubclass(to_type, SetEnv)
-        return refactoried
+        result = self.to(exploded, of_type, factory)
+        if inspect.isclass(of_type) and issubclass(of_type, SetEnv):
+            result.use_replacer(lambda c, s: c, args=args)  # type: ignore[attr-defined] # noqa: ARG005
+        return result
 
     def found_keys(self) -> set[str]:
         return set(self.content.keys()) - self._unused_exclude
@@ -126,5 +113,6 @@ class TomlLoader(Loader[TomlTypes]):
 
 
 __all__ = [
+    "HandledError",
     "TomlLoader",
 ]

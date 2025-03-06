@@ -51,14 +51,15 @@ def test_set_env_bad_line() -> None:
         SetEnv("A", "py", "py", Path())
 
 
-_ConfType = Literal["ini", "toml"]
+ConfigFileFormat = Literal["ini", "toml"]
 
 
 class EvalSetEnv(Protocol):
     def __call__(
         self,
         config: str,
-        conf_type: _ConfType = "ini",
+        *,
+        of_type: ConfigFileFormat = "ini",
         extra_files: dict[str, Any] | None = ...,
         from_cwd: Path | None = ...,
     ) -> SetEnv: ...
@@ -68,14 +69,12 @@ class EvalSetEnv(Protocol):
 def eval_set_env(tox_project: ToxProjectCreator) -> EvalSetEnv:
     def func(
         config: str,
-        conf_type: _ConfType = "ini",
+        *,
+        of_type: ConfigFileFormat = "ini",
         extra_files: dict[str, Any] | None = None,
         from_cwd: Path | None = None,
     ) -> SetEnv:
-        if conf_type == "ini":
-            prj = tox_project({"tox.ini": config, **(extra_files or {})})
-        else:
-            prj = tox_project({"tox.toml": config, **(extra_files or {})})
+        prj = tox_project({f"tox.{of_type}": config, **(extra_files or {})})
         result = prj.run("c", "-k", "set_env", "-e", "py", from_cwd=None if from_cwd is None else prj.path / from_cwd)
         result.assert_success()
         set_env: SetEnv = result.env_conf("py")["set_env"]
@@ -162,17 +161,18 @@ def test_set_env_honor_override(eval_set_env: EvalSetEnv) -> None:
 
 
 @pytest.mark.parametrize(
-    ("conf_type", "config"),
+    ("of_type", "config"),
     [
-        ("ini", "[testenv]\npackage=skip\nset_env=file|A{/}a.txt\nchange_dir=C"),
-        ("toml", '[env_run_base]\npackage="skip"\nset_env={file="A{/}a.txt"}\nchange_dir="C"'),
-        # Using monkeypatched env setting as a reference
-        ("ini", "[testenv]\npackage=skip\nset_env=file|{env:myenvfile}\nchange_dir=C"),
-        ("toml", '[env_run_base]\npackage="skip"\nset_env={file="{env:myenvfile}"}\nchange_dir="C"'),
+        pytest.param("ini", "[testenv]\npackage=skip\nset_env=file|A{/}a.txt\nchange_dir=C", id="ini"),
+        pytest.param("toml", '[env_run_base]\npackage="skip"\nset_env={file="A{/}a.txt"}\nchange_dir="C"', id="toml"),
+        pytest.param("ini", "[testenv]\npackage=skip\nset_env=file|{env:env_file}\nchange_dir=C", id="ini-env"),
+        pytest.param(
+            "toml", '[env_run_base]\npackage="skip"\nset_env={file="{env:env_file}"}\nchange_dir="C"', id="toml-env"
+        ),
     ],
 )
 def test_set_env_environment_file(
-    conf_type: _ConfType, config: str, eval_set_env: EvalSetEnv, monkeypatch: MonkeyPatch
+    of_type: ConfigFileFormat, config: str, eval_set_env: EvalSetEnv, monkeypatch: MonkeyPatch
 ) -> None:
     env_file = """
     A=1
@@ -182,11 +182,10 @@ def test_set_env_environment_file(
     E = "1"
     F =
     """
-    # Monkeypatch only used for some of the parameters
-    monkeypatch.setenv("myenvfile", "A{/}a.txt")
+    monkeypatch.setenv("env_file", "A{/}a.txt")
 
     extra = {"A": {"a.txt": env_file}, "B": None, "C": None}
-    set_env = eval_set_env(config, conf_type=conf_type, extra_files=extra, from_cwd=Path("B"))
+    set_env = eval_set_env(config, of_type=of_type, extra_files=extra, from_cwd=Path("B"))
     content = {k: set_env.load(k) for k in set_env}
     assert content == {
         "PIP_DISABLE_PIP_VERSION_CHECK": "1",
@@ -201,26 +200,31 @@ def test_set_env_environment_file(
 
 
 @pytest.mark.parametrize(
-    ("conf_type", "config"),
+    ("of_type", "config"),
     [
-        ("ini", "[testenv]\npackage=skip\nset_env=file|A{/}a.txt\n X=y\nchange_dir=C"),
-        ("toml", '[env_run_base]\npackage="skip"\nset_env={file="A{/}a.txt", X="y"}\nchange_dir="C"'),
-        # Using monkeypatched env setting as a reference
-        ("ini", "[testenv]\npackage=skip\nset_env=file|{env:myenvfile}\n X=y\nchange_dir=C"),
-        ("toml", '[env_run_base]\npackage="skip"\nset_env={file="{env:myenvfile}", X="y"}\nchange_dir="C"'),
+        pytest.param("ini", "[testenv]\npackage=skip\nset_env=file|A{/}a.txt\n X=y\nchange_dir=C", id="ini"),
+        pytest.param(
+            "toml", '[env_run_base]\npackage="skip"\nset_env={file="A{/}a.txt", X="y"}\nchange_dir="C"', id="toml"
+        ),
+        pytest.param("ini", "[testenv]\npackage=skip\nset_env=file|{env:env_file}\n X=y\nchange_dir=C", id="ini-env"),
+        pytest.param(
+            "toml",
+            '[env_run_base]\npackage="skip"\nset_env={file="{env:env_file}", X="y"}\nchange_dir="C"',
+            id="toml-env",
+        ),
     ],
 )
 def test_set_env_environment_file_combined_with_normal_setting(
-    conf_type: _ConfType, config: str, eval_set_env: EvalSetEnv, monkeypatch: MonkeyPatch
+    of_type: ConfigFileFormat, config: str, eval_set_env: EvalSetEnv, monkeypatch: MonkeyPatch
 ) -> None:
     env_file = """
     A=1
     """
     # Monkeypatch only used for some of the parameters
-    monkeypatch.setenv("myenvfile", "A{/}a.txt")
+    monkeypatch.setenv("env_file", "A{/}a.txt")
 
     extra = {"A": {"a.txt": env_file}, "B": None, "C": None}
-    set_env = eval_set_env(config, conf_type=conf_type, extra_files=extra, from_cwd=Path("B"))
+    set_env = eval_set_env(config, of_type=of_type, extra_files=extra, from_cwd=Path("B"))
     content = {k: set_env.load(k) for k in set_env}
     assert content == {
         "PIP_DISABLE_PIP_VERSION_CHECK": "1",

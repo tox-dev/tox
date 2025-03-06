@@ -24,22 +24,17 @@ class SetEnv:
         from .loader.replacer import MatchExpression, find_replace_expr  # noqa: PLC0415
 
         if isinstance(raw, dict):
-            # TOML 'file' attribute is to be handled separately later
-            self._raw = dict(raw)
-            if "file" in raw:
+            self._raw = raw
+            if "file" in raw:  # environment files to be handled later
                 self._env_files.append(raw["file"])
                 self._raw.pop("file")
-
             return
-
         if isinstance(raw, list):
             self._raw = reduce(lambda a, b: {**a, **b}, raw)
             return
-
         for line in raw.splitlines():  # noqa: PLR1702
             if line.strip():
-                # INI 'file|' attribute is to be handled separately later
-                if line.startswith("file|"):
+                if line.startswith("file|"):  # environment files to be handled later
                     self._env_files.append(line[len("file|") :])
                 else:
                     try:
