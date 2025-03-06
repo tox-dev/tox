@@ -1,1 +1,1 @@
-- `--parallel-no-spinner` now respects max CPU set by `--parallel N`
+- ``--parallel-no-spinner`` now respects max CPU set by ``--parallel N``
