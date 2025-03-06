@@ -1,11 +1,14 @@
 from __future__ import annotations
 
+import inspect
 import logging
 from pathlib import Path
 from typing import TYPE_CHECKING, Dict, Iterator, List, Mapping, TypeVar, cast
 
 from tox.config.loader.api import ConfigLoadArgs, Loader, Override
+from tox.config.set_env import SetEnv
 from tox.config.types import Command, EnvList
+from tox.report import HandledError
 
 from ._api import TomlTypes
 from ._replace import Unroll
@@ -63,7 +66,10 @@ class TomlLoader(Loader[TomlTypes]):
         args: ConfigLoadArgs,
     ) -> _T:
         exploded = Unroll(conf=conf, loader=self, args=args)(raw)
-        return self.to(exploded, of_type, factory)
+        result = self.to(exploded, of_type, factory)
+        if inspect.isclass(of_type) and issubclass(of_type, SetEnv):
+            result.use_replacer(lambda c, s: c, args=args)  # type: ignore[attr-defined] # noqa: ARG005
+        return result
 
     def found_keys(self) -> set[str]:
         return set(self.content.keys()) - self._unused_exclude
@@ -107,5 +113,6 @@ class TomlLoader(Loader[TomlTypes]):
 
 
 __all__ = [
+    "HandledError",
     "TomlLoader",
 ]

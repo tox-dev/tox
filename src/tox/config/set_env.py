@@ -11,7 +11,7 @@ Replacer = Callable[[str, ConfigLoadArgs], str]
 
 
 class SetEnv:
-    def __init__(  # noqa: C901
+    def __init__(  # noqa: C901, PLR0912
         self, raw: str | dict[str, str] | list[dict[str, str]], name: str, env_name: str | None, root: Path
     ) -> None:
         self.changed = False
@@ -25,13 +25,16 @@ class SetEnv:
 
         if isinstance(raw, dict):
             self._raw = raw
+            if "file" in raw:  # environment files to be handled later
+                self._env_files.append(raw["file"])
+                self._raw.pop("file")
             return
         if isinstance(raw, list):
             self._raw = reduce(lambda a, b: {**a, **b}, raw)
             return
         for line in raw.splitlines():  # noqa: PLR1702
             if line.strip():
-                if line.startswith("file|"):
+                if line.startswith("file|"):  # environment files to be handled later
                     self._env_files.append(line[len("file|") :])
                 else:
                     try:
