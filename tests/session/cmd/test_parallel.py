@@ -14,6 +14,7 @@ from tox.session.cmd.run import parallel
 from tox.session.cmd.run.parallel import parse_num_processes
 from tox.tox_env.api import ToxEnv
 from tox.tox_env.errors import Fail
+from tox.util.cpu import auto_detect_cpus
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -180,7 +181,20 @@ def test_parallel_no_spinner(tox_project: ToxProjectCreator) -> None:
 
     mocked.assert_called_once_with(
         mock.ANY,
-        max_workers=None,
+        max_workers=auto_detect_cpus(),
+        has_spinner=False,
+        live=False,
+    )
+
+
+def test_parallel_no_spinner_with_parallel(tox_project: ToxProjectCreator) -> None:
+    """Ensure `--parallel N` is still respected with `--parallel-no-spinner`."""
+    with mock.patch.object(parallel, "execute") as mocked:
+        tox_project({"tox.ini": ""}).run("p", "--parallel-no-spinner", "--parallel", "2")
+
+    mocked.assert_called_once_with(
+        mock.ANY,
+        max_workers=2,
         has_spinner=False,
         live=False,
     )
@@ -197,7 +211,7 @@ def test_parallel_no_spinner_ci(
 
     mocked.assert_called_once_with(
         mock.ANY,
-        max_workers=None,
+        max_workers=auto_detect_cpus(),
         has_spinner=False,
         live=False,
     )
@@ -209,7 +223,7 @@ def test_parallel_no_spinner_legacy(tox_project: ToxProjectCreator) -> None:
 
     mocked.assert_called_once_with(
         mock.ANY,
-        max_workers=None,
+        max_workers=auto_detect_cpus(),
         has_spinner=False,
         live=False,
     )
