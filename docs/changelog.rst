@@ -4,6 +4,20 @@ Release History
 
 .. towncrier release notes start
 
+v4.24.2 (2025-03-07)
+--------------------
+
+Bugfixes - 4.24.2
+~~~~~~~~~~~~~~~~~
+- multiple source_type supports for the same filename. Like pyproject.toml can be load by both TomlPyProject & LegacyToml (:issue:`3117`)
+- Support ``set_env = { file = "conf{/}local.env"}`` for TOML format - by :user:`juditnovak`. (:issue:`3474`)
+- fix example on the docs (:issue:`3480`)
+- - ``--parallel-no-spinner`` now respects max CPU set by ``--parallel N`` (:issue:`3495`)
+
+Improved Documentation - 4.24.2
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+- Updates the documentation for ``os.environ['KEY']`` when the variable does not exist - by :user:`jugmac00`. (:issue:`3456`)
+
 v4.24.1 (2025-01-21)
 --------------------
 
