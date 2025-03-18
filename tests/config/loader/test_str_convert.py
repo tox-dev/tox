@@ -77,7 +77,7 @@ if sys.version_info >= (3, 9):
     [
         ("a", TypeVar, TypeError, r"a cannot cast to .*typing.TypeVar.*"),
         ("3", Literal["1", "2"], ValueError, r"3 must be one of \('1', '2'\)"),
-        ("3", Union[str, int], TypeError, r"3 cannot cast to typing.Union\[str, int\]"),
+        ("3", Union[str, int], TypeError, r"3 cannot cast to (typing.Union\[str, int\]|str \| int)"),
         ("", Command, ValueError, r"attempting to parse '' into a command failed"),
     ],
 )
