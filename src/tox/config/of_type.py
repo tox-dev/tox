@@ -7,14 +7,11 @@ from itertools import product
 from typing import TYPE_CHECKING, Callable, Generic, Iterable, TypeVar, cast
 
 from tox.config.loader.api import ConfigLoadArgs, Loader
+from tox.config.types import CircularChainError
 
 if TYPE_CHECKING:
     from tox.config.loader.convert import Factory
     from tox.config.main import Config  # pragma: no cover
-
-
-class CircularChainError(ValueError):
-    """circular chain in config"""
 
 
 T = TypeVar("T")
