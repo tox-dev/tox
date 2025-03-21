@@ -6,6 +6,10 @@ from typing import Iterator, Sequence
 from tox.execute.request import shell_cmd
 
 
+class CircularChainError(ValueError):
+    """circular chain in config"""
+
+
 class Command:  # noqa: PLW1641
     """A command to execute."""
 

@@ -179,6 +179,54 @@ def test_factor_config_no_env_list_creates_env(tox_ini_conf: ToxIniCreator) -> N
 
 
 @pytest.mark.parametrize(
+    ("env_list", "expected_envs"),
+    [
+        ("py3{10-13}", ["py310", "py311", "py312", "py313"]),
+        ("py3{10-11},a", ["py310", "py311", "a"]),
+        ("py3{10-11},a{1-2}", ["py310", "py311", "a1", "a2"]),
+        ("py3{10-12,14}", ["py310", "py311", "py312", "py314"]),
+        ("py3{8-10,12,14-16}", ["py38", "py39", "py310", "py312", "py314", "py315", "py316"]),
+        (
+            "py3{10-11}-django1.{3-5}",
+            [
+                "py310-django1.3",
+                "py310-django1.4",
+                "py310-django1.5",
+                "py311-django1.3",
+                "py311-django1.4",
+                "py311-django1.5",
+            ],
+        ),
+        (
+            "py3{10-11, 13}-django1.{3-4, 6}",
+            [
+                "py310-django1.3",
+                "py310-django1.4",
+                "py310-django1.6",
+                "py311-django1.3",
+                "py311-django1.4",
+                "py311-django1.6",
+                "py313-django1.3",
+                "py313-django1.4",
+                "py313-django1.6",
+            ],
+        ),
+        ("py3{10-11},a{1-2}-b{3-4}", ["py310", "py311", "a1-b3", "a1-b4", "a2-b3", "a2-b4"]),
+        ("py3{13-11}", ["py313", "py312", "py311"]),
+    ],
+)
+def test_env_list_expands_ranges(env_list: str, expected_envs: list[str], tox_ini_conf: ToxIniCreator) -> None:
+    config = tox_ini_conf(
+        f"""
+        [tox]
+        env_list = {env_list}
+        """
+    )
+
+    assert list(config) == expected_envs
+
+
+@pytest.mark.parametrize(
     ("env", "result"),
     [
         ("py35", "python -m coverage html -d cov"),
@@ -200,6 +248,18 @@ def test_ini_loader_raw_with_factors(
     )
     outcome = loader.load_raw(key="commands", conf=empty_config, env_name=env)
     assert outcome == result
+
+
+def test_generative_section_name_with_ranges(tox_ini_conf: ToxIniCreator) -> None:
+    config = tox_ini_conf(
+        """
+        [testenv:py3{11-13}-{black,lint}]
+        deps-x =
+            black: black
+            lint: flake8
+        """,
+    )
+    assert list(config) == ["py311-black", "py311-lint", "py312-black", "py312-lint", "py313-black", "py313-lint"]
 
 
 def test_generative_section_name(tox_ini_conf: ToxIniCreator) -> None:
