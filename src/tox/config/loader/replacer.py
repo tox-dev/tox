@@ -287,24 +287,9 @@ def replace_env(conf: Config | None, args: list[str], conf_args: ConfigLoadArgs)
 def replace_tty(args: list[str]) -> str:
     return (args[0] if len(args) > 0 else "") if sys.stdout.isatty() else args[1] if len(args) > 1 else ""
 
-
-def expand_ranges(value: str) -> str:
-    """Expand ranges in env expressions, eg py3{10-13} -> "py3{10,11,12,13}"""
-    matches = re.findall(r"((\d+)-(\d+)|\d+)(?:,|})", value)
-    for src, start_, end_ in matches:
-        if src and start_ and end_:
-            start = int(start_)
-            end = int(end_)
-            direction = 1 if start < end else -1
-            expansion = ",".join(str(x) for x in range(start, end + direction, direction))
-            value = value.replace(src, expansion, 1)
-    return value
-
-
 __all__ = [
     "MatchExpression",
     "MatchRecursionError",
-    "expand_ranges",
     "find_replace_expr",
     "load_posargs",
     "replace",

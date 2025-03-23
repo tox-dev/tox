@@ -10,7 +10,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, Iterator
 
 from tox.config.loader.convert import Convert
-from tox.config.loader.replacer import expand_ranges
+from tox.config.loader.ini.factor import expand_ranges
 from tox.config.types import Command, EnvList
 
 if TYPE_CHECKING:
