@@ -66,7 +66,7 @@ def find_factor_groups(value: str) -> Iterator[list[tuple[str, bool]]]:
         yield result
 
 
-_FACTOR_RE = re.compile(r"!?[\w._][\w._-]*")
+_FACTOR_RE = re.compile(r"(?:!?[\w._][\w._-]*|^$)")
 
 
 def expand_env_with_negation(value: str) -> Iterator[str]:

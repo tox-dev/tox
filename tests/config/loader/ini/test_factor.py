@@ -213,6 +213,13 @@ def test_factor_config_no_env_list_creates_env(tox_ini_conf: ToxIniCreator) -> N
         ),
         ("py3{10-11},a{1-2}-b{3-4}", ["py310", "py311", "a1-b3", "a1-b4", "a2-b3", "a2-b4"]),
         ("py3{13-11}", ["py313", "py312", "py311"]),
+        ("py3{-11}", ["py3-11"]),
+        ("foo{11-}", ["foo11-"]),
+        ("foo{a-}", ["fooa-"]),
+        ("foo{-a}", ["foo-a"]),
+        ("foo{a-11}", ["fooa-11"]),
+        ("foo{13-a}", ["foo13-a"]),
+        ("foo{a-b}", ["fooa-b"]),
     ],
 )
 def test_env_list_expands_ranges(env_list: str, expected_envs: list[str], tox_ini_conf: ToxIniCreator) -> None:
