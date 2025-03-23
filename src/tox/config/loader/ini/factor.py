@@ -92,6 +92,7 @@ def name_with_negate(factor: str) -> tuple[str, bool]:
 def is_negated(factor: str) -> bool:
     return factor.startswith("!")
 
+
 def expand_ranges(value: str) -> str:
     """Expand ranges in env expressions, eg py3{10-13} -> "py3{10,11,12,13}"""
     matches = re.findall(r"((\d+)-(\d+)|\d+)(?:,|})", value)
@@ -104,10 +105,11 @@ def expand_ranges(value: str) -> str:
             value = value.replace(src, expansion, 1)
     return value
 
+
 __all__ = (
     "expand_factors",
+    "expand_ranges",
     "extend_factors",
     "filter_for_env",
     "find_envs",
-    "expand_ranges",
 )

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from tox.config.loader.ini.factor import extend_factors, expand_ranges
+from tox.config.loader.ini.factor import expand_ranges, extend_factors
 from tox.config.loader.section import Section
 
 

@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import logging
 import os
-import re
 import sys
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, Any, Final, Sequence, Union
@@ -286,6 +285,7 @@ def replace_env(conf: Config | None, args: list[str], conf_args: ConfigLoadArgs)
 
 def replace_tty(args: list[str]) -> str:
     return (args[0] if len(args) > 0 else "") if sys.stdout.isatty() else args[1] if len(args) > 1 else ""
+
 
 __all__ = [
     "MatchExpression",
