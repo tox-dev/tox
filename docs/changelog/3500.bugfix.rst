@@ -1,2 +1,0 @@
-Make tox tests pass with Python 3.14.0a6
-- by :user:`hroncok`

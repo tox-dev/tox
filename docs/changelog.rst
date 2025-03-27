@@ -4,6 +4,18 @@ Release History
 
 .. towncrier release notes start
 
+v4.25.0 (2025-03-27)
+--------------------
+
+Features - 4.25.0
+~~~~~~~~~~~~~~~~~
+- Add support for number ranges in generative environments, more details :ref:`here<generative-environment-list>`. - by :user:`mimre25` (:issue:`3502`)
+
+Bugfixes - 4.25.0
+~~~~~~~~~~~~~~~~~
+- Make tox tests pass with Python 3.14.0a6
+  - by :user:`hroncok` (:issue:`3500`)
+
 v4.24.2 (2025-03-07)
 --------------------
 
