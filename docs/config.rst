@@ -1554,6 +1554,8 @@ Conditional settings
   Here pip will be always installed as the configuration value is not conditional. black is only used for the ``format``
   environment, while ``pytest`` is only installed for the ``py310`` and ``py39`` environments.
 
+.. _generative-environment-list:
+
 Generative environment list
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -1595,13 +1597,15 @@ This will generate the following tox environments:
     py311-django40-sqlite -> [no description]
     py311-django40-mysql  -> [no description]
 
-Both enumerations (`{1,2,3}`) and ranges (`{1-3}`) are supported, and can be mixed together:
+Both enumerations (``{1,2,3}``) and numerical ranges (``{1-3}``) are supported, and can be mixed together:
+
 .. code-block:: ini
 
     [tox]
     env_list = py3{8-10, 11, 13-14}
 
 will create the following envs:
+
 .. code-block:: shell
 
     > tox l
@@ -1612,6 +1616,8 @@ will create the following envs:
     py311 -> [no description]
     py313 -> [no description]
     py314 -> [no description]
+
+Negative ranges will also be expanded (``{3-1}`` -> ``{3,2,1}``), however, open ranges such as ``{1-}``, ``{-2}``, ``{a-}``, and ``{-b}`` will not be expanded.
 
 
 
