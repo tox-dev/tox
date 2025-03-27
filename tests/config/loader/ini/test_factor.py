@@ -179,6 +179,76 @@ def test_factor_config_no_env_list_creates_env(tox_ini_conf: ToxIniCreator) -> N
 
 
 @pytest.mark.parametrize(
+    ("env_list", "expected_envs"),
+    [
+        pytest.param("py3{10-13}", ["py310", "py311", "py312", "py313"], id="Expand positive range"),
+        pytest.param("py3{10-11},a", ["py310", "py311", "a"], id="Expand range and add additional env"),
+        pytest.param("py3{10-11},a{1-2}", ["py310", "py311", "a1", "a2"], id="Expand multiple env with ranges"),
+        pytest.param(
+            "py3{10-12,14}",
+            ["py310", "py311", "py312", "py314"],
+            id="Expand ranges, and allow extra parameter in generator",
+        ),
+        pytest.param(
+            "py3{8-10,12,14-16}",
+            ["py38", "py39", "py310", "py312", "py314", "py315", "py316"],
+            id="Expand multiple ranges for one generator",
+        ),
+        pytest.param(
+            "py3{10-11}-django1.{3-5}",
+            [
+                "py310-django1.3",
+                "py310-django1.4",
+                "py310-django1.5",
+                "py311-django1.3",
+                "py311-django1.4",
+                "py311-django1.5",
+            ],
+            id="Expand ranges and factor multiple environment parts",
+        ),
+        pytest.param(
+            "py3{10-11, 13}-django1.{3-4, 6}",
+            [
+                "py310-django1.3",
+                "py310-django1.4",
+                "py310-django1.6",
+                "py311-django1.3",
+                "py311-django1.4",
+                "py311-django1.6",
+                "py313-django1.3",
+                "py313-django1.4",
+                "py313-django1.6",
+            ],
+            id="Expand ranges and parameters and factor multiple environment parts",
+        ),
+        pytest.param(
+            "py3{10-11},a{1-2}-b{3-4}",
+            ["py310", "py311", "a1-b3", "a1-b4", "a2-b3", "a2-b4"],
+            id="Expand ranges and parameters & factor multiple environment parts for multiple generative environments",
+        ),
+        pytest.param("py3{13-11}", ["py313", "py312", "py311"], id="Expand negative ranges"),
+        pytest.param("3.{10-13}", ["3.10", "3.11", "3.12", "3.13"], id="Expand new-style python envs"),
+        pytest.param("py3{-11}", ["py3-11"], id="Don't expand left-open numerical range"),
+        pytest.param("foo{11-}", ["foo11-"], id="Don't expand right-open numerical range"),
+        pytest.param("foo{a-}", ["fooa-"], id="Don't expand right-open range"),
+        pytest.param("foo{-a}", ["foo-a"], id="Don't expand left-open range"),
+        pytest.param("foo{a-11}", ["fooa-11"], id="Don't expand alpha-umerical range"),
+        pytest.param("foo{13-a}", ["foo13-a"], id="Don't expand numerical-alpha range"),
+        pytest.param("foo{a-b}", ["fooa-b"], id="Don't expand non-numerical range"),
+    ],
+)
+def test_env_list_expands_ranges(env_list: str, expected_envs: list[str], tox_ini_conf: ToxIniCreator) -> None:
+    config = tox_ini_conf(
+        f"""
+        [tox]
+        env_list = {env_list}
+        """
+    )
+
+    assert list(config) == expected_envs
+
+
+@pytest.mark.parametrize(
     ("env", "result"),
     [
         ("py35", "python -m coverage html -d cov"),
@@ -200,6 +270,18 @@ def test_ini_loader_raw_with_factors(
     )
     outcome = loader.load_raw(key="commands", conf=empty_config, env_name=env)
     assert outcome == result
+
+
+def test_generative_section_name_with_ranges(tox_ini_conf: ToxIniCreator) -> None:
+    config = tox_ini_conf(
+        """
+        [testenv:py3{11-13}-{black,lint}]
+        deps-x =
+            black: black
+            lint: flake8
+        """,
+    )
+    assert list(config) == ["py311-black", "py311-lint", "py312-black", "py312-lint", "py313-black", "py313-lint"]
 
 
 def test_generative_section_name(tox_ini_conf: ToxIniCreator) -> None:

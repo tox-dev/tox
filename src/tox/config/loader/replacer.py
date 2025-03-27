@@ -8,7 +8,7 @@ import sys
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, Any, Final, Sequence, Union
 
-from tox.config.of_type import CircularChainError
+from tox.config.types import CircularChainError
 from tox.execute.request import shell_cmd
 
 if TYPE_CHECKING:

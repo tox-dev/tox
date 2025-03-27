@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from tox.config.loader.ini.factor import extend_factors
+from tox.config.loader.ini.factor import expand_ranges, extend_factors
 from tox.config.loader.section import Section
 
 
@@ -15,7 +15,7 @@ class IniSection(Section):
 
     @property
     def names(self) -> list[str]:
-        return list(extend_factors(self.name))
+        return list(extend_factors(expand_ranges(self.name)))
 
 
 TEST_ENV_PREFIX = "testenv"
