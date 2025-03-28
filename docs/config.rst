@@ -1449,7 +1449,7 @@ Empty commands groups will be ignored:
 .. code-block:: toml
 
     [env.A]
-    commands = [[], ["pytest]]
+    commands = [[], ["pytest"]]
 
 will only invoke pytest. This is especially useful together with posargs allowing you to opt out of running a set of
 commands:
