@@ -1,0 +1,1 @@
+Fix ``TypeError`` for ``HelpFormatter`` with Python 3.14

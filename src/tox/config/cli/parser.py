@@ -95,8 +95,8 @@ class ArgumentParserWithEnvAndConfig(ArgumentParser):
 class HelpFormatter(ArgumentDefaultsHelpFormatter):
     """A help formatter that provides the default value and the source it comes from."""
 
-    def __init__(self, prog: str) -> None:
-        super().__init__(prog, max_help_position=30, width=240)
+    def __init__(self, prog: str, **kwargs: Any) -> None:
+        super().__init__(prog, max_help_position=30, width=240, **kwargs)
 
     def _get_help_string(self, action: Action) -> str | None:
         text: str = super()._get_help_string(action) or ""
