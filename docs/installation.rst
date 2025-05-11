@@ -4,7 +4,7 @@ Installation
 As tool
 --------
 
-:pypi:`tox` is a CLI tool that needs a Python interpreter (version 3.7 or higher) to run. We recommend either
+:pypi:`tox` is a CLI tool that needs a Python interpreter (version 3.9 or higher) to run. We recommend either
 :pypi:`pipx` or  :pypi:`uv` to install tox into an isolated environment. This has the added benefit that later you'll
 be able to upgrade tox without affecting other parts of the system. We provide method for ``pip`` too here but we
 discourage that path if you can:
@@ -77,7 +77,7 @@ Python and OS Compatibility
 
 tox works with the following Python interpreter implementations:
 
-- `CPython <https://www.python.org/>`_ versions 3.8, 3.9, 3.10, 3.11, 3.12, 3.13
+- `CPython <https://www.python.org/>`_ versions 3.9, 3.10, 3.11, 3.12, 3.13
 
 This means tox works on the latest patch version of each of these minor versions. Previous patch versions are supported
 on a best effort approach.
