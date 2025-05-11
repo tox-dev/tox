@@ -97,6 +97,7 @@ def patch_prev_py(mocker: MockerFixture) -> Callable[[bool], tuple[str, str]]:
                 implementation=impl,
                 version_info=ver_info,
                 version="",
+                free_threaded=False,
                 is_64=True,
                 platform=sys.platform,
                 extra={"executable": Path(sys.executable)},

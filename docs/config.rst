@@ -866,6 +866,29 @@ Python options
 
    The Python executable from within the tox environment.
 
+.. conf::
+   :keys: py_dot_ver
+   :constant:
+   :version_added: 4.0.10
+
+   Major.Minor version of the Python interpreter in the tox environment (e.g., ``3.13``).
+
+.. conf::
+   :keys: py_impl
+   :constant:
+   :version_added: 4.0.10
+
+   Name of the Python implementation in the tox environment in lowercase (e.g., ``cpython``, ``pypy``).
+
+.. conf::
+   :keys: py_free_threaded
+   :constant:
+   :version_added: 4.26
+
+   ``True`` if the Python interpreter in the tox environment is an experimental free-threaded CPython build,
+   else ``False``.
+
+
 Python run
 ~~~~~~~~~~
 .. conf::

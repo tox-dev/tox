@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import sys
+import sysconfig
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -152,11 +153,16 @@ def test_config_skip_missing_interpreters(
     assert result.code == (0 if expected else -1)
 
 
+SYS_PY_VER = "".join(str(i) for i in sys.version_info[0:2]) + (
+    "t" if sysconfig.get_config_var("Py_GIL_DISABLED") == 1 else ""
+)
+
+
 @pytest.mark.parametrize(
     ("skip", "env", "retcode"),
     [
-        ("true", f"py{''.join(str(i) for i in sys.version_info[0:2])}", 0),
-        ("false", f"py{''.join(str(i) for i in sys.version_info[0:2])}", 0),
+        ("true", f"py{SYS_PY_VER}", 0),
+        ("false", f"py{SYS_PY_VER}", 0),
         ("true", "py31", -1),
         ("false", "py31", 1),
         ("true", None, 0),
@@ -169,8 +175,7 @@ def test_skip_missing_interpreters_specified_env(
     env: str | None,
     retcode: int,
 ) -> None:
-    py_ver = "".join(str(i) for i in sys.version_info[0:2])
-    project = tox_project({"tox.ini": f"[tox]\nenvlist=py31,py{py_ver}\n[testenv]\nusedevelop=true"})
+    project = tox_project({"tox.ini": f"[tox]\nenvlist=py31,py{SYS_PY_VER}\n[testenv]\nusedevelop=true"})
     args = [f"--skip-missing-interpreters={skip}"]
     if env:
         args += ["-e", env]
