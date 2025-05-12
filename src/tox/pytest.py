@@ -281,7 +281,8 @@ class ToxProject:
                 m.setenv("VIRTUALENV_SYMLINK_APP_DATA", "1")
                 m.setenv("VIRTUALENV_SYMLINKS", "1")
                 m.setenv("VIRTUALENV_PIP", "embed")
-                m.setenv("VIRTUALENV_WHEEL", "embed")
+                if sys.version_info[:2] < (3, 9):
+                    m.setenv("VIRTUALENV_WHEEL", "embed")
                 m.setenv("VIRTUALENV_SETUPTOOLS", "embed")
                 try:
                     tox_run(args)

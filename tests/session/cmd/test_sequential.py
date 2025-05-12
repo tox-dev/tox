@@ -114,7 +114,9 @@ def test_result_json_sequential(
     py_test = get_cmd_exit_run_id(log_report, "py", "test")
     assert py_test == [(1, "commands[0]"), (0, "commands[1]")]
     packaging_installed = log_report["testenvs"]["py"].pop("installed_packages")
-    expected_pkg = {"pip", "setuptools", "wheel", "a"}
+    expected_pkg = {"pip", "setuptools", "a"}
+    if sys.version_info[0:2] == (3, 8):
+        expected_pkg.add("wheel")
     assert {i[: i.find("==")] if "@" not in i else "a" for i in packaging_installed} == expected_pkg
     install_package = log_report["testenvs"]["py"].pop("installpkg")
     assert re.match(r"^[a-fA-F0-9]{64}$", install_package.pop("sha256"))

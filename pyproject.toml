@@ -59,7 +59,7 @@ dependencies = [
   "pyproject-api>=1.8",
   "tomli>=2.2.1; python_version<'3.11'",
   "typing-extensions>=4.12.2; python_version<'3.11'",
-  "virtualenv>=20.29.1",
+  "virtualenv>=20.31",
 ]
 optional-dependencies.test = [
   "devpi-process>=1.0.2",
