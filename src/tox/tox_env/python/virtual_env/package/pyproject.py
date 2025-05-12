@@ -118,8 +118,15 @@ class Pep517VenvPackager(PythonPackageToxEnv, ABC):
 
     @root.setter
     def root(self, value: Path) -> None:
-        self._root = value
-        self._frontend_ = None  # force recreating the frontend with new root
+        # NOTE(vytas): Recreating the frontend with a new root will orphan the
+        #   current frontend.backend_executor, if any, making tox hang upon
+        #   exit waiting for its threads and subprocesses (#3512).
+        #
+        #   Here, we partially worka round the issue by only resetting the root
+        #   when it has actually changed:
+        if self._root != value:
+            self._root = value
+            self._frontend_ = None  # force recreating the frontend with new root
 
     @staticmethod
     def id() -> str:
