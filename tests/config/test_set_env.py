@@ -240,3 +240,51 @@ def test_set_env_environment_file_missing(tox_project: ToxProjectCreator) -> Non
     result = project.run("r")
     result.assert_failed()
     assert f"py: failed with {project.path / 'magic.txt'} does not exist for set_env" in result.out
+
+
+# https://github.com/tox-dev/tox/issues/2435
+def test_set_env_environment_with_file_and_expanded_substitution(
+    tox_project: ToxProjectCreator, monkeypatch: MonkeyPatch
+) -> None:
+    conf = {
+        "tox.ini": """
+        [tox]
+        envlist =
+            check
+
+        [testenv]
+        setenv =
+            file|.env
+            PRECENDENCE_TEST_1=1_expanded_precedence
+
+        [testenv:check]
+        setenv =
+            {[testenv]setenv}
+            PRECENDENCE_TEST_1=1_self_precedence
+            PRECENDENCE_TEST_2=2_self_precedence
+        """,
+        ".env": """
+        PRECENDENCE_TEST_1=1_file_precedence
+        PRECENDENCE_TEST_2=2_file_precedence
+        PRECENDENCE_TEST_3=3_file_precedence
+        """,
+    }
+    monkeypatch.setenv("env_file", ".env")
+    project = tox_project(conf)
+
+    result = project.run("c", "-k", "set_env", "-e", "check")
+    result.assert_success()
+    set_env = result.env_conf("check")["set_env"]
+    content = {k: set_env.load(k) for k in set_env}
+    assert content == {
+        "PIP_DISABLE_PIP_VERSION_CHECK": "1",
+        "PYTHONHASHSEED": ANY,
+        "PYTHONIOENCODING": "utf-8",
+        "PRECENDENCE_TEST_1": "1_expanded_precedence",
+        "PRECENDENCE_TEST_2": "2_self_precedence",
+        "PRECENDENCE_TEST_3": "3_file_precedence",
+    }
+
+    result = project.run("r", "-e", "check")
+    result.assert_success()
+    assert "check: OK" in result.out

@@ -34,8 +34,8 @@ class SetEnv:
             return
         for line in raw.splitlines():  # noqa: PLR1702
             if line.strip():
-                if line.startswith("file|"):  # environment files to be handled later
-                    self._env_files.append(line[len("file|") :])
+                if self._is_file_line(line):
+                    self._env_files.append(self._parse_file_line(line))
                 else:
                     try:
                         key, value = self._extract_key_value(line)
@@ -52,12 +52,20 @@ class SetEnv:
                     else:
                         self._raw[key] = value
 
+    @staticmethod
+    def _is_file_line(line: str) -> bool:
+        return line.startswith("file|")
+
+    @staticmethod
+    def _parse_file_line(line: str) -> str:
+        return line[len("file|") :]
+
     def use_replacer(self, value: Replacer, args: ConfigLoadArgs) -> None:
         self._replacer = value
         for filename in self._env_files:
-            self._read_env_file(filename, args)
+            self._raw.update(self._stream_env_file(filename, args))
 
-    def _read_env_file(self, filename: str, args: ConfigLoadArgs) -> None:
+    def _stream_env_file(self, filename: str, args: ConfigLoadArgs) -> Iterator[tuple[str, str]]:
         # Our rules in the documentation, some upstream environment file rules (we follow mostly the docker one):
         # - https://www.npmjs.com/package/dotenv#rules
         # - https://docs.docker.com/compose/env-file/
@@ -70,8 +78,7 @@ class SetEnv:
             env_line = env_line.strip()  # noqa: PLW2901
             if not env_line or env_line.startswith("#"):
                 continue
-            key, value = self._extract_key_value(env_line)
-            self._raw[key] = value
+            yield self._extract_key_value(env_line)
 
     @staticmethod
     def _extract_key_value(line: str) -> tuple[str, str]:
@@ -100,10 +107,18 @@ class SetEnv:
         # start with the materialized ones, maybe we don't need to materialize the raw ones
         yield from self._materialized.keys()
         yield from list(self._raw.keys())  # iterating over this may trigger materialization and change the dict
+        args = ConfigLoadArgs([], self._name, self._env_name)
         while self._needs_replacement:
             line = self._needs_replacement.pop(0)
-            expanded_line = self._replacer(line, ConfigLoadArgs([], self._name, self._env_name))
-            sub_raw = dict(self._extract_key_value(sub_line) for sub_line in expanded_line.splitlines() if sub_line)
+            expanded_line = self._replacer(line, args)
+            sub_raw: dict[str, str] = {}
+            for sub_line in filter(None, expanded_line.splitlines()):
+                if not self._is_file_line(sub_line):
+                    sub_raw.__setitem__(*self._extract_key_value(sub_line))
+                else:
+                    for key, value in self._stream_env_file(self._parse_file_line(sub_line), args):
+                        if key not in self._raw:
+                            sub_raw[key] = value  # noqa: PERF403
             self._raw.update(sub_raw)
             self.changed = True  # loading while iterating can cause these values to be missed
             yield from sub_raw.keys()
