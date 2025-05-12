@@ -5,6 +5,7 @@ on:
 
 env:
   dists-artifact-name: python-package-distributions
+  FORCE_COLOR: 1
 
 jobs:
   build:
