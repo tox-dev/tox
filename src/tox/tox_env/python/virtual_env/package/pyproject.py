@@ -122,7 +122,7 @@ class Pep517VenvPackager(PythonPackageToxEnv, ABC):
         #   current frontend.backend_executor, if any, making tox hang upon
         #   exit waiting for its threads and subprocesses (#3512).
         #
-        #   Here, we partially worka round the issue by only resetting the root
+        #   Here, we partially work around the issue by only resetting the root
         #   when it has actually changed:
         if self._root != value:
             self._root = value
