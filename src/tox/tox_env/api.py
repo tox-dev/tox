@@ -222,6 +222,7 @@ class ToxEnv(ABC):
             "FORCE_COLOR",  # force color output
             "NO_COLOR",  # disable color output
             "NETRC",  # used by pip and netrc modules
+            "PYTHON_GIL",  # allows controlling python gil
         ]
         if sys.stdout.isatty():  # if we're on a interactive shell pass on the TERM
             env.append("TERM")

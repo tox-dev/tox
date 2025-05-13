@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import sys
+import sysconfig
 from types import SimpleNamespace
 from typing import TYPE_CHECKING, Callable
 from unittest.mock import patch
@@ -81,30 +82,56 @@ def test_diff_msg_no_diff() -> None:
     ("env", "base_python"),
     [
         ("py3", "py3"),
+        ("py3t", "py3t"),
         ("py311", "py311"),
+        ("py311t", "py311t"),
         ("py3.12", "py3.12"),
+        ("py3.12t", "py3.12t"),
         ("pypy2", "pypy2"),
+        ("pypy2t", "pypy2t"),
         ("rustpython3", "rustpython3"),
+        ("rustpython3t", "rustpython3t"),
         ("graalpy", "graalpy"),
+        ("graalpyt", None),
         ("jython", "jython"),
+        ("jythont", None),
         ("cpython3.8", "cpython3.8"),
+        ("cpython3.8t", "cpython3.8t"),
         ("ironpython2.7", "ironpython2.7"),
+        ("ironpython2.7t", "ironpython2.7t"),
         ("functional-py310", "py310"),
+        ("functional-py310t", "py310t"),
         ("bar-pypy2-foo", "pypy2"),
+        ("bar-foo2t-py2", "py2"),
+        ("bar-pypy2t-foo", "pypy2t"),
         ("py", None),
+        ("pyt", None),
         ("django-32", None),
+        ("django-32t", None),
         ("eslint-8.3", None),
+        ("eslint-8.3t", None),
         ("py-310", None),
+        ("py-310t", None),
         ("py3000", None),
+        ("py3000t", None),
         ("4.foo", None),
+        ("4.foot", None),
         ("310", None),
+        ("310t", None),
         ("5", None),
+        ("5t", None),
         ("2000", None),
+        ("2000t", None),
         ("4000", None),
+        ("4000t", None),
         ("3.10", "3.10"),
+        ("3.10t", "3.10t"),
         ("3.9", "3.9"),
+        ("3.9t", "3.9t"),
         ("2.7", "2.7"),
+        ("2.7t", "2.7t"),
         ("pypy-3.10", "pypy3.10"),
+        ("pypy-3.10t", "pypy3.10t"),
     ],
     ids=lambda a: "|".join(a) if isinstance(a, list) else str(a),
 )
@@ -294,13 +321,24 @@ def test_usedevelop_with_nonexistent_basepython(tox_project: ToxProjectCreator) 
 
 
 @pytest.mark.parametrize(
-    ("impl", "major", "minor", "arch"),
+    ("impl", "major", "minor", "arch", "free_threaded"),
     [
-        ("cpython", 3, 12, 64),
-        ("pypy", 3, 9, 32),
+        ("cpython", 3, 12, 64, None),
+        ("cpython", 3, 13, 64, True),
+        ("cpython", 3, 13, 64, False),
+        ("pypy", 3, 9, 32, None),
     ],
 )
-def test_python_spec_for_sys_executable(impl: str, major: int, minor: int, arch: int, mocker: MockerFixture) -> None:
+def test_python_spec_for_sys_executable(  # noqa: PLR0913
+    impl: str, major: int, minor: int, arch: int, free_threaded: bool | None, mocker: MockerFixture
+) -> None:
+    get_config_var_ = sysconfig.get_config_var
+
+    def get_config_var(name: str) -> object:
+        if name == "Py_GIL_DISABLED":
+            return free_threaded
+        return get_config_var_(name)
+
     version_info = SimpleNamespace(major=major, minor=minor, micro=5, releaselevel="final", serial=0)
     implementation = SimpleNamespace(
         name=impl,
@@ -312,8 +350,10 @@ def test_python_spec_for_sys_executable(impl: str, major: int, minor: int, arch:
     mocker.patch.object(sys, "version_info", version_info)
     mocker.patch.object(sys, "implementation", implementation)
     mocker.patch.object(sys, "maxsize", 2**arch // 2 - 1)
+    mocker.patch.object(sysconfig, "get_config_var", get_config_var)
     spec = Python._python_spec_for_sys_executable()  # noqa: SLF001
     assert spec.implementation == impl
     assert spec.major == major
     assert spec.minor == minor
     assert spec.architecture == arch
+    assert spec.free_threaded == bool(free_threaded)

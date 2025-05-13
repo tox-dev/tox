@@ -136,7 +136,7 @@ class _ToxEnvInfo:
     package_skip: tuple[str, Skip] | None = None  #: if set the creation of the packaging environment failed
 
 
-_DYNAMIC_ENV_FACTORS = re.compile(r"(pypy|py|cython|)((\d(\.\d+(\.\d+)?)?)|\d+)?")
+_DYNAMIC_ENV_FACTORS = re.compile(r"(pypy|py|cython|)(((\d(\.\d+(\.\d+)?)?)|\d+)t?)?")
 _PY_PRE_RELEASE_FACTOR = re.compile(r"alpha|beta|rc\.\d+")
 
 

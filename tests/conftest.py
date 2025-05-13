@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 import sys
+import sysconfig
 from pathlib import Path
 from typing import TYPE_CHECKING, Callable, Iterator, Protocol, Sequence
 from unittest.mock import patch
@@ -100,6 +101,7 @@ def patch_prev_py(mocker: MockerFixture) -> Callable[[bool], tuple[str, str]]:
                 is_64=True,
                 platform=sys.platform,
                 extra={"executable": Path(sys.executable)},
+                free_threaded=sysconfig.get_config_var("Py_GIL_DISABLED") == 1,
             )
 
         mocker.patch.object(VirtualEnv, "_get_python", get_python)
