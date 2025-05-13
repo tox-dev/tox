@@ -89,6 +89,7 @@ def test_result_json_sequential(
         "sysplatform": py_info.platform,
         "version": py_info.version,
         "version_info": list(py_info.version_info),
+        "free_threaded": py_info.free_threaded,
     }
     packaging_setup = get_cmd_exit_run_id(log_report, ".pkg", "setup")
     assert "result" not in log_report["testenvs"][".pkg"]
