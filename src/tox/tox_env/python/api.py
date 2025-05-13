@@ -5,9 +5,11 @@ from __future__ import annotations
 import logging
 import re
 import sys
+import sysconfig
 from abc import ABC, abstractmethod
+from dataclasses import dataclass
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, List, NamedTuple, cast
+from typing import TYPE_CHECKING, Any, List, NamedTuple
 
 from virtualenv.discovery.py_spec import PythonSpec
 
@@ -26,13 +28,15 @@ class VersionInfo(NamedTuple):
     serial: int
 
 
-class PythonInfo(NamedTuple):
+@dataclass(frozen=True)
+class PythonInfo:
     implementation: str
     version_info: VersionInfo
     version: str
     is_64: bool
     platform: str
     extra: dict[str, Any]
+    free_threaded: bool = False
 
     @property
     def version_no_dot(self) -> str:
@@ -51,11 +55,14 @@ PY_FACTORS_RE = re.compile(
     r"""
     ^(?!py$)                                               # don't match 'py' as it doesn't provide any info
     (?P<impl>py|pypy|cpython|jython|graalpy|rustpython|ironpython) # the interpreter; most users will simply use 'py'
-    (?P<version>[2-9]\.?[0-9]?[0-9]?)?$                    # the version; one of: MAJORMINOR, MAJOR.MINOR
+    (?:
+    (?P<version>[2-9]\.?[0-9]?[0-9]?)                      # the version; one of: MAJORMINOR, MAJOR.MINOR
+    (?P<threaded>t?)                                       # version followed by t for free-threading
+    )?$
     """,
     re.VERBOSE,
 )
-PY_FACTORS_RE_EXPLICIT_VERSION = re.compile(r"^((?P<impl>cpython|pypy)-)?(?P<version>[2-9]\.[0-9]+)$")
+PY_FACTORS_RE_EXPLICIT_VERSION = re.compile(r"^((?P<impl>cpython|pypy)-)?(?P<version>[2-9]\.[0-9]+)(?P<threaded>t?)$")
 
 
 class Python(ToxEnv, ABC):
@@ -100,6 +107,7 @@ class Python(ToxEnv, ABC):
         )
         self.conf.add_constant("py_dot_ver", "<python major>.<python minor>", value=self.py_dot_ver)
         self.conf.add_constant("py_impl", "python implementation", value=self.py_impl)
+        self.conf.add_constant("py_free_threaded", "is no-gil interpreted", value=self.py_free_threaded)
 
     def _default_set_env(self) -> dict[str, str]:
         env = super()._default_set_env()
@@ -110,6 +118,9 @@ class Python(ToxEnv, ABC):
 
     def py_dot_ver(self) -> str:
         return self.base_python.version_dot
+
+    def py_free_threaded(self) -> bool:
+        return self.base_python.free_threaded
 
     def py_impl(self) -> str:
         return self.base_python.impl_lower
@@ -145,7 +156,7 @@ class Python(ToxEnv, ABC):
         match = PY_FACTORS_RE_EXPLICIT_VERSION.match(env_name)
         if match:
             found = match.groupdict()
-            candidates.append(f"{'pypy' if found['impl'] == 'pypy' else ''}{found['version']}")
+            candidates.append(f"{'pypy' if found['impl'] == 'pypy' else ''}{found['version']}{found['threaded']}")
         else:
             for factor in env_name.split("-"):
                 match = PY_FACTORS_RE.match(factor)
@@ -163,7 +174,8 @@ class Python(ToxEnv, ABC):
         implementation = sys.implementation.name
         version = sys.version_info
         bits = "64" if sys.maxsize > 2**32 else "32"
-        string_spec = f"{implementation}{version.major}{version.minor}-{bits}"
+        threaded = "t" if sysconfig.get_config_var("Py_GIL_DISABLED") == 1 else ""
+        string_spec = f"{implementation}{version.major}{version.minor}{threaded}-{bits}"
         return PythonSpec.from_string_spec(string_spec)
 
     @classmethod
@@ -186,7 +198,7 @@ class Python(ToxEnv, ABC):
                         spec_base = cls.python_spec_for_path(path)
                 if any(
                     getattr(spec_base, key) != getattr(spec_name, key)
-                    for key in ("implementation", "major", "minor", "micro", "architecture")
+                    for key in ("implementation", "major", "minor", "micro", "architecture", "free_threaded")
                     if getattr(spec_name, key) is not None
                 ):
                     msg = f"env name {env_name} conflicting with base python {base_python}"
@@ -290,7 +302,7 @@ class Python(ToxEnv, ABC):
                 raise Skip(msg)
             raise NoInterpreter(base_pythons)
 
-        return cast("PythonInfo", self._base_python)
+        return self._base_python
 
     def _get_env_journal_python(self) -> dict[str, Any]:
         return {

@@ -146,6 +146,7 @@ class VirtualEnv(Python, ABC):
             is_64=(interpreter.architecture == 64),  # noqa: PLR2004
             platform=interpreter.platform,
             extra={"executable": Path(interpreter.system_executable).resolve()},
+            free_threaded=interpreter.free_threaded,
         )
 
     def prepend_env_var_path(self) -> list[Path]:

@@ -542,11 +542,12 @@ Base options
             - ✅
             - ✅
             - ❌
+        *   - PYTHON_GIL
+            - ✅
+            - ✅
+            - ✅
 
-
-
-   More environment variable-related information
-   can be found in :ref:`environment variable substitutions`.
+   More environment variable-related information can be found in :ref:`environment variable substitutions`.
 
 .. conf::
    :keys: set_env, setenv
@@ -834,6 +835,7 @@ Python options
    Python version for a tox environment. If not specified, the virtual environments factors (e.g. name part) will be
    used to automatically set one. For example, ``py310`` means ``python3.10``, ``py3`` means ``python3`` and ``py``
    means ``python``. If the name does not match this pattern the same Python version tox is installed into will be used.
+   A base interpreter ending with ``t`` means that only free threaded Python implementations are accepted.
 
     .. versionchanged:: 3.1
 
@@ -865,6 +867,29 @@ Python options
    :constant:
 
    The Python executable from within the tox environment.
+
+.. conf::
+   :keys: py_dot_ver
+   :constant:
+   :version_added: 4.0.10
+
+   Major.Minor version of the Python interpreter in the tox environment (e.g., ``3.13``).
+
+.. conf::
+   :keys: py_impl
+   :constant:
+   :version_added: 4.0.10
+
+   Name of the Python implementation in the tox environment in lowercase (e.g., ``cpython``, ``pypy``).
+
+.. conf::
+   :keys: py_free_threaded
+   :constant:
+   :version_added: 4.26
+
+   ``True`` if the Python interpreter in the tox environment is an experimental free-threaded CPython build,
+   else ``False``.
+
 
 Python run
 ~~~~~~~~~~

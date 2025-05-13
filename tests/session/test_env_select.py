@@ -261,10 +261,15 @@ def test_matches_combined_env(env_name: str, tox_project: ToxProjectCreator) -> 
         "pypy312",
         "py3",
         "py3.12",
+        "py3.12t",
         "py312",
+        "py312t",
         "3",
+        "3t",
         "3.12",
+        "3.12t",
         "3.12.0",
+        "3.12.0t",
     ],
 )
 def test_dynamic_env_factors_match(env: str) -> None:
