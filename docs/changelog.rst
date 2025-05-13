@@ -4,6 +4,21 @@ Release History
 
 .. towncrier release notes start
 
+v4.26.0 (2025-05-13)
+--------------------
+
+Features - 4.26.0
+~~~~~~~~~~~~~~~~~
+- Add support for free-threaded python builds.
+  Factors like ``py313t`` will only pick builds with the GIL disabled while factors without trailing ``t`` will only pick
+  builds without no-GIL support. (:issue:`3391`)
+- Drop support for EOL Python 3.8. (:issue:`3527`)
+
+Bugfixes - 4.26.0
+~~~~~~~~~~~~~~~~~
+- Fix a regression issue related to inability to use ``file|`` substitution option in nested ``set_env`` sections of ``ini`` configurations since tox4 update. (:issue:`2435`)
+- Fix ``TypeError`` for ``HelpFormatter`` with Python 3.14 (:issue:`3523`)
+
 v4.25.0 (2025-03-27)
 --------------------
 

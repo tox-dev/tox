@@ -1,3 +1,0 @@
-Add support for free-threaded python builds.
-Factors like ``py313t`` will only pick builds with the GIL disabled while factors without trailing ``t`` will only pick
-builds without no-GIL support.
