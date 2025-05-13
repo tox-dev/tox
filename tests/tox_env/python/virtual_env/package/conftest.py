@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 import pytest
 
 if TYPE_CHECKING:
-    from pathlib import Path
+    from pathlib import Callable, Path
 
 
 @pytest.fixture(scope="session")
