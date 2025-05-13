@@ -1,0 +1,1 @@
+Fix a regression issue related to inability to use ``file|`` substitution option in nested ``set_env`` sections of ``ini`` configurations since tox4 update.
