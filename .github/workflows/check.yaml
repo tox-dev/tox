@@ -23,6 +23,7 @@ jobs:
       fail-fast: false
       matrix:
         py:
+          - "3.14t"
           - "3.14"
           - "3.13"
           - "3.12"
@@ -49,8 +50,16 @@ jobs:
         run: echo "$USERPROFILE/.local/bin" >> $GITHUB_PATH
       - name: Install tox@self
         run: uv tool install --python-preference only-managed --python ${{ matrix.py }} tox@.
+      - uses: haya14busa/action-cond@v1
+        id: free_threaded
+        with:
+          cond: ${{ endsWith(matrix.py, 't') }}
+          if_true: 0
+          if_false: 1
       - name: Setup test suite
         run: tox run -vv --notest --skip-missing-interpreters false -e ${{ matrix.py }}
+        env:
+          PYTHON_GIL: ${{ steps.free_threaded.outputs.value }}
       - name: Run test suite
         run: tox run --skip-pkg-install -e ${{ matrix.py }}
         env:

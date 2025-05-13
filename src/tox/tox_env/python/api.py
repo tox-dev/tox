@@ -7,8 +7,9 @@ import re
 import sys
 import sysconfig
 from abc import ABC, abstractmethod
+from dataclasses import dataclass
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, List, NamedTuple, cast
+from typing import TYPE_CHECKING, Any, List, NamedTuple
 
 from virtualenv.discovery.py_spec import PythonSpec
 
@@ -27,14 +28,15 @@ class VersionInfo(NamedTuple):
     serial: int
 
 
-class PythonInfo(NamedTuple):
+@dataclass(frozen=True)
+class PythonInfo:
     implementation: str
     version_info: VersionInfo
     version: str
-    free_threaded: bool
     is_64: bool
     platform: str
     extra: dict[str, Any]
+    free_threaded: bool = False
 
     @property
     def version_no_dot(self) -> str:
@@ -300,7 +302,7 @@ class Python(ToxEnv, ABC):
                 raise Skip(msg)
             raise NoInterpreter(base_pythons)
 
-        return cast("PythonInfo", self._base_python)
+        return self._base_python
 
     def _get_env_journal_python(self) -> dict[str, Any]:
         return {

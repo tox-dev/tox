@@ -542,11 +542,12 @@ Base options
             - ✅
             - ✅
             - ❌
+        *   - PYTHON_GIL
+            - ✅
+            - ✅
+            - ✅
 
-
-
-   More environment variable-related information
-   can be found in :ref:`environment variable substitutions`.
+   More environment variable-related information can be found in :ref:`environment variable substitutions`.
 
 .. conf::
    :keys: set_env, setenv
@@ -834,6 +835,7 @@ Python options
    Python version for a tox environment. If not specified, the virtual environments factors (e.g. name part) will be
    used to automatically set one. For example, ``py310`` means ``python3.10``, ``py3`` means ``python3`` and ``py``
    means ``python``. If the name does not match this pattern the same Python version tox is installed into will be used.
+   A base interpreter ending with ``t`` means that only free threaded Python implementations are accepted.
 
     .. versionchanged:: 3.1
 

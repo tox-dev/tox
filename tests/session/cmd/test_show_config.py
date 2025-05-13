@@ -135,7 +135,7 @@ def test_pass_env_config_default(tox_project: ToxProjectCreator, stdout_is_atty:
         + (["PROGRAMDATA"] if is_win else [])
         + (["PROGRAMFILES"] if is_win else [])
         + (["PROGRAMFILES(x86)"] if is_win else [])
-        + ["REQUESTS_CA_BUNDLE", "SSL_CERT_FILE"]
+        + ["PYTHON_GIL", "REQUESTS_CA_BUNDLE", "SSL_CERT_FILE"]
         + (["SYSTEMDRIVE", "SYSTEMROOT", "TEMP"] if is_win else [])
         + (["TERM"] if stdout_is_atty else [])
         + (["TMP", "USERPROFILE"] if is_win else ["TMPDIR"])
