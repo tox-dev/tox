@@ -1,5 +1,5 @@
 requires = ["tox>=4.24.1"]
-env_list = ["fix", "3.13", "3.12", "3.11", "3.10", "3.9", "3.8", "cov", "type", "docs", "pkg_meta"]
+env_list = ["fix", "3.14", "3.13", "3.12", "3.11", "3.10", "3.9", "cov", "type", "docs", "pkg_meta"]
 skip_missing_interpreters = true
 
 [env_run_base]
