@@ -2,12 +2,12 @@ from __future__ import annotations
 
 import sys
 from textwrap import dedent
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Callable
 
 import pytest
 
 if TYPE_CHECKING:
-    from pathlib import Callable, Path
+    from pathlib import Path
 
 
 @pytest.fixture(scope="session")
