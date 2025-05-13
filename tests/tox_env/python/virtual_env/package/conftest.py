@@ -49,7 +49,7 @@ def pkg_with_pdm_backend(
 ) -> Path:
     tmp_path = tmp_path_factory.mktemp("skeleton")
 
-    pyproject_toml = f"""
+    pyproject_toml = """
     [build-system]
     requires = ["pdm-backend"]
     build-backend = "pdm.backend"
