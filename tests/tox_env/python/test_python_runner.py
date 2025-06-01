@@ -261,8 +261,12 @@ def test_dependency_groups_include(tox_project: ToxProjectCreator) -> None:
               "furo>=2024.8.6",
               "sphinx>=8.0.2",
             ]
+            "friendly.Bard" = [
+                "bard-song",
+            ]
             type = [
               {include-group = "test"},
+              {include-group = "FrIeNdLy-._.-bArD"},
               "mypy>=1",
             ]
             """,
@@ -278,7 +282,7 @@ def test_dependency_groups_include(tox_project: ToxProjectCreator) -> None:
         (
             "py",
             "install_dependency-groups",
-            ["python", "-I", "-m", "pip", "install", "furo>=2024.8.6", "mypy>=1", "sphinx>=8.0.2"],
+            ["python", "-I", "-m", "pip", "install", "bard-song", "furo>=2024.8.6", "mypy>=1", "sphinx>=8.0.2"],
         )
     ]
 
@@ -330,18 +334,18 @@ def test_dependency_groups_not_list(tox_project: ToxProjectCreator) -> None:
             "tox.toml": """
             [env_run_base]
             skip_install = true
-            dependency_groups = ["test"]
+            dependency_groups = ["tEst"]
             """,
             "pyproject.toml": """
             [dependency-groups]
-            test = 1
+            teSt = 1
             """,
         },
     )
     result = project.run("r", "-e", "py")
 
     result.assert_failed()
-    assert "py: failed with dependency group 'test' is not a list\n" in result.out
+    assert "py: failed with dependency group 'teSt' is not a list\n" in result.out
 
 
 def test_dependency_groups_bad_requirement(tox_project: ToxProjectCreator) -> None:
@@ -398,12 +402,12 @@ def test_dependency_groups_cyclic(tox_project: ToxProjectCreator) -> None:
             """,
             "pyproject.toml": """
             [dependency-groups]
-            test = [ { include-group = "type" } ]
-            type = [ { include-group = "test" } ]
+            teSt = [ { include-group = "type" } ]
+            tyPe = [ { include-group = "test" } ]
             """,
         },
     )
     result = project.run("r", "-e", "py")
 
     result.assert_failed()
-    assert "py: failed with Cyclic dependency group include: 'test' -> ('test', 'type')\n" in result.out
+    assert "py: failed with Cyclic dependency group include: 'teSt' -> ('teSt', 'tyPe')\n" in result.out
