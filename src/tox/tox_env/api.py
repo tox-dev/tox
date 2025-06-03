@@ -31,23 +31,23 @@ if TYPE_CHECKING:
     from tox.tox_env.installer import Installer
 
 LOGGER = logging.getLogger(__name__)
-SECRET_ENV_VAR_REGEX = re.compile(
-    r"""(?ix)                              # case-insensitive, verbose mode
-    ^\s*                                   # optional leading whitespace
-    (?P<key>                               # capture group: key
-        (?:\w*(_)?)
-        (?:
-            (SECRET|TOKEN|KEY|PASSWORD|PWD|CRED|PRIVATE|AUTH|API)
-        )
-        (?:\w*)                             # allow variable prefixes/suffixes
-    )\s*=\s*                                # equal sign with optional spaces
-    (?P<value>                              # capture group: value
-        (['"])?                             # optional opening quote
-        ([A-Za-z0-9\-_]{12,})               # suspicious value (long, alphanumeric)
-        \1?                                 # optional closing quote matching opening
-    )
-    """
-)
+# Based on original gitleaks rule named generic-api-key
+# See: https://github.com/gitleaks/gitleaks/blob/master/config/gitleaks.toml#L587
+secret_keywords = [
+    "access",
+    "api",
+    "auth",
+    "client",
+    "cred",
+    "key",
+    "passwd",
+    "password",
+    "private",
+    "pwd",
+    "secret",
+    "token",
+]
+SECRET_ENV_VAR_REGEX = re.compile(".*(" + "|".join(secret_keywords) + ").*", re.IGNORECASE)
 
 
 def redact_value(name: str, value: str) -> str:
@@ -485,8 +485,21 @@ class ToxEnv(ABC):
         with log_file.open("wt", encoding="utf-8") as file:
             file.write(f"name: {env_name}\n")
             file.write(f"run_id: {request.run_id}\n")
+            redacted = False
+            msg = ""
             for env_key, env_value in sorted(request.env.items()):
-                file.write(f"env {env_key}: {redact_value(name=env_key, value=env_value)}\n")
+                redacted_value = redact_value(name=env_key, value=env_value)
+                if redacted_value != env_value:
+                    redacted = True
+                msg += f"env {env_key}: {redacted_value}\n"
+            if redacted:
+                msg = (
+                    "notice: Same values of the environment variables with names containing "
+                    + ", ".join(secret_keywords)
+                    + " were redacted with '*' to prevent potential leak of secrets.\n"
+                    + msg
+                )
+            file.write(msg)
             for meta_key, meta_value in status.metadata.items():
                 file.write(f"metadata {meta_key}: {meta_value}\n")
             file.write(f"cwd: {request.cwd}\n")
