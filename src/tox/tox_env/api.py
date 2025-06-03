@@ -31,6 +31,30 @@ if TYPE_CHECKING:
     from tox.tox_env.installer import Installer
 
 LOGGER = logging.getLogger(__name__)
+SECRET_ENV_VAR_REGEX = re.compile(
+    r"""(?ix)                              # case-insensitive, verbose mode
+    ^\s*                                   # optional leading whitespace
+    (?P<key>                               # capture group: key
+        (?:\w*(_)?)
+        (?:
+            (SECRET|TOKEN|KEY|PASSWORD|PWD|CRED|PRIVATE|AUTH|API)
+        )
+        (?:\w*)                             # allow variable prefixes/suffixes
+    )\s*=\s*                                # equal sign with optional spaces
+    (?P<value>                              # capture group: value
+        (['"])?                             # optional opening quote
+        ([A-Za-z0-9\-_]{12,})               # suspicious value (long, alphanumeric)
+        \1?                                 # optional closing quote matching opening
+    )
+    """
+)
+
+
+def redact_value(name: str, value: str) -> str:
+    """Returns a redacted text if the key name looks like a secret."""
+    if SECRET_ENV_VAR_REGEX.match(name):
+        return "*" * len(value)
+    return value
 
 
 class ToxEnvCreateArgs(NamedTuple):
@@ -461,8 +485,8 @@ class ToxEnv(ABC):
         with log_file.open("wt", encoding="utf-8") as file:
             file.write(f"name: {env_name}\n")
             file.write(f"run_id: {request.run_id}\n")
-            for env_key, env_value in request.env.items():
-                file.write(f"env {env_key}: {env_value}\n")
+            for env_key, env_value in sorted(request.env.items()):
+                file.write(f"env {env_key}: {redact_value(name=env_key, value=env_value)}\n")
             for meta_key, meta_value in status.metadata.items():
                 file.write(f"metadata {meta_key}: {meta_value}\n")
             file.write(f"cwd: {request.cwd}\n")

@@ -2,6 +2,10 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+import pytest
+
+from tox.tox_env.api import redact_value
+
 if TYPE_CHECKING:
     from pathlib import Path
 
@@ -32,3 +36,12 @@ def test_setenv_section_substitution(tox_project: ToxProjectCreator) -> None:
     project = tox_project({"tox.ini": ini})
     result = project.run()
     result.assert_success()
+
+
+@pytest.mark.parametrize(
+    ("key", "value", "expected"), [pytest.param("FOO", "bar", "bar"), pytest.param("GITHUB_TOKEN", "foo", "***")]
+)
+def test_redact(key: str, value: str, expected: str) -> None:
+    """Ensures that redact_value works as expected."""
+    result = redact_value(key, value)
+    assert result == expected
