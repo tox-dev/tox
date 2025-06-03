@@ -441,6 +441,15 @@ CLI
   have a stale Python environment; e.g. ``tox run -e py310 -r`` would clean the run environment and recreate it from
   scratch.
 
+Logging
+~~~~~~~
+
+Tox logs its activity inside ``.tox/<env_name>/log`` which can prove to be a good source of information when debugging
+its behavior. It should be noted that some of the environment variables with names containing one of the words
+``access``, ``api``, ``auth``, ``client``, ``cred``, ``key``, ``passwd``, ``password``, ``private``, ``pwd``,
+``secret`` and ``token`` will be logged with their values redacted with ``*`` to prevent accidental secret leaking when
+tox is used in CI/CD environments (as log collection is common).
+
 Config files
 ~~~~~~~~~~~~
 
