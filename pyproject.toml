@@ -83,6 +83,7 @@ dev = [
 test = [
   "build[virtualenv]>=1.2.2.post1",
   "covdefaults>=2.3",
+  "coverage>=7.9.1",
   "detect-test-pollution>=1.2",
   "devpi-process>=1.0.2",
   "diff-cover>=9.2",
