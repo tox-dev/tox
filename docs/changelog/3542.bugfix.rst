@@ -1,2 +1,0 @@
-Improves logging of environment variables by sorting them by key and redacting
-the values for the ones that are likely to contain secrets.

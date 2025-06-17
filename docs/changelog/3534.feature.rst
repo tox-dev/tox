@@ -1,1 +1,0 @@
-Add ``free_threaded`` flag to to ``"python"`` entries in json output of ``--result-json``.

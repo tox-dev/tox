@@ -4,6 +4,19 @@ Release History
 
 .. towncrier release notes start
 
+v4.27.0 (2025-06-17)
+--------------------
+
+Features - 4.27.0
+~~~~~~~~~~~~~~~~~
+- Add ``free_threaded`` flag to to ``"python"`` entries in json output of ``--result-json``. (:issue:`3534`)
+
+Bugfixes - 4.27.0
+~~~~~~~~~~~~~~~~~
+- Fix dependency-group name normalization. (:issue:`3539`)
+- Improves logging of environment variables by sorting them by key and redacting
+  the values for the ones that are likely to contain secrets. (:issue:`3542`)
+
 v4.26.0 (2025-05-13)
 --------------------
 
