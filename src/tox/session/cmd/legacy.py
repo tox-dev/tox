@@ -62,7 +62,7 @@ def tox_add_option(parser: ToxParser) -> None:
     our.add_argument(
         "--pre",
         action="store_true",
-        help="deprecated use PIP_PRE in set_env instead - install pre-releases and development versions of"
+        help="deprecated use pip_pre=true in a testenv instead - install pre-releases and development versions of"
         "dependencies; this will set PIP_PRE=1 environment variable",
     )
     our.add_argument(
