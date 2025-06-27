@@ -382,6 +382,7 @@ you want to do more research, we recommend taking a look at these projects:
 - `Invoke <https://www.pyinvoke.org/>`__ is a general-purpose task execution library, similar to Make. Invoke is far
   more general-purpose than tox but it does not contain the Python testing-specific features that tox specializes in.
 
+.. _auto-provisioning:
 
 Auto-provisioning
 -----------------
