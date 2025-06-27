@@ -46,7 +46,8 @@ For example:
 .. code-block:: ini
 
     [tox]
-    min_version = 4.20
+    requires =
+        tox >= 4.20
     env_list =
         3.13
         3.12
@@ -74,7 +75,8 @@ This configuration file uses:
 .. code-block:: ini
 
     [tox:tox]
-    min_version = 4.0
+    requires =
+        tox >= 4.0
     env_list =
         3.13
         3.12
@@ -98,7 +100,8 @@ instead inside the ``pyproject.toml`` file under the ``tool.tox`` table and ``le
     [tool.tox]
     legacy_tox_ini = """
         [tox]
-        min_version = 4.0
+        requires =
+            tox >= 4.0
         env_list =
             py310
             py39
@@ -203,6 +206,9 @@ The following options are set in the ``[tox]`` section of ``tox.ini`` or the ``[
 .. conf::
    :keys: min_version, minversion
    :default: <current version of tox>
+   :version_deprecated: 4.28.0
+
+   **DEPRECATED** Prefer requiring a minimum tox version via :ref:`requires`.
 
    A string to define the minimal tox version required to run. If the host's tox version is less than this, it will
    automatically create a provisioned tox environment that satisfies this requirement. See :ref:`provision_tox_env`

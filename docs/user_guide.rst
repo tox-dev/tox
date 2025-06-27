@@ -382,10 +382,12 @@ you want to do more research, we recommend taking a look at these projects:
 - `Invoke <https://www.pyinvoke.org/>`__ is a general-purpose task execution library, similar to Make. Invoke is far
   more general-purpose than tox but it does not contain the Python testing-specific features that tox specializes in.
 
+.. _auto-provisioning:
 
 Auto-provisioning
 -----------------
-In case the installed tox version does not satisfy either the :ref:`min_version` or the :ref:`requires`, tox will automatically
+
+In case the installed tox version does not satisfy either the :ref:`requires` or the :ref:`min_version`, tox will automatically
 create a virtual environment under :ref:`provision_tox_env` name that satisfies those constraints and delegate all
 calls to this meta environment. This should allow satisfying constraints on your tox environment automatically,
 given you have at least version ``3.8.0`` of tox.
@@ -396,17 +398,16 @@ For example given:
 
    .. code-block:: toml
 
-        min_version = "4"
-        requires = ["tox-uv>=1"]
+        requires = ["tox>=4", "tox-uv>=1"]
 
 .. tab:: INI
 
    .. code-block:: ini
 
         [tox]
-        min_version = 4
-        requires = tox-uv>=1
-
+        requires =
+            tox>=4
+            tox-uv>=1
 
 if the user runs it with tox ``3.8`` or later the installed tox application will automatically ensure that both the minimum version and
 requires constraints are satisfied, by creating a virtual environment under ``.tox`` folder, and then installing into it
