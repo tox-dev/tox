@@ -89,28 +89,29 @@ class RunToxEnv(ToxEnv, ABC):
         self._call_pkg_envs("interrupt")
 
     def get_package_env_types(self) -> tuple[str, str] | None:
-        if self._register_package_conf():
-            has_external_pkg = self.conf["package"] == "external"
-            self.core.add_config(
-                keys=["package_env", "isolated_build_env"],
-                of_type=str,
-                default=self._default_package_env,
-                desc="tox environment used to package",
-            )
-            self.conf.add_config(
-                keys=["package_env"],
-                of_type=str,
-                default=f"{self.core['package_env']}{'_external' if has_external_pkg else ''}",
-                desc="tox environment used to package",
-            )
-            is_external = self.conf["package"] == "external"
-            self.conf.add_constant(
-                keys=["package_tox_env_type"],
-                desc="tox package type used to generate the package",
-                value=self._external_pkg_tox_env_type if is_external else self._package_tox_env_type,
-            )
-            return self.conf["package_env"], self.conf["package_tox_env_type"]
-        return None
+        if not self._register_package_conf():
+            return None
+
+        has_external_pkg = self.conf["package"] == "external"
+        self.core.add_config(
+            keys=["package_env", "isolated_build_env"],
+            of_type=str,
+            default=self._default_package_env,
+            desc="tox environment used to package",
+        )
+        self.conf.add_config(
+            keys=["package_env"],
+            of_type=str,
+            default=f"{self.core['package_env']}{'_external' if has_external_pkg else ''}",
+            desc="tox environment used to package",
+        )
+        is_external = self.conf["package"] == "external"
+        self.conf.add_constant(
+            keys=["package_tox_env_type"],
+            desc="tox package type used to generate the package",
+            value=self._external_pkg_tox_env_type if is_external else self._package_tox_env_type,
+        )
+        return self.conf["package_env"], self.conf["package_tox_env_type"]
 
     def _call_pkg_envs(self, method_name: str, *args: Any) -> None:
         for package_env in self.package_envs:
