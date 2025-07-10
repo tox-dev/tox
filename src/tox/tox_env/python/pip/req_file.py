@@ -56,7 +56,7 @@ class PythonDeps(RequirementsFile):
     def _pre_process(self, content: str) -> ReqFileLines:
         for at, line in super()._pre_process(content):
             if line.startswith("-r") or (line.startswith("-c") and line[2].isalpha()):
-                found_line = f"{line[0:2]} {line[2:]}"
+                found_line = f"{line[0:2]} {line[2:]}"  # normalize
             else:
                 found_line = line
             yield at, found_line
@@ -64,18 +64,18 @@ class PythonDeps(RequirementsFile):
     def lines(self) -> list[str]:
         return self._raw.splitlines()
 
-    @staticmethod
-    def _normalize_raw(raw: str) -> str:
+    @classmethod
+    def _normalize_raw(cls, raw: str) -> str:
         # a line ending in an unescaped \ is treated as a line continuation and the newline following it is effectively
         # ignored
         raw = "".join(raw.replace("\r", "").split("\\\n"))
         # for tox<4 supporting requirement/constraint files via -rreq.txt/-creq.txt
-        lines: list[str] = [PythonDeps._normalize_line(line) for line in raw.splitlines()]
+        lines: list[str] = [cls._normalize_line(line) for line in raw.splitlines()]
         adjusted = "\n".join(lines)
         return f"{adjusted}\n" if raw.endswith("\\\n") else adjusted  # preserve trailing newline if input has it
 
-    @staticmethod
-    def _normalize_line(line: str) -> str:
+    @classmethod
+    def _normalize_line(cls, line: str) -> str:
         arg_match = next(
             (
                 arg
@@ -127,6 +127,113 @@ class PythonDeps(RequirementsFile):
 
     @classmethod
     def factory(cls, root: Path, raw: object) -> PythonDeps:
+        if not (
+            isinstance(raw, str)
+            or (
+                isinstance(raw, list)
+                and (all(isinstance(i, str) for i in raw) or all(isinstance(i, Requirement) for i in raw))
+            )
+        ):
+            raise TypeError(raw)
+        return cls(raw, root)
+
+
+class PythonConstraints(RequirementsFile):
+    def __init__(self, raw: str | list[str] | list[Requirement], root: Path) -> None:
+        super().__init__(root / "tox.ini", constraint=True)
+        got = raw if isinstance(raw, str) else "\n".join(str(i) for i in raw)
+        self._raw = self._normalize_raw(got)
+        self._unroll: tuple[list[str], list[str]] | None = None
+        self._req_parser_: RequirementsFile | None = None
+
+    @property
+    def _req_parser(self) -> RequirementsFile:
+        if self._req_parser_ is None:
+            self._req_parser_ = RequirementsFile(path=self._path, constraint=True)
+        return self._req_parser_
+
+    def _get_file_content(self, url: str) -> str:
+        if self._is_url_self(url):
+            return self._raw
+        return super()._get_file_content(url)
+
+    def _is_url_self(self, url: str) -> bool:
+        return url == str(self._path)
+
+    def _pre_process(self, content: str) -> ReqFileLines:
+        for at, line in super()._pre_process(content):
+            if line.startswith("-r") or (line.startswith("-c") and line[2].isalpha()):
+                found_line = f"{line[0:2]} {line[2:]}"  # normalize
+            else:
+                found_line = line
+            yield at, found_line
+
+    def lines(self) -> list[str]:
+        return self._raw.splitlines()
+
+    @classmethod
+    def _normalize_raw(cls, raw: str) -> str:
+        # a line ending in an unescaped \ is treated as a line continuation and the newline following it is effectively
+        # ignored
+        raw = "".join(raw.replace("\r", "").split("\\\n"))
+        # for tox<4 supporting requirement/constraint files via -rreq.txt/-creq.txt
+        lines: list[str] = [cls._normalize_line(line) for line in raw.splitlines()]
+
+        if any(line.startswith("-") for line in lines):
+            msg = "only constraints files or URLs can be provided"
+            raise ValueError(msg)
+
+        adjusted = "\n".join([f"-c {line}" for line in lines])
+        return f"{adjusted}\n" if raw.endswith("\\\n") else adjusted  # preserve trailing newline if input has it
+
+    @classmethod
+    def _normalize_line(cls, line: str) -> str:
+        arg_match = next(
+            (
+                arg
+                for arg in ONE_ARG
+                if line.startswith(arg)
+                and len(line) > len(arg)
+                and not (line[len(arg)].isspace() or line[len(arg)] == "=")
+            ),
+            None,
+        )
+        if arg_match is not None:
+            values = line[len(arg_match) :]
+            line = f"{arg_match} {values}"
+        # escape spaces
+        escape_match = next((e for e in ONE_ARG_ESCAPE if line.startswith(e) and line[len(e)].isspace()), None)
+        if escape_match is not None:
+            # escape not already escaped spaces
+            escaped = re.sub(r"(?<!\\)(\s)", r"\\\1", line[len(escape_match) + 1 :])
+            line = f"{line[: len(escape_match)]} {escaped}"
+        return line
+
+    def _parse_requirements(self, opt: Namespace, recurse: bool) -> list[ParsedRequirement]:  # noqa: FBT001
+        # check for any invalid options in the deps list
+        # (requirements recursively included from other files are not checked)
+        requirements = super()._parse_requirements(opt, recurse)
+        for req in requirements:
+            if req.from_file != str(self.path):
+                continue
+            if req.options:
+                msg = f"Cannot provide options in constraints list, only paths or URL can be provided. ({req})"
+                raise ValueError(msg)
+        return requirements
+
+    def unroll(self) -> tuple[list[str], list[str]]:
+        if self._unroll is None:
+            opts_dict = vars(self.options)
+            if not self.requirements and opts_dict:
+                msg = "no dependencies"
+                raise ValueError(msg)
+            result_opts: list[str] = [f"{key}={value}" for key, value in opts_dict.items()]
+            result_req = [str(req) for req in self.requirements]
+            self._unroll = result_opts, result_req
+        return self._unroll
+
+    @classmethod
+    def factory(cls, root: Path, raw: object) -> PythonConstraints:
         if not (
             isinstance(raw, str)
             or (

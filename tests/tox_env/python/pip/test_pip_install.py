@@ -56,6 +56,30 @@ def test_pip_install_flags_only_error(tox_project: ToxProjectCreator) -> None:
     assert "no dependencies for tox env py within deps" in result.out
 
 
+@pytest.mark.parametrize(
+    ("content", "error"),
+    [
+        pytest.param(
+            "-r requirements.txt",
+            "only constraints files or URLs can be provided",
+            id="requirements file are not constraints files",
+        ),
+        pytest.param(
+            "-c constraints.txt",
+            "only constraints files or URLs can be provided",
+            id="constraints flag is unnecessary",
+        ),
+        pytest.param("tox==4.23.0", "Could not open requirements file", id="constraints must be specified in a file"),
+    ],
+)
+def test_pip_install_invalid_constraints_error(tox_project: ToxProjectCreator, content: str, error: str) -> None:
+    proj = tox_project({"tox.ini": f"[testenv:py]\nconstraints={content}\nskip_install=true"})
+
+    result = proj.run("r")
+    result.assert_failed()
+    assert error in result.out
+
+
 def test_pip_install_new_flag_recreates(tox_project: ToxProjectCreator) -> None:
     proj = tox_project({"tox.ini": "[testenv:py]\ndeps=a\nskip_install=true"})
     proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
@@ -231,8 +255,17 @@ def test_pip_install_requirements_file_deps(tox_project: ToxProjectCreator) -> N
     assert execute_calls.call_args[0][3].cmd == ["python", "-I", "-m", "pip", "install", "b", "-r", "r.txt"]
 
 
-def test_pip_install_constraint_file_create_change(tox_project: ToxProjectCreator) -> None:
-    proj = tox_project({"tox.ini": "[testenv]\ndeps=-c c.txt\n a\nskip_install=true", "c.txt": "b"})
+@pytest.fixture(params=[True, False])
+def use_constraints_opt(request: SubRequest) -> bool:
+    return bool(request.param)
+
+
+def test_pip_install_constraint_file_create_change(tox_project: ToxProjectCreator, use_constraints_opt: bool) -> None:
+    if use_constraints_opt:
+        toxini = "[testenv]\ndeps=a\nconstraints=c.txt\nskip_install=true"
+    else:
+        toxini = "[testenv]\ndeps=-c c.txt\n a\nskip_install=true"
+    proj = tox_project({"tox.ini": toxini, "c.txt": "b"})
     execute_calls = proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
     result = proj.run("r")
     result.assert_success()
@@ -240,7 +273,11 @@ def test_pip_install_constraint_file_create_change(tox_project: ToxProjectCreato
     assert execute_calls.call_args[0][3].cmd == ["python", "-I", "-m", "pip", "install", "a", "-c", "c.txt"]
 
     # a new dependency triggers an install
-    (proj.path / "tox.ini").write_text("[testenv]\ndeps=-c c.txt\n a\n d\nskip_install=true")
+    if use_constraints_opt:
+        toxini = "[testenv]\ndeps=a\n d\nconstraints=c.txt\nskip_install=true"
+    else:
+        toxini = "[testenv]\ndeps=-c c.txt\n a\n d\nskip_install=true"
+    (proj.path / "tox.ini").write_text(toxini)
     execute_calls.reset_mock()
     result_second = proj.run("r")
     result_second.assert_success()
@@ -257,7 +294,7 @@ def test_pip_install_constraint_file_create_change(tox_project: ToxProjectCreato
     assert execute_calls.call_args[0][3].cmd == ["python", "-I", "-m", "pip", "install", "a", "d", "-c", "c.txt"]
 
 
-def test_pip_install_constraint_file_new(tox_project: ToxProjectCreator) -> None:
+def test_pip_install_constraint_file_new(tox_project: ToxProjectCreator, use_constraints_opt: bool) -> None:
     proj = tox_project({"tox.ini": "[testenv]\ndeps=a\nskip_install=true"})
     execute_calls = proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
     result = proj.run("r")
@@ -265,8 +302,12 @@ def test_pip_install_constraint_file_new(tox_project: ToxProjectCreator) -> None
     assert execute_calls.call_count == 1
     assert execute_calls.call_args[0][3].cmd == ["python", "-I", "-m", "pip", "install", "a"]
 
+    if use_constraints_opt:
+        toxini = "[testenv]\ndeps=a\nconstraints=c.txt\nskip_install=true"
+    else:
+        toxini = "[testenv]\ndeps=a\n -c c.txt\nskip_install=true"
     (proj.path / "c.txt").write_text("a")
-    (proj.path / "tox.ini").write_text("[testenv]\ndeps=a\n -c c.txt\nskip_install=true")
+    (proj.path / "tox.ini").write_text(toxini)
     execute_calls.reset_mock()
     result_second = proj.run("r")
     result_second.assert_success()

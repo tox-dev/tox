@@ -4,8 +4,9 @@ import logging
 import operator
 from abc import ABC, abstractmethod
 from collections import defaultdict
+from functools import partial
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Callable, Sequence
+from typing import TYPE_CHECKING, Any, Callable, Sequence, cast
 
 from packaging.requirements import Requirement
 
@@ -15,7 +16,7 @@ from tox.tox_env.errors import Fail, Recreate
 from tox.tox_env.installer import Installer
 from tox.tox_env.python.api import Python
 from tox.tox_env.python.package import EditableLegacyPackage, EditablePackage, SdistPackage, WheelPackage
-from tox.tox_env.python.pip.req_file import PythonDeps
+from tox.tox_env.python.pip.req_file import PythonConstraints, PythonDeps
 
 if TYPE_CHECKING:
     from tox.config.main import Config
@@ -52,6 +53,7 @@ class Pip(PythonInstallerListDependencies):
 
     def _register_config(self) -> None:
         super()._register_config()
+        root = self._env.core["toxinidir"]
         self._env.conf.add_config(
             keys=["pip_pre"],
             of_type=bool,
@@ -64,6 +66,13 @@ class Pip(PythonInstallerListDependencies):
             default=self.default_install_command,
             post_process=self.post_process_install_command,
             desc="command used to install packages",
+        )
+        self._env.conf.add_config(
+            keys=["constraints"],
+            of_type=PythonConstraints,
+            factory=partial(PythonConstraints.factory, root),
+            default=PythonConstraints("", root),
+            desc="constraints to apply to installed python dependencies",
         )
         self._env.conf.add_config(
             keys=["constrain_package_deps"],
@@ -110,6 +119,10 @@ class Pip(PythonInstallerListDependencies):
             logging.warning("pip cannot install %r", arguments)
             raise SystemExit(1)
 
+    @property
+    def constraints(self) -> PythonConstraints:
+        return cast("PythonConstraints", self._env.conf["constraints"])
+
     def constraints_file(self) -> Path:
         return Path(self._env.env_dir) / "constraints.txt"
 
@@ -121,16 +134,25 @@ class Pip(PythonInstallerListDependencies):
     def use_frozen_constraints(self) -> bool:
         return bool(self._env.conf["use_frozen_constraints"])
 
-    def _install_requirement_file(self, arguments: PythonDeps, section: str, of_type: str) -> None:  # noqa: C901
+    def _install_requirement_file(self, arguments: PythonDeps, section: str, of_type: str) -> None:
+        new_requirements: list[str] = []
+        new_constraints: list[str] = []
+
         try:
             new_options, new_reqs = arguments.unroll()
         except ValueError as exception:
             msg = f"{exception} for tox env py within deps"
             raise Fail(msg) from exception
-        new_requirements: list[str] = []
-        new_constraints: list[str] = []
         for req in new_reqs:
             (new_constraints if req.startswith("-c ") else new_requirements).append(req)
+
+        try:
+            _, new_reqs = self.constraints.unroll()
+        except ValueError as exception:
+            msg = f"{exception} for tox env py within constraints"
+            raise Fail(msg) from exception
+        new_constraints.extend(new_reqs)
+
         constraint_options = {
             "constrain_package_deps": self.constrain_package_deps,
             "use_frozen_constraints": self.use_frozen_constraints,
@@ -159,17 +181,10 @@ class Pip(PythonInstallerListDependencies):
                         raise Recreate(msg)
                 args = arguments.as_root_args
                 if args:  # pragma: no branch
+                    args.extend(self.constraints.as_root_args)
                     self._execute_installer(args, of_type)
                     if self.constrain_package_deps and not self.use_frozen_constraints:
-                        # when we drop Python 3.8 we can use the builtin `.removeprefix`
-                        def remove_prefix(text: str, prefix: str) -> str:
-                            if text.startswith(prefix):
-                                return text[len(prefix) :]
-                            return text
-
-                        combined_constraints = new_requirements + [
-                            remove_prefix(text=c, prefix="-c ") for c in new_constraints
-                        ]
+                        combined_constraints = new_requirements + [c.removeprefix("-c ") for c in new_constraints]
                         self.constraints_file().write_text("\n".join(combined_constraints))
 
     @staticmethod
@@ -215,13 +230,18 @@ class Pip(PythonInstallerListDependencies):
                     raise Recreate(msg)  # pragma: no branch
                 new_deps = sorted(set(groups["req"]) - set(old or []))
                 if new_deps:  # pragma: no branch
+                    new_deps.extend(self.constraints.as_root_args)
                     self._execute_installer(new_deps, req_of_type)
         install_args = ["--force-reinstall", "--no-deps"]
         if groups["pkg"]:
+            # we intentionally ignore constraints when installing the package itself
+            # https://github.com/tox-dev/tox/issues/3550
             self._execute_installer(install_args + groups["pkg"], of_type)
         if groups["dev_pkg"]:
             for entry in groups["dev_pkg"]:
                 install_args.extend(("-e", str(entry)))
+            # we intentionally ignore constraints when installing the package itself
+            # https://github.com/tox-dev/tox/issues/3550
             self._execute_installer(install_args, of_type)
 
     def _execute_installer(self, deps: Sequence[Any], of_type: str) -> None:

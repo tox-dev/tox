@@ -289,7 +289,14 @@
         },
         "deps": {
           "type": "string",
-          "description": "Name of the python dependencies as specified by PEP-440"
+          "description": "python dependencies with optional version specifiers, as specified by PEP-440"
+        },
+        "constraints": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "constraints to apply to installed python dependencies"
         },
         "dependency_groups": {
           "type": "array",
