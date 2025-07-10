@@ -51,8 +51,14 @@ def test_get_package_deps_different_extras(pkg_with_extras_project: Path, tox_pr
         if i[0][3].run_id.startswith("install_package_deps")
     }
     assert installs == {
-        "a": ["colorama>=0.4.3", "platformdirs>=2.1", "setuptools", "sphinx-rtd-theme<1,>=0.4.3", "sphinx>=3", "wheel"],
-        "b": ["black>=3", "colorama>=0.4.3", "flake8", "platformdirs>=2.1"],
+        "a": [
+            "colorama>=0.4.6",
+            "platformdirs>=4.3.8",
+            "setuptools",
+            "sphinx-rtd-theme<1,>=0.4.3",
+            "sphinx>=3",
+        ],
+        "b": ["black>=3", "colorama>=0.4.6", "flake8", "platformdirs>=4.3.8"],
     }
 
 

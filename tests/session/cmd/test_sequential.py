@@ -71,7 +71,7 @@ def test_result_json_sequential(
             "setup.py": "from setuptools import setup\nsetup(name='a', version='1.0', py_modules=['run'],"
             "install_requires=['setuptools>44'])",
             "run.py": "print('run')",
-            "pyproject.toml": '[build-system]\nrequires=["setuptools","wheel"]\nbuild-backend="setuptools.build_meta"',
+            "pyproject.toml": '[build-system]\nrequires=["setuptools"]\nbuild-backend="setuptools.build_meta"',
         },
     )
     log = project.path / "log.json"
@@ -104,7 +104,7 @@ def test_result_json_sequential(
     packaging_test = get_cmd_exit_run_id(log_report, ".pkg", "test")
     assert packaging_test == [(None, "build_wheel")]
     packaging_installed = log_report["testenvs"][".pkg"].pop("installed_packages")
-    assert {i[: i.find("==")] for i in packaging_installed} == {"pip", "setuptools", "wheel"}
+    assert {i[: i.find("==")] for i in packaging_installed} == {"pip", "setuptools"}
 
     result_py = log_report["testenvs"]["py"].pop("result")
     assert result_py.pop("duration") > 0
@@ -153,8 +153,9 @@ def test_rerun_sequential_wheel(tox_project: ToxProjectCreator, demo_pkg_inline:
     proj = tox_project(
         {"tox.ini": "[testenv]\npackage=wheel\ncommands=python -c 'from demo_pkg_inline import do; do()'"},
     )
-    result_first = proj.run("--root", str(demo_pkg_inline))
+    result_first = proj.run("--root", str(demo_pkg_inline), "-vv")
     result_first.assert_success()
+
     result_rerun = proj.run("--root", str(demo_pkg_inline))
     result_rerun.assert_success()
 

@@ -107,7 +107,7 @@ class VenvCmdBuilder(PythonPackageToxEnv, ABC):
             if not work_dir.exists():  # pragma: no branch
                 work_dir.mkdir()
             with tarfile.open(str(path), "r:gz") as tar:
-                tar.extractall(path=str(work_dir))  # noqa: S202
+                tar.extractall(path=str(work_dir), filter=tarfile.data_filter)  # noqa: S202
             # the register run env is guaranteed to be called before this
             assert self._sdist_meta_tox_env is not None  # noqa: S101
             with self._sdist_meta_tox_env.display_context(self._has_display_suspended):

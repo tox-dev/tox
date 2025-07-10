@@ -27,6 +27,13 @@ installed. For example:
 
 For more information, refer to :ref:`the user guide <auto-provisioning>`.
 
+Plugins can be disabled via the ``TOX_DISABLED_EXTERNAL_PLUGINS`` environment variable. This variable can be set to a
+comma separated list of plugin names, e.g.:
+
+```bash
+env TOX_DISABLED_EXTERNAL_PLUGINS=tox-uv,tox-extra tox --version
+```
+
 Developing your own plugin
 --------------------------
 

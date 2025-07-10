@@ -20,8 +20,8 @@ def pkg_with_extras_project(tmp_path_factory: pytest.TempPathFactory) -> Path:
     [options]
     packages = find:
     install_requires =
-        platformdirs>=2.1
-        colorama>=0.4.3
+        platformdirs>=4.3.8
+        colorama>=0.4.6
 
     [options.extras_require]
     testing =
@@ -36,7 +36,8 @@ def pkg_with_extras_project(tmp_path_factory: pytest.TempPathFactory) -> Path:
     """
     tmp_path = tmp_path_factory.mktemp("prj")
     (tmp_path / "setup.cfg").write_text(dedent(setup_cfg))
+    (tmp_path / "README").write_text("")
     (tmp_path / "setup.py").write_text("from setuptools import setup; setup()")
-    toml = '[build-system]\nrequires=["setuptools", "wheel"]\nbuild-backend = "setuptools.build_meta"'
+    toml = '[build-system]\nrequires=["setuptools"]\nbuild-backend = "setuptools.build_meta"'
     (tmp_path / "pyproject.toml").write_text(toml)
     return tmp_path

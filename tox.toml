@@ -1,13 +1,13 @@
-requires = ["tox>=4.24.1"]
-env_list = ["fix", "3.14t", "3.14", "3.13", "3.12", "3.11", "3.10", "3.9", "cov", "type", "docs", "pkg_meta"]
+requires = [ "tox>=4.27" ]
+env_list = [ "fix", "3.14t", "3.14", "3.13", "3.12", "3.11", "3.10", "3.9", "cov", "type", "docs", "pkg_meta" ]
 skip_missing_interpreters = true
 
 [env_run_base]
 description = "run the tests with pytest under {env_name}"
 package = "wheel"
 wheel_build_env = ".pkg"
-dependency_groups = ["test"]
-pass_env = ["PYTEST_*", "SSL_CERT_FILE"]
+dependency_groups = [ "test" ]
+pass_env = [ "PYTEST_*", "SSL_CERT_FILE" ]
 set_env.COVERAGE_FILE = { replace = "env", name = "COVERAGE_FILE", default = "{work_dir}{/}.coverage.{env_name}" }
 set_env.COVERAGE_FILECOVERAGE_PROCESS_START = "{tox_root}{/}pyproject.toml"
 commands = [
@@ -50,18 +50,25 @@ commands = [
 [env.fix]
 description = "format the code base to adhere to our styles, and complain about what we cannot do automatically"
 skip_install = true
-dependency_groups = ["fix"]
-pass_env = [{ replace = "ref", of = ["env_run_base", "pass_env"], extend = true }, "PROGRAMDATA", "DISABLE_PRE_COMMIT_UV_PATCH"]
-commands = [["pre-commit", "run", "--all-files", "--show-diff-on-failure", { replace = "posargs", extend = true }]]
+dependency_groups = [ "fix" ]
+pass_env = [
+  { replace = "ref", of = [
+    "env_run_base",
+    "pass_env",
+  ], extend = true },
+  "PROGRAMDATA",
+  "DISABLE_PRE_COMMIT_UV_PATCH",
+]
+commands = [ [ "pre-commit", "run", "--all-files", "--show-diff-on-failure", { replace = "posargs", extend = true } ] ]
 
 [env.type]
 description = "run type check on code base"
-dependency_groups = ["type"]
-commands = [["mypy", "src{/}tox"], ["mypy", "tests"]]
+dependency_groups = [ "type" ]
+commands = [ [ "mypy", "src{/}tox" ], [ "mypy", "tests" ] ]
 
 [env.docs]
 description = "build documentation"
-dependency_groups = ["docs"]
+dependency_groups = [ "docs" ]
 commands = [
   [
     "sphinx-build",
@@ -72,7 +79,7 @@ commands = [
     "--color",
     "-b",
     "html",
-    { replace = "posargs", default = [], extend = true },
+    { replace = "posargs", default = [  ], extend = true },
     "-W",
   ],
   [
@@ -85,7 +92,7 @@ commands = [
 [env.pkg_meta]
 description = "check that the long description is valid"
 skip_install = true
-dependency_groups = ["pkg_meta"]
+dependency_groups = [ "pkg_meta" ]
 commands = [
   [
     "uv",
@@ -111,12 +118,12 @@ commands = [
 [env.release]
 description = "do a release, required posargs of the version number"
 skip_install = true
-dependency_groups = ["release"]
-commands = [["python", "{tox_root}/tasks/release.py", "--version", "{posargs}"]]
+dependency_groups = [ "release" ]
+commands = [ [ "python", "{tox_root}/tasks/release.py", "--version", "{posargs}" ] ]
 
 [env.dev]
 description = "dev environment with all deps at {envdir}"
 package = "editable"
-dependency_groups = ["dev"]
-commands = [["python", "-m", "pip", "list", "--format=columns"], ["python", "-c", 'print(r"{env_python}")']]
+dependency_groups = [ "dev" ]
+commands = [ [ "python", "-m", "pip", "list", "--format=columns" ], [ "python", "-c", 'print(r"{env_python}")' ] ]
 uv_seed = true

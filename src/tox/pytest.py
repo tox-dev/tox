@@ -82,7 +82,10 @@ def _disable_root_tox_py(request: SubRequest, mocker: MockerFixture) -> Iterator
 @contextmanager
 def check_os_environ() -> Iterator[None]:
     old = os.environ.copy()
-    to_clean = {k: os.environ.pop(k, None) for k in (ENV_VAR_KEY, "TOX_WORK_DIR", "PYTHONPATH", "COV_CORE_CONTEXT")}
+    to_clean = {
+        k: os.environ.pop(k, None)
+        for k in (ENV_VAR_KEY, "TOX_WORK_DIR", "PYTHONPATH", "COV_CORE_CONTEXT", "TOX_DISABLED_EXTERNAL_PLUGINS")
+    }
 
     yield
 
@@ -93,6 +96,7 @@ def check_os_environ() -> Iterator[None]:
     new = os.environ
     extra = {k: new[k] for k in set(new) - set(old)}
     extra.pop("PLAT", None)
+    extra.pop("TOX_DISABLED_EXTERNAL_PLUGINS", None)
     miss = {k: old[k] for k in set(old) - set(new)}
     diff = {
         f"{k} = {old[k]} vs {new[k]}" for k in set(old) & set(new) if old[k] != new[k] and not k.startswith("PYTEST_")

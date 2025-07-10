@@ -27,7 +27,7 @@ def test_tox_install_pkg_wheel(tox_project: ToxProjectCreator, pkg_with_extras_p
     result = proj.run("r", "-e", "py", "--installpkg", str(pkg_with_extras_project_wheel))
     result.assert_success()
     calls = [(i[0][0].conf.name, i[0][3].run_id, i[0][3].cmd[5:]) for i in execute_calls.call_args_list]
-    deps = ["black>=3", "colorama>=0.4.3", "flake8", "platformdirs>=2.1", "sphinx-rtd-theme<1,>=0.4.3", "sphinx>=3"]
+    deps = ["black>=3", "colorama>=0.4.6", "flake8", "platformdirs>=4.3.8", "sphinx-rtd-theme<1,>=0.4.3", "sphinx>=3"]
     expected = [
         ("py", "install_package_deps", deps),
         ("py", "install_package", ["--force-reinstall", "--no-deps", str(pkg_with_extras_project_wheel)]),
@@ -61,9 +61,9 @@ def test_tox_install_pkg_sdist(tox_project: ToxProjectCreator, pkg_with_extras_p
     result = proj.run("r", "-e", "py", "--installpkg", str(pkg_with_extras_project_sdist))
     result.assert_success()
     calls = [(i[0][0].conf.name, i[0][3].run_id, i[0][3].cmd[5:]) for i in execute_calls.call_args_list]
-    deps = ["black>=3", "colorama>=0.4.3", "flake8", "platformdirs>=2.1", "sphinx-rtd-theme<1,>=0.4.3", "sphinx>=3"]
+    deps = ["black>=3", "colorama>=0.4.6", "flake8", "platformdirs>=4.3.8", "sphinx-rtd-theme<1,>=0.4.3", "sphinx>=3"]
     assert calls == [
-        (".pkg_external_sdist_meta", "install_requires", ["setuptools", "wheel"]),
+        (".pkg_external_sdist_meta", "install_requires", ["setuptools"]),
         (".pkg_external_sdist_meta", "_optional_hooks", []),
         (".pkg_external_sdist_meta", "get_requires_for_build_sdist", []),
         (".pkg_external_sdist_meta", "get_requires_for_build_wheel", []),  # required before prepare_metadata*
@@ -86,7 +86,9 @@ def test_install_pkg_via(tox_project: ToxProjectCreator, mode: str, pkg_with_ext
 
 
 @pytest.mark.usefixtures("enable_pip_pypi_access")
-def test_build_wheel_external(tox_project: ToxProjectCreator, demo_pkg_inline: Path) -> None:
+def test_build_wheel_external(
+    tox_project: ToxProjectCreator, demo_pkg_inline: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     ini = """
     [testenv]
     package = external
@@ -101,6 +103,9 @@ def test_build_wheel_external(tox_project: ToxProjectCreator, demo_pkg_inline: P
         pyproject-build -w . -o {envtmpdir}{/}dist
     """
     project = tox_project({"tox.ini": ini})
+    monkeypatch.delenv("PIP_EXTRA_INDEX_URL", raising=False)
+    monkeypatch.delenv("PIP_INDEX_URL", raising=False)
+
     result = project.run("r", "--root", str(demo_pkg_inline), "--workdir", str(project.path))
 
     result.assert_success()
