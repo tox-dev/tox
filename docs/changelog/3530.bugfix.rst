@@ -1,0 +1,3 @@
+Prevent tox from hanging upon exit due to orphaned build threads and
+subprocesses when the ``--installpkg`` option is used with *sdist*.
+- by :user:`vytas7`
