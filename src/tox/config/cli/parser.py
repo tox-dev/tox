@@ -263,7 +263,7 @@ class ToxParser(ArgumentParserWithEnvAndConfig):
 
             def add_mutually_exclusive_group(**e_kwargs: Any) -> Any:
                 def add_argument(*a_args: str, of_type: type[Any] | None = None, **a_kwargs: Any) -> Action:
-                    res_args: Action = prev_add_arg(*a_args, **a_kwargs)  # type: ignore[has-type]
+                    res_args: Action = prev_add_arg(*a_args, **a_kwargs)
                     arguments.append((a_args, of_type, a_kwargs))
                     return res_args
 

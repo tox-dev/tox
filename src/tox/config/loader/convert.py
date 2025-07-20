@@ -47,7 +47,7 @@ class Convert(ABC, Generic[T]):
             return list(self.to_list(raw, of_type=of_type))  # type: ignore[return-value]
         if isinstance(raw, of_type):  # already target type no need to transform it
             # do it this late to allow normalization - e.g. string strip
-            return raw  # type: ignore[no-any-return]
+            return raw
         if factory:
             return factory(raw)
         return of_type(raw)  # type: ignore[no-any-return]
