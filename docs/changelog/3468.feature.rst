@@ -1,1 +1,0 @@
-Allow disabling tox plugins via the ``TOX_DISABLED_EXTERNAL_PLUGINS`` environment variable - by :user:`gaborbernat`.

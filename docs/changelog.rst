@@ -4,6 +4,18 @@ Release History
 
 .. towncrier release notes start
 
+v4.28.0 (2025-07-20)
+--------------------
+
+Features - 4.28.0
+~~~~~~~~~~~~~~~~~
+- Added ``constraints`` to allow specifying constraints files for all dependencies. (:issue:`3350`)
+- Allow disabling tox plugins via the ``TOX_DISABLED_EXTERNAL_PLUGINS`` environment variable - by :user:`gaborbernat`. (:issue:`3468`)
+
+Improved Documentation - 4.28.0
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+- The ``min_version``/``minversion`` config option is deprecated in favor of the ``requires`` option. (:issue:`3553`)
+
 v4.27.0 (2025-06-17)
 --------------------
 
