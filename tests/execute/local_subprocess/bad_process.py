@@ -32,7 +32,7 @@ signal.signal(signal.SIGTERM, handler)
 try:
     start_file = Path(sys.argv[1])
     _p(f"create {start_file}")
-    start_file.write_text("")
+    start_file.write_text("", encoding="utf-8")
     _p(f"created {start_file}")
     while True:
         time.sleep(0.01)

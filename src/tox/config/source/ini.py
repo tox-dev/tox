@@ -32,7 +32,7 @@ class IniSource(Source):
         if content is None:
             if not path.exists():
                 raise ValueError
-            content = path.read_text()
+            content = path.read_text(encoding="utf-8")
         self._parser.read_string(content, str(path))
         self._section_mapping: defaultdict[str, list[str]] = defaultdict(list)
 
