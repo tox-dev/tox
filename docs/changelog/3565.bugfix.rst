@@ -1,0 +1,8 @@
+Use `tarfile.data_filter <https://docs.python.org/3/library/tarfile.html#tarfile.data_filter>`_ with ``extractall``
+only on supported Python versions:
+
+- ``>= 3.11.4``
+- ``>= 3.10.12`` and ``< 3.11``
+- ``>= 3.9.17`` and ``< 3.10``
+
+by :user:`gaborbernat`.
