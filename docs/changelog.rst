@@ -4,6 +4,20 @@ Release History
 
 .. towncrier release notes start
 
+v4.28.1 (2025-07-22)
+--------------------
+
+Bugfixes - 4.28.1
+~~~~~~~~~~~~~~~~~
+- Use `tarfile.data_filter <https://docs.python.org/3/library/tarfile.html#tarfile.data_filter>`_ with ``extractall``
+  only on supported Python versions:
+
+  - ``>= 3.11.4``
+  - ``>= 3.10.12`` and ``< 3.11``
+  - ``>= 3.9.17`` and ``< 3.10``
+
+  by :user:`gaborbernat`. (:issue:`3565`)
+
 v4.28.0 (2025-07-20)
 --------------------
 
