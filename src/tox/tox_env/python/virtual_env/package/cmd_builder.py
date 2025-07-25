@@ -113,7 +113,7 @@ class VenvCmdBuilder(PythonPackageToxEnv, ABC):
                     sys.version_info >= (3, 11, 4)
                     or (3, 10, 12) <= sys.version_info < (3, 11)
                     or (3, 9, 17) <= sys.version_info < (3, 10)
-                ) is not None:
+                ):
                     kwargs["filter"] = tarfile.data_filter
                 tar.extractall(  # noqa: S202
                     path=str(work_dir),
