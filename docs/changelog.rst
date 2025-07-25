@@ -4,6 +4,13 @@ Release History
 
 .. towncrier release notes start
 
+v4.28.2 (2025-07-25)
+--------------------
+
+Bugfixes - 4.28.2
+~~~~~~~~~~~~~~~~~
+- Don't pass in the filter argument to tar.extractall on old Python versions - by :user:`gaborbernat`. (:issue:`3568`)
+
 v4.28.1 (2025-07-22)
 --------------------
 

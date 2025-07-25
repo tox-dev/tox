@@ -1,1 +1,0 @@
-Don't pass in the filter argument to tar.extractall on old Python versions - by :user:`gaborbernat`.
