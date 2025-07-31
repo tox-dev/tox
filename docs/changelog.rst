@@ -4,6 +4,14 @@ Release History
 
 .. towncrier release notes start
 
+v4.28.4 (2025-07-31)
+--------------------
+
+Features - 4.28.4
+~~~~~~~~~~~~~~~~~
+- Pass ssh-agent variables ``SSH_AGENT_PID`` and ``SSH_AUTH_SOCK`` in ``pass_env`` by default.
+  - by :user:`daniilgankov` (:issue:`3572`)
+
 v4.28.3 (2025-07-25)
 --------------------
 
