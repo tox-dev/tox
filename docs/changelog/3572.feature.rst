@@ -1,0 +1,2 @@
+Pass ssh-agent variables ``SSH_AGENT_PID`` and ``SSH_AUTH_SOCK`` in ``pass_env`` by default.
+- by :user:`daniilgankov`
