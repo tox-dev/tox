@@ -552,6 +552,14 @@ Base options
             - ✅
             - ✅
             - ✅
+        *   - SSH_AGENT_PID
+            - ✅
+            - ✅
+            - ❌
+        *   - SSH_AUTH_SOCK
+            - ✅
+            - ✅
+            - ❌
 
    More environment variable-related information can be found in :ref:`environment variable substitutions`.
 

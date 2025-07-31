@@ -267,6 +267,8 @@ class ToxEnv(ABC):
                     "TMPDIR",  # temporary file location
                     "NIX_LD",  # nix-ld loader
                     "NIX_LD_LIBRARY_PATH",  # nix-ld library path
+                    "SSH_AGENT_PID",  # ssh-agent process ID
+                    "SSH_AUTH_SOCK",  # ssh-agent socket path
                 ],
             )
         return env
