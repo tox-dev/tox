@@ -575,7 +575,7 @@ Base options
        .. code-block:: toml
 
           [tool.tox.env_run_base]
-          set_env = { file = "conf{/}local.env", TEST_TIMEOUT = 30 }
+          set_env = { file = "conf{/}local.env", TEST_TIMEOUT = "30" }
 
     .. tab:: INI
 
