@@ -18,7 +18,8 @@ class SetupCfg(IniSource):
     def __init__(self, path: Path) -> None:
         super().__init__(path)
         if not self._parser.has_section(self.CORE_SECTION.key):
-            raise ValueError
+            msg = f"section {self.CORE_SECTION.key} not found"
+            raise ValueError(msg)
 
 
 __all__ = ("SetupCfg",)

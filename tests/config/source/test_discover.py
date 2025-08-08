@@ -10,8 +10,8 @@ if TYPE_CHECKING:
 
 def out_no_src(path: Path) -> str:
     return (
-        f"ROOT: No tox.ini or setup.cfg or pyproject.toml or tox.toml found, assuming empty tox.ini at {path}\n"
-        f"default environments:\npy -> [no description]\n"
+        f"ROOT: No loadable tox.ini or setup.cfg or pyproject.toml or tox.toml found, assuming empty tox.ini at {path}"
+        f"\ndefault environments:\npy -> [no description]\n"
     )
 
 
@@ -47,4 +47,4 @@ def test_bad_src_content(tox_project: ToxProjectCreator, tmp_path: Path) -> None
 
     outcome = project.run("l", "-c", str(tmp_path / "setup.cfg"))
     outcome.assert_failed()
-    assert outcome.out == f"ROOT: HandledError| could not recognize config file {tmp_path / 'setup.cfg'}\n"
+    assert outcome.out == f"ROOT: HandledError| config file {tmp_path / 'setup.cfg'} does not exist\n"

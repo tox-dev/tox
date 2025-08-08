@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import sys
 
+from tox.config.types import MissingRequiredConfigKeyError
+
 if sys.version_info >= (3, 11):  # pragma: no cover (py311+)
     import tomllib
 else:  # pragma: no cover (py311+)
@@ -27,7 +29,8 @@ class LegacyToml(IniSource):
         try:
             content = toml_content["tool"]["tox"]["legacy_tox_ini"]
         except KeyError as exc:
-            raise ValueError(path) from exc
+            msg = f"`tool.tox.legacy_tox_ini` missing from {path}"
+            raise MissingRequiredConfigKeyError(msg) from exc
         super().__init__(path, content=content)
 
 
