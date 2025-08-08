@@ -5,6 +5,7 @@ from itertools import chain
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+from tox.config.types import MissingRequiredConfigKeyError
 from tox.report import HandledError
 
 from .legacy_toml import LegacyToml
@@ -59,21 +60,32 @@ def _locate_source() -> Source | None:
     for base in chain([folder], folder.parents):
         for src_type in SOURCE_TYPES:
             candidate: Path = base / src_type.FILENAME
-            try:
-                return src_type(candidate)
-            except ValueError:
-                pass
+            if candidate.exists():
+                try:
+                    return src_type(candidate)
+                except MissingRequiredConfigKeyError as exc:
+                    msg = f"{src_type.__name__} skipped loading {candidate.resolve()} due to {exc}"
+                    logging.info(msg)
+                except ValueError as exc:
+                    msg = f"{src_type.__name__} failed loading {candidate.resolve()} due to {exc}"
+                    raise HandledError(msg) from exc
     return None
 
 
 def _load_exact_source(config_file: Path) -> Source:
     # if the filename matches to the letter some config file name do not fallback to other source types
+    if not config_file.exists():
+        msg = f"config file {config_file} does not exist"
+        raise HandledError(msg)
     exact_match = [s for s in SOURCE_TYPES if config_file.name == s.FILENAME]  # pragma: no cover
     for src_type in exact_match or SOURCE_TYPES:  # pragma: no branch
         try:
             return src_type(config_file)
-        except ValueError:  # noqa: PERF203
+        except MissingRequiredConfigKeyError:  # noqa: PERF203
             pass
+        except ValueError as exc:
+            msg = f"{src_type.__name__} failed loading {config_file.resolve()} due to {exc}"
+            raise HandledError(msg) from exc
     msg = f"could not recognize config file {config_file}"
     raise HandledError(msg)
 
@@ -88,7 +100,7 @@ def _create_default_source(root_dir: Path | None) -> Source:
     else:  # if not set use where we find pyproject.toml in the tree or cwd
         empty = root_dir
     names = " or ".join({i.FILENAME: None for i in SOURCE_TYPES})
-    logging.warning("No %s found, assuming empty tox.ini at %s", names, empty)
+    logging.warning("No loadable %s found, assuming empty tox.ini at %s", names, empty)
     return ToxIni(empty / "tox.ini", content="")
 
 

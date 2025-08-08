@@ -19,4 +19,4 @@ def test_bad_conf_setup_cfg(tox_project: ToxProjectCreator) -> None:
     filename = str(project.path / "setup.cfg")
     outcome = project.run("l", "-c", filename)
     outcome.assert_failed()
-    assert outcome.out == f"ROOT: HandledError| could not recognize config file {filename}\n"
+    assert outcome.out == f"ROOT: HandledError| SetupCfg failed loading {filename} due to section tox:tox not found\n"
