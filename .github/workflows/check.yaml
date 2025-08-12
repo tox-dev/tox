@@ -34,7 +34,7 @@ jobs:
           - windows-2025
           - macos-15
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 0
       - name: Install the latest version of uv
@@ -75,7 +75,7 @@ jobs:
         exclude:
           - { os: windows-latest, tox_env: docs }
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 0
       - name: Install the latest version of uv
