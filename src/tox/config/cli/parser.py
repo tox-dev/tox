@@ -13,7 +13,6 @@ from typing import TYPE_CHECKING, Any, Callable, Dict, List, Literal, Optional, 
 
 from colorama import Fore
 
-from tox.config.loader.str_convert import StrConvert
 from tox.plugin import NAME
 from tox.util.ci import is_ci
 
@@ -357,10 +356,9 @@ def add_verbosity_flags(parser: ArgumentParser) -> None:
 
 
 def add_color_flags(parser: ArgumentParser) -> None:
-    converter = StrConvert()
     if os.environ.get("NO_COLOR", ""):
         color = "no"
-    elif converter.to_bool(os.environ.get("FORCE_COLOR", "")):
+    elif os.environ.get("FORCE_COLOR", ""):
         color = "yes"
     elif os.environ.get("TERM", "") == "dumb":
         color = "no"
