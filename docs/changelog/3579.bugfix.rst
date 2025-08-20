@@ -1,0 +1,2 @@
+When the ``FORCE_COLOR`` variable is present and not an empty string, it forces ANSI color to be set.
+Previously, only ``yes``, ``true`` or ``0`` were valid values. - by :user:`jugmac00`
