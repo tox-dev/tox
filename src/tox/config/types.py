@@ -10,6 +10,13 @@ class CircularChainError(ValueError):
     """circular chain in config"""
 
 
+class MissingRequiredConfigKeyError(ValueError):
+    """missing required config key
+
+    Used by the two toml loaders in order to identify if config keys are present.
+    """
+
+
 class Command:  # noqa: PLW1641
     """A command to execute."""
 
