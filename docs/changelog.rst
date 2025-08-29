@@ -4,6 +4,22 @@ Release History
 
 .. towncrier release notes start
 
+v4.29.0 (2025-08-29)
+--------------------
+
+Features - 4.29.0
+~~~~~~~~~~~~~~~~~
+- A new tox life cycle event is now exposed for use via :doc:`Plugins
+  API </plugins>` -- by :user:`webknjaz`.
+
+  The corresponding hook point is :func:`tox_extend_envs
+  <tox.plugin.spec.tox_extend_envs>`. It allows plugin authors to
+  declare ephemeral environments that they can then populate through
+  the in-memory configuration loader interface.
+
+  This patch was made possible thanks to pair programming with
+  :user:`gaborbernat` at PyCon US 2025. (:issue:`3510`, :issue:`3591`)
+
 v4.28.4 (2025-07-31)
 --------------------
 
