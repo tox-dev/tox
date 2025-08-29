@@ -28,6 +28,7 @@ def test_inline_tox_py(tox_project: ToxProjectCreator) -> None:
 
 def test_toxfile_py_w_ephemeral_envs(tox_project: ToxProjectCreator) -> None:
     """Ensure additional ephemeral tox envs can be plugin-injected."""
+
     def plugin() -> None:  # pragma: no cover # the code is copied to a python file
         from tox.config.loader.memory import MemoryLoader  # noqa: PLC0415
         from tox.plugin import impl  # noqa: PLC0415
