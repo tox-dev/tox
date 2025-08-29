@@ -2,8 +2,9 @@ from __future__ import annotations
 
 import os
 from collections import OrderedDict, defaultdict
+from itertools import chain
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Iterator, Sequence, TypeVar
+from typing import TYPE_CHECKING, Any, Iterable, Iterator, Sequence, TypeVar
 
 from .sets import ConfigSet, CoreConfigSet, EnvConfigSet
 
@@ -22,18 +23,20 @@ T = TypeVar("T", bound=ConfigSet)
 class Config:
     """Main configuration object for tox."""
 
-    def __init__(
+    def __init__(  # noqa: PLR0913  # <- no way around many args
         self,
         config_source: Source,
         options: Parsed,
         root: Path,
         pos_args: Sequence[str] | None,
         work_dir: Path,
+        extra_envs: Iterable[str],
     ) -> None:
         self._pos_args = None if pos_args is None else tuple(pos_args)
         self._work_dir = work_dir
         self._root = root
         self._options = options
+        self._extra_envs = extra_envs
 
         self._overrides: OverrideMap = defaultdict(list)
         for override in options.override:
@@ -78,7 +81,7 @@ class Config:
 
     def __iter__(self) -> Iterator[str]:
         """:return: an iterator that goes through existing environments"""
-        return self._src.envs(self.core)
+        return chain(self._src.envs(self.core), self._extra_envs)
 
     def sections(self) -> Iterator[Section]:
         yield from self._src.sections()
@@ -91,7 +94,7 @@ class Config:
         return any(name for name in self if name == item)
 
     @classmethod
-    def make(cls, parsed: Parsed, pos_args: Sequence[str] | None, source: Source) -> Config:
+    def make(cls, parsed: Parsed, pos_args: Sequence[str] | None, source: Source, extra_envs: Iterable[str]) -> Config:
         """Make a tox configuration object."""
         # root is the project root, where the configuration file is at
         # work dir is where we put our own files
@@ -106,6 +109,7 @@ class Config:
             pos_args=pos_args,
             root=root,
             work_dir=work_dir,
+            extra_envs=extra_envs,
         )
 
     @property

@@ -1,11 +1,13 @@
 from __future__ import annotations
 
 import sys
+from itertools import chain
 from typing import TYPE_CHECKING, Sequence
 
 from tox.config.main import Config
 from tox.journal import Journal
 from tox.plugin import impl
+from tox.plugin.manager import MANAGER
 
 from .env_select import EnvSelector
 
@@ -18,7 +20,8 @@ class State:
     """Runtime state holder."""
 
     def __init__(self, options: Options, args: Sequence[str]) -> None:
-        self.conf = Config.make(options.parsed, options.pos_args, options.source)
+        extended_envs = chain.from_iterable(MANAGER.tox_extend_envs())
+        self.conf = Config.make(options.parsed, options.pos_args, options.source, extended_envs)
         self.conf.core.add_constant(
             keys=["on_platform"],
             desc="platform we are running on",

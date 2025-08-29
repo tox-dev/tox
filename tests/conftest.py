@@ -62,6 +62,7 @@ def tox_ini_conf(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> ToxIniCreat
             Parsed(work_dir=dest, override=override or [], config_file=config_file, root_dir=None),
             pos_args=[],
             source=source,
+            extra_envs=(),
         )
 
     return func

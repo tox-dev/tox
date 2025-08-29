@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import os
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Iterable
 
 import pluggy
 
@@ -79,6 +79,12 @@ class Plugin:
         for name in os.environ.get("TOX_DISABLED_EXTERNAL_PLUGINS", "").split(","):
             self.manager.set_blocked(name)
         self.manager.load_setuptools_entrypoints(NAME)
+
+    def tox_extend_envs(self) -> list[Iterable[str]]:
+        additional_env_names_hook_value = self.manager.hook.tox_extend_envs()
+        # NOTE: S101 is suppressed below to allow for type narrowing in MyPy
+        assert isinstance(additional_env_names_hook_value, list)  # noqa: S101
+        return additional_env_names_hook_value
 
     def tox_add_option(self, parser: ToxParser) -> None:
         self.manager.hook.tox_add_option(parser=parser)
