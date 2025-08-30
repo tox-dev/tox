@@ -379,6 +379,8 @@ class ToxEnv(ABC):
         result["TOX_ENV_NAME"] = self.name
         result["TOX_WORK_DIR"] = str(self.core["work_dir"])
         result["TOX_ENV_DIR"] = str(self.conf["env_dir"])
+        if (ci := os.environ.get("CI")) is not None:
+            result["__TOX_ENVIRONMENT_VARIABLE_ORIGINAL_CI"] = ci
         return result
 
     @staticmethod

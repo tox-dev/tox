@@ -561,6 +561,8 @@ Base options
             - ✅
             - ❌
 
+   If the environment variable ``CI`` is present, ``__TOX_ENVIRONMENT_VARIABLE_ORIGINAL_CI`` will be set to the value of ``CI``. The ``CI`` variable itself will not be passed through.
+
    More environment variable-related information can be found in :ref:`environment variable substitutions`.
 
 .. conf::
