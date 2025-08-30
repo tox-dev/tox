@@ -33,10 +33,10 @@ def test_parser_const_with_default_none(monkeypatch: MonkeyPatch) -> None:
 
 @pytest.mark.parametrize("is_atty", [True, False])
 @pytest.mark.parametrize("no_color", [None, "0", "1", "", "\t", " ", "false", "true"])
-@pytest.mark.parametrize("force_color", [None, "0", "1"])
+@pytest.mark.parametrize("force_color", [None, "", "0", "1", "string"])
 @pytest.mark.parametrize("tox_color", [None, "bad", "no", "yes"])
 @pytest.mark.parametrize("term", [None, "xterm", "dumb"])
-def test_parser_color(  # noqa: PLR0913
+def test_color(  # noqa: PLR0913
     monkeypatch: MonkeyPatch,
     mocker: MockerFixture,
     no_color: str | None,
@@ -62,7 +62,7 @@ def test_parser_color(  # noqa: PLR0913
         expected = tox_color == "yes"
     elif bool(no_color):
         expected = False
-    elif force_color == "1":
+    elif force_color in {"0", "1", "string"}:
         expected = True
     elif term == "dumb":
         expected = False
