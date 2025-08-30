@@ -1,0 +1,1 @@
+Add ``__TOX_ENVIRONMENT_VARIABLE_ORIGINAL_CI``, which passes through the ``CI`` variable if present. This is intended for use by other libraries to detect if tox is running under CI.
