@@ -33,6 +33,8 @@ def tox_register_tox_env(register: ToxEnvRegister) -> None:
 def tox_extend_envs() -> Iterable[str]:
     """Declare additional environment names.
 
+    .. versionadded:: 4.29.0
+
     This hook is called without any arguments early in the lifecycle. It
     is expected to return an iterable of strings with environment names
     for tox to consider. It can be used to facilitate dynamic creation of
