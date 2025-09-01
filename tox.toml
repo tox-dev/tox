@@ -85,7 +85,7 @@ commands = [
   [
     "python",
     "-c",
-    'print(r"documentation available under file://{work_dir}{/}docs_out{/}index.html")',
+    'print(r"documentation available under file://{work_dir}{/}docs_out{/}html{/}index.html")',
   ],
 ]
 
