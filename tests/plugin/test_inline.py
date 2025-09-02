@@ -43,6 +43,7 @@ def test_toxfile_py_w_ephemeral_envs(tox_project: ToxProjectCreator) -> None:
         def tox_add_core_config(core_conf: ConfigSet, state: State) -> None:  # noqa: ARG001
             in_memory_config_loader = MemoryLoader(
                 base=["sentinel-base"],
+                commands_pre=["sentinel-cmd"],
                 description="sentinel-description",
             )
             state.conf.memory_seed_loaders[env_name].append(
@@ -59,3 +60,10 @@ def test_toxfile_py_w_ephemeral_envs(tox_project: ToxProjectCreator) -> None:
     tox_config_result = project.run("config", "-e", "sentinel-env-name", "-qq")
     tox_config_result.assert_success()
     assert "base = sentinel-base" in tox_config_result.out
+
+    tox_run_result = project.run("run", "-e", "sentinel-env-name", "-q")
+    tox_run_result.assert_failed()
+    expected_cmd_lookup_error_txt = (
+        "sentinel-env-name: Exception running subprocess [Errno 2] No such file or directory: 'sentinel-cmd'\n"
+    )
+    assert expected_cmd_lookup_error_txt in tox_run_result.out
