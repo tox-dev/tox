@@ -486,5 +486,5 @@ def test_aaa_pyproject_installpkg_pep517_envs(
     """
     sdist = pkg_with_pdm_backend / "dist" / "skeleton-0.1.1337.tar.gz"
     proj = tox_project({"tox.ini": tox_ini}, base=pkg_with_pdm_backend)
-    result = proj.run("--installpkg", str(sdist), "--exit-and-dump-after", "10")
+    result = proj.run("--installpkg", str(sdist))
     result.assert_success()
