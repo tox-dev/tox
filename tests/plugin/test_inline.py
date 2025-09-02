@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import sys
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -43,6 +44,7 @@ def test_toxfile_py_w_ephemeral_envs(tox_project: ToxProjectCreator) -> None:
         def tox_add_core_config(core_conf: ConfigSet, state: State) -> None:  # noqa: ARG001
             in_memory_config_loader = MemoryLoader(
                 base=["sentinel-base"],
+                commands_pre=["sentinel-cmd"],
                 description="sentinel-description",
             )
             state.conf.memory_seed_loaders[env_name].append(
@@ -59,3 +61,15 @@ def test_toxfile_py_w_ephemeral_envs(tox_project: ToxProjectCreator) -> None:
     tox_config_result = project.run("config", "-e", "sentinel-env-name", "-qq")
     tox_config_result.assert_success()
     assert "base = sentinel-base" in tox_config_result.out
+
+    tox_run_result = project.run("run", "-e", "sentinel-env-name", "-q")
+    tox_run_result.assert_failed()
+    underlying_expected_oserror_msg = (
+        "[WinError 2] The system cannot find the file specified"
+        if sys.platform == "win32"
+        else "[Errno 2] No such file or directory: 'sentinel-cmd'"
+    )
+    expected_cmd_lookup_error_txt = (
+        f"sentinel-env-name: Exception running subprocess {underlying_expected_oserror_msg!s}\n"
+    )
+    assert expected_cmd_lookup_error_txt in tox_run_result.out
