@@ -1,5 +1,44 @@
-Extending tox
-=============
+Plugins
+=======
+
+Many plugins are available for tox. These include, but are not limited to, the extensions found on the ``tox-dev`` org
+on ':gh:`GitHub <tox-dev>`.
+
+Plugins are automatically discovered once from the Python environment that tox itself is installed in. This means that
+if tox is installed in an isolated environment (e.g. when installed using :pypi:`pipx` or :pypi:`uv`), the plugin(s)
+must be installed in the same environment. To ensure a plugin is always available, you can include the plugin is listed
+in :ref:`requires`, which will cause tox to auto-provision a new isolated environment with both tox and the plugin(s)
+installed. For example:
+
+.. tab:: TOML
+
+   .. code-block:: toml
+
+        requires = ["tox>=4", "tox-uv>=1"]
+
+.. tab:: INI
+
+   .. code-block:: ini
+
+        [tox]
+        requires =
+            tox>=4
+            tox-uv>=1
+
+For more information, refer to :ref:`the user guide <auto-provisioning>`.
+
+Plugins can be disabled via the ``TOX_DISABLED_EXTERNAL_PLUGINS`` environment variable. This variable can be set to a
+comma separated list of plugin names, e.g.:
+
+```bash
+env TOX_DISABLED_EXTERNAL_PLUGINS=tox-uv,tox-extra tox --version
+```
+
+Developing your own plugin
+--------------------------
+
+The below provides some guidance on how to develop your own plugin for tox. A reference guide to the plugin API can be
+found in :doc:`plugins_api`.
 
 Extensions points
 ~~~~~~~~~~~~~~~~~
@@ -50,20 +89,24 @@ How to apply:
 
 Migration from tox 3
 ~~~~~~~~~~~~~~~~~~~~
+
 This section explains how the plugin interface changed between tox 3 and 4, and provides guidance for plugin developers
 on how to migrate.
 
 ``tox_get_python_executable``
------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 With tox 4 the Python discovery is performed ``tox.tox_env.python.virtual_env.api._get_python`` that delegates the job
 to ``virtualenv``. Therefore first `define a new virtualenv discovery mechanism
 <https://virtualenv.pypa.io/en/latest/extend.html#python-discovery>`_ and then set that by setting the
 ``VIRTUALENV_DISCOVERY`` environment variable.
 
 ``tox_package``
----------------
+^^^^^^^^^^^^^^^
+
 Register new packager types via :func:`tox_register_tox_env <tox.plugin.spec.tox_register_tox_env>`.
 
 ``tox_addoption``
------------------
+^^^^^^^^^^^^^^^^^
+
 Renamed to :func:`tox_add_option <tox.plugin.spec.tox_add_option>`.

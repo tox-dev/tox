@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Iterable
 
 import pluggy
 
@@ -27,6 +27,26 @@ def tox_register_tox_env(register: ToxEnvRegister) -> None:
 
     :param register: a object that can be used to register new tox environment types
     """
+
+
+@_spec
+def tox_extend_envs() -> Iterable[str]:
+    """Declare additional environment names.
+
+    .. versionadded:: 4.29.0
+
+    This hook is called without any arguments early in the lifecycle. It
+    is expected to return an iterable of strings with environment names
+    for tox to consider. It can be used to facilitate dynamic creation of
+    additional environments from within tox plugins.
+
+    This is ideal to pair with :func:`tox_add_core_config
+    <tox.plugin.spec.tox_add_core_config>` that has access to
+    ``state.conf.memory_seed_loaders`` allowing to extend it with instances of
+    :class:`tox.config.loader.memory.MemoryLoader` early enough before tox
+    starts caching configuration values sourced elsewhere.
+    """
+    return ()  # <- Please MyPy
 
 
 @_spec
@@ -108,6 +128,7 @@ __all__ = [
     "tox_after_run_commands",
     "tox_before_run_commands",
     "tox_env_teardown",
+    "tox_extend_envs",
     "tox_on_install",
     "tox_register_tox_env",
 ]

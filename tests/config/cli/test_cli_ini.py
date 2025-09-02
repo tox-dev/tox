@@ -166,6 +166,7 @@ def test_conf_arg(tmp_path: Path, conf_arg: str, filename: str, content: str) ->
         Parsed(work_dir=dest, override=[], config_file=config_file, root_dir=None),
         pos_args=[],
         source=source,
+        extra_envs=(),
     )
 
 

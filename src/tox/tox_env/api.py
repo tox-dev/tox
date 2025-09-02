@@ -31,6 +31,30 @@ if TYPE_CHECKING:
     from tox.tox_env.installer import Installer
 
 LOGGER = logging.getLogger(__name__)
+# Based on original gitleaks rule named generic-api-key
+# See: https://github.com/gitleaks/gitleaks/blob/master/config/gitleaks.toml#L587
+SECRET_KEYWORDS = [
+    "access",
+    "api",
+    "auth",
+    "client",
+    "cred",
+    "key",
+    "passwd",
+    "password",
+    "private",
+    "pwd",
+    "secret",
+    "token",
+]
+SECRET_ENV_VAR_REGEX = re.compile(".*(" + "|".join(SECRET_KEYWORDS) + ").*", re.IGNORECASE)
+
+
+def redact_value(name: str, value: str) -> str:
+    """Returns a redacted text if the key name looks like a secret."""
+    if SECRET_ENV_VAR_REGEX.match(name):
+        return "*" * len(value)
+    return value
 
 
 class ToxEnvCreateArgs(NamedTuple):
@@ -243,6 +267,8 @@ class ToxEnv(ABC):
                     "TMPDIR",  # temporary file location
                     "NIX_LD",  # nix-ld loader
                     "NIX_LD_LIBRARY_PATH",  # nix-ld library path
+                    "SSH_AGENT_PID",  # ssh-agent process ID
+                    "SSH_AUTH_SOCK",  # ssh-agent socket path
                 ],
             )
         return env
@@ -353,6 +379,8 @@ class ToxEnv(ABC):
         result["TOX_ENV_NAME"] = self.name
         result["TOX_WORK_DIR"] = str(self.core["work_dir"])
         result["TOX_ENV_DIR"] = str(self.conf["env_dir"])
+        if (ci := os.environ.get("CI")) is not None:
+            result["__TOX_ENVIRONMENT_VARIABLE_ORIGINAL_CI"] = ci
         return result
 
     @staticmethod
@@ -461,8 +489,11 @@ class ToxEnv(ABC):
         with log_file.open("wt", encoding="utf-8") as file:
             file.write(f"name: {env_name}\n")
             file.write(f"run_id: {request.run_id}\n")
-            for env_key, env_value in request.env.items():
-                file.write(f"env {env_key}: {env_value}\n")
+            msg = ""
+            for env_key, env_value in sorted(request.env.items()):
+                redacted_value = redact_value(name=env_key, value=env_value)
+                msg += f"env {env_key}: {redacted_value}\n"
+            file.write(msg)
             for meta_key, meta_value in status.metadata.items():
                 file.write(f"metadata {meta_key}: {meta_value}\n")
             file.write(f"cwd: {request.cwd}\n")

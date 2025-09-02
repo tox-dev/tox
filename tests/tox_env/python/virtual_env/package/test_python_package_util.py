@@ -29,7 +29,7 @@ def test_load_dependency_no_extra(pkg_with_extras: PathDistribution) -> None:
     requires = pkg_with_extras.requires
     assert requires is not None
     result = dependencies_with_extras([Requirement(i) for i in requires], set(), "")
-    for left, right in zip_longest(result, (Requirement("platformdirs>=2.1"), Requirement("colorama>=0.4.3"))):
+    for left, right in zip_longest(result, (Requirement("platformdirs>=4.3.8"), Requirement("colorama>=0.4.6"))):
         assert isinstance(right, Requirement)
         assert str(left) == str(right)
 
@@ -41,8 +41,8 @@ def test_load_dependency_many_extra(pkg_with_extras: PathDistribution) -> None:
     result = dependencies_with_extras([Requirement(i) for i in requires], {"docs", "testing"}, "")
     sphinx = [Requirement("sphinx>=3"), Requirement("sphinx-rtd-theme<1,>=0.4.3")]
     exp = [
-        Requirement("platformdirs>=2.1"),
-        Requirement("colorama>=0.4.3"),
+        Requirement("platformdirs>=4.3.8"),
+        Requirement("colorama>=0.4.6"),
         *(sphinx if sys.version_info[0:2] <= (3, 8) else []),
         Requirement(f'covdefaults>=1.2; python_version == "2.7" or python_version == "{py_ver}"'),
         Requirement(f'pytest>=5.4.1; python_version == "{py_ver}"'),

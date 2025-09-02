@@ -32,6 +32,7 @@ def replace_one(tmp_path: Path) -> ReplaceOne:
             root=tmp_path,
             pos_args=pos_args,
             work_dir=tmp_path,
+            extra_envs=(),
         )
         loader = config.get_env("py").loaders[0]
         args = ConfigLoadArgs(chain=[], name="a", env_name="a")

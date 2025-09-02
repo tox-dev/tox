@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+import importlib
 import sys
 from pathlib import Path
 from textwrap import dedent
+from types import ModuleType
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Set, TypeVar, Union
 
 import pytest
@@ -164,7 +166,24 @@ WACKY_SLASH_ARGS = [
 
 @pytest.fixture(params=["win32", "linux2"])
 def sys_platform(request: SubRequest, monkeypatch: MonkeyPatch) -> str:
-    monkeypatch.setattr(sys, "platform", request.param)
+    class _SelectiveSys(ModuleType):
+        """A sys-like proxy that only overrides `platform`."""
+
+        def __init__(self, patched_platform: str) -> None:
+            super().__init__("sys")
+            self.__dict__["_real"] = sys
+            self.__dict__["_patched_platform"] = patched_platform
+
+        def __getattr__(self, name: str) -> Any:
+            if name == "platform":
+                return self.__dict__["_patched_platform"]
+            return getattr(self.__dict__["_real"], name)
+
+    # Patches sys.platform only for the tox.config.loader.str_convert module.
+    # Everywhere else, sys.platform remains the real value.
+    mod = importlib.import_module("tox.config.loader.str_convert")
+    proxy = _SelectiveSys(str(request.param))
+    monkeypatch.setattr(mod, "sys", proxy, raising=True)
     return str(request.param)
 
 

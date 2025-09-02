@@ -1,7 +1,7 @@
 [build-system]
 build-backend = "hatchling.build"
 requires = [
-  "hatch-vcs>=0.4",
+  "hatch-vcs>=0.5",
   "hatchling>=1.27",
 ]
 
@@ -50,22 +50,17 @@ dynamic = [
   "version",
 ]
 dependencies = [
-  "cachetools>=5.5.1",
+  "cachetools>=6.1",
   "chardet>=5.2",
   "colorama>=0.4.6",
-  "filelock>=3.16.1",
-  "packaging>=24.2",
-  "platformdirs>=4.3.6",
-  "pluggy>=1.5",
-  "pyproject-api>=1.8",
+  "filelock>=3.18",
+  "packaging>=25",
+  "platformdirs>=4.3.8",
+  "pluggy>=1.6",
+  "pyproject-api>=1.9.1",
   "tomli>=2.2.1; python_version<'3.11'",
-  "typing-extensions>=4.12.2; python_version<'3.11'",
-  "virtualenv>=20.31",
-]
-optional-dependencies.test = [
-  "devpi-process>=1.0.2",
-  "pytest>=8.3.4",
-  "pytest-mock>=3.14",
+  "typing-extensions>=4.14.1; python_version<'3.11'",
+  "virtualenv>=20.31.2",
 ]
 urls.Documentation = "https://tox.wiki"
 urls.Homepage = "http://tox.readthedocs.org"
@@ -83,36 +78,36 @@ dev = [
 test = [
   "build[virtualenv]>=1.2.2.post1",
   "covdefaults>=2.3",
+  "coverage>=7.9.2",
   "detect-test-pollution>=1.2",
   "devpi-process>=1.0.2",
-  "diff-cover>=9.2",
-  "distlib>=0.3.9",
+  "diff-cover>=9.6",
+  "distlib>=0.4",
   "flaky>=3.8.1",
-  "hatch-vcs>=0.4",
+  "hatch-vcs>=0.5",
   "hatchling>=1.27",
   "pdm-backend",
-  "psutil>=6.1.1",
-  "pytest>=8.3.4",
-  "pytest-cov>=5",
-  "pytest-mock>=3.14",
-  "pytest-xdist>=3.6.1",
+  "psutil>=7",
+  "pytest>=8.4.1",
+  "pytest-cov>=6.2.1",
+  "pytest-mock>=3.14.1",
+  "pytest-xdist>=3.8",
   "re-assert>=1.1",
-  "setuptools>=75.3; python_version<='3.8'",
-  "setuptools>=75.8; python_version>'3.8'",
-  "time-machine>=2.15; implementation_name!='pypy'",
+  "setuptools>=80.9",
+  "time-machine>=2.16; implementation_name!='pypy'",
   "wheel>=0.45.1",
 ]
 type = [
-  "mypy==1.15",
-  "types-cachetools>=5.5.0.20240820",
+  "mypy==1.17",
+  "types-cachetools>=6.1.0.20250717",
   "types-chardet>=5.0.4.6",
   { include-group = "test" },
 ]
 docs = [
-  "furo>=2024.8.6",
-  "sphinx>=8.1.3",
+  "furo>=2025.7.19",
+  "sphinx>=8.2.3",
   "sphinx-argparse-cli>=1.19",
-  "sphinx-autodoc-typehints>=3.0.1",
+  "sphinx-autodoc-typehints>=3.2",
   "sphinx-copybutton>=0.5.2",
   "sphinx-inline-tabs>=2023.4.21",
   "sphinxcontrib-towncrier>=0.2.1a0",
@@ -122,13 +117,13 @@ fix = [
   "pre-commit-uv>=4.1.4",
 ]
 pkg-meta = [
-  "check-wheel-contents>=0.6.1",
+  "check-wheel-contents>=0.6.2",
   "twine>=6.1",
-  "uv>=0.5.29",
+  "uv>=0.8",
 ]
 release = [
   "gitpython>=3.1.44",
-  "packaging>=24.2",
+  "packaging>=25",
   "towncrier>=24.8",
 ]
 
@@ -202,8 +197,13 @@ max_supported_python = "3.14"
 testpaths = [
   "tests",
 ]
-addopts = "--tb=auto -ra --showlocals --no-success-flaky-report"
-# Keep temporary directories only for failed or errored tests.
+addopts = "--no-success-flaky-report"
+verbosity_assertions = 2
+filterwarnings = [
+  "error",
+  "ignore:unclosed database in <sqlite3.Connection object at:ResourceWarning",
+  "ignore:unclosed file <_io.TextIOWrapper:ResourceWarning",
+]
 tmp_path_retention_policy = "failed"
 
 [tool.coverage]

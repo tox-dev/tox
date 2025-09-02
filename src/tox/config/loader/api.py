@@ -151,13 +151,13 @@ class Loader(Convert[T]):
             converted_override = _STR_CONVERT.to(override.value, of_type, factory)
             if override.append and converted is not None:
                 if isinstance(converted, list) and isinstance(converted_override, list):
-                    converted += converted_override
+                    converted += converted_override  # type: ignore[assignment]
                 elif isinstance(converted, dict) and isinstance(converted_override, dict):
                     converted.update(converted_override)
                 elif isinstance(converted, SetEnv) and isinstance(converted_override, SetEnv):
                     converted.update(converted_override, override=True)
                 elif isinstance(converted, PythonDeps) and isinstance(converted_override, PythonDeps):
-                    converted += converted_override
+                    converted += converted_override  # type: ignore[operator]
                 else:
                     msg = "Only able to append to lists and dicts"
                     raise ValueError(msg)

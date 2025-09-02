@@ -4,6 +4,82 @@ Release History
 
 .. towncrier release notes start
 
+v4.29.0 (2025-08-29)
+--------------------
+
+Features - 4.29.0
+~~~~~~~~~~~~~~~~~
+- A new tox life cycle event is now exposed for use via :doc:`Plugins
+  API </plugins>` -- by :user:`webknjaz`.
+
+  The corresponding hook point is :func:`tox_extend_envs
+  <tox.plugin.spec.tox_extend_envs>`. It allows plugin authors to
+  declare ephemeral environments that they can then populate through
+  the in-memory configuration loader interface.
+
+  This patch was made possible thanks to pair programming with
+  :user:`gaborbernat` at PyCon US 2025. (:issue:`3510`, :issue:`3591`)
+
+v4.28.4 (2025-07-31)
+--------------------
+
+Features - 4.28.4
+~~~~~~~~~~~~~~~~~
+- Pass ssh-agent variables ``SSH_AGENT_PID`` and ``SSH_AUTH_SOCK`` in ``pass_env`` by default.
+  - by :user:`daniilgankov` (:issue:`3572`)
+
+v4.28.3 (2025-07-25)
+--------------------
+
+No significant changes.
+
+
+v4.28.2 (2025-07-25)
+--------------------
+
+Bugfixes - 4.28.2
+~~~~~~~~~~~~~~~~~
+- Don't pass in the filter argument to tar.extractall on old Python versions - by :user:`gaborbernat`. (:issue:`3568`)
+
+v4.28.1 (2025-07-22)
+--------------------
+
+Bugfixes - 4.28.1
+~~~~~~~~~~~~~~~~~
+- Use `tarfile.data_filter <https://docs.python.org/3/library/tarfile.html#tarfile.data_filter>`_ with ``extractall``
+  only on supported Python versions:
+
+  - ``>= 3.11.4``
+  - ``>= 3.10.12`` and ``< 3.11``
+  - ``>= 3.9.17`` and ``< 3.10``
+
+  by :user:`gaborbernat`. (:issue:`3565`)
+
+v4.28.0 (2025-07-20)
+--------------------
+
+Features - 4.28.0
+~~~~~~~~~~~~~~~~~
+- Added ``constraints`` to allow specifying constraints files for all dependencies. (:issue:`3550`)
+- Allow disabling tox plugins via the ``TOX_DISABLED_EXTERNAL_PLUGINS`` environment variable - by :user:`gaborbernat`. (:issue:`3468`)
+
+Improved Documentation - 4.28.0
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+- The ``min_version``/``minversion`` config option is deprecated in favor of the ``requires`` option. (:issue:`3553`)
+
+v4.27.0 (2025-06-17)
+--------------------
+
+Features - 4.27.0
+~~~~~~~~~~~~~~~~~
+- Add ``free_threaded`` flag to to ``"python"`` entries in json output of ``--result-json``. (:issue:`3534`)
+
+Bugfixes - 4.27.0
+~~~~~~~~~~~~~~~~~
+- Fix dependency-group name normalization. (:issue:`3539`)
+- Improves logging of environment variables by sorting them by key and redacting
+  the values for the ones that are likely to contain secrets. (:issue:`3542`)
+
 v4.26.0 (2025-05-13)
 --------------------
 

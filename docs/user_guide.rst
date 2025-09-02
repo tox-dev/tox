@@ -382,10 +382,12 @@ you want to do more research, we recommend taking a look at these projects:
 - `Invoke <https://www.pyinvoke.org/>`__ is a general-purpose task execution library, similar to Make. Invoke is far
   more general-purpose than tox but it does not contain the Python testing-specific features that tox specializes in.
 
+.. _auto-provisioning:
 
 Auto-provisioning
 -----------------
-In case the installed tox version does not satisfy either the :ref:`min_version` or the :ref:`requires`, tox will automatically
+
+In case the installed tox version does not satisfy either the :ref:`requires` or the :ref:`min_version`, tox will automatically
 create a virtual environment under :ref:`provision_tox_env` name that satisfies those constraints and delegate all
 calls to this meta environment. This should allow satisfying constraints on your tox environment automatically,
 given you have at least version ``3.8.0`` of tox.
@@ -396,17 +398,16 @@ For example given:
 
    .. code-block:: toml
 
-        min_version = "4"
-        requires = ["tox-uv>=1"]
+        requires = ["tox>=4", "tox-uv>=1"]
 
 .. tab:: INI
 
    .. code-block:: ini
 
         [tox]
-        min_version = 4
-        requires = tox-uv>=1
-
+        requires =
+            tox>=4
+            tox-uv>=1
 
 if the user runs it with tox ``3.8`` or later the installed tox application will automatically ensure that both the minimum version and
 requires constraints are satisfied, by creating a virtual environment under ``.tox`` folder, and then installing into it
@@ -440,6 +441,15 @@ CLI
   something that should work but fails with some esoteric error it's recommended to use this flag to make sure you don't
   have a stale Python environment; e.g. ``tox run -e py310 -r`` would clean the run environment and recreate it from
   scratch.
+
+Logging
+~~~~~~~
+
+Tox logs its activity inside ``.tox/<env_name>/log`` which can prove to be a good source of information when debugging
+its behavior. It should be noted that some of the environment variables with names containing one of the words
+``access``, ``api``, ``auth``, ``client``, ``cred``, ``key``, ``passwd``, ``password``, ``private``, ``pwd``,
+``secret`` and ``token`` will be logged with their values redacted with ``*`` to prevent accidental secret leaking when
+tox is used in CI/CD environments (as log collection is common).
 
 Config files
 ~~~~~~~~~~~~

@@ -87,14 +87,17 @@ def tox_wheels(tox_wheel: Path, tmp_path_factory: TempPathFactory) -> list[Path]
         distribution = Distribution.at(dist_info)
         wheel_cache = ROOT / ".wheel_cache" / f"{sys.version_info.major}.{sys.version_info.minor}"
         wheel_cache.mkdir(parents=True, exist_ok=True)
-        cmd = [sys.executable, "-I", "-m", "pip", "download", "-d", str(wheel_cache)]
+        cmd = [sys.executable, "-m", "pip", "download", "-d", str(wheel_cache)]
         assert distribution.requires is not None
         for req in distribution.requires:
             requirement = Requirement(req)
-            if not requirement.extras:  # pragma: no branch  # we don't need to install any extras (tests/docs/etc)
+            if not requirement.extras:  # pragma: no branch # we don't need to install any extras (tests/docs/etc)
                 cmd.append(req)
         check_call(cmd)
         result.extend(wheel_cache.iterdir())
+        res = "\n".join(str(i) for i in result)
+        with elapsed(f"acquired dependencies for current tox: {res}"):
+            pass
         return result
 
 

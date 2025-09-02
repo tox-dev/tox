@@ -13,6 +13,7 @@ from tox.config.loader.memory import MemoryLoader
 from tox.config.sets import ConfigSet, CoreConfigSet, EnvConfigSet
 from tox.execute import Outcome
 from tox.plugin import impl
+from tox.plugin.manager import Plugin
 from tox.pytest import ToxProjectCreator, register_inline_plugin
 from tox.session.state import State
 from tox.tox_env.api import ToxEnv
@@ -21,6 +22,7 @@ from tox.tox_env.register import ToxEnvRegister
 if TYPE_CHECKING:
     from pathlib import Path
 
+    import pluggy
     from pytest_mock import MockerFixture
 
 
@@ -268,3 +270,45 @@ def test_plugin_config_frozen_past_add_env(tox_project: ToxProjectCreator, mocke
     project = tox_project({"tox.ini": "[testenv]\npackage=skip"})
     result = project.run("r")
     result.assert_success()
+
+
+@pytest.mark.parametrize(
+    ("env_val", "expect_a", "expect_b"),
+    [
+        pytest.param("", True, True, id="none_disabled"),
+        pytest.param("dummy_plugin_a,dummy_plugin_b", False, False, id="both_disabled"),
+        pytest.param("dummy_plugin_a", False, True, id="only_a_disabled"),
+        pytest.param("dummy_plugin_b", True, False, id="only_b_disabled"),
+    ],
+)
+def test_disable_external_plugins(
+    tox_project: ToxProjectCreator,
+    env_val: str,
+    expect_a: bool,
+    expect_b: bool,
+) -> None:
+    class DummyPluginA:
+        @staticmethod
+        @impl
+        def tox_add_option(parser: ToxParser) -> None:  # noqa: ARG004
+            logging.warning("dummy plugin A called")
+
+    class DummyPluginB:
+        @staticmethod
+        @impl
+        def tox_add_option(parser: ToxParser) -> None:  # noqa: ARG004
+            logging.warning("dummy plugin B called")
+
+    def fake_load_entrypoints(self: pluggy.PluginManager, name: str) -> None:  # noqa: ARG001
+        self.register(DummyPluginA(), name="dummy_plugin_a")
+        self.register(DummyPluginB(), name="dummy_plugin_b")
+
+    project = tox_project({"tox.ini": ""})
+    with patch("pluggy.PluginManager.load_setuptools_entrypoints", fake_load_entrypoints), patch(
+        "tox.plugin.manager.MANAGER", Plugin()
+    ), patch.dict(os.environ, {"TOX_DISABLED_EXTERNAL_PLUGINS": env_val}, clear=False):
+        result = project.run("--version")
+
+    result.assert_success()
+    assert ("dummy plugin A called" in result.out) == expect_a
+    assert ("dummy plugin B called" in result.out) == expect_b

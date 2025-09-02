@@ -46,7 +46,8 @@ For example:
 .. code-block:: ini
 
     [tox]
-    min_version = 4.20
+    requires =
+        tox >= 4.20
     env_list =
         3.13
         3.12
@@ -74,7 +75,8 @@ This configuration file uses:
 .. code-block:: ini
 
     [tox:tox]
-    min_version = 4.0
+    requires =
+        tox >= 4.0
     env_list =
         3.13
         3.12
@@ -98,7 +100,8 @@ instead inside the ``pyproject.toml`` file under the ``tool.tox`` table and ``le
     [tool.tox]
     legacy_tox_ini = """
         [tox]
-        min_version = 4.0
+        requires =
+            tox >= 4.0
         env_list =
             py310
             py39
@@ -203,6 +206,9 @@ The following options are set in the ``[tox]`` section of ``tox.ini`` or the ``[
 .. conf::
    :keys: min_version, minversion
    :default: <current version of tox>
+   :version_deprecated: 4.28.0
+
+   **DEPRECATED** Prefer requiring a minimum tox version via :ref:`requires`.
 
    A string to define the minimal tox version required to run. If the host's tox version is less than this, it will
    automatically create a provisioned tox environment that satisfies this requirement. See :ref:`provision_tox_env`
@@ -546,6 +552,16 @@ Base options
             - ✅
             - ✅
             - ✅
+        *   - SSH_AGENT_PID
+            - ✅
+            - ✅
+            - ❌
+        *   - SSH_AUTH_SOCK
+            - ✅
+            - ✅
+            - ❌
+
+   If the environment variable ``CI`` is present, ``__TOX_ENVIRONMENT_VARIABLE_ORIGINAL_CI`` will be set to the value of ``CI``. The ``CI`` variable itself will not be passed through.
 
    More environment variable-related information can be found in :ref:`environment variable substitutions`.
 
@@ -561,7 +577,7 @@ Base options
        .. code-block:: toml
 
           [tool.tox.env_run_base]
-          set_env = { file = "conf{/}local.env", TEST_TIMEOUT = 30 }
+          set_env = { file = "conf{/}local.env", TEST_TIMEOUT = "30" }
 
     .. tab:: INI
 
@@ -936,15 +952,15 @@ Python run
    :keys: deps
    :default: <empty list>
 
-   Name of the Python dependencies. Installed into the environment prior to project after environment creation, but
+   Python dependencies. Installed into the environment prior to project after environment creation, but
    before package installation. All installer commands are executed using the :ref:`tox_root` as the current working
    directory. Each value must be one of:
 
    - a Python dependency as specified by :pep:`440`,
    - a `requirement file <https://pip.pypa.io/en/stable/user_guide/#requirements-files>`_ when the value starts with
-     ``-r`` (followed by a file path),
+     ``-r`` (followed by a file path or URL),
    - a `constraint file <https://pip.pypa.io/en/stable/user_guide/#constraints-files>`_ when the value starts with
-     ``-c`` (followed by a file path).
+     ``-c`` (followed by a file path or URL).
 
    If you are only defining :pep:`508` requirements (aka no pip requirement files), you should use
    :ref:`dependency_groups` instead.
@@ -970,6 +986,21 @@ Python run
             pytest>=7,<8
             -r requirements.txt
             -c constraints.txt
+
+   .. note::
+
+      :ref:`constraints` is the preferred way to specify constraints files since they will apply to package dependencies
+      also.
+
+.. conf::
+   :keys: constraints
+   :default: <empty list>
+   :version_added: 4.28.0
+
+   `Constraints files <https://pip.pypa.io/en/stable/user_guide/#constraints-files>`_ to use during package and
+   dependency installation. Provided constraints files will be used when installing package dependencies and any
+   additional dependencies specified in :ref:`deps`, but will not be used when installing the package itself.
+   Each value must be a file path or URL.
 
 .. conf::
    :keys: use_develop, usedevelop
@@ -1204,7 +1235,6 @@ Pip installer
    This command will be executed only if executing on Continuous Integrations is detected (for example set environment
    variable ``CI=1``) or if journal is active.
 
-
 .. conf::
    :keys: pip_pre
    :default: false
@@ -1221,7 +1251,7 @@ Pip installer
 
    If ``constrain_package_deps`` is true, then tox will create and use ``{env_dir}{/}constraints.txt`` when installing
    package dependencies during ``install_package_deps`` stage. When this value is set to false, any conflicting package
-   dependencies will override explicit dependencies and constraints passed to ``deps``.
+   dependencies will override explicit dependencies and constraints passed to :ref:`deps`.
 
 .. conf::
    :keys: use_frozen_constraints

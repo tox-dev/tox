@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import glob
+import sys
 import tarfile
 from abc import ABC
 from functools import partial
@@ -107,7 +108,17 @@ class VenvCmdBuilder(PythonPackageToxEnv, ABC):
             if not work_dir.exists():  # pragma: no branch
                 work_dir.mkdir()
             with tarfile.open(str(path), "r:gz") as tar:
-                tar.extractall(path=str(work_dir))  # noqa: S202
+                kwargs = {}
+                if (
+                    sys.version_info >= (3, 11, 4)
+                    or (3, 10, 12) <= sys.version_info < (3, 11)
+                    or (3, 9, 17) <= sys.version_info < (3, 10)
+                ):
+                    kwargs["filter"] = tarfile.data_filter
+                tar.extractall(  # noqa: S202
+                    path=str(work_dir),
+                    **kwargs,  # type: ignore[arg-type]
+                )
             # the register run env is guaranteed to be called before this
             assert self._sdist_meta_tox_env is not None  # noqa: S101
             with self._sdist_meta_tox_env.display_context(self._has_display_suspended):
