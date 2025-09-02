@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING, Any, Final, Iterator, Mapping, cast
 
 from tox.config.loader.section import Section
 from tox.config.loader.toml import TomlLoader
+from tox.config.types import MissingRequiredConfigKeyError
 from tox.report import HandledError
 
 from .api import Source
@@ -81,7 +82,7 @@ class TomlPyProject(Source):
                 our_content = our_content[key]
             self._our_content = our_content
         except KeyError as exc:
-            raise ValueError(path) from exc
+            raise MissingRequiredConfigKeyError(path) from exc
         super().__init__(path)
 
     def get_core_section(self) -> Section:
