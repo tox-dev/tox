@@ -467,10 +467,7 @@ def test_pyproject_config_settings_editable_legacy(
 
 
 @pytest.mark.usefixtures("enable_pip_pypi_access")
-def test_aaa_pyproject_installpkg_pep517_envs(
-    tox_project: ToxProjectCreator,
-    pkg_with_pdm_backend: Path,
-) -> None:
+def test_pyproject_installpkg_pep517_envs(tox_project: ToxProjectCreator, pkg_with_pdm_backend: Path) -> None:
     # Regression test for #3512
     tox_ini = """
     [tox]
