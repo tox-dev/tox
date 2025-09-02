@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import os
 from collections import OrderedDict, defaultdict
-from itertools import chain
+from itertools import chain, tee
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Iterable, Iterator, Sequence, TypeVar
 
@@ -81,7 +81,11 @@ class Config:
 
     def __iter__(self) -> Iterator[str]:
         """:return: an iterator that goes through existing environments"""
-        return chain(self._src.envs(self.core), self._extra_envs)
+        # NOTE: `tee(self._extra_envs)[1]` is necessary for compatibility with
+        # NOTE: Python 3.11 and older versions. Once Python 3.12 is the lowest
+        # NOTE: supported version, it can be changed to
+        # NOTE: `chain.from_iterable(tee(self._extra_envs, 1))`.
+        return chain(self._src.envs(self.core), tee(self._extra_envs)[1])
 
     def sections(self) -> Iterator[Section]:
         yield from self._src.sections()
