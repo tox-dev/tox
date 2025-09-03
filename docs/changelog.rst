@@ -4,6 +4,24 @@ Release History
 
 .. towncrier release notes start
 
+v4.30.0 (2025-09-03)
+--------------------
+
+Features - 4.30.0
+~~~~~~~~~~~~~~~~~
+- Add ``__TOX_ENVIRONMENT_VARIABLE_ORIGINAL_CI``, which passes through the ``CI`` variable if present. This is intended for use by other libraries to detect if tox is running under CI. (:issue:`3442`)
+
+Bugfixes - 4.30.0
+~~~~~~~~~~~~~~~~~
+- Makes the error message more clear when pyproject.toml file cannot be loaded
+  or is missing expected keys. (:issue:`3578`)
+- The :func:`tox_extend_envs() hook <tox.plugin.spec.tox_extend_envs>`
+  recently added in :pull:`3591` turned out to not work well with
+  ``tox run``. It was fixed internally, not to exhaust the underlying
+  iterator on the first use.
+
+  -- by :user:`webknjaz` (:issue:`3598`)
+
 v4.29.0 (2025-08-29)
 --------------------
 
