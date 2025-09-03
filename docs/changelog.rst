@@ -4,6 +4,15 @@ Release History
 
 .. towncrier release notes start
 
+v4.30.1 (2025-09-03)
+--------------------
+
+Bugfixes - 4.30.1
+~~~~~~~~~~~~~~~~~
+- Prevent tox from hanging upon exit due to orphaned build threads and subprocesses when the ``--installpkg`` option is
+  used with *sdist*.
+  - by :user:`vytas7` (:issue:`3530`)
+
 v4.30.0 (2025-09-03)
 --------------------
 
