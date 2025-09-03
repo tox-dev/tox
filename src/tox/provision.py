@@ -146,10 +146,12 @@ def run_provision(name: str, state: State) -> int:
     logging.info("will run in a automatically provisioned python environment under %s", env_python)
     try:
         tox_env.setup()
+        args: list[str] = [str(env_python), "-m", "tox"]
+        args.extend(state.args)
+        outcome = tox_env.execute(cmd=args, stdin=StdinSource.user_only(), show=True, run_id="provision", cwd=Path.cwd())
+        return cast("int", outcome.exit_code)
     except Skip as exception:
         msg = f"cannot provision tox environment {tox_env.conf['env_name']} because {exception}"
         raise HandledError(msg) from exception
-    args: list[str] = [str(env_python), "-m", "tox"]
-    args.extend(state.args)
-    outcome = tox_env.execute(cmd=args, stdin=StdinSource.user_only(), show=True, run_id="provision", cwd=Path.cwd())
-    return cast("int", outcome.exit_code)
+    finally:
+        tox_env.teardown()

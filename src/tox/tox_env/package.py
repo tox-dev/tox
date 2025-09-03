@@ -97,7 +97,8 @@ class PackageToxEnv(ToxEnv, ABC):
         self._envs.add(run_env.conf.name)
 
     def teardown_env(self, conf: EnvConfigSet) -> None:
-        self._envs.remove(conf.name)
+        if conf.name in self._envs:
+            self._envs.remove(conf.name)
         if len(self._envs) == 0:
             self._teardown()
 
