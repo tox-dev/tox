@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import sys
 from textwrap import dedent
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Callable
 
 import pytest
 
@@ -40,4 +40,42 @@ def pkg_with_extras_project(tmp_path_factory: pytest.TempPathFactory) -> Path:
     (tmp_path / "setup.py").write_text("from setuptools import setup; setup()")
     toml = '[build-system]\nrequires=["setuptools"]\nbuild-backend = "setuptools.build_meta"'
     (tmp_path / "pyproject.toml").write_text(toml)
+    return tmp_path
+
+
+@pytest.fixture(scope="session")
+def pkg_with_pdm_backend(
+    tmp_path_factory: pytest.TempPathFactory,
+    pkg_builder: Callable[[Path, Path, list[str], bool], Path],
+) -> Path:
+    tmp_path = tmp_path_factory.mktemp("skeleton")
+
+    pyproject_toml = """
+    [build-system]
+    requires = ["pdm-backend"]
+    build-backend = "pdm.backend"
+
+    [project]
+    name = "skeleton"
+    description = "Just a skeleton for reproducing #3512."
+    version = "0.1.1337"
+    dependencies = [
+        "requests",
+    ]
+
+    [tool.pdm.build]
+    includes = [
+        "skeleton/",
+    ]
+    source-includes = [
+        "tox.ini",
+    ]
+    """
+    (tmp_path / "pyproject.toml").write_text(dedent(pyproject_toml))
+    (tmp_path / "skeleton").mkdir(exist_ok=True)
+    (tmp_path / "skeleton" / "__init__.py").touch()
+
+    dist = tmp_path / "dist"
+    pkg_builder(dist, tmp_path, ["sdist"], False)
+
     return tmp_path

@@ -464,3 +464,24 @@ def test_pyproject_config_settings_editable_legacy(
         "get_requires_for_build_wheel": {"C": "3"},
         "prepare_metadata_for_build_wheel": {"D": "4"},
     }
+
+
+@pytest.mark.usefixtures("enable_pip_pypi_access")
+def test_pyproject_installpkg_pep517_envs(tox_project: ToxProjectCreator, pkg_with_pdm_backend: Path) -> None:
+    # Regression test for #3512
+    tox_ini = """
+    [tox]
+    envlist = dummy1,dummy2
+
+    [testenv:dummy1]
+    commands =
+        python -c print(1)
+
+    [testenv:dummy2]
+    commands =
+        python -c print(42)
+    """
+    sdist = pkg_with_pdm_backend / "dist" / "skeleton-0.1.1337.tar.gz"
+    proj = tox_project({"tox.ini": tox_ini}, base=pkg_with_pdm_backend)
+    result = proj.run("--installpkg", str(sdist))
+    result.assert_success()

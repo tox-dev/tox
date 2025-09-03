@@ -86,6 +86,7 @@ test = [
   "flaky>=3.8.1",
   "hatch-vcs>=0.5",
   "hatchling>=1.27",
+  "pdm-backend",
   "psutil>=7",
   "pytest>=8.4.1",
   "pytest-cov>=6.2.1",
