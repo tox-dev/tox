@@ -7,7 +7,7 @@ import time
 from contextlib import contextmanager
 from pathlib import Path
 from subprocess import check_call
-from typing import TYPE_CHECKING, Callable, Iterator
+from typing import TYPE_CHECKING, Callable, Iterator, Sequence
 from unittest import mock
 from zipfile import ZipFile
 
@@ -16,6 +16,7 @@ from filelock import FileLock
 from packaging.requirements import Requirement
 
 if TYPE_CHECKING:
+    from build import DistributionType
     from devpi_process import Index, IndexServer
 
     from tox.pytest import MonkeyPatch, TempPathFactory, ToxProjectCreator
@@ -102,20 +103,36 @@ def tox_wheels(tox_wheel: Path, tmp_path_factory: TempPathFactory) -> list[Path]
 
 
 @pytest.fixture(scope="session")
-def pypi_index_self(pypi_server: IndexServer, tox_wheels: list[Path], demo_pkg_inline_wheel: Path) -> Index:
-    with elapsed("start devpi and create index"):  # takes around 1s
+def local_pypi_indexes(
+    pypi_server: IndexServer, tox_wheels: list[Path], demo_pkg_inline_wheel: Path
+) -> tuple[Index, Index]:
+    with elapsed("start devpi and create indexes"):  # takes around 1s
+        pypi_server.create_index("mirror", "type=mirror", "mirror_url=https://pypi.org/simple/")
+        mirrored_index = pypi_server.create_index("magic", f"bases={pypi_server.user}/mirror")
         self_index = pypi_server.create_index("self", "volatile=False")
     with elapsed("upload tox and its wheels to devpi"):  # takes around 3.2s on build
+        mirrored_index.upload(*tox_wheels, demo_pkg_inline_wheel)
         self_index.upload(*tox_wheels, demo_pkg_inline_wheel)
-    return self_index
+    return mirrored_index, self_index
+
+
+def _use_pypi_index(pypi_index: Index, monkeypatch: MonkeyPatch) -> None:
+    pypi_index.use()
+    monkeypatch.setenv("PIP_INDEX_URL", pypi_index.url)
+    monkeypatch.setenv("PIP_RETRIES", str(2))
+    monkeypatch.setenv("PIP_TIMEOUT", str(5))
 
 
 @pytest.fixture
-def _pypi_index_self(pypi_index_self: Index, monkeypatch: MonkeyPatch) -> None:
-    pypi_index_self.use()
-    monkeypatch.setenv("PIP_INDEX_URL", pypi_index_self.url)
-    monkeypatch.setenv("PIP_RETRIES", str(2))
-    monkeypatch.setenv("PIP_TIMEOUT", str(5))
+def _pypi_index_mirrored(local_pypi_indexes: tuple[Index, Index], monkeypatch: MonkeyPatch) -> None:
+    pypi_index_mirrored, _ = local_pypi_indexes
+    _use_pypi_index(pypi_index_mirrored, monkeypatch)
+
+
+@pytest.fixture
+def _pypi_index_self(local_pypi_indexes: tuple[Index, Index], monkeypatch: MonkeyPatch) -> None:
+    _, pypi_index_self = local_pypi_indexes
+    _use_pypi_index(pypi_index_self, monkeypatch)
 
 
 def test_provision_requires_nok(tox_project: ToxProjectCreator) -> None:
@@ -254,3 +271,33 @@ def test_provision_default_arguments_exists(tox_project: ToxProjectCreator, subc
     outcome = project.run(subcommand)
     for argument in ["result_json", "hash_seed", "discover", "list_dependencies"]:
         assert hasattr(outcome.state.conf.options, argument)
+
+
+@pytest.mark.integration
+@pytest.mark.usefixtures("_pypi_index_mirrored")
+def test_provision_install_pkg_pep517(
+    tmp_path_factory: TempPathFactory,
+    tox_project: ToxProjectCreator,
+    pkg_builder: Callable[[Path, Path, Sequence[DistributionType], bool], Path],
+) -> None:
+    example = tmp_path_factory.mktemp("example")
+    skeleton = """
+    [build-system]
+    requires = ["setuptools"]
+    build-backend = "setuptools.build_meta"
+    [project]
+    name = "skeleton"
+    version = "0.1.1337"
+    """
+    (example / "pyproject.toml").write_text(skeleton)
+    sdist = pkg_builder(example / "dist", example, ["sdist"], False)
+
+    tox_ini = r"""
+    [tox]
+    requires = demo-pkg-inline
+    [testenv]
+    commands = python -c "print(42)"
+    """
+    project = tox_project({"tox.ini": tox_ini}, base=example)
+    result = project.run("r", "-e", "py", "--installpkg", str(sdist), "--notest")
+    result.assert_success()
