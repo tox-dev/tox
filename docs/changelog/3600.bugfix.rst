@@ -1,4 +1,0 @@
-Previously, when tox ran in an automatically provisioned environment, it could hang waiting for a PEP 517 build backend
-if used in conjunction with the ``--installpkg`` option. This has been fixed by properly tearing down the automatically
-provisioned environment after the tests.
-- by :user:`vytas7`

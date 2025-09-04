@@ -4,6 +4,16 @@ Release History
 
 .. towncrier release notes start
 
+v4.30.2 (2025-09-04)
+--------------------
+
+Bugfixes - 4.30.2
+~~~~~~~~~~~~~~~~~
+- Previously, when tox ran in an automatically provisioned environment, it could hang waiting for a PEP 517 build backend
+  if used in conjunction with the ``--installpkg`` option. This has been fixed by properly tearing down the automatically
+  provisioned environment after the tests.
+  - by :user:`vytas7` (:issue:`3600`)
+
 v4.30.1 (2025-09-03)
 --------------------
 
