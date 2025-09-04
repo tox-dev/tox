@@ -110,7 +110,7 @@ def local_pypi_indexes(
         pypi_server.create_index("mirror", "type=mirror", "mirror_url=https://pypi.org/simple/")
         mirrored_index = pypi_server.create_index("magic", f"bases={pypi_server.user}/mirror")
         self_index = pypi_server.create_index("self", "volatile=False")
-    with elapsed("upload tox and its wheels to devpi"):  # takes around 3.2s on # build
+    with elapsed("upload tox and its wheels to devpi"):  # takes around 3.2s on build
         mirrored_index.upload(*tox_wheels, demo_pkg_inline_wheel)
         self_index.upload(*tox_wheels, demo_pkg_inline_wheel)
     return mirrored_index, self_index
