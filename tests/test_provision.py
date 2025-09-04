@@ -124,13 +124,13 @@ def _use_pypi_index(pypi_index: Index, monkeypatch: MonkeyPatch) -> None:
 
 
 @pytest.fixture
-def _pypi_index_mirrored(local_pypi_indexes: Index, monkeypatch: MonkeyPatch) -> None:
+def _pypi_index_mirrored(local_pypi_indexes: tuple[Index, Index], monkeypatch: MonkeyPatch) -> None:
     pypi_index_mirrored, _ = local_pypi_indexes
     _use_pypi_index(pypi_index_mirrored, monkeypatch)
 
 
 @pytest.fixture
-def _pypi_index_self(local_pypi_indexes: Index, monkeypatch: MonkeyPatch) -> None:
+def _pypi_index_self(local_pypi_indexes: tuple[Index, Index], monkeypatch: MonkeyPatch) -> None:
     _, pypi_index_self = local_pypi_indexes
     _use_pypi_index(pypi_index_self, monkeypatch)
 
