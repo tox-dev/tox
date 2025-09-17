@@ -149,3 +149,9 @@ def build_pkg(dist_dir: Path, of: Path, distributions: Sequence[DistributionType
 @pytest.fixture(scope="session")
 def pkg_builder() -> Callable[[Path, Path, Sequence[DistributionType], bool], Path]:
     return build_pkg
+
+
+@pytest.fixture(scope="session", autouse=True)
+def no_default_config_ini(session_mocker: MockerFixture) -> None:
+    filename = str(uuid4())
+    session_mocker.patch("tox.config.cli.ini.DEFAULT_CONFIG_FILE", Path(filename))
