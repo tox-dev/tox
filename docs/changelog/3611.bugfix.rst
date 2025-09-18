@@ -1,0 +1,2 @@
+Fix ``None`` appearing as the config filename in error output
+when the user's default config file is corrupt. - by :user:`kurtmckee`

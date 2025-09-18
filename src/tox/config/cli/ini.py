@@ -39,7 +39,7 @@ class IniConfig:
                 if self.has_tox_section:
                     self.ini = IniLoader(CORE, parser, overrides=[], core_section=CORE)
             except Exception as exception:  # noqa: BLE001
-                logging.error("failed to read config file %s because %r", config_file, exception)  # noqa: TRY400
+                logging.error("failed to read config file %s because %r", self.config_file, exception)  # noqa: TRY400
                 self.has_config_file = None
 
     def get(self, key: str, of_type: type[Any]) -> Any:
