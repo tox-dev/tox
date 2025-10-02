@@ -216,7 +216,7 @@ class LocalSubProcessExecuteInstance(ExecuteInstance):
         except OSError as exception:
             # We log a nice error message to avout returning opaque error codes,
             # like exit code 2 (filenotfound).
-            logging.error("Exception running subprocess %s", str(exception))  # noqa: TRY400
+            logging.error("Exception running subprocess %s", exception)  # noqa: TRY400
             return LocalSubprocessExecuteFailedStatus(self.options, self._out, self._err, exception.errno)
 
         status = LocalSubprocessExecuteStatus(self.options, self._out, self._err, process)
