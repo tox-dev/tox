@@ -20,7 +20,7 @@ def run(args: Sequence[str] | None = None) -> None:
             result = main(sys.argv[1:] if args is None else args)
     except Exception as exception:
         if isinstance(exception, HandledError):
-            logging.error("%s| %s", type(exception).__name__, str(exception))  # noqa: TRY400
+            logging.error("%s| %s", type(exception).__name__, exception)  # noqa: TRY400
             result = -2
         else:
             raise
