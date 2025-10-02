@@ -4,6 +4,17 @@ Release History
 
 .. towncrier release notes start
 
+v4.30.3 (2025-10-02)
+--------------------
+
+Bugfixes - 4.30.3
+~~~~~~~~~~~~~~~~~
+- Fix incorrect type annotation in ``PythonPathPackageWithDeps.__init__()``
+  where ``deps`` was annotated as ``Sequence[Package]`` but should be
+  ``Sequence[Requirement]`` to match actual runtime usage - by :user:`PreistlyPython` (:issue:`3607`)
+- Fix ``None`` appearing as the config filename in error output
+  when the user's default config file is corrupt. - by :user:`kurtmckee` (:issue:`3611`)
+
 v4.30.2 (2025-09-04)
 --------------------
 
