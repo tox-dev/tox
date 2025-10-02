@@ -28,9 +28,9 @@ class PythonPackage(Package):
 
 
 class PythonPathPackageWithDeps(PathPackage):
-    def __init__(self, path: Path, deps: Sequence[Any]) -> None:
+    def __init__(self, path: Path, deps: Sequence[Requirement]) -> None:
         super().__init__(path=path)
-        self.deps: Sequence[Package] = deps
+        self.deps: Sequence[Requirement] = deps
 
 
 class WheelPackage(PythonPathPackageWithDeps):
