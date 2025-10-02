@@ -1,0 +1,3 @@
+Fix incorrect type annotation in ``PythonPathPackageWithDeps.__init__()``
+where ``deps`` was annotated as ``Sequence[Package]`` but should be
+``Sequence[Requirement]`` to match actual runtime usage - by :user:`PreistlyPython`

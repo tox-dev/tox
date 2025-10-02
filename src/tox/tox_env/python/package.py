@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, Any, Generator, Iterator, List, Sequence, cast
+from typing import TYPE_CHECKING, Generator, Iterator, List, Sequence, cast
 
 from packaging.requirements import Requirement
 
@@ -28,9 +28,9 @@ class PythonPackage(Package):
 
 
 class PythonPathPackageWithDeps(PathPackage):
-    def __init__(self, path: Path, deps: Sequence[Any]) -> None:
+    def __init__(self, path: Path, deps: Sequence[Requirement]) -> None:
         super().__init__(path=path)
-        self.deps: Sequence[Package] = deps
+        self.deps: Sequence[Requirement] = deps
 
 
 class WheelPackage(PythonPathPackageWithDeps):
