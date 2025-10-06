@@ -15,7 +15,7 @@ repos:
       - id: codespell
         additional_dependencies: ["tomli>=2.2.1"]
   - repo: https://github.com/tox-dev/pyproject-fmt
-    rev: "v2.6.0"
+    rev: "v2.7.0"
     hooks:
       - id: pyproject-fmt
   - repo: https://github.com/abravalheri/validate-pyproject
@@ -23,7 +23,7 @@ repos:
     hooks:
       - id: validate-pyproject
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: "v0.13.2"
+    rev: "v0.13.3"
     hooks:
       - id: ruff-check
         args: ["--fix", "--unsafe-fixes", "--exit-non-zero-on-fix"]
