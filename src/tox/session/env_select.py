@@ -6,7 +6,7 @@ from collections import Counter
 from dataclasses import dataclass
 from difflib import get_close_matches
 from itertools import chain
-from typing import TYPE_CHECKING, Dict, Iterable, Iterator, List, cast
+from typing import TYPE_CHECKING, cast
 
 from tox.config.loader.str_convert import StrConvert
 from tox.config.types import EnvList
@@ -19,6 +19,7 @@ from tox.tox_env.runner import RunToxEnv
 
 if TYPE_CHECKING:
     from argparse import ArgumentParser
+    from collections.abc import Iterable, Iterator
 
     from tox.session.state import State
 
@@ -48,7 +49,7 @@ class CliEnv:  # noqa: PLW1641
 
     def __init__(self, value: list[str] | str | None = None) -> None:
         if isinstance(value, str):
-            value = StrConvert().to(value, of_type=List[str], factory=None)
+            value = StrConvert().to(value, of_type=list[str], factory=None)
         self._names: list[str] | None = value
 
     def __iter__(self) -> Iterator[str]:
@@ -157,7 +158,7 @@ class EnvSelector:
         self._journal = self._state._journal  # noqa: SLF001
         self._provision: tuple[bool, str] | None = None
 
-        self._state.conf.core.add_config("labels", Dict[str, EnvList], {}, "core labels")
+        self._state.conf.core.add_config("labels", dict[str, EnvList], {}, "core labels")
         tox_env_filter_regex = getattr(state.conf.options, "skip_env", "").strip()
         self._filter_re = re.compile(tox_env_filter_regex) if tox_env_filter_regex else None
 

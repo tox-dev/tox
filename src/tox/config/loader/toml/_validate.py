@@ -1,11 +1,10 @@
 from __future__ import annotations
 
 from inspect import isclass
+from types import UnionType
 from typing import (
     TYPE_CHECKING,
     Any,
-    Dict,
-    List,
     Literal,
     TypeVar,
     Union,
@@ -22,7 +21,7 @@ if TYPE_CHECKING:
     if sys.version_info >= (3, 11):  # pragma: no cover (py311+)
         from typing import TypeGuard
     else:  # pragma: no cover (py311+)
-        from typing_extensions import TypeGuard
+        from typing import TypeGuard
 
 T = TypeVar("T")
 
@@ -30,7 +29,7 @@ T = TypeVar("T")
 def validate(val: TomlTypes, of_type: type[T]) -> TypeGuard[T]:  # noqa: C901, PLR0912
     casting_to = getattr(of_type, "__origin__", of_type.__class__)
     msg = ""
-    if casting_to in {list, List}:
+    if casting_to in {list, list}:
         entry_type = of_type.__args__[0]  # type: ignore[attr-defined]
         if isinstance(val, list):
             for va in val:
@@ -39,8 +38,8 @@ def validate(val: TomlTypes, of_type: type[T]) -> TypeGuard[T]:  # noqa: C901, P
             msg = f"{val!r} is not list"
     elif isclass(of_type) and issubclass(of_type, Command):
         # first we cast it to list then create commands, so for now validate it as a nested list
-        validate(val, List[str])
-    elif casting_to in {dict, Dict}:
+        validate(val, list[str])
+    elif casting_to in {dict, dict}:
         key_type, value_type = of_type.__args__[0], of_type.__args__[1]  # type: ignore[attr-defined]
         if isinstance(val, dict):
             for va in val:
@@ -49,7 +48,7 @@ def validate(val: TomlTypes, of_type: type[T]) -> TypeGuard[T]:  # noqa: C901, P
                 validate(va, value_type)
         else:
             msg = f"{val!r} is not dictionary"
-    elif casting_to == Union:  # handle Optional values
+    elif casting_to in {Union, UnionType}:  # handle Optional values
         args: list[type[Any]] = of_type.__args__  # type: ignore[attr-defined]
         for arg in args:
             try:

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import os
 from textwrap import indent
-from typing import TYPE_CHECKING, Iterable
+from typing import TYPE_CHECKING
 
 from colorama import Fore
 
@@ -14,6 +14,8 @@ from tox.session.cmd.run.common import env_run_create_flags
 from tox.session.env_select import CliEnv, register_env_select_flags
 
 if TYPE_CHECKING:
+    from collections.abc import Iterable
+
     from tox.config.cli.parser import ToxParser
     from tox.config.sets import ConfigSet
     from tox.session.state import State

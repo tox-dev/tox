@@ -4,7 +4,7 @@ import os
 import sys
 from itertools import chain, combinations
 from textwrap import dedent
-from typing import TYPE_CHECKING, Sequence
+from typing import TYPE_CHECKING
 
 import pytest
 
@@ -12,6 +12,7 @@ from tox.pytest import MonkeyPatch, ToxProjectCreator, check_os_environ
 from tox.report import HandledError
 
 if TYPE_CHECKING:
+    from collections.abc import Sequence
     from pathlib import Path
 
     from pytest_mock import MockerFixture

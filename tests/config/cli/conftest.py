@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Callable
+from typing import TYPE_CHECKING
 
 import pytest
 
@@ -16,6 +16,8 @@ from tox.session.cmd.schema import gen_schema
 from tox.session.cmd.show_config import show_config
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     from tox.session.state import State
 
 

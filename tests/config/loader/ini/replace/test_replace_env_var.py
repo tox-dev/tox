@@ -1,11 +1,13 @@
 from __future__ import annotations
 
 import threading
-from typing import TYPE_CHECKING, Generator
+from typing import TYPE_CHECKING
 
 import pytest
 
 if TYPE_CHECKING:
+    from collections.abc import Generator
+
     from tests.config.loader.conftest import ReplaceOne
     from tox.pytest import LogCaptureFixture, MonkeyPatch
 

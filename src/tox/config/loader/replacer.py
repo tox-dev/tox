@@ -6,7 +6,8 @@ import logging
 import os
 import sys
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, Any, Final, Sequence, Union
+from collections.abc import Sequence
+from typing import TYPE_CHECKING, Any, Final, Union
 
 from tox.config.types import CircularChainError
 from tox.execute.request import shell_cmd

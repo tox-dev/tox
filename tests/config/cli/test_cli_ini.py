@@ -4,7 +4,7 @@ import logging
 import sys
 import textwrap
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Callable
+from typing import TYPE_CHECKING, Any
 from unittest.mock import ANY
 
 import pytest
@@ -19,6 +19,8 @@ from tox.session.env_select import CliEnv
 from tox.util.ci import is_ci
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     from pytest_mock import MockerFixture
 
     from tox.pytest import CaptureFixture, LogCaptureFixture, MonkeyPatch

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Callable
+from typing import TYPE_CHECKING
 
 import pytest
 
@@ -9,6 +9,7 @@ from tox.config.loader.ini import IniLoader
 from tox.config.source.ini_section import IniSection
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
     from configparser import ConfigParser
 
 

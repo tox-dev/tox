@@ -3,7 +3,7 @@ from __future__ import annotations
 import os
 from functools import partial
 from pathlib import Path
-from typing import TYPE_CHECKING, List
+from typing import TYPE_CHECKING
 
 import pytest
 
@@ -74,7 +74,7 @@ def test_config_override_appends_to_list(tox_ini_conf: ToxIniCreator) -> None:
     passenv = foo
     """
     conf = tox_ini_conf(example, override=[Override("testenv.passenv+=bar")]).get_env("testenv")
-    conf.add_config("passenv", of_type=List[str], default=[], desc="desc")
+    conf.add_config("passenv", of_type=list[str], default=[], desc="desc")
     assert conf["passenv"] == ["foo", "bar"]
 
 
@@ -85,13 +85,13 @@ def test_config_override_sequence(tox_ini_conf: ToxIniCreator) -> None:
     """
     overrides = [Override("testenv.passenv=bar"), Override("testenv.passenv+=baz")]
     conf = tox_ini_conf(example, override=overrides).get_env("testenv")
-    conf.add_config("passenv", of_type=List[str], default=[], desc="desc")
+    conf.add_config("passenv", of_type=list[str], default=[], desc="desc")
     assert conf["passenv"] == ["bar", "baz"]
 
 
 def test_config_override_appends_to_empty_list(tox_ini_conf: ToxIniCreator) -> None:
     conf = tox_ini_conf("[testenv]", override=[Override("testenv.passenv+=bar")]).get_env("testenv")
-    conf.add_config("passenv", of_type=List[str], default=[], desc="desc")
+    conf.add_config("passenv", of_type=list[str], default=[], desc="desc")
     assert conf["passenv"] == ["bar"]
 
 

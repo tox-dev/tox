@@ -8,7 +8,7 @@ import textwrap
 import threading
 import time
 from collections import OrderedDict
-from typing import IO, TYPE_CHECKING, NamedTuple, Sequence, TypeVar
+from typing import IO, TYPE_CHECKING, NamedTuple, TypeVar
 
 from colorama import Fore
 
@@ -18,6 +18,7 @@ else:  # pragma: <3.11 cover
     from typing_extensions import Self
 
 if TYPE_CHECKING:
+    from collections.abc import Sequence
     from types import TracebackType
     from typing import Any, ClassVar
 

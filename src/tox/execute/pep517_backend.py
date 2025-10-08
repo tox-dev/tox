@@ -5,7 +5,7 @@ from __future__ import annotations
 import time
 from subprocess import TimeoutExpired
 from threading import Lock
-from typing import TYPE_CHECKING, Sequence
+from typing import TYPE_CHECKING
 
 from pyproject_api import BackendFailed
 
@@ -16,6 +16,7 @@ from tox.execute.request import StdinSource
 from tox.execute.stream import SyncWrite
 
 if TYPE_CHECKING:
+    from collections.abc import Sequence
     from pathlib import Path
     from types import TracebackType
 

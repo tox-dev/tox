@@ -3,13 +3,16 @@ from __future__ import annotations
 import sys
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Callable, Generator, Iterator, Mapping, Sequence, TypeVar, cast
+from typing import TYPE_CHECKING, Any, TypeVar, cast, overload
 
 from .of_type import ConfigConstantDefinition, ConfigDefinition, ConfigDynamicDefinition, ConfigLoadArgs
 from .set_env import SetEnv
 from .types import EnvList
 
 if TYPE_CHECKING:
+    from collections.abc import Callable, Generator, Iterator, Mapping, Sequence
+    from types import UnionType
+
     from tox.config.loader.api import Loader
     from tox.config.main import Config
 
@@ -46,10 +49,32 @@ class ConfigSet(ABC):
     def mark_finalized(self) -> None:
         self._final = True
 
-    def add_config(  # noqa: PLR0913
+    @overload
+    def add_config(
         self,
         keys: str | Sequence[str],
         of_type: type[V],
+        default: Callable[[Config, str | None], V] | V,
+        desc: str,
+        post_process: Callable[[V], V] | None = None,
+        factory: Factory[Any] | None = None,
+    ) -> ConfigDynamicDefinition[V]: ...
+
+    @overload
+    def add_config(
+        self,
+        keys: str | Sequence[str],
+        of_type: UnionType,
+        default: Callable[[Config, str | None], V | None] | V | None,
+        desc: str,
+        post_process: Callable[[V | None], V | None] | None = None,
+        factory: Factory[Any] | None = None,
+    ) -> ConfigDynamicDefinition[V | None]: ...
+
+    def add_config(  # noqa: PLR0913
+        self,
+        keys: str | Sequence[str],
+        of_type: type[V] | UnionType,
         default: Callable[[Config, str | None], V] | V,
         desc: str,
         post_process: Callable[[V], V] | None = None,
@@ -63,8 +88,8 @@ class ConfigSet(ABC):
         :param default: the default value of the config value
         :param desc: a help message describing the configuration
         :param post_process: a callback to post-process the configuration value after it has been loaded
-        :param factory: factory method used to build contained objects (if ``of_type`` is a container type it
-          should perform the contained item creation, otherwise creates objects that match the type)
+        :param factory: factory method used to build contained objects (if ``of_type`` is a container type it should
+            perform the contained item creation, otherwise creates objects that match the type)
         :return: the new dynamic config definition
         """
         if self._final:

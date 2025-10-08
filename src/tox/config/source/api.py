@@ -3,11 +3,12 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, Any, Iterator, List
+from typing import TYPE_CHECKING, Any
 
 from tox.config.loader.section import Section
 
 if TYPE_CHECKING:
+    from collections.abc import Iterator
     from pathlib import Path
 
     from tox.config.loader.api import Loader, OverrideMap
@@ -57,7 +58,7 @@ class Source(ABC):
         if base is not None:
             conf.add_config(
                 keys="base",
-                of_type=List[str],
+                of_type=list[str],
                 desc="inherit missing keys from these sections",
                 default=base,
             )

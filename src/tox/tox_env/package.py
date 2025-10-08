@@ -6,13 +6,15 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 from threading import RLock
 from types import MethodType
-from typing import TYPE_CHECKING, Any, Callable, Generator, Iterator, cast
+from typing import TYPE_CHECKING, Any, cast
 
 from filelock import FileLock
 
 from .api import ToxEnv, ToxEnvCreateArgs
 
 if TYPE_CHECKING:
+    from collections.abc import Callable, Generator, Iterator
+
     from tox.config.main import Config
     from tox.config.sets import EnvConfigSet
 

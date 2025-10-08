@@ -4,11 +4,13 @@ import os
 from collections import OrderedDict, defaultdict
 from itertools import chain, tee
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Iterable, Iterator, Sequence, TypeVar
+from typing import TYPE_CHECKING, Any, TypeVar
 
 from .sets import ConfigSet, CoreConfigSet, EnvConfigSet
 
 if TYPE_CHECKING:
+    from collections.abc import Iterable, Iterator, Sequence
+
     from tox.config.loader.api import Loader, OverrideMap
 
     from .cli.parser import Parsed

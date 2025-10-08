@@ -14,6 +14,7 @@ from tox.report import HandledError
 
 if TYPE_CHECKING:
     from configparser import ConfigParser, SectionProxy
+    from types import UnionType
 
     from tox.config.loader.convert import Factory
     from tox.config.loader.section import Section
@@ -60,7 +61,7 @@ class IniLoader(StrConvert, Loader[str]):
     def build(  # noqa: PLR0913
         self,
         key: str,
-        of_type: type[V],
+        of_type: type[V] | UnionType,
         factory: Factory[V],
         conf: Config | None,
         raw: str,

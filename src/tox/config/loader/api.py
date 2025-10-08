@@ -2,7 +2,8 @@ from __future__ import annotations
 
 from abc import abstractmethod
 from argparse import ArgumentTypeError
-from typing import TYPE_CHECKING, Any, List, Mapping, TypeVar
+from collections.abc import Mapping
+from typing import TYPE_CHECKING, Any, TypeVar
 
 from tox.plugin import impl
 from tox.tox_env.python.pip.req_file import PythonDeps
@@ -11,6 +12,8 @@ from .convert import Convert, Factory
 from .str_convert import StrConvert
 
 if TYPE_CHECKING:
+    from types import UnionType
+
     from tox.config.cli.parser import ToxParser
     from tox.config.main import Config
 
@@ -70,7 +73,7 @@ class ConfigLoadArgs:
         return ConfigLoadArgs(self.chain.copy(), self.name, self.env_name)
 
 
-OverrideMap = Mapping[str, List[Override]]
+OverrideMap = Mapping[str, list[Override]]
 
 T = TypeVar("T")
 V = TypeVar("V")
@@ -119,7 +122,7 @@ class Loader(Convert[T]):
     def load(
         self,
         key: str,
-        of_type: type[V],
+        of_type: type[V] | UnionType,
         factory: Factory[V],
         conf: Config | None,
         args: ConfigLoadArgs,
@@ -169,7 +172,7 @@ class Loader(Convert[T]):
     def build(  # noqa: PLR0913
         self,
         key: str,  # noqa: ARG002
-        of_type: type[V],
+        of_type: type[V] | UnionType,
         factory: Factory[V],
         conf: Config | None,  # noqa: ARG002
         raw: T,

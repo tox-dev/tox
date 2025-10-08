@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from abc import ABC
 from functools import partial
-from typing import TYPE_CHECKING, Set
+from typing import TYPE_CHECKING
 
 from packaging.utils import canonicalize_name
 
@@ -42,7 +42,7 @@ class PythonRun(Python, RunToxEnv, ABC):
         )
         self.conf.add_config(
             keys=["dependency_groups"],
-            of_type=Set[str],
+            of_type=set[str],
             default=set(),
             desc="dependency groups to install of the target package",
             post_process=_normalize_extras,
@@ -144,7 +144,7 @@ def add_skip_missing_interpreters_to_core(core: CoreConfigSet, options: Parsed) 
 def add_extras_to_env(conf: EnvConfigSet) -> None:
     conf.add_config(
         keys=["extras"],
-        of_type=Set[str],
+        of_type=set[str],
         default=set(),
         desc="extras to install of the target package",
         post_process=_normalize_extras,

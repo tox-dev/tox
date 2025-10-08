@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any, Dict, List, Literal, Optional, TypeVar
+from typing import Any, Literal, TypeVar
 
 import pytest
 
@@ -59,36 +59,36 @@ def test_toml_loader_bool_nok() -> None:
 
 
 def test_toml_loader_list_ok() -> None:
-    assert perform_load(["a"], List[str]) == ["a"]
+    assert perform_load(["a"], list[str]) == ["a"]
 
 
 def test_toml_loader_list_nok() -> None:
     with pytest.raises(TypeError, match=r"{} is not list"):
-        perform_load({}, List[str])
+        perform_load({}, list[str])
 
 
 def test_toml_loader_list_nok_element() -> None:
     with pytest.raises(TypeError, match="2 is not of type 'str'"):
-        perform_load(["a", 2], List[str])
+        perform_load(["a", 2], list[str])
 
 
 def test_toml_loader_dict_ok() -> None:
-    assert perform_load({"a": "1"}, Dict[str, str]) == {"a": "1"}
+    assert perform_load({"a": "1"}, dict[str, str]) == {"a": "1"}
 
 
 def test_toml_loader_dict_nok() -> None:
     with pytest.raises(TypeError, match=r"{'a'} is not dictionary"):
-        perform_load({"a"}, Dict[str, str])
+        perform_load({"a"}, dict[str, str])
 
 
 def test_toml_loader_dict_nok_key() -> None:
     with pytest.raises(TypeError, match="1 is not of type 'str'"):
-        perform_load({"a": 1, 1: "2"}, Dict[str, int])
+        perform_load({"a": 1, 1: "2"}, dict[str, int])
 
 
 def test_toml_loader_dict_nok_value() -> None:
     with pytest.raises(TypeError, match="'2' is not of type 'int'"):
-        perform_load({"a": 1, "b": "2"}, Dict[str, int])
+        perform_load({"a": 1, "b": "2"}, dict[str, int])
 
 
 def test_toml_loader_path_ok() -> None:
@@ -101,7 +101,7 @@ def test_toml_loader_path_nok() -> None:
 
 
 def test_toml_loader_command_ok() -> None:
-    commands = perform_load([["a", "b"], ["c"]], List[Command])
+    commands = perform_load([["a", "b"], ["c"]], list[Command])
     assert isinstance(commands, list)
     assert len(commands) == 2
     assert all(isinstance(i, Command) for i in commands)
@@ -112,7 +112,7 @@ def test_toml_loader_command_ok() -> None:
 
 def test_toml_loader_command_nok() -> None:
     with pytest.raises(TypeError, match="1 is not of type 'str'"):
-        perform_load([["a", 1]], List[Command])
+        perform_load([["a", 1]], list[Command])
 
 
 def test_toml_loader_env_list_ok() -> None:
@@ -127,18 +127,18 @@ def test_toml_loader_env_list_nok() -> None:
 
 
 def test_toml_loader_list_optional_ok() -> None:
-    assert perform_load(["a", None], List[Optional[str]]) == ["a", None]
+    assert perform_load(["a", None], list[str | None]) == ["a", None]
 
 
 def test_toml_loader_list_optional_nok() -> None:
     with pytest.raises(TypeError, match="1 is not union of str, NoneType"):
-        perform_load(["a", None, 1], List[Optional[str]])
+        perform_load(["a", None, 1], list[str | None])
 
 
 def test_toml_loader_list_literal_ok() -> None:
-    assert perform_load(["a", "b"], List[Literal["a", "b"]]) == ["a", "b"]
+    assert perform_load(["a", "b"], list[Literal["a", "b"]]) == ["a", "b"]
 
 
 def test_toml_loader_list_literal_nok() -> None:
     with pytest.raises(TypeError, match="'c' is not one of literal 'a','b'"):
-        perform_load(["a", "c"], List[Literal["a", "b"]])
+        perform_load(["a", "c"], list[Literal["a", "b"]])

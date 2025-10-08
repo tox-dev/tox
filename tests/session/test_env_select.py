@@ -37,7 +37,6 @@ CURRENT_PY_ENV = f"py{sys.version_info[0]}{sys.version_info[1]}"  # e.g. py310
 def test_clienv(user_input: str, env_names: tuple[str], is_all: bool, is_default: bool) -> None:
     ce = CliEnv(user_input)
     assert (ce.is_all, ce.is_default_list, tuple(ce)) == (is_all, is_default, tuple(env_names))
-    assert ce is not ce.is_default_list
     assert CliEnv(user_input) == ce
 
 

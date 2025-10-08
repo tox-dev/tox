@@ -5,7 +5,7 @@ from __future__ import annotations
 import sys
 from argparse import SUPPRESS, Action, ArgumentParser, Namespace
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Sequence, cast
+from typing import TYPE_CHECKING, Any, cast
 
 import tox
 from tox.plugin import impl
@@ -13,6 +13,8 @@ from tox.plugin.manager import MANAGER
 from tox.version import version
 
 if TYPE_CHECKING:
+    from collections.abc import Sequence
+
     from tox.config.cli.parser import HelpFormatter, ToxParser
 
 

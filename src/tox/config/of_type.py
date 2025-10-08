@@ -4,12 +4,15 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from itertools import product
-from typing import TYPE_CHECKING, Callable, Generic, Iterable, TypeVar, cast
+from typing import TYPE_CHECKING, Generic, TypeVar, cast
 
 from tox.config.loader.api import ConfigLoadArgs, Loader
 from tox.config.types import CircularChainError
 
 if TYPE_CHECKING:
+    from collections.abc import Callable, Iterable
+    from types import UnionType
+
     from tox.config.loader.convert import Factory
     from tox.config.main import Config  # pragma: no cover
 
@@ -74,7 +77,7 @@ class ConfigDynamicDefinition(ConfigDefinition[T]):  # noqa: PLW1641
         self,
         keys: Iterable[str],
         desc: str,
-        of_type: type[T],
+        of_type: type[T] | UnionType,
         default: Callable[[Config, str | None], T] | T,
         post_process: Callable[[T], T] | None = None,
         factory: Factory[T] | None = None,

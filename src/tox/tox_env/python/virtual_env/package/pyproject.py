@@ -9,7 +9,7 @@ from contextlib import contextmanager
 from itertools import chain
 from pathlib import Path
 from threading import RLock
-from typing import TYPE_CHECKING, Any, Dict, Generator, Iterator, Literal, NoReturn, Optional, Sequence, cast
+from typing import TYPE_CHECKING, Any, Literal, NoReturn, cast
 
 from cachetools import cached
 from packaging.requirements import Requirement
@@ -38,6 +38,8 @@ from tox.util.file_view import create_session_view
 from .util import dependencies_with_extras, dependencies_with_extras_from_markers
 
 if TYPE_CHECKING:
+    from collections.abc import Generator, Iterator, Sequence
+
     from tox.config.sets import EnvConfigSet
     from tox.execute.api import ExecuteStatus
     from tox.tox_env.api import ToxEnvCreateArgs
@@ -52,7 +54,7 @@ if sys.version_info >= (3, 11):  # pragma: no cover (py311+)
 else:  # pragma: no cover (py311+)
     import tomli as tomllib
 
-ConfigSettings = Optional[Dict[str, Any]]
+ConfigSettings = dict[str, Any] | None
 
 
 class ToxBackendFailed(Fail, BackendFailed):
@@ -170,7 +172,7 @@ class Pep517VenvPackager(PythonPackageToxEnv, ABC):
         for key in keys.get(build_type, []):
             self.conf.add_config(
                 keys=[f"config_settings_{key}"],
-                of_type=Dict[str, str],
+                of_type=dict[str, str],
                 default=None,  # type: ignore[arg-type]
                 desc=f"config settings passed to the {key} backend API endpoint",
             )

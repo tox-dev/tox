@@ -8,7 +8,7 @@ import os
 import shutil
 import sys
 from subprocess import DEVNULL, PIPE, TimeoutExpired
-from typing import TYPE_CHECKING, Any, Generator, Sequence
+from typing import TYPE_CHECKING, Any
 
 from tox.execute.api import Execute, ExecuteInstance, ExecuteOptions, ExecuteStatus
 from tox.execute.request import ExecuteRequest, StdinSource
@@ -17,6 +17,7 @@ from tox.tox_env.errors import Fail
 
 if TYPE_CHECKING:
     import io
+    from collections.abc import Generator, Sequence
     from types import TracebackType
 
     from tox.execute.stream import SyncWrite

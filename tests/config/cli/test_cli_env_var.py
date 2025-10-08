@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Callable
+from typing import TYPE_CHECKING
 from unittest.mock import ANY
 
 import pytest
@@ -11,6 +11,8 @@ from tox.session.env_select import CliEnv
 from tox.util.ci import is_ci
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     from tox.pytest import CaptureFixture, LogCaptureFixture, MonkeyPatch
     from tox.session.state import State
 

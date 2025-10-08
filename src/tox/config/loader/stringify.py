@@ -1,7 +1,8 @@
 from __future__ import annotations
 
+from collections.abc import Mapping, Sequence
 from pathlib import Path
-from typing import Any, Mapping, Sequence, Set
+from typing import Any
 
 from tox.config.set_env import SetEnv
 from tox.config.types import Command, EnvList
@@ -23,7 +24,7 @@ def stringify(value: Any) -> tuple[str, bool]:  # noqa: PLR0911
         return "\n".join(f"{stringify(k)[0]}={stringify(v)[0]}" for k, v in value.items()), True
     if isinstance(value, Sequence):
         return "\n".join(stringify(i)[0] for i in value), True
-    if isinstance(value, Set):  # sort it to make it stable
+    if isinstance(value, set):  # sort it to make it stable
         return "\n".join(sorted(stringify(i)[0] for i in value)), True
     if isinstance(value, EnvList):
         return "\n".join(e for e in value.envs), True

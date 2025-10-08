@@ -11,9 +11,12 @@ from io import BytesIO, TextIOWrapper
 from pathlib import Path
 from threading import Thread, current_thread, local
 from threading import enumerate as enumerate_threads
-from typing import IO, ClassVar, Iterator, Tuple
+from typing import IO, TYPE_CHECKING, ClassVar
 
 from colorama import Fore, Style, init
+
+if TYPE_CHECKING:
+    from collections.abc import Iterator
 
 LEVELS = {
     0: logging.CRITICAL,
@@ -26,7 +29,7 @@ LEVELS = {
 
 MAX_LEVEL = max(LEVELS.keys())
 LOGGER = logging.getLogger()
-OutErr = Tuple[TextIOWrapper, TextIOWrapper]
+OutErr = tuple[TextIOWrapper, TextIOWrapper]
 
 
 class _LogThreadLocal(local):

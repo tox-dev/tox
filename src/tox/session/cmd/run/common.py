@@ -10,7 +10,7 @@ from concurrent.futures import CancelledError, Future, ThreadPoolExecutor, as_co
 from pathlib import Path
 from signal import SIGINT, Handlers, signal
 from threading import Event, Thread
-from typing import TYPE_CHECKING, Any, Iterator, Optional, Sequence, cast
+from typing import TYPE_CHECKING, Any, cast
 
 from colorama import Fore
 
@@ -21,6 +21,8 @@ from tox.util.graph import stable_topological_sort
 from tox.util.spinner import MISS_DURATION, Spinner
 
 if TYPE_CHECKING:
+    from collections.abc import Iterator, Sequence
+
     from tox.config.types import EnvList
     from tox.session.state import State
     from tox.tox_env.api import ToxEnv
@@ -91,7 +93,7 @@ def env_run_create_flags(parser: ArgumentParser, mode: str) -> None:
             "--installpkg",
             help="use specified package for installation into venv, instead of packaging the project",
             default=None,
-            of_type=Optional[Path],
+            of_type=Path | None,
             action=InstallPackageAction,
             dest="install_pkg",
         )

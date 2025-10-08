@@ -1,9 +1,12 @@
 from __future__ import annotations
 
 from collections import OrderedDict
-from typing import Iterator, Sequence
+from typing import TYPE_CHECKING
 
 from tox.execute.request import shell_cmd
+
+if TYPE_CHECKING:
+    from collections.abc import Iterator, Sequence
 
 
 class CircularChainError(ValueError):
