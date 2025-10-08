@@ -24,7 +24,8 @@ if TYPE_CHECKING:
 company, name = "tox-dev", "tox"
 release, version = __version__, ".".join(__version__.split(".")[:2])
 copyright = f"{company}"  # noqa: A001
-master_doc, source_suffix = "index", ".rst"
+master_doc = "index"
+source_suffix = {".rst": "restructuredtext"}
 
 html_theme = "furo"
 html_title, html_last_updated_fmt = "tox", "%Y-%m-%dT%H:%M:%S"
