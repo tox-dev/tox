@@ -23,6 +23,7 @@ jobs:
       fail-fast: false
       matrix:
         py:
+          - "3.14t"
           - "3.14"
           - "3.13"
           - "3.12"
@@ -89,7 +90,7 @@ jobs:
         shell: bash
         run: echo "$USERPROFILE/.local/bin" >> $GITHUB_PATH
       - name: Install tox@self
-        run: uv tool install --python-preference only-managed --python 3.13 tox@.
+        run: uv tool install --python-preference only-managed --python 3.14t tox@.
       - name: Setup check suite
         run: tox r -vv --notest --skip-missing-interpreters false -e ${{ matrix.tox_env }}
       - name: Run check for ${{ matrix.tox_env }}
