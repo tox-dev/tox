@@ -2,8 +2,9 @@ from __future__ import annotations
 
 import re
 from collections import OrderedDict
+from collections.abc import Callable
 from pathlib import Path
-from typing import TYPE_CHECKING, Callable, Dict, Optional, Set, TypeVar
+from typing import TYPE_CHECKING, TypeVar
 
 import pytest
 
@@ -46,7 +47,7 @@ def test_config_path(conf_builder: ConfBuilder) -> None:
 
 def test_config_set(conf_builder: ConfBuilder) -> None:
     config_set = conf_builder("set = 1\n 2\n 3")
-    config_set.add_config(keys="set", of_type=Set[int], default=set(), desc="set")
+    config_set.add_config(keys="set", of_type=set[int], default=set(), desc="set")
     set_materialize = config_set["set"]
     assert set_materialize == {1, 2, 3}
 
@@ -55,7 +56,7 @@ def test_config_optional_none(conf_builder: ConfBuilder) -> None:
     config_set = conf_builder("")
     config_set.add_config(
         keys="optional_none",
-        of_type=Optional[int],  # type: ignore[arg-type]
+        of_type=int | None,
         default=None,
         desc="optional_none",
     )
@@ -65,7 +66,7 @@ def test_config_optional_none(conf_builder: ConfBuilder) -> None:
 
 def test_config_dict(conf_builder: ConfBuilder) -> None:
     config_set = conf_builder("dict = a=1\n  b=2\n  c=3")
-    config_set.add_config(keys="dict", of_type=Dict[str, int], default={}, desc="dict")
+    config_set.add_config(keys="dict", of_type=dict[str, int], default={}, desc="dict")
     dict_val = config_set["dict"]
     assert dict_val == OrderedDict([("a", 1), ("b", 2), ("c", 3)])
 
@@ -82,7 +83,7 @@ def test_config_bad_type(conf_builder: ConfBuilder) -> None:
 def test_config_bad_dict(conf_builder: ConfBuilder) -> None:
     config_set = conf_builder("bad_dict = something")
 
-    config_set.add_config(keys="bad_dict", of_type=Dict[str, str], default={}, desc="bad_dict")
+    config_set.add_config(keys="bad_dict", of_type=dict[str, str], default={}, desc="bad_dict")
     with pytest.raises(TypeError) as context:
         assert config_set["bad_dict"]
     assert str(context.value) == "dictionary lines must be of form key=value, found 'something'"

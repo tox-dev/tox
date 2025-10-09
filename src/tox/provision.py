@@ -8,7 +8,7 @@ import logging
 import sys
 from importlib.metadata import PackageNotFoundError, distribution
 from pathlib import Path
-from typing import TYPE_CHECKING, List, cast
+from typing import TYPE_CHECKING, cast
 
 from packaging.requirements import Requirement
 from packaging.utils import canonicalize_name
@@ -76,7 +76,7 @@ def provision(state: State) -> int | bool:
 
     state.conf.core.add_config(
         keys="requires",
-        of_type=List[Requirement],
+        of_type=list[Requirement],
         default=[],
         desc="Name of the virtual environment used to provision a tox.",
         post_process=add_tox_requires_min_version,

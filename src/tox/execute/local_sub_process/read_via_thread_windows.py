@@ -6,9 +6,12 @@ import _overlapped  # type: ignore[import]  # pragma: win32 cover # noqa: PLC270
 import logging  # pragma: win32 cover
 from asyncio.windows_utils import BUFSIZE  # type: ignore[attr-defined] # pragma: win32 cover
 from time import sleep  # pragma: win32 cover
-from typing import Callable  # pragma: win32 cover
+from typing import TYPE_CHECKING
 
 from .read_via_thread import ReadViaThread  # pragma: win32 cover
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 # mypy: warn-unused-ignores=false
 

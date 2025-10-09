@@ -28,7 +28,6 @@ jobs:
           - "3.12"
           - "3.11"
           - "3.10"
-          - "3.9"
         os:
           - ubuntu-24.04
           - windows-2025
@@ -66,6 +65,7 @@ jobs:
       matrix:
         tox_env:
           - type
+          - type-3.10
           - dev
           - docs
           - pkg_meta
@@ -89,7 +89,10 @@ jobs:
         shell: bash
         run: echo "$USERPROFILE/.local/bin" >> $GITHUB_PATH
       - name: Install tox@self
-        run: uv tool install --python-preference only-managed --python 3.13 tox@.
+        run: uv tool install --python-preference only-managed --python 3.14 tox@.
+      - name: Install Python 3.10 for type-3.10
+        if: matrix.tox_env == 'type-3.10'
+        run: uv python install 3.10
       - name: Setup check suite
         run: tox r -vv --notest --skip-missing-interpreters false -e ${{ matrix.tox_env }}
       - name: Run check for ${{ matrix.tox_env }}

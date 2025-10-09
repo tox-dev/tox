@@ -5,7 +5,7 @@ import sys
 from pathlib import Path
 from textwrap import dedent
 from types import ModuleType
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Set, TypeVar, Union
+from typing import TYPE_CHECKING, Any, Optional, TypeVar, Union
 
 import pytest
 
@@ -21,37 +21,43 @@ from typing import Literal
 @pytest.mark.parametrize(
     ("raw", "value", "of_type"),
     [
-        ("true", True, bool),
-        ("false", False, bool),
-        ("True", True, bool),
-        ("False", False, bool),
-        ("TruE", True, bool),
-        ("FalsE", False, bool),
-        ("1", True, bool),
-        ("0", False, bool),
-        ("1", 1, int),
-        ("0", 0, int),
-        ("+1", 1, int),
-        ("-1", -1, int),
-        ("1.1", 1.1, float),
-        ("0.1", 0.1, float),
-        ("+1.1", 1.1, float),
-        ("-1.1", -1.1, float),
-        ("magic", "magic", str),
-        ("1", {"1"}, Set[str]),
-        ("1", [1], List[int]),
-        ("1=2", {1: 2}, Dict[int, int]),
-        ("a=1\n\nc=2", {"a": 1, "c": 2}, Dict[str, int]),
-        ("a", Path("a"), Path),
-        ("a", Command(["a"]), Command),
-        ("a,b", EnvList(["a", "b"]), EnvList),
-        ("", None, Optional[int]),
-        ("1", 1, Optional[int]),
-        ("", None, Optional[str]),
-        ("1", "1", Optional[str]),
-        ("", None, Optional[List[str]]),
-        ("1,2", ["1", "2"], Optional[List[str]]),
-        ("1", "1", Literal["1", "2"]),
+        pytest.param("true", True, bool, id="str_true_to_bool"),
+        pytest.param("false", False, bool, id="str_false_to_bool"),
+        pytest.param("True", True, bool, id="str_True_to_bool"),
+        pytest.param("False", False, bool, id="str_False_to_bool"),
+        pytest.param("TruE", True, bool, id="str_TruE_to_bool"),
+        pytest.param("FalsE", False, bool, id="str_FalsE_to_bool"),
+        pytest.param("1", True, bool, id="str_1_to_bool"),
+        pytest.param("0", False, bool, id="str_0_to_bool"),
+        pytest.param("1", 1, int, id="str_1_to_int"),
+        pytest.param("0", 0, int, id="str_0_to_int"),
+        pytest.param("+1", 1, int, id="str_plus1_to_int"),
+        pytest.param("-1", -1, int, id="str_minus1_to_int"),
+        pytest.param("1.1", 1.1, float, id="str_1.1_to_float"),
+        pytest.param("0.1", 0.1, float, id="str_0.1_to_float"),
+        pytest.param("+1.1", 1.1, float, id="str_plus1.1_to_float"),
+        pytest.param("-1.1", -1.1, float, id="str_minus1.1_to_float"),
+        pytest.param("magic", "magic", str, id="str_magic_to_str"),
+        pytest.param("1", {"1"}, set[str], id="str_1_to_set_str"),
+        pytest.param("1", [1], list[int], id="str_1_to_list_int"),
+        pytest.param("1=2", {1: 2}, dict[int, int], id="str_1eq2_to_dict_int_int"),
+        pytest.param("a=1\n\nc=2", {"a": 1, "c": 2}, dict[str, int], id="str_multiline_dict_str_int"),
+        pytest.param("a", Path("a"), Path, id="str_a_to_path"),
+        pytest.param("a", Command(["a"]), Command, id="str_a_to_command"),
+        pytest.param("a,b", EnvList(["a", "b"]), EnvList, id="str_a_b_to_envlist"),
+        pytest.param("", None, Optional[int], id="empty_to_optional_int"),  # noqa: UP045
+        pytest.param("1", 1, Optional[int], id="str_1_to_optional_int"),  # noqa: UP045
+        pytest.param("", None, Optional[str], id="empty_to_optional_str"),  # noqa: UP045
+        pytest.param("1", "1", Optional[str], id="str_1_to_optional_str"),  # noqa: UP045
+        pytest.param("", None, Optional[list[str]], id="empty_to_optional_list_str"),  # noqa: UP045
+        pytest.param("1,2", ["1", "2"], Optional[list[str]], id="str_1_2_to_optional_list_str"),  # noqa: UP045
+        pytest.param("", None, int | None, id="empty_to_int_or_none"),
+        pytest.param("1", 1, int | None, id="str_1_to_int_or_none"),
+        pytest.param("", None, str | None, id="empty_to_str_or_none"),
+        pytest.param("1", "1", str | None, id="str_1_to_str_or_none"),
+        pytest.param("", None, list[str] | None, id="empty_to_list_str_or_none"),
+        pytest.param("1,2", ["1", "2"], list[str] | None, id="str_1_2_to_list_str_or_none"),
+        pytest.param("1", "1", Literal["1", "2"], id="str_1_to_literal_1_2"),
     ],
 )
 def test_str_convert_ok(raw: str, value: Any, of_type: type[Any]) -> None:
@@ -59,28 +65,26 @@ def test_str_convert_ok(raw: str, value: Any, of_type: type[Any]) -> None:
     assert result == value
 
 
-# Tests that can work only with py39 or newer due to type not being subscriptible before
-if sys.version_info >= (3, 9):
-
-    @pytest.mark.parametrize(
-        ("raw", "value", "of_type"),
-        [
-            ("", None, Optional[list[str]]),
-            ("1,2", ["1", "2"], Optional[list[str]]),
-        ],
-    )
-    def test_str_convert_ok_py39(raw: str, value: Any, of_type: type[Any]) -> None:
-        result = StrConvert().to(raw, of_type, None)
-        assert result == value
-
-
 @pytest.mark.parametrize(
     ("raw", "of_type", "exc_type", "msg"),
     [
-        ("a", TypeVar, TypeError, r"a cannot cast to .*typing.TypeVar.*"),
-        ("3", Literal["1", "2"], ValueError, r"3 must be one of \('1', '2'\)"),
-        ("3", Union[str, int], TypeError, r"3 cannot cast to (typing.Union\[str, int\]|str \| int)"),
-        ("", Command, ValueError, r"attempting to parse '' into a command failed"),
+        pytest.param("a", TypeVar, TypeError, r"a cannot cast to .*typing.TypeVar.*", id="fail_typevar"),
+        pytest.param("3", Literal["1", "2"], ValueError, r"3 must be one of \('1', '2'\)", id="fail_literal_1_2"),
+        pytest.param(
+            "3",
+            Union[str, int],  # noqa: UP007
+            TypeError,
+            r"3 cannot cast to (typing.Union\[str, int\]|str \| int)",
+            id="fail_union_str_int",
+        ),
+        pytest.param(
+            "3",
+            str | int,
+            TypeError,
+            r"3 cannot cast to (typing.Union\[str, int\]|str \| int)",
+            id="fail_union_bar_str_int",
+        ),
+        pytest.param("", Command, ValueError, r"attempting to parse '' into a command failed", id="fail_empty_command"),
     ],
 )
 def test_str_convert_nok(raw: str, of_type: type[Any], msg: str, exc_type: type[Exception]) -> None:

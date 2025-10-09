@@ -1,8 +1,8 @@
 from __future__ import annotations
 
+from collections.abc import Callable, Iterator, Mapping
 from functools import reduce
 from pathlib import Path
-from typing import Callable, Iterator, Mapping
 
 from tox.config.loader.api import ConfigLoadArgs
 from tox.tox_env.errors import Fail

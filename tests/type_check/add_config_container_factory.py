@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from typing import List
-
 from tox.config.sets import ConfigSet
 
 
@@ -14,7 +12,7 @@ class EnvDockerConfigSet(ConfigSet):
 
         self.add_config(
             keys=["k"],
-            of_type=List[str],
+            of_type=list[str],
             default=[],
             desc="desc",
             factory=factory,

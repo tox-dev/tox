@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, Generator, Iterator, List, Sequence, cast
+from typing import TYPE_CHECKING, cast
 
 from packaging.requirements import Requirement
 
@@ -13,6 +13,7 @@ from tox.tox_env.package import Package, PackageToxEnv, PathPackage
 from .api import NoInterpreter, Python
 
 if TYPE_CHECKING:
+    from collections.abc import Generator, Iterator, Sequence
     from pathlib import Path
 
     from tox.config.main import Config
@@ -69,7 +70,7 @@ class PythonPackageToxEnv(Python, PackageToxEnv, ABC):
         if run_env.conf["package"] != "skip" and "deps" not in self.conf:
             self.conf.add_config(
                 keys="deps",
-                of_type=List[Requirement],
+                of_type=list[Requirement],
                 default=[],
                 desc="Name of the python dependencies as specified by PEP-440",
             )

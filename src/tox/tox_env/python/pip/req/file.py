@@ -8,8 +8,9 @@ import shlex
 import sys
 import urllib.parse
 from argparse import ArgumentParser, Namespace
+from collections.abc import Iterator
 from pathlib import Path
-from typing import IO, Any, Iterator, List, Tuple, cast
+from typing import IO, Any, cast
 from urllib.request import urlopen
 
 import chardet
@@ -26,7 +27,7 @@ _COMMENT_RE = re.compile(r"(^|\s+)#.*$")
 # https://www.python.org/dev/peps/pep-0508/#extras
 _EXTRA_PATH = re.compile(r"(.*)\[([-._,\sa-zA-Z0-9]*)]")
 _EXTRA_ELEMENT = re.compile(r"[a-zA-Z0-9]*[-._a-zA-Z0-9]")
-ReqFileLines = Iterator[Tuple[int, str]]
+ReqFileLines = Iterator[tuple[int, str]]
 
 DEFAULT_INDEX_URL = "https://pypi.org/simple"
 
@@ -168,7 +169,7 @@ class RequirementsFile:
     @property
     def requirements(self) -> list[ParsedRequirement]:
         self._ensure_requirements_parsed()
-        return cast("List[ParsedRequirement]", self._requirements)
+        return cast("list[ParsedRequirement]", self._requirements)
 
     @property
     def _parser(self) -> ArgumentParser:

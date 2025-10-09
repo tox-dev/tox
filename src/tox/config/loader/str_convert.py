@@ -7,13 +7,14 @@ import sys
 from inspect import isclass
 from itertools import chain
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Iterator
+from typing import TYPE_CHECKING, Any
 
 from tox.config.loader.convert import Convert
 from tox.config.loader.ini.factor import expand_ranges
 from tox.config.types import Command, EnvList
 
 if TYPE_CHECKING:
+    from collections.abc import Iterator
     from typing import Final
 
 

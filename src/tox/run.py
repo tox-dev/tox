@@ -7,11 +7,14 @@ import logging
 import os
 import sys
 import time
-from typing import Sequence
+from typing import TYPE_CHECKING
 
 from tox.config.cli.parse import get_options
 from tox.report import HandledError, ToxHandler
 from tox.session.state import State
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
 
 
 def run(args: Sequence[str] | None = None) -> None:

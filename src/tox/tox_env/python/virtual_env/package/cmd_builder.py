@@ -7,7 +7,7 @@ from abc import ABC
 from functools import partial
 from io import TextIOWrapper
 from pathlib import Path
-from typing import TYPE_CHECKING, Generator, Iterator, List, cast
+from typing import TYPE_CHECKING, cast
 from zipfile import ZipFile
 
 from packaging.requirements import Requirement
@@ -26,6 +26,7 @@ from .pyproject import Pep517VirtualEnvPackager
 from .util import dependencies_with_extras
 
 if TYPE_CHECKING:
+    from collections.abc import Generator, Iterator
     from os import PathLike
 
     from tox.config.sets import EnvConfigSet
@@ -54,7 +55,7 @@ class VenvCmdBuilder(PythonPackageToxEnv, ABC):
         )
         self.conf.add_config(
             keys=["commands"],
-            of_type=List[Command],
+            of_type=list[Command],
             default=[],
             desc="the commands to be called for testing",
         )

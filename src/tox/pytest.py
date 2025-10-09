@@ -13,7 +13,7 @@ import warnings
 from contextlib import closing, contextmanager
 from pathlib import Path
 from types import ModuleType, TracebackType
-from typing import TYPE_CHECKING, Any, Callable, Iterator, Protocol, Sequence, cast
+from typing import TYPE_CHECKING, Any, Protocol, cast
 
 import pytest
 from _pytest.fixtures import SubRequest  # noqa: PLC2701
@@ -32,6 +32,7 @@ from tox.tox_env import api as tox_env_api
 from tox.tox_env.api import ToxEnv
 
 if TYPE_CHECKING:
+    from collections.abc import Callable, Iterator, Sequence
     from unittest.mock import MagicMock
 
     from pytest_mock import MockerFixture
@@ -285,8 +286,6 @@ class ToxProject:
                 m.setenv("VIRTUALENV_SYMLINK_APP_DATA", "1")
                 m.setenv("VIRTUALENV_SYMLINKS", "1")
                 m.setenv("VIRTUALENV_PIP", "embed")
-                if sys.version_info[:2] < (3, 9):
-                    m.setenv("VIRTUALENV_WHEEL", "embed")
                 m.setenv("VIRTUALENV_SETUPTOOLS", "embed")
                 try:
                     tox_run(args)

@@ -1,12 +1,14 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Iterable
+from typing import TYPE_CHECKING, Any
 
 import pluggy
 
 from . import NAME
 
 if TYPE_CHECKING:
+    from collections.abc import Iterable
+
     from tox.config.cli.parser import ToxParser
     from tox.config.sets import ConfigSet, EnvConfigSet
     from tox.execute import Outcome
@@ -46,7 +48,7 @@ def tox_extend_envs() -> Iterable[str]:
     :class:`tox.config.loader.memory.MemoryLoader` early enough before tox
     starts caching configuration values sourced elsewhere.
     """
-    return ()  # <- Please MyPy
+    return ()
 
 
 @_spec

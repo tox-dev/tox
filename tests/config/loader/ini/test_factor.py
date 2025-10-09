@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from textwrap import dedent
-from typing import TYPE_CHECKING, Callable, List
+from typing import TYPE_CHECKING
 
 import pytest
 
@@ -10,6 +10,7 @@ from tox.config.loader.ini.factor import filter_for_env, find_envs
 from tox.config.source.ini_section import IniSection
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
     from configparser import ConfigParser
 
     from tests.conftest import ToxIniCreator
@@ -140,7 +141,7 @@ def test_factor_config(tox_ini_conf: ToxIniCreator) -> None:
     assert list(config) == ["py36-django15", "py36-django16", "py37-django15", "py37-django16"]
     for env in config.core["env_list"]:
         env_config = config.get_env(env)
-        env_config.add_config(keys="deps-x", of_type=List[str], default=[], desc="deps")
+        env_config.add_config(keys="deps-x", of_type=list[str], default=[], desc="deps")
         deps = env_config["deps-x"]
         assert "pytest" in deps
         if "py36" in env:
@@ -296,12 +297,12 @@ def test_generative_section_name(tox_ini_conf: ToxIniCreator) -> None:
     assert list(config) == ["py311-black", "py311-lint", "py310-black", "py310-lint"]
 
     env_config = config.get_env("py311-black")
-    env_config.add_config(keys="deps-x", of_type=List[str], default=[], desc="deps")
+    env_config.add_config(keys="deps-x", of_type=list[str], default=[], desc="deps")
     deps = env_config["deps-x"]
     assert deps == ["black"]
 
     env_config = config.get_env("py311-lint")
-    env_config.add_config(keys="deps-x", of_type=List[str], default=[], desc="deps")
+    env_config.add_config(keys="deps-x", of_type=list[str], default=[], desc="deps")
     deps = env_config["deps-x"]
     assert deps == ["flake8"]
 

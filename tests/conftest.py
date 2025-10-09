@@ -4,7 +4,7 @@ import os
 import sys
 import sysconfig
 from pathlib import Path
-from typing import TYPE_CHECKING, Callable, Iterator, Protocol, Sequence
+from typing import TYPE_CHECKING, Protocol
 from unittest.mock import patch
 from uuid import uuid4
 
@@ -20,6 +20,8 @@ from tox.tox_env.python.api import PythonInfo, VersionInfo
 from tox.tox_env.python.virtual_env.api import VirtualEnv
 
 if TYPE_CHECKING:
+    from collections.abc import Callable, Iterator, Sequence
+
     from build import DistributionType
     from pytest_mock import MockerFixture
 

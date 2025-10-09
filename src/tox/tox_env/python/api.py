@@ -9,7 +9,7 @@ import sysconfig
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, List, NamedTuple
+from typing import TYPE_CHECKING, Any, NamedTuple
 
 from virtualenv.discovery.py_spec import PythonSpec
 
@@ -79,7 +79,7 @@ class Python(ToxEnv, ABC):
 
         self.conf.add_config(
             keys=["base_python", "basepython"],
-            of_type=List[str],
+            of_type=list[str],
             default=self.default_base_python,
             desc="environment identifier for python, first one found wins",
             post_process=validate_base_python,

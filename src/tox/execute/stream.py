@@ -2,12 +2,13 @@ from __future__ import annotations
 
 from contextlib import contextmanager
 from threading import Event, Lock, Timer
-from typing import IO, TYPE_CHECKING, Iterator
+from typing import IO, TYPE_CHECKING
 
 from colorama import Fore
 
 if TYPE_CHECKING:
     import sys
+    from collections.abc import Iterator
     from types import TracebackType
 
     if sys.version_info >= (3, 11):  # pragma: no cover (py311+)

@@ -4,13 +4,14 @@ import os
 import sys
 from contextlib import contextmanager
 from io import BytesIO
-from typing import IO, TYPE_CHECKING, Any, Iterator
+from typing import IO, TYPE_CHECKING, Any
 
 import pytest
 
 from tox.tox_env.python.pip.req.file import ParsedRequirement, RequirementsFile
 
 if TYPE_CHECKING:
+    from collections.abc import Iterator
     from pathlib import Path
 
     from pytest_mock import MockerFixture

@@ -7,7 +7,7 @@ import time
 from contextlib import contextmanager
 from pathlib import Path
 from subprocess import check_call
-from typing import TYPE_CHECKING, Callable, Iterator, Sequence
+from typing import TYPE_CHECKING
 from unittest import mock
 from zipfile import ZipFile
 
@@ -16,6 +16,8 @@ from filelock import FileLock
 from packaging.requirements import Requirement
 
 if TYPE_CHECKING:
+    from collections.abc import Callable, Iterator, Sequence
+
     from build import DistributionType
     from devpi_process import Index, IndexServer
 

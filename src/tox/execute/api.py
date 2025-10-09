@@ -6,8 +6,9 @@ import logging
 import sys
 import time
 from abc import ABC, abstractmethod
+from collections.abc import Callable, Iterator, Sequence
 from contextlib import contextmanager
-from typing import TYPE_CHECKING, Any, Callable, Iterator, NoReturn, Sequence, cast
+from typing import TYPE_CHECKING, Any, NoReturn, cast
 
 from colorama import Fore
 

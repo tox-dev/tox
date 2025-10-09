@@ -11,7 +11,7 @@ import sys
 from abc import ABC, abstractmethod
 from contextlib import contextmanager
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Iterator, List, NamedTuple, Sequence, Set, cast
+from typing import TYPE_CHECKING, Any, NamedTuple, cast
 
 from tox.execute.request import ExecuteRequest
 from tox.tox_env.errors import Fail, Recreate, Skip
@@ -19,6 +19,7 @@ from tox.tox_env.info import Info
 from tox.util.path import ensure_empty_dir
 
 if TYPE_CHECKING:
+    from collections.abc import Iterator, Sequence
     from io import BytesIO
 
     from tox.config.cli.parser import Parsed
@@ -129,7 +130,7 @@ class ToxEnv(ABC):
         )
         self.conf.add_config(
             keys=["labels"],
-            of_type=Set[str],
+            of_type=set[str],
             default=set(),
             desc="labels attached to the tox environment",
         )
@@ -176,7 +177,7 @@ class ToxEnv(ABC):
 
         self.conf.add_config(
             keys=["pass_env", "passenv"],
-            of_type=List[str],
+            of_type=list[str],
             default=[],
             desc="environment variables to pass on to the tox environment",
             post_process=pass_env_post_process,
@@ -195,7 +196,7 @@ class ToxEnv(ABC):
         )
         self.conf.add_config(
             "allowlist_externals",
-            of_type=List[str],
+            of_type=list[str],
             default=[],
             desc="external command glob to allow calling",
         )

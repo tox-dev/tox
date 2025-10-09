@@ -5,7 +5,10 @@ from __future__ import annotations
 import sys
 from enum import Enum
 from pathlib import Path
-from typing import Sequence
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
 
 
 class StdinSource(Enum):

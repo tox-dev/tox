@@ -31,7 +31,8 @@ tox configuration file (root of your project).
 
 from __future__ import annotations
 
-from typing import Any, Callable, TypeVar
+from collections.abc import Callable
+from typing import Any, TypeVar
 
 import pluggy
 

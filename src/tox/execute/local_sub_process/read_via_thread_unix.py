@@ -5,9 +5,12 @@ from __future__ import annotations
 import errno  # pragma: win32 no cover
 import os  # pragma: win32 no cover
 import select  # pragma: win32 no cover
-from typing import Callable
+from typing import TYPE_CHECKING
 
 from .read_via_thread import ReadViaThread  # pragma: win32 no cover
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 STOP_EVENT_CHECK_PERIODICITY_IN_MS = 0.01  # pragma: win32 no cover
 

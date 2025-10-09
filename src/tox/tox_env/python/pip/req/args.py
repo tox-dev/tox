@@ -3,9 +3,12 @@ from __future__ import annotations
 import bisect
 import re
 from argparse import Action, ArgumentParser, ArgumentTypeError, Namespace
-from typing import Any, NoReturn, Protocol, Sequence, TypeVar
+from typing import TYPE_CHECKING, Any, NoReturn, Protocol, TypeVar
 
 from tox.tox_env.python.pip.req.util import handle_binary_option
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
 
 _T_contra = TypeVar("_T_contra", contravariant=True)
 
@@ -22,8 +25,7 @@ class _OurArgumentParser(ArgumentParser):
     def exit(self, status: int = 0, message: str | None = None) -> NoReturn:  # noqa: ARG002, PLR6301
         message = "" if message is None else message
         msg = message.lstrip(": ").rstrip()
-        if msg.startswith("error: "):
-            msg = msg[len("error: ") :]
+        msg = msg.removeprefix("error: ")
         raise ValueError(msg)
 
 

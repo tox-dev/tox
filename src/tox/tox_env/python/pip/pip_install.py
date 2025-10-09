@@ -4,9 +4,10 @@ import logging
 import operator
 from abc import ABC, abstractmethod
 from collections import defaultdict
+from collections.abc import Callable, Sequence
 from functools import partial
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Callable, Sequence, cast
+from typing import TYPE_CHECKING, Any, cast
 
 from packaging.requirements import Requirement
 

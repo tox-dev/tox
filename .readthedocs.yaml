@@ -5,6 +5,7 @@ build:
     python: "3"
   commands:
     - pip install uv
-    - uv venv
+    - uv venv -p 3.14
     - uv pip install tox-uv tox@.
-    - .venv/bin/tox run -e docs --
+    - .venv/bin/tox run -e docs --notest
+    - .venv/bin/tox run -e docs --skip-pkg-install --

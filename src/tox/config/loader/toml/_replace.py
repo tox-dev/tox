@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import re
-from typing import TYPE_CHECKING, Any, Iterator, List, cast
+from typing import TYPE_CHECKING, Any, cast
 
 from tox.config.loader.replacer import MatchRecursionError, ReplaceReference, load_posargs, replace, replace_env
 from tox.config.loader.stringify import stringify
@@ -9,6 +9,8 @@ from tox.config.loader.stringify import stringify
 from ._validate import validate
 
 if TYPE_CHECKING:
+    from collections.abc import Iterator
+
     from tox.config.loader.api import ConfigLoadArgs
     from tox.config.loader.toml import TomlLoader
     from tox.config.main import Config
@@ -40,7 +42,7 @@ class Unroll:
             for val in value:  # apply replacement for every entry
                 got = self(val, depth)
                 if isinstance(val, dict) and val.get("replace") and val.get("extend"):
-                    res_list.extend(cast("List[Any]", got))
+                    res_list.extend(cast("list[Any]", got))
                 else:
                     res_list.append(got)
             value = res_list
@@ -50,7 +52,7 @@ class Unroll:
                 if replace_type == "posargs" and self.conf is not None:
                     got_posargs = load_posargs(self.conf, self.args)
                     return (
-                        [self(v, depth) for v in cast("List[str]", value.get("default", []))]
+                        [self(v, depth) for v in cast("list[str]", value.get("default", []))]
                         if got_posargs is None
                         else list(got_posargs)
                     )
@@ -76,7 +78,7 @@ class Unroll:
         if self.conf is not None and (env := value.get("env")) and (key := value.get("key")):
             return cast("TomlTypes", self.conf.get_env(cast("str", env))[cast("str", key)])
         if of := value.get("of"):
-            validated_of = cast("List[str]", validate(of, List[str]))
+            validated_of = cast("list[str]", validate(of, list[str]))
             loaded = self.loader.load_raw_from_root(self.loader.section.SEP.join(validated_of))
             return self(loaded, depth)
         return value

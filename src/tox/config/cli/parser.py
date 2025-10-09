@@ -9,7 +9,8 @@ import random
 import sys
 from argparse import SUPPRESS, Action, ArgumentDefaultsHelpFormatter, ArgumentError, ArgumentParser, Namespace
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Callable, Dict, List, Literal, Optional, Sequence, Tuple, Type, TypeVar, cast
+from types import UnionType
+from typing import TYPE_CHECKING, Any, Literal, TypeVar, cast
 
 from colorama import Fore
 
@@ -26,6 +27,8 @@ else:  # pragma: <3.11 cover
     from typing_extensions import Self
 
 if TYPE_CHECKING:
+    from collections.abc import Callable, Sequence
+
     from tox.session.state import State
 
 
@@ -64,7 +67,7 @@ class ArgumentParserWithEnvAndConfig(ArgumentParser):
         of_type: type[Any] | None = getattr(action, "of_type", None)
         if of_type is None:
             if isinstance(action, argparse._AppendAction):  # noqa: SLF001
-                of_type = List[action.type]  # type: ignore[name-defined]
+                of_type = list[action.type]  # type: ignore[name-defined]
             elif isinstance(action, argparse._StoreAction) and action.choices:  # noqa: SLF001
                 loc = locals()
                 loc["Literal"] = Literal
@@ -135,7 +138,7 @@ class Parsed(Namespace):
     exit_and_dump_after: int
 
 
-ArgumentArgs = Tuple[Tuple[str, ...], Optional[Type[Any]], Dict[str, Any]]
+ArgumentArgs = tuple[tuple[str, ...], type[Any] | UnionType | None, dict[str, Any]]
 
 
 class ToxParser(ArgumentParserWithEnvAndConfig):
@@ -230,7 +233,7 @@ class ToxParser(ArgumentParserWithEnvAndConfig):
             help="set PYTHONHASHSEED to SEED before running commands. Defaults to a random integer in the range "
             "[1, 4294967295] ([1, 1024] on Windows). Passing 'notset' suppresses this behavior.",
             action=SeedAction,
-            of_type=Optional[int],  # type: ignore[arg-type]
+            of_type=int | None,
             default=hashseed_default,
             dest="hash_seed",
         )
@@ -239,7 +242,7 @@ class ToxParser(ArgumentParserWithEnvAndConfig):
             dest="discover",
             nargs="+",
             metavar="path",
-            of_type=List[str],
+            of_type=list[str],
             help="for Python discovery first try these Python executables",
             default=[],
         )
@@ -280,7 +283,7 @@ class ToxParser(ArgumentParserWithEnvAndConfig):
             self._groups.append((args, kwargs, excl))
         return result
 
-    def add_argument(self, *args: str, of_type: type[Any] | None = None, **kwargs: Any) -> Action:
+    def add_argument(self, *args: str, of_type: type[Any] | UnionType | None = None, **kwargs: Any) -> Action:
         result = super().add_argument(*args, **kwargs)
         if self.of_cmd is None and result.dest != "help":
             self._arguments.append((args, of_type, kwargs))
@@ -403,7 +406,7 @@ def add_core_arguments(parser: ArgumentParser) -> None:
         metavar="file",
         default=None,
         type=Path,
-        of_type=Optional[Path],
+        of_type=Path | None,
         help="configuration file/folder for tox (if not specified will discover one)",
     )
     parser.add_argument(
@@ -412,7 +415,7 @@ def add_core_arguments(parser: ArgumentParser) -> None:
         metavar="dir",
         default=None,
         type=Path,
-        of_type=Optional[Path],
+        of_type=Path | None,
         help="tox working directory (if not specified will be the folder of the config file)",
     )
     parser.add_argument(
@@ -421,7 +424,7 @@ def add_core_arguments(parser: ArgumentParser) -> None:
         metavar="dir",
         default=None,
         type=Path,
-        of_type=Optional[Path],
+        of_type=Path | None,
         help="project root directory (if not specified will be the folder of the config file)",
     )
 

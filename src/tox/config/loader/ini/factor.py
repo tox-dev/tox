@@ -4,7 +4,10 @@ from __future__ import annotations
 
 import re
 from itertools import chain, groupby, product
-from typing import Iterator
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from collections.abc import Iterator
 
 
 def filter_for_env(value: str, name: str | None) -> str:

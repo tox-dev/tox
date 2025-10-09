@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections import defaultdict
 from configparser import ConfigParser
 from itertools import chain
-from typing import TYPE_CHECKING, Iterable, Iterator
+from typing import TYPE_CHECKING
 
 from tox.config.loader.ini import IniLoader
 from tox.config.loader.ini.factor import find_envs
@@ -15,6 +15,7 @@ from .api import Source
 from .ini_section import CORE, PKG_ENV_PREFIX, TEST_ENV_PREFIX, IniSection
 
 if TYPE_CHECKING:
+    from collections.abc import Iterable, Iterator
     from pathlib import Path
 
     from tox.config.loader.api import OverrideMap

@@ -3,7 +3,7 @@ from __future__ import annotations
 import inspect
 import logging
 from pathlib import Path
-from typing import TYPE_CHECKING, Dict, Iterator, List, Mapping, TypeVar, cast
+from typing import TYPE_CHECKING, TypeVar, cast
 
 from tox.config.loader.api import ConfigLoadArgs, Loader, Override
 from tox.config.set_env import SetEnv
@@ -15,6 +15,9 @@ from ._replace import Unroll
 from ._validate import validate
 
 if TYPE_CHECKING:
+    from collections.abc import Iterator, Mapping
+    from types import UnionType
+
     from tox.config.loader.convert import Factory
     from tox.config.loader.section import Section
     from tox.config.main import Config
@@ -59,7 +62,7 @@ class TomlLoader(Loader[TomlTypes]):
     def build(  # noqa: PLR0913
         self,
         key: str,  # noqa: ARG002
-        of_type: type[_T],
+        of_type: type[_T] | UnionType,
         factory: Factory[_T],
         conf: Config | None,
         raw: TomlTypes,
@@ -84,17 +87,17 @@ class TomlLoader(Loader[TomlTypes]):
 
     @staticmethod
     def to_list(value: TomlTypes, of_type: type[_T]) -> Iterator[_T]:
-        of = List[of_type]  # type: ignore[valid-type] # no mypy support
+        of = list[of_type]  # type: ignore[valid-type] # no mypy support
         return iter(validate(value, of))  # type: ignore[call-overload,no-any-return]
 
     @staticmethod
     def to_set(value: TomlTypes, of_type: type[_T]) -> Iterator[_T]:
-        of = List[of_type]  # type: ignore[valid-type] # no mypy support
+        of = list[of_type]  # type: ignore[valid-type] # no mypy support
         return iter(validate(value, of))  # type: ignore[call-overload,no-any-return]
 
     @staticmethod
     def to_dict(value: TomlTypes, of_type: tuple[type[_T], type[_V]]) -> Iterator[tuple[_T, _V]]:
-        of = Dict[of_type[0], of_type[1]]  # type: ignore[valid-type] # no mypy support
+        of = dict[of_type[0], of_type[1]]  # type: ignore[valid-type] # no mypy support
         return validate(value, of).items()  # type: ignore[attr-defined,no-any-return]
 
     @staticmethod
@@ -104,7 +107,7 @@ class TomlLoader(Loader[TomlTypes]):
     @staticmethod
     def to_command(value: TomlTypes) -> Command | None:
         if value:
-            return Command(args=cast("List[str]", value))  # validated during load in _ensure_type_correct
+            return Command(args=cast("list[str]", value))  # validated during load in _ensure_type_correct
         return None
 
     @staticmethod

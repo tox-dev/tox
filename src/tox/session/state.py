@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import sys
 from itertools import chain, tee
-from typing import TYPE_CHECKING, Sequence
+from typing import TYPE_CHECKING
 
 from tox.config.main import Config
 from tox.journal import Journal
@@ -12,6 +12,8 @@ from tox.plugin.manager import MANAGER
 from .env_select import EnvSelector
 
 if TYPE_CHECKING:
+    from collections.abc import Sequence
+
     from tox.config.cli.parse import Options
     from tox.config.cli.parser import ToxParser
 

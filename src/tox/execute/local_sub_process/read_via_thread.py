@@ -4,10 +4,11 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from threading import Event, Thread
-from typing import TYPE_CHECKING, Callable
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     import sys
+    from collections.abc import Callable
     from types import TracebackType
 
     if sys.version_info >= (3, 11):  # pragma: no cover (py311+)

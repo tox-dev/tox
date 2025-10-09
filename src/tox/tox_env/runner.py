@@ -5,7 +5,7 @@ import os
 import re
 from abc import ABC, abstractmethod
 from hashlib import sha256
-from typing import TYPE_CHECKING, Any, Iterable, List
+from typing import TYPE_CHECKING, Any
 
 from tox.config.types import Command, EnvList
 
@@ -14,6 +14,8 @@ from .package import Package, PackageToxEnv, PathPackage
 from .util import add_change_dir_conf
 
 if TYPE_CHECKING:
+    from collections.abc import Iterable
+
     from tox.journal import EnvJournal
 
 
@@ -44,19 +46,19 @@ class RunToxEnv(ToxEnv, ABC):
         super().register_config()
         self.conf.add_config(
             keys=["commands_pre"],
-            of_type=List[Command],
+            of_type=list[Command],
             default=[],
             desc="the commands to be called before testing",
         )
         self.conf.add_config(
             keys=["commands"],
-            of_type=List[Command],
+            of_type=list[Command],
             default=[],
             desc="the commands to be called for testing",
         )
         self.conf.add_config(
             keys=["commands_post"],
-            of_type=List[Command],
+            of_type=list[Command],
             default=[],
             desc="the commands to be called after testing",
         )

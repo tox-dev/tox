@@ -1,5 +1,5 @@
 requires = [ "tox>=4.27" ]
-env_list = [ "fix", "3.14t", "3.14", "3.13", "3.12", "3.11", "3.10", "3.9", "cov", "type", "docs", "pkg_meta" ]
+env_list = [ "fix", "3.14t", "3.14", "3.13", "3.12", "3.11", "3.10", "cov", "type", "docs", "pkg_meta" ]
 skip_missing_interpreters = true
 
 [env_run_base]
@@ -62,13 +62,19 @@ pass_env = [
 commands = [ [ "pre-commit", "run", "--all-files", "--show-diff-on-failure", { replace = "posargs", extend = true } ] ]
 
 [env.type]
+base_python = ["3.14"]
 description = "run type check on code base"
 dependency_groups = [ "type" ]
 commands = [ [ "mypy", "src{/}tox" ], [ "mypy", "tests" ] ]
 
+[env.type-3.10]
+base_python = ["3.10"]
+base = ["env", "type"]
+
 [env.docs]
 description = "build documentation"
 dependency_groups = [ "docs" ]
+base_python = ["3.14"]
 commands = [
   [
     "sphinx-build",

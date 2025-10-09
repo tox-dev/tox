@@ -26,7 +26,7 @@ maintainers = [
 authors = [
   { name = "Bernát Gábor", email = "gaborjbernat@gmail.com" },
 ]
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 classifiers = [
   "Development Status :: 5 - Production/Stable",
   "Framework :: tox",
@@ -36,7 +36,6 @@ classifiers = [
   "Operating System :: Microsoft :: Windows",
   "Operating System :: POSIX",
   "Programming Language :: Python :: 3 :: Only",
-  "Programming Language :: Python :: 3.9",
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
@@ -50,17 +49,17 @@ dynamic = [
   "version",
 ]
 dependencies = [
-  "cachetools>=6.1",
+  "cachetools>=6.2",
   "chardet>=5.2",
   "colorama>=0.4.6",
-  "filelock>=3.18",
+  "filelock>=3.20",
   "packaging>=25",
-  "platformdirs>=4.3.8",
+  "platformdirs>=4.5",
   "pluggy>=1.6",
   "pyproject-api>=1.9.1",
-  "tomli>=2.2.1; python_version<'3.11'",
-  "typing-extensions>=4.14.1; python_version<'3.11'",
-  "virtualenv>=20.31.2",
+  "tomli>=2.3; python_version<'3.11'",
+  "typing-extensions>=4.15; python_version<'3.11'",
+  "virtualenv>=20.34",
 ]
 urls.Documentation = "https://tox.wiki"
 urls.Homepage = "http://tox.readthedocs.org"
@@ -76,55 +75,55 @@ dev = [
   { include-group = "type" },
 ]
 test = [
-  "build[virtualenv]>=1.2.2.post1",
+  "build[virtualenv]>=1.3",
   "covdefaults>=2.3",
-  "coverage>=7.9.2",
+  "coverage>=7.10.7",
   "detect-test-pollution>=1.2",
   "devpi-process>=1.0.2",
-  "diff-cover>=9.6",
+  "diff-cover>=9.7.1",
   "distlib>=0.4",
   "flaky>=3.8.1",
   "hatch-vcs>=0.5",
   "hatchling>=1.27",
-  "pdm-backend",
-  "psutil>=7",
-  "pytest>=8.4.1",
-  "pytest-cov>=6.2.1",
-  "pytest-mock>=3.14.1",
+  "pdm-backend>=2.4.5",
+  "psutil>=7.1",
+  "pytest>=8.4.2",
+  "pytest-cov>=7",
+  "pytest-mock>=3.15.1",
   "pytest-xdist>=3.8",
   "re-assert>=1.1",
   "setuptools>=80.9",
-  "time-machine>=2.16; implementation_name!='pypy'",
+  "time-machine>=2.19; implementation_name!='pypy'",
   "wheel>=0.45.1",
 ]
 type = [
-  "mypy==1.17",
-  "types-cachetools>=6.1.0.20250717",
+  "mypy==1.18.2",
+  "types-cachetools>=6.2.0.20250827",
   "types-chardet>=5.0.4.6",
   { include-group = "test" },
 ]
 docs = [
-  "furo>=2025.7.19",
+  "furo>=2025.9.25",
   "sphinx>=8.2.3",
-  "sphinx-argparse-cli>=1.19",
-  "sphinx-autodoc-typehints>=3.2",
+  "sphinx-argparse-cli>=1.20.1",
+  "sphinx-autodoc-typehints>=3.5",
   "sphinx-copybutton>=0.5.2",
   "sphinx-inline-tabs>=2023.4.21",
   "sphinxcontrib-towncrier>=0.2.1a0",
-  "towncrier>=24.8",
+  "towncrier>=25.8",
 ]
 fix = [
-  "pre-commit-uv>=4.1.4",
+  "pre-commit-uv>=4.1.5",
 ]
 pkg-meta = [
-  "check-wheel-contents>=0.6.2",
-  "twine>=6.1",
-  "uv>=0.8",
+  "check-wheel-contents>=0.6.3",
+  "twine>=6.2",
+  "uv>=0.9",
 ]
 release = [
-  "gitpython>=3.1.44",
+  "gitpython>=3.1.45",
   "packaging>=25",
-  "towncrier>=24.8",
+  "towncrier>=25.8",
 ]
 
 [tool.hatch]
@@ -140,7 +139,6 @@ build.targets.sdist.include = [
 version.source = "vcs"
 
 [tool.ruff]
-target-version = "py38"
 line-length = 120
 format.preview = true
 format.docstring-code-line-length = 100
@@ -238,7 +236,6 @@ template = "docs/changelog/template.jinja2"
 # possible types, all default: feature, bugfix, doc, removal, misc
 
 [tool.mypy]
-python_version = "3.11"
 show_error_codes = true
 strict = true
 overrides = [

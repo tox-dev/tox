@@ -165,9 +165,13 @@ def test_local_execute_terminal_size(os_env: dict[str, str], monkeypatch: Monkey
     main, child = pty.openpty()  # type: ignore[attr-defined, unused-ignore]
     # Use ReadViaThreadUnix to help with debugging the test itself.
     pipe_out = ReadViaThreadUnix(main, sys.stdout.buffer.write, name="testout", drain=True)  # type: ignore[arg-type]
-    with pipe_out, monkeypatch.context() as monkey, open(  # noqa: PTH123
-        child, "w", encoding=locale.getpreferredencoding(False)
-    ) as stdout_mock:
+    with (
+        pipe_out,
+        monkeypatch.context() as monkey,
+        open(  # noqa: PTH123
+            child, "w", encoding=locale.getpreferredencoding(False)
+        ) as stdout_mock,
+    ):
         # Switch stdout with test pty
         monkey.setattr(sys, "stdout", stdout_mock)
         monkey.setenv("COLUMNS", "84")

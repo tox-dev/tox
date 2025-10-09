@@ -304,9 +304,11 @@ def test_disable_external_plugins(
         self.register(DummyPluginB(), name="dummy_plugin_b")
 
     project = tox_project({"tox.ini": ""})
-    with patch("pluggy.PluginManager.load_setuptools_entrypoints", fake_load_entrypoints), patch(
-        "tox.plugin.manager.MANAGER", Plugin()
-    ), patch.dict(os.environ, {"TOX_DISABLED_EXTERNAL_PLUGINS": env_val}, clear=False):
+    with (
+        patch("pluggy.PluginManager.load_setuptools_entrypoints", fake_load_entrypoints),
+        patch("tox.plugin.manager.MANAGER", Plugin()),
+        patch.dict(os.environ, {"TOX_DISABLED_EXTERNAL_PLUGINS": env_val}, clear=False),
+    ):
         result = project.run("--version")
 
     result.assert_success()

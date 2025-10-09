@@ -4,13 +4,16 @@ from __future__ import annotations
 
 import re
 from configparser import SectionProxy
-from functools import lru_cache
-from typing import TYPE_CHECKING, Iterator, Pattern
+from functools import cache
+from re import Pattern
+from typing import TYPE_CHECKING
 
 from tox.config.loader.replacer import ReplaceReference
 from tox.config.loader.stringify import stringify
 
 if TYPE_CHECKING:
+    from collections.abc import Iterator
+
     from tox.config.loader.api import ConfigLoadArgs
     from tox.config.loader.ini import IniLoader
     from tox.config.main import Config
@@ -82,7 +85,7 @@ class ReplaceReferenceIni(ReplaceReference):
             yield value
 
 
-@lru_cache(maxsize=None)
+@cache
 def _replace_ref(env: str | None) -> Pattern[str]:
     return re.compile(
         rf"""

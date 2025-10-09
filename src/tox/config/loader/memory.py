@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Iterator
+from typing import TYPE_CHECKING, Any
 
 from tox.config.types import Command, EnvList
 
@@ -10,6 +10,8 @@ from .section import Section
 from .str_convert import StrConvert
 
 if TYPE_CHECKING:
+    from collections.abc import Iterator
+
     from tox.config.main import Config
 
 

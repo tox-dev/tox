@@ -1,11 +1,12 @@
 from __future__ import annotations
 
 from configparser import ConfigParser
-from typing import TYPE_CHECKING, Callable
+from typing import TYPE_CHECKING
 
 import pytest
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
     from pathlib import Path
 
 

@@ -3,7 +3,7 @@ from __future__ import annotations
 import sys
 import sysconfig
 from types import SimpleNamespace
-from typing import TYPE_CHECKING, Callable
+from typing import TYPE_CHECKING
 from unittest.mock import patch
 
 import pytest
@@ -12,6 +12,7 @@ from tox.tox_env.errors import Fail
 from tox.tox_env.python.api import Python
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
     from pathlib import Path
 
     from pytest_mock import MockerFixture
