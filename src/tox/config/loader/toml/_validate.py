@@ -6,6 +6,7 @@ from typing import (
     TYPE_CHECKING,
     Any,
     Literal,
+    TypeGuard,
     TypeVar,
     Union,
     cast,
@@ -14,14 +15,8 @@ from typing import (
 from tox.config.types import Command
 
 if TYPE_CHECKING:
-    import sys
-
     from ._api import TomlTypes
 
-    if sys.version_info >= (3, 11):  # pragma: no cover (py311+)
-        from typing import TypeGuard
-    else:  # pragma: no cover (py311+)
-        from typing import TypeGuard
 
 T = TypeVar("T")
 
