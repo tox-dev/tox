@@ -903,7 +903,7 @@ Python options
    :constant:
    :version_added: 4.26
 
-   ``True`` if the Python interpreter in the tox environment is an experimental free-threaded CPython build,
+   ``True`` if the Python interpreter in the tox environment is a free-threaded CPython build,
    else ``False``.
 
 

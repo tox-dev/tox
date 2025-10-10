@@ -1,0 +1,2 @@
+Free-threaded CPython is no longer experimental as of Python 3.14.
+- by :user:`cclauss`
