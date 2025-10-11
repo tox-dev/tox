@@ -49,6 +49,8 @@ For example:
     requires =
         tox >= 4.20
     env_list =
+        3.14t
+        3.14
         3.13
         3.12
         type
@@ -78,6 +80,8 @@ This configuration file uses:
     requires =
         tox >= 4.0
     env_list =
+        3.14t
+        3.14
         3.13
         3.12
         type
@@ -135,7 +139,7 @@ We support native TOML configuration via the ``pyproject.toml`` files ``tool.tox
 
     [tool.tox]
     requires = ["tox>=4.19"]
-    env_list = ["3.13", "3.12", "type"]
+    env_list = ["3.14t", "3.14", "3.13", "3.12", "type"]
 
     [tool.tox.env_run_base]
     description = "Run test under {base_python}"
@@ -143,7 +147,7 @@ We support native TOML configuration via the ``pyproject.toml`` files ``tool.tox
 
     [tool.tox.env.type]
     description = "run type check on code base"
-    deps = ["mypy==1.11.2", "types-cachetools>=5.5.0.20240820", "types-chardet>=5.0.4.6"]
+    deps = ["mypy==1.18.2", "types-cachetools>=5.5.0.20240820", "types-chardet>=5.0.4.6"]
     commands = [["mypy", "src{/}tox"], ["mypy", "tests"]]
 
 ``tox.toml``
@@ -157,7 +161,7 @@ For example:
 .. code-block:: toml
 
     requires = ["tox>=4.19"]
-    env_list = ["3.13", "3.12", "type"]
+    env_list = ["3.14t", "3.14", "3.13", "3.12", "type"]
 
     [env_run_base]
     description = "Run test under {base_python}"
@@ -165,7 +169,7 @@ For example:
 
     [env.type]
     description = "run type check on code base"
-    deps = ["mypy==1.11.2", "types-cachetools>=5.5.0.20240820", "types-chardet>=5.0.4.6"]
+    deps = ["mypy==1.18.2", "types-cachetools>=5.5.0.20240820", "types-chardet>=5.0.4.6"]
     commands = [["mypy", "src{/}tox"], ["mypy", "tests"]]
 
 .. _conf-core:
@@ -298,7 +302,7 @@ The following options are set in the ``[tox]`` section of ``tox.ini`` or the ``[
        .. code-block:: toml
 
           [tool.tox]
-          labels = { test = ["3.13", "3.12"], static = ["ruff", "mypy"] }
+          labels = { test = ["3.14t", "3.14", "3.13", "3.12"], static = ["ruff", "mypy"] }
 
     .. tab:: INI
 
@@ -306,7 +310,7 @@ The following options are set in the ``[tox]`` section of ``tox.ini`` or the ``[
 
           [tox]
           labels =
-               test = 3.13, 3.12
+               test = 3.14t, 3.14, 3.13, 3.12
                static = ruff, mypy
 
 .. conf::
@@ -889,7 +893,7 @@ Python options
    :constant:
    :version_added: 4.0.10
 
-   Major.Minor version of the Python interpreter in the tox environment (e.g., ``3.13``).
+   Major.Minor version of the Python interpreter in the tox environment (e.g., ``3.14``).
 
 .. conf::
    :keys: py_impl
@@ -903,7 +907,7 @@ Python options
    :constant:
    :version_added: 4.26
 
-   ``True`` if the Python interpreter in the tox environment is an experimental free-threaded CPython build,
+   ``True`` if the Python interpreter in the tox environment is a free-threaded CPython build,
    else ``False``.
 
 
@@ -1813,7 +1817,7 @@ specified, the value of DEFAULTS will be used instead. If DEFAULTS contains othe
 
 Use a double ``--`` if you also want to pass options to an underlying test command, for example::
 
-    tox run -e 3.13 -- --opt1 ARG1
+    tox run -e 3.14 -- --opt1 ARG1
 
 will make the ``--opt1 ARG1`` appear in all test commands where ``[]`` or ``{posargs}`` was specified.  By default (see
 ``args_are_paths`` setting), ``tox`` rewrites each positional argument if it is a relative path and exists on the
