@@ -1663,6 +1663,12 @@ Both enumerations (``{1,2,3}``) and numerical ranges (``{1-3}``) are supported, 
     [tox]
     env_list = py3{8-10, 11, 13-14}
 
+    [testenv]
+    deps =
+        py{310,311-314}: urllib3
+    setenv =
+        py{310,311-314}: FOO=bar
+
 will create the following envs:
 
 .. code-block:: shell
