@@ -10,7 +10,6 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 from tox.config.loader.convert import Convert
-from tox.config.loader.ini.factor import expand_ranges
 from tox.config.types import Command, EnvList
 
 if TYPE_CHECKING:
@@ -115,7 +114,6 @@ class StrConvert(Convert[str]):
     def to_env_list(value: str) -> EnvList:
         from tox.config.loader.ini.factor import extend_factors  # noqa: PLC0415
 
-        value = expand_ranges(value)
         elements = list(chain.from_iterable(extend_factors(expr) for expr in value.split("\n")))
         return EnvList(elements)
 
