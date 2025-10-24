@@ -4,6 +4,23 @@ Release History
 
 .. towncrier release notes start
 
+v4.32.0 (2025-10-24)
+--------------------
+
+Bugfixes - 4.32.0
+~~~~~~~~~~~~~~~~~
+- Expand braced range syntax in all internal sections of ``tox.ini`` (e.g. ``deps``, ``testenv``). Syntax like py3{10-14} can be used in those sections now.
+  - by :user:`marcosboger` (:issue:`3571`)
+
+Improved Documentation - 4.32.0
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+- Add Python 3.14 and 3.14t to config examples
+  - by :user:`cclauss` (:issue:`3626`)
+
+Misc - 4.32.0
+~~~~~~~~~~~~~
+- :issue:`3629`
+
 v4.31.0 (2025-10-09)
 --------------------
 
