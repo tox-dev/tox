@@ -1,0 +1,56 @@
+name: weekly checks
+on:
+  workflow_dispatch:
+  push:
+    branches: ["main"]
+    tags-ignore: ["**"]
+  pull_request:
+    paths:
+      - .github/workflows/weekly.yaml
+  schedule:
+    - cron: "0 8 * * 1"
+
+env:
+  FORCE_COLOR: 1
+
+concurrency:
+  group: check-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: test ${{ matrix.py }} on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        py:
+          - "3.15"
+        os:
+          - ubuntu-24.04
+          - windows-2025
+          - macos-15
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - name: Install the latest version of uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+          cache-dependency-glob: "pyproject.toml"
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Add .local/bin to Windows PATH
+        if: runner.os == 'Windows'
+        shell: bash
+        run: echo "$USERPROFILE/.local/bin" >> $GITHUB_PATH
+      - name: Install tox@self
+        run: uv tool install --python-preference only-managed --python ${{ matrix.py }} tox@.
+      - name: Setup test suite
+        run: tox run -vv --notest --skip-missing-interpreters false -e ${{ matrix.py }}
+      - name: Run test suite
+        run: tox run --skip-pkg-install -e ${{ matrix.py }}
+        env:
+          PYTEST_ADDOPTS: "-vv --durations=20"
+          DIFF_AGAINST: HEAD
+          PYTEST_XDIST_AUTO_NUM_WORKERS: 0
