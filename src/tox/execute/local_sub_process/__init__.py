@@ -85,6 +85,7 @@ class LocalSubprocessExecuteStatus(ExecuteStatus):
                     self._process.send_signal(SIG_INTERRUPT)
                 if self.wait(self.options.interrupt_timeout) is None:  # still alive -> TERM # pragma: no branch
                     terminate_output = self.options.terminate_timeout
+                    msg = "send signal %s to %d from %d with timeout %.2f"
                     logging.warning(msg, f"SIGTERM({SIGTERM})", to_pid, host_pid, terminate_output)
                     self._process.terminate()
                     # Windows terminate is UNIX kill
