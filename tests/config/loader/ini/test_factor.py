@@ -273,6 +273,40 @@ def test_ini_loader_raw_with_factors(
     assert outcome == result
 
 
+def test_generative_ranges_in_deps(tox_ini_conf: ToxIniCreator) -> None:
+    config = tox_ini_conf(
+        """
+        [testenv]
+        deps-x =
+            py{310-314}: black
+        """,
+    )
+    assert list(config) == ["py310", "py311", "py312", "py313", "py314"]
+
+
+def test_generative_ranges_in_deps_with_mixed_approach(tox_ini_conf: ToxIniCreator) -> None:
+    config = tox_ini_conf(
+        """
+        [testenv]
+        deps-x =
+            py3{10-14}: black
+        """,
+    )
+    assert list(config) == ["py310", "py311", "py312", "py313", "py314"]
+
+
+def test_generative_ranges_in_setenv(tox_ini_conf: ToxIniCreator) -> None:
+    config = tox_ini_conf(
+        """
+        [testenv]
+        setenv =
+            foo{1,2}: FOO=bar
+            foo{3-5}: FOO=baz
+        """,
+    )
+    assert list(config) == ["foo1", "foo2", "foo3", "foo4", "foo5"]
+
+
 def test_generative_section_name_with_ranges(tox_ini_conf: ToxIniCreator) -> None:
     config = tox_ini_conf(
         """
