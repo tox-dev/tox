@@ -1,0 +1,1 @@
+Added 'LocalAppData' to the default passed environment variables on Windows.

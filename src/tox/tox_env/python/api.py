@@ -131,6 +131,7 @@ class Python(ToxEnv, ABC):
             env.extend(
                 [
                     "APPDATA",  # Needed for PIP platformsdirs.windows
+                    "LOCALAPPDATA",  # Needed for pymanager
                     "PROGRAMDATA",  # needed for discovering the VS compiler
                     "PROGRAMFILES(x86)",  # needed for discovering the VS compiler
                     "PROGRAMFILES",  # needed for discovering the VS compiler

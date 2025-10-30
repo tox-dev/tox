@@ -504,6 +504,10 @@ Base options
             - ❌
             - ❌
             - ✅
+        *   - LOCALAPPDATA
+            - ❌
+            - ❌
+            - ✅
         *   - PROGRAMDATA
             - ❌
             - ❌
