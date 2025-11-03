@@ -24,7 +24,7 @@ class JsonFormatter(ReportFormatter):
     def file_extension(self) -> str:
         return ".json"
 
-    def format(self, journal: Journal, output_path: Path | None = None) -> str | None:
+    def format(self, journal: Journal, output_path: Path | None = None) -> str | None:  # noqa: PLR6301
         content = journal.content
         json_content = json.dumps(content, indent=2, ensure_ascii=False)
 
