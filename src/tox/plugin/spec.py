@@ -12,6 +12,7 @@ if TYPE_CHECKING:
     from tox.config.cli.parser import ToxParser
     from tox.config.sets import ConfigSet, EnvConfigSet
     from tox.execute import Outcome
+    from tox.report.formatter import ReportFormatterRegister
     from tox.session.state import State
     from tox.tox_env.api import ToxEnv
     from tox.tox_env.register import ToxEnvRegister
@@ -122,6 +123,15 @@ def tox_env_teardown(tox_env: ToxEnv) -> None:
     """
 
 
+@_spec
+def tox_register_report_formatter(register: ReportFormatterRegister) -> None:
+    """
+    Register a custom test report formatter.
+
+    :param register: a object that can be used to register new report formatters
+    """
+
+
 __all__ = [
     "NAME",
     "tox_add_core_config",
@@ -133,4 +143,5 @@ __all__ = [
     "tox_extend_envs",
     "tox_on_install",
     "tox_register_tox_env",
+    "tox_register_report_formatter",
 ]

@@ -26,6 +26,7 @@ if TYPE_CHECKING:
     from tox.config.cli.parser import ToxParser
     from tox.config.sets import ConfigSet, EnvConfigSet
     from tox.execute import Outcome
+    from tox.report.formatter import ReportFormatterRegister
     from tox.session.state import State
     from tox.tox_env.api import ToxEnv
 
@@ -52,6 +53,8 @@ class Plugin:
         if inline is not None:
             self.manager.register(inline)
         self._load_external_plugins()
+        from tox.report import config as report_config  # noqa: PLC0415
+
         internal_plugins = (
             loader_api,
             provision,
@@ -70,6 +73,7 @@ class Plugin:
             parallel,
             sequential,
             package_api,
+            report_config,
         )
         for plugin in internal_plugins:
             self.manager.register(plugin)
@@ -111,12 +115,28 @@ class Plugin:
     def tox_env_teardown(self, tox_env: ToxEnv) -> None:
         self.manager.hook.tox_env_teardown(tox_env=tox_env)
 
+    def tox_register_report_formatter(self, register: ReportFormatterRegister) -> None:
+        self.manager.hook.tox_register_report_formatter(register=register)
+
+    def _register_builtin_report_formatters(self) -> None:
+        """Register built-in report formatters."""
+        from tox.report.formatter import REGISTER  # noqa: PLC0415
+        from tox.report.formatters import JsonFormatter, XmlFormatter  # noqa: PLC0415
+
+        # Register built-in formatters
+        REGISTER.register(JsonFormatter())
+        REGISTER.register(XmlFormatter())
+
+        # Allow plugins to register additional formatters
+        self.manager.hook.tox_register_report_formatter(register=REGISTER)
+
     def load_plugins(self, path: Path) -> None:
         for _plugin in self.manager.get_plugins():  # make sure we start with a clean state, repeated in memory run
             self.manager.unregister(_plugin)
         inline = _load_inline(path)
         self._register_plugins(inline)
         REGISTER._register_tox_env_types(self)  # noqa: SLF001
+        self._register_builtin_report_formatters()
 
 
 def _load_inline(path: Path) -> ModuleType | None:  # used to be able to unregister plugin tests

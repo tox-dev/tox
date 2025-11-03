@@ -204,7 +204,7 @@ def execute(state: State, max_workers: int | None, has_spinner: bool, live: bool
         name_to_run = {r.name: r for r in results}
         ordered_results: list[ToxEnvRunResult] = [name_to_run[env] for env in to_run_list]
         # write the journal
-        write_journal(getattr(state.conf.options, "result_json", None), state._journal)  # noqa: SLF001
+        write_journal(getattr(state.conf.options, "result_json", None), state._journal, state.conf)  # noqa: SLF001
         # report the outcome
         exit_code = report(
             state.conf.options.start,

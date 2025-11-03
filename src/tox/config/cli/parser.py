@@ -200,7 +200,7 @@ class ToxParser(ArgumentParserWithEnvAndConfig):
             metavar="path",
             of_type=Path,
             default=None,
-            help="write a JSON file with detailed information about all commands and results involved",
+            help="write a test report file with detailed information about all commands and results involved (format determined by report_format config or defaults to JSON)",
         )
 
         class SeedAction(Action):
