@@ -3,11 +3,10 @@
 from __future__ import annotations
 
 from tox.plugin import impl
-from tox.report.formatter import REGISTER
 
 
 @impl
-def tox_add_core_config(core_conf, state):  # noqa: ARG001
+def tox_add_core_config(core_conf, state) -> None:  # noqa: ARG001
     """Add report_format configuration to core config."""
     core_conf.add_config(
         keys=["report_format"],
@@ -18,7 +17,7 @@ def tox_add_core_config(core_conf, state):  # noqa: ARG001
 
 
 @impl
-def tox_add_env_config(env_conf, state):  # noqa: ARG001
+def tox_add_env_config(env_conf, state) -> None:  # noqa: ARG001
     """Add report_format configuration to environment config (inherits from core if not set)."""
     env_conf.add_config(
         keys=["report_format"],
@@ -29,4 +28,3 @@ def tox_add_env_config(env_conf, state):  # noqa: ARG001
 
 
 __all__ = ()
-

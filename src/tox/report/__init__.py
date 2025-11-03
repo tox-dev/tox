@@ -1,4 +1,5 @@
 """Report formatting system for tox."""
 
-__all__ = ()
+from __future__ import annotations
 
+__all__ = ()

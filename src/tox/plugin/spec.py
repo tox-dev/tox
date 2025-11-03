@@ -142,6 +142,6 @@ __all__ = [
     "tox_env_teardown",
     "tox_extend_envs",
     "tox_on_install",
-    "tox_register_tox_env",
     "tox_register_report_formatter",
+    "tox_register_tox_env",
 ]

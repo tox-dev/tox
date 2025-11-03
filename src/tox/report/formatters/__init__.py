@@ -9,4 +9,3 @@ __all__ = (
     "JsonFormatter",
     "XmlFormatter",
 )
-

@@ -5,9 +5,12 @@ from __future__ import annotations
 import json
 import locale
 from pathlib import Path
+from typing import TYPE_CHECKING
 
-from tox.journal.main import Journal
 from tox.report.formatter import ReportFormatter
+
+if TYPE_CHECKING:
+    from tox.journal.main import Journal
 
 
 class JsonFormatter(ReportFormatter):
@@ -34,4 +37,3 @@ class JsonFormatter(ReportFormatter):
 
 
 __all__ = ("JsonFormatter",)
-

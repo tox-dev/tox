@@ -3,12 +3,12 @@
 from __future__ import annotations
 
 import abc
-from typing import TYPE_CHECKING, Any
-
-from tox.journal.main import Journal
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from pathlib import Path
+
+    from tox.journal.main import Journal
 
 
 class ReportFormatter(abc.ABC):
@@ -74,8 +74,7 @@ class ReportFormatterRegister:
 REGISTER = ReportFormatterRegister()
 
 __all__ = (
+    "REGISTER",
     "ReportFormatter",
     "ReportFormatterRegister",
-    "REGISTER",
 )
-

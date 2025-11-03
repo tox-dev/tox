@@ -4,10 +4,13 @@ from __future__ import annotations
 
 import locale
 from pathlib import Path
-from xml.etree import ElementTree
+from typing import TYPE_CHECKING
+from xml.etree import ElementTree as ET
 
-from tox.journal.main import Journal
 from tox.report.formatter import ReportFormatter
+
+if TYPE_CHECKING:
+    from tox.journal.main import Journal
 
 
 class XmlFormatter(ReportFormatter):
@@ -25,7 +28,7 @@ class XmlFormatter(ReportFormatter):
         content = journal.content
 
         # Create root testsuites element
-        testsuites = ElementTree.Element("testsuites")
+        testsuites = ET.Element("testsuites")
 
         # Add metadata
         if "toxversion" in content:
@@ -43,7 +46,7 @@ class XmlFormatter(ReportFormatter):
         # Process each test environment
         testenvs = content.get("testenvs", {})
         for env_name, env_data in testenvs.items():
-            testsuite = ElementTree.SubElement(testsuites, "testsuite")
+            testsuite = ET.SubElement(testsuites, "testsuite")
             testsuite.set("name", env_name)
 
             env_tests = 0
@@ -57,7 +60,7 @@ class XmlFormatter(ReportFormatter):
 
             # Process setup commands
             for setup in setup_results:
-                testcase = ElementTree.SubElement(testsuite, "testcase")
+                testcase = ET.SubElement(testsuite, "testcase")
                 testcase.set("classname", env_name)
                 testcase.set("name", f"setup:{setup.get('run_id', 'unknown')}")
                 elapsed = float(setup.get("elapsed", 0.0))
@@ -66,14 +69,14 @@ class XmlFormatter(ReportFormatter):
                 env_tests += 1
 
                 if setup.get("retcode", 0) != 0:
-                    failure = ElementTree.SubElement(testcase, "failure")
+                    failure = ET.SubElement(testcase, "failure")
                     failure.set("message", f"Setup command failed with exit code {setup.get('retcode')}")
                     failure.text = setup.get("err", "")
                     env_errors += 1
 
             # Process test commands
             for test in test_results:
-                testcase = ElementTree.SubElement(testsuite, "testcase")
+                testcase = ET.SubElement(testsuite, "testcase")
                 testcase.set("classname", env_name)
                 testcase.set("name", test.get("command", test.get("run_id", "unknown")))
                 elapsed = float(test.get("elapsed", 0.0))
@@ -83,7 +86,7 @@ class XmlFormatter(ReportFormatter):
 
                 retcode = test.get("retcode", 0)
                 if retcode != 0:
-                    failure = ElementTree.SubElement(testcase, "failure")
+                    failure = ET.SubElement(testcase, "failure")
                     failure.set("message", f"Test command failed with exit code {retcode}")
                     failure.text = test.get("err", test.get("output", ""))
                     env_failures += 1
@@ -111,10 +114,10 @@ class XmlFormatter(ReportFormatter):
 
         # Convert to XML string
         try:
-            ElementTree.indent(testsuites, space="  ")  # Python 3.9+
+            ET.indent(testsuites, space="  ")  # Python 3.9+
         except AttributeError:
             pass  # ElementTree.indent not available in older Python versions
-        xml_content = ElementTree.tostring(testsuites, encoding="unicode", xml_declaration=True)
+        xml_content = ET.tostring(testsuites, encoding="unicode", xml_declaration=True)
 
         if output_path is not None:
             with Path(output_path).open("w", encoding=locale.getpreferredencoding(do_setlocale=False)) as file_handler:
@@ -125,4 +128,3 @@ class XmlFormatter(ReportFormatter):
 
 
 __all__ = ("XmlFormatter",)
-
