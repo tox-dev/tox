@@ -31,7 +31,7 @@ jobs:
           - windows-2025
           - macos-15
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
       - name: Install the latest version of uv
