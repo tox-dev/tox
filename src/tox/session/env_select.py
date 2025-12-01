@@ -283,8 +283,8 @@ class EnvSelector:
                                 other_env_info = self._defined_envs_.get(env.name)
                                 if other_env_info is not None and isinstance(other_env_info.env, RunToxEnv):
                                     del self._defined_envs_[env.name]  # pragma: no cover
-                                    for _pkg_env in other_env_info.env.package_envs:  # pragma: no cover
-                                        self._pkg_env_counter[_pkg_env.name] -= 1  # pragma: no cover
+                                    for pkg_env in other_env_info.env.package_envs:  # pragma: no cover
+                                        self._pkg_env_counter[pkg_env.name] -= 1  # pragma: no cover
                         except Exception:  # noqa: BLE001
                             assert self._defined_envs_[name].package_skip is not None  # noqa: S101
             failed_to_create = failed.keys() - self._defined_envs_.keys()
