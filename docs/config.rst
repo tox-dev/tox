@@ -1688,6 +1688,13 @@ will create the following envs:
 
 Negative ranges will also be expanded (``{3-1}`` -> ``{3,2,1}``), however, open ranges such as ``{1-}``, ``{-2}``, ``{a-}``, and ``{-b}`` will not be expanded.
 
+.. caution::
+
+  Be conscious of the number of significant digits in your range endpoints.
+  A range like ``py{39-314}`` will not do what you may expect.
+  (It expands to 275 environment names,
+  ``py39``, ``py40``, ``py41`` … ``py314``.)
+  Instead, use ``py3{9-14}``.
 
 
 Generative section names
