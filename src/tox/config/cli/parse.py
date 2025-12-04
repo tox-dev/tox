@@ -91,7 +91,10 @@ def _get_parser_doc() -> ToxParser:
 
     MANAGER.load_plugins(Path.cwd())
 
-    return _get_parser()  # pragma: no cover
+    parser = _get_parser()  # pragma: no cover
+    # Remove epilog message from help when formatting website docs
+    parser.epilog = None
+    return parser
 
 
 __all__ = (
