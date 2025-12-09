@@ -1,0 +1,2 @@
+Sphinx is now set up to use :pypi:`sphinx-issues` for referencing
+GitHub issues and pull requests in the docs -- by :user:`webknjaz`.

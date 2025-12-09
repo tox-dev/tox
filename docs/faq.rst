@@ -307,7 +307,7 @@ codes with any value, so their documentation should be consulted.
 
 
 Sometimes, no exit code is given at all. An example may be found in
-:gh:`pytest-qt issue #170 <pytest-dev/pytest-qt/issues/170>`, where Qt was calling
+:issue:`pytest-qt issue #170 <pytest-dev/pytest-qt#170>`, where Qt was calling
 `abort() <https://unix.org/version2/sample/abort.html>`_ instead of ``exit()``.
 
 Access full logs
