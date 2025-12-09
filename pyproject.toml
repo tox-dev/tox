@@ -109,6 +109,7 @@ docs = [
   "sphinx-autodoc-typehints>=3.5",
   "sphinx-copybutton>=0.5.2",
   "sphinx-inline-tabs>=2023.4.21",
+  "sphinx-issues>=5.0.1",
   "sphinxcontrib-towncrier>=0.2.1a0",
   "towncrier>=25.8",
 ]

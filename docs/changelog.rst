@@ -69,7 +69,7 @@ Bugfixes - 4.30.0
 - Makes the error message more clear when pyproject.toml file cannot be loaded
   or is missing expected keys. (:issue:`3578`)
 - The :func:`tox_extend_envs() hook <tox.plugin.spec.tox_extend_envs>`
-  recently added in :pull:`3591` turned out to not work well with
+  recently added in :pr:`3591` turned out to not work well with
   ``tox run``. It was fixed internally, not to exhaust the underlying
   iterator on the first use.
 
@@ -309,7 +309,7 @@ v4.18.1 (2024-09-07)
 
 Bugfixes - 4.18.1
 ~~~~~~~~~~~~~~~~~
-- Fix and test the string spec for the ``sys.executable`` interpreter (introduced in :pull:`3325`)
+- Fix and test the string spec for the ``sys.executable`` interpreter (introduced in :pr:`3325`)
   - by :user:`hroncok` (:issue:`3327`)
 
 Improved Documentation - 4.18.1
@@ -1402,24 +1402,24 @@ Features - 4.0.0a10
   for packages passed in via :ref:`--installpkg <tox-run---installpkg>` - by :user:`gaborbernat`. (:issue:`2204`)
 - Add support for rewriting script invocations that have valid shebang lines when the ``TOX_LIMITED_SHEBANG`` environment
   variable is set and not empty - by :user:`gaborbernat`. (:issue:`2208`)
-- Support for the ``--discover`` CLI flag - by :user:`gaborbernat`. (:pull:`2245`)
+- Support for the ``--discover`` CLI flag - by :user:`gaborbernat`. (:pr:`2245`)
 - Moved the python packaging logic into a dedicate package :pypi:`pyproject-api` and
-  use it as a dependency - by :user:`gaborbernat`. (:pull:`2274`)
-- Drop python 3.6 support - by :user:`gaborbernat`. (:pull:`2275`)
+  use it as a dependency - by :user:`gaborbernat`. (:pr:`2274`)
+- Drop python 3.6 support - by :user:`gaborbernat`. (:pr:`2275`)
 - Support for selecting target environments with a given factor via the :ref:`-f <tox-run--f>` CLI environment flag - by
-  :user:`gaborbernat`. (:pull:`2290`)
+  :user:`gaborbernat`. (:pr:`2290`)
 
 Bugfixes - 4.0.0a10
 ~~~~~~~~~~~~~~~~~~~
 - Fix ``CTRL+C`` is not stopping the process on Windows - by :user:`gaborbernat`. (:issue:`2159`)
 - Fix list/depends commands can create tox package environment as runtime environment and display an error message
-  - by :user:`gaborbernat`. (:pull:`2234`)
+  - by :user:`gaborbernat`. (:pr:`2234`)
 
 Deprecations and Removals - 4.0.0a10
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 - ``tox_add_core_config`` and ``tox_add_env_config`` now take a ``state: State`` argument instead of a configuration one,
   and ``Config`` not longer provides the ``envs`` property (instead users should migrate to ``State.envs``) - by
-  :user:`gaborbernat`. (:pull:`2275`)
+  :user:`gaborbernat`. (:pr:`2275`)
 
 
 v4.0.0a9 (2021-09-16)
@@ -1428,7 +1428,7 @@ v4.0.0a9 (2021-09-16)
 Features - 4.0.0a9
 ~~~~~~~~~~~~~~~~~~
 - Expose the parsed CLI arguments on the main configuration object for plugins and allow plugins to define their own
-  configuration section -- by :user:`gaborbernat`. (:pull:`2191`)
+  configuration section -- by :user:`gaborbernat`. (:pr:`2191`)
 - Let tox run fail when all envs are skipped -- by :user:`jugmac00`. (:issue:`2195`)
 - Expose the configuration loading mechanism to plugins to define and load their own sections. Add
   :meth:`tox_add_env_config <tox.plugin.spec.tox_add_env_config>` plugin hook called after the configuration environment
@@ -1444,7 +1444,7 @@ Bugfixes - 4.0.0a9
 ~~~~~~~~~~~~~~~~~~
 - Fix env variable substitutions with defaults containing colon (e.g. URL) -- by :user:`comabrewer`. (:issue:`2182`)
 - Do not allow constructing ``ConfigSet`` directly and implement ``__contains__`` for ``Loader`` -- by
-  :user:`gaborbernat`. (:pull:`2209`)
+  :user:`gaborbernat`. (:pr:`2209`)
 - Fix old-new value on recreate cache miss-match are swapped -- by :user:`gaborbernat`. (:issue:`2211`)
 - Report fails when report does not support Unicode characters -- by :user:`gaborbernat`. (:issue:`2213`)
 
@@ -1474,10 +1474,10 @@ Features - 4.0.0a8
 - Add support for ``{:}`` substitution in ini files as placeholder for the OS path separator - by :user:`gaborbernat`. (:issue:`2125`)
 - When cleaning directories (for tox environment, ``env_log_dir``, ``env_tmp_dir`` and packaging metadata folders) do not
   delete the directory itself and recreate, but instead just delete its content (this allows the user to cd into it and
-  still be in a valid folder after a new run) - by :user:`gaborbernat`. (:pull:`2139`)
+  still be in a valid folder after a new run) - by :user:`gaborbernat`. (:pr:`2139`)
 - Changes to help plugin development: simpler tox env creation argument list, expose python creation directly,
   allow skipping list dependencies install command for pip and executable is only part of the python cache for virtualenv
-  - by :user:`gaborbernat`. (:pull:`2172`)
+  - by :user:`gaborbernat`. (:pr:`2172`)
 
 Bugfixes - 4.0.0a8
 ~~~~~~~~~~~~~~~~~~
@@ -1489,7 +1489,7 @@ Bugfixes - 4.0.0a8
 - Virtual environment creation for Python is always triggered at every run - by :user:`gaborbernat`. (:issue:`2041`)
 - Add support for setting :ref:`suicide_timeout`, :ref:`interrupt_timeout` and :ref:`terminate_timeout` - by
   :user:`gaborbernat`. (:issue:`2124`)
-- Parallel show output not working when there's a packaging phase in the run - by :user:`gaborbernat`. (:pull:`2161`)
+- Parallel show output not working when there's a packaging phase in the run - by :user:`gaborbernat`. (:pr:`2161`)
 
 Improved Documentation - 4.0.0a8
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1513,10 +1513,10 @@ Features - 4.0.0a7
 - Implement ``[testenv] ignore_outcome`` - "a failing result of this testenv will not make tox fail" - by :user:`hexagonrecursion`. (:issue:`1947`)
 - Inline plugin support via ``tox_.py``. This is loaded where the tox config source is discovered. It's a Python file
   that can contain arbitrary Python code, such as definition of a plugin. Eventually we'll add a plugin that allows
-  succinct declaration/generation of new tox environments - by :user:`gaborbernat`. (:pull:`1963`)
+  succinct declaration/generation of new tox environments - by :user:`gaborbernat`. (:pr:`1963`)
 - Introduce the installer concept, and collect pip installation into a ``pip`` package, also attach to this
-  the requirements file parsing which got a major rework - by :user:`gaborbernat`. (:pull:`1991`)
-- Support CPython ``3.10`` -by :user:`gaborbernat`. (:pull:`2014`)
+  the requirements file parsing which got a major rework - by :user:`gaborbernat`. (:pr:`1991`)
+- Support CPython ``3.10`` -by :user:`gaborbernat`. (:pr:`2014`)
 
 Bugfixes - 4.0.0a7
 ~~~~~~~~~~~~~~~~~~
@@ -1534,23 +1534,23 @@ Bugfixes - 4.0.0a7
   without the ``testenv:`` prefix - by :user:`jugmac00`, :user:`obestwalter`, :user:`eumiro`. (:issue:`1985`)
 - Fix legacy list env command for empty/missing envlist - by :user:`jugmac00`. (:issue:`1987`)
 - Requirements and constraints files handling got reimplemented, which should fix all open issues related to this area
-  - by :user:`gaborbernat`. (:pull:`1991`)
+  - by :user:`gaborbernat`. (:pr:`1991`)
 - Use importlib instead of ``__import__`` - by :user:`dmendek`. (:issue:`1995`)
 - Evaluate factor conditions for ``command`` keys - by :user:`jugmac00`. (:issue:`2002`)
 - Prefer f-strings instead of the str.format method - by :user:`eumiro`. (:issue:`2012`)
 - Fix regex validation for SHA 512 hashes - by :user:`jugmac00`. (:issue:`2018`)
 - Actually run all environments when ``ALL`` is provided to the legacy env command - by :user:`jugmac00`. (:issue:`2112`)
-- Move from ``appdirs`` to ``platformdirs`` - by :user:`gaborbernat`. (:pull:`2117`)
-- Move from ``toml`` to ``tomli`` - by :user:`gaborbernat`. (:pull:`2118`)
+- Move from ``appdirs`` to ``platformdirs`` - by :user:`gaborbernat`. (:pr:`2117`)
+- Move from ``toml`` to ``tomli`` - by :user:`gaborbernat`. (:pr:`2118`)
 
 Improved Documentation - 4.0.0a7
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 - Start documenting the plugin interface. Added :meth:`tox_register_tox_env <tox.plugin.spec.tox_register_tox_env>`,
   :meth:`tox_add_option <tox.plugin.spec.tox_add_option>`,
   :meth:`tox_add_core_config <tox.plugin.spec.tox_add_core_config>`,
-  ``tox_configure`` - by :user:`gaborbernat`. (:pull:`1991`)
+  ``tox_configure`` - by :user:`gaborbernat`. (:pr:`1991`)
 - Explain how ``-v`` and ``-q`` flags play together to determine CLI verbosity level - by :user:`jugmac00`. (:issue:`2005`)
-- Start polishing the documentation for the upcoming final release - by :user:`jugmac00`. (:pull:`2006`)
+- Start polishing the documentation for the upcoming final release - by :user:`jugmac00`. (:pr:`2006`)
 - Update documentation about changelog entries for trivial changes - by :user:`jugmac00`. (:issue:`2007`)
 
 
@@ -1573,14 +1573,14 @@ Features - 4.0.0a6
 - Add support for the ``pip_pre`` settings for virtual environment based tox environments - by :user:`gaborbernat`. (:issue:`1844`)
 - Add support for the ``platform`` settings in tox test environments - by :user:`gaborbernat`. (:issue:`1845`)
 - Add support for the ``recreate`` settings in tox test environments - by :user:`gaborbernat`. (:issue:`1846`)
-- Allow Python test and packaging environments with version 2.7 - by :user:`gaborbernat`. (:pull:`1900`)
+- Allow Python test and packaging environments with version 2.7 - by :user:`gaborbernat`. (:pr:`1900`)
 - Do not construct a requirements file for deps in virtualenv, instead pass content as CLI argument to pip - by
-  :user:`gaborbernat`. (:pull:`1906`)
+  :user:`gaborbernat`. (:pr:`1906`)
 - Do not display status update environment reports when interrupted or for the final environment ran (because at the
   final report will be soon printed and makes the status update redundant) - by :user:`gaborbernat`. (:issue:`1909`)
 - The ``_TOX_SHOW_THREAD`` environment variable can be used to print alive threads when tox exists (useful to debug
   when tox hangs because of some non-finished thread) and also now prints the pid of the local subprocess when reporting
-  the outcome of an execution - by :user:`gaborbernat`. (:pull:`1915`)
+  the outcome of an execution - by :user:`gaborbernat`. (:pr:`1915`)
 
 Bugfixes - 4.0.0a6
 ~~~~~~~~~~~~~~~~~~
@@ -1594,7 +1594,7 @@ Bugfixes - 4.0.0a6
   and post was not always executed) - by :user:`gaborbernat`. (:issue:`1843`)
 - Support requirement files containing ``--hash`` constraints - by :user:`gaborbernat`. (:issue:`1903`)
 - Fix a bug that caused tox to never finish when pulling configuration from a tox run environment that was never executed
-  - by :user:`gaborbernat`. (:pull:`1915`)
+  - by :user:`gaborbernat`. (:pr:`1915`)
 
 Deprecations and Removals - 4.0.0a6
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1639,11 +1639,11 @@ Bugfixes - 4.0.0a5
   - fix an error that made the show configuration command crash when making the string of a config value failed,
   - support empty-new lines within the set env configurations replacements,
 
-  by :user:`gaborbernat`. (:pull:`1864`)
+  by :user:`gaborbernat`. (:pr:`1864`)
 
 Improved Documentation - 4.0.0a5
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-- Add CLI documentation - by :user:`gaborbernat`. (:pull:`1852`)
+- Add CLI documentation - by :user:`gaborbernat`. (:pr:`1852`)
 
 
 v4.0.0a4 (2021-01-16)
@@ -1655,7 +1655,7 @@ Features - 4.0.0a4
   just ``.tox`` before public release, however to encourage testing tox 4 in parallel with tox 3 this is helpful
   - by :user:`gaborbernat`. (:discussion:`1812`)
 - Colorize the ``config`` command: section headers are yellow, keys are green, values remained white, exceptions are light
-  red and comments are cyan - by :user:`gaborbernat`. (:pull:`1821`)
+  red and comments are cyan - by :user:`gaborbernat`. (:pr:`1821`)
 
 Bugfixes - 4.0.0a4
 ~~~~~~~~~~~~~~~~~~
@@ -1667,9 +1667,9 @@ Bugfixes - 4.0.0a4
   by :user:`gaborbernat`. (:issue:`1793`)
 - Fix ``RequirementsFile`` from tox is rendered incorrectly in ``config`` command - by :user:`gaborbernat`. (:issue:`1820`)
 - Fix a bug in the configuration system where referring to the same named key in another env/section causes circular
-  dependency error - by :user:`gaborbernat`. (:pull:`1821`)
+  dependency error - by :user:`gaborbernat`. (:pr:`1821`)
 - Raise ``ValueError`` with descriptive message when a requirements file specified does not exist
-  - by :user:`gaborbernat`. (:pull:`1828`)
+  - by :user:`gaborbernat`. (:pr:`1828`)
 - Support all valid requirement file specification without delimiting space in the ``deps`` of the ``tox.ini`` -
   by :user:`gaborbernat`. (:issue:`1834`)
 
@@ -1687,7 +1687,7 @@ Features - 4.0.0a3
 - - Raise exception when variable substitution enters into a circle.
   - Add ``{/}`` as substitution for os specific path separator.
   - Add ``{env_bin_dir}`` constant substitution.
-  - Implement support for ``--discover`` flag - by :user:`gaborbernat`. (:pull:`1784`)
+  - Implement support for ``--discover`` flag - by :user:`gaborbernat`. (:pr:`1784`)
 
 Bugfixes - 4.0.0a3
 ~~~~~~~~~~~~~~~~~~
@@ -1705,7 +1705,7 @@ Bugfixes - 4.0.0a3
     arguments strip both ``'`` and ``"`` quoted outcomes).
   - Allow windows paths in substitution set/default (the ``:`` character used to separate substitution arguments may
     also be present in paths on Windows - do not support single capital letter values as substitution arguments) -
-    by :user:`gaborbernat`. (:pull:`1784`)
+    by :user:`gaborbernat`. (:pr:`1784`)
 - Rework how we handle Python packaging environments:
 
   - the base packaging environment changed from ``.package`` to ``.pkg``,
@@ -1730,22 +1730,22 @@ v4.0.0a2 (2021-01-09)
 Features - 4.0.0a2
 ~~~~~~~~~~~~~~~~~~
 - Add option to disable colored output, and support ``NO_COLOR`` and ``FORCE_COLOR`` environment variables - by
-  :user:`gaborbernat`. (:pull:`1630`)
+  :user:`gaborbernat`. (:pr:`1630`)
 
 Bugfixes - 4.0.0a2
 ~~~~~~~~~~~~~~~~~~
-- Fix coverage generation in CI - by :user:`gaborbernat`. (:pull:`1551`)
+- Fix coverage generation in CI - by :user:`gaborbernat`. (:pr:`1551`)
 - Fix the CI failures:
 
   - drop Python 3.5 support as it's not expected to get to a release before EOL,
   - fix test using ``\n`` instead of ``os.linesep``,
   - Windows Python 3.6 does not contain ``_overlapped.ReadFileInto``
 
-  - by :user:`gaborbernat`. (:pull:`1556`)
+  - by :user:`gaborbernat`. (:pr:`1556`)
 
 Improved Documentation - 4.0.0a2
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-- Add base documentation by merging virtualenv structure with tox 3 - by :user:`gaborbernat`. (:pull:`1551`)
+- Add base documentation by merging virtualenv structure with tox 3 - by :user:`gaborbernat`. (:pr:`1551`)
 
 
 v4.0.0a1

@@ -42,6 +42,7 @@ extensions = [
     "sphinx_autodoc_typehints",
     "sphinx_inline_tabs",
     "sphinx_copybutton",
+    "sphinx_issues",  # :user: and similar roles
 ]
 
 exclude_patterns = ["_build", "changelog/*", "_draft.rst"]
@@ -54,13 +55,9 @@ autodoc_default_options = {
 autosectionlabel_prefix_document = True
 
 extlinks = {
-    "issue": ("https://github.com/tox-dev/tox/issues/%s", "#%s"),
-    "pull": ("https://github.com/tox-dev/tox/pull/%s", "PR #%s"),
     "discussion": ("https://github.com/tox-dev/tox/discussions/%s", "#%s"),
-    "user": ("https://github.com/%s", "@%s"),
     "gh_repo": ("https://github.com/%s", "%s"),
     "gh": ("https://github.com/%s", "%s"),
-    "pypi": ("https://pypi.org/project/%s", "%s"),
 }
 intersphinx_mapping = {
     "python": ("https://docs.python.org/3", None),
@@ -79,6 +76,8 @@ linkcheck_ignore = [
 ]
 linkcheck_allowed_redirects = {r"https://github.com/tox-dev/tox/issues/\d+": r"https://github.com/tox-dev/tox/pull/\d+"}
 extlinks_detect_hardcoded_links = True
+
+issues_github_path = f"{company}/{name}"  # `sphinx-issues` ext
 
 
 def process_signature(  # noqa: PLR0913
