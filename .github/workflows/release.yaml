@@ -23,7 +23,7 @@ jobs:
       - name: Build package
         run: uv build --python 3.14 --python-preference only-managed --sdist --wheel . --out-dir dist
       - name: Store the distribution packages
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: ${{ env.dists-artifact-name }}
           path: dist/*
