@@ -292,8 +292,10 @@ _REQ_FILE_TEST_CASES = [
         "912224782ab\t--hash=sha256:af957b369adcd07e5b3c64d2cdb76d6808c5e0b16c35ca41c79c8eee34808152 # ok",
         {},
         [
-            "attrs --hash sha256:af957b369adcd07e5b3c64d2cdb76d6808c5e0b16c35ca41c79c8eee34808152 --hash sha384:"
-            "142d9b02f3f4511ccabf6c14bd34d2b0a9ed043a898228b48343cfdf4eb10856ef7ad5e2ff2c528ecae04912224782ab",
+            (
+                "attrs --hash sha256:af957b369adcd07e5b3c64d2cdb76d6808c5e0b16c35ca41c79c8eee34808152 --hash sha384:"
+                "142d9b02f3f4511ccabf6c14bd34d2b0a9ed043a898228b48343cfdf4eb10856ef7ad5e2ff2c528ecae04912224782ab"
+            ),
         ],
         ["attrs"],
         id="hash",
@@ -304,8 +306,10 @@ _REQ_FILE_TEST_CASES = [
         "e2ff2c528ecae04912224782ab\n",
         {},
         [
-            "attrs --hash sha256:af957b369adcd07e5b3c64d2cdb76d6808c5e0b16c35ca41c79c8eee34808152 --hash sha384:"
-            "142d9b02f3f4511ccabf6c14bd34d2b0a9ed043a898228b48343cfdf4eb10856ef7ad5e2ff2c528ecae04912224782ab",
+            (
+                "attrs --hash sha256:af957b369adcd07e5b3c64d2cdb76d6808c5e0b16c35ca41c79c8eee34808152 --hash sha384:"
+                "142d9b02f3f4511ccabf6c14bd34d2b0a9ed043a898228b48343cfdf4eb10856ef7ad5e2ff2c528ecae04912224782ab"
+            ),
         ],
         ["attrs"],
         id="hash with escaped newline",
@@ -315,8 +319,10 @@ _REQ_FILE_TEST_CASES = [
         "dada670026f41fdd62e5e10b3fd75d6112704a9521c3df105f0b6f3bb11b128a",
         {},
         [
-            "attrs --hash sha512:7a91e5a3d1a1238525e477385ef5ee6cecdc8f8fcc2a79d1b35a9f57ad15c814"
-            "dada670026f41fdd62e5e10b3fd75d6112704a9521c3df105f0b6f3bb11b128a",
+            (
+                "attrs --hash sha512:7a91e5a3d1a1238525e477385ef5ee6cecdc8f8fcc2a79d1b35a9f57ad15c814"
+                "dada670026f41fdd62e5e10b3fd75d6112704a9521c3df105f0b6f3bb11b128a"
+            ),
         ],
         ["attrs"],
         id="sha512 hash is supported",
@@ -440,8 +446,10 @@ def test_req_path_with_space_escape(tmp_path: Path) -> None:
     [
         "sha256:a",
         "sha256:xxxxxxxxxx123456789012345678901234567890123456789012345678901234",
-        "sha512:thisshouldfail8525e477385ef5ee6cecdc8f8fcc2a79d1b35a9f57ad15c814"
-        "dada670026f41fdd62e5e10b3fd75d6112704a9521c3df105f0b6f3bb11b128a",
+        (
+            "sha512:thisshouldfail8525e477385ef5ee6cecdc8f8fcc2a79d1b35a9f57ad15c814"
+            "dada670026f41fdd62e5e10b3fd75d6112704a9521c3df105f0b6f3bb11b128a"
+        ),
     ],
 )
 def test_bad_hash(hash_value: str, tmp_path: Path) -> None:
