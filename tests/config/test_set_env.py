@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import os
+import sys
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Literal
 from unittest.mock import ANY
@@ -288,3 +290,103 @@ def test_set_env_environment_with_file_and_expanded_substitution(
     result = project.run("r", "-e", "check")
     result.assert_success()
     assert "check: OK" in result.out
+
+
+@pytest.mark.parametrize(
+    ("of_type", "config", "expected_present", "expected_value"),
+    [
+        pytest.param(
+            "ini",
+            f"[testenv]\npackage=skip\nset_env=CONDITIONAL=value; sys_platform == '{sys.platform}'",
+            True,
+            "value",
+            id="ini-marker-true",
+        ),
+        pytest.param(
+            "ini",
+            "[testenv]\npackage=skip\nset_env=CONDITIONAL=value; sys_platform == 'nonexistent'",
+            False,
+            None,
+            id="ini-marker-false",
+        ),
+        pytest.param(
+            "toml",
+            f'[env_run_base]\npackage="skip"\nset_env.CONDITIONAL = {{ value = "value", '
+            f"marker = \"sys_platform == '{sys.platform}'\" }}",
+            True,
+            "value",
+            id="toml-marker-true",
+        ),
+        pytest.param(
+            "toml",
+            '[env_run_base]\npackage="skip"\n'
+            'set_env.CONDITIONAL = { value = "value", marker = "sys_platform == \'nonexistent\'" }',
+            False,
+            None,
+            id="toml-marker-false",
+        ),
+        pytest.param(
+            "ini",
+            "[testenv]\npackage=skip\nset_env=UNCONDITIONAL=value",
+            True,
+            "value",
+            id="ini-no-marker",
+        ),
+        pytest.param(
+            "ini",
+            f"[testenv]\npackage=skip\nset_env=OS_CHECK=yes; os_name == '{os.name}'",
+            True,
+            "yes",
+            id="ini-os-name-marker",
+        ),
+    ],
+)
+def test_set_env_marker(
+    eval_set_env: EvalSetEnv,
+    of_type: ConfigFileFormat,
+    config: str,
+    expected_present: bool,
+    expected_value: str | None,
+) -> None:
+    set_env = eval_set_env(config, of_type=of_type)
+    if expected_present:
+        assert "CONDITIONAL" in set_env or "UNCONDITIONAL" in set_env or "OS_CHECK" in set_env
+        key = next(k for k in ("CONDITIONAL", "UNCONDITIONAL", "OS_CHECK") if k in set_env)
+        assert set_env.load(key) == expected_value
+    else:
+        assert "CONDITIONAL" not in set_env
+
+
+@pytest.mark.parametrize(
+    ("marker", "expected_present"),
+    [
+        pytest.param(f"sys_platform == '{sys.platform}'", True, id="marker-true"),
+        pytest.param("sys_platform == 'nonexistent'", False, id="marker-false"),
+    ],
+)
+def test_set_env_marker_with_replace_toml(
+    eval_set_env: EvalSetEnv, monkeypatch: MonkeyPatch, marker: str, expected_present: bool
+) -> None:
+    monkeypatch.setenv("MY_VAR", "from_env")
+    config = (
+        f'[env_run_base]\npackage="skip"\n'
+        f'set_env.CONDITIONAL = {{ replace = "env", name = "MY_VAR", default = "default", marker = "{marker}" }}'
+    )
+    set_env = eval_set_env(config, of_type="toml")
+    if expected_present:
+        assert "CONDITIONAL" in set_env
+        assert set_env.load("CONDITIONAL") == "from_env"
+    else:
+        assert "CONDITIONAL" not in set_env
+
+
+def test_set_env_marker_mixed(eval_set_env: EvalSetEnv) -> None:
+    marker = f"sys_platform == '{sys.platform}'"
+    config = (
+        f"[testenv]\npackage=skip\nset_env=ALWAYS=1\n CONDITIONAL=2; {marker}\n NEVER=3; sys_platform == 'nonexistent'"
+    )
+    set_env = eval_set_env(config)
+    keys = list(set_env)
+    assert "ALWAYS" in keys
+    assert "CONDITIONAL" in keys
+    assert "NEVER" not in keys

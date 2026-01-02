@@ -3,20 +3,25 @@ from __future__ import annotations
 from collections.abc import Callable, Iterator, Mapping
 from functools import reduce
 from pathlib import Path
+from typing import Any
+
+from packaging.markers import Marker
 
 from tox.config.loader.api import ConfigLoadArgs
 from tox.tox_env.errors import Fail
 
 Replacer = Callable[[str, ConfigLoadArgs], str]
+SetEnvRaw = str | dict[str, Any] | list[dict[str, Any]]
 
 
 class SetEnv:
     def __init__(  # noqa: C901, PLR0912
-        self, raw: str | dict[str, str] | list[dict[str, str]], name: str, env_name: str | None, root: Path
+        self, raw: SetEnvRaw, name: str, env_name: str | None, root: Path
     ) -> None:
         self.changed = False
         self._materialized: dict[str, str] = {}  # env vars we already loaded
         self._raw: dict[str, str] = {}  # could still need replacement
+        self._markers: dict[str, Marker] = {}  # PEP-496 markers for conditional env vars
         self._needs_replacement: list[str] = []  # env vars that need replacement
         self._env_files: list[str] = []
         self._replacer: Replacer = lambda s, c: s  # noqa: ARG005
@@ -24,13 +29,11 @@ class SetEnv:
         from .loader.replacer import MatchExpression, find_replace_expr  # noqa: PLC0415
 
         if isinstance(raw, dict):
-            self._raw = raw
-            if "file" in raw:  # environment files to be handled later
-                self._env_files.append(raw["file"])
-                self._raw.pop("file")
+            self._parse_dict(raw)
             return
         if isinstance(raw, list):
-            self._raw = reduce(lambda a, b: {**a, **b}, raw)
+            merged = reduce(lambda a, b: {**a, **b}, raw)
+            self._parse_dict(merged)
             return
         for line in raw.splitlines():  # noqa: PLR1702
             if line.strip():
@@ -38,7 +41,7 @@ class SetEnv:
                     self._env_files.append(self._parse_file_line(line))
                 else:
                     try:
-                        key, value = self._extract_key_value(line)
+                        key, value, marker = self._extract_key_value_marker(line)
                         if "{" in key:
                             msg = f"invalid line {line!r} in set_env"
                             raise ValueError(msg)  # noqa: TRY301
@@ -51,6 +54,20 @@ class SetEnv:
                             raise
                     else:
                         self._raw[key] = value
+                        if marker:
+                            self._markers[key] = Marker(marker)
+
+    def _parse_dict(self, raw: dict[str, Any]) -> None:
+        for key, value in raw.items():
+            if key == "file":
+                self._env_files.append(value)
+            elif isinstance(value, dict):
+                if "value" in value:
+                    self._raw[key] = value["value"]
+                    if marker := value.get("marker"):
+                        self._markers[key] = Marker(marker)
+            else:
+                self._raw[key] = value
 
     @staticmethod
     def _is_file_line(line: str) -> bool:
@@ -59,6 +76,11 @@ class SetEnv:
     @staticmethod
     def _parse_file_line(line: str) -> str:
         return line[len("file|") :]
+
+    def _marker_matches(self, key: str) -> bool:
+        if key not in self._markers:
+            return True
+        return self._markers[key].evaluate()
 
     def use_replacer(self, value: Replacer, args: ConfigLoadArgs) -> None:
         self._replacer = value
@@ -78,15 +100,36 @@ class SetEnv:
             env_line = env_line.strip()  # noqa: PLW2901
             if not env_line or env_line.startswith("#"):
                 continue
-            yield self._extract_key_value(env_line)
+            key, value, _ = self._extract_key_value_marker(env_line)
+            yield key, value
 
     @staticmethod
-    def _extract_key_value(line: str) -> tuple[str, str]:
-        key, sep, value = line.partition("=")
-        if sep:
-            return key.strip(), value.strip()
-        msg = f"invalid line {line!r} in set_env"
-        raise ValueError(msg)
+    def _extract_key_value_marker(line: str) -> tuple[str, str, str]:
+        key, sep, rest = line.partition("=")
+        if not sep:
+            msg = f"invalid line {line!r} in set_env"
+            raise ValueError(msg)
+        value, marker = SetEnv._split_value_marker(rest.strip())
+        return key.strip(), value, marker
+
+    @staticmethod
+    def _split_value_marker(value: str) -> tuple[str, str]:
+        # Parse value; marker format (PEP-496 style)
+        # Handle escaped semicolons (\;) and quoted strings
+        in_quotes = False
+        quote_char = ""
+        i = 0
+        while i < len(value):
+            char = value[i]
+            if char in {'"', "'"} and (i == 0 or value[i - 1] != "\\"):
+                if not in_quotes:
+                    in_quotes, quote_char = True, char
+                elif char == quote_char:
+                    in_quotes = False
+            elif char == ";" and not in_quotes and (i == 0 or value[i - 1] != "\\"):
+                return value[:i].strip(), value[i + 1 :].strip()
+            i += 1
+        return value, ""
 
     def load(self, item: str, args: ConfigLoadArgs | None = None) -> str:
         if item in self._materialized:
@@ -105,23 +148,35 @@ class SetEnv:
 
     def __iter__(self) -> Iterator[str]:
         # start with the materialized ones, maybe we don't need to materialize the raw ones
-        yield from self._materialized.keys()
-        yield from list(self._raw.keys())  # iterating over this may trigger materialization and change the dict
+        for key in self._materialized:
+            if self._marker_matches(key):
+                yield key
+        for key in list(self._raw.keys()):  # iterating over this may trigger materialization and change the dict
+            if self._marker_matches(key):
+                yield key
+        yield from self._iter_needs_replacement()
+
+    def _iter_needs_replacement(self) -> Iterator[str]:
         args = ConfigLoadArgs([], self._name, self._env_name)
         while self._needs_replacement:
             line = self._needs_replacement.pop(0)
             expanded_line = self._replacer(line, args)
             sub_raw: dict[str, str] = {}
             for sub_line in filter(None, expanded_line.splitlines()):
-                if not self._is_file_line(sub_line):
-                    sub_raw.__setitem__(*self._extract_key_value(sub_line))
-                else:
+                if self._is_file_line(sub_line):
                     for key, value in self._stream_env_file(self._parse_file_line(sub_line), args):
                         if key not in self._raw:
                             sub_raw[key] = value  # noqa: PERF403
+                else:
+                    key, value, marker = self._extract_key_value_marker(sub_line)
+                    sub_raw[key] = value
+                    if marker:
+                        self._markers[key] = Marker(marker)
             self._raw.update(sub_raw)
             self.changed = True  # loading while iterating can cause these values to be missed
-            yield from sub_raw.keys()
+            for key in sub_raw:
+                if self._marker_matches(key):
+                    yield key
 
     def update(self, param: Mapping[str, str] | SetEnv, *, override: bool = True) -> None:
         for key in param:
