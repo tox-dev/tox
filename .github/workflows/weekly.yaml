@@ -14,7 +14,7 @@ env:
   FORCE_COLOR: 1
 
 concurrency:
-  group: check-${{ github.ref }}
+  group: weekly-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
