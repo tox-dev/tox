@@ -49,15 +49,17 @@ class Unroll:
         elif isinstance(value, dict):
             # need to inspect every entry of the list to check for reference.
             if replace_type := value.get("replace"):
+                marker = value.get("marker")
                 if replace_type == "posargs" and self.conf is not None:
                     got_posargs = load_posargs(self.conf, self.args)
-                    return (
+                    posargs_result: TomlTypes = (
                         [self(v, depth) for v in cast("list[str]", value.get("default", []))]
                         if got_posargs is None
                         else list(got_posargs)
                     )
+                    return {"value": posargs_result, "marker": marker} if marker else posargs_result
                 if replace_type == "env":
-                    return replace_env(
+                    env_result: TomlTypes = replace_env(
                         self.conf,
                         [
                             cast("str", validate(value["name"], str)),
@@ -65,8 +67,10 @@ class Unroll:
                         ],
                         self.args,
                     )
+                    return {"value": env_result, "marker": marker} if marker else env_result
                 if replace_type == "ref":  # pragma: no branch
-                    return self._replace_ref(value, depth)
+                    ref_result = self._replace_ref(value, depth)
+                    return {"value": ref_result, "marker": marker} if marker else ref_result
 
             res_dict: dict[str, TomlTypes] = {}
             for key, val in value.items():  # apply replacement for every entry

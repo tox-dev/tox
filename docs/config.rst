@@ -623,6 +623,47 @@ Base options
        - each line is in KEY=VALUE format; both the key and the value are stripped,
        - there is no special handling of quotation marks, they are part of the key or value.
 
+   **Conditional environment variables**
+
+   .. versionadded:: 4.33
+
+   Environment variables can be set conditionally based on PEP-508 environment markers. If the marker evaluates to
+   false, the variable will not be set.
+
+   .. note::
+
+      Markers are evaluated against the Python interpreter running tox (the host Python), not the target environment's
+      Python interpreter. This means markers like ``python_version`` reflect tox's Python version, not the target's.
+      For platform-specific conditions (e.g., ``sys_platform``, ``os_name``), this is typically the desired behavior
+      since the target environment runs on the same platform.
+
+    .. tab:: TOML
+
+       .. code-block:: toml
+
+          [tool.tox.env_run_base]
+          set_env.LINUX_VAR = { value = "1", marker = "sys_platform == 'linux'" }
+          set_env.WIN_VAR = { value = "1", marker = "sys_platform == 'win32'" }
+
+          # Can also be combined with replace directives
+          set_env.CONDITIONAL = { replace = "env", name = "MY_VAR", default = "fallback", marker = "sys_platform == 'linux'" }
+
+    .. tab:: INI
+
+       .. code-block:: ini
+
+          [testenv]
+          set_env =
+              LINUX_VAR = 1; sys_platform == 'linux'
+              DARWIN_VAR = 1; sys_platform == 'darwin'
+              WIN_ONLY = 1; sys_platform == 'win32'
+
+   Available markers include ``sys_platform``, ``os_name``, ``platform_machine``, ``platform_system``,
+   ``python_version``, ``implementation_name``, and others as defined in PEP-508.
+
+   For conditional settings that should differ per target Python environment (e.g., based on Python version), use
+   tox's :ref:`conditional settings <conditional-settings>` mechanism with environment factors instead.
+
    More environment variable-related information
    can be found in :ref:`environment variable substitutions`.
 
@@ -1598,6 +1639,8 @@ others to avoid repeating the same values:
     deps =
         mercurial
         {[base]deps}
+
+.. _conditional-settings:
 
 Conditional settings
 ~~~~~~~~~~~~~~~~~~~~

@@ -263,13 +263,20 @@ class EnvConfigSet(ConfigSet):
             return values
 
         def set_env_factory(raw: object) -> SetEnv:
+            def is_valid_value(v: object) -> bool:
+                if isinstance(v, str):
+                    return True
+                if isinstance(v, dict):
+                    return "value" in v and isinstance(v.get("value"), str)
+                return False
+
             if not (
                 isinstance(raw, str)
-                or (isinstance(raw, dict) and all(isinstance(k, str) and isinstance(v, str) for k, v in raw.items()))
+                or (isinstance(raw, dict) and all(isinstance(k, str) and is_valid_value(v) for k, v in raw.items()))
                 or (
                     isinstance(raw, list)
                     and all(
-                        isinstance(e, dict) and all(isinstance(k, str) and isinstance(v, str) for k, v in e.items())
+                        isinstance(e, dict) and all(isinstance(k, str) and is_valid_value(v) for k, v in e.items())
                         for e in raw
                     )
                 )
