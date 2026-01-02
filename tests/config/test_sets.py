@@ -56,8 +56,8 @@ def test_config_optional_none(conf_builder: ConfBuilder) -> None:
     config_set = conf_builder("")
     config_set.add_config(
         keys="optional_none",
-        of_type=int | None,
-        default=None,
+        of_type=int | None,  # type: ignore[arg-type]
+        default=None,  # type: ignore[arg-type]
         desc="optional_none",
     )
     optional_none = config_set["optional_none"]
