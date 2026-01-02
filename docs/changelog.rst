@@ -4,6 +4,24 @@ Release History
 
 .. towncrier release notes start
 
+v4.33.0 (2026-01-02)
+--------------------
+
+Features - 4.33.0
+~~~~~~~~~~~~~~~~~
+- Add support for conditional ``set_env`` using PEP-496 environment markers. In INI format use
+  ``VAR=value; marker`` syntax, in TOML format use ``set_env.VAR = { value = "...", marker = "..." }``
+  -- by :user:`gaborbernat`. (:issue:`3663`)
+
+Bugfixes - 4.33.0
+~~~~~~~~~~~~~~~~~
+- Added 'LocalAppData' to the default passed environment variables on Windows. (:issue:`3639`)
+
+Improved Documentation - 4.33.0
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+- Sphinx is now set up to use :pypi:`sphinx-issues` for referencing
+  GitHub issues and pull requests in the docs -- by :user:`webknjaz`. (:issue:`3202`)
+
 v4.32.0 (2025-10-24)
 --------------------
 
