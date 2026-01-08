@@ -1,0 +1,2 @@
+Support installing extras from the current project in dependency groups.
+-- by :user:`czaki`.
