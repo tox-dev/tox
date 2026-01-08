@@ -4,6 +4,14 @@ Release History
 
 .. towncrier release notes start
 
+v4.34.0 (2026-01-08)
+--------------------
+
+Features - 4.34.0
+~~~~~~~~~~~~~~~~~
+- Support installing extras from the current project in dependency groups.
+  -- by :user:`czaki`. (:issue:`3561`)
+
 v4.33.0 (2026-01-02)
 --------------------
 
