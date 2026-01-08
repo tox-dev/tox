@@ -241,8 +241,13 @@ def test_dependency_groups_extras(tox_project: ToxProjectCreator) -> None:
 
     found_calls = [(i[0][0].conf.name, i[0][3].run_id, i[0][3].cmd) for i in execute_calls.call_args_list]
     assert found_calls == [
-        ("py", "install_dependency-groups", ["python", "-I", "-m", "pip", "install", "extra_pkg>=1.0", "furo>=2024.8.6", "sphinx>=8.0.2"])
+        (
+            "py",
+            "install_dependency-groups",
+            ["python", "-I", "-m", "pip", "install", "extra_pkg>=1.0", "furo>=2024.8.6", "sphinx>=8.0.2"],
+        )
     ]
+
 
 def test_dependency_groups_nested_extras(tox_project: ToxProjectCreator) -> None:
     project = tox_project(
@@ -275,7 +280,11 @@ def test_dependency_groups_nested_extras(tox_project: ToxProjectCreator) -> None
 
     found_calls = [(i[0][0].conf.name, i[0][3].run_id, i[0][3].cmd) for i in execute_calls.call_args_list]
     assert found_calls == [
-        ("py", "install_dependency-groups", ["python", "-I", "-m", "pip", "install", "extra_pkg>=1.0", "furo>=2024.8.6", "sphinx>=8.0.2"])
+        (
+            "py",
+            "install_dependency-groups",
+            ["python", "-I", "-m", "pip", "install", "extra_pkg>=1.0", "furo>=2024.8.6", "sphinx>=8.0.2"],
+        )
     ]
 
 
@@ -310,8 +319,23 @@ def test_dependency_groups_double_extras(tox_project: ToxProjectCreator) -> None
 
     found_calls = [(i[0][0].conf.name, i[0][3].run_id, i[0][3].cmd) for i in execute_calls.call_args_list]
     assert found_calls == [
-        ("py", "install_dependency-groups", ["python", "-I", "-m", "pip", "install", "extra_pkg2>=1.0", "extra_pkg>=1.0", "furo>=2024.8.6", "sphinx>=8.0.2"])
+        (
+            "py",
+            "install_dependency-groups",
+            [
+                "python",
+                "-I",
+                "-m",
+                "pip",
+                "install",
+                "extra_pkg2>=1.0",
+                "extra_pkg>=1.0",
+                "furo>=2024.8.6",
+                "sphinx>=8.0.2",
+            ],
+        )
     ]
+
 
 def test_dependency_groups_duplicate_extras(tox_project: ToxProjectCreator) -> None:
     project = tox_project(
@@ -344,8 +368,23 @@ def test_dependency_groups_duplicate_extras(tox_project: ToxProjectCreator) -> N
 
     found_calls = [(i[0][0].conf.name, i[0][3].run_id, i[0][3].cmd) for i in execute_calls.call_args_list]
     assert found_calls == [
-        ("py", "install_dependency-groups", ["python", "-I", "-m", "pip", "install", "extra_pkg2>=1.0", "extra_pkg>=1.0", "furo>=2024.8.6", "sphinx>=8.0.2"])
+        (
+            "py",
+            "install_dependency-groups",
+            [
+                "python",
+                "-I",
+                "-m",
+                "pip",
+                "install",
+                "extra_pkg2>=1.0",
+                "extra_pkg>=1.0",
+                "furo>=2024.8.6",
+                "sphinx>=8.0.2",
+            ],
+        )
     ]
+
 
 def test_dependency_groups_multiple(tox_project: ToxProjectCreator) -> None:
     project = tox_project(

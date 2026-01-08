@@ -21,6 +21,28 @@ else:  # pragma: no cover (py311+)
 _IncludeGroup = TypedDict("_IncludeGroup", {"include-group": str})
 
 
+def _add_extra_to_deps(
+    dependency_groups: dict[str, list[str]],
+    dependencies: set[Requirement],
+    extra: str,
+    seen_extras: set[str],
+) -> None:
+    """Add dependencies for a given extra to the dependencies set."""
+    normed_extra = canonicalize_name(extra)
+    if normed_extra in seen_extras:
+        return
+    seen_extras.add(normed_extra)
+    if normed_extra not in dependency_groups:
+        msg = f"extra {extra!r} not found in dependency groups"
+        raise Fail(msg)
+    for dep_str in dependency_groups[normed_extra]:
+        try:
+            dependencies.add(Requirement(dep_str))
+        except InvalidRequirement as exc:  # noqa: PERF203
+            msg = f"{dep_str!r} is not valid requirement due to {exc}"
+            raise Fail(msg) from exc
+
+
 def unwrap_nested_extras(
     dependency_groups: dict[str, list[str]],
     project_name: str | None,
@@ -37,25 +59,12 @@ def unwrap_nested_extras(
             extras_to_unwrap.add(dependency)
     if not extras_to_unwrap:
         return dependencies
-    
+
     for dependency in extras_to_unwrap:
         dependencies.remove(dependency)
         for extra in dependency.extras:
-            if extra in seen_extras:
-                continue
-            normed_extra = canonicalize_name(extra)
-            if normed_extra not in dependency_groups:
-                msg = f"extra {extra!r} not found in dependency groups"
-                raise Fail(msg)
-            for dep_str in dependency_groups[normed_extra]:
-                try:
-                    dependencies.add(Requirement(dep_str))
-                except InvalidRequirement as exc:
-                    msg = f"{dep_str!r} is not valid requirement due to {exc}"
-                    raise Fail(msg) from exc
+            _add_extra_to_deps(dependency_groups, dependencies, extra, seen_extras)
     return unwrap_nested_extras(dependency_groups, project_name, dependencies, seen_extras)
-    
-
 
 
 def resolve(root: Path, groups: set[str]) -> set[Requirement]:
