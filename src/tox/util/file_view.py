@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import logging
-import os
 import shutil
 from itertools import chain
 from os.path import commonpath
@@ -24,16 +23,8 @@ def create_session_view(package: Path, temp_path: Path) -> Path:
     session_dir.mkdir()
     session_package = session_dir / package.name
 
-    links = False  # if we can do hard links do that, otherwise just copy
-    if hasattr(os, "link"):
-        try:
-            os.link(package, session_package)
-            links = True
-        except (OSError, NotImplementedError):
-            pass
-    if not links:
-        shutil.copyfile(package, session_package)
-    operation = "links" if links else "copied"
+    shutil.copyfile(package, session_package)
+    operation = "copied"
     common = commonpath((session_package, package))
     rel_session, rel_package = session_package.relative_to(common), package.relative_to(common)
     logging.debug("package %s %s to %s (%s)", rel_session, operation, rel_package, common)
