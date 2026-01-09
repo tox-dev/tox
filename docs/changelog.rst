@@ -4,6 +4,13 @@ Release History
 
 .. towncrier release notes start
 
+v4.34.1 (2026-01-09)
+--------------------
+
+Bugfixes - 4.34.1
+~~~~~~~~~~~~~~~~~
+- Fix wheel corruption errors when the build backend updates the file in place - by :user:`gaborbernat`. (:issue:`3667`)
+
 v4.34.0 (2026-01-08)
 --------------------
 

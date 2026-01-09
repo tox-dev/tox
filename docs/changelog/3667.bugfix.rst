@@ -1,1 +1,0 @@
-Fix wheel corruption errors when the build backend updates the file in place - by :user:`gaborbernat`.
