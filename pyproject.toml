@@ -149,20 +149,22 @@ lint.select = [
   "ALL",
 ]
 lint.ignore = [
-  "ANN401",  # Dynamically typed expressions (typing.Any) are disallowed in `arg`"
-  "COM812",  # conflicts with formatter
-  "CPY",     # No copyright header
-  "D",       # ignore documentation for now
-  "D203",    # `one-blank-line-before-class` (D203) and `no-blank-line-before-class` (D211) are incompatible
-  "D212",    # `multi-line-summary-first-line` (D212) and `multi-line-summary-second-line` (D213) are incompatible
-  "DOC201",  # no restructuredtext support yet
-  "DOC402",  # no restructuredtext support yet
-  "DOC501",  # broken with sphinx docs
-  "INP001",  # no implicit namespaces here
-  "ISC001",  # conflicts with formatter
+  "ANN401", # Dynamically typed expressions (typing.Any) are disallowed in `arg`"
+  "COM812", # conflicts with formatter
+  "CPY",    # No copyright header
+  "D",      # ignore documentation for now
+  "D203",   # `one-blank-line-before-class` (D203) and `no-blank-line-before-class` (D211) are incompatible
+  "D212",   # `multi-line-summary-first-line` (D212) and `multi-line-summary-second-line` (D213) are incompatible
+  "DOC201", # no restructuredtext support yet
+  "DOC402", # no restructuredtext support yet
+  "DOC501", # broken with sphinx docs
+  "INP001", # no implicit namespaces here
+  "ISC001", # conflicts with formatter
+
   "LOG015",  # we require use of the root logger for reporting
   "PLR0914", ## Too many local variables
   "PLR0917", ## Too many positional arguments
+  "RUF067",  # `__init__` module should only contain docstrings and re-exports
   "S104",    # Possible binding to all interfaces
   "S404",    # Using subprocess is alright.
   "S603",    # Using subprocess is alright.
