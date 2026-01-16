@@ -33,7 +33,7 @@ Here is a non-exhaustive list of these.
         run-parallel (p)          run environments in parallel
         depends (de)              visualize tox environment dependencies
         list (l)                  list environments
-        devenv (d)                sets up a development environment at ENVDIR based on the tox configuration specified
+        devenv (d)                sets up a development environment at path based on the tox configuration specified
         config (c)                show tox configuration
         quickstart (q)            Command line script to quickly create a tox config file for a Python project
         exec (e)                  execute an arbitrary command within a tox environment
