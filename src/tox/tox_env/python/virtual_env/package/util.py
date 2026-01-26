@@ -1,11 +1,13 @@
 from __future__ import annotations
 
 from copy import deepcopy
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING, Literal, cast
 
 if TYPE_CHECKING:
-    from packaging._parser import Op, Variable
-    from packaging.markers import Marker
+    from collections.abc import Sequence
+
+    from packaging._parser import Op, Value, Variable
+    from packaging.markers import Marker, MarkerAtom, MarkerList  # type: ignore[attr-defined]
     from packaging.requirements import Requirement
 
 
@@ -50,9 +52,9 @@ def extract_extra_markers(deps: list[Requirement]) -> list[tuple[Requirement, se
 
 def _extract_extra_markers(req: Requirement) -> tuple[Requirement, set[str | None]]:
     req = deepcopy(req)
-    markers: list[str | tuple[Variable, Op, Variable]] = getattr(req.marker, "_markers", []) or []
-    new_markers: list[str | tuple[Variable, Op, Variable]] = []
-    extra_markers: set[str] = set()  # markers that have a key of extra
+    markers: MarkerList = getattr(req.marker, "_markers", []) or []
+    new_markers: MarkerList = []
+    extra_markers: set[str] = set()
     marker = markers.pop(0) if markers else None
     while marker:
         extra = _get_extra(marker)
@@ -73,12 +75,13 @@ def _extract_extra_markers(req: Requirement) -> tuple[Requirement, set[str | Non
     return req, cast("set[str | None]", extra_markers) or {None}
 
 
-def _get_extra(_marker: str | tuple[Variable, Op, Variable]) -> str | None:
-    if (
-        isinstance(_marker, tuple)
-        and len(_marker) == 3  # noqa: PLR2004
-        and _marker[0].value == "extra"
-        and _marker[1].value == "=="
-    ):
-        return _marker[2].value
+def _get_extra(
+    _marker: MarkerList | tuple[Variable | Value, Op, Variable | Value] | Sequence[MarkerAtom] | Literal["and", "or"],
+) -> str | None:
+    if not isinstance(_marker, tuple) or len(_marker) != 3:  # noqa: PLR2004
+        return None
+    marker_tuple = cast("tuple[Variable | Value, Op, Variable | Value]", _marker)
+    left, op, right = marker_tuple
+    if hasattr(left, "value") and left.value == "extra" and hasattr(op, "value") and op.value == "==":
+        return right.value if hasattr(right, "value") else None
     return None

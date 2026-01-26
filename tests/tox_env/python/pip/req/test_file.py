@@ -207,8 +207,8 @@ _REQ_FILE_TEST_CASES = [
     pytest.param(
         "numpy[2,1]  @ file://./downloads/numpy-1.9.2-cp34-none-win32.whl",
         {},
-        ["numpy[1,2]@ file://./downloads/numpy-1.9.2-cp34-none-win32.whl"],
-        ["numpy[1,2]@ file://./downloads/numpy-1.9.2-cp34-none-win32.whl"],
+        ["numpy[1,2] @ file://./downloads/numpy-1.9.2-cp34-none-win32.whl"],
+        ["numpy[1,2] @ file://./downloads/numpy-1.9.2-cp34-none-win32.whl"],
         id="path with name-extra-protocol",
     ),
     pytest.param(
@@ -330,8 +330,8 @@ _REQ_FILE_TEST_CASES = [
     pytest.param(
         "\tp @ https://github.com/a/b/c/d.zip ",
         {},
-        ["p@ https://github.com/a/b/c/d.zip"],
-        ["p@ https://github.com/a/b/c/d.zip"],
+        ["p @ https://github.com/a/b/c/d.zip"],
+        ["p @ https://github.com/a/b/c/d.zip"],
         id="whitespace around",
     ),
 ]
