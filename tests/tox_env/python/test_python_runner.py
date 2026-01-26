@@ -542,7 +542,7 @@ def test_dependency_groups_bad_requirement(tox_project: ToxProjectCreator) -> No
     result.assert_failed()
     assert (
         "py: failed with 'whatever --' is not valid requirement due to "
-        "Expected end or semicolon (after name and no valid version specifier)\n    whatever --\n             ^\n"
+        "Expected semicolon (after name with no version specifier) or end\n    whatever --\n             ^\n"
         in result.out
     )
 
