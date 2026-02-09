@@ -149,18 +149,17 @@ lint.select = [
   "ALL",
 ]
 lint.ignore = [
-  "ANN401", # Dynamically typed expressions (typing.Any) are disallowed in `arg`"
-  "COM812", # conflicts with formatter
-  "CPY",    # No copyright header
-  "D",      # ignore documentation for now
-  "D203",   # `one-blank-line-before-class` (D203) and `no-blank-line-before-class` (D211) are incompatible
-  "D212",   # `multi-line-summary-first-line` (D212) and `multi-line-summary-second-line` (D213) are incompatible
-  "DOC201", # no restructuredtext support yet
-  "DOC402", # no restructuredtext support yet
-  "DOC501", # broken with sphinx docs
-  "INP001", # no implicit namespaces here
-  "ISC001", # conflicts with formatter
-
+  "ANN401",  # Dynamically typed expressions (typing.Any) are disallowed in `arg`"
+  "COM812",  # conflicts with formatter
+  "CPY",     # No copyright header
+  "D",       # ignore documentation for now
+  "D203",    # `one-blank-line-before-class` (D203) and `no-blank-line-before-class` (D211) are incompatible
+  "D212",    # `multi-line-summary-first-line` (D212) and `multi-line-summary-second-line` (D213) are incompatible
+  "DOC201",  # no restructuredtext support yet
+  "DOC402",  # no restructuredtext support yet
+  "DOC501",  # broken with sphinx docs
+  "INP001",  # no implicit namespaces here
+  "ISC001",  # conflicts with formatter
   "LOG015",  # we require use of the root logger for reporting
   "PLR0914", ## Too many local variables
   "PLR0917", ## Too many positional arguments
@@ -195,19 +194,19 @@ count = true
 [tool.pyproject-fmt]
 max_supported_python = "3.14"
 
-[tool.pytest.ini_options]
-testpaths = [
+[tool.pytest]
+ini_options.testpaths = [
   "tests",
 ]
-addopts = "--no-success-flaky-report"
-verbosity_assertions = 2
-filterwarnings = [
+ini_options.addopts = "--no-success-flaky-report"
+ini_options.verbosity_assertions = 2
+ini_options.filterwarnings = [
   "error",
   "ignore:unclosed database in <sqlite3.Connection object at:ResourceWarning",
   "ignore:unclosed file <_io.TextIOWrapper:ResourceWarning",
   "ignore:subprocess .* is still running:ResourceWarning",
 ]
-tmp_path_retention_policy = "failed"
+ini_options.tmp_path_retention_policy = "failed"
 
 [tool.coverage]
 html.show_contexts = true
