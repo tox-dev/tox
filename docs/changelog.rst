@@ -4,6 +4,19 @@ Release History
 
 .. towncrier release notes start
 
+v4.35.0 (2026-02-12)
+--------------------
+
+Features - 4.35.0
+~~~~~~~~~~~~~~~~~
+- Show ``toxfile.py`` inline plugins in ``tox --version`` output, including any ``tox_append_version_info()`` result - by :user:`rahuldevikar`. (:issue:`3508`)
+
+Improved Documentation - 4.35.0
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+- Document injected environment variables (``TOX_ENV_NAME``, ``TOX_WORK_DIR``, ``TOX_ENV_DIR``, ``TOX_PACKAGE``,
+  ``VIRTUAL_ENV``, ``PYTHONIOENCODING``, ``__TOX_ENVIRONMENT_VARIABLE_ORIGINAL_CI``) that tox automatically sets when
+  running commands - by :user:`rahuldevikar`. (:issue:`3514`)
+
 v4.34.1 (2026-01-09)
 --------------------
 
