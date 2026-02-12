@@ -34,6 +34,7 @@ class Plugin:
     def __init__(self) -> None:
         self.manager: pluggy.PluginManager = pluggy.PluginManager(NAME)
         self.manager.add_hookspecs(spec)
+        self.inline_module: ModuleType | None = None
 
     def _register_plugins(self, inline: ModuleType | None) -> None:
         from tox.session import state  # noqa: PLC0415
@@ -49,6 +50,7 @@ class Plugin:
             version_flag,
         )
 
+        self.inline_module = inline
         if inline is not None:
             self.manager.register(inline)
         self._load_external_plugins()

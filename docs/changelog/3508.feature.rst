@@ -1,0 +1,1 @@
+Show ``toxfile.py`` inline plugins in ``tox --version`` output, including any ``tox_append_version_info()`` result - by :user:`rahuldevikar`.
