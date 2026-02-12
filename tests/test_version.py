@@ -68,7 +68,7 @@ def test_version_with_inline_plugin(tox_project: ToxProjectCreator) -> None:
 @pytest.mark.plugin_test
 def test_version_with_inline_plugin_append_version_info(tox_project: ToxProjectCreator) -> None:
     def plugin() -> None:  # pragma: no cover
-        def tox_append_version_info() -> str:  # noqa: E306
+        def tox_append_version_info() -> str:
             return "custom-info-v1"
 
     project = tox_project({"tox.ini": "", "toxfile.py": plugin})
