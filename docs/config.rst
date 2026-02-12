@@ -667,6 +667,42 @@ Base options
    More environment variable-related information
    can be found in :ref:`environment variable substitutions`.
 
+.. _injected-environment-variables:
+
+Injected environment variables
+''''''''''''''''''''''''''''''
+
+tox automatically injects several environment variables into the test environment when running commands. These are
+always set regardless of the ``pass_env`` or ``set_env`` configuration and cannot be overridden by the user.
+
+.. list-table::
+   :widths: 30 70
+   :header-rows: 1
+
+   *   - Variable
+       - Description
+   *   - ``TOX_ENV_NAME``
+       - The name of the current tox environment (e.g. ``py312``, ``lint``).
+   *   - ``TOX_WORK_DIR``
+       - The tox working directory (by default ``.tox`` under the project root).
+   *   - ``TOX_ENV_DIR``
+       - The directory of the current tox environment (e.g. ``.tox/py312``).
+   *   - ``PYTHONIOENCODING``
+       - Always set to ``utf-8`` to ensure consistent encoding for standard I/O.
+   *   - ``TOX_PACKAGE``
+       - The path(s) to the built package artifact(s), joined by ``os.pathsep`` if there are multiple. Only set in
+         run environments where a package has been built.
+   *   - ``VIRTUAL_ENV``
+       - The path to the virtual environment directory. Only set when using ``virtualenv``\-based environments (the
+         default).
+   *   - ``__TOX_ENVIRONMENT_VARIABLE_ORIGINAL_CI``
+       - The value of the ``CI`` environment variable from the host. Only set when the ``CI`` variable is present in
+         the host environment.
+
+.. note::
+
+   In tox 3, ``TOX_PARALLEL_ENV`` was injected during parallel runs. This variable is **no longer injected** in tox 4.
+
 .. conf::
    :keys: parallel_show_output
    :default: False

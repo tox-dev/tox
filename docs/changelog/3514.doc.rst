@@ -1,0 +1,3 @@
+Document injected environment variables (``TOX_ENV_NAME``, ``TOX_WORK_DIR``, ``TOX_ENV_DIR``, ``TOX_PACKAGE``,
+``VIRTUAL_ENV``, ``PYTHONIOENCODING``, ``__TOX_ENVIRONMENT_VARIABLE_ORIGINAL_CI``) that tox automatically sets when
+running commands - by :user:`rahuldevikar`.
