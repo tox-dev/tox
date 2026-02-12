@@ -50,4 +50,10 @@ def get_version_info() -> str:
             info = module.tox_append_version_info() if hasattr(module, "tox_append_version_info") else ""
             with_info = f" {info}" if info else ""
             out.append(f"    {egg_info.project_name}-{egg_info.version} at {source}{with_info}")
+    inline = MANAGER.inline_module
+    if inline is not None:
+        source = getattr(inline, "__file__", repr(inline))
+        info = inline.tox_append_version_info() if hasattr(inline, "tox_append_version_info") else ""
+        with_info = f" {info}" if info else ""
+        out.append(f"inline plugin: {source}{with_info}")
     return "\n".join(out)
