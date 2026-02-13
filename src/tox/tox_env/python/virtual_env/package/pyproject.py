@@ -202,6 +202,13 @@ class Pep517VenvPackager(PythonPackageToxEnv, ABC):
         self.builds[build_type].append(run_env.conf)
 
     def _setup_env(self) -> None:
+        if self.conf["deps"]:
+            msg = (
+                f"PEP-517 packaging environment {self.conf.name!r} does not support the deps configuration. "
+                f"Build dependencies should be specified in the [build-system] table of pyproject.toml "
+                f"or by the build backend via get_requires_for_build hooks"
+            )
+            raise Fail(msg)
         super()._setup_env()
         if "sdist" in self.call_require_hooks or "external" in self.call_require_hooks:
             self._setup_build_requires("sdist")

@@ -1,0 +1,2 @@
+Raise an error when ``deps`` is configured on a PEP-517 packaging environment (e.g. ``.pkg``), since build
+dependencies should be specified via the ``[build-system]`` table in ``pyproject.toml`` - by :user:`rahuldevikar`
