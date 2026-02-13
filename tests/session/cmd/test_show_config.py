@@ -96,7 +96,7 @@ def test_show_config_exception(tox_project: ToxProjectCreator) -> None:
         },
     )
     outcome = project.run("c", "-e", "a", "-k", "env_site_packages_dir", raise_on_config_fail=False)
-    outcome.assert_success()
+    outcome.assert_failed(code=-1)
     txt = (
         "\nenv_site_packages_dir = # Exception: "
         "RuntimeError(\"failed to find interpreter for Builtin discover of python_spec='missing-python'"
@@ -107,9 +107,38 @@ def test_show_config_exception(tox_project: ToxProjectCreator) -> None:
 def test_show_config_empty_install_command_exception(tox_project: ToxProjectCreator) -> None:
     project = tox_project({"tox.ini": "[testenv:a]\ninstall_command="})
     outcome = project.run("c", "-e", "a", "-k", "install_command", raise_on_config_fail=False)
-    outcome.assert_success()
+    outcome.assert_failed(code=-1)
     txt = "\ninstall_command = # Exception: ValueError(\"attempting to parse '' into a command failed\")"
     assert txt in outcome.out
+
+
+def test_show_config_invalid_python_exit_code(tox_project: ToxProjectCreator) -> None:
+    project = tox_project(
+        {
+            "tox.ini": """
+        [testenv:a]
+        base_python = py47
+        """,
+        },
+    )
+    outcome = project.run("c", "-e", "a", raise_on_config_fail=False)
+    outcome.assert_failed(code=-1)
+    assert "# Exception:" in outcome.out
+
+
+def test_show_config_valid_env_exit_code_zero(tox_project: ToxProjectCreator) -> None:
+    project = tox_project(
+        {
+            "tox.ini": """
+        [tox]
+        no_package = true
+        [testenv:a]
+        commands = python -c 'pass'
+        """,
+        },
+    )
+    outcome = project.run("c", "-e", "a")
+    outcome.assert_success()
 
 
 @pytest.mark.parametrize("stdout_is_atty", [True, False])
@@ -158,7 +187,6 @@ def test_show_config_pkg_env_once(
     ini = f"[tox]\nenv_list=py{prev_ver},py\n[testenv]\npackage=wheel"
     project = tox_project({"tox.ini": ini, "pyproject.toml": ""})
     result = project.run("c", "-e", "ALL", raise_on_config_fail=False)
-    result.assert_success()
     parser = ConfigParser(interpolation=None)
     parser.read_string(result.out)
     sections = set(parser.sections())
@@ -173,7 +201,6 @@ def test_show_config_pkg_env_skip(
     ini = f"[tox]\nenv_list=py{prev_ver},py\n[testenv]\npackage=wheel"
     project = tox_project({"tox.ini": ini, "pyproject.toml": ""})
     result = project.run("c", "-e", "ALL", raise_on_config_fail=False)
-    result.assert_success()
     parser = ConfigParser(interpolation=None)
     parser.read_string(result.out)
     sections = set(parser.sections())
