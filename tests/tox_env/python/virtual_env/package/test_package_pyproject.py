@@ -263,19 +263,26 @@ def test_pyproject_no_build_editable_fallback(tox_project: ToxProjectCreator, de
     assert found_calls == expected_calls
 
 
-@pytest.mark.parametrize("package", ["sdist", "wheel", "editable", "editable-legacy", "skip"])
-def test_project_package_with_deps(tox_project: ToxProjectCreator, demo_pkg_setuptools: Path, package: str) -> None:
+@pytest.mark.parametrize("package", ["sdist", "wheel", "editable", "editable-legacy"])
+def test_pep517_pkg_env_rejects_deps(tox_project: ToxProjectCreator, demo_pkg_setuptools: Path, package: str) -> None:
     ini = f"[testenv]\npackage={package}\n[pkgenv]\ndeps = A"
     proj = tox_project({"tox.ini": ini}, base=demo_pkg_setuptools)
-    execute_calls = proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
+    proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
     result = proj.run("r", "--notest")
-    result.assert_success()
-    found_calls = [(i[0][0].conf.name, i[0][3].run_id) for i in execute_calls.call_args_list]
-    if package == "skip":
-        assert (".pkg", "install_deps") not in found_calls
-    else:
-        assert found_calls[0] == (".pkg", "install_requires")
-        assert found_calls[1] == (".pkg", "install_deps")
+    result.assert_failed()
+    assert "does not support the deps configuration" in result.out
+
+
+def test_pep517_pkg_env_rejects_deps_via_testenv(
+    tox_project: ToxProjectCreator,
+    demo_pkg_setuptools: Path,
+) -> None:
+    ini = "[testenv]\npackage=sdist\n[testenv:.pkg]\ndeps = B"
+    proj = tox_project({"tox.ini": ini}, base=demo_pkg_setuptools)
+    proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
+    result = proj.run("r", "--notest")
+    result.assert_failed()
+    assert "does not support the deps configuration" in result.out
 
 
 def test_pyproject_build_editable_and_wheel(tox_project: ToxProjectCreator, demo_pkg_inline: Path) -> None:
