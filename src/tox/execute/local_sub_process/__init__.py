@@ -111,10 +111,10 @@ class LocalSubprocessExecuteStatus(ExecuteStatus):
         try:
             if sys.platform == "win32":  # explicit check for mypy  # pragma: win32 cover
                 # on Windows we have a PipeHandle object here rather than a file stream
-                import _overlapped  # type: ignore[import]  # noqa: PLC0415,PLC2701
+                import _overlapped  # noqa: PLC0415,PLC2701  # ty: ignore[unresolved-import] # no typeshed stubs
 
                 ov = _overlapped.Overlapped(0)
-                ov.WriteFile(stdin.handle, bytes_content)  # type: ignore[attr-defined]
+                ov.WriteFile(stdin.handle, bytes_content)  # ty: ignore[unresolved-attribute] # PipeHandle on Windows
                 result = ov.getresult(10)  # wait up to 10ms to perform the operation
                 if result != len(bytes_content):
                     msg = f"failed to write to {stdin!r}"
@@ -229,8 +229,8 @@ class LocalSubProcessExecuteInstance(ExecuteInstance):
         self._read_stdout.__enter__()
 
         if sys.platform == "win32":  # explicit check for mypy:  # pragma: win32 cover
-            process.stderr.read = self._read_stderr._drain_stream  # type: ignore[assignment,union-attr]  # noqa: SLF001
-            process.stdout.read = self._read_stdout._drain_stream  # type: ignore[assignment,union-attr]  # noqa: SLF001
+            process.stderr.read = self._read_stderr._drain_stream  # noqa: SLF001  # ty: ignore[invalid-assignment] # monkey-patching drain onto Popen stream
+            process.stdout.read = self._read_stdout._drain_stream  # noqa: SLF001  # ty: ignore[invalid-assignment] # monkey-patching drain onto Popen stream
         return status
 
     def __exit__(
@@ -307,21 +307,21 @@ def _pty(key: str) -> tuple[int, int] | None:
         return None  # cannot proceed on platforms without pty support
 
     try:
-        main, child = pty.openpty()
+        main, child = pty.openpty()  # ty: ignore[possibly-missing-attribute] # Unix-only
     except OSError:  # could not open a tty
         return None  # pragma: no cover
 
     try:
-        mode = termios.tcgetattr(stream)
-        termios.tcsetattr(child, termios.TCSANOW, mode)
-    except (termios.error, OSError):  # could not inherit traits
+        mode = termios.tcgetattr(stream)  # ty: ignore[possibly-missing-attribute] # Unix-only
+        termios.tcsetattr(child, termios.TCSANOW, mode)  # ty: ignore[possibly-missing-attribute] # Unix-only
+    except (termios.error, OSError):  # could not inherit traits  # ty: ignore[possibly-missing-attribute]
         return None  # pragma: no cover
 
     # adjust sub-process terminal size
     columns, lines = shutil.get_terminal_size(fallback=(-1, -1))
     if columns != -1 and lines != -1:
         size = struct.pack("HHHH", lines, columns, 0, 0)
-        fcntl.ioctl(child, termios.TIOCSWINSZ, size)
+        fcntl.ioctl(child, termios.TIOCSWINSZ, size)  # ty: ignore[possibly-missing-attribute] # Unix-only
 
     return main, child
 

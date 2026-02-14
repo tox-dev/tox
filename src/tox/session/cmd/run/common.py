@@ -193,12 +193,6 @@ def execute(state: State, max_workers: int | None, has_spinner: bool, live: bool
                 if canceled is False and not future.done():  # pragma: no branch
                     tox_env.interrupt()
             done.wait()
-            # workaround for https://bugs.python.org/issue45274
-            lock = getattr(thread, "_tstate_lock", None)
-            if lock is not None and lock.locked():  # pragma: no branch
-                lock.release()  # pragma: no cover
-                # calling private method to fix thread state
-                thread._stop()  # type: ignore[attr-defined] # pragma: no cover # noqa: SLF001
             thread.join()
     finally:
         name_to_run = {r.name: r for r in results}

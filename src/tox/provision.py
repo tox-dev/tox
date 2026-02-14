@@ -59,7 +59,7 @@ def provision(state: State) -> int | bool:
         keys=["min_version", "minversion"],
         of_type=Version,
         # do not include local version specifier (because it's not allowed in version spec per PEP-440)
-        default=None,  # type: ignore[arg-type] # Optional[Version] translates to object
+        default=None,  # Optional[Version] translates to object
         desc="Define the minimal tox version required to run",
     )
     state.conf.core.add_config(

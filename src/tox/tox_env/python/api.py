@@ -77,7 +77,7 @@ class Python(ToxEnv, ABC):
         def validate_base_python(value: list[str]) -> list[str]:
             return self._validate_base_python(self.name, value, self.core["ignore_base_python_conflict"])
 
-        self.conf.add_config(
+        self.conf.add_config(  # ty: ignore[no-matching-overload] # https://github.com/astral-sh/ty/issues/2428
             keys=["base_python", "basepython"],
             of_type=list[str],
             default=self.default_base_python,

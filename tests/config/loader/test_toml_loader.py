@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any, Literal, TypeVar
+from typing import Any, Literal, NoReturn, TypeVar
 
 import pytest
 
@@ -26,7 +26,7 @@ def test_toml_loader_found_keys() -> None:
     assert loader.found_keys() == {"a", "c"}
 
 
-def factory_na(obj: object) -> None:
+def factory_na(obj: object) -> NoReturn:
     raise NotImplementedError
 
 
@@ -37,7 +37,7 @@ def perform_load(value: Any, of_type: type[V]) -> V:
     env_name, key = "A", "k"
     loader = TomlLoader(TomlPyProjectSection.from_key(f"tox.env.{env_name}"), [], {key: value}, {}, set())
     args = ConfigLoadArgs(None, env_name, env_name)
-    return loader.load(key, of_type, factory_na, None, args)  # type: ignore[arg-type]
+    return loader.load(key, of_type, factory_na, None, args)
 
 
 def test_toml_loader_str_ok() -> None:

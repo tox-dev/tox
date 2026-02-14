@@ -8,7 +8,7 @@ import time
 from abc import ABC, abstractmethod
 from collections.abc import Callable, Iterator, Sequence
 from contextlib import contextmanager
-from typing import TYPE_CHECKING, Any, NoReturn, cast
+from typing import IO, TYPE_CHECKING, Any, NoReturn, cast
 
 from colorama import Fore
 
@@ -21,7 +21,7 @@ if TYPE_CHECKING:
     from tox.report import OutErr
     from tox.tox_env.api import ToxEnv
 
-ContentHandler = Callable[[bytes], None]
+ContentHandler = Callable[[bytes], int]
 Executor = Callable[[ExecuteRequest, ContentHandler, ContentHandler], int]
 LOGGER = logging.getLogger(__name__)
 
@@ -132,9 +132,12 @@ class Execute(ABC):
                 stderr_color = Fore.RED
         try:
             # collector is what forwards the content from the file streams to the standard streams
-            out, err = out_err[0].buffer, out_err[1].buffer
-            out_sync = SyncWrite(out.name, out if show else None)  # type: ignore[arg-type]
-            err_sync = SyncWrite(err.name, err if show else None, stderr_color)  # type: ignore[arg-type]
+            out = cast("IO[bytes]", out_err[0].buffer)
+            err = cast("IO[bytes]", out_err[1].buffer)
+            out_sync = SyncWrite(out.name, out if show else None)
+            err_sync = SyncWrite(
+                err.name, err if show else None, str(stderr_color) if stderr_color is not None else None
+            )
 
             with out_sync, err_sync:
                 instance = self.build_instance(request, self._option_class(env), out_sync, err_sync)
@@ -274,9 +277,9 @@ class Outcome:
                 if not self.out.endswith("\n"):
                     sys.stdout.write("\n")
             if self.err:
-                sys.stderr.write(Fore.RED)
+                sys.stderr.write(str(Fore.RED))
                 sys.stderr.write(self.err)
-                sys.stderr.write(Fore.RESET)
+                sys.stderr.write(str(Fore.RESET))
                 if not self.err.endswith("\n"):
                     sys.stderr.write("\n")
         self.log_run_done(logging.CRITICAL)

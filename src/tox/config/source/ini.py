@@ -19,7 +19,7 @@ if TYPE_CHECKING:
     from pathlib import Path
 
     from tox.config.loader.api import OverrideMap
-    from tox.config.sets import ConfigSet
+    from tox.config.sets import ConfigSet, CoreConfigSet
 
 
 class IniSource(Source):
@@ -75,9 +75,9 @@ class IniSource(Source):
     def get_tox_env_section(self, item: str) -> tuple[Section, list[str], list[str]]:  # noqa: PLR6301
         return IniSection.test_env(item), [TEST_ENV_PREFIX], [PKG_ENV_PREFIX]
 
-    def envs(self, core_config: ConfigSet) -> Iterator[str]:
+    def envs(self, core_conf: CoreConfigSet) -> Iterator[str]:
         seen = set()
-        for name in self._discover_tox_envs(core_config):
+        for name in self._discover_tox_envs(core_conf):
             if name not in seen:
                 seen.add(name)
                 yield name

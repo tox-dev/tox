@@ -55,12 +55,12 @@ class SyncWrite:
             self._cancel()
             self._write(len(self._content))
 
-    def handler(self, content: bytes) -> None:
+    def handler(self, content: bytes) -> int:
         """A callback called whenever content is written."""
         with self._content_lock:
             self._content.extend(content)
             if self._target_enabled is False:
-                return
+                return len(content)
             at = content.rfind(b"\n")
             if at != -1:  # pragma: no branch
                 at = len(self._content) - len(content) + at + 1
@@ -70,6 +70,7 @@ class SyncWrite:
                 self._write(at)
         finally:
             self._start()
+        return len(content)
 
     def _start(self) -> None:
         self.timer = Timer(self.REFRESH_RATE, self._trigger_timer)
@@ -100,11 +101,11 @@ class SyncWrite:
         if self._color is None or self._target is None:
             yield
         else:
-            self._target.write(self._color.encode("utf-8"))
+            self._target.write(str(self._color).encode("utf-8"))
             try:
                 yield
             finally:
-                self._target.write(Fore.RESET.encode("utf-8"))
+                self._target.write(str(Fore.RESET).encode("utf-8"))
 
     @property
     def text(self) -> str:

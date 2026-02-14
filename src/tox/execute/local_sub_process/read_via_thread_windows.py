@@ -2,9 +2,11 @@
 
 from __future__ import annotations  # pragma: win32 cover
 
-import _overlapped  # type: ignore[import]  # pragma: win32 cover # noqa: PLC2701
+import _overlapped  # pragma: win32 cover # noqa: PLC2701  # ty: ignore[unresolved-import] # no typeshed stubs
 import logging  # pragma: win32 cover
-from asyncio.windows_utils import BUFSIZE  # type: ignore[attr-defined] # pragma: win32 cover
+from asyncio.windows_utils import (
+    BUFSIZE,
+)  # pragma: win32 cover
 from time import sleep  # pragma: win32 cover
 from typing import TYPE_CHECKING
 
@@ -13,11 +15,9 @@ from .read_via_thread import ReadViaThread  # pragma: win32 cover
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-# mypy: warn-unused-ignores=false
-
 
 class ReadViaThreadWindows(ReadViaThread):  # pragma: win32 cover
-    def __init__(self, file_no: int, handler: Callable[[bytes], None], name: str, drain: bool) -> None:  # noqa: FBT001
+    def __init__(self, file_no: int, handler: Callable[[bytes], int], name: str, drain: bool) -> None:  # noqa: FBT001
         super().__init__(file_no, handler, name, drain)
         self.closed = False
         self._ov: _overlapped.Overlapped | None = None
@@ -43,13 +43,13 @@ class ReadViaThreadWindows(ReadViaThread):  # pragma: win32 cover
         if self._waiting_for_read is False:
             self._ov = _overlapped.Overlapped(0)  # can use it only once to read a batch
             try:  # read up to BUFSIZE at a time
-                self._ov.ReadFile(self.file_no, BUFSIZE)  # type: ignore[attr-defined]
+                self._ov.ReadFile(self.file_no, BUFSIZE)
                 self._waiting_for_read = True
             except OSError:
                 self.closed = True
                 return None
         try:  # wait=False to not block and give chance for the stop check
-            data = self._ov.getresult(False)  # type: ignore[union-attr]  # noqa: FBT003
+            data = self._ov.getresult(False)  # noqa: FBT003  # ty: ignore[unresolved-attribute] # https://github.com/astral-sh/ty/issues/160
         except OSError as exception:
             # 996 (0x3E4) Overlapped I/O event is not in a signaled state.
             # 995 (0x3E3) The I/O operation has been aborted because of either a thread exit or an application request.

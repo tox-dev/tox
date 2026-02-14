@@ -3,11 +3,13 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from tox.config.loader.section import Section
-from tox.config.sets import ConfigSet
+from tox.config.sets import ConfigSet, CoreConfigSet
 from tox.config.source.ini import IniSource
 
 if TYPE_CHECKING:
     from pathlib import Path
+
+    from pytest_mock import MockerFixture
 
     from tests.conftest import ToxIniCreator
 
@@ -18,15 +20,19 @@ def test_source_ini_with_interpolated(tmp_path: Path) -> None:
     loader.load_raw("a", None, None)
 
 
-def test_source_ini_ignore_non_testenv_sections(tmp_path: Path) -> None:
+def test_source_ini_ignore_non_testenv_sections(tmp_path: Path, mocker: MockerFixture) -> None:
+    core = mocker.create_autospec(CoreConfigSet, instance=True)
+    core.__getitem__ = lambda _self, key: [] if key == "env_list" else None
     loader = IniSource(tmp_path, content="[mypy-rest_framework.compat.*]")
-    res = list(loader.envs({"env_list": []}))  # type: ignore[arg-type]
+    res = list(loader.envs(core))
     assert not res
 
 
-def test_source_ini_ignore_invalid_factor_filters(tmp_path: Path) -> None:
+def test_source_ini_ignore_invalid_factor_filters(tmp_path: Path, mocker: MockerFixture) -> None:
+    core = mocker.create_autospec(CoreConfigSet, instance=True)
+    core.__getitem__ = lambda _self, key: [] if key == "env_list" else None
     loader = IniSource(tmp_path, content="[a]\nb= if c: d")
-    res = list(loader.envs({"env_list": []}))  # type: ignore[arg-type]
+    res = list(loader.envs(core))
     assert not res
 
 

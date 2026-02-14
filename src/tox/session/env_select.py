@@ -67,7 +67,9 @@ class CliEnv:  # noqa: PLW1641
         return f"{self.__class__.__name__}({'' if self.is_default_list else repr(str(self))})"
 
     def __eq__(self, other: object) -> bool:
-        return type(self) == type(other) and self._names == other._names  # type: ignore[attr-defined]  # noqa: E721
+        if not isinstance(other, CliEnv):
+            return False
+        return self._names == other._names
 
     def __ne__(self, other: object) -> bool:
         return not (self == other)
@@ -98,7 +100,8 @@ def register_env_select_flags(
     """
     if multiple:
         group = parser.add_argument_group("select target environment(s)")
-        add_to: ArgumentParser = group.add_mutually_exclusive_group(required=False)  # type: ignore[assignment]
+        # _MutuallyExclusiveGroup is private in argparse https://github.com/python/cpython/issues/144812
+        add_to: ArgumentParser = group.add_mutually_exclusive_group(required=False)  # ty: ignore[invalid-assignment]
     else:
         add_to = parser
     if not group_only:
@@ -335,7 +338,8 @@ class EnvSelector:
             try:
                 package_tox_env = self._get_package_env(core_type, name, active.get(name, missing_active))
                 self._pkg_env_counter[name] += 1
-                run_env: RunToxEnv = self._defined_envs_[run_env_name].env  # type: ignore[index,assignment]
+                assert self._defined_envs_ is not None  # noqa: S101
+                run_env = cast("RunToxEnv", self._defined_envs_[run_env_name].env)
                 child_package_envs = package_tox_env.register_run_env(run_env)
                 try:
                     name_type = next(child_package_envs)

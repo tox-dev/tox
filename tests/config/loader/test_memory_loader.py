@@ -77,10 +77,10 @@ def test_memory_loader(value: Any, of_type: type[Any], outcome: Any) -> None:
         (1, EnvList, TypeError, "1"),
     ],
 )
-def test_memory_loader_fails_invalid(value: Any, of_type: type[Any], exception: Exception, msg: str) -> None:
+def test_memory_loader_fails_invalid(value: Any, of_type: type[Any], exception: type[Exception], msg: str) -> None:
     loader = MemoryLoader(a=value, kwargs={})
     args = ConfigLoadArgs([], "name", None)
-    with pytest.raises(exception, match=msg):  # type: ignore[call-overload]
+    with pytest.raises(exception, match=msg):
         loader.load("a", of_type=of_type, conf=None, factory=None, args=args)
 
 

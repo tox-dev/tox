@@ -21,7 +21,7 @@ WAIT_GENERAL = 0.05  # stop thread join every so often (give chance to a signal 
 
 
 class ReadViaThread(ABC):
-    def __init__(self, file_no: int, handler: Callable[[bytes], None], name: str, drain: bool) -> None:  # noqa: FBT001
+    def __init__(self, file_no: int, handler: Callable[[bytes], int], name: str, drain: bool) -> None:  # noqa: FBT001
         self.file_no = file_no
         self.stop = Event()
         self.thread = Thread(target=self._read_stream, name=f"tox-r-{name}-{file_no}")
