@@ -563,6 +563,35 @@ built:
 For pure Python projects (non C-Extension ones) it's recommended to set :ref:`wheel_build_env` to the same as the
 :ref:`package_env`. This way you'll build the wheel once and install the same wheel for all tox environments.
 
+Configuring packaging environments
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Packaging environments are tox environments and can be configured individually. However, unlike run environments,
+packaging environments do **not** inherit settings from ``[testenv]`` (INI) or ``env_run_base`` (TOML). Instead, they
+inherit from the ``[pkgenv]`` section (INI) or ``env_pkg_base`` table (TOML). This avoids conflicts between test and
+packaging settings.
+
+For example, to pass environment variables to all packaging environments:
+
+.. tab:: TOML
+
+   .. code-block:: toml
+
+      [env_pkg_base]
+      pass_env = ["PKG_CONFIG", "PKG_CONFIG_PATH"]
+
+.. tab:: INI
+
+   .. code-block:: ini
+
+      [pkgenv]
+      pass_env =
+          PKG_CONFIG
+          PKG_CONFIG_PATH
+
+To configure a specific packaging environment, use the standard environment syntax (e.g. ``[testenv:.pkg]`` in INI).
+For full details on packaging environment configuration and inheritance, see :ref:`packaging-env-config`.
+
 Advanced features
 -----------------
 

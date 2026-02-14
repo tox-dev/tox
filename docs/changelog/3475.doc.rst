@@ -1,0 +1,3 @@
+Move vital packaging environment documentation from "Upgrading to tox v4" into the regular Configuration and User Guide
+sections, covering packaging environment inheritance (``pkgenv``/``env_pkg_base``), editable mode fallback behavior,
+and provisioning environment configuration - by :user:`rahuldevikar`
