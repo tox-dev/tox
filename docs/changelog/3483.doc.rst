@@ -1,0 +1,2 @@
+Update ``development.rst`` to reflect current standards: replace references to ``flake8``/``black``/``isort``/``pyupgrade`` with
+``ruff``, remove outdated Python 2.7 compatibility note, and fix CI config filename - by :user:`rahuldevikar`

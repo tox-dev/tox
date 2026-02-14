@@ -20,6 +20,7 @@ from tox.tox_env.python.pip.pip_install import Pip
 
 if TYPE_CHECKING:
     from virtualenv.create.creator import Creator
+    from virtualenv.create.describe import Describe
     from virtualenv.discovery.py_info import PythonInfo as VirtualenvPythonInfo
     from virtualenv.run.session import Session
 
@@ -152,16 +153,19 @@ class VirtualEnv(Python, ABC):
     def prepend_env_var_path(self) -> list[Path]:
         """Paths to add to the executable."""
         # we use the original executable as shims may be somewhere else
-        return list(dict.fromkeys((self.creator.bin_dir, self.creator.script_dir)))
+        creator = cast(
+            "Describe", self.creator
+        )  # all concrete Creator subclasses inherit Describe via VirtualenvBuiltin
+        return list(dict.fromkeys((creator.bin_dir, creator.script_dir)))
 
     def env_site_package_dir(self) -> Path:
-        return cast("Path", self.creator.purelib)
+        return cast("Path", cast("Describe", self.creator).purelib)
 
     def env_python(self) -> Path:
-        return cast("Path", self.creator.exe)
+        return cast("Path", cast("Describe", self.creator).exe)
 
     def env_bin_dir(self) -> Path:
-        return cast("Path", self.creator.script_dir)
+        return cast("Path", cast("Describe", self.creator).script_dir)
 
     @property
     def runs_on_platform(self) -> str:

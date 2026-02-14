@@ -42,16 +42,16 @@ def create_release_branch(repo: Repo, version: Version) -> tuple[Remote, Head]:
     branch_name = f"release-{version}"
     release_branch = repo.create_head(branch_name, upstream.refs.main, force=True)
     upstream.push(refspec=f"{branch_name}:{branch_name}", force=True)
-    release_branch.set_tracking_branch(repo.refs[f"{upstream.name}/{branch_name}"])
+    release_branch.set_tracking_branch(repo.refs[f"{upstream.name}/{branch_name}"])  # ty: ignore[invalid-argument-type] # gitpython types Reference broadly
     release_branch.checkout()
     return upstream, release_branch
 
 
 def get_upstream(repo: Repo) -> Remote:
     for remote in repo.remotes:
-        if any(url.endswith("tox-dev/tox.git") for url in remote.urls):
+        if any("tox-dev/tox" in url for url in remote.urls):
             return remote
-    msg = "could not find tox-dev/tox.git remote"
+    msg = "could not find tox-dev/tox remote"
     raise RuntimeError(msg)
 
 
@@ -66,9 +66,9 @@ def tag_release_commit(release_commit: Commit, repo: Repo, version: Version) -> 
     existing_tags = [x.name for x in repo.tags]
     if version in existing_tags:
         print(f"delete existing tag {version}")  # noqa: T201
-        repo.delete_tag(version)
+        repo.delete_tag(version)  # ty: ignore[invalid-argument-type] # Version has __str__, gitpython uses it
     print(f"create tag {version}")  # noqa: T201
-    return repo.create_tag(version, ref=release_commit, force=True)
+    return repo.create_tag(version, ref=release_commit, force=True)  # ty: ignore[invalid-argument-type] # Version has __str__, gitpython uses it
 
 
 if __name__ == "__main__":

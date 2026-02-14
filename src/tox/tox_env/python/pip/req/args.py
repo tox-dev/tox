@@ -3,7 +3,7 @@ from __future__ import annotations
 import bisect
 import re
 from argparse import Action, ArgumentParser, ArgumentTypeError, Namespace
-from typing import TYPE_CHECKING, Any, NoReturn, Protocol, TypeVar
+from typing import TYPE_CHECKING, Any, NoReturn, Protocol, TypeVar, cast
 
 from tox.tox_env.python.pip.req.util import handle_binary_option
 
@@ -84,8 +84,8 @@ class AddSortedUniqueAction(Action):
         if getattr(namespace, self.dest, None) is None:
             setattr(namespace, self.dest, [])
         current = getattr(namespace, self.dest)
-        if values not in current:
-            bisect.insort(current, values)
+        if values is not None and values not in current:
+            bisect.insort(current, cast("str", values))
 
 
 class AddUniqueAction(Action):

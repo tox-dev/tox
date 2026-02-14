@@ -7,7 +7,7 @@ from collections.abc import Callable, Iterator
 from inspect import isclass
 from pathlib import Path
 from types import UnionType
-from typing import Any, Generic, Literal, TypeVar, Union, cast
+from typing import Any, Generic, Literal, TypeVar, Union, cast, get_args, get_origin
 
 from tox.config.types import Command, EnvList
 
@@ -39,52 +39,53 @@ class Convert(ABC, Generic[T]):
             return self._to_typing(raw, of_type, factory)
         if isclass(of_type):
             if issubclass(of_type, Path):
-                return self.to_path(raw)  # type: ignore[return-value]
+                return cast("V", self.to_path(raw))
             if issubclass(of_type, bool):
-                return self.to_bool(raw)  # type: ignore[return-value]
+                return cast("V", self.to_bool(raw))
             if issubclass(of_type, Command):
-                return self.to_command(raw)  # type: ignore[return-value]
+                return cast("V", self.to_command(raw))
             if issubclass(of_type, EnvList):
-                return self.to_env_list(raw)  # type: ignore[return-value]
+                return cast("V", self.to_env_list(raw))
             if issubclass(of_type, str):
-                return self.to_str(raw)  # type: ignore[return-value]
+                return cast("V", self.to_str(raw))
         if isinstance(raw, cast("type[V]", of_type)):  # already target type no need to transform it
             # do it this late to allow normalization - e.g. string strip
             return raw
         if factory:
             return factory(raw)
-        return cast("type[V]", of_type)(raw)  # type: ignore[call-arg]
+        return cast("type[V]", of_type)(raw)
 
     def _to_typing(self, raw: T, of_type: type[V] | UnionType, factory: Factory[V]) -> V:  # noqa: C901
-        origin = getattr(of_type, "__origin__", of_type.__class__)
+        origin = get_origin(of_type) or of_type.__class__
         result: Any = _NO_MAPPING
+        type_args = get_args(of_type)
         if origin in {list, list}:
-            entry_type = cast("type[V]", of_type).__args__[0]  # type: ignore[attr-defined]
+            entry_type = type_args[0]
             result = [self.to(i, entry_type, factory) for i in self.to_list(raw, entry_type)]
             if isclass(entry_type) and issubclass(entry_type, Command):
                 result = [i for i in result if i is not None]
         elif origin in {set, set}:
-            entry_type = cast("type[V]", of_type).__args__[0]  # type: ignore[attr-defined]
+            entry_type = type_args[0]
             result = {self.to(i, entry_type, factory) for i in self.to_set(raw, entry_type)}
         elif origin in {dict, dict}:
-            key_type, value_type = cast("type[V]", of_type).__args__[0], cast("type[V]", of_type).__args__[1]  # type: ignore[attr-defined]
+            key_type, value_type = type_args[0], type_args[1]
             result = OrderedDict(
                 (self.to(k, key_type, factory), self.to(v, value_type, factory))
                 for k, v in self.to_dict(raw, (key_type, value_type))
             )
         elif origin in {Union, UnionType}:  # handle Optional values
-            args: list[type[Any]] = of_type.__args__  # type: ignore[union-attr,assignment]
+            args: list[type[Any]] = list(type_args)
             none = type(None)
             if len(args) == 2 and none in args:  # noqa: PLR2004
                 if isinstance(raw, str):
-                    raw = raw.strip()  # type: ignore[assignment]
-                if not raw:
+                    raw = cast("T", raw.strip())
+                if raw is None or (isinstance(raw, str) and not raw):
                     result = None
                 else:
                     new_type = next(i for i in args if i != none)  # pragma: no cover
                     result = self.to(raw, new_type, factory)
         elif origin in {Literal, type(Literal)}:
-            choice = cast("type[V]", of_type).__args__  # type: ignore[attr-defined]
+            choice = type_args
             if raw not in choice:
                 msg = f"{raw} must be one of {choice}"
                 raise ValueError(msg)

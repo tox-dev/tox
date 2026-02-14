@@ -225,6 +225,12 @@ The following options are set in the ``[tox]`` section of ``tox.ini`` or the ``[
 
    Name of the tox environment used to provision a valid tox run environment.
 
+   .. note::
+
+      The provisioning environment does not inherit settings from ``[testenv]`` (INI) or ``env_run_base`` (TOML).
+      It must be explicitly configured if you need to customize it (e.g. ``[testenv:.tox]`` in INI or
+      ``env.".tox"`` in TOML).
+
    .. versionchanged:: 3.23.0
 
       When tox is invoked with the ``--no-provision`` flag, the provision won't be attempted,  tox will fail instead.
@@ -923,6 +929,54 @@ Run
 
    tox package type used to package.
 
+.. _packaging-env-config:
+
+Packaging environment configuration
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Packaging environments (such as ``.pkg`` and ``.pkg-cpython314``) are tox environments used to build your project's
+package. Unlike run environments, packaging environments do **not** inherit from the ``[testenv]`` section (INI) or
+``env_run_base`` table (TOML). This is intentional — test environment settings often conflict with packaging settings.
+
+Instead, packaging environments inherit from the ``[pkgenv]`` section (INI) or ``env_pkg_base`` table (TOML). This
+allows you to define common packaging settings in one central place, while still overriding them for specific packaging
+environments when needed.
+
+.. tab:: TOML
+
+   .. code-block:: toml
+
+      [env_pkg_base]
+      pass_env = ["PKG_CONFIG", "PKG_CONFIG_PATH", "PKG_CONFIG_SYSROOT_DIR"]
+
+      [env.".pkg-cpython311"]
+      pass_env = ["PKG_CONFIG", "PKG_CONFIG_PATH", "PKG_CONFIG_SYSROOT_DIR", "IS_311"]
+
+.. tab:: INI
+
+   .. code-block:: ini
+
+      [pkgenv]
+      pass_env =
+          PKG_CONFIG
+          PKG_CONFIG_PATH
+          PKG_CONFIG_SYSROOT_DIR
+
+      [testenv:.pkg-cpython311]
+      pass_env =
+          {[pkgenv]pass_env}
+          IS_311 = yes
+
+.. note::
+
+   Specific packaging environments are defined under ``[testenv:.pkg]`` and **not** ``[pkgenv:.pkg]``. The ``[pkgenv]``
+   section (or ``env_pkg_base`` in TOML) serves only as the base/fallback for settings shared across all packaging
+   environments.
+
+.. versionchanged:: 4.2
+
+   Packaging environments now inherit from the ``[pkgenv]`` / ``env_pkg_base`` section.
+
 .. _python-options:
 
 Python options
@@ -1112,6 +1166,11 @@ Python run
    :ref:`use_develop` is set this becomes a constant of ``editable``. If :ref:`skip_install` is set this becomes a
    constant of ``skip``.
 
+   When ``editable`` is selected and the build backend supports :pep:`660`, tox will use the standardized editable
+   install mechanism. If the backend does not support :pep:`660`, tox will automatically fall back to
+   ``editable-legacy`` mode (equivalent to ``pip install -e``) and print a message suggesting you make this setting
+   explicit in your configuration. To ensure your backend supports the standardized method, verify it meets the minimum
+   version requirement (e.g. ``setuptools>=64``).
 
 .. conf::
    :keys: wheel_build_env

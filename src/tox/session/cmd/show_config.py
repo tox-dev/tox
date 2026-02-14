@@ -47,9 +47,10 @@ def show_config(state: State) -> int:
     is_colored = state.conf.options.is_colored
     keys: list[str] = state.conf.options.list_keys_only
     is_first = True
+    has_exception = False
 
     def _print_env(tox_env: ToxEnv) -> None:
-        nonlocal is_first
+        nonlocal is_first, has_exception
         if is_first:
             is_first = False
         else:
@@ -57,7 +58,8 @@ def show_config(state: State) -> int:
         print_section_header(is_colored, f"[testenv:{tox_env.conf.name}]")
         if not keys:
             print_key_value(is_colored, "type", type(tox_env).__name__)
-        print_conf(is_colored, tox_env.conf, keys)
+        if print_conf(is_colored, tox_env.conf, keys):
+            has_exception = True
 
     show_everything = state.conf.options.env.is_all
     done: set[str] = set()
@@ -69,8 +71,9 @@ def show_config(state: State) -> int:
     if show_everything or state.conf.options.show_core:
         print()  # noqa: T201
         print_section_header(is_colored, "[tox]")
-        print_conf(is_colored, state.conf.core, keys)
-    return 0
+        if print_conf(is_colored, state.conf.core, keys):
+            has_exception = True
+    return -1 if has_exception else 0
 
 
 def _colored(is_colored: bool, color: int, msg: str) -> str:  # noqa: FBT001
@@ -97,7 +100,8 @@ def print_key_value(is_colored: bool, key: str, value: str, multi_line: bool = F
     print(value_str)  # noqa: T201
 
 
-def print_conf(is_colored: bool, conf: ConfigSet, keys: Iterable[str]) -> None:  # noqa: FBT001
+def print_conf(is_colored: bool, conf: ConfigSet, keys: Iterable[str]) -> bool:  # noqa: FBT001
+    has_exception = False
     for key in keys or conf:
         if key not in conf:
             continue
@@ -109,9 +113,11 @@ def print_conf(is_colored: bool, conf: ConfigSet, keys: Iterable[str]) -> None: 
             if os.environ.get("_TOX_SHOW_CONFIG_RAISE"):  # pragma: no branch
                 raise  # pragma: no cover
             as_str, multi_line = _colored(is_colored, Fore.LIGHTRED_EX, f"# Exception: {exception!r}"), False
+            has_exception = True
         if multi_line and "\n" not in as_str:
             multi_line = False
         print_key_value(is_colored, key, as_str, multi_line=multi_line)
     unused = conf.unused()
     if unused and not keys:
         print_comment(is_colored, f"# !!! unused: {', '.join(unused)}")
+    return has_exception

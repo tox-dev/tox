@@ -21,6 +21,7 @@ if TYPE_CHECKING:
     from pathlib import Path
 
     from tox.config.cli.parser import Parsed
+    from tox.config.main import Config
     from tox.config.sets import CoreConfigSet, EnvConfigSet
     from tox.tox_env.api import ToxEnvCreateArgs
     from tox.tox_env.package import Package
@@ -48,6 +49,7 @@ class PythonRun(Python, RunToxEnv, ABC):
             post_process=_normalize_extras,
         )
         add_skip_missing_interpreters_to_core(self.core, self.options)
+        add_skip_missing_interpreters_to_env(self.conf, self.core, self.options)
 
     @property
     def _package_types(self) -> tuple[str, ...]:
@@ -141,6 +143,24 @@ def add_skip_missing_interpreters_to_core(core: CoreConfigSet, options: Parsed) 
     )
 
 
+def add_skip_missing_interpreters_to_env(conf: EnvConfigSet, core: CoreConfigSet, options: Parsed) -> None:
+    def _default_skip_missing(conf: Config, env_name: str | None) -> bool:  # noqa: ARG001
+        return core["skip_missing_interpreters"]
+
+    def _post_process(value: bool) -> bool:  # noqa: FBT001
+        if getattr(options, "skip_missing_interpreters", "config") != "config":
+            return StrConvert().to_bool(options.skip_missing_interpreters)
+        return value
+
+    conf.add_config(  # ty: ignore[no-matching-overload] # https://github.com/astral-sh/ty/issues/2428
+        keys=["skip_missing_interpreters"],
+        default=_default_skip_missing,
+        of_type=bool,
+        post_process=_post_process,
+        desc="override core skip_missing_interpreters for this environment",
+    )
+
+
 def add_extras_to_env(conf: EnvConfigSet) -> None:
     conf.add_config(
         keys=["extras"],
@@ -161,4 +181,5 @@ __all__ = [
     "PythonRun",
     "add_extras_to_env",
     "add_skip_missing_interpreters_to_core",
+    "add_skip_missing_interpreters_to_env",
 ]

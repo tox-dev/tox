@@ -47,7 +47,8 @@ def get_version_info() -> str:
         out.append("registered plugins:")
         for module, egg_info in plugin_info:
             source = getattr(module, "__file__", repr(module))
-            info = module.tox_append_version_info() if hasattr(module, "tox_append_version_info") else ""
+            append_fn = getattr(module, "tox_append_version_info", None)
+            info = append_fn() if append_fn is not None else ""
             with_info = f" {info}" if info else ""
             out.append(f"    {egg_info.project_name}-{egg_info.version} at {source}{with_info}")
     inline = MANAGER.inline_module

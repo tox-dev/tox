@@ -7,7 +7,7 @@ if TYPE_CHECKING:
     from collections.abc import Sequence
 
     from packaging._parser import Op, Value, Variable
-    from packaging.markers import Marker, MarkerAtom, MarkerList  # type: ignore[attr-defined]
+    from packaging.markers import Marker, MarkerAtom, MarkerList
     from packaging.requirements import Requirement
 
 

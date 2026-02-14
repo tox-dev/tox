@@ -124,12 +124,9 @@ Code style guide
 ~~~~~~~~~~~~~~~~
 
 - First and foremost, the linters configured for the project must pass; this generally means following PEP-8 rules,
-  as codified by: ``flake8``, ``black``, ``isort``, ``pyupgrade``.
+  as codified by ``ruff`` (which replaces the previously used ``flake8``, ``black``, ``isort``, and ``pyupgrade``).
 - The supported Python versions (and the code syntax to use) are listed in the ``pyproject.toml`` file
-  in the ``project/requires-python`` entry. However, there are some files that have to be kept compatible
-  with Python 2.7 to allow and test for running Python 2 envs from tox. They are listed in ``.pre-commit-config.yaml``
-  under ``repo: https://github.com/asottile/pyupgrade`` under ``hooks/exclude``.
-  Please do not attempt to modernize them to Python 3.x.
+  in the ``project/requires-python`` entry.
 - All code (tests too) must be type annotated as much as required by ``mypy``.
 - We use a line length of 120.
 - Exception messages should only be capitalized (and ended with a period/exclamation mark) if they are multi-sentenced,
@@ -177,7 +174,7 @@ Automated testing
 ~~~~~~~~~~~~~~~~~
 
 All pull requests and merges to the ``main`` branch are tested using :gh:`GitHub Actions <features/actions>`
-(configured by ``check.yml`` file inside the ``.github/workflows`` directory). You can find the status and the results
+(configured by ``check.yaml`` file inside the ``.github/workflows`` directory). You can find the status and the results
 to the CI runs for your PR on GitHub's Web UI for the pull request. You can also find links to the CI services' pages
 for the specific builds in the form of "Details" links, in case the CI run fails and you wish to view the output.
 
