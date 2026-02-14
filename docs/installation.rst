@@ -55,13 +55,6 @@ When installing via a source distribution you need an installer that handles the
 need to ensure that the build requirements from :gh:`pyproject.toml <tox-dev/tox/blob/main/pyproject.toml>` are
 satisfied before triggering the installation.
 
-via ``setup.py``
-----------------
-
-We don't recommend and officially support this method. You should prefer using an installer that supports :pep:`517`
-interface, such as pip ``19.0.0`` or later. That being said you might be able to still install a package via this method
-if you satisfy build dependencies before calling the installation command (as described under :ref:`sdist`).
-
 latest unreleased
 -----------------
 
