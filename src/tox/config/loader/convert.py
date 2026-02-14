@@ -78,7 +78,7 @@ class Convert(ABC, Generic[T]):
             if len(args) == 2 and none in args:  # noqa: PLR2004
                 if isinstance(raw, str):
                     raw = raw.strip()  # type: ignore[assignment]
-                if not raw:
+                if raw is None or (isinstance(raw, str) and not raw):
                     result = None
                 else:
                     new_type = next(i for i in args if i != none)  # pragma: no cover
