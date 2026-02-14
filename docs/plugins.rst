@@ -62,6 +62,36 @@ A plugin can define its plugin module a:
 
 and this message will be appended to the output of the ``--version`` flag.
 
+CLI argument conventions
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+When adding command line arguments via :func:`tox_add_option <tox.plugin.spec.tox_add_option>`, follow these conventions
+to prevent clashes between tox core and plugins:
+
+- **Prefix long options with the plugin name.** For example, a plugin named ``tox-docker`` should use ``--docker-image``
+  rather than ``--image``. This avoids collisions with other plugins and tox core options.
+
+- **Avoid short options.** Single-letter flags like ``-d`` are a scarce resource and likely to clash with tox core (which
+  uses ``-v``, ``-q``, ``-e``, ``-p``, ``-c``, ``-x``, ``-s``, etc.) or other plugins. If you must add one, check the
+  output of ``tox --help`` to verify it's not already taken.
+
+- **Use kebab-case for long options** (e.g. ``--docker-image``, not ``--docker_image``). This is consistent with tox
+  core and standard CLI conventions.
+
+.. code-block:: python
+
+   @tox.plugin.impl
+   def tox_add_option(parser: ToxParser) -> None:
+       parser.add_argument(
+           "--docker-image",
+           dest="docker_image",
+           default=None,
+           help="docker image to use for the environment",
+       )
+
+Note that all CLI options can also be set via ``TOX_<DEST>`` environment variables (where ``<DEST>`` is the uppercased
+``dest`` value) or via a ``tox.ini`` ``[tox]`` section key matching the ``dest`` name. See :ref:`cli` for details.
+
 Adoption of a plugin under tox-dev Github organization
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
