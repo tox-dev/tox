@@ -360,6 +360,6 @@ def run_order(state: State, to_run: list[str]) -> tuple[list[str], dict[str, set
     for env in to_run:
         run_env = cast("RunToxEnv", state.envs[env])
         depends = set(cast("EnvList", run_env.conf["depends"]).envs)
-        todo[env] = (to_run_set & depends) - {env}  # exclude self-dependency
+        todo[env] = to_run_set & depends
     order = stable_topological_sort(todo)
     return order, todo

@@ -205,6 +205,10 @@ testpaths = [
 ]
 addopts = "--no-success-flaky-report"
 verbosity_assertions = 2
+markers = [
+  "integration: marks tests as integration tests requiring external services (deselect with '-m \"not integration\"')",
+  "slow: marks tests as slow (>1s) (deselect with '-m \"not slow\"')",
+]
 filterwarnings = [
   "error",
   "ignore:unclosed database in <sqlite3.Connection object at:ResourceWarning",

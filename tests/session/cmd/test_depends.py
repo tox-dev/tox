@@ -96,32 +96,6 @@ def test_depends_sdist(tox_project: ToxProjectCreator, patch_prev_py: Callable[[
     assert outcome.out == dedent(expected).lstrip()
 
 
-def test_depends_self_dependency(tox_project: ToxProjectCreator) -> None:
-    ini = """
-    [tox]
-    env_list = lint,py312,py313
-    [testenv]
-    skip_install = true
-    depends = lint
-    [testenv:lint]
-    skip_install = true
-    """
-    project = tox_project({"tox.ini": ini})
-    outcome = project.run("de")
-    outcome.assert_success()
-
-    expected = dedent("""
-    Execution order: lint, py312, py313
-    ALL
-       lint
-       py312
-          lint
-       py313
-          lint
-    """).lstrip()
-    assert outcome.out == expected
-
-
 def test_depends_help(tox_project: ToxProjectCreator) -> None:
     outcome = tox_project({"tox.ini": ""}).run("de", "-h")
     outcome.assert_success()

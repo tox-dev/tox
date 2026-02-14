@@ -163,6 +163,7 @@ def test_install_command_no_packages(tox_project: ToxProjectCreator, disable_pip
     assert found_cmd == ["python", "-m", "pip", "install", "-i", disable_pip_pypi_access[0], "--pre", "magic"]
 
 
+@pytest.mark.slow
 def test_list_dependencies_command(tox_project: ToxProjectCreator) -> None:
     install_cmd = "python -m pip freeze"
     proj = tox_project({"tox.ini": f"[testenv]\npackage=skip\nlist_dependencies_command={install_cmd}"})
