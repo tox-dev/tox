@@ -1,0 +1,2 @@
+Allow ``skip_missing_interpreters`` to be set per environment, overriding the global setting.
+This enables marking specific environments as optional while keeping others required.

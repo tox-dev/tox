@@ -183,6 +183,60 @@ def test_skip_missing_interpreters_specified_env(
     assert result.code == retcode
 
 
+def test_per_env_skip_missing_interpreters_override_global_false(tox_project: ToxProjectCreator) -> None:
+    py_ver = ".".join(str(i) for i in sys.version_info[0:2])
+    project = tox_project({
+        "tox.ini": (
+            f"[tox]\nenvlist=py31,py{py_ver}\nskip_missing_interpreters=false\n"
+            "[testenv:py31]\nskip_missing_interpreters=true\n"
+        ),
+    })
+    result = project.run()
+    assert result.code == 0
+
+
+def test_per_env_skip_missing_interpreters_override_global_true(tox_project: ToxProjectCreator) -> None:
+    project = tox_project({
+        "tox.ini": (
+            "[tox]\nenvlist=py31\nskip_missing_interpreters=true\n[testenv:py31]\nskip_missing_interpreters=false\n"
+        ),
+    })
+    result = project.run()
+    assert result.code == 1
+
+
+def test_per_env_skip_missing_interpreters_cli_overrides_env(tox_project: ToxProjectCreator) -> None:
+    project = tox_project({
+        "tox.ini": (
+            "[tox]\nenvlist=py31\nskip_missing_interpreters=false\n[testenv:py31]\nskip_missing_interpreters=false\n"
+        ),
+    })
+    result = project.run("--skip-missing-interpreters=true")
+    assert result.code == -1
+
+
+def test_per_env_skip_missing_interpreters_unset_falls_to_global(tox_project: ToxProjectCreator) -> None:
+    py_ver = ".".join(str(i) for i in sys.version_info[0:2])
+    project = tox_project({
+        "tox.ini": f"[tox]\nenvlist=py31,py{py_ver}\nskip_missing_interpreters=true\n",
+    })
+    result = project.run()
+    assert result.code == 0
+
+
+def test_per_env_skip_missing_interpreters_toml(tox_project: ToxProjectCreator) -> None:
+    project = tox_project({
+        "tox.toml": """
+            env_list = ["py31"]
+            skip_missing_interpreters = true
+            [env.py31]
+            skip_missing_interpreters = false
+        """,
+    })
+    result = project.run()
+    assert result.code == 1
+
+
 def test_dependency_groups_single(tox_project: ToxProjectCreator) -> None:
     project = tox_project(
         {

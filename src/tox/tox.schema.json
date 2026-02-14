@@ -287,6 +287,10 @@
         "basepython": {
           "$ref": "#/properties/env_run_base/properties/base_python"
         },
+        "skip_missing_interpreters": {
+          "type": "boolean",
+          "description": "override core skip_missing_interpreters for this environment"
+        },
         "deps": {
           "type": "string",
           "description": "python dependencies with optional version specifiers, as specified by PEP-440"
