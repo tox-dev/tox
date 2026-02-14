@@ -2,8 +2,10 @@ from __future__ import annotations
 
 import os
 import re
+import sys
 from argparse import ArgumentError, ArgumentParser, Namespace
 from typing import TYPE_CHECKING
+from urllib.parse import quote
 
 import pytest
 
@@ -36,6 +38,39 @@ def test_install_pkg_ok(tmp_path: Path) -> None:
     namespace = Namespace()
     InstallPackageAction(option_strings=["--install-pkg"], dest="into")(argument_parser, namespace, str(path))
     assert namespace.into == path
+
+
+def test_install_pkg_file_uri(tmp_path: Path) -> None:
+    argument_parser = ArgumentParser()
+    path = tmp_path / "pkg.whl"
+    path.write_text("")
+    uri = path.as_uri()
+    namespace = Namespace()
+    InstallPackageAction(option_strings=["--install-pkg"], dest="into")(argument_parser, namespace, uri)
+    assert namespace.into == path
+
+
+def test_install_pkg_file_uri_percent_encoded(tmp_path: Path) -> None:
+    argument_parser = ArgumentParser()
+    name = "pkg+extra-1.0.whl"
+    path = tmp_path / name
+    path.write_text("")
+    # Build a file: URI with percent-encoded '+' in the filename
+    if sys.platform == "win32":
+        uri = "file:///" + quote(str(path).replace("\\", "/"), safe=":/")
+    else:
+        uri = "file://" + quote(str(path), safe="/")
+    namespace = Namespace()
+    InstallPackageAction(option_strings=["--install-pkg"], dest="into")(argument_parser, namespace, uri)
+    assert namespace.into == path
+
+
+def test_install_pkg_file_uri_does_not_exist(tmp_path: Path) -> None:
+    argument_parser = ArgumentParser()
+    path = tmp_path / "missing.whl"
+    uri = path.as_uri()
+    with pytest.raises(ArgumentError, match=re.escape(f"{path} does not exist")):
+        InstallPackageAction(option_strings=["--install-pkg"], dest="into")(argument_parser, Namespace(), uri)
 
 
 def test_install_pkg_does_not_exist(tmp_path: Path) -> None:
