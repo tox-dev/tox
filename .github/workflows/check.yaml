@@ -42,6 +42,14 @@ jobs:
           enable-cache: true
           cache-dependency-glob: "pyproject.toml"
           github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Cache wheel downloads
+        uses: actions/cache@v4
+        with:
+          path: .wheel_cache
+          key: wheel-cache-${{ runner.os }}-${{ matrix.py }}-${{ hashFiles('pyproject.toml') }}
+          restore-keys: |
+            wheel-cache-${{ runner.os }}-${{ matrix.py }}-
+            wheel-cache-${{ runner.os }}-
       - name: Add .local/bin to Windows PATH
         if: runner.os == 'Windows'
         shell: bash
@@ -84,6 +92,14 @@ jobs:
           enable-cache: true
           cache-dependency-glob: "pyproject.toml"
           github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Cache wheel downloads
+        uses: actions/cache@v4
+        with:
+          path: .wheel_cache
+          key: wheel-cache-${{ runner.os }}-3.14-${{ hashFiles('pyproject.toml') }}
+          restore-keys: |
+            wheel-cache-${{ runner.os }}-3.14-
+            wheel-cache-${{ runner.os }}-
       - name: Add .local/bin to Windows PATH
         if: runner.os == 'Windows'
         shell: bash

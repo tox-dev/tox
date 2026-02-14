@@ -15,7 +15,7 @@ commands = [
     "pytest",
     { replace = "posargs", extend = true, default = [
       "--durations",
-      "15",
+      "20",
       "-n",
       { replace = "env", name = "PYTEST_XDIST_AUTO_NUM_WORKERS", default = "auto" },
       "--junitxml",
@@ -135,3 +135,22 @@ package = "editable"
 dependency_groups = [ "dev" ]
 commands = [ [ "python", "-m", "pip", "list", "--format=columns" ], [ "python", "-c", 'print(r"{env_python}")' ] ]
 uv_seed = true
+
+[env.fast]
+description = "fast test run for development (no integration, no slow tests, no coverage)"
+package = "editable"
+dependency_groups = [ "test" ]
+commands = [
+  [
+    "pytest",
+    { replace = "posargs", extend = true, default = [
+      "-m",
+      "not integration and not slow",
+      "-n",
+      { replace = "env", name = "PYTEST_XDIST_AUTO_NUM_WORKERS", default = "auto" },
+      "--no-cov",
+      "-q",
+      "tests",
+    ] },
+  ],
+]

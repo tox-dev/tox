@@ -16,6 +16,7 @@ if TYPE_CHECKING:
     from tox.tox_env.runner import RunToxEnv
 
 
+@pytest.mark.slow
 @pytest.mark.integration
 def test_setuptools_package(
     tox_project: ToxProjectCreator,

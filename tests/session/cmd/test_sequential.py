@@ -56,6 +56,7 @@ def test_run_sequential_quiet(tox_project: ToxProjectCreator) -> None:
     assert Matches(r"  a: OK \([\d.]+ seconds\)") == reports[-2]
 
 
+@pytest.mark.slow
 @pytest.mark.integration
 def test_result_json_sequential(
     tox_project: ToxProjectCreator,
@@ -160,6 +161,7 @@ def test_rerun_sequential_wheel(tox_project: ToxProjectCreator, demo_pkg_inline:
     result_rerun.assert_success()
 
 
+@pytest.mark.slow
 @pytest.mark.integration
 def test_rerun_sequential_sdist(tox_project: ToxProjectCreator, demo_pkg_inline: Path) -> None:
     proj = tox_project(
@@ -234,6 +236,7 @@ def test_backend_not_found(tox_project: ToxProjectCreator) -> None:
     assert "packaging backend failed (code=-5), with FailedToStart: could not start backend" in result.out, result.out
 
 
+@pytest.mark.slow
 def test_missing_interpreter_skip_on(tox_project: ToxProjectCreator) -> None:
     ini = "[tox]\nskip_missing_interpreters=true\n[testenv]\npackage=skip\nbase_python=missing-interpreter"
     proj = tox_project({"tox.ini": ini})
@@ -243,6 +246,7 @@ def test_missing_interpreter_skip_on(tox_project: ToxProjectCreator) -> None:
     assert "py: SKIP" in result.out
 
 
+@pytest.mark.slow
 def test_missing_interpreter_skip_off(tox_project: ToxProjectCreator) -> None:
     ini = "[tox]\nskip_missing_interpreters=false\n[testenv]\npackage=skip\nbase_python=missing-interpreter"
     proj = tox_project({"tox.ini": ini})
