@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import re
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 from packaging.requirements import Requirement
 
@@ -135,7 +135,7 @@ class PythonDeps(RequirementsFile):
             )
         ):
             raise TypeError(raw)
-        return cls(raw, root)
+        return cls(cast("str | list[str] | list[Requirement]", raw), root)
 
 
 class PythonConstraints(RequirementsFile):
@@ -242,7 +242,7 @@ class PythonConstraints(RequirementsFile):
             )
         ):
             raise TypeError(raw)
-        return cls(raw, root)
+        return cls(cast("str | list[str] | list[Requirement]", raw), root)
 
 
 ONE_ARG = {

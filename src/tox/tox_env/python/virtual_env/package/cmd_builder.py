@@ -118,7 +118,7 @@ class VenvCmdBuilder(PythonPackageToxEnv, ABC):
                     kwargs["filter"] = tarfile.data_filter
                 tar.extractall(  # noqa: S202
                     path=str(work_dir),
-                    **kwargs,  # type: ignore[arg-type]
+                    **kwargs,
                 )
             # the register run env is guaranteed to be called before this
             assert self._sdist_meta_tox_env is not None  # noqa: S101

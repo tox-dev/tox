@@ -61,7 +61,7 @@ class Pip(PythonInstallerListDependencies):
             default=False,
             desc="install the latest available pre-release (alpha/beta/rc) of dependencies without a specified version",
         )
-        self._env.conf.add_config(
+        self._env.conf.add_config(  # ty: ignore[no-matching-overload] # https://github.com/astral-sh/ty/issues/2428
             keys=["install_command"],
             of_type=Command,
             default=self.default_install_command,

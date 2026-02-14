@@ -3,7 +3,7 @@ from __future__ import annotations
 from abc import abstractmethod
 from argparse import ArgumentTypeError
 from collections.abc import Mapping
-from typing import TYPE_CHECKING, Any, TypeVar
+from typing import TYPE_CHECKING, Any, TypeVar, cast
 
 from tox.plugin import impl
 from tox.tox_env.python.pip.req_file import PythonDeps
@@ -43,12 +43,12 @@ class Override:  # noqa: PLW1641
         return f"{self.namespace}{'.' if self.namespace else ''}{self.key}={self.value}"
 
     def __eq__(self, other: object) -> bool:
-        if type(self) != type(other):  # noqa: E721
+        if not isinstance(other, Override):
             return False
         return (self.namespace, self.key, self.value) == (
-            other.namespace,  # type: ignore[attr-defined]
-            other.key,  # type: ignore[attr-defined]
-            other.value,  # type: ignore[attr-defined]
+            other.namespace,
+            other.key,
+            other.value,
         )
 
     def __ne__(self, other: object) -> bool:
@@ -154,20 +154,20 @@ class Loader(Convert[T]):
             converted_override = _STR_CONVERT.to(override.value, of_type, factory)
             if override.append and converted is not None:
                 if isinstance(converted, list) and isinstance(converted_override, list):
-                    converted += converted_override  # type: ignore[assignment]
+                    converted += converted_override
                 elif isinstance(converted, dict) and isinstance(converted_override, dict):
                     converted.update(converted_override)
                 elif isinstance(converted, SetEnv) and isinstance(converted_override, SetEnv):
                     converted.update(converted_override, override=True)
                 elif isinstance(converted, PythonDeps) and isinstance(converted_override, PythonDeps):
-                    converted += converted_override  # type: ignore[operator]
+                    converted += converted_override
                 else:
                     msg = "Only able to append to lists and dicts"
                     raise ValueError(msg)
             else:
                 converted = converted_override
 
-        return converted  # type: ignore[return-value]
+        return cast("V", converted)  # guaranteed non-None: either build() succeeded or overrides set it
 
     def build(  # noqa: PLR0913
         self,

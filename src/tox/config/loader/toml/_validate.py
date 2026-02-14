@@ -6,10 +6,11 @@ from typing import (
     TYPE_CHECKING,
     Any,
     Literal,
-    TypeGuard,
     TypeVar,
     Union,
     cast,
+    get_args,
+    get_origin,
 )
 
 from tox.config.types import Command
@@ -21,11 +22,12 @@ if TYPE_CHECKING:
 T = TypeVar("T")
 
 
-def validate(val: TomlTypes, of_type: type[T]) -> TypeGuard[T]:  # noqa: C901, PLR0912
-    casting_to = getattr(of_type, "__origin__", of_type.__class__)
+def validate(val: TomlTypes, of_type: type[T]) -> T:  # noqa: C901, PLR0912
+    casting_to = get_origin(of_type) or of_type.__class__
+    type_args = get_args(of_type)
     msg = ""
     if casting_to in {list, list}:
-        entry_type = of_type.__args__[0]  # type: ignore[attr-defined]
+        entry_type = type_args[0]
         if isinstance(val, list):
             for va in val:
                 validate(va, entry_type)
@@ -35,7 +37,7 @@ def validate(val: TomlTypes, of_type: type[T]) -> TypeGuard[T]:  # noqa: C901, P
         # first we cast it to list then create commands, so for now validate it as a nested list
         validate(val, list[str])
     elif casting_to in {dict, dict}:
-        key_type, value_type = of_type.__args__[0], of_type.__args__[1]  # type: ignore[attr-defined]
+        key_type, value_type = type_args[0], type_args[1]
         if isinstance(val, dict):
             for va in val:
                 validate(va, key_type)
@@ -44,7 +46,7 @@ def validate(val: TomlTypes, of_type: type[T]) -> TypeGuard[T]:  # noqa: C901, P
         else:
             msg = f"{val!r} is not dictionary"
     elif casting_to in {Union, UnionType}:  # handle Optional values
-        args: list[type[Any]] = of_type.__args__  # type: ignore[attr-defined]
+        args: list[type[Any]] = list(type_args)
         for arg in args:
             try:
                 validate(val, arg)
@@ -54,7 +56,7 @@ def validate(val: TomlTypes, of_type: type[T]) -> TypeGuard[T]:  # noqa: C901, P
         else:
             msg = f"{val!r} is not union of {', '.join(a.__name__ for a in args)}"
     elif casting_to in {Literal, type(Literal)}:
-        choice = of_type.__args__  # type: ignore[attr-defined]
+        choice = type_args
         if val not in choice:
             msg = f"{val!r} is not one of literal {','.join(repr(i) for i in choice)}"
     elif not isinstance(val, of_type):
@@ -62,7 +64,7 @@ def validate(val: TomlTypes, of_type: type[T]) -> TypeGuard[T]:  # noqa: C901, P
             fail = not isinstance(val, of_type)
         else:
             try:  # check if it can be converted
-                of_type(val)  # type: ignore[call-arg]
+                of_type(val)
                 fail = False
             except Exception:  # noqa: BLE001
                 fail = True
@@ -70,7 +72,7 @@ def validate(val: TomlTypes, of_type: type[T]) -> TypeGuard[T]:  # noqa: C901, P
             msg = f"{val!r} is not of type {of_type.__name__!r}"
     if msg:
         raise TypeError(msg)
-    return cast("T", val)  # type: ignore[return-value] # logic too complicated for mypy
+    return cast("T", val)
 
 
 __all__ = [

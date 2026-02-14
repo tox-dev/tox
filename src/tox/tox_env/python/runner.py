@@ -145,14 +145,14 @@ def add_skip_missing_interpreters_to_core(core: CoreConfigSet, options: Parsed) 
 
 def add_skip_missing_interpreters_to_env(conf: EnvConfigSet, core: CoreConfigSet, options: Parsed) -> None:
     def _default_skip_missing(conf: Config, env_name: str | None) -> bool:  # noqa: ARG001
-        return core["skip_missing_interpreters"]  # type: ignore[no-any-return]
+        return core["skip_missing_interpreters"]
 
     def _post_process(value: bool) -> bool:  # noqa: FBT001
         if getattr(options, "skip_missing_interpreters", "config") != "config":
             return StrConvert().to_bool(options.skip_missing_interpreters)
         return value
 
-    conf.add_config(
+    conf.add_config(  # ty: ignore[no-matching-overload] # https://github.com/astral-sh/ty/issues/2428
         keys=["skip_missing_interpreters"],
         default=_default_skip_missing,
         of_type=bool,

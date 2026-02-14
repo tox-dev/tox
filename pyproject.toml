@@ -97,9 +97,13 @@ test = [
   "wheel>=0.46.3",
 ]
 type = [
-  "mypy==1.19.1",
-  "types-cachetools>=6.2.0.20251022",
-  "types-chardet>=5.0.4.6",
+  "ty>=0.0.16",
+  { include-group = "test" },
+  { include-group = "docs" },
+  { include-group = "release" },
+]
+type-min = [
+  "ty>=0.0.16",
   { include-group = "test" },
 ]
 docs = [
@@ -241,19 +245,6 @@ template = "docs/changelog/template.jinja2"
 
 # possible types, all default: feature, bugfix, doc, removal, misc
 
-[tool.mypy]
-show_error_codes = true
-strict = true
-overrides = [
-  { module = [
-    "colorama.*",
-    "coverage.*",
-    "distlib.*",
-    "flaky.*",
-    "importlib_metadata.*",
-    "pluggy.*",
-    "psutil.*",
-    "re_assert.*",
-    "virtualenv.*",
-  ], ignore_missing_imports = true },
-]
+[tool.ty]
+environment.python-version = "3.14"
+src.exclude = []

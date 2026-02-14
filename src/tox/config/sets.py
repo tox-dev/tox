@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, TypeVar, cast, overload
 
 from .of_type import ConfigConstantDefinition, ConfigDefinition, ConfigDynamicDefinition, ConfigLoadArgs
-from .set_env import SetEnv
+from .set_env import SetEnv, SetEnvRaw
 from .types import EnvList
 
 if TYPE_CHECKING:
@@ -230,7 +230,7 @@ class CoreConfigSet(ConfigSet):
             desc="the root directory (where the configuration file is found)",
         )
 
-        self.add_config(
+        self.add_config(  # ty: ignore[no-matching-overload] # https://github.com/astral-sh/ty/issues/2428
             keys=["work_dir", "toxworkdir"],
             of_type=Path,
             default=self._default_work_dir,
@@ -267,7 +267,7 @@ class EnvConfigSet(ConfigSet):
                 if isinstance(v, str):
                     return True
                 if isinstance(v, dict):
-                    return "value" in v and isinstance(v.get("value"), str)
+                    return "value" in v and isinstance(v.get("value"), str)  # ty: ignore[invalid-argument-type] # https://github.com/astral-sh/ty/issues/2374
                 return False
 
             if not (
@@ -282,7 +282,7 @@ class EnvConfigSet(ConfigSet):
                 )
             ):
                 raise TypeError(raw)
-            return SetEnv(raw, self.name, self.env_name, root)
+            return SetEnv(cast("SetEnvRaw", raw), self.name, self.env_name, root)
 
         root = self._conf.core["tox_root"]
         self.add_config(

@@ -31,15 +31,11 @@ tox configuration file (root of your project).
 
 from __future__ import annotations
 
-from collections.abc import Callable
-from typing import Any, TypeVar
-
 import pluggy
 
 NAME = "tox"  #: the name of the tox hook
 
-_F = TypeVar("_F", bound=Callable[..., Any])
-impl: Callable[[_F], _F] = pluggy.HookimplMarker(NAME)  #: decorator to mark tox plugin hooks
+impl = pluggy.HookimplMarker(NAME)  #: decorator to mark tox plugin hooks
 
 
 __all__ = (

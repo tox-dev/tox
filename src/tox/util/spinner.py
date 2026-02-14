@@ -140,13 +140,13 @@ class Spinner:
         self._envs[name] = time.monotonic()
 
     def succeed(self, key: str) -> None:
-        self.finalize(key, f"OK {self.outcome.ok}", Fore.GREEN)
+        self.finalize(key, f"OK {self.outcome.ok}", str(Fore.GREEN))
 
     def fail(self, key: str) -> None:
-        self.finalize(key, f"FAIL {self.outcome.fail}", Fore.RED)
+        self.finalize(key, f"FAIL {self.outcome.fail}", str(Fore.RED))
 
     def skip(self, key: str) -> None:
-        self.finalize(key, f"SKIP {self.outcome.skip}", Fore.YELLOW)
+        self.finalize(key, f"SKIP {self.outcome.skip}", str(Fore.YELLOW))
 
     def finalize(self, key: str, status: str, color: str) -> None:
         start_at = self._envs.pop(key, None)
@@ -164,10 +164,10 @@ class Spinner:
         if self.stream.isatty():
             if sys.platform == "win32":  # pragma: win32 cover
                 ci = _CursorInfo()
-                handle = ctypes.windll.kernel32.GetStdHandle(-11)
-                ctypes.windll.kernel32.GetConsoleCursorInfo(handle, ctypes.byref(ci))
+                handle = ctypes.windll.kernel32.GetStdHandle(-11)  # ty: ignore[possibly-missing-attribute] # Windows-only
+                ctypes.windll.kernel32.GetConsoleCursorInfo(handle, ctypes.byref(ci))  # ty: ignore[possibly-missing-attribute] # Windows-only
                 ci.visible = False
-                ctypes.windll.kernel32.SetConsoleCursorInfo(handle, ctypes.byref(ci))
+                ctypes.windll.kernel32.SetConsoleCursorInfo(handle, ctypes.byref(ci))  # ty: ignore[possibly-missing-attribute] # Windows-only
             else:
                 self.stream.write("\033[?25l")
 
@@ -175,10 +175,10 @@ class Spinner:
         if self.stream.isatty():
             if sys.platform == "win32":  # pragma: win32 cover
                 ci = _CursorInfo()
-                handle = ctypes.windll.kernel32.GetStdHandle(-11)
-                ctypes.windll.kernel32.GetConsoleCursorInfo(handle, ctypes.byref(ci))
+                handle = ctypes.windll.kernel32.GetStdHandle(-11)  # ty: ignore[possibly-missing-attribute] # Windows-only
+                ctypes.windll.kernel32.GetConsoleCursorInfo(handle, ctypes.byref(ci))  # ty: ignore[possibly-missing-attribute] # Windows-only
                 ci.visible = True
-                ctypes.windll.kernel32.SetConsoleCursorInfo(handle, ctypes.byref(ci))
+                ctypes.windll.kernel32.SetConsoleCursorInfo(handle, ctypes.byref(ci))  # ty: ignore[possibly-missing-attribute] # Windows-only
             else:
                 self.stream.write("\033[?25h")
 

@@ -1,0 +1,1 @@
+Switch type checker from ``mypy`` to ``ty`` - by :user:`gaborbernat`.

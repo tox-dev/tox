@@ -40,7 +40,7 @@ def test_spinner_disabled(capfd: CaptureFixture) -> None:
         spin.add("x")
         for _ in range(len(spin.frames)):
             spin.render_frame()
-        spin.finalize("x", "done", Fore.GREEN)
+        spin.finalize("x", "done", str(Fore.GREEN))
         spin.clear()
     out, err = capfd.readouterr()
     assert out == f"{Fore.GREEN}x: done in 0 seconds{Fore.RESET}{os.linesep}", out

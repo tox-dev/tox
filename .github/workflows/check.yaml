@@ -65,7 +65,7 @@ jobs:
       matrix:
         tox_env:
           - type
-          - type-3.10
+          - type-min
           - dev
           - docs
           - pkg_meta
@@ -90,8 +90,8 @@ jobs:
         run: echo "$USERPROFILE/.local/bin" >> $GITHUB_PATH
       - name: Install tox@self
         run: uv tool install --python-preference only-managed --python 3.14 tox@.
-      - name: Install Python 3.10 for type-3.10
-        if: matrix.tox_env == 'type-3.10'
+      - name: Install Python 3.10 for type-min
+        if: matrix.tox_env == 'type-min'
         run: uv python install 3.10
       - name: Setup check suite
         run: tox r -vv --notest --skip-missing-interpreters false -e ${{ matrix.tox_env }}

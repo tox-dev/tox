@@ -4,7 +4,7 @@ import os
 from collections import OrderedDict, defaultdict
 from itertools import chain, tee
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, TypeVar
+from typing import TYPE_CHECKING, Any, TypeVar, cast
 
 from .sets import ConfigSet, CoreConfigSet, EnvConfigSet
 
@@ -143,7 +143,7 @@ class Config:
     ) -> T:
         key = section.key, for_env or "", "-".join(base or [])
         try:
-            return self._key_to_conf_set[key]  # type: ignore[return-value] # expected T but found ConfigSet
+            return cast("T", self._key_to_conf_set[key])
         except KeyError:
             conf_set = of_type(self, section, for_env)
             self._key_to_conf_set[key] = conf_set

@@ -62,8 +62,8 @@ class Unroll:
                     env_result: TomlTypes = replace_env(
                         self.conf,
                         [
-                            cast("str", validate(value["name"], str)),
-                            cast("str", validate(self(value.get("default", ""), depth), str)),
+                            validate(value["name"], str),
+                            validate(self(value.get("default", ""), depth), str),
                         ],
                         self.args,
                     )
@@ -82,7 +82,7 @@ class Unroll:
         if self.conf is not None and (env := value.get("env")) and (key := value.get("key")):
             return cast("TomlTypes", self.conf.get_env(cast("str", env))[cast("str", key)])
         if of := value.get("of"):
-            validated_of = cast("list[str]", validate(of, list[str]))
+            validated_of = validate(of, list[str])
             loaded = self.loader.load_raw_from_root(self.loader.section.SEP.join(validated_of))
             return self(loaded, depth)
         return value
@@ -133,7 +133,7 @@ class TomlReplaceLoader(ReplaceReference):
             yield self.conf.core
             return
 
-        section: TomlSection = self.loader.section  # type: ignore[assignment]
+        section = cast("TomlSection", self.loader.section)
         core_prefix = section.core_prefix()
         env_prefix = section.env_prefix()
         if sec.startswith(env_prefix):

@@ -11,7 +11,7 @@ from io import BytesIO, TextIOWrapper
 from pathlib import Path
 from threading import Thread, current_thread, local
 from threading import enumerate as enumerate_threads
-from typing import IO, TYPE_CHECKING, ClassVar
+from typing import IO, TYPE_CHECKING, ClassVar, cast
 
 from colorama import Fore, Style, init
 
@@ -38,21 +38,25 @@ class _LogThreadLocal(local):
     _ident_to_data: ClassVar[dict[int | None, str]] = {}
 
     def __init__(self, out_err: OutErr) -> None:
-        self.name = self._ident_to_data.get(getattr(current_thread(), "parent_ident", None), "ROOT")
+        thread = current_thread()
+        parent_ident: int | None = getattr(thread, "parent_ident", None)
+        self.name = self._ident_to_data.get(parent_ident, "ROOT")
         self.out_err = out_err
 
     @staticmethod
     @contextmanager
     def patch_thread() -> Iterator[None]:
-        def new_start(self: Thread) -> None:  # need to patch this
-            self.parent_ident = current_thread().ident  # type: ignore[attr-defined]
+        # CPython has no parent thread tracking, monkey-patch needed https://github.com/python/cpython/issues/86718
+        def new_start(self: Thread) -> None:
+            self.parent_ident = current_thread().ident  # ty: ignore[unresolved-attribute]
             old_start(self)
 
-        old_start, Thread.start = Thread.start, new_start  # type: ignore[method-assign]
+        old_start = Thread.start
+        Thread.start = new_start  # ty: ignore[invalid-assignment]
         try:
             yield
         finally:
-            Thread.start = old_start  # type: ignore[method-assign]
+            Thread.start = old_start
 
     @property
     def name(self) -> str:
@@ -101,7 +105,7 @@ class NamedBytesIO(BytesIO):
         self.name: str = name
 
 
-class ToxHandler(logging.StreamHandler):  # type: ignore[type-arg] # is generic but at runtime doesn't take a type arg
+class ToxHandler(logging.StreamHandler):  # is generic but at runtime doesn't take a type arg
     # """Controls tox output."""
 
     def __init__(self, level: int, is_colored: bool, out_err: OutErr) -> None:  # noqa: FBT001
@@ -129,7 +133,7 @@ class ToxHandler(logging.StreamHandler):  # type: ignore[type-arg] # is generic 
             yield
 
     @property
-    def name(self) -> str:  # type: ignore[override]
+    def name(self) -> str:
         """:return: the current tox environment name"""
         return self._local.name  # pragma: no cover
 
@@ -219,7 +223,7 @@ def setup_report(verbosity: int, is_colored: bool) -> ToxHandler:  # noqa: FBT00
     for name in ("distlib.util", "filelock"):
         logger = logging.getLogger(name)
         logger.disabled = True
-    out_err: OutErr = (sys.stdout, sys.stderr)  # type: ignore[assignment]
+    out_err: OutErr = cast("OutErr", (sys.stdout, sys.stderr))
     handler = ToxHandler(level, is_colored, out_err)
     LOGGER.addHandler(handler)
     logging.debug("setup logging to %s on pid %s", logging.getLevelName(level), os.getpid())

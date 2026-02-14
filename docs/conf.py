@@ -115,7 +115,7 @@ def setup(app: Sphinx) -> None:
             target: str,
             node: pending_xref,
             contnode: Element,
-        ) -> Element:
+        ) -> reference | None:
             # fixup some wrongly resolved mappings
             mapping = {
                 "tox.config.of_type.T": "typing.TypeVar",  # used by Sphinx bases
@@ -134,9 +134,10 @@ def setup(app: Sphinx) -> None:
     app.add_directive(tox_cfg.name, tox_cfg)
 
     def check_uri(self: ExternalLinksChecker, refnode: reference) -> None:
-        if refnode.document.attributes["source"].endswith("index.rst"):
+        if refnode.document is not None and refnode.document.attributes["source"].endswith("index.rst"):
             return None  # do not use for the index file
         return prev_check(self, refnode)
 
-    prev_check, ExternalLinksChecker.check_uri = ExternalLinksChecker.check_uri, check_uri
+    prev_check = ExternalLinksChecker.check_uri
+    ExternalLinksChecker.check_uri = check_uri  # ty: ignore[invalid-assignment] # monkey-patching instance method onto class
     inject_into_ssl()

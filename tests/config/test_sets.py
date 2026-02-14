@@ -56,8 +56,8 @@ def test_config_optional_none(conf_builder: ConfBuilder) -> None:
     config_set = conf_builder("")
     config_set.add_config(
         keys="optional_none",
-        of_type=int | None,  # type: ignore[arg-type]
-        default=None,  # type: ignore[arg-type]
+        of_type=int | None,
+        default=None,
         desc="optional_none",
     )
     optional_none = config_set["optional_none"]
@@ -74,7 +74,7 @@ def test_config_dict(conf_builder: ConfBuilder) -> None:
 def test_config_bad_type(conf_builder: ConfBuilder) -> None:
     config_set = conf_builder("crazy = something-bad")
 
-    config_set.add_config(keys="crazy", of_type=TypeVar, default=TypeVar("V"), desc="crazy")
+    config_set.add_config(keys="crazy", of_type=TypeVar, default=TypeVar("V"), desc="crazy")  # ty: ignore[invalid-legacy-type-variable] # intentionally passing TypeVar as type to test error path
     with pytest.raises(TypeError) as context:
         assert config_set["crazy"]
     assert str(context.value) == f"something-bad cannot cast to {TypeVar!r}"
@@ -177,7 +177,7 @@ def test_define_custom_set(tox_project: ToxProjectCreator) -> None:
 
 def test_do_not_allow_create_config_set(mocker: MockerFixture) -> None:
     with pytest.raises(TypeError, match="Can't instantiate"):
-        ConfigSet(mocker.create_autospec(Config))  # type: ignore[abstract,call-arg]
+        ConfigSet(mocker.create_autospec(Config))  # ty: ignore[missing-argument] # intentionally wrong args to test TypeError
 
 
 def test_set_env_raises_on_non_str(mocker: MockerFixture) -> None:
