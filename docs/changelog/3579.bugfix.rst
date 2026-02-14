@@ -1,0 +1,4 @@
+Follow `FORCE_COLOR <https://force-color.org/>`_ recommendations: any non-empty value now enables color
+(previously only ``yes``, ``true``, or ``1`` were accepted, and other values caused a crash).
+Also add support for `TTY_COMPATIBLE <https://github.com/Textualize/rich/pull/3675>`_
+(``1`` forces color, ``0`` disables it) — by :user:`rahuldevikar`.

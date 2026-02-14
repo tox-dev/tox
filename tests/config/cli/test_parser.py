@@ -33,8 +33,9 @@ def test_parser_const_with_default_none(monkeypatch: MonkeyPatch) -> None:
 
 @pytest.mark.parametrize("is_atty", [True, False])
 @pytest.mark.parametrize("no_color", [None, "0", "1", "", "\t", " ", "false", "true"])
-@pytest.mark.parametrize("force_color", [None, "0", "1"])
+@pytest.mark.parametrize("force_color", [None, "", "0", "1", "always", "not an empty string"])
 @pytest.mark.parametrize("tox_color", [None, "bad", "no", "yes"])
+@pytest.mark.parametrize("tty_compatible", [None, "", "0", "1", "other"])
 @pytest.mark.parametrize("term", [None, "xterm", "dumb"])
 def test_parser_color(  # noqa: PLR0913
     monkeypatch: MonkeyPatch,
@@ -42,6 +43,7 @@ def test_parser_color(  # noqa: PLR0913
     no_color: str | None,
     force_color: str | None,
     tox_color: str | None,
+    tty_compatible: str | None,
     is_atty: bool,
     term: str | None,
 ) -> None:
@@ -49,6 +51,7 @@ def test_parser_color(  # noqa: PLR0913
         "NO_COLOR": no_color,
         "TOX_COLORED": tox_color,
         "FORCE_COLOR": force_color,
+        "TTY_COMPATIBLE": tty_compatible,
         "TERM": term,
     }.items():
         if value is None:
@@ -62,8 +65,10 @@ def test_parser_color(  # noqa: PLR0913
         expected = tox_color == "yes"
     elif bool(no_color):
         expected = False
-    elif force_color == "1":
+    elif bool(force_color):
         expected = True
+    elif tty_compatible in {"0", "1"}:
+        expected = tty_compatible == "1"
     elif term == "dumb":
         expected = False
     else:
