@@ -1,0 +1,2 @@
+Fix ``KeyError`` when an environment depends on itself (e.g., when ``depends`` is set in ``[testenv]`` base config and the
+depended-upon environment inherits it, creating a self-dependency cycle) - by :user:`rahuldevikar`.
