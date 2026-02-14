@@ -98,12 +98,8 @@ test = [
 ]
 type = [
   "ty>=0.0.16",
-  { include-group = "test" },
   { include-group = "docs" },
   { include-group = "release" },
-]
-type-min = [
-  "ty>=0.0.16",
   { include-group = "test" },
 ]
 docs = [
@@ -117,6 +113,10 @@ docs = [
   "sphinxcontrib-towncrier>=0.2.1a0",
   "towncrier>=25.8",
   "truststore>=0.10.4",
+]
+type-min = [
+  "ty>=0.0.16",
+  { include-group = "test" },
 ]
 fix = [
   "pre-commit-uv>=4.2",
@@ -247,4 +247,4 @@ template = "docs/changelog/template.jinja2"
 
 [tool.ty]
 environment.python-version = "3.14"
-src.exclude = []
+src.exclude = [  ]
