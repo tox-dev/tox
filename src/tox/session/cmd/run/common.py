@@ -97,6 +97,13 @@ def env_run_create_flags(parser: ArgumentParser, mode: str) -> None:
             action=InstallPackageAction,
             dest="install_pkg",
         )
+        parser.add_argument(
+            "--fail-fast",
+            action="store_true",
+            default=False,
+            dest="fail_fast",
+            help="stop execution after the first environment failure",
+        )
     if mode not in {"devenv", "depends"}:
         parser.add_argument(
             "--develop",
@@ -196,7 +203,14 @@ def execute(state: State, max_workers: int | None, has_spinner: bool, live: bool
             thread.join()
     finally:
         name_to_run = {r.name: r for r in results}
-        ordered_results: list[ToxEnvRunResult] = [name_to_run[env] for env in to_run_list]
+        ordered_results: list[ToxEnvRunResult] = []
+        for env in to_run_list:
+            if env in name_to_run:
+                ordered_results.append(name_to_run[env])
+            else:
+                ordered_results.append(
+                    ToxEnvRunResult(name=env, skipped=True, code=-2, outcomes=[], duration=MISS_DURATION)
+                )
         # write the journal
         write_journal(getattr(state.conf.options, "result_json", None), state._journal)  # noqa: SLF001
         # report the outcome
@@ -254,8 +268,14 @@ def _queue_and_wait(  # noqa: C901, PLR0913, PLR0915, PLR0912
             try:
                 executor = ThreadPoolExecutor(max_workers=max_workers, thread_name_prefix="tox-driver")
                 env_list: list[str] = []
+                fail_fast_enabled = options.parsed.fail_fast or any(
+                    cast("RunToxEnv", state.envs[env]).conf["fail_fast"] for env in to_run_list
+                )
                 while True:
-                    for env in env_list:  # queue all available
+                    envs_to_queue = (
+                        env_list[:1] if max_workers == 1 and fail_fast_enabled and not interrupt.is_set() else env_list
+                    )
+                    for env in envs_to_queue:  # queue all available (or one at a time if sequential + fail-fast)
                         tox_env_to_run = cast("RunToxEnv", state.envs[env])
                         if interrupt.is_set():  # queue the rest as failed upfront
                             tox_env_to_run.teardown()
@@ -265,6 +285,7 @@ def _queue_and_wait(  # noqa: C901, PLR0913, PLR0915, PLR0912
                         else:
                             future = executor.submit(_run, tox_env_to_run)
                         future_to_env[future] = tox_env_to_run
+                    env_list = env_list[len(envs_to_queue) :]
 
                     if not future_to_env:
                         result: ToxEnvRunResult | None = None
@@ -285,8 +306,18 @@ def _queue_and_wait(  # noqa: C901, PLR0913, PLR0915, PLR0912
                             )
                         results.append(result)
                         completed.add(result.name)
+                        if (
+                            result.code != Outcome.OK
+                            and not result.ignore_outcome
+                            and (options.parsed.fail_fast or result.fail_fast)
+                        ):
+                            interrupt.set()
+                            env_list = []
+                            for pending_future in list(future_to_env.keys()):
+                                pending_future.cancel()
 
-                    env_list = next(envs_to_run_generator, [])
+                    if not interrupt.is_set() and not env_list:
+                        env_list = next(envs_to_run_generator, [])
                     # if nothing running and nothing more to run we're done
                     final_run = not env_list and not future_to_env
                     if final_run:  # disable report on final env
