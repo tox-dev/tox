@@ -7,7 +7,9 @@
 Practical recipes for common tox tasks. Each section answers a specific "How do I...?" question.
 
 .. ------------------------------------------------------------------------------------------
+
 .. Testing & Verification (most common workflows)
+
 .. ------------------------------------------------------------------------------------------
 
 ******************
@@ -126,7 +128,9 @@ The command must be in the environment's ``PATH`` or listed in :ref:`allowlist_e
 debugging, running one-off scripts, or interactively exploring an environment without modifying your configuration.
 
 .. ------------------------------------------------------------------------------------------
+
 .. Configuration (frequently needed)
+
 .. ------------------------------------------------------------------------------------------
 
 *********************************
@@ -301,7 +305,9 @@ subcommand, use the ``run`` subcommand explicitly:
     tox r -e list
 
 .. ------------------------------------------------------------------------------------------
+
 .. Dependencies & Packages
+
 .. ------------------------------------------------------------------------------------------
 
 .. _faq_custom_pypi_server:
@@ -442,7 +448,9 @@ This installs your package together with the specified extras, avoiding the need
 ``pyproject.toml`` and your tox configuration.
 
 .. ------------------------------------------------------------------------------------------
+
 .. Environment Customization
+
 .. ------------------------------------------------------------------------------------------
 
 *******************************
@@ -537,7 +545,9 @@ tox uses colored output by default. To disable it, use any of these methods:
     tox run --colored no
 
 .. ------------------------------------------------------------------------------------------
+
 .. CI/CD & Automation
+
 .. ------------------------------------------------------------------------------------------
 
 .. _howto-ci:
@@ -586,7 +596,9 @@ up dependency installation.
         - tox run -e 3.13
 
 .. ------------------------------------------------------------------------------------------
+
 .. Documentation
+
 .. ------------------------------------------------------------------------------------------
 
 *********************************
@@ -671,7 +683,9 @@ Define separate environments for developing and deploying mkdocs documentation:
          commands = mkdocs gh-deploy --clean
 
 .. ------------------------------------------------------------------------------------------
+
 .. Troubleshooting & Debugging
+
 .. ------------------------------------------------------------------------------------------
 
 *********************************
@@ -746,7 +760,9 @@ On Unix systems, exit codes larger than 128 indicate a fatal signal. tox provide
 Signal numbers are documented in the `signal man page <https://man7.org/linux/man-pages/man7/signal.7.html>`_.
 
 .. ------------------------------------------------------------------------------------------
+
 .. Advanced & Specialized (niche topics at end)
+
 .. ------------------------------------------------------------------------------------------
 
 .. _eol-version-support:
