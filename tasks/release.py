@@ -26,13 +26,19 @@ def main(version_str: str) -> None:
         repo.git.push(upstream.name, f"{release_branch}:main", "-f")
         print("push release tag")  # noqa: T201
         repo.git.push(upstream.name, tag, "-f")
-    finally:
         print("checkout main to new release and delete release branch")  # noqa: T201
         repo.heads.main.checkout()
         repo.delete_head(release_branch, force=True)
         upstream.fetch()
-        repo.git.reset("--hard", "upstream/main")
-    print("All done! ✨ 🍰 ✨")  # noqa: T201
+        repo.git.reset("--hard", f"{upstream.name}/main")
+        print("All done! ✨ 🍰 ✨")  # noqa: T201
+    except Exception:
+        print("Release failed! Cleaning up remote release branch...")  # noqa: T201
+        try:
+            repo.git.push(upstream.name, f":{release_branch}", "--no-verify")
+        except Exception as cleanup_error:  # noqa: BLE001
+            print(f"Warning: Failed to clean up remote branch: {cleanup_error}")  # noqa: T201
+        raise
 
 
 def create_release_branch(repo: Repo, version: Version) -> tuple[Remote, Head]:
