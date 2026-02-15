@@ -1,1 +1,2 @@
-Support ``file:`` URIs in ``--installpkg`` (e.g. ``--installpkg file:///path/to/pkg.whl``), including proper handling of percent-encoded characters - by :user:`rahuldevikar`.
+Support ``file:`` URIs in ``--installpkg`` (e.g. ``--installpkg file:///path/to/pkg.whl``), including proper handling of
+percent-encoded characters - by :user:`rahuldevikar`.
