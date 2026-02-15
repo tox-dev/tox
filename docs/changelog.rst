@@ -127,7 +127,7 @@ v4.29.0 (2025-08-29)
 Features - 4.29.0
 ~~~~~~~~~~~~~~~~~
 - A new tox life cycle event is now exposed for use via :doc:`Plugins
-  API </plugins>` -- by :user:`webknjaz`.
+  API </plugins/index>` -- by :user:`webknjaz`.
 
   The corresponding hook point is :func:`tox_extend_envs
   <tox.plugin.spec.tox_extend_envs>`. It allows plugin authors to
