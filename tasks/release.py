@@ -34,6 +34,8 @@ def main(version_str: str) -> None:
         print("checkout main to new release and delete release branch")  # noqa: T201
         repo.heads.main.checkout()
         repo.delete_head(release_branch, force=True)
+        print("delete remote release branch")  # noqa: T201
+        repo.git.push(upstream.name, f":{release_branch}", "--no-verify")
         upstream.fetch()
         repo.git.reset("--hard", f"{upstream.name}/main")
         print("All done! ✨ 🍰 ✨")  # noqa: T201
