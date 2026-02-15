@@ -45,18 +45,6 @@ tox is a generic virtual environment management and test command line tool you c
 Useful links
 ------------
 
-**Related projects**
-
-tox has influenced several other projects in the Python test automation space. If tox doesn't quite fit your needs or
-you want to do more research, we recommend taking a look at these projects:
-
-- `Invoke <https://www.pyinvoke.org/>`_ is a general-purpose task execution library, similar to Make. Invoke is far more
-  general-purpose than tox but it does not contain the Python testing-specific features that tox specializes in.
-
-- `nox <https://nox.thea.codes/en/stable/>`_  is a project similar in spirit to tox but different in approach. Nox's key
-  difference is that it uses Python scripts instead of a configuration file. Nox might be useful if you find tox's
-  configuration too limiting but aren't looking to move to something as general-purpose as Invoke or Make.
-
 **Tutorials**
 
 * `Oliver Bestwalter - Automating Build, Test and Release Workflows with tox <https://www.youtube.com/watch?v=PrAyvH-tm8E>`_
@@ -68,12 +56,11 @@ you want to do more research, we recommend taking a look at these projects:
    :hidden:
 
    installation
+   getting_started
    user_guide
-   cli_interface
+   howto
    config
-   faq
-   plugins
-   plugins_api
+   cli_interface
+   plugins/index
    development
    changelog
-   upgrading
