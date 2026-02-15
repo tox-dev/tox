@@ -1,0 +1,1 @@
+Add glob pattern support in ``depends`` (e.g. ``depends = py3*``) to match environments by wildcard instead of listing them explicitly - by :user:`gaborbernat`

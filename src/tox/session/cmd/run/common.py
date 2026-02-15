@@ -7,6 +7,7 @@ import os
 import time
 from argparse import Action, ArgumentError, ArgumentParser, Namespace
 from concurrent.futures import CancelledError, Future, ThreadPoolExecutor, as_completed
+from fnmatch import fnmatchcase
 from pathlib import Path
 from signal import SIGINT, Handlers, signal
 from threading import Event, Thread
@@ -391,6 +392,6 @@ def run_order(state: State, to_run: list[str]) -> tuple[list[str], dict[str, set
     for env in to_run:
         run_env = cast("RunToxEnv", state.envs[env])
         depends = set(cast("EnvList", run_env.conf["depends"]).envs)
-        todo[env] = to_run_set & depends
+        todo[env] = {name for dep in depends for name in to_run_set if fnmatchcase(name, dep)} - {env}
     order = stable_topological_sort(todo)
     return order, todo

@@ -814,7 +814,32 @@ Run
    :keys: depends
    :default: <empty list>
 
-   tox environments that this environment depends on (must be run after those).
+   tox environments that this environment depends on (must be run after those). Supports glob patterns using
+   :py:mod:`fnmatch` syntax to match environment names dynamically:
+
+   - ``*`` matches everything (e.g. ``3.*`` matches ``3.12``, ``3.13``, ``3.14``)
+   - ``?`` matches any single character (e.g. ``py?`` matches ``py3`` but not ``py314``)
+   - ``[seq]`` matches any character in *seq* (e.g. ``lint-[ab]`` matches ``lint-a`` and ``lint-b``)
+   - ``[!seq]`` matches any character not in *seq*
+
+   .. tab:: TOML
+
+      .. code-block:: toml
+
+         [env.coverage]
+         depends = ["3.*"]
+
+   .. tab:: INI
+
+      .. code-block:: ini
+
+         [testenv:coverage]
+         depends = 3.*
+
+   This matches all environments whose name starts with ``3.`` (e.g. ``3.12``, ``3.13``, ``3.14``). Glob patterns are
+   resolved at runtime against the set of environments being run, so adding a new environment to ``env_list``
+   automatically includes it in the dependency without updating ``depends``. Self-matches are excluded, so
+   ``depends = *`` will depend on all other environments without creating a cycle.
 
    .. warning::
 
