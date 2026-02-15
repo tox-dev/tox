@@ -3,6 +3,10 @@ from __future__ import annotations
 from copy import deepcopy
 from typing import TYPE_CHECKING, Literal, cast
 
+from packaging.utils import canonicalize_name
+
+from tox.tox_env.errors import Fail
+
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
@@ -11,15 +15,32 @@ if TYPE_CHECKING:
     from packaging.requirements import Requirement
 
 
-def dependencies_with_extras(deps: list[Requirement], extras: set[str], package_name: str) -> list[Requirement]:
-    return dependencies_with_extras_from_markers(extract_extra_markers(deps), extras, package_name)
+def dependencies_with_extras(
+    deps: list[Requirement],
+    extras: set[str],
+    package_name: str,
+    *,
+    available_extras: set[str] | None = None,
+) -> list[Requirement]:
+    return dependencies_with_extras_from_markers(
+        extract_extra_markers(deps), extras, package_name, available_extras=available_extras
+    )
 
 
 def dependencies_with_extras_from_markers(
     deps_with_markers: list[tuple[Requirement, set[str | None]]],
     extras: set[str],
     package_name: str,
+    *,
+    available_extras: set[str] | None = None,
 ) -> list[Requirement]:
+    if available_extras is not None and extras:
+        normalized_available = {canonicalize_name(e) for e in available_extras}
+        if unknown := extras - normalized_available:
+            available_str = ", ".join(sorted(normalized_available)) or "none"
+            unknown_str = ", ".join(sorted(unknown))
+            msg = f"extras not found for package {package_name}: {unknown_str} (available: {available_str})"
+            raise Fail(msg)
     result: list[Requirement] = []
     found: set[str] = set()
     todo: set[str | None] = extras | {None}

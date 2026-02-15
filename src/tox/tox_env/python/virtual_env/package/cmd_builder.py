@@ -102,7 +102,10 @@ class VenvCmdBuilder(PythonPackageToxEnv, ABC):
         if path.suffix == ".whl":
             wheel_dist = WheelDistribution(path)
             requires: list[str] = wheel_dist.requires or []
-            deps = dependencies_with_extras([Requirement(i) for i in requires], extras, wheel_dist.metadata["Name"])
+            available = set(wheel_dist.metadata.get_all("Provides-Extra") or [])
+            deps = dependencies_with_extras(
+                [Requirement(i) for i in requires], extras, wheel_dist.metadata["Name"], available_extras=available
+            )
             package: Package = WheelPackage(path, deps)
         else:  # must be source distribution
             work_dir = self.env_tmp_dir / "sdist-extract"
@@ -126,7 +129,8 @@ class VenvCmdBuilder(PythonPackageToxEnv, ABC):
                 self._sdist_meta_tox_env.root = next(work_dir.iterdir())  # contains a single egg info folder
                 deps = self._sdist_meta_tox_env.get_package_dependencies(for_env)
                 name = self._sdist_meta_tox_env.get_package_name(for_env)
-            package = SdistPackage(path, dependencies_with_extras(deps, extras, name))
+                available = self._sdist_meta_tox_env.get_package_extras(for_env)
+            package = SdistPackage(path, dependencies_with_extras(deps, extras, name, available_extras=available))
         return [package]
 
     def register_run_env(self, run_env: RunToxEnv) -> Generator[tuple[str, str], PackageToxEnv, None]:
