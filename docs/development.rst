@@ -2,6 +2,10 @@
  Development
 #############
 
+.. toctree::
+
+    architecture
+
 ************
  Key points
 ************
