@@ -1,0 +1,2 @@
+Add ``disallow_pass_env`` configuration option to exclude specific environment variables after ``pass_env`` glob
+expansion - by :user:`gaborbernat`

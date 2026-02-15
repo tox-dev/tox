@@ -580,6 +580,32 @@ Base options
    More environment variable-related information can be found in :ref:`environment variable substitutions`.
 
 .. conf::
+   :keys: disallow_pass_env
+   :default: <empty list>
+
+   Environment variable patterns to exclude after :ref:`pass_env` glob expansion. Uses the same
+   :py:mod:`fnmatch` wildcard syntax as ``pass_env``. Applied after ``pass_env`` patterns are resolved against the
+   host environment and before ``set_env`` values are applied:
+
+   .. tab:: TOML
+
+      .. code-block:: toml
+
+         [env_run_base]
+         pass_env = ["FOO_*"]
+         disallow_pass_env = ["FOO_SECRET"]
+
+   .. tab:: INI
+
+      .. code-block:: ini
+
+         [testenv]
+         pass_env = FOO_*
+         disallow_pass_env = FOO_SECRET
+
+   In this example, all environment variables matching ``FOO_*`` are passed through except ``FOO_SECRET``.
+
+.. conf::
    :keys: set_env, setenv
 
    A dictionary of environment variables to set when running commands in the tox environment.
