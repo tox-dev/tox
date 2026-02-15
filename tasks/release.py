@@ -19,20 +19,44 @@ def main(version_str: str) -> None:
         msg = "Current repository is dirty. Please commit any changes and try again."
         raise RuntimeError(msg)
     upstream, release_branch = create_release_branch(repo, version)
+    main_pushed = False
+    tag_pushed = False
+    original_main_sha = upstream.refs.main.commit.hexsha
     try:
         release_commit = release_changelog(repo, version)
         tag = tag_release_commit(release_commit, repo, version)
         print("push release commit")  # noqa: T201
         repo.git.push(upstream.name, f"{release_branch}:main", "-f")
+        main_pushed = True
         print("push release tag")  # noqa: T201
         repo.git.push(upstream.name, tag, "-f")
-    finally:
+        tag_pushed = True
         print("checkout main to new release and delete release branch")  # noqa: T201
         repo.heads.main.checkout()
         repo.delete_head(release_branch, force=True)
         upstream.fetch()
-        repo.git.reset("--hard", "upstream/main")
-    print("All done! ✨ 🍰 ✨")  # noqa: T201
+        repo.git.reset("--hard", f"{upstream.name}/main")
+        print("All done! ✨ 🍰 ✨")  # noqa: T201
+    except Exception:
+        print("Release failed! Cleaning up...")  # noqa: T201
+        if tag_pushed:
+            print(f"Deleting remote tag {version}")  # noqa: T201
+            try:
+                repo.git.push(upstream.name, f":refs/tags/{version}", "--no-verify")
+            except Exception as cleanup_error:  # noqa: BLE001
+                print(f"Warning: Failed to delete remote tag: {cleanup_error}")  # noqa: T201
+        if main_pushed:
+            print(f"Reverting main to {original_main_sha[:8]}")  # noqa: T201
+            try:
+                repo.git.push(upstream.name, f"{original_main_sha}:main", "-f", "--no-verify")
+            except Exception as cleanup_error:  # noqa: BLE001
+                print(f"Warning: Failed to revert main: {cleanup_error}")  # noqa: T201
+        print("Deleting remote release branch")  # noqa: T201
+        try:
+            repo.git.push(upstream.name, f":{release_branch}", "--no-verify")
+        except Exception as cleanup_error:  # noqa: BLE001
+            print(f"Warning: Failed to delete remote branch: {cleanup_error}")  # noqa: T201
+        raise
 
 
 def create_release_branch(repo: Repo, version: Version) -> tuple[Remote, Head]:
