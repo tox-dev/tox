@@ -503,6 +503,9 @@ Parallel mode
   environment list to be run to satisfy these dependencies, also for sequential runs. Furthermore, in parallel mode,
   tox will only schedule a tox environment to run once all of its dependencies have finished (independent of their outcome).
 
+  ``depends`` supports glob patterns (``*``, ``?``, ``[seq]``), so instead of listing each environment explicitly you
+  can write ``depends = 3.*`` to match all environments starting with ``3.``.
+
   .. warning::
 
     ``depends`` does not pull in dependencies into the run target, for example if you select ``py310,py39,coverage``
