@@ -162,9 +162,10 @@ def test_local_execute_terminal_size(os_env: dict[str, str], monkeypatch: Monkey
     import pty  # noqa: PLC0415
 
     terminal_size = os.terminal_size((84, 42))
-    main, child = pty.openpty()  # type: ignore[attr-defined, unused-ignore]
+    main, child = pty.openpty()  # ty: ignore[possibly-missing-attribute] # Unix-only
+
     # Use ReadViaThreadUnix to help with debugging the test itself.
-    pipe_out = ReadViaThreadUnix(main, sys.stdout.buffer.write, name="testout", drain=True)  # type: ignore[arg-type]
+    pipe_out = ReadViaThreadUnix(main, sys.stdout.buffer.write, name="testout", drain=True)
     with (
         pipe_out,
         monkeypatch.context() as monkey,

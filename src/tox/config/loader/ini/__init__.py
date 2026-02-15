@@ -87,7 +87,7 @@ class IniLoader(StrConvert, Loader[str]):
         prepared = replacer(raw, args) if not delay_replace else raw
         converted = self.to(prepared, of_type, factory)
         if delay_replace:
-            converted.use_replacer(replacer, args)  # type: ignore[attr-defined] # this can be only set_env that has it
+            converted.use_replacer(replacer, args)  # this can be only set_env that has it
         return converted
 
     def found_keys(self) -> set[str]:

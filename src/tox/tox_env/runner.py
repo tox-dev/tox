@@ -81,6 +81,12 @@ class RunToxEnv(ToxEnv, ABC):
             default=False,
             desc="if set to true a failing result of this testenv will not make tox fail (instead just warn)",
         )
+        self.conf.add_config(
+            keys=["fail_fast"],
+            of_type=bool,
+            default=False,
+            desc="if set to true, tox will stop executing remaining environments when this environment fails",
+        )
 
     def _teardown(self) -> None:
         super()._teardown()

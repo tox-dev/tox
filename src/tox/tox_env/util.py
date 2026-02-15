@@ -13,7 +13,7 @@ def add_change_dir_conf(config: EnvConfigSet, core: CoreConfigSet) -> None:
             value = (core["tox_root"] / value).resolve()
         return value
 
-    config.add_config(
+    config.add_config(  # ty: ignore[no-matching-overload] # https://github.com/astral-sh/ty/issues/2428
         keys=["change_dir", "changedir"],
         of_type=Path,
         default=lambda conf, name: cast("Path", conf.core["tox_root"]),  # noqa: ARG005

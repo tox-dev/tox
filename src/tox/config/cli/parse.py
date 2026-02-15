@@ -70,6 +70,12 @@ def _get_base(args: Sequence[str]) -> tuple[int, ToxHandler, Source]:
 def _get_all(args: Sequence[str]) -> tuple[Parsed, dict[str, Callable[[State], int]]]:
     """Parse all the options."""
     tox_parser = _get_parser()
+    try:
+        import argcomplete  # noqa: PLC0415
+
+        argcomplete.autocomplete(tox_parser)
+    except ImportError:
+        pass
     parsed = cast("Parsed", tox_parser.parse_args(args))
     handlers = {k: p for k, (_, p) in tox_parser.handlers.items()}
     return parsed, handlers

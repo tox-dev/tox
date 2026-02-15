@@ -54,7 +54,7 @@ class ArgumentParserWithEnvAndConfig(ArgumentParser):
                 outcome = self.file_config.get(key, of_type=of_type)
             if outcome is not None:
                 action.default, default_value = outcome
-                action.default_source = default_value  # type: ignore[attr-defined]
+                action.default_source = default_value  # ty: ignore[unresolved-attribute] # dynamic attr for HelpFormatter
         if isinstance(action, argparse._SubParsersAction):  # noqa: SLF001
             for values in action.choices.values():
                 if not isinstance(values, ToxParser):  # pragma: no cover
@@ -67,7 +67,7 @@ class ArgumentParserWithEnvAndConfig(ArgumentParser):
         of_type: type[Any] | None = getattr(action, "of_type", None)
         if of_type is None:
             if isinstance(action, argparse._AppendAction):  # noqa: SLF001
-                of_type = list[action.type]  # type: ignore[name-defined]
+                of_type = list[action.type]  # ty: ignore[invalid-type-form] # runtime generic from argparse action type
             elif isinstance(action, argparse._StoreAction) and action.choices:  # noqa: SLF001
                 loc = locals()
                 loc["Literal"] = Literal
@@ -81,7 +81,7 @@ class ArgumentParserWithEnvAndConfig(ArgumentParser):
                 raise TypeError(action)
         return of_type
 
-    def parse_args(  # type: ignore[override] # avoid defining all overloads
+    def parse_args(  # avoid defining all overloads
         self,
         args: Sequence[str] | None = None,
         namespace: Namespace | None = None,
@@ -92,7 +92,7 @@ class ArgumentParserWithEnvAndConfig(ArgumentParser):
                 f"unrecognized arguments: {' '.join(argv)}\n"
                 "hint: if you tried to pass arguments to a command use -- to separate them from tox ones",
             )
-        return res
+        return cast("Namespace", res)
 
 
 class HelpFormatter(ArgumentDefaultsHelpFormatter):
@@ -274,11 +274,11 @@ class ToxParser(ArgumentParserWithEnvAndConfig):
                 excl.append((e_kwargs, arguments))
                 res_excl = prev_excl(**kwargs)
                 prev_add_arg = res_excl.add_argument
-                res_excl.add_argument = add_argument  # type: ignore[method-assign]
+                res_excl.add_argument = add_argument  # ty: ignore[invalid-assignment] # wrapping to record args
                 return res_excl
 
             prev_excl = result.add_mutually_exclusive_group
-            result.add_mutually_exclusive_group = add_mutually_exclusive_group  # type: ignore[method-assign]
+            result.add_mutually_exclusive_group = add_mutually_exclusive_group  # ty: ignore[invalid-assignment] # wrapping to record exclusions
             excl: list[tuple[dict[str, Any], list[ArgumentArgs]]] = []
             self._groups.append((args, kwargs, excl))
         return result
@@ -291,7 +291,7 @@ class ToxParser(ArgumentParserWithEnvAndConfig):
                 for parser in {id(v): v for k, v in self._cmd.choices.items()}.values():
                     parser.add_argument(*args, of_type=of_type, **kwargs)
         if of_type is not None:
-            result.of_type = of_type  # type: ignore[attr-defined]
+            result.of_type = of_type  # ty: ignore[unresolved-attribute] # dynamic attr read by get_type
         return result
 
     @classmethod
@@ -313,7 +313,7 @@ class ToxParser(ArgumentParserWithEnvAndConfig):
         add_core_arguments(self)
         self.fix_defaults()
 
-    def parse_known_args(  # type: ignore[override]
+    def parse_known_args(
         self,
         args: Sequence[str] | None = None,
         namespace: Parsed | None = None,

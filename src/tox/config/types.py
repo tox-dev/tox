@@ -40,10 +40,12 @@ class Command:  # noqa: PLW1641
         return f"{type(self).__name__}(args={args!r})"
 
     def __eq__(self, other: object) -> bool:
-        return type(self) == type(other) and (self.args, self.ignore_exit_code, self.invert_exit_code) == (  # noqa: E721
-            other.args,  # type: ignore[attr-defined]
-            other.ignore_exit_code,  # type: ignore[attr-defined]
-            other.invert_exit_code,  # type: ignore[attr-defined]
+        if not isinstance(other, Command):
+            return False
+        return (self.args, self.ignore_exit_code, self.invert_exit_code) == (
+            other.args,
+            other.ignore_exit_code,
+            other.invert_exit_code,
         )
 
     def __ne__(self, other: object) -> bool:
@@ -70,7 +72,9 @@ class EnvList:  # noqa: PLW1641
         return f"{type(self).__name__}({self.envs!r})"
 
     def __eq__(self, other: object) -> bool:
-        return type(self) == type(other) and self.envs == other.envs  # type: ignore[attr-defined]  # noqa: E721
+        if not isinstance(other, EnvList):
+            return False
+        return self.envs == other.envs
 
     def __ne__(self, other: object) -> bool:
         return not (self == other)

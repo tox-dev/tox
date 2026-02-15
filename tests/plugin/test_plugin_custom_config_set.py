@@ -33,8 +33,8 @@ def _custom_config_set(mocker: MockerFixture) -> None:
 
         env_conf.add_config(
             "docker",
-            of_type=DockerConfigSet | None,  # type: ignore[arg-type]
-            default=None,  # type: ignore[arg-type]
+            of_type=DockerConfigSet | None,
+            default=None,
             desc="docker env",
             factory=partial(factory, env_conf.name),
         )

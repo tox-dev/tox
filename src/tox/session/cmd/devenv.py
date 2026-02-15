@@ -29,11 +29,11 @@ def devenv(state: State) -> int:
     opt = state.conf.options
     opt.devenv_path = opt.devenv_path.absolute()
     opt.skip_missing_interpreters = False  # the target python must exist
-    opt.no_test = False  # do not run the test suite
+    opt.no_test = True
     opt.package_only = False
-    opt.install_pkg = None  # no explicit packages to install
-    opt.skip_pkg_install = False  # always install a package in this case
-    opt.no_test = True  # do not run the test phase
+    opt.install_pkg = None
+    opt.fail_fast = False
+    opt.skip_pkg_install = False
     loader = MemoryLoader(  # these configuration values are loaded from in-memory always (no file conf)
         usedevelop=True,  # dev environments must be of type dev
         env_dir=opt.devenv_path,  # move it in source

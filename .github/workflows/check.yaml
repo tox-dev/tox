@@ -42,6 +42,14 @@ jobs:
           enable-cache: true
           cache-dependency-glob: "pyproject.toml"
           github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Cache wheel downloads
+        uses: actions/cache@v4
+        with:
+          path: .wheel_cache
+          key: wheel-cache-${{ runner.os }}-${{ matrix.py }}-${{ hashFiles('pyproject.toml') }}
+          restore-keys: |
+            wheel-cache-${{ runner.os }}-${{ matrix.py }}-
+            wheel-cache-${{ runner.os }}-
       - name: Add .local/bin to Windows PATH
         if: runner.os == 'Windows'
         shell: bash
@@ -65,7 +73,7 @@ jobs:
       matrix:
         tox_env:
           - type
-          - type-3.10
+          - type-min
           - dev
           - docs
           - pkg_meta
@@ -84,14 +92,22 @@ jobs:
           enable-cache: true
           cache-dependency-glob: "pyproject.toml"
           github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Cache wheel downloads
+        uses: actions/cache@v4
+        with:
+          path: .wheel_cache
+          key: wheel-cache-${{ runner.os }}-3.14-${{ hashFiles('pyproject.toml') }}
+          restore-keys: |
+            wheel-cache-${{ runner.os }}-3.14-
+            wheel-cache-${{ runner.os }}-
       - name: Add .local/bin to Windows PATH
         if: runner.os == 'Windows'
         shell: bash
         run: echo "$USERPROFILE/.local/bin" >> $GITHUB_PATH
       - name: Install tox@self
         run: uv tool install --python-preference only-managed --python 3.14 tox@.
-      - name: Install Python 3.10 for type-3.10
-        if: matrix.tox_env == 'type-3.10'
+      - name: Install Python 3.10 for type-min
+        if: matrix.tox_env == 'type-min'
         run: uv python install 3.10
       - name: Setup check suite
         run: tox r -vv --notest --skip-missing-interpreters false -e ${{ matrix.tox_env }}

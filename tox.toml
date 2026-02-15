@@ -1,11 +1,12 @@
 requires = [ "tox>=4.27" ]
-env_list = [ "fix", "3.15t", "3.15", "3.14t", "3.14", "3.13", "3.12", "3.11", "3.10", "cov", "type", "docs", "pkg_meta" ]
+env_list = [ "fix", "3.15t", "3.15", "3.14t", "3.14", "3.13", "3.12", "3.11", "3.10", "cov", "type", "type-min", "docs", "pkg_meta" ]
 skip_missing_interpreters = true
 
 [env_run_base]
 description = "run the tests with pytest under {env_name}"
 package = "wheel"
 wheel_build_env = ".pkg"
+extras = [ "completion" ]
 dependency_groups = [ "test" ]
 pass_env = [ "PYTEST_*", "SSL_CERT_FILE" ]
 set_env.COVERAGE_FILE = { replace = "env", name = "COVERAGE_FILE", default = "{work_dir}{/}.coverage.{env_name}" }
@@ -15,7 +16,7 @@ commands = [
     "pytest",
     { replace = "posargs", extend = true, default = [
       "--durations",
-      "15",
+      "20",
       "-n",
       { replace = "env", name = "PYTEST_XDIST_AUTO_NUM_WORKERS", default = "auto" },
       "--junitxml",
@@ -65,11 +66,13 @@ commands = [ [ "pre-commit", "run", "--all-files", "--show-diff-on-failure", { r
 base_python = ["3.14"]
 description = "run type check on code base"
 dependency_groups = [ "type" ]
-commands = [ [ "mypy", "src{/}tox" ], [ "mypy", "tests" ] ]
+commands = [ [ "ty", "check", "--python-platform", "all", "--output-format", "concise", "--error-on-warning", "." ] ]
 
-[env.type-3.10]
+[env.type-min]
 base_python = ["3.10"]
-base = ["env", "type"]
+description = "run type check on code base for the minimum supported Python"
+dependency_groups = [ "type-min" ]
+commands = [ [ "ty", "check", "--python-version", "3.10", "--python-platform", "all", "--output-format", "concise", "--error-on-warning", "src", "tests" ] ]
 
 [env.docs]
 description = "build documentation"
@@ -130,6 +133,26 @@ commands = [ [ "python", "{tox_root}/tasks/release.py", "--version", "{posargs}"
 [env.dev]
 description = "dev environment with all deps at {envdir}"
 package = "editable"
+extras = [ "completion" ]
 dependency_groups = [ "dev" ]
 commands = [ [ "python", "-m", "pip", "list", "--format=columns" ], [ "python", "-c", 'print(r"{env_python}")' ] ]
 uv_seed = true
+
+[env.fast]
+description = "fast test run for development (no integration, no slow tests, no coverage)"
+package = "editable"
+dependency_groups = [ "test" ]
+commands = [
+  [
+    "pytest",
+    { replace = "posargs", extend = true, default = [
+      "-m",
+      "not integration and not slow",
+      "-n",
+      { replace = "env", name = "PYTEST_XDIST_AUTO_NUM_WORKERS", default = "auto" },
+      "--no-cov",
+      "-q",
+      "tests",
+    ] },
+  ],
+]

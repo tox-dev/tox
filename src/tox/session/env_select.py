@@ -5,10 +5,14 @@ import re
 from collections import Counter
 from dataclasses import dataclass
 from difflib import get_close_matches
+from importlib.util import find_spec
 from itertools import chain
 from typing import TYPE_CHECKING, cast
 
+from tox.config.cli.parser import Parsed
 from tox.config.loader.str_convert import StrConvert
+from tox.config.main import Config
+from tox.config.source.discover import discover_source
 from tox.config.types import EnvList
 from tox.report import HandledError
 from tox.tox_env.api import ToxEnvCreateArgs
@@ -18,7 +22,7 @@ from tox.tox_env.register import REGISTER
 from tox.tox_env.runner import RunToxEnv
 
 if TYPE_CHECKING:
-    from argparse import ArgumentParser
+    from argparse import Action, ArgumentParser, Namespace
     from collections.abc import Iterable, Iterator
 
     from tox.session.state import State
@@ -67,7 +71,9 @@ class CliEnv:  # noqa: PLW1641
         return f"{self.__class__.__name__}({'' if self.is_default_list else repr(str(self))})"
 
     def __eq__(self, other: object) -> bool:
-        return type(self) == type(other) and self._names == other._names  # type: ignore[attr-defined]  # noqa: E721
+        if not isinstance(other, CliEnv):
+            return False
+        return self._names == other._names
 
     def __ne__(self, other: object) -> bool:
         return not (self == other)
@@ -98,7 +104,8 @@ def register_env_select_flags(
     """
     if multiple:
         group = parser.add_argument_group("select target environment(s)")
-        add_to: ArgumentParser = group.add_mutually_exclusive_group(required=False)  # type: ignore[assignment]
+        # _MutuallyExclusiveGroup is private in argparse https://github.com/python/cpython/issues/144812
+        add_to: ArgumentParser = group.add_mutually_exclusive_group(required=False)  # ty: ignore[invalid-assignment]
     else:
         add_to = parser
     if not group_only:
@@ -106,7 +113,9 @@ def register_env_select_flags(
             help_msg = "enumerate (ALL -> all environments, not set -> use <env_list> from config)"
         else:
             help_msg = "environment to run"
-        add_to.add_argument("-e", dest="env", help=help_msg, default=default, type=CliEnv)
+        action = add_to.add_argument("-e", dest="env", help=help_msg, default=default, type=CliEnv)
+        if find_spec("argcomplete"):
+            action.completer = _env_completer  # type: ignore[attr-defined]
     if multiple:
         help_msg = "labels to evaluate"
         add_to.add_argument("-m", dest="labels", metavar="label", help=help_msg, default=[], type=str, nargs="+")
@@ -126,6 +135,28 @@ def register_env_select_flags(
     help_msg = "exclude all environments selected that match this regular expression"
     add_to.add_argument("--skip-env", dest="skip_env", metavar="re", help=help_msg, default="", type=str)
     return add_to
+
+
+def _env_completer(
+    prefix: str,  # noqa: ARG001
+    action: Action,  # noqa: ARG001
+    parser: ArgumentParser,  # noqa: ARG001
+    parsed_args: Namespace,  # noqa: ARG001
+) -> list[str]:
+    from tox.plugin.manager import MANAGER  # noqa: PLC0415  # circular import
+
+    try:
+        source = discover_source(None, None)
+        conf = Config.make(
+            Parsed(override=[], root_dir=None, work_dir=None),
+            None,
+            source,
+            chain.from_iterable(MANAGER.tox_extend_envs()),
+        )
+    except HandledError:
+        return []
+    else:
+        return ["ALL", *conf]
 
 
 @dataclass
@@ -335,7 +366,8 @@ class EnvSelector:
             try:
                 package_tox_env = self._get_package_env(core_type, name, active.get(name, missing_active))
                 self._pkg_env_counter[name] += 1
-                run_env: RunToxEnv = self._defined_envs_[run_env_name].env  # type: ignore[index,assignment]
+                assert self._defined_envs_ is not None  # noqa: S101
+                run_env = cast("RunToxEnv", self._defined_envs_[run_env_name].env)
                 child_package_envs = package_tox_env.register_run_env(run_env)
                 try:
                     name_type = next(child_package_envs)

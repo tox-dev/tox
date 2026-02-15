@@ -27,6 +27,7 @@ class ToxEnvRunResult(NamedTuple):
     outcomes: list[Outcome]
     duration: float
     ignore_outcome: bool = False
+    fail_fast: bool = False
 
 
 def run_one(tox_env: RunToxEnv, no_test: bool, suspend_display: bool) -> ToxEnvRunResult:  # noqa: FBT001
@@ -35,7 +36,9 @@ def run_one(tox_env: RunToxEnv, no_test: bool, suspend_display: bool) -> ToxEnvR
     with tox_env.display_context(suspend_display):
         skipped, code, outcomes = _evaluate(tox_env, no_test)
     duration = time.monotonic() - start_one
-    return ToxEnvRunResult(name, skipped, code, outcomes, duration, tox_env.conf["ignore_outcome"])
+    return ToxEnvRunResult(
+        name, skipped, code, outcomes, duration, tox_env.conf["ignore_outcome"], tox_env.conf["fail_fast"]
+    )
 
 
 def _evaluate(tox_env: RunToxEnv, no_test: bool) -> tuple[bool, int, list[Outcome]]:  # noqa: FBT001

@@ -3,7 +3,7 @@ from __future__ import annotations
 import inspect
 import logging
 from pathlib import Path
-from typing import TYPE_CHECKING, TypeVar, cast
+from typing import TYPE_CHECKING, Any, TypeVar, cast
 
 from tox.config.loader.api import ConfigLoadArgs, Loader, Override
 from tox.config.set_env import SetEnv
@@ -71,7 +71,7 @@ class TomlLoader(Loader[TomlTypes]):
         exploded = Unroll(conf=conf, loader=self, args=args)(raw)
         result = self.to(exploded, of_type, factory)
         if inspect.isclass(of_type) and issubclass(of_type, SetEnv):
-            result.use_replacer(lambda c, s: c, args=args)  # type: ignore[attr-defined] # noqa: ARG005
+            result.use_replacer(lambda c, s: c, args=args)  # noqa: ARG005
         return result
 
     def found_keys(self) -> set[str]:
@@ -79,7 +79,7 @@ class TomlLoader(Loader[TomlTypes]):
 
     @staticmethod
     def to_str(value: TomlTypes) -> str:
-        return validate(value, str)  # type: ignore[return-value] # no mypy support
+        return validate(value, str)
 
     @staticmethod
     def to_bool(value: TomlTypes) -> bool:
@@ -87,18 +87,18 @@ class TomlLoader(Loader[TomlTypes]):
 
     @staticmethod
     def to_list(value: TomlTypes, of_type: type[_T]) -> Iterator[_T]:
-        of = list[of_type]  # type: ignore[valid-type] # no mypy support
-        return iter(validate(value, of))  # type: ignore[call-overload,no-any-return]
+        result = validate(value, cast("type[list[Any]]", list[of_type]))  # ty: ignore[invalid-type-form] # runtime generic from type variable
+        return iter(cast("list[_T]", result))
 
     @staticmethod
     def to_set(value: TomlTypes, of_type: type[_T]) -> Iterator[_T]:
-        of = list[of_type]  # type: ignore[valid-type] # no mypy support
-        return iter(validate(value, of))  # type: ignore[call-overload,no-any-return]
+        result = validate(value, cast("type[list[Any]]", list[of_type]))  # ty: ignore[invalid-type-form] # runtime generic from type variable
+        return iter(cast("list[_T]", result))
 
     @staticmethod
     def to_dict(value: TomlTypes, of_type: tuple[type[_T], type[_V]]) -> Iterator[tuple[_T, _V]]:
-        of = dict[of_type[0], of_type[1]]  # type: ignore[valid-type] # no mypy support
-        return validate(value, of).items()  # type: ignore[attr-defined,no-any-return]
+        result = validate(value, cast("type[dict[Any, Any]]", dict[of_type[0], of_type[1]]))  # ty: ignore[invalid-type-form] # runtime generic from type variables
+        return iter(cast("dict[_T, _V]", result).items())
 
     @staticmethod
     def to_path(value: TomlTypes) -> Path:

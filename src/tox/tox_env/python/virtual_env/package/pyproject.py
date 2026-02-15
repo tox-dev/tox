@@ -173,7 +173,7 @@ class Pep517VenvPackager(PythonPackageToxEnv, ABC):
             self.conf.add_config(
                 keys=[f"config_settings_{key}"],
                 of_type=dict[str, str],
-                default=None,  # type: ignore[arg-type]
+                default=None,
                 desc=f"config settings passed to the {key} backend API endpoint",
             )
 
@@ -256,7 +256,7 @@ class Pep517VenvPackager(PythonPackageToxEnv, ABC):
                 cast("Pep517VirtualEnvFrontend", self._frontend_).backend,
             )
             for env in targets:
-                env._defined["package"].value = "editable-legacy"  # type: ignore[attr-defined]  # noqa: SLF001
+                env._defined["package"].value = "editable-legacy"  # noqa: SLF001  # ty: ignore[invalid-assignment] # ConfigDefinition.value is dynamically typed
                 self.builds["editable-legacy"].append(env)
             self._run_state["setup"] = False  # force setup again as we need to provision wheel to get dependencies
             deps = self._load_deps(for_env)
@@ -333,6 +333,7 @@ class Pep517VenvPackager(PythonPackageToxEnv, ABC):
             deps_with_markers=deps_with_markers,
             extras=extras,
             package_name=project.get("name", "."),
+            available_extras=set(optional_deps.keys()),
         )
 
     def _load_deps_from_built_metadata(self, for_env: EnvConfigSet) -> list[Requirement]:
@@ -341,19 +342,23 @@ class Pep517VenvPackager(PythonPackageToxEnv, ABC):
         of_type: str = for_env["package"]
         reqs: list[Requirement] | None = None
         name = ""
+        available: set[str] | None = None
         if of_type in {"wheel", "editable"}:  # wheel packages
             w_env = self._wheel_build_envs.get(for_env["wheel_build_env"])
             if w_env is not None and w_env is not self:
                 with w_env.display_context(self._has_display_suspended):
                     if isinstance(w_env, Pep517VirtualEnvPackager):
-                        reqs, name = w_env.get_package_dependencies(for_env), w_env.get_package_name(for_env)
+                        reqs = w_env.get_package_dependencies(for_env)
+                        name = w_env.get_package_name(for_env)
+                        available = w_env.get_package_extras(for_env)
                     else:
                         reqs = []
         if reqs is None:
             reqs = self.get_package_dependencies(for_env)
             name = self.get_package_name(for_env)
+            available = self.get_package_extras(for_env)
         extras: set[str] = for_env["extras"]
-        return dependencies_with_extras(reqs, extras, name)
+        return dependencies_with_extras(reqs, extras, name, available_extras=available)
 
     def get_package_dependencies(self, for_env: EnvConfigSet) -> list[Requirement]:
         with self._pkg_lock:
@@ -369,6 +374,11 @@ class Pep517VenvPackager(PythonPackageToxEnv, ABC):
                 self._ensure_meta_present(for_env)
                 self._package_name = cast("PathDistribution", self._distribution_meta).metadata["Name"]
         return self._package_name
+
+    def get_package_extras(self, for_env: EnvConfigSet) -> set[str]:
+        with self._pkg_lock:
+            self._ensure_meta_present(for_env)
+            return set(cast("PathDistribution", self._distribution_meta).metadata.get_all("Provides-Extra") or [])
 
     def _ensure_meta_present(self, for_env: EnvConfigSet) -> None:
         if self._distribution_meta is not None:  # pragma: no branch

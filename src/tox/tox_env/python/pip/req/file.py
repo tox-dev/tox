@@ -263,7 +263,7 @@ class RequirementsFile:
         raw = file_handler.read()
         if not raw:
             return ""
-        codec = chardet.detect(raw)["encoding"]
+        codec: str = chardet.detect(raw)["encoding"] or "utf-8"
         return raw.decode(codec)
 
     def _pre_process(self, content: str) -> ReqFileLines:

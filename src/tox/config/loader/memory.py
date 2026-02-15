@@ -46,7 +46,7 @@ class MemoryLoader(Loader[Any]):
 
     @staticmethod
     def to_dict(value: Any, of_type: tuple[type[Any], type[Any]]) -> Iterator[tuple[Any, Any]]:  # noqa: ARG004
-        return value.items()  # type: ignore[no-any-return]
+        return value.items()
 
     @staticmethod
     def to_path(value: Any) -> Path:

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import shutil
 import sys
 import sysconfig
 from pathlib import Path
@@ -79,7 +80,12 @@ def demo_pkg_setuptools() -> Path:
 def demo_pkg_inline() -> Iterator[Path]:
     demo_path = HERE / "demo_pkg_inline"
     with FileLock(f"{demo_path}.lock"):
+        tox_dir = demo_path / ".tox"
+        if tox_dir.exists():
+            shutil.rmtree(tox_dir)
         yield demo_path
+        if tox_dir.exists():
+            shutil.rmtree(tox_dir)
 
 
 @pytest.fixture
@@ -93,10 +99,10 @@ def patch_prev_py(mocker: MockerFixture) -> Callable[[bool], tuple[str, str]]:
         def get_python(self: VirtualEnv, base_python: list[str]) -> PythonInfo | None:  # noqa: ARG001
             if base_python[0] == "py31" or (base_python[0] == prev_py and not has_prev):
                 return None
-            raw = list(sys.version_info)
+            major, minor, micro, release_level, serial = sys.version_info
             if base_python[0] == prev_py:
-                raw[1] -= 1  # type: ignore[operator]
-            ver_info = VersionInfo(*raw)  # type: ignore[arg-type]
+                minor -= 1
+            ver_info = VersionInfo(major, minor, micro, release_level, serial)
             return PythonInfo(
                 implementation=impl,
                 version_info=ver_info,

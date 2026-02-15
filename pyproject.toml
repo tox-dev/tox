@@ -61,6 +61,9 @@ dependencies = [
   "typing-extensions>=4.15; python_version<'3.11'",
   "virtualenv>=20.36.1",
 ]
+optional-dependencies.completion = [
+  "argcomplete>=3.6.3",
+]
 urls.Documentation = "https://tox.wiki"
 urls.Homepage = "http://tox.readthedocs.org"
 urls."Release Notes" = "https://tox.wiki/en/latest/changelog.html"
@@ -97,9 +100,9 @@ test = [
   "wheel>=0.46.3",
 ]
 type = [
-  "mypy==1.19.1",
-  "types-cachetools>=6.2.0.20251022",
-  "types-chardet>=5.0.4.6",
+  "ty>=0.0.16",
+  { include-group = "docs" },
+  { include-group = "release" },
   { include-group = "test" },
 ]
 docs = [
@@ -113,6 +116,10 @@ docs = [
   "sphinxcontrib-towncrier>=0.2.1a0",
   "towncrier>=25.8",
   "truststore>=0.10.4",
+]
+type-min = [
+  "ty>=0.0.16",
+  { include-group = "test" },
 ]
 fix = [
   "pre-commit-uv>=4.2",
@@ -201,6 +208,10 @@ testpaths = [
 ]
 addopts = "--no-success-flaky-report"
 verbosity_assertions = 2
+markers = [
+  "integration: marks tests as integration tests requiring external services (deselect with '-m \"not integration\"')",
+  "slow: marks tests as slow (>1s) (deselect with '-m \"not slow\"')",
+]
 filterwarnings = [
   "error",
   "ignore:unclosed database in <sqlite3.Connection object at:ResourceWarning",
@@ -241,19 +252,6 @@ template = "docs/changelog/template.jinja2"
 
 # possible types, all default: feature, bugfix, doc, removal, misc
 
-[tool.mypy]
-show_error_codes = true
-strict = true
-overrides = [
-  { module = [
-    "colorama.*",
-    "coverage.*",
-    "distlib.*",
-    "flaky.*",
-    "importlib_metadata.*",
-    "pluggy.*",
-    "psutil.*",
-    "re_assert.*",
-    "virtualenv.*",
-  ], ignore_missing_imports = true },
-]
+[tool.ty]
+environment.python-version = "3.14"
+src.exclude = [  ]
