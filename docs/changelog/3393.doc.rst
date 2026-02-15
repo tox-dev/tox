@@ -1,2 +1,0 @@
-Add TOML configuration reference with complete examples for ``tox.toml`` and ``pyproject.toml`` formats, and emphasize
-TOML as the recommended format throughout - by :user:`gaborbernat`

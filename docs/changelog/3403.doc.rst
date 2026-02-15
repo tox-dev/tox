@@ -1,1 +1,0 @@
-Document the ``tox exec`` subcommand with usage examples in the how-to guides - by :user:`gaborbernat`

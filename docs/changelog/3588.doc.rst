@@ -1,1 +1,0 @@
-Drop ``setup.py`` mentions from the installation page — by :user:`rahuldevikar`.

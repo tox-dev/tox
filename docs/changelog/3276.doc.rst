@@ -1,2 +1,0 @@
-Document negative factor conditions and multi-factor combinations with negation in the INI configuration reference - by
-:user:`gaborbernat`

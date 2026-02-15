@@ -1,2 +1,0 @@
-Document how to provide environments via ``toxfile.py`` inline plugins using ``tox_extend_envs`` and ``MemoryLoader`` -
-by :user:`gaborbernat`.

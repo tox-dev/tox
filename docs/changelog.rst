@@ -6,6 +6,67 @@
 
 .. towncrier release notes start
 
+*********************
+ v4.36.0 (2026-02-15)
+*********************
+
+Features - 4.36.0
+=================
+- Allow ``skip_missing_interpreters`` to be set per environment, overriding the global setting. This enables marking
+  specific environments as optional while keeping others required. (:issue:`435`)
+- Add ``--fail-fast`` CLI flag and ``fail_fast`` per-environment config option to stop executing remaining environments
+  when the first failure occurs - by :user:`gaborbernat`. (:issue:`578`)
+- Add shell completion support for bash, zsh, and fish via :pypi:`argcomplete` - by :user:`gaborbernat` (:issue:`918`)
+- Validate that configured extras exist in package metadata, raising a clear error for unknown extras - by
+  :user:`gaborbernat` (:issue:`1113`)
+- Add glob pattern support in ``depends`` (e.g. ``depends = py3*``) to match environments by wildcard instead of listing
+  them explicitly - by :user:`gaborbernat` (:issue:`1152`)
+- Add ``disallow_pass_env`` configuration option to exclude specific environment variables after ``pass_env`` glob
+  expansion - by :user:`gaborbernat` (:issue:`1387`)
+- Support ``file:`` URIs in ``--installpkg`` (e.g. ``--installpkg file:///path/to/pkg.whl``), including proper handling of percent-encoded characters - by :user:`rahuldevikar`. (:issue:`3498`)
+
+Bugfixes - 4.36.0
+=================
+- Raise an error when ``deps`` is configured on a PEP-517 packaging environment (e.g. ``.pkg``), since build dependencies
+  should be specified via the ``[build-system]`` table in ``pyproject.toml`` - by :user:`rahuldevikar` (:issue:`3412`)
+- Follow `FORCE_COLOR <https://force-color.org/>`_ recommendations: any non-empty value now enables color
+  (previously only ``yes``, ``true``, or ``1`` were accepted, and other values caused a crash).
+  Also add support for ``TTY_COMPATIBLE``
+  (``1`` forces color, ``0`` disables it) — by :user:`rahuldevikar`. (:issue:`3579`)
+- Return non-zero exit code from tox config when configuration exceptions occur. (:issue:`3649`)
+- Fix flaky spinner test assertion caused by timing variations on slower systems. (:issue:`3692`)
+
+Documentation - 4.36.0
+======================
+- Document how to provide environments via ``toxfile.py`` inline plugins using ``tox_extend_envs`` and ``MemoryLoader`` -
+  by :user:`gaborbernat`. (:issue:`828`)
+- Document shell completion setup for bash, zsh, and fish in the CLI reference - by :user:`gaborbernat` (:issue:`918`)
+- Document negative factor conditions and multi-factor combinations with negation in the INI configuration reference - by
+  :user:`gaborbernat` (:issue:`3276`)
+- Add a substitution quick reference table covering all available ``{...}`` replacement variables - by :user:`gaborbernat` (:issue:`3326`)
+- Add TOML configuration reference with complete examples for ``tox.toml`` and ``pyproject.toml`` formats, and emphasize
+  TOML as the recommended format throughout - by :user:`gaborbernat` (:issue:`3393`)
+- Document the ``tox exec`` subcommand with usage examples in the how-to guides - by :user:`gaborbernat` (:issue:`3403`)
+- Comprehensive documentation improvements: added how-to guides for tox exec, CI/CD, coverage, build backends, labels,
+  migration, debugging, and extras; expanded plugin documentation with all hook examples and packaging guide; added env
+  var handling guide, factor conditions reference, and substitution quick reference; integrated docstrfmt for consistent
+  RST formatting; fixed docstring issues in source code - by :user:`gaborbernat` (:issue:`3475`)
+- Update ``development.rst`` to reflect current standards: replace references to
+  ``flake8``/``black``/``isort``/``pyupgrade`` with ``ruff``, remove outdated Python 2.7 compatibility note, and fix CI
+  config filename - by :user:`rahuldevikar` (:issue:`3483`)
+- Drop ``setup.py`` mentions from the installation page — by :user:`rahuldevikar`. (:issue:`3588`)
+- Restructure documentation following the `Diataxis <https://diataxis.fr/>`_ framework: add a step-by-step tutorial
+  (``getting_started.rst``), consolidate how-to recipes (``howto.rst``), refocus the user guide on conceptual explanation,
+  and move plugin docs into their own ``plugins/`` subdirectory. Remove the obsolete tox 3-to-4 migration guide
+  (``upgrading.rst``) and FAQ, redistributing still-relevant content into the appropriate sections. All configuration
+  examples now show TOML first with INI alongside - by :user:`gaborbernat` (:issue:`3702`)
+
+Miscellaneous - 4.36.0
+======================
+- Switch type checker from ``mypy`` to ``ty`` - by :user:`gaborbernat`. (:issue:`3685`)
+- Add GitHub Actions workflow dispatch for release preparation as alternative to local ``tox r -e release`` command - by
+  :user:`gaborbernat` (:issue:`3704`)
+
 **********************
  v4.35.0 (2026-02-12)
 **********************

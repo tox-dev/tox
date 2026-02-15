@@ -1,1 +1,0 @@
-Fix flaky spinner test assertion caused by timing variations on slower systems.

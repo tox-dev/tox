@@ -1,2 +1,0 @@
-Validate that configured extras exist in package metadata, raising a clear error for unknown extras - by
-:user:`gaborbernat`

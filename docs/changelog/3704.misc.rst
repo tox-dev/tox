@@ -1,2 +1,0 @@
-Add GitHub Actions workflow dispatch for release preparation as alternative to local ``tox r -e release`` command - by
-:user:`gaborbernat`
