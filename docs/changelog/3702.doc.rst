@@ -1,0 +1,5 @@
+Restructure documentation following the `Diataxis <https://diataxis.fr/>`_ framework: add a step-by-step tutorial
+(``getting_started.rst``), consolidate how-to recipes (``howto.rst``), refocus the user guide on conceptual explanation,
+and move plugin docs into their own ``plugins/`` subdirectory. Remove the obsolete tox 3-to-4 migration guide
+(``upgrading.rst``) and FAQ, redistributing still-relevant content into the appropriate sections. All configuration
+examples now show TOML first with INI alongside - by :user:`gaborbernat`
