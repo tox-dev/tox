@@ -183,6 +183,12 @@ class ToxEnv(ABC):
             post_process=pass_env_post_process,
         )
         self.conf.add_config(
+            keys=["disallow_pass_env"],
+            of_type=list[str],
+            default=[],
+            desc="environment variable patterns to exclude after pass_env glob expansion",
+        )
+        self.conf.add_config(
             "parallel_show_output",
             of_type=bool,
             default=False,
@@ -371,6 +377,9 @@ class ToxEnv(ABC):
             return self._env_vars
 
         result = self._load_pass_env(pass_env)
+        if disallow := self.conf["disallow_pass_env"]:
+            disallow_patterns = [re.compile(fnmatch.translate(e), re.IGNORECASE) for e in disallow]
+            result = {k: v for k, v in result.items() if not any(p.match(k) for p in disallow_patterns)}
         # load/paths_env might trigger a load of the environment variables, set result here, returns current state
         self._env_vars, self._env_vars_pass_env, set_env.changed = result, pass_env.copy(), False
         # set PATH here in case setting and environment variable requires access to the environment variable PATH

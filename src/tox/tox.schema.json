@@ -187,6 +187,13 @@
         "passenv": {
           "$ref": "#/properties/env_run_base/properties/pass_env"
         },
+        "disallow_pass_env": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/subs"
+          },
+          "description": "environment variable patterns to exclude after pass_env glob expansion"
+        },
         "parallel_show_output": {
           "type": "boolean",
           "description": "if set to True the content of the output will always be shown  when running in parallel mode"
