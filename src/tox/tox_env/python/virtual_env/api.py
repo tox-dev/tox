@@ -179,11 +179,12 @@ class VirtualEnv(Python, ABC):
 
     @classmethod
     def python_spec_for_path(cls, path: Path) -> PythonSpec:
-        """
-        Get the spec for an absolute path to a Python executable.
+        """Get the spec for an absolute path to a Python executable.
 
         :param path: the path investigated
-        :return: the found spec
+
+        :returns: the found spec
+
         """
         info = cls.get_virtualenv_py_info(path)
         return PythonSpec.from_string_spec(
@@ -192,11 +193,12 @@ class VirtualEnv(Python, ABC):
 
     @staticmethod
     def get_virtualenv_py_info(path: Path) -> VirtualenvPythonInfo:
-        """
-        Get the version info for an absolute path to a Python executable.
+        """Get the version info for an absolute path to a Python executable.
 
         :param path: the path investigated
-        :return: the found information (cached)
+
+        :returns: the found information (cached)
+
         """
         return cached_py_info.from_exe(
             cached_py_info.PythonInfo,

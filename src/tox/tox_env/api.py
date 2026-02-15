@@ -72,10 +72,10 @@ class ToxEnv(ABC):
     """A tox environment."""
 
     def __init__(self, create_args: ToxEnvCreateArgs) -> None:
-        """
-        Create a new tox environment.
+        """Create a new tox environment.
 
         :param create_args: tox env create args
+
         """
         self.journal: EnvJournal = create_args.journal  #: handler to the tox reporting system
         self.conf: EnvConfigSet = create_args.conf  #: the config set to use for this environment
@@ -213,17 +213,17 @@ class ToxEnv(ABC):
 
     @property
     def env_dir(self) -> Path:
-        """:return: the tox environments environment folder"""
+        """:returns: the tox environments environment folder"""
         return cast("Path", self.conf["env_dir"])
 
     @property
     def env_tmp_dir(self) -> Path:
-        """:return: the tox environments temp folder"""
+        """:returns: the tox environments temp folder"""
         return cast("Path", self.conf["env_tmp_dir"])
 
     @property
     def env_log_dir(self) -> Path:
-        """:return: the tox environments log folder"""
+        """:returns: the tox environments log folder"""
         return cast("Path", self.conf["env_log_dir"])
 
     @property
@@ -329,9 +329,9 @@ class ToxEnv(ABC):
         raise NotImplementedError
 
     def _setup_env(self) -> None:
-        """
-        1. env dir exists
+        """1. env dir exists
         2. contains a runner with the same type.
+
         """
         conf = {"name": self.conf.name, "type": type(self).__name__}
         with self.cache.compare(conf, ToxEnv.__name__) as (eq, old):

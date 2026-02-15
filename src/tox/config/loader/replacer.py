@@ -47,12 +47,13 @@ class MatchError(Exception):
 class ReplaceReference(ABC):
     @abstractmethod
     def __call__(self, value: str, conf_args: ConfigLoadArgs) -> str | None:
-        """
-        Perform a reference replacement.
+        """Perform a reference replacement.
 
         :param value: the raw value
         :param conf_args: the configuration loads argument object
-        :return: the replaced value, None if it can't do it.
+
+        :returns: the replaced value, None if it can't do it.
+
         """
         raise NotImplementedError
 
@@ -115,14 +116,14 @@ class MatchExpression:  # noqa: PLW1641
         terminator: str = "",
         split: str | None = None,
     ) -> tuple[Sequence[MatchArg], int]:
-        """
-        Tokenize `value` to up `terminator` character.
+        """Tokenize `value` to up `terminator` character.
 
         If `split` is given, multiple arguments will be returned.
 
         Returns list of arguments (list of str or MatchExpression) and final character position examined in value.
 
         This function recursively calls itself via `_next_replace_expression`.
+
         """
         args = []
         last_arg: list[str | MatchExpression] = []

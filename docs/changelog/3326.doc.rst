@@ -1,0 +1,1 @@
+Add a substitution quick reference table covering all available ``{...}`` replacement variables - by :user:`gaborbernat`

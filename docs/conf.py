@@ -44,7 +44,9 @@ extensions = [
     "sphinx_inline_tabs",
     "sphinx_copybutton",
     "sphinx_issues",  # :user: and similar roles
+    "sphinxcontrib.mermaid",
 ]
+mermaid_output_format = "raw"
 
 exclude_patterns = ["_build", "changelog/*", "_draft.rst"]
 autoclass_content, autodoc_member_order, autodoc_typehints = "class", "bysource", "none"

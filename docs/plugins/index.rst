@@ -1,5 +1,6 @@
-Plugins
-=======
+#########
+ Plugins
+#########
 
 Many plugins are available for tox. These include, but are not limited to, the extensions found on the ``tox-dev`` org
 on :gh:`GitHub <tox-dev>`.
@@ -12,31 +13,32 @@ For example:
 
 .. tab:: TOML
 
-   .. code-block:: toml
+    .. code-block:: toml
 
-        requires = ["tox>=4", "tox-uv>=1"]
+         requires = ["tox>=4", "tox-uv>=1"]
 
 .. tab:: INI
 
-   .. code-block:: ini
+    .. code-block:: ini
 
-        [tox]
-        requires =
-            tox>=4
-            tox-uv>=1
+         [tox]
+         requires =
+             tox>=4
+             tox-uv>=1
 
-Disabling plugins
------------------
+*******************
+ Disabling plugins
+*******************
 
 Plugins can be disabled via the ``TOX_DISABLED_EXTERNAL_PLUGINS`` environment variable. Set it to a comma-separated list
 of plugin names:
 
 .. code-block:: bash
 
-   env TOX_DISABLED_EXTERNAL_PLUGINS=tox-uv,tox-extra tox --version
+    env TOX_DISABLED_EXTERNAL_PLUGINS=tox-uv,tox-extra tox --version
 
 .. toctree::
 
-   getting_started
-   howto
-   api
+    getting_started
+    howto
+    api

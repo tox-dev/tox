@@ -22,11 +22,12 @@ class Section:  # noqa: PLW1641
 
     @classmethod
     def from_key(cls: type[Self], key: str) -> Self:
-        """
-        Create a section from a section key.
+        """Create a section from a section key.
 
         :param key: the section key
-        :return: the constructed section
+
+        :returns: the constructed section
+
         """
         sep_at = key.find(cls.SEP)
         if sep_at == -1:
@@ -37,17 +38,17 @@ class Section:  # noqa: PLW1641
 
     @property
     def prefix(self) -> str | None:
-        """:return: the prefix of the section"""
+        """:returns: the prefix of the section"""
         return self._prefix
 
     @property
     def name(self) -> str:
-        """:return: the name of the section"""
+        """:returns: the name of the section"""
         return self._name
 
     @property
     def key(self) -> str:
-        """:return: the section key"""
+        """:returns: the section key"""
         return self.SEP.join(i for i in (self._prefix, self._name) if i is not None)
 
     def __str__(self) -> str:

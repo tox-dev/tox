@@ -59,17 +59,17 @@ class ConfigLoadArgs:
     """Arguments that help loading a configuration value."""
 
     def __init__(self, chain: list[str] | None, name: str | None, env_name: str | None) -> None:
-        """
-        :param chain: the configuration chain (useful to detect circular references)
+        """:param chain: the configuration chain (useful to detect circular references)
         :param name: the name of the configuration
         :param env_name: the tox environment this load is for
+
         """
         self.chain: list[str] = chain or []
         self.name = name
         self.env_name = env_name
 
     def copy(self) -> ConfigLoadArgs:
-        """:return: create a copy of the object"""
+        """:returns: create a copy of the object"""
         return ConfigLoadArgs(self.chain.copy(), self.name, self.env_name)
 
 
@@ -83,6 +83,7 @@ class Loader(Convert[T]):
     """Loader loads configuration values and converts it.
 
     :param overrides: A list of overrides to be applied.
+
     """
 
     def __init__(self, section: Section, overrides: list[Override]) -> None:
@@ -99,12 +100,12 @@ class Loader(Convert[T]):
 
     @abstractmethod
     def load_raw(self, key: str, conf: Config | None, env_name: str | None) -> T:
-        """
-        Load the raw object from the config store.
+        """Load the raw object from the config store.
 
         :param key: the key under what we want the configuration
         :param env_name: load for env name
         :param conf: the global config object
+
         """
         raise NotImplementedError
 
@@ -127,15 +128,16 @@ class Loader(Convert[T]):
         conf: Config | None,
         args: ConfigLoadArgs,
     ) -> V:
-        """
-        Load a value (raw and then convert).
+        """Load a value (raw and then convert).
 
         :param key: the key under it lives
         :param of_type: the type to convert to
         :param factory: factory method to build the object
         :param conf: the configuration object of this tox session (needed to manifest the value)
         :param args: the config load arguments
-        :return: the converted type
+
+        :returns: the converted type
+
         """
         from tox.config.set_env import SetEnv  # noqa: PLC0415
 
@@ -178,8 +180,7 @@ class Loader(Convert[T]):
         raw: T,
         args: ConfigLoadArgs,  # noqa: ARG002
     ) -> V:
-        """
-        Materialize the raw configuration value from the loader.
+        """Materialize the raw configuration value from the loader.
 
         :param future: a future which when called will provide the converted config value
         :param key: the config key
@@ -187,6 +188,7 @@ class Loader(Convert[T]):
         :param conf: the global config
         :param raw: the raw value
         :param args: env args
+
         """
         return self.to(raw, of_type, factory)
 

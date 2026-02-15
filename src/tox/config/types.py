@@ -17,6 +17,7 @@ class MissingRequiredConfigKeyError(ValueError):
     """missing required config key
 
     Used by the two toml loaders in order to identify if config keys are present.
+
     """
 
 
@@ -24,10 +25,10 @@ class Command:  # noqa: PLW1641
     """A command to execute."""
 
     def __init__(self, args: list[str]) -> None:
-        """
-        Create a new command to execute.
+        """Create a new command to execute.
 
         :param args: the command line arguments (first value can be ``-`` to indicate ignore the exit code)
+
         """
         self.ignore_exit_code: bool = args[0] == "-"  #: a flag indicating if the exit code should be ignored
         self.invert_exit_code: bool = args[0] == "!"  #: a flag for flipped exit code (non-zero = success, 0 = error)
@@ -53,7 +54,7 @@ class Command:  # noqa: PLW1641
 
     @property
     def shell(self) -> str:
-        """:return: a shell representation of the command (platform dependent)"""
+        """:returns: a shell representation of the command (platform dependent)"""
         return shell_cmd(self.args)
 
 
@@ -61,10 +62,10 @@ class EnvList:  # noqa: PLW1641
     """A tox environment list."""
 
     def __init__(self, envs: Sequence[str]) -> None:
-        """
-        Crate a new tox environment list.
+        """Crate a new tox environment list.
 
         :param envs: the list of tox environments
+
         """
         self.envs = list(OrderedDict((e, None) for e in envs).keys())
 
@@ -80,7 +81,7 @@ class EnvList:  # noqa: PLW1641
         return not (self == other)
 
     def __iter__(self) -> Iterator[str]:
-        """:return: iterator that goes through the defined env-list"""
+        """:returns: iterator that goes through the defined env-list"""
         return iter(self.envs)
 
 

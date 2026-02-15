@@ -21,13 +21,13 @@ _spec = pluggy.HookspecMarker(NAME)
 
 @_spec
 def tox_register_tox_env(register: ToxEnvRegister) -> None:
-    """
-    Register new tox environment type. You can register:
+    """Register new tox environment type. You can register:
 
     - **run environment**: by default this is a local subprocess backed virtualenv Python
     - **packaging environment**: by default this is a PEP-517 compliant local subprocess backed virtualenv Python
 
     :param register: a object that can be used to register new tox environment types
+
     """
 
 
@@ -37,88 +37,88 @@ def tox_extend_envs() -> Iterable[str]:
 
     .. versionadded:: 4.29.0
 
-    This hook is called without any arguments early in the lifecycle. It
-    is expected to return an iterable of strings with environment names
-    for tox to consider. It can be used to facilitate dynamic creation of
-    additional environments from within tox plugins.
+    This hook is called without any arguments early in the lifecycle. It is expected to return an iterable of strings
+    with environment names for tox to consider. It can be used to facilitate dynamic creation of additional environments
+    from within tox plugins.
 
-    This is ideal to pair with :func:`tox_add_core_config
-    <tox.plugin.spec.tox_add_core_config>` that has access to
+    This is ideal to pair with :func:`tox_add_core_config <tox.plugin.spec.tox_add_core_config>` that has access to
     ``state.conf.memory_seed_loaders`` allowing to extend it with instances of
-    :class:`tox.config.loader.memory.MemoryLoader` early enough before tox
-    starts caching configuration values sourced elsewhere.
+    :class:`tox.config.loader.memory.MemoryLoader` early enough before tox starts caching configuration values sourced
+    elsewhere.
+
     """
     return ()
 
 
 @_spec
 def tox_add_option(parser: ToxParser) -> None:
-    """
-    Add a command line argument. This is the first hook to be called, right after the logging setup and config source
-    discovery.
+    """Add a command line argument.
+
+    This is the first hook to be called, right after the logging setup and config source discovery.
 
     :param parser: the command line parser
+
     """
 
 
 @_spec
 def tox_add_core_config(core_conf: ConfigSet, state: State) -> None:
-    """
-    Called when the core configuration is built for a tox environment.
+    """Called when the core configuration is built for a tox environment.
 
     :param core_conf: the core configuration object
     :param state: the global tox state object
+
     """
 
 
 @_spec
 def tox_add_env_config(env_conf: EnvConfigSet, state: State) -> None:
-    """
-    Called when configuration is built for a tox environment.
+    """Called when configuration is built for a tox environment.
 
     :param env_conf: the core configuration object
     :param state: the global tox state object
+
     """
 
 
 @_spec
 def tox_before_run_commands(tox_env: ToxEnv) -> None:
-    """
-    Called before the commands set is executed.
+    """Called before the commands set is executed.
 
     :param tox_env: the tox environment being executed
+
     """
 
 
 @_spec
 def tox_after_run_commands(tox_env: ToxEnv, exit_code: int, outcomes: list[Outcome]) -> None:
-    """
-    Called after the commands set is executed.
+    """Called after the commands set is executed.
 
     :param tox_env: the tox environment being executed
     :param exit_code: exit code of the command
     :param outcomes: outcome of each command execution
+
     """
 
 
 @_spec
 def tox_on_install(tox_env: ToxEnv, arguments: Any, section: str, of_type: str) -> None:
-    """
-    Called before executing an installation command.
+    """Called before executing an installation command.
 
     :param tox_env: the tox environment where the command runs in
     :param arguments: installation arguments
     :param section: section of the installation
     :param of_type: type of the installation
+
     """
 
 
 @_spec
 def tox_env_teardown(tox_env: ToxEnv) -> None:
-    """
-    Called after a tox environment has been teared down.
+    """Called after a tox environment has been teared down.
 
     :param tox_env: the tox environment
+
     """
 
 

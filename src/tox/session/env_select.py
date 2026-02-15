@@ -32,23 +32,20 @@ LOGGER = logging.getLogger(__name__)
 
 
 class CliEnv:  # noqa: PLW1641
-    """A `CliEnv` is the user's selection of tox test environments, usually supplied via the ``-e`` command-line option
-    or in a TOML file (typically ``env_list`` in ``tox.ini``). It may be treated as a sequence if it's not a "default"
-    or "all" selection.
+    """The user's selection of tox test environments via ``-e`` or ``env_list`` config.
 
     It is in one of three forms:
 
     - A list of specific environments, instantiated with a string that is a comma-separated list of the environment
       names. (These may have spaces on either side of the commas which are removed.) As a sequence this will be a
       sequence of those names.
-
-    - "ALL" which is all environments defined by the tox configuration. This is instantiated with ``ALL`` either
-      alone or as any element of a comma-separated list; any other environment names are ignored. `is_all()` will be
-      true and as a sequence it will be empty. This prints in string representation as ``ALL``.
-
+    - "ALL" which is all environments defined by the tox configuration. This is instantiated with ``ALL`` either alone
+      or as any element of a comma-separated list; any other environment names are ignored. `is_all()` will be true and
+      as a sequence it will be empty. This prints in string representation as ``ALL``.
     - The default environments as chosen by tox configuration. This is instantiated with `None` as the parameter,
-      `is_default_list()` will be true, and as a sequence this will be empty. This prints in string representation
-      as ``<env_list>``.
+      `is_default_list()` will be true, and as a sequence this will be empty. This prints in string representation as
+      ``<env_list>``.
+
     """
 
     def __init__(self, value: list[str] | str | None = None) -> None:
@@ -93,14 +90,13 @@ def register_env_select_flags(
     multiple: bool = True,  # noqa: FBT001, FBT002
     group_only: bool = False,  # noqa: FBT001, FBT002
 ) -> ArgumentParser:
-    """
-    Register environment selection flags.
+    """Register environment selection flags.
 
     :param parser: the parser to register to
     :param default: the default value for env selection
     :param multiple: allow selecting multiple environments
-    :param group_only:
-    :return:
+    :param group_only: only register group selection flags
+
     """
     if multiple:
         group = parser.add_argument_group("select target environment(s)")
@@ -198,7 +194,7 @@ class EnvSelector:
         return getattr(self._state.conf.options, "env", None)
 
     def _collect_names(self) -> Iterator[tuple[Iterable[str], bool]]:
-        """:return: sources of tox environments defined with name and if is marked as target to run"""
+        """:returns: sources of tox environments defined with name and if is marked as target to run"""
         if self._provision is not None:  # pragma: no branch
             yield (self._provision[1],), False
         env_list, everything_active = self._state.conf.core["env_list"], False
@@ -433,9 +429,10 @@ class EnvSelector:
                             break
 
     def __getitem__(self, item: str) -> RunToxEnv | PackageToxEnv:
-        """
-        :param item: the name of the environment
-        :return: the tox environment
+        """:param item: the name of the environment
+
+        :returns: the tox environment
+
         """
         return self._defined_envs[item].env
 
@@ -445,13 +442,13 @@ class EnvSelector:
         only_active: bool = True,
         package: bool = False,
     ) -> Iterator[str]:
-        """
-        Get tox environments.
+        """Get tox environments.
 
         :param only_active: active environments are marked to be executed in the current target
         :param package: return package environments
 
-        :return: an iteration of tox environments
+        :returns: an iteration of tox environments
+
         """
         for name, env_info in self._defined_envs.items():
             if only_active and not env_info.is_active:

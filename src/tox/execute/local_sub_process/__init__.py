@@ -277,16 +277,17 @@ class LocalSubProcessExecuteInstance(ExecuteInstance):
 
 
 def _pty(key: str) -> tuple[int, int] | None:
-    """
-    Allocate a virtual terminal (pty) for a subprocess.
+    """Allocate a virtual terminal (pty) for a subprocess.
 
-    A virtual terminal allows a process to perform syscalls that fetch attributes related to the tty,
-    for example to determine whether to use colored output or enter interactive mode.
+    A virtual terminal allows a process to perform syscalls that fetch attributes related to the tty, for example to
+    determine whether to use colored output or enter interactive mode.
 
     The termios attributes of the controlling terminal stream will be copied to the allocated pty.
 
     :param key: The stream to copy attributes from. Either "stdout" or "stderr".
-    :return: (main_fd, child_fd) of an allocated pty; or None on error or if unsupported (win32).
+
+    :returns: (main_fd, child_fd) of an allocated pty; or None on error or if unsupported (win32).
+
     """
     if sys.platform == "win32":  # explicit check for mypy # pragma: win32 cover
         return None

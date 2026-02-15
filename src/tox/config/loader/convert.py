@@ -22,13 +22,14 @@ class Convert(ABC, Generic[T]):
     """A class that converts a raw type to a given tox (python) type."""
 
     def to(self, raw: T, of_type: type[V] | UnionType, factory: Factory[V]) -> V:  # noqa: PLR0911
-        """
-        Convert given raw type to python type.
+        """Convert given raw type to python type.
 
         :param raw: the raw type
         :param of_type: python type
         :param factory: factory method to build the object
-        :return: the converted type
+
+        :returns: the converted type
+
         """
         from_module = getattr(of_type, "__module__", None)
         if (
@@ -98,91 +99,99 @@ class Convert(ABC, Generic[T]):
     @staticmethod
     @abstractmethod
     def to_str(value: T) -> str:
-        """
-        Convert to string.
+        """Convert to string.
 
         :param value: the value to convert
+
         :returns: a string representation of the value
+
         """
         raise NotImplementedError
 
     @staticmethod
     @abstractmethod
     def to_bool(value: T) -> bool:
-        """
-        Convert to boolean.
+        """Convert to boolean.
 
         :param value: the value to convert
+
         :returns: a boolean representation of the value
+
         """
         raise NotImplementedError
 
     @staticmethod
     @abstractmethod
     def to_list(value: T, of_type: type[Any]) -> Iterator[T]:
-        """
-        Convert to list.
+        """Convert to list.
 
         :param value: the value to convert
         :param of_type: the type of elements in the list
+
         :returns: a list representation of the value
+
         """
         raise NotImplementedError
 
     @staticmethod
     @abstractmethod
     def to_set(value: T, of_type: type[Any]) -> Iterator[T]:
-        """
-        Convert to set.
+        """Convert to set.
 
         :param value: the value to convert
         :param of_type: the type of elements in the set
+
         :returns: a set representation of the value
+
         """
         raise NotImplementedError
 
     @staticmethod
     @abstractmethod
     def to_dict(value: T, of_type: tuple[type[Any], type[Any]]) -> Iterator[tuple[T, T]]:
-        """
-        Convert to dictionary.
+        """Convert to dictionary.
 
         :param value: the value to convert
         :param of_type: a tuple indicating the type of the key and the value
+
         :returns: a iteration of key-value pairs that gets populated into a dict
+
         """
         raise NotImplementedError
 
     @staticmethod
     @abstractmethod
     def to_path(value: T) -> Path:
-        """
-        Convert to path.
+        """Convert to path.
 
         :param value: the value to convert
+
         :returns: path representation of the value
+
         """
         raise NotImplementedError
 
     @staticmethod
     @abstractmethod
     def to_command(value: T) -> Command | None:
-        """
-        Convert to a command to execute.
+        """Convert to a command to execute.
 
         :param value: the value to convert
+
         :returns: command representation of the value
+
         """
         raise NotImplementedError
 
     @staticmethod
     @abstractmethod
     def to_env_list(value: T) -> EnvList:
-        """
-        Convert to a tox EnvList.
+        """Convert to a tox EnvList.
 
         :param value: the value to convert
+
         :returns: a list of tox environments from the value
+
         """
         raise NotImplementedError
 

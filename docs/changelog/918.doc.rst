@@ -1,0 +1,1 @@
+Document shell completion setup for bash, zsh, and fish in the CLI reference - by :user:`gaborbernat`

@@ -1,3 +1,4 @@
-Move vital packaging environment documentation from "Upgrading to tox v4" into the regular Configuration and User Guide
-sections, covering packaging environment inheritance (``pkgenv``/``env_pkg_base``), editable mode fallback behavior,
-and provisioning environment configuration - by :user:`rahuldevikar`
+Comprehensive documentation improvements: added how-to guides for tox exec, CI/CD, coverage, build backends, labels,
+migration, debugging, and extras; expanded plugin documentation with all hook examples and packaging guide; added env
+var handling guide, factor conditions reference, and substitution quick reference; integrated docstrfmt for consistent
+RST formatting; fixed docstring issues in source code - by :user:`gaborbernat`

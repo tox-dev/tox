@@ -124,32 +124,32 @@ class ToxHandler(logging.StreamHandler):  # is generic but at runtime doesn't ta
 
     @contextmanager
     def with_context(self, name: str) -> Iterator[None]:
-        """
-        Set a new tox environment context.
+        """Set a new tox environment context.
 
         :param name: the name of the tox environment
+
         """
         with self._local.with_name(name):
             yield
 
     @property
     def name(self) -> str:
-        """:return: the current tox environment name"""
+        """:returns: the current tox environment name"""
         return self._local.name  # pragma: no cover
 
     @property
     def stdout(self) -> TextIOWrapper:
-        """:return: the current standard output"""
+        """:returns: the current standard output"""
         return self._local.out_err[0]
 
     @property
     def stderr(self) -> TextIOWrapper:
-        """:return: the current standard error"""
+        """:returns: the current standard error"""
         return self._local.out_err[1]
 
     @property
     def stream(self) -> IO[str]:
-        """:return: the current stream to write to (alias for the current standard output)"""
+        """:returns: the current stream to write to (alias for the current standard output)"""
         return self.stdout
 
     @stream.setter

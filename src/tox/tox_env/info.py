@@ -1,6 +1,8 @@
-"""
-Declare and handle the tox env info file (a file at the root of every tox environment that contains information about
-the status of the tox environment - python version of the environment, installed packages, etc.).
+"""Handle the tox env info file.
+
+This file at the root of every tox environment contains information about the status of the tox environment: python
+version, installed packages, etc.
+
 """
 
 from __future__ import annotations
@@ -35,13 +37,14 @@ class Info:
         section: str,
         sub_section: str | None = None,
     ) -> Iterator[tuple[bool, Any | None]]:
-        """
-        Compare new information with the existing one and update if differs.
+        """Compare new information with the existing one and update if differs.
 
         :param value: the value stored
         :param section: the primary key of the information
         :param sub_section: the secondary key of the information
-        :return: a tuple where the first value is if it differs and the second is the old value
+
+        :returns: a tuple where the first value is if it differs and the second is the old value
+
         """
         old = self._content.get(section)
         if sub_section is not None and old is not None:
