@@ -82,7 +82,6 @@ def test_package_root_via_testenv(tox_project: ToxProjectCreator, demo_pkg_inlin
     ("conf", "extra", "deps"),
     [
         pytest.param("[project]", "", [], id="no_deps"),
-        pytest.param("[project]", "alpha", [], id="no_deps_with_extra"),
         pytest.param("[project]\ndependencies=['B', 'A']", "", ["A", "B"], id="deps"),
         pytest.param(
             "[project]\ndependencies=['A']\noptional-dependencies.alpha=['B']\noptional-dependencies.beta=['C']",
@@ -98,9 +97,9 @@ def test_package_root_via_testenv(tox_project: ToxProjectCreator, demo_pkg_inlin
         ),
         pytest.param(
             "[project]\ndependencies=['A']\noptional-dependencies.alpha=[]",
-            "alpha,beta",
+            "alpha",
             ["A"],
-            id="deps_with_one_empty_extra",
+            id="deps_with_empty_extra",
         ),
         pytest.param(
             "[project]\ndependencies=['A']\ndynamic=['optional-dependencies']",
@@ -187,19 +186,41 @@ def test_pyproject_deps_from_static(
         assert expected_args == args
 
 
+def test_pyproject_invalid_extra_static(tox_project: ToxProjectCreator, demo_pkg_inline: Path) -> None:
+    conf = "[project]\nname='demo'\ndependencies=['A']\noptional-dependencies.alpha=['B']"
+    toml = f"{(demo_pkg_inline / 'pyproject.toml').read_text()}{conf}"
+    proj = tox_project({"tox.ini": "[testenv]\nextras=typo", "pyproject.toml": toml}, base=demo_pkg_inline)
+    proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
+    result = proj.run("r", "--notest")
+    result.assert_failed()
+    assert "extras not found for package demo: typo (available: alpha)" in result.out
+
+
+def test_pyproject_invalid_extra_no_optional_deps(tox_project: ToxProjectCreator, demo_pkg_inline: Path) -> None:
+    conf = "[project]\nname='demo'"
+    toml = f"{(demo_pkg_inline / 'pyproject.toml').read_text()}{conf}"
+    proj = tox_project({"tox.ini": "[testenv]\nextras=alpha", "pyproject.toml": toml}, base=demo_pkg_inline)
+    proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
+    result = proj.run("r", "--notest")
+    result.assert_failed()
+    assert "extras not found for package demo: alpha (available: none)" in result.out
+
+
 @pytest.mark.parametrize(
-    ("metadata", "dynamic", "deps"),
+    ("metadata", "dynamic", "extra", "deps"),
     [
-        pytest.param("Requires-Dist: A", "['dependencies']", ["A"], id="deps"),
+        pytest.param("Requires-Dist: A", "['dependencies']", "", ["A"], id="deps"),
         pytest.param(
-            "Requires-Dist: A\nRequires-Dist: B;extra=='alpha'",
+            "Provides-Extra: alpha\nRequires-Dist: A\nRequires-Dist: B;extra=='alpha'",
             "['dependencies']",
+            "alpha",
             ["A", "B"],
             id="deps_extra",
         ),
         pytest.param(
-            "Requires-Dist: A\nRequires-Dist: B;extra=='alpha'",
+            "Provides-Extra: alpha\nRequires-Dist: A\nRequires-Dist: B;extra=='alpha'",
             "['optional-dependencies']",
+            "alpha",
             ["A", "B"],
             id="deps_extra_dynamic_opt",
         ),
@@ -211,11 +232,12 @@ def test_pyproject_deps_static_with_dynamic(  # noqa: PLR0913
     monkeypatch: pytest.MonkeyPatch,
     metadata: str,
     dynamic: str,
+    extra: str,
     deps: list[str],
 ) -> None:
     monkeypatch.setenv("METADATA_EXTRA", metadata)
     toml = f"{(demo_pkg_inline / 'pyproject.toml').read_text()}[project]\ndynamic={dynamic}"
-    ini = "[testenv]\nextras=alpha\n[testenv:.pkg]\npass_env=METADATA_EXTRA"
+    ini = f"[testenv]\nextras={extra}\n[testenv:.pkg]\npass_env=METADATA_EXTRA"
     proj = tox_project({"tox.ini": ini, "pyproject.toml": toml}, base=demo_pkg_inline)
 
     execute_calls = proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)

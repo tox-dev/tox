@@ -8,6 +8,7 @@ import pytest
 from packaging.requirements import Requirement
 from pyproject_api import SubprocessFrontend
 
+from tox.tox_env.errors import Fail
 from tox.tox_env.python.virtual_env.package.util import dependencies_with_extras
 
 if TYPE_CHECKING:
@@ -79,3 +80,35 @@ def test_load_dependency_requirement_many_or_extras(extra: str) -> None:
     requires = [Requirement('filelock<4.0.0,>=3.9.0; extra == "extras1" or extra == "extras2" or extra == "extras3"')]
     result = dependencies_with_extras(requires, {extra}, "")
     assert [str(r) for r in result] == ["filelock<4.0.0,>=3.9.0"]
+
+
+def test_validate_extras_unknown() -> None:
+    with pytest.raises(Fail, match=r"extras not found for package pkg: typo \(available: alpha, beta\)"):
+        dependencies_with_extras([], {"typo"}, "pkg", available_extras={"alpha", "beta"})
+
+
+def test_validate_extras_valid() -> None:
+    requires = [Requirement('A; extra == "alpha"')]
+    result = dependencies_with_extras(requires, {"alpha"}, "pkg", available_extras={"alpha", "beta"})
+    assert [str(r) for r in result] == ["A"]
+
+
+def test_validate_extras_none_skips_validation() -> None:
+    result = dependencies_with_extras([], {"nonexistent"}, "pkg", available_extras=None)
+    assert result == []
+
+
+def test_validate_extras_empty_requested() -> None:
+    result = dependencies_with_extras([], set(), "pkg", available_extras={"alpha"})
+    assert result == []
+
+
+def test_validate_extras_normalization() -> None:
+    requires = [Requirement('A; extra == "my-extra"')]
+    result = dependencies_with_extras(requires, {"my-extra"}, "pkg", available_extras={"my_extra"})
+    assert [str(r) for r in result] == ["A"]
+
+
+def test_validate_extras_no_available() -> None:
+    with pytest.raises(Fail, match=r"extras not found for package pkg: alpha \(available: none\)"):
+        dependencies_with_extras([], {"alpha"}, "pkg", available_extras=set())
