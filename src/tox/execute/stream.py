@@ -18,10 +18,10 @@ if TYPE_CHECKING:
 
 
 class SyncWrite:
-    """
-    Make sure data collected is synced in-memory and to the target stream on every newline and time period.
+    """Make sure data collected is synced in-memory and to the target stream on every newline and time period.
 
     Used to propagate executed commands output to the standard output/error streams visible to the user.
+
     """
 
     REFRESH_RATE = 0.1

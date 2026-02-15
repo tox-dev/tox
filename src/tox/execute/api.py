@@ -226,8 +226,7 @@ class Outcome:
         cmd: Sequence[str],
         metadata: dict[str, Any],
     ) -> None:
-        """
-        Create a new execution outcome.
+        """Create a new execution outcome.
 
         :param request: the execution request
         :param show_on_standard: a flag indicating if the execution was shown on stdout/stderr
@@ -238,6 +237,7 @@ class Outcome:
         :param end: a timer sample for the end of the execution
         :param cmd: the command as executed
         :param metadata: additional metadata attached to the execution
+
         """
         self.request = request  #: the execution request
         self.show_on_standard = show_on_standard  #: a flag indicating if the execution was shown on stdout/stderr
@@ -286,10 +286,10 @@ class Outcome:
         raise SystemExit(self.exit_code)
 
     def log_run_done(self, lvl: int) -> None:
-        """
-        Log that the run was done.
+        """Log that the run was done.
 
         :param lvl: the level on what to log as interpreted by :func:`logging.log`
+
         """
         req = self.request
         metadata = ""
@@ -307,11 +307,11 @@ class Outcome:
 
     @property
     def elapsed(self) -> float:
-        """:return: time the execution took in seconds"""
+        """:returns: time the execution took in seconds"""
         return self.end - self.start
 
     def out_err(self) -> tuple[str, str]:
-        """:return: a tuple of the standard output and standard error"""
+        """:returns: a tuple of the standard output and standard error"""
         return self.out, self.err
 
 

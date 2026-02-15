@@ -27,12 +27,13 @@ SOURCE_TYPES: tuple[type[Source], ...] = (
 
 
 def discover_source(config_file: Path | None, root_dir: Path | None) -> Source:
-    """
-    Discover a source for configuration.
+    """Discover a source for configuration.
 
     :param config_file: the file storing the source
     :param root_dir: the root directory as set by the user (None means not set)
-    :return: the source of the config
+
+    :returns: the source of the config
+
     """
     if config_file is None:
         src = _locate_source()

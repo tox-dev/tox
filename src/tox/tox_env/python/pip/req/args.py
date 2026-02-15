@@ -20,7 +20,7 @@ class _SupportsWrite(Protocol[_T_contra]):
 
 class _OurArgumentParser(ArgumentParser):
     def print_usage(self, file: _SupportsWrite[str] | None = None) -> None:
-        """ """
+        pass
 
     def exit(self, status: int = 0, message: str | None = None) -> NoReturn:  # noqa: ARG002, PLR6301
         message = "" if message is None else message

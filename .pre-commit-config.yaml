@@ -33,6 +33,12 @@ repos:
     hooks:
       - id: blacken-docs
         additional_dependencies: [black==26.1]
+  - repo: https://github.com/LilSpazJoekp/docstrfmt
+    rev: v2.0.2
+    hooks:
+      - id: docstrfmt
+        args: ["-l", "120"]
+        additional_dependencies: ["sphinx>=9.1"]
   - repo: https://github.com/pre-commit/pygrep-hooks
     rev: v1.10.0
     hooks:

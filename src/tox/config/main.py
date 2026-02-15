@@ -50,9 +50,10 @@ class Config:
         self.memory_seed_loaders: defaultdict[str, list[MemoryLoader]] = defaultdict(list)
 
     def pos_args(self, to_path: Path | None) -> tuple[str, ...] | None:
-        """
-        :param to_path: if not None rewrite relative posargs paths from cwd to to_path
-        :return: positional argument
+        """:param to_path: if not None rewrite relative posargs paths from cwd to to_path
+
+        :returns: positional argument
+
         """
         if self._pos_args is not None and to_path is not None and Path.cwd() != to_path:
             args = []
@@ -73,16 +74,16 @@ class Config:
 
     @property
     def work_dir(self) -> Path:
-        """:return: working directory for this project"""
+        """:returns: working directory for this project"""
         return self._work_dir
 
     @property
     def src_path(self) -> Path:
-        """:return: the location of the tox configuration source"""
+        """:returns: the location of the tox configuration source"""
         return self._src.path
 
     def __iter__(self) -> Iterator[str]:
-        """:return: an iterator that goes through existing environments"""
+        """:returns: an iterator that goes through existing environments"""
         # NOTE: `tee(self._extra_envs)[1]` is necessary for compatibility with
         # NOTE: Python 3.11 and older versions. Once Python 3.12 is the lowest
         # NOTE: supported version, it can be changed to
@@ -96,7 +97,7 @@ class Config:
         return f"{type(self).__name__}(config_source={self._src!r})"
 
     def __contains__(self, item: str) -> bool:
-        """:return: check if an environment already exists"""
+        """:returns: check if an environment already exists"""
         return any(name for name in self if name == item)
 
     @classmethod
@@ -124,7 +125,7 @@ class Config:
 
     @property
     def core(self) -> CoreConfigSet:
-        """:return: the core configuration"""
+        """:returns: the core configuration"""
         if self._core_set is not None:
             return self._core_set
         core_section = self._src.get_core_section()
@@ -161,13 +162,14 @@ class Config:
         package: bool = False,  # noqa: FBT001, FBT002
         loaders: Sequence[Loader[Any]] | None = None,
     ) -> EnvConfigSet:
-        """
-        Return the configuration for a given tox environment (will create if not exist yet).
+        """Return the configuration for a given tox environment (will create if not exist yet).
 
         :param item: the name of the environment is
         :param package: a flag indicating if the environment is of type packaging or not (only used for creation)
         :param loaders: loaders to use for this configuration (only used for creation)
-        :return: the tox environments config
+
+        :returns: the tox environments config
+
         """
         section, base_test, base_pkg = self._src.get_tox_env_section(item)
         return self.get_section_config(

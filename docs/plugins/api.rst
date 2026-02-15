@@ -1,147 +1,155 @@
-API Reference
-=============
+###############
+ API Reference
+###############
 
-tox objects
-~~~~~~~~~~~
+*************
+ tox objects
+*************
 
 register
---------
+========
 
 .. automodule:: tox.tox_env.register
-   :members:
-   :exclude-members: REGISTER
+    :members:
+    :exclude-members: REGISTER
 
 .. autodata:: REGISTER
-   :no-value:
+    :no-value:
 
 config
-------
+======
+
 .. autoclass:: tox.config.cli.parser.ArgumentParserWithEnvAndConfig
-   :members:
+    :members:
 
 .. autoclass:: tox.config.cli.parser.ToxParser
-   :members:
+    :members:
 
 .. autoclass:: tox.config.cli.parser.Parsed
-   :members:
+    :members:
 
 .. autoclass:: tox.config.main.Config
-   :members:
-   :exclude-members: __init__, make
+    :members:
+    :exclude-members: __init__, make
 
 .. autoclass:: tox.config.loader.section.Section
-   :members:
+    :members:
 
 .. autoclass:: tox.config.loader.api.ConfigLoadArgs
-   :members:
+    :members:
 
 .. autoclass:: tox.config.sets.ConfigSet
-   :members:
-   :special-members: __iter__, __contains__
+    :members:
+    :special-members: __iter__, __contains__
 
 .. autoclass:: tox.config.sets.CoreConfigSet
-   :members:
+    :members:
 
 .. autoclass:: tox.config.sets.EnvConfigSet
-   :members:
+    :members:
 
 .. autoclass:: tox.config.of_type.ConfigDefinition
-   :members:
+    :members:
 
 .. autoclass:: tox.config.of_type.ConfigDynamicDefinition
-   :members:
+    :members:
 
 .. autoclass:: tox.config.of_type.ConfigConstantDefinition
-   :members:
+    :members:
 
 .. autoclass:: tox.config.source.api.Source
-   :members:
+    :members:
 
 .. autoclass:: tox.config.loader.api.Override
-   :members:
+    :members:
 
 .. autoclass:: tox.config.loader.api.Loader
-   :members:
+    :members:
 
 .. autoclass:: tox.config.loader.memory.MemoryLoader
-   :members:
+    :members:
 
 .. autoclass:: tox.config.loader.convert.Convert
-   :members:
+    :members:
 
 .. autoclass:: tox.config.types.EnvList
-   :members:
-   :special-members: __bool__, __iter__
+    :members:
+    :special-members: __bool__, __iter__
 
 .. autoclass:: tox.config.types.Command
-   :members:
+    :members:
 
 .. autoclass:: tox.config.loader.convert.Factory
-   :members:
+    :members:
 
 environments
-------------
+============
+
 .. autoclass:: tox.tox_env.api.ToxEnv
-   :members:
+    :members:
 
 .. autoclass:: tox.tox_env.runner.RunToxEnv
-   :members:
+    :members:
 
 .. autoclass:: tox.tox_env.package.PackageToxEnv
-   :members:
+    :members:
 
 .. autoclass:: tox.tox_env.package.Package
-   :members:
+    :members:
 
 journal
--------
+=======
+
 .. autoclass:: tox.journal.env.EnvJournal
-   :members:
-   :exclude-members: __init__
-   :special-members: __bool__, __setitem__
+    :members:
+    :exclude-members: __init__
+    :special-members: __bool__, __setitem__
 
 report
-------
+======
+
 .. autoclass:: tox.report.ToxHandler
-   :members:
-   :exclude-members: stream, format, patch_thread, write_out_err, suspend_out_err
+    :members:
+    :exclude-members: stream, format, patch_thread, write_out_err, suspend_out_err
 
 execute
--------
+=======
+
 .. autoclass:: tox.execute.request.ExecuteRequest
-   :members:
+    :members:
 
 .. autoclass:: tox.execute.request.StdinSource
-   :members:
+    :members:
 
 .. autoclass:: tox.execute.api.Outcome
-   :members:
+    :members:
 
 .. autoclass:: tox.execute.api.Execute
-   :members:
+    :members:
 
 .. autoclass:: tox.execute.api.ExecuteStatus
-   :members:
+    :members:
 
 .. autoclass:: tox.execute.api.ExecuteInstance
-   :members:
+    :members:
 
 .. autoclass:: tox.execute.stream.SyncWrite
-   :members:
+    :members:
 
 installer
----------
+=========
 
 .. autoclass:: tox.tox_env.installer.Installer
-   :members:
+    :members:
 
 session
--------
+=======
+
 .. autoclass:: tox.session.state.State
-   :members:
+    :members:
 
 .. autoclass:: tox.session.env_select.EnvSelector
-   :members:
+    :members:
 
 .. autoclass:: tox.tox_env.info.Info
-   :members:
+    :members:

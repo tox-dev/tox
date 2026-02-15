@@ -4,9 +4,10 @@ from pathlib import Path
 
 
 def shebang(exe: str) -> list[str] | None:
-    """
-    :param exe: the executable
-    :return: the shebang interpreter arguments
+    """:param exe: the executable
+
+    :returns: the shebang interpreter arguments
+
     """
     # When invoking a command using a shebang line that exceeds the OS shebang limit (e.g. Linux has a limit of 128;
     # BINPRM_BUF_SIZE) the invocation will fail. In this case you'd want to replace the shebang invocation with an

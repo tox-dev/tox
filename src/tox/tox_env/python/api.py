@@ -212,19 +212,21 @@ class Python(ToxEnv, ABC):
     @classmethod
     @abstractmethod
     def python_spec_for_path(cls, path: Path) -> PythonSpec:
-        """
-        Get the spec for an absolute path to a Python executable.
+        """Get the spec for an absolute path to a Python executable.
 
         :param path: the path investigated
-        :return: the found spec
+
+        :returns: the found spec
+
         """
         raise NotImplementedError
 
     @abstractmethod
     def env_site_package_dir(self) -> Path:
-        """
-        If we have the python we just need to look at the last path under prefix.
-        E.g., Debian derivatives change the site-packages to dist-packages, so we need to fix it for site-packages.
+        """Return the site-packages directory for this environment.
+
+        Debian derivatives change site-packages to dist-packages, so we look at the last path under prefix.
+
         """
         raise NotImplementedError
 

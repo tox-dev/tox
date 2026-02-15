@@ -34,14 +34,15 @@ class Source(ABC):
         override_map: OverrideMap,
         conf: ConfigSet,
     ) -> Iterator[Loader[Any]]:
-        """
-        Return a loader that loads settings from a given section name.
+        """Return a loader that loads settings from a given section name.
 
         :param section: the section to load
         :param base: base sections to fallback to
         :param override_map: a list of overrides to apply
         :param conf: the config set to use
+
         :returns: the loaders to use
+
         """
         section = self.transform_section(section)
         key = section.key
@@ -87,18 +88,19 @@ class Source(ABC):
 
     @abstractmethod
     def sections(self) -> Iterator[Section]:
-        """
-        Return a loader that loads the core configuration values.
+        """Return a loader that loads the core configuration values.
 
         :returns: the core loader from this source
+
         """
         raise NotImplementedError
 
     @abstractmethod
     def envs(self, core_conf: CoreConfigSet) -> Iterator[str]:
-        """
-        :param core_conf: the core configuration set
+        """:param core_conf: the core configuration set
+
         :returns: a list of environments defined within this source
+
         """
         raise NotImplementedError
 

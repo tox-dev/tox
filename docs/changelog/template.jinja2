@@ -1,14 +1,16 @@
-{% set top_underline = underlines[0] %}
+{% set top_underline = "*" %}
+{% set underline = "=" %}
 {% if versiondata.name %}
-v{{ versiondata.version }} ({{ versiondata.date }})
-{{ top_underline * ((versiondata.version + versiondata.date)|length + 4)}}
+{{ top_underline * ((versiondata.version + versiondata.date)|length + 5)}}
+ v{{ versiondata.version }} ({{ versiondata.date }})
+{{ top_underline * ((versiondata.version + versiondata.date)|length + 5)}}
 {% else %}
-{{ versiondata.version }} ({{ versiondata.date }})
-{{ top_underline * ((versiondata.version + versiondata.date)|length + 3)}}
+{{ top_underline * ((versiondata.version + versiondata.date)|length + 4)}}
+ {{ versiondata.version }} ({{ versiondata.date }})
+{{ top_underline * ((versiondata.version + versiondata.date)|length + 4)}}
 {% endif %}
 
 {% for section, _ in sections.items() %}
-{% set underline = underlines[1] %}
 {% if sections[section] %}
 {% for category, val in definitions.items() if category in sections[section]%}
 {{ definitions[category]['name'] }} - {{ versiondata.version }}

@@ -1,49 +1,55 @@
 .. _cli:
 
-Shell completion
-----------------
+###############
+ CLI interface
+###############
+
+******************
+ Shell completion
+******************
 
 tox supports shell completion for commands, flags, and environment names via :pypi:`argcomplete`. Install tox with the
 ``completion`` extra:
 
 .. code-block:: bash
 
-   uv tool install 'tox[completion]'
+    uv tool install 'tox[completion]'
 
 Then configure your shell:
 
 .. tab:: bash
 
-   Add to ``~/.bashrc``:
+    Add to ``~/.bashrc``:
 
-   .. code-block:: bash
+    .. code-block:: bash
 
-      eval "$(register-python-argcomplete tox)"
+       eval "$(register-python-argcomplete tox)"
 
 .. tab:: zsh
 
-   Add to ``~/.zshrc``:
+    Add to ``~/.zshrc``:
 
-   .. code-block:: zsh
+    .. code-block:: zsh
 
-      autoload -U bashcompinit
-      bashcompinit
-      eval "$(register-python-argcomplete tox)"
+       autoload -U bashcompinit
+       bashcompinit
+       eval "$(register-python-argcomplete tox)"
 
 .. tab:: fish
 
-   Add to ``~/.config/fish/config.fish``:
+    Add to ``~/.config/fish/config.fish``:
 
-   .. code-block:: fish
+    .. code-block:: fish
 
-      register-python-argcomplete --shell fish tox | source
+       register-python-argcomplete --shell fish tox | source
 
 Once configured, pressing ``<TAB>`` completes subcommands (``tox r`` → ``tox run``), flags (``tox run --``), and
 environment names (``tox run -e`` lists environments from your tox configuration).
 
-CLI interface
--------------
+**********************
+ Command-line options
+**********************
 
 .. sphinx_argparse_cli::
-  :module: tox.config.cli.parse
-  :func: _get_parser_doc
+    :module: tox.config.cli.parse
+    :func: _get_parser_doc

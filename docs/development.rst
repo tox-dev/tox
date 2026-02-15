@@ -1,8 +1,10 @@
-Development
-===========
+#############
+ Development
+#############
 
-Key points
-----------
+************
+ Key points
+************
 
 If you're already experienced with submitting GitHub PRs to open-source Python projects, the following are the key
 points you need to know about this project. (If you're not, you should carefully read all the documentation after this
@@ -21,30 +23,30 @@ section. This section contains only highlights; it's not a substitute for readin
   ``docs/changelog/####.{feature,bugfix,doc,removal,misc}.rst`` per the `changelog entry <#changelog-entries>`_ section
   below.
 - GitHub Actions will do a full set of `tests and checks <#automated-testing>`_ when the PR is submitted. For local
-  testing you'll need to install your own "top-level" tox (using `pipx`_ or similar is fine) and use the following
-  targets (tox environments):
+  testing you'll need to install your own "top-level" tox (using pipx_ or similar is fine) and use the following targets
+  (tox environments):
 
-  - :samp:`tox -e py [-- {pytest-arg ...}]`  to `test code changes <#running-tests>`_. This will skip tests for which
-    you are missing dependencies, but those tests will still be run by GitHub Actions.
+  - :samp:`tox -e py [-- {pytest-arg ...}]` to `test code changes <#running-tests>`_. This will skip tests for which you
+    are missing dependencies, but those tests will still be run by GitHub Actions.
   - ``tox -e type`` to typecheck changes. (All new code should have complete type annotations.)
   - ``tox -e docs`` to build documentation changes and update the changelog, followed by viewing (with a browser) the
     generated HTML files under :file:`.tox/docs_out/html/`. The required changelog entry can be viewed at the "Release
     History" link at the left.
-  - ``tox -e fix`` to lint code, documentation and any other changes to the repo. This will also fix the code and
-    write out the changed files; you can update your commit with `git commit --amend`.
+  - ``tox -e fix`` to lint code, documentation and any other changes to the repo. This will also fix the code and write
+    out the changed files; you can update your commit with `git commit --amend`.
 
-
-Getting started
----------------
+*****************
+ Getting started
+*****************
 
 ``tox`` is a volunteer maintained open source project and we welcome contributions of all forms. The sections below will
 help you get started with development, testing, and documentation. We’re pleased that you are interested in working on
 tox. This document is meant to get you setup to work on tox and to act as a guide and reference to the development
-setup. If you face any issues during this process, please
-:issue:`open an issue <new?title=Trouble+with+development+environment>` about it on the issue tracker.
+setup. If you face any issues during this process, please :issue:`open an issue
+<new?title=Trouble+with+development+environment>` about it on the issue tracker.
 
 Setup
-~~~~~
+=====
 
 tox is a command line application written in Python. To work on it, you'll need:
 
@@ -55,14 +57,13 @@ tox is a command line application written in Python. To work on it, you'll need:
       git clone https://github.com/tox-dev/tox
       cd tox
 
-- **Python interpreter**: We recommend using ``CPython``. You can use
-  `this guide <https://realpython.com/installing-python/>`_ to set it up.
-
+- **Python interpreter**: We recommend using ``CPython``. You can use `this guide
+  <https://realpython.com/installing-python/>`_ to set it up.
 - :pypi:`tox`: to automatically get the projects development dependencies and run the test suite. We recommend
   installing it using `pipx <https://pipxproject.github.io/pipx/>`_.
 
 Running from source tree
-~~~~~~~~~~~~~~~~~~~~~~~~
+========================
 
 The easiest way to do this is to generate the development tox environment, and then invoke tox from under the
 ``.tox/dev`` folder
@@ -74,7 +75,7 @@ The easiest way to do this is to generate the development tox environment, and t
     .tox/dev/Scripts/tox  # on Windows
 
 Running tests
-~~~~~~~~~~~~~
+=============
 
 tox's tests are written using the :pypi:`pytest` test framework. :pypi:`tox` is used to automate the setup and execution
 of tox's tests.
@@ -104,11 +105,10 @@ Some tests require additional dependencies to be run, such is the various shell 
 that in CI all tests are run; so even if all tests succeed locally for you, they may still fail in the CI.
 
 Running linters
-~~~~~~~~~~~~~~~
+===============
 
-tox uses :pypi:`pre-commit` for managing linting of the codebase. ``pre-commit`` performs various checks on all
-files in tox and uses tools that help following a consistent code style within the codebase. To use linters locally,
-run:
+tox uses :pypi:`pre-commit` for managing linting of the codebase. ``pre-commit`` performs various checks on all files in
+tox and uses tools that help following a consistent code style within the codebase. To use linters locally, run:
 
 .. code-block:: shell
 
@@ -121,12 +121,12 @@ run:
     sidestep bugs within the linters.
 
 Code style guide
-~~~~~~~~~~~~~~~~
+================
 
-- First and foremost, the linters configured for the project must pass; this generally means following PEP-8 rules,
-  as codified by ``ruff`` (which replaces the previously used ``flake8``, ``black``, ``isort``, and ``pyupgrade``).
-- The supported Python versions (and the code syntax to use) are listed in the ``pyproject.toml`` file
-  in the ``project/requires-python`` entry.
+- First and foremost, the linters configured for the project must pass; this generally means following PEP-8 rules, as
+  codified by ``ruff`` (which replaces the previously used ``flake8``, ``black``, ``isort``, and ``pyupgrade``).
+- The supported Python versions (and the code syntax to use) are listed in the ``pyproject.toml`` file in the
+  ``project/requires-python`` entry.
 - All code (tests too) must be type annotated as much as required by ``mypy``.
 - We use a line length of 120.
 - Exception messages should only be capitalized (and ended with a period/exclamation mark) if they are multi-sentenced,
@@ -137,7 +137,7 @@ Code style guide
 - Tests should contain as little information as possible but do use descriptive variable names within it.
 
 Building documentation
-~~~~~~~~~~~~~~~~~~~~~~
+======================
 
 tox's documentation is built using :pypi:`Sphinx`. The documentation is written in reStructuredText. To build it
 locally, run:
@@ -149,12 +149,12 @@ locally, run:
 The built documentation can be found in the ``.tox/docs_out/html`` folder and may be viewed by opening ``index.html``
 within that folder.
 
-
-Contributing
--------------
+**************
+ Contributing
+**************
 
 Submitting pull requests
-~~~~~~~~~~~~~~~~~~~~~~~~
+========================
 
 Submit pull requests (PRs) against the ``main`` branch, providing a good description of what you're doing and why. You
 must have legal permission to distribute any code you contribute to tox and it must be available under the MIT License.
@@ -162,27 +162,27 @@ Provide tests that cover your changes and run the tests locally first. tox :ref:
 multiple Python versions and operating systems. Any pull request must consider and work on all these platforms.
 
 Pull requests should be small to facilitate review. Keep them self-contained, and limited in scope. Studies have shown
-that review quality falls off as patch size grows. In particular, pull requests must not be treated as
-"feature branches", with ongoing development work happening within the PR. Instead, the feature should be broken up into
-smaller, independent parts which can be reviewed and merged individually.
+that review quality falls off as patch size grows. In particular, pull requests must not be treated as "feature
+branches", with ongoing development work happening within the PR. Instead, the feature should be broken up into smaller,
+independent parts which can be reviewed and merged individually.
 
 Additionally, avoid including "cosmetic" changes to code that is unrelated to your change, as these make reviewing the
 PR more difficult. Examples include re-flowing text in comments or documentation, or addition or removal of blank lines
 or whitespace within lines. Such changes can be made separately, as a "formatting cleanup" PR, if needed.
 
 Automated testing
-~~~~~~~~~~~~~~~~~
+=================
 
-All pull requests and merges to the ``main`` branch are tested using :gh:`GitHub Actions <features/actions>`
-(configured by ``check.yaml`` file inside the ``.github/workflows`` directory). You can find the status and the results
-to the CI runs for your PR on GitHub's Web UI for the pull request. You can also find links to the CI services' pages
-for the specific builds in the form of "Details" links, in case the CI run fails and you wish to view the output.
+All pull requests and merges to the ``main`` branch are tested using :gh:`GitHub Actions <features/actions>` (configured
+by ``check.yaml`` file inside the ``.github/workflows`` directory). You can find the status and the results to the CI
+runs for your PR on GitHub's Web UI for the pull request. You can also find links to the CI services' pages for the
+specific builds in the form of "Details" links, in case the CI run fails and you wish to view the output.
 
 To trigger CI to run again for a pull request, you can close and open the pull request or submit another change to the
 pull request. If needed, project maintainers can manually trigger a restart of a job/build.
 
 Changelog entries
-~~~~~~~~~~~~~~~~~
+=================
 
 The ``changelog.rst`` file is managed using :pypi:`towncrier` and all changes must be accompanied by a changelog entry.
 To add an entry to the changelog, first you need to have created an issue describing the change you want to make. A pull
@@ -207,17 +207,17 @@ added a feature and deprecated/removed the old feature at the same time, you wou
 you may create a file for each of them with the same contents and :pypi:`towncrier` will deduplicate them.
 
 Contents of a changelog entry
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+-----------------------------
 
-The content of this file is reStructuredText formatted text that will be used as the content of the changelog entry.
-You do not need to reference the issue or PR numbers here as towncrier will automatically add a reference to all of the
+The content of this file is reStructuredText formatted text that will be used as the content of the changelog entry. You
+do not need to reference the issue or PR numbers here as towncrier will automatically add a reference to all of the
 affected issues when rendering the changelog. You may append ``- by :user:USERNAME``, with a GitHub username in
 backticks, if you wish.
 
-In order to maintain a consistent style in the ``changelog.rst`` file, it is preferred to keep the entries to the
-point, in sentence case, shorter than 120 characters and in an imperative tone -- an entry should complete the sentence
-``This change will …``. In rare cases, where one line is not enough, use a summary line in an imperative tone followed
-by a blank line separating it from a description of the feature/change in one or more paragraphs, each wrapped at 120
+In order to maintain a consistent style in the ``changelog.rst`` file, it is preferred to keep the entries to the point,
+in sentence case, shorter than 120 characters and in an imperative tone -- an entry should complete the sentence ``This
+change will …``. In rare cases, where one line is not enough, use a summary line in an imperative tone followed by a
+blank line separating it from a description of the feature/change in one or more paragraphs, each wrapped at 120
 characters. Remember that a changelog entry is meant for end users and should only contain details relevant to an end
 user.
 
@@ -229,9 +229,8 @@ An example of ``docs/changelog/####.bugfix.rst`` contents is:
     ``surrogateescape`` error handling to convert the unrecognized bytes to escape sequences according to :pep:`383`
     - by :user:`masenf`
 
-
 Becoming a maintainer
-~~~~~~~~~~~~~~~~~~~~~
+=====================
 
 If you want to become an official maintainer, start by helping out. As a first step, we welcome you to triage issues on
 tox's issue tracker. tox maintainers provide triage abilities to contributors once they have been around for some time
@@ -247,35 +246,40 @@ maintainers.
     - GitHub Push Access (provides also CI administration capabilities)
     - PyPI Publishing Access
     - ReadTheDocs Administration capabilities (the root domain `tox.wiki <https://tox.wiki/en/latest/>`_ is currently
-      owned and maintained by the primary maintainer and author ``Bernat Gabor``; bought via
-      `Porkbun <https://porkbun.com/>`_
-      -- reach out to him directly for any changes).
+      owned and maintained by the primary maintainer and author ``Bernat Gabor``; bought via `Porkbun
+      <https://porkbun.com/>`_ -- reach out to him directly for any changes).
 
 Creating a new release
-~~~~~~~~~~~~~~~~~~~~~~
+======================
 
 .. note::
 
     The following process assumes that you call the ``remote`` for the main repository for tox ``upstream``.
 
-    .. code:: shell
+    .. code-block:: shell
 
         git remote add upstream git@github.com:tox-dev/tox.git
 
-In order to create a new release, a maintainer needs to run the following command::
+In order to create a new release, a maintainer needs to run the following command:
+
+::
 
     tox r -e release -- <version>
 
-You need to replace ``<version>`` with an actual version number according to
-`Semantic Versioning <https://semver.org/>`_.
+You need to replace ``<version>`` with an actual version number according to `Semantic Versioning
+<https://semver.org/>`_.
 
 .. _current-maintainers:
 
 Current maintainers
-^^^^^^^^^^^^^^^^^^^
+-------------------
 
--  :user:`Anthony Sottile <asottile>`
--  :user:`Bernát Gábor <gaborbernat>`
--  :user:`Jürgen Gmach <jugmac00>`
--  :user:`Masen Furer <masenf>`
--  :user:`Oliver Bestwalter <obestwalter>`
+- :user:`Bernát Gábor <gaborbernat>`
+- :user:`Jürgen Gmach <jugmac00>`
+
+Previous maintainers
+--------------------
+
+- :user:`Anthony Sottile <asottile>`
+- :user:`Masen Furer <masenf>`
+- :user:`Oliver Bestwalter <obestwalter>`

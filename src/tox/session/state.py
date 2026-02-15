@@ -36,7 +36,7 @@ class State:
 
     @property
     def envs(self) -> EnvSelector:
-        """:return: provides access to the tox environments"""
+        """:returns: provides access to the tox environments"""
         if self._selector is None:
             self._selector = EnvSelector(self)
         return self._selector

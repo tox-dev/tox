@@ -49,12 +49,12 @@ dynamic = [
   "version",
 ]
 dependencies = [
-  "cachetools>=6.2.5",
+  "cachetools>=7.0.1",
   "chardet>=5.2",
   "colorama>=0.4.6",
-  "filelock>=3.20.3",
+  "filelock>=3.24",
   "packaging>=26",
-  "platformdirs>=4.5.1",
+  "platformdirs>=4.9.1",
   "pluggy>=1.6",
   "pyproject-api>=1.10",
   "tomli>=2.4; python_version<'3.11'",
@@ -80,7 +80,7 @@ dev = [
 test = [
   "build[virtualenv]>=1.4",
   "covdefaults>=2.3",
-  "coverage>=7.13.2",
+  "coverage>=7.13.4",
   "detect-test-pollution>=1.2",
   "devpi-process>=1.1",
   "diff-cover>=10.2",
@@ -88,19 +88,19 @@ test = [
   "flaky>=3.8.1",
   "hatch-vcs>=0.5",
   "hatchling>=1.28",
-  "pdm-backend>=2.4.6",
-  "psutil>=7.2.1",
+  "pdm-backend>=2.4.7",
+  "psutil>=7.2.2",
   "pytest>=9.0.2",
   "pytest-cov>=7",
   "pytest-mock>=3.15.1",
   "pytest-xdist>=3.8",
   "re-assert>=1.1",
-  "setuptools>=80.10.2",
+  "setuptools>=82",
   "time-machine>=3.2; implementation_name!='pypy'",
   "wheel>=0.46.3",
 ]
 type = [
-  "ty>=0.0.16",
+  "ty>=0.0.17",
   { include-group = "docs" },
   { include-group = "release" },
   { include-group = "test" },
@@ -113,12 +113,13 @@ docs = [
   "sphinx-copybutton>=0.5.2",
   "sphinx-inline-tabs>=2025.12.21.14",
   "sphinx-issues>=5.0.1",
+  "sphinxcontrib-mermaid>=2",
   "sphinxcontrib-towncrier>=0.2.1a0",
   "towncrier>=25.8",
   "truststore>=0.10.4",
 ]
 type-min = [
-  "ty>=0.0.16",
+  "ty>=0.0.17",
   { include-group = "test" },
 ]
 fix = [
@@ -127,7 +128,7 @@ fix = [
 pkg-meta = [
   "check-wheel-contents>=0.6.3",
   "twine>=6.2",
-  "uv>=0.9.26",
+  "uv>=0.10.2",
 ]
 release = [
   "gitpython>=3.1.46",
@@ -250,7 +251,30 @@ title_format = false
 issue_format = ":issue:`{issue}`"
 template = "docs/changelog/template.jinja2"
 
-# possible types, all default: feature, bugfix, doc, removal, misc
+[[tool.towncrier.type]]
+directory = "feature"
+name = "Features"
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "bugfix"
+name = "Bugfixes"
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "doc"
+name = "Documentation"
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "removal"
+name = "Removals"
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "misc"
+name = "Miscellaneous"
+showcontent = true
 
 [tool.ty]
 environment.python-version = "3.14"

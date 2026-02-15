@@ -18,7 +18,7 @@ class StdinSource(Enum):
 
     @staticmethod
     def user_only() -> StdinSource:
-        """:return: ``USER`` if the standard input is tty type else ``OFF``"""
+        """:returns: ``USER`` if the standard input is tty type else ``OFF``"""
         return StdinSource.USER if sys.stdin.isatty() else StdinSource.OFF
 
 
@@ -34,14 +34,14 @@ class ExecuteRequest:
         run_id: str,
         allow: list[str] | None = None,
     ) -> None:
-        """
-        Create a new execution request.
+        """Create a new execution request.
 
         :param cmd: the command to run
         :param cwd: the current working directory
         :param env: the environment variables
         :param stdin: the type of standard input allowed
         :param run_id: an id to identify this run
+
         """
         if len(cmd) == 0:
             msg = "cannot execute an empty command"
@@ -57,7 +57,7 @@ class ExecuteRequest:
 
     @property
     def shell_cmd(self) -> str:
-        """:return: the command to run as a shell command"""
+        """:returns: the command to run as a shell command"""
         try:
             exe = str(Path(self.cmd[0]).relative_to(self.cwd))
         except ValueError:

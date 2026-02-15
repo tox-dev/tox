@@ -12,12 +12,13 @@ CONVERT = StrConvert()
 
 
 def get_env_var(key: str, of_type: type[Any]) -> tuple[Any, str] | None:
-    """
-    Get the environment variable option.
+    """Get the environment variable option.
 
     :param key: the config key requested
     :param of_type: the type we would like to convert it to
-    :return:
+
+    :returns: the converted value and its origin, or ``None`` if not found
+
     """
     key_upper = key.upper()
     for environ_key in (f"TOX_{key_upper}", f"TOX{key_upper}"):

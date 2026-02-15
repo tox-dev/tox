@@ -37,7 +37,7 @@ class ConfigSet(ABC):
         self.register_config()
 
     def get_configs(self) -> Generator[ConfigDefinition[Any], None, None]:
-        """:return: a mapping of config keys to their definitions"""
+        """:returns: a mapping of config keys to their definitions"""
         for k, v in self._defined.items():
             if k == next(iter(v.keys)):
                 yield v
@@ -80,8 +80,7 @@ class ConfigSet(ABC):
         post_process: Callable[[V], V] | None = None,
         factory: Factory[Any] | None = None,
     ) -> ConfigDynamicDefinition[V]:
-        """
-        Add configuration value.
+        """Add configuration value.
 
         :param keys: the keys under what to register the config (first is primary key)
         :param of_type: the type of the config value
@@ -90,7 +89,9 @@ class ConfigSet(ABC):
         :param post_process: a callback to post-process the configuration value after it has been loaded
         :param factory: factory method used to build contained objects (if ``of_type`` is a container type it should
             perform the contained item creation, otherwise creates objects that match the type)
-        :return: the new dynamic config definition
+
+        :returns: the new dynamic config definition
+
         """
         if self._final:
             msg = "config set has been marked final and cannot be extended"
@@ -101,13 +102,14 @@ class ConfigSet(ABC):
         return cast("ConfigDynamicDefinition[V]", result)
 
     def add_constant(self, keys: str | Sequence[str], desc: str, value: V) -> ConfigConstantDefinition[V]:
-        """
-        Add a constant value.
+        """Add a constant value.
 
         :param keys: the keys under what to register the config (first is primary key)
         :param desc: a help message describing the configuration
         :param value: the config value to use
-        :return: the new constant config value
+
+        :returns: the new constant config value
+
         """
         if self._final:
             msg = "config set has been marked final and cannot be extended"
@@ -138,21 +140,23 @@ class ConfigSet(ABC):
         raise ValueError(msg)
 
     def __getitem__(self, item: str) -> Any:
-        """
-        Get the config value for a given key (will materialize in case of dynamic config).
+        """Get the config value for a given key (will materialize in case of dynamic config).
 
         :param item: the config key
-        :return: the configuration value
+
+        :returns: the configuration value
+
         """
         return self.load(item)
 
     def load(self, item: str, chain: list[str] | None = None) -> Any:
-        """
-        Get the config value for a given key (will materialize in case of dynamic config).
+        """Get the config value for a given key (will materialize in case of dynamic config).
 
         :param item: the config key
         :param chain: a chain of configuration keys already loaded for this load operation (used to detect circles)
-        :return: the configuration value
+
+        :returns: the configuration value
+
         """
         config_definition = self._defined[item]
         return config_definition.__call__(self._conf, self.loaders, ConfigLoadArgs(chain, self.name, self.env_name))  # noqa: PLC2801
@@ -161,20 +165,21 @@ class ConfigSet(ABC):
         return f"{self.__class__.__name__}(loaders={self.loaders!r})"
 
     def __iter__(self) -> Iterator[str]:
-        """:return: iterate through the defined config keys (primary keys used)"""
+        """:returns: iterate through the defined config keys (primary keys used)"""
         return iter(self._keys.keys())
 
     def __contains__(self, item: str) -> bool:
-        """
-        Check if a configuration key is within the config set.
+        """Check if a configuration key is within the config set.
 
         :param item: the configuration value
-        :return: a boolean indicating the truthiness of the statement
+
+        :returns: a boolean indicating the truthiness of the statement
+
         """
         return item in self._alias
 
     def unused(self) -> list[str]:
-        """:return: Return a list of keys present in the config source but not used"""
+        """:returns: Return a list of keys present in the config source but not used"""
         found: set[str] = set()
         # keys within loaders (only if the loader is not a parent too)
         parents = {id(i.parent) for i in self.loaders if i.parent is not None}
@@ -185,11 +190,12 @@ class ConfigSet(ABC):
         return sorted(found)
 
     def primary_key(self, key: str) -> str:
-        """
-        Get the primary key for a config key.
+        """Get the primary key for a config key.
 
         :param key: the config key
-        :return: the key that's considered the primary for the input key
+
+        :returns: the key that's considered the primary for the input key
+
         """
         return self._alias[key]
 

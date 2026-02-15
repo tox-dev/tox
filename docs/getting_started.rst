@@ -1,13 +1,15 @@
 .. _getting_started:
 
-Getting Started
-===============
+#################
+ Getting Started
+#################
 
 This tutorial walks you through creating your first tox project from scratch. By the end, you will have a working tox
 configuration that runs tests and linting across multiple Python versions.
 
-Prerequisites
--------------
+***************
+ Prerequisites
+***************
 
 Before starting, make sure you have:
 
@@ -21,87 +23,90 @@ Verify tox is available:
 
     tox --version
 
-Creating your first configuration
-----------------------------------
+***********************************
+ Creating your first configuration
+***********************************
 
 tox needs a configuration file where you define what tools to run and how to set up environments for them. tox supports
-two configuration formats: TOML and INI. We recommend TOML for new projects as it is more robust and structured.
+two configuration formats: TOML and INI. **TOML is the recommended format for new projects** -- it is more robust, has
+proper type support, and avoids ambiguities inherent in INI parsing. INI remains supported for existing projects.
 
 Create a ``tox.toml`` (or ``tox.ini``) at the root of your project:
 
 .. tab:: TOML
 
-   .. code-block:: toml
+    .. code-block:: toml
 
-        env_list = ["3.13", "3.12", "lint"]
+         env_list = ["3.13", "3.12", "lint"]
 
-        [env_run_base]
-        description = "run the test suite with pytest"
-        deps = [
-            "pytest>=8",
-        ]
-        commands = [["pytest", { replace = "posargs", default = ["tests"], extend = true }]]
+         [env_run_base]
+         description = "run the test suite with pytest"
+         deps = [
+             "pytest>=8",
+         ]
+         commands = [["pytest", { replace = "posargs", default = ["tests"], extend = true }]]
 
-        [env.lint]
-        description = "run linters"
-        skip_install = true
-        deps = ["ruff"]
-        commands = [["ruff", "check", { replace = "posargs", default = ["."], extend = true }]]
+         [env.lint]
+         description = "run linters"
+         skip_install = true
+         deps = ["ruff"]
+         commands = [["ruff", "check", { replace = "posargs", default = ["."], extend = true }]]
 
 .. tab:: INI
 
-   .. code-block:: ini
+    .. code-block:: ini
 
-        [tox]
-        env_list = 3.13, 3.12, lint
+         [tox]
+         env_list = 3.13, 3.12, lint
 
-        [testenv]
-        description = run the test suite with pytest
-        deps =
-            pytest>=8
-        commands =
-            pytest {posargs:tests}
+         [testenv]
+         description = run the test suite with pytest
+         deps =
+             pytest>=8
+         commands =
+             pytest {posargs:tests}
 
-        [testenv:lint]
-        description = run linters
-        skip_install = true
-        deps =
-            ruff
-        commands = ruff check {posargs:.}
+         [testenv:lint]
+         description = run linters
+         skip_install = true
+         deps =
+             ruff
+         commands = ruff check {posargs:.}
 
 .. tip::
 
-   You can also generate a ``tox.ini`` file automatically by running ``tox quickstart`` and answering a few questions.
+    You can also generate a ``tox.ini`` file automatically by running ``tox quickstart`` and answering a few questions.
 
-Understanding the configuration
---------------------------------
+*********************************
+ Understanding the configuration
+*********************************
 
 The configuration has two parts: **core settings** and **environment settings**.
 
 Core settings
-~~~~~~~~~~~~~
+=============
 
 Core settings affect all environments or configure how tox itself behaves. They live at the root level in ``tox.toml``
 (or under the ``[tox]`` section in ``tox.ini``).
 
 .. tab:: TOML
 
-   .. code-block:: toml
+    .. code-block:: toml
 
-      env_list = ["3.13", "3.12", "lint"]
+       env_list = ["3.13", "3.12", "lint"]
 
 .. tab:: INI
 
-   .. code-block:: ini
+    .. code-block:: ini
 
-      [tox]
-      env_list = 3.13, 3.12, lint
+       [tox]
+       env_list = 3.13, 3.12, lint
 
 The :ref:`env_list` setting defines which environments run by default when you invoke ``tox`` without specifying any.
 For the full list of core options, see :ref:`conf-core`.
 
 Environment settings
-~~~~~~~~~~~~~~~~~~~~
+====================
 
 Each tox environment has its own configuration. Settings defined at the base level (``env_run_base`` in TOML,
 ``testenv`` in INI) are inherited by all environments unless overridden. Individual environments are configured under
@@ -109,60 +114,65 @@ Each tox environment has its own configuration. Settings defined at the base lev
 
 .. tab:: TOML
 
-   .. code-block:: toml
+    .. code-block:: toml
 
-        [env_run_base]
-        description = "run the test suite with pytest"
-        deps = ["pytest>=8"]
-        commands = [["pytest", { replace = "posargs", default = ["tests"], extend = true }]]
+         [env_run_base]
+         description = "run the test suite with pytest"
+         deps = ["pytest>=8"]
+         commands = [["pytest", { replace = "posargs", default = ["tests"], extend = true }]]
 
-        [env.lint]
-        description = "run linters"
-        skip_install = true
-        deps = ["ruff"]
-        commands = [["ruff", "check", "."]]
+         [env.lint]
+         description = "run linters"
+         skip_install = true
+         deps = ["ruff"]
+         commands = [["ruff", "check", "."]]
 
 .. tab:: INI
 
-   .. code-block:: ini
+    .. code-block:: ini
 
-        [testenv]
-        description = run the test suite with pytest
-        deps =
-            pytest>=8
-        commands =
-            pytest {posargs:tests}
+         [testenv]
+         description = run the test suite with pytest
+         deps =
+             pytest>=8
+         commands =
+             pytest {posargs:tests}
 
-        [testenv:lint]
-        description = run linters
-        skip_install = true
-        deps =
-            ruff
-        commands = ruff check .
+         [testenv:lint]
+         description = run linters
+         skip_install = true
+         deps =
+             ruff
+         commands = ruff check .
 
 Here the ``lint`` environment overrides the base settings entirely, while ``3.13`` and ``3.12`` inherit from the base.
 
 Environment names and Python versions
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+=====================================
 
 Environment names can consist of alphanumeric characters, dashes, and dots. Names are split on dashes into **factors**
 -- for example ``py311-django42`` splits into factors ``py311`` and ``django42``.
 
 tox recognizes certain naming patterns and automatically sets the Python interpreter:
 
-- ``pyNM`` or ``pyN.M``: CPython N.M (e.g. ``py313`` or ``py3.13``)
-- ``N.M``: CPython N.M (e.g. ``3.13``)
+- ``N.M``: CPython N.M (e.g. ``3.13``) -- **preferred**
+- ``pyNM`` or ``pyN.M``: CPython N.M (e.g. ``py313`` or ``py3.13``) -- legacy, still supported
 - ``pypyNM``: PyPy N.M
 - ``cpythonNM``: CPython N.M
 - ``graalpyNM``: GraalPy N.M
 
-If the name doesn't match any pattern, tox uses the same Python as the one tox is installed into (this is the case
-for ``lint`` in our example).
+Prefer the ``N.M`` form (e.g. ``3.14``) over ``pyNMM`` (e.g. ``py314``). The dotted form is unambiguous, reads more
+naturally in environment lists and CI output, and avoids confusion for Python versions >= 3.10 where the concatenated
+digits become three characters.
+
+If the name doesn't match any pattern, tox uses the same Python as the one tox is installed into (this is the case for
+``lint`` in our example).
 
 For the full list of environment options, see :ref:`conf-testenv`.
 
-Running your environments
--------------------------
+***************************
+ Running your environments
+***************************
 
 Run all default environments (those listed in :ref:`env_list`):
 
@@ -195,8 +205,9 @@ Pass extra arguments to the underlying tool using ``--``:
 The ``{ replace = "posargs" }`` in TOML (or ``{posargs}`` in INI) is a placeholder that gets replaced by whatever you
 pass after ``--``.
 
-Understanding the output
-------------------------
+**************************
+ Understanding the output
+**************************
 
 On the first run, tox creates virtual environments and installs dependencies. Subsequent runs reuse existing
 environments unless dependencies change:
@@ -224,8 +235,9 @@ recreation with the ``-r`` flag:
 
     tox run -e 3.13 -r
 
-Listing available environments
-------------------------------
+********************************
+ Listing available environments
+********************************
 
 See all configured environments and their descriptions:
 
@@ -237,8 +249,9 @@ See all configured environments and their descriptions:
     3.12 -> run the test suite with pytest
     lint -> run linters
 
-Inspecting configuration
--------------------------
+**************************
+ Inspecting configuration
+**************************
 
 View the resolved configuration for an environment:
 
@@ -248,8 +261,9 @@ View the resolved configuration for an environment:
 
 This is useful for debugging configuration issues.
 
-Next steps
-----------
+************
+ Next steps
+************
 
 Now that you have a working tox setup, explore these topics:
 

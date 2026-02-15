@@ -1,1 +1,2 @@
-Add ``--fail-fast`` CLI flag and ``fail_fast`` per-environment config option to stop executing remaining environments when the first failure occurs - by :user:`gaborbernat`.
+Add ``--fail-fast`` CLI flag and ``fail_fast`` per-environment config option to stop executing remaining environments
+when the first failure occurs - by :user:`gaborbernat`.

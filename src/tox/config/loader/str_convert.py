@@ -55,11 +55,11 @@ class StrConvert(Convert[str]):
 
     @staticmethod
     def _win32_process_path_backslash(value: str, escape: str, special_chars: str) -> str:
-        """
-        Escape backslash in value that is not followed by a special character.
+        """Escape backslash in value that is not followed by a special character.
 
-        This allows windows paths to be written without double backslash, while
-        retaining the POSIX backslash escape semantics for quotes and escapes.
+        This allows windows paths to be written without double backslash, while retaining the POSIX backslash escape
+        semantics for quotes and escapes.
+
         """
         result = []
         for ix, char in enumerate(value):
@@ -75,10 +75,10 @@ class StrConvert(Convert[str]):
 
     @staticmethod
     def to_command(value: str) -> Command | None:
-        """
-        At this point, ``value`` has already been substituted out, and all punctuation / escapes are final.
+        """At this point, ``value`` has already been substituted out, and all punctuation / escapes are final.
 
         Value will typically be stripped of whitespace when coming from an ini file.
+
         """
         value = value.replace(r"\#", "#")
         is_win = sys.platform == "win32"

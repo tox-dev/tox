@@ -5,3 +5,13 @@ blockquote {
   margin-right: 0;
   padding: 0;
 }
+
+body[data-theme="dark"] .mermaid {
+  filter: invert(0.88) hue-rotate(180deg);
+}
+
+@media (prefers-color-scheme: dark) {
+  body:not([data-theme="light"]) .mermaid {
+    filter: invert(0.88) hue-rotate(180deg);
+  }
+}

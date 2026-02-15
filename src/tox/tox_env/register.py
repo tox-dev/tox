@@ -25,18 +25,18 @@ class ToxEnvRegister:
         manager.tox_register_tox_env(register=self)
 
     def add_run_env(self, of_type: type[RunToxEnv]) -> None:
-        """
-        Define a new run tox environment type.
+        """Define a new run tox environment type.
 
         :param of_type: the new run environment type
+
         """
         self._run_envs[of_type.id()] = of_type
 
     def add_package_env(self, of_type: type[PackageToxEnv]) -> None:
-        """
-        Define a new packaging tox environment type.
+        """Define a new packaging tox environment type.
 
         :param of_type: the new packaging environment type
+
         """
         self._package_envs[of_type.id()] = of_type
 
@@ -54,10 +54,10 @@ class ToxEnvRegister:
 
     @default_env_runner.setter
     def default_env_runner(self, value: str) -> None:
-        """
-        Change the default run environment type.
+        """Change the default run environment type.
 
         :param value: the new run environment type by name
+
         """
         if value not in self._run_envs:
             msg = "run env must be registered before setting it as default"
@@ -65,20 +65,22 @@ class ToxEnvRegister:
         self._default_run_env = value
 
     def runner(self, name: str) -> type[RunToxEnv]:
-        """
-        Lookup a run tox environment type by name.
+        """Lookup a run tox environment type by name.
 
         :param name: the name of the runner type
-        :return: the type of the runner type
+
+        :returns: the type of the runner type
+
         """
         return self._run_envs[name]
 
     def package(self, name: str) -> type[PackageToxEnv]:
-        """
-        Lookup a packaging tox environment type by name.
+        """Lookup a packaging tox environment type by name.
 
         :param name: the name of the packaging type
-        :return: the type of the packaging type
+
+        :returns: the type of the packaging type
+
         """
         return self._package_envs[name]
 

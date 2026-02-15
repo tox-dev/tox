@@ -238,11 +238,12 @@ class RequirementsFile:
             yield ParsedLine(url, line_number, args_str, opts, constraint)
 
     def _get_file_content(self, url: str) -> str:
-        """
-        Gets the content of a file; it may be a filename, file: URL, or http: URL.  Returns (location, content).
-        Content is unicode. Respects # -*- coding: declarations on the retrieved files.
+        """Get the content of a file; it may be a filename, file: URL, or http: URL.
 
-        :param url:         File path or url.
+        Content is unicode. Respects ``# -*- coding:`` declarations on the retrieved files.
+
+        :param url: file path or url
+
         """
         scheme = get_url_scheme(url)
         if scheme in {"http", "https"}:
@@ -267,10 +268,10 @@ class RequirementsFile:
         return raw.decode(codec)
 
     def _pre_process(self, content: str) -> ReqFileLines:
-        """
-        Split, filter, and join lines, and return a line iterator.
+        """Split, filter, and join lines, and return a line iterator.
 
         :param content: the content of the requirements file
+
         """
         lines_enum: ReqFileLines = enumerate(content.splitlines(), start=1)
         lines_enum = self._join_lines(lines_enum)
@@ -363,9 +364,11 @@ class RequirementsFile:
 
     @staticmethod
     def _break_args_options(line: str) -> tuple[str, str]:
-        """
-        Break up the line into an args and options string.  We only want to shlex (and then optparse) the options, not
-        the args. args can contain markers which are corrupted by shlex.
+        """Break up the line into an args and options string.
+
+        We only want to shlex (and then optparse) the options, not the args. args can contain markers which are
+        corrupted by shlex.
+
         """
         tokens = line.split(" ")
         args = []
@@ -379,9 +382,10 @@ class RequirementsFile:
 
     @staticmethod
     def _join_lines(lines_enum: ReqFileLines) -> ReqFileLines:
-        """
-        Joins a line ending in '\' with the previous line (except when following comments). The joined line takes on the
-        index of the first line.
+        """Join a line ending in ``\\`` with the previous line (except when following comments).
+
+        The joined line takes on the index of the first line.
+
         """
         primary_line_number = None
         new_line: list[str] = []
@@ -415,8 +419,7 @@ class RequirementsFile:
 
     @staticmethod
     def _expand_env_variables(lines_enum: ReqFileLines) -> ReqFileLines:
-        """
-        Replace all environment variables that can be retrieved via `os.getenv`.
+        """Replace all environment variables that can be retrieved via `os.getenv`.
 
         The only allowed format for environment variables defined in the requirement file is `${MY_VARIABLE_1}` to
         ensure two things:
@@ -427,6 +430,7 @@ class RequirementsFile:
         These points are the result of a discussion on the `github pull request #3514
         <https://github.com/pypa/pip/pull/3514>`_. Valid characters in variable names follow the `POSIX standard
         <http://pubs.opengroup.org/onlinepubs/9699919799/>`_ and are limited to uppercase letter, digits and the `_`.
+
         """
         for line_number, line in lines_enum:
             expanded_line = line

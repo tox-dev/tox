@@ -10,11 +10,12 @@ from tox.tox_env.python.pip.req_file import PythonDeps
 
 
 def stringify(value: Any) -> tuple[str, bool]:  # noqa: PLR0911
-    """
-    Transform a value into a string representation.
+    """Transform a value into a string representation.
 
     :param value: the value in question
-    :return: a tuple, first the value as str, second a flag if the value if a multi-line one
+
+    :returns: a tuple, first the value as str, second a flag if the value if a multi-line one
+
     """
     if isinstance(value, str):
         return value, False

@@ -62,11 +62,12 @@ def dependencies_with_extras_from_markers(
 
 
 def extract_extra_markers(deps: list[Requirement]) -> list[tuple[Requirement, set[str | None]]]:
-    """
-    Extract extra markers from dependencies.
+    """Extract extra markers from dependencies.
 
     :param deps: the dependencies
-    :return: a list of requirement, extras set
+
+    :returns: a list of requirement, extras set
+
     """
     return [_extract_extra_markers(d) for d in deps]
 
