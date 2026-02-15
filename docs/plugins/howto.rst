@@ -200,6 +200,119 @@ In ``src/tox_myplugin/__init__.py``, define your hooks exactly as in ``toxfile.p
 
 After ``pip install tox-myplugin``, tox discovers the plugin automatically via the entry point.
 
+*********
+ Logging
+*********
+
+tox uses Python's standard :mod:`logging` module. Plugin authors can use it to emit messages that integrate with tox's
+output. The root logger is configured by tox at startup, so any ``logging`` call from plugin code is automatically
+handled.
+
+Getting a logger
+================
+
+Use :func:`logging.getLogger` with your plugin's package name:
+
+.. code-block:: python
+
+    import logging
+
+    logger = logging.getLogger(__name__)
+
+You can also call module-level functions like ``logging.info(...)`` directly, but using a named logger makes it easier
+for users to filter output.
+
+Verbosity levels
+================
+
+tox maps its ``-v`` / ``-q`` flags to standard logging levels:
+
+.. list-table::
+    :header-rows: 1
+    :widths: 15 25 60
+
+    - - Flags
+      - Logging level
+      - Notes
+    - - ``-q`` (quiet)
+      - ``CRITICAL``
+      - Almost nothing is shown.
+    - - *(default)*
+      - ``ERROR``
+      - Only errors are shown.
+    - - ``-v``
+      - ``WARNING``
+      - Warnings and above are shown. This is the first level that appears in normal output.
+    - - ``-vv``
+      - ``INFO``
+      - Informational messages appear.
+    - - ``-vvv``
+      - ``DEBUG``
+      - Debug messages appear, along with timestamps and source file locations.
+
+.. tip::
+
+    For messages that should be visible during normal usage (e.g. ``tox -v``), use ``logging.warning()``. Use
+    ``logging.info()`` for detail that is only useful when diagnosing issues.
+
+Coloring
+========
+
+tox applies color automatically based on the log level (when color output is enabled):
+
+- **ERROR** and above: red
+- **WARNING**: cyan
+- **INFO** and below: white
+
+There is a special convention for the ``WARNING`` level: if the message format string is ``"%s%s> %s"`` the second
+argument is rendered in a dimmed style and the ``>`` acts as a separator. This is the pattern tox itself uses to show
+the tox-environment prefix:
+
+.. code-block:: python
+
+    # The second argument (plugin name) appears dimmed, followed by "> message"
+    logging.warning("%s%s> %s", "", "my-plugin", "This is a warning message")
+
+For other levels (including ``ERROR``), the entire line is colored, so inline formatting is not possible.
+
+.. note::
+
+    Color is controlled by the ``--colored`` flag and the ``NO_COLOR`` / ``FORCE_COLOR`` environment variables. Plugin
+    code does not need to handle color escapes manually.
+
+Debug output
+============
+
+At ``-vvv`` (``DEBUG`` level), tox adds extra metadata to every log line:
+
+- elapsed time in milliseconds
+- one-letter level indicator (``D``, ``I``, ``W``, ``E``, ``C``)
+- source file and line number
+
+This is useful for profiling and tracing plugin behavior.
+
+Complete example
+================
+
+.. code-block:: python
+
+    import logging
+
+    from tox.plugin import impl
+    from tox.tox_env.api import ToxEnv
+
+    logger = logging.getLogger(__name__)
+
+
+    @impl
+    def tox_before_run_commands(tox_env: ToxEnv) -> None:
+        # Visible at -vv or higher
+        logger.info("preparing environment %s", tox_env.name)
+        # Visible at -v or higher, with dimmed plugin name prefix
+        logger.warning(
+            "%s%s> %s", "", __package__, f"running pre-checks for {tox_env.name}"
+        )
+
 ******************
  Extension points
 ******************
