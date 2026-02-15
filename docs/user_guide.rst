@@ -535,6 +535,53 @@ Example progress bar, showing a rotating spinner, the number of environments run
 
     ⠹ [2] py310 | py39
 
+Fail-fast mode
+--------------
+
+When running multiple environments, tox normally runs all of them even if an early environment fails. The ``--fail-fast``
+flag stops execution after the first environment failure, saving time in CI pipelines and development workflows.
+
+.. tab:: TOML
+
+   .. code-block:: bash
+
+      # Stop after first failure via CLI flag
+      tox run -e py312,py311,py310 --fail-fast
+
+      # Or configure per-environment
+      tox run -e py312,py311,py310
+
+   .. code-block:: toml
+
+      [env.critical]
+      fail_fast = true
+      commands = [["pytest", "tests/critical"]]
+
+.. tab:: INI
+
+   .. code-block:: bash
+
+      # Stop after first failure via CLI flag
+      tox run -e py312,py311,py310 --fail-fast
+
+      # Or configure per-environment
+      tox run -e py312,py311,py310
+
+   .. code-block:: ini
+
+      [testenv:critical]
+      fail_fast = true
+      commands = pytest tests/critical
+
+The fail-fast behavior:
+
+- Works in both sequential and parallel execution modes.
+- In parallel mode, environments already running when a failure occurs will continue to completion. Only environments not yet queued will be skipped.
+- Respects :ref:`ignore_outcome` - environments with ``ignore_outcome = true`` will not trigger fail-fast even if they fail.
+- Respects environment dependencies defined via :ref:`depends` - dependent environments will not run if a dependency fails with fail-fast enabled.
+- Environments not yet started are skipped with exit code -2 and marked as ``SKIP`` in the output.
+- The overall tox exit code will be the exit code of the first failed environment.
+
 Packaging
 ---------
 
