@@ -1,0 +1,1 @@
+Add shell completion support for bash, zsh, and fish via :pypi:`argcomplete` - by :user:`gaborbernat`

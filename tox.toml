@@ -6,6 +6,7 @@ skip_missing_interpreters = true
 description = "run the tests with pytest under {env_name}"
 package = "wheel"
 wheel_build_env = ".pkg"
+extras = [ "completion" ]
 dependency_groups = [ "test" ]
 pass_env = [ "PYTEST_*", "SSL_CERT_FILE" ]
 set_env.COVERAGE_FILE = { replace = "env", name = "COVERAGE_FILE", default = "{work_dir}{/}.coverage.{env_name}" }
@@ -132,6 +133,7 @@ commands = [ [ "python", "{tox_root}/tasks/release.py", "--version", "{posargs}"
 [env.dev]
 description = "dev environment with all deps at {envdir}"
 package = "editable"
+extras = [ "completion" ]
 dependency_groups = [ "dev" ]
 commands = [ [ "python", "-m", "pip", "list", "--format=columns" ], [ "python", "-c", 'print(r"{env_python}")' ] ]
 uv_seed = true
