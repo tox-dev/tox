@@ -1,0 +1,1 @@
+Fix ``ty`` type check error by explicitly converting virtualenv's ``VersionInfo`` to tox's ``VersionInfo`` in ``VirtualEnv._get_python()`` - by :user:`rahuldevikar`.

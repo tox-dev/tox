@@ -26,6 +26,7 @@ if TYPE_CHECKING:
 
     from tox.execute.api import Execute
     from tox.tox_env.api import ToxEnvCreateArgs
+    from tox.tox_env.python.api import VersionInfo
 
 
 class VirtualEnv(Python, ABC):
@@ -142,7 +143,7 @@ class VirtualEnv(Python, ABC):
             return None
         return PythonInfo(
             implementation=interpreter.implementation,
-            version_info=interpreter.version_info,
+            version_info=cast("VersionInfo", interpreter.version_info),
             version=interpreter.version,
             is_64=(interpreter.architecture == 64),  # noqa: PLR2004
             platform=interpreter.platform,
