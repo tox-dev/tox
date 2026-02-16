@@ -148,7 +148,7 @@ def demo_pkg_inline_wheel(tmp_path_factory: pytest.TempPathFactory, demo_pkg_inl
 
 
 def build_pkg(dist_dir: Path, of: Path, distributions: Sequence[DistributionType], isolation: bool = True) -> Path:
-    from build.__main__ import build_package  # noqa: PLC0415,PLC2701
+    from build.__main__ import build_package  # noqa: PLC0415
 
     build_package(str(of), str(dist_dir), distributions=distributions, isolation=isolation)
     return next(dist_dir.iterdir())

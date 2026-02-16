@@ -64,9 +64,9 @@ dependencies = [
 optional-dependencies.completion = [
   "argcomplete>=3.6.3",
 ]
+urls."Release Notes" = "https://tox.wiki/en/latest/changelog.html"
 urls.Documentation = "https://tox.wiki"
 urls.Homepage = "http://tox.readthedocs.org"
-urls."Release Notes" = "https://tox.wiki/en/latest/changelog.html"
 urls.Source = "https://github.com/tox-dev/tox"
 urls.Tracker = "https://github.com/tox-dev/tox/issues"
 scripts.tox = "tox.run:run"
@@ -118,10 +118,6 @@ docs = [
   "towncrier>=25.8",
   "truststore>=0.10.4",
 ]
-type-min = [
-  "ty>=0.0.17",
-  { include-group = "test" },
-]
 fix = [
   "pre-commit-uv>=4.2",
 ]
@@ -134,6 +130,10 @@ release = [
   "gitpython>=3.1.46",
   "packaging>=26",
   "towncrier>=25.8",
+]
+type-min = [
+  "ty>=0.0.17",
+  { include-group = "test" },
 ]
 
 [tool.hatch]
@@ -157,18 +157,17 @@ lint.select = [
   "ALL",
 ]
 lint.ignore = [
-  "ANN401", # Dynamically typed expressions (typing.Any) are disallowed in `arg`"
-  "COM812", # conflicts with formatter
-  "CPY",    # No copyright header
-  "D",      # ignore documentation for now
-  "D203",   # `one-blank-line-before-class` (D203) and `no-blank-line-before-class` (D211) are incompatible
-  "D212",   # `multi-line-summary-first-line` (D212) and `multi-line-summary-second-line` (D213) are incompatible
-  "DOC201", # no restructuredtext support yet
-  "DOC402", # no restructuredtext support yet
-  "DOC501", # broken with sphinx docs
-  "INP001", # no implicit namespaces here
-  "ISC001", # conflicts with formatter
-
+  "ANN401",  # Dynamically typed expressions (typing.Any) are disallowed in `arg`"
+  "COM812",  # conflicts with formatter
+  "CPY",     # No copyright header
+  "D",       # ignore documentation for now
+  "D203",    # `one-blank-line-before-class` (D203) and `no-blank-line-before-class` (D211) are incompatible
+  "D212",    # `multi-line-summary-first-line` (D212) and `multi-line-summary-second-line` (D213) are incompatible
+  "DOC201",  # no restructuredtext support yet
+  "DOC402",  # no restructuredtext support yet
+  "DOC501",  # broken with sphinx docs
+  "INP001",  # no implicit namespaces here
+  "ISC001",  # conflicts with formatter
   "LOG015",  # we require use of the root logger for reporting
   "PLR0914", ## Too many local variables
   "PLR0917", ## Too many positional arguments
@@ -203,27 +202,29 @@ count = true
 [tool.pyproject-fmt]
 max_supported_python = "3.14"
 
-[tool.pytest.ini_options]
-testpaths = [
+[tool.pytest]
+ini_options.testpaths = [
   "tests",
 ]
-addopts = "--no-success-flaky-report"
-verbosity_assertions = 2
-markers = [
+ini_options.addopts = "--no-success-flaky-report"
+ini_options.verbosity_assertions = 2
+ini_options.markers = [
   "integration: marks tests as integration tests requiring external services (deselect with '-m \"not integration\"')",
   "slow: marks tests as slow (>1s) (deselect with '-m \"not slow\"')",
 ]
-filterwarnings = [
+ini_options.filterwarnings = [
   "error",
   "ignore:unclosed database in <sqlite3.Connection object at:ResourceWarning",
   "ignore:unclosed file <_io.TextIOWrapper:ResourceWarning",
   "ignore:subprocess .* is still running:ResourceWarning",
 ]
-tmp_path_retention_policy = "failed"
+ini_options.tmp_path_retention_policy = "failed"
 
 [tool.coverage]
-html.show_contexts = true
-html.skip_covered = false
+run.parallel = true
+run.plugins = [
+  "covdefaults",
+]
 paths.source = [
   "src",
   ".tox*/*/lib/python*/site-packages",
@@ -238,10 +239,8 @@ report.omit = [
   "tests/execute/local_subprocess/bad_process.py",
   "tests/type_check/*",
 ]
-run.parallel = true
-run.plugins = [
-  "covdefaults",
-]
+html.show_contexts = true
+html.skip_covered = false
 
 [tool.towncrier]
 name = "tox"
@@ -250,32 +249,14 @@ directory = "docs/changelog"
 title_format = false
 issue_format = ":issue:`{issue}`"
 template = "docs/changelog/template.jinja2"
-
-[[tool.towncrier.type]]
-directory = "feature"
-name = "Features"
-showcontent = true
-
-[[tool.towncrier.type]]
-directory = "bugfix"
-name = "Bugfixes"
-showcontent = true
-
-[[tool.towncrier.type]]
-directory = "doc"
-name = "Documentation"
-showcontent = true
-
-[[tool.towncrier.type]]
-directory = "removal"
-name = "Removals"
-showcontent = true
-
-[[tool.towncrier.type]]
-directory = "misc"
-name = "Miscellaneous"
-showcontent = true
+type = [
+  { directory = "feature", name = "Features", showcontent = true },
+  { directory = "bugfix", name = "Bugfixes", showcontent = true },
+  { directory = "doc", name = "Documentation", showcontent = true },
+  { directory = "removal", name = "Removals", showcontent = true },
+  { directory = "misc", name = "Miscellaneous", showcontent = true },
+]
 
 [tool.ty]
 environment.python-version = "3.14"
-src.exclude = [  ]
+src.exclude = []
