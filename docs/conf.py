@@ -30,8 +30,10 @@ source_suffix = {".rst": "restructuredtext"}
 
 html_theme = "furo"
 html_title, html_last_updated_fmt = "tox", "%Y-%m-%dT%H:%M:%S"
+html_show_sourcelink = False
 pygments_style, pygments_dark_style = "sphinx", "monokai"
 html_static_path, html_css_files = ["_static"], ["custom.css"]
+html_js_files = ["mermaid-reset.js"]
 html_logo, html_favicon = "_static/img/tox.svg", "_static/img/toxfavi.ico"
 
 extensions = [
@@ -47,6 +49,8 @@ extensions = [
     "sphinxcontrib.mermaid",
 ]
 mermaid_output_format = "raw"
+mermaid_d3_zoom = True
+mermaid_height = "auto"
 
 exclude_patterns = ["_build", "changelog/*", "_draft.rst"]
 autoclass_content, autodoc_member_order, autodoc_typehints = "class", "bysource", "none"

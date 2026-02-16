@@ -4,7 +4,7 @@
 
 .. toctree::
 
-    architecture
+    onboarding
 
 ************
  Key points
