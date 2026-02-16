@@ -2,6 +2,10 @@
  Development
 #############
 
+.. toctree::
+
+    onboarding
+
 ************
  Key points
 ************
