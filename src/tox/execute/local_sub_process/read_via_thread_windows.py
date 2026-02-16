@@ -1,4 +1,4 @@
-"""On Windows we use overlapped I/O with periodic polling for efficient real-time stream reading."""
+"""On Windows we use overlapped I/O for efficient real-time stream reading."""
 
 from __future__ import annotations  # pragma: win32 cover
 
@@ -11,8 +11,8 @@ from .read_via_thread import ReadViaThread  # pragma: win32 cover
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-TIMEOUT_FOR_INTERRUPT = 0.05  # pragma: win32 cover
 READ_CHUNK_SIZE = 32768  # pragma: win32 cover
+POLL_INTERVAL = 0.05  # pragma: win32 cover
 ERROR_IO_INCOMPLETE = 996  # pragma: win32 cover
 
 
@@ -29,16 +29,20 @@ class ReadViaThreadWindows(ReadViaThread):  # pragma: win32 cover
                 except OSError:
                     break
 
-                while not self.stop.is_set():
+                start_time = time.monotonic()
+                max_wait = 1.0
+                while True:
                     try:
                         data = ov.getresult(False)  # noqa: FBT003
                         break
                     except OSError as exception:
                         if getattr(exception, "winerror", None) != ERROR_IO_INCOMPLETE:
                             return
-                        time.sleep(TIMEOUT_FOR_INTERRUPT)
-                else:
-                    return
+                        if self.stop.is_set() and (time.monotonic() - start_time) > 0.2:
+                            return
+                        if (time.monotonic() - start_time) > max_wait:
+                            return
+                        time.sleep(POLL_INTERVAL)
 
                 if not data:
                     break
@@ -55,14 +59,10 @@ class ReadViaThreadWindows(ReadViaThread):  # pragma: win32 cover
                 except OSError:
                     break
 
-                while True:
-                    try:
-                        data = ov.getresult(False)  # noqa: FBT003
-                        break
-                    except OSError as exception:
-                        if getattr(exception, "winerror", None) != ERROR_IO_INCOMPLETE:
-                            return
-                        time.sleep(TIMEOUT_FOR_INTERRUPT)
+                try:
+                    data = ov.getresult(True)  # noqa: FBT003
+                except OSError:
+                    break
 
                 if not data:
                     break
