@@ -227,10 +227,6 @@ class LocalSubProcessExecuteInstance(ExecuteInstance):
         self._read_stderr.__enter__()
         self._read_stdout = ReadViaThread(stdout.send(process), self.out_handler, name=f"out-{pid}", drain=drain)
         self._read_stdout.__enter__()
-
-        if sys.platform == "win32":  # explicit check for mypy:  # pragma: win32 cover
-            process.stderr.read = self._read_stderr._drain_stream  # noqa: SLF001  # ty: ignore[invalid-assignment] # monkey-patching drain onto Popen stream
-            process.stdout.read = self._read_stdout._drain_stream  # noqa: SLF001  # ty: ignore[invalid-assignment] # monkey-patching drain onto Popen stream
         return status
 
     def __exit__(
