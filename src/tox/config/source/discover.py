@@ -43,11 +43,16 @@ def discover_source(config_file: Path | None, root_dir: Path | None) -> Source:
         src = None
         for src_type in SOURCE_TYPES:
             candidate: Path = config_file / src_type.FILENAME
+            if not candidate.exists():
+                continue
             try:
                 src = src_type(candidate)
                 break
-            except ValueError:
+            except MissingRequiredConfigKeyError:
                 continue
+            except ValueError as exc:
+                msg = f"{src_type.__name__} failed loading {candidate.resolve()} due to {exc}"
+                raise HandledError(msg) from exc
         if src is None:
             msg = f"could not find any config file in {config_file}"
             raise HandledError(msg)
