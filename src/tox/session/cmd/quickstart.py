@@ -17,11 +17,14 @@ if TYPE_CHECKING:
 
 @impl
 def tox_add_option(parser: ToxParser) -> None:
+    from tox.config.cli.parser import CORE  # noqa: PLC0415
+
     our = parser.add_command(
         "quickstart",
         ["q"],
         "Command line script to quickly create a tox config file for a Python project",
         quickstart,
+        inherit=frozenset({CORE}),
     )
     our.add_argument(
         "quickstart_root",

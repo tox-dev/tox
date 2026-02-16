@@ -119,9 +119,7 @@ def test_parallel_run_live_out(tox_project: ToxProjectCreator) -> None:
 def test_parallel_show_output_with_pkg(tox_project: ToxProjectCreator, demo_pkg_inline: Path) -> None:
     ini = "[testenv]\nparallel_show_output=True\ncommands=python -c 'print(\"r {env_name}\")'"
     project = tox_project({"tox.ini": ini})
-
-    result = project.run("p", "--root", str(demo_pkg_inline))
-
+    result = project.run("p", "--root", str(demo_pkg_inline), "--workdir", str(project.path / ".tox"))
     result.assert_success()
     assert "r py" in result.out
 

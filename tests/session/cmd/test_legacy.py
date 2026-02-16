@@ -143,7 +143,18 @@ def test_legacy_help(tox_project: ToxProjectCreator) -> None:
 
 def test_legacy_cli_flags(tox_project: ToxProjectCreator, mocker: MockerFixture) -> None:
     session = mocker.MagicMock()
-    session.creator.interpreter.system_executable = "I"
+    interpreter = session.creator.interpreter
+    interpreter.system_executable = "I"
+    interpreter.implementation = "CPython"
+    interpreter.version = "3.14.0"
+    interpreter.architecture = 64
+    interpreter.platform = "darwin"
+    interpreter.free_threaded = False
+    interpreter.version_info.major = 3
+    interpreter.version_info.minor = 14
+    interpreter.version_info.micro = 0
+    interpreter.version_info.releaselevel = "final"
+    interpreter.version_info.serial = 0
     virtualenv_session = mocker.patch("tox.tox_env.python.virtual_env.api.session_via_cli", return_value=session)
     ini = "[testenv]\ndeps = p>6\n c\n -rr.txt\npackage=skip\nset_env = PIP_PRE = 0"
     proj = tox_project({"tox.ini": ini})

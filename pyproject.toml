@@ -93,6 +93,7 @@ test = [
   "pytest>=9.0.2",
   "pytest-cov>=7",
   "pytest-mock>=3.15.1",
+  "pytest-timeout>=2.4",
   "pytest-xdist>=3.8",
   "re-assert>=1.1",
   "setuptools>=80.10.2",
@@ -146,6 +147,7 @@ build.targets.sdist.include = [
   "/tests",
   "/tox.toml",
 ]
+build.targets.wheel.shared-data = { "docs/man" = "share/man/man1" }
 version.source = "vcs"
 
 [tool.ruff]
@@ -220,6 +222,7 @@ filterwarnings = [
   "ignore:subprocess .* is still running:ResourceWarning",
 ]
 tmp_path_retention_policy = "failed"
+timeout = 30
 
 [tool.coverage]
 html.show_contexts = true
