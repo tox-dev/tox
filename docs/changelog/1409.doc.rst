@@ -1,0 +1,1 @@
+Add Unix man page generation and installation support using sphinx-argparse-cli - by :user:`gaborbernat`.

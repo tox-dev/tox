@@ -484,6 +484,8 @@ class Pep517VirtualEnvFrontend(Frontend):
             super()._unexpected_response(cmd, got, expected_type, out, err)
         except BackendFailed as exception:
             raise exception if isinstance(exception, ToxBackendFailed) else ToxBackendFailed(exception) from exception
+        msg = "super()._unexpected_response did not raise"
+        raise RuntimeError(msg)
 
     @property
     def backend_executor(self) -> LocalSubProcessPep517Executor:

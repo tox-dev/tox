@@ -404,7 +404,7 @@ def test_shebang_failed_to_parse(tmp_path: Path) -> None:
 
 
 def _create_shebang_test(tmp_path: Path, env: dict[str, str]) -> tuple[str, Path, LocalSubProcessExecuteInstance]:
-    exe = shutil.which("python")
+    exe = shutil.which("python3") or shutil.which("python")
     assert exe is not None
     script = tmp_path / f"s{'.EXE' if sys.platform == 'win32' else ''}"
     script.write_text(f"#!{exe} -s")

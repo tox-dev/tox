@@ -10,6 +10,9 @@ on:
   schedule:
     - cron: "0 8 * * 1"
 
+permissions:
+  contents: read
+
 env:
   FORCE_COLOR: 1
 
