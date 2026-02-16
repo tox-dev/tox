@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, cast
 
+from tox.config.cli.parser import CORE
 from tox.plugin import impl
 from tox.session.cmd.run.common import env_run_create_flags, run_order
 
@@ -18,6 +19,7 @@ def tox_add_option(parser: ToxParser) -> None:
         ["de"],
         "visualize tox environment dependencies",
         depends,
+        inherit=frozenset({CORE}),
     )
     env_run_create_flags(our, mode="depends")
 

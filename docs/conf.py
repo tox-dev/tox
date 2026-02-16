@@ -86,6 +86,10 @@ extlinks_detect_hardcoded_links = True
 
 issues_github_path = f"{company}/{name}"  # `sphinx-issues` ext
 
+# Man page configuration
+man_pages = [("man/tox.1", "tox", "virtualenv-based automation of test activities", ["tox-dev"], 1)]
+man_show_urls = True
+
 
 def process_signature(  # noqa: PLR0913
     app: Sphinx,  # noqa: ARG001

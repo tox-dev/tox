@@ -80,3 +80,84 @@ tox works with the following Python interpreter implementations:
 
 This means tox works on the latest patch version of each of these minor versions. Previous patch versions are supported
 on a best effort approach.
+
+******************
+ Man Page Support
+******************
+
+tox includes a Unix man page that is automatically built when building documentation. The man page provides
+comprehensive reference documentation for all tox commands and options.
+
+Automatic Installation
+======================
+
+The man page is pre-built and included in tox wheels. When installing tox:
+
+- **System-wide** (``sudo pip install tox``): Installs to ``/usr/share/man/man1/tox.1`` automatically
+- **User install** (``pip install --user tox``): Installs to ``~/.local/share/man/man1/tox.1`` automatically
+- **Package managers** (apt, brew, dnf): Install to the appropriate system location
+
+For user installs, ensure ``~/.local/share/man`` is in your ``MANPATH``:
+
+.. code-block:: bash
+
+    # Add to ~/.bashrc or ~/.zshrc
+    export MANPATH="$HOME/.local/share/man:$MANPATH"
+
+After updating your profile, restart your shell or run ``source ~/.bashrc``.
+
+Virtualenv Installations
+========================
+
+When tox is installed in a virtualenv (via pipx, uv tool, or venv), the man page is installed but not on the system
+``MANPATH``. Use the ``tox man`` command to set it up automatically:
+
+.. code-block:: bash
+
+    tox man
+
+This command will:
+
+- Check if the man page is accessible
+- Create a symlink from the virtualenv to ``~/.local/share/man/man1/``
+- Detect your shell and provide instructions for adding ``MANPATH`` to your profile
+
+Alternatively, you can set it up manually:
+
+.. code-block:: bash
+
+    # Find where tox is installed
+    TOX_PREFIX=$(python -c "import sys; print(sys.prefix)")
+
+    # Create symlink to user man directory
+    mkdir -p ~/.local/share/man/man1
+    ln -sf "$TOX_PREFIX/share/man/man1/tox.1" ~/.local/share/man/man1/tox.1
+
+    # Ensure MANPATH includes user directory (if not already set)
+    export MANPATH="$HOME/.local/share/man:$MANPATH"
+
+Building from Source
+====================
+
+Package maintainers building from source can generate the man page using Sphinx:
+
+.. code-block:: bash
+
+    # Build documentation (includes man page)
+    tox run -e docs
+
+    # Man page is generated at .tox/docs_out/man/tox.1
+    # Install to system location
+    install -D -m 644 .tox/docs_out/man/tox.1 /usr/share/man/man1/tox.1
+    gzip -9 /usr/share/man/man1/tox.1
+
+Viewing the Man Page
+====================
+
+After installation:
+
+.. code-block:: bash
+
+    man tox
+
+For virtualenv-based installations where the man page is not on ``MANPATH``, use ``tox --help`` instead.
