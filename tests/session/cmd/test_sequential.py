@@ -144,9 +144,9 @@ def get_cmd_exit_run_id(report: dict[str, Any], name: str, group: str) -> list[t
 
 def test_rerun_sequential_skip(tox_project: ToxProjectCreator, demo_pkg_inline: Path) -> None:
     proj = tox_project({"tox.ini": "[testenv]\npackage=skip\ncommands=python -c 'print(1)'"})
-    result_first = proj.run("--root", str(demo_pkg_inline))
+    result_first = proj.run("--root", str(demo_pkg_inline), "--workdir", str(proj.path / ".tox"))
     result_first.assert_success()
-    result_rerun = proj.run("--root", str(demo_pkg_inline))
+    result_rerun = proj.run("--root", str(demo_pkg_inline), "--workdir", str(proj.path / ".tox"))
     result_rerun.assert_success()
 
 
@@ -154,10 +154,10 @@ def test_rerun_sequential_wheel(tox_project: ToxProjectCreator, demo_pkg_inline:
     proj = tox_project(
         {"tox.ini": "[testenv]\npackage=wheel\ncommands=python -c 'from demo_pkg_inline import do; do()'"},
     )
-    result_first = proj.run("--root", str(demo_pkg_inline), "-vv")
+    result_first = proj.run("--root", str(demo_pkg_inline), "--workdir", str(proj.path / ".tox"), "-vv")
     result_first.assert_success()
 
-    result_rerun = proj.run("--root", str(demo_pkg_inline))
+    result_rerun = proj.run("--root", str(demo_pkg_inline), "--workdir", str(proj.path / ".tox"))
     result_rerun.assert_success()
 
 
@@ -167,9 +167,9 @@ def test_rerun_sequential_sdist(tox_project: ToxProjectCreator, demo_pkg_inline:
     proj = tox_project(
         {"tox.ini": "[testenv]\npackage=sdist\ncommands=python -c 'from demo_pkg_inline import do; do()'"},
     )
-    result_first = proj.run("--root", str(demo_pkg_inline))
+    result_first = proj.run("--root", str(demo_pkg_inline), "--workdir", str(proj.path / ".tox"))
     result_first.assert_success()
-    result_rerun = proj.run("--root", str(demo_pkg_inline))
+    result_rerun = proj.run("--root", str(demo_pkg_inline), "--workdir", str(proj.path / ".tox"))
     result_rerun.assert_success()
 
 
@@ -177,10 +177,12 @@ def test_recreate_package(tox_project: ToxProjectCreator, demo_pkg_inline: Path)
     proj = tox_project(
         {"tox.ini": "[testenv]\npackage=wheel\ncommands=python -c 'from demo_pkg_inline import do; do()'"},
     )
-    result_first = proj.run("--root", str(demo_pkg_inline), "-r")
+    result_first = proj.run("--root", str(demo_pkg_inline), "--workdir", str(proj.path / ".tox"), "-r")
     result_first.assert_success()
 
-    result_rerun = proj.run("-r", "--root", str(demo_pkg_inline), "--no-recreate-pkg")
+    result_rerun = proj.run(
+        "-r", "--root", str(demo_pkg_inline), "--workdir", str(proj.path / ".tox"), "--no-recreate-pkg"
+    )
     result_rerun.assert_success()
 
 
@@ -291,7 +293,7 @@ def test_env_name_change_recreate(tox_project: ToxProjectCreator) -> None:
 
 def test_skip_pkg_install(tox_project: ToxProjectCreator, demo_pkg_inline: Path) -> None:
     proj = tox_project({"tox.ini": "[testenv]\npackage=wheel\n"})
-    result_first = proj.run("--root", str(demo_pkg_inline), "--skip-pkg-install")
+    result_first = proj.run("--root", str(demo_pkg_inline), "--workdir", str(proj.path / ".tox"), "--skip-pkg-install")
     result_first.assert_success()
     assert result_first.out.startswith("py: skip building and installing the package"), result_first.out
 
@@ -436,7 +438,9 @@ def test_sequential_help(tox_project: ToxProjectCreator) -> None:
 
 def test_sequential_clears_pkg_at_most_once(tox_project: ToxProjectCreator, demo_pkg_inline: Path) -> None:
     project = tox_project({"tox.ini": "[tox]\nenv_list=a,b"})
-    result = project.run("r", "--root", str(demo_pkg_inline), "-e", "a,b", "-r")
+    result = project.run(
+        "r", "--root", str(demo_pkg_inline), "--workdir", str(project.path / ".tox"), "-e", "a,b", "-r"
+    )
     result.assert_success()
 
 

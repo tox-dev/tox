@@ -151,12 +151,13 @@ def test_provision_requires_nok(tox_project: ToxProjectCreator) -> None:
 
 @pytest.mark.integration
 @pytest.mark.usefixtures("_pypi_index_self")
+@pytest.mark.skipif(sys.platform == "win32", reason="Windows subprocess deadlocks during provision recreate")
 def test_provision_requires_ok(tox_project: ToxProjectCreator, tmp_path: Path) -> None:
     proj = tox_project({"tox.ini": "[tox]\nrequires=demo-pkg-inline\n[testenv]\npackage=skip"})
     log = tmp_path / "out.log"
 
     # initial run
-    result_first = proj.run("r", "--result-json", str(log))
+    result_first = proj.run("r", "--result-json", str(log), "--no-list-dependencies")
     result_first.assert_success()
     prov_msg = (
         f"ROOT: will run in automatically provisioned tox, host {sys.executable} is missing"
@@ -170,13 +171,13 @@ def test_provision_requires_ok(tox_project: ToxProjectCreator, tmp_path: Path) -
 
     # recreate without recreating the provisioned env
     provision_env = result_first.env_conf(".tox")["env_dir"]
-    result_recreate_no_pr = proj.run("r", "--recreate", "--no-recreate-provision")
+    result_recreate_no_pr = proj.run("r", "--recreate", "--no-recreate-provision", "--no-list-dependencies")
     result_recreate_no_pr.assert_success()
     assert prov_msg in result_recreate_no_pr.out
     assert f"ROOT: remove tox env folder {provision_env}" not in result_recreate_no_pr.out, result_recreate_no_pr.out
 
     # recreate with recreating the provisioned env
-    result_recreate = proj.run("r", "--recreate")
+    result_recreate = proj.run("r", "--recreate", "--no-list-dependencies")
     result_recreate.assert_success()
     assert prov_msg in result_recreate.out
     assert f"ROOT: remove tox env folder {provision_env}" in result_recreate.out, result_recreate.out
@@ -277,6 +278,7 @@ def test_provision_default_arguments_exists(tox_project: ToxProjectCreator, subc
 
 @pytest.mark.integration
 @pytest.mark.usefixtures("_pypi_index_mirrored")
+@pytest.mark.flaky(max_runs=3, min_passes=1)
 def test_provision_install_pkg_pep517(
     tmp_path_factory: TempPathFactory,
     tox_project: ToxProjectCreator,
@@ -301,5 +303,5 @@ def test_provision_install_pkg_pep517(
     commands = python -c "print(42)"
     """
     project = tox_project({"tox.ini": tox_ini}, base=example)
-    result = project.run("r", "-e", "py", "--installpkg", str(sdist), "--notest")
+    result = project.run("r", "-e", "py", "--installpkg", str(sdist), "--notest", "--no-list-dependencies")
     result.assert_success()

@@ -6,6 +6,12 @@ blockquote {
   padding: 0;
 }
 
+.mermaid svg {
+  max-height: 800px !important;
+  min-height: 200px !important;
+  height: auto !important;
+}
+
 body[data-theme="dark"] .mermaid {
   filter: invert(0.88) hue-rotate(180deg);
 }

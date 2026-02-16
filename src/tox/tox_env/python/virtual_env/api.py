@@ -15,7 +15,7 @@ from virtualenv.discovery.py_spec import PythonSpec
 
 from tox.config.loader.str_convert import StrConvert
 from tox.execute.local_sub_process import LocalSubProcessExecutor
-from tox.tox_env.python.api import Python, PythonInfo
+from tox.tox_env.python.api import Python, PythonInfo, VersionInfo
 from tox.tox_env.python.pip.pip_install import Pip
 
 if TYPE_CHECKING:
@@ -140,9 +140,10 @@ class VirtualEnv(Python, ABC):
             interpreter = self.creator.interpreter
         except (FileNotFoundError, RuntimeError):  # Unable to find the interpreter
             return None
+        vi = interpreter.version_info
         return PythonInfo(
             implementation=interpreter.implementation,
-            version_info=interpreter.version_info,
+            version_info=VersionInfo(vi.major, vi.minor, vi.micro, vi.releaselevel, vi.serial),
             version=interpreter.version,
             is_64=(interpreter.architecture == 64),  # noqa: PLR2004
             platform=interpreter.platform,

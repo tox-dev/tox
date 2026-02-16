@@ -119,6 +119,10 @@ class HelpFormatter(ArgumentDefaultsHelpFormatter):
 ToxParserT = TypeVar("ToxParserT", bound="ToxParser")
 DEFAULT_VERBOSITY = 2
 
+CORE = "core"
+ENV = "env"
+_INHERIT_ALL: frozenset[str] = frozenset({CORE, ENV})
+
 
 class Parsed(Namespace):
     """CLI options."""
@@ -145,6 +149,7 @@ class ToxParser(ArgumentParserWithEnvAndConfig):
 
     def __init__(self, *args: Any, root: bool = False, add_cmd: bool = False, **kwargs: Any) -> None:
         self.of_cmd: str | None = None
+        self.inherit: frozenset[str] = _INHERIT_ALL
         self.handlers: dict[str, tuple[Any, Callable[[State], int]]] = {}
         self._arguments: list[ArgumentArgs] = []
         self._groups: list[tuple[Any, dict[str, Any], list[tuple[dict[str, Any], list[ArgumentArgs]]]]] = []
@@ -165,6 +170,8 @@ class ToxParser(ArgumentParserWithEnvAndConfig):
         aliases: Sequence[str],
         help_msg: str,
         handler: Callable[[State], int],
+        *,
+        inherit: frozenset[str] = _INHERIT_ALL,
     ) -> ArgumentParser:
         if self._cmd is None:
             msg = "no sub-command group allowed"
@@ -176,23 +183,50 @@ class ToxParser(ArgumentParserWithEnvAndConfig):
             formatter_class=HelpFormatter,
             file_config=self.file_config,
         )
-        sub_parser.of_cmd = cmd  # mark it as parser for a sub-command
+        sub_parser.of_cmd = cmd
+        sub_parser.inherit = inherit
         content = sub_parser, handler
         self.handlers[cmd] = content
         for alias in aliases:
             self.handlers[alias] = content
-        for args, of_type, kwargs in self._arguments:
-            sub_parser.add_argument(*args, of_type=of_type, **kwargs)
-        for args, kwargs, excl in self._groups:
-            group = sub_parser.add_argument_group(*args, **kwargs)
-            for e_kwargs, arguments in excl:
-                excl_group = group.add_mutually_exclusive_group(**e_kwargs)
-                for a_args, _, a_kwargs in arguments:
-                    excl_group.add_argument(*a_args, **a_kwargs)
-        self._add_provision_arguments(sub_parser)
+        defaults: dict[str, Any] = {}
+        self._copy_arguments(sub_parser, defaults)
+        self._copy_groups(sub_parser, defaults)
+        self._add_env_arguments(sub_parser, defaults)
+        if defaults:
+            sub_parser.set_defaults(**defaults)
         return sub_parser
 
-    def _add_provision_arguments(self, sub_parser: ToxParser) -> None:  # noqa: PLR6301
+    def _copy_arguments(self, sub_parser: ToxParser, defaults: dict[str, Any]) -> None:
+        for args, of_type, kwargs in self._arguments:
+            if CORE in sub_parser.inherit:
+                sub_parser.add_argument(*args, of_type=of_type, **kwargs)
+            else:
+                defaults[self._dest_from(args, kwargs)] = kwargs.get("default")
+
+    def _copy_groups(self, sub_parser: ToxParser, defaults: dict[str, Any]) -> None:
+        for args, kwargs, excl in self._groups:
+            if CORE in sub_parser.inherit:
+                group = sub_parser.add_argument_group(*args, **kwargs)
+                for e_kwargs, arguments in excl:
+                    excl_group = group.add_mutually_exclusive_group(**e_kwargs)
+                    for a_args, _, a_kwargs in arguments:
+                        excl_group.add_argument(*a_args, **a_kwargs)
+            else:
+                for _, arguments in excl:
+                    for a_args, _, a_kwargs in arguments:
+                        defaults[self._dest_from(a_args, a_kwargs)] = a_kwargs.get("default")
+
+    def _add_env_arguments(self, sub_parser: ToxParser, defaults: dict[str, Any]) -> None:  # noqa: PLR6301
+        if os.environ.get("PYTHONHASHSEED", "random") != "random":
+            hashseed_default = int(os.environ["PYTHONHASHSEED"])
+        else:
+            hashseed_default = random.randint(1, 1024 if sys.platform == "win32" else 4294967295)  # noqa: S311
+
+        if ENV not in sub_parser.inherit:
+            defaults.update(result_json=None, hash_seed=hashseed_default, discover=[], list_dependencies=is_ci())
+            return
+
         sub_parser.add_argument(
             "--result-json",
             dest="result_json",
@@ -222,10 +256,6 @@ class ToxParser(ArgumentParserWithEnvAndConfig):
                         raise ArgumentError(self, str(exc)) from exc
                 setattr(namespace, self.dest, result)
 
-        if os.environ.get("PYTHONHASHSEED", "random") != "random":
-            hashseed_default = int(os.environ["PYTHONHASHSEED"])
-        else:
-            hashseed_default = random.randint(1, 1024 if sys.platform == "win32" else 4294967295)  # noqa: S311
         sub_parser.add_argument(
             "--hashseed",
             metavar="SEED",
@@ -259,6 +289,17 @@ class ToxParser(ArgumentParserWithEnvAndConfig):
             help="never list the dependencies installed during environment setup",
         )
 
+    @staticmethod
+    def _dest_from(args: tuple[str, ...], kwargs: dict[str, Any]) -> str:
+        if dest := kwargs.get("dest"):
+            return dest
+        args_list = list(args)
+        args_list.sort(key=len, reverse=True)
+        for arg in args_list:
+            if arg.startswith("--"):
+                return arg.lstrip("-").replace("-", "_")
+        return args[0].lstrip("-").replace("-", "_")
+
     def add_argument_group(self, *args: Any, **kwargs: Any) -> Any:
         result = super().add_argument_group(*args, **kwargs)
         if self.of_cmd is None and args not in {("positional arguments",), ("optional arguments",)}:
@@ -288,7 +329,10 @@ class ToxParser(ArgumentParserWithEnvAndConfig):
             self._arguments.append((args, of_type, kwargs))
             if hasattr(self, "_cmd") and self._cmd is not None and hasattr(self._cmd, "choices"):
                 for parser in {id(v): v for k, v in self._cmd.choices.items()}.values():
-                    parser.add_argument(*args, of_type=of_type, **kwargs)
+                    if CORE in parser.inherit:
+                        parser.add_argument(*args, of_type=of_type, **kwargs)
+                    else:
+                        parser.set_defaults(**{result.dest: result.default})
         if of_type is not None:
             result.of_type = of_type  # ty: ignore[unresolved-attribute] # dynamic attr read by get_type
         return result
@@ -337,64 +381,6 @@ class ToxParser(ArgumentParserWithEnvAndConfig):
         return result, args
 
 
-def add_verbosity_flags(parser: ArgumentParser) -> None:
-    from tox.report import LEVELS  # noqa: PLC0415
-
-    level_map = "|".join(f"{c}={logging.getLevelName(level)}" for c, level in sorted(LEVELS.items()))
-    verbosity_group = parser.add_argument_group("verbosity")
-    verbosity_group.description = (
-        f"every -v increases, every -q decreases verbosity level, "
-        f"default {logging.getLevelName(LEVELS[DEFAULT_VERBOSITY])}, map {level_map}"
-    )
-    verbosity = verbosity_group.add_mutually_exclusive_group()
-    verbosity.add_argument(
-        "-v",
-        "--verbose",
-        action="count",
-        dest="verbose",
-        help="increase verbosity",
-        default=DEFAULT_VERBOSITY,
-    )
-    verbosity.add_argument("-q", "--quiet", action="count", dest="quiet", help="decrease verbosity", default=0)
-
-
-def add_color_flags(parser: ArgumentParser) -> None:
-    if os.environ.get("NO_COLOR", ""):
-        color = "no"
-    elif os.environ.get("FORCE_COLOR", ""):
-        color = "yes"
-    elif (tty_compat := os.environ.get("TTY_COMPATIBLE", "")) in {"0", "1"}:
-        color = "yes" if tty_compat == "1" else "no"
-    elif os.environ.get("TERM", "") == "dumb":
-        color = "no"
-    else:
-        color = "yes" if sys.stdout.isatty() else "no"
-
-    parser.add_argument(
-        "--colored",
-        default=color,
-        choices=["yes", "no"],
-        help="should output be enriched with colors, default is yes unless TERM=dumb or NO_COLOR is defined.",
-    )
-    parser.add_argument(
-        "--stderr-color",
-        default="RED",
-        choices=[*Fore.__dict__.keys()],
-        help="color for stderr output, use RESET for terminal defaults.",
-    )
-
-
-def add_exit_and_dump_after(parser: ArgumentParser) -> None:
-    parser.add_argument(
-        "--exit-and-dump-after",
-        dest="exit_and_dump_after",
-        metavar="seconds",
-        default=0,
-        type=int,
-        help="dump tox threads after n seconds and exit the app - useful to debug when tox hangs, 0 means disabled",
-    )
-
-
 def add_core_arguments(parser: ArgumentParser) -> None:
     add_color_flags(parser)
     add_verbosity_flags(parser)
@@ -429,8 +415,68 @@ def add_core_arguments(parser: ArgumentParser) -> None:
     )
 
 
+def add_color_flags(parser: ArgumentParser) -> None:
+    if os.environ.get("NO_COLOR", ""):
+        color = "no"
+    elif os.environ.get("FORCE_COLOR", ""):
+        color = "yes"
+    elif (tty_compat := os.environ.get("TTY_COMPATIBLE", "")) in {"0", "1"}:
+        color = "yes" if tty_compat == "1" else "no"
+    elif os.environ.get("TERM", "") == "dumb":
+        color = "no"
+    else:
+        color = "yes" if sys.stdout.isatty() else "no"
+
+    parser.add_argument(
+        "--colored",
+        default=color,
+        choices=["yes", "no"],
+        help="should output be enriched with colors, default is yes unless TERM=dumb or NO_COLOR is defined.",
+    )
+    parser.add_argument(
+        "--stderr-color",
+        default="RED",
+        choices=[*Fore.__dict__.keys()],
+        help="color for stderr output, use RESET for terminal defaults.",
+    )
+
+
+def add_verbosity_flags(parser: ArgumentParser) -> None:
+    from tox.report import LEVELS  # noqa: PLC0415
+
+    level_map = "|".join(f"{c}={logging.getLevelName(level)}" for c, level in sorted(LEVELS.items()))
+    verbosity_group = parser.add_argument_group("verbosity")
+    verbosity_group.description = (
+        f"every -v increases, every -q decreases verbosity level, "
+        f"default {logging.getLevelName(LEVELS[DEFAULT_VERBOSITY])}, map {level_map}"
+    )
+    verbosity = verbosity_group.add_mutually_exclusive_group()
+    verbosity.add_argument(
+        "-v",
+        "--verbose",
+        action="count",
+        dest="verbose",
+        help="increase verbosity",
+        default=DEFAULT_VERBOSITY,
+    )
+    verbosity.add_argument("-q", "--quiet", action="count", dest="quiet", help="decrease verbosity", default=0)
+
+
+def add_exit_and_dump_after(parser: ArgumentParser) -> None:
+    parser.add_argument(
+        "--exit-and-dump-after",
+        dest="exit_and_dump_after",
+        metavar="seconds",
+        default=0,
+        type=int,
+        help="dump tox threads after n seconds and exit the app - useful to debug when tox hangs, 0 means disabled",
+    )
+
+
 __all__ = (
+    "CORE",
     "DEFAULT_VERBOSITY",
+    "ENV",
     "HelpFormatter",
     "Parsed",
     "ToxParser",

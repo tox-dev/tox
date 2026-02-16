@@ -14,6 +14,7 @@ import packaging.version
 import tox.config.set_env
 import tox.config.types
 import tox.tox_env.python.pip.req_file
+from tox.config.cli.parser import CORE
 from tox.plugin import impl
 
 if TYPE_CHECKING:
@@ -24,69 +25,10 @@ if TYPE_CHECKING:
 
 @impl
 def tox_add_option(parser: ToxParser) -> None:
-    our = parser.add_command("schema", [], "Generate schema for tox configuration", gen_schema)
+    our = parser.add_command(
+        "schema", [], "Generate schema for tox configuration", gen_schema, inherit=frozenset({CORE})
+    )
     our.add_argument("--strict", action="store_true", help="Disallow extra properties in configuration")
-
-
-def _process_type(of_type: typing.Any) -> dict[str, typing.Any]:  # noqa: C901, PLR0911
-    if of_type in {
-        Path,
-        str,
-        packaging.version.Version,
-        packaging.requirements.Requirement,
-        tox.tox_env.python.pip.req_file.PythonDeps,
-    }:
-        return {"type": "string"}
-    if typing.get_origin(of_type) is typing.Union:
-        types = [x for x in typing.get_args(of_type) if x is not type(None)]
-        if len(types) == 1:
-            return _process_type(types[0])
-        msg = f"Union types are not supported: {of_type}"
-        raise ValueError(msg)
-    if of_type is bool:
-        return {"type": "boolean"}
-    if of_type is float:
-        return {"type": "number"}
-    if typing.get_origin(of_type) is typing.Literal:
-        return {"enum": list(typing.get_args(of_type))}
-    if of_type in {tox.config.types.Command, tox.config.types.EnvList}:
-        return {"type": "array", "items": {"$ref": "#/definitions/subs"}}
-    if typing.get_origin(of_type) in {list, set}:
-        if typing.get_args(of_type)[0] in {str, packaging.requirements.Requirement}:
-            return {"type": "array", "items": {"$ref": "#/definitions/subs"}}
-        if typing.get_args(of_type)[0] is tox.config.types.Command:
-            return {"type": "array", "items": _process_type(typing.get_args(of_type)[0])}
-        msg = f"Unknown list type: {of_type}"
-        raise ValueError(msg)
-    if of_type is tox.config.set_env.SetEnv:
-        return {
-            "type": "object",
-            "additionalProperties": {"$ref": "#/definitions/subs"},
-        }
-    if typing.get_origin(of_type) is dict:
-        return {
-            "type": "object",
-            "additionalProperties": {**_process_type(typing.get_args(of_type)[1])},
-        }
-    msg = f"Unknown type: {of_type}"
-    raise ValueError(msg)
-
-
-def _get_schema(conf: ConfigSet, path: str) -> dict[str, dict[str, typing.Any]]:
-    properties = {}
-    for x in conf.get_configs():
-        name, *aliases = x.keys
-        of_type = getattr(x, "of_type", None)
-        if of_type is None:
-            continue
-        desc = getattr(x, "desc", None)
-        try:
-            properties[name] = {**_process_type(of_type), "description": desc}
-        except ValueError:
-            print(name, "has unrecoginsed type:", of_type, file=sys.stderr)  # noqa: T201
-        for alias in aliases:
-            properties[alias] = {"$ref": f"{path}/{name}"}
-    return properties
 
 
 def gen_schema(state: State) -> int:
@@ -174,3 +116,64 @@ def gen_schema(state: State) -> int:
     }
     print(json.dumps(json_schema, indent=2))  # noqa: T201
     return 0
+
+
+def _get_schema(conf: ConfigSet, path: str) -> dict[str, dict[str, typing.Any]]:
+    properties = {}
+    for x in conf.get_configs():
+        name, *aliases = x.keys
+        of_type = getattr(x, "of_type", None)
+        if of_type is None:
+            continue
+        desc = getattr(x, "desc", None)
+        try:
+            properties[name] = {**_process_type(of_type), "description": desc}
+        except ValueError:
+            print(name, "has unrecoginsed type:", of_type, file=sys.stderr)  # noqa: T201
+        for alias in aliases:
+            properties[alias] = {"$ref": f"{path}/{name}"}
+    return properties
+
+
+def _process_type(of_type: typing.Any) -> dict[str, typing.Any]:  # noqa: C901, PLR0911
+    if of_type in {
+        Path,
+        str,
+        packaging.version.Version,
+        packaging.requirements.Requirement,
+        tox.tox_env.python.pip.req_file.PythonDeps,
+    }:
+        return {"type": "string"}
+    if typing.get_origin(of_type) is typing.Union:
+        types = [x for x in typing.get_args(of_type) if x is not type(None)]
+        if len(types) == 1:
+            return _process_type(types[0])
+        msg = f"Union types are not supported: {of_type}"
+        raise ValueError(msg)
+    if of_type is bool:
+        return {"type": "boolean"}
+    if of_type is float:
+        return {"type": "number"}
+    if typing.get_origin(of_type) is typing.Literal:
+        return {"enum": list(typing.get_args(of_type))}
+    if of_type in {tox.config.types.Command, tox.config.types.EnvList}:
+        return {"type": "array", "items": {"$ref": "#/definitions/subs"}}
+    if typing.get_origin(of_type) in {list, set}:
+        if typing.get_args(of_type)[0] in {str, packaging.requirements.Requirement}:
+            return {"type": "array", "items": {"$ref": "#/definitions/subs"}}
+        if typing.get_args(of_type)[0] is tox.config.types.Command:
+            return {"type": "array", "items": _process_type(typing.get_args(of_type)[0])}
+        msg = f"Unknown list type: {of_type}"
+        raise ValueError(msg)
+    if of_type is tox.config.set_env.SetEnv:
+        return {
+            "type": "object",
+            "additionalProperties": {"$ref": "#/definitions/subs"},
+        }
+    if typing.get_origin(of_type) is dict:
+        return {
+            "type": "object",
+            "additionalProperties": {**_process_type(typing.get_args(of_type)[1])},
+        }
+    msg = f"Unknown type: {of_type}"
+    raise ValueError(msg)

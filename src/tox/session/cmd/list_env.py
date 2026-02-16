@@ -5,6 +5,7 @@ from __future__ import annotations
 from itertools import chain
 from typing import TYPE_CHECKING
 
+from tox.config.cli.parser import CORE
 from tox.plugin import impl
 from tox.session.env_select import register_env_select_flags
 
@@ -15,7 +16,7 @@ if TYPE_CHECKING:
 
 @impl
 def tox_add_option(parser: ToxParser) -> None:
-    our = parser.add_command("list", ["l"], "list environments", list_env)
+    our = parser.add_command("list", ["l"], "list environments", list_env, inherit=frozenset({CORE}))
     our.add_argument("--no-desc", action="store_true", help="do not show description", dest="list_no_description")
     d = register_env_select_flags(our, default=None, group_only=True)
     d.add_argument("-d", action="store_true", help="list just default envs", dest="list_default_only")

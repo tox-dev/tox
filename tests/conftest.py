@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import os
-import shutil
 import sys
 import sysconfig
 from pathlib import Path
@@ -11,7 +10,6 @@ from uuid import uuid4
 
 import pytest
 from distlib.scripts import ScriptMaker
-from filelock import FileLock
 from virtualenv import cli_run
 
 from tox.config.cli.parser import Parsed
@@ -77,15 +75,8 @@ def demo_pkg_setuptools() -> Path:
 
 
 @pytest.fixture(scope="session")
-def demo_pkg_inline() -> Iterator[Path]:
-    demo_path = HERE / "demo_pkg_inline"
-    with FileLock(f"{demo_path}.lock"):
-        tox_dir = demo_path / ".tox"
-        if tox_dir.exists():
-            shutil.rmtree(tox_dir)
-        yield demo_path
-        if tox_dir.exists():
-            shutil.rmtree(tox_dir)
+def demo_pkg_inline() -> Path:
+    return HERE / "demo_pkg_inline"
 
 
 @pytest.fixture
