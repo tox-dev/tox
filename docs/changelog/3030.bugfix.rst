@@ -1,0 +1,1 @@
+Report TOML parse errors during config discovery instead of silently ignoring them - by :user:`rahuldevikar`.

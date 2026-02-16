@@ -48,3 +48,13 @@ def test_bad_src_content(tox_project: ToxProjectCreator, tmp_path: Path) -> None
     outcome = project.run("l", "-c", str(tmp_path / "setup.cfg"))
     outcome.assert_failed()
     assert outcome.out == f"ROOT: HandledError| config file {tmp_path / 'setup.cfg'} does not exist\n"
+
+
+def test_malformed_toml_in_dir_reports_error(tox_project: ToxProjectCreator) -> None:
+    """Config discovery in a directory should report TOML parse errors instead of silently ignoring them."""
+    project = tox_project({})
+    # Write a pyproject.toml with an invalid TOML escape sequence (unescaped backslash)
+    (project.path / "pyproject.toml").write_text('[tool.tox]\ntest = "c:\\path"\n', encoding="utf-8")
+    outcome = project.run("l", "-c", str(project.path))
+    outcome.assert_failed()
+    assert "failed loading" in outcome.out
