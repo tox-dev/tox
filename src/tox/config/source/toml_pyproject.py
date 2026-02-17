@@ -65,7 +65,11 @@ class TomlSection(Section):
             return []
         prefix_parts: list[str] = prefix.split(self.SEP) if prefix else []
         # Strip the global PREFIX (e.g. ("tool", "tox")) from the front
-        if self.PREFIX and len(prefix_parts) >= len(self.PREFIX) and tuple(prefix_parts[: len(self.PREFIX)]) == self.PREFIX:
+        if (
+            self.PREFIX
+            and len(prefix_parts) >= len(self.PREFIX)
+            and tuple(prefix_parts[: len(self.PREFIX)]) == self.PREFIX
+        ):
             prefix_parts = prefix_parts[len(self.PREFIX) :]
         result = prefix_parts
         if name:
