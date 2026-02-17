@@ -1,0 +1,2 @@
+``TOX_OVERRIDE`` with ``+=`` (append) now works correctly when the override key name differs from the config file key
+name (e.g., overriding ``pass_env`` when config uses ``passenv``, or vice versa) - by :user:`gaborbernat`.

@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from itertools import product
 from typing import TYPE_CHECKING, Generic, TypeVar, cast
 
 from tox.config.loader.api import ConfigLoadArgs, Loader
@@ -100,8 +99,9 @@ class ConfigDynamicDefinition(ConfigDefinition[T]):  # noqa: PLW1641
         args: ConfigLoadArgs,
     ) -> T:
         if self._cache is _PLACE_HOLDER:
-            for key, loader in product(self.keys, loaders):
-                chain_key = f"{loader.section.key}.{key}"
+            primary_key, *alias_keys = self.keys
+            for loader in loaders:
+                chain_key = f"{loader.section.key}.{primary_key}"
                 try:
                     if chain_key in args.chain:
                         values = args.chain[args.chain.index(chain_key) :]
@@ -110,7 +110,7 @@ class ConfigDynamicDefinition(ConfigDefinition[T]):  # noqa: PLW1641
                 finally:
                     args.chain.append(chain_key)
                 try:
-                    value = loader.load(key, self.of_type, self.factory, conf, args)
+                    value = loader.load(primary_key, self.of_type, self.factory, conf, args, all_keys=alias_keys)
                 except KeyError:
                     continue
                 else:
