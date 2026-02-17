@@ -116,6 +116,13 @@ def get_upstream(repo: Repo) -> Remote:
 def release_changelog(repo: Repo, version: Version) -> Commit:
     print("generate release commit")  # noqa: T201
     check_call(["towncrier", "build", "--yes", "--version", version.public], cwd=str(ROOT_SRC_DIR))  # noqa: S607
+    print("format changelog with pre-commit")  # noqa: T201
+    changelog_path = ROOT_SRC_DIR / "docs" / "changelog.rst"
+    try:
+        check_call(["pre-commit", "run", "--files", str(changelog_path)], cwd=str(ROOT_SRC_DIR))  # noqa: S607
+    except CalledProcessError:
+        print("pre-commit made formatting changes, staging them")  # noqa: T201
+    repo.index.add([str(changelog_path)])
     return repo.index.commit(f"release {version}")
 
 

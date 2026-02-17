@@ -134,6 +134,7 @@ pkg-meta = [
 release = [
   "gitpython>=3.1.46",
   "packaging>=26",
+  "pre-commit>=4.5.1",
   "towncrier>=25.8",
 ]
 
