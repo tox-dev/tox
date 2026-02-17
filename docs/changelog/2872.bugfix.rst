@@ -1,0 +1,2 @@
+``set_env`` values from cross-section substitution (e.g., ``{[testenv]set_env}``) now correctly override default
+environment variables like ``PYTHONHASHSEED`` - by :user:`gaborbernat`.

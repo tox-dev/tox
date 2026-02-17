@@ -1,0 +1,2 @@
+``set_env`` values explicitly defined in a section now take precedence over values inherited via cross-section
+substitution (e.g., ``{[testenv]set_env}``) - by :user:`gaborbernat`.

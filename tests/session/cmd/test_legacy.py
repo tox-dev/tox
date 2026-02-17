@@ -136,6 +136,16 @@ def test_legacy_run_sequential_ci(
     assert run_sequential.call_count == 1
 
 
+def test_legacy_no_spinner_does_not_suppress_output(
+    tox_project: ToxProjectCreator, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("TOX_PARALLEL_NO_SPINNER", "1")
+    ini = "[testenv]\npackage=skip\ncommands=python -c 'print(\"hello-from-env\")'"
+    result = tox_project({"tox.ini": ini}).run("le", "-e", "py")
+    result.assert_success()
+    assert "hello-from-env" in result.out
+
+
 def test_legacy_help(tox_project: ToxProjectCreator) -> None:
     outcome = tox_project({"tox.ini": ""}).run("le", "-h")
     outcome.assert_success()
