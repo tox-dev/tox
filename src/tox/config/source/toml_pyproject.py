@@ -55,11 +55,22 @@ class TomlSection(Section):
 
     @property
     def keys(self) -> Iterable[str]:
-        key = self.key
-        keys = key.split(self.SEP) if self.key else []
-        if self.PREFIX and len(keys) >= len(self.PREFIX) and tuple(keys[: len(self.PREFIX)]) == self.PREFIX:
-            keys = keys[len(self.PREFIX) :]
-        return keys
+        # Build keys from prefix and name components directly, rather than
+        # splitting the joined key on SEP.  This preserves dots that are part
+        # of the name (e.g. environment name "py3.11") instead of treating
+        # them as path separators.
+        prefix = self._prefix
+        name = self._name
+        if prefix is None and not name:
+            return []
+        prefix_parts: list[str] = prefix.split(self.SEP) if prefix else []
+        # Strip the global PREFIX (e.g. ("tool", "tox")) from the front
+        if self.PREFIX and len(prefix_parts) >= len(self.PREFIX) and tuple(prefix_parts[: len(self.PREFIX)]) == self.PREFIX:
+            prefix_parts = prefix_parts[len(self.PREFIX) :]
+        result = prefix_parts
+        if name:
+            result.append(name)
+        return result
 
 
 class TomlPyProjectSection(TomlSection):
@@ -113,17 +124,17 @@ class TomlPyProject(Source):
 
     def envs(self, core_conf: CoreConfigSet) -> Iterator[str]:
         yield from core_conf["env_list"]
-        yield from [i.key for i in self.sections()]
+        yield from [i.name for i in self.sections()]
 
     def sections(self) -> Iterator[Section]:
         for env_name in self._our_content.get(self._Section.ENV, {}):
             if not isinstance(env_name, str):
                 msg = f"Environment key must be string, got {env_name!r}"
                 raise HandledError(msg)
-            yield self._Section.from_key(env_name)
+            yield self._Section.test_env(env_name)
 
     def get_base_sections(self, base: list[str], in_section: Section) -> Iterator[Section]:  # noqa: ARG002
-        yield from [self._Section.from_key(b) for b in base]
+        yield from [self._Section.test_env(b) for b in base]
 
     def get_tox_env_section(self, item: str) -> tuple[Section, list[str], list[str]]:
         return self._Section.test_env(item), [self._Section.run_env_base()], [self._Section.package_env_base()]
