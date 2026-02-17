@@ -37,8 +37,9 @@ Below is a graphical representation of the tox lifecycle:
             create --> deps[Install dependencies]
             deps --> pkg{package project?}
             pkg -- yes --> build[Build and install package]
-            pkg -- no --> cmds
-            build --> cmds
+            pkg -- no --> extra
+            build --> extra[Run extra_setup_commands]
+            extra --> cmds
             cmds[Run commands]
         end
 
@@ -48,6 +49,7 @@ Below is a graphical representation of the tox lifecycle:
         classDef configStyle fill:#dbeafe,stroke:#3b82f6,stroke-width:2px,color:#1e3a5f
         classDef envStyle fill:#dcfce7,stroke:#22c55e,stroke-width:2px,color:#14532d
         classDef pkgStyle fill:#ffedd5,stroke:#f97316,stroke-width:2px,color:#7c2d12
+        classDef setupStyle fill:#fde68a,stroke:#fbbf24,stroke-width:2px,color:#78350f
         classDef cmdStyle fill:#ede9fe,stroke:#8b5cf6,stroke-width:2px,color:#3b0764
         classDef reportStyle fill:#ccfbf1,stroke:#14b8a6,stroke-width:2px,color:#134e4a
         classDef decisionStyle fill:#fef9c3,stroke:#eab308,stroke-width:2px,color:#713f12
@@ -55,6 +57,7 @@ Below is a graphical representation of the tox lifecycle:
         class config configStyle
         class create,deps envStyle
         class build pkgStyle
+        class extra setupStyle
         class cmds cmdStyle
         class report reportStyle
         class pkg decisionStyle
@@ -77,7 +80,9 @@ The primary tox states are:
       configuration section, and then the earlier packaged source distribution. By default ``pip`` is used to install
       packages, however one can customize this via ``install_command``.
    3. **Packaging** (optional): create a distribution of the current project (see :ref:`packaging` below).
-   4. **Commands**: run the specified commands in the specified order. Whenever the exit code of any of them is not
+   4. **Extra setup commands** (optional): run the :ref:`extra_setup_commands` specified. These execute after all
+      installations complete but before test commands, and run during the ``--notest`` phase.
+   5. **Commands**: run the specified commands in the specified order. Whenever the exit code of any of them is not
       zero, stop and mark the environment failed. When you start a command with a dash character, the exit code will be
       ignored.
 

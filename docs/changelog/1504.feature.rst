@@ -1,0 +1,2 @@
+Add ``extra_setup_commands`` configuration option to run commands after dependency and package installation but before
+test commands, useful with ``--notest`` for separating setup from execution - by :user:`gaborbernat`.

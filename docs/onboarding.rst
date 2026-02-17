@@ -116,25 +116,26 @@ This traces ``tox run -e py311`` from start to finish, showing the six main phas
             L[Create virtualenv]
             M[Install dependencies]
             N[Build & install package]
+            O[Run extra_setup_commands]
             K -->|No| L --> M
             K -->|Yes| M
-            M --> N
+            M --> N --> O
         end
 
         subgraph EXEC["5️⃣ EXECUTION"]
             direction TB
-            O[Run commands_pre]
-            P[Run commands]
-            Q[Run commands_post]
-            O --> P --> Q
+            P[Run commands_pre]
+            Q[Run commands]
+            R[Run commands_post]
+            P --> Q --> R
         end
 
         subgraph RESULT["6️⃣ RESULTS"]
             direction TB
-            R[Collect outcomes]
-            S[Write journal]
-            T[Report summary]
-            R --> S --> T
+            S[Collect outcomes]
+            T[Write journal]
+            U[Report summary]
+            S --> T --> U
         end
 
         ENTRY --> PROV
@@ -165,12 +166,13 @@ This traces ``tox run -e py311`` from start to finish, showing the six main phas
         style L fill:#9B59B6,stroke:#6D3F8C,color:#fff
         style M fill:#9B59B6,stroke:#6D3F8C,color:#fff
         style N fill:#9B59B6,stroke:#6D3F8C,color:#fff
-        style O fill:#3498DB,stroke:#2574A9,color:#fff
+        style O fill:#9B59B6,stroke:#6D3F8C,color:#fff
         style P fill:#3498DB,stroke:#2574A9,color:#fff
         style Q fill:#3498DB,stroke:#2574A9,color:#fff
-        style R fill:#E74C3C,stroke:#B23A2F,color:#fff
+        style R fill:#3498DB,stroke:#2574A9,color:#fff
         style S fill:#E74C3C,stroke:#B23A2F,color:#fff
         style T fill:#E74C3C,stroke:#B23A2F,color:#fff
+        style U fill:#E74C3C,stroke:#B23A2F,color:#fff
 
 High-level architecture
 =======================
@@ -405,7 +407,7 @@ Environment lifecycle
 .. mermaid::
 
     flowchart TD
-        A["1. SETUP<br/>• Platform check (skip if no match)<br/>• Recreate check → clean()<br/>• Create virtualenv<br/>• Install deps<br/>• Install package (build + install)"]
+        A["1. SETUP<br/>• Platform check (skip if no match)<br/>• Recreate check → clean()<br/>• Create virtualenv<br/>• Install deps<br/>• Install package (build + install)<br/>• extra_setup_commands"]
         B["2. EXECUTE<br/>• commands_pre<br/>• commands<br/>• commands_post (always runs)"]
         C["3. TEARDOWN<br/>• Detach from package envs<br/>• Close PEP-517 backend<br/>• Delete built packages"]
 
