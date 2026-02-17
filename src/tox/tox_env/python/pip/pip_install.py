@@ -212,10 +212,10 @@ class Pip(PythonInstallerListDependencies):
             if isinstance(arg, Requirement):
                 groups["req"].append(str(arg))
             elif isinstance(arg, (WheelPackage, SdistPackage, EditablePackage)):
-                groups["req"].extend(str(i) for i in arg.deps)
+                groups["req"].extend(self._apply_force_deps(arg.deps))
                 groups["pkg"].append(str(arg.path))
             elif isinstance(arg, EditableLegacyPackage):
-                groups["req"].extend(str(i) for i in arg.deps)
+                groups["req"].extend(self._apply_force_deps(arg.deps))
                 groups["dev_pkg"].append(str(arg.path))
             else:
                 logging.warning("pip cannot install %r", arg)
@@ -244,6 +244,10 @@ class Pip(PythonInstallerListDependencies):
             # we intentionally ignore constraints when installing the package itself
             # https://github.com/tox-dev/tox/issues/3550
             self._execute_installer(install_args, of_type)
+
+    def _apply_force_deps(self, deps: Sequence[Requirement]) -> list[str]:
+        forced: dict[str, Requirement] = {r.name: r for r in getattr(self._env.options, "force_dep", [])}
+        return [str(forced.get(dep.name, dep)) for dep in deps]
 
     def _execute_installer(self, deps: Sequence[Any], of_type: str) -> None:
         if of_type == "package_deps" and self.constrain_package_deps:
