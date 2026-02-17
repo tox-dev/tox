@@ -136,7 +136,9 @@ class TomlReplaceLoader(ReplaceReference):
         section = cast("TomlSection", self.loader.section)
         core_prefix = section.core_prefix()
         env_prefix = section.env_prefix()
-        if sec.startswith(env_prefix):
+        run_env_base = section.run_env_base()
+        pkg_env_base = section.package_env_base()
+        if sec.startswith(env_prefix) and sec not in {run_env_base, pkg_env_base}:
             env = sec[len(env_prefix) + len(section.SEP) :]
             yield self.conf.get_env(env)
         else:
