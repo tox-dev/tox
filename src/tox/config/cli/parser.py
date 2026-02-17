@@ -66,7 +66,7 @@ class ArgumentParserWithEnvAndConfig(ArgumentParser):
         of_type: type[Any] | None = getattr(action, "of_type", None)
         if of_type is None:
             if isinstance(action, argparse._AppendAction):  # noqa: SLF001
-                if action.nargs in ("+", "*") or (isinstance(action.nargs, int) and action.nargs > 1):
+                if action.nargs in {"+", "*"} or (isinstance(action.nargs, int) and action.nargs > 1):
                     of_type = list[list[action.type]]  # ty: ignore[invalid-type-form] # nargs produces list per invocation
                 else:
                     of_type = list[action.type]  # ty: ignore[invalid-type-form] # runtime generic from argparse action type

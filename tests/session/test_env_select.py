@@ -157,8 +157,19 @@ def test_factor_select(
     [
         ("cov", ("py310-django20-cov", "py310-django21-cov", "py39-django20-cov", "py39-django21-cov")),
         ("py39,django20", ("py39-django20-cov", "py39-django20")),
-        ("py39;py310", ("py310-django20-cov", "py310-django20", "py310-django21-cov", "py310-django21",
-                        "py39-django20-cov", "py39-django20", "py39-django21-cov", "py39-django21")),
+        (
+            "py39;py310",
+            (
+                "py310-django20-cov",
+                "py310-django20",
+                "py310-django21-cov",
+                "py310-django21",
+                "py39-django20-cov",
+                "py39-django20",
+                "py39-django21-cov",
+                "py39-django21",
+            ),
+        ),
     ],
 )
 def test_factor_select_via_env_var(
