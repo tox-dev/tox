@@ -2,7 +2,9 @@ from __future__ import annotations
 
 import logging
 import os
+import shutil
 import sys
+import tarfile
 from abc import ABC
 from collections import defaultdict
 from contextlib import contextmanager
@@ -198,7 +200,10 @@ class Pep517VenvPackager(PythonPackageToxEnv, ABC):
     def register_run_env(self, run_env: RunToxEnv) -> Generator[tuple[str, str], PackageToxEnv, None]:
         yield from super().register_run_env(run_env)
         build_type = run_env.conf["package"]
-        self.call_require_hooks.add(build_type)
+        if build_type == "sdist-wheel":
+            self.call_require_hooks.update({"sdist", "wheel"})
+        else:
+            self.call_require_hooks.add(build_type)
         self.builds[build_type].append(run_env.conf)
 
     def _setup_env(self) -> None:
@@ -280,6 +285,14 @@ class Pep517VenvPackager(PythonPackageToxEnv, ABC):
                 sdist = create_session_view(sdist, self._package_temp_path)
                 self._package_paths.add(sdist)
                 package = SdistPackage(sdist, deps)
+        elif of_type == "sdist-wheel":
+            w_env = self._wheel_build_envs.get(for_env["wheel_build_env"])
+            if w_env is not None and w_env is not self:
+                with w_env.display_context(self._has_display_suspended):
+                    return w_env.perform_packaging(for_env)
+            wheel = create_session_view(self._build_wheel_from_sdist(), self._package_temp_path)
+            self._package_paths.add(wheel)
+            package = WheelPackage(wheel, deps)
         elif of_type in {"wheel", "editable"}:
             w_env = self._wheel_build_envs.get(for_env["wheel_build_env"])
             if w_env is not None and w_env is not self:
@@ -302,6 +315,60 @@ class Pep517VenvPackager(PythonPackageToxEnv, ABC):
             msg = f"cannot handle package type {of_type}"
             raise TypeError(msg)  # pragma: no cover
         return [package]
+
+    def _build_wheel_from_sdist(self) -> Path:
+        """Build a wheel by first building an sdist, extracting it, and building a wheel from the extracted source."""
+        self.setup()
+        with self._pkg_lock:
+            # Step 1: Build the sdist from the original source tree
+            sdist_config: ConfigSettings = self.conf["config_settings_build_sdist"]
+            sdist = self._frontend.build_sdist(
+                sdist_directory=self.pkg_dir,
+                config_settings=sdist_config,
+            ).sdist
+            logging.info("built sdist %s, now building wheel from it", sdist.name)
+
+            # Step 2: Extract the sdist to a temporary directory
+            extract_dir = self.env_dir / ".sdist-extract"
+            if extract_dir.exists():
+                shutil.rmtree(extract_dir)
+            extract_dir.mkdir()
+            kwargs: dict[str, Any] = {}
+            if (
+                sys.version_info >= (3, 11, 4)
+                or (3, 10, 12) <= sys.version_info < (3, 11)
+                or (3, 9, 17) <= sys.version_info < (3, 10)
+            ):
+                kwargs["filter"] = tarfile.data_filter
+            with tarfile.open(str(sdist), "r:gz") as tar:
+                tar.extractall(path=str(extract_dir), **kwargs)  # noqa: S202
+
+            # Step 3: Find the extracted source root (standard sdists contain a single top-level directory)
+            extracted_items = list(extract_dir.iterdir())
+            if len(extracted_items) == 1 and extracted_items[0].is_dir():
+                sdist_source_root = extracted_items[0]
+            else:
+                # Non-standard sdist with files at root (no wrapper directory)
+                sdist_source_root = extract_dir
+
+            # Step 4: Build the wheel from the extracted sdist source by swapping root
+            # The root setter closes the existing backend and forces a new frontend to be created
+            original_root = self.root
+            try:
+                self.root = sdist_source_root
+                wheel_config: ConfigSettings = self.conf["config_settings_build_wheel"]
+                wheel = self._frontend.build_wheel(
+                    wheel_directory=self.pkg_dir,
+                    config_settings=wheel_config,
+                ).wheel
+            finally:
+                self.root = original_root
+
+            # Clean up the sdist and extraction directory
+            sdist.unlink()
+            shutil.rmtree(extract_dir)
+
+            return wheel
 
     @property
     def _package_temp_path(self) -> Path:
@@ -348,7 +415,7 @@ class Pep517VenvPackager(PythonPackageToxEnv, ABC):
         reqs: list[Requirement] | None = None
         name = ""
         available: set[str] | None = None
-        if of_type in {"wheel", "editable"}:  # wheel packages
+        if of_type in {"wheel", "sdist-wheel", "editable"}:  # wheel packages
             w_env = self._wheel_build_envs.get(for_env["wheel_build_env"])
             if w_env is not None and w_env is not self:
                 with w_env.display_context(self._has_display_suspended):

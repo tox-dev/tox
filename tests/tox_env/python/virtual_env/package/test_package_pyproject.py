@@ -35,7 +35,10 @@ def test_tox_ini_package_type_invalid(tox_project: ToxProjectCreator) -> None:
     proj = tox_project({"tox.ini": "[testenv]\npackage=bad", "pyproject.toml": ""})
     result = proj.run("c", "-k", "package_tox_env_type")
     result.assert_failed()
-    msg = " invalid package config type bad requested, must be one of wheel, sdist, editable, editable-legacy, skip"
+    msg = (
+        " invalid package config type bad requested,"
+        " must be one of wheel, sdist, sdist-wheel, editable, editable-legacy, skip"
+    )
     assert msg in result.out
 
 
@@ -527,3 +530,32 @@ def test_pyproject_installpkg_pep517_envs(tox_project: ToxProjectCreator, pkg_wi
     proj = tox_project({"tox.ini": tox_ini}, base=pkg_with_pdm_backend)
     result = proj.run("--installpkg", str(sdist))
     result.assert_success()
+
+
+def test_sdist_wheel_package_type(tox_project: ToxProjectCreator, demo_pkg_inline: Path) -> None:
+    ini = "[testenv]\npackage=sdist-wheel"
+    proj = tox_project({"tox.ini": ini}, base=demo_pkg_inline)
+    execute_calls = proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
+    result = proj.run("r", "--notest")
+    result.assert_success()
+    # Verify that build_sdist was called and a subsequent build_wheel follows it.
+    # Note: an earlier build_wheel may appear from metadata extraction; the last
+    # build_wheel is the one produced from the extracted sdist.
+    call_ids = [i[0][3].run_id for i in execute_calls.call_args_list]
+    assert "build_sdist" in call_ids
+    sdist_idx = call_ids.index("build_sdist")
+    # Find a build_wheel call that comes after build_sdist
+    wheel_after_sdist = [i for i, cid in enumerate(call_ids) if cid == "build_wheel" and i > sdist_idx]
+    assert wheel_after_sdist, "expected a build_wheel call after build_sdist"
+
+
+def test_wheel_package_does_not_build_sdist(tox_project: ToxProjectCreator, demo_pkg_inline: Path) -> None:
+    ini = "[testenv]\npackage=wheel"
+    proj = tox_project({"tox.ini": ini}, base=demo_pkg_inline)
+    execute_calls = proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
+    result = proj.run("r", "--notest")
+    result.assert_success()
+    # Verify that build_sdist was NOT called with plain wheel package type
+    call_ids = [i[0][3].run_id for i in execute_calls.call_args_list]
+    assert "build_sdist" not in call_ids
+    assert "build_wheel" in call_ids

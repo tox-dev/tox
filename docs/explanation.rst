@@ -203,6 +203,7 @@ The :ref:`package` configuration controls how the project is packaged:
         pkg{package setting}
         pkg -- sdist --> sdist[sdist — default]
         pkg -- wheel --> wheel[wheel — faster install]
+        pkg -- sdist-wheel --> sdistwheel[sdist-wheel — build wheel from sdist]
         pkg -- editable --> editable[editable — PEP 660]
         pkg -- editable-legacy --> legacy[editable-legacy — pip -e]
         pkg -- skip --> skip[skip — no packaging]
@@ -210,6 +211,8 @@ The :ref:`package` configuration controls how the project is packaged:
 
         sdist --> env_pkg[build env: .pkg]
         wheel --> env_wheel[build env: .pkg-cpython313]
+        sdistwheel --> env_pkg
+        sdistwheel --> env_wheel
         editable --> env_wheel
         legacy --> env_pkg
         skip --> no_env[no build env]
@@ -221,12 +224,14 @@ The :ref:`package` configuration controls how the project is packaged:
         classDef skipStyle fill:#f3f4f6,stroke:#9ca3af,stroke-width:2px,color:#374151
 
         class pkg decisionStyle
-        class sdist,wheel,editable,legacy,external pkgStyle
+        class sdist,wheel,sdistwheel,editable,legacy,external pkgStyle
         class env_pkg,env_wheel envStyle
         class skip,no_env skipStyle
 
 - ``sdist`` (default): builds a source distribution
 - ``wheel``: builds a wheel (much faster to install)
+- ``sdist-wheel``: builds a source distribution first, then builds a wheel from that sdist (validates sdist
+  completeness)
 - ``editable``: builds an editable wheel as defined by :PEP:`660`
 - ``editable-legacy``: invokes pip with ``-e`` (fallback when the backend doesn't support PEP 660)
 - ``skip``: skips packaging entirely (useful for tools like linters that don't need the project installed)
