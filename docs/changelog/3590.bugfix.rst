@@ -1,1 +1,0 @@
-Fix env names containing dots (e.g. ``py3.11``) losing their description in TOML configuration - by :user:`Fridayai700`.

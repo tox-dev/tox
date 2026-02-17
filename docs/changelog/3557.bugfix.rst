@@ -1,2 +1,0 @@
-Fix factor selection via ``TOX_FACTORS`` environment variable producing wrong results because ``append`` + ``nargs="+"``
-actions need nested list types for proper env var conversion - by :user:`Fridayai700`.
