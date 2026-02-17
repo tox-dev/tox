@@ -169,7 +169,8 @@ class SetEnv:
                             sub_raw[key] = value  # noqa: PERF403
                 else:
                     key, value, marker = self._extract_key_value_marker(sub_line)
-                    sub_raw[key] = value
+                    if key not in self._raw:
+                        sub_raw[key] = value
                     if marker:
                         self._markers[key] = Marker(marker)
             self._materialized = {k: v for k, v in self._materialized.items() if k not in sub_raw}

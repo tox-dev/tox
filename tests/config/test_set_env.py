@@ -282,7 +282,7 @@ def test_set_env_environment_with_file_and_expanded_substitution(
         "PIP_DISABLE_PIP_VERSION_CHECK": "1",
         "PYTHONHASHSEED": ANY,
         "PYTHONIOENCODING": "utf-8",
-        "PRECENDENCE_TEST_1": "1_expanded_precedence",
+        "PRECENDENCE_TEST_1": "1_self_precedence",
         "PRECENDENCE_TEST_2": "2_self_precedence",
         "PRECENDENCE_TEST_3": "3_file_precedence",
     }
@@ -378,6 +378,29 @@ def test_set_env_marker_with_replace_toml(
         assert set_env.load("CONDITIONAL") == "from_env"
     else:
         assert "CONDITIONAL" not in set_env
+
+
+def test_set_env_cross_section_override(tox_project: ToxProjectCreator) -> None:
+    ini = """\
+    [testenv]
+    skip_install = true
+    set_env =
+        OS_TEST_PATH=./tests/unit
+    commands = python -c "import os; print(os.environ['OS_TEST_PATH'])"
+
+    [testenv:functional]
+    set_env =
+      {[testenv]set_env}
+      OS_TEST_PATH=./tests/functional
+    commands = python -c "import os; print(os.environ['OS_TEST_PATH'])"
+
+    [testenv:functional-py]
+    set_env = {[testenv:functional]set_env}
+    commands = {[testenv:functional]commands}
+    """
+    result = tox_project({"tox.ini": ini}).run("r", "-e", "functional-py")
+    result.assert_success()
+    assert result.out.splitlines()[1] == "./tests/functional"
 
 
 def test_set_env_marker_mixed(eval_set_env: EvalSetEnv) -> None:
