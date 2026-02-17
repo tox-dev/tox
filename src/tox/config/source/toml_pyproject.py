@@ -141,7 +141,7 @@ class TomlPyProject(Source):
         core = self._Section.core_prefix()
         prefix = f"{core}{self._Section.SEP}" if core else ""
         for b in base:
-            name = b[len(prefix):] if b.startswith(prefix) else b
+            name = b.removeprefix(prefix)
             yield self._Section(prefix=core or None, name=name)
 
     def get_tox_env_section(self, item: str) -> tuple[Section, list[str], list[str]]:
