@@ -202,7 +202,7 @@ def test_setenv_path_venv_paths_first(tox_project: ToxProjectCreator) -> None:
     project = tox_project({"tox.toml": toml})
     result = project.run("r")
     result.assert_success()
-    path_line = [line for line in result.out.splitlines() if "/trailing/path" in line][0]
+    path_line = next(line for line in result.out.splitlines() if "/trailing/path" in line)
     path_entries = path_line.split(":")
     # The virtual environment paths (containing .tox) must come before the trailing path
     tox_idx = next((i for i, p in enumerate(path_entries) if ".tox" in p), None)
