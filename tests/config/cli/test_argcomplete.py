@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-import argcomplete
+import argcomplete  # ty: ignore[unresolved-import] # optional dependency, only installed via extras=["completion"]
 
 from tox.config.cli.parse import get_options
 

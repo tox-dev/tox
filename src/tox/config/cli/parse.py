@@ -71,7 +71,7 @@ def _get_all(args: Sequence[str]) -> tuple[Parsed, dict[str, Callable[[State], i
     """Parse all the options."""
     tox_parser = _get_parser()
     try:
-        import argcomplete  # noqa: PLC0415
+        import argcomplete  # noqa: PLC0415  # ty: ignore[unresolved-import] # optional dependency
 
         argcomplete.autocomplete(tox_parser)
     except ImportError:
