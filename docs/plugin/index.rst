@@ -5,6 +5,17 @@
 Many plugins are available for tox. These include, but are not limited to, the extensions found on the ``tox-dev`` org
 on :gh:`GitHub <tox-dev>`.
 
+*****************
+ Popular plugins
+*****************
+
+- :pypi:`tox-uv` - Use :pypi:`uv` for faster package installation.
+- :pypi:`tox-gh-actions` - Integrate tox with GitHub Actions for efficient CI workflows.
+- :pypi:`tox-gh` - Enhanced GitHub integration for running tox across multiple environments.
+- :pypi:`tox-extra` - Add sanity checks before/after tests (dirty repo detection, system dependencies).
+- :pypi:`tox-recreate` - Automatically recreate environments when dependency files change.
+- :pypi:`tox-multipython` - Interpreter discovery for multipython.
+
 Plugins are automatically discovered from the Python environment that tox itself is installed in. This means that if tox
 is installed in an isolated environment (e.g. when installed using :pypi:`pipx` or :pypi:`uv`), the plugin(s) must be
 installed in the same environment. To ensure a plugin is always available, include it in :ref:`requires`, which causes
@@ -38,6 +49,7 @@ of plugin names:
     env TOX_DISABLED_EXTERNAL_PLUGINS=tox-uv,tox-extra tox --version
 
 .. toctree::
+    :hidden:
 
     getting_started
     howto

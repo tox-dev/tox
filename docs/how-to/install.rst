@@ -37,49 +37,48 @@ discourage that path if you can:
     You can install it within the global Python interpreter itself (perhaps as a user package via the
     ``--user`` flag). Be cautious if you are using a Python installation that is managed by your operating system or
     another package manager. ``pip`` might not coordinate with those tools, and may leave your system in an inconsistent
-    state. Note, if you go down this path you need to ensure pip is new enough per the subsections below
+    state.
 
-wheel
-=====
+    **Requirements:**
 
-Installing tox via a wheel (default with pip) requires an installer that can understand the ``python-requires`` tag (see
-:PEP:`503`), with pip this is version ``9.0.0`` (released in November 2016). Furthermore, in case you're not installing
-it via PyPI you need to use a mirror that correctly forwards the ``python-requires`` tag (notably the OpenStack mirrors
-don't do this, or older :gh_repo:`devpi/devpi` versions - added with version ``4.7.0``).
+    - **wheel (default):** Installing tox via a wheel requires pip that understands the ``python-requires`` tag (see
+      :PEP:`503`). With pip this is version ``9.0.0`` or later (released November 2016). If installing from a mirror,
+      ensure it forwards the ``python-requires`` tag (notably OpenStack mirrors don't, and older :gh_repo:`devpi/devpi`
+      versions before ``4.7.0`` don't).
 
-.. _sdist:
+    .. _sdist:
 
-sdist
-=====
-
-When installing via a source distribution you need an installer that handles the :PEP:`517` specification. In case of
-``pip`` this is version ``18.0.0`` or later (released in July 2018). If you cannot upgrade your pip to support this you
-need to ensure that the build requirements from :gh:`pyproject.toml <tox-dev/tox/blob/main/pyproject.toml>` are
-satisfied before triggering the installation.
+    - **sdist:** When installing via a source distribution you need pip that handles :PEP:`517`. With pip this is
+      version ``18.0.0`` or later (released July 2018). If you cannot upgrade pip, ensure the build requirements from
+      :gh:`pyproject.toml <tox-dev/tox/blob/main/pyproject.toml>` are satisfied before installation.
 
 *******************
  latest unreleased
 *******************
 
-Installing an unreleased version is discouraged and should be only done for testing purposes. If you do so you'll need a
-pip version of at least ``18.0.0`` and use the following command:
+Installing an unreleased version is discouraged and should be only done for testing purposes:
 
-.. code-block:: bash
+.. tab:: uv
 
-    pip install git+https://github.com/tox-dev/tox.git@main
+    .. code-block:: bash
 
-.. _compatibility-requirements:
+        uv tool install --from git+https://github.com/tox-dev/tox.git@main tox
 
-*****************************
- Python and OS Compatibility
-*****************************
+.. tab:: pipx
 
-tox works with the following Python interpreter implementations:
+    .. code-block:: bash
 
-- `CPython <https://www.python.org/>`_ versions 3.10, 3.11, 3.12, 3.13, 3.14
+        pipx install git+https://github.com/tox-dev/tox.git@main
 
-This means tox works on the latest patch version of each of these minor versions. Previous patch versions are supported
-on a best effort approach.
+.. tab:: pip
+
+    .. code-block:: bash
+
+        pip install git+https://github.com/tox-dev/tox.git@main
+
+    Requires pip version ``18.0.0`` or later.
+
+For Python version compatibility, see :ref:`compatibility-requirements`.
 
 ******************
  Man Page Support

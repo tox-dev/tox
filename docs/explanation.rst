@@ -16,7 +16,8 @@ can set up environments for and invoke:
 - build and publishing tools (e.g., :pypi:`build` with :pypi:`twine`),
 - ...
 
-For a step-by-step introduction, see the :doc:`getting_started` tutorial. For practical recipes, see :doc:`howto`.
+For a step-by-step introduction, see the :doc:`tutorial/getting-started` tutorial. For practical recipes, see
+:doc:`how-to/usage`.
 
 *****************
  System overview
@@ -440,25 +441,9 @@ The fail-fast behavior:
 - Environments not yet started are skipped with exit code -2 and marked as ``SKIP`` in the output.
 - The overall tox exit code will be the exit code of the first failed environment.
 
-*****************
- Quick reference
-*****************
-
-CLI shortcuts
-=============
-
-- Each tox subcommand has a 1 (or 2) letter shortcut, e.g. ``tox run`` = ``tox r``, ``tox config`` = ``tox c``.
-- Run all default environments: ``tox`` (runs everything in :ref:`env_list`).
-- Run a specific environment: ``tox run -e 3.13``.
-- Run multiple environments: ``tox run -e lint,3.13`` (sequential, in order).
-- Run environments in parallel: ``tox parallel -e 3.13,3.12`` (see :ref:`parallel_mode`).
-- Run all environments matching a label: ``tox run -m test`` (see :ref:`labels`).
-- Run all environments matching a factor: ``tox run -f django`` (runs all envs containing the ``django`` factor).
-- Inspect configuration: ``tox config -e 3.13 -k pass_env``.
-- Force recreation: ``tox run -e 3.13 -r``.
-
-Configuration inheritance
-=========================
+***************************
+ Configuration inheritance
+***************************
 
 Every tox environment has its own configuration section. If a value is not defined in the environment-specific section,
 it falls back to the base section (:ref:`base` configuration). For ``tox.toml`` this is the ``env_run_base`` table, for
@@ -485,22 +470,6 @@ it falls back to the base section (:ref:`base` configuration). For ``tox.toml`` 
          description = run the test suite with pytest
 
 Here ``test`` inherits ``commands`` from the base because it is not specified in ``[env.test]``.
-
-Environment variables
-=====================
-
-- View environment variables: ``tox c -e 3.13 -k set_env pass_env``.
-- Pass through system environment variables: use :ref:`pass_env`.
-- Set environment variables: use :ref:`set_env`.
-- Setup commands: :ref:`commands_pre`. Teardown commands: :ref:`commands_post`.
-- Change working directory: :ref:`change_dir` (affects install commands too if using relative paths).
-
-Logging
-=======
-
-tox logs command invocations inside ``.tox/<env_name>/log``. Environment variables with names containing sensitive words
-(``access``, ``api``, ``auth``, ``client``, ``cred``, ``key``, ``passwd``, ``password``, ``private``, ``pwd``,
-``secret``, ``token``) are logged with their values redacted to prevent accidental secret leaking in CI/CD environments.
 
 ******************
  Related projects

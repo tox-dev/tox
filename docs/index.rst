@@ -1,10 +1,6 @@
-##########################
- tox - automation project
-##########################
-
-``tox`` aims to automate and standardize testing in Python. It is part of a larger vision of easing the packaging,
-testing and release process of Python software (alongside `pytest <https://docs.pytest.org/en/latest/>`_ and `devpi
-<https://www.devpi.net>`_).
+#####
+ tox
+#####
 
 .. image:: https://img.shields.io/pypi/v/tox?style=flat-square
     :target: https://pypi.org/project/tox/#history
@@ -52,27 +48,77 @@ tox is a generic virtual environment management and test command line tool you c
 - acting as a frontend to continuous integration servers, greatly reducing boilerplate and merging CI and shell-based
   testing.
 
-**************
- Useful links
-**************
+******************
+ Quick navigation
+******************
 
-**Tutorials**
+**Tutorial** - Learn by doing
+
+- :doc:`tutorial/getting-started` — Create your first tox environment and learn the basic workflow
+
+**How-to guides** - Solve specific problems
+
+- :doc:`how-to/install` — Install tox on your system
+- :doc:`how-to/usage` — Common tasks and workflows with tox
+
+**Reference** - Technical information
+
+- :doc:`reference/config` — Complete configuration reference
+- :doc:`reference/cli` — Command line interface options
+
+**Explanation** - Understand the concepts
+
+- :doc:`explanation` — How tox works, architecture, and design principles
+
+**Extensions**
+
+- :doc:`plugin/index` — Extend tox with custom plugins
+
+***************
+ Presentations
+***************
+
+Learn more about tox from maintainer presentations:
 
 - `Oliver Bestwalter - Automating Build, Test and Release Workflows with tox
   <https://www.youtube.com/watch?v=PrAyvH-tm8E>`_
 - `Bernat Gabor - Standardize Testing in Python <https://www.youtube.com/watch?v=SFqna5ilqig>`_
 
-.. comment: split here
+.. toctree::
+    :hidden:
+    :caption: Tutorial
+
+    tutorial/getting-started
 
 .. toctree::
     :hidden:
+    :caption: How-to guides
 
-    installation
-    getting_started
-    user_guide
-    howto
-    config
-    cli_interface
-    plugins/index
+    how-to/install
+    how-to/usage
+
+.. toctree::
+    :hidden:
+    :caption: Reference
+
+    reference/config
+    reference/cli
+
+.. toctree::
+    :hidden:
+    :caption: Explanation
+
+    explanation
+
+.. toctree::
+    :hidden:
+    :caption: Extend
+
+    plugin/index
+
+.. toctree::
+    :hidden:
+    :caption: Project
+
     development
     changelog
