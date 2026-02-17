@@ -1,17 +1,20 @@
 from __future__ import annotations
 
+import contextlib
+import errno
 import json
 import locale
 import logging
 import os
 import re
+import selectors
 import shutil
 import stat
 import subprocess
 import sys
 from io import TextIOWrapper
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, NoReturn
 from unittest.mock import MagicMock, create_autospec
 
 import psutil
@@ -432,3 +435,146 @@ def test_local_execute_does_not_overwrite(key: str, mocker: MockerFixture) -> No
 
     assert outcome is not None
     assert outcome.out == key
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="Unix-specific tests")
+def test_read_via_thread_eintr_during_select(mocker: MockerFixture) -> None:
+    """Test that EINTR during selector.select() is handled correctly."""
+    # Create a pipe
+    read_fd, write_fd = os.pipe()
+    try:
+        data_received = []
+        eintr_raised = [False]
+
+        def handler(data: bytes) -> int:
+            data_received.append(data)
+            return len(data)
+
+        # Mock selector.select to raise OSError with EINTR once
+        original_select = selectors.DefaultSelector.select
+
+        def mock_select(self: Any, timeout: float | None = None) -> list[tuple[selectors.SelectorKey, int]]:
+            if not eintr_raised[0]:
+                eintr_raised[0] = True
+                err = OSError("Interrupted system call")
+                err.errno = errno.EINTR
+                raise err
+            return original_select(self, timeout)
+
+        mocker.patch.object(selectors.DefaultSelector, "select", mock_select)
+
+        # Write some data
+        os.write(write_fd, b"test data")
+        os.close(write_fd)
+
+        # Read the data
+        reader = ReadViaThreadUnix(read_fd, handler, "test", drain=True)
+        with reader:
+            reader.thread.join(timeout=2)
+
+        assert eintr_raised[0], "EINTR should have been raised"
+        assert b"test data" in data_received, "Data should still be read after EINTR"
+    finally:
+        with contextlib.suppress(OSError):
+            os.close(read_fd)
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="Unix-specific tests")
+def test_read_via_thread_eintr_during_read(mocker: MockerFixture) -> None:
+    """Test that EINTR during os.read() is handled correctly."""
+    # Create a pipe
+    read_fd, write_fd = os.pipe()
+    try:
+        data_received = []
+
+        def handler(data: bytes) -> int:
+            data_received.append(data)
+            return len(data)
+
+        # Mock os.read to raise EINTR once, then work normally
+        original_read = os.read
+        call_count = [0]
+
+        def mock_read(fd: int, n: int) -> bytes:
+            call_count[0] += 1
+            if call_count[0] == 1:
+                err = OSError("Interrupted")
+                err.errno = errno.EINTR
+                raise err
+            return original_read(fd, n)
+
+        mocker.patch("os.read", mock_read)
+
+        # Write some data
+        os.write(write_fd, b"test data")
+        os.close(write_fd)
+
+        # Read the data
+        reader = ReadViaThreadUnix(read_fd, handler, "test", drain=True)
+        with reader:
+            reader.thread.join(timeout=1)
+
+        assert b"test data" in data_received
+    finally:
+        with contextlib.suppress(OSError):
+            os.close(read_fd)
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="Unix-specific tests")
+def test_read_via_thread_ebadf_during_read(mocker: MockerFixture) -> None:
+    """Test that EBADF during os.read() is handled correctly."""
+    # Create a pipe
+    read_fd, write_fd = os.pipe()
+    try:
+        data_received = []
+
+        def handler(data: bytes) -> int:
+            data_received.append(data)
+            return len(data)
+
+        # Mock os.read to raise EBADF
+        def mock_read(fd: int, n: int) -> NoReturn:  # noqa: ARG001
+            err = OSError("Bad file descriptor")
+            err.errno = errno.EBADF
+            raise err
+
+        mocker.patch("os.read", mock_read)
+
+        # Close write end
+        os.close(write_fd)
+
+        # Try to read - should handle EBADF gracefully
+        reader = ReadViaThreadUnix(read_fd, handler, "test", drain=True)
+        with reader:
+            reader.thread.join(timeout=1)
+
+        # Should not crash, but won't receive data due to EBADF
+    finally:
+        with contextlib.suppress(OSError):
+            os.close(read_fd)
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="Unix-specific tests")
+def test_read_via_thread_drain_no_data() -> None:
+    """Test drain_stream when there's no data ready."""
+    # Create a pipe with no data
+    read_fd, write_fd = os.pipe()
+    try:
+        data_received = []
+
+        def handler(data: bytes) -> int:
+            data_received.append(data)
+            return len(data)
+
+        # Close write end immediately so no data will be ready
+        os.close(write_fd)
+
+        reader = ReadViaThreadUnix(read_fd, handler, "test", drain=True)
+        # Call drain directly to test the "if not ready: break" path
+        reader._drain_stream()  # noqa: SLF001
+
+        # Should handle gracefully with no data
+        assert len(data_received) == 0
+    finally:
+        with contextlib.suppress(OSError):
+            os.close(read_fd)

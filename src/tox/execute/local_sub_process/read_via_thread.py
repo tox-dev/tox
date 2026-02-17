@@ -1,4 +1,4 @@
-"""A reader that drain a stream via its file no on a background thread."""
+"""A reader that drains a stream via its file descriptor, following CPython's subprocess approach."""
 
 from __future__ import annotations
 
@@ -17,7 +17,7 @@ if TYPE_CHECKING:
         from typing_extensions import Self
 
 
-WAIT_GENERAL = 0.05  # stop thread join every so often (give chance to a signal interrupt)
+WAIT_GENERAL = 0.05
 
 
 class ReadViaThread(ABC):
@@ -38,10 +38,11 @@ class ReadViaThread(ABC):
         exc_val: BaseException | None,
         exc_tb: TracebackType | None,
     ) -> None:
-        self.stop.set()  # signal thread to stop
-        while self.thread.is_alive():  # wait until it stops
+        self.stop.set()
+        while self.thread.is_alive():
             self.thread.join(WAIT_GENERAL)
-        self._drain_stream()  # read anything left
+        if self._on_exit_drain:
+            self._drain_stream()
 
     @abstractmethod
     def _read_stream(self) -> None:
