@@ -172,6 +172,7 @@ class SetEnv:
                     sub_raw[key] = value
                     if marker:
                         self._markers[key] = Marker(marker)
+            self._materialized = {k: v for k, v in self._materialized.items() if k not in sub_raw}
             self._raw.update(sub_raw)
             self.changed = True  # loading while iterating can cause these values to be missed
             for key in sub_raw:

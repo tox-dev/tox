@@ -239,6 +239,20 @@ def test_python_keep_hash_seed(tox_project: ToxProjectCreator) -> None:
     assert result.out.splitlines()[1] == "12"
 
 
+def test_python_hash_seed_via_section_substitution(tox_project: ToxProjectCreator) -> None:
+    ini = """
+    [testenv]
+    package=skip
+    set_env=PYTHONHASHSEED=12
+    [testenv:hs]
+    commands=python -c 'import os; print(os.environ["PYTHONHASHSEED"])'
+    set_env={[testenv]set_env}
+    """
+    result = tox_project({"tox.ini": ini}).run("r", "-e", "hs")
+    result.assert_success()
+    assert result.out.splitlines()[1] == "12"
+
+
 def test_python_disable_hash_seed(tox_project: ToxProjectCreator) -> None:
     ini = "[testenv]\npackage=skip\ncommands=python -c 'import os; print(os.environ.get(\"PYTHONHASHSEED\"))'"
     prj = tox_project({"tox.ini": ini})
