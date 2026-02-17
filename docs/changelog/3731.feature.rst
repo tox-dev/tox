@@ -1,0 +1,3 @@
+Scope dependency rejection in PEP-517 package environments to only pure PEP-517 build types (``sdist``, ``wheel``,
+``editable``), allowing non-standard package types like ``editable-legacy`` to specify dependencies - by
+:user:`rahuldevikar`.
