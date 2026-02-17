@@ -86,12 +86,12 @@ class LocalSubProcessPep517Executor(Execute):
     def close(self) -> None:
         if self._local_execute is not None:  # pragma: no branch
             execute, _status = self._local_execute
-            execute.__exit__(None, None, None)
             if execute.process is not None and execute.process.returncode is None:  # pragma: no cover
                 try:  # pragma: no cover
                     execute.process.wait(timeout=0.1)  # pragma: no cover
                 except TimeoutExpired:  # pragma: no cover
                     execute.process.terminate()  # pragma: no cover  # if does not stop on its own kill it
+            execute.__exit__(None, None, None)
             self._local_execute = None
         self.is_alive = False
 

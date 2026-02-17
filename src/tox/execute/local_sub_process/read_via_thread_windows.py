@@ -29,18 +29,12 @@ class ReadViaThreadWindows(ReadViaThread):  # pragma: win32 cover
                 except OSError:
                     break
 
-                start_time = time.monotonic()
-                max_wait = 1.0
                 while True:
                     try:
                         data = ov.getresult(False)  # noqa: FBT003
                         break
                     except OSError as exception:
                         if getattr(exception, "winerror", None) != ERROR_IO_INCOMPLETE:
-                            return
-                        if self.stop.is_set() and (time.monotonic() - start_time) > 0.2:
-                            return
-                        if (time.monotonic() - start_time) > max_wait:
                             return
                         time.sleep(POLL_INTERVAL)
 
