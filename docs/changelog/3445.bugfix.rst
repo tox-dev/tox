@@ -1,0 +1,2 @@
+Fix ``PATH`` environment variable modifications in ``set_env`` being ignored. The ``_paths`` setter was directly
+updating the cached environment variables, bypassing ``set_env`` values — by :user:`gaborbernat`.

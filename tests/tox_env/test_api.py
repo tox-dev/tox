@@ -38,6 +38,24 @@ def test_setenv_section_substitution(tox_project: ToxProjectCreator) -> None:
     result.assert_success()
 
 
+def test_setenv_can_modify_path(tox_project: ToxProjectCreator) -> None:
+    project = tox_project(
+        {
+            "tox.toml": """
+                [env_run_base]
+                package = "skip"
+                set_env.PATH = "{env:PATH}:/custom/path"
+                commands = [
+                    ["python", "-c", "import os; print(os.environ.get('PATH', ''))"]
+                ]
+            """,
+        },
+    )
+    result = project.run("r", "-e", "py")
+    result.assert_success()
+    assert "/custom/path" in result.out
+
+
 @pytest.mark.parametrize(
     ("key", "do_redact"),
     [

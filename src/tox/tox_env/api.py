@@ -406,11 +406,8 @@ class ToxEnv(ABC):
     @_paths.setter
     def _paths(self, value: list[Path]) -> None:
         self._paths_private = value
-        # also update the environment variable with the new value
-        if self._env_vars is not None:  # pragma: no branch
-            # remove duplicates and prepend the tox env paths
-            result = self._make_path()
-            self._env_vars["PATH"] = result
+        if self._env_vars is not None:
+            self._env_vars = None
 
     @property
     def _allow_externals(self) -> list[str]:
