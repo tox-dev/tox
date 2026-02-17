@@ -7,6 +7,17 @@
 .. towncrier release notes start
 
 **********************
+ v4.38.0 (2026-02-17)
+**********************
+
+Features - 4.38.0
+=================
+
+- Scope dependency rejection in PEP-517 package environments to only pure PEP-517 build types (``sdist``, ``wheel``,
+  ``editable``), allowing non-standard package types like ``editable-legacy`` to specify dependencies - by
+  :user:`rahuldevikar`. (:issue:`3731`)
+
+**********************
  v4.37.0 (2026-02-17)
 **********************
 
