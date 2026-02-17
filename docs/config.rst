@@ -965,6 +965,46 @@ Run
        set.
 
 .. conf::
+    :keys: extra_setup_commands
+    :default: <empty list>
+    :version_added: 4.37
+
+    Commands to execute after the setup phase (dependencies and package installation) but before test commands.
+    These commands run during the ``--notest`` phase, making them useful for separating environment setup from
+    test execution. All evaluation and configuration logic applies from :ref:`commands`.
+
+    This is particularly useful when you want to use ``tox run --notest`` to set up the environment and install
+    additional tools or perform setup tasks, while keeping the actual test execution separate.
+
+    For example, to install pre-commit hooks during the setup phase:
+
+    .. tab:: TOML
+
+       .. code-block:: toml
+
+          [tool.tox.env_run_base]
+          deps = ["pre-commit"]
+          extra_setup_commands = [
+            ["pre-commit", "install-hooks"],
+          ]
+          commands = [
+            ["pre-commit", "run", "--all-files"],
+          ]
+
+    .. tab:: INI
+
+       .. code-block:: ini
+
+          [testenv]
+          deps = pre-commit
+          extra_setup_commands = pre-commit install-hooks
+          commands = pre-commit run --all-files
+
+    When running ``tox run --notest``, the environment will be created, dependencies installed, and
+    ``extra_setup_commands`` executed, but ``commands`` will be skipped. When running ``tox run`` without
+    ``--notest``, all commands including ``extra_setup_commands`` will execute.
+
+.. conf::
     :keys: commands_pre
     :default: <empty list>
     :version_added: 3.4
