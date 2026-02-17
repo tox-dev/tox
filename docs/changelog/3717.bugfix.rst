@@ -1,0 +1,1 @@
+Run pre-commit on changelog.rst after towncrier build to ensure proper formatting before committing the release
