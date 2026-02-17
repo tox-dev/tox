@@ -417,3 +417,35 @@ def test_config_set_env_ref(tox_project: ToxProjectCreator) -> None:
         "  PYTHONIOENCODING=utf-8\n"
     )
     outcome.assert_out_err(out, "")
+
+
+def test_config_env_run_base_deps_reference_with_additional_deps(tox_project: ToxProjectCreator) -> None:
+    project = tox_project({
+        "pyproject.toml": """
+        [tool.tox.env_run_base]
+        deps = ["pytest>=8", "coverage>=7"]
+
+        [tool.tox.env.test]
+        deps = ["{[tool.tox.env_run_base]deps}", "pytest-xdist", "pytest-timeout"]
+        """
+    })
+    outcome = project.run("c", "-e", "test", "-k", "deps")
+    outcome.assert_success()
+    out = "[testenv:test]\ndeps =\n  pytest>=8\n  coverage>=7\n  pytest-xdist\n  pytest-timeout\n"
+    outcome.assert_out_err(out, "")
+
+
+def test_config_env_pkg_base_deps_reference_with_additional_deps(tox_project: ToxProjectCreator) -> None:
+    project = tox_project({
+        "pyproject.toml": """
+        [tool.tox.env_pkg_base]
+        deps = ["build", "wheel"]
+
+        [tool.tox.env.pkg]
+        deps = ["{[tool.tox.env_pkg_base]deps}", "setuptools>=40"]
+        """
+    })
+    outcome = project.run("c", "-e", "pkg", "-k", "deps")
+    outcome.assert_success()
+    out = "[testenv:pkg]\ndeps =\n  build\n  wheel\n  setuptools>=40\n"
+    outcome.assert_out_err(out, "")
