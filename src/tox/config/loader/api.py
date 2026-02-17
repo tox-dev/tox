@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from abc import abstractmethod
 from argparse import ArgumentTypeError
-from collections.abc import Mapping
+from collections.abc import Iterable, Mapping
 from typing import TYPE_CHECKING, Any, TypeVar, cast
 
 from tox.plugin import impl
@@ -120,13 +120,14 @@ class Loader(Convert[T]):
     def __contains__(self, item: str) -> bool:
         return item in self.found_keys()
 
-    def load(
+    def load(  # noqa: PLR0913
         self,
         key: str,
         of_type: type[V] | UnionType,
         factory: Factory[V],
         conf: Config | None,
         args: ConfigLoadArgs,
+        all_keys: Iterable[str] = (),
     ) -> V:
         """Load a value (raw and then convert).
 
@@ -135,22 +136,25 @@ class Loader(Convert[T]):
         :param factory: factory method to build the object
         :param conf: the configuration object of this tox session (needed to manifest the value)
         :param args: the config load arguments
+        :param all_keys: all alias keys for this config entry (to collect overrides from any alias)
 
         :returns: the converted type
 
         """
         from tox.config.set_env import SetEnv  # noqa: PLC0415
 
-        overrides = self.overrides.get(key, [])
-
-        try:
-            raw = self.load_raw(key, conf, args.env_name)
-        except KeyError:
-            converted = None
-            if not overrides:
-                raise
+        overrides = [o for alias in (key, *all_keys) for o in self.overrides.get(alias, [])]
+        converted = None
+        for alias in (key, *all_keys):
+            try:
+                raw = self.load_raw(alias, conf, args.env_name)
+            except KeyError:
+                continue
+            converted = self.build(alias, of_type, factory, conf, raw, args)
+            break
         else:
-            converted = self.build(key, of_type, factory, conf, raw, args)
+            if not overrides:
+                raise KeyError(key)
 
         for override in overrides:
             converted_override = _STR_CONVERT.to(override.value, of_type, factory)

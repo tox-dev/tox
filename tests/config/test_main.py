@@ -95,6 +95,25 @@ def test_config_override_appends_to_empty_list(tox_ini_conf: ToxIniCreator) -> N
     assert conf["passenv"] == ["bar"]
 
 
+@pytest.mark.parametrize(
+    ("ini_key", "override_key"),
+    [
+        pytest.param("passenv", "pass_env", id="ini_old_override_new"),
+        pytest.param("pass_env", "passenv", id="ini_new_override_old"),
+    ],
+)
+def test_config_override_append_alias_key(tox_ini_conf: ToxIniCreator, ini_key: str, override_key: str) -> None:
+    example = f"""
+    [testenv]
+    {ini_key} = foo
+    """
+    conf = tox_ini_conf(example, override=[Override(f"testenv.{override_key}+=bar")]).get_env("testenv")
+    conf.add_config(["pass_env", "passenv"], of_type=list[str], default=[], desc="desc")
+    result = conf["pass_env"]
+    assert "foo" in result
+    assert "bar" in result
+
+
 def test_config_override_appends_to_setenv(tox_ini_conf: ToxIniCreator) -> None:
     example = """
     [testenv]
