@@ -237,6 +237,23 @@ def test_set_env_environment_file_combined_with_normal_setting(
     }
 
 
+def test_set_env_file_does_not_override_later_values(tox_project: ToxProjectCreator) -> None:
+    ini = """\
+    [testenv]
+    skip_install = true
+    set_env =
+        file|.env
+        FOO=QUX
+    """
+    project = tox_project({"tox.ini": ini, ".env": "FOO=BAR\nEXTRA=from_file"})
+    result = project.run("c", "-e", "py", "-k", "set_env")
+    result.assert_success()
+    set_env = result.env_conf("py")["set_env"]
+    content = {k: set_env.load(k) for k in set_env}
+    assert content["FOO"] == "QUX"
+    assert content["EXTRA"] == "from_file"
+
+
 def test_set_env_environment_file_missing(tox_project: ToxProjectCreator) -> None:
     project = tox_project({"tox.ini": "[testenv]\npackage=skip\nset_env=file|magic.txt"})
     result = project.run("r")
