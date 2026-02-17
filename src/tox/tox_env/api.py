@@ -386,6 +386,9 @@ class ToxEnv(ABC):
         result["PATH"] = self._make_path()
         for key in set_env:
             result[key] = set_env.load(key)
+        # if set_env modified PATH, re-prepend virtual-env paths (deduped) so they always come first
+        if self._paths and "PATH" in set_env:
+            result["PATH"] = self._make_path(result["PATH"])
         result["TOX_ENV_NAME"] = self.name
         result["TOX_WORK_DIR"] = str(self.core["work_dir"])
         result["TOX_ENV_DIR"] = str(self.conf["env_dir"])
@@ -406,11 +409,8 @@ class ToxEnv(ABC):
     @_paths.setter
     def _paths(self, value: list[Path]) -> None:
         self._paths_private = value
-        # also update the environment variable with the new value
-        if self._env_vars is not None:  # pragma: no branch
-            # remove duplicates and prepend the tox env paths
-            result = self._make_path()
-            self._env_vars["PATH"] = result
+        # Invalidate cached env vars so they rebuild on next access, preserving set_env PATH modifications.
+        self._env_vars = None
 
     @property
     def _allow_externals(self) -> list[str]:
@@ -418,9 +418,9 @@ class ToxEnv(ABC):
         result.extend(i.strip() for i in self.conf["allowlist_externals"])
         return result
 
-    def _make_path(self) -> str:
+    def _make_path(self, existing: str | None = None) -> str:
         values = dict.fromkeys(str(i) for i in self._paths)
-        values.update(dict.fromkeys(os.environ.get("PATH", "").split(os.pathsep)))
+        values.update(dict.fromkeys((existing or os.environ.get("PATH", "")).split(os.pathsep)))
         return os.pathsep.join(values)
 
     def execute(  # noqa: PLR0913

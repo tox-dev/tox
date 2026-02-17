@@ -174,3 +174,38 @@ def test_change_dir_is_relative_to_conf(tox_project: ToxProjectCreator) -> None:
     result.assert_success()
     lines = result.out.splitlines()
     assert lines[1] == f"change_dir = {prj.path / 'a'}"
+
+
+def test_setenv_path_not_overwritten(tox_project: ToxProjectCreator) -> None:
+    cmd = "import os; print(os.environ['PATH'])"
+    toml = f"""
+    [env_run_base]
+    package = "skip"
+    set_env.PATH = "{{env:PATH}}:/custom/test/path"
+    commands = [["python", "-c", "{cmd}"]]
+    """
+    project = tox_project({"tox.toml": toml})
+    result = project.run("r")
+    result.assert_success()
+    # The custom path from set_env must survive — not be overwritten
+    assert "/custom/test/path" in result.out
+
+
+def test_setenv_path_venv_paths_first(tox_project: ToxProjectCreator) -> None:
+    cmd = "import os; print(os.environ['PATH'])"
+    toml = f"""
+    [env_run_base]
+    package = "skip"
+    set_env.PATH = "{{env:PATH}}:/trailing/path"
+    commands = [["python", "-c", "{cmd}"]]
+    """
+    project = tox_project({"tox.toml": toml})
+    result = project.run("r")
+    result.assert_success()
+    path_line = next(line for line in result.out.splitlines() if "/trailing/path" in line)
+    path_entries = path_line.split(":")
+    # The virtual environment paths (containing .tox) must come before the trailing path
+    tox_idx = next((i for i, p in enumerate(path_entries) if ".tox" in p), None)
+    trailing_idx = next(i for i, p in enumerate(path_entries) if p == "/trailing/path")
+    assert tox_idx is not None, f"expected .tox path in PATH, got: {path_line}"
+    assert tox_idx < trailing_idx, f"venv paths should precede trailing path: {path_line}"
