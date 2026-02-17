@@ -386,6 +386,14 @@ class ToxEnv(ABC):
         result["PATH"] = self._make_path()
         for key in set_env:
             result[key] = set_env.load(key)
+        # ensure virtual environment paths are always at the beginning of PATH,
+        # even if set_env modified PATH (e.g., PATH = {env:PATH}:/test)
+        if self._paths:
+            env_paths = dict.fromkeys(str(i) for i in self._paths)
+            current = result.get("PATH", "")
+            for entry in current.split(os.pathsep):
+                env_paths.setdefault(entry)
+            result["PATH"] = os.pathsep.join(env_paths)
         result["TOX_ENV_NAME"] = self.name
         result["TOX_WORK_DIR"] = str(self.core["work_dir"])
         result["TOX_ENV_DIR"] = str(self.conf["env_dir"])
