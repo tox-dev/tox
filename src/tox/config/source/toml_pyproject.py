@@ -138,7 +138,11 @@ class TomlPyProject(Source):
             yield self._Section.test_env(env_name)
 
     def get_base_sections(self, base: list[str], in_section: Section) -> Iterator[Section]:  # noqa: ARG002
-        yield from [self._Section.test_env(b) for b in base]
+        core = self._Section.core_prefix()
+        prefix = f"{core}{self._Section.SEP}" if core else ""
+        for b in base:
+            name = b[len(prefix):] if b.startswith(prefix) else b
+            yield self._Section(prefix=core or None, name=name)
 
     def get_tox_env_section(self, item: str) -> tuple[Section, list[str], list[str]]:
         return self._Section.test_env(item), [self._Section.run_env_base()], [self._Section.package_env_base()]

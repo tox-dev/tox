@@ -112,6 +112,40 @@ def test_show_config_empty_install_command_exception(tox_project: ToxProjectCrea
     assert txt in outcome.out
 
 
+@pytest.mark.parametrize(
+    ("filename", "content"),
+    [
+        pytest.param(
+            "tox.toml",
+            """
+            [env_run_base]
+            package = "skip"
+            install_command = ["echo", "CUSTOM", "{packages}"]
+            commands = [["python", "-c", "pass"]]
+            """,
+            id="tox.toml",
+        ),
+        pytest.param(
+            "pyproject.toml",
+            """
+            [tool.tox]
+            env_list = ["py"]
+            [tool.tox.env_run_base]
+            package = "skip"
+            install_command = ["echo", "CUSTOM", "{packages}"]
+            commands = [["python", "-c", "pass"]]
+            """,
+            id="pyproject.toml",
+        ),
+    ],
+)
+def test_show_config_install_command_toml(tox_project: ToxProjectCreator, filename: str, content: str) -> None:
+    project = tox_project({filename: content})
+    outcome = project.run("c", "-k", "install_command")
+    outcome.assert_success()
+    assert "echo CUSTOM '{packages}'" in outcome.out
+
+
 def test_show_config_invalid_python_exit_code(tox_project: ToxProjectCreator) -> None:
     project = tox_project(
         {
