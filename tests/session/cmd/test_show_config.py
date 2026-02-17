@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING
 import pytest
 
 from tox.config.types import Command
+from tox.execute.request import shell_cmd
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -143,7 +144,8 @@ def test_show_config_install_command_toml(tox_project: ToxProjectCreator, filena
     project = tox_project({filename: content})
     outcome = project.run("c", "-k", "install_command")
     outcome.assert_success()
-    assert "echo CUSTOM '{packages}'" in outcome.out
+    expected_cmd = shell_cmd(["echo", "CUSTOM", "{packages}"])
+    assert f"install_command = {expected_cmd}" in outcome.out
 
 
 def test_show_config_invalid_python_exit_code(tox_project: ToxProjectCreator) -> None:
