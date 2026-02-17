@@ -1,0 +1,2 @@
+Set ``PIP_USER=0`` environment variable when running pip commands in virtualenvs to prevent pip from attempting
+``--user`` installs when users have ``pip config --user`` configured globally — by :user:`gaborbernat`.

@@ -113,8 +113,8 @@ External commands need to be explicitly allowed via :ref:`allowlist_externals`.
    virtualenv first.
 4. **set_env** -- values defined here are applied last and can override anything from the previous steps, including
    ``PATH``.
-5. **Injected variables** -- tox adds ``TOX_ENV_NAME``, ``TOX_WORK_DIR``, ``TOX_ENV_DIR``, ``VIRTUAL_ENV``, and
-   ``PYTHONIOENCODING=utf-8``. These cannot be overridden.
+5. **Injected variables** -- tox adds ``TOX_ENV_NAME``, ``TOX_WORK_DIR``, ``TOX_ENV_DIR``, ``VIRTUAL_ENV``,
+   ``PIP_USER=0``, and ``PYTHONIOENCODING=utf-8``. These cannot be overridden.
 
 **PATH behavior**: because tox prepends the virtualenv ``bin/`` directory to ``PATH`` at step 3, commands like
 ``python`` and ``pip`` resolve to the virtualenv versions. If you override ``PATH`` in ``set_env``, be aware that this
