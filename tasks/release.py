@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from subprocess import check_call
+from subprocess import CalledProcessError, check_call, run
 
 from git import Commit, Head, Remote, Repo, TagReference
 from packaging.version import Version
@@ -151,10 +151,23 @@ def create_github_release(version: Version) -> None:
             break
         notes_lines.append(line)
     notes = "\n".join(notes_lines).strip()
-    check_call(
-        ["gh", "release", "create", version_str, "--title", f"v{version_str}", "--notes", notes],  # noqa: S607
-        cwd=str(ROOT_SRC_DIR),
-    )
+    try:
+        result = run(
+            ["gh", "release", "create", version_str, "--title", f"v{version_str}", "--notes", notes],  # noqa: S607
+            cwd=str(ROOT_SRC_DIR),
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+        if result.stdout:
+            print(result.stdout)  # noqa: T201
+    except CalledProcessError as e:
+        print(f"gh release create failed with exit code {e.returncode}")  # noqa: T201
+        if e.stdout:
+            print(f"stdout: {e.stdout}")  # noqa: T201
+        if e.stderr:
+            print(f"stderr: {e.stderr}")  # noqa: T201
+        raise
 
 
 if __name__ == "__main__":
