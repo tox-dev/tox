@@ -388,7 +388,7 @@ class ToxEnv(ABC):
             result[key] = set_env.load(key)
         # if set_env modified PATH, re-prepend virtual-env paths (deduped) so they always come first
         if self._paths and "PATH" in set_env:
-            result["PATH"] = self._make_path_with(result["PATH"])
+            result["PATH"] = self._make_path(result["PATH"])
         result["TOX_ENV_NAME"] = self.name
         result["TOX_WORK_DIR"] = str(self.core["work_dir"])
         result["TOX_ENV_DIR"] = str(self.conf["env_dir"])
@@ -420,13 +420,9 @@ class ToxEnv(ABC):
         result.extend(i.strip() for i in self.conf["allowlist_externals"])
         return result
 
-    def _make_path(self) -> str:
-        return self._make_path_with(os.environ.get("PATH", ""))
-
-    def _make_path_with(self, existing: str) -> str:
-        """Build PATH with virtual-env paths first, deduplicating entries."""
+    def _make_path(self, existing: str | None = None) -> str:
         values = dict.fromkeys(str(i) for i in self._paths)
-        values.update(dict.fromkeys(existing.split(os.pathsep)))
+        values.update(dict.fromkeys((existing or os.environ.get("PATH", "")).split(os.pathsep)))
         return os.pathsep.join(values)
 
     def execute(  # noqa: PLR0913
