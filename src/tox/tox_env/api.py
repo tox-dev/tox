@@ -409,9 +409,7 @@ class ToxEnv(ABC):
     @_paths.setter
     def _paths(self, value: list[Path]) -> None:
         self._paths_private = value
-        # Invalidate the cached environment variables so they are rebuilt
-        # on next access. This ensures that set_env PATH modifications
-        # (e.g., PATH = {env:PATH}:/test) are not overwritten.
+        # Invalidate cached env vars so they rebuild on next access, preserving set_env PATH modifications.
         self._env_vars = None
 
     @property
