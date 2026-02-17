@@ -65,12 +65,14 @@ commands = [ [ "pre-commit", "run", "--all-files", "--show-diff-on-failure", { r
 [env.type]
 base_python = ["3.14"]
 description = "run type check on code base"
+extras = [ "completion" ]
 dependency_groups = [ "type" ]
 commands = [ [ "ty", "check", "--python-platform", "all", "--output-format", "concise", "--error-on-warning", "." ] ]
 
 [env.type-min]
 base_python = ["3.10"]
 description = "run type check on code base for the minimum supported Python"
+extras = [ "completion" ]
 dependency_groups = [ "type-min" ]
 commands = [ [ "ty", "check", "--python-version", "3.10", "--python-platform", "all", "--output-format", "concise", "--error-on-warning", "src", "tests" ] ]
 
