@@ -202,7 +202,12 @@ class Pep517VenvPackager(PythonPackageToxEnv, ABC):
         self.builds[build_type].append(run_env.conf)
 
     def _setup_env(self) -> None:
-        if self.conf["deps"]:
+        # Only reject deps for standard PEP-517 build types (sdist, wheel, editable).
+        # Non-standard types like editable-legacy legitimately need deps (e.g. the wheel package)
+        # since they run setup.py directly in the packaging environment rather than through
+        # PEP-517 build isolation.
+        standard_pep517_types = {"sdist", "wheel", "editable"}
+        if self.conf["deps"] and self.call_require_hooks <= standard_pep517_types:
             msg = (
                 f"PEP-517 packaging environment {self.conf.name!r} does not support the deps configuration. "
                 f"Build dependencies should be specified in the [build-system] table of pyproject.toml "

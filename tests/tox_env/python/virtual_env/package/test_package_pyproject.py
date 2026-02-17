@@ -285,7 +285,7 @@ def test_pyproject_no_build_editable_fallback(tox_project: ToxProjectCreator, de
     assert found_calls == expected_calls
 
 
-@pytest.mark.parametrize("package", ["sdist", "wheel", "editable", "editable-legacy"])
+@pytest.mark.parametrize("package", ["sdist", "wheel", "editable"])
 def test_pep517_pkg_env_rejects_deps(tox_project: ToxProjectCreator, demo_pkg_setuptools: Path, package: str) -> None:
     ini = f"[testenv]\npackage={package}\n[pkgenv]\ndeps = A"
     proj = tox_project({"tox.ini": ini}, base=demo_pkg_setuptools)
@@ -293,6 +293,18 @@ def test_pep517_pkg_env_rejects_deps(tox_project: ToxProjectCreator, demo_pkg_se
     result = proj.run("r", "--notest")
     result.assert_failed()
     assert "does not support the deps configuration" in result.out
+
+
+def test_pep517_pkg_env_allows_deps_for_editable_legacy(
+    tox_project: ToxProjectCreator,
+    demo_pkg_setuptools: Path,
+) -> None:
+    ini = "[testenv]\npackage=editable-legacy\n[pkgenv]\ndeps = A"
+    proj = tox_project({"tox.ini": ini}, base=demo_pkg_setuptools)
+    proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
+    result = proj.run("r", "--notest")
+    result.assert_success()
+    assert "does not support the deps configuration" not in result.out
 
 
 def test_pep517_pkg_env_rejects_deps_via_testenv(
