@@ -218,13 +218,23 @@ def test_parallel_no_spinner_ci(
     )
 
 
-def test_parallel_no_spinner_legacy(tox_project: ToxProjectCreator) -> None:
+def test_parallel_no_spinner_legacy_sequential(tox_project: ToxProjectCreator, mocker: MockerFixture) -> None:
+    """--parallel-no-spinner alone should not force parallel mode in legacy command."""
+    mocked = mocker.patch("tox.session.cmd.legacy.run_sequential")
+
+    tox_project({"tox.ini": ""}).run("--parallel-no-spinner")
+
+    mocked.assert_called_once()
+
+
+def test_parallel_no_spinner_legacy_with_parallel(tox_project: ToxProjectCreator) -> None:
+    """--parallel-no-spinner combined with -p should still run parallel without spinner."""
     with mock.patch.object(parallel, "execute") as mocked:
-        tox_project({"tox.ini": ""}).run("--parallel-no-spinner")
+        tox_project({"tox.ini": ""}).run("--parallel-no-spinner", "-p", "all")
 
     mocked.assert_called_once_with(
         mock.ANY,
-        max_workers=auto_detect_cpus(),
+        max_workers=None,
         has_spinner=False,
         live=False,
     )

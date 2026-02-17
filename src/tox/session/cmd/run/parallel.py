@@ -79,10 +79,7 @@ def parallel_flags(
         action="store_true",
         dest="parallel_no_spinner",
         default=default_spinner,
-        help=(
-            "run tox environments in parallel, but don't show the spinner, implies --parallel. "
-            "Disabled by default if CI is detected (not in legacy API)."
-        ),
+        help="disable the spinner when running in parallel, enabled by default in CI",
     )
 
 

@@ -110,7 +110,7 @@ def legacy(state: State) -> int:
             option.env = CliEnv(["py"])
         option.devenv_path = Path(option.devenv_path)
         return devenv(state)
-    if option.parallel_no_spinner is True or option.parallel != 0:  # only 0 means sequential
+    if option.parallel != 0:  # only 0 means sequential
         return run_parallel(state)
     return run_sequential(state)
 
