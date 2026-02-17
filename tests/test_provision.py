@@ -151,7 +151,7 @@ def test_provision_requires_nok(tox_project: ToxProjectCreator) -> None:
 
 @pytest.mark.integration
 @pytest.mark.usefixtures("_pypi_index_self")
-@pytest.mark.skipif(sys.platform == "win32", reason="Windows subprocess deadlocks during provision recreate")
+@pytest.mark.timeout(120)
 def test_provision_requires_ok(tox_project: ToxProjectCreator, tmp_path: Path) -> None:
     proj = tox_project({"tox.ini": "[tox]\nrequires=demo-pkg-inline\n[testenv]\npackage=skip"})
     log = tmp_path / "out.log"
@@ -279,6 +279,7 @@ def test_provision_default_arguments_exists(tox_project: ToxProjectCreator, subc
 @pytest.mark.integration
 @pytest.mark.usefixtures("_pypi_index_mirrored")
 @pytest.mark.flaky(max_runs=3, min_passes=1)
+@pytest.mark.timeout(120)
 def test_provision_install_pkg_pep517(
     tmp_path_factory: TempPathFactory,
     tox_project: ToxProjectCreator,
