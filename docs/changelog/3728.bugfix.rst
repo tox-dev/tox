@@ -1,2 +1,0 @@
-Fix type checker CI failure by adding ``completion`` extras to ``type`` and ``type-min`` environments so ``ty`` can
-resolve the ``argcomplete`` import - by :user:`gaborbernat`.

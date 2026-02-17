@@ -1,2 +1,0 @@
-Restructured documentation using the Diátaxis framework to separate Tutorial, How-to guides, Reference, and Explanation
-content for better discoverability and user experience.
