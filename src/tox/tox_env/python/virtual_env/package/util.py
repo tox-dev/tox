@@ -34,23 +34,24 @@ def dependencies_with_extras_from_markers(
     *,
     available_extras: set[str] | None = None,
 ) -> list[Requirement]:
-    if available_extras is not None and extras:
+    normalized_extras = {canonicalize_name(e) for e in extras}
+    if available_extras is not None and normalized_extras:
         normalized_available = {canonicalize_name(e) for e in available_extras}
-        if unknown := extras - normalized_available:
+        if unknown := normalized_extras - normalized_available:
             available_str = ", ".join(sorted(normalized_available)) or "none"
             unknown_str = ", ".join(sorted(unknown))
             msg = f"extras not found for package {package_name}: {unknown_str} (available: {available_str})"
             raise Fail(msg)
     result: list[Requirement] = []
     found: set[str] = set()
-    todo: set[str | None] = extras | {None}
+    todo: set[str | None] = normalized_extras | {None}
     visited: set[str | None] = set()
     while todo:
         new_extras: set[str | None] = set()
         for req, extra_markers in deps_with_markers:
             if todo & extra_markers:
                 if req.name == package_name:  # support for recursive extras
-                    new_extras.update(req.extras or set())
+                    new_extras.update(canonicalize_name(e) for e in (req.extras or set()))
                 else:
                     req_str = str(req)
                     if req_str not in found:
@@ -81,7 +82,7 @@ def _extract_extra_markers(req: Requirement) -> tuple[Requirement, set[str | Non
     while marker:
         extra = _get_extra(marker)
         if extra is not None:
-            extra_markers.add(extra)
+            extra_markers.add(canonicalize_name(extra))
             if new_markers and new_markers[-1] in {"and", "or"}:
                 del new_markers[-1]
             marker = markers.pop(0) if markers else None

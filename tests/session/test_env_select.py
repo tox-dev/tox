@@ -152,6 +152,43 @@ def test_factor_select(
     outcome.assert_out_err("{}\n".format("\n".join(expect_envs)), "")
 
 
+@pytest.mark.parametrize(
+    ("env_value", "expect_envs"),
+    [
+        ("cov", ("py310-django20-cov", "py310-django21-cov", "py39-django20-cov", "py39-django21-cov")),
+        ("py39,django20", ("py39-django20-cov", "py39-django20")),
+        (
+            "py39;py310",
+            (
+                "py310-django20-cov",
+                "py310-django20",
+                "py310-django21-cov",
+                "py310-django21",
+                "py39-django20-cov",
+                "py39-django20",
+                "py39-django21-cov",
+                "py39-django21",
+            ),
+        ),
+    ],
+)
+def test_factor_select_via_env_var(
+    tox_project: ToxProjectCreator,
+    monkeypatch: MonkeyPatch,
+    env_value: str,
+    expect_envs: tuple[str, ...],
+) -> None:
+    ini = """
+        [tox]
+        env_list = py3{10,9}-{django20,django21}{-cov,}
+        """
+    monkeypatch.setenv("TOX_FACTORS", env_value)
+    project = tox_project({"tox.ini": ini})
+    outcome = project.run("l", "--no-desc")
+    outcome.assert_success()
+    outcome.assert_out_err("{}\n".format("\n".join(expect_envs)), "")
+
+
 def test_tox_skip_env(tox_project: ToxProjectCreator, monkeypatch: MonkeyPatch) -> None:
     monkeypatch.setenv("TOX_SKIP_ENV", "m[y]py")
     project = tox_project({"tox.ini": "[tox]\nenv_list = py3{10,9},mypy"})

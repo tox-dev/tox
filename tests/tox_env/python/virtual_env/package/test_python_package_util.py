@@ -112,3 +112,34 @@ def test_validate_extras_normalization() -> None:
 def test_validate_extras_no_available() -> None:
     with pytest.raises(Fail, match=r"extras not found for package pkg: alpha \(available: none\)"):
         dependencies_with_extras([], {"alpha"}, "pkg", available_extras=set())
+
+
+def test_extras_underscore_hyphen_matching() -> None:
+    """Extras with underscores in tox.ini should match hyphens in metadata markers (#3433)."""
+    requires = [
+        Requirement('dep-a; extra == "kebab-case"'),
+        Requirement('dep-b; extra == "snake-case"'),
+        Requirement('dep-c; extra == "kebab-case-2"'),
+    ]
+    result = dependencies_with_extras(requires, {"kebab-case", "snake_case", "kebab-case-2"}, "pkg")
+    assert sorted(str(r) for r in result) == ["dep-a", "dep-b", "dep-c"]
+
+
+def test_extras_underscore_in_markers() -> None:
+    """Extras with underscores in markers should match hyphens in tox.ini (#3433)."""
+    requires = [
+        Requirement('dep-a; extra == "snake_case"'),
+    ]
+    result = dependencies_with_extras(requires, {"snake-case"}, "pkg")
+    assert [str(r) for r in result] == ["dep-a"]
+
+
+def test_extras_normalization_with_recursive() -> None:
+    """Recursive extras with underscores should be resolved correctly (#3433)."""
+    requires = [
+        Requirement('dep1; extra == "my-extra"'),
+        Requirement('name[sub_extra]; extra == "my-extra"'),
+        Requirement('dep2; extra == "sub-extra"'),
+    ]
+    result = dependencies_with_extras(requires, {"my_extra"}, "name")
+    assert sorted(str(r) for r in result) == ["dep1", "dep2"]

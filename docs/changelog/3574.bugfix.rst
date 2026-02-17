@@ -1,0 +1,2 @@
+Fix custom ``install_command`` being ignored when specified in TOML configuration (``tox.toml``/``pyproject.toml``) - by
+:user:`Fridayai700`.

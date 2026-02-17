@@ -123,6 +123,7 @@ class TomlReplaceLoader(ReplaceReference):
                     default = settings["default"]
                     if default is not None:
                         return default
+                    return None  # keep original text, consistent with ini loader behavior
                 raise exception
         return value
 
