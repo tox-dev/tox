@@ -27,9 +27,16 @@ _COMMENT_RE = re.compile(r"(^|\s+)#.*$")
 # https://www.python.org/dev/peps/pep-0508/#extras
 _EXTRA_PATH = re.compile(r"(.*)\[([-._,\sa-zA-Z0-9]*)]")
 _EXTRA_ELEMENT = re.compile(r"[a-zA-Z0-9]*[-._a-zA-Z0-9]")
+_VERSION_SPECIFIER = re.compile(r"[><=!~]=|===?|[><]")
 ReqFileLines = Iterator[tuple[int, str]]
 
 DEFAULT_INDEX_URL = "https://pypi.org/simple"
+
+
+def _looks_like_version_specifier(req: str) -> bool:
+    """Check if a string contains PEP 440 version specifier operators, suggesting it's an invalid requirement rather
+    than a local path (e.g. ``pre-commit ~= 4`` where ``~=`` triggers tilde expansion if treated as a path)."""
+    return bool(_VERSION_SPECIFIER.search(req))
 
 
 class ParsedRequirement:
@@ -40,6 +47,8 @@ class ParsedRequirement:
         except InvalidRequirement:
             if is_url(req) or any(req.startswith(f"{v}+") and is_url(req[len(v) + 1 :]) for v in VCS):
                 self._requirement = req
+            elif _looks_like_version_specifier(req):
+                self._requirement = req  # invalid requirement with version specifier — let pip report the error
             else:
                 root = Path(from_file).parent
                 extras: list[str] = []

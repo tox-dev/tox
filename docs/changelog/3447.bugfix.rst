@@ -1,0 +1,2 @@
+Fix ``deps`` entries with ``~=`` version specifier being incorrectly treated as local paths instead of being passed
+through to pip - by :user:`Fridayai700`.

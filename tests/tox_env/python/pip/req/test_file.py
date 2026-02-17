@@ -550,6 +550,13 @@ def test_requirement_via_file_protocol_na(tmp_path: Path) -> None:
         assert req_file.options
 
 
+@pytest.mark.parametrize("req", ["pre-commit ~= 4", "pre-commit~=4"])
+def test_requirement_with_tilde_equals_not_treated_as_path(tmp_path: Path, req: str) -> None:
+    """Deps with ``~=`` version specifier should not be treated as local paths (#3447)."""
+    parsed = ParsedRequirement(req, {}, str(tmp_path / "tox.ini"), 1)
+    assert str(parsed.requirement) == req
+
+
 def test_requirement_to_path_one_level_up(tmp_path: Path) -> None:
     other_req = tmp_path / "other.txt"
     other_req.write_text("-e ..")
