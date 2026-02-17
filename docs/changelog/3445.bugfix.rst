@@ -1,1 +1,2 @@
-Fix ``setenv`` modifications to ``PATH`` being overwritten when tox environment paths are set up - by :user:`Fridayai700`
+Fix ``setenv`` modifications to ``PATH`` being overwritten when tox environment paths are set up - by
+:user:`Fridayai700`
