@@ -1,2 +1,0 @@
-Document use of Python :mod:`logging` for plugin authors in the how-to guides, covering verbosity levels, coloring, and
-best practices — by :user:`rahuldevikar`.

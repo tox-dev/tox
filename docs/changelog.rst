@@ -6,6 +6,22 @@
 
 .. towncrier release notes start
 
+*********************
+ v4.36.1 (2026-02-17)
+*********************
+
+Bugfixes - 4.36.1
+=================
+- Report TOML parse errors during config discovery instead of silently ignoring them - by :user:`rahuldevikar`. (:issue:`3030`)
+- Adopt CPython's subprocess stream handling to fix deadlocks and improve performance when reading subprocess output (:issue:`3715`)
+
+Documentation - 4.36.1
+======================
+- Add Unix man page generation and installation support using sphinx-argparse-cli - by :user:`gaborbernat`. (:issue:`1409`)
+- Document use of Python :mod:`logging` for plugin authors in the how-to guides, covering verbosity levels, coloring, and
+  best practices — by :user:`rahuldevikar`. (:issue:`3449`)
+- Add architecture documentation for new contributors under the development section - by :user:`rahuldevikar` (:issue:`3707`)
+
 **********************
  v4.36.0 (2026-02-15)
 **********************

@@ -1,1 +1,0 @@
-Add architecture documentation for new contributors under the development section - by :user:`rahuldevikar`
