@@ -1,6 +1,6 @@
-##############################
- Getting Started with Plugins
-##############################
+###################
+ Your first plugin
+###################
 
 You can define plugins directly in your project by creating a ``toxfile.py`` file next to your tox configuration file.
 This avoids the need to package and install a separate plugin. All the same hooks are available.

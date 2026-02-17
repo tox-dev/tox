@@ -239,7 +239,7 @@ Bugfixes - 4.30.0
 Features - 4.29.0
 =================
 
-- A new tox life cycle event is now exposed for use via :doc:`Plugins API </plugins/index>` -- by :user:`webknjaz`.
+- A new tox life cycle event is now exposed for use via :doc:`Plugins API </plugin/index>` -- by :user:`webknjaz`.
 
   The corresponding hook point is :func:`tox_extend_envs <tox.plugin.spec.tox_extend_envs>`. It allows plugin authors to
   declare ephemeral environments that they can then populate through the in-memory configuration loader interface.

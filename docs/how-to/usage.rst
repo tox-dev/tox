@@ -6,6 +6,39 @@
 
 Practical recipes for common tox tasks. Each section answers a specific "How do I...?" question.
 
+*****************
+ Quick reference
+*****************
+
+Common commands
+===============
+
+- Each tox subcommand has a 1 (or 2) letter shortcut, e.g. ``tox run`` = ``tox r``, ``tox config`` = ``tox c``.
+- Run all default environments: ``tox`` (runs everything in :ref:`env_list`).
+- Run a specific environment: ``tox run -e 3.13``.
+- Run multiple environments: ``tox run -e lint,3.13`` (sequential, in order).
+- Run environments in parallel: ``tox parallel -e 3.13,3.12`` (see :ref:`parallel_mode`).
+- Run all environments matching a label: ``tox run -m test`` (see :ref:`labels`).
+- Run all environments matching a factor: ``tox run -f django`` (runs all envs containing the ``django`` factor).
+- Inspect configuration: ``tox config -e 3.13 -k pass_env``.
+- Force recreation: ``tox run -e 3.13 -r``.
+
+Environment variables
+=====================
+
+- View environment variables: ``tox c -e 3.13 -k set_env pass_env``.
+- Pass through system environment variables: use :ref:`pass_env`.
+- Set environment variables: use :ref:`set_env`.
+- Setup commands: :ref:`commands_pre`. Teardown commands: :ref:`commands_post`.
+- Change working directory: :ref:`change_dir` (affects install commands too if using relative paths).
+
+Logging
+=======
+
+tox logs command invocations inside ``.tox/<env_name>/log``. Environment variables with names containing sensitive words
+(``access``, ``api``, ``auth``, ``client``, ``cred``, ``key``, ``passwd``, ``password``, ``private``, ``pwd``,
+``secret``, ``token``) are logged with their values redacted to prevent accidental secret leaking in CI/CD environments.
+
 .. ------------------------------------------------------------------------------------------
 
 .. Testing & Verification (most common workflows)

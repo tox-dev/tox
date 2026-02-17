@@ -14,7 +14,7 @@ configuration that runs tests and linting across multiple Python versions.
 Before starting, make sure you have:
 
 - Python 3.10 or later installed
-- tox installed (see :doc:`installation`)
+- tox installed (see :doc:`../how-to/install`)
 - A Python project you want to test (or follow along to create one)
 
 Verify tox is available:
@@ -267,7 +267,7 @@ This is useful for debugging configuration issues.
 
 Now that you have a working tox setup, explore these topics:
 
-- :doc:`user_guide` -- understand how tox works (parallel mode, packaging, auto-provisioning)
-- :doc:`howto` -- practical recipes for common tasks
+- :doc:`../explanation` -- understand how tox works (parallel mode, packaging, auto-provisioning)
+- :doc:`../how-to/usage` -- practical recipes for common tasks
 - :ref:`configuration` -- full configuration reference
 - :ref:`cli` -- complete CLI reference

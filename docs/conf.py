@@ -29,6 +29,9 @@ master_doc = "index"
 source_suffix = {".rst": "restructuredtext"}
 
 html_theme = "furo"
+html_theme_options = {
+    "sidebar_hide_name": True,
+}
 html_title, html_last_updated_fmt = "tox", "%Y-%m-%dT%H:%M:%S"
 html_show_sourcelink = False
 pygments_style, pygments_dark_style = "sphinx", "monokai"

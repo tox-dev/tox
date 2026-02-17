@@ -7,6 +7,19 @@
 tox configuration can be split into two categories: core and environment specific. Core settings are options that can be
 set once and used for all tox environments, while environment options are applied to the given tox environment only.
 
+.. _compatibility-requirements:
+
+*********************
+ System requirements
+*********************
+
+tox works with the following Python interpreter implementations:
+
+- `CPython <https://www.python.org/>`_ versions 3.10, 3.11, 3.12, 3.13, 3.14
+
+This means tox works on the latest patch version of each of these minor versions. Previous patch versions are supported
+on a best effort approach.
+
 **************************
  Discovery and file types
 **************************
