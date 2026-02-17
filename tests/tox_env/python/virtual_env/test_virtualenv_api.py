@@ -172,3 +172,20 @@ def test_list_dependencies_command(tox_project: ToxProjectCreator) -> None:
     result.assert_success()
     request: ExecuteRequest = execute_calls.call_args[0][3]
     assert request.cmd == ["python", "-m", "pip", "freeze"]
+
+
+def test_pip_user_disabled(tox_project: ToxProjectCreator) -> None:
+    proj = tox_project(
+        {
+            "tox.toml": """
+                [env_run_base]
+                package = "skip"
+                commands = [
+                    ["python", "-c", "import os; print('PIP_USER=' + os.environ.get('PIP_USER', 'NOT_SET'))"]
+                ]
+            """,
+        },
+    )
+    result = proj.run("r", "-e", "py")
+    result.assert_success()
+    assert "PIP_USER=0" in result.out

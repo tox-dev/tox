@@ -819,6 +819,9 @@ always set regardless of the ``pass_env`` or ``set_env`` configuration and canno
       - The directory of the current tox environment (e.g. ``.tox/3.12``).
     - - ``PYTHONIOENCODING``
       - Always set to ``utf-8`` to ensure consistent encoding for standard I/O.
+    - - ``PIP_USER``
+      - Always set to ``0`` to prevent pip from attempting ``--user`` installs inside virtualenvs, which would fail
+        because user site-packages aren't visible. Only set when using ``virtualenv``\-based environments.
     - - ``TOX_PACKAGE``
       - The path(s) to the built package artifact(s), joined by ``os.pathsep`` if there are multiple. Only set in run
         environments where a package has been built.

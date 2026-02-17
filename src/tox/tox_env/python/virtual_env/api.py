@@ -176,6 +176,7 @@ class VirtualEnv(Python, ABC):
     def environment_variables(self) -> dict[str, str]:
         environment_variables = super().environment_variables
         environment_variables["VIRTUAL_ENV"] = str(self.conf["env_dir"])
+        environment_variables["PIP_USER"] = "0"
         return environment_variables
 
     @classmethod
