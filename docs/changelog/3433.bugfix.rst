@@ -1,0 +1,2 @@
+Normalize extra names when resolving dependencies so that underscores and hyphens are treated equivalently (e.g.
+``extras = snake_case`` now matches ``Provides-Extra: snake-case`` in wheel metadata) - by :user:`Fridayai700`.
