@@ -34,7 +34,11 @@ DEFAULT_INDEX_URL = "https://pypi.org/simple"
 
 
 def _looks_like_version_specifier(req: str) -> bool:
-    """Check if a string contains PEP 440 version specifier operators, suggesting it's an invalid requirement rather than a local path (e.g. ``pre-commit ~= 4`` where ``~=`` triggers tilde expansion if treated as a path)."""
+    """Check if a string contains PEP 440 version specifier operators.
+
+    Suggests the string is an invalid requirement rather than a local path
+    (e.g. ``pre-commit ~= 4`` where ``~=`` triggers tilde expansion).
+    """
     return bool(_VERSION_SPECIFIER.search(req))
 
 
