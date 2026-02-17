@@ -55,26 +55,16 @@ class TomlSection(Section):
 
     @property
     def keys(self) -> Iterable[str]:
-        # Build keys from prefix and name components directly, rather than
-        # splitting the joined key on SEP.  This preserves dots that are part
-        # of the name (e.g. environment name "py3.11") instead of treating
-        # them as path separators.
-        prefix = self._prefix
-        name = self._name
+        # Build keys from prefix + name directly, preserving dots in names (e.g. env "py3.11").
+        prefix, name = self._prefix, self._name
         if prefix is None and not name:
             return []
-        prefix_parts: list[str] = prefix.split(self.SEP) if prefix else []
-        # Strip the global PREFIX (e.g. ("tool", "tox")) from the front
-        if (
-            self.PREFIX
-            and len(prefix_parts) >= len(self.PREFIX)
-            and tuple(prefix_parts[: len(self.PREFIX)]) == self.PREFIX
-        ):
-            prefix_parts = prefix_parts[len(self.PREFIX) :]
-        result = prefix_parts
+        parts: list[str] = prefix.split(self.SEP) if prefix else []
+        if self.PREFIX and len(parts) >= len(self.PREFIX) and tuple(parts[: len(self.PREFIX)]) == self.PREFIX:
+            parts = parts[len(self.PREFIX) :]  # strip global PREFIX (e.g. ("tool", "tox"))
         if name:
-            result.append(name)
-        return result
+            parts.append(name)
+        return parts
 
 
 class TomlPyProjectSection(TomlSection):
@@ -128,7 +118,7 @@ class TomlPyProject(Source):
 
     def envs(self, core_conf: CoreConfigSet) -> Iterator[str]:
         yield from core_conf["env_list"]
-        yield from [i.name for i in self.sections()]
+        yield from [section.name for section in self.sections()]
 
     def sections(self) -> Iterator[Section]:
         for env_name in self._our_content.get(self._Section.ENV, {}):
@@ -138,7 +128,10 @@ class TomlPyProject(Source):
             yield self._Section.test_env(env_name)
 
     def get_base_sections(self, base: list[str], in_section: Section) -> Iterator[Section]:  # noqa: ARG002
-        yield from [self._Section.test_env(b) for b in base]
+        core_prefix = self._Section.core_prefix()
+        strip = f"{core_prefix}{self._Section.SEP}" if core_prefix else ""
+        for entry in base:
+            yield self._Section(prefix=core_prefix or None, name=entry.removeprefix(strip))
 
     def get_tox_env_section(self, item: str) -> tuple[Section, list[str], list[str]]:
         return self._Section.test_env(item), [self._Section.run_env_base()], [self._Section.package_env_base()]

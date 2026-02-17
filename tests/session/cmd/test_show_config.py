@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING
 import pytest
 
 from tox.config.types import Command
+from tox.execute.request import shell_cmd
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -110,6 +111,41 @@ def test_show_config_empty_install_command_exception(tox_project: ToxProjectCrea
     outcome.assert_failed(code=-1)
     txt = "\ninstall_command = # Exception: ValueError(\"attempting to parse '' into a command failed\")"
     assert txt in outcome.out
+
+
+@pytest.mark.parametrize(
+    ("filename", "content"),
+    [
+        pytest.param(
+            "tox.toml",
+            """
+            [env_run_base]
+            package = "skip"
+            install_command = ["echo", "CUSTOM", "{packages}"]
+            commands = [["python", "-c", "pass"]]
+            """,
+            id="tox.toml",
+        ),
+        pytest.param(
+            "pyproject.toml",
+            """
+            [tool.tox]
+            env_list = ["py"]
+            [tool.tox.env_run_base]
+            package = "skip"
+            install_command = ["echo", "CUSTOM", "{packages}"]
+            commands = [["python", "-c", "pass"]]
+            """,
+            id="pyproject.toml",
+        ),
+    ],
+)
+def test_show_config_install_command_toml(tox_project: ToxProjectCreator, filename: str, content: str) -> None:
+    project = tox_project({filename: content})
+    outcome = project.run("c", "-k", "install_command")
+    outcome.assert_success()
+    expected_cmd = shell_cmd(["echo", "CUSTOM", "{packages}"])
+    assert f"install_command = {expected_cmd}" in outcome.out
 
 
 def test_show_config_invalid_python_exit_code(tox_project: ToxProjectCreator) -> None:
