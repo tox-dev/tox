@@ -7,7 +7,7 @@ import sys
 import time
 from abc import ABC, abstractmethod
 from collections.abc import Callable, Iterator, Sequence
-from contextlib import contextmanager
+from contextlib import contextmanager, suppress
 from typing import IO, TYPE_CHECKING, Any, NoReturn, cast
 
 from colorama import Fore
@@ -130,6 +130,15 @@ class Execute(ABC):
                 stderr_color = getattr(Fore, cfg_color)
             except (AttributeError, KeyError, TypeError):  # many tests have a mocked 'env'
                 stderr_color = Fore.RED
+            if sys.platform == "win32" and show:
+                try:
+                    import colorama.ansitowin32  # noqa: PLC0415
+
+                    for stream in out_err:
+                        with suppress(AttributeError, OSError):
+                            colorama.ansitowin32.enable_vt_processing(stream.buffer.fileno())
+                except ImportError:
+                    pass
         try:
             # collector is what forwards the content from the file streams to the standard streams
             out = cast("IO[bytes]", out_err[0].buffer)
