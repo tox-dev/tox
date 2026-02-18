@@ -19,7 +19,7 @@ if TYPE_CHECKING:
 
 @pytest.mark.parametrize(
     "pkg_type",
-    ["editable-legacy", "editable", "sdist", "wheel"],
+    ["editable-legacy", "editable", "sdist", "sdist-wheel", "wheel"],
 )
 def test_tox_ini_package_type_valid(tox_project: ToxProjectCreator, pkg_type: str) -> None:
     proj = tox_project({"tox.ini": f"[testenv]\npackage={pkg_type}", "pyproject.toml": ""})
@@ -288,7 +288,7 @@ def test_pyproject_no_build_editable_fallback(tox_project: ToxProjectCreator, de
     assert found_calls == expected_calls
 
 
-@pytest.mark.parametrize("package", ["sdist", "wheel", "editable"])
+@pytest.mark.parametrize("package", ["sdist", "sdist-wheel", "wheel", "editable"])
 def test_pep517_pkg_env_rejects_deps(tox_project: ToxProjectCreator, demo_pkg_setuptools: Path, package: str) -> None:
     ini = f"[testenv]\npackage={package}\n[pkgenv]\ndeps = A"
     proj = tox_project({"tox.ini": ini}, base=demo_pkg_setuptools)
@@ -538,15 +538,49 @@ def test_sdist_wheel_package_type(tox_project: ToxProjectCreator, demo_pkg_inlin
     execute_calls = proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
     result = proj.run("r", "--notest")
     result.assert_success()
-    # Verify that build_sdist was called and a subsequent build_wheel follows it.
-    # Note: an earlier build_wheel may appear from metadata extraction; the last
-    # build_wheel is the one produced from the extracted sdist.
-    call_ids = [i[0][3].run_id for i in execute_calls.call_args_list]
-    assert "build_sdist" in call_ids
-    sdist_idx = call_ids.index("build_sdist")
-    # Find a build_wheel call that comes after build_sdist
-    wheel_after_sdist = [i for i, cid in enumerate(call_ids) if cid == "build_wheel" and i > sdist_idx]
-    assert wheel_after_sdist, "expected a build_wheel call after build_sdist"
+
+    found_calls = [(i[0][0].conf.name, i[0][3].run_id) for i in execute_calls.call_args_list]
+
+    # The parent .pkg env builds the sdist
+    assert (".pkg", "build_sdist") in found_calls, f"expected .pkg to build_sdist, got {found_calls}"
+
+    # A separate child env builds the wheel from the extracted sdist
+    child_wheel_calls = [(env, rid) for env, rid in found_calls if env != ".pkg" and rid == "build_wheel"]
+    assert child_wheel_calls, f"expected a child env (not .pkg) to build_wheel, got {found_calls}"
+    child_env_name = child_wheel_calls[0][0]
+
+    # The sdist build must happen before the child's wheel build
+    sdist_idx = found_calls.index((".pkg", "build_sdist"))
+    child_wheel_idx = found_calls.index((child_env_name, "build_wheel"))
+    assert sdist_idx < child_wheel_idx, "build_sdist must happen before child's build_wheel"
+
+    # The final package installed should be a wheel
+    install_calls = [(env, rid) for env, rid in found_calls if rid == "install_package"]
+    assert install_calls, "expected install_package call"
+
+
+def test_sdist_wheel_config(tox_project: ToxProjectCreator, demo_pkg_inline: Path) -> None:
+    ini = "[testenv]\npackage=sdist-wheel"
+    proj = tox_project({"tox.ini": ini}, base=demo_pkg_inline)
+    result = proj.run("c", "-k", "package", "-k", "sdist_wheel_build_env")
+    result.assert_success()
+    res = result.env_conf("py")["package"]
+    assert res == "sdist-wheel"
+    # The sdist_wheel_build_env config should be present with a default value
+    build_env = result.env_conf("py")["sdist_wheel_build_env"]
+    assert build_env == ".pkg-sdist-wheel"
+
+
+def test_sdist_wheel_custom_build_env(tox_project: ToxProjectCreator, demo_pkg_inline: Path) -> None:
+    ini = "[testenv]\npackage=sdist-wheel\nsdist_wheel_build_env=.custom-wheel-builder"
+    proj = tox_project({"tox.ini": ini}, base=demo_pkg_inline)
+    execute_calls = proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
+    result = proj.run("r", "--notest")
+    result.assert_success()
+
+    found_calls = [(i[0][0].conf.name, i[0][3].run_id) for i in execute_calls.call_args_list]
+    env_names = {env for env, _ in found_calls}
+    assert ".custom-wheel-builder" in env_names, f"expected custom child env name, got {env_names}"
 
 
 def test_wheel_package_does_not_build_sdist(tox_project: ToxProjectCreator, demo_pkg_inline: Path) -> None:

@@ -77,7 +77,7 @@ class PythonPackageToxEnv(Python, PackageToxEnv, ABC):
 
         if (
             not isinstance(run_env, Python)
-            or run_env.conf["package"] not in {"wheel", "sdist-wheel", "editable"}
+            or run_env.conf["package"] not in {"wheel", "editable"}
             or "wheel_build_env" in run_env.conf
         ):
             return

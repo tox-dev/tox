@@ -113,6 +113,7 @@ class Pep517VenvPackager(PythonPackageToxEnv, ABC):
         self._pkg_lock = RLock()  # can build only one package at a time
         self._package_paths: set[Path] = set()
         self._root: Path | None = None
+        self._sdist_wheel_build_envs: dict[str, PythonPackageToxEnv] = {}
 
     @property
     def root(self) -> Path:
@@ -200,11 +201,24 @@ class Pep517VenvPackager(PythonPackageToxEnv, ABC):
     def register_run_env(self, run_env: RunToxEnv) -> Generator[tuple[str, str], PackageToxEnv, None]:
         yield from super().register_run_env(run_env)
         build_type = run_env.conf["package"]
-        if build_type == "sdist-wheel":
-            self.call_require_hooks.update({"sdist", "wheel"})
+        if build_type == "sdist-wheel" and "sdist_wheel_build_env" not in run_env.conf:
+            # Parent env only builds the sdist; a separate child env builds the wheel from the extracted sdist.
+            # This ensures full build isolation — the wheel build happens in a clean environment that only knows
+            # about the extracted sdist's own build-system.requires.
+            self.call_require_hooks.add("sdist")
+            self.builds[build_type].append(run_env.conf)
+            run_env.conf.add_config(
+                keys=["sdist_wheel_build_env"],
+                of_type=str,
+                default=f"{self.conf.name}-sdist-wheel",
+                desc="tox environment used to build a wheel from the sdist (isolated from sdist build)",
+            )
+            child_name = run_env.conf["sdist_wheel_build_env"]
+            child = yield child_name, run_env.conf["package_tox_env_type"]
+            self._sdist_wheel_build_envs[child_name] = cast("PythonPackageToxEnv", child)
         else:
             self.call_require_hooks.add(build_type)
-        self.builds[build_type].append(run_env.conf)
+            self.builds[build_type].append(run_env.conf)
 
     def _setup_env(self) -> None:
         # Only reject deps for standard PEP-517 build types (sdist, wheel, editable).
@@ -235,6 +249,11 @@ class Pep517VenvPackager(PythonPackageToxEnv, ABC):
         self._install(requires, PythonPackageToxEnv.__name__, f"requires_for_build_{of_type}")
 
     def _teardown(self) -> None:
+        # Teardown sdist-wheel child environments first
+        for env in self._sdist_wheel_build_envs.values():
+            if env is not self:
+                with env.display_context(self._has_display_suspended):
+                    env.teardown()
         executor = self._frontend.backend_executor
         if executor is not None:  # pragma: no branch
             try:
@@ -286,11 +305,7 @@ class Pep517VenvPackager(PythonPackageToxEnv, ABC):
                 self._package_paths.add(sdist)
                 package = SdistPackage(sdist, deps)
         elif of_type == "sdist-wheel":
-            w_env = self._wheel_build_envs.get(for_env["wheel_build_env"])
-            if w_env is not None and w_env is not self:
-                with w_env.display_context(self._has_display_suspended):
-                    return w_env.perform_packaging(for_env)
-            wheel = create_session_view(self._build_wheel_from_sdist(), self._package_temp_path)
+            wheel = create_session_view(self._build_wheel_via_sdist(for_env), self._package_temp_path)
             self._package_paths.add(wheel)
             package = WheelPackage(wheel, deps)
         elif of_type in {"wheel", "editable"}:
@@ -316,59 +331,73 @@ class Pep517VenvPackager(PythonPackageToxEnv, ABC):
             raise TypeError(msg)  # pragma: no cover
         return [package]
 
-    def _build_wheel_from_sdist(self) -> Path:
-        """Build a wheel by first building an sdist, extracting it, and building a wheel from the extracted source."""
+    def _build_wheel_via_sdist(self, for_env: EnvConfigSet) -> Path:
+        """Build a wheel by first building an sdist, then building a wheel from it in an isolated child environment."""
         self.setup()
         with self._pkg_lock:
-            # Step 1: Build the sdist from the original source tree
+            # Step 1: Build the sdist in this (parent) environment
             sdist_config: ConfigSettings = self.conf["config_settings_build_sdist"]
             sdist = self._frontend.build_sdist(
                 sdist_directory=self.pkg_dir,
                 config_settings=sdist_config,
             ).sdist
-            logging.info("built sdist %s, now building wheel from it", sdist.name)
+            logging.info("built sdist %s, now building wheel from it in isolated environment", sdist.name)
 
             # Step 2: Extract the sdist to a temporary directory
             extract_dir = self.env_dir / ".sdist-extract"
             if extract_dir.exists():
                 shutil.rmtree(extract_dir)
             extract_dir.mkdir()
-            kwargs: dict[str, Any] = {}
-            if (
-                sys.version_info >= (3, 11, 4)
-                or (3, 10, 12) <= sys.version_info < (3, 11)
-                or (3, 9, 17) <= sys.version_info < (3, 10)
-            ):
-                kwargs["filter"] = tarfile.data_filter
-            with tarfile.open(str(sdist), "r:gz") as tar:
-                tar.extractall(path=str(extract_dir), **kwargs)  # noqa: S202
-
-            # Step 3: Find the extracted source root (standard sdists contain a single top-level directory)
-            extracted_items = list(extract_dir.iterdir())
-            if len(extracted_items) == 1 and extracted_items[0].is_dir():
-                sdist_source_root = extracted_items[0]
-            else:
-                # Non-standard sdist with files at root (no wrapper directory)
-                sdist_source_root = extract_dir
-
-            # Step 4: Build the wheel from the extracted sdist source by swapping root
-            # The root setter closes the existing backend and forces a new frontend to be created
-            original_root = self.root
             try:
-                self.root = sdist_source_root
-                wheel_config: ConfigSettings = self.conf["config_settings_build_wheel"]
-                wheel = self._frontend.build_wheel(
-                    wheel_directory=self.pkg_dir,
+                self._extract_sdist(sdist, extract_dir)
+                sdist_source_root = self._find_sdist_root(extract_dir)
+
+                # Step 3: Get the isolated child environment and point it at the extracted sdist
+                child_env = self._get_sdist_wheel_child(for_env)
+                child_env.root = sdist_source_root
+                # The child only needs wheel build requirements from the extracted sdist
+                child_env.call_require_hooks = {"wheel"}
+                # Force re-setup so the child installs build deps from the extracted sdist's pyproject.toml
+                child_env._run_state["setup"] = False  # noqa: SLF001
+                child_env.setup()
+
+                # Step 4: Build the wheel in the child environment (fully isolated)
+                wheel_config: ConfigSettings = child_env.conf["config_settings_build_wheel"]
+                wheel = child_env._frontend.build_wheel(  # noqa: SLF001
+                    wheel_directory=child_env.pkg_dir,
+                    metadata_directory=None,
                     config_settings=wheel_config,
                 ).wheel
             finally:
-                self.root = original_root
-
-            # Clean up the sdist and extraction directory
-            sdist.unlink()
-            shutil.rmtree(extract_dir)
+                sdist.unlink(missing_ok=True)
+                shutil.rmtree(extract_dir, ignore_errors=True)
 
             return wheel
+
+    def _get_sdist_wheel_child(self, for_env: EnvConfigSet) -> Pep517VenvPackager:
+        """Get the child environment for building a wheel from an sdist."""
+        child_name = for_env["sdist_wheel_build_env"]
+        child = self._sdist_wheel_build_envs.get(child_name)
+        if child is not None and isinstance(child, Pep517VenvPackager):
+            return child
+        return self  # fallback (shouldn't happen in normal flow)
+
+    @staticmethod
+    def _extract_sdist(sdist: Path, extract_dir: Path) -> None:
+        """Extract an sdist tarball safely."""
+        kwargs: dict[str, Any] = {}
+        if hasattr(tarfile, "data_filter"):
+            kwargs["filter"] = tarfile.data_filter
+        with tarfile.open(str(sdist), "r:*") as tar:
+            tar.extractall(path=str(extract_dir), **kwargs)  # noqa: S202
+
+    @staticmethod
+    def _find_sdist_root(extract_dir: Path) -> Path:
+        """Find the source root inside an extracted sdist (standard sdists have a single top-level directory)."""
+        extracted_items = list(extract_dir.iterdir())
+        if len(extracted_items) == 1 and extracted_items[0].is_dir():
+            return extracted_items[0]
+        return extract_dir  # non-standard flat layout
 
     @property
     def _package_temp_path(self) -> Path:
@@ -415,7 +444,7 @@ class Pep517VenvPackager(PythonPackageToxEnv, ABC):
         reqs: list[Requirement] | None = None
         name = ""
         available: set[str] | None = None
-        if of_type in {"wheel", "sdist-wheel", "editable"}:  # wheel packages
+        if of_type in {"wheel", "editable"}:  # wheel packages - use wheel_build_env for metadata
             w_env = self._wheel_build_envs.get(for_env["wheel_build_env"])
             if w_env is not None and w_env is not self:
                 with w_env.display_context(self._has_display_suspended):
@@ -470,6 +499,17 @@ class Pep517VenvPackager(PythonPackageToxEnv, ABC):
         else:
             dist_info = str(result.metadata)
         self._distribution_meta = Distribution.at(dist_info)
+
+    def child_pkg_envs(self, run_conf: EnvConfigSet) -> Iterator[PackageToxEnv]:
+        yield from super().child_pkg_envs(run_conf)
+        if run_conf["package"] == "sdist-wheel":
+            try:
+                child_name = run_conf["sdist_wheel_build_env"]
+            except KeyError:
+                return
+            env = self._sdist_wheel_build_envs.get(child_name)
+            if env is not None and env.name != self.name:
+                yield env
 
     def requires(self) -> tuple[Requirement, ...]:
         return self._frontend.requires
