@@ -349,13 +349,11 @@ class Pep517VenvPackager(PythonPackageToxEnv, ABC):
 
             # Step 4: Build the wheel in the child environment
             wheel_config: ConfigSettings = child_env.conf["config_settings_build_wheel"]
-            wheel = child_env._frontend.build_wheel(  # noqa: SLF001
+            return child_env._frontend.build_wheel(  # noqa: SLF001
                 wheel_directory=child_env.pkg_dir,
                 metadata_directory=None,
                 config_settings=wheel_config,
             ).wheel
-
-            return wheel
 
     @staticmethod
     def _extract_sdist(sdist: Path, extract_dir: Path) -> None:
