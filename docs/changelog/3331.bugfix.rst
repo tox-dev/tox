@@ -1,2 +1,0 @@
-On Windows, colored output is now preserved when running provisioned tox by explicitly passing the ``--colored yes``
-flag to the provisioned subprocess when the parent has colors enabled - by :user:`gaborbernat`.

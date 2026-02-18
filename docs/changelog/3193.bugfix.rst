@@ -1,2 +1,0 @@
-``TOX_PARALLEL_NO_SPINNER`` / ``--parallel-no-spinner`` no longer forces parallel mode in the legacy command, fixing
-output suppression for sequential runs in CI - by :user:`gaborbernat`.

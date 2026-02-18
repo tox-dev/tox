@@ -1,2 +1,0 @@
-Concurrent tox processes no longer corrupt the provision environment (``.tox``) -- a file lock now serializes
-provisioning across processes - by :user:`gaborbernat`.

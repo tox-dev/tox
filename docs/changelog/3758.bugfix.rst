@@ -1,3 +1,0 @@
-Fix ``RecursionError`` when TOML ``set_env`` contains substitutions like ``{env_site_packages_dir}`` that trigger config
-loading cycles -- the TOML loader now defers string substitution in ``set_env`` values, matching the INI loader's lazy
-resolution behavior - by :user:`gaborbernat`.

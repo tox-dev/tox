@@ -7,6 +7,95 @@
 .. towncrier release notes start
 
 **********************
+ v4.39.0 (2026-02-18)
+**********************
+
+Features - 4.39.0
+=================
+
+- Create a ``CACHEDIR.TAG`` file in the tox work directory (``.tox``) so that backup and archiving tools (e.g., ``tar
+  --exclude-caches``, Borg, restic) can automatically skip it - by :user:`radevika`. (:issue:`3334`)
+
+Bugfixes - 4.39.0
+=================
+
+- On Windows, ANSI color codes from child processes (like pytest, mypy) are now rendered correctly in terminals by
+  enabling VT100 processing mode for subprocess output streams - by :user:`gaborbernat`. (:issue:`2337`)
+- Concurrent tox processes no longer corrupt the provision environment (``.tox``) -- a file lock now serializes
+  provisioning across processes - by :user:`gaborbernat`. (:issue:`2515`)
+- Config files (``tox.ini``, ``setup.cfg``) with unicode characters are now read correctly on Windows when running tox
+  with ``python -m -I`` (isolation mode) - by :user:`gaborbernat`. (:issue:`2692`)
+- ``set_env`` values explicitly defined in a section now take precedence over values inherited via cross-section
+  substitution (e.g., ``{[testenv]set_env}``) - by :user:`gaborbernat`. (:issue:`2831`)
+- The ``-e`` flag now supports brace expansion (e.g. ``tox -e 'py{38,39}-pytest{6.x,7.x}'``) instead of incorrectly
+  splitting on commas inside braces - by :user:`gaborbernat`. (:issue:`2850`)
+- Posargs containing colons no longer crash tox when an inactive environment uses ``{posargs}`` in path-like
+  configuration values such as ``env_dir`` - by :user:`gaborbernat`. (:issue:`2860`)
+- ``set_env`` values from cross-section substitution (e.g., ``{[testenv]set_env}``) now correctly override default
+  environment variables like ``PYTHONHASHSEED`` - by :user:`gaborbernat`. (:issue:`2872`)
+- ``--force-dep`` now applies to package dependencies from project metadata (e.g. ``setup.cfg`` ``install_requires``,
+  ``pyproject.toml`` ``dependencies``), not just tox config ``deps`` - by :user:`gaborbernat`. (:issue:`2943`)
+- Using ``{posargs}`` in ``change_dir`` no longer causes a ``RecursionError`` - by :user:`gaborbernat`. (:issue:`3062`)
+- Cross-section substitution (e.g. ``{[testenv:a]commands}``) now resolves environment-specific variables like
+  ``{envpython}``, ``{envbindir}``, ``{envtmpdir}``, and ``{envsitepackagesdir}`` in the calling environment's context
+  rather than the referenced environment's context - by :user:`gaborbernat`. (:issue:`3075`)
+- Fix ``ValueError`` crash when using posargs on Windows with ``subst`` drive mappings -- ``os.path.relpath`` fails
+  across drive letters, so fall back to absolute paths when the relative path cannot be computed - by
+  :user:`gaborbernat`. (:issue:`3086`)
+- ``TOX_OVERRIDE`` with ``+=`` (append) now works correctly when the override key name differs from the config file key
+  name (e.g., overriding ``pass_env`` when config uses ``passenv``, or vice versa) - by :user:`gaborbernat`.
+  (:issue:`3127`)
+- Fix spurious environment discovery from non-tox sections in ``setup.cfg`` -- ``packages = find:`` in ``[options]`` was
+  incorrectly interpreted as a tox factor marker, creating a phantom ``find`` environment - by :user:`gaborbernat`.
+  (:issue:`3134`)
+- Requirements in ``requires`` with environment markers that evaluate to false (e.g. ``virtualenv<20.22.0;
+  python_version < "3.8"``) are now correctly skipped during provisioning instead of causing an infinite provisioning
+  loop - by :user:`gaborbernat`. (:issue:`3136`)
+- Running environments with ``recreate = true`` no longer destroys shared package environments (e.g. ``.pkg``), which
+  previously caused ``FileNotFoundError`` when a subsequent environment tried to use the already-built wheel - by
+  :user:`gaborbernat`. (:issue:`3146`)
+- Factor-conditional config values (e.g. ``base_python = py312: python3.12``) now correctly fall back to the default
+  when no factors match the current environment, instead of producing an empty value - by :user:`gaborbernat`.
+  (:issue:`3189`)
+- ``TOX_PARALLEL_NO_SPINNER`` / ``--parallel-no-spinner`` no longer forces parallel mode in the legacy command, fixing
+  output suppression for sequential runs in CI - by :user:`gaborbernat`. (:issue:`3193`)
+- Multiple ``-e`` flags are now additive (``tox r -e a -e b`` runs both ``a`` and ``b``), matching tox 3 behavior - by
+  :user:`gaborbernat`. (:issue:`3199`)
+- Environments like ``functional-py312`` no longer incorrectly match when only ``functional{-py310}`` is defined as a
+  testenv section -- factors from section headers are no longer treated as freely combinable with CLI ``-e`` selections
+  - by :user:`gaborbernat`. (:issue:`3219`)
+- On Windows, a trailing path separator (e.g. from ``{/}``) no longer causes the next command argument to be merged into
+  the path - backslash before whitespace is now treated as a literal path separator rather than a space escape - by
+  :user:`gaborbernat`. (:issue:`3222`)
+- Fix ``{envtmpdir}`` and other env variable substitutions not expanding in external package environment commands - by
+  :user:`gaborbernat`. (:issue:`3238`) (:issue:`3238`)
+- On Windows, colored output is now preserved when running provisioned tox by explicitly passing the ``--colored yes``
+  flag to the provisioned subprocess when the parent has colors enabled - by :user:`gaborbernat`. (:issue:`3331`)
+- ``set_env`` values defined after a ``file|`` reference now correctly take precedence over values loaded from the env
+  file - by :user:`gaborbernat`. (:issue:`3335`)
+- The ``base`` configuration key now works correctly in TOML format (``tox.toml`` and ``pyproject.toml``), allowing
+  environments to inherit from arbitrary sections defined under ``[env.*]`` - by :user:`gaborbernat`. (:issue:`3497`)
+- Skip ``toxfile.py`` inline plugin when it uses hooks not available in the current tox version instead of crashing -
+  this allows provisioning to upgrade tox to a version that supports those hooks - by :user:`gaborbernat`.
+  (:issue:`3593`)
+- ``set_env`` substitution referencing ``{envsitepackagesdir}``, ``{envbindir}``, or ``{envpython}`` for environments
+  with missing interpreters now raises ``Skip`` instead of ``RuntimeError``, allowing ``skip_missing_interpreters`` to
+  work correctly - by :user:`gaborbernat`. (:issue:`3597`)
+- A ``setup.cfg`` without a ``[tox:tox]`` section no longer blocks discovery of ``pyproject.toml`` or ``tox.toml``
+  configuration files in the same directory - by :user:`gaborbernat`. (:issue:`3602`)
+- Fix pytest ``INTERNALERROR`` on Python 3.15 caused by Pygments using deprecated ``os.path.commonprefix()`` - by
+  :user:`gaborbernat`. (:issue:`3733`)
+- Fix ``RecursionError`` when TOML ``set_env`` contains substitutions like ``{env_site_packages_dir}`` that trigger
+  config loading cycles -- the TOML loader now defers string substitution in ``set_env`` values, matching the INI
+  loader's lazy resolution behavior - by :user:`gaborbernat`. (:issue:`3758`)
+
+Documentation - 4.39.0
+======================
+
+- Document that interactive terminal programs (e.g., IPython) may not work correctly under tox due to the PTY-based
+  output capture architecture - by :user:`gaborbernat`. (:issue:`2999`)
+
+**********************
  v4.38.0 (2026-02-17)
 **********************
 

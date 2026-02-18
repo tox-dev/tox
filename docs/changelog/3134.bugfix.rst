@@ -1,2 +1,0 @@
-Fix spurious environment discovery from non-tox sections in ``setup.cfg`` -- ``packages = find:`` in ``[options]`` was
-incorrectly interpreted as a tox factor marker, creating a phantom ``find`` environment - by :user:`gaborbernat`.

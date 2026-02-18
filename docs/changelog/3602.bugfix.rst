@@ -1,2 +1,0 @@
-A ``setup.cfg`` without a ``[tox:tox]`` section no longer blocks discovery of ``pyproject.toml`` or ``tox.toml``
-configuration files in the same directory - by :user:`gaborbernat`.

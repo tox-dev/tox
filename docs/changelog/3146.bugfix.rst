@@ -1,3 +1,0 @@
-Running environments with ``recreate = true`` no longer destroys shared package environments (e.g. ``.pkg``), which
-previously caused ``FileNotFoundError`` when a subsequent environment tried to use the already-built wheel - by
-:user:`gaborbernat`.
