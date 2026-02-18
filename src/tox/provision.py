@@ -10,6 +10,7 @@ from importlib.metadata import PackageNotFoundError, distribution
 from pathlib import Path
 from typing import TYPE_CHECKING, cast
 
+from filelock import FileLock
 from packaging.requirements import Requirement
 from packaging.utils import canonicalize_name
 from packaging.version import Version
@@ -146,16 +147,19 @@ def run_provision(name: str, state: State) -> int:
     tox_env: PythonRun = cast("PythonRun", state.envs[name])
     env_python = tox_env.env_python()
     logging.info("will run in a automatically provisioned python environment under %s", env_python)
-    try:
-        tox_env.setup()
-        args: list[str] = [str(env_python), "-m", "tox"]
-        args.extend(state.args)
-        outcome = tox_env.execute(
-            cmd=args, stdin=StdinSource.user_only(), show=True, run_id="provision", cwd=Path.cwd()
-        )
-        return cast("int", outcome.exit_code)
-    except Skip as exception:
-        msg = f"cannot provision tox environment {tox_env.conf['env_name']} because {exception}"
-        raise HandledError(msg) from exception
-    finally:
-        tox_env.teardown()
+    lock_path = tox_env.env_dir / "file.lock"
+    lock_path.parent.mkdir(parents=True, exist_ok=True)
+    with FileLock(lock_path):
+        try:
+            tox_env.setup()
+            args: list[str] = [str(env_python), "-m", "tox"]
+            args.extend(state.args)
+            outcome = tox_env.execute(
+                cmd=args, stdin=StdinSource.user_only(), show=True, run_id="provision", cwd=Path.cwd()
+            )
+            return cast("int", outcome.exit_code)
+        except Skip as exception:
+            msg = f"cannot provision tox environment {tox_env.conf['env_name']} because {exception}"
+            raise HandledError(msg) from exception
+        finally:
+            tox_env.teardown()
