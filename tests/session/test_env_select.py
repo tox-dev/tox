@@ -32,6 +32,14 @@ CURRENT_PY_ENV = f"py{sys.version_info[0]}{sys.version_info[1]}"  # e.g. py310
         (",,", (), False, True),
         #   Environment names with "invalid" characters are accepted here; the client is expected to deal with this.
         ("\x01.-@\x02,xxx", ("\x01.-@\x02", "xxx"), False, False),
+        #   Brace expansion produces the cartesian product of factors.
+        (
+            "py{38,39}-pytest{6.x,7.x}",
+            ("py38-pytest6.x", "py38-pytest7.x", "py39-pytest6.x", "py39-pytest7.x"),
+            False,
+            False,
+        ),
+        ("a{1,2},b", ("a1", "a2", "b"), False, False),
     ],
 )
 def test_clienv(user_input: str, env_names: tuple[str], is_all: bool, is_default: bool) -> None:
@@ -322,6 +330,15 @@ def test_dynamic_env_factors_match(env: str) -> None:
 )
 def test_dynamic_env_factors_not_match(env: str) -> None:
     assert not _DYNAMIC_ENV_FACTORS.fullmatch(env)
+
+
+@pytest.mark.parametrize("env_name", ["functional-py312", "functional"])
+def test_partial_section_match_rejected(env_name: str, tox_project: ToxProjectCreator) -> None:
+    tox_ini = "[testenv]\nskip_install = true\ncommands=python -c 'print(1)'\n[testenv:functional{-py310}]\n"
+    proj = tox_project({"tox.ini": tox_ini})
+    outcome = proj.run("r", "-e", env_name)
+    outcome.assert_failed(code=-2)
+    assert "provided environments not found in configuration file" in outcome.out
 
 
 def test_suggest_env(tox_project: ToxProjectCreator) -> None:

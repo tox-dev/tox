@@ -1,0 +1,3 @@
+Environments like ``functional-py312`` no longer incorrectly match when only ``functional{-py310}`` is defined as a
+testenv section -- factors from section headers are no longer treated as freely combinable with CLI ``-e`` selections -
+by :user:`gaborbernat`.

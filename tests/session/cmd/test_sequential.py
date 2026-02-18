@@ -186,6 +186,27 @@ def test_recreate_package(tox_project: ToxProjectCreator, demo_pkg_inline: Path)
     result_rerun.assert_success()
 
 
+def test_recreate_env_does_not_destroy_shared_pkg(tox_project: ToxProjectCreator, demo_pkg_inline: Path) -> None:
+    toml = (demo_pkg_inline / "pyproject.toml").read_text()
+    build = (demo_pkg_inline / "build.py").read_text()
+    proj = tox_project({
+        "tox.toml": """\
+env_list = ["a", "b"]
+
+[env_run_base]
+package = "wheel"
+commands = [["python", "-c", "from demo_pkg_inline import do; do()"]]
+
+[env.b]
+recreate = true
+""",
+        "pyproject.toml": toml,
+        "build.py": build,
+    })
+    result = proj.run("r", "-e", "a,b")
+    result.assert_success()
+
+
 def test_package_deps_change(tox_project: ToxProjectCreator, demo_pkg_inline: Path) -> None:
     toml = (demo_pkg_inline / "pyproject.toml").read_text()
     build = (demo_pkg_inline / "build.py").read_text()
