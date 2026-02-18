@@ -324,34 +324,36 @@ class Pep517VenvPackager(PythonPackageToxEnv, ABC):
             ).sdist
             logging.info("built sdist %s, now building wheel from it", sdist.name)
 
-            # Step 2: Extract the sdist to a temporary directory
-            # Use env_dir (not env_tmp_dir) because child setup() clears env_tmp_dir
-            extract_dir = self.env_dir / ".sdist-extract"
+            # Step 2: Extract sdist to env_tmp_dir (auto-cleaned by tox lifecycle)
+            extract_dir = self.env_tmp_dir / "sdist-extract"
             if extract_dir.exists():
                 shutil.rmtree(extract_dir)
-            extract_dir.mkdir()
-            try:
-                self._extract_sdist(sdist, extract_dir)
-                sdist_source_root = self._find_sdist_root(extract_dir)
+            extract_dir.mkdir(parents=True, exist_ok=True)
+            self._extract_sdist(sdist, extract_dir)
+            sdist_source_root = self._find_sdist_root(extract_dir)
+            sdist.unlink(missing_ok=True)
 
-                # Step 3: Get wheel_build_env child and point it at extracted sdist
-                w_env = self._wheel_build_envs.get(for_env["wheel_build_env"])
-                child_env = cast("Pep517VenvPackager", w_env) if w_env is not None else self
-                child_env.root = sdist_source_root
-                child_env.call_require_hooks = {"wheel"}
+            # Step 3: Get wheel_build_env child and point it at extracted sdist
+            w_env = self._wheel_build_envs.get(for_env["wheel_build_env"])
+            child_env = cast("Pep517VenvPackager", w_env) if w_env is not None else self
+            child_env.root = sdist_source_root
+            child_env.call_require_hooks = {"wheel"}
+            if child_env is not self:
+                # Full setup for separate child env (its env_tmp_dir != parent's, so extraction survives)
                 child_env._run_state["setup"] = False  # noqa: SLF001
                 child_env.setup()
+            else:
+                # Minimal re-setup: install build requirements without full setup() which clears env_tmp_dir
+                self._install(self.requires(), PythonPackageToxEnv.__name__, "requires")
+                self._setup_build_requires("wheel")
 
-                # Step 4: Build the wheel in the child environment
-                wheel_config: ConfigSettings = child_env.conf["config_settings_build_wheel"]
-                wheel = child_env._frontend.build_wheel(  # noqa: SLF001
-                    wheel_directory=child_env.pkg_dir,
-                    metadata_directory=None,
-                    config_settings=wheel_config,
-                ).wheel
-            finally:
-                sdist.unlink(missing_ok=True)
-                shutil.rmtree(extract_dir, ignore_errors=True)
+            # Step 4: Build the wheel in the child environment
+            wheel_config: ConfigSettings = child_env.conf["config_settings_build_wheel"]
+            wheel = child_env._frontend.build_wheel(  # noqa: SLF001
+                wheel_directory=child_env.pkg_dir,
+                metadata_directory=None,
+                config_settings=wheel_config,
+            ).wheel
 
             return wheel
 
