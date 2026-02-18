@@ -5,6 +5,8 @@ from __future__ import annotations
 import os
 import sys
 from abc import ABC
+from contextlib import redirect_stderr
+from io import StringIO
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, cast
 
@@ -110,7 +112,12 @@ class VirtualEnv(Python, ABC):
         if self._virtualenv_session is None:
             env_dir = [str(self.env_dir)]
             env = self.virtualenv_env_vars()
-            self._virtualenv_session = session_via_cli(env_dir, options=None, setup_logging=False, env=env)
+            try:
+                with redirect_stderr(StringIO()):
+                    self._virtualenv_session = session_via_cli(env_dir, options=None, setup_logging=False, env=env)
+            except SystemExit as exc:
+                msg = f"virtualenv session creation failed for {env_dir[0]}"
+                raise RuntimeError(msg) from exc
         return self._virtualenv_session
 
     def virtualenv_env_vars(self) -> dict[str, str]:
