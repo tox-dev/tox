@@ -100,7 +100,7 @@ def test_show_config_exception(tox_project: ToxProjectCreator) -> None:
     outcome.assert_failed(code=-1)
     txt = (
         "\nenv_site_packages_dir = # Exception: "
-        "RuntimeError(\"failed to find interpreter for Builtin discover of python_spec='missing-python'"
+        "Skip(\"failed to find interpreter for Builtin discover of python_spec='missing-python'"
     )
     assert txt in outcome.out
 
