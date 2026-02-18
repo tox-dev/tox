@@ -127,11 +127,13 @@ class TomlPyProject(Source):
                 raise HandledError(msg)
             yield self._Section.test_env(env_name)
 
-    def get_base_sections(self, base: list[str], in_section: Section) -> Iterator[Section]:  # noqa: ARG002
+    def get_base_sections(self, base: list[str], in_section: Section) -> Iterator[Section]:
         core_prefix = self._Section.core_prefix()
         strip = f"{core_prefix}{self._Section.SEP}" if core_prefix else ""
         for entry in base:
             yield self._Section(prefix=core_prefix or None, name=entry.removeprefix(strip))
+            if in_section.prefix is not None:
+                yield self._Section(prefix=in_section.prefix, name=entry)
 
     def get_tox_env_section(self, item: str) -> tuple[Section, list[str], list[str]]:
         return self._Section.test_env(item), [self._Section.run_env_base()], [self._Section.package_env_base()]
