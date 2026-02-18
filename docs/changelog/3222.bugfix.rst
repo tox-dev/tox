@@ -1,0 +1,3 @@
+On Windows, a trailing path separator (e.g. from ``{/}``) no longer causes the next command argument to be merged into
+the path - backslash before whitespace is now treated as a literal path separator rather than a space escape - by
+:user:`gaborbernat`.
