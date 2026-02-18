@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from textwrap import dedent
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -48,3 +49,20 @@ def test_setup_cfg_does_not_block_tox_toml(tox_project: ToxProjectCreator) -> No
     outcome = project.run("l")
     outcome.assert_success()
     assert "b -> [no description]" in outcome.out
+
+
+def test_setup_cfg_unicode_characters(tox_project: ToxProjectCreator) -> None:
+    """Test that setup.cfg files with unicode characters can be read without UnicodeDecodeError."""
+    cfg = """
+        [tox:tox]
+        env_list=
+         a
+
+        [tox:testenv:a]
+        description = Test with emoji ❌ and unicode ✨
+        package = skip
+        """
+    project = tox_project({"setup.cfg": dedent(cfg)})
+    outcome = project.run("l")
+    outcome.assert_success()
+    assert "a ->" in outcome.out
