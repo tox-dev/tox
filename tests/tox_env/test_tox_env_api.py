@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 from textwrap import dedent
 from typing import TYPE_CHECKING
 from unittest.mock import patch
@@ -173,6 +174,28 @@ commands = [["python", "--version"]]
     result = prj.run("r", "-e", "foo", "--", "subdir")
     result.assert_success()
     assert f"foo: commands[0] {prj.path / 'subdir'}>" in result.out
+
+
+def test_posargs_cross_drive_no_crash(tox_project: ToxProjectCreator, monkeypatch: pytest.MonkeyPatch) -> None:
+    toml = """\
+[env_run_base]
+package = "skip"
+commands = [["python", "{posargs}"]]
+"""
+    prj = tox_project({"tox.toml": toml})
+    (prj.path / "test.py").write_text("print('ok')")
+    original_relpath = os.path.relpath
+
+    def _relpath_cross_drive(path: str, start: str) -> str:
+        if "test.py" in path:
+            msg = "path is on mount 'O:', start on mount 'C:'"
+            raise ValueError(msg)
+        return original_relpath(path, start)
+
+    monkeypatch.setattr(os.path, "relpath", _relpath_cross_drive)
+    result = prj.run("r", "--", "test.py")
+    result.assert_success()
+    assert "ok" in result.out
 
 
 def test_change_dir_is_created_if_not_exist(tox_project: ToxProjectCreator) -> None:
