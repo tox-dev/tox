@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import platform
 import sys
 from configparser import ConfigParser
@@ -371,9 +372,10 @@ def test_cross_section_envpython_resolves_to_calling_env(tox_project: ToxProject
     lines = outcome.out.splitlines()
     a_cmd = next(line for line in lines if line.startswith("commands") and lines.index(line) < lines.index(""))
     b_cmd = [line for line in lines if line.startswith("commands")][-1]
-    assert ".tox/a/" in a_cmd
-    assert ".tox/b/" in b_cmd
-    assert ".tox/a/" not in b_cmd
+    sep = os.sep
+    assert f".tox{sep}a{sep}" in a_cmd
+    assert f".tox{sep}b{sep}" in b_cmd
+    assert f".tox{sep}a{sep}" not in b_cmd
 
 
 def test_core_on_platform(tox_project: ToxProjectCreator) -> None:
