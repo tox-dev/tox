@@ -17,7 +17,6 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, NoReturn
 from unittest.mock import MagicMock, create_autospec
 
-import colorama.ansitowin32
 import psutil
 import pytest
 from colorama import Fore
@@ -590,7 +589,8 @@ def test_vt_processing_enabled_on_windows(monkeypatch: MonkeyPatch) -> None:
         enable_vt_called.append(fd)
         return True
 
-    monkeypatch.setattr(colorama.ansitowin32, "enable_vt_processing", mock_enable_vt)
+    # Monkeypatch at the module level in sys.modules
+    monkeypatch.setattr("colorama.ansitowin32.enable_vt_processing", mock_enable_vt)
 
     fake = FakeOutErr()
     env = MagicMock()
