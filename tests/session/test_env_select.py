@@ -32,6 +32,14 @@ CURRENT_PY_ENV = f"py{sys.version_info[0]}{sys.version_info[1]}"  # e.g. py310
         (",,", (), False, True),
         #   Environment names with "invalid" characters are accepted here; the client is expected to deal with this.
         ("\x01.-@\x02,xxx", ("\x01.-@\x02", "xxx"), False, False),
+        #   Brace expansion produces the cartesian product of factors.
+        (
+            "py{38,39}-pytest{6.x,7.x}",
+            ("py38-pytest6.x", "py38-pytest7.x", "py39-pytest6.x", "py39-pytest7.x"),
+            False,
+            False,
+        ),
+        ("a{1,2},b", ("a1", "a2", "b"), False, False),
     ],
 )
 def test_clienv(user_input: str, env_names: tuple[str], is_all: bool, is_default: bool) -> None:
