@@ -21,6 +21,7 @@ if TYPE_CHECKING:
     from build import DistributionType
     from devpi_process import Index, IndexServer
 
+    from tox.execute.request import ExecuteRequest
     from tox.pytest import MonkeyPatch, TempPathFactory, ToxProjectCreator
 
 from importlib.metadata import Distribution
@@ -286,6 +287,23 @@ def test_provision_conf_file(tox_project: ToxProjectCreator, tmp_path: Path, rel
     conf_path = str(Path(project.path.name) / "tox.ini") if relative_path else str(project.path / "tox.ini")
     result = project.run("c", "--conf", conf_path, "-e", "py", from_cwd=tmp_path)
     result.assert_success()
+
+
+def test_provision_acquires_file_lock(tox_project: ToxProjectCreator) -> None:
+    lock_held_during_provision: dict[str, bool] = {}
+
+    def _check_lock(request: ExecuteRequest) -> int | None:
+        if request.run_id == "provision":
+            env_dir = request.env.get("TOX_ENV_DIR", "")
+            lock_path = Path(env_dir) / "file.lock"
+            lock_held_during_provision["held"] = lock_path.exists()
+            return 0
+        return 0 if "install" in request.run_id else None
+
+    project = tox_project({"tox.ini": "[tox]\nrequires = tox<4.14\n[testenv]\npackage = skip"})
+    project.patch_execute(_check_lock)
+    project.run("r")
+    assert lock_held_during_provision.get("held") is True
 
 
 @pytest.mark.parametrize("subcommand", ["r", "p", "de", "l", "d", "c", "q", "e", "le"])
