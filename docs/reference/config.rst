@@ -2022,6 +2022,20 @@ Conditional settings
   The ``coverage report`` command only runs in environments whose name contains the ``coverage`` factor (e.g.
   ``3.13-coverage``).
 
+- **Default fallback**: when *all* lines in a setting are conditional and none match the current environment, the
+  setting falls back to its default value. For example:
+
+  .. code-block:: ini
+
+      [testenv]
+      base_python =
+          py312: python3.12
+          py313: python3.13
+
+  If you run an environment named ``lint`` (which contains neither the ``py312`` nor ``py313`` factor), ``base_python``
+  falls back to the default -- derived from the environment name -- rather than becoming an empty string. This applies
+  to any configuration key, not just ``base_python``.
+
 .. _generative-environment-list:
 
 Generative environment list
