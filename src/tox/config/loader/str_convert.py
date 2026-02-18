@@ -87,7 +87,7 @@ class StrConvert(Convert[str]):
             value = StrConvert._win32_process_path_backslash(
                 value,
                 escape=s.escape,
-                special_chars=s.quotes + s.whitespace,
+                special_chars=s.quotes,
             )
         splitter = shlex.shlex(value, posix=True)
         splitter.whitespace_split = True

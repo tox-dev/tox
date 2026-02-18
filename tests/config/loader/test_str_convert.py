@@ -156,6 +156,9 @@ WINDOWS_PATH_ARGS = [
         ],
     ),
 ]
+WINDOWS_TRAILING_SEP_ARGS = [
+    (r"command path\to\trailing\sep\ -b foo", ["command", "path\\to\\trailing\\sep\\", "-b", "foo"]),
+]
 WACKY_SLASH_ARGS = [
     ("\\\\\\", ["\\\\\\"]),
     (" \\'\\'\\ '", [" \\'\\'\\ '"]),
@@ -166,6 +169,12 @@ WACKY_SLASH_ARGS = [
     ("'\\' \\\\", ["\\", "\\"]),
     ('"\\\\" \\\\', ["\\", "\\"]),
 ]
+WACKY_SLASH_ARGS_WIN32 = {
+    " \\'\\'\\ '": ["''\\", "'"],
+    "\\'\\'\\ ": ["''\\"],
+    "\\'\\ \\\\": ["'\\", "\\"],
+    "\\'\\ ": ["'\\"],
+}
 
 
 @pytest.fixture(params=["win32", "linux2"])
@@ -204,6 +213,17 @@ def test_shlex_platform_specific(sys_platform: str, value: str, expected: list[s
     if sys_platform != "win32" and value.startswith("SPECIAL:"):
         # on non-windows platform, backslash is always an escape, not path separator
         expected = [exp.replace("\\", "") for exp in expected]
+    if sys_platform == "win32" and value in WACKY_SLASH_ARGS_WIN32:
+        expected = WACKY_SLASH_ARGS_WIN32[value]
+    result = StrConvert().to_command(value)
+    assert result is not None
+    assert result.args == expected
+
+
+@pytest.mark.parametrize(("value", "expected"), WINDOWS_TRAILING_SEP_ARGS)
+def test_shlex_win32_trailing_sep(sys_platform: str, value: str, expected: list[str]) -> None:
+    if sys_platform != "win32":
+        pytest.skip("trailing path separator only relevant on Windows")
     result = StrConvert().to_command(value)
     assert result is not None
     assert result.args == expected
@@ -243,3 +263,21 @@ def test_shlex_platform_specific_ini(
     env_config = outcome.env_conf("py")
     result = env_config["commands"]
     assert result == [Command(args=expected)]
+
+
+def test_trailing_path_sep_does_not_merge_args(
+    tox_project: ToxProjectCreator,
+    sys_platform: str,
+    monkeypatch: MonkeyPatch,
+) -> None:
+    if sys_platform != "win32":
+        pytest.skip("trailing path separator only relevant on Windows")
+    monkeypatch.setattr("os.sep", "\\")
+    project = tox_project({
+        "tox.ini": "[testenv]\ncommands = command path{/}to{/}sep{/} -b foo",
+    })
+    outcome = project.run("c")
+    outcome.assert_success()
+    env_config = outcome.env_conf("py")
+    result = env_config["commands"]
+    assert result == [Command(args=["command", "path\\to\\sep\\", "-b", "foo"])]

@@ -1,0 +1,2 @@
+Skip ``toxfile.py`` inline plugin when it uses hooks not available in the current tox version instead of crashing - this
+allows provisioning to upgrade tox to a version that supports those hooks - by :user:`gaborbernat`.

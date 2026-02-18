@@ -100,7 +100,15 @@ class IniSource(Source):
                     yield name
         # add all conditional markers that are not part of the explicitly defined sections
         for section in self.sections():
-            yield from self._discover_from_section(section, known_factors)
+            if self._is_tox_section(section):
+                yield from self._discover_from_section(section, known_factors)
+
+    def _is_tox_section(self, section: IniSection) -> bool:
+        if section.is_test_env or section == self.CORE_SECTION:
+            return True
+        if section.prefix != self.CORE_SECTION.prefix:
+            return False
+        return section.name == TEST_ENV_PREFIX or section.name.startswith(f"{TEST_ENV_PREFIX}{Section.SEP}")
 
     def _discover_from_section(self, section: IniSection, known_factors: set[str]) -> Iterator[str]:
         for value in self._parser[section.key].values():
