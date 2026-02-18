@@ -27,6 +27,19 @@ def test_inline_tox_py(tox_project: ToxProjectCreator) -> None:
     assert "--magic" in result.out
 
 
+def test_toxfile_unknown_hook_skipped(tox_project: ToxProjectCreator) -> None:
+    def plugin() -> None:  # pragma: no cover
+        from tox.plugin import impl  # noqa: PLC0415
+
+        @impl
+        def tox_nonexistent_hook() -> None: ...
+
+    project = tox_project({"toxfile.py": plugin, "tox.toml": ""})
+    result = project.run("l")
+    result.assert_success()
+    assert "skipping inline plugin" in result.out
+
+
 def test_toxfile_py_w_ephemeral_envs(tox_project: ToxProjectCreator) -> None:
     """Ensure additional ephemeral tox envs can be plugin-injected."""
 
