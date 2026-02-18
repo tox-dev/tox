@@ -9,8 +9,11 @@ from typing import TYPE_CHECKING
 from packaging.utils import canonicalize_name
 
 from tox.config.loader.str_convert import StrConvert
+from tox.config.types import Command
+from tox.execute import Outcome
 from tox.report import HandledError
-from tox.tox_env.errors import Skip
+from tox.session.cmd.run.single import run_command_set
+from tox.tox_env.errors import Fail, Skip
 from tox.tox_env.python.pip.req_file import PythonDeps
 from tox.tox_env.runner import RunToxEnv
 
@@ -47,6 +50,12 @@ class PythonRun(Python, RunToxEnv, ABC):
             default=set(),
             desc="dependency groups to install of the target package",
             post_process=_normalize_extras,
+        )
+        self.conf.add_config(
+            keys=["extra_setup_commands"],
+            of_type=list[Command],
+            default=[],
+            desc="commands to execute after setup (deps and package install) but before test commands",
         )
         add_skip_missing_interpreters_to_core(self.core, self.options)
         add_skip_missing_interpreters_to_env(self.conf, self.core, self.options)
@@ -115,6 +124,23 @@ class PythonRun(Python, RunToxEnv, ABC):
             root = self.core["tox_root"]
         requirements = resolve(root, groups)
         self._install(list(requirements), PythonRun.__name__, "dependency-groups")
+
+    def _setup_with_env(self) -> None:
+        super()._setup_with_env()
+        self._run_extra_setup_commands()
+
+    def _run_extra_setup_commands(self) -> None:
+        command_set: list[Command] = self.conf["extra_setup_commands"]
+        if not command_set:
+            return
+        chdir: Path = self.conf["change_dir"]
+        chdir.mkdir(exist_ok=True, parents=True)
+        ignore_errors: bool = self.conf["ignore_errors"]
+        outcomes: list[Outcome] = []
+        exit_code = run_command_set(self, "extra_setup_commands", chdir, ignore_errors, outcomes)
+        if exit_code != Outcome.OK and not ignore_errors:
+            msg = "extra_setup_commands failed"
+            raise Fail(msg)
 
     def _build_packages(self) -> list[Package]:
         package_env = self.package_env
