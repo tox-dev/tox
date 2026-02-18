@@ -62,6 +62,24 @@ def test_clienv_is_all(user_input: str, expected: bool) -> None:
     assert CliEnv(user_input).is_all is expected
 
 
+def test_clienv_iadd() -> None:
+    cli_env = CliEnv("a,b")
+    cli_env += CliEnv("c,d")
+    assert list(cli_env) == ["a", "b", "c", "d"]
+
+
+def test_clienv_iadd_from_default() -> None:
+    cli_env = CliEnv()
+    cli_env += CliEnv("c")
+    assert list(cli_env) == ["c"]
+
+
+def test_clienv_iadd_noop() -> None:
+    cli_env = CliEnv("a")
+    cli_env += CliEnv()
+    assert list(cli_env) == ["a"]
+
+
 def test_env_select_lazily_looks_at_envs() -> None:
     state = State(get_options(), [])
     env_selector = EnvSelector(state)
@@ -219,6 +237,15 @@ def test_tox_skip_env_logs(tox_project: ToxProjectCreator, monkeypatch: MonkeyPa
     outcome = project.run("l", "--no-desc")
     outcome.assert_success()
     outcome.assert_out_err("ROOT: skip environment mypy, matches filter 'm[y]py'\npy310\npy39\n", "")
+
+
+def test_multiple_e_flags_are_additive(tox_project: ToxProjectCreator) -> None:
+    proj = tox_project({"tox.ini": "[tox]\nenv_list=a,b,c"})
+    outcome = proj.run("c", "-e", "a", "-e", "b", "-k", "env_name")
+    outcome.assert_success()
+    assert "[testenv:a]" in outcome.out
+    assert "[testenv:b]" in outcome.out
+    assert "[testenv:c]" not in outcome.out
 
 
 def test_cli_env_can_be_specified_in_default(tox_project: ToxProjectCreator) -> None:

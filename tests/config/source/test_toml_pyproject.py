@@ -449,3 +449,26 @@ def test_config_env_pkg_base_deps_reference_with_additional_deps(tox_project: To
     outcome.assert_success()
     out = "[testenv:pkg]\ndeps =\n  build\n  wheel\n  setuptools>=40\n"
     outcome.assert_out_err(out, "")
+
+
+def test_config_env_base_inherit_from_arbitrary_section(tox_project: ToxProjectCreator) -> None:
+    project = tox_project({
+        "pyproject.toml": """
+        [tool.tox]
+        env_list = ["a", "b"]
+
+        [tool.tox.env.shared]
+        description = "shared config"
+        skip_install = true
+
+        [tool.tox.env.a]
+        base = ["shared"]
+
+        [tool.tox.env.b]
+        base = ["shared"]
+        """
+    })
+    outcome = project.run("c", "-e", "a,b", "-k", "description")
+    outcome.assert_success()
+    out = "[testenv:a]\ndescription = shared config\n\n[testenv:b]\ndescription = shared config\n"
+    outcome.assert_out_err(out, "")

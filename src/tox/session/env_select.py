@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import argparse
 import logging
 import re
 from collections import Counter
@@ -7,7 +8,7 @@ from dataclasses import dataclass
 from difflib import get_close_matches
 from importlib.util import find_spec
 from itertools import chain
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING, Any, cast
 
 from tox.config.cli.parser import Parsed
 from tox.config.loader.ini.factor import extend_factors
@@ -22,8 +23,14 @@ from tox.tox_env.register import REGISTER
 from tox.tox_env.runner import RunToxEnv
 
 if TYPE_CHECKING:
+    import sys
     from argparse import Action, ArgumentParser, Namespace
     from collections.abc import Iterable, Iterator
+
+    if sys.version_info >= (3, 11):  # pragma: no cover (py311+)
+        from typing import Self
+    else:  # pragma: no cover (<py311)
+        from typing_extensions import Self
 
     from tox.session.state import State
 
@@ -79,6 +86,14 @@ class CliEnv:  # noqa: PLW1641
     def __ne__(self, other: object) -> bool:
         return not (self == other)
 
+    def __iadd__(self, other: CliEnv) -> Self:
+        if other._names is not None:
+            if self._names is None:
+                self._names = list(other._names)
+            else:
+                self._names.extend(other._names)
+        return self
+
     @property
     def is_all(self) -> bool:
         return self._names is not None and "ALL" in self._names
@@ -86,6 +101,22 @@ class CliEnv:  # noqa: PLW1641
     @property
     def is_default_list(self) -> bool:
         return not (self._names or [])
+
+
+class _CliEnvAction(argparse.Action):
+    def __call__(
+        self,
+        parser: argparse.ArgumentParser,  # noqa: ARG002
+        namespace: argparse.Namespace,
+        values: Any,
+        option_string: str | None = None,  # noqa: ARG002
+    ) -> None:
+        new = CliEnv(values)
+        existing = getattr(namespace, self.dest, None)
+        if existing is not None and isinstance(existing, CliEnv) and existing is not self.default:
+            existing += new
+        else:
+            setattr(namespace, self.dest, new)
 
 
 def register_env_select_flags(
@@ -113,7 +144,7 @@ def register_env_select_flags(
             help_msg = "enumerate (ALL -> all environments, not set -> use <env_list> from config)"
         else:
             help_msg = "environment to run"
-        action = add_to.add_argument("-e", dest="env", help=help_msg, default=default, type=CliEnv)
+        action = add_to.add_argument("-e", dest="env", help=help_msg, default=default, action=_CliEnvAction)
         if find_spec("argcomplete"):
             action.completer = _env_completer  # type: ignore[attr-defined]
     if multiple:
