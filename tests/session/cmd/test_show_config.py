@@ -378,6 +378,19 @@ def test_cross_section_envpython_resolves_to_calling_env(tox_project: ToxProject
     assert f".tox{sep}a{sep}" not in b_cmd
 
 
+def test_factor_conditional_falls_back_to_default(tox_project: ToxProjectCreator) -> None:
+    py_ver = f"{sys.version_info[0]}.{sys.version_info[1]}"
+    ini = (
+        f"[tox]\nenv_list=py{py_ver}-a,py{py_ver}-b\nno_package=true\n[testenv]\nbase_python =\n    a: python{py_ver}\n"
+    )
+    outcome = tox_project({"tox.ini": ini}).run("c", "-e", f"py{py_ver}-a,py{py_ver}-b", "-k", "base_python")
+    outcome.assert_success()
+    parser = ConfigParser(interpolation=None)
+    parser.read_string(outcome.out)
+    assert parser.get(f"testenv:py{py_ver}-a", "base_python") == f"python{py_ver}"
+    assert parser.get(f"testenv:py{py_ver}-b", "base_python") == f"py{py_ver}"
+
+
 def test_core_on_platform(tox_project: ToxProjectCreator) -> None:
     project = tox_project({"tox.ini": "[tox]\nno_package = true"})
     result = project.run("c", "-e", "py", "--core", "-k", "on_platform")
