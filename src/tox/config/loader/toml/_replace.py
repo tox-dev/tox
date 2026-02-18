@@ -26,12 +26,14 @@ class Unroll:
         self.loader = loader
         self.args = args
 
-    def __call__(self, value: TomlTypes, depth: int = 0) -> TomlTypes:  # noqa: C901, PLR0912
+    def __call__(  # noqa: C901, PLR0912
+        self, value: TomlTypes, depth: int = 0, *, skip_str: bool = False
+    ) -> TomlTypes:
         """Replace all active tokens within value according to the config."""
         depth += 1
         MatchRecursionError.check(depth, value)
         if isinstance(value, str):
-            if self.conf is not None:  # core config does not support string substitution
+            if not skip_str and self.conf is not None:  # core config does not support string substitution
                 reference = TomlReplaceLoader(self.conf, self.loader)
                 value = replace(self.conf, reference, value, self.args)
         elif isinstance(value, (int, float, bool)):
@@ -40,7 +42,7 @@ class Unroll:
             # need to inspect every entry of the list to check for reference.
             res_list: list[TomlTypes] = []
             for val in value:  # apply replacement for every entry
-                got = self(val, depth)
+                got = self(val, depth, skip_str=skip_str)
                 if isinstance(val, dict) and val.get("replace") and val.get("extend"):
                     res_list.extend(cast("list[Any]", got))
                 else:
@@ -53,7 +55,7 @@ class Unroll:
                 if replace_type == "posargs" and self.conf is not None:
                     got_posargs = load_posargs(self.conf, self.args)
                     posargs_result: TomlTypes = (
-                        [self(v, depth) for v in cast("list[str]", value.get("default", []))]
+                        [self(v, depth, skip_str=skip_str) for v in cast("list[str]", value.get("default", []))]
                         if got_posargs is None
                         else list(got_posargs)
                     )
@@ -63,28 +65,28 @@ class Unroll:
                         self.conf,
                         [
                             validate(value["name"], str),
-                            validate(self(value.get("default", ""), depth), str),
+                            validate(self(value.get("default", ""), depth, skip_str=skip_str), str),
                         ],
                         self.args,
                     )
                     return {"value": env_result, "marker": marker} if marker else env_result
                 if replace_type == "ref":  # pragma: no branch
-                    ref_result = self._replace_ref(value, depth)
+                    ref_result = self._replace_ref(value, depth, skip_str=skip_str)
                     return {"value": ref_result, "marker": marker} if marker else ref_result
 
             res_dict: dict[str, TomlTypes] = {}
             for key, val in value.items():  # apply replacement for every entry
-                res_dict[key] = self(val, depth)
+                res_dict[key] = self(val, depth, skip_str=skip_str)
             value = res_dict
         return value
 
-    def _replace_ref(self, value: dict[str, TomlTypes], depth: int) -> TomlTypes:
+    def _replace_ref(self, value: dict[str, TomlTypes], depth: int, *, skip_str: bool = False) -> TomlTypes:
         if self.conf is not None and (env := value.get("env")) and (key := value.get("key")):
             return cast("TomlTypes", self.conf.get_env(cast("str", env))[cast("str", key)])
         if of := value.get("of"):
             validated_of = validate(of, list[str])
             loaded = self.loader.load_raw_from_root(self.loader.section.SEP.join(validated_of))
-            return self(loaded, depth)
+            return self(loaded, depth, skip_str=skip_str)
         return value
 
 
@@ -158,5 +160,6 @@ class RawLoader:
 
 
 __all__ = [
+    "TomlReplaceLoader",
     "Unroll",
 ]
