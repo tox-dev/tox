@@ -1,2 +1,2 @@
-Config files (``tox.ini``, ``setup.cfg``) with unicode characters are now read correctly on Windows when running
-tox with ``python -m -I`` (isolation mode) - by :user:`gaborbernat`.
+Config files (``tox.ini``, ``setup.cfg``) with unicode characters are now read correctly on Windows when running tox
+with ``python -m -I`` (isolation mode) - by :user:`gaborbernat`.
