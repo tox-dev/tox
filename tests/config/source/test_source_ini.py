@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from textwrap import dedent
 from typing import TYPE_CHECKING
 
 from tox.config.loader.section import Section
@@ -58,3 +59,17 @@ def test_source_ini_custom_non_testenv_sections(tox_ini_conf: ToxIniCreator) -> 
         for_env=None,
     )
     assert custom_section["a"] == "b"
+
+
+def test_source_ini_unicode_characters(tmp_path: Path) -> None:
+    """Test that INI files with unicode characters are read correctly."""
+    ini_file = tmp_path / "tox.ini"
+    content = """
+        [tox]
+        description = Test with emoji ❌ and unicode ✨
+        """
+    ini_file.write_text(dedent(content), encoding="utf-8")
+    loader = IniSource(ini_file).get_loader(Section(None, "tox"), {})
+    assert loader is not None
+    desc = loader.load_raw("description", None, None)
+    assert desc == "Test with emoji ❌ and unicode ✨"
