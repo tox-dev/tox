@@ -246,3 +246,14 @@ def test_setenv_path_venv_paths_first(tox_project: ToxProjectCreator) -> None:
     trailing_idx = next(i for i, p in enumerate(path_entries) if p == "/trailing/path")
     assert tox_idx is not None, f"expected .tox path in PATH, got: {path_line}"
     assert tox_idx < trailing_idx, f"venv paths should precede trailing path: {path_line}"
+
+
+def test_cachedir_tag_created(tox_project: ToxProjectCreator) -> None:
+    prj = tox_project({"tox.ini": "[testenv]\npackage=skip"})
+    result = prj.run("r")
+    result.assert_success()
+
+    tag = prj.path / ".tox" / "CACHEDIR.TAG"
+    assert tag.is_file()
+    content = tag.read_text(encoding="utf-8")
+    assert content.startswith("Signature: 8a477f597d28d172789f06886806bc55\n")

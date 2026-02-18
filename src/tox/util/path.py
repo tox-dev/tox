@@ -6,6 +6,21 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from pathlib import Path
 
+_CACHEDIR_TAG = """\
+Signature: 8a477f597d28d172789f06886806bc55
+# This file is a cache directory tag created by tox.
+# For information about cache directory tags, see:
+#	https://bford.info/cachedir/spec.html
+"""
+
+
+def ensure_cachedir_tag(work_dir: Path) -> None:
+    """Ensure a ``CACHEDIR.TAG`` file exists in *work_dir* per https://bford.info/cachedir/spec.html."""
+    tag_path = work_dir / "CACHEDIR.TAG"
+    if not tag_path.exists():
+        work_dir.mkdir(parents=True, exist_ok=True)
+        tag_path.write_text(_CACHEDIR_TAG, encoding="utf-8")
+
 
 def ensure_empty_dir(path: Path, except_filename: str | None = None) -> None:
     if path.exists():
@@ -25,5 +40,6 @@ def ensure_empty_dir(path: Path, except_filename: str | None = None) -> None:
 
 
 __all__ = [
+    "ensure_cachedir_tag",
     "ensure_empty_dir",
 ]
