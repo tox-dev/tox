@@ -153,6 +153,8 @@ def run_provision(name: str, state: State) -> int:
         try:
             tox_env.setup()
             args: list[str] = [str(env_python), "-m", "tox"]
+            if state.conf.options.is_colored and "--colored" not in state.args:
+                args.extend(["--colored", "yes"])
             args.extend(state.args)
             outcome = tox_env.execute(
                 cmd=args, stdin=StdinSource.user_only(), show=True, run_id="provision", cwd=Path.cwd()
