@@ -544,7 +544,7 @@ def test_sdist_wheel_package_type(tox_project: ToxProjectCreator, demo_pkg_inlin
     # The parent .pkg env builds the sdist
     assert (".pkg", "build_sdist") in found_calls, f"expected .pkg to build_sdist, got {found_calls}"
 
-    # A separate child env builds the wheel from the extracted sdist (default: .pkg-sdist-wheel)
+    # A separate child env builds the wheel from the extracted sdist
     child_wheel_calls = [(env, rid) for env, rid in found_calls if env != ".pkg" and rid == "build_wheel"]
     assert child_wheel_calls, f"expected a child env (not .pkg) to build_wheel, got {found_calls}"
     child_env_name = child_wheel_calls[0][0]
@@ -562,17 +562,17 @@ def test_sdist_wheel_package_type(tox_project: ToxProjectCreator, demo_pkg_inlin
 def test_sdist_wheel_config(tox_project: ToxProjectCreator, demo_pkg_inline: Path) -> None:
     ini = "[testenv]\npackage=sdist-wheel"
     proj = tox_project({"tox.ini": ini}, base=demo_pkg_inline)
-    result = proj.run("c", "-k", "package", "-k", "wheel_build_env")
+    result = proj.run("c", "-k", "package", "-k", "sdist_wheel_build_env")
     result.assert_success()
     res = result.env_conf("py")["package"]
     assert res == "sdist-wheel"
-    # sdist-wheel reuses wheel_build_env but defaults to a separate isolated child env
-    build_env = result.env_conf("py")["wheel_build_env"]
+    # The sdist_wheel_build_env config should be present with a default value
+    build_env = result.env_conf("py")["sdist_wheel_build_env"]
     assert build_env == ".pkg-sdist-wheel"
 
 
 def test_sdist_wheel_custom_build_env(tox_project: ToxProjectCreator, demo_pkg_inline: Path) -> None:
-    ini = "[testenv]\npackage=sdist-wheel\nwheel_build_env=.custom-wheel-builder"
+    ini = "[testenv]\npackage=sdist-wheel\nsdist_wheel_build_env=.custom-wheel-builder"
     proj = tox_project({"tox.ini": ini}, base=demo_pkg_inline)
     execute_calls = proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
     result = proj.run("r", "--notest")
