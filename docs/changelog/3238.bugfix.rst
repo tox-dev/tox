@@ -1,2 +1,2 @@
-Fix ``{envtmpdir}`` and other env variable substitutions not expanding in external package environment
-commands - by :user:`gaborbernat`. (:issue:`3238`)
+Fix ``{envtmpdir}`` and other env variable substitutions not expanding in external package environment commands - by
+:user:`gaborbernat`. (:issue:`3238`)
