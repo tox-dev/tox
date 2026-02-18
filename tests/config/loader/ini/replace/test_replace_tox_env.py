@@ -111,7 +111,7 @@ def test_replace_within_tox_env_from_base(example: EnvConfigCreator) -> None:
     assert result == "one"
 
 
-def test_replace_ref_bad_type(tox_ini_conf: ToxIniCreator) -> None:
+def test_replace_ref_raw_value(tox_ini_conf: ToxIniCreator) -> None:
     config = tox_ini_conf("[testenv:a]\nx = {[testenv:b]v}\n[testenv:b]\nv=1")
 
     class BadType:
@@ -125,8 +125,7 @@ def test_replace_ref_bad_type(tox_ini_conf: ToxIniCreator) -> None:
     conf_a = config.get_env("a")
     conf_a.add_config(keys="x", of_type=str, default="o", desc="o")
 
-    with pytest.raises(HandledError, match=r"replace failed in a.x with ValueError.*'1'.*"):
-        assert conf_a["x"]
+    assert conf_a["x"] == "1"
 
 
 @pytest.mark.parametrize(
