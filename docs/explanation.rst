@@ -471,9 +471,9 @@ it falls back to the base section (:ref:`base` configuration). For ``tox.toml`` 
 
 Here ``test`` inherits ``commands`` from the base because it is not specified in ``[env.test]``.
 
-********************
+*******************
  Known limitations
-********************
+*******************
 
 Interactive terminal programs
 =============================
