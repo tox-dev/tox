@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 import os
 from typing import TYPE_CHECKING, Any
 
@@ -78,7 +79,15 @@ class Plugin:
         for plugin in internal_plugins:
             self.manager.register(plugin)
         self.manager.register(state)
-        self.manager.check_pending()
+        try:
+            self.manager.check_pending()
+        except pluggy.PluginValidationError:
+            if inline is None:
+                raise
+            logging.warning("toxfile.py uses hooks not available in this tox version, skipping inline plugin")
+            self.manager.unregister(inline)
+            self.inline_module = None
+            self.manager.check_pending()
 
     def _load_external_plugins(self) -> None:
         for name in os.environ.get("TOX_DISABLED_EXTERNAL_PLUGINS", "").split(","):

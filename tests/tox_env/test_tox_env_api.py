@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 from textwrap import dedent
 from typing import TYPE_CHECKING
 from unittest.mock import patch
@@ -175,6 +176,28 @@ commands = [["python", "--version"]]
     assert f"foo: commands[0] {prj.path / 'subdir'}>" in result.out
 
 
+def test_posargs_cross_drive_no_crash(tox_project: ToxProjectCreator, monkeypatch: pytest.MonkeyPatch) -> None:
+    toml = """\
+[env_run_base]
+package = "skip"
+commands = [["python", "{posargs}"]]
+"""
+    prj = tox_project({"tox.toml": toml})
+    (prj.path / "test.py").write_text("print('ok')")
+    original_relpath = os.path.relpath
+
+    def _relpath_cross_drive(path: str, start: str) -> str:
+        if "test.py" in path:
+            msg = "path is on mount 'O:', start on mount 'C:'"
+            raise ValueError(msg)
+        return original_relpath(path, start)
+
+    monkeypatch.setattr(os.path, "relpath", _relpath_cross_drive)
+    result = prj.run("r", "--", "test.py")
+    result.assert_success()
+    assert "ok" in result.out
+
+
 def test_change_dir_is_created_if_not_exist(tox_project: ToxProjectCreator) -> None:
     prj = tox_project({"tox.ini": "[testenv]\npackage=skip\nchange_dir=a{/}b\ncommands=python --version"})
     result_first = prj.run("r")
@@ -223,3 +246,14 @@ def test_setenv_path_venv_paths_first(tox_project: ToxProjectCreator) -> None:
     trailing_idx = next(i for i, p in enumerate(path_entries) if p == "/trailing/path")
     assert tox_idx is not None, f"expected .tox path in PATH, got: {path_line}"
     assert tox_idx < trailing_idx, f"venv paths should precede trailing path: {path_line}"
+
+
+def test_cachedir_tag_created(tox_project: ToxProjectCreator) -> None:
+    prj = tox_project({"tox.ini": "[testenv]\npackage=skip"})
+    result = prj.run("r")
+    result.assert_success()
+
+    tag = prj.path / ".tox" / "CACHEDIR.TAG"
+    assert tag.is_file()
+    content = tag.read_text(encoding="utf-8")
+    assert content.startswith("Signature: 8a477f597d28d172789f06886806bc55\n")

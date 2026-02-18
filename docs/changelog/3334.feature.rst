@@ -1,0 +1,2 @@
+Create a ``CACHEDIR.TAG`` file in the tox work directory (``.tox``) so that backup and archiving tools (e.g., ``tar
+--exclude-caches``, Borg, restic) can automatically skip it - by :user:`radevika`.

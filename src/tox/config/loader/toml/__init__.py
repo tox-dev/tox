@@ -6,12 +6,13 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, TypeVar, cast
 
 from tox.config.loader.api import ConfigLoadArgs, Loader, Override
+from tox.config.loader.replacer import replace
 from tox.config.set_env import SetEnv
 from tox.config.types import Command, EnvList
 from tox.report import HandledError
 
 from ._api import TomlTypes
-from ._replace import Unroll
+from ._replace import TomlReplaceLoader, Unroll
 from ._validate import validate
 
 if TYPE_CHECKING:
@@ -68,10 +69,19 @@ class TomlLoader(Loader[TomlTypes]):
         raw: TomlTypes,
         args: ConfigLoadArgs,
     ) -> _T:
-        exploded = Unroll(conf=conf, loader=self, args=args)(raw)
+        delay_replace = inspect.isclass(of_type) and issubclass(of_type, SetEnv)
+        unroll = Unroll(conf=conf, loader=self, args=args)
+        exploded = unroll(raw, skip_str=True) if delay_replace else unroll(raw)
         result = self.to(exploded, of_type, factory)
-        if inspect.isclass(of_type) and issubclass(of_type, SetEnv):
-            result.use_replacer(lambda c, s: c, args=args)  # noqa: ARG005
+        if delay_replace:
+            loader = self
+
+            def _toml_replacer(value: str, args_: ConfigLoadArgs) -> str:
+                if conf is None:
+                    return value
+                return replace(conf, TomlReplaceLoader(conf, loader), value, args_)
+
+            result.use_replacer(_toml_replacer, args=args)
         return result
 
     def found_keys(self) -> set[str]:
