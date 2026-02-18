@@ -1,0 +1,1 @@
+Using ``{posargs}`` in ``change_dir`` no longer causes a ``RecursionError`` - by :user:`gaborbernat`.

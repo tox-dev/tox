@@ -161,6 +161,20 @@ def test_disallow_pass_env_empty(tox_project: ToxProjectCreator) -> None:
     assert "bar" in result.out
 
 
+def test_change_dir_posargs_no_recursion(tox_project: ToxProjectCreator) -> None:
+    toml = """\
+[env.foo]
+package = "skip"
+change_dir = "{posargs}"
+commands = [["python", "--version"]]
+"""
+    prj = tox_project({"tox.toml": toml})
+    (prj.path / "subdir").mkdir()
+    result = prj.run("r", "-e", "foo", "--", "subdir")
+    result.assert_success()
+    assert f"foo: commands[0] {prj.path / 'subdir'}>" in result.out
+
+
 def test_change_dir_is_created_if_not_exist(tox_project: ToxProjectCreator) -> None:
     prj = tox_project({"tox.ini": "[testenv]\npackage=skip\nchange_dir=a{/}b\ncommands=python --version"})
     result_first = prj.run("r")
