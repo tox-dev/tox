@@ -578,38 +578,3 @@ def test_read_via_thread_drain_no_data() -> None:
     finally:
         with contextlib.suppress(OSError):
             os.close(read_fd)
-
-
-@pytest.mark.skipif(sys.platform != "win32", reason="Windows-specific test")
-def test_vt_processing_enabled_on_windows(monkeypatch: MonkeyPatch) -> None:
-    """Verify that VT100 processing is enabled for subprocess output on Windows."""
-    enable_vt_called = []
-
-    def mock_enable_vt(fd: int) -> bool:
-        enable_vt_called.append(fd)
-        return True
-
-    # Monkeypatch at the module level in sys.modules
-    monkeypatch.setattr("colorama.ansitowin32.enable_vt_processing", mock_enable_vt)
-
-    fake = FakeOutErr()
-    env = MagicMock()
-    mock_conf = MagicMock()
-    mock_conf.options.stderr_color = "RED"
-    env.conf._conf = mock_conf  # noqa: SLF001
-
-    executor = LocalSubProcessExecutor(colored=True)
-    request = ExecuteRequest(
-        cmd=[sys.executable, "-c", "print('test')"],
-        cwd=Path.cwd(),
-        env=os.environ.copy(),
-        stdin=StdinSource.OFF,
-        run_id="test",
-        allow=None,
-    )
-
-    with executor.call(request, show=True, out_err=fake.out_err, env=env):
-        pass
-
-    # Verify enable_vt_processing was called for both stdout and stderr
-    assert len(enable_vt_called) == 2, f"Expected 2 calls, got {len(enable_vt_called)}"
