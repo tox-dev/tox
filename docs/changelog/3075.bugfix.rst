@@ -1,0 +1,3 @@
+Cross-section substitution (e.g. ``{[testenv:a]commands}``) now resolves environment-specific variables like
+``{envpython}``, ``{envbindir}``, ``{envtmpdir}``, and ``{envsitepackagesdir}`` in the calling environment's context
+rather than the referenced environment's context - by :user:`gaborbernat`.

@@ -64,11 +64,9 @@ class ReplaceReferenceIni(ReplaceReference):
     def _config_value_sources(
         self, env: str | None, section: str | None, current_env: str | None
     ) -> Iterator[SectionProxy | ConfigSet]:
-        # if we have an env name specified take only from there
-        if env is not None and env in self.conf:
-            yield self.conf.get_env(env)
-
         if section is None:
+            if env is not None and env in self.conf:
+                yield self.conf.get_env(env)
             # if no section specified perhaps it's an unregistered config:
             # 1. try first from core conf
             yield self.conf.core
@@ -80,9 +78,12 @@ class ReplaceReferenceIni(ReplaceReference):
         # if there's a section, special handle the core section
         if section == self.loader.core_section.name:
             yield self.conf.core  # try via registered configs
-        value = self.loader.get_section(section)  # fallback to section
-        if value is not None:
-            yield value
+        # prefer raw section values so substitutions resolve in the calling env's context
+        if (proxy := self.loader.get_section(section)) is not None:
+            yield proxy
+        # fallback to the env's ConfigSet for registered-only keys
+        if env is not None and env in self.conf:
+            yield self.conf.get_env(env)
 
 
 @cache

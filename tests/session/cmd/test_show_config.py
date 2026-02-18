@@ -354,6 +354,28 @@ def test_package_env_inherits_from_pkgenv(tox_project: ToxProjectCreator, demo_p
     assert exp in outcome.out
 
 
+def test_cross_section_envpython_resolves_to_calling_env(tox_project: ToxProjectCreator) -> None:
+    project = tox_project({
+        "tox.ini": dedent("""\
+            [testenv:a]
+            package = skip
+            commands = {envpython} -m black .
+
+            [testenv:b]
+            package = skip
+            commands = {[testenv:a]commands}
+        """),
+    })
+    outcome = project.run("c", "-e", "a,b", "-k", "commands")
+    outcome.assert_success()
+    lines = outcome.out.splitlines()
+    a_cmd = next(line for line in lines if line.startswith("commands") and lines.index(line) < lines.index(""))
+    b_cmd = [line for line in lines if line.startswith("commands")][-1]
+    assert ".tox/a/" in a_cmd
+    assert ".tox/b/" in b_cmd
+    assert ".tox/a/" not in b_cmd
+
+
 def test_core_on_platform(tox_project: ToxProjectCreator) -> None:
     project = tox_project({"tox.ini": "[tox]\nno_package = true"})
     result = project.run("c", "-e", "py", "--core", "-k", "on_platform")
