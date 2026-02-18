@@ -17,6 +17,7 @@ from virtualenv.discovery.py_spec import PythonSpec
 
 from tox.config.loader.str_convert import StrConvert
 from tox.execute.local_sub_process import LocalSubProcessExecutor
+from tox.tox_env.errors import Skip
 from tox.tox_env.python.api import Python, PythonInfo, VersionInfo
 from tox.tox_env.python.pip.pip_install import Pip
 
@@ -167,13 +168,19 @@ class VirtualEnv(Python, ABC):
         return list(dict.fromkeys((creator.bin_dir, creator.script_dir)))
 
     def env_site_package_dir(self) -> Path:
-        return cast("Path", cast("Describe", self.creator).purelib)
+        return cast("Path", cast("Describe", self._creator_with_skip()).purelib)
 
     def env_python(self) -> Path:
-        return cast("Path", cast("Describe", self.creator).exe)
+        return cast("Path", cast("Describe", self._creator_with_skip()).exe)
 
     def env_bin_dir(self) -> Path:
-        return cast("Path", cast("Describe", self.creator).script_dir)
+        return cast("Path", cast("Describe", self._creator_with_skip()).script_dir)
+
+    def _creator_with_skip(self) -> Creator:
+        try:
+            return self.creator
+        except RuntimeError as exc:
+            raise Skip(str(exc)) from exc
 
     @property
     def runs_on_platform(self) -> str:

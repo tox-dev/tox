@@ -11,6 +11,7 @@ from tox.config.loader.replacer import replace
 from tox.config.loader.str_convert import StrConvert
 from tox.config.set_env import SetEnv
 from tox.report import HandledError
+from tox.tox_env.errors import Skip
 
 if TYPE_CHECKING:
     from configparser import ConfigParser, SectionProxy
@@ -77,7 +78,7 @@ class IniLoader(StrConvert, Loader[str]):
                 try:
                     replaced = replace(conf, reference_replacer, raw_, args_)  # do replacements
                 except Exception as exception:
-                    if isinstance(exception, HandledError):
+                    if isinstance(exception, (HandledError, Skip)):
                         raise
                     name = self.core_section.key if args_.env_name is None else args_.env_name
                     msg = f"replace failed in {name}.{key} with {exception!r}"
