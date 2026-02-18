@@ -244,8 +244,8 @@ tox uses a virtual environment for building, whose name depends on the artifact 
 
 - For source distributions: the :ref:`package_env` (default ``.pkg``)
 - For wheels: the :ref:`wheel_build_env` (default ``.pkg-<impl><version>``, e.g. ``.pkg-cpython313``)
-- For sdist-wheel: uses two environments — the :ref:`package_env` for building the sdist, and the
-  :ref:`wheel_build_env` (default ``.pkg-<impl><version>``) for building the wheel from the extracted sdist
+- For sdist-wheel: uses two environments — the :ref:`package_env` for building the sdist, and the :ref:`wheel_build_env`
+  (default ``.pkg-<impl><version>``) for building the wheel from the extracted sdist
 
 For pure Python projects (no C extensions), set :ref:`wheel_build_env` to the same value as :ref:`package_env`. This way
 the wheel is built once and reused for all tox environments:
