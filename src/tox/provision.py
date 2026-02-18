@@ -129,6 +129,8 @@ def provision(state: State) -> int | bool:
 def _get_missing(requires: list[Requirement]) -> list[tuple[Requirement, str | None]]:
     missing: list[tuple[Requirement, str | None]] = []
     for package in requires:
+        if package.marker and not package.marker.evaluate():
+            continue
         package_name = canonicalize_name(package.name)
         try:
             dist = distribution(package_name)

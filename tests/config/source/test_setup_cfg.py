@@ -14,9 +14,29 @@ def test_conf_in_setup_cfg(tox_project: ToxProjectCreator) -> None:
     assert outcome.out == "default environments:\na -> [no description]\nb -> [no description]\n"
 
 
-def test_bad_conf_setup_cfg(tox_project: ToxProjectCreator) -> None:
+def test_setup_cfg_without_tox_section(tox_project: ToxProjectCreator) -> None:
     project = tox_project({"setup.cfg": "[tox]\nenv_list=\n a\n b"})
     filename = str(project.path / "setup.cfg")
     outcome = project.run("l", "-c", filename)
     outcome.assert_failed()
-    assert outcome.out == f"ROOT: HandledError| SetupCfg failed loading {filename} due to section tox:tox not found\n"
+    assert outcome.out == f"ROOT: HandledError| could not recognize config file {filename}\n"
+
+
+def test_setup_cfg_does_not_block_pyproject_toml(tox_project: ToxProjectCreator) -> None:
+    project = tox_project({
+        "setup.cfg": "[metadata]\nname = test-pkg\n",
+        "pyproject.toml": "[tool.tox]\nenv_list = ['a']\n\n[tool.tox.env_run_base]\npackage = 'skip'\n",
+    })
+    outcome = project.run("l")
+    outcome.assert_success()
+    assert "a -> [no description]" in outcome.out
+
+
+def test_setup_cfg_does_not_block_tox_toml(tox_project: ToxProjectCreator) -> None:
+    project = tox_project({
+        "setup.cfg": "[metadata]\nname = test-pkg\n",
+        "tox.toml": 'env_list = ["b"]\n\n[env_run_base]\npackage = "skip"\n',
+    })
+    outcome = project.run("l")
+    outcome.assert_success()
+    assert "b -> [no description]" in outcome.out

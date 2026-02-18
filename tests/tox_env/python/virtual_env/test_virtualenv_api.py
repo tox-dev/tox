@@ -174,6 +174,26 @@ def test_list_dependencies_command(tox_project: ToxProjectCreator) -> None:
     assert request.cmd == ["python", "-m", "pip", "freeze"]
 
 
+def test_posargs_colon_in_inactive_env_does_not_crash(tox_project: ToxProjectCreator) -> None:
+    project = tox_project({
+        "tox.toml": """
+            env_list = ["hello"]
+
+            [env.hello]
+            package = "skip"
+            commands = [["python", "-c", "print('ok')"]]
+
+            [env.dev]
+            env_dir = "{posargs:venv}"
+            package = "editable"
+            commands = [["python", "-c", "print('dev')"]]
+        """,
+    })
+    outcome = project.run("r", "-e", "hello", "--", "x:y")
+    outcome.assert_success()
+    assert "ok" in outcome.out
+
+
 def test_pip_user_disabled(tox_project: ToxProjectCreator) -> None:
     proj = tox_project(
         {
