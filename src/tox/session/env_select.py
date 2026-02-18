@@ -10,7 +10,7 @@ from itertools import chain
 from typing import TYPE_CHECKING, cast
 
 from tox.config.cli.parser import Parsed
-from tox.config.loader.str_convert import StrConvert
+from tox.config.loader.ini.factor import extend_factors
 from tox.config.main import Config
 from tox.config.source.discover import discover_source
 from tox.config.types import EnvList
@@ -50,7 +50,11 @@ class CliEnv:  # noqa: PLW1641
 
     def __init__(self, value: list[str] | str | None = None) -> None:
         if isinstance(value, str):
-            value = StrConvert().to(value, of_type=list[str], factory=None)
+            raw = value
+            try:
+                value = list(extend_factors(raw)) or None
+            except ValueError:
+                value = [v.strip() for v in raw.split(",") if v.strip()] or None
         self._names: list[str] | None = value
 
     def __iter__(self) -> Iterator[str]:

@@ -1,0 +1,2 @@
+The ``-e`` flag now supports brace expansion (e.g. ``tox -e 'py{38,39}-pytest{6.x,7.x}'``) instead of incorrectly
+splitting on commas inside braces - by :user:`gaborbernat`.
