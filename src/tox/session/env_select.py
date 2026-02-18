@@ -50,10 +50,11 @@ class CliEnv:  # noqa: PLW1641
 
     def __init__(self, value: list[str] | str | None = None) -> None:
         if isinstance(value, str):
+            raw = value
             try:
-                value = list(extend_factors(value)) or None
+                value = list(extend_factors(raw)) or None
             except ValueError:
-                value = [v.strip() for v in value.split(",") if v.strip()] or None
+                value = [v.strip() for v in raw.split(",") if v.strip()] or None
         self._names: list[str] | None = value
 
     def __iter__(self) -> Iterator[str]:
