@@ -1,0 +1,2 @@
+Multiple ``-e`` flags are now additive (``tox r -e a -e b`` runs both ``a`` and ``b``), matching tox 3 behavior - by
+:user:`gaborbernat`.
