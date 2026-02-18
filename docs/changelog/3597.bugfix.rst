@@ -1,3 +1,0 @@
-``set_env`` substitution referencing ``{envsitepackagesdir}``, ``{envbindir}``, or ``{envpython}`` for environments with
-missing interpreters now raises ``Skip`` instead of ``RuntimeError``, allowing ``skip_missing_interpreters`` to work
-correctly - by :user:`gaborbernat`.

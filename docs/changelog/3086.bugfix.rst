@@ -1,2 +1,0 @@
-Fix ``ValueError`` crash when using posargs on Windows with ``subst`` drive mappings -- ``os.path.relpath`` fails across
-drive letters, so fall back to absolute paths when the relative path cannot be computed - by :user:`gaborbernat`.

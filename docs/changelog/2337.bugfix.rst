@@ -1,2 +1,0 @@
-On Windows, ANSI color codes from child processes (like pytest, mypy) are now rendered correctly in terminals by
-enabling VT100 processing mode for subprocess output streams - by :user:`gaborbernat`.

@@ -1,2 +1,0 @@
-Posargs containing colons no longer crash tox when an inactive environment uses ``{posargs}`` in path-like configuration
-values such as ``env_dir`` - by :user:`gaborbernat`.

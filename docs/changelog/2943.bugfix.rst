@@ -1,2 +1,0 @@
-``--force-dep`` now applies to package dependencies from project metadata (e.g. ``setup.cfg`` ``install_requires``,
-``pyproject.toml`` ``dependencies``), not just tox config ``deps`` - by :user:`gaborbernat`.
