@@ -22,6 +22,14 @@ def test_setup_cfg_without_tox_section(tox_project: ToxProjectCreator) -> None:
     assert outcome.out == f"ROOT: HandledError| could not recognize config file {filename}\n"
 
 
+def test_setup_cfg_non_tox_section_not_discovered_as_env(tox_project: ToxProjectCreator) -> None:
+    cfg = "[tox:tox]\nenv_list = py\n[tox:testenv]\npackage = skip\n[options]\npackages = find:\n"
+    project = tox_project({"setup.cfg": cfg})
+    outcome = project.run("l")
+    outcome.assert_success()
+    assert "find" not in outcome.out
+
+
 def test_setup_cfg_does_not_block_pyproject_toml(tox_project: ToxProjectCreator) -> None:
     project = tox_project({
         "setup.cfg": "[metadata]\nname = test-pkg\n",
