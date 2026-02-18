@@ -7,7 +7,7 @@ import sys
 import time
 from abc import ABC, abstractmethod
 from collections.abc import Callable, Iterator, Sequence
-from contextlib import contextmanager
+from contextlib import contextmanager, suppress
 from typing import IO, TYPE_CHECKING, Any, NoReturn, cast
 
 from colorama import Fore
@@ -24,6 +24,20 @@ if TYPE_CHECKING:
 ContentHandler = Callable[[bytes], int]
 Executor = Callable[[ExecuteRequest, ContentHandler, ContentHandler], int]
 LOGGER = logging.getLogger(__name__)
+
+
+def _enable_vt_processing_for_buffers(out_err: OutErr) -> None:
+    """Enable VT100 processing on Windows for stdout/stderr buffers to render ANSI codes from subprocesses."""
+    if sys.platform != "win32":
+        return
+    try:
+        from colorama.ansitowin32 import enable_vt_processing  # noqa: PLC0415
+
+        for stream in out_err:
+            with suppress(AttributeError, OSError):
+                enable_vt_processing(stream.buffer.fileno())
+    except ImportError:
+        pass
 
 
 class ExecuteOptions:
@@ -130,6 +144,8 @@ class Execute(ABC):
                 stderr_color = getattr(Fore, cfg_color)
             except (AttributeError, KeyError, TypeError):  # many tests have a mocked 'env'
                 stderr_color = Fore.RED
+            if sys.platform == "win32" and show:
+                _enable_vt_processing_for_buffers(out_err)
         try:
             # collector is what forwards the content from the file streams to the standard streams
             out = cast("IO[bytes]", out_err[0].buffer)
