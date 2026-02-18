@@ -352,3 +352,23 @@ def test_provision_install_pkg_pep517(
     project = tox_project({"tox.ini": tox_ini}, base=example)
     result = project.run("r", "-e", "py", "--installpkg", str(sdist), "--notest", "--no-list-dependencies")
     result.assert_success()
+
+
+def test_provision_colored_passed_to_subprocess(tox_project: ToxProjectCreator) -> None:
+
+    captured_cmd = None
+
+    def handle_provision(request: ExecuteRequest) -> int | None:
+        nonlocal captured_cmd
+        if "provision" in str(request.run_id):
+            captured_cmd = request.cmd
+        return 0
+
+    ini = "[tox]\nrequires = tox>=999\n\n[testenv]\npackage = skip\ncommands = python -c 'pass'"
+    project = tox_project({"tox.ini": ini})
+    project.patch_execute(handle_provision)
+    outcome = project.run("c", "--colored", "yes")
+    outcome.assert_success()
+    assert captured_cmd is not None, "provision command not captured"
+    assert "--colored" in captured_cmd, f"--colored not in command: {captured_cmd}"
+    assert "yes" in captured_cmd, f"'yes' not in command: {captured_cmd}"
