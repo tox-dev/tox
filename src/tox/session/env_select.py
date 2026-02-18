@@ -215,11 +215,17 @@ class EnvSelector:
             yield label_envs.keys(), False
 
     def _ensure_envs_valid(self) -> None:
-        valid_factors = set(chain.from_iterable(env.split("-") for env in self._state.conf))
-        valid_factors.add(".pkg")  # packaging factor
+        known_envs = set(self._state.conf)
+        # factors that can be freely combined: from env_list entries and known env names themselves
+        combinable = set(chain.from_iterable(env.split("-") for env in self._state.conf.core["env_list"]))
+        combinable.update(known_envs)
+        combinable.add(".pkg")
+        # broader pool for suggestions includes factors from all known env names
+        all_factors = set(chain.from_iterable(env.split("-") for env in known_envs))
+        all_factors.update(combinable)
         invalid_envs: dict[str, str | None] = {}
         for env in self._cli_envs or []:
-            if env.startswith(".pkg_external"):  # external package
+            if env.startswith(".pkg_external") or env in known_envs:
                 continue
             factors: dict[str, str | None] = dict.fromkeys(env.split("-"))
             found_factors: set[str] = set()
@@ -227,12 +233,13 @@ class EnvSelector:
                 if (
                     _DYNAMIC_ENV_FACTORS.fullmatch(factor)
                     or _PY_PRE_RELEASE_FACTOR.fullmatch(factor)
-                    or factor in valid_factors
+                    or factor in combinable
                 ):
                     found_factors.add(factor)
                 else:
-                    closest = get_close_matches(factor, valid_factors, n=1)
-                    factors[factor] = closest[0] if closest else None
+                    closest = get_close_matches(factor, all_factors, n=1)
+                    suggestion = closest[0] if closest else None
+                    factors[factor] = None if suggestion == factor else suggestion
             if set(factors) - found_factors:
                 invalid_envs[env] = (
                     None
