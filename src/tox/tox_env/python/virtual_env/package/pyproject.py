@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import logging
 import os
-import shutil
 import sys
 import tarfile
 from abc import ABC
@@ -200,10 +199,7 @@ class Pep517VenvPackager(PythonPackageToxEnv, ABC):
     def register_run_env(self, run_env: RunToxEnv) -> Generator[tuple[str, str], PackageToxEnv, None]:
         yield from super().register_run_env(run_env)
         build_type = run_env.conf["package"]
-        if build_type == "sdist-wheel":
-            self.call_require_hooks.add("sdist")
-        else:
-            self.call_require_hooks.add(build_type)
+        self.call_require_hooks.add("sdist" if build_type == "sdist-wheel" else build_type)
         self.builds[build_type].append(run_env.conf)
 
     def _setup_env(self) -> None:
@@ -313,7 +309,7 @@ class Pep517VenvPackager(PythonPackageToxEnv, ABC):
         return [package]
 
     def _build_wheel_via_sdist(self, for_env: EnvConfigSet) -> Path:
-        """Build a wheel by first building an sdist, then building a wheel from it in an isolated child environment."""
+        """Build a wheel by first building an sdist, then building a wheel from it."""
         self.setup()
         with self._pkg_lock:
             # Step 1: Build the sdist in this (parent) environment
@@ -326,28 +322,21 @@ class Pep517VenvPackager(PythonPackageToxEnv, ABC):
 
             # Step 2: Extract sdist to env_tmp_dir (auto-cleaned by tox lifecycle)
             extract_dir = self.env_tmp_dir / "sdist-extract"
-            if extract_dir.exists():
-                shutil.rmtree(extract_dir)
             extract_dir.mkdir(parents=True, exist_ok=True)
             self._extract_sdist(sdist, extract_dir)
             sdist_source_root = self._find_sdist_root(extract_dir)
             sdist.unlink(missing_ok=True)
 
             # Step 3: Get wheel_build_env child and point it at extracted sdist
-            w_env = self._wheel_build_envs.get(for_env["wheel_build_env"])
-            child_env = cast("Pep517VenvPackager", w_env) if w_env is not None else self
+            child_env = cast("Pep517VenvPackager", self._wheel_build_envs[for_env["wheel_build_env"]])
             child_env.root = sdist_source_root
-            child_env.call_require_hooks = {"wheel"}
-            if child_env is not self:
-                # Full setup for separate child env (its env_tmp_dir != parent's, so extraction survives)
-                child_env._run_state["setup"] = False  # noqa: SLF001
-                child_env.setup()
-            else:
-                # Minimal re-setup: install build requirements without full setup() which clears env_tmp_dir
-                self._install(self.requires(), PythonPackageToxEnv.__name__, "requires")
+            child_env.call_require_hooks.add("wheel")
+            if child_env is self:
                 self._setup_build_requires("wheel")
+            else:
+                child_env.setup()
 
-            # Step 4: Build the wheel in the child environment
+            # Step 4: Build the wheel
             wheel_config: ConfigSettings = child_env.conf["config_settings_build_wheel"]
             return child_env._frontend.build_wheel(  # noqa: SLF001
                 wheel_directory=child_env.pkg_dir,
