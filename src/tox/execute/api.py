@@ -26,20 +26,6 @@ Executor = Callable[[ExecuteRequest, ContentHandler, ContentHandler], int]
 LOGGER = logging.getLogger(__name__)
 
 
-def _enable_vt_processing_for_buffers(out_err: OutErr) -> None:
-    """Enable VT100 processing on Windows for stdout/stderr buffers to render ANSI codes from subprocesses."""
-    if sys.platform != "win32":
-        return
-    try:
-        from colorama.ansitowin32 import enable_vt_processing  # noqa: PLC0415
-
-        for stream in out_err:
-            with suppress(AttributeError, OSError):
-                enable_vt_processing(stream.buffer.fileno())
-    except ImportError:
-        pass
-
-
 class ExecuteOptions:
     def __init__(self, env: ToxEnv) -> None:
         self._env = env
@@ -145,7 +131,14 @@ class Execute(ABC):
             except (AttributeError, KeyError, TypeError):  # many tests have a mocked 'env'
                 stderr_color = Fore.RED
             if sys.platform == "win32" and show:
-                _enable_vt_processing_for_buffers(out_err)
+                try:
+                    import colorama.ansitowin32  # noqa: PLC0415
+
+                    for stream in out_err:
+                        with suppress(AttributeError, OSError):
+                            colorama.ansitowin32.enable_vt_processing(stream.buffer.fileno())
+                except ImportError:
+                    pass
         try:
             # collector is what forwards the content from the file streams to the standard streams
             out = cast("IO[bytes]", out_err[0].buffer)
