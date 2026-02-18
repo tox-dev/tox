@@ -16,7 +16,7 @@ from typing import TYPE_CHECKING, Any, NamedTuple, cast
 from tox.execute.request import ExecuteRequest
 from tox.tox_env.errors import Fail, Recreate, Skip
 from tox.tox_env.info import Info
-from tox.util.path import ensure_empty_dir
+from tox.util.path import ensure_cachedir_tag, ensure_empty_dir
 
 if TYPE_CHECKING:
     from collections.abc import Iterator, Sequence
@@ -357,6 +357,7 @@ class ToxEnv(ABC):
 
     def _handle_core_tmp_dir(self) -> None:
         self.core["temp_dir"].mkdir(parents=True, exist_ok=True)
+        ensure_cachedir_tag(self.core["work_dir"])
 
     def _clean(self, transitive: bool = False) -> None:  # noqa: ARG002, FBT001, FBT002
         if self._run_state["clean"]:  # pragma: no branch
