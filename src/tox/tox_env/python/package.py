@@ -77,7 +77,7 @@ class PythonPackageToxEnv(Python, PackageToxEnv, ABC):
 
         if (
             not isinstance(run_env, Python)
-            or run_env.conf["package"] not in {"wheel", "editable"}
+            or run_env.conf["package"] not in {"wheel", "sdist-wheel", "editable"}
             or "wheel_build_env" in run_env.conf
         ):
             return
@@ -120,7 +120,7 @@ class PythonPackageToxEnv(Python, PackageToxEnv, ABC):
         self._wheel_build_envs[pkg_env] = cast("PythonPackageToxEnv", result)
 
     def child_pkg_envs(self, run_conf: EnvConfigSet) -> Iterator[PackageToxEnv]:
-        if run_conf["package"] == "wheel":
+        if run_conf["package"] in {"wheel", "sdist-wheel"}:
             try:
                 conf = run_conf["wheel_build_env"]
             except Skip:
