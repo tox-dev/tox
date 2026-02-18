@@ -1,0 +1,3 @@
+Requirements in ``requires`` with environment markers that evaluate to false (e.g. ``virtualenv<20.22.0; python_version
+< "3.8"``) are now correctly skipped during provisioning instead of causing an infinite provisioning loop - by
+:user:`gaborbernat`.
