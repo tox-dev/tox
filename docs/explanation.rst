@@ -211,8 +211,8 @@ The :ref:`package` configuration controls how the project is packaged:
 
         sdist --> env_pkg[build env: .pkg]
         wheel --> env_wheel[build env: .pkg-cpython313]
-        sdistwheel --> env_pkg
-        sdistwheel --> env_wheel
+        sdistwheel --> env_pkg[build env: .pkg]
+        sdistwheel --> env_sdistwheel[build env: .pkg-sdist-wheel]
         editable --> env_wheel
         legacy --> env_pkg
         skip --> no_env[no build env]
@@ -225,7 +225,7 @@ The :ref:`package` configuration controls how the project is packaged:
 
         class pkg decisionStyle
         class sdist,wheel,sdistwheel,editable,legacy,external pkgStyle
-        class env_pkg,env_wheel envStyle
+        class env_pkg,env_wheel,env_sdistwheel envStyle
         class skip,no_env skipStyle
 
 - ``sdist`` (default): builds a source distribution
@@ -244,6 +244,8 @@ tox uses a virtual environment for building, whose name depends on the artifact 
 
 - For source distributions: the :ref:`package_env` (default ``.pkg``)
 - For wheels: the :ref:`wheel_build_env` (default ``.pkg-<impl><version>``, e.g. ``.pkg-cpython313``)
+- For sdist-wheel: uses two environments — the :ref:`package_env` for building the sdist, and a separate
+  ``sdist_wheel_build_env`` (default ``.pkg-sdist-wheel``) for building the wheel from the extracted sdist
 
 For pure Python projects (no C extensions), set :ref:`wheel_build_env` to the same value as :ref:`package_env`. This way
 the wheel is built once and reused for all tox environments:

@@ -1394,12 +1394,21 @@ Python run
     :version_added: 4.0
     :default: <package_env>-<python-flavor-lowercase><python-version-no-dot>
 
-    If :ref:`package` is set to ``wheel`` or ``sdist-wheel`` this will be the tox Python environment in which the
-    wheel will be built. The value is generated to be unique per Python flavor and version, and prefixed with
-    :ref:`package_env` value.
+    If :ref:`package` is set to ``wheel`` this will be the tox Python environment in which the wheel will be
+    built. The value is generated to be unique per Python flavor and version, and prefixed with :ref:`package_env`
+    value.
     This is to ensure the target interpreter and the generated wheel will be compatible. If you have a wheel that can be
     reused across multiple Python versions set this value to the same across them (to avoid building a new wheel for
     each one of them).
+
+.. conf::
+    :keys: sdist_wheel_build_env
+    :version_added: 4.39
+    :default: <package_env>-sdist-wheel
+
+    If :ref:`package` is set to ``sdist-wheel`` this will be the tox Python environment in which the wheel is built
+    from the extracted sdist. The sdist itself is built in the :ref:`package_env` environment. This separate child
+    environment ensures full build isolation — the wheel build only sees the extracted sdist's own build requirements.
 
 .. conf::
     :keys: extras
