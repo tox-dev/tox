@@ -149,6 +149,34 @@ def test_provision_requires_nok(tox_project: ToxProjectCreator) -> None:
     )
 
 
+def test_provision_requires_skips_false_markers(tox_project: ToxProjectCreator) -> None:
+    project = tox_project({
+        "tox.toml": """
+            requires = ['pkg-does-not-exist; python_version < "2.0"']
+
+            [env_run_base]
+            package = "skip"
+        """,
+    })
+    outcome = project.run("c", "-e", "py")
+    outcome.assert_success()
+    assert "provisioned" not in outcome.out
+
+
+def test_provision_requires_checks_true_markers(tox_project: ToxProjectCreator) -> None:
+    project = tox_project({
+        "tox.toml": """
+            requires = ['pkg-does-not-exist; python_version >= "3.0"']
+
+            [env_run_base]
+            package = "skip"
+        """,
+    })
+    outcome = project.run("c", "-e", "py")
+    outcome.assert_failed()
+    assert "pkg-does-not-exist" in outcome.out
+
+
 @pytest.mark.integration
 @pytest.mark.usefixtures("_pypi_index_self")
 @pytest.mark.timeout(120)
