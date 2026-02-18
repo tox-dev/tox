@@ -471,6 +471,30 @@ it falls back to the base section (:ref:`base` configuration). For ``tox.toml`` 
 
 Here ``test`` inherits ``commands`` from the base because it is not specified in ``[env.test]``.
 
+*******************
+ Known limitations
+*******************
+
+Interactive terminal programs
+=============================
+
+Programs that require advanced terminal control — such as IPython, debuggers with rich UIs, or any tool built on
+`prompt_toolkit <https://python-prompt-toolkit.readthedocs.io/>`__ — may not work correctly under tox.
+
+tox captures subprocess output by routing ``stdout`` and ``stderr`` through pseudo-terminal (PTY) pairs. This is
+necessary for logging, result reporting, and colorized output. However, the subprocess's ``stdin`` remains connected to
+the real terminal. This means ``stdin`` and ``stdout`` are on *different* terminal devices.
+
+Libraries like ``prompt_toolkit`` assume all streams share the same terminal. They set raw mode on ``stdin`` (to read
+individual keystrokes) while writing VT100 escape sequences to ``stdout`` (for cursor positioning, screen clearing,
+etc.). When ``stdout`` goes through tox's capture buffer instead of directly to the terminal, escape sequences are
+delayed and the synchronous terminal control these libraries depend on breaks.
+
+Workarounds:
+
+- For IPython, pass ``--simple-prompt`` to disable ``prompt_toolkit``'s advanced terminal features.
+- For other tools, look for a "dumb terminal" or "no-color" mode that avoids VT100 escape sequences.
+
 ******************
  Related projects
 ******************
