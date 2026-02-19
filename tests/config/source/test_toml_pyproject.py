@@ -1,9 +1,12 @@
 from __future__ import annotations
 
 import sys
+from textwrap import dedent
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
+    from pathlib import Path
+
     import pytest
 
     from tox.pytest import ToxProjectCreator
@@ -486,3 +489,45 @@ def test_config_env_base_inherit_from_arbitrary_section(tox_project: ToxProjectC
     outcome.assert_success()
     out = "[testenv:a]\ndescription = shared config\n\n[testenv:b]\ndescription = shared config\n"
     outcome.assert_out_err(out, "")
+
+
+def test_config_in_toml_replace_glob_match(tox_project: ToxProjectCreator, tmp_path: Path) -> None:
+    (tmp_path / "p" / "dist").mkdir(parents=True)
+    (tmp_path / "p" / "dist" / "pkg-1.0.whl").touch()
+    project = tox_project({
+        "pyproject.toml": dedent("""
+        [tool.tox.env.A]
+        description = { replace = "glob", pattern = "dist/*.whl" }
+        """),
+    })
+    outcome = project.run("c", "-e", "A", "-k", "description")
+    outcome.assert_success()
+    assert "pkg-1.0.whl" in outcome.out
+
+
+def test_config_in_toml_replace_glob_no_match_default(tox_project: ToxProjectCreator) -> None:
+    project = tox_project({
+        "pyproject.toml": dedent("""
+        [tool.tox.env.A]
+        description = { replace = "glob", pattern = "dist/*.xyz", default = "none" }
+        """),
+    })
+    outcome = project.run("c", "-e", "A", "-k", "description")
+    outcome.assert_success()
+    outcome.assert_out_err("[testenv:A]\ndescription = none\n", "")
+
+
+def test_config_in_toml_replace_glob_extend(tox_project: ToxProjectCreator, tmp_path: Path) -> None:
+    (tmp_path / "p" / "dist").mkdir(parents=True)
+    (tmp_path / "p" / "dist" / "a.whl").touch()
+    (tmp_path / "p" / "dist" / "b.whl").touch()
+    project = tox_project({
+        "pyproject.toml": dedent("""
+        [tool.tox.env.A]
+        commands = [["echo", { replace = "glob", pattern = "dist/*.whl", extend = true }]]
+        """),
+    })
+    outcome = project.run("c", "-e", "A", "-k", "commands")
+    outcome.assert_success()
+    assert "a.whl" in outcome.out
+    assert "b.whl" in outcome.out

@@ -1922,6 +1922,32 @@ dictionaries to ``set_env`` they will be merged together, for example:
 
 Here the ``magic`` tox environment will have both ``A``, ``B``, ``C`` and ``D`` environments set.
 
+Glob pattern reference
+======================
+
+.. versionadded:: 4.40
+
+You can expand file system glob patterns via the ``glob`` replacement. Matched paths are sorted for deterministic
+output, and relative patterns are resolved against ``tox_root``. The ``**`` wildcard matches any number of directories
+recursively.
+
+.. code-block:: toml
+
+    [env.A]
+    commands = [["twine", "upload", { replace = "glob", pattern = "dist/*.whl", extend = true }]]
+
+When used with ``extend = true`` the matched files are expanded as separate arguments in the host list. Without
+``extend`` the matches are joined as a single space-separated string.
+
+If no files match and a ``default`` is provided it will be used as fallback:
+
+.. code-block:: toml
+
+    [env.A]
+    commands = [["twine", "upload", { replace = "glob", pattern = "dist/*.whl", default = ["fallback.whl"], extend = true }]]
+
+When no files match and no default is given, the result is an empty string (or empty list with ``extend``).
+
 **********
  INI only
 **********
@@ -2271,6 +2297,50 @@ will make the ``--opt1 ARG1`` appear in all test commands where ``[]`` or ``{pos
 ``args_are_paths`` setting), ``tox`` rewrites each positional argument if it is a relative path and exists on the
 filesystem to become a path relative to the ``changedir`` setting.
 
+.. _glob substitution:
+
+Glob pattern substitution
+=========================
+
+.. versionadded:: 4.40
+
+You can expand glob/wildcard patterns to matching file paths:
+
+::
+
+    {glob:PATTERN}
+
+Matches are sorted and returned as a space-separated string. If no files match, the result is an empty string. You can
+provide a default value for when no files match:
+
+::
+
+    {glob:PATTERN:DEFAULT}
+
+Relative patterns are resolved against ``tox_root``. Use ``**`` for recursive matching across directories.
+
+.. tab:: TOML
+
+    .. code-block:: toml
+
+        [env.A]
+        commands = [["twine", "upload", "{glob:dist/*.whl}"]]
+
+    Or using the TOML dict syntax (see :ref:`pyproject-toml-native`):
+
+    .. code-block:: toml
+
+        [env.A]
+        commands = [["twine", "upload", { replace = "glob", pattern = "dist/*.whl", extend = true }]]
+
+.. tab:: INI
+
+    .. code-block:: ini
+
+        [testenv]
+        commands = twine upload {glob:dist/*.whl}
+        deps = {glob:requirements/*.txt:requirements.txt}
+
 Other substitutions
 ===================
 
@@ -2327,6 +2397,9 @@ or via ``{name}`` in INI.
       - Positional arguments passed after ``--``, with optional defaults.
     - - ``{tty:ON:OFF}``
       - ``ON`` value when running in an interactive terminal, ``OFF`` otherwise.
+    - - ``{glob:PATTERN}`` / ``{glob:PATTERN:DEFAULT}``
+      - Expand glob pattern to matching file paths (space-separated, sorted). Relative paths resolve against
+        ``tox_root``.
     - - ``{/}``
       - OS path separator (``/`` or ``\``).
     - - ``{:}``
@@ -2334,5 +2407,5 @@ or via ``{name}`` in INI.
     - - ``{[section]key}`` *(INI only)*
       - Value of ``key`` from ``[section]`` (cross-section reference).
 
-For TOML-specific replacement syntax (``replace = "ref"``, ``replace = "posargs"``, ``replace = "env"``), see
-:ref:`pyproject-toml-native`.
+For TOML-specific replacement syntax (``replace = "ref"``, ``replace = "posargs"``, ``replace = "env"``, ``replace =
+"glob"``), see :ref:`pyproject-toml-native`.

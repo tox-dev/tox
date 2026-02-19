@@ -2,19 +2,19 @@
 
 from __future__ import annotations
 
+import glob
 import logging
 import os
 import sys
 from abc import ABC, abstractmethod
 from collections.abc import Sequence
+from pathlib import Path
 from typing import TYPE_CHECKING, Any, Final, Union
 
 from tox.config.types import CircularChainError
 from tox.execute.request import shell_cmd
 
 if TYPE_CHECKING:
-    from pathlib import Path
-
     from tox.config.loader.api import ConfigLoadArgs
     from tox.config.main import Config
     from tox.config.set_env import SetEnv
@@ -215,6 +215,8 @@ class Replacer:
             replace_value = replace_tty(args)
         elif of_type == "posargs":
             replace_value = replace_pos_args(self.conf, args, conf_args)
+        elif of_type == "glob":
+            replace_value = replace_glob(self.conf, args)
         else:
             arg_value = ARG_DELIMITER.join(flattened_args)
             replace_value = self.reference(arg_value, conf_args)
@@ -291,6 +293,24 @@ def replace_env(conf: Config | None, args: list[str], conf_args: ConfigLoadArgs)
 
 def replace_tty(args: list[str]) -> str:
     return (args[0] if len(args) > 0 else "") if sys.stdout.isatty() else args[1] if len(args) > 1 else ""
+
+
+def replace_glob(conf: Config | None, args: list[str]) -> str:
+    if not args or not args[0]:
+        msg = "No pattern was supplied in glob substitution"
+        raise MatchError(msg)
+    # rejoin Windows drive letter that was split on colon (e.g. C:\path -> ["C", "\\path"])
+    if len(args[0]) == 1 and args[0].isalpha() and len(args) > 1 and args[1][:1] in {"\\", "/"}:
+        pattern = f"{args[0]}:{args[1]}"
+        default_args = args[2:]
+    else:
+        pattern = args[0]
+        default_args = args[1:]
+    if conf is not None and not Path(pattern).is_absolute():
+        pattern = str(conf.core["tox_root"] / pattern)
+    if matches := sorted(glob.glob(pattern, recursive=True)):  # noqa: PTH207
+        return " ".join(matches)
+    return ARG_DELIMITER.join(default_args) if default_args else ""
 
 
 __all__ = [
