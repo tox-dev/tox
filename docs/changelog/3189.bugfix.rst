@@ -1,2 +1,0 @@
-Factor-conditional config values (e.g. ``base_python = py312: python3.12``) now correctly fall back to the default when
-no factors match the current environment, instead of producing an empty value - by :user:`gaborbernat`.

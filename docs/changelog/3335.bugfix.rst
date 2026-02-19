@@ -1,2 +1,0 @@
-``set_env`` values defined after a ``file|`` reference now correctly take precedence over values loaded from the env
-file - by :user:`gaborbernat`.

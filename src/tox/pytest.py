@@ -73,7 +73,7 @@ def _disable_root_tox_py(request: SubRequest, mocker: MockerFixture) -> Iterator
 
         mocker.patch.object(manager, "_load_inline", _load_inline)
         yield
-        if module is not None:  # pragma: no branch
+        if module is not None and manager.MANAGER.manager.is_registered(module):  # pragma: no branch
             manager.MANAGER.manager.unregister(module)
     else:  # do not allow loading inline plugins
         mocker.patch("tox.plugin.inline._load_plugin", return_value=None)

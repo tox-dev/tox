@@ -1,2 +1,0 @@
-The ``base`` configuration key now works correctly in TOML format (``tox.toml`` and ``pyproject.toml``), allowing
-environments to inherit from arbitrary sections defined under ``[env.*]`` - by :user:`gaborbernat`.

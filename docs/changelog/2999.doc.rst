@@ -1,2 +1,0 @@
-Document that interactive terminal programs (e.g., IPython) may not work correctly under tox due to the PTY-based output
-capture architecture - by :user:`gaborbernat`.
