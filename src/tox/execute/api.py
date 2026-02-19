@@ -63,6 +63,10 @@ class ExecuteOptions:
     def terminate_timeout(self) -> float:
         return cast("float", self._env.conf["terminate_timeout"])
 
+    @property
+    def no_capture(self) -> bool:
+        return cast("bool", getattr(self._env.options, "no_capture", False))
+
 
 class ExecuteStatus(ABC):
     def __init__(self, options: ExecuteOptions, out: SyncWrite, err: SyncWrite) -> None:

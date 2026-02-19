@@ -641,3 +641,33 @@ def test_fail_fast_parallel_mode(tox_project: ToxProjectCreator) -> None:
     assert "env1" in result.out
     assert "env2" in result.out
     assert "SKIP" in result.out
+
+
+def test_no_capture_with_result_json_fails(tox_project: ToxProjectCreator) -> None:
+    ini = "[testenv]\npackage=skip\ncommands=python --version"
+    result = tox_project({"tox.ini": ini}).run("r", "-e", "py", "--no-capture", "--result-json", "result.json")
+    result.assert_failed()
+
+
+def test_no_capture_short_flag_with_result_json_fails(tox_project: ToxProjectCreator) -> None:
+    ini = "[testenv]\npackage=skip\ncommands=python --version"
+    result = tox_project({"tox.ini": ini}).run("r", "-e", "py", "-i", "--result-json", "result.json")
+    result.assert_failed()
+
+
+def test_no_capture_flag_parsed(tox_project: ToxProjectCreator) -> None:
+    ini = "[testenv]\npackage=skip\ncommands=python -c 'print(\"hello\")'"
+    project = tox_project({"tox.ini": ini})
+    execute_calls = project.patch_execute(lambda r: 0)  # noqa: ARG005
+    result = project.run("r", "-e", "py", "--no-capture")
+    result.assert_success()
+    assert execute_calls.call_count > 0
+
+
+def test_no_capture_short_flag_parsed(tox_project: ToxProjectCreator) -> None:
+    ini = "[testenv]\npackage=skip\ncommands=python -c 'print(\"hello\")'"
+    project = tox_project({"tox.ini": ini})
+    execute_calls = project.patch_execute(lambda r: 0)  # noqa: ARG005
+    result = project.run("r", "-e", "py", "-i")
+    result.assert_success()
+    assert execute_calls.call_count > 0

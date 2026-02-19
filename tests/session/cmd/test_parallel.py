@@ -238,3 +238,15 @@ def test_parallel_no_spinner_legacy_with_parallel(tox_project: ToxProjectCreator
         has_spinner=False,
         live=False,
     )
+
+
+def test_no_capture_with_parallel_fails(tox_project: ToxProjectCreator) -> None:
+    ini = "[testenv]\npackage=skip\ncommands=python --version"
+    result = tox_project({"tox.ini": ini}).run("p", "-e", "py", "--no-capture")
+    result.assert_failed()
+
+
+def test_no_capture_short_flag_with_parallel_fails(tox_project: ToxProjectCreator) -> None:
+    ini = "[testenv]\npackage=skip\ncommands=python --version"
+    result = tox_project({"tox.ini": ini}).run("p", "-e", "py", "-i")
+    result.assert_failed()
