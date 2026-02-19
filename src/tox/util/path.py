@@ -39,7 +39,22 @@ def ensure_empty_dir(path: Path, except_filename: str | None = None) -> None:
         path.mkdir(parents=True)
 
 
+def ensure_gitignore(path: Path) -> None:
+    """Create a ``.gitignore`` file with ``*`` in the given directory if one does not already exist.
+
+    This prevents tox-managed directories (like ``.tox/``) from being tracked by git, so users don't need to add them to
+    their project's ``.gitignore``.
+
+    :param path: the directory in which to create the ``.gitignore`` file
+
+    """
+    if not (gitignore := path / ".gitignore").exists():
+        path.mkdir(parents=True, exist_ok=True)
+        gitignore.write_text("*\n", encoding="utf-8")
+
+
 __all__ = [
     "ensure_cachedir_tag",
     "ensure_empty_dir",
+    "ensure_gitignore",
 ]

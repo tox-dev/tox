@@ -257,3 +257,12 @@ def test_cachedir_tag_created(tox_project: ToxProjectCreator) -> None:
     assert tag.is_file()
     content = tag.read_text(encoding="utf-8")
     assert content.startswith("Signature: 8a477f597d28d172789f06886806bc55\n")
+
+
+def test_gitignore_created_in_work_dir(tox_project: ToxProjectCreator) -> None:
+    prj = tox_project({"tox.ini": "[testenv]\npackage=skip\ncommands=python -c 'print(1)'"})
+    result = prj.run("r")
+    result.assert_success()
+    gitignore = prj.path / ".tox" / ".gitignore"
+    assert gitignore.exists()
+    assert gitignore.read_text(encoding="utf-8") == "*\n"
