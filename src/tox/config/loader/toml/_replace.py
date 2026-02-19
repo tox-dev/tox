@@ -1,9 +1,20 @@
 from __future__ import annotations
 
+import ast
+import glob
+import os
 import re
+from pathlib import Path
 from typing import TYPE_CHECKING, Any, cast
 
-from tox.config.loader.replacer import MatchRecursionError, ReplaceReference, load_posargs, replace, replace_env
+from tox.config.loader.replacer import (
+    MatchError,
+    MatchRecursionError,
+    ReplaceReference,
+    load_posargs,
+    replace,
+    replace_env,
+)
 from tox.config.loader.stringify import stringify
 
 from ._validate import validate
@@ -70,6 +81,12 @@ class Unroll:
                         self.args,
                     )
                     return {"value": env_result, "marker": marker} if marker else env_result
+                if replace_type == "glob":
+                    glob_result = _replace_glob_toml(self.conf, value)
+                    return {"value": glob_result, "marker": marker} if marker else glob_result
+                if replace_type == "if":
+                    if_result = _replace_if_toml(value, self, depth, skip_str=skip_str)
+                    return {"value": if_result, "marker": marker} if marker else if_result
                 if replace_type == "ref":  # pragma: no branch
                     ref_result = self._replace_ref(value, depth, skip_str=skip_str)
                     return {"value": ref_result, "marker": marker} if marker else ref_result
@@ -88,6 +105,67 @@ class Unroll:
             loaded = self.loader.load_raw_from_root(self.loader.section.SEP.join(validated_of))
             return self(loaded, depth, skip_str=skip_str)
         return value
+
+
+def _replace_glob_toml(conf: Config | None, value: dict[str, Any]) -> list[str] | str:
+    pattern = validate(value.get("pattern"), str)
+    if not pattern:
+        msg = "No pattern was supplied in glob replacement"
+        raise MatchError(msg)
+    if conf is not None and not Path(pattern).is_absolute():
+        pattern = str(conf.core["tox_root"] / pattern)
+    extending = value.get("extend", False)
+    if matches := sorted(glob.glob(pattern, recursive=True)):  # noqa: PTH207
+        return matches if extending else " ".join(matches)
+    default = value.get("default")
+    if default is None:
+        return [] if extending else ""
+    return validate(default, list) if extending else validate(default, str)
+
+
+def _replace_if_toml(value: dict[str, Any], unroll: Unroll, depth: int, *, skip_str: bool = False) -> TomlTypes:
+    condition = value.get("condition")
+    if not condition or not isinstance(condition, str):
+        msg = "No condition was supplied in if replacement"
+        raise MatchError(msg)
+    if "then" not in value:
+        msg = "No 'then' value was supplied in if replacement"
+        raise MatchError(msg)
+    return unroll(value["then"] if _evaluate_condition(condition) else value.get("else", ""), depth, skip_str=skip_str)
+
+
+def _evaluate_condition(expr: str) -> bool:  # noqa: C901
+    """Evaluate a condition expression supporting env.VAR lookups, comparisons, and boolean logic."""
+    try:
+        tree = ast.parse(expr, mode="eval")
+    except SyntaxError:
+        msg = f"Invalid condition expression: {expr}"
+        raise MatchError(msg) from None
+
+    def _eval(node: ast.expr) -> str | bool:  # noqa: PLR0911
+        if isinstance(node, ast.BoolOp):
+            if isinstance(node.op, ast.And):
+                return all(bool(_eval(v)) for v in node.values)
+            return any(bool(_eval(v)) for v in node.values)
+        if isinstance(node, ast.UnaryOp) and isinstance(node.op, ast.Not):
+            return not bool(_eval(node.operand))
+        if isinstance(node, ast.Compare) and len(node.ops) == 1 and len(node.comparators) == 1:
+            left = _eval(node.left)
+            right = _eval(node.comparators[0])
+            if isinstance(node.ops[0], ast.Eq):
+                return left == right
+            if isinstance(node.ops[0], ast.NotEq):
+                return left != right
+            msg = f"Unsupported comparison operator in condition: {expr}"
+            raise MatchError(msg)
+        if isinstance(node, ast.Attribute) and isinstance(node.value, ast.Name) and node.value.id == "env":
+            return os.environ.get(node.attr, "")
+        if isinstance(node, ast.Constant) and isinstance(node.value, str):
+            return node.value
+        msg = f"Unsupported expression in condition: {ast.dump(node)}"
+        raise MatchError(msg)
+
+    return bool(_eval(tree.body))
 
 
 _REFERENCE_PATTERN = re.compile(

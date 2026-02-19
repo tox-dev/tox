@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 import os
 import sys
+import tarfile
 from abc import ABC
 from collections import defaultdict
 from contextlib import contextmanager
@@ -198,7 +199,7 @@ class Pep517VenvPackager(PythonPackageToxEnv, ABC):
     def register_run_env(self, run_env: RunToxEnv) -> Generator[tuple[str, str], PackageToxEnv, None]:
         yield from super().register_run_env(run_env)
         build_type = run_env.conf["package"]
-        self.call_require_hooks.add(build_type)
+        self.call_require_hooks.add("sdist" if build_type == "sdist-wheel" else build_type)
         self.builds[build_type].append(run_env.conf)
 
     def _setup_env(self) -> None:
@@ -280,6 +281,10 @@ class Pep517VenvPackager(PythonPackageToxEnv, ABC):
                 sdist = create_session_view(sdist, self._package_temp_path)
                 self._package_paths.add(sdist)
                 package = SdistPackage(sdist, deps)
+        elif of_type == "sdist-wheel":
+            wheel = create_session_view(self._build_wheel_via_sdist(for_env), self._package_temp_path)
+            self._package_paths.add(wheel)
+            package = WheelPackage(wheel, deps)
         elif of_type in {"wheel", "editable"}:
             w_env = self._wheel_build_envs.get(for_env["wheel_build_env"])
             if w_env is not None and w_env is not self:
@@ -302,6 +307,61 @@ class Pep517VenvPackager(PythonPackageToxEnv, ABC):
             msg = f"cannot handle package type {of_type}"
             raise TypeError(msg)  # pragma: no cover
         return [package]
+
+    def _build_wheel_via_sdist(self, for_env: EnvConfigSet) -> Path:
+        """Build a wheel by first building an sdist, then building a wheel from it."""
+        self.setup()
+        with self._pkg_lock:
+            # Step 1: Build the sdist in this (parent) environment
+            sdist_config: ConfigSettings = self.conf["config_settings_build_sdist"]
+            sdist = self._frontend.build_sdist(sdist_directory=self.pkg_dir, config_settings=sdist_config).sdist
+            logging.info("built sdist %s, now building wheel from it", sdist.name)
+
+            # Step 2: Extract sdist to env_tmp_dir (auto-cleaned by tox lifecycle)
+            (extract_dir := self.env_tmp_dir / "sdist-extract").mkdir(parents=True, exist_ok=True)
+            with tarfile.open(str(sdist), "r:*") as tar:
+                if sys.version_info >= (3, 12):  # pragma: no cover (py312+)
+                    try:
+                        tar.extractall(path=str(extract_dir), filter="data")
+                    except tarfile.OutsideDestinationError as exc:
+                        msg = f"tar member {exc.tarinfo.name!r} would extract outside of {extract_dir}"
+                        raise Fail(msg) from exc
+                else:  # pragma: no cover (py312+)
+                    dest_resolved = extract_dir.resolve()
+                    safe_members: list[tarfile.TarInfo] = []
+                    for member in tar.getmembers():
+                        member_path = (extract_dir / member.name).resolve()
+                        if not str(member_path).startswith(f"{dest_resolved}{os.sep}") and member_path != dest_resolved:
+                            msg = f"tar member {member.name!r} would extract outside of {extract_dir}"
+                            raise Fail(msg)
+                        safe_members.append(member)
+                    tar.extractall(path=str(extract_dir), members=safe_members)  # noqa: S202
+            sdist_source_root = self._find_sdist_root(extract_dir)
+
+            # Step 3: Get wheel_build_env child and point it at extracted sdist
+            child_env = cast("Pep517VenvPackager", self._wheel_build_envs[for_env["wheel_build_env"]])
+            child_env.root = sdist_source_root
+            child_env.call_require_hooks.add("wheel")
+            if child_env is self:
+                self._setup_build_requires("wheel")
+            else:
+                child_env.setup()
+
+            # Step 4: Build the wheel
+            wheel_config: ConfigSettings = child_env.conf["config_settings_build_wheel"]
+            return child_env._frontend.build_wheel(  # noqa: SLF001
+                wheel_directory=child_env.pkg_dir,
+                metadata_directory=None,
+                config_settings=wheel_config,
+            ).wheel
+
+    @staticmethod
+    def _find_sdist_root(extract_dir: Path) -> Path:
+        """Find the source root inside an extracted sdist (standard sdists have a single top-level directory)."""
+        extracted_items = list(extract_dir.iterdir())
+        if len(extracted_items) == 1 and extracted_items[0].is_dir():
+            return extracted_items[0]
+        return extract_dir  # non-standard flat layout
 
     @property
     def _package_temp_path(self) -> Path:
@@ -348,7 +408,7 @@ class Pep517VenvPackager(PythonPackageToxEnv, ABC):
         reqs: list[Requirement] | None = None
         name = ""
         available: set[str] | None = None
-        if of_type in {"wheel", "editable"}:  # wheel packages
+        if of_type in {"wheel", "editable"}:  # wheel packages - use wheel_build_env for metadata
             w_env = self._wheel_build_envs.get(for_env["wheel_build_env"])
             if w_env is not None and w_env is not self:
                 with w_env.display_context(self._has_display_suspended):

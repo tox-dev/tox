@@ -1375,9 +1375,13 @@ Python run
     :keys: package
     :version_added: 4.0
 
-    When option can be one of ``wheel``, ``sdist``, ``editable``, ``editable-legacy``, ``skip``, or ``external``. If
-    :ref:`use_develop` is set this becomes a constant of ``editable``. If :ref:`skip_install` is set this becomes a
-    constant of ``skip``.
+    When option can be one of ``wheel``, ``sdist``, ``sdist-wheel``, ``editable``, ``editable-legacy``, ``skip``, or
+    ``external``. If :ref:`use_develop` is set this becomes a constant of ``editable``. If :ref:`skip_install` is set
+    this becomes a constant of ``skip``.
+
+    When ``sdist-wheel`` is selected, tox first builds a source distribution and then builds a wheel from that sdist
+    (rather than directly from the source tree). This is useful for verifying that the sdist is complete and that the
+    package can be correctly built from it — catching missing files or packaging errors early.
 
     When ``editable`` is selected and the build backend supports :pep:`660`, tox will use the standardized editable
     install mechanism. If the backend does not support :pep:`660`, tox will automatically fall back to
@@ -1390,8 +1394,10 @@ Python run
     :version_added: 4.0
     :default: <package_env>-<python-flavor-lowercase><python-version-no-dot>
 
-    If :ref:`package` is set to ``wheel`` this will be the tox Python environment in which the wheel will be
-    built. The value is generated to be unique per Python flavor and version, and prefixed with :ref:`package_env` value.
+    If :ref:`package` is set to ``wheel`` or ``sdist-wheel`` this will be the tox Python environment in which the wheel
+    will be built. For ``sdist-wheel``, the sdist is first built in the :ref:`package_env` environment, then the wheel
+    is built from the extracted sdist in this environment. The value is generated to be unique per Python flavor and
+    version, and prefixed with :ref:`package_env` value.
     This is to ensure the target interpreter and the generated wheel will be compatible. If you have a wheel that can be
     reused across multiple Python versions set this value to the same across them (to avoid building a new wheel for
     each one of them).
@@ -1922,6 +1928,103 @@ dictionaries to ``set_env`` they will be merged together, for example:
 
 Here the ``magic`` tox environment will have both ``A``, ``B``, ``C`` and ``D`` environments set.
 
+Glob pattern reference
+======================
+
+.. versionadded:: 4.40
+
+You can expand file system glob patterns via the ``glob`` replacement. Matched paths are sorted for deterministic
+output, and relative patterns are resolved against ``tox_root``. The ``**`` wildcard matches any number of directories
+recursively.
+
+.. code-block:: toml
+
+    [env.A]
+    commands = [["twine", "upload", { replace = "glob", pattern = "dist/*.whl", extend = true }]]
+
+When used with ``extend = true`` the matched files are expanded as separate arguments in the host list. Without
+``extend`` the matches are joined as a single space-separated string.
+
+If no files match and a ``default`` is provided it will be used as fallback:
+
+.. code-block:: toml
+
+    [env.A]
+    commands = [["twine", "upload", { replace = "glob", pattern = "dist/*.whl", default = ["fallback.whl"], extend = true }]]
+
+When no files match and no default is given, the result is an empty string (or empty list with ``extend``).
+
+.. _conditional-value-reference:
+
+Conditional value reference
+===========================
+
+.. versionadded:: 4.40
+
+You can conditionally select values based on environment variables via the ``if`` replacement. The ``condition`` field
+accepts an expression language that supports ``env.VAR_NAME`` lookups, ``==``/``!=`` comparisons, and ``and``/``or``/
+``not`` boolean logic.
+
+**Check if an environment variable is set (non-empty):**
+
+.. code-block:: toml
+
+    [env.A]
+    set_env.MATURITY = { replace = "if", condition = "env.TAG_NAME", then = "production", "else" = "testing" }
+
+If ``TAG_NAME`` is set and non-empty, ``MATURITY`` becomes ``production``, otherwise ``testing``.
+
+**Compare an environment variable to a value:**
+
+.. code-block:: toml
+
+    [env.A]
+    set_env.MODE = { replace = "if", condition = "env.CI == 'true'", then = "ci", "else" = "local" }
+
+**Combine conditions with boolean logic:**
+
+.. code-block:: toml
+
+    [env.A]
+    description = { replace = "if", condition = "env.CI and env.DEPLOY", then = "deploying", "else" = "skipped" }
+
+    [env.B]
+    description = { replace = "if", condition = "env.CI or env.LOCAL", then = "active", "else" = "inactive" }
+
+    [env.C]
+    description = { replace = "if", condition = "not env.CI", then = "local dev", "else" = "CI build" }
+
+    [env.D]
+    description = { replace = "if", condition = "env.MODE != 'prod'", then = "non-production", "else" = "production" }
+
+**Omitting the else clause** defaults to an empty string:
+
+.. code-block:: toml
+
+    [env.A]
+    description = { replace = "if", condition = "env.DEPLOY", then = "deployment mode" }
+
+**Nested substitutions** in ``then``/``else`` values are processed normally:
+
+.. code-block:: toml
+
+    [env.A]
+    description = { replace = "if", condition = "env.DEPLOY", then = "{env_name}", "else" = "none" }
+
+**With extend in list contexts:**
+
+.. code-block:: toml
+
+    [env.A]
+    commands = [["pytest", { replace = "if", condition = "env.VERBOSE", then = ["--verbose", "--debug"], "else" = ["--quiet"], extend = true }]]
+
+**Condition expression reference:**
+
+- ``env.VAR`` -- value of environment variable ``VAR`` (empty string if unset); truthy when non-empty
+- ``==``, ``!=`` -- string comparison
+- ``and``, ``or``, ``not`` -- boolean logic
+- ``'string'`` -- string literal
+
 **********
  INI only
 **********
@@ -2271,6 +2374,50 @@ will make the ``--opt1 ARG1`` appear in all test commands where ``[]`` or ``{pos
 ``args_are_paths`` setting), ``tox`` rewrites each positional argument if it is a relative path and exists on the
 filesystem to become a path relative to the ``changedir`` setting.
 
+.. _glob substitution:
+
+Glob pattern substitution
+=========================
+
+.. versionadded:: 4.40
+
+You can expand glob/wildcard patterns to matching file paths:
+
+::
+
+    {glob:PATTERN}
+
+Matches are sorted and returned as a space-separated string. If no files match, the result is an empty string. You can
+provide a default value for when no files match:
+
+::
+
+    {glob:PATTERN:DEFAULT}
+
+Relative patterns are resolved against ``tox_root``. Use ``**`` for recursive matching across directories.
+
+.. tab:: TOML
+
+    .. code-block:: toml
+
+        [env.A]
+        commands = [["twine", "upload", "{glob:dist/*.whl}"]]
+
+    Or using the TOML dict syntax (see :ref:`pyproject-toml-native`):
+
+    .. code-block:: toml
+
+        [env.A]
+        commands = [["twine", "upload", { replace = "glob", pattern = "dist/*.whl", extend = true }]]
+
+.. tab:: INI
+
+    .. code-block:: ini
+
+        [testenv]
+        commands = twine upload {glob:dist/*.whl}
+        deps = {glob:requirements/*.txt:requirements.txt}
+
 Other substitutions
 ===================
 
@@ -2327,6 +2474,9 @@ or via ``{name}`` in INI.
       - Positional arguments passed after ``--``, with optional defaults.
     - - ``{tty:ON:OFF}``
       - ``ON`` value when running in an interactive terminal, ``OFF`` otherwise.
+    - - ``{glob:PATTERN}`` / ``{glob:PATTERN:DEFAULT}``
+      - Expand glob pattern to matching file paths (space-separated, sorted). Relative paths resolve against
+        ``tox_root``.
     - - ``{/}``
       - OS path separator (``/`` or ``\``).
     - - ``{:}``
@@ -2334,5 +2484,5 @@ or via ``{name}`` in INI.
     - - ``{[section]key}`` *(INI only)*
       - Value of ``key`` from ``[section]`` (cross-section reference).
 
-For TOML-specific replacement syntax (``replace = "ref"``, ``replace = "posargs"``, ``replace = "env"``), see
-:ref:`pyproject-toml-native`.
+For TOML-specific replacement syntax (``replace = "ref"``, ``replace = "posargs"``, ``replace = "env"``, ``replace =
+"glob"``, ``replace = "if"``), see :ref:`pyproject-toml-native`.
