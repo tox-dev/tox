@@ -96,7 +96,7 @@ test = [
   "pytest-timeout>=2.4",
   "pytest-xdist>=3.8",
   "re-assert>=1.1",
-  "setuptools>=80.10.2",
+  "setuptools>=80.10.2,<82",
   "time-machine>=3.2; implementation_name!='pypy'",
   "wheel>=0.46.3",
 ]

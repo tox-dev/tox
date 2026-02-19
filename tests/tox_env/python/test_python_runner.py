@@ -4,12 +4,16 @@ import sys
 import sysconfig
 from pathlib import Path
 from typing import TYPE_CHECKING
+from unittest.mock import MagicMock
 
 import pytest
+from packaging.requirements import Requirement
 
 from tox.journal import EnvJournal
 from tox.tox_env.package import PathPackage
+from tox.tox_env.python.extras import resolve_extras_static
 from tox.tox_env.python.runner import PythonRun
+from tox.tox_env.python.virtual_env.package.cmd_builder import VenvCmdBuilder
 
 if TYPE_CHECKING:
     from tox.pytest import ToxProjectCreator
@@ -132,7 +136,17 @@ def test_extras_are_normalized(
     used_extra: str,
 ) -> None:
     project = tox_project({"tox.ini": f"[testenv]\nextras={extra}"})
-    result = project.run("c", "-e", "py", "--root", str(demo_pkg_inline), "-k", "extras")
+    result = project.run(
+        "c",
+        "-e",
+        "py",
+        "--root",
+        str(demo_pkg_inline),
+        "--workdir",
+        str(project.path / ".tox"),
+        "-k",
+        "extras",
+    )
     result.assert_success()
     assert result.out == f"[testenv:py]\nextras = {used_extra}\n"
 
@@ -640,3 +654,250 @@ def test_dependency_groups_cyclic(tox_project: ToxProjectCreator) -> None:
 
     result.assert_failed()
     assert "py: failed with Cyclic dependency group include: 'teSt' -> ('teSt', 'tyPe')\n" in result.out
+
+
+def test_deps_only_static(tox_project: ToxProjectCreator) -> None:
+    project = tox_project(
+        {
+            "tox.toml": """
+            [env_run_base]
+            package = "deps-only"
+            """,
+            "pyproject.toml": """
+            [project]
+            name = "demo"
+            version = "1.0"
+            dependencies = ["httpx>=0.27", "rich>=13"]
+            """,
+        },
+    )
+    execute_calls = project.patch_execute()
+    result = project.run("r", "-e", "py")
+
+    result.assert_success()
+
+    found_calls = [(i[0][0].conf.name, i[0][3].run_id, i[0][3].cmd) for i in execute_calls.call_args_list]
+    assert found_calls == [
+        ("py", "install_package_deps", ["python", "-I", "-m", "pip", "install", "httpx>=0.27", "rich>=13"])
+    ]
+
+
+def test_deps_only_with_extras(tox_project: ToxProjectCreator) -> None:
+    project = tox_project(
+        {
+            "tox.toml": """
+            [env_run_base]
+            package = "deps-only"
+            extras = ["docs"]
+            """,
+            "pyproject.toml": """
+            [project]
+            name = "demo"
+            version = "1.0"
+            dependencies = ["httpx>=0.27"]
+            [project.optional-dependencies]
+            docs = ["sphinx>=7", "furo"]
+            """,
+        },
+    )
+    execute_calls = project.patch_execute()
+    result = project.run("r", "-e", "py")
+
+    result.assert_success()
+
+    found_calls = [(i[0][0].conf.name, i[0][3].run_id, i[0][3].cmd) for i in execute_calls.call_args_list]
+    assert found_calls == [
+        (
+            "py",
+            "install_package_deps",
+            ["python", "-I", "-m", "pip", "install", "furo", "httpx>=0.27", "sphinx>=7"],
+        )
+    ]
+
+
+def test_deps_only_multiple_extras(tox_project: ToxProjectCreator) -> None:
+    project = tox_project(
+        {
+            "tox.toml": """
+            [env_run_base]
+            package = "deps-only"
+            extras = ["docs", "testing"]
+            """,
+            "pyproject.toml": """
+            [project]
+            name = "demo"
+            version = "1.0"
+            dependencies = ["httpx>=0.27"]
+            [project.optional-dependencies]
+            docs = ["sphinx>=7"]
+            testing = ["pytest>=8"]
+            """,
+        },
+    )
+    execute_calls = project.patch_execute()
+    result = project.run("r", "-e", "py")
+
+    result.assert_success()
+
+    found_calls = [(i[0][0].conf.name, i[0][3].run_id, i[0][3].cmd) for i in execute_calls.call_args_list]
+    assert found_calls == [
+        (
+            "py",
+            "install_package_deps",
+            ["python", "-I", "-m", "pip", "install", "httpx>=0.27", "pytest>=8", "sphinx>=7"],
+        )
+    ]
+
+
+def test_deps_only_with_deps(tox_project: ToxProjectCreator) -> None:
+    project = tox_project(
+        {
+            "tox.toml": """
+            [env_run_base]
+            package = "deps-only"
+            deps = ["coverage[toml]"]
+            """,
+            "pyproject.toml": """
+            [project]
+            name = "demo"
+            version = "1.0"
+            dependencies = ["httpx>=0.27"]
+            """,
+        },
+    )
+    execute_calls = project.patch_execute()
+    result = project.run("r", "-e", "py")
+
+    result.assert_success()
+
+    found_calls = [(i[0][0].conf.name, i[0][3].run_id, i[0][3].cmd) for i in execute_calls.call_args_list]
+    assert found_calls == [
+        ("py", "install_deps", ["python", "-I", "-m", "pip", "install", "coverage[toml]"]),
+        ("py", "install_package_deps", ["python", "-I", "-m", "pip", "install", "httpx>=0.27"]),
+    ]
+
+
+def test_deps_only_with_dependency_groups(tox_project: ToxProjectCreator) -> None:
+    project = tox_project(
+        {
+            "tox.toml": """
+            [env_run_base]
+            package = "deps-only"
+            dependency_groups = ["test"]
+            """,
+            "pyproject.toml": """
+            [project]
+            name = "demo"
+            version = "1.0"
+            dependencies = ["httpx>=0.27"]
+            [dependency-groups]
+            test = ["pytest>=8"]
+            """,
+        },
+    )
+    execute_calls = project.patch_execute()
+    result = project.run("r", "-e", "py")
+
+    result.assert_success()
+
+    found_calls = [(i[0][0].conf.name, i[0][3].run_id, i[0][3].cmd) for i in execute_calls.call_args_list]
+    assert found_calls == [
+        ("py", "install_dependency-groups", ["python", "-I", "-m", "pip", "install", "pytest>=8"]),
+        ("py", "install_package_deps", ["python", "-I", "-m", "pip", "install", "httpx>=0.27"]),
+    ]
+
+
+def test_deps_only_no_extras(tox_project: ToxProjectCreator) -> None:
+    project = tox_project(
+        {
+            "tox.toml": """
+            [env_run_base]
+            package = "deps-only"
+            """,
+            "pyproject.toml": """
+            [project]
+            name = "demo"
+            version = "1.0"
+            dependencies = ["httpx>=0.27"]
+            [project.optional-dependencies]
+            docs = ["sphinx>=7"]
+            """,
+        },
+    )
+    execute_calls = project.patch_execute()
+    result = project.run("r", "-e", "py")
+
+    result.assert_success()
+
+    found_calls = [(i[0][0].conf.name, i[0][3].run_id, i[0][3].cmd) for i in execute_calls.call_args_list]
+    assert found_calls == [("py", "install_package_deps", ["python", "-I", "-m", "pip", "install", "httpx>=0.27"])]
+
+
+def test_deps_only_unknown_extra(tox_project: ToxProjectCreator) -> None:
+    project = tox_project(
+        {
+            "tox.toml": """
+            [env_run_base]
+            package = "deps-only"
+            extras = ["nonexistent"]
+            """,
+            "pyproject.toml": """
+            [project]
+            name = "demo"
+            version = "1.0"
+            dependencies = ["httpx>=0.27"]
+            [project.optional-dependencies]
+            docs = ["sphinx>=7"]
+            """,
+        },
+    )
+    result = project.run("r", "-e", "py")
+
+    result.assert_failed()
+    assert "extras not found for package demo: nonexistent (available: docs)" in result.out
+
+
+def test_deps_only_fallback_no_project_table(tox_project: ToxProjectCreator, demo_pkg_inline: Path) -> None:
+    project = tox_project({"tox.toml": '[env_run_base]\npackage = "deps-only"\n'})
+    execute_calls = project.patch_execute(lambda r: 0 if "install" in r.run_id else None)
+    result = project.run("r", "-e", "py", "--root", str(demo_pkg_inline), "--workdir", str(project.path / ".tox"))
+
+    result.assert_success()
+
+    found_calls = [(i[0][0].conf.name, i[0][3].run_id) for i in execute_calls.call_args_list]
+    pkg_calls = [c for c in found_calls if c[0] == "py" and "package_deps" in c[1]]
+    assert pkg_calls == []
+
+
+def test_resolve_extras_static_no_pyproject(tmp_path: Path) -> None:
+    assert resolve_extras_static(tmp_path, set()) is None
+
+
+def test_resolve_extras_static_no_project_table(tmp_path: Path) -> None:
+    (tmp_path / "pyproject.toml").write_text('[build-system]\nrequires = ["setuptools"]')
+    assert resolve_extras_static(tmp_path, set()) is None
+
+
+def test_resolve_extras_static_dynamic_deps(tmp_path: Path) -> None:
+    (tmp_path / "pyproject.toml").write_text('[project]\nname = "demo"\nversion = "1.0"\ndynamic = ["dependencies"]')
+    assert resolve_extras_static(tmp_path, set()) is None
+
+
+def test_resolve_extras_static_dynamic_optional_deps(tmp_path: Path) -> None:
+    (tmp_path / "pyproject.toml").write_text(
+        '[project]\nname = "demo"\nversion = "1.0"\ndynamic = ["optional-dependencies"]'
+    )
+    assert resolve_extras_static(tmp_path, {"docs"}) is None
+
+
+def test_cmd_builder_load_deps_for_env() -> None:
+    builder = MagicMock(spec=VenvCmdBuilder)
+    mock_meta_env = MagicMock()
+    mock_meta_env.load_deps_for_env.return_value = [Requirement("requests>=2")]
+    builder._sdist_meta_tox_env = mock_meta_env  # noqa: SLF001
+    mock_conf = MagicMock()
+
+    result = VenvCmdBuilder.load_deps_for_env(builder, mock_conf)
+
+    assert result == [Requirement("requests>=2")]
+    mock_meta_env.load_deps_for_env.assert_called_once_with(mock_conf)

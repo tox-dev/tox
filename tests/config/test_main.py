@@ -243,6 +243,7 @@ def test_args_are_paths_when_with_change_dir(tox_project: ToxProjectCreator) -> 
     assert result.out == f"[testenv:py]\ncommands = magic.py {project.path} ..{os.sep}tox.ini a.txt . ..\n"
 
 
+@pytest.mark.timeout(60)
 def test_get_env_reuses_config_across_package_flag(tox_project: ToxProjectCreator) -> None:
     project = tox_project({
         "tox.toml": """

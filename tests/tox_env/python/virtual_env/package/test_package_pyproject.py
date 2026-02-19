@@ -39,7 +39,7 @@ def test_tox_ini_package_type_invalid(tox_project: ToxProjectCreator) -> None:
     result.assert_failed()
     msg = (
         " invalid package config type bad requested,"
-        " must be one of wheel, sdist, sdist-wheel, editable, editable-legacy, skip"
+        " must be one of wheel, sdist, sdist-wheel, editable, editable-legacy, deps-only, skip"
     )
     assert msg in result.out
 

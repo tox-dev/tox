@@ -57,11 +57,12 @@ class LocalSubProcessPep517Executor(Execute):
             )
             status = instance.__enter__()  # noqa: PLC2801
             self._local_execute = instance, status
+            process_exited = instance.process is None  # Popen failed (e.g. ENOENT)
             while True:
                 if b"started backend " in status.out:
                     self.is_alive = True
                     break
-                if b"failed to start backend" in status.err:
+                if b"failed to start backend" in status.err or process_exited:
                     from tox.tox_env.python.virtual_env.package.pyproject import ToxBackendFailed  # noqa: PLC0415
 
                     failure = BackendFailed(
@@ -75,6 +76,8 @@ class LocalSubProcessPep517Executor(Execute):
                     )
                     self._exc = ToxBackendFailed(failure)
                     raise self._exc
+                if instance.process is not None and instance.process.poll() is not None:
+                    process_exited = True  # give reader threads one more iteration to drain
                 time.sleep(0.01)  # wait a short while for the output to populate
         return self._local_execute
 

@@ -324,7 +324,6 @@ def test_provision_default_arguments_exists(tox_project: ToxProjectCreator, subc
 
 @pytest.mark.integration
 @pytest.mark.usefixtures("_pypi_index_mirrored")
-@pytest.mark.flaky(max_runs=3, min_passes=1)
 @pytest.mark.timeout(120)
 def test_provision_install_pkg_pep517(
     tmp_path_factory: TempPathFactory,
@@ -341,7 +340,7 @@ def test_provision_install_pkg_pep517(
     version = "0.1.1337"
     """
     (example / "pyproject.toml").write_text(skeleton)
-    sdist = pkg_builder(example / "dist", example, ["sdist"], False)
+    wheel = pkg_builder(example / "dist", example, ["wheel"], False)
 
     tox_ini = r"""
     [tox]
@@ -350,7 +349,7 @@ def test_provision_install_pkg_pep517(
     commands = python -c "print(42)"
     """
     project = tox_project({"tox.ini": tox_ini}, base=example)
-    result = project.run("r", "-e", "py", "--installpkg", str(sdist), "--notest", "--no-list-dependencies")
+    result = project.run("r", "-e", "py", "--installpkg", str(wheel), "--notest", "--no-list-dependencies")
     result.assert_success()
 
 

@@ -76,6 +76,10 @@ class VenvCmdBuilder(PythonPackageToxEnv, ABC):
     def requires(self) -> PythonDeps:
         return cast("PythonDeps", self.conf["deps"])
 
+    def load_deps_for_env(self, for_env: EnvConfigSet) -> list[Requirement]:
+        assert self._sdist_meta_tox_env is not None  # noqa: S101
+        return self._sdist_meta_tox_env.load_deps_for_env(for_env)
+
     def perform_packaging(self, for_env: EnvConfigSet) -> list[Package]:
         self.setup()
         path: Path | None = getattr(self.options, "install_pkg", None)

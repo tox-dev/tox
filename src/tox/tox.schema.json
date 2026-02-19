@@ -352,7 +352,7 @@
         },
         "package": {
           "type": "string",
-          "description": "package installation mode - wheel | sdist | sdist-wheel | editable | editable-legacy | skip | external "
+          "description": "package installation mode - wheel | sdist | sdist-wheel | editable | editable-legacy | deps-only | skip | external "
         },
         "extras": {
           "type": "array",

@@ -19,6 +19,7 @@ from tox.tox_env.runner import RunToxEnv
 
 from .api import Python
 from .dependency_groups import resolve
+from .extras import resolve_extras_static
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -62,7 +63,7 @@ class PythonRun(Python, RunToxEnv, ABC):
 
     @property
     def _package_types(self) -> tuple[str, ...]:
-        return "wheel", "sdist", "sdist-wheel", "editable", "editable-legacy", "skip", "external"
+        return "wheel", "sdist", "sdist-wheel", "editable", "editable-legacy", "deps-only", "skip", "external"
 
     def _register_package_conf(self) -> bool:
         # provision package type
@@ -104,6 +105,23 @@ class PythonRun(Python, RunToxEnv, ABC):
             msg = f"invalid package config type {pkg_type} requested, must be one of {values}"
             raise HandledError(msg)
         return pkg_type
+
+    def _setup_pkg(self) -> None:
+        if self.pkg_type == "deps-only":
+            self._install_package_deps_only()
+            return
+        super()._setup_pkg()
+
+    def _install_package_deps_only(self) -> None:
+        extras: set[str] = self.conf["extras"]
+        root: Path = self.core["package_root"]
+        if (deps := resolve_extras_static(root, extras)) is None:
+            package_env = self.package_env
+            assert package_env is not None  # noqa: S101
+            with package_env.display_context(self._has_display_suspended):
+                deps = package_env.load_deps_for_env(self.conf)
+        if deps and not self.options.package_only:
+            self._install(deps, PythonRun.__name__, "package_deps")
 
     def _setup_env(self) -> None:
         super()._setup_env()
