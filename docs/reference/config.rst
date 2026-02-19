@@ -1954,6 +1954,77 @@ If no files match and a ``default`` is provided it will be used as fallback:
 
 When no files match and no default is given, the result is an empty string (or empty list with ``extend``).
 
+.. _conditional-value-reference:
+
+Conditional value reference
+===========================
+
+.. versionadded:: 4.40
+
+You can conditionally select values based on environment variables via the ``if`` replacement. The ``condition`` field
+accepts an expression language that supports ``env.VAR_NAME`` lookups, ``==``/``!=`` comparisons, and ``and``/``or``/
+``not`` boolean logic.
+
+**Check if an environment variable is set (non-empty):**
+
+.. code-block:: toml
+
+    [env.A]
+    set_env.MATURITY = { replace = "if", condition = "env.TAG_NAME", then = "production", "else" = "testing" }
+
+If ``TAG_NAME`` is set and non-empty, ``MATURITY`` becomes ``production``, otherwise ``testing``.
+
+**Compare an environment variable to a value:**
+
+.. code-block:: toml
+
+    [env.A]
+    set_env.MODE = { replace = "if", condition = "env.CI == 'true'", then = "ci", "else" = "local" }
+
+**Combine conditions with boolean logic:**
+
+.. code-block:: toml
+
+    [env.A]
+    description = { replace = "if", condition = "env.CI and env.DEPLOY", then = "deploying", "else" = "skipped" }
+
+    [env.B]
+    description = { replace = "if", condition = "env.CI or env.LOCAL", then = "active", "else" = "inactive" }
+
+    [env.C]
+    description = { replace = "if", condition = "not env.CI", then = "local dev", "else" = "CI build" }
+
+    [env.D]
+    description = { replace = "if", condition = "env.MODE != 'prod'", then = "non-production", "else" = "production" }
+
+**Omitting the else clause** defaults to an empty string:
+
+.. code-block:: toml
+
+    [env.A]
+    description = { replace = "if", condition = "env.DEPLOY", then = "deployment mode" }
+
+**Nested substitutions** in ``then``/``else`` values are processed normally:
+
+.. code-block:: toml
+
+    [env.A]
+    description = { replace = "if", condition = "env.DEPLOY", then = "{env_name}", "else" = "none" }
+
+**With extend in list contexts:**
+
+.. code-block:: toml
+
+    [env.A]
+    commands = [["pytest", { replace = "if", condition = "env.VERBOSE", then = ["--verbose", "--debug"], "else" = ["--quiet"], extend = true }]]
+
+**Condition expression reference:**
+
+- ``env.VAR`` -- value of environment variable ``VAR`` (empty string if unset); truthy when non-empty
+- ``==``, ``!=`` -- string comparison
+- ``and``, ``or``, ``not`` -- boolean logic
+- ``'string'`` -- string literal
+
 **********
  INI only
 **********
@@ -2414,4 +2485,4 @@ or via ``{name}`` in INI.
       - Value of ``key`` from ``[section]`` (cross-section reference).
 
 For TOML-specific replacement syntax (``replace = "ref"``, ``replace = "posargs"``, ``replace = "env"``, ``replace =
-"glob"``), see :ref:`pyproject-toml-native`.
+"glob"``, ``replace = "if"``), see :ref:`pyproject-toml-native`.

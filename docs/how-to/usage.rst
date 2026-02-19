@@ -317,7 +317,43 @@ entire environment is skipped. Conditional factors (``lin:``, ``mac:``, ``win:``
 .. note::
 
     Conditional factors and generative environments are currently only supported in the INI format (see
-    :ref:`toml-feature-gaps`).
+    :ref:`toml-feature-gaps`). For TOML, use ``replace = "if"`` with a condition expression to achieve similar results
+    (see :ref:`conditional-value-reference`).
+
+.. _howto_conditional_values:
+
+*********************************
+ Set values based on a condition
+*********************************
+
+.. versionadded:: 4.40
+
+TOML configurations can conditionally select values based on environment variables using ``replace = "if"``. The
+``condition`` field accepts expressions with ``env.VAR`` lookups, ``==``/``!=`` comparisons, and ``and``/``or``/``not``
+boolean logic.
+
+Set a variable depending on whether you are in CI:
+
+.. code-block:: toml
+
+    [env_run_base]
+    set_env.MATURITY = { replace = "if", condition = "env.CI", then = "release", "else" = "dev" }
+
+Add verbose flags to commands when a ``DEBUG`` variable is set:
+
+.. code-block:: toml
+
+    [env_run_base]
+    commands = [["pytest", { replace = "if", condition = "env.DEBUG", then = ["-vv", "--tb=long"], "else" = [], extend = true }]]
+
+Combine multiple conditions:
+
+.. code-block:: toml
+
+    [env.deploy]
+    commands = [["deploy", { replace = "if", condition = "env.CI and env.TAG_NAME != ''", then = ["--production"], "else" = ["--dry-run"], extend = true }]]
+
+For the full expression syntax and more examples, see :ref:`conditional-value-reference`.
 
 *****************************************
  Handle env names that match subcommands

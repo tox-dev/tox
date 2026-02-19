@@ -4,10 +4,12 @@ import sys
 from textwrap import dedent
 from typing import TYPE_CHECKING
 
+import pytest
+
+from tox.config.loader.replacer import MatchError
+
 if TYPE_CHECKING:
     from pathlib import Path
-
-    import pytest
 
     from tox.pytest import ToxProjectCreator
 
@@ -531,3 +533,138 @@ def test_config_in_toml_replace_glob_extend(tox_project: ToxProjectCreator, tmp_
     outcome.assert_success()
     assert "a.whl" in outcome.out
     assert "b.whl" in outcome.out
+
+
+@pytest.mark.parametrize(
+    ("env_vars", "condition", "then", "else_val", "expected"),
+    [
+        pytest.param({"TAG": "v1"}, "env.TAG", "yes", "no", "yes", id="env_set"),
+        pytest.param({}, "env.TAG", "yes", "no", "no", id="env_unset"),
+        pytest.param({"TAG": ""}, "env.TAG", "yes", "no", "no", id="env_empty"),
+        pytest.param({"CI": "true"}, "env.CI == 'true'", "ci", "local", "ci", id="eq_match"),
+        pytest.param({"CI": "false"}, "env.CI == 'true'", "ci", "local", "local", id="eq_no_match"),
+        pytest.param({"M": "s"}, "env.M != 'prod'", "dev", "prod", "dev", id="neq"),
+        pytest.param({"CI": "1", "D": "1"}, "env.CI and env.D", "y", "n", "y", id="and_true"),
+        pytest.param({"CI": "1"}, "env.CI and env.D", "y", "n", "n", id="and_partial"),
+        pytest.param({}, "env.CI or env.L", "y", "n", "n", id="or_false"),
+        pytest.param({"L": "1"}, "env.CI or env.L", "y", "n", "y", id="or_true"),
+        pytest.param({}, "not env.CI", "local", "ci", "local", id="not_true"),
+        pytest.param({"CI": "1"}, "not env.CI", "local", "ci", "ci", id="not_false"),
+    ],
+)
+def test_config_in_toml_replace_if(  # noqa: PLR0913
+    tox_project: ToxProjectCreator,
+    monkeypatch: pytest.MonkeyPatch,
+    env_vars: dict[str, str],
+    condition: str,
+    then: str,
+    else_val: str,
+    expected: str,
+) -> None:
+    for k in ("TAG", "CI", "D", "L", "M"):
+        monkeypatch.delenv(k, raising=False)
+    for k, v in env_vars.items():
+        monkeypatch.setenv(k, v)
+    project = tox_project({
+        "pyproject.toml": dedent(f"""
+        [tool.tox.env.A]
+        description = {{ replace = "if", condition = "{condition}", then = "{then}", "else" = "{else_val}" }}
+        """),
+    })
+    outcome = project.run("c", "-e", "A", "-k", "description")
+    outcome.assert_success()
+    outcome.assert_out_err(f"[testenv:A]\ndescription = {expected}\n", "")
+
+
+def test_config_in_toml_replace_if_no_else(tox_project: ToxProjectCreator, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("DEPLOY", raising=False)
+    project = tox_project({
+        "pyproject.toml": """\
+        [tool.tox.env.A]
+        description = { replace = "if", condition = "env.DEPLOY", then = "deploy mode" }
+        """
+    })
+    outcome = project.run("c", "-e", "A", "-k", "description")
+    outcome.assert_success()
+    outcome.assert_out_err("[testenv:A]\ndescription = \n", "")
+
+
+def test_config_in_toml_replace_if_nested_substitution(
+    tox_project: ToxProjectCreator, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("DEPLOY", "yes")
+    project = tox_project({
+        "pyproject.toml": """\
+        [tool.tox.env.A]
+        description = { replace = "if", condition = "env.DEPLOY", then = "{env_name}", "else" = "none" }
+        """
+    })
+    outcome = project.run("c", "-e", "A", "-k", "description")
+    outcome.assert_success()
+    outcome.assert_out_err("[testenv:A]\ndescription = A\n", "")
+
+
+def test_config_in_toml_replace_if_set_env(tox_project: ToxProjectCreator, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("TAG_NAME", "v2.0")
+    project = tox_project({
+        "pyproject.toml": """\
+        [tool.tox.env.A]
+        set_env.MATURITY = { replace = "if", condition = "env.TAG_NAME", then = "production", "else" = "testing" }
+        """
+    })
+    outcome = project.run("c", "-e", "A", "-k", "set_env")
+    outcome.assert_success()
+    assert "MATURITY=production" in outcome.out
+
+
+def test_config_in_toml_replace_if_extend(tox_project: ToxProjectCreator, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("V", "1")
+    toml = """\
+    [tool.tox.env.A]
+    commands = [["echo", { replace = "if", condition = "env.V", then = ["-v"], "else" = ["-q"], extend = true }]]
+    """
+    project = tox_project({"pyproject.toml": toml})
+    outcome = project.run("c", "-e", "A", "-k", "commands")
+    outcome.assert_success()
+    assert "-v" in outcome.out
+
+
+@pytest.mark.parametrize(
+    ("condition_toml", "error_match"),
+    [
+        pytest.param(
+            'then = "yes", "else" = "no"',
+            "No condition was supplied in if replacement",
+            id="missing_condition",
+        ),
+        pytest.param(
+            'condition = "env.CI", "else" = "no"',
+            "No 'then' value was supplied in if replacement",
+            id="missing_then",
+        ),
+        pytest.param(
+            'condition = "env.CI ===", then = "yes"',
+            r"Invalid condition expression: env\.CI ===",
+            id="invalid_syntax",
+        ),
+        pytest.param(
+            'condition = "env.CI > env.X", then = "yes"',
+            r"Unsupported comparison operator in condition: env\.CI > env\.X",
+            id="unsupported_compare",
+        ),
+        pytest.param(
+            'condition = "1 + 2", then = "yes"',
+            r"Unsupported expression in condition: ",
+            id="unsupported_expr",
+        ),
+    ],
+)
+def test_config_in_toml_replace_if_error(tox_project: ToxProjectCreator, condition_toml: str, error_match: str) -> None:
+    project = tox_project({
+        "pyproject.toml": dedent(f"""
+        [tool.tox.env.A]
+        description = {{ replace = "if", {condition_toml} }}
+        """),
+    })
+    with pytest.raises(MatchError, match=error_match):
+        project.run("c", "-e", "A", "-k", "description")
