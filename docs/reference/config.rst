@@ -1400,9 +1400,16 @@ Python run
     :keys: package
     :version_added: 4.0
 
-    When option can be one of ``wheel``, ``sdist``, ``sdist-wheel``, ``editable``, ``editable-legacy``, ``skip``, or
-    ``external``. If :ref:`use_develop` is set this becomes a constant of ``editable``. If :ref:`skip_install` is set
-    this becomes a constant of ``skip``.
+    When option can be one of ``wheel``, ``sdist``, ``sdist-wheel``, ``editable``, ``editable-legacy``, ``deps-only``,
+    ``skip``, or ``external``. If :ref:`use_develop` is set this becomes a constant of ``editable``. If
+    :ref:`skip_install` is set this becomes a constant of ``skip``.
+
+    When ``deps-only`` is selected, tox installs the package's dependencies (including any requested :ref:`extras`) but
+    does **not** build or install the package itself. This is useful for environments that need the same dependencies as
+    the package without the package, such as coverage combining, documentation building, or linting. For projects with
+    static :pep:`621` metadata in ``pyproject.toml``, dependencies are read directly without creating a packaging
+    environment. For dynamic dependencies or non-PEP-621 projects, the packaging environment is used to extract
+    metadata.
 
     When ``sdist-wheel`` is selected, tox first builds a source distribution and then builds a wheel from that sdist
     (rather than directly from the source tree). This is useful for verifying that the sdist is complete and that the

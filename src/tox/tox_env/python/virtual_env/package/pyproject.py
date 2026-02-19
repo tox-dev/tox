@@ -367,6 +367,9 @@ class Pep517VenvPackager(PythonPackageToxEnv, ABC):
     def _package_temp_path(self) -> Path:
         return cast("Path", self.core["temp_dir"]) / "package"
 
+    def load_deps_for_env(self, for_env: EnvConfigSet) -> list[Requirement]:
+        return self._load_deps(for_env)
+
     def _load_deps(self, for_env: EnvConfigSet) -> list[Requirement]:
         # first check if this is statically available via PEP-621
         deps = self._load_deps_from_static(for_env)

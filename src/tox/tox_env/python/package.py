@@ -65,6 +65,10 @@ class PythonPackageToxEnv(Python, PackageToxEnv, ABC):
     def requires(self) -> tuple[Requirement, ...] | PythonDeps:
         raise NotImplementedError
 
+    @abstractmethod
+    def load_deps_for_env(self, for_env: EnvConfigSet) -> list[Requirement]:
+        raise NotImplementedError
+
     def register_run_env(self, run_env: RunToxEnv) -> Generator[tuple[str, str], PackageToxEnv, None]:
         yield from super().register_run_env(run_env)
         if run_env.conf["package"] != "skip" and "deps" not in self.conf:

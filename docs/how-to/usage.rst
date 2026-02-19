@@ -516,6 +516,46 @@ environments via the :ref:`extras` configuration:
 This installs your package together with the specified extras, avoiding the need to duplicate dependency lists in both
 ``pyproject.toml`` and your tox configuration.
 
+************************************
+ Install extras without the package
+************************************
+
+Sometimes you need the package's dependencies (including extras) without installing the package itself. For example,
+coverage combining, documentation builds, or linting environments that share the same dependency set. Use ``package =
+"deps-only"`` instead of ``skip_install = true`` combined with manually duplicated ``deps``:
+
+.. tab:: TOML
+
+    .. code-block:: toml
+
+         # pyproject.toml
+         [project]
+         name = "myproject"
+         dependencies = ["httpx>=0.27"]
+
+         [project.optional-dependencies]
+         docs = ["sphinx>=7", "furo"]
+
+    .. code-block:: toml
+
+         # tox.toml
+         [env.docs]
+         package = "deps-only"
+         extras = ["docs"]
+         commands = [["sphinx-build", "-W", "docs", "docs/_build/html"]]
+
+.. tab:: INI
+
+    .. code-block:: ini
+
+         [testenv:docs]
+         package = deps-only
+         extras = docs
+         commands = sphinx-build -W docs docs/_build/html
+
+This reads your ``pyproject.toml`` directly (no build step) and installs ``httpx``, ``sphinx``, and ``furo`` into the
+environment. If your dependencies are dynamic, tox falls back to using the packaging environment to extract metadata.
+
 .. ------------------------------------------------------------------------------------------
 
 .. Environment Customization

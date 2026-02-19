@@ -150,6 +150,15 @@ def pkg_builder() -> Callable[[Path, Path, Sequence[DistributionType], bool], Pa
     return build_pkg
 
 
+@pytest.fixture(autouse=True)
+def _ensure_demo_pkg_clean() -> Iterator[None]:
+    yield
+    for path in HERE.iterdir():
+        if path.is_dir() and path.name.startswith("demo_pkg_") and (tox_dir := path / ".tox").exists():
+            msg = f"test left behind {tox_dir}, fix the test to not pollute the source tree"
+            raise AssertionError(msg)
+
+
 @pytest.fixture(scope="session", autouse=True)
 def no_default_config_ini(session_mocker: MockerFixture) -> None:
     filename = str(uuid4())
