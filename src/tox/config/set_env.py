@@ -21,6 +21,7 @@ class SetEnv:
         self.changed = False
         self._materialized: dict[str, str] = {}  # env vars we already loaded
         self._raw: dict[str, str] = {}  # could still need replacement
+        self._defined_keys: set[str] = set()  # keys explicitly defined during parsing (survives load() draining _raw)
         self._markers: dict[str, Marker] = {}  # PEP-496 markers for conditional env vars
         self._needs_replacement: list[str] = []  # env vars that need replacement
         self._env_files: list[tuple[str, set[str]]] = []
@@ -55,6 +56,7 @@ class SetEnv:
                             raise
                     else:
                         self._raw[key] = value
+                        self._defined_keys.add(key)
                         keys_after_file.add(key)
                         if marker:
                             self._markers[key] = Marker(marker)
@@ -67,11 +69,13 @@ class SetEnv:
             elif isinstance(value, dict):
                 if "value" in value:
                     self._raw[key] = value["value"]
+                    self._defined_keys.add(key)
                     keys_after_file.add(key)
                     if marker := value.get("marker"):
                         self._markers[key] = Marker(marker)
             else:
                 self._raw[key] = value
+                self._defined_keys.add(key)
                 keys_after_file.add(key)
 
     @staticmethod
@@ -172,11 +176,11 @@ class SetEnv:
             for sub_line in filter(None, expanded_line.splitlines()):
                 if self._is_file_line(sub_line):
                     for key, value in self._stream_env_file(self._parse_file_line(sub_line), args):
-                        if key not in self._raw:
+                        if key not in self._raw and key not in self._defined_keys:
                             sub_raw[key] = value  # noqa: PERF403
                 else:
                     key, value, marker = self._extract_key_value_marker(sub_line)
-                    if key not in self._raw:
+                    if key not in self._raw and key not in self._defined_keys:
                         sub_raw[key] = value
                     if marker:
                         self._markers[key] = Marker(marker)

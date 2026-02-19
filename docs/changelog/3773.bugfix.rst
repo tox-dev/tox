@@ -1,0 +1,4 @@
+When ``set_env`` both inherits via cross-section substitution (e.g., ``{[testenv]set_env}``) and explicitly overrides
+the same variable, the explicit value was incorrectly replaced by the inherited one because ``load()`` moved the key
+from the raw dict to the materialized dict before the deferred substitution ran, making the protection check ineffective
+- by :user:`gaborjbernat`. Fixes :issue:`3773`.

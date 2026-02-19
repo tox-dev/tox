@@ -420,6 +420,24 @@ def test_set_env_cross_section_override(tox_project: ToxProjectCreator) -> None:
     assert result.out.splitlines()[1] == "./tests/functional"
 
 
+def test_set_env_cross_section_override_direct(tox_project: ToxProjectCreator) -> None:
+    ini = """\
+    [testenv]
+    skip_install = true
+    set_env =
+        COVERAGE_FILE=THISISBAD
+
+    [testenv:coverage_report]
+    set_env =
+        {[testenv]set_env}
+        COVERAGE_FILE=THISISGOOD
+    commands = python -c "import os; print(os.environ['COVERAGE_FILE'])"
+    """
+    result = tox_project({"tox.ini": ini}).run("r", "-e", "coverage_report")
+    result.assert_success()
+    assert result.out.splitlines()[1] == "THISISGOOD"
+
+
 def test_set_env_marker_mixed(eval_set_env: EvalSetEnv) -> None:
     marker = f"sys_platform == '{sys.platform}'"
     config = (
