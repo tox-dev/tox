@@ -1,3 +1,0 @@
-Add conditional value selection via ``replace = "if"`` in TOML configuration. Supports a ``condition`` expression with
-``env.VAR`` lookups, ``==``/``!=`` comparisons, and ``and``/``or``/``not`` boolean logic to select between ``then`` and
-``else`` values - by :user:`gaborbernat`.

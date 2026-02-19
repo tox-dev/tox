@@ -1,2 +1,0 @@
-Add ``sdist-wheel`` package type that builds a wheel from a source distribution, ensuring the sdist is complete and the
-package can be correctly built from it — by :user:`rahuldevikar`.

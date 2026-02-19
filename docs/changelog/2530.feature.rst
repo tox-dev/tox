@@ -1,2 +1,0 @@
-Automatically create a ``.gitignore`` file containing ``*`` in the tox work directory (typically ``.tox/``) and in
-environment info directories, so that tox-managed files are not tracked by git - by :user:`rahuldevikar`.
