@@ -1,0 +1,1 @@
+Add ``commands_retry`` configuration option to automatically retry failed commands - by :user:`gaborbernat`.

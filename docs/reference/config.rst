@@ -1103,6 +1103,31 @@ Run
     setting is analogous to the ``-k`` or ``--keep-going`` option of GNU Make.
 
 .. conf::
+    :keys: commands_retry
+    :default: 0
+    :version_added: 4.41
+
+    Number of times to retry a failed command before giving up. A value of ``N`` means each command can be attempted up
+    to ``N + 1`` times total. Applies to :ref:`commands_pre`, :ref:`commands`, and :ref:`commands_post`. Commands
+    prefixed with ``-`` (ignore exit code) are never retried since their failures are already ignored.
+
+    .. tab:: TOML
+
+       .. code-block:: toml
+
+          [env_run_base]
+          commands_retry = 2
+          commands = [["pytest", "tests"]]
+
+    .. tab:: INI
+
+       .. code-block:: ini
+
+          [testenv]
+          commands_retry = 2
+          commands = pytest tests
+
+.. conf::
     :keys: ignore_outcome
     :default: False
     :version_added: 2.2
