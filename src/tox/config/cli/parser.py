@@ -234,7 +234,6 @@ class ToxParser(ArgumentParserWithEnvAndConfig):
                 hash_seed=hashseed_default,
                 discover=[],
                 list_dependencies=is_ci(),
-                no_capture=False,
             )
             return
 

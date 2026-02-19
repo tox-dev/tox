@@ -59,6 +59,7 @@ interrupt_done = False
 signal.signal(signal.SIGINT, handler)
 logging.info("PID %d start %r", os.getpid(), request)
 tox_env = MagicMock(conf={"suicide_timeout": 0.01, "interrupt_timeout": 0.05, "terminate_timeout": 0.07})
+tox_env.options.no_capture = False
 try:
     with executor.call(request, show=False, out_err=out_err, env=tox_env) as status:
         logging.info("wait on %r", status)
