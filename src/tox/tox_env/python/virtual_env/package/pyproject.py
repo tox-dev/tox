@@ -236,7 +236,7 @@ class Pep517VenvPackager(PythonPackageToxEnv, ABC):
             try:
                 if executor.is_alive:
                     self._frontend._send("_exit")  # try first on amicable shutdown  # noqa: SLF001
-            except SystemExit:  # pragma: no cover  # if already has been interrupted ignore
+            except (SystemExit, BrokenPipeError):  # pragma: no cover  # if interrupted or backend dead, ignore
                 pass
             finally:
                 executor.close()
