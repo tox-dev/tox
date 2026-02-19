@@ -65,10 +65,9 @@ class LocalSubProcessPep517Executor(Execute):
                 if b"failed to start backend" in status.err or process_exited:
                     from tox.tox_env.python.virtual_env.package.pyproject import ToxBackendFailed  # noqa: PLC0415
 
-                    rc = instance.process.returncode if instance.process else -5
                     failure = BackendFailed(
                         result={
-                            "code": rc or -5,
+                            "code": -5,
                             "exc_type": "FailedToStart",
                             "exc_msg": "could not start backend",
                         },
