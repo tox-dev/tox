@@ -36,9 +36,9 @@ Out of box tox supports five configuration locations prioritized in the followin
     flowchart TD
         search[tox searches current directory] --> tox_ini
         tox_ini[tox.ini — INI] -- not found --> setup_cfg[setup.cfg — INI]
-        setup_cfg -- not found --> pyproject_legacy[pyproject.toml — legacy_tox_ini]
-        pyproject_legacy -- not found --> pyproject_native[pyproject.toml — tool.tox]
-        pyproject_native -- not found --> tox_toml[tox.toml — TOML]
+        setup_cfg -- not found --> pyproject_native[pyproject.toml — tool.tox]
+        pyproject_native -- not found --> pyproject_legacy[pyproject.toml — legacy_tox_ini]
+        pyproject_legacy -- not found --> tox_toml[tox.toml — TOML]
 
         classDef ini fill:#dbeafe,stroke:#3b82f6,stroke-width:2px,color:#1e3a5f
         classDef toml fill:#dcfce7,stroke:#22c55e,stroke-width:2px,color:#14532d
@@ -50,8 +50,8 @@ Out of box tox supports five configuration locations prioritized in the followin
 
 1. ``tox.ini`` (INI),
 2. ``setup.cfg`` (INI),
-3. ``pyproject.toml`` with the ``tool.tox`` table, having ``legacy_tox_ini`` key (containing INI),
-4. Native ``pyproject.toml`` under the ``tool.tox`` table (TOML),
+3. Native ``pyproject.toml`` under the ``tool.tox`` table (TOML),
+4. ``pyproject.toml`` with the ``tool.tox`` table, having ``legacy_tox_ini`` key (containing INI),
 5. ``tox.toml`` (TOML).
 
 Historically, the INI format was created first, and TOML was added in 2024. **TOML is the recommended format for new

@@ -20,8 +20,8 @@ if TYPE_CHECKING:
 SOURCE_TYPES: tuple[type[Source], ...] = (
     ToxIni,
     SetupCfg,
-    LegacyToml,
     TomlPyProject,
+    LegacyToml,
     TomlTox,
 )
 
