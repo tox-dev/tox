@@ -1,9 +1,18 @@
 from __future__ import annotations
 
+import glob
 import re
+from pathlib import Path
 from typing import TYPE_CHECKING, Any, cast
 
-from tox.config.loader.replacer import MatchRecursionError, ReplaceReference, load_posargs, replace, replace_env
+from tox.config.loader.replacer import (
+    MatchError,
+    MatchRecursionError,
+    ReplaceReference,
+    load_posargs,
+    replace,
+    replace_env,
+)
 from tox.config.loader.stringify import stringify
 
 from ._validate import validate
@@ -70,6 +79,9 @@ class Unroll:
                         self.args,
                     )
                     return {"value": env_result, "marker": marker} if marker else env_result
+                if replace_type == "glob":
+                    glob_result = _replace_glob_toml(self.conf, value)
+                    return {"value": glob_result, "marker": marker} if marker else glob_result
                 if replace_type == "ref":  # pragma: no branch
                     ref_result = self._replace_ref(value, depth, skip_str=skip_str)
                     return {"value": ref_result, "marker": marker} if marker else ref_result
@@ -88,6 +100,22 @@ class Unroll:
             loaded = self.loader.load_raw_from_root(self.loader.section.SEP.join(validated_of))
             return self(loaded, depth, skip_str=skip_str)
         return value
+
+
+def _replace_glob_toml(conf: Config | None, value: dict[str, Any]) -> list[str] | str:
+    pattern = validate(value.get("pattern"), str)
+    if not pattern:
+        msg = "No pattern was supplied in glob replacement"
+        raise MatchError(msg)
+    if conf is not None and not Path(pattern).is_absolute():
+        pattern = str(conf.core["tox_root"] / pattern)
+    extending = value.get("extend", False)
+    if matches := sorted(glob.glob(pattern, recursive=True)):  # noqa: PTH207
+        return matches if extending else " ".join(matches)
+    default = value.get("default")
+    if default is None:
+        return [] if extending else ""
+    return validate(default, list) if extending else validate(default, str)
 
 
 _REFERENCE_PATTERN = re.compile(

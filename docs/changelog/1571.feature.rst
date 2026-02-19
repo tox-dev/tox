@@ -1,0 +1,3 @@
+Add ``{glob:PATTERN}`` substitution to expand file system glob/wildcard patterns in configuration values. Supports
+default values, recursive ``**`` matching, and both INI string syntax and TOML dict syntax (``{ replace = "glob",
+pattern = "..." }``) - by :user:`gaborbernat`.
