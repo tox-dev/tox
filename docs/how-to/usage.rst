@@ -282,45 +282,178 @@ that look like Python version specifiers -- ``tox -e 3.13`` or ``tox -e py313`` 
  Configure platform-specific settings
 **************************************
 
-Use conditional factors to run different commands or dependencies per platform:
+Platform-dependent commands
+===========================
 
-.. tab:: TOML
-
-    .. code-block:: toml
-
-         env_list = ["3.13-lin", "3.13-mac", "3.13-win"]
-
-         [env_run_base]
-         commands = [["python", "-c", "print('hello')"]]
+The current platform (``sys.platform`` value like ``linux``, ``darwin``, ``win32``) is automatically available as an
+implicit factor in all environments. Use platform factors to run different commands or set different dependencies per
+platform without encoding the platform name in the environment:
 
 .. tab:: INI
 
     .. code-block:: ini
 
          [tox]
-         env_list = py{313}-{lin,mac,win}
+         env_list = py313
 
          [testenv]
-         platform = lin: linux
-                    mac: darwin
-                    win: win32
-
-         deps = lin,mac: platformdirs==3
-                win: platformdirs==2
-
+         deps =
+             pytest
+             linux,darwin: platformdirs>=3
+             win32: platformdirs>=2
          commands =
-            lin: python -c 'print("Hello, Linus!")'
-            mac: python -c 'print("Hello, Tim!")'
-            win: python -c 'print("Hello, Satya!")'
+             linux: python -c 'print("Running on Linux")'
+             darwin: python -c 'print("Running on macOS")'
+             win32: python -c 'print("Running on Windows")'
+             python -m pytest
 
-The :ref:`platform` setting accepts a regular expression matched against ``sys.platform``. If it does not match, the
-entire environment is skipped. Conditional factors (``lin:``, ``mac:``, ``win:``) filter individual settings.
+.. tab:: TOML
+
+    .. code-block:: toml
+
+         [env_list_base]
+         env_list = ["py313"]
+
+         [env_run_base]
+         deps = [
+             "pytest",
+             { replace = "if", condition = "factor.linux or factor.darwin", then = ["platformdirs>=3"] },
+             { replace = "if", condition = "factor.win32", then = ["platformdirs>=2"] },
+         ]
+         commands = [
+             { replace = "if", condition = "factor.linux", then = [["python", "-c", "print('Running on Linux')"]] },
+             { replace = "if", condition = "factor.darwin", then = [["python", "-c", "print('Running on macOS')"]] },
+             { replace = "if", condition = "factor.win32", then = [["python", "-c", "print('Running on Windows')"]] },
+             ["python", "-m", "pytest"],
+         ]
+
+This allows a single environment like ``py313`` to adapt its behavior based on the execution platform. The platform
+factors work alongside regular factors from the environment name.
+
+Common ``sys.platform`` values:
+
+- ``linux`` - Linux systems
+- ``darwin`` - macOS systems
+- ``win32`` - Windows systems (both 32-bit and 64-bit)
+- ``cygwin`` - Cygwin on Windows
+- ``freebsd13`` - FreeBSD 13.x (version varies)
+- ``openbsd7`` - OpenBSD 7.x (version varies)
+
+Platform factors with environment factors
+=========================================
+
+Platform factors combine with regular environment factors. For example, an environment named ``py313-django50`` has
+factors ``py313``, ``django50``, and the current platform:
+
+.. tab:: INI
+
+    .. code-block:: ini
+
+        [tox]
+        env_list = py3{12,13}-django{42,50}
+
+        [testenv]
+        deps =
+            django42: Django>=4.2,<4.3
+            django50: Django>=5.0,<5.1
+            py312,linux: pytest-xdist  # only on Python 3.12 + Linux
+            darwin: pyobjc-framework-Cocoa  # only on macOS
+        commands =
+            win32: python -c 'import winreg'  # only runs on Windows
+            pytest
+
+.. tab:: TOML
+
+    .. code-block:: toml
+
+        [env_list_base]
+        env_list = ["py312-django42", "py312-django50", "py313-django42", "py313-django50"]
+
+        [env_run_base]
+        deps = [
+            { replace = "if", condition = "factor.django42", then = ["Django>=4.2,<4.3"] },
+            { replace = "if", condition = "factor.django50", then = ["Django>=5.0,<5.1"] },
+            { replace = "if", condition = "factor.py312 and factor.linux", then = ["pytest-xdist"] },
+            { replace = "if", condition = "factor.darwin", then = ["pyobjc-framework-Cocoa"] },
+        ]
+        commands = [
+            { replace = "if", condition = "factor.win32", then = [["python", "-c", "import winreg"]] },
+            ["pytest"],
+        ]
+
+Negation also works with platform factors:
+
+.. tab:: INI
+
+    .. code-block:: ini
+
+        [testenv]
+        deps =
+            !win32: uvloop  # install uvloop on non-Windows platforms
+            !darwin: pyinotify  # install pyinotify except on macOS
+
+.. tab:: TOML
+
+    .. code-block:: toml
+
+        [env_run_base]
+        deps = [
+            { replace = "if", condition = "not factor.win32", then = ["uvloop"] },
+            { replace = "if", condition = "not factor.darwin", then = ["pyinotify"] },
+        ]
+
+Platform skipping vs platform factors
+=====================================
+
+There are two ways to handle platform differences:
+
+**Platform factors** (recommended) - Filter individual settings per platform:
+
+.. tab:: INI
+
+    .. code-block:: ini
+
+        [testenv]
+        commands =
+            linux: pytest --numprocesses=auto
+            darwin,win32: pytest
+
+.. tab:: TOML
+
+    .. code-block:: toml
+
+        [env_run_base]
+        commands = [
+            { replace = "if", condition = "factor.linux", then = [["pytest", "--numprocesses=auto"]] },
+            { replace = "if", condition = "factor.darwin or factor.win32", then = [["pytest"]] },
+        ]
+
+Settings without a platform factor apply to all platforms. This is ideal for most cross-platform projects.
+
+**Platform skipping** - Skip entire environments when platform doesn't match:
+
+.. tab:: INI
+
+    .. code-block:: ini
+
+        [testenv]
+        platform = linux
+
+.. tab:: TOML
+
+    .. code-block:: toml
+
+        [env_run_base]
+        platform = "linux"
+
+This skips the entire environment on non-Linux systems. Use this only when an environment genuinely cannot run on other
+platforms (e.g., testing Linux-specific kernel features).
 
 .. note::
 
-    Conditional factors and generative environments are currently only supported in the INI format (see
-    :ref:`toml-feature-gaps`). For TOML, use ``replace = "if"`` with a condition expression to achieve similar results
-    (see :ref:`conditional-value-reference`).
+    Platform factors are supported in both INI and TOML formats. INI uses inline syntax (``linux: command``), while TOML
+    uses ``replace = "if"`` with ``factor.NAME`` conditions (see :ref:`conditional-value-reference`). Generative
+    environments are currently only supported in the INI format (see :ref:`toml-feature-gaps`).
 
 .. _howto_conditional_values:
 
@@ -328,11 +461,13 @@ entire environment is skipped. Conditional factors (``lin:``, ``mac:``, ``win:``
  Set values based on a condition
 *********************************
 
-.. versionadded:: 4.40
+.. versionadded:: 4.40 Conditional value replacement with ``env.VAR`` lookups.
 
-TOML configurations can conditionally select values based on environment variables using ``replace = "if"``. The
-``condition`` field accepts expressions with ``env.VAR`` lookups, ``==``/``!=`` comparisons, and ``and``/``or``/``not``
-boolean logic.
+.. versionchanged:: 4.42 Added ``factor.NAME`` lookups for environment name factors and platform.
+
+TOML configurations can conditionally select values based on environment variables and factors using ``replace = "if"``.
+The ``condition`` field accepts expressions with ``env.VAR`` lookups for environment variables, ``factor.NAME`` lookups
+for environment name factors and platform, ``==``/``!=`` comparisons, and ``and``/``or``/``not`` boolean logic.
 
 Set a variable depending on whether you are in CI:
 
@@ -348,12 +483,25 @@ Add verbose flags to commands when a ``DEBUG`` variable is set:
     [env_run_base]
     commands = [["pytest", { replace = "if", condition = "env.DEBUG", then = ["-vv", "--tb=long"], "else" = [], extend = true }]]
 
-Combine multiple conditions:
+Use different dependencies based on environment factors:
+
+.. code-block:: toml
+
+    [env_run_base]
+    deps = [
+        "pytest",
+        { replace = "if", condition = "factor.django50", then = ["Django>=5.0,<5.1"], "else" = ["Django>=4.2,<4.3"] },
+    ]
+
+Combine multiple conditions (environment variables and factors):
 
 .. code-block:: toml
 
     [env.deploy]
     commands = [["deploy", { replace = "if", condition = "env.CI and env.TAG_NAME != ''", then = ["--production"], "else" = ["--dry-run"], extend = true }]]
+
+    [env_run_base]
+    commands = [["pytest", { replace = "if", condition = "factor.linux and not env.CI", then = ["--numprocesses=auto"], "else" = [], extend = true }]]
 
 For the full expression syntax and more examples, see :ref:`conditional-value-reference`.
 
@@ -1049,7 +1197,9 @@ TOML is the recommended configuration format for new projects. Here is how commo
 - Positional arguments use replacement objects: ``{ replace = "posargs", default = ["tests"] }`` vs ``{posargs:tests}``
 - Environment variables in ``set_env`` use ``{ replace = "env", name = "VAR" }`` vs ``{env:VAR}``
 - Section references use ``{ replace = "ref", ... }`` vs ``{[section]key}``
-- No conditional factors or generative environment lists in TOML (see :ref:`toml-feature-gaps`)
+- Factor conditions use ``{ replace = "if", condition = "factor.NAME", ... }`` vs ``NAME:`` (see
+  :ref:`toml-feature-gaps`)
+- No generative environment lists in TOML (see :ref:`toml-feature-gaps`)
 
 *************************************
  Format your tox configuration files

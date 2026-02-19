@@ -568,7 +568,7 @@ def test_config_in_toml_replace_if(  # noqa: PLR0913
     project = tox_project({
         "pyproject.toml": dedent(f"""
         [tool.tox.env.A]
-        description = {{ replace = "if", condition = "{condition}", then = "{then}", "else" = "{else_val}" }}
+        description = {{ replace = "if", condition = "{condition}", then = "{then}", else = "{else_val}" }}
         """),
     })
     outcome = project.run("c", "-e", "A", "-k", "description")
@@ -596,7 +596,7 @@ def test_config_in_toml_replace_if_nested_substitution(
     project = tox_project({
         "pyproject.toml": """\
         [tool.tox.env.A]
-        description = { replace = "if", condition = "env.DEPLOY", then = "{env_name}", "else" = "none" }
+        description = { replace = "if", condition = "env.DEPLOY", then = "{env_name}", else = "none" }
         """
     })
     outcome = project.run("c", "-e", "A", "-k", "description")
@@ -609,7 +609,7 @@ def test_config_in_toml_replace_if_set_env(tox_project: ToxProjectCreator, monke
     project = tox_project({
         "pyproject.toml": """\
         [tool.tox.env.A]
-        set_env.MATURITY = { replace = "if", condition = "env.TAG_NAME", then = "production", "else" = "testing" }
+        set_env.MATURITY = { replace = "if", condition = "env.TAG_NAME", then = "production", else = "testing" }
         """
     })
     outcome = project.run("c", "-e", "A", "-k", "set_env")
@@ -621,7 +621,7 @@ def test_config_in_toml_replace_if_extend(tox_project: ToxProjectCreator, monkey
     monkeypatch.setenv("V", "1")
     toml = """\
     [tool.tox.env.A]
-    commands = [["echo", { replace = "if", condition = "env.V", then = ["-v"], "else" = ["-q"], extend = true }]]
+    commands = [["echo", { replace = "if", condition = "env.V", then = ["-v"], else = ["-q"], extend = true }]]
     """
     project = tox_project({"pyproject.toml": toml})
     outcome = project.run("c", "-e", "A", "-k", "commands")
@@ -633,12 +633,12 @@ def test_config_in_toml_replace_if_extend(tox_project: ToxProjectCreator, monkey
     ("condition_toml", "error_match"),
     [
         pytest.param(
-            'then = "yes", "else" = "no"',
+            'then = "yes", else = "no"',
             "No condition was supplied in if replacement",
             id="missing_condition",
         ),
         pytest.param(
-            'condition = "env.CI", "else" = "no"',
+            'condition = "env.CI", else = "no"',
             "No 'then' value was supplied in if replacement",
             id="missing_then",
         ),
@@ -668,3 +668,104 @@ def test_config_in_toml_replace_if_error(tox_project: ToxProjectCreator, conditi
     })
     with pytest.raises(MatchError, match=error_match):
         project.run("c", "-e", "A", "-k", "description")
+
+
+def test_config_in_toml_replace_if_factor_positive(tox_project: ToxProjectCreator) -> None:
+
+    project = tox_project({
+        "pyproject.toml": dedent("""
+        [tool.tox.env."3.13-django50"]
+        description = { replace = "if", condition = "factor.django50", then = "has django50", else = "no django50" }
+        """),
+    })
+    outcome = project.run("c", "-e", "3.13-django50", "-k", "description")
+    outcome.assert_success()
+    outcome.assert_out_err("[testenv:3.13-django50]\ndescription = has django50\n", "")
+
+
+def test_config_in_toml_replace_if_factor_negative(tox_project: ToxProjectCreator) -> None:
+    project = tox_project({
+        "pyproject.toml": dedent("""
+        [tool.tox.env."3.13"]
+        description = { replace = "if", condition = "factor.django50", then = "has django50", else = "no django50" }
+        """),
+    })
+    outcome = project.run("c", "-e", "3.13", "-k", "description")
+    outcome.assert_success()
+    outcome.assert_out_err("[testenv:3.13]\ndescription = no django50\n", "")
+
+
+def test_config_in_toml_replace_if_factor_platform(tox_project: ToxProjectCreator) -> None:
+    condition_val = f"factor.{sys.platform}"
+    toml_str = f"""
+        [tool.tox.env.task]
+        description.replace = "if"
+        description.condition = "{condition_val}"
+        description.then = "correct platform"
+        description.else = "wrong platform"
+        """
+    project = tox_project({"pyproject.toml": dedent(toml_str)})
+    outcome = project.run("c", "-e", "task", "-k", "description")
+    outcome.assert_success()
+    outcome.assert_out_err("[testenv:task]\ndescription = correct platform\n", "")
+
+
+def test_config_in_toml_replace_if_factor_not(tox_project: ToxProjectCreator) -> None:
+    project = tox_project({
+        "pyproject.toml": dedent("""
+        [tool.tox.env."3.13"]
+        description = { replace = "if", condition = "not factor.win32", then = "not windows", else = "windows" }
+        """),
+    })
+    outcome = project.run("c", "-e", "3.13", "-k", "description")
+    outcome.assert_success()
+    expected = "windows" if sys.platform == "win32" else "not windows"
+    outcome.assert_out_err(f"[testenv:3.13]\ndescription = {expected}\n", "")
+
+
+def test_config_in_toml_replace_if_factor_and(tox_project: ToxProjectCreator) -> None:
+    project = tox_project({
+        "pyproject.toml": dedent("""
+        [tool.tox.env.py313-django50]
+        description.replace = "if"
+        description.condition = "factor.django50 and factor.py313"
+        description.then = "both"
+        description.else = "not both"
+        """),
+    })
+    outcome = project.run("c", "-e", "py313-django50", "-k", "description")
+    outcome.assert_success()
+    outcome.assert_out_err("[testenv:py313-django50]\ndescription = both\n", "")
+
+
+def test_config_in_toml_replace_if_factor_or(tox_project: ToxProjectCreator) -> None:
+    project = tox_project({
+        "pyproject.toml": dedent("""
+        [tool.tox.env.py313]
+        description.replace = "if"
+        description.condition = "factor.django50 or factor.py313"
+        description.then = "at least one"
+        description.else = "neither"
+        """),
+    })
+    outcome = project.run("c", "-e", "py313", "-k", "description")
+    outcome.assert_success()
+    outcome.assert_out_err("[testenv:py313]\ndescription = at least one\n", "")
+
+
+def test_config_in_toml_replace_if_factor_combined_with_env(
+    tox_project: ToxProjectCreator, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("CI", "1")
+    project = tox_project({
+        "pyproject.toml": dedent("""
+        [tool.tox.env."3.13-django50"]
+        description.replace = "if"
+        description.condition = "factor.django50 and env.CI"
+        description.then = "django in CI"
+        description.else = "other"
+        """),
+    })
+    outcome = project.run("c", "-e", "3.13-django50", "-k", "description")
+    outcome.assert_success()
+    outcome.assert_out_err("[testenv:3.13-django50]\ndescription = django in CI\n", "")

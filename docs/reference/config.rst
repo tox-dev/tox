@@ -66,23 +66,50 @@ TOML feature gaps
 
 The following INI features are not yet available in TOML. Contributions to add support are welcome.
 
-**Conditional factors** -- INI allows lines to be filtered by factor name. A factor is any dash-separated segment in the
-environment name (e.g. ``py313-django50`` has factors ``py313`` and ``django50``):
+**Conditional factors** -- Both INI and TOML support filtering by factor name. A factor is any dash-separated segment in
+the environment name (e.g. ``py313-django50`` has factors ``py313`` and ``django50``). Additionally, the current
+platform (``sys.platform`` value like ``linux``, ``darwin``, ``win32``) is automatically available as an implicit
+factor.
 
-.. code-block:: ini
+.. tab:: INI
 
-    [testenv]
-    deps =
-        pytest
-        django50: Django>=5.0,<5.1
-        django42: Django>=4.2,<4.3
-        !lint: coverage
-    commands =
-        linux: python -c 'print("on linux")'
-        darwin: python -c 'print("on mac")'
+    .. code-block:: ini
 
-Supports simple factors (``django50:``), multiple factors (``py313,py312:``), and negation (``!lint:``). Any multi-line
-setting (``deps``, ``commands``, ``set_env``, etc.) can use factor conditions.
+        [testenv]
+        deps =
+            pytest
+            django50: Django>=5.0,<5.1
+            django42: Django>=4.2,<4.3
+            !lint: coverage
+        commands =
+            linux: python -c 'print("on linux")'
+            darwin: python -c 'print("on mac")'
+            win32: python -c 'print("on windows")'
+
+    Supports simple factors (``django50:``), multiple factors (``py313,py312:``), and negation (``!lint:``). Any
+    multi-line setting (``deps``, ``commands``, ``set_env``, etc.) can use factor conditions.
+
+.. tab:: TOML
+
+    .. code-block:: toml
+
+        [env_run_base]
+        deps = [
+            "pytest",
+            { replace = "if", condition = "factor.django50", then = ["Django>=5.0,<5.1"] },
+            { replace = "if", condition = "factor.django42", then = ["Django>=4.2,<4.3"] },
+            { replace = "if", condition = "not factor.lint", then = ["coverage"] },
+        ]
+        commands = [
+            { replace = "if", condition = "factor.linux", then = [["python", "-c", "print('on linux')"]] },
+            { replace = "if", condition = "factor.darwin", then = [["python", "-c", "print('on mac')"]] },
+            { replace = "if", condition = "factor.win32", then = [["python", "-c", "print('on windows')"]] },
+        ]
+
+    Use ``replace = "if"`` with ``factor.NAME`` conditions. Supports boolean operations (``and``, ``or``, ``not``) and
+    can combine with environment variable checks (``env.VAR``).
+
+Platform factors work in any environment without requiring the platform name in the environment name.
 
 **Generative environment lists** -- INI expands curly-brace expressions into the Cartesian product of all combinations:
 
@@ -102,6 +129,22 @@ Ranges are also supported: ``py3{12-14}`` expands to ``py312``, ``py313``, ``py3
     envdir =
         x86: .venv-x86
         x64: .venv-x64
+
+TOML does not support generative section names, but you can use factor conditions in individual environment sections:
+
+.. code-block:: toml
+
+    [env."py312-x86"]
+    env_dir = { replace = "if", condition = "factor.x86", then = ".venv-x86", "else" = ".venv-x64" }
+
+    [env."py312-x64"]
+    env_dir = { replace = "if", condition = "factor.x64", then = ".venv-x64", "else" = ".venv-x86" }
+
+    [env."py313-x86"]
+    env_dir = { replace = "if", condition = "factor.x86", then = ".venv-x86", "else" = ".venv-x64" }
+
+    [env."py313-x64"]
+    env_dir = { replace = "if", condition = "factor.x64", then = ".venv-x64", "else" = ".venv-x86" }
 
 .. _tox-ini:
 
@@ -1991,11 +2034,14 @@ When no files match and no default is given, the result is an empty string (or e
 Conditional value reference
 ===========================
 
-.. versionadded:: 4.40
+.. versionadded:: 4.40 Conditional value replacement with ``env.VAR`` lookups.
 
-You can conditionally select values based on environment variables via the ``if`` replacement. The ``condition`` field
-accepts an expression language that supports ``env.VAR_NAME`` lookups, ``==``/``!=`` comparisons, and ``and``/``or``/
-``not`` boolean logic.
+.. versionchanged:: 4.42 Added ``factor.NAME`` lookups for environment name factors and platform.
+
+You can conditionally select values based on environment variables and factors via the ``if`` replacement. The
+``condition`` field accepts an expression language that supports ``env.VAR_NAME`` lookups for environment variables,
+``factor.NAME`` lookups for environment name factors and platform, ``==``/``!=`` comparisons, and ``and``/``or``/``not``
+boolean logic.
 
 **Check if an environment variable is set (non-empty):**
 
@@ -2050,9 +2096,42 @@ If ``TAG_NAME`` is set and non-empty, ``MATURITY`` becomes ``production``, other
     [env.A]
     commands = [["pytest", { replace = "if", condition = "env.VERBOSE", then = ["--verbose", "--debug"], "else" = ["--quiet"], extend = true }]]
 
+**Check if a factor is present:**
+
+.. code-block:: toml
+
+    [env_run_base]
+    deps = [
+        "pytest",
+        { replace = "if", condition = "factor.django50", then = ["Django>=5.0,<5.1"] },
+    ]
+
+If the environment name contains ``django50`` (e.g., ``py313-django50``), the Django dependency is added.
+
+**Check for platform factors:**
+
+.. code-block:: toml
+
+    [env_run_base]
+    commands = [
+        { replace = "if", condition = "factor.linux", then = [["pytest", "--numprocesses=auto"]] },
+        { replace = "if", condition = "not factor.linux", then = [["pytest"]] },
+    ]
+
+The current platform (``sys.platform`` value like ``linux``, ``darwin``, ``win32``) is automatically available as a
+factor without requiring it in the environment name.
+
+**Combine factor conditions with environment variables:**
+
+.. code-block:: toml
+
+    [env_run_base]
+    commands = [["pytest", { replace = "if", condition = "factor.linux and env.CI", then = ["--numprocesses=auto"], "else" = [], extend = true }]]
+
 **Condition expression reference:**
 
 - ``env.VAR`` -- value of environment variable ``VAR`` (empty string if unset); truthy when non-empty
+- ``factor.NAME`` -- ``True`` if ``NAME`` is a factor in the environment name or platform; ``False`` otherwise
 - ``==``, ``!=`` -- string comparison
 - ``and``, ``or``, ``not`` -- boolean logic
 - ``'string'`` -- string literal
