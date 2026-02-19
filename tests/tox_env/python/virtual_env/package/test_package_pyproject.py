@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+import io
 import json
+import tarfile
 from textwrap import dedent
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import pytest
 
@@ -19,7 +21,7 @@ if TYPE_CHECKING:
 
 @pytest.mark.parametrize(
     "pkg_type",
-    ["editable-legacy", "editable", "sdist", "wheel"],
+    ["editable-legacy", "editable", "sdist", "sdist-wheel", "wheel"],
 )
 def test_tox_ini_package_type_valid(tox_project: ToxProjectCreator, pkg_type: str) -> None:
     proj = tox_project({"tox.ini": f"[testenv]\npackage={pkg_type}", "pyproject.toml": ""})
@@ -35,7 +37,10 @@ def test_tox_ini_package_type_invalid(tox_project: ToxProjectCreator) -> None:
     proj = tox_project({"tox.ini": "[testenv]\npackage=bad", "pyproject.toml": ""})
     result = proj.run("c", "-k", "package_tox_env_type")
     result.assert_failed()
-    msg = " invalid package config type bad requested, must be one of wheel, sdist, editable, editable-legacy, skip"
+    msg = (
+        " invalid package config type bad requested,"
+        " must be one of wheel, sdist, sdist-wheel, editable, editable-legacy, skip"
+    )
     assert msg in result.out
 
 
@@ -285,7 +290,7 @@ def test_pyproject_no_build_editable_fallback(tox_project: ToxProjectCreator, de
     assert found_calls == expected_calls
 
 
-@pytest.mark.parametrize("package", ["sdist", "wheel", "editable"])
+@pytest.mark.parametrize("package", ["sdist", "sdist-wheel", "wheel", "editable"])
 def test_pep517_pkg_env_rejects_deps(tox_project: ToxProjectCreator, demo_pkg_setuptools: Path, package: str) -> None:
     ini = f"[testenv]\npackage={package}\n[pkgenv]\ndeps = A"
     proj = tox_project({"tox.ini": ini}, base=demo_pkg_setuptools)
@@ -527,3 +532,91 @@ def test_pyproject_installpkg_pep517_envs(tox_project: ToxProjectCreator, pkg_wi
     proj = tox_project({"tox.ini": tox_ini}, base=pkg_with_pdm_backend)
     result = proj.run("--installpkg", str(sdist))
     result.assert_success()
+
+
+def test_sdist_wheel_package_type(tox_project: ToxProjectCreator, demo_pkg_inline: Path) -> None:
+    ini = "[testenv]\npackage=sdist-wheel"
+    proj = tox_project({"tox.ini": ini}, base=demo_pkg_inline)
+    execute_calls = proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
+    result = proj.run("r", "--notest")
+    result.assert_success()
+
+    found_calls = [(i[0][0].conf.name, i[0][3].run_id) for i in execute_calls.call_args_list]
+
+    # The .pkg env builds the sdist
+    assert (".pkg", "build_sdist") in found_calls, f"expected .pkg to build_sdist, got {found_calls}"
+
+    # A wheel is built from the extracted sdist (may be in .pkg or a wheel_build_env child)
+    wheel_calls = [(i, env, rid) for i, (env, rid) in enumerate(found_calls) if rid == "build_wheel"]
+    assert wheel_calls, f"expected build_wheel call, got {found_calls}"
+
+    # The sdist-wheel flow: build_sdist must happen before the final build_wheel
+    # (an earlier build_wheel may occur for metadata extraction)
+    sdist_idx = found_calls.index((".pkg", "build_sdist"))
+    last_wheel_idx = wheel_calls[-1][0]
+    assert sdist_idx < last_wheel_idx, f"build_sdist must happen before final build_wheel, got {found_calls}"
+
+    # The final package installed should be a wheel
+    install_calls = [(env, rid) for env, rid in found_calls if rid == "install_package"]
+    assert install_calls, "expected install_package call"
+
+
+def test_sdist_wheel_config(tox_project: ToxProjectCreator, demo_pkg_inline: Path) -> None:
+    ini = "[testenv]\npackage=sdist-wheel"
+    proj = tox_project({"tox.ini": ini}, base=demo_pkg_inline)
+    result = proj.run("c", "-k", "package", "-k", "wheel_build_env")
+    result.assert_success()
+    res = result.env_conf("py")["package"]
+    assert res == "sdist-wheel"
+    # wheel_build_env should be present (reusing existing infrastructure)
+    build_env = result.env_conf("py")["wheel_build_env"]
+    assert build_env  # has a value (name depends on Python version)
+
+
+def test_sdist_wheel_custom_build_env(tox_project: ToxProjectCreator, demo_pkg_inline: Path) -> None:
+    ini = "[testenv]\npackage=sdist-wheel\nwheel_build_env=.custom-wheel-builder"
+    proj = tox_project({"tox.ini": ini}, base=demo_pkg_inline)
+    execute_calls = proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
+    result = proj.run("r", "--notest")
+    result.assert_success()
+
+    found_calls = [(i[0][0].conf.name, i[0][3].run_id) for i in execute_calls.call_args_list]
+    env_names = {env for env, _ in found_calls}
+    assert ".custom-wheel-builder" in env_names, f"expected custom child env name, got {env_names}"
+
+
+def test_wheel_package_does_not_build_sdist(tox_project: ToxProjectCreator, demo_pkg_inline: Path) -> None:
+    ini = "[testenv]\npackage=wheel"
+    proj = tox_project({"tox.ini": ini}, base=demo_pkg_inline)
+    execute_calls = proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
+    result = proj.run("r", "--notest")
+    result.assert_success()
+    # Verify that build_sdist was NOT called with plain wheel package type
+    call_ids = [i[0][3].run_id for i in execute_calls.call_args_list]
+    assert "build_sdist" not in call_ids
+    assert "build_wheel" in call_ids
+
+
+def test_sdist_wheel_rejects_path_traversal(
+    tox_project: ToxProjectCreator, demo_pkg_inline: Path, mocker: MockerFixture
+) -> None:
+    ini = "[testenv]\npackage=sdist-wheel"
+    proj = tox_project({"tox.ini": ini}, base=demo_pkg_inline)
+    proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
+
+    original_build_sdist = Pep517VirtualEnvFrontend.build_sdist
+
+    def _build_malicious_sdist(self: Pep517VirtualEnvFrontend, *args: Any, **kwargs: Any) -> object:
+        result = original_build_sdist(self, *args, **kwargs)
+        buf = io.BytesIO()
+        with tarfile.open(fileobj=buf, mode="w:gz") as tar:
+            info = tarfile.TarInfo(name="../escape.txt")
+            info.size = 4
+            tar.addfile(info, io.BytesIO(b"evil"))
+        result.sdist.write_bytes(buf.getvalue())
+        return result
+
+    mocker.patch.object(Pep517VirtualEnvFrontend, "build_sdist", _build_malicious_sdist)
+    result = proj.run("r", "--notest")
+    result.assert_failed()
+    assert "tar member '../escape.txt' would extract outside of" in result.out

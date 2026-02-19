@@ -62,7 +62,7 @@ class PythonRun(Python, RunToxEnv, ABC):
 
     @property
     def _package_types(self) -> tuple[str, ...]:
-        return "wheel", "sdist", "editable", "editable-legacy", "skip", "external"
+        return "wheel", "sdist", "sdist-wheel", "editable", "editable-legacy", "skip", "external"
 
     def _register_package_conf(self) -> bool:
         # provision package type

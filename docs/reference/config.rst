@@ -1375,9 +1375,13 @@ Python run
     :keys: package
     :version_added: 4.0
 
-    When option can be one of ``wheel``, ``sdist``, ``editable``, ``editable-legacy``, ``skip``, or ``external``. If
-    :ref:`use_develop` is set this becomes a constant of ``editable``. If :ref:`skip_install` is set this becomes a
-    constant of ``skip``.
+    When option can be one of ``wheel``, ``sdist``, ``sdist-wheel``, ``editable``, ``editable-legacy``, ``skip``, or
+    ``external``. If :ref:`use_develop` is set this becomes a constant of ``editable``. If :ref:`skip_install` is set
+    this becomes a constant of ``skip``.
+
+    When ``sdist-wheel`` is selected, tox first builds a source distribution and then builds a wheel from that sdist
+    (rather than directly from the source tree). This is useful for verifying that the sdist is complete and that the
+    package can be correctly built from it — catching missing files or packaging errors early.
 
     When ``editable`` is selected and the build backend supports :pep:`660`, tox will use the standardized editable
     install mechanism. If the backend does not support :pep:`660`, tox will automatically fall back to
@@ -1390,8 +1394,10 @@ Python run
     :version_added: 4.0
     :default: <package_env>-<python-flavor-lowercase><python-version-no-dot>
 
-    If :ref:`package` is set to ``wheel`` this will be the tox Python environment in which the wheel will be
-    built. The value is generated to be unique per Python flavor and version, and prefixed with :ref:`package_env` value.
+    If :ref:`package` is set to ``wheel`` or ``sdist-wheel`` this will be the tox Python environment in which the wheel
+    will be built. For ``sdist-wheel``, the sdist is first built in the :ref:`package_env` environment, then the wheel
+    is built from the extracted sdist in this environment. The value is generated to be unique per Python flavor and
+    version, and prefixed with :ref:`package_env` value.
     This is to ensure the target interpreter and the generated wheel will be compatible. If you have a wheel that can be
     reused across multiple Python versions set this value to the same across them (to avoid building a new wheel for
     each one of them).
