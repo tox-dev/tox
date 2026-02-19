@@ -139,6 +139,8 @@ ensure coverage runs after all test environments:
 The ``-p`` flag (parallel mode) creates separate ``.coverage.<hash>`` files per environment. ``coverage combine`` merges
 them before generating the report.
 
+.. _tox-exec:
+
 **********************************
  Run a one-off command (tox exec)
 **********************************
@@ -859,6 +861,39 @@ When an environment fails, use these techniques to investigate:
    .. code-block:: bash
 
        tox run -e 3.13 -r
+
+.. _run-interactive-programs:
+
+**************************
+ Run interactive programs
+**************************
+
+Interactive programs like Python REPL, debuggers, or TUI applications need direct terminal access to handle user input
+and query console properties. By default, tox pipes stdout/stderr to capture output for logging, which breaks terminal
+APIs that require real console handles.
+
+Use ``--no-capture`` (or ``-i``) to disable output capture and give the subprocess direct access to the terminal:
+
+.. code-block:: bash
+
+    # Open a Python REPL with full terminal support
+    tox run -e 3.13 -i -- python
+
+    # Run a debugger interactively
+    tox run -e 3.13 -i -- python -m pdb script.py
+
+    # Use a TUI application
+    tox run -e 3.13 -i -- pytest --pdb
+
+The ``--no-capture`` flag is mutually exclusive with ``--result-json`` (which requires output capture) and parallel mode
+(where multiple environments' output would interleave). When enabled, tox cannot log command output to
+``.tox/<env_name>/log/`` files.
+
+.. note::
+
+    ``tox exec`` always runs in interactive mode without output capture. Use ``tox exec`` for one-off commands that
+    don't need the full environment setup (see :ref:`tox-exec`). Use ``tox run --no-capture`` when you need to run the
+    configured commands interactively.
 
 ******************
  Access full logs

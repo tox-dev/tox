@@ -6,6 +6,8 @@ from typing import TYPE_CHECKING
 import pytest
 
 if TYPE_CHECKING:
+    from unittest.mock import MagicMock
+
     from tox.pytest import ToxProjectCreator
 
 
@@ -39,3 +41,26 @@ def test_exec(tox_project: ToxProjectCreator, exit_code: int) -> None:
 def test_exec_help(tox_project: ToxProjectCreator) -> None:
     outcome = tox_project({"tox.ini": ""}).run("e", "-h")
     outcome.assert_success()
+
+
+def test_exec_always_no_capture(tox_project: ToxProjectCreator) -> None:
+    """Verify tox exec always runs with no_capture enabled for interactive mode."""
+    ini = "[testenv]\npackage=skip"
+    project = tox_project({"tox.ini": ini})
+
+    captured_options: list[MagicMock] = []
+
+    def capture_options(request):  # noqa: ANN001, ANN202
+        captured_options.append(request)
+        return 0
+
+    execute_calls = project.patch_execute(capture_options)
+    result = project.run("e", "-e", "py", "--", "python", "--version")
+    result.assert_success()
+
+    assert execute_calls.call_count > 0
+    for call in execute_calls.call_args_list:
+        _, kwargs = call
+        env_instance = kwargs.get("self")
+        if env_instance and hasattr(env_instance, "options"):
+            assert env_instance.options.no_capture is True

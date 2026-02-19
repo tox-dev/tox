@@ -29,6 +29,7 @@ def tox_add_option(parser: ToxParser) -> None:
 
 def exec_(state: State) -> int:
     state.conf.options.skip_pkg_install = True  # avoid package install
+    state.conf.options.no_capture = True  # always run interactively without output capture
     envs = list(state.envs.iter())
     if len(envs) != 1:
         msg = f"exactly one target environment allowed in exec mode but found {', '.join(envs)}"

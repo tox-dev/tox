@@ -94,6 +94,8 @@ class ArgumentParserWithEnvAndConfig(ArgumentParser):
                 f"unrecognized arguments: {' '.join(argv)}\n"
                 "hint: if you tried to pass arguments to a command use -- to separate them from tox ones",
             )
+        if getattr(res, "no_capture", False) and getattr(res, "result_json", None):
+            self.error("argument -i/--no-capture: not allowed with argument --result-json")
         return cast("Namespace", res)
 
 
@@ -227,7 +229,12 @@ class ToxParser(ArgumentParserWithEnvAndConfig):
             hashseed_default = random.randint(1, 1024 if sys.platform == "win32" else 4294967295)  # noqa: S311
 
         if ENV not in sub_parser.inherit:
-            defaults.update(result_json=None, hash_seed=hashseed_default, discover=[], list_dependencies=is_ci())
+            defaults.update(
+                result_json=None,
+                hash_seed=hashseed_default,
+                discover=[],
+                list_dependencies=is_ci(),
+            )
             return
 
         sub_parser.add_argument(
@@ -238,6 +245,17 @@ class ToxParser(ArgumentParserWithEnvAndConfig):
             default=None,
             help="write a JSON file with detailed information about all commands and results involved",
         )
+        if sub_parser.of_cmd != "exec":
+            sub_parser.add_argument(
+                "-i",
+                "--no-capture",
+                dest="no_capture",
+                action="store_true",
+                default=False,
+                help="disable output capture (mutually exclusive with --result-json and parallel mode)",
+            )
+        else:
+            defaults["no_capture"] = False
 
         class SeedAction(Action):
             def __call__(

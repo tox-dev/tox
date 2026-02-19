@@ -86,6 +86,9 @@ def parallel_flags(
 def run_parallel(state: State) -> int:
     """Here we'll just start parallel sub-processes."""
     option = state.conf.options
+    if option.no_capture:
+        msg = "--no-capture cannot be used with parallel mode"
+        raise SystemExit(msg)
     return execute(
         state,
         max_workers=auto_detect_cpus() if option.parallel == 0 else option.parallel,

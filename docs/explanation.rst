@@ -516,18 +516,33 @@ Interactive terminal programs
 =============================
 
 Programs that require advanced terminal control — such as IPython, debuggers with rich UIs, or any tool built on
-`prompt_toolkit <https://python-prompt-toolkit.readthedocs.io/>`__ — may not work correctly under tox.
+`prompt_toolkit <https://python-prompt-toolkit.readthedocs.io/>`__ — need direct terminal access to work correctly.
 
-tox captures subprocess output by routing ``stdout`` and ``stderr`` through pseudo-terminal (PTY) pairs. This is
-necessary for logging, result reporting, and colorized output. However, the subprocess's ``stdin`` remains connected to
-the real terminal. This means ``stdin`` and ``stdout`` are on *different* terminal devices.
+By default, tox captures subprocess output by routing ``stdout`` and ``stderr`` through pseudo-terminal (PTY) pairs.
+This is necessary for logging, result reporting, and colorized output. However, the subprocess's ``stdin`` remains
+connected to the real terminal. This means ``stdin`` and ``stdout`` are on *different* terminal devices.
 
 Libraries like ``prompt_toolkit`` assume all streams share the same terminal. They set raw mode on ``stdin`` (to read
 individual keystrokes) while writing VT100 escape sequences to ``stdout`` (for cursor positioning, screen clearing,
 etc.). When ``stdout`` goes through tox's capture buffer instead of directly to the terminal, escape sequences are
 delayed and the synchronous terminal control these libraries depend on breaks.
 
-Workarounds:
+Solution:
+
+Use the ``--no-capture`` (or ``-i``) flag to disable output capture and give the subprocess direct terminal access:
+
+.. code-block:: bash
+
+    # Run IPython with full terminal support
+    tox run -e 3.13 -i -- ipython
+
+    # Run debugger interactively
+    tox run -e 3.13 -i -- python -m pdb script.py
+
+This flag is mutually exclusive with ``--result-json`` and parallel mode. See :ref:`run-interactive-programs` for
+details.
+
+Alternative workarounds if you cannot use ``--no-capture``:
 
 - For IPython, pass ``--simple-prompt`` to disable ``prompt_toolkit``'s advanced terminal features.
 - For other tools, look for a "dumb terminal" or "no-color" mode that avoids VT100 escape sequences.

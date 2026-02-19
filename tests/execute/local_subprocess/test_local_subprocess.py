@@ -48,6 +48,13 @@ class FakeOutErr:
         return out_got, err_got
 
 
+def _create_mock_env() -> MagicMock:
+    """Create a mock tox environment with no_capture=False to prevent console inheritance."""
+    mock_env = MagicMock()
+    mock_env.options.no_capture = False
+    return mock_env
+
+
 @pytest.mark.parametrize("color", [True, False], ids=["color", "no_color"])
 @pytest.mark.parametrize(("out", "err"), [("out", "err"), ("", "")], ids=["simple", "nothing"])
 @pytest.mark.parametrize("show", [True, False], ids=["show", "no_show"])
@@ -68,7 +75,7 @@ def test_local_execute_basic_pass(  # noqa: PLR0913
     caplog.set_level(logging.NOTSET)
     executor = LocalSubProcessExecutor(colored=color)
 
-    tox_env = MagicMock()
+    tox_env = _create_mock_env()
     tox_env.conf._conf.options.stderr_color = stderr_color  # noqa: SLF001
     code = f"import sys; print({out!r}, end=''); print({err!r}, end='', file=sys.stderr)"
     request = ExecuteRequest(cmd=[sys.executable, "-c", code], cwd=Path(), env=os_env, stdin=StdinSource.OFF, run_id="")
@@ -109,7 +116,7 @@ def test_local_execute_basic_pass_show_on_standard_newline_flush(caplog: LogCapt
         run_id="",
     )
     out_err = FakeOutErr()
-    with executor.call(request, show=True, out_err=out_err.out_err, env=MagicMock()) as status:
+    with executor.call(request, show=True, out_err=out_err.out_err, env=_create_mock_env()) as status:
         while status.exit_code is None:  # pragma: no branch
             status.wait()
     outcome = status.outcome
@@ -147,7 +154,7 @@ def test_local_execute_write_a_lot(os_env: dict[str, str]) -> None:
         run_id="",
     )
     out_err = FakeOutErr()
-    with executor.call(request, show=False, out_err=out_err.out_err, env=MagicMock()) as status:
+    with executor.call(request, show=False, out_err=out_err.out_err, env=_create_mock_env()) as status:
         while status.exit_code is None:  # pragma: no branch
             status.wait()
     outcome = status.outcome
@@ -190,7 +197,7 @@ def test_local_execute_terminal_size(os_env: dict[str, str], monkeypatch: Monkey
             run_id="",
         )
         out_err = FakeOutErr()
-        with executor.call(request, show=False, out_err=out_err.out_err, env=MagicMock()) as status:
+        with executor.call(request, show=False, out_err=out_err.out_err, env=_create_mock_env()) as status:
             while status.exit_code is None:  # pragma: no branch
                 status.wait()
     outcome = status.outcome
@@ -215,7 +222,7 @@ def test_local_execute_basic_fail(capsys: CaptureFixture, caplog: LogCaptureFixt
 
     # run test
     out_err = FakeOutErr()
-    with executor.call(request, show=False, out_err=out_err.out_err, env=MagicMock()) as status:
+    with executor.call(request, show=False, out_err=out_err.out_err, env=_create_mock_env()) as status:
         while status.exit_code is None:  # pragma: no branch
             status.wait()
     outcome = status.outcome
@@ -273,7 +280,7 @@ def test_command_does_not_exist(caplog: LogCaptureFixture, os_env: dict[str, str
         run_id="",
     )
     out_err = FakeOutErr()
-    with executor.call(request, show=False, out_err=out_err.out_err, env=MagicMock()) as status:
+    with executor.call(request, show=False, out_err=out_err.out_err, env=_create_mock_env()) as status:
         while status.exit_code is None:  # pragma: no branch
             status.wait()  # pragma: no cover
     outcome = status.outcome
@@ -350,7 +357,7 @@ def test_local_subprocess_tty(monkeypatch: MonkeyPatch, mocker: MockerFixture, t
     cmd: list[str] = [sys.executable, str(Path(__file__).parent / "tty_check.py")]
     request = ExecuteRequest(cmd=cmd, stdin=StdinSource.API, cwd=Path.cwd(), env=dict(os.environ), run_id="")
     out_err = FakeOutErr()
-    with executor.call(request, show=False, out_err=out_err.out_err, env=MagicMock()) as status:
+    with executor.call(request, show=False, out_err=out_err.out_err, env=_create_mock_env()) as status:
         while status.exit_code is None:  # pragma: no branch
             status.wait()
     outcome = status.outcome
@@ -428,7 +435,7 @@ def test_local_execute_does_not_overwrite(key: str, mocker: MockerFixture) -> No
     cmd = [sys.executable, "-c", f"import os; print(os.environ['{key}'], end='')"]
     request = ExecuteRequest(cmd=cmd, stdin=StdinSource.API, cwd=Path.cwd(), env=env, run_id="")
     out_err = FakeOutErr()
-    with executor.call(request, show=False, out_err=out_err.out_err, env=MagicMock()) as status:
+    with executor.call(request, show=False, out_err=out_err.out_err, env=_create_mock_env()) as status:
         while status.exit_code is None:  # pragma: no branch
             status.wait()
     outcome = status.outcome

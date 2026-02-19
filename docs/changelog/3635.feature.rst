@@ -1,0 +1,4 @@
+Add ``--no-capture`` (``-i``) CLI flag to disable output capture, allowing interactive programs like Python REPL to
+access the terminal directly. When enabled, subprocess inherits parent console handles instead of pipes, fixing issues
+where terminal APIs (e.g., querying console dimensions) fail on pipe handles. Mutually exclusive with ``--result-json``
+and parallel mode - by :user:`gaborjbernat`. Fixes :issue:`3635`.

@@ -205,12 +205,15 @@ class LocalSubProcessExecuteInstance(ExecuteInstance):
         if lines != -1:  # pragma: no branch
             self.request.env.setdefault("LINES", str(lines))
 
+        # --no-capture inherits console handles for interactive programs (e.g., Python REPL).
+        # Allows terminal APIs to query console dimensions and interact with the terminal directly.
+        inherit_console = self.options.no_capture
         stdout, stderr = self.get_stream_file_no("stdout"), self.get_stream_file_no("stderr")
         try:
             self.process = process = Popen(
                 self.cmd,
-                stdout=next(stdout),
-                stderr=next(stderr),
+                stdout=None if inherit_console else next(stdout),
+                stderr=None if inherit_console else next(stderr),
                 stdin={StdinSource.USER: None, StdinSource.OFF: DEVNULL, StdinSource.API: PIPE}[self.request.stdin],
                 cwd=str(self.request.cwd),
                 env=self.request.env,
@@ -222,11 +225,12 @@ class LocalSubProcessExecuteInstance(ExecuteInstance):
             return LocalSubprocessExecuteFailedStatus(self.options, self._out, self._err, exception.errno)
 
         status = LocalSubprocessExecuteStatus(self.options, self._out, self._err, process)
-        drain, pid = self._on_exit_drain, self.process.pid
-        self._read_stderr = ReadViaThread(stderr.send(process), self.err_handler, name=f"err-{pid}", drain=drain)
-        self._read_stderr.__enter__()
-        self._read_stdout = ReadViaThread(stdout.send(process), self.out_handler, name=f"out-{pid}", drain=drain)
-        self._read_stdout.__enter__()
+        if not inherit_console:
+            drain, pid = self._on_exit_drain, self.process.pid
+            self._read_stderr = ReadViaThread(stderr.send(process), self.err_handler, name=f"err-{pid}", drain=drain)
+            self._read_stderr.__enter__()
+            self._read_stdout = ReadViaThread(stdout.send(process), self.out_handler, name=f"out-{pid}", drain=drain)
+            self._read_stdout.__enter__()
         return status
 
     def __exit__(
