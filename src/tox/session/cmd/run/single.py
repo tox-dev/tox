@@ -79,55 +79,69 @@ def run_commands(tox_env: RunToxEnv, no_test: bool) -> tuple[int, list[Outcome]]
         chdir: Path = tox_env.conf["change_dir"]
         chdir.mkdir(exist_ok=True, parents=True)
         ignore_errors: bool = tox_env.conf["ignore_errors"]
+        retry_count: int = tox_env.conf["commands_retry"]
         MANAGER.tox_before_run_commands(tox_env)
         status_pre, status_main, status_post = -1, -1, -1
         try:
             try:
-                status_pre = run_command_set(tox_env, "commands_pre", chdir, ignore_errors, outcomes)
+                status_pre = run_command_set(tox_env, "commands_pre", chdir, ignore_errors, outcomes, retry_count)
                 if status_pre == Outcome.OK or ignore_errors:
-                    status_main = run_command_set(tox_env, "commands", chdir, ignore_errors, outcomes)
+                    status_main = run_command_set(tox_env, "commands", chdir, ignore_errors, outcomes, retry_count)
                 else:
                     status_main = Outcome.OK
             finally:
-                status_post = run_command_set(tox_env, "commands_post", chdir, ignore_errors, outcomes)
+                status_post = run_command_set(tox_env, "commands_post", chdir, ignore_errors, outcomes, retry_count)
         finally:
             exit_code = status_pre or status_main or status_post  # first non-success
             MANAGER.tox_after_run_commands(tox_env, exit_code, outcomes)
     return exit_code, outcomes
 
 
-def run_command_set(
+def run_command_set(  # noqa: PLR0913
     tox_env: ToxEnv,
     key: str,
     cwd: Path,
     ignore_errors: bool,  # noqa: FBT001
     outcomes: list[Outcome],
+    retry_count: int = 0,
 ) -> int:
     exit_code = Outcome.OK
     command_set: list[Command] = tox_env.conf[key]
     for at, cmd in enumerate(command_set):
-        current_outcome = tox_env.execute(
-            cmd.args,
-            cwd=cwd,
-            stdin=StdinSource.user_only(),
-            show=True,
-            run_id=f"{key}[{at}]",
-        )
-        outcomes.append(current_outcome)
-        try:
-            if cmd.invert_exit_code:
-                current_outcome.assert_failure()
+        max_attempts = 1 if cmd.ignore_exit_code else retry_count + 1
+        for attempt in range(1, max_attempts + 1):
+            current_outcome = tox_env.execute(
+                cmd.args,
+                cwd=cwd,
+                stdin=StdinSource.user_only(),
+                show=True,
+                run_id=f"{key}[{at}]",
+            )
+            outcomes.append(current_outcome)
+            try:
+                if cmd.invert_exit_code:
+                    current_outcome.assert_failure()
+                else:
+                    current_outcome.assert_success()
+            except SystemExit as exception:
+                if cmd.ignore_exit_code:
+                    logging.warning("command failed but is marked ignore outcome so handling it as success")
+                    break
+                if attempt < max_attempts:
+                    logging.warning(
+                        "command failed (attempt %d of %d), retrying ...: %s",
+                        attempt,
+                        max_attempts,
+                        cmd.shell,
+                    )
+                    continue
+                if ignore_errors:
+                    if exit_code == Outcome.OK:
+                        exit_code = cast("int", exception.code)
+                    break
+                return cast("int", exception.code)
             else:
-                current_outcome.assert_success()
-        except SystemExit as exception:
-            if cmd.ignore_exit_code:
-                logging.warning("command failed but is marked ignore outcome so handling it as success")
-                continue
-            if ignore_errors:
-                if exit_code == Outcome.OK:
-                    exit_code = cast("int", exception.code)  # ignore errors continues ahead but saves the exit code
-                continue
-            return cast("int", exception.code)
+                break
     return exit_code
 
 

@@ -597,6 +597,33 @@ To invert the exit code (fail if the command returns 0, succeed otherwise), use 
              python --version
 
 **********************
+ Retry flaky commands
+**********************
+
+Commands that fail due to transient errors (network timeouts, flaky tests) can be automatically retried using
+:ref:`commands_retry`. The value specifies how many times to retry a failed command -- a value of ``2`` means each
+command is attempted up to 3 times total. Retries apply to :ref:`commands_pre`, :ref:`commands`, and
+:ref:`commands_post`. Commands prefixed with ``-`` (ignore exit code) are never retried.
+
+.. tab:: TOML
+
+    .. code-block:: toml
+
+         [env.integration]
+         description = "run integration tests with retries for flaky network calls"
+         commands_retry = 2
+         commands = [["pytest", "tests/integration"]]
+
+.. tab:: INI
+
+    .. code-block:: ini
+
+         [testenv:integration]
+         description = run integration tests with retries for flaky network calls
+         commands_retry = 2
+         commands = pytest tests/integration
+
+**********************
  Control color output
 **********************
 

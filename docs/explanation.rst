@@ -85,7 +85,8 @@ The primary tox states are:
       installations complete but before test commands, and run during the ``--notest`` phase.
    5. **Commands**: run the specified commands in the specified order. Whenever the exit code of any of them is not
       zero, stop and mark the environment failed. When you start a command with a dash character, the exit code will be
-      ignored.
+      ignored. If :ref:`commands_retry` is set, failed commands are retried up to the configured number of times before
+      being treated as a failure.
 
 3. **Report** print out a report of outcomes for each tox environment:
 

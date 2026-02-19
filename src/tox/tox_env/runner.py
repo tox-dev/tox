@@ -76,6 +76,12 @@ class RunToxEnv(ToxEnv, ABC):
             desc="when executing the commands keep going even if a sub-command exits with non-zero exit code",
         )
         self.conf.add_config(
+            keys=["commands_retry"],
+            of_type=int,
+            default=0,
+            desc="number of times to retry a failed command (0 means no retries)",
+        )
+        self.conf.add_config(
             keys=["ignore_outcome"],
             of_type=bool,
             default=False,
