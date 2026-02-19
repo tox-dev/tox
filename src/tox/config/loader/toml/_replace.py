@@ -4,9 +4,12 @@ import ast
 import glob
 import os
 import re
+import sys
+from itertools import chain
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, cast
 
+from tox.config.loader.ini.factor import find_factor_groups
 from tox.config.loader.replacer import (
     MatchError,
     MatchRecursionError,
@@ -36,6 +39,17 @@ class Unroll:
         self.conf = conf
         self.loader = loader
         self.args = args
+        self.factors = self._extract_factors(args.env_name)
+
+    @staticmethod
+    def _extract_factors(env_name: str | None) -> set[str]:
+        """Extract factors from environment name and add platform."""
+        if env_name is None:
+            factors = set()
+        else:
+            factors = set(chain.from_iterable([(i for i, _ in a) for a in find_factor_groups(env_name)]))
+        factors.add(sys.platform)
+        return factors
 
     def __call__(  # noqa: C901, PLR0912
         self, value: TomlTypes, depth: int = 0, *, skip_str: bool = False
@@ -85,7 +99,7 @@ class Unroll:
                     glob_result = _replace_glob_toml(self.conf, value)
                     return {"value": glob_result, "marker": marker} if marker else glob_result
                 if replace_type == "if":
-                    if_result = _replace_if_toml(value, self, depth, skip_str=skip_str)
+                    if_result = _replace_if_toml(value, self, depth, self.factors, skip_str=skip_str)
                     return {"value": if_result, "marker": marker} if marker else if_result
                 if replace_type == "ref":  # pragma: no branch
                     ref_result = self._replace_ref(value, depth, skip_str=skip_str)
@@ -123,7 +137,9 @@ def _replace_glob_toml(conf: Config | None, value: dict[str, Any]) -> list[str] 
     return validate(default, list) if extending else validate(default, str)
 
 
-def _replace_if_toml(value: dict[str, Any], unroll: Unroll, depth: int, *, skip_str: bool = False) -> TomlTypes:
+def _replace_if_toml(
+    value: dict[str, Any], unroll: Unroll, depth: int, factors: set[str], *, skip_str: bool = False
+) -> TomlTypes:
     condition = value.get("condition")
     if not condition or not isinstance(condition, str):
         msg = "No condition was supplied in if replacement"
@@ -131,18 +147,20 @@ def _replace_if_toml(value: dict[str, Any], unroll: Unroll, depth: int, *, skip_
     if "then" not in value:
         msg = "No 'then' value was supplied in if replacement"
         raise MatchError(msg)
-    return unroll(value["then"] if _evaluate_condition(condition) else value.get("else", ""), depth, skip_str=skip_str)
+    return unroll(
+        value["then"] if _evaluate_condition(condition, factors) else value.get("else", ""), depth, skip_str=skip_str
+    )
 
 
-def _evaluate_condition(expr: str) -> bool:  # noqa: C901
-    """Evaluate a condition expression supporting env.VAR lookups, comparisons, and boolean logic."""
+def _evaluate_condition(expr: str, factors: set[str]) -> bool:  # noqa: C901
+    """Evaluate a condition expression supporting env.VAR, factor.NAME lookups, comparisons, and boolean logic."""
     try:
         tree = ast.parse(expr, mode="eval")
     except SyntaxError:
         msg = f"Invalid condition expression: {expr}"
         raise MatchError(msg) from None
 
-    def _eval(node: ast.expr) -> str | bool:  # noqa: PLR0911
+    def _eval(node: ast.expr) -> str | bool:  # noqa: PLR0911, C901
         if isinstance(node, ast.BoolOp):
             if isinstance(node.op, ast.And):
                 return all(bool(_eval(v)) for v in node.values)
@@ -158,8 +176,13 @@ def _evaluate_condition(expr: str) -> bool:  # noqa: C901
                 return left != right
             msg = f"Unsupported comparison operator in condition: {expr}"
             raise MatchError(msg)
-        if isinstance(node, ast.Attribute) and isinstance(node.value, ast.Name) and node.value.id == "env":
-            return os.environ.get(node.attr, "")
+        if isinstance(node, ast.Attribute) and isinstance(node.value, ast.Name):
+            if node.value.id == "env":
+                return os.environ.get(node.attr, "")
+            if node.value.id == "factor":
+                return node.attr in factors
+            msg = f"Unsupported namespace in condition: {node.value.id} (expected 'env' or 'factor')"
+            raise MatchError(msg)
         if isinstance(node, ast.Constant) and isinstance(node.value, str):
             return node.value
         msg = f"Unsupported expression in condition: {ast.dump(node)}"

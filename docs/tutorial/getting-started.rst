@@ -151,7 +151,8 @@ Environment names and Python versions
 =====================================
 
 Environment names can consist of alphanumeric characters, dashes, and dots. Names are split on dashes into **factors**
--- for example ``py311-django42`` splits into factors ``py311`` and ``django42``.
+-- for example ``py311-django42`` splits into factors ``py311`` and ``django42``. Additionally, the current platform
+(like ``linux``, ``darwin``, ``win32``) is automatically available as an implicit factor for conditional configuration.
 
 tox recognizes certain naming patterns and automatically sets the Python interpreter:
 

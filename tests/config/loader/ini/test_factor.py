@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import sys
 from textwrap import dedent
 from typing import TYPE_CHECKING
 
@@ -347,3 +348,59 @@ def test_multiple_factor_match(tox_ini_conf: ToxIniCreator) -> None:
     env_config.add_config(keys="conf", of_type=str, default="", desc="conf")
     deps = env_config["conf"]
     assert deps == "x"
+
+
+def test_platform_factor_filter_for_env() -> None:
+    value = dedent(
+        """
+        linux: Linux command
+        darwin: Darwin command
+        win32: Windows command
+        default command
+        """,
+    )
+
+    result = filter_for_env(value, name="task")
+    assert "default command" in result
+    if sys.platform == "linux":
+        assert "Linux command" in result
+        assert "Darwin command" not in result
+        assert "Windows command" not in result
+    elif sys.platform == "darwin":
+        assert "Darwin command" in result
+        assert "Linux command" not in result
+        assert "Windows command" not in result
+    elif sys.platform == "win32":
+        assert "Windows command" in result
+        assert "Linux command" not in result
+        assert "Darwin command" not in result
+
+
+def test_platform_factor(tox_ini_conf: ToxIniCreator) -> None:
+    config = tox_ini_conf(
+        """
+        [testenv:task]
+        commands =
+            linux: python -c 'print("Linux")'
+            darwin: python -c 'print("Darwin")'
+            win32: python -c 'print("Windows")'
+            default command
+        """,
+    )
+    env_config = config.get_env("task")
+    env_config.add_config(keys="commands", of_type=list[str], default=[], desc="commands")
+    commands = env_config["commands"]
+
+    assert "default command" in str(commands)
+    if sys.platform == "linux":
+        assert 'print("Linux")' in str(commands)
+        assert 'print("Darwin")' not in str(commands)
+        assert 'print("Windows")' not in str(commands)
+    elif sys.platform == "darwin":
+        assert 'print("Darwin")' in str(commands)
+        assert 'print("Linux")' not in str(commands)
+        assert 'print("Windows")' not in str(commands)
+    elif sys.platform == "win32":
+        assert 'print("Windows")' in str(commands)
+        assert 'print("Linux")' not in str(commands)
+        assert 'print("Darwin")' not in str(commands)

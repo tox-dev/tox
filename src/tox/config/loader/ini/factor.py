@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import re
+import sys
 from itertools import chain, groupby, product
 from typing import TYPE_CHECKING
 
@@ -14,6 +15,7 @@ def filter_for_env(value: str, name: str | None) -> str:
     current = (
         set(chain.from_iterable([(i for i, _ in a) for a in find_factor_groups(name)])) if name is not None else set()
     )
+    current.add(sys.platform)
     overall = []
     for factors, content in expand_factors(value):
         if factors is None:
