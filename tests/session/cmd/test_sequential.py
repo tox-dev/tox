@@ -46,6 +46,31 @@ def test_run_sequential_fail(tox_project: ToxProjectCreator) -> None:
     assert Matches(r"  a: FAIL code 1 \(.*=setup\[.*\]\+cmd\[.*\] seconds\)") == reports[-3]
 
 
+@pytest.mark.parametrize(
+    ("envs", "expected_code"),
+    [
+        ("a", 1),  # single failing env returns its exit code
+        ("a,b", 1),  # mixed fail+ok returns positive non-zero
+        ("a,c", 1),  # all failing returns positive non-zero
+    ],
+)
+def test_run_multi_env_exit_code_positive(tox_project: ToxProjectCreator, envs: str, expected_code: int) -> None:
+    """Exit code must be a positive integer so Windows CMD ``IF ERRORLEVEL 1`` detects failure (see #2945)."""
+
+    def _cmd(value: int) -> str:
+        return f"python -c 'import sys; sys.exit({value})'"
+
+    ini = (
+        f"[tox]\nno_package=true\n"
+        f"[testenv:a]\ncommands={_cmd(1)}\n"
+        f"[testenv:b]\ncommands={_cmd(0)}\n"
+        f"[testenv:c]\ncommands={_cmd(2)}\n"
+    )
+    project = tox_project({"tox.ini": ini})
+    outcome = project.run("r", "-e", envs)
+    assert outcome.code == expected_code
+
+
 def test_run_sequential_quiet(tox_project: ToxProjectCreator) -> None:
     ini = "[tox]\nenv_list=a\nno_package=true\n[testenv]\ncommands=python -V"
     project = tox_project({"tox.ini": ini})
