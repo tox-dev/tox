@@ -1,3 +1,0 @@
-Add ``package = "deps-only"`` mode that installs the package's dependencies (including extras) without building or
-installing the package itself. For projects with static :PEP:`621` metadata, dependencies are read directly from
-``pyproject.toml`` without creating a packaging environment - by :user:`gaborbernat`.

@@ -1,3 +1,0 @@
-Fix PEP 517 backend crash detection to handle both ``ENOENT`` (missing interpreter) and runtime crashes without hanging,
-and fix flaky ``test_provision_install_pkg_pep517`` integration test by using a pre-built wheel instead of an sdist to
-avoid devpi mirror dependency on setuptools - by :user:`gaborjbernat`.
