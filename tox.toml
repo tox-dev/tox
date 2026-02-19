@@ -16,7 +16,9 @@ commands = [
     "pytest",
     { replace = "posargs", extend = true, default = [
       "--durations",
-      "20",
+      "0",
+      "--durations-min",
+      "0.5",
       "-n",
       { replace = "env", name = "PYTEST_XDIST_AUTO_NUM_WORKERS", default = "auto" },
       "--junitxml",
