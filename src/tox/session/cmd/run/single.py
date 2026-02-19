@@ -28,6 +28,7 @@ class ToxEnvRunResult(NamedTuple):
     duration: float
     ignore_outcome: bool = False
     fail_fast: bool = False
+    unavailable: bool = False
 
 
 def run_one(tox_env: RunToxEnv, no_test: bool, suspend_display: bool) -> ToxEnvRunResult:  # noqa: FBT001

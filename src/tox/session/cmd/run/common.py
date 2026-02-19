@@ -148,7 +148,7 @@ def report(start: float, runs: list[ToxEnvRunResult], is_colored: bool, verbosit
 
     successful, skipped = [], []
     for run in runs:
-        successful.append(run.code == Outcome.OK or run.ignore_outcome)
+        successful.append(run.code == Outcome.OK or run.ignore_outcome or run.unavailable)
         skipped.append(run.skipped)
         duration_individual = [o.elapsed for o in run.outcomes] if verbosity >= 2 else []  # noqa: PLR2004
         extra = f"+cmd[{','.join(f'{i:.2f}' for i in duration_individual)}]" if duration_individual else ""
@@ -169,7 +169,9 @@ def report(start: float, runs: list[ToxEnvRunResult], is_colored: bool, verbosit
 
 
 def _get_outcome_message(run: ToxEnvRunResult) -> tuple[str, int]:
-    if run.skipped:
+    if run.unavailable:
+        msg, color = "NOT AVAILABLE", Fore.YELLOW
+    elif run.skipped:
         msg, color = "SKIP", Fore.YELLOW
     elif run.code == Outcome.OK:
         msg, color = "OK", Fore.GREEN
@@ -225,6 +227,12 @@ def execute(state: State, max_workers: int | None, has_spinner: bool, live: bool
                 ordered_results.append(
                     ToxEnvRunResult(name=env, skipped=True, code=-2, outcomes=[], duration=MISS_DURATION)
                 )
+        # add results for unavailable environments
+        ordered_results.extend(
+            ToxEnvRunResult(name=env_name, skipped=False, code=0, outcomes=[], duration=MISS_DURATION, unavailable=True)
+            for env_name in state.envs.unavailable_envs()
+            if env_name not in name_to_run
+        )
         # write the journal
         write_journal(getattr(state.conf.options, "result_json", None), state._journal)  # noqa: SLF001
         # report the outcome
