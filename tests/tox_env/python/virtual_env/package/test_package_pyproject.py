@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+import io
 import json
+import tarfile
 from textwrap import dedent
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import pytest
 
@@ -593,3 +595,28 @@ def test_wheel_package_does_not_build_sdist(tox_project: ToxProjectCreator, demo
     call_ids = [i[0][3].run_id for i in execute_calls.call_args_list]
     assert "build_sdist" not in call_ids
     assert "build_wheel" in call_ids
+
+
+def test_sdist_wheel_rejects_path_traversal(
+    tox_project: ToxProjectCreator, demo_pkg_inline: Path, mocker: MockerFixture
+) -> None:
+    ini = "[testenv]\npackage=sdist-wheel"
+    proj = tox_project({"tox.ini": ini}, base=demo_pkg_inline)
+    proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
+
+    original_build_sdist = Pep517VirtualEnvFrontend.build_sdist
+
+    def _build_malicious_sdist(self: Pep517VirtualEnvFrontend, *args: Any, **kwargs: Any) -> object:
+        result = original_build_sdist(self, *args, **kwargs)
+        buf = io.BytesIO()
+        with tarfile.open(fileobj=buf, mode="w:gz") as tar:
+            info = tarfile.TarInfo(name="../escape.txt")
+            info.size = 4
+            tar.addfile(info, io.BytesIO(b"evil"))
+        result.sdist.write_bytes(buf.getvalue())
+        return result
+
+    mocker.patch.object(Pep517VirtualEnvFrontend, "build_sdist", _build_malicious_sdist)
+    result = proj.run("r", "--notest")
+    result.assert_failed()
+    assert "tar member '../escape.txt' would extract outside of" in result.out

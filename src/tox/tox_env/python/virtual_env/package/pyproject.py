@@ -314,18 +314,29 @@ class Pep517VenvPackager(PythonPackageToxEnv, ABC):
         with self._pkg_lock:
             # Step 1: Build the sdist in this (parent) environment
             sdist_config: ConfigSettings = self.conf["config_settings_build_sdist"]
-            sdist = self._frontend.build_sdist(
-                sdist_directory=self.pkg_dir,
-                config_settings=sdist_config,
-            ).sdist
+            sdist = self._frontend.build_sdist(sdist_directory=self.pkg_dir, config_settings=sdist_config).sdist
             logging.info("built sdist %s, now building wheel from it", sdist.name)
 
             # Step 2: Extract sdist to env_tmp_dir (auto-cleaned by tox lifecycle)
-            extract_dir = self.env_tmp_dir / "sdist-extract"
-            extract_dir.mkdir(parents=True, exist_ok=True)
-            self._extract_sdist(sdist, extract_dir)
+            (extract_dir := self.env_tmp_dir / "sdist-extract").mkdir(parents=True, exist_ok=True)
+            with tarfile.open(str(sdist), "r:*") as tar:
+                if sys.version_info >= (3, 12):  # pragma: no cover (py312+)
+                    try:
+                        tar.extractall(path=str(extract_dir), filter="data")
+                    except tarfile.OutsideDestinationError as exc:
+                        msg = f"tar member {exc.tarinfo.name!r} would extract outside of {extract_dir}"
+                        raise Fail(msg) from exc
+                else:  # pragma: no cover (py312+)
+                    dest_resolved = extract_dir.resolve()
+                    safe_members: list[tarfile.TarInfo] = []
+                    for member in tar.getmembers():
+                        member_path = (extract_dir / member.name).resolve()
+                        if not str(member_path).startswith(f"{dest_resolved}{os.sep}") and member_path != dest_resolved:
+                            msg = f"tar member {member.name!r} would extract outside of {extract_dir}"
+                            raise Fail(msg)
+                        safe_members.append(member)
+                    tar.extractall(path=str(extract_dir), members=safe_members)  # noqa: S202
             sdist_source_root = self._find_sdist_root(extract_dir)
-            sdist.unlink(missing_ok=True)
 
             # Step 3: Get wheel_build_env child and point it at extracted sdist
             child_env = cast("Pep517VenvPackager", self._wheel_build_envs[for_env["wheel_build_env"]])
@@ -343,15 +354,6 @@ class Pep517VenvPackager(PythonPackageToxEnv, ABC):
                 metadata_directory=None,
                 config_settings=wheel_config,
             ).wheel
-
-    @staticmethod
-    def _extract_sdist(sdist: Path, extract_dir: Path) -> None:
-        """Extract an sdist tarball safely."""
-        kwargs: dict[str, Any] = {}
-        if hasattr(tarfile, "data_filter"):
-            kwargs["filter"] = tarfile.data_filter
-        with tarfile.open(str(sdist), "r:*") as tar:
-            tar.extractall(path=str(extract_dir), **kwargs)  # noqa: S202
 
     @staticmethod
     def _find_sdist_root(extract_dir: Path) -> Path:
