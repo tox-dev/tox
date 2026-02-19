@@ -146,6 +146,35 @@ conditionally set variables based on platform:
         COVERAGE_FILE = {work_dir}/.coverage.{env_name}
         LDFLAGS = -L/usr/local/lib ; sys_platform == "darwin"
 
+.. _conditional-values-explained:
+
+Conditional value evaluation
+============================
+
+.. versionadded:: 4.40
+
+TOML configurations support ``replace = "if"`` to conditionally select values at configuration load time. The
+``condition`` field accepts expressions that are parsed using Python's ``ast`` module and evaluated against the host
+``os.environ``.
+
+The expression language supports:
+
+- ``env.VAR`` -- resolves to the value of the environment variable ``VAR``, or empty string if unset. An empty string is
+  falsy, any non-empty string is truthy.
+- ``'literal'`` -- a string literal for comparison.
+- ``==``, ``!=`` -- string equality and inequality.
+- ``and``, ``or``, ``not`` -- boolean combinators with standard Python precedence.
+
+Conditions are evaluated before ``set_env`` is applied. The ``env.VAR`` lookup reads directly from ``os.environ``, not
+from the tox ``set_env`` configuration. This avoids circular dependencies -- a ``set_env`` value can use ``replace =
+"if"`` to check a host variable without triggering a recursive load.
+
+Both ``then`` and ``else`` values are processed through the normal TOML replacement pipeline, so they can contain nested
+substitutions like ``{env_name}`` or ``{ replace = "env", ... }``. Only the selected branch is evaluated.
+
+For syntax details and examples, see :ref:`conditional-value-reference`. For practical recipes, see
+:ref:`howto_conditional_values`.
+
 Dependency change detection
 ===========================
 
