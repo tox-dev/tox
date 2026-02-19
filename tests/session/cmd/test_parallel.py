@@ -157,6 +157,10 @@ def test_keyboard_interrupt(tox_project: ToxProjectCreator, demo_pkg_inline: Pat
     assert "send signal SIGINT" in out, out
     assert "interrupt finished with success" in out, out
     assert "interrupt tox environment: .pkg" in out, out
+    assert "BrokenPipeError" not in out, out
+    assert "BrokenPipeError" not in err, err
+    assert "KeyError" not in out, out
+    assert "KeyError" not in err, err
 
 
 def test_parallels_help(tox_project: ToxProjectCreator) -> None:
