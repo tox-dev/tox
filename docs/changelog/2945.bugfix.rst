@@ -1,0 +1,3 @@
+Use positive exit code (``1``) instead of ``-1`` when reporting failures across multiple environments. On Windows,
+``cmd.exe``'s ``IF ERRORLEVEL 1`` only matches exit codes ``>= 1``, so the previous negative exit code was silently
+treated as success - by :user:`radevika`. Fixes :issue:`2945`.

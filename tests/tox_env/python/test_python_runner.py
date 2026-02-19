@@ -150,7 +150,7 @@ def test_config_skip_missing_interpreters(
     py_ver = ".".join(str(i) for i in sys.version_info[0:2])
     project = tox_project({"tox.ini": f"[tox]\nenvlist=py4,py{py_ver}\nskip_missing_interpreters={config}"})
     result = project.run(f"--skip-missing-interpreters={cli}")
-    assert result.code == (0 if expected else -1)
+    assert result.code == (0 if expected else 1)
 
 
 SYS_PY_VER = "".join(str(i) for i in sys.version_info[0:2]) + (
@@ -163,10 +163,10 @@ SYS_PY_VER = "".join(str(i) for i in sys.version_info[0:2]) + (
     [
         ("true", f"py{SYS_PY_VER}", 0),
         ("false", f"py{SYS_PY_VER}", 0),
-        ("true", "py31", -1),
+        ("true", "py31", 1),
         ("false", "py31", 1),
         ("true", None, 0),
-        ("false", None, -1),
+        ("false", None, 1),
     ],
 )
 def test_skip_missing_interpreters_specified_env(
@@ -212,7 +212,7 @@ def test_per_env_skip_missing_interpreters_cli_overrides_env(tox_project: ToxPro
         ),
     })
     result = project.run("--skip-missing-interpreters=true")
-    assert result.code == -1
+    assert result.code == 1
 
 
 def test_per_env_skip_missing_interpreters_unset_falls_to_global(tox_project: ToxProjectCreator) -> None:
