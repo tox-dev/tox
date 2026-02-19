@@ -1,0 +1,3 @@
+Prefer TOML-native configuration (``[tool.tox]``) over ``legacy_tox_ini`` when both are present in ``pyproject.toml``,
+allowing users to include a ``legacy_tox_ini`` section with ``min_version`` for older tox versions while using native
+TOML config for newer ones - by :user:`rahuldevikar`.

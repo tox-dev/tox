@@ -89,6 +89,8 @@ class TomlPyProject(Source):
             self._our_content = our_content
         except KeyError as exc:
             raise MissingRequiredConfigKeyError(path) from exc
+        if set(self._our_content.keys()) == {"legacy_tox_ini"}:
+            raise MissingRequiredConfigKeyError(path)
         super().__init__(path)
 
     def get_core_section(self) -> Section:

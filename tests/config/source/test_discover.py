@@ -58,3 +58,26 @@ def test_malformed_toml_in_dir_reports_error(tox_project: ToxProjectCreator) -> 
     outcome = project.run("l", "-c", str(project.path))
     outcome.assert_failed()
     assert "failed loading" in outcome.out
+
+
+def test_toml_native_preferred_over_legacy_tox_ini(tox_project: ToxProjectCreator) -> None:
+    """When pyproject.toml has both legacy_tox_ini and native TOML config, native TOML should win."""
+    pyproject = """\
+[tool.tox]
+legacy_tox_ini = \"\"\"
+[tox]
+min_version = 4.21
+[testenv]
+commands = python -c "print('legacy')"
+\"\"\"
+env_list = ["native"]
+
+[tool.tox.env_run_base]
+package = "skip"
+commands = [["python", "-c", "print('native')"]]
+"""
+    project = tox_project({"pyproject.toml": pyproject})
+    outcome = project.run("l")
+    outcome.assert_success()
+    assert "native" in outcome.out
+    assert "legacy" not in outcome.out
