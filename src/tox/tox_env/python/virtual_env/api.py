@@ -170,6 +170,9 @@ class VirtualEnv(Python, ABC):
     def env_site_package_dir(self) -> Path:
         return cast("Path", cast("Describe", self._creator_with_skip()).purelib)
 
+    def env_site_package_dir_plat(self) -> Path:
+        return cast("Path", cast("Describe", self._creator_with_skip()).platlib)
+
     def env_python(self) -> Path:
         return cast("Path", cast("Describe", self._creator_with_skip()).exe)
 
