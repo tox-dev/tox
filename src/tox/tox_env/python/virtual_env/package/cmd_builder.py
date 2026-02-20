@@ -42,6 +42,7 @@ class VenvCmdBuilder(PythonPackageToxEnv, ABC):
     def __init__(self, create_args: ToxEnvCreateArgs) -> None:
         super().__init__(create_args)
         self._sdist_meta_tox_env: Pep517VirtualEnvPackager | None = None
+        self._built_package_path: Path | None = None
 
     def register_config(self) -> None:
         super().register_config()
@@ -81,25 +82,29 @@ class VenvCmdBuilder(PythonPackageToxEnv, ABC):
         return self._sdist_meta_tox_env.load_deps_for_env(for_env)
 
     def perform_packaging(self, for_env: EnvConfigSet) -> list[Package]:
-        self.setup()
-        path: Path | None = getattr(self.options, "install_pkg", None)
-        if path is None:  # use install_pkg if specified, otherwise build via commands
-            chdir: Path = self.conf["change_dir"]
-            ignore_errors: bool = self.conf["ignore_errors"]
-            status = run_command_set(self, "commands", chdir, ignore_errors, [])
-            if status != Outcome.OK:
-                msg = "stopping as failed to build package"
-                raise Fail(msg)
-            package_glob = self.conf["package_glob"]
-            found = glob.glob(package_glob)  # noqa: PTH207
-            if not found:
-                msg = f"no package found in {package_glob}"
-                raise Fail(msg)
-            if len(found) != 1:
-                msg = f"found more than one package {', '.join(sorted(found))}"
-                raise Fail(msg)
-            path = Path(found[0])
+        if (path := self._built_package_path) is None:
+            path = self._build_package()
+            self._built_package_path = path
         return self.extract_install_info(for_env, path)
+
+    def _build_package(self) -> Path:
+        self.setup()
+        if (path := getattr(self.options, "install_pkg", None)) is not None:
+            return Path(path)
+        chdir: Path = self.conf["change_dir"]
+        ignore_errors: bool = self.conf["ignore_errors"]
+        if run_command_set(self, "commands", chdir, ignore_errors, []) != Outcome.OK:
+            msg = "stopping as failed to build package"
+            raise Fail(msg)
+        package_glob = self.conf["package_glob"]
+        found = glob.glob(package_glob)  # noqa: PTH207
+        if not found:
+            msg = f"no package found in {package_glob}"
+            raise Fail(msg)
+        if len(found) != 1:
+            msg = f"found more than one package {', '.join(sorted(found))}"
+            raise Fail(msg)
+        return Path(found[0])
 
     def extract_install_info(self, for_env: EnvConfigSet, path: Path) -> list[Package]:
         extras: set[str] = for_env["extras"]
