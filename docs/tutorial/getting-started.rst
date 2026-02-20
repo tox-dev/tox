@@ -184,6 +184,11 @@ If the name doesn't match any pattern, tox uses the same Python as the one tox i
 This pins a default Python version for environments without a Python factor, improving reproducibility across machines
 with different system Pythons.
 
+.. tip::
+
+    If your project uses :PEP:`751` lock files (``pylock.toml``), you can install locked dependencies via :ref:`pylock`
+    instead of listing packages in ``deps``.
+
 For the full list of environment options, see :ref:`conf-testenv`.
 
 ***************************

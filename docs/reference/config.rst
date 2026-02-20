@@ -1459,6 +1459,34 @@ Python run
            ]
 
 .. conf::
+    :keys: pylock
+    :default: <empty string>
+    :version_added: 4.44
+
+    Path to a :pep:`751` ``pylock.toml`` lock file to install locked dependencies from. Mutually exclusive with
+    :ref:`deps`. Each package in the lock file is filtered by evaluating its environment markers against the target
+    Python interpreter and the configured :ref:`extras` and :ref:`dependency_groups`, then converted to a pinned
+    requirement (``name==version``) and installed via pip with ``--no-deps``. The path is resolved relative to the
+    :ref:`package_root` (or :ref:`tox_root` if no package root is configured). Change detection is automatic: adding,
+    removing, or changing packages triggers environment recreation as needed. See :ref:`pylock-explanation` for details.
+
+    For example:
+
+     .. tab:: TOML
+
+        .. code-block:: toml
+
+           [tool.tox.env_run_base]
+           pylock = "pylock.toml"
+
+     .. tab:: INI
+
+        .. code-block:: ini
+
+         [testenv]
+         pylock = pylock.toml
+
+.. conf::
     :keys: deps
     :default: <empty list>
     :version_added: 0.5

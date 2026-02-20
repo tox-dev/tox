@@ -1,0 +1,3 @@
+Support PEP 751 ``pylock.toml`` lock files as dependency input via the ``pylock`` configuration option (mutually
+exclusive with ``deps``). Packages are filtered by extras, dependency groups, and platform markers evaluated against the
+target Python interpreter, then installed via pip with ``--no-deps`` - by :user:`gaborbernat`.

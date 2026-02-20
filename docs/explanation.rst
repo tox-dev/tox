@@ -35,8 +35,11 @@ Below is a graphical representation of the tox lifecycle:
         subgraph envloop [for each selected environment]
             direction TB
             create[Create environment]
-            create --> deps[Install dependencies]
-            deps --> pkg{package project?}
+            create --> depmode{pylock set?}
+            depmode -- yes --> pylock[Install from pylock.toml]
+            depmode -- no --> deps[Install deps + dependency groups]
+            pylock --> pkg{package project?}
+            deps --> pkg
             pkg -- yes --> build[Build and install package]
             pkg -- no --> extra
             build --> extra[Run extra_setup_commands]
@@ -54,6 +57,7 @@ Below is a graphical representation of the tox lifecycle:
         classDef cmdStyle fill:#ede9fe,stroke:#8b5cf6,stroke-width:2px,color:#3b0764
         classDef reportStyle fill:#ccfbf1,stroke:#14b8a6,stroke-width:2px,color:#134e4a
         classDef decisionStyle fill:#fef9c3,stroke:#eab308,stroke-width:2px,color:#713f12
+        classDef pylockStyle fill:#e0e7ff,stroke:#6366f1,stroke-width:2px,color:#312e81
 
         class config configStyle
         class create,deps envStyle
@@ -61,7 +65,8 @@ Below is a graphical representation of the tox lifecycle:
         class extra setupStyle
         class cmds cmdStyle
         class report reportStyle
-        class pkg decisionStyle
+        class depmode,pkg decisionStyle
+        class pylock pylockStyle
 
 The primary tox states are:
 
@@ -80,9 +85,10 @@ The primary tox states are:
       invoked with the :ref:`recreate` flag (``-r``). When recreation occurs, any :ref:`recreate_commands` run inside
       the old environment before its directory is removed -- this lets tools like pre-commit clean their external
       caches. Failures in these commands are logged as warnings but never block the recreation.
-   2. **Install dependencies** (optional): install the environment dependencies specified inside the ``deps``
-      configuration section, and then the earlier packaged source distribution. By default ``pip`` is used to install
-      packages, however one can customize this via ``install_command``.
+   2. **Install dependencies** (optional): install the environment dependencies. When :ref:`pylock` is set, tox installs
+      locked dependencies from the :PEP:`751` lock file (filtered by extras, dependency groups, and platform markers).
+      Otherwise, it installs :ref:`deps` and :ref:`dependency_groups`. By default ``pip`` is used to install packages,
+      however one can customize this via ``install_command``.
    3. **Packaging** (optional): create a distribution of the current project (see :ref:`packaging` below).
 
    Steps 2 and 3 can be selectively skipped with CLI flags:
@@ -195,6 +201,39 @@ tox discovers package dependency changes (via :PEP:`621` or :PEP:`517`
 the next run. When a dependency is removed the entire environment is automatically recreated. This also works for
 ``requirements`` files within :ref:`deps`. In most cases you should never need to use the ``--recreate`` flag -- tox
 detects changes and applies them automatically.
+
+.. _pylock-explanation:
+
+Lock file installation (PEP 751)
+================================
+
+.. versionadded:: 4.44
+
+The :ref:`pylock` setting installs dependencies from a :PEP:`751` lock file (``pylock.toml``). It is mutually exclusive
+with :ref:`deps` — a lock file already contains all transitive dependencies with exact versions, so mixing both sources
+would create conflicts. Lock files differ from ``deps`` in that every dependency is already resolved — the file contains
+exact versions, markers, and artifact URLs for every package.
+
+**Extras and dependency groups:** lock files can declare ``extras`` and ``dependency-groups`` at the top level, with
+per-package markers like ``'docs' in extras`` or ``'dev' in dependency_groups``. Use the existing :ref:`extras` and
+:ref:`dependency_groups` settings to select which groups to include — tox evaluates these markers together with platform
+markers (``sys_platform``, ``python_version``, etc.) against the **target** Python interpreter (not the host running
+tox) to filter packages at install time.
+
+**How it works today:** pip does not yet support installing from ``pylock.toml`` directly. tox parses the lock file
+using the ``packaging.pylock`` module, evaluates markers to filter packages, transpiles matching packages to a temporary
+requirements file (``{env_dir}/pylock.txt``), and passes it to pip with ``--no-deps``. The ``--no-deps`` flag prevents
+pip from re-resolving transitive dependencies, ensuring the exact versions from the lock file are installed.
+
+**Plugin support:** the ``Pylock`` object is passed through the ``tox_on_install`` plugin hook. Installer plugins can
+inspect it via ``isinstance(arguments, Pylock)`` and handle lock files natively (e.g. ``uv pip install --pylock``)
+instead of relying on the transpile path.
+
+**Future:** when pip gains native ``pylock.toml`` support, the transpile step will be replaced with a direct pip
+invocation. No configuration changes will be needed.
+
+**Change detection** works the same as for ``deps``: tox caches the resolved requirements. When packages are added, only
+the new ones are installed. When packages are removed, the environment is recreated.
 
 Open-ended range bounds
 =======================
