@@ -185,6 +185,24 @@ def _get_outcome_message(run: ToxEnvRunResult) -> tuple[str, int]:
 logger = logging.getLogger(__name__)
 
 
+def _warn_unused_config(state: State) -> None:
+    from tox.config.cli.parser import DEFAULT_VERBOSITY  # noqa: PLC0415
+
+    if state.conf.options.verbosity <= DEFAULT_VERBOSITY:
+        return
+    is_colored = state.conf.options.is_colored
+    for name in state.envs.iter():
+        if unused := state.envs[name].conf.unused():
+            _print_unused(is_colored, f"[testenv:{name}]", unused)
+    if unused := state.conf.core.unused():
+        _print_unused(is_colored, "[tox]", unused)
+
+
+def _print_unused(is_colored: bool, section: str, unused: list[str]) -> None:  # noqa: FBT001
+    msg = f"  {section} unused config key(s): {', '.join(unused)}"
+    print(f"{Fore.YELLOW if is_colored else ''}{msg}{Fore.RESET if is_colored else ''}")  # noqa: T201
+
+
 def execute(state: State, max_workers: int | None, has_spinner: bool, live: bool) -> int:  # noqa: FBT001
     interrupt, done = Event(), Event()
     results: list[ToxEnvRunResult] = []
@@ -235,6 +253,8 @@ def execute(state: State, max_workers: int | None, has_spinner: bool, live: bool
         )
         # write the journal
         write_journal(getattr(state.conf.options, "result_json", None), state._journal)  # noqa: SLF001
+        # warn about unused config keys
+        _warn_unused_config(state)
         # report the outcome
         exit_code = report(
             state.conf.options.start,
