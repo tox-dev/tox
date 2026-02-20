@@ -306,6 +306,41 @@ def test_provision_acquires_file_lock(tox_project: ToxProjectCreator) -> None:
     assert lock_held_during_provision.get("held") is True
 
 
+def test_provision_unrecognized_args_no_provision(tox_project: ToxProjectCreator) -> None:
+    """When provisioning is not needed, unknown CLI args should still error."""
+    proj = tox_project({
+        "tox.toml": """
+            [env_run_base]
+            package = "skip"
+        """,
+    })
+    result = proj.run("r", "--some-unknown-flag")
+    result.assert_failed()
+    assert "unrecognized arguments: --some-unknown-flag" in result.out
+
+
+@pytest.mark.integration
+@pytest.mark.usefixtures("_pypi_index_self")
+def test_provision_plugin_cli_options(tox_project: ToxProjectCreator, tmp_path: Path) -> None:
+    """Tox should provision before rejecting CLI options from not-yet-installed plugins."""
+    log = tmp_path / "out.log"
+    proj = tox_project({
+        "tox.toml": """
+            requires = ["demo-pkg-inline"]
+            [env_run_base]
+            package = "skip"
+        """,
+    })
+    prov_msg = (
+        f"ROOT: will run in automatically provisioned tox, host {sys.executable} is missing"
+        f" [requires (has)]: demo-pkg-inline"
+    )
+
+    result = proj.run("r", "-e", "py", "--demo-plugin", "--result-json", str(log))
+    result.assert_success()
+    assert prov_msg in result.out
+
+
 @pytest.mark.parametrize("subcommand", ["r", "p", "de", "l", "d", "c", "q", "e", "le"])
 def test_provision_default_arguments_exists(tox_project: ToxProjectCreator, subcommand: str) -> None:
     ini = r"""

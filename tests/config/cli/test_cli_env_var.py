@@ -72,6 +72,7 @@ def test_verbose_no_test() -> None:
         "labels": [],
         "skip_env": "",
         "list_dependencies": is_ci(),
+        "remainder": [],
     }
 
 
@@ -135,6 +136,7 @@ def test_env_var_exhaustive_parallel_values(
         "exit_and_dump_after": 0,
         "skip_env": "",
         "list_dependencies": is_ci(),
+        "remainder": [],
     }
     assert options.parsed.verbosity == 4
     assert options.cmd_handlers == core_handlers
