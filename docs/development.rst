@@ -25,8 +25,8 @@ section. This section contains only highlights; it's not a substitute for readin
   changes *must* be checked visually (see below).
 - All PRs that make changes visible to an end user require a changelog entry. This should reference an issue if it
   closes that issue, otherwise reference the PR. Create one or more (if there's more than one issue)
-  ``docs/changelog/####.{feature,bugfix,doc,removal,misc}.rst`` per the `changelog entry <#changelog-entries>`_ section
-  below.
+  ``docs/changelog/####.{breaking,deprecation,feature,bugfix,doc,packaging,contrib,misc}.rst`` per the `changelog entry
+  <#changelog-entries>`_ section below.
 - GitHub Actions will do a full set of `tests and checks <#automated-testing>`_ when the PR is submitted. For local
   testing you'll need to install your own "top-level" tox (using pipx_ or similar is fine) and use the following targets
   (tox environments):
@@ -199,17 +199,20 @@ There is no need to create an issue for trivial changes, e.g. for typo fixes.
 Once you have an issue or pull request, you take the number and you create a file inside of the ``docs/changelog``
 directory named after that issue number with an extension of:
 
-- ``feature.rst``,
-- ``bugfix.rst``,
-- ``doc.rst``,
-- ``removal.rst``,
-- ``misc.rst``.
+- ``breaking.rst`` - backward incompatible changes,
+- ``deprecation.rst`` - deprecations (removal in next major release),
+- ``feature.rst`` - new features,
+- ``bugfix.rst`` - bug fixes,
+- ``doc.rst`` - documentation improvements,
+- ``packaging.rst`` - packaging updates and notes for downstreams,
+- ``contrib.rst`` - contributor-facing changes,
+- ``misc.rst`` - miscellaneous internal changes.
 
 Thus if your issue or PR number is ``1234`` and this change is fixing a bug, then you would create a file
 ``docs/changelog/1234.bugfix.rst``. PRs can span multiple categories by creating multiple files (for instance, if you
 added a feature and deprecated/removed the old feature at the same time, you would create
-``docs/changelog/1234.bugfix.rst`` and ``docs/changelog/1234.remove.rst``). Likewise if a PR touches multiple issues/PRs
-you may create a file for each of them with the same contents and :pypi:`towncrier` will deduplicate them.
+``docs/changelog/1234.bugfix.rst`` and ``docs/changelog/1234.deprecation.rst``). Likewise if a PR touches multiple
+issues/PRs you may create a file for each of them with the same contents and :pypi:`towncrier` will deduplicate them.
 
 Contents of a changelog entry
 -----------------------------

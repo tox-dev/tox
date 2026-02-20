@@ -257,28 +257,43 @@ issue_format = ":issue:`{issue}`"
 template = "docs/changelog/template.jinja2"
 
 [[tool.towncrier.type]]
+directory = "breaking"
+name = "Backward incompatible changes"
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "deprecation"
+name = "Deprecations (removal in next major release)"
+showcontent = true
+
+[[tool.towncrier.type]]
 directory = "feature"
 name = "Features"
 showcontent = true
 
 [[tool.towncrier.type]]
 directory = "bugfix"
-name = "Bugfixes"
+name = "Bug fixes"
 showcontent = true
 
 [[tool.towncrier.type]]
 directory = "doc"
-name = "Documentation"
+name = "Improved documentation"
 showcontent = true
 
 [[tool.towncrier.type]]
-directory = "removal"
-name = "Removals"
+directory = "packaging"
+name = "Packaging updates and notes for downstreams"
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "contrib"
+name = "Contributor-facing changes"
 showcontent = true
 
 [[tool.towncrier.type]]
 directory = "misc"
-name = "Miscellaneous"
+name = "Miscellaneous internal changes"
 showcontent = true
 
 [tool.ty]

@@ -1,0 +1,2 @@
+Improve towncrier changelog structure with more granular categories: ``breaking``, ``deprecation``, ``feature``,
+``bugfix``, ``doc``, ``packaging``, ``contrib``, and ``misc`` - by :user:`gaborbernat`.
