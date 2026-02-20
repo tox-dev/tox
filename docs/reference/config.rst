@@ -56,38 +56,20 @@ Out of box tox supports five configuration locations prioritized in the followin
 
 Historically, the INI format was created first, and TOML was added in 2024. **TOML is the recommended format for new
 projects** -- it is more robust, has proper type support, and avoids ambiguities inherent in INI parsing (e.g.
-multi-line values, comment escaping). INI remains supported and is more concise for some patterns, but TOML should be
-preferred unless you need features that TOML does not yet support (see :ref:`toml-feature-gaps` below).
+multi-line values, comment escaping). INI remains supported and is more concise for some patterns.
 
 .. _toml-feature-gaps:
 
-TOML feature gaps
+Format comparison
 =================
 
-The following INI features are not yet available in TOML. Contributions to add support are welcome.
+Both INI and TOML support the same features with different syntax. The only INI feature without a TOML equivalent is
+generative section names (see below).
 
 **Conditional factors** -- Both INI and TOML support filtering by factor name. A factor is any dash-separated segment in
 the environment name (e.g. ``py313-django50`` has factors ``py313`` and ``django50``). Additionally, the current
 platform (``sys.platform`` value like ``linux``, ``darwin``, ``win32``) is automatically available as an implicit
 factor.
-
-.. tab:: INI
-
-    .. code-block:: ini
-
-        [testenv]
-        deps =
-            pytest
-            django50: Django>=5.0,<5.1
-            django42: Django>=4.2,<4.3
-            !lint: coverage
-        commands =
-            linux: python -c 'print("on linux")'
-            darwin: python -c 'print("on mac")'
-            win32: python -c 'print("on windows")'
-
-    Supports simple factors (``django50:``), multiple factors (``py313,py312:``), and negation (``!lint:``). Any
-    multi-line setting (``deps``, ``commands``, ``set_env``, etc.) can use factor conditions.
 
 .. tab:: TOML
 
@@ -109,19 +91,52 @@ factor.
     Use ``replace = "if"`` with ``factor.NAME`` conditions. Supports boolean operations (``and``, ``or``, ``not``) and
     can combine with environment variable checks (``env.VAR``).
 
+.. tab:: INI
+
+    .. code-block:: ini
+
+        [testenv]
+        deps =
+            pytest
+            django50: Django>=5.0,<5.1
+            django42: Django>=4.2,<4.3
+            !lint: coverage
+        commands =
+            linux: python -c 'print("on linux")'
+            darwin: python -c 'print("on mac")'
+            win32: python -c 'print("on windows")'
+
+    Supports simple factors (``django50:``), multiple factors (``py313,py312:``), and negation (``!lint:``). Any
+    multi-line setting (``deps``, ``commands``, ``set_env``, etc.) can use factor conditions.
+
 Platform factors work in any environment without requiring the platform name in the environment name.
 
-**Generative environment lists** -- INI expands curly-brace expressions into the Cartesian product of all combinations:
+**Generative environment lists** -- Both INI and TOML support generating environment lists from factor combinations.
 
-.. code-block:: ini
+.. tab:: TOML
 
-    [tox]
-    env_list = py3{12,13,14}-django{42,50}-{sqlite,mysql}
+    .. code-block:: toml
 
-This generates 18 environments: ``py312-django42-sqlite``, ``py312-django42-mysql``, ..., ``py314-django50-mysql``.
-Ranges are also supported: ``py3{12-14}`` expands to ``py312``, ``py313``, ``py314``. Open-ended ranges expand to the
-`supported CPython versions <https://devguide.python.org/versions/>`_ at the time of the tox release: ``py3{10-}``
-expands up to the latest supported version, ``py3{-13}`` expands down to the oldest supported one.
+        env_list = [
+            { product = [["py312", "py313", "py314"], ["django42", "django50"]] },
+        ]
+
+    The ``product`` dict computes the Cartesian product of its factor groups and joins each combination with ``-``.
+    Range dicts (``{ prefix = "py3", start = 12, stop = 14 }``) and literal strings can be mixed in the same list.
+    An optional ``exclude`` key skips specific combinations.
+
+.. tab:: INI
+
+    .. code-block:: ini
+
+        [tox]
+        env_list = py3{12,13,14}-django{42,50}
+
+    Curly-brace expressions expand into the Cartesian product of all combinations. This generates 6 environments:
+    ``py312-django42``, ``py312-django50``, ..., ``py314-django50``. Ranges are also supported: ``py3{12-14}`` expands
+    to ``py312``, ``py313``, ``py314``. Open-ended ranges expand to the `supported CPython versions
+    <https://devguide.python.org/versions/>`_ at the time of the tox release: ``py3{10-}`` expands up to the latest
+    supported version, ``py3{-13}`` expands down to the oldest supported one.
 
 **Generative section names** -- INI section headers can use the same curly-brace expansion:
 
@@ -2378,23 +2393,44 @@ Generative environment list
 If you have a large matrix of dependencies, python versions and/or environments you can use a generative :ref:`env_list`
 and conditional settings to express that in a concise form:
 
-.. code-block:: ini
+.. tab:: TOML
 
-    [tox]
-    env_list = py3{9-11}-django{41,40}-{sqlite,mysql}
+    .. code-block:: toml
 
-    [testenv]
-    deps =
-        django41: Django>=4.1,<4.2
-        django40: Django>=4.0,<4.1
-        # use PyMySQL if factors "py311" and "mysql" are present in env name
-        py311-mysql: PyMySQL
-        # use urllib3 if any of "py311" or "py310" are present in env name
-        py311,py310: urllib3
-        # mocking sqlite on 3.11 and 3.10 if factor "sqlite" is present
-        py{311,310}-sqlite: mock
+        env_list = [
+            "lint",
+            { product = [
+                { prefix = "py3", start = 9, stop = 11 },
+                ["django41", "django40"],
+                ["sqlite", "mysql"],
+            ] },
+        ]
 
-This will generate the following tox environments:
+        [env_run_base]
+        deps = [
+            { replace = "if", condition = "factor.django41", then = ["Django>=4.1,<4.2"] },
+            { replace = "if", condition = "factor.django40", then = ["Django>=4.0,<4.1"] },
+            { replace = "if", condition = "factor.py311 and factor.mysql", then = ["PyMySQL"] },
+            { replace = "if", condition = "factor.py311 or factor.py310", then = ["urllib3"] },
+            { replace = "if", condition = "(factor.py311 or factor.py310) and factor.sqlite", then = ["mock"] },
+        ]
+
+.. tab:: INI
+
+    .. code-block:: ini
+
+        [tox]
+        env_list = py3{9-11}-django{41,40}-{sqlite,mysql}
+
+        [testenv]
+        deps =
+            django41: Django>=4.1,<4.2
+            django40: Django>=4.0,<4.1
+            py311-mysql: PyMySQL
+            py311,py310: urllib3
+            py{311,310}-sqlite: mock
+
+This will generate the following tox environments (plus ``lint``):
 
 .. code-block:: shell
 
@@ -2412,6 +2448,9 @@ This will generate the following tox environments:
     py311-django41-mysql  -> [no description]
     py311-django40-sqlite -> [no description]
     py311-django40-mysql  -> [no description]
+
+INI expansion syntax
+--------------------
 
 Both enumerations (``{1,2,3}``) and numerical ranges (``{1-3}``) are supported, and can be mixed together:
 
@@ -2457,6 +2496,31 @@ ones reach end-of-life.
     Be conscious of the number of significant digits in your range endpoints. A range like ``py{39-314}`` will not do
     what you may expect. (It expands to 275 environment names, ``py39``, ``py40``, ``py41`` … ``py314``.) Instead, use
     ``py3{9-14}``.
+
+TOML product syntax
+-------------------
+
+TOML uses a ``product`` dict instead of curly-brace expansion. Each factor group is an array of strings or a range dict.
+The Cartesian product of all groups is computed and each combination is joined with ``-``.
+
+Range dicts accept ``prefix``, ``start``, and ``stop``. Omit ``stop`` to expand up to the latest supported CPython minor
+version (currently **14**), or omit ``start`` to expand down from the oldest (currently **10**):
+
+.. code-block:: toml
+
+    env_list = [
+        { product = [{ prefix = "py3", start = 10 }, ["django42"]] },
+    ]
+
+The range ``{ prefix = "py3", start = 10 }`` is equivalent to ``py3{10-}`` in INI.
+
+An ``exclude`` key removes specific combinations from the product -- a capability not available in INI:
+
+.. code-block:: toml
+
+    env_list = [
+        { product = [["py312", "py313"], ["django42", "django50"]], exclude = ["py312-django50"] },
+    ]
 
 Generative section names
 ========================

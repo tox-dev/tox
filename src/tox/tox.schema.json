@@ -24,7 +24,55 @@
     "env_list": {
       "type": "array",
       "items": {
-        "$ref": "#/definitions/subs"
+        "oneOf": [
+          {
+            "$ref": "#/definitions/subs"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "product": {
+                "type": "array",
+                "items": {
+                  "oneOf": [
+                    {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    {
+                      "type": "object",
+                      "required": ["prefix"],
+                      "properties": {
+                        "prefix": {
+                          "type": "string"
+                        },
+                        "start": {
+                          "type": "integer"
+                        },
+                        "stop": {
+                          "type": "integer"
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  ]
+                },
+                "description": "factor groups for cartesian product expansion"
+              },
+              "exclude": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "environment names to exclude from product"
+              }
+            },
+            "required": ["product"],
+            "additionalProperties": false
+          }
+        ]
       },
       "description": "define environments to automatically run"
     },
