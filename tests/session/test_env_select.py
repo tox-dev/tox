@@ -368,6 +368,22 @@ def test_partial_section_match_rejected(env_name: str, tox_project: ToxProjectCr
     assert "provided environments not found in configuration file" in outcome.out
 
 
+def test_factor_conditional_compound_accepted(tox_project: ToxProjectCreator) -> None:
+    tox_ini = f"""
+        [tox]
+        env_list = py3{{{_MINOR},{_MINOR + 1}}}
+        [testenv]
+        package = skip
+        commands =
+            np: python -c 'print("np")'
+            np-cov: python -c 'print("cov")'
+    """
+    proj = tox_project({"tox.ini": tox_ini})
+    outcome = proj.run("r", "-e", f"py3{_MINOR}-np-cov")
+    outcome.assert_success()
+    assert f"py3{_MINOR}-np-cov" in outcome.out
+
+
 def test_suggest_env(tox_project: ToxProjectCreator) -> None:
     tox_ini = f"[testenv:release]\n[testenv:py3{_MINOR}]\n[testenv:alpha-py3{_MINOR}]\n"
     proj = tox_project({"tox.ini": tox_ini})
