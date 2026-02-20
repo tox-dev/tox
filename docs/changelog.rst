@@ -7,6 +7,24 @@
 .. towncrier release notes start
 
 **********************
+ v4.44.0 (2026-02-20)
+**********************
+
+Features - 4.44.0
+=================
+
+- Support PEP 751 ``pylock.toml`` lock files as dependency input via the ``pylock`` configuration option (mutually
+  exclusive with ``deps``). Packages are filtered by extras, dependency groups, and platform markers evaluated against
+  the target Python interpreter, then installed via pip with ``--no-deps`` - by :user:`gaborbernat`. (:issue:`3665`)
+
+Bug fixes - 4.44.0
+==================
+
+- Fix unfactored continuation lines (e.g. ``pytest \``, ``--remote-data \``) being incorrectly skipped when they follow
+  a filtered factor-conditional line ending with ``\`` -- the ``pending_skip`` flag now only drops terminal continuation
+  pieces, preserving shared arguments that are themselves continuations - by :user:`gaborbernat`. (:issue:`3802`)
+
+**********************
  v4.43.0 (2026-02-20)
 **********************
 

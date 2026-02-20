@@ -1,3 +1,0 @@
-Fix unfactored continuation lines (e.g. ``pytest \``, ``--remote-data \``) being incorrectly skipped when they follow a
-filtered factor-conditional line ending with ``\`` -- the ``pending_skip`` flag now only drops terminal continuation
-pieces, preserving shared arguments that are themselves continuations - by :user:`gaborbernat`.
