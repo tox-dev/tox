@@ -7,6 +7,31 @@
 .. towncrier release notes start
 
 **********************
+ v4.43.0 (2026-02-20)
+**********************
+
+Features - 4.43.0
+=================
+
+- Add TOML-native generative ``env_list`` via ``product`` dict syntax -- Cartesian product of factor groups with
+  optional range dicts and exclusions - by :user:`gaborbernat`. (:issue:`3797`)
+
+Bug fixes - 4.43.0
+==================
+
+- Pass ``config_settings_build_wheel`` to pip as ``--config-settings`` when installing sdist packages, ensuring the
+  build backend receives config settings during pip's internal wheel build - by :user:`gaborbernat`. (:issue:`3125`)
+- Fix factor-conditional continuation lines (e.g. ``cov: coverage run \`` / ``!cov: python \`` / ``somefile.py``) where
+  different factor prefixes on consecutive continuation lines caused prefixes to be passed as literal command arguments
+  instead of being filtered - by :user:`gaborbernat`. (:issue:`3796`)
+
+Improved documentation - 4.43.0
+===============================
+
+- Integrate ``sphinxcontrib-towncrier`` to render draft changelog entries directly in Sphinx, replacing the manual
+  towncrier draft script - by :user:`gaborbernat`. (:issue:`3201`)
+
+**********************
  v4.42.0 (2026-02-20)
 **********************
 
