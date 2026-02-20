@@ -244,6 +244,19 @@ def test_parallel_no_spinner_legacy_with_parallel(tox_project: ToxProjectCreator
     )
 
 
+def test_parallel_list_dependencies(tox_project: ToxProjectCreator) -> None:
+    proj = tox_project({
+        "tox.toml": """
+        [env_run_base]
+        skip_install = true
+        commands = [["python", "-c", "print('ok')"]]
+        """
+    })
+    result = proj.run("p", "-e", "py", "--list-dependencies")
+    result.assert_success()
+    assert "pip==" in result.out
+
+
 def test_no_capture_with_parallel_fails(tox_project: ToxProjectCreator) -> None:
     ini = "[testenv]\npackage=skip\ncommands=python --version"
     result = tox_project({"tox.ini": ini}).run("p", "-e", "py", "--no-capture")
