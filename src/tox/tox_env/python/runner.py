@@ -16,10 +16,11 @@ from tox.report import HandledError
 from tox.session.cmd.run.single import run_command_set
 from tox.tox_env.errors import Fail, Skip
 from tox.tox_env.python.pip.req_file import PythonDeps
+from tox.tox_env.python.pylock import Pylock, Pylocks
 from tox.tox_env.runner import RunToxEnv
 
 from .api import Python
-from .dependency_groups import resolve
+from .dependency_groups import resolve as resolve_dependency_groups
 from .extras import resolve_extras_static
 
 if TYPE_CHECKING:
@@ -52,6 +53,12 @@ class PythonRun(Python, RunToxEnv, ABC):
             default=set(),
             desc="dependency groups to install of the target package",
             post_process=_normalize_extras,
+        )
+        self.conf.add_config(
+            keys=["pylock"],
+            of_type=list[str],
+            default=[],
+            desc="PEP 751 pylock.toml lock files to install locked dependencies from",
         )
         self.conf.add_config(
             keys=["extra_setup_commands"],
@@ -131,6 +138,7 @@ class PythonRun(Python, RunToxEnv, ABC):
             return
         self._install_deps()
         self._install_dependency_groups()
+        self._install_pylock()
 
     def _install_deps(self) -> None:
         requirements_file: PythonDeps = self.conf["deps"]
@@ -144,8 +152,23 @@ class PythonRun(Python, RunToxEnv, ABC):
             root: Path = self.core["package_root"]
         except KeyError:
             root = self.core["tox_root"]
-        requirements = resolve(root, groups)
+        requirements = resolve_dependency_groups(root, groups)
         self._install(list(requirements), PythonRun.__name__, "dependency-groups")
+
+    def _install_pylock(self) -> None:
+        if not (files := self.conf["pylock"]):
+            return
+        try:
+            root: Path = self.core["package_root"]
+        except KeyError:
+            root = self.core["tox_root"]
+        locks: list[Pylock] = []
+        for file_str in files:
+            if not (path := root / file_str).exists():
+                msg = f"pylock file {file_str!r} not found at {path}"
+                raise Fail(msg)
+            locks.append(Pylock(path=path))
+        self._install(Pylocks(locks=tuple(locks)), PythonRun.__name__, "pylock")
 
     def _setup_with_env(self) -> None:
         super()._setup_with_env()

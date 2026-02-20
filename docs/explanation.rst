@@ -196,6 +196,39 @@ the next run. When a dependency is removed the entire environment is automatical
 ``requirements`` files within :ref:`deps`. In most cases you should never need to use the ``--recreate`` flag -- tox
 detects changes and applies them automatically.
 
+.. _pylock-explanation:
+
+Lock file installation (PEP 751)
+================================
+
+.. versionadded:: 4.44
+
+The :ref:`pylock` setting installs dependencies from a :PEP:`751` lock file (``pylock.toml``). It is mutually exclusive
+with :ref:`deps` — a lock file already contains all transitive dependencies with exact versions, so mixing both sources
+would create conflicts. Lock files differ from ``deps`` in that every dependency is already resolved — the file contains
+exact versions, markers, and artifact URLs for every package.
+
+**Extras and dependency groups:** lock files can declare ``extras`` and ``dependency-groups`` at the top level, with
+per-package markers like ``'docs' in extras`` or ``'dev' in dependency_groups``. Use the existing :ref:`extras` and
+:ref:`dependency_groups` settings to select which groups to include — tox evaluates these markers together with platform
+markers (``sys_platform``, ``python_version``, etc.) against the **target** Python interpreter (not the host running
+tox) to filter packages at install time.
+
+**How it works today:** pip does not yet support installing from ``pylock.toml`` directly. tox parses the lock file
+using the ``packaging.pylock`` module, evaluates markers to filter packages, transpiles matching packages to a temporary
+requirements file (``{env_dir}/pylock.txt``), and passes it to pip with ``--no-deps``. The ``--no-deps`` flag prevents
+pip from re-resolving transitive dependencies, ensuring the exact versions from the lock file are installed.
+
+**Plugin support:** the ``Pylock`` object is passed through the ``tox_on_install`` plugin hook with
+``of_type="pylock"``. Plugins like :pypi:`tox-uv` can intercept this and delegate to ``uv`` (which supports pylock
+natively via ``uv pip install --pylock``), bypassing the transpile step entirely.
+
+**Future:** when pip gains native ``pylock.toml`` support, the transpile step will be replaced with a direct pip
+invocation. No configuration changes will be needed.
+
+**Change detection** works the same as for ``deps``: tox caches the resolved requirements. When packages are added, only
+the new ones are installed. When packages are removed, the environment is recreated.
+
 Open-ended range bounds
 =======================
 

@@ -706,6 +706,61 @@ coverage combining, documentation builds, or linting environments that share the
 This reads your ``pyproject.toml`` directly (no build step) and installs ``httpx``, ``sphinx``, and ``furo`` into the
 environment. If your dependencies are dynamic, tox falls back to using the packaging environment to extract metadata.
 
+**********************************************
+ Install locked dependencies from pylock.toml
+**********************************************
+
+If your project maintains :PEP:`751` lock files (``pylock.toml``), you can install those locked dependencies directly
+via the :ref:`pylock` configuration. The :ref:`pylock` setting is mutually exclusive with :ref:`deps` — use one or the
+other. Each package in the lock file is installed as a pinned requirement (``name==version``) with ``--no-deps`` (since
+the lock file already contains all transitive dependencies), and tox automatically recreates the environment when the
+lock file changes.
+
+.. tab:: TOML
+
+    .. code-block:: toml
+
+         # tox.toml
+         [env_run_base]
+         pylock = "pylock.toml"
+
+.. tab:: INI
+
+    .. code-block:: ini
+
+         [testenv]
+         pylock = pylock.toml
+
+The locked dependencies are installed first, then the project itself is built and installed normally (unless
+``skip_install`` or ``package = "skip"`` is set). When the lock file contains :PEP:`751` extras or dependency groups,
+use the existing :ref:`extras` and :ref:`dependency_groups` settings to select which ones to include. Packages with
+markers like ``'docs' in extras`` or ``'dev' in dependency_groups`` are filtered at install time — only packages
+matching the selected extras/groups (and the target Python's platform markers) are installed:
+
+.. tab:: TOML
+
+    .. code-block:: toml
+
+         [env.docs]
+         pylock = "pylock.toml"
+         extras = ["docs"]
+
+         [env.dev]
+         pylock = "pylock.toml"
+         dependency_groups = ["dev"]
+
+.. tab:: INI
+
+    .. code-block:: ini
+
+         [testenv:docs]
+         pylock = pylock.toml
+         extras = docs
+
+         [testenv:dev]
+         pylock = pylock.toml
+         dependency_groups = dev
+
 .. ------------------------------------------------------------------------------------------
 
 .. Environment Customization

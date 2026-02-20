@@ -18,6 +18,7 @@ from tox.tox_env.installer import Installer
 from tox.tox_env.python.api import Python
 from tox.tox_env.python.package import EditableLegacyPackage, EditablePackage, SdistPackage, WheelPackage
 from tox.tox_env.python.pip.req_file import PythonConstraints, PythonDeps
+from tox.tox_env.python.pylock import Pylocks
 
 if TYPE_CHECKING:
     from tox.config.main import Config
@@ -114,6 +115,8 @@ class Pip(PythonInstallerListDependencies):
     def install(self, arguments: Any, section: str, of_type: str) -> None:
         if isinstance(arguments, PythonDeps):
             self._install_requirement_file(arguments, section, of_type)
+        elif isinstance(arguments, Pylocks):
+            self._install_pylock(arguments, section, of_type)
         elif isinstance(arguments, Sequence):
             self._install_list_of_deps(arguments, section, of_type)
         else:
@@ -198,6 +201,19 @@ class Pip(PythonInstallerListDependencies):
         added = f" added {', '.join(sorted(fmt(i) for i in added_opts))}" if added_opts else ""
         msg = f"changed {of_type}{removed}{added}"
         raise Recreate(msg)
+
+    def _install_pylock(self, pylocks: Pylocks, section: str, of_type: str) -> None:
+        requirements = pylocks.requirements()
+        new_reqs = sorted(str(r) for r in requirements)
+        with self._env.cache.compare(new_reqs, section, of_type) as (eq, old):
+            if not eq:
+                if old is not None and (missing := sorted(set(old) - set(new_reqs))):
+                    msg = f"pylock dependencies removed: {' '.join(missing)}"
+                    raise Recreate(msg)
+                if new_deps := sorted(set(new_reqs) - set(old or [])):
+                    req_file = Path(self._env.env_dir) / "pylock.txt"
+                    req_file.write_text("\n".join(new_deps))
+                    self._execute_installer(["--no-deps", "-r", str(req_file)], of_type)
 
     def _install_list_of_deps(  # noqa: C901, PLR0912
         self,
