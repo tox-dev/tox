@@ -254,6 +254,13 @@ recreation with the ``-r`` flag:
 If tools inside the environment maintain their own caches (e.g. pre-commit), you can use :ref:`recreate_commands` to
 clean them before the environment directory is removed. See :ref:`howto_clean_caches` for details.
 
+If you want to rerun tests without reinstalling dependencies or the package (e.g. when working offline or when nothing
+has changed), use ``--skip-env-install``:
+
+.. code-block:: bash
+
+    tox run -e 3.13 --skip-env-install
+
 ********************************
  Listing available environments
 ********************************
