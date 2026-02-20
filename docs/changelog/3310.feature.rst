@@ -1,0 +1,2 @@
+Add ``--skip-env-install`` CLI flag to skip dependency and package installation, allowing reuse of existing environments
+when offline or when installation is unnecessary - by :user:`gaborbernat`.

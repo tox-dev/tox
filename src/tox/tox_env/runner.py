@@ -188,7 +188,9 @@ class RunToxEnv(ToxEnv, ABC):
 
     def _setup_with_env(self) -> None:
         if self.package_env is not None:
-            skip_pkg_install: bool = getattr(self.options, "skip_pkg_install", False)
+            skip_pkg_install: bool = getattr(self.options, "skip_pkg_install", False) or getattr(
+                self.options, "skip_env_install", False
+            )
             if skip_pkg_install is True:
                 logging.warning("skip building and installing the package")
             else:

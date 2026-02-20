@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 from abc import ABC
 from functools import partial
 from typing import TYPE_CHECKING
@@ -125,6 +126,9 @@ class PythonRun(Python, RunToxEnv, ABC):
 
     def _setup_env(self) -> None:
         super()._setup_env()
+        if getattr(self.options, "skip_env_install", False):
+            logging.warning("skip installing dependencies and package")
+            return
         self._install_deps()
         self._install_dependency_groups()
 
