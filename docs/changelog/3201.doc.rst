@@ -1,0 +1,2 @@
+Integrate ``sphinxcontrib-towncrier`` to render draft changelog entries directly in Sphinx, replacing the manual
+towncrier draft script - by :user:`gaborbernat`.

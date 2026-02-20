@@ -1,11 +1,8 @@
 from __future__ import annotations
 
 import re
-import subprocess
-import sys
 from importlib.machinery import SourceFileLoader
 from pathlib import Path
-from subprocess import check_output
 from typing import TYPE_CHECKING, Any
 
 from sphinx.domains.python import PythonDomain
@@ -50,12 +47,13 @@ extensions = [
     "sphinx_copybutton",
     "sphinx_issues",  # :user: and similar roles
     "sphinxcontrib.mermaid",
+    "sphinxcontrib.towncrier.ext",
 ]
 mermaid_output_format = "raw"
 mermaid_d3_zoom = True
 mermaid_height = "auto"
 
-exclude_patterns = ["_build", "changelog/*", "_draft.rst"]
+exclude_patterns = ["_build", "changelog/*"]
 autoclass_content, autodoc_member_order, autodoc_typehints = "class", "bysource", "none"
 autodoc_default_options = {
     "member-order": "bysource",
@@ -93,6 +91,10 @@ issues_github_path = f"{company}/{name}"  # `sphinx-issues` ext
 man_pages = [("man/tox.1", "tox", "virtualenv-based automation of test activities", ["tox-dev"], 1)]
 man_show_urls = True
 
+towncrier_draft_autoversion_mode = "draft"
+towncrier_draft_include_empty = True
+towncrier_draft_working_directory = Path(__file__).parent.parent
+
 
 def process_signature(  # noqa: PLR0913
     app: Sphinx,  # noqa: ARG001
@@ -111,13 +113,6 @@ def process_signature(  # noqa: PLR0913
 
 def setup(app: Sphinx) -> None:
     here = Path(__file__).parent
-    # 1. run towncrier
-    root, exe = here.parent, Path(sys.executable)
-    towncrier = exe.with_name(f"towncrier{exe.suffix}")
-    cmd = [str(towncrier), "build", "--draft", "--version", "NEXT"]
-    new = check_output(cmd, cwd=root, text=True, stderr=subprocess.DEVNULL)
-    draft = "" if "No significant changes" in new else new
-    (root / "docs" / "_draft.rst").write_text(draft if draft.endswith("\n") else f"{draft}\n")
 
     class PatchedPythonDomain(PythonDomain):
         def resolve_xref(  # noqa: PLR0913

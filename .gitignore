@@ -1,7 +1,6 @@
 /.*_cache
 /build
 /dist
-/docs/_draft.rst
 /src/tox/version.py
 /toxfile.py
 /Dockerfile
