@@ -247,15 +247,28 @@ class EnvSelector:
         if label_envs:
             yield label_envs.keys(), False
 
-    def _ensure_envs_valid(self) -> None:
+    def _combinable_factors(self) -> tuple[set[str], set[str], set[str]]:
         known_envs = set(self._state.conf)
+        env_list = set(self._state.conf.core["env_list"])
         # factors that can be freely combined: from env_list entries and known env names themselves
-        combinable = set(chain.from_iterable(env.split("-") for env in self._state.conf.core["env_list"]))
+        combinable = set(chain.from_iterable(env.split("-") for env in env_list))
         combinable.update(known_envs)
         combinable.add(".pkg")
+        # section header env names are valid only as whole identifiers (not split into factors)
+        section_envs: set[str] = set()
+        for section in self._state.conf.sections():
+            if hasattr(section, "is_test_env") and not section.is_test_env:
+                continue
+            section_envs.update(getattr(section, "names", [section.name]))
+        # env names from factor conditionals: their individual factors are freely combinable
+        combinable.update(chain.from_iterable(env.split("-") for env in known_envs - env_list - section_envs))
         # broader pool for suggestions includes factors from all known env names
         all_factors = set(chain.from_iterable(env.split("-") for env in known_envs))
         all_factors.update(combinable)
+        return known_envs, combinable, all_factors
+
+    def _ensure_envs_valid(self) -> None:
+        known_envs, combinable, all_factors = self._combinable_factors()
         invalid_envs: dict[str, str | None] = {}
         for env in self._cli_envs or []:
             if env.startswith(".pkg_external") or env in known_envs:
