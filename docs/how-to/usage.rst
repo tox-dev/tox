@@ -1084,6 +1084,36 @@ Signal numbers are documented in the `signal man page <https://man7.org/linux/ma
 
 .. ------------------------------------------------------------------------------------------
 
+.. _pin-default-python:
+
+******************************
+ Pin a default Python version
+******************************
+
+When environments like ``lint`` or ``type`` don't contain a Python factor, tox uses the Python it's installed into. This
+varies across machines -- a contributor on Ubuntu 22.04 gets Python 3.10, while Fedora 37 gives 3.11 -- leading to
+unreproducible results or failures when dependencies don't support the host's Python version.
+
+Set :ref:`default_base_python` to pin a fallback interpreter for all environments without a Python factor:
+
+.. tab:: TOML
+
+    .. code-block:: toml
+
+        [env_run_base]
+        default_base_python = ["3.14", "3.13"]
+
+.. tab:: INI
+
+    .. code-block:: ini
+
+        [testenv]
+        default_base_python = 3.14, 3.13
+
+Environments with a Python factor (e.g. ``3.13``, ``py313``) or an explicit :ref:`base_python` setting are unaffected.
+
+.. ------------------------------------------------------------------------------------------
+
 .. _eol-version-support:
 
 **********************************

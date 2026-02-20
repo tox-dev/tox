@@ -1262,7 +1262,8 @@ Python options
     This determines in practice the Python for what we'll create a virtual isolated environment. Use this to specify the
     Python version for a tox environment. If not specified, the virtual environments factors (e.g. name part) will be
     used to automatically set one. For example, ``py310`` means ``python3.10``, ``py3`` means ``python3`` and ``py``
-    means ``python``. If the name does not match this pattern the same Python version tox is installed into will be used.
+    means ``python``. If the name does not match this pattern, :ref:`default_base_python` is consulted, and if that is
+    also not set, the same Python version tox is installed into will be used.
     A base interpreter ending with ``t`` means that only free threaded Python implementations are accepted.
 
     The preferred naming convention is ``N.M`` (e.g. ``3.14``, ``3.13``) rather than ``pyNMM`` (e.g. ``py314``,
@@ -1281,6 +1282,37 @@ Python options
        and tox is installed into a Python that's not supported by the package. For example, if your package requires
        Python 3.10 or later, and you install tox in Python 3.9, when you run a tox environment that has left this
        unspecified tox will use Python 3.9 to build and install your package which will fail given it requires 3.10.
+
+.. conf::
+    :keys: default_base_python
+    :default: <python version of tox>
+    :version_added: 4.42
+
+    Fallback Python interpreter used when the environment name contains no Python factor and no explicit
+    :ref:`base_python` is set. Accepts a list of specifications -- the first one found wins. This provides a way to
+    pin a default Python version for reproducibility across different machines without conflicting with ``pyXY``
+    factor-named environments.
+
+    The resolution order for an environment's Python interpreter is:
+
+    1. Python factor extracted from the environment name (e.g. ``3.13``, ``py313``)
+    2. Explicit :ref:`base_python` setting on the environment
+    3. ``default_base_python`` (this setting)
+    4. The Python running tox (``sys.executable``)
+
+    .. tab:: TOML
+
+        .. code-block:: toml
+
+            [env_run_base]
+            default_base_python = ["3.14", "3.13"]
+
+    .. tab:: INI
+
+        .. code-block:: ini
+
+            [testenv]
+            default_base_python = 3.14, 3.13
 
 .. conf::
     :keys: env_site_packages_dir, envsitepackagesdir

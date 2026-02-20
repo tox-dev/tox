@@ -1,0 +1,3 @@
+Add ``default_base_python`` configuration key to specify a fallback Python interpreter when no Python factor or explicit
+``base_python`` is defined. This allows projects to pin a default Python version for reproducibility across different
+machines without conflicting with ``pyXY`` factor-named environments - by :user:`gaborbernat`.

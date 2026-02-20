@@ -347,6 +347,69 @@ def test_usedevelop_with_nonexistent_basepython(tox_project: ToxProjectCreator) 
     assert result.code == 0
 
 
+def test_default_base_python_used_when_no_factor(tox_project: ToxProjectCreator) -> None:
+    py_ver = f"{sys.version_info[0]}.{sys.version_info[1]}"
+    toml = f"""\
+env_list = ["lint"]
+
+[env_run_base]
+package = "skip"
+default_base_python = ["python{py_ver}"]
+commands = [["python", "-c", "print('ok')"]]
+"""
+    result = tox_project({"tox.toml": toml}).run("c", "-e", "lint", "-k", "base_python")
+    result.assert_success()
+    assert f"python{py_ver}" in result.out
+
+
+def test_default_base_python_ignored_when_factor_present(tox_project: ToxProjectCreator) -> None:
+    py_ver = f"{sys.version_info[0]}{sys.version_info[1]}"
+    toml = f"""\
+env_list = ["py{py_ver}"]
+
+[env_run_base]
+package = "skip"
+default_base_python = ["python3.8"]
+commands = [["python", "-c", "print('ok')"]]
+"""
+    result = tox_project({"tox.toml": toml}).run("c", "-e", f"py{py_ver}", "-k", "base_python")
+    result.assert_success()
+    assert f"py{py_ver}" in result.out
+    assert "python3.8" not in result.out
+
+
+def test_default_base_python_ignored_when_base_python_explicit(tox_project: ToxProjectCreator) -> None:
+    py_ver = f"{sys.version_info[0]}.{sys.version_info[1]}"
+    toml = f"""\
+env_list = ["lint"]
+
+[env_run_base]
+package = "skip"
+default_base_python = ["python3.8"]
+commands = [["python", "-c", "print('ok')"]]
+
+[env.lint]
+base_python = ["python{py_ver}"]
+"""
+    result = tox_project({"tox.toml": toml}).run("c", "-e", "lint", "-k", "base_python")
+    result.assert_success()
+    assert f"python{py_ver}" in result.out
+    assert "python3.8" not in result.out
+
+
+def test_default_base_python_falls_back_to_sys_executable(tox_project: ToxProjectCreator) -> None:
+    toml = """\
+env_list = ["lint"]
+
+[env_run_base]
+package = "skip"
+commands = [["python", "-c", "print('ok')"]]
+"""
+    result = tox_project({"tox.toml": toml}).run("c", "-e", "lint", "-k", "base_python")
+    result.assert_success()
+    assert sys.executable in result.out
+
+
 @pytest.mark.parametrize(
     ("impl", "major", "minor", "arch", "free_threaded"),
     [

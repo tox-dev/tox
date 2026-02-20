@@ -74,13 +74,20 @@ class Python(ToxEnv, ABC):
     def register_config(self) -> None:
         super().register_config()
 
+        self.conf.add_config(
+            keys=["default_base_python"],
+            of_type=list[str],
+            default=[sys.executable],
+            desc="fallback python interpreter used when no factor or explicit base_python is defined",
+        )
+
         def validate_base_python(value: list[str]) -> list[str]:
             return self._validate_base_python(self.name, value, self.core["ignore_base_python_conflict"])
 
         self.conf.add_config(  # ty: ignore[no-matching-overload] # https://github.com/astral-sh/ty/issues/2428
             keys=["base_python", "basepython"],
             of_type=list[str],
-            default=self.default_base_python,
+            default=self._base_python_default,
             desc="environment identifier for python, first one found wins",
             post_process=validate_base_python,
         )
@@ -147,9 +154,9 @@ class Python(ToxEnv, ABC):
         env.extend(["REQUESTS_CA_BUNDLE"])
         return env
 
-    def default_base_python(self, conf: Config, env_name: str | None) -> list[str]:  # noqa: ARG002
+    def _base_python_default(self, conf: Config, env_name: str | None) -> list[str]:  # noqa: ARG002
         base_python = None if env_name is None else self.extract_base_python(env_name)
-        return [sys.executable if base_python is None else base_python]
+        return self.conf["default_base_python"] if base_python is None else [base_python]
 
     @classmethod
     def extract_base_python(cls, env_name: str) -> str | None:

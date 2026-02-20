@@ -73,10 +73,11 @@ The primary tox states are:
    1. **Creation**: create a fresh environment; by default :pypi:`virtualenv` is used, but configurable via
       :ref:`runner`. For ``virtualenv`` tox will use the `virtualenv discovery logic
       <https://virtualenv.pypa.io/en/latest/user_guide.html#python-discovery>`_ where the python specification is
-      defined by the tox environments :ref:`base_python` (if not set will default to the environments name). This is
-      created at first run only to be reused at subsequent runs. If certain aspects of the project change (python
-      version, dependencies removed, etc.), a re-creation of the environment is automatically triggered. To force the
-      recreation tox can be invoked with the :ref:`recreate` flag (``-r``).
+      defined by the tox environments :ref:`base_python` (if not set will try to extract it from the environment name,
+      then fall back to :ref:`default_base_python`, and finally to the Python running tox). This is created at first run
+      only to be reused at subsequent runs. If certain aspects of the project change (python version, dependencies
+      removed, etc.), a re-creation of the environment is automatically triggered. To force the recreation tox can be
+      invoked with the :ref:`recreate` flag (``-r``).
    2. **Install dependencies** (optional): install the environment dependencies specified inside the ``deps``
       configuration section, and then the earlier packaged source distribution. By default ``pip`` is used to install
       packages, however one can customize this via ``install_command``.
