@@ -1652,6 +1652,50 @@ Python virtual environment
     overwritten by the ``VIRTUALENV_DOWNLOAD`` environment variable. If (and only if) you want to choose a specific
     version (not necessarily the latest) then you can add ``VIRTUALENV_PIP=20.3.3`` (and similar) to your :ref:`set_env`.
 
+.. conf::
+    :keys: virtualenv_spec
+    :default: ""
+    :version_added: 4.42
+
+    A :pep:`440` version specifier for virtualenv (e.g. ``virtualenv<20.22.0``). When set, tox bootstraps the specified
+    virtualenv version into an isolated environment and drives it via subprocess, instead of using the imported
+    virtualenv library. This enables environments targeting Python versions that are incompatible with the virtualenv
+    installed alongside tox.
+
+    The bootstrap environment is cached under ``.tox/.virtualenv-bootstrap/`` (keyed by a hash of the spec string) and
+    reused across runs. Concurrent access is protected by a file lock. When the spec is empty (the default), tox uses
+    the imported virtualenv with zero overhead.
+
+    .. tab:: TOML
+
+        .. code-block:: toml
+
+            [env.legacy]
+            base_python = ["python3.6"]
+            virtualenv_spec = "virtualenv<20.22.0"
+            commands = [["python", "-c", "import sys; print(sys.version)"]]
+
+            [env.modern]
+            base_python = ["python3.15"]
+            commands = [["python", "-c", "import sys; print(sys.version)"]]
+
+    .. tab:: INI
+
+        .. code-block:: ini
+
+            [testenv:legacy]
+            base_python = python3.6
+            virtualenv_spec = virtualenv<20.22.0
+            commands = python -c 'import sys; print(sys.version)'
+
+            [testenv:modern]
+            base_python = python3.15
+            commands = python -c 'import sys; print(sys.version)'
+
+    Changing this value triggers automatic environment recreation (the spec is included in the cache key).
+
+    See :ref:`virtualenv-version-pinning` for background on when and why to use this setting.
+
 Python virtual environment packaging
 ====================================
 

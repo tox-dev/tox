@@ -287,6 +287,7 @@ This is useful for debugging configuration issues.
 Now that you have a working tox setup, explore these topics:
 
 - :doc:`../explanation` -- understand how tox works (parallel mode, packaging, auto-provisioning)
-- :doc:`../how-to/usage` -- practical recipes for common tasks
+- :doc:`../how-to/usage` -- practical recipes for common tasks (including testing across old and new Python versions
+  with :ref:`virtualenv_spec`)
 - :ref:`configuration` -- full configuration reference
 - :ref:`cli` -- complete CLI reference
