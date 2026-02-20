@@ -297,6 +297,30 @@ def test_ini_loader_raw_with_factors(
     assert outcome == result
 
 
+@pytest.mark.parametrize(
+    ("env", "result"),
+    [
+        ("foo", "python -c \"print('foo')\"\npython -c \"print('bar')\""),
+        ("bar", "python -c \"print('bar')\""),
+    ],
+)
+def test_ini_loader_factor_multiline_command(
+    mk_ini_conf: Callable[[str], ConfigParser],
+    env: str,
+    result: str,
+    empty_config: Config,
+) -> None:
+    commands = "foo: python -c \"\\\n        print('foo')\"\n    python -c \"print('bar')\""
+    loader = IniLoader(
+        section=IniSection(None, "testenv"),
+        parser=mk_ini_conf(f"[tox]\nenvlist=foo,bar\n[testenv]\ncommands={commands}"),
+        overrides=[],
+        core_section=IniSection(None, "tox"),
+    )
+    outcome = loader.load_raw(key="commands", conf=empty_config, env_name=env)
+    assert outcome == result
+
+
 def test_generative_ranges_in_deps(tox_ini_conf: ToxIniCreator) -> None:
     config = tox_ini_conf(
         """

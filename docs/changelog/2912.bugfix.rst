@@ -1,0 +1,2 @@
+Factor-specific multiline commands using backslash continuation (``\``) no longer leak continuation lines into
+environments that don't match the factor - by :user:`gaborbernat`.
