@@ -265,6 +265,16 @@
           },
           "description": "the commands to be called after testing"
         },
+        "recreate_commands": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/subs"
+            }
+          },
+          "description": "commands to run before the environment is removed during recreation (e.g. cache cleanup)"
+        },
         "change_dir": {
           "type": "string",
           "description": "change to this working directory when executing the test command"

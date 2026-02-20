@@ -244,6 +244,9 @@ recreation with the ``-r`` flag:
 
     tox run -e 3.13 -r
 
+If tools inside the environment maintain their own caches (e.g. pre-commit), you can use :ref:`recreate_commands` to
+clean them before the environment directory is removed. See :ref:`howto_clean_caches` for details.
+
 ********************************
  Listing available environments
 ********************************

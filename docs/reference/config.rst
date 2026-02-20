@@ -1064,6 +1064,34 @@ Run
     ``--notest``, all commands including ``extra_setup_commands`` will execute.
 
 .. conf::
+    :keys: recreate_commands
+    :default: <empty list>
+    :version_added: 4.42
+
+    Commands to run before the environment directory is removed during recreation (``tox run -r``). These commands
+    execute inside the existing environment, so tools installed there are available. Useful for cleaning external caches
+    managed by tools like pre-commit. Failures are logged as warnings but never block recreation.
+
+    .. tab:: TOML
+
+       .. code-block:: toml
+
+          [env_run_base]
+          deps = ["pre-commit"]
+          recreate_commands = [["{env_python}", "-Im", "pre_commit", "clean"]]
+
+    .. tab:: INI
+
+       .. code-block:: ini
+
+          [testenv]
+          deps = pre-commit
+          recreate_commands = {env_python} -Im pre_commit clean
+
+    These commands do **not** run on first creation (the environment directory does not exist yet) or on normal
+    re-runs without ``-r``.
+
+.. conf::
     :keys: commands_pre
     :default: <empty list>
     :version_added: 3.4
