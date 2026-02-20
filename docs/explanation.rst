@@ -548,6 +548,32 @@ Alternative workarounds if you cannot use ``--no-capture``:
 - For IPython, pass ``--simple-prompt`` to disable ``prompt_toolkit``'s advanced terminal features.
 - For other tools, look for a "dumb terminal" or "no-color" mode that avoids VT100 escape sequences.
 
+Debian/Ubuntu without ``python3-venv``
+======================================
+
+On Debian and Ubuntu, the system Python is split into multiple packages. The ``python3`` package does not include the
+:mod:`venv` module or :mod:`ensurepip` — these are in the separate ``python3-venv`` package.
+
+tox itself is **not affected** because it uses :pypi:`virtualenv` (which bundles its own bootstrap mechanism) rather
+than stdlib :mod:`venv`. However, tools that tox *runs as commands* inside environments may use stdlib :mod:`venv`
+internally and fail. A common example is :pypi:`build` (``pyproject-build``), which creates an isolated build
+environment using :mod:`venv` when a recent ``pip`` is available.
+
+If you see errors like:
+
+.. code-block:: text
+
+    The virtual environment was not created successfully because ensurepip is not available.
+    On Debian/Ubuntu systems, you need to install the python3-venv package.
+
+this is the tool inside the tox environment hitting the missing system package, not tox itself.
+
+**Solutions:**
+
+- Install the system venv package: ``apt install python3-venv`` (or ``python3.X-venv`` for a specific version).
+- Use :pypi:`tox-uv`, which replaces both the environment creation and package installation with :pypi:`uv`, avoiding
+  the stdlib :mod:`venv` dependency entirely.
+
 ******************
  Related projects
 ******************
