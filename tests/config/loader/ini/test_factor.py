@@ -321,6 +321,30 @@ def test_ini_loader_factor_multiline_command(
     assert outcome == result
 
 
+@pytest.mark.parametrize(
+    ("env", "result"),
+    [
+        ("py-cov", "coverage run somefile.py"),
+        ("py-no_cov", "python somefile.py"),
+    ],
+)
+def test_ini_loader_factor_conditional_continuation(
+    mk_ini_conf: Callable[[str], ConfigParser],
+    env: str,
+    result: str,
+    empty_config: Config,
+) -> None:
+    commands = "cov: coverage run \\\n    !cov: python \\\n        somefile.py"
+    loader = IniLoader(
+        section=IniSection(None, "testenv"),
+        parser=mk_ini_conf(f"[tox]\nenvlist=py-cov,py-no_cov\n[testenv]\ncommands={commands}"),
+        overrides=[],
+        core_section=IniSection(None, "tox"),
+    )
+    outcome = loader.load_raw(key="commands", conf=empty_config, env_name=env)
+    assert outcome == result
+
+
 def test_generative_ranges_in_deps(tox_ini_conf: ToxIniCreator) -> None:
     config = tox_ini_conf(
         """

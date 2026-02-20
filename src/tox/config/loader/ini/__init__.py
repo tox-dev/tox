@@ -52,14 +52,14 @@ class IniLoader(StrConvert, Loader[str]):
             if not line.startswith("#"):
                 part = _COMMENTS.sub("", line)
                 elements.append(part.replace("\\#", "#"))
-        strip_comments = "\n".join(elements).replace("\r", "").replace("\\\n", "")  # collapse continuation lines
+        strip_comments = "\n".join(elements).replace("\r", "")
         if conf is None:  # conf is None when we're loading the global tox configuration file for the CLI
             factor_filtered = strip_comments  # we don't support factor and replace functionality there
         else:
             factor_filtered = filter_for_env(strip_comments, env_name)  # select matching factors
             if not factor_filtered and strip_comments.strip():
                 raise KeyError(value)
-        return factor_filtered
+        return factor_filtered.replace("\\\n", "")
 
     def build(  # noqa: PLR0913
         self,

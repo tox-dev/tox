@@ -19,16 +19,26 @@ def filter_for_env(value: str, name: str | None) -> str:
         set(chain.from_iterable([(i for i, _ in a) for a in find_factor_groups(name)])) if name is not None else set()
     )
     current.add(sys.platform)
-    overall = []
+    overall: list[str] = []
+    active_continuation = False
+    pending_skip = False
     for factors, content in expand_factors(value):
         if factors is None:
+            if pending_skip and not active_continuation:
+                pending_skip = content.endswith("\\")
+                continue
             if content:
                 overall.append(content)
+            active_continuation = active_continuation and content.endswith("\\")
+            pending_skip = False
         else:
-            for group in factors:
-                if all((a_name in current) ^ negate for a_name, negate in group):
-                    overall.append(content)
-                    break  # if any match we use it, and then bail
+            matched = any(all((a_name in current) ^ negate for a_name, negate in group) for group in factors)
+            if matched:
+                overall.append(content)
+                active_continuation = content.endswith("\\")
+                pending_skip = False
+            else:
+                pending_skip = content.endswith("\\")
     return "\n".join(overall)
 
 
