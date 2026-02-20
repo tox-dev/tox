@@ -2,7 +2,7 @@
  Release History
 #################
 
-.. include:: _draft.rst
+.. towncrier-draft-entries::
 
 .. towncrier release notes start
 
