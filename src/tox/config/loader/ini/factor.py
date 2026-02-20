@@ -24,12 +24,12 @@ def filter_for_env(value: str, name: str | None) -> str:
     pending_skip = False
     for factors, content in expand_factors(value):
         if factors is None:
-            if pending_skip and not active_continuation:
-                pending_skip = content.endswith("\\")
+            if pending_skip and not active_continuation and not content.endswith("\\"):
+                pending_skip = False
                 continue
             if content:
                 overall.append(content)
-            active_continuation = active_continuation and content.endswith("\\")
+            active_continuation = content.endswith("\\") if content else active_continuation
             pending_skip = False
         else:
             matched = any(all((a_name in current) ^ negate for a_name, negate in group) for group in factors)

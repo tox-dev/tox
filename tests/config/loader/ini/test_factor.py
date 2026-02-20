@@ -345,6 +345,42 @@ def test_ini_loader_factor_conditional_continuation(
     assert outcome == result
 
 
+@pytest.mark.parametrize(
+    ("env", "result"),
+    [
+        ("py312", "pytest --remote-data --durations=10"),
+        ("py312-coverage", "coverage run -m pytest --remote-data --durations=10"),
+    ],
+)
+def test_ini_loader_factor_mixed_continuation(
+    mk_ini_conf: Callable[[str], ConfigParser],
+    env: str,
+    result: str,
+    empty_config: Config,
+) -> None:
+    ini = dedent("""\
+        [tox]
+        envlist = py312,py312-coverage,py312-devdeps,py312-compatibility,py312-mocks3
+        [testenv]
+        commands =
+            coverage: coverage run -m \\
+            pytest \\
+            devdeps: -W some_warning
+            compatibility: integration_tests/ \\
+            mocks3: tests/ \\
+            --remote-data \\
+            --durations=10
+        """)
+    loader = IniLoader(
+        section=IniSection(None, "testenv"),
+        parser=mk_ini_conf(ini),
+        overrides=[],
+        core_section=IniSection(None, "tox"),
+    )
+    outcome = loader.load_raw(key="commands", conf=empty_config, env_name=env)
+    assert outcome == result
+
+
 def test_generative_ranges_in_deps(tox_ini_conf: ToxIniCreator) -> None:
     config = tox_ini_conf(
         """
