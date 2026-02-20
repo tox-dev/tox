@@ -1,0 +1,4 @@
+Environments with unavailable runners (missing plugins) are now gracefully skipped instead of causing a fatal error,
+shown with status "NOT AVAILABLE". If such an environment is explicitly requested with ``-e``, a clear error message is
+shown indicating which runner is missing and that the plugin may not be installed. Unavailable environments in the
+configuration don't cause the overall run to fail - by :user:`gaborbernat`.

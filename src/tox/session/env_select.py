@@ -17,7 +17,7 @@ from tox.config.source.discover import discover_source
 from tox.config.types import EnvList
 from tox.report import HandledError
 from tox.tox_env.api import ToxEnvCreateArgs
-from tox.tox_env.errors import Skip
+from tox.tox_env.errors import RunnerUnavailable, Skip
 from tox.tox_env.package import PackageToxEnv
 from tox.tox_env.register import REGISTER
 from tox.tox_env.runner import RunToxEnv
@@ -194,9 +194,10 @@ def _env_completer(
 class _ToxEnvInfo:
     """tox environment information."""
 
-    env: PackageToxEnv | RunToxEnv  #: the tox environment
+    env: PackageToxEnv | RunToxEnv | None  #: the tox environment (None if runner unavailable)
     is_active: bool  #: a flag indicating if the environment is marked as active in the current run
     package_skip: tuple[str, Skip] | None = None  #: if set the creation of the packaging environment failed
+    runner_unavailable: str | None = None  #: if set the runner is not available (contains runner name)
 
 
 _DYNAMIC_ENV_FACTORS = re.compile(r"(pypy|py|cython|)(((\d(\.\d+(\.\d+)?)?)|\d+)t?)?")
@@ -213,6 +214,7 @@ class EnvSelector:
         self._state = state
         self._defined_envs_: dict[str, _ToxEnvInfo] | None = None
         self._pkg_env_counter: Counter[str] = Counter()
+        self._unavailable_envs: dict[str, str] = {}  #: name -> runner name for unavailable environments
         from tox.plugin.manager import MANAGER  # noqa: PLC0415
 
         self._manager = MANAGER
@@ -325,11 +327,23 @@ class EnvSelector:
                 if name in self._pkg_env_counter:  # already marked as packaging, nothing to do here
                     continue
                 with self._log_handler.with_context(name):
-                    run_env = self._build_run_env(name)
-                    if run_env is None:
+                    try:
+                        run_env = self._build_run_env(name)
+                        if run_env is None:
+                            continue
+                        self._defined_envs_[name] = _ToxEnvInfo(run_env, is_active)
+                        pkg_name_type = run_env.get_package_env_types()
+                    except RunnerUnavailable as exc:
+                        LOGGER.warning(
+                            "environment %s marked as unavailable, runner %r is not available",
+                            name,
+                            str(exc),
+                        )
+                        self._unavailable_envs[name] = str(exc)
+                        self._defined_envs_[name] = _ToxEnvInfo(
+                            env=None, is_active=is_active, runner_unavailable=str(exc)
+                        )
                         continue
-                    self._defined_envs_[name] = _ToxEnvInfo(run_env, is_active)
-                    pkg_name_type = run_env.get_package_env_types()
                 if pkg_name_type is not None:
                     # build package env and assign it, then register the run environment which can trigger generation
                     # of additional run environments
@@ -373,7 +387,8 @@ class EnvSelector:
     def _finalize_config(self) -> None:
         assert self._defined_envs_ is not None  # noqa: S101
         for tox_env in self._defined_envs_.values():
-            tox_env.env.conf.mark_finalized()
+            if tox_env.env is not None:  # skip unavailable environments
+                tox_env.env.conf.mark_finalized()
         self._state.conf.core.mark_finalized()
 
     def _build_run_env(self, name: str) -> RunToxEnv | None:
@@ -386,7 +401,20 @@ class EnvSelector:
         env_conf = self._state.conf.get_env(name, package=False)
         desc = "the tox execute used to evaluate this environment"
         env_conf.add_config(keys="runner", desc=desc, of_type=str, default=self._state.conf.options.default_runner)
-        runner = REGISTER.runner(cast("str", env_conf["runner"]))
+        runner_name = cast("str", env_conf["runner"])
+        try:
+            runner = REGISTER.runner(runner_name)
+        except KeyError as exc:
+            is_provision = self._provision is not None and name == self._provision[1]
+            is_explicitly_requested = (
+                self._cli_envs is not None and not self._cli_envs.is_all and name in self._cli_envs
+            )
+            if is_provision:
+                raise
+            if is_explicitly_requested:
+                msg = f"runner {runner_name!r} for environment {name!r} is not available (plugin may not be installed)"
+                raise HandledError(msg) from exc
+            raise RunnerUnavailable(runner_name) from exc
         journal = self._journal.get_env_journal(name)
         args = ToxEnvCreateArgs(env_conf, self._state.conf.core, self._state.conf.options, journal, self._log_handler)
         run_env = runner(args)
@@ -461,7 +489,7 @@ class EnvSelector:
                     for env_name in self._state.conf.core["labels"].get(label, []):
                         self._defined_envs_[env_name].is_active = True
                 for env_info in self._defined_envs_.values():
-                    if labels.intersection(env_info.env.conf["labels"]):
+                    if env_info.env is not None and labels.intersection(env_info.env.conf["labels"]):
                         env_info.is_active = True
             if factors:  # if matches mark it active
                 for name, env_info in self._defined_envs_.items():
@@ -476,7 +504,9 @@ class EnvSelector:
         :returns: the tox environment
 
         """
-        return self._defined_envs[item].env
+        env = self._defined_envs[item].env
+        assert env is not None  # noqa: S101
+        return env
 
     def iter(
         self,
@@ -503,6 +533,15 @@ class EnvSelector:
                     LOGGER.warning("skip environment %s, matches filter %r", name, self._filter_re.pattern)
                 continue
             yield name
+
+    def unavailable_envs(self) -> dict[str, str]:
+        """Get dict of unavailable environment names to runner names.
+
+        :returns: dict mapping environment name to runner name
+
+        """
+        _ = self._defined_envs  # ensure _defined_envs is initialized
+        return self._unavailable_envs.copy()
 
     def ensure_only_run_env_is_active(self) -> None:
         envs, active = self._defined_envs, self._env_name_to_active()

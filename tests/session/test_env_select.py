@@ -381,3 +381,93 @@ def test_suggest_env(tox_project: ToxProjectCreator) -> None:
         f"alph-p{_MINOR} - did you mean alpha-py3{_MINOR}?\n"
     )
     assert outcome.out == msg
+
+
+def test_unavailable_runner_in_config_not_explicitly_requested(tox_project: ToxProjectCreator) -> None:
+    """Unavailable runner in config should be marked NOT AVAILABLE if not explicitly requested."""
+    tox_toml = """
+        [tool.tox]
+        env_list = ["available", "unavailable"]
+
+        [tool.tox.env_run_base]
+        skip_install = true
+
+        [tool.tox.env.available]
+        commands = [["python", "-c", "print('available')"]]
+
+        [tool.tox.env.unavailable]
+        runner = "nonexistent-runner"
+        commands = [["python", "-c", "print('unavailable')"]]
+        """
+    proj = tox_project({"pyproject.toml": tox_toml})
+    outcome = proj.run("r", "-e", "available")
+    outcome.assert_success()
+    assert "available: OK" in outcome.out
+    assert "unavailable: NOT AVAILABLE" in outcome.out
+
+
+def test_unavailable_runner_explicitly_requested(tox_project: ToxProjectCreator) -> None:
+    """Explicitly requesting unavailable runner should fail with clear error."""
+    tox_toml = """
+        [tool.tox.env_run_base]
+        skip_install = true
+
+        [tool.tox.env.unavailable]
+        runner = "nonexistent-runner"
+        commands = [["python", "-c", "print('unavailable')"]]
+        """
+    proj = tox_project({"pyproject.toml": tox_toml})
+    outcome = proj.run("r", "-e", "unavailable")
+    outcome.assert_failed()
+    assert "runner 'nonexistent-runner' for environment 'unavailable' is not available" in outcome.out
+
+
+def test_unavailable_runner_in_env_list(tox_project: ToxProjectCreator) -> None:
+    """Unavailable runner in env_list should be shown as NOT AVAILABLE."""
+    tox_toml = """
+        [tool.tox]
+        env_list = ["available", "unavailable"]
+
+        [tool.tox.env_run_base]
+        skip_install = true
+
+        [tool.tox.env.available]
+        commands = [["python", "-c", "print('available')"]]
+
+        [tool.tox.env.unavailable]
+        runner = "nonexistent-runner"
+        commands = [["python", "-c", "print('unavailable')"]]
+        """
+    proj = tox_project({"pyproject.toml": tox_toml})
+    outcome = proj.run("r")
+    outcome.assert_success()
+    assert "available: OK" in outcome.out
+    assert "unavailable: NOT AVAILABLE" in outcome.out
+
+
+def test_multiple_unavailable_runners_implicit(tox_project: ToxProjectCreator) -> None:
+    """Multiple unavailable runners should all be marked NOT AVAILABLE when not explicitly requested."""
+    tox_toml = """
+        [tool.tox]
+        env_list = ["available", "unavailable1", "unavailable2"]
+
+        [tool.tox.env_run_base]
+        skip_install = true
+
+        [tool.tox.env.available]
+        commands = [["python", "-c", "print('available')"]]
+
+        [tool.tox.env.unavailable1]
+        runner = "nonexistent-runner-1"
+        commands = [["python", "-c", "print('unavailable1')"]]
+
+        [tool.tox.env.unavailable2]
+        runner = "nonexistent-runner-2"
+        commands = [["python", "-c", "print('unavailable2')"]]
+        """
+    proj = tox_project({"pyproject.toml": tox_toml})
+    outcome = proj.run("r")
+    outcome.assert_success()
+    assert "available: OK" in outcome.out
+    assert "unavailable1: NOT AVAILABLE" in outcome.out
+    assert "unavailable2: NOT AVAILABLE" in outcome.out

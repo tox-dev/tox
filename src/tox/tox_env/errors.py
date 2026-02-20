@@ -13,3 +13,7 @@ class Skip(Exception):  # noqa: N818
 
 class Fail(Exception):  # noqa: N818
     """Failed creating env."""
+
+
+class RunnerUnavailable(Exception):  # noqa: N818
+    """Runner for this environment is not available."""
