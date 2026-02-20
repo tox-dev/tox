@@ -199,7 +199,7 @@ class Pip(PythonInstallerListDependencies):
         msg = f"changed {of_type}{removed}{added}"
         raise Recreate(msg)
 
-    def _install_list_of_deps(  # noqa: C901
+    def _install_list_of_deps(  # noqa: C901, PLR0912
         self,
         arguments: Sequence[
             Requirement | WheelPackage | SdistPackage | EditableLegacyPackage | EditablePackage | PathPackage
@@ -208,12 +208,15 @@ class Pip(PythonInstallerListDependencies):
         of_type: str,
     ) -> None:
         groups: dict[str, list[str]] = defaultdict(list)
+        config_settings: dict[str, str] = {}
         for arg in arguments:
             if isinstance(arg, Requirement):
                 groups["req"].append(str(arg))
             elif isinstance(arg, (WheelPackage, SdistPackage, EditablePackage)):
                 groups["req"].extend(self._apply_force_deps(arg.deps))
                 groups["pkg"].append(str(arg.path))
+                if isinstance(arg, SdistPackage) and arg.config_settings:
+                    config_settings.update(arg.config_settings)
             elif isinstance(arg, EditableLegacyPackage):
                 groups["req"].extend(self._apply_force_deps(arg.deps))
                 groups["dev_pkg"].append(str(arg.path))
@@ -234,10 +237,11 @@ class Pip(PythonInstallerListDependencies):
                     new_deps.extend(self.constraints.as_root_args)
                     self._execute_installer(new_deps, req_of_type)
         install_args = ["--force-reinstall", "--no-deps"]
+        cs_args = [f"--config-settings={k}={v}" for k, v in config_settings.items()]
         if groups["pkg"]:
             # we intentionally ignore constraints when installing the package itself
             # https://github.com/tox-dev/tox/issues/3550
-            self._execute_installer(install_args + groups["pkg"], of_type)
+            self._execute_installer(install_args + cs_args + groups["pkg"], of_type)
         if groups["dev_pkg"]:
             for entry in groups["dev_pkg"]:
                 install_args.extend(("-e", str(entry)))

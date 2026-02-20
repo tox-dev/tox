@@ -280,7 +280,7 @@ class Pep517VenvPackager(PythonPackageToxEnv, ABC):
                 sdist = self._frontend.build_sdist(sdist_directory=self.pkg_dir, config_settings=config_settings).sdist
                 sdist = create_session_view(sdist, self._package_temp_path)
                 self._package_paths.add(sdist)
-                package = SdistPackage(sdist, deps)
+                package = SdistPackage(sdist, deps, config_settings=self.conf["config_settings_build_wheel"])
         elif of_type == "sdist-wheel":
             wheel = create_session_view(self._build_wheel_via_sdist(for_env), self._package_temp_path)
             self._package_paths.add(wheel)
