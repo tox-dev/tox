@@ -1,0 +1,2 @@
+Pass ``config_settings_build_wheel`` to pip as ``--config-settings`` when installing sdist packages, ensuring the build
+backend receives config settings during pip's internal wheel build - by :user:`gaborbernat`.

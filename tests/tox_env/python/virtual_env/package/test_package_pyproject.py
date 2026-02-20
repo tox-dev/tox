@@ -512,6 +512,36 @@ def test_pyproject_config_settings_editable_legacy(
     }
 
 
+def test_pyproject_config_settings_sdist_passed_to_pip_install(
+    tox_project: ToxProjectCreator,
+    demo_pkg_setuptools: Path,
+    mocker: MockerFixture,
+) -> None:
+    toml = """
+    [tox]
+    env_list = ["sdist"]
+
+    [env_run_base]
+    wheel_build_env = ".pkg"
+    package = "sdist"
+
+    [env.".pkg"]
+    config_settings_build_wheel = {X = "y", Z = "w"}
+    """
+    proj = tox_project({"tox.toml": dedent(toml)}, base=demo_pkg_setuptools)
+    execute_calls = proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
+    mocker.spy(LocalSubprocessExecuteStatus, "write_stdin")
+
+    result = proj.run("r", "--notest", from_cwd=proj.path)
+    result.assert_success()
+
+    pip_install_cmds = [i[0][3].cmd for i in execute_calls.call_args_list if i[0][3].run_id == "install_package"]
+    assert pip_install_cmds, "expected at least one install_package call"
+    cmd = pip_install_cmds[0]
+    assert "--config-settings=X=y" in cmd
+    assert "--config-settings=Z=w" in cmd
+
+
 @pytest.mark.integration
 @pytest.mark.usefixtures("enable_pip_pypi_access")
 def test_pyproject_installpkg_pep517_envs(tox_project: ToxProjectCreator, pkg_with_pdm_backend: Path) -> None:

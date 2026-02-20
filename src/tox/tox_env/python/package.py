@@ -41,6 +41,10 @@ class WheelPackage(PythonPathPackageWithDeps):
 class SdistPackage(PythonPathPackageWithDeps):
     """sdist package."""
 
+    def __init__(self, path: Path, deps: Sequence[Requirement], config_settings: dict[str, str] | None = None) -> None:
+        super().__init__(path=path, deps=deps)
+        self.config_settings = config_settings
+
 
 class EditableLegacyPackage(PythonPathPackageWithDeps):
     """legacy editable package."""
