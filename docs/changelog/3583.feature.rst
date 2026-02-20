@@ -1,3 +1,3 @@
-Add open-ended range expansion in generative env lists — ``py3{9-}`` expands up to the latest supported
-CPython minor version and ``py3{-13}`` expands down to the oldest supported one, both hardcoded at release
-time per the `Python release cycle <https://devguide.python.org/versions/>`_ - by :user:`gaborbernat`.
+Add open-ended range expansion in generative env lists — ``py3{9-}`` expands up to the latest supported CPython minor
+version and ``py3{-13}`` expands down to the oldest supported one, both hardcoded at release time per the `Python
+release cycle <https://devguide.python.org/versions/>`_ - by :user:`gaborbernat`.
