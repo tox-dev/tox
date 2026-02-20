@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 import pytest
 
 from tox.config.loader.ini import IniLoader
-from tox.config.loader.ini.factor import filter_for_env, find_envs
+from tox.config.loader.ini.factor import LATEST_PYTHON_MINOR_MAX, LATEST_PYTHON_MINOR_MIN, filter_for_env, find_envs
 from tox.config.source.ini_section import IniSection
 
 if TYPE_CHECKING:
@@ -230,8 +230,31 @@ def test_factor_config_no_env_list_creates_env(tox_ini_conf: ToxIniCreator) -> N
         ),
         pytest.param("py3{13-11}", ["py313", "py312", "py311"], id="Expand negative ranges"),
         pytest.param("3.{10-13}", ["3.10", "3.11", "3.12", "3.13"], id="Expand new-style python envs"),
-        pytest.param("py3{-11}", ["py3-11"], id="Don't expand left-open numerical range"),
-        pytest.param("foo{11-}", ["foo11-"], id="Don't expand right-open numerical range"),
+        pytest.param(
+            "py3{9-}",
+            [f"py3{v}" for v in range(9, LATEST_PYTHON_MINOR_MAX + 1)],
+            id="Expand right-open range to LATEST_PYTHON_MINOR_MAX",
+        ),
+        pytest.param(
+            "3.{10-}",
+            [f"3.{v}" for v in range(10, LATEST_PYTHON_MINOR_MAX + 1)],
+            id="Expand right-open range new-style envs",
+        ),
+        pytest.param(
+            "py3{-13}",
+            [f"py3{v}" for v in range(LATEST_PYTHON_MINOR_MIN, 14)],
+            id="Expand left-open range from LATEST_PYTHON_MINOR_MIN",
+        ),
+        pytest.param(
+            "foo{11-}",
+            [f"foo{v}" for v in range(11, LATEST_PYTHON_MINOR_MAX + 1)],
+            id="Expand right-open numerical range",
+        ),
+        pytest.param(
+            "py3{-11}",
+            [f"py3{v}" for v in range(LATEST_PYTHON_MINOR_MIN, 12)],
+            id="Expand left-open numerical range",
+        ),
         pytest.param("foo{a-}", ["fooa-"], id="Don't expand right-open range"),
         pytest.param("foo{-a}", ["foo-a"], id="Don't expand left-open range"),
         pytest.param("foo{a-11}", ["fooa-11"], id="Don't expand alpha-umerical range"),

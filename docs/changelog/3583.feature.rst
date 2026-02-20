@@ -1,0 +1,3 @@
+Add open-ended range expansion in generative env lists — ``py3{9-}`` expands up to
+``LATEST_PYTHON_MINOR_MAX`` and ``py3{-13}`` expands down to ``LATEST_PYTHON_MINOR_MIN``, both
+hardcoded at release time - by :user:`gaborbernat`.

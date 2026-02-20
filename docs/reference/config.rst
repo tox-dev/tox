@@ -119,7 +119,9 @@ Platform factors work in any environment without requiring the platform name in 
     env_list = py3{12,13,14}-django{42,50}-{sqlite,mysql}
 
 This generates 18 environments: ``py312-django42-sqlite``, ``py312-django42-mysql``, ..., ``py314-django50-mysql``.
-Ranges are also supported: ``py3{12-14}`` expands to ``py312``, ``py313``, ``py314``.
+Ranges are also supported: ``py3{12-14}`` expands to ``py312``, ``py313``, ``py314``. Open-ended ranges use hardcoded
+bounds from the current tox release: ``py3{10-}`` expands up to ``LATEST_PYTHON_MINOR_MAX``, ``py3{-13}`` expands down
+to ``LATEST_PYTHON_MINOR_MIN``.
 
 **Generative section names** -- INI section headers can use the same curly-brace expansion:
 
@@ -2360,8 +2362,17 @@ will create the following envs:
     py313 -> [no description]
     py314 -> [no description]
 
-Negative ranges will also be expanded (``{3-1}`` -> ``{3,2,1}``), however, open ranges such as ``{1-}``, ``{-2}``,
-``{a-}``, and ``{-b}`` will not be expanded.
+Negative ranges will also be expanded (``{3-1}`` -> ``{3,2,1}``). Non-numerical open ranges such as ``{a-}`` and
+``{-b}`` will not be expanded.
+
+Open-ended numerical ranges use bounds derived from the latest stable CPython release at the time tox was released:
+
+- ``{10-}`` expands up to ``LATEST_PYTHON_MINOR_MAX`` (currently **14**)
+- ``{-13}`` expands down from ``LATEST_PYTHON_MINOR_MIN`` (currently **10**)
+
+For example, ``py3{10-}`` is equivalent to ``py3{10,11,12,13,14}`` and ``py3{-13}`` is equivalent to
+``py3{10,11,12,13}``. These bounds are updated with each tox release as new CPython versions become stable or old ones
+reach end-of-life.
 
 .. caution::
 

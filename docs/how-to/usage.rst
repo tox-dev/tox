@@ -1114,6 +1114,40 @@ Environments with a Python factor (e.g. ``3.13``, ``py313``) or an explicit :ref
 
 .. ------------------------------------------------------------------------------------------
 
+.. _open-ended-ranges:
+
+**********************************************
+ Future-proof env_list with open-ended ranges
+**********************************************
+
+Instead of updating ``env_list`` every time a new Python version is released, use open-ended ranges (INI only):
+
+.. code-block:: ini
+
+    [tox]
+    env_list = py3{10-}, lint
+
+This expands up to the latest stable CPython version known to tox. When you upgrade tox after a new Python release, the
+range automatically includes the new version.
+
+To start from the oldest supported version:
+
+.. code-block:: ini
+
+    [tox]
+    env_list = py3{-13}, lint
+
+This expands down from ``LATEST_PYTHON_MINOR_MIN``. Both forms can be mixed with explicit values and closed ranges:
+
+.. code-block:: ini
+
+    [tox]
+    env_list = py3{10-, 8}, lint
+
+See :ref:`generative-environment-list` for the full range syntax reference.
+
+.. ------------------------------------------------------------------------------------------
+
 .. _eol-version-support:
 
 **********************************
