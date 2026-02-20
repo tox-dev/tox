@@ -301,7 +301,9 @@ For example:
  Core
 ******
 
-The following options are set in the ``[tox]`` section of ``tox.ini`` or the ``[tox:tox]`` section of ``setup.cfg``.
+The following options are set in the ``[tox]`` section of ``tox.ini``, the ``[tox:tox]`` section of ``setup.cfg``, or
+the top level of ``tox.toml``. Placing these options in an environment section (e.g. ``[testenv]``) has no effect. Run
+``tox config`` or ``tox run -v`` to check for misplaced keys.
 
 .. conf::
     :keys: requires
@@ -485,7 +487,9 @@ Python language core options
  tox environment
 *****************
 
-These are configuration for the tox environments (either packaging or run type).
+These are configuration for the tox environments (either packaging or run type). Set these in ``[testenv]`` (INI),
+``env_run_base`` (TOML), or per-environment sections. Placing these options in the core ``[tox]`` section has no effect.
+Run ``tox config`` or ``tox run -v`` to check for misplaced keys.
 
 Base options
 ============

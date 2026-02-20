@@ -149,6 +149,11 @@ Each tox environment has its own configuration. Settings defined at the base lev
 
 Here the ``lint`` environment overrides the base settings entirely, while ``3.13`` and ``3.12`` inherit from the base.
 
+.. tip::
+
+    Options must go in the correct section — placing a core option in an environment section (or vice versa) silently
+    has no effect. Run ``tox run -v`` or ``tox config`` to check for misplaced keys.
+
 Environment names and Python versions
 =====================================
 

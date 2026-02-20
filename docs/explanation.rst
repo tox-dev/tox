@@ -593,6 +593,27 @@ this is the tool inside the tox environment hitting the missing system package, 
 - Use :pypi:`tox-uv`, which replaces both the environment creation and package installation with :pypi:`uv`, avoiding
   the stdlib :mod:`venv` dependency entirely.
 
+Misplaced configuration keys
+============================
+
+tox configuration is split into two sections: **core** (``[tox]`` / top-level TOML) and **environment** (``[testenv]`` /
+``env_run_base`` in TOML). Options placed in the wrong section are silently ignored because tox cannot distinguish a
+misplaced option from a plugin-defined key that isn't loaded yet (e.g. during provisioning).
+
+To detect misplaced keys:
+
+- Run ``tox run -v`` — unused keys are printed as warnings before the final report.
+- Run ``tox config`` — unused keys appear as ``# !!! unused:`` comments per section.
+
+For example, putting ``ignore_base_python_conflict`` in ``[testenv]`` instead of ``[tox]`` produces:
+
+.. code-block:: text
+
+    [testenv:py] unused config key(s): ignore_base_python_conflict
+
+See the :ref:`Core <conf-core>` and :ref:`tox environment <conf-testenv>` reference sections for which options belong
+where.
+
 ******************
  Related projects
 ******************

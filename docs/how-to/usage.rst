@@ -1041,6 +1041,14 @@ When an environment fails, use these techniques to investigate:
 
        tox run -e 3.13 -r
 
+6. **Check for misplaced config keys**. Options in the wrong section are silently ignored. Use ``-v`` to surface
+   warnings about unrecognized keys, or run ``tox config`` to see ``# !!! unused:`` markers:
+
+   .. code-block:: bash
+
+       tox run -v
+       tox config -e 3.13
+
 .. _run-interactive-programs:
 
 **************************
