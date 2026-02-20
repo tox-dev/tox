@@ -194,6 +194,17 @@ def test_posargs_colon_in_inactive_env_does_not_crash(tox_project: ToxProjectCre
     assert "ok" in outcome.out
 
 
+def test_env_site_packages_dir_plat(tox_project: ToxProjectCreator) -> None:
+    toml = """\
+[env_run_base]
+package = "skip"
+commands = [["python", "-c", "print('ok')"]]
+"""
+    result = tox_project({"tox.toml": toml}).run("c", "-e", "py", "-k", "env_site_packages_dir_plat")
+    result.assert_success()
+    assert "site-packages" in result.out
+
+
 def test_pip_user_disabled(tox_project: ToxProjectCreator) -> None:
     proj = tox_project(
         {

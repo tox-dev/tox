@@ -92,8 +92,13 @@ class Python(ToxEnv, ABC):
         )
         self.conf.add_constant(
             keys=["env_site_packages_dir", "envsitepackagesdir"],
-            desc="the python environments site package",
+            desc="the python environments site package - pure python (purelib)",
             value=self.env_site_package_dir,
+        )
+        self.conf.add_constant(
+            keys=["env_site_packages_dir_plat", "envsitepackagesdir_plat"],
+            desc="the python environments platform-specific site package (platlib)",
+            value=self.env_site_package_dir_plat,
         )
         self.conf.add_constant(
             keys=["env_bin_dir", "envbindir"],
@@ -223,12 +228,21 @@ class Python(ToxEnv, ABC):
 
     @abstractmethod
     def env_site_package_dir(self) -> Path:
-        """Return the site-packages directory for this environment.
+        """Return the pure-python site-packages directory (purelib) for this environment.
 
         Debian derivatives change site-packages to dist-packages, so we look at the last path under prefix.
 
         """
         raise NotImplementedError
+
+    def env_site_package_dir_plat(self) -> Path:
+        """Return the platform-specific site-packages directory (platlib) for this environment.
+
+        On most platforms this is the same as purelib, but on some Linux distributions (Fedora, RHEL) platlib uses lib64
+        instead of lib. Defaults to purelib so third-party runners don't need to override this.
+
+        """
+        return self.env_site_package_dir()
 
     @abstractmethod
     def env_python(self) -> Path:

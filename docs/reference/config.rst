@@ -1287,7 +1287,16 @@ Python options
     :constant:
     :version_added: 1.4.3
 
-    The Python environments site package - where packages are installed (the purelib folder path).
+    The Python environments site package - where pure-python packages are installed (the purelib folder path).
+
+.. conf::
+    :keys: env_site_packages_dir_plat, envsitepackagesdir_plat
+    :constant:
+    :version_added: 4.42
+
+    The Python environments platform-specific site package (the platlib folder path). On most platforms this is the same
+    as :ref:`env_site_packages_dir`, but on some Linux distributions (Fedora, RHEL) platlib resolves to ``lib64`` instead
+    of ``lib``.
 
 .. conf::
     :keys: env_bin_dir, envbindir
@@ -2570,7 +2579,9 @@ or via ``{name}`` in INI.
     - - ``{env_python}`` / ``{envpython}``
       - Path to the Python executable in the virtual environment.
     - - ``{env_site_packages_dir}`` / ``{envsitepackagesdir}``
-      - Site-packages directory of the virtual environment.
+      - Pure-python site-packages directory (purelib) of the virtual environment.
+    - - ``{env_site_packages_dir_plat}`` / ``{envsitepackagesdir_plat}``
+      - Platform-specific site-packages directory (platlib) of the virtual environment.
     - - ``{base_python}`` / ``{basepython}``
       - The configured base Python interpreter.
     - - ``{py_dot_ver}``
