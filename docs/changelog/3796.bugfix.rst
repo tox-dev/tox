@@ -1,0 +1,3 @@
+Fix factor-conditional continuation lines (e.g. ``cov: coverage run \`` / ``!cov: python \`` / ``somefile.py``) where
+different factor prefixes on consecutive continuation lines caused prefixes to be passed as literal command arguments
+instead of being filtered - by :user:`gaborbernat`.
