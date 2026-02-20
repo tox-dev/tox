@@ -739,6 +739,37 @@ variables:
 Any CLI flag for virtualenv can be set as an environment variable with the ``VIRTUALENV_`` prefix (in uppercase).
 Consult the :pypi:`virtualenv` documentation for supported values.
 
+.. _howto_clean_caches:
+
+*****************************************
+ Clean external caches during recreation
+*****************************************
+
+Tools like :pypi:`pre-commit` maintain their own caches outside the tox environment directory. When you recreate an
+environment with ``tox run -r``, those external caches are left behind. Use :ref:`recreate_commands` to run cleanup
+commands inside the old environment before it is removed:
+
+.. tab:: TOML
+
+    .. code-block:: toml
+
+         [env_run_base]
+         deps = ["pre-commit"]
+         recreate_commands = [["{env_python}", "-Im", "pre_commit", "clean"]]
+         commands = [["pre-commit", "run", "--all-files"]]
+
+.. tab:: INI
+
+    .. code-block:: ini
+
+         [testenv]
+         deps = pre-commit
+         recreate_commands = {env_python} -Im pre_commit clean
+         commands = pre-commit run --all-files
+
+These commands only run during recreation -- they are skipped on first creation and on normal re-runs. Failures are
+logged as warnings and never block the recreation itself.
+
 ***************************
  Ignore command exit codes
 ***************************

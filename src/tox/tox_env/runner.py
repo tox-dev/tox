@@ -8,6 +8,7 @@ from hashlib import sha256
 from typing import TYPE_CHECKING, Any, cast
 
 from tox.config.types import Command, EnvList
+from tox.execute import Outcome
 
 from .api import ToxEnv, ToxEnvCreateArgs
 from .package import Package, PackageToxEnv, PathPackage
@@ -15,6 +16,7 @@ from .util import add_change_dir_conf
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
+    from pathlib import Path
 
     from tox.journal import EnvJournal
 
@@ -61,6 +63,12 @@ class RunToxEnv(ToxEnv, ABC):
             of_type=list[Command],
             default=[],
             desc="the commands to be called after testing",
+        )
+        self.conf.add_config(
+            keys=["recreate_commands"],
+            of_type=list[Command],
+            default=[],
+            desc="commands to run before the environment is removed during recreation (e.g. cache cleanup)",
         )
         add_change_dir_conf(self.conf, self.core)
         self.conf.add_config(
@@ -133,12 +141,36 @@ class RunToxEnv(ToxEnv, ABC):
                 getattr(package_env, method_name)(*args)
 
     def _clean(self, transitive: bool = False) -> None:  # noqa: FBT001, FBT002
+        if not self._run_state["clean"] and self.env_dir.exists():
+            try:
+                self._run_recreate_commands()
+            except Exception:
+                logging.warning("recreate_commands failed, continuing with recreation", exc_info=True)
         super()._clean(transitive)
         if transitive:
             for pkg_env in self.package_envs:
                 if cast("bool", pkg_env.conf["recreate"]):
                     with pkg_env.display_context(suspend=self._has_display_suspended):
                         pkg_env._clean()  # noqa: SLF001
+
+    def _run_recreate_commands(self) -> None:
+        from tox.session.cmd.run.single import run_command_set  # noqa: PLC0415
+
+        command_set: list[Command] = self.conf["recreate_commands"]
+        if not command_set:
+            return
+        chdir: Path = self.conf["change_dir"]
+        chdir.mkdir(exist_ok=True, parents=True)
+        env_dir = self.env_dir
+        old_paths = self._paths_private
+        self._paths_private = [p for p in (env_dir / "bin", env_dir / "Scripts") if p.exists()]
+        try:
+            outcomes: list[Outcome] = []
+            exit_code = run_command_set(self, "recreate_commands", chdir, ignore_errors=True, outcomes=outcomes)
+            if exit_code != Outcome.OK:
+                logging.warning("recreate_commands failed with exit code %d, continuing with recreation", exit_code)
+        finally:
+            self._paths_private = old_paths
 
     @property
     def _default_package_env(self) -> str:
