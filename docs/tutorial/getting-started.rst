@@ -167,7 +167,15 @@ naturally in environment lists and CI output, and avoids confusion for Python ve
 digits become three characters.
 
 If the name doesn't match any pattern, tox uses the same Python as the one tox is installed into (this is the case for
-``lint`` in our example).
+``lint`` in our example). To override this fallback, set :ref:`default_base_python`:
+
+.. code-block:: toml
+
+    [env_run_base]
+    default_base_python = ["3.14", "3.13"]
+
+This pins a default Python version for environments without a Python factor, improving reproducibility across machines
+with different system Pythons.
 
 For the full list of environment options, see :ref:`conf-testenv`.
 
