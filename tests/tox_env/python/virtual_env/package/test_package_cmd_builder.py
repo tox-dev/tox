@@ -87,6 +87,32 @@ def test_install_pkg_via(tox_project: ToxProjectCreator, mode: str, pkg_with_ext
 
 
 @pytest.mark.usefixtures("enable_pip_pypi_access")
+def test_build_wheel_external_runs_once(
+    tox_project: ToxProjectCreator, demo_pkg_inline: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    toml = """
+    env_list = ["a", "b"]
+    [env_run_base]
+    package = "external"
+    package_env = ".ext"
+    commands = [["python", "-c", "from demo_pkg_inline import do; do()"]]
+    [env.".ext"]
+    deps = ["build"]
+    package_glob = "{env_tmp_dir}/dist/*.whl"
+    commands = [["pyproject-build", "-w", ".", "-o", "{env_tmp_dir}/dist"]]
+    """
+    project = tox_project({"tox.toml": toml})
+    monkeypatch.delenv("PIP_EXTRA_INDEX_URL", raising=False)
+    monkeypatch.delenv("PIP_INDEX_URL", raising=False)
+
+    result = project.run("r", "--root", str(demo_pkg_inline), "--workdir", str(project.path))
+
+    result.assert_success()
+    assert result.out.count("pyproject-build") == 1
+    assert result.out.count("greetings from demo_pkg_inline") == 2
+
+
+@pytest.mark.usefixtures("enable_pip_pypi_access")
 def test_build_wheel_external(
     tox_project: ToxProjectCreator, demo_pkg_inline: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
