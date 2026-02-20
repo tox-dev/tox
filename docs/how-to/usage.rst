@@ -1049,6 +1049,45 @@ When an environment fails, use these techniques to investigate:
        tox run -v
        tox config -e 3.13
 
+.. _skip-env-install:
+
+**************************************
+ Reuse an environment without network
+**************************************
+
+When working offline, on a plane, or in an air-gapped CI environment, tox still attempts to install dependencies and the
+project package on every run. If the environment was previously set up and nothing has changed, you can skip all
+installation steps with ``--skip-env-install``:
+
+.. code-block:: bash
+
+    # First run: installs everything normally
+    tox run -e 3.13
+
+    # Subsequent runs: skip all installation, reuse existing environment
+    tox run -e 3.13 --skip-env-install
+
+This skips:
+
+- Installing ``deps`` and dependency groups
+- Building and installing the project package
+
+The environment must already exist from a previous run. Commands (``commands_pre``, ``commands``, ``commands_post``)
+still execute normally.
+
+``--skip-env-install`` differs from ``--skip-pkg-install`` in scope: ``--skip-pkg-install`` only skips the package build
+and install step, while ``--skip-env-install`` additionally skips dependency installation. Use ``--skip-pkg-install``
+when you want to refresh dependencies but not rebuild the package. Use ``--skip-env-install`` when you want to skip all
+installation entirely.
+
+.. code-block:: bash
+
+    # Skip only package build/install, still install deps
+    tox run -e 3.13 --skip-pkg-install
+
+    # Skip everything: deps + package
+    tox run -e 3.13 --skip-env-install
+
 .. _run-interactive-programs:
 
 **************************

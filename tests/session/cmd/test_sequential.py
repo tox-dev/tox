@@ -385,6 +385,29 @@ def test_skip_pkg_install(tox_project: ToxProjectCreator, demo_pkg_inline: Path)
     assert result_first.out.startswith("py: skip building and installing the package"), result_first.out
 
 
+def test_skip_env_install(tox_project: ToxProjectCreator, demo_pkg_inline: Path) -> None:
+    proj = tox_project({"tox.toml": '[env_run_base]\npackage = "wheel"\n'})
+    result = proj.run("--root", str(demo_pkg_inline), "--workdir", str(proj.path / ".tox"), "--skip-env-install")
+    result.assert_success()
+    assert "skip installing dependencies and package" in result.out
+    assert "skip building and installing the package" in result.out
+
+
+def test_skip_env_install_no_install_calls(tox_project: ToxProjectCreator, demo_pkg_inline: Path) -> None:
+    proj = tox_project({
+        "tox.toml": """
+            [env_run_base]
+            package = "wheel"
+            deps = ["setuptools"]
+        """,
+    })
+    execute_calls = proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
+    result = proj.run("--root", str(demo_pkg_inline), "--workdir", str(proj.path / ".tox"), "--skip-env-install")
+    result.assert_success()
+    calls = [(i[0][0].conf.name, i[0][3].run_id) for i in execute_calls.call_args_list]
+    assert not any(run_id.startswith("install") for _, run_id in calls)
+
+
 def test_skip_develop_mode(tox_project: ToxProjectCreator, demo_pkg_setuptools: Path) -> None:
     proj = tox_project({"tox.ini": "[testenv]\npackage=wheel\n"})
     execute_calls = proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)

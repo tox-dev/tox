@@ -1216,8 +1216,9 @@ Run
     :default: False
     :version_added: 1.9
 
-    Skip installation of the package.  This can be used when you need the virtualenv management but do not want to
-    install the current package into that environment.
+    Skip installation of the package. This can be used when you need the virtualenv management but do not want to
+    install the current package into that environment. To also skip dependency installation at runtime, use the
+    ``--skip-env-install`` CLI flag (see :ref:`skip-env-install`).
 
 .. conf::
     :keys: package_env

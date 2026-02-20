@@ -84,6 +84,14 @@ The primary tox states are:
       configuration section, and then the earlier packaged source distribution. By default ``pip`` is used to install
       packages, however one can customize this via ``install_command``.
    3. **Packaging** (optional): create a distribution of the current project (see :ref:`packaging` below).
+
+   Steps 2 and 3 can be selectively skipped with CLI flags:
+
+   - ``--skip-pkg-install`` skips step 3 only (packaging and package installation), while still installing dependencies.
+   - ``--skip-env-install`` skips both steps 2 and 3 entirely, reusing the environment as-is. This is useful when
+     working offline or when the environment is already fully set up from a previous run. See :ref:`skip-env-install`
+     for practical usage.
+
    4. **Extra setup commands** (optional): run the :ref:`extra_setup_commands` specified. These execute after all
       installations complete but before test commands, and run during the ``--notest`` phase.
    5. **Commands**: run the specified commands in the specified order. Whenever the exit code of any of them is not

@@ -139,6 +139,12 @@ def env_run_create_flags(parser: ArgumentParser, mode: str) -> None:
             help="skip package installation for this run",
             action="store_true",
         )
+        parser.add_argument(
+            "--skip-env-install",
+            dest="skip_env_install",
+            help="skip dependency and package installation, reuse existing environment",
+            action="store_true",
+        )
 
 
 def report(start: float, runs: list[ToxEnvRunResult], is_colored: bool, verbosity: int) -> int:  # noqa: FBT001
