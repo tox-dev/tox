@@ -770,6 +770,43 @@ commands inside the old environment before it is removed:
 These commands only run during recreation -- they are skipped on first creation and on normal re-runs. Failures are
 logged as warnings and never block the recreation itself.
 
+*****************************************
+ Test across old and new Python versions
+*****************************************
+
+When a project must support both very old (e.g. Python 3.6) and very new (e.g. Python 3.15) interpreters, no single
+virtualenv release covers both. Use :ref:`virtualenv_spec` to pin a different virtualenv version per environment:
+
+.. tab:: TOML
+
+    .. code-block:: toml
+
+         env_list = ["3.6", "3.15", "3.13"]
+
+         [env_run_base]
+         deps = ["pytest"]
+         commands = [["pytest"]]
+
+         [env."3.6"]
+         virtualenv_spec = "virtualenv<20.22.0"
+
+.. tab:: INI
+
+    .. code-block:: ini
+
+         [tox]
+         env_list = 3.6, 3.15, 3.13
+
+         [testenv]
+         deps = pytest
+         commands = pytest
+
+         [testenv:3.6]
+         virtualenv_spec = virtualenv<20.22.0
+
+The ``3.6`` environment uses an older virtualenv that still supports Python 3.6, while other environments use the
+default (imported) virtualenv. The first run bootstraps the pinned version; subsequent runs reuse the cached bootstrap.
+
 ***************************
  Ignore command exit codes
 ***************************

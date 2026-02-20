@@ -20,6 +20,7 @@ from tox.execute.local_sub_process import LocalSubProcessExecutor
 from tox.tox_env.errors import Skip
 from tox.tox_env.python.api import Python, PythonInfo, VersionInfo
 from tox.tox_env.python.pip.pip_install import Pip
+from tox.tox_env.python.virtual_env.subprocess_adapter import SubprocessCreator, SubprocessSession
 
 if TYPE_CHECKING:
     from virtualenv.create.creator import Creator
@@ -35,7 +36,7 @@ class VirtualEnv(Python, ABC):
     """A python executor that uses the virtualenv project with pip."""
 
     def __init__(self, create_args: ToxEnvCreateArgs) -> None:
-        self._virtualenv_session: Session | None = None
+        self._virtualenv_session: Session | SubprocessSession | None = None
         self._executor: Execute | None = None
         self._installer: Pip | None = None
         super().__init__(create_args)
@@ -69,6 +70,14 @@ class VirtualEnv(Python, ABC):
             ),
             desc="true if you want virtualenv to upgrade pip/wheel/setuptools to the latest version",
         )
+        self.conf.add_config(
+            keys=["virtualenv_spec"],
+            of_type=str,
+            default="",
+            desc="PEP 440 version spec for virtualenv (e.g. virtualenv<20.22.0). When set, tox bootstraps this "
+            "version in an isolated environment and runs it via subprocess, enabling Python versions "
+            "incompatible with the installed virtualenv.",
+        )
 
     @property
     def executor(self) -> Execute:
@@ -84,12 +93,11 @@ class VirtualEnv(Python, ABC):
 
     def python_cache(self) -> dict[str, Any]:
         base = super().python_cache()
-        base.update(
-            {
-                "executable": str(self.base_python.extra["executable"]),
-                "virtualenv version": virtualenv_version,
-            },
-        )
+        base["executable"] = str(self.base_python.extra["executable"])
+        if spec := self.conf["virtualenv_spec"]:
+            base["virtualenv_spec"] = spec
+        else:
+            base["virtualenv version"] = virtualenv_version
         return base
 
     def _get_env_journal_python(self) -> dict[str, Any]:
@@ -109,17 +117,31 @@ class VirtualEnv(Python, ABC):
         return env
 
     @property
-    def session(self) -> Session:
+    def session(self) -> Session | SubprocessSession:
         if self._virtualenv_session is None:
-            env_dir = [str(self.env_dir)]
             env = self.virtualenv_env_vars()
-            try:
-                with redirect_stderr(StringIO()):
-                    self._virtualenv_session = session_via_cli(env_dir, options=None, setup_logging=False, env=env)
-            except SystemExit as exc:
-                msg = f"virtualenv session creation failed for {env_dir[0]}"
-                raise RuntimeError(msg) from exc
+            if spec := self.conf["virtualenv_spec"]:
+                self._virtualenv_session = self._create_subprocess_session(spec, env)
+            else:
+                self._virtualenv_session = self._create_imported_session(env)
         return self._virtualenv_session
+
+    def _create_subprocess_session(self, spec: str, env: dict[str, str]) -> SubprocessSession:
+        from .subprocess_adapter import ensure_bootstrap, probe_python  # noqa: PLC0415
+
+        bootstrap_python = ensure_bootstrap(cast("Path", self.core["work_dir"]), spec)
+        base_pythons: list[str] = self.conf["base_python"]
+        interpreter = next((info for bp in base_pythons if (info := probe_python(bp)) is not None), None)
+        return SubprocessSession(self.env_dir, bootstrap_python, env, interpreter)
+
+    def _create_imported_session(self, env: dict[str, str]) -> Session:
+        env_dir = [str(self.env_dir)]
+        try:
+            with redirect_stderr(StringIO()):
+                return session_via_cli(env_dir, options=None, setup_logging=False, env=env)
+        except SystemExit as exc:
+            msg = f"virtualenv session creation failed for {env_dir[0]}"
+            raise RuntimeError(msg) from exc
 
     def virtualenv_env_vars(self) -> dict[str, str]:
         env = self.environment_variables.copy()
@@ -136,7 +158,7 @@ class VirtualEnv(Python, ABC):
         return env
 
     @property
-    def creator(self) -> Creator:
+    def creator(self) -> Creator | SubprocessCreator:
         return self.session.creator
 
     def create_python_env(self) -> None:
@@ -161,25 +183,31 @@ class VirtualEnv(Python, ABC):
 
     def prepend_env_var_path(self) -> list[Path]:
         """Paths to add to the executable."""
-        # we use the original executable as shims may be somewhere else
-        creator = cast(
-            "Describe", self.creator
-        )  # all concrete Creator subclasses inherit Describe via VirtualenvBuiltin
-        return list(dict.fromkeys((creator.bin_dir, creator.script_dir)))
+        creator = self._creator_with_skip()
+        if isinstance(creator, SubprocessCreator):
+            return list(dict.fromkeys((creator.bin_dir, creator.script_dir)))
+        described = cast("Describe", creator)
+        return list(dict.fromkeys((described.bin_dir, described.script_dir)))
 
     def env_site_package_dir(self) -> Path:
-        return cast("Path", cast("Describe", self._creator_with_skip()).purelib)
+        return self._describe_path("purelib")
 
     def env_site_package_dir_plat(self) -> Path:
-        return cast("Path", cast("Describe", self._creator_with_skip()).platlib)
+        return self._describe_path("platlib")
 
     def env_python(self) -> Path:
-        return cast("Path", cast("Describe", self._creator_with_skip()).exe)
+        return self._describe_path("exe")
 
     def env_bin_dir(self) -> Path:
-        return cast("Path", cast("Describe", self._creator_with_skip()).script_dir)
+        return self._describe_path("script_dir")
 
-    def _creator_with_skip(self) -> Creator:
+    def _describe_path(self, attr: str) -> Path:
+        creator = self._creator_with_skip()
+        if isinstance(creator, SubprocessCreator):
+            return getattr(creator, attr)
+        return cast("Path", getattr(cast("Describe", creator), attr))
+
+    def _creator_with_skip(self) -> Creator | SubprocessCreator:
         try:
             return self.creator
         except RuntimeError as exc:

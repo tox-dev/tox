@@ -536,6 +536,36 @@ it falls back to the base section (:ref:`base` configuration). For ``tox.toml`` 
 
 Here ``test`` inherits ``commands`` from the base because it is not specified in ``[env.test]``.
 
+.. _virtualenv-version-pinning:
+
+****************************
+ Virtualenv version pinning
+****************************
+
+tox creates isolated environments using :pypi:`virtualenv`, which it imports as a library. This works well when the
+installed virtualenv supports all target Python versions, but breaks down at the edges: older virtualenv releases
+(pre-20.22) are required for Python 3.6 support, while the latest virtualenv is needed for Python 3.15+. Since tox can
+only import one virtualenv version per process, projects that need both old and new Pythons in a single ``tox.toml`` hit
+a wall.
+
+The :ref:`virtualenv_spec` setting resolves this by decoupling the virtualenv used for environment creation from the one
+tox imports. When set, tox:
+
+1. Creates a bootstrap venv (using the stdlib ``venv`` module) in ``.tox/.virtualenv-bootstrap/``.
+2. Installs the specified virtualenv version into that bootstrap venv via pip.
+3. Runs the bootstrapped virtualenv as a subprocess instead of calling ``session_via_cli()`` from the imported library.
+
+The bootstrap is content-addressed by a hash of the spec string, so different specs get separate cached environments. A
+file lock protects against concurrent bootstrap creation (relevant in parallel mode). Once bootstrapped, subsequent runs
+skip directly to step 3.
+
+When ``virtualenv_spec`` is empty (the default), tox uses the imported virtualenv with zero overhead -- the subprocess
+path only activates when explicitly configured. The spec is included in the environment cache key, so changing it
+triggers automatic recreation.
+
+This design mirrors tox's own auto-provisioning mechanism (``requires`` / ``min_version``), where tox bootstraps itself
+into a separate environment when the running installation doesn't meet the declared requirements.
+
 *******************
  Known limitations
 *******************
