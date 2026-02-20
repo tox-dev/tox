@@ -24,6 +24,7 @@ content = {
     logic: f"def do():\n    print('greetings from {name}')",
     plugin: """
         try:
+            from tox.config.cli.parser import ToxParser
             from tox.plugin import impl
             from tox.tox_env.python.virtual_env.runner import VirtualEnvRunner
             from tox.tox_env.register import ToxEnvRegister
@@ -37,6 +38,9 @@ content = {
             @impl
             def tox_register_tox_env(register: ToxEnvRegister) -> None:
                 register.add_run_env(ExampleVirtualEnvRunner)
+            @impl
+            def tox_add_option(parser: ToxParser) -> None:
+                parser.add_argument("--demo-plugin", action="store_true", help="demo plugin flag")
         """,
 }
 metadata_files = {

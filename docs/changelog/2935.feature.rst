@@ -1,0 +1,2 @@
+CLI options added by plugins listed in ``requires`` are now accepted during provisioning instead of failing with
+"unrecognized arguments" - by :user:`gaborbernat`.

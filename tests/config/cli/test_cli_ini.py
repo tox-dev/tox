@@ -61,6 +61,7 @@ def default_options() -> dict[str, Any]:
         "exit_and_dump_after": 0,
         "skip_env": "",
         "list_dependencies": is_ci(),
+        "remainder": [],
     }
 
 
@@ -239,6 +240,7 @@ def test_ini_exhaustive_parallel_values(core_handlers: dict[str, Callable[[State
         "exit_and_dump_after": 0,
         "skip_env": "",
         "list_dependencies": is_ci(),
+        "remainder": [],
     }
     assert options.parsed.verbosity == 4
     assert options.cmd_handlers == core_handlers

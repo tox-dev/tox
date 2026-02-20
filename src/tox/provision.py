@@ -104,6 +104,12 @@ def provision(state: State) -> int | bool:
     state.envs._mark_provision(bool(missing), provision_tox_env)  # noqa: SLF001
 
     if not missing:
+        if remainder := getattr(state.conf.options, "remainder", []):
+            msg = (
+                f"unrecognized arguments: {' '.join(remainder)}\n"
+                "hint: if you tried to pass arguments to a command use -- to separate them from tox ones"
+            )
+            raise HandledError(msg)
         return False
 
     miss_msg = f"is missing [requires (has)]: {deps}"
