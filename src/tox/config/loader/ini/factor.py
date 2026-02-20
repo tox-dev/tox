@@ -10,6 +10,9 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from collections.abc import Iterator
 
+LATEST_PYTHON_MINOR_MIN: int = 10
+LATEST_PYTHON_MINOR_MAX: int = 14
+
 
 def filter_for_env(value: str, name: str | None) -> str:
     current = (
@@ -100,19 +103,31 @@ def is_negated(factor: str) -> bool:
 
 
 def expand_ranges(value: str) -> str:
-    """Expand ranges in env expressions, eg py3{10-13} -> "py3{10,11,12,13}"""
-    matches = re.findall(r"((\d+)-(\d+)|\d+)(?:,|})", value)
-    for src, start_, end_ in matches:
+    """Expand ranges in env expressions.
+
+    Supports closed ranges ``{10-13}``, right-open ``{10-}`` (upper bound = :data:`LATEST_PYTHON_MINOR_MAX`), and
+    left-open ``{-13}`` (lower bound = :data:`LATEST_PYTHON_MINOR_MIN`).
+
+    """
+    matches = re.findall(r"((\d+)-(\d+)|(\d+)-|(?<=[{,])-(\d+)|\d+)(?:,|})", value)
+    for src, start_, end_, open_start, open_end in matches:
         if src and start_ and end_:
-            start = int(start_)
-            end = int(end_)
+            start, end = int(start_), int(end_)
             direction = 1 if start < end else -1
             expansion = ",".join(str(x) for x in range(start, end + direction, direction))
             value = value.replace(src, expansion, 1)
+        elif open_start:
+            expansion = ",".join(str(x) for x in range(int(open_start), LATEST_PYTHON_MINOR_MAX + 1))
+            value = value.replace(f"{open_start}-", expansion, 1)
+        elif open_end:
+            expansion = ",".join(str(x) for x in range(LATEST_PYTHON_MINOR_MIN, int(open_end) + 1))
+            value = value.replace(f"-{open_end}", expansion, 1)
     return value
 
 
 __all__ = (
+    "LATEST_PYTHON_MINOR_MAX",
+    "LATEST_PYTHON_MINOR_MIN",
     "expand_factors",
     "expand_ranges",
     "extend_factors",

@@ -186,6 +186,23 @@ the next run. When a dependency is removed the entire environment is automatical
 ``requirements`` files within :ref:`deps`. In most cases you should never need to use the ``--recreate`` flag -- tox
 detects changes and applies them automatically.
 
+Open-ended range bounds
+=======================
+
+INI generative environment lists support open-ended ranges like ``py3{10-}`` and ``py3{-13}``. Instead of probing the
+system for available interpreters (which would be slow and environment-dependent), tox tracks the `supported CPython
+versions <https://devguide.python.org/versions/>`_ via two constants:
+
+- ``LATEST_PYTHON_MINOR_MIN`` -- the oldest supported CPython minor version (currently **10**, for Python 3.10)
+- ``LATEST_PYTHON_MINOR_MAX`` -- the latest supported CPython minor version (currently **14**, for Python 3.14)
+
+These values are updated with each tox release. A right-open range ``{10-}`` uses ``LATEST_PYTHON_MINOR_MAX`` as its
+upper bound; a left-open range ``{-13}`` uses ``LATEST_PYTHON_MINOR_MIN`` as its lower bound.
+
+This design is deterministic and fast -- the expansion happens at configuration load time with no I/O -- while keeping
+environment lists future-proof across tox upgrades. Environments for interpreters not installed on the system are
+naturally skipped by the :ref:`skip_missing_interpreters` setting.
+
 ***************
  Main features
 ***************
