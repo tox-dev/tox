@@ -199,9 +199,10 @@ detects changes and applies them automatically.
 Open-ended range bounds
 =======================
 
-INI generative environment lists support open-ended ranges like ``py3{10-}`` and ``py3{-13}``. Instead of probing the
-system for available interpreters (which would be slow and environment-dependent), tox tracks the `supported CPython
-versions <https://devguide.python.org/versions/>`_ via two constants:
+Both INI and TOML support generative environment lists with open-ended ranges. INI uses curly-brace syntax
+(``py3{10-}``), while TOML uses range dicts (``{ prefix = "py3", start = 10 }``). Instead of probing the system for
+available interpreters (which would be slow and environment-dependent), tox tracks the `supported CPython versions
+<https://devguide.python.org/versions/>`_ via two constants:
 
 - ``LATEST_PYTHON_MINOR_MIN`` -- the oldest supported CPython minor version (currently **10**, for Python 3.10)
 - ``LATEST_PYTHON_MINOR_MAX`` -- the latest supported CPython minor version (currently **14**, for Python 3.14)

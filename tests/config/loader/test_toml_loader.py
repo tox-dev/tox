@@ -122,7 +122,7 @@ def test_toml_loader_env_list_ok() -> None:
 
 
 def test_toml_loader_env_list_nok() -> None:
-    with pytest.raises(TypeError, match="1 is not of type 'str'"):
+    with pytest.raises(TypeError, match="env_list items must be strings or product dicts, got int"):
         perform_load(["a", 1], EnvList)
 
 

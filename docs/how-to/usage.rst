@@ -289,24 +289,6 @@ The current platform (``sys.platform`` value like ``linux``, ``darwin``, ``win32
 implicit factor in all environments. Use platform factors to run different commands or set different dependencies per
 platform without encoding the platform name in the environment:
 
-.. tab:: INI
-
-    .. code-block:: ini
-
-         [tox]
-         env_list = py313
-
-         [testenv]
-         deps =
-             pytest
-             linux,darwin: platformdirs>=3
-             win32: platformdirs>=2
-         commands =
-             linux: python -c 'print("Running on Linux")'
-             darwin: python -c 'print("Running on macOS")'
-             win32: python -c 'print("Running on Windows")'
-             python -m pytest
-
 .. tab:: TOML
 
     .. code-block:: toml
@@ -327,6 +309,24 @@ platform without encoding the platform name in the environment:
              ["python", "-m", "pytest"],
          ]
 
+.. tab:: INI
+
+    .. code-block:: ini
+
+         [tox]
+         env_list = py313
+
+         [testenv]
+         deps =
+             pytest
+             linux,darwin: platformdirs>=3
+             win32: platformdirs>=2
+         commands =
+             linux: python -c 'print("Running on Linux")'
+             darwin: python -c 'print("Running on macOS")'
+             win32: python -c 'print("Running on Windows")'
+             python -m pytest
+
 This allows a single environment like ``py313`` to adapt its behavior based on the execution platform. The platform
 factors work alongside regular factors from the environment name.
 
@@ -345,6 +345,26 @@ Platform factors with environment factors
 Platform factors combine with regular environment factors. For example, an environment named ``py313-django50`` has
 factors ``py313``, ``django50``, and the current platform:
 
+.. tab:: TOML
+
+    .. code-block:: toml
+
+        env_list = [
+            { product = [["py312", "py313"], ["django42", "django50"]] },
+        ]
+
+        [env_run_base]
+        deps = [
+            { replace = "if", condition = "factor.django42", then = ["Django>=4.2,<4.3"] },
+            { replace = "if", condition = "factor.django50", then = ["Django>=5.0,<5.1"] },
+            { replace = "if", condition = "factor.py312 and factor.linux", then = ["pytest-xdist"] },
+            { replace = "if", condition = "factor.darwin", then = ["pyobjc-framework-Cocoa"] },
+        ]
+        commands = [
+            { replace = "if", condition = "factor.win32", then = [["python", "-c", "import winreg"]] },
+            ["pytest"],
+        ]
+
 .. tab:: INI
 
     .. code-block:: ini
@@ -362,35 +382,7 @@ factors ``py313``, ``django50``, and the current platform:
             win32: python -c 'import winreg'  # only runs on Windows
             pytest
 
-.. tab:: TOML
-
-    .. code-block:: toml
-
-        [env_list_base]
-        env_list = ["py312-django42", "py312-django50", "py313-django42", "py313-django50"]
-
-        [env_run_base]
-        deps = [
-            { replace = "if", condition = "factor.django42", then = ["Django>=4.2,<4.3"] },
-            { replace = "if", condition = "factor.django50", then = ["Django>=5.0,<5.1"] },
-            { replace = "if", condition = "factor.py312 and factor.linux", then = ["pytest-xdist"] },
-            { replace = "if", condition = "factor.darwin", then = ["pyobjc-framework-Cocoa"] },
-        ]
-        commands = [
-            { replace = "if", condition = "factor.win32", then = [["python", "-c", "import winreg"]] },
-            ["pytest"],
-        ]
-
 Negation also works with platform factors:
-
-.. tab:: INI
-
-    .. code-block:: ini
-
-        [testenv]
-        deps =
-            !win32: uvloop  # install uvloop on non-Windows platforms
-            !darwin: pyinotify  # install pyinotify except on macOS
 
 .. tab:: TOML
 
@@ -402,21 +394,21 @@ Negation also works with platform factors:
             { replace = "if", condition = "not factor.darwin", then = ["pyinotify"] },
         ]
 
+.. tab:: INI
+
+    .. code-block:: ini
+
+        [testenv]
+        deps =
+            !win32: uvloop  # install uvloop on non-Windows platforms
+            !darwin: pyinotify  # install pyinotify except on macOS
+
 Platform skipping vs platform factors
 =====================================
 
 There are two ways to handle platform differences:
 
 **Platform factors** (recommended) - Filter individual settings per platform:
-
-.. tab:: INI
-
-    .. code-block:: ini
-
-        [testenv]
-        commands =
-            linux: pytest --numprocesses=auto
-            darwin,win32: pytest
 
 .. tab:: TOML
 
@@ -428,16 +420,18 @@ There are two ways to handle platform differences:
             { replace = "if", condition = "factor.darwin or factor.win32", then = [["pytest"]] },
         ]
 
-Settings without a platform factor apply to all platforms. This is ideal for most cross-platform projects.
-
-**Platform skipping** - Skip entire environments when platform doesn't match:
-
 .. tab:: INI
 
     .. code-block:: ini
 
         [testenv]
-        platform = linux
+        commands =
+            linux: pytest --numprocesses=auto
+            darwin,win32: pytest
+
+Settings without a platform factor apply to all platforms. This is ideal for most cross-platform projects.
+
+**Platform skipping** - Skip entire environments when platform doesn't match:
 
 .. tab:: TOML
 
@@ -446,14 +440,20 @@ Settings without a platform factor apply to all platforms. This is ideal for mos
         [env_run_base]
         platform = "linux"
 
+.. tab:: INI
+
+    .. code-block:: ini
+
+        [testenv]
+        platform = linux
+
 This skips the entire environment on non-Linux systems. Use this only when an environment genuinely cannot run on other
 platforms (e.g., testing Linux-specific kernel features).
 
 .. note::
 
     Platform factors are supported in both INI and TOML formats. INI uses inline syntax (``linux: command``), while TOML
-    uses ``replace = "if"`` with ``factor.NAME`` conditions (see :ref:`conditional-value-reference`). Generative
-    environments are currently only supported in the INI format (see :ref:`toml-feature-gaps`).
+    uses ``replace = "if"`` with ``factor.NAME`` conditions (see :ref:`conditional-value-reference`).
 
 .. _howto_conditional_values:
 
@@ -806,6 +806,62 @@ virtualenv release covers both. Use :ref:`virtualenv_spec` to pin a different vi
 
 The ``3.6`` environment uses an older virtualenv that still supports Python 3.6, while other environments use the
 default (imported) virtualenv. The first run bootstraps the pinned version; subsequent runs reuse the cached bootstrap.
+
+.. _howto_generate_matrix:
+
+***************************************
+ Generate environment matrices in TOML
+***************************************
+
+Use the ``product`` dict in :ref:`env_list` to generate environments from the Cartesian product of factor groups. Each
+factor group is an array of strings or a range dict. Combinations are joined with ``-``:
+
+.. tab:: TOML
+
+    .. code-block:: toml
+
+         env_list = [
+             "lint",
+             { product = [
+                 { prefix = "py3", start = 12, stop = 14 },
+                 ["django42", "django50"],
+             ] },
+         ]
+
+         [env_run_base]
+         package = "skip"
+         deps = [
+             "pytest",
+             { replace = "if", condition = "factor.django42", then = ["Django>=4.2,<4.3"] },
+             { replace = "if", condition = "factor.django50", then = ["Django>=5.0,<5.1"] },
+         ]
+         commands = [["pytest"]]
+
+.. tab:: INI
+
+    .. code-block:: ini
+
+         [tox]
+         env_list = py3{12-14}-django{42,50}
+
+         [testenv]
+         package = skip
+         deps =
+             pytest
+             django42: Django>=4.2,<4.3
+             django50: Django>=5.0,<5.1
+         commands = pytest
+
+This generates ``lint``, ``py312-django42``, ``py312-django50``, ``py313-django42``, ``py313-django50``,
+``py314-django42``, ``py314-django50``.
+
+To skip incompatible combinations, add ``exclude`` -- this is only available in TOML:
+
+.. code-block:: toml
+
+    env_list = [
+        { product = [["py312", "py313"], ["django42", "django50"]], exclude = ["py312-django50"] },
+    ]
 
 ***************************
  Ignore command exit codes
@@ -1235,30 +1291,63 @@ Environments with a Python factor (e.g. ``3.13``, ``py313``) or an explicit :ref
  Future-proof env_list with open-ended ranges
 **********************************************
 
-Instead of updating ``env_list`` every time a new Python version is released, use open-ended ranges (INI only):
+Instead of updating ``env_list`` every time a new Python version is released, use open-ended ranges:
 
-.. code-block:: ini
+.. tab:: TOML
 
-    [tox]
-    env_list = py3{10-}, lint
+    .. code-block:: toml
+
+        env_list = [
+            { product = [{ prefix = "py3", start = 10 }] },
+            "lint",
+        ]
+
+.. tab:: INI
+
+    .. code-block:: ini
+
+        [tox]
+        env_list = py3{10-}, lint
 
 This expands up to the latest `supported CPython version <https://devguide.python.org/versions/>`_ known to tox. When
 you upgrade tox after a new Python release, the range automatically includes the new version.
 
 To start from the oldest supported version:
 
-.. code-block:: ini
+.. tab:: TOML
 
-    [tox]
-    env_list = py3{-13}, lint
+    .. code-block:: toml
 
-This expands down from the oldest supported CPython version. Both forms can be mixed with explicit values and closed
-ranges:
+        env_list = [
+            { product = [{ prefix = "py3", stop = 13 }] },
+            "lint",
+        ]
 
-.. code-block:: ini
+.. tab:: INI
 
-    [tox]
-    env_list = py3{10-, 8}, lint
+    .. code-block:: ini
+
+        [tox]
+        env_list = py3{-13}, lint
+
+This expands down from the oldest supported CPython version. Both forms can be mixed with explicit values:
+
+.. tab:: TOML
+
+    .. code-block:: toml
+
+        env_list = [
+            { product = [{ prefix = "py3", start = 10 }] },
+            "py38",
+            "lint",
+        ]
+
+.. tab:: INI
+
+    .. code-block:: ini
+
+        [tox]
+        env_list = py3{10-, 8}, lint
 
 See :ref:`generative-environment-list` for the full range syntax reference.
 
@@ -1377,9 +1466,8 @@ TOML is the recommended configuration format for new projects. Here is how commo
 - Positional arguments use replacement objects: ``{ replace = "posargs", default = ["tests"] }`` vs ``{posargs:tests}``
 - Environment variables in ``set_env`` use ``{ replace = "env", name = "VAR" }`` vs ``{env:VAR}``
 - Section references use ``{ replace = "ref", ... }`` vs ``{[section]key}``
-- Factor conditions use ``{ replace = "if", condition = "factor.NAME", ... }`` vs ``NAME:`` (see
-  :ref:`toml-feature-gaps`)
-- No generative environment lists in TOML (see :ref:`toml-feature-gaps`)
+- Factor conditions use ``{ replace = "if", condition = "factor.NAME", ... }`` vs ``NAME:``
+- Generative environment lists use ``{ product = [...] }`` dicts vs ``{a,b}-{c,d}`` brace expansion
 
 *************************************
  Format your tox configuration files

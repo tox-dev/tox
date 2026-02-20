@@ -102,10 +102,10 @@ Core settings affect all environments or configure how tox itself behaves. They 
        [tox]
        env_list = 3.13, 3.12, lint
 
-The :ref:`env_list` setting defines which environments run by default when you invoke ``tox`` without specifying any. In
-INI format, you can use ranges to avoid listing every version manually — ``3.{10-}`` expands to all Python minor
-versions from 10 up to the latest `supported CPython version <https://devguide.python.org/versions/>`_ known to tox (see
-:ref:`generative-environment-list`). For the full list of core options, see :ref:`conf-core`.
+The :ref:`env_list` setting defines which environments run by default when you invoke ``tox`` without specifying any.
+Both formats support generating environment matrices from factor combinations — INI uses curly-brace expansion
+(``3.{10-}``), while TOML uses ``product`` dicts (``{ product = [{ prefix = "py3", start = 10 }, ["django42"]] }``). See
+:ref:`generative-environment-list` for details. For the full list of core options, see :ref:`conf-core`.
 
 Environment settings
 ====================

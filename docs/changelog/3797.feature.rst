@@ -1,0 +1,2 @@
+Add TOML-native generative ``env_list`` via ``product`` dict syntax -- Cartesian product of factor groups with optional
+range dicts and exclusions - by :user:`gaborbernat`.
