@@ -190,11 +190,11 @@ Open-ended range bounds
 =======================
 
 INI generative environment lists support open-ended ranges like ``py3{10-}`` and ``py3{-13}``. Instead of probing the
-system for available interpreters (which would be slow and environment-dependent), tox hardcodes two constants that
-define the range of actively maintained CPython 3.x minor versions:
+system for available interpreters (which would be slow and environment-dependent), tox tracks the `supported CPython
+versions <https://devguide.python.org/versions/>`_ via two constants:
 
-- ``LATEST_PYTHON_MINOR_MIN`` -- the oldest non-end-of-life minor version (currently **10**, for Python 3.10)
-- ``LATEST_PYTHON_MINOR_MAX`` -- the latest stable release (currently **14**, for Python 3.14)
+- ``LATEST_PYTHON_MINOR_MIN`` -- the oldest supported CPython minor version (currently **10**, for Python 3.10)
+- ``LATEST_PYTHON_MINOR_MAX`` -- the latest supported CPython minor version (currently **14**, for Python 3.14)
 
 These values are updated with each tox release. A right-open range ``{10-}`` uses ``LATEST_PYTHON_MINOR_MAX`` as its
 upper bound; a left-open range ``{-13}`` uses ``LATEST_PYTHON_MINOR_MIN`` as its lower bound.
