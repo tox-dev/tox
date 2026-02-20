@@ -1,1 +1,0 @@
-Warn about unused configuration keys during ``tox run -v`` - by :user:`gaborbernat`.

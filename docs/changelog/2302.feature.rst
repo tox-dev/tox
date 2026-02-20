@@ -1,3 +1,0 @@
-Add ``{env_site_packages_dir_plat}`` / ``{envsitepackagesdir_plat}`` substitution that returns the platform-specific
-(platlib) site-packages directory. On some Linux distributions (Fedora, RHEL) this resolves to ``lib64`` instead of
-``lib``, which is no longer symlinked since virtualenv 20.x - by :user:`gaborbernat`.

@@ -1,2 +1,0 @@
-Add ``recreate_commands`` configuration option to run cleanup commands (e.g. clearing external caches like pre-commit)
-before the environment directory is removed during recreation (``-r``) - by :user:`gaborbernat`.

@@ -1,2 +1,0 @@
-Suppress ``BrokenPipeError`` during backend teardown when interrupted, preventing traceback spam during
-KeyboardInterrupt - by :user:`gaborjbernat`. Fixes :issue:`2660`.

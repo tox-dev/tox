@@ -1,6 +1,0 @@
-Platform-dependent commands can now be specified using factor syntax without requiring the platform name in the
-environment name. The current platform (``sys.platform`` value like ``linux``, ``darwin``, ``win32``) is automatically
-available as an implicit factor, allowing configurations like ``linux: pytest`` in INI or ``factor.linux`` in TOML
-conditional expressions to work in any environment. Additionally, TOML configurations can now use ``factor.NAME`` in
-conditional expressions to filter settings based on environment name factors, achieving feature parity with INI's factor
-system - by :user:`gaborbernat`.

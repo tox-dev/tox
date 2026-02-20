@@ -1,2 +1,0 @@
-``--list-dependencies`` output is now printed to stdout during parallel runs. Previously, the dependency list was
-captured in suspended output buffers and only shown on failure - by :user:`gaborbernat`.

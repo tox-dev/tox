@@ -1,4 +1,0 @@
-Compound factor conditionals (e.g., ``np-cov: coverage``) now correctly allow their individual factors to be used when
-specifying environments with ``-e``. Previously, running ``tox -e py310-np-cov`` with a factor conditional ``np-cov:
-coverage`` in the config would fail with "provided environments not found" because the individual factor ``cov`` was not
-recognized as combinable - by :user:`gaborbernat`.

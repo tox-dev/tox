@@ -1,1 +1,0 @@
-Document Debian/Ubuntu ``python3-venv`` limitation in known limitations - by :user:`gaborbernat`.

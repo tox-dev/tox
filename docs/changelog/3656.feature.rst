@@ -1,4 +1,0 @@
-Add ``virtualenv_spec`` configuration key that allows pinning a specific virtualenv version per environment (e.g.
-``virtualenv_spec = "virtualenv<20.22.0"``). When set, tox bootstraps the specified version in an isolated environment
-and drives it via subprocess, enabling environments targeting Python versions incompatible with the installed virtualenv
-- by :user:`gaborbernat`.

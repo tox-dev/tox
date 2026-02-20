@@ -1,2 +1,0 @@
-External packaging environments (``package = external``) now only run their build commands once per session, reusing the
-built package for all test environments that depend on them - by :user:`gaborbernat`.

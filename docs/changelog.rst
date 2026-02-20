@@ -7,6 +7,72 @@
 .. towncrier release notes start
 
 **********************
+ v4.42.0 (2026-02-20)
+**********************
+
+Features - 4.42.0
+=================
+
+- Platform-dependent commands can now be specified using factor syntax without requiring the platform name in the
+  environment name. The current platform (``sys.platform`` value like ``linux``, ``darwin``, ``win32``) is automatically
+  available as an implicit factor, allowing configurations like ``linux: pytest`` in INI or ``factor.linux`` in TOML
+  conditional expressions to work in any environment. Additionally, TOML configurations can now use ``factor.NAME`` in
+  conditional expressions to filter settings based on environment name factors, achieving feature parity with INI's
+  factor system - by :user:`gaborbernat`. (:issue:`2092`)
+- Add ``{env_site_packages_dir_plat}`` / ``{envsitepackagesdir_plat}`` substitution that returns the platform-specific
+  (platlib) site-packages directory. On some Linux distributions (Fedora, RHEL) this resolves to ``lib64`` instead of
+  ``lib``, which is no longer symlinked since virtualenv 20.x - by :user:`gaborbernat`. (:issue:`2302`)
+- External packaging environments (``package = external``) now only run their build commands once per session, reusing
+  the built package for all test environments that depend on them - by :user:`gaborbernat`. (:issue:`2729`)
+- Add ``default_base_python`` configuration key to specify a fallback Python interpreter when no Python factor or
+  explicit ``base_python`` is defined. This allows projects to pin a default Python version for reproducibility across
+  different machines without conflicting with ``pyXY`` factor-named environments - by :user:`gaborbernat`.
+  (:issue:`2846`)
+- CLI options added by plugins listed in ``requires`` are now accepted during provisioning instead of failing with
+  "unrecognized arguments" - by :user:`gaborbernat`. (:issue:`2935`)
+- Warn about unused configuration keys during ``tox run -v`` - by :user:`gaborbernat`. (:issue:`3188`)
+- Improve towncrier changelog structure with more granular categories: ``breaking``, ``deprecation``, ``feature``,
+  ``bugfix``, ``doc``, ``packaging``, ``contrib``, and ``misc`` - by :user:`gaborbernat`. (:issue:`3200`)
+- Add ``--skip-env-install`` CLI flag to skip dependency and package installation, allowing reuse of existing
+  environments when offline or when installation is unnecessary - by :user:`gaborbernat`. (:issue:`3310`)
+- Add ``recreate_commands`` configuration option to run cleanup commands (e.g. clearing external caches like pre-commit)
+  before the environment directory is removed during recreation (``-r``) - by :user:`gaborbernat`. (:issue:`3423`)
+- Environments with unavailable runners (missing plugins) are now gracefully skipped instead of causing a fatal error,
+  shown with status "NOT AVAILABLE". If such an environment is explicitly requested with ``-e``, a clear error message
+  is shown indicating which runner is missing and that the plugin may not be installed. Unavailable environments in the
+  configuration don't cause the overall run to fail - by :user:`gaborbernat`. (:issue:`3504`)
+- Add open-ended range expansion in generative env lists — ``py3{9-}`` expands up to the latest supported CPython minor
+  version and ``py3{-13}`` expands down to the oldest supported one, both hardcoded at release time per the `Python
+  release cycle <https://devguide.python.org/versions/>`_ - by :user:`gaborbernat`. (:issue:`3583`)
+- Add ``--no-capture`` (``-i``) CLI flag to disable output capture, allowing interactive programs like Python REPL to
+  access the terminal directly. When enabled, subprocess inherits parent console handles instead of pipes, fixing issues
+  where terminal APIs (e.g., querying console dimensions) fail on pipe handles. Mutually exclusive with
+  ``--result-json`` and parallel mode - by :user:`gaborjbernat`. Fixes :issue:`3635`. (:issue:`3635`)
+- Add ``virtualenv_spec`` configuration key that allows pinning a specific virtualenv version per environment (e.g.
+  ``virtualenv_spec = "virtualenv<20.22.0"``). When set, tox bootstraps the specified version in an isolated environment
+  and drives it via subprocess, enabling environments targeting Python versions incompatible with the installed
+  virtualenv - by :user:`gaborbernat`. (:issue:`3656`)
+
+Bug fixes - 4.42.0
+==================
+
+- Suppress ``BrokenPipeError`` during backend teardown when interrupted, preventing traceback spam during
+  KeyboardInterrupt - by :user:`gaborjbernat`. Fixes :issue:`2660`. (:issue:`2660`)
+- Factor-specific multiline commands using backslash continuation (``\``) no longer leak continuation lines into
+  environments that don't match the factor - by :user:`gaborbernat`. (:issue:`2912`)
+- ``--list-dependencies`` output is now printed to stdout during parallel runs. Previously, the dependency list was
+  captured in suspended output buffers and only shown on failure - by :user:`gaborbernat`. (:issue:`3322`)
+- Compound factor conditionals (e.g., ``np-cov: coverage``) now correctly allow their individual factors to be used when
+  specifying environments with ``-e``. Previously, running ``tox -e py310-np-cov`` with a factor conditional ``np-cov:
+  coverage`` in the config would fail with "provided environments not found" because the individual factor ``cov`` was
+  not recognized as combinable - by :user:`gaborbernat`. (:issue:`3780`)
+
+Improved documentation - 4.42.0
+===============================
+
+- Document Debian/Ubuntu ``python3-venv`` limitation in known limitations - by :user:`gaborbernat`. (:issue:`3195`)
+
+**********************
  v4.41.0 (2026-02-19)
 **********************
 
