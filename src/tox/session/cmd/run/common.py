@@ -385,7 +385,7 @@ def _handle_one_run_done(
             pkg_out_err = package_env.close_and_read_out_err()
             if pkg_out_err is not None:  # pragma: no branch
                 pkg_out_err_list.append(pkg_out_err)
-        if not success or tox_env.conf["parallel_show_output"]:
+        if not success or tox_env.conf["parallel_show_output"] or state.conf.options.list_dependencies:
             for pkg_out_err in pkg_out_err_list:
                 state._options.log_handler.write_out_err(pkg_out_err)  # pragma: no cover  # noqa: SLF001
             if out_err is not None:  # pragma: no branch # first show package build
