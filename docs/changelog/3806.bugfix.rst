@@ -1,0 +1,3 @@
+Add redirects for old documentation URLs that broke after the Diataxis restructure (e.g. ``/config.html`` ->
+``/reference/config.html``, ``/example/general.html`` -> ``/index.html``) using ``sphinx-reredirects`` - by
+:user:`gaborbernat`.
