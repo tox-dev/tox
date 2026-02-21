@@ -20,6 +20,6 @@ tox is a generic virtual environment management and test command line tool you c
 - acting as a frontend to continuous integration servers, greatly reducing boilerplate and merging CI and shell-based
   testing.
 
-Please read our [user guide](https://tox.wiki/en/latest/user_guide.html#basic-example) for an example and more detailed
+Please read our [user guide](https://tox.wiki/en/latest/tutorial/getting-started.html) for an example and more detailed
 introduction, or watch [this YouTube video](https://www.youtube.com/watch?v=SFqna5ilqig) that presents the problem space
 and how tox solves it.
