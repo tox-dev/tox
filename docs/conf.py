@@ -48,6 +48,7 @@ extensions = [
     "sphinx_issues",  # :user: and similar roles
     "sphinxcontrib.mermaid",
     "sphinxcontrib.towncrier.ext",
+    "sphinx_reredirects",
 ]
 mermaid_output_format = "raw"
 mermaid_d3_zoom = True
@@ -90,6 +91,34 @@ issues_github_path = f"{company}/{name}"  # `sphinx-issues` ext
 # Man page configuration
 man_pages = [("man/tox.1", "tox", "virtualenv-based automation of test activities", ["tox-dev"], 1)]
 man_show_urls = True
+
+redirects = {
+    "config": "reference/config.html",
+    "cli_interface": "reference/cli.html",
+    "user_guide": "explanation.html",
+    "installation": "how-to/install.html",
+    "howto": "how-to/usage.html",
+    "getting_started": "tutorial/getting-started.html",
+    "plugins": "plugin/index.html",
+    "plugins_api": "plugin/api.html",
+    "plugins/index": "plugin/index.html",
+    "plugins/api": "plugin/api.html",
+    "plugins/getting_started": "plugin/getting_started.html",
+    "plugins/howto": "plugin/howto.html",
+    "upgrading": "index.html",
+    "faq": "index.html",
+    "example/general": "index.html",
+    "example/basic": "index.html",
+    "example/devenv": "index.html",
+    "example/documentation": "index.html",
+    "example/jenkins": "index.html",
+    "example/nose": "index.html",
+    "example/package": "index.html",
+    "example/platform": "index.html",
+    "example/pytest": "index.html",
+    "example/result": "index.html",
+    "example/unittest": "index.html",
+}
 
 towncrier_draft_autoversion_mode = "draft"
 towncrier_draft_include_empty = True
