@@ -10,8 +10,6 @@ from sphinx.util.docutils import SphinxDirective
 from sphinx.util.logging import getLogger
 
 if TYPE_CHECKING:
-    from typing import Final
-
     from docutils.parsers.rst.states import RSTState, RSTStateMachine
     from sphinx.domains.std import StandardDomain
 
@@ -21,7 +19,7 @@ LOGGER = getLogger(__name__)
 class ToxConfig(SphinxDirective):
     name = "conf"
     has_content = True
-    option_spec: Final[ClassVar[dict[str, Any]]] = {
+    option_spec: ClassVar[dict[str, Any]] = {
         "keys": unchanged_required,
         "version_added": unchanged,
         "version_deprecated": unchanged,
