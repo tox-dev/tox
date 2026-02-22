@@ -405,8 +405,9 @@ def test_factor_conditional_falls_back_to_default(tox_project: ToxProjectCreator
 def test_cross_section_factor_conditional_resolves_to_empty(tox_project: ToxProjectCreator) -> None:
     """Cross-section substitution resolves to empty when no factors match.
 
-    Regression test for gh-3809: {[section]key} where key contains factor-conditional
-    values should resolve to empty string when no factors match, not remain unresolved.
+    Regression test for gh-3809: {[section]key} where key contains factor-conditional values should resolve to empty
+    string when no factors match, not remain unresolved.
+
     """
     ini = (
         "[tox]\nenv_list=py39{,-keyfs_sqlite,-hash_hl}\nno_package=true\n"
