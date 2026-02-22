@@ -1,0 +1,3 @@
+Fix cross-section substitution ``{[section]key}`` resolving to a literal unresolved reference instead of empty
+string when the referenced value contains only factor-conditional lines and no factors match the requesting
+environment - by :user:`Fridayai700`.

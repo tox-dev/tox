@@ -25,7 +25,7 @@ class ReplaceReferenceIni(ReplaceReference):
         self.conf = conf
         self.loader = loader
 
-    def __call__(self, value: str, conf_args: ConfigLoadArgs) -> str | None:
+    def __call__(self, value: str, conf_args: ConfigLoadArgs) -> str | None:  # noqa: C901
         # a return value of None indicates could not replace
         pattern = _replace_ref(self.loader.section.prefix or self.loader.section.name)
         match = pattern.match(value)
