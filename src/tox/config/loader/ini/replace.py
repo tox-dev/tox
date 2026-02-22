@@ -41,7 +41,15 @@ class ReplaceReferenceIni(ReplaceReference):
                 for src in self._config_value_sources(settings["env"], settings["section"], conf_args.env_name):
                     try:
                         if isinstance(src, SectionProxy):
-                            return self.loader.process_raw(self.conf, conf_args.env_name, src[key])
+                            try:
+                                return self.loader.process_raw(self.conf, conf_args.env_name, src[key])
+                            except KeyError:
+                                if key in src:
+                                    # Key exists but factor filtering emptied the value.
+                                    # For cross-section references this is a valid empty result,
+                                    # not a missing key — the caller explicitly asked for this value.
+                                    return ""
+                                raise
                         value = src.load(key, conf_args.chain)
                     except KeyError as exc:  # if fails, keep trying maybe another source can satisfy # noqa: PERF203
                         exception = exc
