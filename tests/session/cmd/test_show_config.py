@@ -391,9 +391,14 @@ def test_cross_section_envpython_resolves_to_calling_env(tox_project: ToxProject
 
 def test_factor_conditional_falls_back_to_default(tox_project: ToxProjectCreator) -> None:
     py_ver = f"{sys.version_info[0]}.{sys.version_info[1]}"
-    ini = (
-        f"[tox]\nenv_list=py{py_ver}-a,py{py_ver}-b\nno_package=true\n[testenv]\nbase_python =\n    a: python{py_ver}\n"
-    )
+    ini = f"""\
+    [tox]
+    env_list=py{py_ver}-a,py{py_ver}-b
+    no_package=true
+    [testenv]
+    base_python =
+        a: python{py_ver}
+    """
     outcome = tox_project({"tox.ini": ini}).run("c", "-e", f"py{py_ver}-a,py{py_ver}-b", "-k", "base_python")
     outcome.assert_success()
     parser = ConfigParser(interpolation=None)
