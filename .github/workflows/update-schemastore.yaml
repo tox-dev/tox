@@ -1,0 +1,64 @@
+name: Update SchemaStore
+on:
+  push:
+    tags: ["*"]
+
+permissions:
+  contents: read
+
+jobs:
+  update-schemastore:
+    runs-on: ubuntu-24.04
+    env:
+      GH_TOKEN: ${{ secrets.SCHEMASTORE_TOKEN }}
+      BRANCH: update-tox-schema
+    steps:
+      - uses: actions/checkout@v6
+      - name: Fork and clone SchemaStore
+        run: gh repo fork SchemaStore/schemastore --clone --remote -- /tmp/schemastore
+      - name: Create or reset branch
+        run: git switch -C "$BRANCH"
+        working-directory: /tmp/schemastore
+      - name: Copy schema with SchemaStore $id
+        run: |
+          python3 -c "
+          import json
+          with open('${{ github.workspace }}/src/tox/tox.schema.json') as f:
+              schema = json.load(f)
+          schema['\$id'] = 'https://json.schemastore.org/tox.json'
+          with open('/tmp/schemastore/src/schemas/json/tox.json', 'w') as f:
+              json.dump(schema, f, indent=2)
+              f.write('\n')
+          "
+      - name: Check for changes
+        id: diff
+        run: |
+          git add src/schemas/json/tox.json
+          if git diff --cached --quiet; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+        working-directory: /tmp/schemastore
+      - name: Commit and push
+        if: steps.diff.outputs.changed == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "Update tox JSON Schema to ${{ github.ref_name }}"
+          git push --force origin "$BRANCH"
+        working-directory: /tmp/schemastore
+      - name: Create or update pull request
+        if: steps.diff.outputs.changed == 'true'
+        run: |
+          if ! gh pr view "$BRANCH" --repo SchemaStore/schemastore > /dev/null 2>&1; then
+            gh pr create \
+              --repo SchemaStore/schemastore \
+              --title "Update tox JSON Schema to ${{ github.ref_name }}" \
+              --body "Updates tox's JSON Schema to [${{ github.sha }}](https://github.com/tox-dev/tox/commit/${{ github.sha }}) (release ${{ github.ref_name }})."
+          else
+            gh pr edit "$BRANCH" --repo SchemaStore/schemastore \
+              --title "Update tox JSON Schema to ${{ github.ref_name }}" \
+              --body "Updates tox's JSON Schema to [${{ github.sha }}](https://github.com/tox-dev/tox/commit/${{ github.sha }}) (release ${{ github.ref_name }})."
+          fi
+        working-directory: /tmp/schemastore
