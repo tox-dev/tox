@@ -1,3 +1,0 @@
-Enhance ``tox schema`` command: add ``x-taplo`` metadata for IDE integration, product dict support for ``env_list``,
-handle ``int`` and ``PythonConstraints`` types, fix ``$schema`` draft-07 URI, and add schema freshness test. Add
-``tox.toml`` to SchemaStore catalog for automatic IDE validation - by :user:`gaborbernat`.
