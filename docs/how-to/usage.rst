@@ -455,6 +455,61 @@ platforms (e.g., testing Linux-specific kernel features).
     Platform factors are supported in both INI and TOML formats. INI uses inline syntax (``linux: command``), while TOML
     uses ``replace = "if"`` with ``factor.NAME`` conditions (see :ref:`conditional-value-reference`).
 
+.. _howto_architecture:
+
+Targeting a specific CPU architecture
+=====================================
+
+.. versionadded:: 4.x
+
+On machines that support multiple CPU architectures (e.g. Apple Silicon running ``arm64`` natively and ``x86_64`` via
+Rosetta 2, or Linux running ``aarch64`` and ``x86_64`` via ``qemu-user``), you can constrain tox environments to a
+specific architecture by appending the ISA name to :ref:`base_python`.
+
+The architecture is derived from :func:`python:sysconfig.get_platform` (e.g. ``macosx-14.0-arm64``, ``linux-x86_64``)
+and normalized by :pypi:`virtualenv` (``amd64`` → ``x86_64``, ``aarch64`` → ``arm64``).
+
+.. tab:: TOML
+
+    .. code-block:: toml
+
+        # Run tests on both arm64 and x86_64 interpreters
+        env_list = ["arm64", "x86_64"]
+
+        [env.arm64]
+        base_python = ["cpython3.12-64-arm64"]
+        commands = [["pytest"]]
+
+        [env.x86_64]
+        base_python = ["cpython3.12-64-x86_64"]
+        commands = [["pytest"]]
+
+.. tab:: INI
+
+    .. code-block:: ini
+
+        [tox]
+        env_list = arm64, x86_64
+
+        [testenv:arm64]
+        base_python = cpython3.12-64-arm64
+        commands = pytest
+
+        [testenv:x86_64]
+        base_python = cpython3.12-64-x86_64
+        commands = pytest
+
+If the discovered interpreter's architecture does not match the requested one, tox raises a failure — just as it does
+for Python version mismatches. The matched architecture is recorded in the tox journal under the ``machine`` key.
+
+Common architecture values (after normalization):
+
+- ``x86_64`` — 64-bit x86 (Intel/AMD)
+- ``arm64`` — 64-bit ARM (Apple Silicon, Graviton, Ampere)
+- ``x86`` — 32-bit x86
+- ``s390x`` — IBM Z mainframe
+- ``ppc64le`` — 64-bit PowerPC little-endian
+
 .. _howto_conditional_values:
 
 *********************************

@@ -79,12 +79,14 @@ The primary tox states are:
       :ref:`runner`. For ``virtualenv`` tox will use the `virtualenv discovery logic
       <https://virtualenv.pypa.io/en/latest/user_guide.html#python-discovery>`_ where the python specification is
       defined by the tox environments :ref:`base_python` (if not set will try to extract it from the environment name,
-      then fall back to :ref:`default_base_python`, and finally to the Python running tox). This is created at first run
-      only to be reused at subsequent runs. If certain aspects of the project change (python version, dependencies
-      removed, etc.), a re-creation of the environment is automatically triggered. To force the recreation tox can be
-      invoked with the :ref:`recreate` flag (``-r``). When recreation occurs, any :ref:`recreate_commands` run inside
-      the old environment before its directory is removed -- this lets tools like pre-commit clean their external
-      caches. Failures in these commands are logged as warnings but never block the recreation.
+      then fall back to :ref:`default_base_python`, and finally to the Python running tox). The specification can
+      include a CPU architecture suffix (e.g. ``cpython3.12-64-arm64``) to constrain discovery to a specific ISA — the
+      architecture is derived from :func:`python:sysconfig.get_platform` and validated after discovery. This is created
+      at first run only to be reused at subsequent runs. If certain aspects of the project change (python version,
+      dependencies removed, etc.), a re-creation of the environment is automatically triggered. To force the recreation
+      tox can be invoked with the :ref:`recreate` flag (``-r``). When recreation occurs, any :ref:`recreate_commands`
+      run inside the old environment before its directory is removed -- this lets tools like pre-commit clean their
+      external caches. Failures in these commands are logged as warnings but never block the recreation.
    2. **Install dependencies** (optional): install the environment dependencies. When :ref:`pylock` is set, tox installs
       locked dependencies from the :PEP:`751` lock file (filtered by extras, dependency groups, and platform markers).
       Otherwise, it installs :ref:`deps` and :ref:`dependency_groups`. By default ``pip`` is used to install packages,
