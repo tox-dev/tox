@@ -521,6 +521,23 @@ def test_machine_factor_run_env(tox_project: ToxProjectCreator) -> None:
     result.assert_success()
     assert machine in result.out
 
+    # verify the created virtualenv reports the correct machine in the journal
+    result_journal = proj.run("r", "-e", f"py-{machine}", "--result-json", str(proj.path / "out.json"))
+    result_journal.assert_success()
+    with (proj.path / "out.json").open() as f:
+        report = json.load(f)
+    py_journal = report["testenvs"][f"py-{machine}"]["python"]
+    py_info = PythonInfo.current_system()
+    assert py_journal["machine"] == py_info.machine
+
+
+def test_machine_factor_unavailable(tox_project: ToxProjectCreator) -> None:
+    ini = "[testenv]\npackage=skip\nbase_python=cpython3-64-fakearch999"
+    proj = tox_project({"tox.ini": ini})
+    result = proj.run("r")
+    result.assert_failed()
+    assert "could not find python interpreter" in result.out
+
 
 def test_platform_does_not_match_package_env(tox_project: ToxProjectCreator, demo_pkg_inline: Path) -> None:
     toml = (demo_pkg_inline / "pyproject.toml").read_text()
