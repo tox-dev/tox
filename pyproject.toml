@@ -50,16 +50,16 @@ dynamic = [
 ]
 dependencies = [
   "cachetools>=7.0.1",
-  "chardet>=5.2",
+  "chardet>=6.0.0.post1",
   "colorama>=0.4.6",
-  "filelock>=3.24",
+  "filelock>=3.24.3",
   "packaging>=26",
-  "platformdirs>=4.9.1",
+  "platformdirs>=4.9.2",
   "pluggy>=1.6",
   "pyproject-api>=1.10",
   "tomli>=2.4; python_version<'3.11'",
   "typing-extensions>=4.15; python_version<'3.11'",
-  "virtualenv>=20.36.1",
+  "virtualenv>=20.38",
 ]
 optional-dependencies.completion = [
   "argcomplete>=3.6.3",
@@ -96,12 +96,12 @@ test = [
   "pytest-timeout>=2.4",
   "pytest-xdist>=3.8",
   "re-assert>=1.1",
-  "setuptools>=80.10.2,<82",
+  "setuptools<82,>=81",
   "time-machine>=3.2; implementation_name!='pypy'",
   "wheel>=0.46.3",
 ]
 type = [
-  "ty>=0.0.17",
+  "ty>=0.0.18",
   { include-group = "docs" },
   { include-group = "release" },
   { include-group = "test" },
@@ -110,27 +110,27 @@ docs = [
   "furo>=2025.12.19",
   "sphinx>=9.1",
   "sphinx-argparse-cli>=1.20.1",
-  "sphinx-autodoc-typehints>=3.6.2",
+  "sphinx-autodoc-typehints>=3.6.3",
   "sphinx-copybutton>=0.5.2",
   "sphinx-inline-tabs>=2025.12.21.14",
   "sphinx-issues>=5.0.1",
-  "sphinx-reredirects>=0.2.1",
+  "sphinx-reredirects>=1.1",
   "sphinxcontrib-mermaid>=2",
   "sphinxcontrib-towncrier>=0.2.1a0",
   "towncrier>=25.8",
   "truststore>=0.10.4",
 ]
 type-min = [
-  "ty>=0.0.17",
+  "ty>=0.0.18",
   { include-group = "test" },
 ]
 fix = [
-  "pre-commit-uv>=4.2",
+  "pre-commit-uv>=4.2.1",
 ]
 pkg-meta = [
   "check-wheel-contents>=0.6.3",
   "twine>=6.2",
-  "uv>=0.10.2",
+  "uv>=0.10.4",
 ]
 release = [
   "gitpython>=3.1.46",
