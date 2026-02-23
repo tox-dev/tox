@@ -1320,7 +1320,7 @@ Python options
     ``py313``). The dotted form is clearer, avoids ambiguity for Python versions >= 3.10, and reads more naturally in
     environment lists and CI output.
 
-    .. versionadded:: 4.x
+    .. versionadded:: 4.45
 
         You can append a CPU architecture (ISA) suffix to constrain the interpreter to a specific machine type. The
         architecture is derived from :func:`python:sysconfig.get_platform` and normalized by :pypi:`virtualenv` (e.g.

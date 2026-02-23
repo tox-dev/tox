@@ -4,6 +4,7 @@ import json
 import os
 import re
 import sys
+import sysconfig
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
@@ -507,6 +508,18 @@ def test_platform_matches_run_env(tox_project: ToxProjectCreator) -> None:
     proj = tox_project({"tox.ini": ini})
     result = proj.run("r")
     result.assert_success()
+
+
+def test_machine_factor_run_env(tox_project: ToxProjectCreator) -> None:
+    parts = sysconfig.get_platform().rsplit("-", 1)
+    if len(parts) < 2:
+        pytest.skip("sysconfig.get_platform() has no machine component")
+    machine = parts[-1]
+    ini = f"[testenv]\npackage=skip\ncommands=\n    {machine}: python -c 'print(\"{machine}\")'"
+    proj = tox_project({"tox.ini": ini})
+    result = proj.run("r", "-e", f"py-{machine}")
+    result.assert_success()
+    assert machine in result.out
 
 
 def test_platform_does_not_match_package_env(tox_project: ToxProjectCreator, demo_pkg_inline: Path) -> None:

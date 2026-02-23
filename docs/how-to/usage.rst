@@ -460,7 +460,7 @@ platforms (e.g., testing Linux-specific kernel features).
 Targeting a specific CPU architecture
 =====================================
 
-.. versionadded:: 4.x
+.. versionadded:: 4.45
 
 On machines that support multiple CPU architectures (e.g. Apple Silicon running ``arm64`` natively and ``x86_64`` via
 Rosetta 2, or Linux running ``aarch64`` and ``x86_64`` via ``qemu-user``), you can constrain tox environments to a
