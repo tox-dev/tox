@@ -223,7 +223,7 @@ def test_pkg_env_dep_remove_recreate(tox_project: ToxProjectCreator, demo_pkg_in
     proj = tox_project(
         {
             "tox.ini": "[testenv]\npackage=wheel",
-            "pyproject.toml": toml.replace("requires = [\n]", 'requires = ["setuptools"]'),
+            "pyproject.toml": toml.replace("requires = []", 'requires = ["setuptools"]'),
             "build.py": (demo_pkg_inline / "build.py").read_text(),
         },
     )
@@ -365,7 +365,7 @@ def constrained_mock_project(
 ) -> tuple[ToxProject, list[str]]:
     toml = (demo_pkg_inline / "pyproject.toml").read_text()
     files = {
-        "pyproject.toml": toml.replace("requires = [\n]", 'requires = ["setuptools"]')
+        "pyproject.toml": toml.replace("requires = []", 'requires = ["setuptools"]')
         + '\n[project]\nname = "demo"\nversion = "0.1"\ndependencies = ["foo > 2"]',
         "build.py": (demo_pkg_inline / "build.py").read_text(),
     }
