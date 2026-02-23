@@ -229,7 +229,7 @@ def test_pip_user_disabled(tox_project: ToxProjectCreator) -> None:
     ("var", "substitution", "expected_fragment"),
     [
         pytest.param("COVERAGE_SRC", "{env_site_packages_dir}", "site-packages", id="env_site_packages_dir"),
-        pytest.param("MY_BIN", "{env_bin_dir}", "bin", id="env_bin_dir"),
+        pytest.param("MY_BIN", "{env_bin_dir}", "Scripts" if sys.platform == "win32" else "bin", id="env_bin_dir"),
         pytest.param("MY_PYTHON", "{env_python}", "python", id="env_python"),
     ],
 )
