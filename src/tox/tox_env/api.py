@@ -89,6 +89,7 @@ class ToxEnv(ABC):
         self._hidden_outcomes: list[Outcome] | None = []
         self._env_vars: dict[str, str] | None = None
         self._env_vars_pass_env: list[str] = []
+        self._resolving_env_vars: bool = False
         self._suspended_out_err: OutErr | None = None
         self._execute_statuses: dict[int, ExecuteStatus] = {}
         self._interrupted = False
@@ -373,8 +374,20 @@ class ToxEnv(ABC):
 
     @property
     def environment_variables(self) -> dict[str, str]:
+        if self._resolving_env_vars:
+            # Re-entrant call: set_env resolution triggered a substitution (e.g. {env_site_packages_dir})
+            # that requires the virtualenv session, which needs environment_variables to be built first.
+            # Return pass_env + PATH without set_env to break the cycle.
+            result = self._load_pass_env(self.conf["pass_env"])
+            result["PATH"] = self._make_path()
+            return result
+
         pass_env: list[str] = self.conf["pass_env"]
-        set_env: SetEnv = self.conf["set_env"]
+        self._resolving_env_vars = True
+        try:
+            set_env: SetEnv = self.conf["set_env"]
+        finally:
+            self._resolving_env_vars = False
         if self._env_vars_pass_env == pass_env and not set_env.changed and self._env_vars is not None:
             return self._env_vars
 
@@ -386,8 +399,12 @@ class ToxEnv(ABC):
         self._env_vars, self._env_vars_pass_env, set_env.changed = result, pass_env.copy(), False
         # set PATH here in case setting and environment variable requires access to the environment variable PATH
         result["PATH"] = self._make_path()
-        for key in set_env:
-            result[key] = set_env.load(key)
+        self._resolving_env_vars = True
+        try:
+            for key in set_env:
+                result[key] = set_env.load(key)
+        finally:
+            self._resolving_env_vars = False
         # if set_env modified PATH, re-prepend virtual-env paths (deduped) so they always come first
         if self._paths and "PATH" in set_env:
             result["PATH"] = self._make_path(result["PATH"])
