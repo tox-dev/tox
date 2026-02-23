@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 import pytest
 
 from tox.config.loader.ini.factor import LATEST_PYTHON_MINOR_MAX, LATEST_PYTHON_MINOR_MIN
-from tox.config.loader.toml._product import (
+from tox.config.loader.toml._product import (  # noqa: PLC2701
     _expand_factor_group,
     _expand_range,
     expand_product,
