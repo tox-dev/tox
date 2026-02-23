@@ -409,15 +409,17 @@ def test_cross_section_factor_conditional_resolves_to_empty(tox_project: ToxProj
     string when no factors match, not remain unresolved.
 
     """
-    ini = (
-        "[tox]\nenv_list=py39{,-keyfs_sqlite,-hash_hl}\nno_package=true\n"
-        "[devpisettings]\n"
-        "storagebackend=\n"
-        "    keyfs_sqlite: --backend-sqlite\n"
-        "[testenv]\n"
-        "commands=echo {[devpisettings]storagebackend}\n"
-        "allowlist_externals = echo\n"
-    )
+    ini = """
+    [tox]
+    env_list=py39{,-keyfs_sqlite,-hash_hl}
+    no_package=true
+    [devpisettings]
+    storagebackend=
+        keyfs_sqlite: --backend-sqlite
+    [testenv]
+    commands=echo {[devpisettings]storagebackend}
+    allowlist_externals = echo
+    """
     outcome = tox_project({"tox.ini": ini}).run("c", "-e", "py39,py39-keyfs_sqlite", "-k", "commands")
     outcome.assert_success()
     parser = ConfigParser(interpolation=None)
