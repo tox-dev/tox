@@ -7,6 +7,30 @@
 .. towncrier release notes start
 
 **********************
+ v4.45.0 (2026-02-23)
+**********************
+
+Features - 4.45.0
+=================
+
+- Enhance ``tox schema`` command: add ``x-taplo`` metadata for IDE integration, product dict support for ``env_list``,
+  handle ``int`` and ``PythonConstraints`` types, fix ``$schema`` draft-07 URI, and add schema freshness test. Add
+  ``tox.toml`` to SchemaStore catalog for automatic IDE validation - by :user:`gaborbernat`. (:issue:`1388`)
+
+Bug fixes - 4.45.0
+==================
+
+- Add redirects for old documentation URLs that broke after the Diataxis restructure (e.g. ``/config.html`` ->
+  ``/reference/config.html``, ``/example/general.html`` -> ``/index.html``) using ``sphinx-reredirects`` - by
+  :user:`gaborbernat`. (:issue:`3806`)
+- Fix cross-section substitution ``{[section]key}`` resolving to a literal unresolved reference instead of empty string
+  when the referenced value contains only factor-conditional lines and no factors match the requesting environment - by
+  :user:`Fridayai700`. (:issue:`3809`)
+- Fix circular dependency in ``environment_variables`` when ``set_env`` references ``{env_site_packages_dir}`` or
+  similar lazy constants, causing ``RecursionError`` silently caught as "could not find python interpreter" - by
+  :user:`gaborbernat`. (:issue:`3816`)
+
+**********************
  v4.44.0 (2026-02-20)
 **********************
 
