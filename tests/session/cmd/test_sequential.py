@@ -243,7 +243,7 @@ def test_package_deps_change(tox_project: ToxProjectCreator, demo_pkg_inline: Pa
     assert ".pkg: install" not in result_first.out  # no deps initially
 
     # new deps are picked up
-    (proj.path / "pyproject.toml").write_text(toml.replace("requires = [\n]", 'requires = ["wheel"]'))
+    (proj.path / "pyproject.toml").write_text(toml.replace("requires = []", 'requires = ["wheel"]'))
     (proj.path / "build.py").write_text(build.replace("return []", "return ['setuptools']"))
 
     result_rerun = proj.run("r")
