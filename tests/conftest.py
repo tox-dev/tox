@@ -102,6 +102,7 @@ def patch_prev_py(mocker: MockerFixture) -> Callable[[bool], tuple[str, str]]:
                 platform=sys.platform,
                 extra={"executable": Path(sys.executable)},
                 free_threaded=sysconfig.get_config_var("Py_GIL_DISABLED") == 1,
+                machine=sysconfig.get_platform().rsplit("-", 1)[-1] or None,
             )
 
         mocker.patch.object(VirtualEnv, "_get_python", get_python)

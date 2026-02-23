@@ -33,10 +33,38 @@ def test_probe_python_current_interpreter() -> None:
     assert info.implementation == sys.implementation.name
     assert info.architecture in {32, 64}
     assert info.system_executable
+    assert info.sysconfig_platform is not None
+    assert info.machine  # should be non-empty on all platforms
 
 
 def test_probe_python_nonexistent() -> None:
     assert probe_python("/nonexistent/python999") is None
+
+
+@pytest.mark.parametrize(
+    ("sysconfig_platform", "expected_machine"),
+    [
+        ("linux-x86_64", "x86_64"),
+        ("linux-aarch64", "aarch64"),
+        ("win-amd64", "amd64"),
+        ("macosx-14.0-arm64", "arm64"),
+        ("win32", ""),
+        (None, ""),
+    ],
+)
+def test_subprocess_python_info_machine(sysconfig_platform: str | None, expected_machine: str) -> None:
+    vi = _VersionInfo(major=3, minor=12, micro=0, releaselevel="final", serial=0)
+    info = SubprocessPythonInfo(
+        implementation="cpython",
+        version_info=vi,
+        version="3.12.0",
+        architecture=64,
+        platform="linux",
+        system_executable="/usr/bin/python3",
+        free_threaded=False,
+        sysconfig_platform=sysconfig_platform,
+    )
+    assert info.machine == expected_machine
 
 
 def test_probe_python_failing_script(tmp_path: Path) -> None:
