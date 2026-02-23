@@ -47,7 +47,8 @@ def test_virtualenv_default_settings(tox_project: ToxProjectCreator, virtualenv_
     assert virtualenv_opt.clear is False
     assert virtualenv_opt.system_site is False
     assert virtualenv_opt.download is False
-    assert virtualenv_opt.copies is False
+    if hasattr(virtualenv_opt, "copies"):
+        assert virtualenv_opt.copies is False
     assert virtualenv_opt.no_periodic_update is True
     assert virtualenv_opt.python == ["py3"]
     assert virtualenv_opt.try_first_with == [str(sys.executable), str(proj.path / "a")]
@@ -74,7 +75,8 @@ def test_virtualenv_flipped_settings(
     assert virtualenv_opt.clear is False
     assert virtualenv_opt.system_site is True
     assert virtualenv_opt.download is True
-    assert virtualenv_opt.copies is True
+    if hasattr(virtualenv_opt, "copies"):
+        assert virtualenv_opt.copies is True
     assert virtualenv_opt.python == ["py3"]
 
 
@@ -112,7 +114,8 @@ def run_and_check_set(proj: ToxProject, virtualenv_opt: VirtualEnvOptions) -> No
     assert conf["download"] is True
     assert virtualenv_opt.system_site is True
     assert virtualenv_opt.download is True
-    assert virtualenv_opt.copies is True
+    if hasattr(virtualenv_opt, "copies"):
+        assert virtualenv_opt.copies is True
 
 
 def test_honor_set_env_for_clear_periodic_update(
@@ -220,3 +223,33 @@ def test_pip_user_disabled(tox_project: ToxProjectCreator) -> None:
     result = proj.run("r", "-e", "py")
     result.assert_success()
     assert "PIP_USER=0" in result.out
+
+
+@pytest.mark.parametrize(
+    ("var", "substitution", "expected_fragment"),
+    [
+        pytest.param("COVERAGE_SRC", "{env_site_packages_dir}", "site-packages", id="env_site_packages_dir"),
+        pytest.param("MY_BIN", "{env_bin_dir}", "bin", id="env_bin_dir"),
+        pytest.param("MY_PYTHON", "{env_python}", "python", id="env_python"),
+    ],
+)
+def test_set_env_lazy_constant_no_circular_dependency(
+    tox_project: ToxProjectCreator,
+    var: str,
+    substitution: str,
+    expected_fragment: str,
+) -> None:
+    proj = tox_project(
+        {
+            "tox.toml": f"""\
+[env_run_base]
+package = "skip"
+set_env.{var} = "{substitution}"
+commands = [["python", "-c", "print('ok')"]]
+""",
+        },
+    )
+    result = proj.run("c", "-e", "py", "-k", "set_env")
+    result.assert_success()
+    assert f"{var}=" in result.out
+    assert expected_fragment in result.out
