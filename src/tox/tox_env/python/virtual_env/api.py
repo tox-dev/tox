@@ -179,7 +179,7 @@ class VirtualEnv(Python, ABC):
             platform=interpreter.platform,
             extra={"executable": Path(interpreter.system_executable).resolve()},
             free_threaded=interpreter.free_threaded,
-            machine=interpreter.machine,
+            machine=getattr(interpreter, "machine", None),
         )
 
     def prepend_env_var_path(self) -> list[Path]:
@@ -235,7 +235,7 @@ class VirtualEnv(Python, ABC):
 
         """
         info = cls.get_virtualenv_py_info(path)
-        machine_suffix = f"-{m}" if (m := info.machine) else ""
+        machine_suffix = f"-{m}" if (m := getattr(info, "machine", None)) else ""
         return PythonSpec.from_string_spec(
             f"{info.implementation}{info.version_info.major}{info.version_info.minor}-{info.architecture}{machine_suffix}"
         )
