@@ -469,6 +469,14 @@ def test_custom_file_encoding(codec: str, tmp_path: Path) -> None:
     assert [str(i) for i in req_file.requirements] == ["art"]
 
 
+def test_non_utf8_file_encoding_falls_back_to_locale(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr("tox.tox_env.python.pip.req.file.locale.getpreferredencoding", lambda **_: "latin-1")
+    requirements_file = tmp_path / "r.txt"
+    requirements_file.write_bytes(b"art  # \xe9\n")
+    req_file = RequirementsFile(requirements_file, constraint=False)
+    assert [str(i) for i in req_file.requirements] == ["art"]
+
+
 def test_parsed_requirement_properties(tmp_path: Path) -> None:
     req = ParsedRequirement("a", {"b": 1}, str(tmp_path), 1)
     assert req.options == {"b": 1}

@@ -50,7 +50,6 @@ dynamic = [
 ]
 dependencies = [
   "cachetools>=7.0.1",
-  "chardet>=6.0.0.post1",
   "colorama>=0.4.6",
   "filelock>=3.24.3",
   "packaging>=26",
