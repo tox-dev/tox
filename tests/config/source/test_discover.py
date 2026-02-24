@@ -50,6 +50,13 @@ def test_bad_src_content(tox_project: ToxProjectCreator, tmp_path: Path) -> None
     assert outcome.out == f"ROOT: HandledError| config file {tmp_path / 'setup.cfg'} does not exist\n"
 
 
+def test_malformed_config_does_not_prevent_help(tox_project: ToxProjectCreator) -> None:
+    project = tox_project({"tox.toml": "deps =\n    mypy\n"})
+    outcome = project.run("--help")
+    outcome.assert_success()
+    assert "usage: tox" in outcome.out
+
+
 def test_malformed_toml_in_dir_reports_error(tox_project: ToxProjectCreator) -> None:
     """Config discovery in a directory should report TOML parse errors instead of silently ignoring them."""
     project = tox_project({})
