@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import codecs
+import locale
 import os
 import re
 import shlex
@@ -13,7 +15,6 @@ from pathlib import Path
 from typing import IO, Any, cast
 from urllib.request import urlopen
 
-import chardet
 from packaging.requirements import InvalidRequirement, Requirement
 
 from .args import build_parser
@@ -23,6 +24,13 @@ from .util import VCS, get_url_scheme, is_url, url_to_path
 # letters, digits or the '_' (underscore). This follows the POSIX standard defined in IEEE Std 1003.1, 2013 Edition.
 _ENV_VAR_RE = re.compile(r"(?P<var>\${(?P<name>[A-Z0-9_]+)})")
 _SCHEME_RE = re.compile(r"^(http|https|file):", re.IGNORECASE)
+_BOMS: tuple[tuple[bytes, str], ...] = (
+    (codecs.BOM_UTF8, "utf-8"),
+    (codecs.BOM_UTF32_BE, "utf-32-be"),
+    (codecs.BOM_UTF32_LE, "utf-32-le"),
+    (codecs.BOM_UTF16_BE, "utf-16-be"),
+    (codecs.BOM_UTF16_LE, "utf-16-le"),
+)
 _COMMENT_RE = re.compile(r"(^|\s+)#.*$")
 # https://www.python.org/dev/peps/pep-0508/#extras
 _EXTRA_PATH = re.compile(r"(.*)\[([-._,\sa-zA-Z0-9]*)]")
@@ -267,8 +275,13 @@ class RequirementsFile:
         raw = file_handler.read()
         if not raw:
             return ""
-        codec: str = chardet.detect(raw)["encoding"] or "utf-8"
-        return raw.decode(codec)
+        for bom, encoding in _BOMS:
+            if raw.startswith(bom):
+                return raw[len(bom) :].decode(encoding)
+        try:
+            return raw.decode("utf-8")
+        except UnicodeDecodeError:
+            return raw.decode(locale.getpreferredencoding(do_setlocale=False) or sys.getdefaultencoding())
 
     def _pre_process(self, content: str) -> ReqFileLines:
         """Split, filter, and join lines, and return a line iterator.
