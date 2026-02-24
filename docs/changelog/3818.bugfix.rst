@@ -1,0 +1,2 @@
+Drop ``chardet`` dependency and use BOM detection with locale fallback for requirements file decoding, matching pip's
+own approach - by :user:`gaborbernat`.
