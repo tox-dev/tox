@@ -192,8 +192,8 @@ This generates ``test-3.13`` and ``test-3.14``. For multi-dimensional matrices:
 This generates 4 environments: ``django-py312-django42``, ``django-py312-django50``, ``django-py313-django42``,
 ``django-py313-django50``.
 
-**Inheritance chain:** settings resolve in this order: ``[env.{name}]`` (explicit overrides) |rarr|
-``[env_base.{template}]`` (template defaults) |rarr| ``[env_run_base]`` (global defaults).
+**Inheritance chain:** settings resolve in this order: ``[env.{name}]`` (explicit overrides) → ``[env_base.{template}]``
+(template defaults) → ``[env_run_base]`` (global defaults).
 
 **Factor groups** can be:
 
