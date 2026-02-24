@@ -7,6 +7,29 @@
 .. towncrier release notes start
 
 **********************
+ v4.46.0 (2026-02-24)
+**********************
+
+Features - 4.46.0
+=================
+
+- Add architecture (ISA) awareness to Python discovery. tox now propagates the ``machine`` field (e.g. ``arm64``,
+  ``x86_64``) from :pypi:`virtualenv`'s interpreter info — derived from :func:`python:sysconfig.get_platform` — through
+  the Python specification, validation, and journal. This allows selecting a Python interpreter by CPU architecture via
+  :ref:`base_python` (e.g. ``cpython3.12-64-arm64``) and ensures tox validates the running interpreter's architecture
+  matches the requested one. Requires ``virtualenv >= 20.39`` - by :user:`rahuldevikar`. (:issue:`3069`)
+- Add ``env_base`` TOML sections for named environment templates that generate multiple environments from factor
+  combinations via Cartesian product -- by :user:`gaborbernat`. (:issue:`3817`)
+
+Bug fixes - 4.46.0
+==================
+
+- Drop ``chardet`` dependency and use BOM detection with locale fallback for requirements file decoding, matching pip's
+  own approach - by :user:`gaborbernat`. (:issue:`3818`)
+- Allow ``--help`` to render even when the configuration file is malformed or missing - by :user:`gaborbernat`.
+  (:issue:`3819`)
+
+**********************
  v4.45.0 (2026-02-23)
 **********************
 

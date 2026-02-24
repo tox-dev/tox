@@ -1,5 +1,0 @@
-Add architecture (ISA) awareness to Python discovery. tox now propagates the ``machine`` field (e.g. ``arm64``,
-``x86_64``) from :pypi:`virtualenv`'s interpreter info — derived from :func:`python:sysconfig.get_platform` — through
-the Python specification, validation, and journal. This allows selecting a Python interpreter by CPU architecture via
-:ref:`base_python` (e.g. ``cpython3.12-64-arm64``) and ensures tox validates the running interpreter's architecture
-matches the requested one. Requires ``virtualenv >= 20.39`` - by :user:`rahuldevikar`.
