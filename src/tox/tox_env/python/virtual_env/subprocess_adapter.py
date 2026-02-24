@@ -27,6 +27,7 @@ print(json.dumps({
     "platform": sys.platform,
     "system_executable": sys.executable,
     "free_threaded": sysconfig.get_config_var("Py_GIL_DISABLED") == 1,
+    "sysconfig_platform": sysconfig.get_platform(),
 }))
 """
 
@@ -51,6 +52,15 @@ class SubprocessPythonInfo:
     platform: str
     system_executable: str
     free_threaded: bool
+    sysconfig_platform: str | None = None
+
+    @property
+    def machine(self) -> str:
+        """Derive instruction set architecture from sysconfig_platform."""
+        if (plat := self.sysconfig_platform) is None:
+            return ""
+        parts = plat.rsplit("-", 1)
+        return parts[-1] if len(parts) > 1 else ""
 
 
 @dataclass
@@ -139,6 +149,7 @@ def probe_python(python_path: str) -> SubprocessPythonInfo | None:
         platform=raw["platform"],
         system_executable=raw["system_executable"],
         free_threaded=raw["free_threaded"],
+        sysconfig_platform=raw.get("sysconfig_platform"),
     )
 
 

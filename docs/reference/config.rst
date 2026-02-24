@@ -1320,6 +1320,19 @@ Python options
     ``py313``). The dotted form is clearer, avoids ambiguity for Python versions >= 3.10, and reads more naturally in
     environment lists and CI output.
 
+    .. versionadded:: 4.46
+
+        You can append a CPU architecture (ISA) suffix to constrain the interpreter to a specific machine type. The
+        architecture is derived from :func:`python:sysconfig.get_platform` and normalized by :pypi:`virtualenv` (e.g.
+        ``amd64`` becomes ``x86_64``, ``aarch64`` becomes ``arm64``). Examples:
+
+        - ``cpython3.12-64-arm64`` — CPython 3.12, 64-bit, ARM
+        - ``cpython3.13-64-x86_64`` — CPython 3.13, 64-bit, x86-64
+
+        If the discovered interpreter's architecture does not match the requested one, tox raises a failure, just as it
+        does for version mismatches. This is useful on machines with multi-architecture support (e.g. Apple Silicon
+        running both ``arm64`` and ``x86_64`` via Rosetta, or Linux with ``aarch64`` and ``x86_64`` via ``qemu-user``).
+
      .. versionchanged:: 3.1
 
          After resolving this value if the interpreter reports back a different version number than implied from the name

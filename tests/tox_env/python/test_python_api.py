@@ -411,16 +411,24 @@ commands = [["python", "-c", "print('ok')"]]
 
 
 @pytest.mark.parametrize(
-    ("impl", "major", "minor", "arch", "free_threaded"),
+    ("impl", "major", "minor", "arch", "free_threaded", "platform_str", "expected_machine"),
     [
-        ("cpython", 3, 12, 64, None),
-        ("cpython", 3, 13, 64, True),
-        ("cpython", 3, 13, 64, False),
-        ("pypy", 3, 9, 32, None),
+        ("cpython", 3, 12, 64, None, "linux-x86_64", "x86_64"),
+        ("cpython", 3, 13, 64, True, "linux-aarch64", "arm64"),
+        ("cpython", 3, 13, 64, False, "win-amd64", "x86_64"),
+        ("pypy", 3, 9, 32, None, "win32", None),
+        ("cpython", 3, 12, 64, None, "macosx-14.0-arm64", "arm64"),
     ],
 )
 def test_python_spec_for_sys_executable(  # noqa: PLR0913
-    impl: str, major: int, minor: int, arch: int, free_threaded: bool | None, mocker: MockerFixture
+    impl: str,
+    major: int,
+    minor: int,
+    arch: int,
+    free_threaded: bool | None,
+    platform_str: str,
+    expected_machine: str,
+    mocker: MockerFixture,
 ) -> None:
     get_config_var_ = sysconfig.get_config_var
 
@@ -441,9 +449,11 @@ def test_python_spec_for_sys_executable(  # noqa: PLR0913
     mocker.patch.object(sys, "implementation", implementation)
     mocker.patch.object(sys, "maxsize", 2**arch // 2 - 1)
     mocker.patch.object(sysconfig, "get_config_var", get_config_var)
+    mocker.patch.object(sysconfig, "get_platform", return_value=platform_str)
     spec = Python._python_spec_for_sys_executable()  # noqa: SLF001
     assert spec.implementation == impl
     assert spec.major == major
     assert spec.minor == minor
     assert spec.architecture == arch
     assert spec.free_threaded == bool(free_threaded)
+    assert spec.machine == expected_machine

@@ -37,6 +37,7 @@ class PythonInfo:
     platform: str
     extra: dict[str, Any]
     free_threaded: bool = False
+    machine: str | None = None
 
     @property
     def version_no_dot(self) -> str:
@@ -188,7 +189,9 @@ class Python(ToxEnv, ABC):
         version = sys.version_info
         bits = "64" if sys.maxsize > 2**32 else "32"
         threaded = "t" if sysconfig.get_config_var("Py_GIL_DISABLED") == 1 else ""
-        string_spec = f"{implementation}{version.major}{version.minor}{threaded}-{bits}"
+        parts = sysconfig.get_platform().rsplit("-", 1)
+        machine_suffix = f"-{isa}" if len(parts) > 1 and (isa := parts[-1]) else ""
+        string_spec = f"{implementation}{version.major}{version.minor}{threaded}-{bits}{machine_suffix}"
         return PythonSpec.from_string_spec(string_spec)
 
     @classmethod
@@ -211,7 +214,7 @@ class Python(ToxEnv, ABC):
                         spec_base = cls.python_spec_for_path(path)
                 if any(
                     getattr(spec_base, key) != getattr(spec_name, key)
-                    for key in ("implementation", "major", "minor", "micro", "architecture", "free_threaded")
+                    for key in ("implementation", "major", "minor", "micro", "architecture", "machine", "free_threaded")
                     if getattr(spec_name, key) is not None
                 ):
                     msg = f"env name {env_name} conflicting with base python {base_python}"
@@ -337,6 +340,7 @@ class Python(ToxEnv, ABC):
             "sysplatform": self.base_python.platform,
             "extra_version_info": None,
             "free_threaded": self.base_python.free_threaded,
+            "machine": self.base_python.machine,
         }
 
     @abstractmethod

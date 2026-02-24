@@ -5,6 +5,7 @@ import glob
 import os
 import re
 import sys
+import sysconfig
 from itertools import chain
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, cast
@@ -49,6 +50,9 @@ class Unroll:
         else:
             factors = set(chain.from_iterable([(i for i, _ in a) for a in find_factor_groups(env_name)]))
         factors.add(sys.platform)
+        parts = sysconfig.get_platform().rsplit("-", 1)
+        if len(parts) > 1:
+            factors.add(parts[-1])
         return factors
 
     def __call__(  # noqa: C901, PLR0912

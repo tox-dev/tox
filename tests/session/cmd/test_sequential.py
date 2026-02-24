@@ -4,6 +4,7 @@ import json
 import os
 import re
 import sys
+import sysconfig
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
@@ -116,6 +117,7 @@ def test_result_json_sequential(
         "version": py_info.version,
         "version_info": list(py_info.version_info),
         "free_threaded": py_info.free_threaded,
+        "machine": py_info.machine,
     }
     packaging_setup = get_cmd_exit_run_id(log_report, ".pkg", "setup")
     assert "result" not in log_report["testenvs"][".pkg"]
@@ -506,6 +508,35 @@ def test_platform_matches_run_env(tox_project: ToxProjectCreator) -> None:
     proj = tox_project({"tox.ini": ini})
     result = proj.run("r")
     result.assert_success()
+
+
+def test_machine_factor_run_env(tox_project: ToxProjectCreator) -> None:
+    parts = sysconfig.get_platform().rsplit("-", 1)
+    if len(parts) < 2:
+        pytest.skip("sysconfig.get_platform() has no machine component")
+    machine = parts[-1]
+    ini = f"[testenv]\npackage=skip\ncommands=\n    {machine}: python -c 'print(\"{machine}\")'"
+    proj = tox_project({"tox.ini": ini})
+    result = proj.run("r", "-e", f"py-{machine}")
+    result.assert_success()
+    assert machine in result.out
+
+    # verify the created virtualenv reports the correct machine in the journal
+    result_journal = proj.run("r", "-e", f"py-{machine}", "--result-json", str(proj.path / "out.json"))
+    result_journal.assert_success()
+    with (proj.path / "out.json").open() as f:
+        report = json.load(f)
+    py_journal = report["testenvs"][f"py-{machine}"]["python"]
+    py_info = PythonInfo.current_system()
+    assert py_journal["machine"] == py_info.machine
+
+
+def test_machine_factor_unavailable(tox_project: ToxProjectCreator) -> None:
+    ini = "[testenv]\npackage=skip\nbase_python=cpython3-64-fakearch999"
+    proj = tox_project({"tox.ini": ini})
+    result = proj.run("r")
+    result.assert_failed()
+    assert "could not find python interpreter" in result.out
 
 
 def test_platform_does_not_match_package_env(tox_project: ToxProjectCreator, demo_pkg_inline: Path) -> None:
