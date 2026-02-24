@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, NamedTuple
 
 from tox.config.source import Source, discover_source
-from tox.report import ToxHandler, setup_report
+from tox.report import HandledError, ToxHandler, setup_report
 
 from .parser import Parsed, ToxParser
 
@@ -60,11 +60,23 @@ def _get_base(args: Sequence[str]) -> tuple[int, ToxHandler, Source]:
     handler = setup_report(guess_verbosity, parsed.is_colored)
     from tox.plugin.manager import MANAGER  # load the plugin system right after we set up report  # noqa: PLC0415
 
-    source = discover_source(parsed.config_file, parsed.root_dir)
+    try:
+        source = discover_source(parsed.config_file, parsed.root_dir)
+    except HandledError:
+        if {"-h", "--help"}.intersection(args):
+            source = _empty_source()
+        else:
+            raise
 
     MANAGER.load_plugins(source.path)
 
     return guess_verbosity, handler, source
+
+
+def _empty_source() -> Source:
+    from tox.config.source.tox_ini import ToxIni  # noqa: PLC0415
+
+    return ToxIni(Path.cwd() / "tox.ini", content="")
 
 
 def _get_all(args: Sequence[str]) -> tuple[Parsed, dict[str, Callable[[State], int]]]:
