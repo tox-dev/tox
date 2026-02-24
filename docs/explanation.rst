@@ -255,6 +255,27 @@ This design is deterministic and fast -- the expansion happens at configuration 
 environment lists future-proof across tox upgrades. Environments for interpreters not installed on the system are
 naturally skipped by the :ref:`skip_missing_interpreters` setting.
 
+Environment templates (``env_base``)
+====================================
+
+tox provides three levels for configuring environments:
+
+1. **``env_run_base``** -- global defaults inherited by all run environments. Use this when every environment shares the
+   same setting (e.g. a common ``deps`` or ``commands``).
+2. **``env_base.{name}``** -- named templates that generate multiple environments from factor combinations. Use this
+   when a group of environments shares configuration but differs from other groups. The ``factors`` key defines which
+   environments to generate via Cartesian product; all other keys in the section become the template's defaults.
+3. **``env.{name}``** -- explicit per-environment configuration. Use this for one-off environments (like ``lint``) or to
+   override specific settings in a generated environment.
+
+The inheritance chain resolves bottom-up: ``env.{name}`` > ``env_base.{template}`` > ``env_run_base``. A setting in
+``env.{name}`` shadows the same setting in ``env_base``, which in turn shadows ``env_run_base``.
+
+Templates themselves are not runnable environments -- they exist only to define shared configuration. Only the generated
+environments (template name + factor suffix) appear in ``tox list`` and can be run.
+
+For the configuration reference, see :ref:`env-base-templates`. For practical recipes, see :ref:`howto_env_base_matrix`.
+
 ***************
  Main features
 ***************

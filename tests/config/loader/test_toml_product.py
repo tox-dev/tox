@@ -7,8 +7,8 @@ import pytest
 
 from tox.config.loader.ini.factor import LATEST_PYTHON_MINOR_MAX, LATEST_PYTHON_MINOR_MIN
 from tox.config.loader.toml._product import (  # noqa: PLC2701
-    _expand_factor_group,
     _expand_range,
+    expand_factor_group,
     expand_product,
 )
 
@@ -51,21 +51,21 @@ def test_expand_product_not_list() -> None:
 
 
 def test_expand_factor_group_list() -> None:
-    assert _expand_factor_group(["py312", "py313"]) == ["py312", "py313"]
+    assert expand_factor_group(["py312", "py313"]) == ["py312", "py313"]
 
 
 def test_expand_factor_group_range_dict() -> None:
-    assert _expand_factor_group({"prefix": "py3", "start": 12, "stop": 14}) == ["py312", "py313", "py314"]
+    assert expand_factor_group({"prefix": "py3", "start": 12, "stop": 14}) == ["py312", "py313", "py314"]
 
 
 def test_expand_factor_group_bad_type() -> None:
     with pytest.raises(TypeError, match="factor group must be a list of strings or a range dict"):
-        _expand_factor_group(42)
+        expand_factor_group(42)
 
 
 def test_expand_factor_group_dict_no_prefix() -> None:
     with pytest.raises(TypeError, match="factor group must be a list of strings or a range dict"):
-        _expand_factor_group({"start": 1, "stop": 3})
+        expand_factor_group({"start": 1, "stop": 3})
 
 
 def test_expand_range_closed() -> None:

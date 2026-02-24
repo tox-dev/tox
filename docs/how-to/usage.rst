@@ -973,6 +973,46 @@ To skip incompatible combinations, add ``exclude`` -- this is only available in 
         { product = [["py312", "py313"], ["django42", "django50"]], exclude = ["py312-django50"] },
     ]
 
+.. _howto_env_base_matrix:
+
+***********************************************
+ Test a matrix of configurations with env_base
+***********************************************
+
+When multiple environments share the same deps, commands, and other settings but differ only by factors, use
+``env_base`` templates instead of repeating configuration across ``[env.X]`` sections. The ``factors`` key defines the
+Cartesian product of factor groups, and each generated environment inherits all other settings from the template:
+
+.. code-block:: toml
+
+    [env_base.django]
+    factors = [
+        { prefix = "py3", start = 13, stop = 14 },
+        ["django42", "django50"],
+    ]
+    package = "skip"
+    deps = [
+        "pytest",
+        { replace = "if", condition = "factor.django42", then = ["Django>=4.2,<4.3"] },
+        { replace = "if", condition = "factor.django50", then = ["Django>=5.0,<5.1"] },
+    ]
+    commands = [["pytest"]]
+
+This generates ``django-py313-django42``, ``django-py313-django50``, ``django-py314-django42``,
+``django-py314-django50``. Each environment resolves factor conditions independently -- ``django-py313-django42`` gets
+``Django>=4.2,<4.3`` while ``django-py314-django50`` gets ``Django>=5.0,<5.1``.
+
+To override a specific generated environment, add an explicit ``[env.NAME]`` section:
+
+.. code-block:: toml
+
+    [env.django-py314-django50]
+    description = "bleeding edge"
+
+The inheritance chain is: ``[env.{name}]`` > ``[env_base.{template}]`` > ``[env_run_base]``.
+
+See :ref:`env-base-templates` for the full reference.
+
 ***************************
  Ignore command exit codes
 ***************************
