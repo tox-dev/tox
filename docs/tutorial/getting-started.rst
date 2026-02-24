@@ -191,6 +191,22 @@ with different system Pythons.
 
 For the full list of environment options, see :ref:`conf-testenv`.
 
+Scaling to multiple Python versions
+====================================
+
+When your test matrix grows beyond a few environments, use ``env_base`` sections to define named templates that generate
+environments from factor combinations:
+
+.. code-block:: toml
+
+    [env_base.test]
+    factors = [["3.13", "3.14"]]
+    deps = ["pytest>=8"]
+    commands = [["pytest"]]
+
+This generates ``test-3.13`` and ``test-3.14``, each inheriting deps and commands from the template. The template itself
+inherits from ``env_run_base``, so global defaults still apply. See :ref:`env-base-templates` for details.
+
 ***************************
  Running your environments
 ***************************

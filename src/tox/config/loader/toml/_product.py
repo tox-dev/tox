@@ -22,12 +22,12 @@ def expand_product(value: dict[str, Any]) -> list[str]:
         raise TypeError(msg)
     if not raw_groups:
         return []
-    expanded = [_expand_factor_group(g) for g in raw_groups]
+    expanded = [expand_factor_group(g) for g in raw_groups]
     exclude = set(value.get("exclude") or [])
     return [name for combo in product(*expanded) if (name := "-".join(combo)) not in exclude]
 
 
-def _expand_factor_group(group: Any) -> list[str]:
+def expand_factor_group(group: Any) -> list[str]:
     if isinstance(group, list):
         return [str(item) for item in group]
     if isinstance(group, dict) and "prefix" in group:
@@ -55,5 +55,6 @@ def _expand_range(range_dict: dict[str, Any]) -> list[str]:
 
 
 __all__ = [
+    "expand_factor_group",
     "expand_product",
 ]

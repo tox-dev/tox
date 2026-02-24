@@ -1,0 +1,2 @@
+Add ``env_base`` TOML sections for named environment templates that generate multiple environments from factor
+combinations via Cartesian product -- by :user:`gaborbernat`.

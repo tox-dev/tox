@@ -147,21 +147,61 @@ Platform factors work in any environment without requiring the platform name in 
         x86: .venv-x86
         x64: .venv-x64
 
-TOML does not support generative section names, but you can use factor conditions in individual environment sections:
+TOML does not support generative section names, but you can use ``env_base`` templates (see :ref:`env-base-templates`)
+to generate multiple environments from a single definition:
 
 .. code-block:: toml
 
-    [env."py312-x86"]
+    [env_base.build]
+    factors = [["py312", "py313"], ["x86", "x64"]]
     env_dir = { replace = "if", condition = "factor.x86", then = ".venv-x86", "else" = ".venv-x64" }
+    commands = [["python", "-c", "print('ok')"]]
 
-    [env."py312-x64"]
-    env_dir = { replace = "if", condition = "factor.x64", then = ".venv-x64", "else" = ".venv-x86" }
+This generates ``build-py312-x86``, ``build-py312-x64``, ``build-py313-x86``, ``build-py313-x64`` -- each inheriting
+from the template and resolving factor conditions per environment.
 
-    [env."py313-x86"]
-    env_dir = { replace = "if", condition = "factor.x86", then = ".venv-x86", "else" = ".venv-x64" }
+.. _env-base-templates:
 
-    [env."py313-x64"]
-    env_dir = { replace = "if", condition = "factor.x64", then = ".venv-x64", "else" = ".venv-x86" }
+Environment base templates
+--------------------------
+
+``env_base`` sections define named templates that generate multiple environments from factor combinations. Each template
+requires a ``factors`` key -- a list of factor groups whose Cartesian product determines which environments are created.
+The template name is joined with each factor combination using ``-``:
+
+.. code-block:: toml
+
+    [env_base.test]
+    factors = [["3.13", "3.14"]]
+    deps = ["pytest>=8"]
+    commands = [["pytest"]]
+
+This generates ``test-3.13`` and ``test-3.14``. For multi-dimensional matrices:
+
+.. code-block:: toml
+
+    [env_base.django]
+    factors = [["py312", "py313"], ["django42", "django50"]]
+    deps = [
+        "pytest",
+        { replace = "if", condition = "factor.django42", then = ["Django>=4.2,<4.3"] },
+        { replace = "if", condition = "factor.django50", then = ["Django>=5.0,<5.1"] },
+    ]
+    commands = [["pytest"]]
+
+This generates 4 environments: ``django-py312-django42``, ``django-py312-django50``, ``django-py313-django42``,
+``django-py313-django50``.
+
+**Inheritance chain:** settings resolve in this order: ``[env.{name}]`` (explicit overrides) |rarr|
+``[env_base.{template}]`` (template defaults) |rarr| ``[env_run_base]`` (global defaults).
+
+**Factor groups** can be:
+
+- A list of strings: ``["a", "b"]``
+- A range dict: ``{ prefix = "py3", start = 12, stop = 14 }`` (generates ``py312``, ``py313``, ``py314``)
+- Mixed in the same ``factors`` list for Cartesian products
+
+The template name itself does not appear as a runnable environment -- only the generated names do.
 
 .. _tox-ini:
 
@@ -2556,28 +2596,44 @@ Generative section names
 Suppose you have some binary packages, and need to run tests both in 32 and 64 bits. You also want an environment to
 create your virtual env for the developers. This also supports ranges in the same way as generative environment lists.
 
-.. code-block:: ini
+.. tab:: INI
 
-    [testenv]
-    base_python =
-        py311-x86: python3.11-32
-        py311-x64: python3.11-64
-    commands = pytest
+    .. code-block:: ini
 
-    [testenv:py311-{x86,x64}-venv]
-    envdir =
-        x86: .venv-x86
-        x64: .venv-x64
+        [testenv]
+        base_python =
+            py311-x86: python3.11-32
+            py311-x64: python3.11-64
+        commands = pytest
 
-.. code-block:: shell
+        [testenv:py311-{x86,x64}-venv]
+        envdir =
+            x86: .venv-x86
+            x64: .venv-x64
 
-    > tox l
-    default environments:
-    py          -> [no description]
+    .. code-block:: shell
 
-    additional environments:
-    py311-x86-venv -> [no description]
-    py311-x64-venv -> [no description]
+        > tox l
+        default environments:
+        py          -> [no description]
+
+        additional environments:
+        py311-x86-venv -> [no description]
+        py311-x64-venv -> [no description]
+
+.. tab:: TOML
+
+    TOML does not support generative section names. Use :ref:`env_base <env-base-templates>` templates instead:
+
+    .. code-block:: toml
+
+        [env_base.py311-venv]
+        factors = [["x86", "x64"]]
+        base_python = { replace = "if", condition = "factor.x86", then = "python3.11-32", "else" = "python3.11-64" }
+        env_dir = { replace = "if", condition = "factor.x86", then = ".venv-x86", "else" = ".venv-x64" }
+        commands = [["pytest"]]
+
+    This generates ``py311-venv-x86`` and ``py311-venv-x64``, equivalent to the INI generative section.
 
 .. _substitution:
 

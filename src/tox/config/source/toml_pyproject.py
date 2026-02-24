@@ -4,10 +4,12 @@ from __future__ import annotations
 
 import sys
 from collections.abc import Iterator, Mapping
+from itertools import product
 from typing import TYPE_CHECKING, Any, Final, cast
 
 from tox.config.loader.section import Section
 from tox.config.loader.toml import TomlLoader
+from tox.config.loader.toml._product import expand_factor_group
 from tox.config.types import MissingRequiredConfigKeyError
 from tox.report import HandledError
 
@@ -30,6 +32,7 @@ class TomlSection(Section):
     SEP: str = "."
     PREFIX: tuple[str, ...]
     ENV: Final[str] = "env"
+    ENV_BASE: Final[str] = "env_base"
     RUN_ENV_BASE: Final[str] = "env_run_base"
     PKG_ENV_BASE: Final[str] = "env_pkg_base"
 
@@ -52,6 +55,14 @@ class TomlSection(Section):
     @classmethod
     def run_env_base(cls) -> str:
         return cls.SEP.join((*cls.PREFIX, cls.RUN_ENV_BASE))
+
+    @classmethod
+    def env_base_prefix(cls) -> str:
+        return cls.SEP.join((*cls.PREFIX, cls.ENV_BASE))
+
+    @classmethod
+    def env_base(cls, name: str) -> TomlSection:
+        return cls(cls.env_base_prefix(), name)
 
     @property
     def keys(self) -> Iterable[str]:
@@ -91,6 +102,9 @@ class TomlPyProject(Source):
             raise MissingRequiredConfigKeyError(path) from exc
         if set(self._our_content.keys()) == {"legacy_tox_ini"}:
             raise MissingRequiredConfigKeyError(path)
+        self._env_base_generated: dict[str, str] = _build_env_base_map(
+            dict(self._our_content.get(self._Section.ENV_BASE, {})),
+        )
         super().__init__(path)
 
     def get_core_section(self) -> Section:
@@ -110,17 +124,25 @@ class TomlPyProject(Source):
         if not isinstance(current, Mapping):
             msg = f"{sec.key} must be a table, is {current.__class__.__name__!r}"
             raise HandledError(msg)
+        is_core = section.prefix is None
+        is_env_base = not is_core and sec.prefix == self._Section.env_base_prefix()
+        unused_exclude: set[str] = set()
+        if is_core:
+            unused_exclude = {sec.ENV, sec.ENV_BASE, sec.RUN_ENV_BASE, sec.PKG_ENV_BASE}
+        elif is_env_base:
+            unused_exclude = {"factors"}
         return TomlLoader(
             section=section,
             overrides=override_map.get(section.key, []),
             content=current,
             root_content=self._content,
-            unused_exclude={sec.ENV, sec.RUN_ENV_BASE, sec.PKG_ENV_BASE} if section.prefix is None else set(),
+            unused_exclude=unused_exclude,
         )
 
     def envs(self, core_conf: CoreConfigSet) -> Iterator[str]:
         yield from core_conf["env_list"]
         yield from [section.name for section in self.sections()]
+        yield from self._env_base_generated
 
     def sections(self) -> Iterator[Section]:
         for env_name in self._our_content.get(self._Section.ENV, {}):
@@ -132,13 +154,47 @@ class TomlPyProject(Source):
     def get_base_sections(self, base: list[str], in_section: Section) -> Iterator[Section]:
         core_prefix = self._Section.core_prefix()
         strip = f"{core_prefix}{self._Section.SEP}" if core_prefix else ""
+        env_base_pfx = self._Section.env_base_prefix()
+        env_base_dot = f"{env_base_pfx}{self._Section.SEP}"
         for entry in base:
-            yield self._Section(prefix=core_prefix or None, name=entry.removeprefix(strip))
-            if in_section.prefix is not None:
-                yield self._Section(prefix=in_section.prefix, name=entry)
+            if entry.startswith(env_base_dot):
+                yield self._Section.env_base(entry[len(env_base_dot) :])
+            else:
+                yield self._Section(prefix=core_prefix or None, name=entry.removeprefix(strip))
+                if in_section.prefix is not None:
+                    yield self._Section(prefix=in_section.prefix, name=entry)
 
     def get_tox_env_section(self, item: str) -> tuple[Section, list[str], list[str]]:
+        if base_name := self._env_base_generated.get(item):
+            return (
+                self._Section.test_env(item),
+                [self._Section.env_base_prefix() + self._Section.SEP + base_name, self._Section.run_env_base()],
+                [self._Section.package_env_base()],
+            )
         return self._Section.test_env(item), [self._Section.run_env_base()], [self._Section.package_env_base()]
+
+
+def _build_env_base_map(env_base_content: dict[str, Any]) -> dict[str, str]:
+    result: dict[str, str] = {}
+    for base_name, config in env_base_content.items():
+        if not isinstance(config, Mapping):
+            msg = f"env_base.{base_name} must be a table"
+            raise HandledError(msg)
+        factors_raw = config.get("factors")
+        if factors_raw is None:
+            msg = f"env_base.{base_name} requires a 'factors' key; use [env.{base_name}] for single environments"
+            raise HandledError(msg)
+        if not isinstance(factors_raw, list):
+            msg = f"env_base.{base_name}.factors must be a list, got {type(factors_raw).__name__}"
+            raise HandledError(msg)
+        if factors_raw and isinstance(factors_raw[0], list | dict):
+            expanded = [expand_factor_group(g) for g in factors_raw]
+            names = ["-".join(combo) for combo in product(*expanded)]
+        else:
+            names = [str(f) for f in factors_raw]
+        for factor_suffix in names:
+            result[f"{base_name}-{factor_suffix}"] = base_name
+    return result
 
 
 __all__ = [
