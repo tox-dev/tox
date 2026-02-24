@@ -920,9 +920,9 @@ To skip incompatible combinations, add ``exclude`` -- this is only available in 
 
 .. _howto_env_base_matrix:
 
-*************************************************
+***********************************************
  Test a matrix of configurations with env_base
-*************************************************
+***********************************************
 
 When multiple environments share the same deps, commands, and other settings but differ only by factors, use
 ``env_base`` templates instead of repeating configuration across ``[env.X]`` sections. The ``factors`` key defines the

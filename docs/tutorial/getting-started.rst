@@ -192,7 +192,7 @@ with different system Pythons.
 For the full list of environment options, see :ref:`conf-testenv`.
 
 Scaling to multiple Python versions
-====================================
+===================================
 
 When your test matrix grows beyond a few environments, use ``env_base`` sections to define named templates that generate
 environments from factor combinations:
