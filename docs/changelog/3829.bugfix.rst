@@ -1,1 +1,0 @@
-Fixed the minimum version of virtualenv, to avoid incompatibility.

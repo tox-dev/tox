@@ -7,6 +7,17 @@
 .. towncrier release notes start
 
 **********************
+ v4.46.3 (2026-02-25)
+**********************
+
+Bug fixes - 4.46.3
+==================
+
+- Fix SchemaStore update workflow creating PRs with merge conflicts by branching from upstream master - by
+  :user:`gaborbernat`. (:issue:`3828`)
+- Fixed the minimum version of virtualenv, to avoid incompatibility. (:issue:`3829`)
+
+**********************
  v4.46.2 (2026-02-25)
 **********************
 
