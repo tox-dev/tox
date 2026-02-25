@@ -7,6 +7,18 @@
 .. towncrier release notes start
 
 **********************
+ v4.46.1 (2026-02-25)
+**********************
+
+Bug fixes - 4.46.1
+==================
+
+- Allow glob patterns (``*``, ``?``) in ``depends`` configuration for ini files - by :user:`gaborbernat`.
+  (:issue:`3822`)
+- Fix false positive schema validation errors with tombi by adding ``additionalProperties: true`` to
+  ``partial-tox.json`` on SchemaStore - by :user:`gaborbernat`. (:issue:`3823`)
+
+**********************
  v4.46.0 (2026-02-24)
 **********************
 
