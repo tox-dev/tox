@@ -22,8 +22,24 @@ from .util import VCS, get_url_scheme, is_url, url_to_path
 
 # Matches environment variable-style values in '${MY_VARIABLE_1}' with the variable name consisting of only uppercase
 # letters, digits or the '_' (underscore). This follows the POSIX standard defined in IEEE Std 1003.1, 2013 Edition.
-_ENV_VAR_RE = re.compile(r"(?P<var>\${(?P<name>[A-Z0-9_]+)})")
-_SCHEME_RE = re.compile(r"^(http|https|file):", re.IGNORECASE)
+_ENV_VAR_RE = re.compile(
+    r"""
+    (?P<var>
+        \$ \{               # dollar sign and opening brace
+        (?P<name> [A-Z0-9_]+ )  # POSIX variable name
+        \}                  # closing brace
+    )
+    """,
+    re.VERBOSE,
+)
+_SCHEME_RE = re.compile(
+    r"""
+    ^                       # start of string
+    ( http | https | file ) # URL scheme
+    :                       # colon
+    """,
+    re.VERBOSE | re.IGNORECASE,
+)
 _BOMS: tuple[tuple[bytes, str], ...] = (
     (codecs.BOM_UTF8, "utf-8"),
     (codecs.BOM_UTF32_BE, "utf-32-be"),
@@ -31,11 +47,37 @@ _BOMS: tuple[tuple[bytes, str], ...] = (
     (codecs.BOM_UTF16_BE, "utf-16-be"),
     (codecs.BOM_UTF16_LE, "utf-16-le"),
 )
-_COMMENT_RE = re.compile(r"(^|\s+)#.*$")
-# https://www.python.org/dev/peps/pep-0508/#extras
-_EXTRA_PATH = re.compile(r"(.*)\[([-._,\sa-zA-Z0-9]*)]")
-_EXTRA_ELEMENT = re.compile(r"[a-zA-Z0-9]*[-._a-zA-Z0-9]")
-_VERSION_SPECIFIER = re.compile(r"[><=!~]=|===?|[><]")
+_COMMENT_RE = re.compile(
+    r"""
+    ( ^ | \s+ )    # start of string or whitespace
+    \# .* $        # hash followed by anything to end
+    """,
+    re.VERBOSE,
+)
+_EXTRA_PATH = re.compile(
+    r"""
+    ( .* )                          # path portion
+    \[                              # opening bracket
+    ( [-._,\s a-zA-Z0-9]* )        # extras list
+    ]                               # closing bracket
+    """,
+    re.VERBOSE,
+)
+_EXTRA_ELEMENT = re.compile(
+    r"""
+    [a-zA-Z0-9]*       # optional leading alphanumeric
+    [-._a-zA-Z0-9]     # at least one valid extra char
+    """,
+    re.VERBOSE,
+)
+_VERSION_SPECIFIER = re.compile(
+    r"""
+    [><=!~] =   # two-char operators: >=, <=, ==, !=, ~=
+    | ===?      # === or ==
+    | [><]      # single-char operators: > or <
+    """,
+    re.VERBOSE,
+)
 ReqFileLines = Iterator[tuple[int, str]]
 
 DEFAULT_INDEX_URL = "https://pypi.org/simple"

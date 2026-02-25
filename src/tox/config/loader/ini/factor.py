@@ -69,7 +69,14 @@ def explode_factor(group: list[tuple[str, bool]]) -> str:
 def expand_factors(value: str) -> Iterator[tuple[list[list[tuple[str, bool]]] | None, str]]:
     for line in value.split("\n"):
         factors: list[list[tuple[str, bool]]] | None = None
-        marker_search = re.search(r":(\s|$)", line)
+        marker_search = re.search(
+            r"""
+            :           # colon separator
+            ( \s | $ )  # followed by whitespace or end of string
+            """,
+            line,
+            re.VERBOSE,
+        )
         marker_at, content = marker_search.start() if marker_search else -1, line
         if marker_at != -1:
             try:
@@ -89,15 +96,45 @@ def find_factor_groups(value: str) -> Iterator[list[tuple[str, bool]]]:
         yield result
 
 
-_FACTOR_RE = re.compile(r"(?:!?[\w._][\w._-]*|^$)")
+_FACTOR_RE = re.compile(
+    r"""
+    (?:
+        !?              # optional negation prefix
+        [\w.*?]         # first char: word char, dot, or glob wildcards
+        [\w.*?-]*       # remaining chars: word chars, dots, glob wildcards, or hyphens
+    |
+        ^$              # or an empty string
+    )
+    """,
+    re.VERBOSE,
+)
 
 
 def expand_env_with_negation(value: str) -> Iterator[str]:
     """Transform '{py,!pi}-{a,b},c' to ['py-a', 'py-b', '!pi-a', '!pi-b', 'c']."""
-    for key, group in groupby(re.split(r"((?:{[^}]+})+)|,", value), key=bool):
+    for key, group in groupby(
+        re.split(
+            r"""
+            ( (?: \{ [^}]+ \} )+ )  # one or more brace groups
+            |                        # or
+            ,                        # comma separator
+            """,
+            value,
+            flags=re.VERBOSE,
+        ),
+        key=bool,
+    ):
         if key:
             group_str = "".join(group).strip()
-            elements = re.split(r"{([^}]+)}", group_str)
+            elements = re.split(
+                r"""
+                \{          # opening brace
+                ( [^}]+ )   # capture contents
+                \}          # closing brace
+                """,
+                group_str,
+                flags=re.VERBOSE,
+            )
             parts = [[i.strip() for i in elem.split(",")] for elem in elements]
             for variant in product(*parts):
                 variant_str = "".join(variant)
@@ -123,7 +160,22 @@ def expand_ranges(value: str) -> str:
     left-open ``{-13}`` (lower bound = :data:`LATEST_PYTHON_MINOR_MIN`).
 
     """
-    matches = re.findall(r"((\d+)-(\d+)|(\d+)-|(?<=[{,])-(\d+)|\d+)(?:,|})", value)
+    matches = re.findall(
+        r"""
+        (                       # outer capture group
+            ( \d+ ) - ( \d+ )   # closed range: start-end
+            |
+            ( \d+ ) -           # right-open range: start-
+            |
+            (?<= [{,] ) - ( \d+ )  # left-open range: -end (preceded by { or ,)
+            |
+            \d+                 # single number
+        )
+        (?: , | \} )            # followed by comma or closing brace
+        """,
+        value,
+        re.VERBOSE,
+    )
     for src, start_, end_, open_start, open_end in matches:
         if src and start_ and end_:
             start, end = int(start_), int(end_)

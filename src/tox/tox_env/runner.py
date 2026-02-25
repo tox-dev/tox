@@ -30,7 +30,14 @@ class RunToxEnv(ToxEnv, ABC):
 
     def register_config(self) -> None:
         def ensure_one_line(value: str) -> str:
-            return re.sub(r"\s+", " ", value.replace("\r", "").replace("\n", " "))
+            return re.sub(
+                r"""
+                \s+     # one or more whitespace characters
+                """,
+                " ",
+                value.replace("\r", "").replace("\n", " "),
+                flags=re.VERBOSE,
+            )
 
         self.conf.add_config(
             keys=["description"],

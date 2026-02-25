@@ -7,6 +7,14 @@ from packaging.requirements import Requirement
 
 from .req.file import ParsedRequirement, ReqFileLines, RequirementsFile
 
+_UNESCAPED_SPACE_RE = re.compile(
+    r"""
+    (?<! \\ )   # not preceded by backslash
+    ( \s )      # capture whitespace
+    """,
+    re.VERBOSE,
+)
+
 if TYPE_CHECKING:
     from argparse import ArgumentParser, Namespace
     from pathlib import Path
@@ -93,7 +101,7 @@ class PythonDeps(RequirementsFile):
         escape_match = next((e for e in ONE_ARG_ESCAPE if line.startswith(e) and line[len(e)].isspace()), None)
         if escape_match is not None:
             # escape not already escaped spaces
-            escaped = re.sub(r"(?<!\\)(\s)", r"\\\1", line[len(escape_match) + 1 :])
+            escaped = _UNESCAPED_SPACE_RE.sub(r"\\\1", line[len(escape_match) + 1 :])
             line = f"{line[: len(escape_match)]} {escaped}"
         return line
 
@@ -205,7 +213,7 @@ class PythonConstraints(RequirementsFile):
         escape_match = next((e for e in ONE_ARG_ESCAPE if line.startswith(e) and line[len(e)].isspace()), None)
         if escape_match is not None:
             # escape not already escaped spaces
-            escaped = re.sub(r"(?<!\\)(\s)", r"\\\1", line[len(escape_match) + 1 :])
+            escaped = _UNESCAPED_SPACE_RE.sub(r"\\\1", line[len(escape_match) + 1 :])
             line = f"{line[: len(escape_match)]} {escaped}"
         return line
 

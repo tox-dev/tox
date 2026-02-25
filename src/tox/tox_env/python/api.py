@@ -63,7 +63,16 @@ PY_FACTORS_RE = re.compile(
     """,
     re.VERBOSE,
 )
-PY_FACTORS_RE_EXPLICIT_VERSION = re.compile(r"^((?P<impl>cpython|pypy)-)?(?P<version>[2-9]\.[0-9]+)(?P<threaded>t?)$")
+PY_FACTORS_RE_EXPLICIT_VERSION = re.compile(
+    r"""
+    ^
+    ( (?P<impl> cpython | pypy ) - )?   # optional interpreter prefix with dash
+    (?P<version> [2-9] \. [0-9]+ )      # explicit major.minor version
+    (?P<threaded> t? )                   # optional free-threaded suffix
+    $
+    """,
+    re.VERBOSE,
+)
 
 
 class Python(ToxEnv, ABC):
