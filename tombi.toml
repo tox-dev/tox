@@ -1,0 +1,8 @@
+[[schemas]]
+path = "src/tox/tox.schema.json"
+include = ["tox.toml"]
+
+[[schemas]]
+root = "tool.tox"
+path = "src/tox/tox.schema.json"
+include = ["pyproject.toml"]

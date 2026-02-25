@@ -29,11 +29,23 @@ jobs:
           with open('/tmp/schemastore/src/schemas/json/tox.json', 'w') as f:
               json.dump(schema, f, indent=2)
               f.write('\n')
+          partial = {
+              '\$schema': 'http://json-schema.org/draft-07/schema#',
+              '\$id': 'https://json.schemastore.org/partial-tox.json',
+              'title': 'Tox configuration in pyproject.toml',
+              'description': 'Schema for the [tool.tox] section in pyproject.toml',
+              'type': 'object',
+              'allOf': [{'\$ref': 'https://json.schemastore.org/tox.json'}],
+              'additionalProperties': True,
+          }
+          with open('/tmp/schemastore/src/schemas/json/partial-tox.json', 'w') as f:
+              json.dump(partial, f, indent=2)
+              f.write('\n')
           "
       - name: Check for changes
         id: diff
         run: |
-          git add src/schemas/json/tox.json
+          git add src/schemas/json/tox.json src/schemas/json/partial-tox.json
           if git diff --cached --quiet; then
             echo "changed=false" >> "$GITHUB_OUTPUT"
           else
