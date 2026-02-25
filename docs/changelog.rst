@@ -7,6 +7,16 @@
 .. towncrier release notes start
 
 **********************
+ v4.46.2 (2026-02-25)
+**********************
+
+Bug fixes - 4.46.2
+==================
+
+- Fix SchemaStore update workflow authentication and PR creation for fork repositories - by :user:`gaborbernat`.
+  (:issue:`3826`)
+
+**********************
  v4.46.1 (2026-02-25)
 **********************
 

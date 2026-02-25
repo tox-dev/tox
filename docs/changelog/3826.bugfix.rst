@@ -1,1 +1,0 @@
-Fix SchemaStore update workflow authentication and PR creation for fork repositories - by :user:`gaborbernat`.
