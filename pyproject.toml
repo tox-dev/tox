@@ -58,7 +58,7 @@ dependencies = [
   "pyproject-api>=1.10",
   "tomli>=2.4; python_version<'3.11'",
   "typing-extensions>=4.15; python_version<'3.11'",
-  "virtualenv>=20.38",
+  "virtualenv>=20.39",
 ]
 optional-dependencies.completion = [
   "argcomplete>=3.6.3",
