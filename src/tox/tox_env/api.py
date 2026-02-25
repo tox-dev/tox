@@ -48,7 +48,14 @@ SECRET_KEYWORDS = [
     "secret",
     "token",
 ]
-SECRET_ENV_VAR_REGEX = re.compile(".*(" + "|".join(SECRET_KEYWORDS) + ").*", re.IGNORECASE)
+SECRET_ENV_VAR_REGEX = re.compile(
+    r"""
+    .*                  # any prefix
+    ( {keywords} )      # one of the secret keywords
+    .*                  # any suffix
+    """.format(keywords="|".join(SECRET_KEYWORDS)),
+    re.VERBOSE | re.IGNORECASE,
+)
 
 
 def redact_value(name: str, value: str) -> str:

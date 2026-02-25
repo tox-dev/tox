@@ -200,8 +200,29 @@ class _ToxEnvInfo:
     runner_unavailable: str | None = None  #: if set the runner is not available (contains runner name)
 
 
-_DYNAMIC_ENV_FACTORS = re.compile(r"(pypy|py|cython|)(((\d(\.\d+(\.\d+)?)?)|\d+)t?)?")
-_PY_PRE_RELEASE_FACTOR = re.compile(r"alpha|beta|rc\.\d+")
+_DYNAMIC_ENV_FACTORS = re.compile(
+    r"""
+    ( pypy | py | cython | )        # interpreter prefix (or empty)
+    (                                # version group
+        (
+            ( \d                     # major digit
+                ( \. \d+ ( \. \d+ )? )?  # optional minor.patch
+            )
+            | \d+                    # or just digits
+        )
+        t?                           # optional free-threaded suffix
+    )?
+    """,
+    re.VERBOSE,
+)
+_PY_PRE_RELEASE_FACTOR = re.compile(
+    r"""
+    alpha       # alpha release
+    | beta      # beta release
+    | rc \. \d+ # release candidate with number
+    """,
+    re.VERBOSE,
+)
 
 
 class EnvSelector:

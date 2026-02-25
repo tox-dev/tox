@@ -64,7 +64,17 @@ def _req_options(parser: ArgumentParser) -> None:
     parser.add_argument("--hash", action=AddSortedUniqueAction, type=_validate_hash)
 
 
-_HASH = re.compile(r"sha(256:[a-f0-9]{64}|384:[a-f0-9]{96}|512:[a-f0-9]{128})")
+_HASH = re.compile(
+    r"""
+    sha
+    (
+        256 : [a-f0-9]{64}      # SHA-256 hash
+        | 384 : [a-f0-9]{96}    # SHA-384 hash
+        | 512 : [a-f0-9]{128}   # SHA-512 hash
+    )
+    """,
+    re.VERBOSE,
+)
 
 
 def _validate_hash(value: str) -> str:

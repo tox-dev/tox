@@ -22,7 +22,14 @@ if TYPE_CHECKING:
     from tox.config.main import Config
 
 V = TypeVar("V")
-_COMMENTS = re.compile(r"(\s)*(?<!\\)#.*")
+_COMMENTS = re.compile(
+    r"""
+    ( \s )*     # optional leading whitespace
+    (?<! \\ )   # not preceded by backslash
+    \# .*       # hash followed by anything
+    """,
+    re.VERBOSE,
+)
 
 
 class IniLoader(StrConvert, Loader[str]):

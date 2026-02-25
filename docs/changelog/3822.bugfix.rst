@@ -1,0 +1,1 @@
+Allow glob patterns (``*``, ``?``) in ``depends`` configuration for ini files - by :user:`gaborbernat`.

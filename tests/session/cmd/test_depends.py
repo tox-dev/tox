@@ -215,6 +215,130 @@ def test_depends_glob_excludes_self(tox_project: ToxProjectCreator) -> None:
     assert outcome.out == expected
 
 
+def test_depends_ini_glob_star(tox_project: ToxProjectCreator) -> None:
+    ini = """
+    [tox]
+    env_list = 3.12,3.13,3.14,lint,cov
+    [testenv]
+    skip_install = true
+    [testenv:cov]
+    depends = 3.*
+    """
+    project = tox_project({"tox.ini": ini})
+    outcome = project.run("de")
+    outcome.assert_success()
+    expected = dedent("""\
+    Execution order: 3.12, 3.13, 3.14, lint, cov
+    ALL
+       3.12
+       3.13
+       3.14
+       lint
+       cov
+          3.12
+          3.13
+          3.14
+    """)
+    assert outcome.out == expected
+
+
+def test_depends_ini_glob_question_mark(tox_project: ToxProjectCreator) -> None:
+    ini = """
+    [tox]
+    env_list = a1,a2,ab,cov
+    [testenv]
+    skip_install = true
+    [testenv:cov]
+    depends = a?
+    """
+    project = tox_project({"tox.ini": ini})
+    outcome = project.run("de")
+    outcome.assert_success()
+    expected = dedent("""\
+    Execution order: a1, a2, ab, cov
+    ALL
+       a1
+       a2
+       ab
+       cov
+          a1
+          a2
+          ab
+    """)
+    assert outcome.out == expected
+
+
+def test_depends_ini_glob_no_match(tox_project: ToxProjectCreator) -> None:
+    ini = """
+    [tox]
+    env_list = lint,cov
+    [testenv]
+    skip_install = true
+    [testenv:cov]
+    depends = py*
+    """
+    project = tox_project({"tox.ini": ini})
+    outcome = project.run("de")
+    outcome.assert_success()
+    expected = dedent("""\
+    Execution order: lint, cov
+    ALL
+       lint
+       cov
+    """)
+    assert outcome.out == expected
+
+
+def test_depends_ini_glob_mixed(tox_project: ToxProjectCreator) -> None:
+    ini = """
+    [tox]
+    env_list = 3.13,3.14,lint,cov
+    [testenv]
+    skip_install = true
+    [testenv:cov]
+    depends = lint,3.*
+    """
+    project = tox_project({"tox.ini": ini})
+    outcome = project.run("de")
+    outcome.assert_success()
+    expected = dedent("""\
+    Execution order: 3.13, 3.14, lint, cov
+    ALL
+       3.13
+       3.14
+       lint
+       cov
+          3.13
+          3.14
+          lint
+    """)
+    assert outcome.out == expected
+
+
+def test_depends_ini_glob_excludes_self(tox_project: ToxProjectCreator) -> None:
+    ini = """
+    [tox]
+    env_list = a,b,cov
+    [testenv]
+    skip_install = true
+    [testenv:cov]
+    depends = *
+    """
+    project = tox_project({"tox.ini": ini})
+    outcome = project.run("de")
+    outcome.assert_success()
+    expected = dedent("""\
+    Execution order: a, b, cov
+    ALL
+       a
+       b
+       cov
+          a
+          b
+    """)
+    assert outcome.out == expected
+
+
 def test_depends_help(tox_project: ToxProjectCreator) -> None:
     outcome = tox_project({"tox.ini": ""}).run("de", "-h")
     outcome.assert_success()
