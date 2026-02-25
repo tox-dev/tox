@@ -1,1 +1,2 @@
-Fix SchemaStore update workflow creating PRs with merge conflicts by branching from upstream master - by :user:`gaborbernat`.
+Fix SchemaStore update workflow creating PRs with merge conflicts by branching from upstream master - by
+:user:`gaborbernat`.
