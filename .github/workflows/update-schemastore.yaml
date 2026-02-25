@@ -64,14 +64,16 @@ jobs:
       - name: Create or update pull request
         if: steps.diff.outputs.changed == 'true'
         run: |
-          if ! gh pr view "$BRANCH" --repo SchemaStore/schemastore > /dev/null 2>&1; then
+          FORK_OWNER=$(gh api user --jq .login)
+          HEAD="$FORK_OWNER:$BRANCH"
+          if ! gh pr view "$HEAD" --repo SchemaStore/schemastore > /dev/null 2>&1; then
             gh pr create \
               --repo SchemaStore/schemastore \
+              --head "$HEAD" \
               --title "Update tox JSON Schema to ${{ github.ref_name }}" \
               --body "Updates tox's JSON Schema to [${{ github.sha }}](https://github.com/tox-dev/tox/commit/${{ github.sha }}) (release ${{ github.ref_name }})."
           else
-            gh pr edit "$BRANCH" --repo SchemaStore/schemastore \
+            gh pr edit "$HEAD" --repo SchemaStore/schemastore \
               --title "Update tox JSON Schema to ${{ github.ref_name }}" \
               --body "Updates tox's JSON Schema to [${{ github.sha }}](https://github.com/tox-dev/tox/commit/${{ github.sha }}) (release ${{ github.ref_name }})."
           fi
-        working-directory: /tmp/schemastore
