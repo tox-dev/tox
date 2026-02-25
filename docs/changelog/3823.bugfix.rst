@@ -1,0 +1,2 @@
+Fix false positive schema validation errors with tombi by adding ``additionalProperties: true`` to ``partial-tox.json``
+on SchemaStore - by :user:`gaborbernat`.
