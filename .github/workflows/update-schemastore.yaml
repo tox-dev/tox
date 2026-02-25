@@ -16,8 +16,10 @@ jobs:
       - uses: actions/checkout@v6
       - name: Fork and clone SchemaStore
         run: gh repo fork SchemaStore/schemastore --clone --remote -- /tmp/schemastore
-      - name: Create or reset branch
-        run: git switch -C "$BRANCH"
+      - name: Create or reset branch from upstream
+        run: |
+          git fetch upstream master
+          git switch -C "$BRANCH" upstream/master
         working-directory: /tmp/schemastore
       - name: Copy schema with SchemaStore $id
         run: |
