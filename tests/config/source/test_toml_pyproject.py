@@ -769,3 +769,68 @@ def test_config_in_toml_replace_if_factor_combined_with_env(
     outcome = project.run("c", "-e", "3.13-django50", "-k", "description")
     outcome.assert_success()
     outcome.assert_out_err("[testenv:3.13-django50]\ndescription = django in CI\n", "")
+
+
+def test_config_in_toml_replace_if_list_env_substitution(
+    tox_project: ToxProjectCreator, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Regression test for #3831: env var substitution in conditional list deps should not nest."""
+    monkeypatch.setenv("XCLIM_VERSION", "0.59.0")
+    project = tox_project({
+        "pyproject.toml": dedent("""
+        [tool.tox.env.A]
+        package = "skip"
+        deps = [
+            "pytest",
+            {replace = "if", condition = "env.XCLIM_VERSION", then = ["xclim=={env:XCLIM_VERSION}"]},
+        ]
+        commands = [["python", "-c", "print('ok')"]]
+        """),
+    })
+    outcome = project.run("c", "-e", "A", "-k", "deps")
+    outcome.assert_success()
+    assert "xclim==0.59.0" in outcome.out
+
+
+def test_config_in_toml_replace_if_list_env_not_set(
+    tox_project: ToxProjectCreator, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """When the env var is not set, the conditional dep should be omitted."""
+    monkeypatch.delenv("XCLIM_VERSION", raising=False)
+    project = tox_project({
+        "pyproject.toml": dedent("""
+        [tool.tox.env.A]
+        package = "skip"
+        deps = [
+            "pytest",
+            {replace = "if", condition = "env.XCLIM_VERSION", then = ["xclim=={env:XCLIM_VERSION}"]},
+        ]
+        commands = [["python", "-c", "print('ok')"]]
+        """),
+    })
+    outcome = project.run("c", "-e", "A", "-k", "deps")
+    outcome.assert_success()
+    assert "xclim" not in outcome.out
+
+
+def test_config_in_toml_replace_if_multi_list_env_substitution(
+    tox_project: ToxProjectCreator, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Regression test for #3831: multiple conditional deps with env vars."""
+    monkeypatch.setenv("ESMF_VERSION", "8.6.0")
+    monkeypatch.setenv("XCLIM_VERSION", "0.59.0")
+    project = tox_project({
+        "pyproject.toml": dedent("""
+        [tool.tox.env.A]
+        package = "skip"
+        deps = [
+            {replace = "if", condition = "env.ESMF_VERSION", then = ["esmf=={env:ESMF_VERSION}"]},
+            {replace = "if", condition = "env.XCLIM_VERSION", then = ["xclim=={env:XCLIM_VERSION}"]},
+        ]
+        commands = [["python", "-c", "print('ok')"]]
+        """),
+    })
+    outcome = project.run("c", "-e", "A", "-k", "deps")
+    outcome.assert_success()
+    assert "esmf==8.6.0" in outcome.out
+    assert "xclim==0.59.0" in outcome.out

@@ -72,7 +72,7 @@ class Unroll:
             res_list: list[TomlTypes] = []
             for val in value:  # apply replacement for every entry
                 got = self(val, depth, skip_str=skip_str)
-                if isinstance(val, dict) and val.get("replace") and val.get("extend"):
+                if isinstance(val, dict) and val.get("replace") and (isinstance(got, list) or val.get("extend")):
                     res_list.extend(cast("list[Any]", got))
                 else:
                     res_list.append(got)
