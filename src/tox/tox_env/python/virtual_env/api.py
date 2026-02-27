@@ -12,7 +12,6 @@ from typing import TYPE_CHECKING, Any, cast
 
 from virtualenv import __version__ as virtualenv_version
 from virtualenv import app_data, session_via_cli
-from virtualenv.discovery import cached_py_info
 from virtualenv.discovery.py_spec import PythonSpec
 
 from tox.config.loader.str_convert import StrConvert
@@ -170,6 +169,8 @@ class VirtualEnv(Python, ABC):
             interpreter = self.creator.interpreter
         except (FileNotFoundError, RuntimeError):  # Unable to find the interpreter
             return None
+        if (sys_exe := interpreter.system_executable) is None:
+            return None
         vi = interpreter.version_info
         return PythonInfo(
             implementation=interpreter.implementation,
@@ -177,7 +178,7 @@ class VirtualEnv(Python, ABC):
             version=interpreter.version,
             is_64=(interpreter.architecture == 64),  # noqa: PLR2004
             platform=interpreter.platform,
-            extra={"executable": Path(interpreter.system_executable).resolve()},
+            extra={"executable": Path(sys_exe).resolve()},
             free_threaded=interpreter.free_threaded,
             machine=getattr(interpreter, "machine", None),
         )
@@ -249,8 +250,15 @@ class VirtualEnv(Python, ABC):
         :returns: the found information (cached)
 
         """
-        return cached_py_info.from_exe(
-            cached_py_info.PythonInfo,
+        from virtualenv.discovery import cached_py_info  # noqa: PLC0415
+        from virtualenv.discovery.py_info import PythonInfo as VirtualenvPythonInfo  # noqa: PLC0415
+
+        result = cached_py_info.from_exe(
+            VirtualenvPythonInfo,
             app_data.make_app_data(None, read_only=False, env=os.environ),
             str(path),
         )
+        if result is None:
+            msg = f"could not query python information for {path}"
+            raise RuntimeError(msg)
+        return result
