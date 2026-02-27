@@ -807,19 +807,158 @@ def test_config_in_toml_replace_if_list_with_extend(
     assert "extra-pkg" in outcome.out
 
 
-def test_config_in_toml_build_wraps_errors_in_handled_error(tox_project: ToxProjectCreator) -> None:
+_CMD = 'commands = [["python", "--version"]]'
+
+
+@pytest.mark.parametrize(
+    ("toml_body", "key", "expected_msg"),
+    [
+        # --- str fields ---
+        pytest.param(f"description = 1\n{_CMD}", "description", "1 is not of type 'str'", id="description-int"),
+        pytest.param(f"platform = 1\n{_CMD}", "platform", "1 is not of type 'str'", id="platform-int"),
+        pytest.param(f"runner = 1\n{_CMD}", "runner", "1 is not of type 'str'", id="runner-int"),
+        pytest.param(f"package = 1\n{_CMD}", "package", "1 is not of type 'str'", id="package-int"),
+        pytest.param(f"pylock = 1\n{_CMD}", "pylock", "1 is not of type 'str'", id="pylock-int"),
+        pytest.param(f"virtualenv_spec = 1\n{_CMD}", "virtualenv_spec", "1 is not of type 'str'", id="venv-spec-int"),
+        # --- bool fields ---
+        pytest.param(f"ignore_errors = 42\n{_CMD}", "ignore_errors", "42 is not of type 'bool'", id="ignore-err-int"),
+        pytest.param(
+            f"parallel_show_output = 42\n{_CMD}", "parallel_show_output", "42 is not of type 'bool'", id="parallel-int"
+        ),
+        pytest.param(f"recreate = 42\n{_CMD}", "recreate", "42 is not of type 'bool'", id="recreate-int"),
+        pytest.param(
+            f"args_are_paths = 42\n{_CMD}", "args_are_paths", "42 is not of type 'bool'", id="args-are-paths-int"
+        ),
+        pytest.param(
+            f"ignore_outcome = 42\n{_CMD}", "ignore_outcome", "42 is not of type 'bool'", id="ignore-outcome-int"
+        ),
+        pytest.param(f"fail_fast = 42\n{_CMD}", "fail_fast", "42 is not of type 'bool'", id="fail-fast-int"),
+        pytest.param(f"skip_install = 42\n{_CMD}", "skip_install", "42 is not of type 'bool'", id="skip-install-int"),
+        pytest.param(f"use_develop = 42\n{_CMD}", "use_develop", "42 is not of type 'bool'", id="use-develop-int"),
+        pytest.param(
+            f"system_site_packages = 42\n{_CMD}",
+            "system_site_packages",
+            "42 is not of type 'bool'",
+            id="sys-site-pkg-int",
+        ),
+        pytest.param(f"always_copy = 42\n{_CMD}", "always_copy", "42 is not of type 'bool'", id="always-copy-int"),
+        pytest.param(f"download = 42\n{_CMD}", "download", "42 is not of type 'bool'", id="download-int"),
+        pytest.param(f"pip_pre = 42\n{_CMD}", "pip_pre", "42 is not of type 'bool'", id="pip-pre-int"),
+        pytest.param(
+            f"constrain_package_deps = 42\n{_CMD}",
+            "constrain_package_deps",
+            "42 is not of type 'bool'",
+            id="constrain-pkg-deps-int",
+        ),
+        pytest.param(
+            f"use_frozen_constraints = 42\n{_CMD}",
+            "use_frozen_constraints",
+            "42 is not of type 'bool'",
+            id="frozen-constraints-int",
+        ),
+        pytest.param(
+            f"skip_missing_interpreters = 42\n{_CMD}",
+            "skip_missing_interpreters",
+            "42 is not of type 'bool'",
+            id="skip-missing-int",
+        ),
+        # --- int fields ---
+        pytest.param(
+            f'commands_retry = "bad"\n{_CMD}',
+            "commands_retry",
+            "invalid literal for int() with base 10: 'bad'",
+            id="cmd-retry-str",
+        ),
+        # --- float fields ---
+        pytest.param(
+            f'suicide_timeout = "bad"\n{_CMD}',
+            "suicide_timeout",
+            "could not convert string to float: 'bad'",
+            id="suicide-str",
+        ),
+        pytest.param(
+            f'interrupt_timeout = "bad"\n{_CMD}',
+            "interrupt_timeout",
+            "could not convert string to float: 'bad'",
+            id="interrupt-str",
+        ),
+        pytest.param(
+            f'terminate_timeout = "bad"\n{_CMD}',
+            "terminate_timeout",
+            "could not convert string to float: 'bad'",
+            id="terminate-str",
+        ),
+        # --- Path fields ---
+        pytest.param(f"env_dir = 1\n{_CMD}", "env_dir", "1 is not of type 'str'", id="env-dir-int"),
+        pytest.param(f"env_tmp_dir = 1\n{_CMD}", "env_tmp_dir", "1 is not of type 'str'", id="env-tmp-dir-int"),
+        pytest.param(f"env_log_dir = 1\n{_CMD}", "env_log_dir", "1 is not of type 'str'", id="env-log-dir-int"),
+        pytest.param(f"change_dir = 1\n{_CMD}", "change_dir", "1 is not of type 'str'", id="change-dir-int"),
+        # --- list[str] fields ---
+        pytest.param(f"pass_env = 42\n{_CMD}", "pass_env", "42 is not list", id="pass-env-not-list"),
+        pytest.param(f"pass_env = [1]\n{_CMD}", "pass_env", "1 is not of type 'str'", id="pass-env-int-item"),
+        pytest.param(
+            f"disallow_pass_env = 42\n{_CMD}", "disallow_pass_env", "42 is not list", id="disallow-pass-env-not-list"
+        ),
+        pytest.param(
+            f"allowlist_externals = [true]\n{_CMD}",
+            "allowlist_externals",
+            "True is not of type 'str'",
+            id="allowlist-bool-item",
+        ),
+        pytest.param(f"base_python = 42\n{_CMD}", "base_python", "42 is not list", id="base-python-not-list"),
+        # --- set[str] fields ---
+        pytest.param(f"labels = 42\n{_CMD}", "labels", "42 is not list", id="labels-not-list"),
+        pytest.param(f"labels = [1]\n{_CMD}", "labels", "1 is not of type 'str'", id="labels-int-item"),
+        pytest.param(f"extras = 42\n{_CMD}", "extras", "42 is not list", id="extras-not-list"),
+        pytest.param(
+            f"dependency_groups = 42\n{_CMD}", "dependency_groups", "42 is not list", id="dep-groups-not-list"
+        ),
+        # --- list[Command] fields ---
+        pytest.param("commands = 42", "commands", "42 is not list", id="commands-not-list"),
+        pytest.param("commands = [[1]]", "commands", "1 is not of type 'str'", id="commands-int-arg"),
+        pytest.param("commands_pre = 42", "commands_pre", "42 is not list", id="commands-pre-not-list"),
+        pytest.param("commands_post = 42", "commands_post", "42 is not list", id="commands-post-not-list"),
+        pytest.param(
+            "recreate_commands = [[1]]", "recreate_commands", "1 is not of type 'str'", id="recreate-cmds-int-arg"
+        ),
+        pytest.param(
+            "extra_setup_commands = 42", "extra_setup_commands", "42 is not list", id="extra-setup-cmds-not-list"
+        ),
+        # --- EnvList fields ---
+        pytest.param(f"depends = 42\n{_CMD}", "depends", "env_list must be a list, got int", id="depends-not-list"),
+        pytest.param(
+            f"depends = [1]\n{_CMD}",
+            "depends",
+            "env_list items must be strings or product dicts, got int",
+            id="depends-int-item",
+        ),
+        # --- factory fields ---
+        pytest.param("deps = [1]", "deps", "deps expected str, list[str], or list[Requirement]", id="deps-int-item"),
+        pytest.param("deps = true", "deps", "deps expected str, list[str], or list[Requirement]", id="deps-bool"),
+        pytest.param(
+            f"constraints = 42\n{_CMD}",
+            "constraints",
+            "constraints expected str, list[str], or list[Requirement]",
+            id="constraints-int",
+        ),
+    ],
+)
+def test_config_in_toml_type_error_message(
+    tox_project: ToxProjectCreator,
+    toml_body: str,
+    key: str,
+    expected_msg: str,
+) -> None:
     project = tox_project({
-        "pyproject.toml": dedent("""
+        "pyproject.toml": dedent(f"""
         [tool.tox.env_run_base]
-        deps = [1]
-        commands = [["python", "--version"]]
+        {toml_body}
         """),
     })
-    outcome = project.run("c", "-e", "py", "-k", "deps")
+    outcome = project.run("c", "-e", "py", "-k", key)
     outcome.assert_failed()
-    expected = "failed to load py.deps: deps expected str, list[str], or list[Requirement]"
-    assert expected in outcome.out
-    assert "got list with invalid items: [0] int" in outcome.out
+    assert f"failed to load py.{key}" in outcome.out
+    assert expected_msg in outcome.out
 
 
 def test_config_in_toml_handled_error_on_run(tox_project: ToxProjectCreator) -> None:
@@ -833,6 +972,5 @@ def test_config_in_toml_handled_error_on_run(tox_project: ToxProjectCreator) -> 
     outcome = project.run("r", "-e", "py")
     outcome.assert_failed()
     assert "internal error" not in outcome.out
-    expected = "failed to load py.deps: deps expected str, list[str], or list[Requirement]"
-    assert expected in outcome.out
-    assert "got list with invalid items: [0] int" in outcome.out
+    assert "failed to load py.deps" in outcome.out
+    assert "deps expected str, list[str], or list[Requirement]" in outcome.out
