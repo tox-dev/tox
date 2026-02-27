@@ -769,3 +769,70 @@ def test_config_in_toml_replace_if_factor_combined_with_env(
     outcome = project.run("c", "-e", "3.13-django50", "-k", "description")
     outcome.assert_success()
     outcome.assert_out_err("[testenv:3.13-django50]\ndescription = django in CI\n", "")
+
+
+def test_config_in_toml_replace_if_list_without_extend_in_deps(
+    tox_project: ToxProjectCreator, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("X", "1")
+    project = tox_project({
+        "pyproject.toml": dedent("""
+        [tool.tox.env_run_base]
+        deps = [
+            "pytest",
+            { replace = "if", condition = "env.X", then = ["extra-pkg"] },
+        ]
+        """),
+    })
+    outcome = project.run("c", "-e", "py", "-k", "deps")
+    outcome.assert_failed()
+    assert "failed to load py.deps: deps expected str, list[str], or list[Requirement]" in outcome.out
+
+
+def test_config_in_toml_replace_if_list_with_extend(
+    tox_project: ToxProjectCreator, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("X", "1")
+    project = tox_project({
+        "pyproject.toml": dedent("""
+        [tool.tox.env_run_base]
+        deps = [
+            "pytest",
+            { replace = "if", condition = "env.X", then = ["extra-pkg"], extend = true },
+        ]
+        """),
+    })
+    outcome = project.run("c", "-e", "py", "-k", "deps")
+    outcome.assert_success()
+    assert "extra-pkg" in outcome.out
+
+
+def test_config_in_toml_build_wraps_errors_in_handled_error(tox_project: ToxProjectCreator) -> None:
+    project = tox_project({
+        "pyproject.toml": dedent("""
+        [tool.tox.env_run_base]
+        deps = [1]
+        commands = [["python", "--version"]]
+        """),
+    })
+    outcome = project.run("c", "-e", "py", "-k", "deps")
+    outcome.assert_failed()
+    expected = "failed to load py.deps: deps expected str, list[str], or list[Requirement]"
+    assert expected in outcome.out
+    assert "got list with invalid items: [0] int" in outcome.out
+
+
+def test_config_in_toml_handled_error_on_run(tox_project: ToxProjectCreator) -> None:
+    project = tox_project({
+        "pyproject.toml": dedent("""
+        [tool.tox.env_run_base]
+        deps = [1]
+        commands = [["python", "--version"]]
+        """),
+    })
+    outcome = project.run("r", "-e", "py")
+    outcome.assert_failed()
+    assert "internal error" not in outcome.out
+    expected = "failed to load py.deps: deps expected str, list[str], or list[Requirement]"
+    assert expected in outcome.out
+    assert "got list with invalid items: [0] int" in outcome.out

@@ -58,7 +58,8 @@ class MemoryLoader(Loader[Any]):
             return value
         if isinstance(value, str):
             return StrConvert.to_command(value)
-        raise TypeError(value)
+        msg = f"command expected Command or str, got {type(value).__name__}: {value!r}"
+        raise TypeError(msg)
 
     @staticmethod
     def to_env_list(value: Any) -> EnvList:
@@ -66,4 +67,5 @@ class MemoryLoader(Loader[Any]):
             return value
         if isinstance(value, str):
             return StrConvert.to_env_list(value)
-        raise TypeError(value)
+        msg = f"env_list expected EnvList or str, got {type(value).__name__}: {value!r}"
+        raise TypeError(msg)
