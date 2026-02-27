@@ -786,7 +786,7 @@ def test_config_in_toml_replace_if_list_without_extend_in_deps(
     })
     outcome = project.run("c", "-e", "py", "-k", "deps")
     outcome.assert_failed()
-    assert "failed to load py.deps" in outcome.out
+    assert "failed to load py.deps: deps expected str, list[str], or list[Requirement]" in outcome.out
 
 
 def test_config_in_toml_replace_if_list_with_extend(
@@ -817,7 +817,9 @@ def test_config_in_toml_build_wraps_errors_in_handled_error(tox_project: ToxProj
     })
     outcome = project.run("c", "-e", "py", "-k", "deps")
     outcome.assert_failed()
-    assert "failed to load py.deps" in outcome.out
+    expected = "failed to load py.deps: deps expected str, list[str], or list[Requirement]"
+    assert expected in outcome.out
+    assert "got list with invalid items: [0] int" in outcome.out
 
 
 def test_config_in_toml_handled_error_on_run(tox_project: ToxProjectCreator) -> None:
@@ -831,4 +833,6 @@ def test_config_in_toml_handled_error_on_run(tox_project: ToxProjectCreator) -> 
     outcome = project.run("r", "-e", "py")
     outcome.assert_failed()
     assert "internal error" not in outcome.out
-    assert "failed to load" in outcome.out
+    expected = "failed to load py.deps: deps expected str, list[str], or list[Requirement]"
+    assert expected in outcome.out
+    assert "got list with invalid items: [0] int" in outcome.out

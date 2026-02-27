@@ -287,7 +287,10 @@ class EnvConfigSet(ConfigSet):
                     )
                 )
             ):
-                raise TypeError(raw)
+                msg = (
+                    f"set_env expected str, dict[str, str], or list[dict[str, str]], got {type(raw).__name__}: {raw!r}"
+                )
+                raise TypeError(msg)
             return SetEnv(cast("SetEnvRaw", raw), self.name, self.env_name, root)
 
         root = self._conf.core["tox_root"]

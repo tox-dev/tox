@@ -78,7 +78,7 @@ class TomlLoader(Loader[TomlTypes]):
             raise
         except Exception as exception:
             name = "core" if args.env_name is None else args.env_name
-            msg = f"failed to load {name}.{key}: {exception!r}"
+            msg = f"failed to load {name}.{key}: {exception}"
             raise HandledError(msg) from exception
         if delay_replace:
             loader = self
