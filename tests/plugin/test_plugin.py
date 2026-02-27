@@ -189,14 +189,14 @@ def test_plugin_injects_invalid_python_run(tox_project: ToxProjectCreator, mocke
     @impl
     def tox_add_env_config(env_conf: EnvConfigSet, state: State) -> None:  # noqa: ARG001
         env_conf.loaders.insert(0, MemoryLoader(deps=[1]))
-        with pytest.raises(TypeError, match="1"):
+        with pytest.raises(TypeError, match="deps expected"):
             assert env_conf["deps"]
 
     register_inline_plugin(mocker, tox_add_env_config)
     project = tox_project({"tox.ini": "[testenv]\npackage=skip"})
     result = project.run()
     result.assert_failed()
-    assert "raise TypeError(raw)" in result.out
+    assert "raise TypeError(_factory_type_error" in result.out
 
 
 def test_plugin_extend_pass_env(tox_project: ToxProjectCreator, mocker: MockerFixture) -> None:
