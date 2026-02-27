@@ -2,12 +2,16 @@ from __future__ import annotations
 
 import os
 import sys
+from pathlib import Path
 from typing import TYPE_CHECKING
+from unittest.mock import MagicMock, PropertyMock
 
 import pytest
 from virtualenv import __version__ as virtualenv_version
 from virtualenv import session_via_cli
 from virtualenv.config.cli.parser import VirtualEnvOptions
+
+from tox.tox_env.python.virtual_env.api import VirtualEnv
 
 if TYPE_CHECKING:
     from pytest_mock import MockerFixture
@@ -253,3 +257,25 @@ commands = [["python", "-c", "print('ok')"]]
     result.assert_success()
     assert f"{var}=" in result.out
     assert expected_fragment in result.out
+
+
+def test_get_python_returns_none_when_system_executable_missing(
+    tox_project: ToxProjectCreator,
+    mocker: MockerFixture,
+) -> None:
+    mocker.patch.object(
+        VirtualEnv,
+        "creator",
+        new_callable=PropertyMock,
+        return_value=MagicMock(interpreter=MagicMock(system_executable=None)),
+    )
+    proj = tox_project({"tox.ini": "[testenv]\npackage=skip\nbase_python=missing-interp"})
+    result = proj.run("r")
+    result.assert_failed()
+    assert "could not find python interpreter" in result.out
+
+
+def test_get_virtualenv_py_info_raises_on_none(mocker: MockerFixture) -> None:
+    mocker.patch("virtualenv.discovery.cached_py_info.from_exe", return_value=None)
+    with pytest.raises(RuntimeError, match="could not query python information for"):
+        VirtualEnv.get_virtualenv_py_info(Path("/no/such/python"))

@@ -108,6 +108,7 @@ def test_result_json_sequential(
         log_report = json.load(file_handler)
 
     py_info = PythonInfo.current_system()
+    assert py_info.system_executable is not None
     host_python = {
         "executable": str(Path(py_info.system_executable).resolve()),
         "extra_version_info": None,
