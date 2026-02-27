@@ -142,7 +142,7 @@ class PythonDeps(RequirementsFile):
                 and (all(isinstance(i, str) for i in raw) or all(isinstance(i, Requirement) for i in raw))
             )
         ):
-            raise TypeError(raw)
+            raise TypeError(_factory_type_error("deps", raw))
         return cls(cast("str | list[str] | list[Requirement]", raw), root)
 
 
@@ -249,8 +249,18 @@ class PythonConstraints(RequirementsFile):
                 and (all(isinstance(i, str) for i in raw) or all(isinstance(i, Requirement) for i in raw))
             )
         ):
-            raise TypeError(raw)
+            raise TypeError(_factory_type_error("constraints", raw))
         return cls(cast("str | list[str] | list[Requirement]", raw), root)
+
+
+def _factory_type_error(field: str, raw: object) -> str:
+    expected = "str, list[str], or list[Requirement]"
+    if isinstance(raw, list):
+        bad_items = ", ".join(
+            f"[{i}] {type(item).__name__}" for i, item in enumerate(raw) if not isinstance(item, (str, Requirement))
+        )
+        return f"{field} expected {expected}, got list with invalid items: {bad_items}"
+    return f"{field} expected {expected}, got {type(raw).__name__}: {raw!r}"
 
 
 ONE_ARG = {

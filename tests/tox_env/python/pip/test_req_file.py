@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from tox.tox_env.python.pip.req_file import PythonDeps
+from tox.tox_env.python.pip.req_file import PythonConstraints, PythonDeps
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -74,3 +74,23 @@ def test_req_iadd(tmp_path: Path) -> None:
     b = PythonDeps(raw="bar", root=tmp_path)
     a += b
     assert a.lines() == ["foo", "bar"]
+
+
+def test_deps_factory_invalid_list(tmp_path: Path) -> None:
+    with pytest.raises(TypeError, match=r"deps expected .*, got list with invalid items: \[1\] int"):
+        PythonDeps.factory(tmp_path, ["ok", 42, "also-ok"])
+
+
+def test_deps_factory_invalid_type(tmp_path: Path) -> None:
+    with pytest.raises(TypeError, match=r"deps expected .*, got int"):
+        PythonDeps.factory(tmp_path, 123)
+
+
+def test_constraints_factory_invalid_list(tmp_path: Path) -> None:
+    with pytest.raises(TypeError, match=r"constraints expected .*, got list with invalid items: \[0\] list"):
+        PythonConstraints.factory(tmp_path, [["nested"]])
+
+
+def test_constraints_factory_invalid_type(tmp_path: Path) -> None:
+    with pytest.raises(TypeError, match=r"constraints expected .*, got dict"):
+        PythonConstraints.factory(tmp_path, {"key": "val"})
