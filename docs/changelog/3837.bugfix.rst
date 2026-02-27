@@ -1,0 +1,3 @@
+Fix type errors flagged by ``ty`` for ``virtualenv`` API changes (``system_executable`` nullability and
+``cached_py_info.PythonInfo`` removal), and correct the CI workflow matrix exclude for ``windows-2025`` - by
+:user:`gaborbernat`.
