@@ -1,2 +1,2 @@
-Show clean error messages instead of stack traces when TOML configuration contains type mismatches (e.g.,
-``deps = [1]``), wrapping failures in ``HandledError`` with environment and key context - by :user:`gaborbernat`.
+Show clean error messages instead of stack traces when TOML configuration contains type mismatches (e.g., ``deps =
+[1]``), wrapping failures in ``HandledError`` with environment and key context - by :user:`gaborbernat`.
