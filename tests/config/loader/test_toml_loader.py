@@ -41,12 +41,15 @@ def perform_load(value: Any, of_type: type[V]) -> V:
     return loader.load(key, of_type, factory_na, None, args)
 
 
+_PREFIX = r"failed to load A\.k: "
+
+
 def test_toml_loader_str_ok() -> None:
     assert perform_load("s", str) == "s"
 
 
 def test_toml_loader_str_nok() -> None:
-    with pytest.raises(HandledError, match="1 is not of type 'str'"):
+    with pytest.raises(HandledError, match=_PREFIX + r"1 is not of type 'str'"):
         perform_load(1, str)
 
 
@@ -55,7 +58,7 @@ def test_toml_loader_bool_ok() -> None:
 
 
 def test_toml_loader_bool_nok() -> None:
-    with pytest.raises(HandledError, match="'true' is not of type 'bool'"):
+    with pytest.raises(HandledError, match=_PREFIX + r"'true' is not of type 'bool'"):
         perform_load("true", bool)
 
 
@@ -64,12 +67,12 @@ def test_toml_loader_list_ok() -> None:
 
 
 def test_toml_loader_list_nok() -> None:
-    with pytest.raises(HandledError, match=r"\{\} is not list"):
+    with pytest.raises(HandledError, match=_PREFIX + r"\{\} is not list"):
         perform_load({}, list[str])
 
 
 def test_toml_loader_list_nok_element() -> None:
-    with pytest.raises(HandledError, match="2 is not of type 'str'"):
+    with pytest.raises(HandledError, match=_PREFIX + r"2 is not of type 'str'"):
         perform_load(["a", 2], list[str])
 
 
@@ -78,17 +81,17 @@ def test_toml_loader_dict_ok() -> None:
 
 
 def test_toml_loader_dict_nok() -> None:
-    with pytest.raises(HandledError, match=r"\{'a'\} is not dictionary"):
+    with pytest.raises(HandledError, match=_PREFIX + r"\{'a'\} is not dictionary"):
         perform_load({"a"}, dict[str, str])
 
 
 def test_toml_loader_dict_nok_key() -> None:
-    with pytest.raises(HandledError, match="1 is not of type 'str'"):
+    with pytest.raises(HandledError, match=_PREFIX + r"1 is not of type 'str'"):
         perform_load({"a": 1, 1: "2"}, dict[str, int])
 
 
 def test_toml_loader_dict_nok_value() -> None:
-    with pytest.raises(HandledError, match="'2' is not of type 'int'"):
+    with pytest.raises(HandledError, match=_PREFIX + r"'2' is not of type 'int'"):
         perform_load({"a": 1, "b": "2"}, dict[str, int])
 
 
@@ -97,7 +100,7 @@ def test_toml_loader_path_ok() -> None:
 
 
 def test_toml_loader_path_nok() -> None:
-    with pytest.raises(HandledError, match="1 is not of type 'str'"):
+    with pytest.raises(HandledError, match=_PREFIX + r"1 is not of type 'str'"):
         perform_load(1, Path)
 
 
@@ -112,7 +115,7 @@ def test_toml_loader_command_ok() -> None:
 
 
 def test_toml_loader_command_nok() -> None:
-    with pytest.raises(HandledError, match="1 is not of type 'str'"):
+    with pytest.raises(HandledError, match=_PREFIX + r"1 is not of type 'str'"):
         perform_load([["a", 1]], list[Command])
 
 
@@ -123,7 +126,7 @@ def test_toml_loader_env_list_ok() -> None:
 
 
 def test_toml_loader_env_list_nok() -> None:
-    with pytest.raises(HandledError, match="env_list items must be strings or product dicts, got int"):
+    with pytest.raises(HandledError, match=_PREFIX + r"env_list items must be strings or product dicts, got int"):
         perform_load(["a", 1], EnvList)
 
 
@@ -132,7 +135,7 @@ def test_toml_loader_list_optional_ok() -> None:
 
 
 def test_toml_loader_list_optional_nok() -> None:
-    with pytest.raises(HandledError, match="1 is not union of str, NoneType"):
+    with pytest.raises(HandledError, match=_PREFIX + r"1 is not union of str, NoneType"):
         perform_load(["a", None, 1], list[str | None])
 
 
@@ -141,5 +144,5 @@ def test_toml_loader_list_literal_ok() -> None:
 
 
 def test_toml_loader_list_literal_nok() -> None:
-    with pytest.raises(HandledError, match="'c' is not one of literal 'a','b'"):
+    with pytest.raises(HandledError, match=_PREFIX + r"'c' is not one of literal 'a','b'"):
         perform_load(["a", "c"], list[Literal["a", "b"]])
