@@ -84,7 +84,7 @@ jobs:
           - ubuntu-24.04
           - windows-2025
         exclude:
-          - { os: windows-latest, tox_env: docs }
+          - { os: windows-2025, tox_env: docs }
     steps:
       - uses: actions/checkout@v6
         with:
