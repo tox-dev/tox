@@ -56,7 +56,7 @@ class Convert(ABC, Generic[T]):
             return factory(raw)
         return cast("type[V]", of_type)(raw)
 
-    def _to_typing(self, raw: T, of_type: type[V] | UnionType, factory: Factory[V]) -> V:  # noqa: C901
+    def _to_typing(self, raw: T, of_type: type[V] | UnionType, factory: Factory[V]) -> V:  # noqa: C901, PLR0912
         origin = get_origin(of_type) or of_type.__class__
         result: Any = _NO_MAPPING
         type_args = get_args(of_type)
@@ -74,7 +74,7 @@ class Convert(ABC, Generic[T]):
                 (self.to(k, key_type, factory), self.to(v, value_type, factory))
                 for k, v in self.to_dict(raw, (key_type, value_type))
             )
-        elif origin in {Union, UnionType}:  # handle Optional values
+        elif origin in {Union, UnionType}:
             args: list[type[Any]] = list(type_args)
             none = type(None)
             if len(args) == 2 and none in args:  # noqa: PLR2004
@@ -85,6 +85,13 @@ class Convert(ABC, Generic[T]):
                 else:
                     new_type = next(i for i in args if i != none)  # pragma: no cover
                     result = self.to(raw, new_type, factory)
+            elif any(get_origin(arg) is not None for arg in args):
+                for arg in args:
+                    try:
+                        result = self.to(raw, arg, factory)
+                        break
+                    except (TypeError, ValueError):
+                        pass
         elif origin in {Literal, type(Literal)}:
             choice = type_args
             if raw not in choice:

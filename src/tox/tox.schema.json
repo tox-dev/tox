@@ -493,17 +493,31 @@
           "description": "if set to true, tox will stop executing remaining environments when this environment fails"
         },
         "default_base_python": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/subs"
-          },
+          "oneOf": [
+            {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/subs"
+              }
+            },
+            {
+              "type": "string"
+            }
+          ],
           "description": "fallback python interpreter used when no factor or explicit base_python is defined"
         },
         "base_python": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/subs"
-          },
+          "oneOf": [
+            {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/subs"
+              }
+            },
+            {
+              "type": "string"
+            }
+          ],
           "description": "environment identifier for python, first one found wins"
         },
         "basepython": {
