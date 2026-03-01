@@ -118,7 +118,7 @@ def run_command_set(  # noqa: PLR0913
             current_outcome = tox_env.execute(
                 cmd.args,
                 cwd=cwd,
-                stdin=StdinSource.user_only(),
+                stdin=StdinSource.USER if getattr(tox_env.options, "no_capture", False) else StdinSource.user_only(),
                 show=True,
                 run_id=f"{key}[{at}]",
             )
