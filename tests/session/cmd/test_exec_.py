@@ -5,6 +5,8 @@ from typing import TYPE_CHECKING
 
 import pytest
 
+from tox.execute.request import ExecuteRequest, StdinSource
+
 if TYPE_CHECKING:
     from unittest.mock import MagicMock
 
@@ -64,3 +66,21 @@ def test_exec_always_no_capture(tox_project: ToxProjectCreator) -> None:
         env_instance = kwargs.get("self")
         if env_instance and hasattr(env_instance, "options"):
             assert env_instance.options.no_capture is True
+
+
+def test_exec_passes_stdin_through(tox_project: ToxProjectCreator, monkeypatch: pytest.MonkeyPatch) -> None:
+    project = tox_project({"tox.ini": "[testenv]\npackage=skip"})
+    monkeypatch.setattr(sys.stdin, "isatty", lambda: False)
+
+    stdin_sources: list[StdinSource] = []
+
+    def capture_stdin(request: ExecuteRequest) -> int:
+        stdin_sources.append(request.stdin)
+        return 0
+
+    project.patch_execute(capture_stdin)
+    result = project.run("e", "-e", "py", "--", "python", "--version")
+    result.assert_success()
+
+    assert stdin_sources
+    assert all(source == StdinSource.USER for source in stdin_sources)
