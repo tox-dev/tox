@@ -7,6 +7,31 @@
 .. towncrier release notes start
 
 **********************
+ v4.47.0 (2026-03-01)
+**********************
+
+Features - 4.47.0
+=================
+
+- Show clean error messages instead of stack traces when TOML configuration contains type mismatches (e.g., ``deps =
+  [1]``), wrapping failures in ``HandledError`` with environment and key context - by :user:`gaborbernat`.
+  (:issue:`3831`)
+- Add comprehensive tests asserting full error messages for every configurable field type when TOML config contains type
+  mismatches - by :user:`gaborbernat`. (:issue:`3840`)
+
+Bug fixes - 4.47.0
+==================
+
+- Fix type errors flagged by ``ty`` for ``virtualenv`` API changes (``system_executable`` nullability and
+  ``cached_py_info.PythonInfo`` removal), and correct the CI workflow matrix exclude for ``windows-2025`` - by
+  :user:`gaborbernat`. (:issue:`3837`)
+- ``base_python`` and ``default_base_python`` now accept a string value in TOML configuration (e.g., ``base_python =
+  "python"`` is coerced to ``["python"]``) instead of raising ``TypeError`` - by :user:`gaborbernat`. (:issue:`3839`)
+- Pass stdin through to commands executed via ``tox exec`` so that piped input (e.g., ``echo "foo" | tox exec -- python
+  -c 'import sys; print(sys.stdin.read())'``) reaches the subprocess instead of being discarded - by
+  :user:`gaborbernat`. (:issue:`3841`)
+
+**********************
  v4.46.3 (2026-02-25)
 **********************
 

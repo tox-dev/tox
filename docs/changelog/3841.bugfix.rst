@@ -1,2 +1,0 @@
-Pass stdin through to commands executed via ``tox exec`` so that piped input (e.g., ``echo "foo" | tox exec -- python -c
-'import sys; print(sys.stdin.read())'``) reaches the subprocess instead of being discarded - by :user:`gaborbernat`.
