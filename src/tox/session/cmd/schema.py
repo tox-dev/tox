@@ -6,6 +6,7 @@ import json
 import sys
 import typing
 from pathlib import Path
+from types import UnionType
 from typing import TYPE_CHECKING
 
 import packaging.requirements
@@ -167,12 +168,11 @@ def _process_type(of_type: typing.Any) -> dict[str, typing.Any]:  # noqa: C901, 
         tox.tox_env.python.pip.req_file.PythonConstraints,
     }:
         return {"type": "string"}
-    if typing.get_origin(of_type) is typing.Union:
+    if typing.get_origin(of_type) is typing.Union or isinstance(of_type, UnionType):
         types = [x for x in typing.get_args(of_type) if x is not type(None)]
         if len(types) == 1:
             return _process_type(types[0])
-        msg = f"Union types are not supported: {of_type}"
-        raise ValueError(msg)
+        return {"oneOf": [_process_type(t) for t in types]}
     if of_type is bool:
         return {"type": "boolean"}
     if of_type is int:

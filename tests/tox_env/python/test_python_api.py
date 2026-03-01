@@ -397,6 +397,38 @@ base_python = ["python{py_ver}"]
     assert "python3.8" not in result.out
 
 
+def test_base_python_string_in_toml(tox_project: ToxProjectCreator) -> None:
+    py_ver = f"{sys.version_info[0]}.{sys.version_info[1]}"
+    toml = f"""\
+env_list = ["lint"]
+
+[env_run_base]
+package = "skip"
+commands = [["python", "-c", "print('ok')"]]
+
+[env.lint]
+base_python = "python{py_ver}"
+"""
+    result = tox_project({"tox.toml": toml}).run("c", "-e", "lint", "-k", "base_python")
+    result.assert_success()
+    assert f"python{py_ver}" in result.out
+
+
+def test_default_base_python_string_in_toml(tox_project: ToxProjectCreator) -> None:
+    py_ver = f"{sys.version_info[0]}.{sys.version_info[1]}"
+    toml = f"""\
+env_list = ["lint"]
+
+[env_run_base]
+package = "skip"
+default_base_python = "python{py_ver}"
+commands = [["python", "-c", "print('ok')"]]
+"""
+    result = tox_project({"tox.toml": toml}).run("c", "-e", "lint", "-k", "base_python")
+    result.assert_success()
+    assert f"python{py_ver}" in result.out
+
+
 def test_default_base_python_falls_back_to_sys_executable(tox_project: ToxProjectCreator) -> None:
     toml = """\
 env_list = ["lint"]

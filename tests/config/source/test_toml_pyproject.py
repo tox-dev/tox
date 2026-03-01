@@ -905,7 +905,12 @@ _CMD = 'commands = [["python", "--version"]]'
             "True is not of type 'str'",
             id="allowlist-bool-item",
         ),
-        pytest.param(f"base_python = 42\n{_CMD}", "base_python", "42 is not list", id="base-python-not-list"),
+        pytest.param(
+            f"base_python = 42\n{_CMD}",
+            "base_python",
+            "42 cannot cast to list[str] | str",
+            id="base-python-not-list",
+        ),
         # --- set[str] fields ---
         pytest.param(f"labels = 42\n{_CMD}", "labels", "42 is not list", id="labels-not-list"),
         pytest.param(f"labels = [1]\n{_CMD}", "labels", "1 is not of type 'str'", id="labels-int-item"),

@@ -84,19 +84,23 @@ class Python(ToxEnv, ABC):
     def register_config(self) -> None:
         super().register_config()
 
-        self.conf.add_config(
+        def _ensure_list(value: list[str] | str) -> list[str]:
+            return [value] if isinstance(value, str) else value
+
+        self.conf.add_config(  # ty: ignore[no-matching-overload] # https://github.com/astral-sh/ty/issues/2428
             keys=["default_base_python"],
-            of_type=list[str],
+            of_type=list[str] | str,
             default=[sys.executable],
             desc="fallback python interpreter used when no factor or explicit base_python is defined",
+            post_process=_ensure_list,
         )
 
-        def validate_base_python(value: list[str]) -> list[str]:
-            return self._validate_base_python(self.name, value, self.core["ignore_base_python_conflict"])
+        def validate_base_python(value: list[str] | str) -> list[str]:
+            return self._validate_base_python(self.name, _ensure_list(value), self.core["ignore_base_python_conflict"])
 
         self.conf.add_config(  # ty: ignore[no-matching-overload] # https://github.com/astral-sh/ty/issues/2428
             keys=["base_python", "basepython"],
-            of_type=list[str],
+            of_type=list[str] | str,
             default=self._base_python_default,
             desc="environment identifier for python, first one found wins",
             post_process=validate_base_python,

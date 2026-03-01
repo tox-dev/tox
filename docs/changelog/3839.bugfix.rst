@@ -1,0 +1,2 @@
+``base_python`` and ``default_base_python`` now accept a string value in TOML configuration (e.g., ``base_python =
+"python"`` is coerced to ``["python"]``) instead of raising ``TypeError`` - by :user:`gaborbernat`.
