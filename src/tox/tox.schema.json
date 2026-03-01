@@ -41,9 +41,7 @@
           },
           {
             "type": "object",
-            "required": [
-              "product"
-            ],
+            "required": ["product"],
             "properties": {
               "product": {
                 "type": "array",
@@ -57,9 +55,7 @@
                     },
                     {
                       "type": "object",
-                      "required": [
-                        "prefix"
-                      ],
+                      "required": ["prefix"],
                       "properties": {
                         "prefix": {
                           "type": "string"
@@ -134,9 +130,7 @@
             },
             {
               "type": "object",
-              "required": [
-                "product"
-              ],
+              "required": ["product"],
               "properties": {
                 "product": {
                   "type": "array",
@@ -150,9 +144,7 @@
                       },
                       {
                         "type": "object",
-                        "required": [
-                          "prefix"
-                        ],
+                        "required": ["prefix"],
                         "properties": {
                           "prefix": {
                             "type": "string"
@@ -270,9 +262,7 @@
               },
               {
                 "type": "object",
-                "required": [
-                  "product"
-                ],
+                "required": ["product"],
                 "properties": {
                   "product": {
                     "type": "array",
@@ -286,9 +276,7 @@
                         },
                         {
                           "type": "object",
-                          "required": [
-                            "prefix"
-                          ],
+                          "required": ["prefix"],
                           "properties": {
                             "prefix": {
                               "type": "string"
@@ -691,9 +679,7 @@
               "type": "boolean"
             }
           },
-          "required": [
-            "replace"
-          ],
+          "required": ["replace"],
           "additionalProperties": false
         },
         {
@@ -725,10 +711,7 @@
               "type": "boolean"
             }
           },
-          "required": [
-            "replace",
-            "of"
-          ],
+          "required": ["replace", "of"],
           "additionalProperties": false
         }
       ]
