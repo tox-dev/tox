@@ -67,8 +67,7 @@ class IniSource(Source):
 
     def get_base_sections(self, base: list[str], in_section: Section) -> Iterator[Section]:  # noqa: PLR6301
         for a_base in base:
-            section = IniSection.from_key(a_base)
-            yield section  # the base specifier is explicit
+            yield IniSection.from_key(a_base)
             if in_section.prefix is not None:  # no prefix specified, so this could imply our own prefix
                 yield IniSection(in_section.prefix, a_base)
 

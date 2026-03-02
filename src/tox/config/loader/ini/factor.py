@@ -92,8 +92,7 @@ def find_factor_groups(value: str) -> Iterator[list[tuple[str, bool]]]:
     """Transform '{py,!pi}-{a,b},c' to [{'py', 'a'}, {'py', 'b'}, {'pi', 'a'}, {'pi', 'b'}, {'c'}]."""
     value = expand_ranges(value)
     for env in expand_env_with_negation(value):
-        result = [name_with_negate(f) for f in env.split("-")]
-        yield result
+        yield [name_with_negate(f) for f in env.split("-")]
 
 
 _FACTOR_RE = re.compile(
