@@ -1,0 +1,3 @@
+Handle ``OSError`` when checking if positional arguments are existing paths in ``pos_args()`` — long arguments (e.g.,
+pytest ``-k`` expressions exceeding the 255-character filesystem name limit) no longer crash with ``OSError: [Errno 36]
+File name too long`` - by :user:`yarikoptic`.
