@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import os
 from collections import OrderedDict, defaultdict
 from itertools import chain, tee
@@ -62,7 +63,12 @@ class Config:
             to_path_str = os.path.abspath(str(to_path))  # noqa: PTH100
             for arg in self._pos_args:
                 path_arg = Path(arg)
-                if path_arg.exists() and not path_arg.is_absolute():
+                try:
+                    is_existing_path = path_arg.exists()
+                except OSError:
+                    logging.debug("could not check if %r is an existing path", arg)
+                    is_existing_path = False
+                if is_existing_path and not path_arg.is_absolute():
                     # we use os.path to unroll .. in path without resolve
                     path_arg_str = os.path.abspath(str(path_arg))  # noqa: PTH100
                     try:

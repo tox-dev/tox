@@ -235,6 +235,14 @@ def test_args_are_paths_when_from_child_dir(tox_project: ToxProjectCreator) -> N
     assert result.out == f"[testenv:py]\ncommands = magic.py {project.path} tox.ini . ..\n"
 
 
+def test_args_are_paths_long_arg(tox_project: ToxProjectCreator) -> None:
+    project = tox_project({"tox.ini": "[testenv]\npackage=skip\ncommands={posargs}", "w": {"a.txt": "a"}})
+    long_arg = "a" * 300  # exceeds filesystem filename length limit (typically 255)
+    result = project.run("c", "-e", "py", "-k", "commands", "--", long_arg, from_cwd=project.path / "w")
+    result.assert_success()
+    assert result.out == f"[testenv:py]\ncommands = {long_arg}\n"
+
+
 def test_args_are_paths_when_with_change_dir(tox_project: ToxProjectCreator) -> None:
     project = tox_project({"tox.ini": "[testenv]\npackage=skip\ncommands={posargs}\nchange_dir=w", "w": {"a.txt": "a"}})
     args = "magic.py", str(project.path), "tox.ini", f"w{os.sep}a.txt", "w", "."
