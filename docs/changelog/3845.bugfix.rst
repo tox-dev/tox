@@ -1,0 +1,1 @@
+New-style version factors (e.g., ``3.10-tests``) now correctly set ``base_python`` - by :user:`gaborbernat`.

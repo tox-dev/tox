@@ -67,7 +67,7 @@ PY_FACTORS_RE_EXPLICIT_VERSION = re.compile(
     r"""
     ^
     ( (?P<impl> cpython | pypy ) - )?   # optional interpreter prefix with dash
-    (?P<version> [2-9] \. [0-9]+ )      # explicit major.minor version
+    (?P<version> [23] \. [0-9]+ )        # explicit major.minor version (Python 2.x or 3.x)
     (?P<threaded> t? )                   # optional free-threaded suffix
     $
     """,
@@ -180,15 +180,18 @@ class Python(ToxEnv, ABC):
     @classmethod
     def extract_base_python(cls, env_name: str) -> str | None:
         candidates: list[str] = []
-        match = PY_FACTORS_RE_EXPLICIT_VERSION.match(env_name)
-        if match:
+        if match := PY_FACTORS_RE_EXPLICIT_VERSION.match(env_name):
             found = match.groupdict()
             candidates.append(f"{'pypy' if found['impl'] == 'pypy' else ''}{found['version']}{found['threaded']}")
         else:
             for factor in env_name.split("-"):
-                match = PY_FACTORS_RE.match(factor)
-                if match:
+                if match := PY_FACTORS_RE.match(factor):
                     candidates.append(factor)
+                elif match := PY_FACTORS_RE_EXPLICIT_VERSION.match(factor):
+                    found = match.groupdict()
+                    candidates.append(
+                        f"{'pypy' if found['impl'] == 'pypy' else ''}{found['version']}{found['threaded']}"
+                    )
         if candidates:
             if len(candidates) > 1:
                 msg = f"conflicting factors {', '.join(candidates)} in {env_name}"

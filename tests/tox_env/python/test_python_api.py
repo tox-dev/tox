@@ -45,6 +45,16 @@ def test_conflicting_base_python_factor() -> None:
         Python.extract_base_python(name)
 
 
+def test_conflicting_base_python_factor_explicit_version() -> None:
+    with pytest.raises(ValueError, match=r"conflicting factors 3\.10, 3\.11 in 3\.10-3\.11"):
+        Python.extract_base_python("3.10-3.11")
+
+
+def test_conflicting_base_python_factor_mixed_style() -> None:
+    with pytest.raises(ValueError, match=r"conflicting factors py310, 3\.11 in py310-3\.11"):
+        Python.extract_base_python("py310-3.11")
+
+
 def test_build_wheel_in_non_base_pkg_env(
     tox_project: ToxProjectCreator,
     patch_prev_py: Callable[[bool], tuple[str, str]],
@@ -142,6 +152,11 @@ def test_diff_msg_no_diff() -> None:
         ("2.7t", "2.7t"),
         ("pypy-3.10", "pypy3.10"),
         ("pypy-3.10t", "pypy3.10t"),
+        ("3.10-tests", "3.10"),
+        ("3.10t-tests", "3.10t"),
+        ("tests-3.10", "3.10"),
+        ("tests-3.10t", "3.10t"),
+        ("foo-3.14-bar", "3.14"),
     ],
     ids=lambda a: "|".join(a) if isinstance(a, list) else str(a),
 )
