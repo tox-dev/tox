@@ -1,0 +1,46 @@
+# .mailmap - Consolidate git author identities
+# See: https://git-scm.com/docs/gitmailmap
+#
+# Format: Canonical Name <canonical@email.com> Old Name <old@email.com>
+
+# Bernát Gábor
+Bernát Gábor <bgabor8@bloomberg.net> Bernát Gábor <gaborjbernat@gmail.com>
+Bernát Gábor <bgabor8@bloomberg.net> Bernat Gabor <bgabor8@bloomberg.net>
+Bernát Gábor <bgabor8@bloomberg.net> bgabor8 <bgabor8@bloomberg.net>
+Bernát Gábor <bgabor8@bloomberg.net> gaborbernat <gaborbernat@users.noreply.github.com>
+
+# Eric L
+Eric L <ewl+git@lavar.de> <ericzolf@users.noreply.github.com>
+
+# Hugo van Kemenade
+Hugo van Kemenade <1324225+hugovk@users.noreply.github.com> <hugovk@users.noreply.github.com>
+
+# James Williams
+James Williams <jamwil@gmail.com> <james@kananlabs.org>
+
+# Jürgen Gmach
+Jürgen Gmach <juergen.gmach@googlemail.com> <juergen.gmach@canonical.com>
+
+# Matt Bogosian
+Matt Bogosian <matt@bogosian.net> <eb3f73+github+com@yaymail.com>
+
+# Robsdedude (Rouven Bauer)
+Robsdedude <dev@rouvenbauer.de> <rouven.bauer@neo4j.com>
+
+# seyidaniels
+seyidaniels <seyidaniels@gmail.com> <odaniel8@bloomberg.net>
+
+# Sorin Sbarnea
+Sorin Sbarnea <sorin.sbarnea@gmail.com> <ssbarnea@redhat.com>
+
+# Stefano Rivera
+Stefano Rivera <stefano@rivera.za.net> <github@rivera.za.net>
+
+# Stephen Finucane
+Stephen Finucane <stephen@that.guru> <stephenfinucane@hotmail.com>
+
+# Sviatoslav Sydorenko
+Sviatoslav Sydorenko <wk@sydorenko.org.ua> Sviatoslav Sydorenko <wk.cvs.github@sydorenko.org.ua>
+Sviatoslav Sydorenko <wk@sydorenko.org.ua> Sviatoslav Sydorenko (Святослав Сидоренко) <wk@sydorenko.org.ua>
+Sviatoslav Sydorenko <wk@sydorenko.org.ua> 🇺🇦 Sviatoslav Sydorenko (Святослав Сидоренко) <wk@sydorenko.org.ua>
+Sviatoslav Sydorenko <wk@sydorenko.org.ua> 🇺🇦 Sviatoslav Sydorenko (Святослав Сидоренко) <webknjaz@redhat.com>
