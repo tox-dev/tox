@@ -7,6 +7,17 @@
 .. towncrier release notes start
 
 **********************
+ v4.47.2 (2026-03-03)
+**********************
+
+Bug fixes - 4.47.2
+==================
+
+- Handle ``OSError`` when checking if positional arguments are existing paths in ``pos_args()`` — long arguments (e.g.,
+  pytest ``-k`` expressions exceeding the 255-character filesystem name limit) no longer crash with ``OSError: [Errno
+  36] File name too long`` - by :user:`yarikoptic`. (:issue:`3847`)
+
+**********************
  v4.47.1 (2026-03-03)
 **********************
 
