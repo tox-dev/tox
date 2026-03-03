@@ -174,7 +174,13 @@ class Python(ToxEnv, ABC):
         return env
 
     def _base_python_default(self, conf: Config, env_name: str | None) -> list[str]:  # noqa: ARG002
-        base_python = None if env_name is None else self.extract_base_python(env_name)
+        try:
+            base_python = None if env_name is None else self.extract_base_python(env_name)
+        except ValueError:
+            if self.core["ignore_base_python_conflict"]:
+                base_python = None
+            else:
+                raise
         return self.conf["default_base_python"] if base_python is None else [base_python]
 
     @classmethod
@@ -217,7 +223,12 @@ class Python(ToxEnv, ABC):
         base_pythons: list[str],
         ignore_base_python_conflict: bool,  # noqa: FBT001
     ) -> list[str]:
-        env_base_python = cls.extract_base_python(env_name)
+        try:
+            env_base_python = cls.extract_base_python(env_name)
+        except ValueError:
+            if ignore_base_python_conflict:
+                return base_pythons
+            raise
         if env_base_python is not None:
             spec_name = PythonSpec.from_string_spec(env_base_python)
             for base_python in base_pythons:

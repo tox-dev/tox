@@ -55,6 +55,30 @@ def test_conflicting_base_python_factor_mixed_style() -> None:
         Python.extract_base_python("py310-3.11")
 
 
+def test_conflicting_base_python_factor_ignore(tox_project: ToxProjectCreator) -> None:
+    ini = "[tox]\nenv_list=unit-py3.10-2.16\nignore_base_python_conflict=true\n[testenv]\npackage=skip\n"
+    project = tox_project({"tox.ini": ini})
+    result = project.run("c", "-e", "unit-py3.10-2.16", "-k", "base_python")
+    result.assert_success()
+
+
+def test_conflicting_base_python_factor_no_ignore(tox_project: ToxProjectCreator) -> None:
+    ini = "[tox]\nenv_list=unit-py3.10-2.16\n[testenv]\npackage=skip\n"
+    project = tox_project({"tox.ini": ini})
+    result = project.run("c", "-e", "unit-py3.10-2.16", "-k", "base_python", raise_on_config_fail=False)
+    result.assert_failed(code=-1)
+
+
+def test_validate_base_python_conflicting_factors_ignore() -> None:
+    result = Python._validate_base_python("unit-py3.10-2.16", ["python3"], ignore_base_python_conflict=True)  # noqa: SLF001
+    assert result == ["python3"]
+
+
+def test_validate_base_python_conflicting_factors_no_ignore() -> None:
+    with pytest.raises(ValueError, match=r"conflicting factors py3\.10, 2\.16 in unit-py3\.10-2\.16"):
+        Python._validate_base_python("unit-py3.10-2.16", ["python3"], ignore_base_python_conflict=False)  # noqa: SLF001
+
+
 def test_build_wheel_in_non_base_pkg_env(
     tox_project: ToxProjectCreator,
     patch_prev_py: Callable[[bool], tuple[str, str]],
