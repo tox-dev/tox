@@ -7,6 +7,16 @@
 .. towncrier release notes start
 
 **********************
+ v4.47.1 (2026-03-03)
+**********************
+
+Bug fixes - 4.47.1
+==================
+
+- New-style version factors (e.g., ``3.10-tests``) now correctly set ``base_python`` - by :user:`gaborbernat`.
+  (:issue:`3845`)
+
+**********************
  v4.47.0 (2026-03-01)
 **********************
 
