@@ -7,6 +7,18 @@
 .. towncrier release notes start
 
 **********************
+ v4.47.3 (2026-03-04)
+**********************
+
+Bug fixes - 4.47.3
+==================
+
+- ``ignore_base_python_conflict`` now also suppresses errors when an environment name contains multiple conflicting
+  version-like factors (e.g., ``unit-py3.10-2.16`` where both ``py3.10`` and ``2.16`` are detected as Python versions).
+  Previously this flag only handled conflicts between explicit ``base_python`` settings and the environment name - by
+  :user:`gaborbernat`. (:issue:`3850`)
+
+**********************
  v4.47.2 (2026-03-03)
 **********************
 
