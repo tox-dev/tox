@@ -521,7 +521,7 @@ Python language core options
 
 .. conf::
     :keys: ignore_base_python_conflict, ignore_basepython_conflict
-    :default: True
+    :default: False
     :version_added: 3.1
 
      .. versionadded:: 3.1.0
@@ -535,6 +535,17 @@ Python language core options
      Furthermore, we allow hard enforcing this rule by setting this flag to ``true``. In such cases we ignore the
      :ref:`base_python` and instead always use the base Python implied from the Python name. This allows you to configure
      :ref:`base_python` in the :ref:`base` section without affecting environments that have implied base Python versions.
+
+     **This flag handles two types of conflicts:**
+
+     1. **Explicit setting vs. environment name**: When :ref:`base_python` is explicitly set but conflicts with the
+        version extracted from the environment name. Setting this to ``true`` uses the version from the environment name.
+
+     2. **Multiple version factors in environment name** (since 4.47.3): When the environment name itself contains
+        multiple factors that look like Python versions (e.g., ``unit-py3.10-2.16`` where both ``py3.10`` and ``2.16``
+        match Python version patterns). Setting this to ``true`` falls back to :ref:`default_base_python` instead of
+        raising an error. To avoid this ambiguity, prefix non-Python version factors (e.g. use ``ac2.16`` instead of
+        ``2.16``).
 
 .. _conf-testenv:
 
@@ -1359,6 +1370,13 @@ Python options
     The preferred naming convention is ``N.M`` (e.g. ``3.14``, ``3.13``) rather than ``pyNMM`` (e.g. ``py314``,
     ``py313``). The dotted form is clearer, avoids ambiguity for Python versions >= 3.10, and reads more naturally in
     environment lists and CI output.
+
+    .. warning::
+
+       Any factor matching the pattern ``2.N`` or ``3.N`` (where N is one or more digits) is treated as a Python
+       version specifier. This means non-Python versions like ``2.16`` in an environment name such as
+       ``unit-py3.10-2.16`` will conflict with the ``py3.10`` factor. To avoid this, prefix non-Python version numbers
+       (e.g. ``ac2.16``), or set :ref:`ignore_base_python_conflict` to ``true``.
 
     .. versionadded:: 4.46
 
