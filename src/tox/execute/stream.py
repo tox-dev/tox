@@ -11,9 +11,9 @@ if TYPE_CHECKING:
     from collections.abc import Iterator
     from types import TracebackType
 
-    if sys.version_info >= (3, 11):  # pragma: no cover (py311+)
+    if sys.version_info >= (3, 11):  # pragma: >=3.11 cover
         from typing import Self
-    else:  # pragma: no cover (<py311)
+    else:  # pragma: <3.11 cover
         from typing_extensions import Self
 
 

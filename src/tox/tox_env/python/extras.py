@@ -10,9 +10,9 @@ from .virtual_env.package.util import dependencies_with_extras_from_markers
 if TYPE_CHECKING:
     from pathlib import Path
 
-if sys.version_info >= (3, 11):  # pragma: no cover (py311+)
+if sys.version_info >= (3, 11):  # pragma: >=3.11 cover
     import tomllib
-else:  # pragma: no cover (py311+)
+else:  # pragma: <3.11 cover
     import tomli as tomllib
 
 

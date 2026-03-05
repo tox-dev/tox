@@ -6,6 +6,7 @@ skip_missing_interpreters = true
 description = "run the tests with pytest under {env_name}"
 package = "wheel"
 wheel_build_env = ".pkg"
+uv_seed = true
 extras = [ "completion" ]
 dependency_groups = [ "test" ]
 pass_env = [ "PYTEST_*", "SSL_CERT_FILE" ]
