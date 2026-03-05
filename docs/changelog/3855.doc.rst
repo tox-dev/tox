@@ -1,0 +1,1 @@
+Replace archived ``31z4/tox`` Docker image recommendation with instructions for building your own image using the official Python base image and ``uv`` - by :user:`rahuldevikar`.
