@@ -1920,7 +1920,8 @@ Pip installer
 
     The ``list_dependencies_command`` setting is used for listing the packages installed into the virtual environment.
     This command will be executed only if executing on Continuous Integrations is detected (for example set environment
-    variable ``CI=1``) or if journal is active. In TOML configurations, reference this Command value using ``{replace = "ref"}`` with ``extend = true`` rather than string interpolation (see :ref:`Configuration reference <configuration-reference>`).
+    variable ``CI=1``) or if journal is active. In TOML configurations, reference this Command value using
+    ``{replace = "ref"}`` with ``extend = true`` rather than string interpolation.
 
 .. conf::
     :keys: pip_pre
