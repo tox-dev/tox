@@ -1278,6 +1278,15 @@ Run
     If set to true a failing result of this test environment will not make tox fail (instead just warn).
 
 .. conf::
+    :keys: fail_fast
+    :default: False
+    :version_added: 4.36.0
+
+    If set to true, tox will stop executing remaining environments when this environment fails. This can also be
+    enabled globally via the ``--fail-fast`` (``-x``) CLI flag. The behavior respects :ref:`ignore_outcome` --
+    environments with ``ignore_outcome = true`` will not trigger fail-fast even if they fail.
+
+.. conf::
     :keys: skip_install
     :default: False
     :version_added: 1.9

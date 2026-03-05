@@ -1,0 +1,1 @@
+Add ``fail_fast`` to the configuration reference documentation - by :user:`rahuldevikar`.
