@@ -1292,6 +1292,61 @@ When an environment fails, use these techniques to investigate:
        tox run -v
        tox config -e 3.13
 
+7. **Extract configuration in different formats.** Use ``--format`` to choose between ``ini`` (default), ``json``, or
+   ``toml``. Write to a file with ``-o`` instead of stdout:
+
+   .. code-block:: bash
+
+       tox config -e py -k deps commands                          # INI (default)
+       tox config -e py -k deps commands --format json             # JSON to stdout
+       tox config -e py -k deps commands --format toml -o out.toml # TOML to file
+
+   Given a ``tox.ini`` with ``deps = pytest`` and ``commands = pytest {posargs}``, the output looks like:
+
+   .. tab:: INI
+
+       .. code-block:: ini
+
+           [testenv:py]
+           deps = pytest
+           commands = pytest
+
+   .. tab:: JSON
+
+       .. code-block:: json
+
+           {
+             "env": {
+               "py": {
+                 "deps": [
+                   "pytest"
+                 ],
+                 "commands": [
+                   "pytest"
+                 ]
+               }
+             }
+           }
+
+   .. tab:: TOML
+
+       .. code-block:: toml
+
+           [env.py]
+           deps = ["pytest"]
+           commands = ["pytest"]
+
+   The JSON and TOML formats preserve native types (booleans, integers, floats, arrays, dicts) and use the same key
+   structure as ``tox.toml`` (``env.<name>`` for environments, ``tox`` for core settings). The ``-o`` flag always writes
+   without color codes.
+
+   To get the list of environments programmatically, query ``-k type`` — the ``env`` keys in the output are the
+   environment names:
+
+   .. code-block:: bash
+
+       tox config -k type --format json | python -c "import json,sys; print(*json.load(sys.stdin)['env'])"
+
 .. _skip-env-install:
 
 **************************************

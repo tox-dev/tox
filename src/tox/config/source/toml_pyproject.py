@@ -15,9 +15,9 @@ from tox.report import HandledError
 
 from .api import Source
 
-if sys.version_info >= (3, 11):  # pragma: no cover (py311+)
+if sys.version_info >= (3, 11):  # pragma: >=3.11 cover
     import tomllib
-else:  # pragma: no cover (py311+)
+else:  # pragma: <3.11 cover
     import tomli as tomllib
 
 if TYPE_CHECKING:
