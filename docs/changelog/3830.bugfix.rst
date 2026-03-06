@@ -1,3 +1,0 @@
-Command-type configuration values like ``list_dependencies_command`` can now be referenced in TOML using the structured
-``{replace = "ref"}`` syntax. The reference automatically extracts the command's argument list for compatibility with
-TOML's ``list[list[str]]`` structure - by :user:`gaborbernat`.

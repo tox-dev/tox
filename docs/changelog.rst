@@ -7,6 +7,23 @@
 .. towncrier release notes start
 
 **********************
+ v4.48.1 (2026-03-06)
+**********************
+
+Bug fixes - 4.48.1
+==================
+
+- Command-type configuration values like ``list_dependencies_command`` can now be referenced in TOML using the
+  structured ``{replace = "ref"}`` syntax. The reference automatically extracts the command's argument list for
+  compatibility with TOML's ``list[list[str]]`` structure - by :user:`gaborbernat`. (:issue:`3830`)
+
+Improved documentation - 4.48.1
+===============================
+
+- Replace archived ``31z4/tox`` Docker image recommendation with instructions for building your own image using the
+  official Python base image and ``uv`` - by :user:`rahuldevikar`. (:issue:`3855`)
+
+**********************
  v4.48.0 (2026-03-05)
 **********************
 
