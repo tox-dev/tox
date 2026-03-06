@@ -1157,9 +1157,9 @@ up dependency installation.
 
 .. _howto-docker:
 
-***************************************
+***********************************
  Run tox inside a Docker container
-***************************************
+***********************************
 
 Build a lightweight Docker image that contains tox and your target Python versions. Using `uv
 <https://docs.astral.sh/uv/>`__ keeps the image small and installation fast:
@@ -1214,9 +1214,9 @@ To test against multiple Python versions in the same image, start from a base im
 
 .. note::
 
-    The previously recommended `31z4/tox <https://hub.docker.com/r/31z4/tox>`_ Docker image has been
-    `archived <https://github.com/31z4/tox-docker>`_ and is no longer maintained. The image is still available on
-    Docker Hub but may not receive updates. Building your own image as shown above is the recommended approach.
+    The previously recommended `31z4/tox <https://hub.docker.com/r/31z4/tox>`_ Docker image has been `archived
+    <https://github.com/31z4/tox-docker>`_ and is no longer maintained. The image is still available on Docker Hub but
+    may not receive updates. Building your own image as shown above is the recommended approach.
 
 .. ------------------------------------------------------------------------------------------
 
