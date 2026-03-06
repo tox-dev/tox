@@ -18,10 +18,9 @@ keywords = [
 ]
 license = "MIT"
 maintainers = [
-  { name = "Anthony Sottile", email = "asottile@umich.edu" },
   { name = "Bernát Gábor", email = "gaborjbernat@gmail.com" },
   { name = "Jürgen Gmach", email = "juergen.gmach@googlemail.com" },
-  { name = "Oliver Bestwalter", email = "oliver@bestwalter.de" },
+  { name = "Rahul Devikar", email = "rahuldevikar5512@gmail.com" },
 ]
 authors = [
   { name = "Bernát Gábor", email = "gaborjbernat@gmail.com" },
