@@ -342,6 +342,7 @@ Current maintainers
 
 - :user:`Bernát Gábor <gaborbernat>`
 - :user:`Jürgen Gmach <jugmac00>`
+- :user:`Rahul Devikar <rahuldevikar>`
 
 Previous maintainers
 --------------------
