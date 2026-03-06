@@ -20,6 +20,8 @@ def test_legacy_show_config(tox_project: ToxProjectCreator, mocker: MockerFixtur
     assert show_config.call_count == 1
     assert outcome.state.conf.options.list_keys_only == []
     assert outcome.state.conf.options.show_core is True
+    assert outcome.state.conf.options.config_format == "ini"
+    assert outcome.state.conf.options.output_file is None
 
 
 def test_legacy_show_config_with_env(tox_project: ToxProjectCreator, mocker: MockerFixture) -> None:
@@ -30,6 +32,8 @@ def test_legacy_show_config_with_env(tox_project: ToxProjectCreator, mocker: Moc
     assert show_config.call_count == 1
     assert outcome.state.conf.options.list_keys_only == []
     assert outcome.state.conf.options.show_core is False
+    assert outcome.state.conf.options.config_format == "ini"
+    assert outcome.state.conf.options.output_file is None
 
 
 @pytest.mark.parametrize("verbose", range(3))
