@@ -73,6 +73,7 @@ def test_match_expr(value: str, exp_output: list[str | MatchExpression]) -> None
         ("py37-{i18n,base},b", None),
         ("{toxinidir,}", None),
         ("{env}", r"MatchError\('No variable name was supplied in {env} substitution'\)"),
+        ("{factor}", r"MatchError\('No label was supplied in {factor} substitution'\)"),
     ],
 )
 def test_dont_replace(replace_one: ReplaceOne, value: str, exp_exception: str | None) -> None:

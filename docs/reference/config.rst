@@ -199,9 +199,65 @@ This generates 4 environments: ``django-py312-django42``, ``django-py312-django5
 
 - A list of strings: ``["a", "b"]``
 - A range dict: ``{ prefix = "py3", start = 12, stop = 14 }`` (generates ``py312``, ``py313``, ``py314``)
+- A labeled dict: ``{ ecosystem = ["oci", "python"] }`` (same as a list, but registers the label for substitution)
 - Mixed in the same ``factors`` list for Cartesian products
 
 The template name itself does not appear as a runnable environment -- only the generated names do.
+
+.. _factor-label-substitution:
+
+Factor label substitution
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. versionadded:: 4.49.0
+
+Factor groups can be labeled by using a single-key dict instead of a plain list. The label enables ``{factor:label}``
+substitution in any string value (descriptions, commands, deps, set_env, etc.), resolving to whichever value from the
+labeled group is an active factor in the current environment. Every factor group also receives a positional label
+(``0``, ``1``, ...) automatically.
+
+**Named labels** -- use a single-key dict to name a factor group:
+
+.. code-block:: toml
+
+    [env_base.sync]
+    factors = [{ecosystem = ["oci", "python", "js"]}, {target = ["pw", "tt"]}]
+    description = "Sync {factor:ecosystem} artifacts to {factor:target}"
+    commands = [["sync-tool", "--ecosystem", "{factor:ecosystem}"]]
+
+For ``sync-oci-pw``, the description resolves to ``Sync oci artifacts to pw`` and the command receives ``--ecosystem
+oci``.
+
+**Positional labels** -- plain lists automatically get index-based labels:
+
+.. code-block:: toml
+
+    [env_base.task]
+    factors = [["oci", "python"], ["pw", "tt"]]
+    description = "Run {factor:0} on {factor:1}"
+
+For ``task-oci-pw``, the description resolves to ``Run oci on pw``. Labeled dicts also support positional access:
+``{factor:0}`` and ``{factor:ecosystem}`` both resolve to ``oci`` when the labeled dict is in position 0.
+
+**In product matrices** -- labeled factor groups work in ``env_list`` product dicts too:
+
+.. code-block:: toml
+
+    env_list = [
+        { product = [["sync"], {ecosystem = ["oci", "python"]}, {target = ["pw", "tt"]}] },
+    ]
+
+    [env_run_base]
+    description = "Sync {factor:ecosystem} to {factor:target}"
+
+**Defaults** -- ``{factor:label:fallback}`` uses ``fallback`` when the label is unknown, following the same convention
+as ``{env:VAR:default}``.
+
+**Comparison with conditionals** -- ``{factor:label}`` replaces nested ``replace = "if"`` chains when the substituted
+value equals the factor name itself. For values that don't match factor names (e.g., mapping ``pw`` to
+``production-west-cluster``), use ``replace = "if"`` with ``factor.NAME`` conditions.
+
+**Reserved names** -- the following cannot be used as label names: ``env``, ``posargs``, ``tty``, ``glob``, ``factor``.
 
 .. _tox-ini:
 

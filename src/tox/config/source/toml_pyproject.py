@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING, Any, Final, cast
 
 from tox.config.loader.section import Section
 from tox.config.loader.toml import TomlLoader
-from tox.config.loader.toml._product import expand_factor_group
+from tox.config.loader.toml._product import expand_factor_group, extract_label
 from tox.config.types import MissingRequiredConfigKeyError
 from tox.report import HandledError
 
@@ -102,9 +102,10 @@ class TomlPyProject(Source):
             raise MissingRequiredConfigKeyError(path) from exc
         if set(self._our_content.keys()) == {"legacy_tox_ini"}:
             raise MissingRequiredConfigKeyError(path)
-        self._env_base_generated: dict[str, str] = _build_env_base_map(
+        self._env_base_generated, self._factor_labels = _build_env_base_map(
             dict(self._our_content.get(self._Section.ENV_BASE, {})),
         )
+        self._factor_labels.update(_extract_env_list_labels(self._our_content.get("env_list")))
         super().__init__(path)
 
     def get_core_section(self) -> Section:
@@ -174,8 +175,9 @@ class TomlPyProject(Source):
         return self._Section.test_env(item), [self._Section.run_env_base()], [self._Section.package_env_base()]
 
 
-def _build_env_base_map(env_base_content: dict[str, Any]) -> dict[str, str]:
+def _build_env_base_map(env_base_content: dict[str, Any]) -> tuple[dict[str, str], dict[str, list[str]]]:
     result: dict[str, str] = {}
+    all_labels: dict[str, list[str]] = {}
     for base_name, config in env_base_content.items():
         if not isinstance(config, Mapping):
             msg = f"env_base.{base_name} must be a table"
@@ -188,13 +190,36 @@ def _build_env_base_map(env_base_content: dict[str, Any]) -> dict[str, str]:
             msg = f"env_base.{base_name}.factors must be a list, got {type(factors_raw).__name__}"
             raise HandledError(msg)
         if factors_raw and isinstance(factors_raw[0], list | dict):
-            expanded = [expand_factor_group(g) for g in factors_raw]
+            expanded: list[list[str]] = []
+            for idx, g in enumerate(factors_raw):
+                values = expand_factor_group(g)
+                expanded.append(values)
+                all_labels[str(idx)] = values
+                if (label := extract_label(g)) is not None:
+                    all_labels[label] = values
             names = ["-".join(combo) for combo in product(*expanded)]
         else:
             names = [str(f) for f in factors_raw]
         for factor_suffix in names:
             result[f"{base_name}-{factor_suffix}"] = base_name
-    return result
+    return result, all_labels
+
+
+def _extract_env_list_labels(env_list_raw: Any) -> dict[str, list[str]]:
+    if not isinstance(env_list_raw, list):
+        return {}
+    labels: dict[str, list[str]] = {}
+    for item in env_list_raw:
+        if isinstance(item, dict) and "product" in item:
+            raw_groups = item["product"]
+            if not isinstance(raw_groups, list):
+                continue
+            for idx, g in enumerate(raw_groups):
+                values = expand_factor_group(g)
+                labels[str(idx)] = values
+                if (label := extract_label(g)) is not None:
+                    labels[label] = values
+    return labels
 
 
 __all__ = [

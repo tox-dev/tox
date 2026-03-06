@@ -68,6 +68,21 @@
                         }
                       },
                       "additionalProperties": false
+                    },
+                    {
+                      "type": "object",
+                      "minProperties": 1,
+                      "maxProperties": 1,
+                      "not": {
+                        "required": ["prefix"]
+                      },
+                      "additionalProperties": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      },
+                      "description": "labeled factor group for {factor:label} substitution"
                     }
                   ]
                 },
@@ -157,6 +172,21 @@
                           }
                         },
                         "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "minProperties": 1,
+                        "maxProperties": 1,
+                        "not": {
+                          "required": ["prefix"]
+                        },
+                        "additionalProperties": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "description": "labeled factor group for {factor:label} substitution"
                       }
                     ]
                   },
@@ -289,6 +319,21 @@
                             }
                           },
                           "additionalProperties": false
+                        },
+                        {
+                          "type": "object",
+                          "minProperties": 1,
+                          "maxProperties": 1,
+                          "not": {
+                            "required": ["prefix"]
+                          },
+                          "additionalProperties": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            }
+                          },
+                          "description": "labeled factor group for {factor:label} substitution"
                         }
                       ]
                     },

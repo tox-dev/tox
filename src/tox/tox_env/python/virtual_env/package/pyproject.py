@@ -262,7 +262,7 @@ class Pep517VenvPackager(PythonPackageToxEnv, ABC):
                 cast("Pep517VirtualEnvFrontend", self._frontend_).backend,
             )
             for env in targets:
-                env._defined["package"].value = "editable-legacy"  # noqa: SLF001  # ty: ignore[invalid-assignment] # ConfigDefinition.value is dynamically typed
+                env._defined["package"].value = "editable-legacy"  # noqa: SLF001  # ty: ignore[unresolved-attribute] # ConfigDefinition.value is dynamically typed
                 self.builds["editable-legacy"].append(env)
             self._run_state["setup"] = False  # force setup again as we need to provision wheel to get dependencies
             deps = self._load_deps(for_env)

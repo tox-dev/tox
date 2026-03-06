@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import sys
+import textwrap
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -113,3 +114,24 @@ def test_config_in_toml_replace_from_section_absolute(tox_project: ToxProjectCre
     outcome = project.run("c", "-e", "B", "-k", "description")
     outcome.assert_success()
     outcome.assert_out_err("[testenv:B]\ndescription = o\n", "")
+
+
+def test_config_in_toml_env_list_keyed_factor_description(tox_project: ToxProjectCreator) -> None:
+    project = tox_project({
+        "tox.toml": textwrap.dedent("""\
+            env_list = [
+                { product = [["sync"], {ecosystem = ["oci", "python"]}, {target = ["pw", "tt"]}] },
+            ]
+
+            [env_run_base]
+            package = "skip"
+            description = "Sync {factor:ecosystem} to {factor:target}"
+            commands = [["python", "-c", "print('ok')"]]
+        """),
+    })
+    outcome = project.run("c", "-e", "sync-oci-pw", "-k", "description")
+    outcome.assert_success()
+    outcome.assert_out_err("[testenv:sync-oci-pw]\ndescription = Sync oci to pw\n", "")
+    outcome = project.run("c", "-e", "sync-python-tt", "-k", "description")
+    outcome.assert_success()
+    outcome.assert_out_err("[testenv:sync-python-tt]\ndescription = Sync python to tt\n", "")
