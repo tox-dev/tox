@@ -134,6 +134,10 @@ class Config:
         return self._options
 
     @property
+    def factor_labels(self) -> dict[str, list[str]]:
+        return getattr(self._src, "_factor_labels", {})
+
+    @property
     def core(self) -> CoreConfigSet:
         """:returns: the core configuration"""
         if self._core_set is not None:

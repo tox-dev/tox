@@ -2,7 +2,7 @@
 build-backend = "hatchling.build"
 requires = [
   "hatch-vcs>=0.5",
-  "hatchling>=1.28",
+  "hatchling>=1.29",
 ]
 
 [project]
@@ -49,17 +49,17 @@ dynamic = [
   "version",
 ]
 dependencies = [
-  "cachetools>=7.0.1",
+  "cachetools>=7.0.3",
   "colorama>=0.4.6",
-  "filelock>=3.24.3",
+  "filelock>=3.25",
   "packaging>=26",
-  "platformdirs>=4.9.2",
+  "platformdirs>=4.9.4",
   "pluggy>=1.6",
   "pyproject-api>=1.10",
   "tomli>=2.4; python_version<'3.11'",
-  "tomli-w>=1.1",
+  "tomli-w>=1.2",
   "typing-extensions>=4.15; python_version<'3.11'",
-  "virtualenv>=20.39",
+  "virtualenv>=21.1",
 ]
 optional-dependencies.completion = [
   "argcomplete>=3.6.3",
@@ -82,12 +82,12 @@ test = [
   "covdefaults>=2.3",
   "coverage>=7.13.4",
   "detect-test-pollution>=1.2",
-  "devpi-process>=1.1",
+  "devpi-process>=1.1.1",
   "diff-cover>=10.2",
   "distlib>=0.4",
   "flaky>=3.8.1",
   "hatch-vcs>=0.5",
-  "hatchling>=1.28",
+  "hatchling>=1.29",
   "pdm-backend>=2.4.7",
   "psutil>=7.2.2",
   "pytest>=9.0.2",
@@ -101,7 +101,7 @@ test = [
   "wheel>=0.46.3",
 ]
 type = [
-  "ty>=0.0.18",
+  "ty>=0.0.21",
   { include-group = "docs" },
   { include-group = "release" },
   { include-group = "test" },
@@ -109,13 +109,13 @@ type = [
 docs = [
   "furo>=2025.12.19",
   "sphinx>=9.1",
-  "sphinx-argparse-cli>=1.20.1",
-  "sphinx-autodoc-typehints>=3.6.3",
+  "sphinx-argparse-cli>=1.21.1",
+  "sphinx-autodoc-typehints>=3.9.7",
   "sphinx-copybutton>=0.5.2",
   "sphinx-inline-tabs>=2025.12.21.14",
   "sphinx-issues>=5.0.1",
   "sphinx-reredirects>=1.1",
-  "sphinxcontrib-mermaid>=2",
+  "sphinxcontrib-mermaid>=2.0.1",
   "sphinxcontrib-towncrier>=0.2.1a0",
   "towncrier>=25.8",
   "truststore>=0.10.4",
@@ -126,7 +126,7 @@ fix = [
 pkg-meta = [
   "check-wheel-contents>=0.6.3",
   "twine>=6.2",
-  "uv>=0.10.4",
+  "uv>=0.10.8",
 ]
 release = [
   "gitpython>=3.1.46",
@@ -135,7 +135,7 @@ release = [
   "towncrier>=25.8",
 ]
 type-min = [
-  "ty>=0.0.18",
+  "ty>=0.0.21",
   { include-group = "test" },
 ]
 

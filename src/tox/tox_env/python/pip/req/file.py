@@ -252,7 +252,7 @@ class RequirementsFile:
         return result
 
     def _key_func(self, line: ParsedRequirement) -> tuple[int, tuple[int, str, str]]:  # noqa: PLR6301
-        of_type = {Requirement: 0, Path: 1, str: 2}[type(line.requirement)]
+        of_type = {Requirement: 0, Path: 1, str: 2}[type(line.requirement)]  # ty: ignore[invalid-argument-type]
         between = of_type, str(line.requirement).lower(), str(line.options)
         if "is_constraint" in line.options:
             return 2, between

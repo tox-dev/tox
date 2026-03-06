@@ -44,7 +44,7 @@ def dependencies_with_extras_from_markers(
             raise Fail(msg)
     result: list[Requirement] = []
     found: set[str] = set()
-    todo: set[str | None] = normalized_extras | {None}
+    todo: set[str | None] = normalized_extras | {None}  # ty: ignore[invalid-assignment]
     visited: set[str | None] = set()
     while todo:
         new_extras: set[str | None] = set()
@@ -95,7 +95,7 @@ def _extract_extra_markers(req: Requirement) -> tuple[Requirement, set[str | Non
         cast("Marker", req.marker)._markers = new_markers  # noqa: SLF001
     else:
         req.marker = None
-    return req, cast("set[str | None]", extra_markers) or {None}
+    return req, cast("set[str | None]", extra_markers) or {None}  # ty: ignore[invalid-return-type]
 
 
 def _get_extra(

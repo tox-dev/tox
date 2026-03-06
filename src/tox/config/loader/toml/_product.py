@@ -27,13 +27,32 @@ def expand_product(value: dict[str, Any]) -> list[str]:
     return [name for combo in product(*expanded) if (name := "-".join(combo)) not in exclude]
 
 
+_RESERVED_LABELS: frozenset[str] = frozenset({"env", "posargs", "tty", "glob", "factor"})
+
+
 def expand_factor_group(group: Any) -> list[str]:
     if isinstance(group, list):
         return [str(item) for item in group]
-    if isinstance(group, dict) and "prefix" in group:
-        return _expand_range(group)
-    msg = f"factor group must be a list of strings or a range dict with 'prefix', got {type(group).__name__}"
+    if isinstance(group, dict):
+        if "prefix" in group:
+            return _expand_range(group)
+        if len(group) == 1:
+            label, values = next(iter(group.items()))
+            if label in _RESERVED_LABELS:
+                msg = f"'{label}' is reserved and cannot be used as a factor label"
+                raise TypeError(msg)
+            if not isinstance(values, list):
+                msg = f"labeled factor group '{label}' must map to a list, got {type(values).__name__}"
+                raise TypeError(msg)
+            return [str(v) for v in values]
+    msg = f"factor group must be a list, a range dict, or a labeled dict, got {type(group).__name__}"
     raise TypeError(msg)
+
+
+def extract_label(group: Any) -> str | None:
+    if isinstance(group, dict) and "prefix" not in group and len(group) == 1:
+        return next(iter(group))
+    return None
 
 
 def _expand_range(range_dict: dict[str, Any]) -> list[str]:
@@ -55,6 +74,8 @@ def _expand_range(range_dict: dict[str, Any]) -> list[str]:
 
 
 __all__ = [
+    "_RESERVED_LABELS",
     "expand_factor_group",
     "expand_product",
+    "extract_label",
 ]

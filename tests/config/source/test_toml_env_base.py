@@ -402,3 +402,116 @@ def test_env_base_cartesian_with_range(tox_project: ToxProjectCreator) -> None:
     result.assert_success()
     for env in ("django-a-py312", "django-a-py313", "django-b-py312", "django-b-py313"):
         assert env in result.out
+
+
+def test_env_base_keyed_factor_description(tox_project: ToxProjectCreator) -> None:
+    project = tox_project({
+        "tox.toml": textwrap.dedent("""\
+            [env_base.sync]
+            factors = [{ecosystem = ["oci", "python"]}]
+            package = "skip"
+            description = "Sync {factor:ecosystem} artifacts"
+            commands = [["python", "-c", "print('ok')"]]
+        """),
+    })
+    outcome = project.run("c", "-e", "sync-oci", "-k", "description")
+    outcome.assert_success()
+    outcome.assert_out_err("[testenv:sync-oci]\ndescription = Sync oci artifacts\n", "")
+    outcome = project.run("c", "-e", "sync-python", "-k", "description")
+    outcome.assert_success()
+    outcome.assert_out_err("[testenv:sync-python]\ndescription = Sync python artifacts\n", "")
+
+
+def test_env_base_keyed_factor_two_groups(tox_project: ToxProjectCreator) -> None:
+    project = tox_project({
+        "tox.toml": textwrap.dedent("""\
+            [env_base.sync]
+            factors = [{ecosystem = ["oci", "python"]}, {target = ["pw", "tt"]}]
+            package = "skip"
+            description = "Sync {factor:ecosystem} to {factor:target}"
+            commands = [["python", "-c", "print('ok')"]]
+        """),
+    })
+    outcome = project.run("c", "-e", "sync-oci-pw", "-k", "description")
+    outcome.assert_success()
+    outcome.assert_out_err("[testenv:sync-oci-pw]\ndescription = Sync oci to pw\n", "")
+    outcome = project.run("c", "-e", "sync-python-tt", "-k", "description")
+    outcome.assert_success()
+    outcome.assert_out_err("[testenv:sync-python-tt]\ndescription = Sync python to tt\n", "")
+
+
+def test_env_base_positional_factor_description(tox_project: ToxProjectCreator) -> None:
+    project = tox_project({
+        "tox.toml": textwrap.dedent("""\
+            [env_base.sync]
+            factors = [["oci", "python"], ["pw", "tt"]]
+            package = "skip"
+            description = "Sync {factor:0} to {factor:1}"
+            commands = [["python", "-c", "print('ok')"]]
+        """),
+    })
+    outcome = project.run("c", "-e", "sync-oci-pw", "-k", "description")
+    outcome.assert_success()
+    outcome.assert_out_err("[testenv:sync-oci-pw]\ndescription = Sync oci to pw\n", "")
+
+
+def test_env_base_keyed_factor_mixed_with_plain(tox_project: ToxProjectCreator) -> None:
+    project = tox_project({
+        "tox.toml": textwrap.dedent("""\
+            [env_base.task]
+            factors = [["a", "b"], {target = ["x", "y"]}]
+            package = "skip"
+            description = "{factor:0} on {factor:target}"
+            commands = [["python", "-c", "print('ok')"]]
+        """),
+    })
+    outcome = project.run("c", "-e", "task-a-x", "-k", "description")
+    outcome.assert_success()
+    outcome.assert_out_err("[testenv:task-a-x]\ndescription = a on x\n", "")
+
+
+def test_env_base_keyed_factor_in_commands(tox_project: ToxProjectCreator) -> None:
+    project = tox_project({
+        "tox.toml": textwrap.dedent("""\
+            [env_base.sync]
+            factors = [{ecosystem = ["oci", "python"]}]
+            package = "skip"
+            commands = [["python", "-c", "print('{factor:ecosystem}')"]]
+        """),
+    })
+    result = project.run("r", "-e", "sync-oci")
+    result.assert_success()
+    assert "oci" in result.out
+
+
+def test_env_base_factor_label_no_match_returns_empty(tox_project: ToxProjectCreator) -> None:
+    project = tox_project({
+        "tox.toml": textwrap.dedent("""\
+            [env_base.task]
+            factors = [{ecosystem = ["oci", "python"]}]
+            package = "skip"
+            description = "Got [{factor:ecosystem}]"
+            commands = [["python", "-c", "print('ok')"]]
+
+            [env.other]
+            description = "No match [{factor:ecosystem}]"
+        """),
+    })
+    outcome = project.run("c", "-e", "other", "-k", "description")
+    outcome.assert_success()
+    outcome.assert_out_err("[testenv:other]\ndescription = No match []\n", "")
+
+
+def test_env_base_factor_label_with_default(tox_project: ToxProjectCreator) -> None:
+    project = tox_project({
+        "tox.toml": textwrap.dedent("""\
+            [env_base.task]
+            factors = [{ecosystem = ["oci", "python"]}]
+            package = "skip"
+            description = "Type is {factor:unknown:fallback}"
+            commands = [["python", "-c", "print('ok')"]]
+        """),
+    })
+    outcome = project.run("c", "-e", "task-oci", "-k", "description")
+    outcome.assert_success()
+    outcome.assert_out_err("[testenv:task-oci]\ndescription = Type is fallback\n", "")
