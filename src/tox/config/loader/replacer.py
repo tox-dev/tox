@@ -205,21 +205,7 @@ class Replacer:
         conf_args = self.conf_args.copy()
         flattened_args = [self.join(arg) for arg in value.expr]
         of_type, *args = flattened_args
-        if of_type == "/":
-            replace_value: str | None = os.sep
-        elif not of_type and args == [""]:
-            replace_value = os.pathsep
-        elif of_type == "env":
-            replace_value = replace_env(self.conf, args, conf_args)
-        elif of_type == "tty":
-            replace_value = replace_tty(args)
-        elif of_type == "posargs":
-            replace_value = replace_pos_args(self.conf, args, conf_args)
-        elif of_type == "glob":
-            replace_value = replace_glob(self.conf, args)
-        else:
-            arg_value = ARG_DELIMITER.join(flattened_args)
-            replace_value = self.reference(arg_value, conf_args)
+        replace_value = self._resolve_replace(of_type, args, flattened_args, conf_args)
         if replace_value is not None:
             needs_expansion = any(isinstance(m, MatchExpression) for m in find_replace_expr(replace_value))
             if needs_expansion:
@@ -234,6 +220,24 @@ class Replacer:
         #     NOTE: can't raise because the content may be a factorial expression where we don't
         #           want to enforce escaping curly braces, for example`env_list = {py39,py38}-{,dep}` should work
         return f"{REPLACE_START}%s{REPLACE_END}" % ARG_DELIMITER.join(flattened_args)
+
+    def _resolve_replace(
+        self, of_type: str, args: list[str], flattened_args: list[str], conf_args: ConfigLoadArgs
+    ) -> str | None:
+        if of_type == "/":
+            return os.sep
+        if not of_type and args == [""]:
+            return os.pathsep
+        dispatch: dict[str, Any] = {
+            "env": lambda: replace_env(self.conf, args, conf_args),
+            "tty": lambda: replace_tty(args),
+            "posargs": lambda: replace_pos_args(self.conf, args, conf_args),
+            "glob": lambda: replace_glob(self.conf, args),
+            "factor": lambda: replace_factor(self.conf, args, conf_args),
+        }
+        if handler := dispatch.get(of_type):
+            return handler()
+        return self.reference(ARG_DELIMITER.join(flattened_args), conf_args)
 
 
 def replace_pos_args(conf: Config, args: list[str], conf_args: ConfigLoadArgs) -> str:
@@ -313,6 +317,22 @@ def replace_glob(conf: Config | None, args: list[str]) -> str:
     return ARG_DELIMITER.join(default_args) if default_args else ""
 
 
+def replace_factor(conf: Config, args: list[str], conf_args: ConfigLoadArgs) -> str:
+    if not args or not args[0]:
+        msg = "No label was supplied in {factor} substitution"
+        raise MatchError(msg)
+    label = args[0]
+    default = ARG_DELIMITER.join(args[1:]) if len(args) > 1 else ""
+    labels = conf.factor_labels
+    if label not in labels or conf_args.env_name is None:
+        return default
+    env_factors = set(conf_args.env_name.split("-"))
+    for value in labels[label]:
+        if value in env_factors:
+            return value
+    return default
+
+
 __all__ = [
     "MatchExpression",
     "MatchRecursionError",
@@ -320,4 +340,5 @@ __all__ = [
     "load_posargs",
     "replace",
     "replace_env",
+    "replace_factor",
 ]

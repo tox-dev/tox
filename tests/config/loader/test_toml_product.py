@@ -10,6 +10,7 @@ from tox.config.loader.toml._product import (  # noqa: PLC2701
     _expand_range,
     expand_factor_group,
     expand_product,
+    extract_label,
 )
 
 if TYPE_CHECKING:
@@ -59,13 +60,48 @@ def test_expand_factor_group_range_dict() -> None:
 
 
 def test_expand_factor_group_bad_type() -> None:
-    with pytest.raises(TypeError, match="factor group must be a list of strings or a range dict"):
+    with pytest.raises(TypeError, match="factor group must be a list, a range dict, or a labeled dict"):
         expand_factor_group(42)
 
 
 def test_expand_factor_group_dict_no_prefix() -> None:
-    with pytest.raises(TypeError, match="factor group must be a list of strings or a range dict"):
+    with pytest.raises(TypeError, match="factor group must be a list, a range dict, or a labeled dict"):
         expand_factor_group({"start": 1, "stop": 3})
+
+
+def test_expand_factor_group_keyed_dict() -> None:
+    assert expand_factor_group({"ecosystem": ["oci", "python"]}) == ["oci", "python"]
+
+
+def test_expand_factor_group_keyed_dict_bad_value_type() -> None:
+    with pytest.raises(TypeError, match="labeled factor group 'ecosystem' must map to a list"):
+        expand_factor_group({"ecosystem": "oci"})
+
+
+def test_expand_factor_group_reserved_label() -> None:
+    with pytest.raises(TypeError, match="'env' is reserved and cannot be used as a factor label"):
+        expand_factor_group({"env": ["a", "b"]})
+
+
+def test_expand_factor_group_reserved_label_factor() -> None:
+    with pytest.raises(TypeError, match="'factor' is reserved and cannot be used as a factor label"):
+        expand_factor_group({"factor": ["a", "b"]})
+
+
+def test_extract_label_keyed_dict() -> None:
+    assert extract_label({"ecosystem": ["oci", "python"]}) == "ecosystem"
+
+
+def test_extract_label_plain_list() -> None:
+    assert extract_label(["oci", "python"]) is None
+
+
+def test_extract_label_range_dict() -> None:
+    assert extract_label({"prefix": "py3", "start": 12, "stop": 14}) is None
+
+
+def test_extract_label_multi_key_dict() -> None:
+    assert extract_label({"a": [1], "b": [2]}) is None
 
 
 def test_expand_range_closed() -> None:
@@ -200,6 +236,24 @@ def test_product_multiple_in_env_list(tox_project: ToxProjectCreator) -> None:
     result.assert_success()
     assert "py312-django42" in result.out
     assert "py313-flask20" in result.out
+
+
+def test_product_keyed_groups_listed(tox_project: ToxProjectCreator) -> None:
+    proj = tox_project({
+        "tox.toml": textwrap.dedent("""\
+            env_list = [
+                { product = [["sync"], {ecosystem = ["oci", "python"]}, {target = ["pw", "tt"]}] },
+            ]
+
+            [env_run_base]
+            package = "skip"
+            commands = [["python", "-c", "print('ok')"]]
+        """),
+    })
+    result = proj.run("l")
+    result.assert_success()
+    for env in ("sync-oci-pw", "sync-oci-tt", "sync-python-pw", "sync-python-tt"):
+        assert env in result.out
 
 
 def test_product_deduplication(tox_project: ToxProjectCreator) -> None:
