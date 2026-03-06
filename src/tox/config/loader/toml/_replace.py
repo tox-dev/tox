@@ -20,6 +20,7 @@ from tox.config.loader.replacer import (
     replace_env,
 )
 from tox.config.loader.stringify import stringify
+from tox.config.types import Command
 
 from ._validate import validate
 
@@ -117,7 +118,10 @@ class Unroll:
 
     def _replace_ref(self, value: dict[str, TomlTypes], depth: int, *, skip_str: bool = False) -> TomlTypes:
         if self.conf is not None and (env := value.get("env")) and (key := value.get("key")):
-            return cast("TomlTypes", self.conf.get_env(cast("str", env))[cast("str", key)])
+            result = self.conf.get_env(cast("str", env))[cast("str", key)]
+            if isinstance(result, Command):
+                return cast("TomlTypes", result.args)
+            return cast("TomlTypes", result)
         if of := value.get("of"):
             validated_of = validate(of, list[str])
             loaded = self.loader.load_raw_from_root(self.loader.section.SEP.join(validated_of))

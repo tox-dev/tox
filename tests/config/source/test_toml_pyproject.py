@@ -979,3 +979,18 @@ def test_config_in_toml_handled_error_on_run(tox_project: ToxProjectCreator) -> 
     assert "internal error" not in outcome.out
     assert "failed to load py.deps" in outcome.out
     assert "deps expected str, list[str], or list[Requirement]" in outcome.out
+
+
+def test_config_in_toml_replace_ref_command(tox_project: ToxProjectCreator) -> None:
+    project = tox_project({
+        "pyproject.toml": dedent("""
+        [tool.tox.env.a]
+        package = "skip"
+        commands = [[{ replace = "ref", env = "a", key = "list_dependencies_command", extend = true }]]
+        """),
+    })
+    outcome = project.run("c", "-e", "a", "-k", "commands")
+    outcome.assert_success()
+    assert "python" in outcome.out
+    assert "pip" in outcome.out
+    assert "freeze" in outcome.out

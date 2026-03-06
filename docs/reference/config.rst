@@ -1920,7 +1920,8 @@ Pip installer
 
     The ``list_dependencies_command`` setting is used for listing the packages installed into the virtual environment.
     This command will be executed only if executing on Continuous Integrations is detected (for example set environment
-    variable ``CI=1``) or if journal is active.
+    variable ``CI=1``) or if journal is active. In TOML configurations, reference this Command value using
+    ``{replace = "ref"}`` with ``extend = true`` rather than string interpolation.
 
 .. conf::
     :keys: pip_pre
@@ -2163,6 +2164,18 @@ You can reference other configurations via the ``ref`` replacement. This can eit
 
 The ``extend`` flag controls if after replacement the value should be replaced as is in the host structure (when flag is
 false -- by default) or be extended into. This flag only operates when the host is a list.
+
+When referencing Command-type configuration values (like ``list_dependencies_command``), the reference automatically
+extracts the command's argument list, making it compatible with TOML's structured ``commands`` format. For example:
+
+    .. code-block:: toml
+
+        [tool.tox.env.a]
+        package = "skip"
+        commands = [[{ replace = "ref", env = "a", key = "list_dependencies_command", extend = true }]]
+
+This expands the Command's args into the command list, avoiding the need for string interpolation which doesn't work
+properly with Command values in TOML.
 
 Positional argument reference
 =============================
