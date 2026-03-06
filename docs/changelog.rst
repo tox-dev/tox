@@ -7,6 +7,24 @@
 .. towncrier release notes start
 
 **********************
+ v4.49.0 (2026-03-06)
+**********************
+
+Features - 4.49.0
+=================
+
+- Add ``{factor:label}`` substitution for TOML configs -- factor groups in ``product`` matrices and ``env_base`` factors
+  can now be labeled with single-key dicts (e.g., ``{ecosystem = ["oci", "python"]}``), enabling ``{factor:ecosystem}``
+  in any string value (descriptions, commands, etc.) to resolve to the active factor. Plain lists automatically get
+  positional labels (``{factor:0}``, ``{factor:1}``, ...) - by :user:`gaborbernat`. (:issue:`3860`) (:issue:`3860`)
+
+Bug fixes - 4.49.0
+==================
+
+- Fix ``--showconfig`` and ``--help-ini`` legacy flags raising ``AttributeError`` after config format options were added
+  - by :user:`rares985` (:issue:`3866`)
+
+**********************
  v4.48.1 (2026-03-06)
 **********************
 

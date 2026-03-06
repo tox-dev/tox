@@ -1,2 +1,0 @@
-Fix ``--showconfig`` and ``--help-ini`` legacy flags raising ``AttributeError`` after config format options were added -
-by :user:`rares985`

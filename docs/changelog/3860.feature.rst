@@ -1,4 +1,0 @@
-Add ``{factor:label}`` substitution for TOML configs -- factor groups in ``product`` matrices and ``env_base`` factors
-can now be labeled with single-key dicts (e.g., ``{ecosystem = ["oci", "python"]}``), enabling ``{factor:ecosystem}`` in
-any string value (descriptions, commands, etc.) to resolve to the active factor. Plain lists automatically get
-positional labels (``{factor:0}``, ``{factor:1}``, ...) - by :user:`gaborbernat`. (:issue:`3860`)
