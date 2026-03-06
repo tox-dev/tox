@@ -1155,6 +1155,69 @@ up dependency installation.
       script:
         - tox run -e 3.13
 
+.. _howto-docker:
+
+***********************************
+ Run tox inside a Docker container
+***********************************
+
+Build a lightweight Docker image that contains tox and your target Python versions. Using `uv
+<https://docs.astral.sh/uv/>`__ keeps the image small and installation fast:
+
+.. code-block:: Dockerfile
+
+    FROM python:3.13-slim
+
+    # Install build tools commonly needed by C-extension packages
+    RUN set -eux; \
+        apt-get update; \
+        apt-get install -y --no-install-recommends gcc make; \
+        rm -rf /var/lib/apt/lists/*
+
+    # Install tox (with tox-uv for faster dependency resolution)
+    COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
+    RUN uv tool install tox --with tox-uv
+
+    ENV PATH="/root/.local/bin:$PATH"
+    WORKDIR /app
+
+Mount your project directory and run tox:
+
+.. code-block:: shell
+
+    docker build -t tox-runner .
+    docker run --rm -v "$(pwd)":/app tox-runner tox run -e 3.13
+
+To test against multiple Python versions in the same image, start from a base image and add the versions you need:
+
+.. code-block:: Dockerfile
+
+    FROM python:3.13-slim
+
+    RUN set -eux; \
+        apt-get update; \
+        apt-get install -y --no-install-recommends gcc make; \
+        rm -rf /var/lib/apt/lists/*
+
+    COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
+
+    # Install additional Python versions via uv
+    RUN uv python install 3.12 3.11
+
+    RUN uv tool install tox --with tox-uv
+    ENV PATH="/root/.local/bin:$PATH"
+    WORKDIR /app
+
+.. code-block:: shell
+
+    docker run --rm -v "$(pwd)":/app tox-runner tox run -e 3.13,3.12,3.11
+
+.. note::
+
+    The previously recommended `31z4/tox <https://hub.docker.com/r/31z4/tox>`_ Docker image has been `archived
+    <https://github.com/31z4/tox-docker>`_ and is no longer maintained. The image is still available on Docker Hub but
+    may not receive updates. Building your own image as shown above is the recommended approach.
+
 .. ------------------------------------------------------------------------------------------
 
 .. Documentation
