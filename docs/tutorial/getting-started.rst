@@ -306,7 +306,14 @@ View the resolved configuration for an environment:
 
     tox config -e 3.13 -k deps commands
 
-This is useful for debugging configuration issues.
+The output format can be changed with ``--format`` and written to a file with ``-o``:
+
+.. code-block:: bash
+
+    tox config -e 3.13 --format json -o config.json
+    tox config -e 3.13 --format toml -o config.toml
+
+This is useful for debugging configuration issues and for programmatic consumption.
 
 ************
  Next steps

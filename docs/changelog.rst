@@ -7,6 +7,22 @@
 .. towncrier release notes start
 
 **********************
+ v4.48.0 (2026-03-05)
+**********************
+
+Features - 4.48.0
+=================
+
+- Add ``--format`` flag (``ini``, ``json``, ``toml``) and ``-o``/``--output-file`` to the ``config`` command for
+  machine-readable output with native types. JSON and TOML use the same key structure as ``tox.toml`` (``env.<name>``
+  for environments, ``tox`` for core) and get syntax-highlighted on stdout - by :user:`gaborbernat`. (:issue:`3854`)
+
+Improved documentation - 4.48.0
+===============================
+
+- Add ``fail_fast`` to the configuration reference documentation - by :user:`rahuldevikar`. (:issue:`578`)
+
+**********************
  v4.47.3 (2026-03-04)
 **********************
 

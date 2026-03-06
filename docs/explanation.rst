@@ -705,12 +705,36 @@ To detect misplaced keys:
 
 - Run ``tox run -v`` — unused keys are printed as warnings before the final report.
 - Run ``tox config`` — unused keys appear as ``# !!! unused:`` comments per section.
+- Run ``tox config --format json`` or ``--format toml`` — unused keys appear in an ``"unused"`` array per section.
 
-For example, putting ``ignore_base_python_conflict`` in ``[testenv]`` instead of ``[tox]`` produces:
+For example, putting ``ignore_base_python_conflict`` in ``[testenv]`` instead of ``[tox]``:
 
-.. code-block:: text
+.. tab:: INI
 
-    [testenv:py] unused config key(s): ignore_base_python_conflict
+    .. code-block:: text
+
+        [testenv:py]
+        ...
+        # !!! unused: ignore_base_python_conflict
+
+.. tab:: JSON
+
+    .. code-block:: json
+
+        {
+          "env": {
+            "py": {
+              "unused": ["ignore_base_python_conflict"]
+            }
+          }
+        }
+
+.. tab:: TOML
+
+    .. code-block:: toml
+
+        [env.py]
+        unused = ["ignore_base_python_conflict"]
 
 See the :ref:`Core <conf-core>` and :ref:`tox environment <conf-testenv>` reference sections for which options belong
 where.
