@@ -93,6 +93,8 @@ def legacy(state: State) -> int:
     if option.show_config:
         option.list_keys_only = []
         option.show_core = not bool(option.env)
+        option.config_format = "ini"
+        option.output_file = None
     if option.list_envs or option.list_envs_all:
         state.envs.on_empty_fallback_py = False
         option.list_no_description = option.verbosity <= DEFAULT_VERBOSITY
