@@ -9,6 +9,8 @@ from typing import TYPE_CHECKING, Any, Optional, TypeVar, Union
 
 import pytest
 
+from packaging.requirements import Requirement
+
 from tox.config.loader.str_convert import StrConvert
 from tox.config.types import Command, EnvList
 
@@ -63,6 +65,18 @@ from typing import Literal
 def test_str_convert_ok(raw: str, value: Any, of_type: type[Any]) -> None:
     result = StrConvert().to(raw, of_type, None)
     assert result == value
+
+
+def test_to_list_requirement_preserves_comma_in_version_spec() -> None:
+    """A single Requirement with a comma in the version spec must not be split on comma."""
+    result = list(StrConvert.to_list("tox>=4.6.4,<5", Requirement))
+    assert result == ["tox>=4.6.4,<5"]
+
+
+def test_to_list_requirement_multiline() -> None:
+    """Multiple Requirements separated by newlines should each be yielded."""
+    result = list(StrConvert.to_list("tox>=4.6.4,<5\npytest>=7", Requirement))
+    assert result == ["tox>=4.6.4,<5", "pytest>=7"]
 
 
 @pytest.mark.parametrize(
