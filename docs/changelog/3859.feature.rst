@@ -1,0 +1,2 @@
+Support multiple values in ``--override`` for list configs like ``deps`` by using ``\n`` as a line separator - e.g.,
+``-x "testenv.deps=pytest\npytest-repeat"`` - by :user:`rahuldevikar`.

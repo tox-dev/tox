@@ -157,7 +157,8 @@ class Loader(Convert[T]):
                 raise KeyError(key)
 
         for override in overrides:
-            converted_override = _STR_CONVERT.to(override.value, of_type, factory)
+            override_value = resolve_override_value(override.value)
+            converted_override = _STR_CONVERT.to(override_value, of_type, factory)
             if override.append and converted is not None:
                 if isinstance(converted, list) and isinstance(converted_override, list):
                     converted += converted_override
@@ -212,3 +213,30 @@ def tox_add_option(parser: ToxParser) -> None:
 
 
 _STR_CONVERT = StrConvert()
+
+
+def resolve_override_value(value: str) -> str:
+    r"""Resolve escape sequences in override values.
+
+    Allows specifying multi-value overrides on the CLI by using ``\n`` as a line separator. For example: ``-x
+    "testenv.deps=pytest\npytest-repeat"`` provides two dependencies.
+
+    Supports ``\\`` to produce a literal backslash.
+
+    """
+    result: list[str] = []
+    i = 0
+    while i < len(value):
+        if value[i] == "\\" and i + 1 < len(value):
+            nxt = value[i + 1]
+            if nxt == "n":
+                result.append("\n")
+                i += 2
+                continue
+            if nxt == "\\":
+                result.append("\\")
+                i += 2
+                continue
+        result.append(value[i])
+        i += 1
+    return "".join(result)

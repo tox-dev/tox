@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from tox.config.loader.api import Override
+from tox.config.loader.api import Override, resolve_override_value
 from tox.config.loader.memory import MemoryLoader
 from tox.config.sets import ConfigSet
 from tox.tox_env.python.pip.req_file import PythonDeps
@@ -216,6 +216,75 @@ def test_config_override_cannot_append(tox_ini_conf: ToxIniCreator) -> None:
     conf.add_config("foo", of_type=int, default=0, desc="desc")
     with pytest.raises(ValueError, match="Only able to append to lists and dicts"):
         conf["foo"]
+
+
+def test_config_override_multivalue_pythondeps(tox_ini_conf: ToxIniCreator, tmp_path: Path) -> None:
+    example = """
+    [testenv]
+    """
+    conf = tox_ini_conf(example, override=[Override("testenv.deps=pytest\\npytest-repeat")]).get_env("testenv")
+    conf.add_config(
+        "deps",
+        of_type=PythonDeps,
+        factory=partial(PythonDeps.factory, tmp_path),
+        default=PythonDeps("", root=tmp_path),
+        desc="desc",
+    )
+    assert conf["deps"].lines() == ["pytest", "pytest-repeat"]
+
+
+def test_config_override_multivalue_pythondeps_append(tox_ini_conf: ToxIniCreator, tmp_path: Path) -> None:
+    example = """
+    [testenv]
+    deps = foo
+    """
+    conf = tox_ini_conf(example, override=[Override("testenv.deps+=bar\\nbaz")]).get_env("testenv")
+    conf.add_config(
+        "deps",
+        of_type=PythonDeps,
+        factory=partial(PythonDeps.factory, tmp_path),
+        default=PythonDeps("", root=tmp_path),
+        desc="desc",
+    )
+    assert conf["deps"].lines() == ["foo", "bar", "baz"]
+
+
+def test_config_override_multivalue_list(tox_ini_conf: ToxIniCreator) -> None:
+    example = """
+    [testenv]
+    passenv = FOO
+    """
+    conf = tox_ini_conf(example, override=[Override("testenv.passenv=BAR\\nBAZ")]).get_env("testenv")
+    conf.add_config("passenv", of_type=list[str], default=[], desc="desc")
+    assert conf["passenv"] == ["BAR", "BAZ"]
+
+
+def test_config_override_escape_literal_backslash(tox_ini_conf: ToxIniCreator) -> None:
+    conf = tox_ini_conf("[testenv]", override=[Override("testenv.c=a\\\\b")]).get_env("py")
+    conf.add_config("c", of_type=str, default="d", desc="desc")
+    assert conf["c"] == "a\\b"
+
+
+def test_config_override_escape_backslash_n(tox_ini_conf: ToxIniCreator) -> None:
+    conf = tox_ini_conf("[testenv]", override=[Override("testenv.c=a\\\\nb")]).get_env("py")
+    conf.add_config("c", of_type=str, default="d", desc="desc")
+    assert conf["c"] == "a\\nb"
+
+
+@pytest.mark.parametrize(
+    ("raw", "expected"),
+    [
+        pytest.param("simple", "simple", id="no_escapes"),
+        pytest.param("a\\nb", "a\nb", id="newline"),
+        pytest.param("a\\\\b", "a\\b", id="backslash"),
+        pytest.param("a\\\\nb", "a\\nb", id="backslash_then_n"),
+        pytest.param("a\\n\\nb", "a\n\nb", id="two_newlines"),
+        pytest.param("\\n", "\n", id="only_newline"),
+        pytest.param("trailing\\", "trailing\\", id="trailing_backslash"),
+    ],
+)
+def test_resolve_override_value(raw: str, expected: str) -> None:
+    assert resolve_override_value(raw) == expected
 
 
 def test_args_are_paths_when_disabled(tox_project: ToxProjectCreator) -> None:
