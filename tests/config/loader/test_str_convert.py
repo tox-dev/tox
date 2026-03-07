@@ -8,7 +8,6 @@ from types import ModuleType
 from typing import TYPE_CHECKING, Any, Optional, TypeVar, Union
 
 import pytest
-
 from packaging.requirements import Requirement
 
 from tox.config.loader.str_convert import StrConvert
