@@ -6,7 +6,8 @@ import logging
 import os
 import time
 from argparse import Action, ArgumentError, ArgumentParser, Namespace
-from concurrent.futures import CancelledError, Future, ThreadPoolExecutor, as_completed
+from concurrent.futures import FIRST_COMPLETED, CancelledError, Future, ThreadPoolExecutor
+from concurrent.futures import wait as wait_futures
 from fnmatch import fnmatchcase
 from pathlib import Path
 from signal import SIGINT, Handlers, signal
@@ -224,10 +225,12 @@ def execute(state: State, max_workers: int | None, has_spinner: bool, live: bool
             target=_queue_and_wait,
             name="tox-interrupt",
             args=(state, to_run_list, results, future_to_env, interrupt, done, max_workers, spinner, live),
+            daemon=True,
         )
         thread.start()
         try:
-            thread.join()
+            while thread.is_alive():
+                thread.join(timeout=1)
         except KeyboardInterrupt:
             previous, has_previous = signal(SIGINT, Handlers.SIG_IGN), True
             spinner.print_report = False  # no need to print reports at this point, final report coming up
@@ -239,8 +242,8 @@ def execute(state: State, max_workers: int | None, has_spinner: bool, live: bool
                 # if cannot be canceled and not done -> still runs
                 if canceled is False and not future.done():  # pragma: no branch
                     tox_env.interrupt()
-            done.wait()
-            thread.join()
+            done.wait(timeout=5)
+            thread.join(timeout=5)
     finally:
         name_to_run = {r.name: r for r in results}
         ordered_results: list[ToxEnvRunResult] = []
@@ -285,6 +288,17 @@ class ToxSpinner(Spinner):
     def update_spinner(self, result: ToxEnvRunResult, success: bool) -> None:  # noqa: FBT001
         done = (self.skip if result.skipped else self.succeed) if success else self.fail
         done(result.name)
+
+
+def _next_completed(
+    future_to_env: dict[Future[ToxEnvRunResult], ToxEnv],
+    interrupt: Event,
+) -> Future[ToxEnvRunResult] | None:
+    while not interrupt.is_set():
+        done_futures, _ = wait_futures(list(future_to_env), timeout=1, return_when=FIRST_COMPLETED)
+        if done_futures:
+            return done_futures.pop()
+    return None
 
 
 def _queue_and_wait(  # noqa: C901, PLR0913, PLR0915, PLR0912
@@ -337,32 +351,39 @@ def _queue_and_wait(  # noqa: C901, PLR0913, PLR0915, PLR0912
 
                     if not future_to_env:
                         result: ToxEnvRunResult | None = None
-                    else:  # if we have queued wait for completed
-                        future = next(as_completed(future_to_env))
-                        tox_env_done = future_to_env.pop(future)
-                        try:
-                            result = future.result()
-                        except CancelledError:
-                            tox_env_done.teardown()
-                            name = tox_env_done.conf.name
-                            result = ToxEnvRunResult(
-                                name=name,
-                                skipped=False,
-                                code=-3,
-                                outcomes=[],
-                                duration=MISS_DURATION,
-                            )
-                        results.append(result)
-                        completed.add(result.name)
-                        if (
-                            result.code != Outcome.OK
-                            and not result.ignore_outcome
-                            and (options.parsed.fail_fast or result.fail_fast)
-                        ):
-                            interrupt.set()
+                    else:
+                        completed_future = _next_completed(future_to_env, interrupt)
+                        if completed_future is None:
+                            for f in list(future_to_env):
+                                f.cancel()
+                            future_to_env.clear()
                             env_list = []
-                            for pending_future in list(future_to_env.keys()):
-                                pending_future.cancel()
+                            result = None
+                        else:
+                            tox_env_done = future_to_env.pop(completed_future)
+                            try:
+                                result = completed_future.result()
+                            except CancelledError:
+                                tox_env_done.teardown()
+                                name = tox_env_done.conf.name
+                                result = ToxEnvRunResult(
+                                    name=name,
+                                    skipped=False,
+                                    code=-3,
+                                    outcomes=[],
+                                    duration=MISS_DURATION,
+                                )
+                            results.append(result)
+                            completed.add(result.name)
+                            if (
+                                result.code != Outcome.OK
+                                and not result.ignore_outcome
+                                and (options.parsed.fail_fast or result.fail_fast)
+                            ):
+                                interrupt.set()
+                                env_list = []
+                                for pending_future in list(future_to_env.keys()):
+                                    pending_future.cancel()
 
                     if not interrupt.is_set() and not env_list:
                         env_list = next(envs_to_run_generator, [])
@@ -379,7 +400,7 @@ def _queue_and_wait(  # noqa: C901, PLR0913, PLR0915, PLR0912
                 logging.exception("Internal Error")  # pragma: no cover
                 raise  # pragma: no cover
             finally:
-                executor.shutdown(wait=True)
+                executor.shutdown(wait=not interrupt.is_set())
     finally:
         try:
             # call teardown - configuration only environments for example could not be finished
