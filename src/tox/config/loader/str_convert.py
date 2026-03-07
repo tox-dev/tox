@@ -9,6 +9,8 @@ from itertools import chain
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, cast
 
+from packaging.requirements import Requirement
+
 from tox.config.loader.convert import Convert
 from tox.config.types import Command, EnvList
 
@@ -31,7 +33,8 @@ class StrConvert(Convert[str]):
 
     @staticmethod
     def to_list(value: str, of_type: type[Any]) -> Iterator[str]:
-        splitter = "\n" if (isclass(of_type) and issubclass(of_type, Command)) or "\n" in value else ","
+        use_newline = (isclass(of_type) and issubclass(of_type, (Command, Requirement))) or "\n" in value
+        splitter = "\n" if use_newline else ","
         splitter = splitter.replace("\r", "")
         for token in value.split(splitter):
             value = token.strip()

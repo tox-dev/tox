@@ -1,0 +1,2 @@
+Fix single-item ``requires`` with comma in version specifier (e.g. ``tox>=4.6.4,<5``) being incorrectly split as
+multiple items - by :user:`rahuldevikar`.
