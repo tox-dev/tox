@@ -349,7 +349,7 @@ class ToxParser(ArgumentParserWithEnvAndConfig):
         if self.of_cmd is None and result.dest != "help":
             self._arguments.append((args, of_type, kwargs))
             if hasattr(self, "_cmd") and self._cmd is not None and hasattr(self._cmd, "choices"):
-                for parser in {id(v): v for k, v in self._cmd.choices.items()}.values():
+                for parser in {id(v): v for v in self._cmd.choices.values()}.values():
                     if CORE in parser.inherit:
                         parser.add_argument(*args, of_type=of_type, **kwargs)
                     else:
