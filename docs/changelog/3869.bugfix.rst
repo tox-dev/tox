@@ -1,0 +1,2 @@
+Break deadlock in execution interrupt chain that caused ~18 flaky timeout failures across 9 tests on Windows/macOS CI -
+by :user:`gaborbernat`.
