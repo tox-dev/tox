@@ -7,6 +7,16 @@
 .. towncrier release notes start
 
 **********************
+ v4.49.1 (2026-03-09)
+**********************
+
+Bug fixes - 4.49.1
+==================
+
+- Break deadlock in execution interrupt chain that caused ~18 flaky timeout failures across 9 tests on Windows/macOS CI
+  - by :user:`gaborbernat`. (:issue:`3869`)
+
+**********************
  v4.49.0 (2026-03-06)
 **********************
 
