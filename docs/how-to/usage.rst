@@ -1682,6 +1682,45 @@ tox automatically detects and uses whatever backend is specified in ``[build-sys
 is needed. For build backends that need extra configuration during the build, use :ref:`config_settings_build_wheel` and
 related options.
 
+.. _howto-reference-built-package:
+
+**********************************************
+ Reference the built package path in commands
+**********************************************
+
+When tox builds an sdist or wheel for your project it stores the path in the ``TOX_PACKAGE`` environment variable (see
+:ref:`injected-environment-variables`). Reference it in ``commands`` (or any other config value) to run post-build
+checks such as ``twine check``, ``check-wheel-contents``, or ``pkginfo`` against the exact artifact that was just built
+and installed.
+
+.. tab:: TOML
+
+    Use the explicit environment variable reference (see :ref:`pyproject-toml-native`):
+
+    .. code-block:: toml
+
+        [env.check]
+        description = "check the built package"
+        deps = ["twine"]
+        commands = [["twine", "check", { replace = "env", name = "TOX_PACKAGE" }]]
+
+.. tab:: INI
+
+    .. code-block:: ini
+
+        [testenv:check]
+        description = check the built package
+        deps = twine
+        commands = twine check {env:TOX_PACKAGE}
+
+``TOX_PACKAGE`` is only set in run environments where a package has been built. If there are multiple artifacts (for
+example both an sdist and a wheel), the paths are joined with ``os.pathsep``.
+
+.. tip::
+
+    If you need a glob-based approach instead (e.g. matching files produced outside of tox), use the ``{glob:PATTERN}``
+    substitution — see :ref:`substitution-reference`.
+
 **********************************
  Migrate from tox.ini to tox.toml
 **********************************
