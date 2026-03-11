@@ -995,7 +995,7 @@ always set regardless of the ``pass_env`` or ``set_env`` configuration and canno
         because user site-packages aren't visible. Only set when using ``virtualenv``\-based environments.
     - - ``TOX_PACKAGE``
       - The path(s) to the built package artifact(s), joined by ``os.pathsep`` if there are multiple. Only set in run
-        environments where a package has been built.
+        environments where a package has been built. See :ref:`howto-reference-built-package` for usage examples.
     - - ``VIRTUAL_ENV``
       - The path to the virtual environment directory. Only set when using ``virtualenv``\-based environments (the
         default).
