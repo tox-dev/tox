@@ -2426,8 +2426,8 @@ If the environment name contains ``django50`` (e.g., ``py313-django50``), the Dj
 
     [env_run_base]
     commands = [
-        { replace = "if", condition = "factor.linux", then = [["pytest", "--numprocesses=auto"]] },
-        { replace = "if", condition = "not factor.linux", then = [["pytest"]] },
+        { replace = "if", condition = "factor.linux", then = [["pytest", "--numprocesses=auto"]], extend = true },
+        { replace = "if", condition = "not factor.linux", then = [["pytest"]], extend = true },
     ]
 
 The current platform (``sys.platform`` value like ``linux``, ``darwin``, ``win32``) is automatically available as a
