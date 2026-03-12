@@ -51,7 +51,7 @@ def expand_factor_group(group: Any) -> list[str]:
 
 def extract_label(group: Any) -> str | None:
     if isinstance(group, dict) and "prefix" not in group and len(group) == 1:
-        return next(iter(group))
+        return str(next(iter(group)))
     return None
 
 
