@@ -149,7 +149,7 @@ def _resolve_dependency_group(
                 msg = f"{item!r} is not valid requirement due to {exc}"
                 raise Fail(msg) from exc
         elif isinstance(item, dict) and tuple(item.keys()) == ("include-group",):
-            include_group = canonicalize_name(next(iter(item.values())))
+            include_group = canonicalize_name(str(next(iter(item.values()))))
             result = result.union(
                 _resolve_dependency_group(
                     dependency_groups, include_group, original_names_lookup, (*past_groups, group)
