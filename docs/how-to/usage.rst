@@ -299,13 +299,13 @@ platform without encoding the platform name in the environment:
          [env_run_base]
          deps = [
              "pytest",
-             { replace = "if", condition = "factor.linux or factor.darwin", then = ["platformdirs>=3"] },
-             { replace = "if", condition = "factor.win32", then = ["platformdirs>=2"] },
+             { replace = "if", condition = "factor.linux or factor.darwin", then = ["platformdirs>=3"], extend = true },
+             { replace = "if", condition = "factor.win32", then = ["platformdirs>=2"], extend = true },
          ]
          commands = [
-             { replace = "if", condition = "factor.linux", then = [["python", "-c", "print('Running on Linux')"]] },
-             { replace = "if", condition = "factor.darwin", then = [["python", "-c", "print('Running on macOS')"]] },
-             { replace = "if", condition = "factor.win32", then = [["python", "-c", "print('Running on Windows')"]] },
+             { replace = "if", condition = "factor.linux", then = [["python", "-c", "print('Running on Linux')"]], extend = true },
+             { replace = "if", condition = "factor.darwin", then = [["python", "-c", "print('Running on macOS')"]], extend = true },
+             { replace = "if", condition = "factor.win32", then = [["python", "-c", "print('Running on Windows')"]], extend = true },
              ["python", "-m", "pytest"],
          ]
 
@@ -355,13 +355,13 @@ factors ``py313``, ``django50``, and the current platform:
 
         [env_run_base]
         deps = [
-            { replace = "if", condition = "factor.django42", then = ["Django>=4.2,<4.3"] },
-            { replace = "if", condition = "factor.django50", then = ["Django>=5.0,<5.1"] },
-            { replace = "if", condition = "factor.py312 and factor.linux", then = ["pytest-xdist"] },
-            { replace = "if", condition = "factor.darwin", then = ["pyobjc-framework-Cocoa"] },
+            { replace = "if", condition = "factor.django42", then = ["Django>=4.2,<4.3"], extend = true },
+            { replace = "if", condition = "factor.django50", then = ["Django>=5.0,<5.1"], extend = true },
+            { replace = "if", condition = "factor.py312 and factor.linux", then = ["pytest-xdist"], extend = true },
+            { replace = "if", condition = "factor.darwin", then = ["pyobjc-framework-Cocoa"], extend = true },
         ]
         commands = [
-            { replace = "if", condition = "factor.win32", then = [["python", "-c", "import winreg"]] },
+            { replace = "if", condition = "factor.win32", then = [["python", "-c", "import winreg"]], extend = true },
             ["pytest"],
         ]
 
@@ -390,8 +390,8 @@ Negation also works with platform factors:
 
         [env_run_base]
         deps = [
-            { replace = "if", condition = "not factor.win32", then = ["uvloop"] },
-            { replace = "if", condition = "not factor.darwin", then = ["pyinotify"] },
+            { replace = "if", condition = "not factor.win32", then = ["uvloop"], extend = true },
+            { replace = "if", condition = "not factor.darwin", then = ["pyinotify"], extend = true },
         ]
 
 .. tab:: INI
@@ -416,8 +416,8 @@ There are two ways to handle platform differences:
 
         [env_run_base]
         commands = [
-            { replace = "if", condition = "factor.linux", then = [["pytest", "--numprocesses=auto"]] },
-            { replace = "if", condition = "factor.darwin or factor.win32", then = [["pytest"]] },
+            { replace = "if", condition = "factor.linux", then = [["pytest", "--numprocesses=auto"]], extend = true },
+            { replace = "if", condition = "factor.darwin or factor.win32", then = [["pytest"]], extend = true },
         ]
 
 .. tab:: INI
@@ -545,7 +545,7 @@ Use different dependencies based on environment factors:
     [env_run_base]
     deps = [
         "pytest",
-        { replace = "if", condition = "factor.django50", then = ["Django>=5.0,<5.1"], "else" = ["Django>=4.2,<4.3"] },
+        { replace = "if", condition = "factor.django50", then = ["Django>=5.0,<5.1"], "else" = ["Django>=4.2,<4.3"], extend = true },
     ]
 
 Combine multiple conditions (environment variables and factors):
@@ -942,8 +942,8 @@ factor group is an array of strings or a range dict. Combinations are joined wit
          package = "skip"
          deps = [
              "pytest",
-             { replace = "if", condition = "factor.django42", then = ["Django>=4.2,<4.3"] },
-             { replace = "if", condition = "factor.django50", then = ["Django>=5.0,<5.1"] },
+             { replace = "if", condition = "factor.django42", then = ["Django>=4.2,<4.3"], extend = true },
+             { replace = "if", condition = "factor.django50", then = ["Django>=5.0,<5.1"], extend = true },
          ]
          commands = [["pytest"]]
 
@@ -993,8 +993,8 @@ Cartesian product of factor groups, and each generated environment inherits all 
     package = "skip"
     deps = [
         "pytest",
-        { replace = "if", condition = "factor.django42", then = ["Django>=4.2,<4.3"] },
-        { replace = "if", condition = "factor.django50", then = ["Django>=5.0,<5.1"] },
+        { replace = "if", condition = "factor.django42", then = ["Django>=4.2,<4.3"], extend = true },
+        { replace = "if", condition = "factor.django50", then = ["Django>=5.0,<5.1"], extend = true },
     ]
     commands = [["pytest"]]
 
