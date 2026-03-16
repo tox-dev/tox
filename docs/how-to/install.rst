@@ -100,7 +100,7 @@ For user installs, ensure ``~/.local/share/man`` is in your ``MANPATH``:
 After updating your profile, restart your shell or run ``source ~/.bashrc``.
 
 Virtual Environment Installations
-==================================
+=================================
 
 When tox is installed in a virtual environment (via pipx, uv tool, or venv), the man page is installed but not on the
 system ``MANPATH``. Use the ``tox man`` command to set it up:
