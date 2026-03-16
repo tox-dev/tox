@@ -1,6 +1,7 @@
 [build-system]
 build-backend = "hatchling.build"
 requires = [
+  "docutils>=0.21",
   "hatch-vcs>=0.5",
   "hatchling>=1.29",
 ]
@@ -84,6 +85,7 @@ test = [
   "devpi-process>=1.1.1",
   "diff-cover>=10.2",
   "distlib>=0.4",
+  "docutils>=0.21",
   "flaky>=3.8.1",
   "hatch-vcs>=0.5",
   "hatchling>=1.29",
@@ -142,13 +144,14 @@ type-min = [
 build.dev-mode-dirs = [
   "src",
 ]
+build.hooks.custom = {}
 build.hooks.vcs.version-file = "src/tox/version.py"
 build.targets.sdist.include = [
   "/src",
   "/tests",
   "/tox.toml",
 ]
-build.targets.wheel.shared-data = { "docs/man" = "share/man/man1" }
+build.targets.wheel.shared-data = { "build/man" = "share/man/man1" }
 version.source = "vcs"
 
 [tool.ruff]
