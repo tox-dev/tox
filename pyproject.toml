@@ -148,7 +148,6 @@ build.targets.sdist.include = [
   "/tests",
   "/tox.toml",
 ]
-build.targets.wheel.shared-data = { "docs/man" = "share/man/man1" }
 version.source = "vcs"
 
 [tool.ruff]

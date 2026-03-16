@@ -1,0 +1,2 @@
+Fix multiple manpage issues: remove duplicate header/author/copyright sections, set ``project`` in Sphinx config, and
+stop shipping raw RST source as manpage in wheel - by :user:`gaborbernat`.
