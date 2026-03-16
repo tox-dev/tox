@@ -1,16 +1,5 @@
 :orphan:
 
-#####
- tox
-#####
-
-************************************************
- virtualenv-based automation of test activities
-************************************************
-
-:Manual section: 1
-:Manual group: User Commands
-
 SYNOPSIS
 ========
 
@@ -125,8 +114,3 @@ AUTHOR
 tox development team
 
 https://github.com/tox-dev/tox
-
-COPYRIGHT
-=========
-
-MIT License
