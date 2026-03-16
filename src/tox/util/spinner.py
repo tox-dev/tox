@@ -164,10 +164,10 @@ class Spinner:
         if self.stream.isatty():
             if sys.platform == "win32":  # pragma: win32 cover
                 ci = _CursorInfo()
-                handle = ctypes.windll.kernel32.GetStdHandle(-11)  # ty: ignore[possibly-missing-attribute] # Windows-only
-                ctypes.windll.kernel32.GetConsoleCursorInfo(handle, ctypes.byref(ci))  # ty: ignore[possibly-missing-attribute] # Windows-only
+                handle = ctypes.windll.kernel32.GetStdHandle(-11)  # Windows-only
+                ctypes.windll.kernel32.GetConsoleCursorInfo(handle, ctypes.byref(ci))  # Windows-only
                 ci.visible = False
-                ctypes.windll.kernel32.SetConsoleCursorInfo(handle, ctypes.byref(ci))  # ty: ignore[possibly-missing-attribute] # Windows-only
+                ctypes.windll.kernel32.SetConsoleCursorInfo(handle, ctypes.byref(ci))  # Windows-only
             else:
                 self.stream.write("\033[?25l")
 
@@ -175,10 +175,10 @@ class Spinner:
         if self.stream.isatty():
             if sys.platform == "win32":  # pragma: win32 cover
                 ci = _CursorInfo()
-                handle = ctypes.windll.kernel32.GetStdHandle(-11)  # ty: ignore[possibly-missing-attribute] # Windows-only
-                ctypes.windll.kernel32.GetConsoleCursorInfo(handle, ctypes.byref(ci))  # ty: ignore[possibly-missing-attribute] # Windows-only
+                handle = ctypes.windll.kernel32.GetStdHandle(-11)  # Windows-only
+                ctypes.windll.kernel32.GetConsoleCursorInfo(handle, ctypes.byref(ci))  # Windows-only
                 ci.visible = True
-                ctypes.windll.kernel32.SetConsoleCursorInfo(handle, ctypes.byref(ci))  # ty: ignore[possibly-missing-attribute] # Windows-only
+                ctypes.windll.kernel32.SetConsoleCursorInfo(handle, ctypes.byref(ci))  # Windows-only
             else:
                 self.stream.write("\033[?25h")
 

@@ -308,21 +308,21 @@ def _pty(key: str) -> tuple[int, int] | None:
         return None  # cannot proceed on platforms without pty support
 
     try:
-        main, child = pty.openpty()  # ty: ignore[possibly-missing-attribute] # Unix-only
+        main, child = pty.openpty()  # Unix-only
     except OSError:  # could not open a tty
         return None  # pragma: no cover
 
     try:
-        mode = termios.tcgetattr(stream)  # ty: ignore[possibly-missing-attribute] # Unix-only
-        termios.tcsetattr(child, termios.TCSANOW, mode)  # ty: ignore[possibly-missing-attribute] # Unix-only
-    except (termios.error, OSError):  # could not inherit traits  # ty: ignore[possibly-missing-attribute]
+        mode = termios.tcgetattr(stream)  # Unix-only
+        termios.tcsetattr(child, termios.TCSANOW, mode)  # Unix-only
+    except (termios.error, OSError):  # could not inherit traits
         return None  # pragma: no cover
 
     # adjust sub-process terminal size
     columns, lines = shutil.get_terminal_size(fallback=(-1, -1))
     if columns != -1 and lines != -1:
         size = struct.pack("HHHH", lines, columns, 0, 0)
-        fcntl.ioctl(child, termios.TIOCSWINSZ, size)  # ty: ignore[possibly-missing-attribute] # Unix-only
+        fcntl.ioctl(child, termios.TIOCSWINSZ, size)  # Unix-only
 
     return main, child
 

@@ -78,14 +78,14 @@ factor.
         [env_run_base]
         deps = [
             "pytest",
-            { replace = "if", condition = "factor.django50", then = ["Django>=5.0,<5.1"] },
-            { replace = "if", condition = "factor.django42", then = ["Django>=4.2,<4.3"] },
-            { replace = "if", condition = "not factor.lint", then = ["coverage"] },
+            { replace = "if", condition = "factor.django50", then = ["Django>=5.0,<5.1"], extend = true },
+            { replace = "if", condition = "factor.django42", then = ["Django>=4.2,<4.3"], extend = true },
+            { replace = "if", condition = "not factor.lint", then = ["coverage"], extend = true },
         ]
         commands = [
-            { replace = "if", condition = "factor.linux", then = [["python", "-c", "print('on linux')"]] },
-            { replace = "if", condition = "factor.darwin", then = [["python", "-c", "print('on mac')"]] },
-            { replace = "if", condition = "factor.win32", then = [["python", "-c", "print('on windows')"]] },
+            { replace = "if", condition = "factor.linux", then = [["python", "-c", "print('on linux')"]], extend = true },
+            { replace = "if", condition = "factor.darwin", then = [["python", "-c", "print('on mac')"]], extend = true },
+            { replace = "if", condition = "factor.win32", then = [["python", "-c", "print('on windows')"]], extend = true },
         ]
 
     Use ``replace = "if"`` with ``factor.NAME`` conditions. Supports boolean operations (``and``, ``or``, ``not``) and
@@ -184,8 +184,8 @@ This generates ``test-3.13`` and ``test-3.14``. For multi-dimensional matrices:
     factors = [["py312", "py313"], ["django42", "django50"]]
     deps = [
         "pytest",
-        { replace = "if", condition = "factor.django42", then = ["Django>=4.2,<4.3"] },
-        { replace = "if", condition = "factor.django50", then = ["Django>=5.0,<5.1"] },
+        { replace = "if", condition = "factor.django42", then = ["Django>=4.2,<4.3"], extend = true },
+        { replace = "if", condition = "factor.django50", then = ["Django>=5.0,<5.1"], extend = true },
     ]
     commands = [["pytest"]]
 
@@ -2214,7 +2214,7 @@ You can reference other configurations via the ``ref`` replacement. This can eit
           [env.src]
           extras = ["A", "{env_name}"]
           [env.dest]
-          extras = [{ replace = "ref", of = ["env", "extras"], extend = true }, "B"]
+          extras = [{ replace = "ref", of = ["env", "src", "extras"], extend = true }, "B"]
 
   In this case ``dest`` environments ``extras`` will be ``A``, ``dest``, ``B``.
 
@@ -2415,7 +2415,7 @@ If ``TAG_NAME`` is set and non-empty, ``MATURITY`` becomes ``production``, other
     [env_run_base]
     deps = [
         "pytest",
-        { replace = "if", condition = "factor.django50", then = ["Django>=5.0,<5.1"] },
+        { replace = "if", condition = "factor.django50", then = ["Django>=5.0,<5.1"], extend = true },
     ]
 
 If the environment name contains ``django50`` (e.g., ``py313-django50``), the Django dependency is added.
@@ -2426,8 +2426,8 @@ If the environment name contains ``django50`` (e.g., ``py313-django50``), the Dj
 
     [env_run_base]
     commands = [
-        { replace = "if", condition = "factor.linux", then = [["pytest", "--numprocesses=auto"]] },
-        { replace = "if", condition = "not factor.linux", then = [["pytest"]] },
+        { replace = "if", condition = "factor.linux", then = [["pytest", "--numprocesses=auto"]], extend = true },
+        { replace = "if", condition = "not factor.linux", then = [["pytest"]], extend = true },
     ]
 
 The current platform (``sys.platform`` value like ``linux``, ``darwin``, ``win32``) is automatically available as a
@@ -2585,11 +2585,11 @@ and conditional settings to express that in a concise form:
 
         [env_run_base]
         deps = [
-            { replace = "if", condition = "factor.django41", then = ["Django>=4.1,<4.2"] },
-            { replace = "if", condition = "factor.django40", then = ["Django>=4.0,<4.1"] },
-            { replace = "if", condition = "factor.py311 and factor.mysql", then = ["PyMySQL"] },
-            { replace = "if", condition = "factor.py311 or factor.py310", then = ["urllib3"] },
-            { replace = "if", condition = "(factor.py311 or factor.py310) and factor.sqlite", then = ["mock"] },
+            { replace = "if", condition = "factor.django41", then = ["Django>=4.1,<4.2"], extend = true },
+            { replace = "if", condition = "factor.django40", then = ["Django>=4.0,<4.1"], extend = true },
+            { replace = "if", condition = "factor.py311 and factor.mysql", then = ["PyMySQL"], extend = true },
+            { replace = "if", condition = "factor.py311 or factor.py310", then = ["urllib3"], extend = true },
+            { replace = "if", condition = "(factor.py311 or factor.py310) and factor.sqlite", then = ["mock"], extend = true },
         ]
 
 .. tab:: INI
