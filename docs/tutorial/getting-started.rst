@@ -173,6 +173,12 @@ Prefer the ``N.M`` form (e.g. ``3.14``) over ``pyNMM`` (e.g. ``py314``). The dot
 naturally in environment lists and CI output, and avoids confusion for Python versions >= 3.10 where the concatenated
 digits become three characters.
 
+.. note::
+
+    Version-number factors like ``3.14`` can be checked in conditional expressions using subscript syntax:
+    ``factor['3.14']`` (the dot-syntax ``factor.3.14`` would be a syntax error). See :ref:`conditional-value-reference`
+    for details.
+
 If the name doesn't match any pattern, tox uses the same Python as the one tox is installed into (this is the case for
 ``lint`` in our example). To override this fallback, set :ref:`default_base_python`:
 

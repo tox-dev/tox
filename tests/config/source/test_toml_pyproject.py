@@ -771,6 +771,82 @@ def test_config_in_toml_replace_if_factor_combined_with_env(
     outcome.assert_out_err("[testenv:3.13-django50]\ndescription = django in CI\n", "")
 
 
+@pytest.mark.parametrize(
+    ("env_name", "condition", "expected"),
+    [
+        pytest.param("test-3.14", "factor['3.14']", "matched", id="match"),
+        pytest.param("test-3.13", "factor['3.14']", "no match", id="no-match"),
+        pytest.param("test-3.13", "not factor['3.14']", "not 3.14", id="negated"),
+        pytest.param("test-3.14-3.13", "factor['3.14'] and factor['3.13']", "both", id="combined"),
+    ],
+)
+def test_config_in_toml_replace_if_factor_subscript(
+    tox_project: ToxProjectCreator, env_name: str, condition: str, expected: str
+) -> None:
+    project = tox_project({
+        "pyproject.toml": dedent(f"""
+        [tool.tox.env."{env_name}"]
+        description.replace = "if"
+        description.condition = "{condition}"
+        description.then = "{expected}"
+        description.else = "no match"
+        """),
+    })
+    outcome = project.run("c", "-e", env_name, "-k", "description")
+    outcome.assert_success()
+    outcome.assert_out_err(f"[testenv:{env_name}]\ndescription = {expected}\n", "")
+
+
+@pytest.mark.parametrize(
+    ("env_value", "condition", "expected"),
+    [
+        pytest.param("1", "env['CI']", "in CI", id="truthy"),
+        pytest.param("true", "env['CI'] == 'true'", "ci true", id="compare"),
+    ],
+)
+def test_config_in_toml_replace_if_env_subscript(
+    tox_project: ToxProjectCreator, monkeypatch: pytest.MonkeyPatch, env_value: str, condition: str, expected: str
+) -> None:
+    monkeypatch.setenv("CI", env_value)
+    project = tox_project({
+        "pyproject.toml": dedent(f"""
+        [tool.tox.env.test]
+        description.replace = "if"
+        description.condition = "{condition}"
+        description.then = "{expected}"
+        description.else = "not CI"
+        """),
+    })
+    outcome = project.run("c", "-e", "test", "-k", "description")
+    outcome.assert_success()
+    outcome.assert_out_err(f"[testenv:test]\ndescription = {expected}\n", "")
+
+
+@pytest.mark.parametrize(
+    ("env_name", "condition", "expected"),
+    [
+        pytest.param("test-3.14", "env_name == 'test-3.14'", "exact", id="match"),
+        pytest.param("test-3.13", "env_name == 'test-3.14'", "other", id="no-match"),
+        pytest.param("test-3.14", "env_name != 'test-3.13'", "not 3.13", id="not-equal"),
+    ],
+)
+def test_config_in_toml_replace_if_env_name(
+    tox_project: ToxProjectCreator, env_name: str, condition: str, expected: str
+) -> None:
+    project = tox_project({
+        "pyproject.toml": dedent(f"""
+        [tool.tox.env."{env_name}"]
+        description.replace = "if"
+        description.condition = "{condition}"
+        description.then = "{expected}"
+        description.else = "other"
+        """),
+    })
+    outcome = project.run("c", "-e", env_name, "-k", "description")
+    outcome.assert_success()
+    outcome.assert_out_err(f"[testenv:{env_name}]\ndescription = {expected}\n", "")
+
+
 def test_config_in_toml_replace_if_list_without_extend_in_deps(
     tox_project: ToxProjectCreator, monkeypatch: pytest.MonkeyPatch
 ) -> None:

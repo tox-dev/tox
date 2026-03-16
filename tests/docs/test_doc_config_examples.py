@@ -145,7 +145,7 @@ def _replace_python_versions(content: str) -> str:
     content = re.sub(r"python3\.\d+", f"python{current_version}", content)
     content = re.sub(r"py\d{2,3}", current_py, content)
     content = re.sub(r"cpython3\.\d+", f"cpython{current_version}", content)
-    return re.sub(r"(?<=[\s\[\"',=])3\.\d+", current_version, content)
+    return re.sub(r"(?<=[\s\[\"',=\-])3\.\d+", current_version, content)
 
 
 def _classify(lang: str, content: str) -> tuple[str, str]:

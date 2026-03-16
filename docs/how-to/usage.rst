@@ -520,6 +520,8 @@ Common architecture values (after normalization):
 
 .. versionchanged:: 4.42 Added ``factor.NAME`` lookups for environment name factors and platform.
 
+.. versionchanged:: 4.50 Added ``factor['NAME']``/``env['VAR']`` subscript syntax and ``env_name`` variable.
+
 TOML configurations can conditionally select values based on environment variables and factors using ``replace = "if"``.
 The ``condition`` field accepts expressions with ``env.VAR`` lookups for environment variables, ``factor.NAME`` lookups
 for environment name factors and platform, ``==``/``!=`` comparisons, and ``and``/``or``/``not`` boolean logic.
@@ -557,6 +559,22 @@ Combine multiple conditions (environment variables and factors):
 
     [env_run_base]
     commands = [["pytest", { replace = "if", condition = "factor.linux and not env.CI", then = ["--numprocesses=auto"], "else" = [], extend = true }]]
+
+Use subscript syntax for version-number factors that aren't valid Python identifiers:
+
+.. code-block:: toml
+
+    [env."test-3.14"]
+    commands = [
+        ["pytest", { replace = "if", condition = "factor['3.14']", then = ["--strict-markers"], "else" = [], extend = true }],
+    ]
+
+Target a specific environment by name with ``env_name``:
+
+.. code-block:: toml
+
+    [env_run_base]
+    set_env.EXTRA = { replace = "if", condition = "env_name == 'test-3.14'", then = "latest", "else" = "" }
 
 For the full expression syntax and more examples, see :ref:`conditional-value-reference`.
 
