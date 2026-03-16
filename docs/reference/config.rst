@@ -2350,6 +2350,8 @@ Conditional value reference
 
 .. versionchanged:: 4.42 Added ``factor.NAME`` lookups for environment name factors and platform.
 
+.. versionchanged:: 4.50 Added ``factor['NAME']`` and ``env['VAR']`` subscript syntax and ``env_name`` variable.
+
 You can conditionally select values based on environment variables and factors via the ``if`` replacement. The
 ``condition`` field accepts an expression language that supports ``env.VAR_NAME`` lookups for environment variables,
 ``factor.NAME`` lookups for environment name factors and platform, ``==``/``!=`` comparisons, and ``and``/``or``/``not``
@@ -2440,10 +2442,36 @@ factor without requiring it in the environment name.
     [env_run_base]
     commands = [["pytest", { replace = "if", condition = "factor.linux and env.CI", then = ["--numprocesses=auto"], "else" = [], extend = true }]]
 
+**Check factors with non-identifier names:**
+
+Factor names like ``3.14`` are not valid Python identifiers, so ``factor.3.14`` would be a syntax error. Use subscript
+syntax instead:
+
+.. code-block:: toml
+
+    [env_run_base]
+    deps = [
+        { replace = "if", condition = "factor['3.14']", then = ["some-py314-dep"], extend = true },
+    ]
+
+The subscript syntax also works for environment variables: ``env['CI']`` is equivalent to ``env.CI``.
+
+**Check the environment name:**
+
+Use ``env_name`` to match the full environment name as a string:
+
+.. code-block:: toml
+
+    [env_run_base]
+    description = { replace = "if", condition = "env_name == 'test-3.14'", then = "latest python", "else" = "older python" }
+
 **Condition expression reference:**
 
 - ``env.VAR`` -- value of environment variable ``VAR`` (empty string if unset); truthy when non-empty
+- ``env['VAR']`` -- same as ``env.VAR``
 - ``factor.NAME`` -- ``True`` if ``NAME`` is a factor in the environment name or platform; ``False`` otherwise
+- ``factor['NAME']`` -- same as ``factor.NAME``, for names that aren't valid Python identifiers (e.g. ``3.14``)
+- ``env_name`` -- the full environment name as a string
 - ``==``, ``!=`` -- string comparison
 - ``and``, ``or``, ``not`` -- boolean logic
 - ``'string'`` -- string literal

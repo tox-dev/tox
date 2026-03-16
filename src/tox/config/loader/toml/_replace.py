@@ -155,48 +155,65 @@ def _replace_if_toml(
     if "then" not in value:
         msg = "No 'then' value was supplied in if replacement"
         raise MatchError(msg)
-    return unroll(
-        value["then"] if _evaluate_condition(condition, factors) else value.get("else", ""), depth, skip_str=skip_str
-    )
+    matched = _evaluate_condition(condition, factors, unroll.args.env_name)
+    return unroll(value["then"] if matched else value.get("else", ""), depth, skip_str=skip_str)
 
 
-def _evaluate_condition(expr: str, factors: set[str]) -> bool:  # noqa: C901
+def _evaluate_condition(expr: str, factors: set[str], env_name: str | None) -> bool:
     """Evaluate a condition expression supporting env.VAR, factor.NAME lookups, comparisons, and boolean logic."""
     try:
         tree = ast.parse(expr, mode="eval")
     except SyntaxError:
         msg = f"Invalid condition expression: {expr}"
         raise MatchError(msg) from None
+    return bool(_eval_condition_node(tree.body, expr, factors, env_name))
 
-    def _eval(node: ast.expr) -> str | bool:  # noqa: PLR0911, C901
-        if isinstance(node, ast.BoolOp):
-            if isinstance(node.op, ast.And):
-                return all(bool(_eval(v)) for v in node.values)
-            return any(bool(_eval(v)) for v in node.values)
-        if isinstance(node, ast.UnaryOp) and isinstance(node.op, ast.Not):
-            return not bool(_eval(node.operand))
-        if isinstance(node, ast.Compare) and len(node.ops) == 1 and len(node.comparators) == 1:
-            left = _eval(node.left)
-            right = _eval(node.comparators[0])
-            if isinstance(node.ops[0], ast.Eq):
-                return left == right
-            if isinstance(node.ops[0], ast.NotEq):
-                return left != right
-            msg = f"Unsupported comparison operator in condition: {expr}"
+
+def _eval_condition_node(  # noqa: PLR0911, C901
+    node: ast.expr, expr: str, factors: set[str], env_name: str | None
+) -> str | bool:
+    if isinstance(node, ast.BoolOp):
+        if isinstance(node.op, ast.And):
+            return all(bool(_eval_condition_node(v, expr, factors, env_name)) for v in node.values)
+        return any(bool(_eval_condition_node(v, expr, factors, env_name)) for v in node.values)
+    if isinstance(node, ast.UnaryOp) and isinstance(node.op, ast.Not):
+        return not bool(_eval_condition_node(node.operand, expr, factors, env_name))
+    if isinstance(node, ast.Compare):
+        if len(node.ops) != 1 or len(node.comparators) != 1:
+            msg = f"Unsupported expression in condition: {ast.dump(node)}"
             raise MatchError(msg)
-        if isinstance(node, ast.Attribute) and isinstance(node.value, ast.Name):
-            if node.value.id == "env":
-                return os.environ.get(node.attr, "")
-            if node.value.id == "factor":
-                return node.attr in factors
-            msg = f"Unsupported namespace in condition: {node.value.id} (expected 'env' or 'factor')"
-            raise MatchError(msg)
-        if isinstance(node, ast.Constant) and isinstance(node.value, str):
-            return node.value
-        msg = f"Unsupported expression in condition: {ast.dump(node)}"
+        left = _eval_condition_node(node.left, expr, factors, env_name)
+        right = _eval_condition_node(node.comparators[0], expr, factors, env_name)
+        if isinstance(node.ops[0], ast.Eq):
+            return left == right
+        if isinstance(node.ops[0], ast.NotEq):
+            return left != right
+        msg = f"Unsupported comparison operator in condition: {expr}"
         raise MatchError(msg)
+    if isinstance(node, ast.Attribute) and isinstance(node.value, ast.Name):
+        return _lookup_namespace(node.value.id, node.attr, factors)
+    if (
+        isinstance(node, ast.Subscript)
+        and isinstance(node.value, ast.Name)
+        and isinstance(node.slice, ast.Constant)
+        and isinstance(node.slice.value, str)
+    ):
+        return _lookup_namespace(node.value.id, node.slice.value, factors)
+    if isinstance(node, ast.Name) and node.id == "env_name":
+        return env_name or ""
+    if isinstance(node, ast.Constant) and isinstance(node.value, str):
+        return node.value
+    msg = f"Unsupported expression in condition: {ast.dump(node)}"
+    raise MatchError(msg)
 
-    return bool(_eval(tree.body))
+
+def _lookup_namespace(namespace: str, key: str, factors: set[str]) -> str | bool:
+    if namespace == "env":
+        return os.environ.get(key, "")
+    if namespace == "factor":
+        return key in factors
+    msg = f"Unsupported namespace in condition: {namespace} (expected 'env' or 'factor')"
+    raise MatchError(msg)
 
 
 _REFERENCE_PATTERN = re.compile(

@@ -173,6 +173,8 @@ Conditional value evaluation
 
 .. versionadded:: 4.40
 
+.. versionchanged:: 4.50 Added ``factor['NAME']``/``env['VAR']`` subscript syntax and ``env_name`` variable.
+
 TOML configurations support ``replace = "if"`` to conditionally select values at configuration load time. The
 ``condition`` field accepts expressions that are parsed using Python's ``ast`` module and evaluated against the host
 ``os.environ``.
@@ -181,6 +183,11 @@ The expression language supports:
 
 - ``env.VAR`` -- resolves to the value of the environment variable ``VAR``, or empty string if unset. An empty string is
   falsy, any non-empty string is truthy.
+- ``env['VAR']`` -- same as ``env.VAR``, useful when the variable name needs to be in a string.
+- ``factor.NAME`` -- resolves to ``True`` if ``NAME`` is a factor in the environment name or platform, ``False`` otherwise.
+- ``factor['NAME']`` -- same as ``factor.NAME``, for names that aren't valid Python identifiers. Use this for version
+  numbers like ``factor['3.14']`` since ``factor.3.14`` would be a syntax error.
+- ``env_name`` -- the full environment name as a string (e.g., ``test-3.14``). Use for exact name matching.
 - ``'literal'`` -- a string literal for comparison.
 - ``==``, ``!=`` -- string equality and inequality.
 - ``and``, ``or``, ``not`` -- boolean combinators with standard Python precedence.

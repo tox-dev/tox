@@ -771,6 +771,147 @@ def test_config_in_toml_replace_if_factor_combined_with_env(
     outcome.assert_out_err("[testenv:3.13-django50]\ndescription = django in CI\n", "")
 
 
+def test_config_in_toml_replace_if_factor_subscript_match(tox_project: ToxProjectCreator) -> None:
+    project = tox_project({
+        "pyproject.toml": dedent("""
+        [tool.tox.env."test-3.14"]
+        description.replace = "if"
+        description.condition = "factor['3.14']"
+        description.then = "matched"
+        description.else = "no match"
+        """),
+    })
+    outcome = project.run("c", "-e", "test-3.14", "-k", "description")
+    outcome.assert_success()
+    outcome.assert_out_err("[testenv:test-3.14]\ndescription = matched\n", "")
+
+
+def test_config_in_toml_replace_if_factor_subscript_no_match(tox_project: ToxProjectCreator) -> None:
+    project = tox_project({
+        "pyproject.toml": dedent("""
+        [tool.tox.env."test-3.13"]
+        description.replace = "if"
+        description.condition = "factor['3.14']"
+        description.then = "matched"
+        description.else = "no match"
+        """),
+    })
+    outcome = project.run("c", "-e", "test-3.13", "-k", "description")
+    outcome.assert_success()
+    outcome.assert_out_err("[testenv:test-3.13]\ndescription = no match\n", "")
+
+
+def test_config_in_toml_replace_if_factor_subscript_negated(tox_project: ToxProjectCreator) -> None:
+    project = tox_project({
+        "pyproject.toml": dedent("""
+        [tool.tox.env."test-3.13"]
+        description.replace = "if"
+        description.condition = "not factor['3.14']"
+        description.then = "not 3.14"
+        description.else = "is 3.14"
+        """),
+    })
+    outcome = project.run("c", "-e", "test-3.13", "-k", "description")
+    outcome.assert_success()
+    outcome.assert_out_err("[testenv:test-3.13]\ndescription = not 3.14\n", "")
+
+
+def test_config_in_toml_replace_if_factor_subscript_combined(tox_project: ToxProjectCreator) -> None:
+    project = tox_project({
+        "pyproject.toml": dedent("""
+        [tool.tox.env."test-3.14-3.13"]
+        description.replace = "if"
+        description.condition = "factor['3.14'] and factor['3.13']"
+        description.then = "both"
+        description.else = "not both"
+        """),
+    })
+    outcome = project.run("c", "-e", "test-3.14-3.13", "-k", "description")
+    outcome.assert_success()
+    outcome.assert_out_err("[testenv:test-3.14-3.13]\ndescription = both\n", "")
+
+
+def test_config_in_toml_replace_if_env_subscript(
+    tox_project: ToxProjectCreator, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("CI", "1")
+    project = tox_project({
+        "pyproject.toml": dedent("""
+        [tool.tox.env.test]
+        description.replace = "if"
+        description.condition = "env['CI']"
+        description.then = "in CI"
+        description.else = "not CI"
+        """),
+    })
+    outcome = project.run("c", "-e", "test", "-k", "description")
+    outcome.assert_success()
+    outcome.assert_out_err("[testenv:test]\ndescription = in CI\n", "")
+
+
+def test_config_in_toml_replace_if_env_subscript_compare(
+    tox_project: ToxProjectCreator, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("CI", "true")
+    project = tox_project({
+        "pyproject.toml": dedent("""
+        [tool.tox.env.test]
+        description.replace = "if"
+        description.condition = "env['CI'] == 'true'"
+        description.then = "ci true"
+        description.else = "ci not true"
+        """),
+    })
+    outcome = project.run("c", "-e", "test", "-k", "description")
+    outcome.assert_success()
+    outcome.assert_out_err("[testenv:test]\ndescription = ci true\n", "")
+
+
+def test_config_in_toml_replace_if_env_name_match(tox_project: ToxProjectCreator) -> None:
+    project = tox_project({
+        "pyproject.toml": dedent("""
+        [tool.tox.env."test-3.14"]
+        description.replace = "if"
+        description.condition = "env_name == 'test-3.14'"
+        description.then = "exact"
+        description.else = "other"
+        """),
+    })
+    outcome = project.run("c", "-e", "test-3.14", "-k", "description")
+    outcome.assert_success()
+    outcome.assert_out_err("[testenv:test-3.14]\ndescription = exact\n", "")
+
+
+def test_config_in_toml_replace_if_env_name_no_match(tox_project: ToxProjectCreator) -> None:
+    project = tox_project({
+        "pyproject.toml": dedent("""
+        [tool.tox.env."test-3.13"]
+        description.replace = "if"
+        description.condition = "env_name == 'test-3.14'"
+        description.then = "exact"
+        description.else = "other"
+        """),
+    })
+    outcome = project.run("c", "-e", "test-3.13", "-k", "description")
+    outcome.assert_success()
+    outcome.assert_out_err("[testenv:test-3.13]\ndescription = other\n", "")
+
+
+def test_config_in_toml_replace_if_env_name_not_equal(tox_project: ToxProjectCreator) -> None:
+    project = tox_project({
+        "pyproject.toml": dedent("""
+        [tool.tox.env."test-3.14"]
+        description.replace = "if"
+        description.condition = "env_name != 'test-3.13'"
+        description.then = "not 3.13"
+        description.else = "is 3.13"
+        """),
+    })
+    outcome = project.run("c", "-e", "test-3.14", "-k", "description")
+    outcome.assert_success()
+    outcome.assert_out_err("[testenv:test-3.14]\ndescription = not 3.13\n", "")
+
+
 def test_config_in_toml_replace_if_list_without_extend_in_deps(
     tox_project: ToxProjectCreator, monkeypatch: pytest.MonkeyPatch
 ) -> None:
