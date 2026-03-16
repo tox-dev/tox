@@ -72,6 +72,12 @@ class RunToxEnv(ToxEnv, ABC):
             desc="the commands to be called after testing",
         )
         self.conf.add_config(
+            keys=["interrupt_post_commands"],
+            of_type=bool,
+            default=False,
+            desc="run commands_post even after interrupt (SIGINT), allow second interrupt to cancel",
+        )
+        self.conf.add_config(
             keys=["recreate_commands"],
             of_type=list[Command],
             default=[],

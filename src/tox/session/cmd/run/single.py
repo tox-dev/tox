@@ -85,6 +85,7 @@ def run_commands(tox_env: RunToxEnv, no_test: bool) -> tuple[int, list[Outcome]]
         chdir.mkdir(exist_ok=True, parents=True)
         ignore_errors: bool = tox_env.conf["ignore_errors"]
         retry_count: int = tox_env.conf["commands_retry"]
+        interrupt_post_commands: bool = tox_env.conf["interrupt_post_commands"]
         MANAGER.tox_before_run_commands(tox_env)
         status_pre, status_main, status_post = -1, -1, -1
         try:
@@ -95,7 +96,8 @@ def run_commands(tox_env: RunToxEnv, no_test: bool) -> tuple[int, list[Outcome]]
                 else:
                     status_main = Outcome.OK
             finally:
-                status_post = run_command_set(tox_env, "commands_post", chdir, ignore_errors, outcomes, retry_count)
+                with tox_env.allow_post_commands_after_interrupt(interrupt_post_commands):
+                    status_post = run_command_set(tox_env, "commands_post", chdir, ignore_errors, outcomes, retry_count)
         finally:
             exit_code = status_pre or status_main or status_post  # first non-success
             MANAGER.tox_after_run_commands(tox_env, exit_code, outcomes)

@@ -75,7 +75,7 @@ class ToxEnvCreateArgs(NamedTuple):
     log_handler: ToxHandler
 
 
-class ToxEnv(ABC):
+class ToxEnv(ABC):  # noqa: PLR0904
     """A tox environment."""
 
     def __init__(self, create_args: ToxEnvCreateArgs) -> None:
@@ -100,6 +100,8 @@ class ToxEnv(ABC):
         self._suspended_out_err: OutErr | None = None
         self._execute_statuses: dict[int, ExecuteStatus] = {}
         self._interrupted = False
+        self._fully_interrupted = False
+        self._allow_interrupted_execution = False
         self._log_id = 0
 
     @property
@@ -467,10 +469,24 @@ class ToxEnv(ABC):
 
     def interrupt(self) -> None:
         """Interrupt the execution of a tox environment."""
-        logging.warning("interrupt tox environment: %s", self.conf.name)
-        self._interrupted = True
+        if self._interrupted:
+            logging.warning("second interrupt received for tox environment: %s - forcing full stop", self.conf.name)
+            self._fully_interrupted = True
+        else:
+            logging.warning("interrupt tox environment: %s", self.conf.name)
+            self._interrupted = True
         for status in list(self._execute_statuses.values()):
             status.interrupt()
+
+    @contextmanager
+    def allow_post_commands_after_interrupt(self, enabled: bool) -> Iterator[None]:  # noqa: FBT001
+        """Context manager to allow commands_post execution after interrupt when enabled."""
+        if enabled and self._interrupted and not self._fully_interrupted:
+            self._allow_interrupted_execution = True
+        try:
+            yield
+        finally:
+            self._allow_interrupted_execution = False
 
     @contextmanager
     def execute_async(  # noqa: PLR0913
@@ -482,7 +498,7 @@ class ToxEnv(ABC):
         run_id: str = "",
         executor: Execute | None = None,
     ) -> Iterator[ExecuteStatus]:
-        if self._interrupted:
+        if self._fully_interrupted or (self._interrupted and not self._allow_interrupted_execution):
             raise SystemExit(-2)  # pragma: no cover
         if cwd is None:
             cwd = self.core["tox_root"]
