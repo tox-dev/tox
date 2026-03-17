@@ -7,6 +7,35 @@
 .. towncrier release notes start
 
 **********************
+ v4.50.0 (2026-03-17)
+**********************
+
+Features - 4.50.0
+=================
+
+- Add ``interrupt_post_commands`` option to run cleanup commands even after SIGINT - by :user:`gaborbernat`.
+  (:issue:`3858`)
+- Add ``factor['NAME']`` and ``env['VAR']`` subscript syntax for conditional expressions, enabling checks of factors
+  with non-identifier names like ``factor['3.14']``. Add ``env_name`` variable to check the full environment name in
+  conditions. (:issue:`3880`)
+
+Bug fixes - 4.50.0
+==================
+
+- Fix multiple manpage issues: remove duplicate header/author/copyright sections, set ``project`` in Sphinx config, and
+  compile the manpage to troff format at wheel-build time instead of shipping raw RST source - by :user:`gaborbernat`.
+  (:issue:`3878`)
+
+Improved documentation - 4.50.0
+===============================
+
+- Document how to reference the built package path in commands via ``TOX_PACKAGE`` - by :user:`rahuldevikar`
+  (:issue:`3862`)
+- Fix broken TOML examples missing ``extend = true`` on conditional replacements inside lists, fix incorrect ``ref of``
+  path in raw reference docs, and add a test that validates all doc config examples - by :user:`gaborbernat`
+  (:issue:`3875`)
+
+**********************
  v4.49.1 (2026-03-09)
 **********************
 

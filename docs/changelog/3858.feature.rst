@@ -1,1 +1,0 @@
-Add ``interrupt_post_commands`` option to run cleanup commands even after SIGINT - by :user:`gaborbernat`.

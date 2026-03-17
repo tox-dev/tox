@@ -1,2 +1,0 @@
-Fix broken TOML examples missing ``extend = true`` on conditional replacements inside lists, fix incorrect ``ref of``
-path in raw reference docs, and add a test that validates all doc config examples - by :user:`gaborbernat`

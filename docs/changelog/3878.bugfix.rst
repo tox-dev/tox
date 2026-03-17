@@ -1,2 +1,0 @@
-Fix multiple manpage issues: remove duplicate header/author/copyright sections, set ``project`` in Sphinx config, and
-compile the manpage to troff format at wheel-build time instead of shipping raw RST source - by :user:`gaborbernat`.
