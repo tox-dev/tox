@@ -1,0 +1,3 @@
+Add ``factor['NAME']`` and ``env['VAR']`` subscript syntax for conditional expressions, enabling checks of factors with
+non-identifier names like ``factor['3.14']``. Add ``env_name`` variable to check the full environment name in
+conditions.
