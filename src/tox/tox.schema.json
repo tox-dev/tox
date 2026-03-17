@@ -497,6 +497,10 @@
           },
           "description": "the commands to be called after testing"
         },
+        "interrupt_post_commands": {
+          "type": "boolean",
+          "description": "run commands_post even after interrupt (SIGINT), allow second interrupt to cancel"
+        },
         "recreate_commands": {
           "type": "array",
           "items": {

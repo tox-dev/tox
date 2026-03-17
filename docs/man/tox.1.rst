@@ -1,23 +1,14 @@
 :orphan:
 
-#####
- tox
-#####
-
-************************************************
- virtualenv-based automation of test activities
-************************************************
-
-:Manual section: 1
-:Manual group: User Commands
-
-SYNOPSIS
-========
+##########
+ SYNOPSIS
+##########
 
 **tox** [*options*] [*command* [*command-options*]]
 
-DESCRIPTION
-===========
+#############
+ DESCRIPTION
+#############
 
 tox aims to automate and standardize testing in Python. It is part of a larger vision of easing the packaging, testing
 and release process of Python software.
@@ -25,8 +16,9 @@ and release process of Python software.
 tox creates virtual environments for multiple Python versions, installs project dependencies, and runs tests in each
 environment. It supports parallel execution, custom test commands, and extensive configuration.
 
-COMMANDS
-========
+##########
+ COMMANDS
+##########
 
 **run** (*default*)
     Execute test environments. This is the default command if none is specified.
@@ -48,8 +40,9 @@ COMMANDS
 
 For command-specific help, use: **tox** *command* **--help**
 
-OPTIONS
-=======
+#########
+ OPTIONS
+#########
 
 For a complete list of options, run ``tox --help`` or see the online documentation at https://tox.wiki/
 
@@ -79,8 +72,9 @@ Common options:
 **--override** *KEY=VALUE*, **-x** *KEY=VALUE*
     Override a configuration value.
 
-FILES
-=====
+#######
+ FILES
+#######
 
 **tox.toml**
     Primary configuration file in TOML format (recommended).
@@ -96,8 +90,9 @@ FILES
 
 The configuration files are searched in the order listed above. The first file found is used.
 
-ENVIRONMENT VARIABLES
-=====================
+#######################
+ ENVIRONMENT VARIABLES
+#######################
 
 ``TOX_*``
     Any tox configuration setting can be overridden via environment variables with the ``TOX_`` prefix. For example,
@@ -112,21 +107,18 @@ ENVIRONMENT VARIABLES
 **TOX_PARALLEL_NO_SPINNER**
     When set, disables the progress spinner during parallel execution.
 
-SEE ALSO
-========
+##########
+ SEE ALSO
+##########
 
 Full documentation: https://tox.wiki/
 
 **pip**\(1), **pytest**\(1), **virtualenv**\(1)
 
-AUTHOR
-======
+########
+ AUTHOR
+########
 
 tox development team
 
 https://github.com/tox-dev/tox
-
-COPYRIGHT
-=========
-
-MIT License
