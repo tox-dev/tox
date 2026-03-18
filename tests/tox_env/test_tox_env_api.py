@@ -266,3 +266,44 @@ def test_gitignore_created_in_work_dir(tox_project: ToxProjectCreator) -> None:
     gitignore = prj.path / ".tox" / ".gitignore"
     assert gitignore.exists()
     assert gitignore.read_text(encoding="utf-8") == "*\n"
+
+
+def test_tox_override_pass_env_runtime(tox_project: ToxProjectCreator, monkeypatch: pytest.MonkeyPatch) -> None:
+    cmd = (
+        "import os; "
+        "nix_ld = os.environ.get('NIX_LD'); "
+        "nix_lib = os.environ.get('NIX_LD_LIBRARY_PATH'); "
+        "print(f'NIX_LD={nix_ld}'); "
+        "print(f'NIX_LD_LIBRARY_PATH={nix_lib}'); "
+        "exit(0 if nix_ld and nix_lib else 1)"
+    )
+    toml = f"""
+    [env_run_base]
+    package = "skip"
+    commands = [["python", "-c", "{cmd}"]]
+    """
+    project = tox_project({"tox.toml": toml})
+    monkeypatch.setenv("NIX_LD", "/nix/store/test-ld")
+    monkeypatch.setenv("NIX_LD_LIBRARY_PATH", "/nix/store/test-lib")
+    monkeypatch.setenv("TOX_OVERRIDE", "testenv.pass_env+=NIX_LD,NIX_LD_LIBRARY_PATH")
+    result = project.run("r")
+    result.assert_success()
+    assert "NIX_LD=/nix/store/test-ld" in result.out
+    assert "NIX_LD_LIBRARY_PATH=/nix/store/test-lib" in result.out
+
+
+def test_tox_override_pass_env_custom_var(tox_project: ToxProjectCreator, monkeypatch: pytest.MonkeyPatch) -> None:
+    cmd = "import os; val = os.environ.get('CUSTOM_VAR'); print(f'CUSTOM_VAR={val}'); exit(0 if val else 1)"
+    toml = f"""
+    [env_run_base]
+    package = "skip"
+    commands = [["python", "-c", "{cmd}"]]
+    """
+    project = tox_project({"tox.toml": toml})
+    monkeypatch.setenv("CUSTOM_VAR", "test_value")
+    monkeypatch.setenv("TOX_OVERRIDE", "testenv.pass_env+=CUSTOM_VAR")
+    config_result = project.run("c", "-k", "pass_env")
+    assert "CUSTOM_VAR" in config_result.out, f"CUSTOM_VAR not in config output:\n{config_result.out}"
+    result = project.run("r")
+    result.assert_success()
+    assert "CUSTOM_VAR=test_value" in result.out
