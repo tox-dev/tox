@@ -132,9 +132,16 @@ class TomlPyProject(Source):
             unused_exclude = {sec.ENV, sec.ENV_BASE, sec.RUN_ENV_BASE, sec.PKG_ENV_BASE}
         elif is_env_base:
             unused_exclude = {"factors"}
+        overrides = list(override_map.get(section.key, []))
+        if section.prefix is not None:
+            overrides.extend(override_map.get(section.prefix, []))
+        if "testenv" in override_map and (
+            section.key == sec.RUN_ENV_BASE or (section.prefix and section.prefix.endswith(sec.ENV))
+        ):
+            overrides.extend(override_map.get("testenv", []))
         return TomlLoader(
             section=section,
-            overrides=override_map.get(section.key, []),
+            overrides=overrides,
             content=current,
             root_content=self._content,
             unused_exclude=unused_exclude,

@@ -53,10 +53,13 @@ class IniSource(Source):
             # if no matching section/prefix is found, use the requested section key as-is (for custom prefixes)
             key = section.key
         if self._parser.has_section(key):
+            overrides = list(override_map.get(section.key, []))
+            if section.prefix is not None:
+                overrides.extend(override_map.get(section.prefix, []))
             return IniLoader(
                 section=section,
                 parser=self._parser,
-                overrides=override_map.get(section.key, []),
+                overrides=overrides,
                 core_section=self.CORE_SECTION,
                 section_key=key,
             )
