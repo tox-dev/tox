@@ -487,3 +487,86 @@ def test_multiple_unavailable_runners_implicit(tox_project: ToxProjectCreator) -
     assert "available: OK" in outcome.out
     assert "unavailable1: NOT AVAILABLE" in outcome.out
     assert "unavailable2: NOT AVAILABLE" in outcome.out
+
+
+@pytest.mark.parametrize(
+    ("env_list", "env_sections", "cli_env", "expected_suggestion"),
+    [
+        pytest.param(
+            '["py310-lint", "py310-test", "py311-lint", "py311-test"]',
+            ['[tool.tox.env."py310-lint"]', '[tool.tox.env."py311-lint"]'],
+            "py3.10-lint",
+            "py310-lint",
+            id="dotted_py_version_with_factor",
+        ),
+        pytest.param(
+            '["py310", "py311"]',
+            ['[tool.tox.env."py310-cov"]', '[tool.tox.env."py311-cov"]'],
+            "py3.10-cov",
+            "py310-cov",
+            id="dotted_py_version_single",
+        ),
+        pytest.param(
+            '["310", "311"]',
+            ['[tool.tox.env."310-lint"]', '[tool.tox.env."311-lint"]'],
+            "3.10-lint",
+            "310-lint",
+            id="explicit_version_format",
+        ),
+    ],
+)
+def test_dotted_env_name_suggests_normalized(
+    tox_project: ToxProjectCreator, env_list: str, env_sections: list[str], cli_env: str, expected_suggestion: str
+) -> None:
+    sections_text = "\n    ".join(f'{sec}\n    commands = [["echo", "specialized"]]' for sec in env_sections)
+    toml = f"""
+    [tool.tox]
+    env_list = {env_list}
+
+    [tool.tox.env_run_base]
+    package = "skip"
+    commands = [["echo", "testenv"]]
+
+    {sections_text}
+    """
+    proj = tox_project({"pyproject.toml": toml})
+    outcome = proj.run("r", "-e", cli_env)
+    outcome.assert_failed(code=-2)
+    assert f"{cli_env} - did you mean {expected_suggestion}?" in outcome.out
+
+
+def test_dotted_env_no_normalized_match_allows_adhoc(tox_project: ToxProjectCreator) -> None:
+    toml = """
+    [tool.tox]
+    env_list = ["lint"]
+
+    [tool.tox.env_run_base]
+    package = "skip"
+    commands = [["python", "-c", "print('adhoc')"]]
+    """
+    proj = tox_project({"pyproject.toml": toml})
+    outcome = proj.run("r", "-e", f"py{sys.version_info[0]}.{sys.version_info[1]}-lint")
+    outcome.assert_success()
+    assert "adhoc" in outcome.out
+
+
+def test_dotted_env_multiple_suggestions(tox_project: ToxProjectCreator) -> None:
+    toml = """
+    [tool.tox]
+    env_list = ["py310-lint", "py311-cov"]
+
+    [tool.tox.env_run_base]
+    package = "skip"
+    commands = [["echo", "testenv"]]
+
+    [tool.tox.env."py310-lint"]
+    commands = [["echo", "lint"]]
+
+    [tool.tox.env."py311-cov"]
+    commands = [["echo", "coverage"]]
+    """
+    proj = tox_project({"pyproject.toml": toml})
+    outcome = proj.run("r", "-e", "py3.10-lint,py3.11-cov")
+    outcome.assert_failed(code=-2)
+    assert "py3.10-lint - did you mean py310-lint?" in outcome.out
+    assert "py3.11-cov - did you mean py311-cov?" in outcome.out
