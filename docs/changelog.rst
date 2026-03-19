@@ -7,6 +7,15 @@
 .. towncrier release notes start
 
 **********************
+ v4.50.2 (2026-03-19)
+**********************
+
+Bug fixes - 4.50.2
+==================
+
+- Fix the sdist to include the missing ``docs/man/tox.1.rst`` file for building the manpage (:issue:`3889`)
+
+**********************
  v4.50.1 (2026-03-19)
 **********************
 
