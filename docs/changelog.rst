@@ -7,6 +7,17 @@
 .. towncrier release notes start
 
 **********************
+ v4.50.1 (2026-03-19)
+**********************
+
+Bug fixes - 4.50.1
+==================
+
+- Detect and suggest normalized environment names when users specify dotted Python versions (e.g., ``py3.10-lint``) that
+  match existing environments with compact notation (e.g., ``py310-lint``), preventing silent fallback to base
+  ``[testenv]`` configuration - by :user:`gaborbernat`. (:issue:`3877`)
+
+**********************
  v4.50.0 (2026-03-17)
 **********************
 
