@@ -1,0 +1,1 @@
+Fix the sdist to include the missing ``docs/man/tox.1.rst`` file for building the manpage
