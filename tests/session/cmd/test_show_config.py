@@ -13,11 +13,11 @@ from tox.config.types import Command
 from tox.execute.request import shell_cmd
 
 if TYPE_CHECKING:
-    from collections.abc import Callable
     from pathlib import Path
 
     from pytest_mock import MockerFixture
 
+    from tests.conftest import PatchPrevPy
     from tox.pytest import MonkeyPatch, ToxProjectCreator
 
 
@@ -218,9 +218,9 @@ def test_pass_env_config_default(tox_project: ToxProjectCreator, stdout_is_atty:
 
 def test_show_config_pkg_env_once(
     tox_project: ToxProjectCreator,
-    patch_prev_py: Callable[[bool], tuple[str, str]],
+    patch_prev_py: PatchPrevPy,
 ) -> None:
-    prev_ver, impl = patch_prev_py(True)
+    prev_ver, impl, _ = patch_prev_py(True)
     ini = f"[tox]\nenv_list=py{prev_ver},py\n[testenv]\npackage=wheel"
     project = tox_project({"tox.ini": ini, "pyproject.toml": ""})
     result = project.run("c", "-e", "ALL", raise_on_config_fail=False)
@@ -232,9 +232,9 @@ def test_show_config_pkg_env_once(
 
 def test_show_config_pkg_env_skip(
     tox_project: ToxProjectCreator,
-    patch_prev_py: Callable[[bool], tuple[str, str]],
+    patch_prev_py: PatchPrevPy,
 ) -> None:
-    prev_ver, _impl = patch_prev_py(False)
+    prev_ver, _impl, _ = patch_prev_py(False)
     ini = f"[tox]\nenv_list=py{prev_ver},py\n[testenv]\npackage=wheel"
     project = tox_project({"tox.ini": ini, "pyproject.toml": ""})
     result = project.run("c", "-e", "ALL", raise_on_config_fail=False)
