@@ -1,0 +1,3 @@
+Use separate ``.pkg`` environments for free-threaded Python targets by including the ``t`` suffix in the wheel build
+environment name (e.g., ``.pkg-cpython314t``), preventing wheel tag mismatches when building for ``py314t`` - by
+:user:`gaborbernat`.

@@ -112,10 +112,12 @@ class PythonPackageToxEnv(Python, PackageToxEnv, ABC):
             if (
                 default_pkg_py.version_no_dot == run_py.version_no_dot
                 and default_pkg_py.impl_lower == run_py.impl_lower
+                and default_pkg_py.free_threaded == run_py.free_threaded
             ):
                 return self.conf.name
 
-            return f"{self.conf.name}-{run_py.impl_lower}{run_py.version_no_dot}"
+            threaded = "t" if run_py.free_threaded else ""
+            return f"{self.conf.name}-{run_py.impl_lower}{run_py.version_no_dot}{threaded}"
 
         run_env.conf.add_config(
             keys=["wheel_build_env"],
