@@ -7,6 +7,17 @@
 .. towncrier release notes start
 
 **********************
+ v4.50.3 (2026-03-20)
+**********************
+
+Bug fixes - 4.50.3
+==================
+
+- Use separate ``.pkg`` environments for free-threaded Python targets by including the ``t`` suffix in the wheel build
+  environment name (e.g., ``.pkg-cpython314t``), preventing wheel tag mismatches when building for ``py314t`` - by
+  :user:`gaborbernat`. (:issue:`3314`)
+
+**********************
  v4.50.2 (2026-03-19)
 **********************
 
