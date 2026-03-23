@@ -209,6 +209,10 @@ count = true
 [tool.pyproject-fmt]
 max_supported_python = "3.14"
 
+[tool.ty]
+environment.python-version = "3.14"
+src.exclude = []
+
 [tool.pytest]
 ini_options.testpaths = [
   "tests",
@@ -268,7 +272,3 @@ type = [
   { directory = "contrib", name = "Contributor-facing changes", showcontent = true },
   { directory = "misc", name = "Miscellaneous internal changes", showcontent = true },
 ]
-
-[tool.ty]
-environment.python-version = "3.14"
-src.exclude = []
