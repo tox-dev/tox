@@ -18,9 +18,9 @@ from packaging.requirements import Requirement
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterator, Sequence
 
+    from build import DistributionType
     from devpi_process import Index, IndexServer
 
-    from build import DistributionType
     from tox.execute.request import ExecuteRequest
     from tox.pytest import MonkeyPatch, TempPathFactory, ToxProjectCreator
 
