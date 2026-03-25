@@ -146,7 +146,7 @@ def register_env_select_flags(
             help_msg = "environment to run"
         action = add_to.add_argument("-e", dest="env", help=help_msg, default=default, action=_CliEnvAction)
         if find_spec("argcomplete"):
-            action.completer = _env_completer  # type: ignore[attr-defined]
+            action.completer = _env_completer  # type: ignore[attr-defined,ty:unresolved-attribute]  # argcomplete extension
     if multiple:
         help_msg = "labels to evaluate"
         add_to.add_argument("-m", dest="labels", metavar="label", help=help_msg, default=[], type=str, nargs="+")

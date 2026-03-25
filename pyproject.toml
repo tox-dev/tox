@@ -102,7 +102,7 @@ test = [
   "wheel>=0.46.3",
 ]
 type = [
-  "ty>=0.0.21",
+  "ty>=0.0.19",
   { include-group = "docs" },
   { include-group = "release" },
   { include-group = "test" },
@@ -136,7 +136,7 @@ release = [
   "towncrier>=25.8",
 ]
 type-min = [
-  "ty>=0.0.21",
+  "ty>=0.0.19",
   { include-group = "test" },
 ]
 
@@ -210,8 +210,9 @@ count = true
 max_supported_python = "3.14"
 
 [tool.ty]
-environment.python-version = "3.14"
 src.exclude = []
+environment.python-version = "3.14"
+environment.extra-paths = [ "typestubs" ]
 
 [tool.pytest]
 ini_options.testpaths = [

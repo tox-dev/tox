@@ -111,7 +111,7 @@ class LocalSubprocessExecuteStatus(ExecuteStatus):
         try:
             if sys.platform == "win32":  # explicit check for mypy  # pragma: win32 cover
                 # on Windows we have a PipeHandle object here rather than a file stream
-                import _overlapped  # noqa: PLC0415,PLC2701  # ty: ignore[unresolved-import] # no typeshed stubs
+                import _overlapped  # noqa: PLC0415,PLC2701
 
                 ov = _overlapped.Overlapped(0)
                 ov.WriteFile(stdin.handle, bytes_content)  # ty: ignore[unresolved-attribute] # PipeHandle on Windows
