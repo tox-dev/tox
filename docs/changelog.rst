@@ -7,6 +7,66 @@
 .. towncrier release notes start
 
 **********************
+ v4.50.3 (2026-03-20)
+**********************
+
+Bug fixes - 4.50.3
+==================
+
+- Use separate ``.pkg`` environments for free-threaded Python targets by including the ``t`` suffix in the wheel build
+  environment name (e.g., ``.pkg-cpython314t``), preventing wheel tag mismatches when building for ``py314t`` - by
+  :user:`gaborbernat`. (:issue:`3314`)
+
+**********************
+ v4.50.2 (2026-03-19)
+**********************
+
+Bug fixes - 4.50.2
+==================
+
+- Fix the sdist to include the missing ``docs/man/tox.1.rst`` file for building the manpage (:issue:`3889`)
+
+**********************
+ v4.50.1 (2026-03-19)
+**********************
+
+Bug fixes - 4.50.1
+==================
+
+- Detect and suggest normalized environment names when users specify dotted Python versions (e.g., ``py3.10-lint``) that
+  match existing environments with compact notation (e.g., ``py310-lint``), preventing silent fallback to base
+  ``[testenv]`` configuration - by :user:`gaborbernat`. (:issue:`3877`)
+
+**********************
+ v4.50.0 (2026-03-17)
+**********************
+
+Features - 4.50.0
+=================
+
+- Add ``interrupt_post_commands`` option to run cleanup commands even after SIGINT - by :user:`gaborbernat`.
+  (:issue:`3858`)
+- Add ``factor['NAME']`` and ``env['VAR']`` subscript syntax for conditional expressions, enabling checks of factors
+  with non-identifier names like ``factor['3.14']``. Add ``env_name`` variable to check the full environment name in
+  conditions. (:issue:`3880`)
+
+Bug fixes - 4.50.0
+==================
+
+- Fix multiple manpage issues: remove duplicate header/author/copyright sections, set ``project`` in Sphinx config, and
+  compile the manpage to troff format at wheel-build time instead of shipping raw RST source - by :user:`gaborbernat`.
+  (:issue:`3878`)
+
+Improved documentation - 4.50.0
+===============================
+
+- Document how to reference the built package path in commands via ``TOX_PACKAGE`` - by :user:`rahuldevikar`
+  (:issue:`3862`)
+- Fix broken TOML examples missing ``extend = true`` on conditional replacements inside lists, fix incorrect ``ref of``
+  path in raw reference docs, and add a test that validates all doc config examples - by :user:`gaborbernat`
+  (:issue:`3875`)
+
+**********************
  v4.49.1 (2026-03-09)
 **********************
 

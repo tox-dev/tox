@@ -3,9 +3,12 @@ from __future__ import annotations
 import json
 import os
 import re
+import signal
 import sys
 import sysconfig
 from pathlib import Path
+from subprocess import PIPE, Popen
+from time import sleep
 from typing import TYPE_CHECKING, Any
 
 import pytest
@@ -726,3 +729,102 @@ def test_no_capture_short_flag_parsed(tox_project: ToxProjectCreator) -> None:
     result = project.run("r", "-e", "py", "-i")
     result.assert_success()
     assert execute_calls.call_count > 0
+
+
+def test_interrupt_post_commands_config_and_context_manager(tox_project: ToxProjectCreator) -> None:
+    toml = "[env_run_base]\npackage = 'skip'\ninterrupt_post_commands = true"
+    proj = tox_project({"tox.toml": toml})
+    result = proj.run("c", "-e", "py", "-k", "interrupt_post_commands")
+    result.assert_success()
+    assert "interrupt_post_commands = True" in result.out
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="SIGINT tests hang on Windows CI")
+@pytest.mark.flaky(max_runs=3, min_passes=1)
+def test_interrupt_post_commands_runs_after_sigint(tox_project: ToxProjectCreator, tmp_path: Path) -> None:
+    marker_main = tmp_path / "main"
+    marker_post = tmp_path / "post"
+    main_cmd = f"from pathlib import Path; Path('{marker_main}').write_text(''); import time; time.sleep(100)"
+    post_cmd = f"from pathlib import Path; Path('{marker_post}').write_text('done')"
+    toml = f"""
+    [env_run_base]
+    package = "skip"
+    interrupt_post_commands = true
+    commands = [["python", "-c", "{main_cmd}"]]
+    commands_post = [["python", "-c", "{post_cmd}"]]
+    """
+    proj = tox_project({"tox.toml": toml})
+    cmd = ["-c", str(proj.path / "tox.toml"), "r", "-e", "py"]
+    process = Popen([sys.executable, "-m", "tox", *cmd], stdout=PIPE, stderr=PIPE, universal_newlines=True)
+    while not marker_main.exists() and (process.poll() is None):
+        sleep(0.05)
+    sig = signal.CTRL_C_EVENT if sys.platform == "win32" else signal.SIGINT
+    process.send_signal(sig)
+    _out, err = process.communicate()
+    assert process.returncode != 0
+    assert "KeyboardInterrupt" in err
+    assert marker_post.exists(), "commands_post should have run after SIGINT"
+    assert marker_post.read_text() == "done"
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="SIGINT tests hang on Windows CI")
+@pytest.mark.flaky(max_runs=3, min_passes=1)
+def test_interrupt_post_commands_not_run_by_default(tox_project: ToxProjectCreator, tmp_path: Path) -> None:
+    marker_main = tmp_path / "main"
+    marker_post = tmp_path / "post"
+    main_cmd = f"from pathlib import Path; Path('{marker_main}').write_text(''); import time; time.sleep(100)"
+    post_cmd = f"from pathlib import Path; Path('{marker_post}').write_text('done')"
+    toml = f"""
+    [env_run_base]
+    package = "skip"
+    commands = [["python", "-c", "{main_cmd}"]]
+    commands_post = [["python", "-c", "{post_cmd}"]]
+    """
+    proj = tox_project({"tox.toml": toml})
+    cmd = ["-c", str(proj.path / "tox.toml"), "r", "-e", "py"]
+    process = Popen([sys.executable, "-m", "tox", *cmd], stdout=PIPE, stderr=PIPE, universal_newlines=True)
+    while not marker_main.exists() and (process.poll() is None):
+        sleep(0.05)
+    sig = signal.CTRL_C_EVENT if sys.platform == "win32" else signal.SIGINT
+    process.send_signal(sig)
+    _out, err = process.communicate()
+    assert process.returncode != 0
+    assert "KeyboardInterrupt" in err
+    assert not marker_post.exists(), "commands_post should NOT run after SIGINT by default"
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="SIGINT tests hang on Windows CI")
+@pytest.mark.flaky(max_runs=3, min_passes=1)
+def test_second_interrupt_stops_post_commands(tox_project: ToxProjectCreator, tmp_path: Path) -> None:
+    marker_main = tmp_path / "main"
+    marker_post_start = tmp_path / "post_start"
+    marker_post_end = tmp_path / "post_end"
+    main_cmd = f"from pathlib import Path; Path('{marker_main}').write_text(''); import time; time.sleep(100)"
+    post_start_cmd = f"from pathlib import Path; Path('{marker_post_start}').write_text('')"
+    post_end_cmd = f"from pathlib import Path; Path('{marker_post_end}').write_text('done')"
+    toml = f"""
+    [env_run_base]
+    package = "skip"
+    interrupt_post_commands = true
+    commands = [["python", "-c", "{main_cmd}"]]
+    commands_post = [
+        ["python", "-c", "{post_start_cmd}"],
+        ["python", "-c", "import time; time.sleep(100)"],
+        ["python", "-c", "{post_end_cmd}"],
+    ]
+    """
+    proj = tox_project({"tox.toml": toml})
+    cmd = ["-c", str(proj.path / "tox.toml"), "r", "-e", "py"]
+    process = Popen([sys.executable, "-m", "tox", *cmd], stdout=PIPE, stderr=PIPE, universal_newlines=True)
+    while not marker_main.exists() and (process.poll() is None):
+        sleep(0.05)
+    sig = signal.CTRL_C_EVENT if sys.platform == "win32" else signal.SIGINT
+    process.send_signal(sig)
+    while not marker_post_start.exists() and (process.poll() is None):
+        sleep(0.05)
+    process.send_signal(sig)
+    out, _err = process.communicate()
+    assert process.returncode != 0
+    assert marker_post_start.exists(), "commands_post should have started"
+    assert not marker_post_end.exists(), "second SIGINT should have stopped commands_post"
+    assert "second interrupt received" in out

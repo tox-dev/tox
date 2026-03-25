@@ -294,6 +294,10 @@ class EnvSelector:
         for env in self._cli_envs or []:
             if env.startswith(".pkg_external") or env in known_envs:
                 continue
+            normalized_env = self._normalize_env_name(env)
+            if normalized_env != env and normalized_env in known_envs:
+                invalid_envs[env] = normalized_env
+                continue
             factors: dict[str, str | None] = dict.fromkeys(env.split("-"))
             found_factors: set[str] = set()
             for factor in factors:
@@ -314,16 +318,31 @@ class EnvSelector:
                     else "-".join(cast("Iterable[str]", factors.values()))
                 )
         if invalid_envs:
-            msg = "provided environments not found in configuration file:\n"
-            first = True
-            for env, suggestion in invalid_envs.items():
-                if not first:
-                    msg += "\n"
-                first = False
-                msg += env
-                if suggestion:
-                    msg += f" - did you mean {suggestion}?"
-            raise HandledError(msg)
+            self._raise_invalid_envs(invalid_envs)
+
+    @staticmethod
+    def _normalize_env_name(env_name: str) -> str:
+        factors = env_name.split("-")
+        normalized_factors = []
+        for factor in factors:
+            if _DYNAMIC_ENV_FACTORS.fullmatch(factor):
+                normalized_factors.append(factor.replace(".", ""))
+            else:
+                normalized_factors.append(factor)
+        return "-".join(normalized_factors)
+
+    @staticmethod
+    def _raise_invalid_envs(invalid_envs: dict[str, str | None]) -> None:
+        msg = "provided environments not found in configuration file:\n"
+        first = True
+        for env, suggestion in invalid_envs.items():
+            if not first:
+                msg += "\n"
+            first = False
+            msg += env
+            if suggestion:
+                msg += f" - did you mean {suggestion}?"
+        raise HandledError(msg)
 
     def _env_name_to_active(self) -> dict[str, bool]:
         env_name_to_active_map = {}

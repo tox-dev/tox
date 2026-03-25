@@ -44,6 +44,10 @@ if sys.implementation.name == "pypy":
     collect_ignore.append("util/test_spinner.py")
 
 
+class PatchPrevPy(Protocol):
+    def __call__(self, has_prev: bool, free_threaded: bool | None = None) -> tuple[str, str, bool]: ...
+
+
 class ToxIniCreator(Protocol):
     def __call__(self, conf: str, override: Sequence[Override] | None = None) -> Config: ...
 
@@ -80,12 +84,13 @@ def demo_pkg_inline() -> Path:
 
 
 @pytest.fixture
-def patch_prev_py(mocker: MockerFixture) -> Callable[[bool], tuple[str, str]]:
-    def _func(has_prev: bool) -> tuple[str, str]:
+def patch_prev_py(mocker: MockerFixture) -> PatchPrevPy:
+    def _func(has_prev: bool, free_threaded: bool | None = None) -> tuple[str, str, bool]:
         ver = sys.version_info[0:2]
         prev_ver = "".join(str(i) for i in (ver[0], ver[1] - 1))
         prev_py = f"py{prev_ver}"
         impl = sys.implementation.name.lower()
+        is_free_threaded = sysconfig.get_config_var("Py_GIL_DISABLED") == 1 if free_threaded is None else free_threaded
 
         def get_python(self: VirtualEnv, base_python: list[str]) -> PythonInfo | None:  # noqa: ARG001
             if base_python[0] == "py31" or (base_python[0] == prev_py and not has_prev):
@@ -101,12 +106,12 @@ def patch_prev_py(mocker: MockerFixture) -> Callable[[bool], tuple[str, str]]:
                 is_64=True,
                 platform=sys.platform,
                 extra={"executable": Path(sys.executable)},
-                free_threaded=sysconfig.get_config_var("Py_GIL_DISABLED") == 1,
+                free_threaded=is_free_threaded,
                 machine=sysconfig.get_platform().rsplit("-", 1)[-1] or None,
             )
 
         mocker.patch.object(VirtualEnv, "_get_python", get_python)
-        return prev_ver, impl
+        return prev_ver, impl, is_free_threaded
 
     return _func
 

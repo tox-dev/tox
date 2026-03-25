@@ -5,13 +5,12 @@ from textwrap import dedent
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from collections.abc import Callable
-
+    from tests.conftest import PatchPrevPy
     from tox.pytest import ToxProjectCreator
 
 
-def test_depends_wheel(tox_project: ToxProjectCreator, patch_prev_py: Callable[[bool], tuple[str, str]]) -> None:
-    prev_ver, impl = patch_prev_py(True)  # has previous python
+def test_depends_wheel(tox_project: ToxProjectCreator, patch_prev_py: PatchPrevPy) -> None:
+    prev_ver, impl, _ = patch_prev_py(True)  # has previous python
     ver = sys.version_info[0:2]
     py = f"py{''.join(str(i) for i in ver)}"
     prev_py = f"py{prev_ver}"
@@ -53,8 +52,8 @@ def test_depends_wheel(tox_project: ToxProjectCreator, patch_prev_py: Callable[[
     assert outcome.out == dedent(expected).lstrip()
 
 
-def test_depends_sdist(tox_project: ToxProjectCreator, patch_prev_py: Callable[[bool], tuple[str, str]]) -> None:
-    prev_ver, _impl = patch_prev_py(True)  # has previous python
+def test_depends_sdist(tox_project: ToxProjectCreator, patch_prev_py: PatchPrevPy) -> None:
+    prev_ver, _impl, _ = patch_prev_py(True)  # has previous python
     ver = sys.version_info[0:2]
     py = f"py{''.join(str(i) for i in ver)}"
     prev_py = f"py{prev_ver}"

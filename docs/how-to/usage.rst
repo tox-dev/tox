@@ -276,6 +276,11 @@ For example, given:
 Running ``tox -e unt`` or ``tox -e unti`` would succeed without running any tests. An exception is made for environments
 that look like Python version specifiers -- ``tox -e 3.13`` or ``tox -e py313`` would still work as intended.
 
+Note that Python versions can be written with or without dots (``py3.10`` vs ``py310``). If you define ``py310-lint`` in
+your configuration and accidentally run ``tox -e py3.10-lint``, tox will detect the mismatch and suggest the correct
+environment name with a ``did you mean py310-lint?`` message rather than silently falling back to the base test
+environment.
+
 .. _platform-specification:
 
 **************************************
@@ -299,13 +304,13 @@ platform without encoding the platform name in the environment:
          [env_run_base]
          deps = [
              "pytest",
-             { replace = "if", condition = "factor.linux or factor.darwin", then = ["platformdirs>=3"] },
-             { replace = "if", condition = "factor.win32", then = ["platformdirs>=2"] },
+             { replace = "if", condition = "factor.linux or factor.darwin", then = ["platformdirs>=3"], extend = true },
+             { replace = "if", condition = "factor.win32", then = ["platformdirs>=2"], extend = true },
          ]
          commands = [
-             { replace = "if", condition = "factor.linux", then = [["python", "-c", "print('Running on Linux')"]] },
-             { replace = "if", condition = "factor.darwin", then = [["python", "-c", "print('Running on macOS')"]] },
-             { replace = "if", condition = "factor.win32", then = [["python", "-c", "print('Running on Windows')"]] },
+             { replace = "if", condition = "factor.linux", then = [["python", "-c", "print('Running on Linux')"]], extend = true },
+             { replace = "if", condition = "factor.darwin", then = [["python", "-c", "print('Running on macOS')"]], extend = true },
+             { replace = "if", condition = "factor.win32", then = [["python", "-c", "print('Running on Windows')"]], extend = true },
              ["python", "-m", "pytest"],
          ]
 
@@ -355,13 +360,13 @@ factors ``py313``, ``django50``, and the current platform:
 
         [env_run_base]
         deps = [
-            { replace = "if", condition = "factor.django42", then = ["Django>=4.2,<4.3"] },
-            { replace = "if", condition = "factor.django50", then = ["Django>=5.0,<5.1"] },
-            { replace = "if", condition = "factor.py312 and factor.linux", then = ["pytest-xdist"] },
-            { replace = "if", condition = "factor.darwin", then = ["pyobjc-framework-Cocoa"] },
+            { replace = "if", condition = "factor.django42", then = ["Django>=4.2,<4.3"], extend = true },
+            { replace = "if", condition = "factor.django50", then = ["Django>=5.0,<5.1"], extend = true },
+            { replace = "if", condition = "factor.py312 and factor.linux", then = ["pytest-xdist"], extend = true },
+            { replace = "if", condition = "factor.darwin", then = ["pyobjc-framework-Cocoa"], extend = true },
         ]
         commands = [
-            { replace = "if", condition = "factor.win32", then = [["python", "-c", "import winreg"]] },
+            { replace = "if", condition = "factor.win32", then = [["python", "-c", "import winreg"]], extend = true },
             ["pytest"],
         ]
 
@@ -390,8 +395,8 @@ Negation also works with platform factors:
 
         [env_run_base]
         deps = [
-            { replace = "if", condition = "not factor.win32", then = ["uvloop"] },
-            { replace = "if", condition = "not factor.darwin", then = ["pyinotify"] },
+            { replace = "if", condition = "not factor.win32", then = ["uvloop"], extend = true },
+            { replace = "if", condition = "not factor.darwin", then = ["pyinotify"], extend = true },
         ]
 
 .. tab:: INI
@@ -416,8 +421,8 @@ There are two ways to handle platform differences:
 
         [env_run_base]
         commands = [
-            { replace = "if", condition = "factor.linux", then = [["pytest", "--numprocesses=auto"]] },
-            { replace = "if", condition = "factor.darwin or factor.win32", then = [["pytest"]] },
+            { replace = "if", condition = "factor.linux", then = [["pytest", "--numprocesses=auto"]], extend = true },
+            { replace = "if", condition = "factor.darwin or factor.win32", then = [["pytest"]], extend = true },
         ]
 
 .. tab:: INI
@@ -520,6 +525,8 @@ Common architecture values (after normalization):
 
 .. versionchanged:: 4.42 Added ``factor.NAME`` lookups for environment name factors and platform.
 
+.. versionchanged:: 4.50 Added ``factor['NAME']``/``env['VAR']`` subscript syntax and ``env_name`` variable.
+
 TOML configurations can conditionally select values based on environment variables and factors using ``replace = "if"``.
 The ``condition`` field accepts expressions with ``env.VAR`` lookups for environment variables, ``factor.NAME`` lookups
 for environment name factors and platform, ``==``/``!=`` comparisons, and ``and``/``or``/``not`` boolean logic.
@@ -545,7 +552,7 @@ Use different dependencies based on environment factors:
     [env_run_base]
     deps = [
         "pytest",
-        { replace = "if", condition = "factor.django50", then = ["Django>=5.0,<5.1"], "else" = ["Django>=4.2,<4.3"] },
+        { replace = "if", condition = "factor.django50", then = ["Django>=5.0,<5.1"], "else" = ["Django>=4.2,<4.3"], extend = true },
     ]
 
 Combine multiple conditions (environment variables and factors):
@@ -557,6 +564,22 @@ Combine multiple conditions (environment variables and factors):
 
     [env_run_base]
     commands = [["pytest", { replace = "if", condition = "factor.linux and not env.CI", then = ["--numprocesses=auto"], "else" = [], extend = true }]]
+
+Use subscript syntax for version-number factors that aren't valid Python identifiers:
+
+.. code-block:: toml
+
+    [env."test-3.14"]
+    commands = [
+        ["pytest", { replace = "if", condition = "factor['3.14']", then = ["--strict-markers"], "else" = [], extend = true }],
+    ]
+
+Target a specific environment by name with ``env_name``:
+
+.. code-block:: toml
+
+    [env_run_base]
+    set_env.EXTRA = { replace = "if", condition = "env_name == 'test-3.14'", then = "latest", "else" = "" }
 
 For the full expression syntax and more examples, see :ref:`conditional-value-reference`.
 
@@ -942,8 +965,8 @@ factor group is an array of strings or a range dict. Combinations are joined wit
          package = "skip"
          deps = [
              "pytest",
-             { replace = "if", condition = "factor.django42", then = ["Django>=4.2,<4.3"] },
-             { replace = "if", condition = "factor.django50", then = ["Django>=5.0,<5.1"] },
+             { replace = "if", condition = "factor.django42", then = ["Django>=4.2,<4.3"], extend = true },
+             { replace = "if", condition = "factor.django50", then = ["Django>=5.0,<5.1"], extend = true },
          ]
          commands = [["pytest"]]
 
@@ -993,8 +1016,8 @@ Cartesian product of factor groups, and each generated environment inherits all 
     package = "skip"
     deps = [
         "pytest",
-        { replace = "if", condition = "factor.django42", then = ["Django>=4.2,<4.3"] },
-        { replace = "if", condition = "factor.django50", then = ["Django>=5.0,<5.1"] },
+        { replace = "if", condition = "factor.django42", then = ["Django>=4.2,<4.3"], extend = true },
+        { replace = "if", condition = "factor.django50", then = ["Django>=5.0,<5.1"], extend = true },
     ]
     commands = [["pytest"]]
 
@@ -1681,6 +1704,45 @@ tox works with any :PEP:`517`/:PEP:`518` compliant build backend. Configure the 
 tox automatically detects and uses whatever backend is specified in ``[build-system]``. No additional tox configuration
 is needed. For build backends that need extra configuration during the build, use :ref:`config_settings_build_wheel` and
 related options.
+
+.. _howto-reference-built-package:
+
+**********************************************
+ Reference the built package path in commands
+**********************************************
+
+When tox builds an sdist or wheel for your project it stores the path in the ``TOX_PACKAGE`` environment variable (see
+:ref:`injected-environment-variables`). Reference it in ``commands`` (or any other config value) to run post-build
+checks such as ``twine check``, ``check-wheel-contents``, or ``pkginfo`` against the exact artifact that was just built
+and installed.
+
+.. tab:: TOML
+
+    Use the explicit environment variable reference (see :ref:`pyproject-toml-native`):
+
+    .. code-block:: toml
+
+        [env.check]
+        description = "check the built package"
+        deps = ["twine"]
+        commands = [["twine", "check", { replace = "env", name = "TOX_PACKAGE" }]]
+
+.. tab:: INI
+
+    .. code-block:: ini
+
+        [testenv:check]
+        description = check the built package
+        deps = twine
+        commands = twine check {env:TOX_PACKAGE}
+
+``TOX_PACKAGE`` is only set in run environments where a package has been built. If there are multiple artifacts (for
+example both an sdist and a wheel), the paths are joined with ``os.pathsep``.
+
+.. tip::
+
+    If you need a glob-based approach instead (e.g. matching files produced outside of tox), use the ``{glob:PATTERN}``
+    substitution — see :ref:`substitution-reference`.
 
 **********************************
  Migrate from tox.ini to tox.toml

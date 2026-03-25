@@ -20,6 +20,7 @@ if TYPE_CHECKING:
     from sphinx.ext.autodoc import Options
 
 company, name = "tox-dev", "tox"
+project = name
 release, version = __version__, ".".join(__version__.split(".")[:2])
 copyright = f"{company}"  # noqa: A001
 master_doc = "index"
@@ -89,7 +90,7 @@ extlinks_detect_hardcoded_links = True
 issues_github_path = f"{company}/{name}"  # `sphinx-issues` ext
 
 # Man page configuration
-man_pages = [("man/tox.1", "tox", "virtualenv-based automation of test activities", ["tox-dev"], 1)]
+man_pages = [("man/tox.1", "tox", "virtualenv-based automation of test activities", [], 1)]
 man_show_urls = True
 
 redirects = {

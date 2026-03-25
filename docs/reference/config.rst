@@ -78,14 +78,14 @@ factor.
         [env_run_base]
         deps = [
             "pytest",
-            { replace = "if", condition = "factor.django50", then = ["Django>=5.0,<5.1"] },
-            { replace = "if", condition = "factor.django42", then = ["Django>=4.2,<4.3"] },
-            { replace = "if", condition = "not factor.lint", then = ["coverage"] },
+            { replace = "if", condition = "factor.django50", then = ["Django>=5.0,<5.1"], extend = true },
+            { replace = "if", condition = "factor.django42", then = ["Django>=4.2,<4.3"], extend = true },
+            { replace = "if", condition = "not factor.lint", then = ["coverage"], extend = true },
         ]
         commands = [
-            { replace = "if", condition = "factor.linux", then = [["python", "-c", "print('on linux')"]] },
-            { replace = "if", condition = "factor.darwin", then = [["python", "-c", "print('on mac')"]] },
-            { replace = "if", condition = "factor.win32", then = [["python", "-c", "print('on windows')"]] },
+            { replace = "if", condition = "factor.linux", then = [["python", "-c", "print('on linux')"]], extend = true },
+            { replace = "if", condition = "factor.darwin", then = [["python", "-c", "print('on mac')"]], extend = true },
+            { replace = "if", condition = "factor.win32", then = [["python", "-c", "print('on windows')"]], extend = true },
         ]
 
     Use ``replace = "if"`` with ``factor.NAME`` conditions. Supports boolean operations (``and``, ``or``, ``not``) and
@@ -184,8 +184,8 @@ This generates ``test-3.13`` and ``test-3.14``. For multi-dimensional matrices:
     factors = [["py312", "py313"], ["django42", "django50"]]
     deps = [
         "pytest",
-        { replace = "if", condition = "factor.django42", then = ["Django>=4.2,<4.3"] },
-        { replace = "if", condition = "factor.django50", then = ["Django>=5.0,<5.1"] },
+        { replace = "if", condition = "factor.django42", then = ["Django>=4.2,<4.3"], extend = true },
+        { replace = "if", condition = "factor.django50", then = ["Django>=5.0,<5.1"], extend = true },
     ]
     commands = [["pytest"]]
 
@@ -995,7 +995,7 @@ always set regardless of the ``pass_env`` or ``set_env`` configuration and canno
         because user site-packages aren't visible. Only set when using ``virtualenv``\-based environments.
     - - ``TOX_PACKAGE``
       - The path(s) to the built package artifact(s), joined by ``os.pathsep`` if there are multiple. Only set in run
-        environments where a package has been built.
+        environments where a package has been built. See :ref:`howto-reference-built-package` for usage examples.
     - - ``VIRTUAL_ENV``
       - The path to the virtual environment directory. Only set when using ``virtualenv``\-based environments (the
         default).
@@ -2214,7 +2214,7 @@ You can reference other configurations via the ``ref`` replacement. This can eit
           [env.src]
           extras = ["A", "{env_name}"]
           [env.dest]
-          extras = [{ replace = "ref", of = ["env", "extras"], extend = true }, "B"]
+          extras = [{ replace = "ref", of = ["env", "src", "extras"], extend = true }, "B"]
 
   In this case ``dest`` environments ``extras`` will be ``A``, ``dest``, ``B``.
 
@@ -2350,6 +2350,8 @@ Conditional value reference
 
 .. versionchanged:: 4.42 Added ``factor.NAME`` lookups for environment name factors and platform.
 
+.. versionchanged:: 4.50 Added ``factor['NAME']`` and ``env['VAR']`` subscript syntax and ``env_name`` variable.
+
 You can conditionally select values based on environment variables and factors via the ``if`` replacement. The
 ``condition`` field accepts an expression language that supports ``env.VAR_NAME`` lookups for environment variables,
 ``factor.NAME`` lookups for environment name factors and platform, ``==``/``!=`` comparisons, and ``and``/``or``/``not``
@@ -2376,30 +2378,30 @@ If ``TAG_NAME`` is set and non-empty, ``MATURITY`` becomes ``production``, other
 .. code-block:: toml
 
     [env.A]
-    description = { replace = "if", condition = "env.CI and env.DEPLOY", then = "deploying", "else" = "skipped" }
+    set_env.DEPLOY_TARGET = { replace = "if", condition = "env.CI and env.DEPLOY", then = "production", "else" = "none" }
 
     [env.B]
-    description = { replace = "if", condition = "env.CI or env.LOCAL", then = "active", "else" = "inactive" }
+    pass_env = [{ replace = "if", condition = "env.CI or env.LOCAL", then = ["AWS_*"], "else" = [], extend = true }]
 
     [env.C]
-    description = { replace = "if", condition = "not env.CI", then = "local dev", "else" = "CI build" }
+    commands = [["pytest", { replace = "if", condition = "not env.CI", then = ["--pdb"], "else" = [], extend = true }]]
 
     [env.D]
-    description = { replace = "if", condition = "env.MODE != 'prod'", then = "non-production", "else" = "production" }
+    set_env.LOG_LEVEL = { replace = "if", condition = "env.MODE != 'prod'", then = "DEBUG", "else" = "INFO" }
 
 **Omitting the else clause** defaults to an empty string:
 
 .. code-block:: toml
 
     [env.A]
-    description = { replace = "if", condition = "env.DEPLOY", then = "deployment mode" }
+    set_env.DEPLOY_FLAG = { replace = "if", condition = "env.DEPLOY", then = "1" }
 
 **Nested substitutions** in ``then``/``else`` values are processed normally:
 
 .. code-block:: toml
 
     [env.A]
-    description = { replace = "if", condition = "env.DEPLOY", then = "{env_name}", "else" = "none" }
+    set_env.TEST_ENV = { replace = "if", condition = "env.DEPLOY", then = "{env_name}", "else" = "local" }
 
 **With extend in list contexts:**
 
@@ -2415,7 +2417,7 @@ If ``TAG_NAME`` is set and non-empty, ``MATURITY`` becomes ``production``, other
     [env_run_base]
     deps = [
         "pytest",
-        { replace = "if", condition = "factor.django50", then = ["Django>=5.0,<5.1"] },
+        { replace = "if", condition = "factor.django50", then = ["Django>=5.0,<5.1"], extend = true },
     ]
 
 If the environment name contains ``django50`` (e.g., ``py313-django50``), the Django dependency is added.
@@ -2426,8 +2428,8 @@ If the environment name contains ``django50`` (e.g., ``py313-django50``), the Dj
 
     [env_run_base]
     commands = [
-        { replace = "if", condition = "factor.linux", then = [["pytest", "--numprocesses=auto"]] },
-        { replace = "if", condition = "not factor.linux", then = [["pytest"]] },
+        { replace = "if", condition = "factor.linux", then = [["pytest", "--numprocesses=auto"]], extend = true },
+        { replace = "if", condition = "not factor.linux", then = [["pytest"]], extend = true },
     ]
 
 The current platform (``sys.platform`` value like ``linux``, ``darwin``, ``win32``) is automatically available as a
@@ -2440,10 +2442,37 @@ factor without requiring it in the environment name.
     [env_run_base]
     commands = [["pytest", { replace = "if", condition = "factor.linux and env.CI", then = ["--numprocesses=auto"], "else" = [], extend = true }]]
 
+**Check factors with non-identifier names:**
+
+Factor names like ``3.14`` are not valid Python identifiers, so ``factor.3.14`` would be a syntax error. Use subscript
+syntax instead:
+
+.. code-block:: toml
+
+    [env."test-3.14"]
+    commands = [
+        ["pytest", { replace = "if", condition = "factor['3.14']", then = ["--strict-markers"], "else" = [], extend = true }],
+    ]
+
+In this example, the environment name ``test-3.14`` has factors ``test`` and ``3.14``. The subscript syntax also works
+for environment variables: ``env['CI']`` is equivalent to ``env.CI``.
+
+**Check the environment name:**
+
+Use ``env_name`` to match the full environment name as a string:
+
+.. code-block:: toml
+
+    [env_run_base]
+    set_env.CUSTOM_FLAG = { replace = "if", condition = "env_name == 'test-3.14'", then = "enabled", "else" = "" }
+
 **Condition expression reference:**
 
 - ``env.VAR`` -- value of environment variable ``VAR`` (empty string if unset); truthy when non-empty
+- ``env['VAR']`` -- same as ``env.VAR``
 - ``factor.NAME`` -- ``True`` if ``NAME`` is a factor in the environment name or platform; ``False`` otherwise
+- ``factor['NAME']`` -- same as ``factor.NAME``, for names that aren't valid Python identifiers (e.g. ``3.14``)
+- ``env_name`` -- the full environment name as a string
 - ``==``, ``!=`` -- string comparison
 - ``and``, ``or``, ``not`` -- boolean logic
 - ``'string'`` -- string literal
@@ -2585,11 +2614,11 @@ and conditional settings to express that in a concise form:
 
         [env_run_base]
         deps = [
-            { replace = "if", condition = "factor.django41", then = ["Django>=4.1,<4.2"] },
-            { replace = "if", condition = "factor.django40", then = ["Django>=4.0,<4.1"] },
-            { replace = "if", condition = "factor.py311 and factor.mysql", then = ["PyMySQL"] },
-            { replace = "if", condition = "factor.py311 or factor.py310", then = ["urllib3"] },
-            { replace = "if", condition = "(factor.py311 or factor.py310) and factor.sqlite", then = ["mock"] },
+            { replace = "if", condition = "factor.django41", then = ["Django>=4.1,<4.2"], extend = true },
+            { replace = "if", condition = "factor.django40", then = ["Django>=4.0,<4.1"], extend = true },
+            { replace = "if", condition = "factor.py311 and factor.mysql", then = ["PyMySQL"], extend = true },
+            { replace = "if", condition = "factor.py311 or factor.py310", then = ["urllib3"], extend = true },
+            { replace = "if", condition = "(factor.py311 or factor.py310) and factor.sqlite", then = ["mock"], extend = true },
         ]
 
 .. tab:: INI
