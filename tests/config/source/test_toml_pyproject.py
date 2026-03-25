@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import sys
+import sysconfig
 from textwrap import dedent
 from typing import TYPE_CHECKING
 
@@ -1070,3 +1071,50 @@ def test_config_in_toml_replace_ref_command(tox_project: ToxProjectCreator) -> N
     assert "python" in outcome.out
     assert "pip" in outcome.out
     assert "freeze" in outcome.out
+
+
+def test_toml_machine_isa_does_not_override_explicit_env_factor(tox_project: ToxProjectCreator) -> None:
+    """Regression test for #3903: explicit ISA in env name takes precedence over machine ISA in TOML."""
+    parts = sysconfig.get_platform().rsplit("-", 1)
+    if len(parts) < 2:
+        pytest.skip("sysconfig.get_platform() has no machine component")
+    machine = parts[-1]
+    other_isa = "x86_64" if machine != "x86_64" else "arm64"
+
+    project = tox_project({
+        "pyproject.toml": dedent(f"""
+        [tool.tox.env_run_base]
+        package = "skip"
+        description = {{ replace = "if", condition = "factor.{machine}", then = "{machine}_val", \
+else = {{ replace = "if", condition = "factor.{other_isa}", then = "{other_isa}_val", else = "unknown" }} }}
+
+        [tool.tox.env.py39-{other_isa}]
+        """),
+    })
+    # Env name contains other_isa, so only other_isa condition should match, not machine ISA.
+    outcome = project.run("c", "-e", f"py39-{other_isa}", "-k", "description")
+    outcome.assert_success()
+    assert f"{other_isa}_val" in outcome.out
+    assert f"{machine}_val" not in outcome.out
+
+
+def test_toml_machine_isa_implicit_when_no_env_isa(tox_project: ToxProjectCreator) -> None:
+    """Machine ISA is added implicitly to TOML factors when no ISA factor is in the env name."""
+    parts = sysconfig.get_platform().rsplit("-", 1)
+    if len(parts) < 2:
+        pytest.skip("sysconfig.get_platform() has no machine component")
+    machine = parts[-1]
+
+    project = tox_project({
+        "pyproject.toml": dedent(f"""
+        [tool.tox.env_run_base]
+        package = "skip"
+        description = {{ replace = "if", condition = "factor.{machine}", then = "matched", else = "no-match" }}
+
+        [tool.tox.env.py39]
+        """),
+    })
+    # No ISA in env name, so machine ISA should be added implicitly.
+    outcome = project.run("c", "-e", "py39", "-k", "description")
+    outcome.assert_success()
+    assert "matched" in outcome.out
