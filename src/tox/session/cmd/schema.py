@@ -37,6 +37,7 @@ def _ensure_package_conf(env: ToxEnv) -> None:
     """Register package-related configs that may be skipped when ``skip_install`` or ``no_package`` is set.
 
     The schema must include *all* possible configuration keys regardless of the current project settings.
+
     """
     from tox.tox_env.python.runner import PythonRun  # noqa: PLC0415
 
