@@ -9,11 +9,14 @@ permissions:
 jobs:
   update-schemastore:
     runs-on: ubuntu-24.04
+    environment: schemastore
     env:
       GH_TOKEN: ${{ secrets.SCHEMASTORE_TOKEN }}
       BRANCH: update-tox-schema
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          persist-credentials: false
       - name: Fork and clone SchemaStore
         run: gh repo fork SchemaStore/schemastore --clone --remote -- /tmp/schemastore
       - name: Create or reset branch from upstream
@@ -44,7 +47,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add src/schemas/json/tox.json
-          git commit -m "Update tox JSON Schema to ${{ github.ref_name }}"
+          git commit -m "Update tox JSON Schema to ${GITHUB_REF_NAME}"
           git push --force origin "$BRANCH"
         working-directory: /tmp/schemastore
       - name: Create or update pull request
@@ -56,10 +59,10 @@ jobs:
             gh pr create \
               --repo SchemaStore/schemastore \
               --head "$HEAD" \
-              --title "Update tox JSON Schema to ${{ github.ref_name }}" \
-              --body "Updates tox's JSON Schema to [${{ github.sha }}](https://github.com/tox-dev/tox/commit/${{ github.sha }}) (release ${{ github.ref_name }})."
+              --title "Update tox JSON Schema to ${GITHUB_REF_NAME}" \
+              --body "Updates tox's JSON Schema to [${{ github.sha }}](https://github.com/tox-dev/tox/commit/${{ github.sha }}) (release ${GITHUB_REF_NAME})."
           else
             gh pr edit "$HEAD" --repo SchemaStore/schemastore \
-              --title "Update tox JSON Schema to ${{ github.ref_name }}" \
-              --body "Updates tox's JSON Schema to [${{ github.sha }}](https://github.com/tox-dev/tox/commit/${{ github.sha }}) (release ${{ github.ref_name }})."
+              --title "Update tox JSON Schema to ${GITHUB_REF_NAME}" \
+              --body "Updates tox's JSON Schema to [${{ github.sha }}](https://github.com/tox-dev/tox/commit/${{ github.sha }}) (release ${GITHUB_REF_NAME})."
           fi

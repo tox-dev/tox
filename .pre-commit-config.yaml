@@ -55,6 +55,10 @@ repos:
         entry: "changelog files must be named ####.(feature|bugfix|doc|removal|misc).rst"
         exclude: ^docs/changelog/(\d+\.(feature|bugfix|doc|removal|misc).rst|template.jinja2)
         files: ^docs/changelog/
+  - repo: https://github.com/zizmorcore/zizmor-pre-commit
+    rev: v1.23.1
+    hooks:
+      - id: zizmor
   - repo: meta
     hooks:
       - id: check-hooks-apply

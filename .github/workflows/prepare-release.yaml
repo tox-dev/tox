@@ -26,13 +26,14 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         with:
           fetch-depth: 0
           token: ${{ secrets.RELEASE_PAT }}
+          persist-credentials: false
 
       - name: Install the latest version of uv
-        uses: astral-sh/setup-uv@v7
+        uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78 # v7
         with:
           enable-cache: true
           cache-dependency-glob: "pyproject.toml"
@@ -40,8 +41,8 @@ jobs:
 
       - name: Configure git
         run: |
-          git config user.name "${{ github.actor }}"
-          git config user.email "${{ github.actor }}@users.noreply.github.com"
+          git config user.name "${GITHUB_ACTOR}"
+          git config user.email "${GITHUB_ACTOR}@users.noreply.github.com"
 
       - name: Set up remote tracking
         run: |
@@ -88,9 +89,12 @@ jobs:
         run: uv tool install --python-preference only-managed --python 3.14 tox@.
 
       - name: Run release process
-        run: tox run -e release -- ${{ steps.version.outputs.version }}
+        run: tox run -e release -- ${STEPS_VERSION_OUTPUTS_VERSION}
         env:
           GH_TOKEN: ${{ secrets.RELEASE_PAT }}
+          STEPS_VERSION_OUTPUTS_VERSION: ${{ steps.version.outputs.version }}
 
       - name: Display completion message
-        run: echo "Release ${{ steps.version.outputs.version }} prepared and pushed successfully!"
+        run: echo "Release ${STEPS_VERSION_OUTPUTS_VERSION} prepared and pushed successfully!"
+        env:
+          STEPS_VERSION_OUTPUTS_VERSION: ${{ steps.version.outputs.version }}
