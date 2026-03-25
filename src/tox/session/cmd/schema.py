@@ -22,6 +22,7 @@ if TYPE_CHECKING:
     from tox.config.cli.parser import ToxParser
     from tox.config.sets import ConfigSet
     from tox.session.state import State
+    from tox.tox_env.api import ToxEnv
 
 
 @impl
@@ -32,13 +33,47 @@ def tox_add_option(parser: ToxParser) -> None:
     our.add_argument("--strict", action="store_true", help="Disallow extra properties in configuration")
 
 
+def _ensure_package_conf(env: ToxEnv) -> None:
+    """Register package-related configs that may be skipped when ``skip_install`` or ``no_package`` is set.
+
+    The schema must include *all* possible configuration keys regardless of the current project settings.
+    """
+    from tox.tox_env.python.runner import PythonRun  # noqa: PLC0415
+
+    if not isinstance(env, PythonRun):
+        return
+    from tox.config.of_type import ConfigConstantDefinition  # noqa: PLC0415
+
+    conf = env.conf
+    was_final = conf._final  # noqa: SLF001
+    conf._final = False  # noqa: SLF001
+    try:
+        if "use_develop" not in conf:
+            conf.add_config(keys=["use_develop", "usedevelop"], desc="use develop mode", default=False, of_type=bool)
+        # When skip_install is true, "package" is registered as a constant (value "skip") which has no of_type
+        # and is therefore invisible to _get_schema.  Replace it with a proper config entry for the schema.
+        if "package" not in conf or isinstance(conf._defined.get("package"), ConfigConstantDefinition):  # noqa: SLF001
+            for key in ("package",):
+                conf._defined.pop(key, None)  # noqa: SLF001
+                conf._keys.pop(key, None)  # noqa: SLF001
+                conf._alias.pop(key, None)  # noqa: SLF001
+            desc = f"package installation mode - {' | '.join(env._package_types)} "  # noqa: SLF001
+            conf.add_config(keys="package", of_type=str, default=env.default_pkg_type, desc=desc)
+        if "package_env" not in conf:
+            conf.add_config(keys=["package_env"], of_type=str, default=".pkg", desc="tox environment used to package")
+    finally:
+        conf._final = was_final  # noqa: SLF001
+
+
 def gen_schema(state: State) -> int:
     core = state.conf.core
     strict = state.conf.options.strict
 
     # Use any available run environment for introspection (fall back to "py" which is always defined)
     env_name = next(state.envs.iter(only_active=False), "py")
-    env_properties = _get_schema(state.envs[env_name].conf, path="#/properties/env_run_base/properties")
+    env = state.envs[env_name]
+    _ensure_package_conf(env)
+    env_properties = _get_schema(env.conf, path="#/properties/env_run_base/properties")
 
     properties = _get_schema(core, path="#/properties")
 
