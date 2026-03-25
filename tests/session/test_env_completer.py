@@ -25,48 +25,48 @@ def completer_args() -> dict[str, Action | ArgumentParser | Namespace | str]:
     }
 
 
-def test_env_completer_ini(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, completer_args: dict[str, object]) -> None:
+def test_env_completer_ini(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, completer_args: dict[str, Action | ArgumentParser | Namespace | str]) -> None:
     config = tmp_path / "tox.ini"
     config.write_text("[tox]\nenv_list = py311,lint\n[testenv:docs]\n")
     monkeypatch.chdir(tmp_path)
-    result = _env_completer(**completer_args)  # type: ignore[arg-type]
+    result = _env_completer(**completer_args)  # type: ignore[arg-type]  # ty: ignore[invalid-argument-type]
     assert "ALL" in result
     assert "py311" in result
     assert "lint" in result
     assert "docs" in result
 
 
-def test_env_completer_toml(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, completer_args: dict[str, object]) -> None:
+def test_env_completer_toml(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, completer_args: dict[str, Action | ArgumentParser | Namespace | str]) -> None:
     config = tmp_path / "tox.toml"
     config.write_text('[env.lint]\ncommands = [["ruff", "check"]]\n')
     monkeypatch.chdir(tmp_path)
-    result = _env_completer(**completer_args)  # type: ignore[arg-type]
+    result = _env_completer(**completer_args)  # type: ignore[arg-type]  # ty: ignore[invalid-argument-type]
     assert "ALL" in result
     assert "lint" in result
 
 
 def test_env_completer_no_config(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, completer_args: dict[str, object]
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, completer_args: dict[str, Action | ArgumentParser | Namespace | str]
 ) -> None:
     monkeypatch.chdir(tmp_path)
-    result = _env_completer(**completer_args)  # type: ignore[arg-type]
+    result = _env_completer(**completer_args)  # type: ignore[arg-type]  # ty: ignore[invalid-argument-type]
     assert result == ["ALL"]
 
 
-def test_env_completer_handled_error(mocker: MockerFixture, completer_args: dict[str, object]) -> None:
+def test_env_completer_handled_error(mocker: MockerFixture, completer_args: dict[str, Action | ArgumentParser | Namespace | str]) -> None:
     mocker.patch("tox.session.env_select.discover_source", side_effect=HandledError("bad config"))
-    result = _env_completer(**completer_args)  # type: ignore[arg-type]
+    result = _env_completer(**completer_args)  # type: ignore[arg-type]  # ty: ignore[invalid-argument-type]
     assert result == []
 
 
 def test_env_completer_includes_plugin_envs(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, mocker: MockerFixture, completer_args: dict[str, object]
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, mocker: MockerFixture, completer_args: dict[str, Action | ArgumentParser | Namespace | str]
 ) -> None:
     config = tmp_path / "tox.ini"
     config.write_text("[tox]\nenv_list = py311\n")
     monkeypatch.chdir(tmp_path)
     mocker.patch("tox.plugin.manager.Plugin.tox_extend_envs", return_value=[["plugin-env"]])
-    result = _env_completer(**completer_args)  # type: ignore[arg-type]
+    result = _env_completer(**completer_args)  # type: ignore[arg-type]  # ty: ignore[invalid-argument-type]
     assert "ALL" in result
     assert "py311" in result
     assert "plugin-env" in result

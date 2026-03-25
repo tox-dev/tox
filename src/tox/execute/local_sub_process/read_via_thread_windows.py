@@ -2,7 +2,7 @@
 
 from __future__ import annotations  # pragma: win32 cover
 
-import _overlapped  # type: ignore[import-untyped]  # pragma: win32 cover # noqa: PLC2701
+import _overlapped  # type: ignore[import-untyped]  # ty: ignore[unresolved-import] # pragma: win32 cover # noqa: PLC2701
 import time  # pragma: win32 cover
 from typing import TYPE_CHECKING
 

@@ -93,7 +93,7 @@ class PackageToxEnv(ToxEnv, ABC):
         raise NotImplementedError
 
     def register_run_env(self, run_env: RunToxEnv) -> Generator[tuple[str, str], PackageToxEnv, None]:  # noqa: ARG002, PLR6301
-        yield from ()  # empty generator by default
+        yield from ()  # ty: ignore[invalid-yield] # empty generator by default
 
     def mark_active_run_env(self, run_env: RunToxEnv) -> None:
         self._envs.add(run_env.conf.name)
