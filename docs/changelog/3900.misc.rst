@@ -1,0 +1,3 @@
+Add ``ty: ignore`` comments alongside existing ``type: ignore`` comments to suppress
+`ty <https://github.com/astral-sh/ty>`_ type checker errors for platform-specific imports,
+dynamic attribute assignments, and generator yield typing - by :user:`rahuldevikar`.
