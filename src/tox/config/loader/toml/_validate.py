@@ -13,7 +13,7 @@ from typing import (
     get_origin,
 )
 
-from tox.config.types import Command
+from tox.config.types import Command, EnvList
 
 if TYPE_CHECKING:
     from ._api import TomlTypes
@@ -36,6 +36,9 @@ def validate(val: TomlTypes, of_type: type[T]) -> T:  # noqa: C901, PLR0912
     elif isclass(of_type) and issubclass(of_type, Command):
         # first we cast it to list then create commands, so for now validate it as a nested list
         validate(val, list[str])
+    elif isclass(of_type) and issubclass(of_type, EnvList):
+        # validation is performed by TomlLoader.to_env_list
+        pass
     elif casting_to in {dict, dict}:
         key_type, value_type = type_args[0], type_args[1]
         if isinstance(val, dict):
