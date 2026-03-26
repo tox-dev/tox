@@ -161,10 +161,9 @@ def _ensure_package_conf(env: ToxEnv) -> None:
         # When skip_install is true, "package" is registered as a constant (value "skip") which has no of_type
         # and is therefore invisible to _get_schema.  Replace it with a proper config entry for the schema.
         if "package" not in conf or isinstance(conf._defined.get("package"), ConfigConstantDefinition):  # noqa: SLF001
-            for key in ("package",):
-                conf._defined.pop(key, None)  # noqa: SLF001
-                conf._keys.pop(key, None)  # noqa: SLF001
-                conf._alias.pop(key, None)  # noqa: SLF001
+            conf._defined.pop("package", None)  # noqa: SLF001
+            conf._keys.pop("package", None)  # noqa: SLF001
+            conf._alias.pop("package", None)  # noqa: SLF001
             desc = f"package installation mode - {' | '.join(env._package_types)} "  # noqa: SLF001
             conf.add_config(keys="package", of_type=str, default=env.default_pkg_type, desc=desc)
         if "package_env" not in conf:
