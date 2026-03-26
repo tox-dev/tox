@@ -16,15 +16,12 @@ import tox.config.set_env
 import tox.config.types
 import tox.tox_env.python.pip.req_file
 from tox.config.cli.parser import CORE
-from tox.config.of_type import ConfigConstantDefinition
 from tox.plugin import impl
-from tox.tox_env.python.runner import PythonRun
 
 if TYPE_CHECKING:
     from tox.config.cli.parser import ToxParser
     from tox.config.sets import ConfigSet
     from tox.session.state import State
-    from tox.tox_env.api import ToxEnv
 
 
 @impl
@@ -41,9 +38,7 @@ def gen_schema(state: State) -> int:
 
     # Use any available run environment for introspection (fall back to "py" which is always defined)
     env_name = next(state.envs.iter(only_active=False), "py")
-    env = state.envs[env_name]
-    _ensure_package_conf(env)
-    env_properties = _get_schema(env.conf, path="#/properties/env_run_base/properties")
+    env_properties = _get_schema(state.envs[env_name].conf, path="#/properties/env_run_base/properties")
 
     properties = _get_schema(core, path="#/properties")
 
@@ -141,35 +136,6 @@ def gen_schema(state: State) -> int:
     }
     print(json.dumps(json_schema, indent=2))  # noqa: T201
     return 0
-
-
-def _ensure_package_conf(env: ToxEnv) -> None:
-    """Register package-related configs that may be skipped when ``skip_install`` or ``no_package`` is set.
-
-    The schema must include *all* possible configuration keys regardless of the current project settings.
-
-    """
-    if not isinstance(env, PythonRun):
-        return
-
-    conf = env.conf
-    was_final = conf._final  # noqa: SLF001
-    conf._final = False  # noqa: SLF001
-    try:
-        if "use_develop" not in conf:
-            conf.add_config(keys=["use_develop", "usedevelop"], desc="use develop mode", default=False, of_type=bool)
-        # When skip_install is true, "package" is registered as a constant (value "skip") which has no of_type
-        # and is therefore invisible to _get_schema.  Replace it with a proper config entry for the schema.
-        if "package" not in conf or isinstance(conf._defined.get("package"), ConfigConstantDefinition):  # noqa: SLF001
-            conf._defined.pop("package", None)  # noqa: SLF001
-            conf._keys.pop("package", None)  # noqa: SLF001
-            conf._alias.pop("package", None)  # noqa: SLF001
-            desc = f"package installation mode - {' | '.join(env._package_types)} "  # noqa: SLF001
-            conf.add_config(keys="package", of_type=str, default=env.default_pkg_type, desc=desc)
-        if "package_env" not in conf:
-            conf.add_config(keys=["package_env"], of_type=str, default=".pkg", desc="tox environment used to package")
-    finally:
-        conf._final = was_final  # noqa: SLF001
 
 
 def _get_schema(conf: ConfigSet, path: str) -> dict[str, dict[str, typing.Any]]:
