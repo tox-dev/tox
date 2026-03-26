@@ -1504,7 +1504,7 @@ Python options
 .. conf::
     :keys: base_python_file
     :default: <empty string>
-    :version_added: 4.x
+    :version_added: 4.51
 
     A path to a file containing the Python version to use for the environment (e.g. ``.python-version``). The first
     non-blank, non-comment line in the file is used as the Python version specifier. This is useful for tool
@@ -1519,14 +1519,14 @@ Python options
        .. code-block:: toml
 
           [env.mypy]
-          base_python_file = ".python-version"
+          base_python_file = [".python-version", ".python-version-default"]
 
     .. tab:: INI
 
        .. code-block:: ini
 
           [testenv:mypy]
-          base_python_file = .python-version
+          base_python_file = .python-version, .python-version-default
 
     The file format is the same as used by ``pyenv`` and GitHub Actions' ``python-version-file``: one version per file,
     lines starting with ``#`` are comments, blank lines are ignored.
