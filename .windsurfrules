@@ -1,0 +1,63 @@
+# Windsurf Rules for tox
+
+You are working on tox, a Python CLI tool for test automation and virtual environment management.
+
+## Language and Style
+
+- Python 3.10+ (minimum supported version)
+- ALWAYS start every module with `from __future__ import annotations`
+- Use type hints on all function signatures and class attributes
+- Line length: 120 characters (ruff enforced)
+- Formatter: ruff (preview mode). Linter: ruff with `ALL` rules enabled
+- Docstrings: RST format for Sphinx compatibility
+- Use `TYPE_CHECKING` guard for imports only needed by type checkers
+- First-party imports: `tox` and `tests`
+
+## Project Layout
+
+- Source code: `src/tox/` (src layout, NOT top-level)
+- Tests: `tests/` (mirrors src structure)
+- Config: `tox.toml` (tox's own config), `pyproject.toml` (build + tools)
+- Type stubs: `typestubs/`
+- Docs: `docs/` (Sphinx + RST)
+
+## Architecture
+
+- Plugin-based architecture using pluggy. Hooks define all extension points
+- Config loaded from tox.toml, tox.ini, pyproject.toml, or setup.cfg via unified loader
+- Core abstraction: `ToxEnv` -> `Python` -> `VirtualEnv` hierarchy in `src/tox/tox_env/`
+- Session flow: CLI parsing -> config loading -> env selection -> provisioning -> command dispatch
+- Commands live in `src/tox/session/cmd/` (run, list, depends, devenv, exec, show-config, etc.)
+
+## Testing
+
+- Framework: pytest with pytest-xdist (parallel execution), pytest-mock, pytest-timeout
+- Run tests: `pytest tests/ -n auto` or `tox run -e py`
+- Fast iteration: `tox run -e fast` (skips integration/slow tests and coverage)
+- Test markers: `@pytest.mark.integration`, `@pytest.mark.slow`
+- Coverage minimum: 88%
+- Timeout: 30 seconds per test (default)
+
+## Commands
+
+- `tox run -e fix` - lint and format (pre-commit + ruff)
+- `tox run -e type` - type check with ty
+- `tox run -e docs` - build Sphinx documentation
+- `tox run -e pkg_meta` - validate package metadata
+
+## Conventions
+
+- Changelog fragments go in `docs/changelog/{issue}.{type}.rst` (towncrier)
+- Fragment types: feature, bugfix, doc, removal, misc
+- Config values use lazy evaluation (computed on demand)
+- Plugin registration via `[project.entry-points.tox]` in pyproject.toml
+- Local plugins can be defined in `toxfile.py`
+- Environment variable substitution syntax: `{env:VAR_NAME:default}`
+
+## Do NOT
+
+- Do not use `typing.Optional` or `typing.Union` - use `X | None` and `X | Y` syntax
+- Do not add imports outside of `TYPE_CHECKING` blocks unless the import is needed at runtime
+- Do not skip the `from __future__ import annotations` import
+- Do not write tests without proper isolation (use tmp_path, monkeypatch)
+- Do not use `print()` in source code (use logging/report module)
