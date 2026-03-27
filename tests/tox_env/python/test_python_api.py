@@ -559,3 +559,103 @@ def test_python_spec_for_sys_executable(  # noqa: PLR0913
     assert spec.architecture == arch
     assert spec.free_threaded == bool(free_threaded)
     assert spec.machine == expected_machine
+
+
+_PY_VER = f"{sys.version_info[0]}.{sys.version_info[1]}"
+_PY_VER_NODOT = f"{sys.version_info[0]}{sys.version_info[1]}"
+
+
+@pytest.mark.parametrize(
+    ("config_file", "config", "version_content", "env", "expected"),
+    [
+        pytest.param(
+            "tox.ini",
+            "[testenv:mypy]\npackage=skip\nbase_python_file=.python-version\n",
+            f"{_PY_VER}\n",
+            "mypy",
+            _PY_VER,
+            id="ini",
+        ),
+        pytest.param(
+            "tox.toml",
+            'env_list = ["mypy"]\n\n[env.mypy]\npackage = "skip"\nbase_python_file = ".python-version"\n',
+            f"{_PY_VER}\n",
+            "mypy",
+            _PY_VER,
+            id="toml",
+        ),
+        pytest.param(
+            "tox.ini",
+            "[testenv:mypy]\npackage=skip\nbase_python_file=.python-version\n",
+            f"# managed by tool\n\n{_PY_VER}\n",
+            "mypy",
+            _PY_VER,
+            id="skips-comments",
+        ),
+        pytest.param(
+            "tox.ini",
+            "[testenv]\npackage=skip\nbase_python_file=.python-version\n",
+            "3.8\n",
+            f"py{_PY_VER_NODOT}",
+            f"py{_PY_VER_NODOT}",
+            id="env-factor-wins",
+        ),
+    ],
+)
+def test_base_python_file(  # noqa: PLR0913
+    tox_project: ToxProjectCreator,
+    config_file: str,
+    config: str,
+    version_content: str,
+    env: str,
+    expected: str,
+) -> None:
+    project = tox_project({config_file: config, ".python-version": version_content})
+    result = project.run("c", "-e", env, "-k", "base_python")
+    result.assert_success()
+    assert expected in result.out
+
+
+@pytest.mark.parametrize(
+    ("extra_files", "error_fragment"),
+    [
+        pytest.param({}, "no valid Python version found", id="not-found"),
+        pytest.param({".python-version": "# just a comment\n"}, "no valid Python version found", id="empty"),
+    ],
+)
+def test_base_python_file_error(
+    tox_project: ToxProjectCreator, extra_files: dict[str, str], error_fragment: str
+) -> None:
+    ini = "[testenv:mypy]\npackage=skip\nbase_python_file=.python-version\n"
+    project = tox_project({"tox.ini": ini, **extra_files})
+    result = project.run("c", "-e", "mypy", "-k", "base_python", raise_on_config_fail=False)
+    result.assert_failed(code=-1)
+    assert error_fragment in result.out
+
+
+def test_base_python_file_conflict(tox_project: ToxProjectCreator) -> None:
+    """Setting both base_python and base_python_file is an error."""
+    ini = f"[testenv:mypy]\npackage=skip\nbase_python=python{_PY_VER}\nbase_python_file=.python-version\n"
+    project = tox_project({"tox.ini": ini, ".python-version": f"{_PY_VER}\n"})
+    result = project.run("c", "-e", "mypy", "-k", "base_python", raise_on_config_fail=False)
+    result.assert_failed(code=-1)
+    assert "cannot set both base_python and base_python_file" in result.out
+
+
+def test_base_python_file_global_testenv(tox_project: ToxProjectCreator) -> None:
+    """base_python_file set in [testenv] applies to all non-factor envs."""
+    ini = f"[tox]\nenv_list=mypy,py{_PY_VER_NODOT}\n[testenv]\npackage=skip\nbase_python_file=.python-version\n"
+    project = tox_project({"tox.ini": ini, ".python-version": f"{_PY_VER}\n"})
+    result = project.run("c", "-e", "mypy", "-k", "base_python")
+    result.assert_success()
+    assert _PY_VER in result.out
+    result = project.run("c", "-e", f"py{_PY_VER_NODOT}", "-k", "base_python")
+    result.assert_success()
+    assert f"py{_PY_VER_NODOT}" in result.out
+
+
+def test_base_python_file_not_used_when_not_set(tox_project: ToxProjectCreator) -> None:
+    toml = 'env_list = ["lint"]\n\n[env_run_base]\npackage = "skip"\ncommands = [["python", "-c", "print(1)"]]\n'
+    result = tox_project({"tox.toml": toml}).run("c", "-e", "lint", "-k", "base_python")
+    result.assert_success()
+    assert sys.executable in result.out
