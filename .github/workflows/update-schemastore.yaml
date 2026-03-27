@@ -18,7 +18,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Fork and clone SchemaStore
-        run: gh repo fork SchemaStore/schemastore --clone --remote -- /tmp/schemastore
+        run: gh repo fork SchemaStore/schemastore --clone -- /tmp/schemastore
       - name: Create or reset branch from upstream
         run: |
           git fetch upstream master
