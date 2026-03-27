@@ -1,0 +1,3 @@
+Nested environment list configuration values are now properly parsed, validated and expanded by the TOML parser. This
+allows you to use generative environment lists in ``tox-gh`` via the TOML format. Previously this was only possible with
+the INI format. - by :user:`Daverball`

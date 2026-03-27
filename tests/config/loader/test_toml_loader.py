@@ -157,3 +157,45 @@ def test_toml_loader_union_list_or_str_with_list() -> None:
 
 def test_toml_loader_union_list_or_str_with_str() -> None:
     assert perform_load("a", list[str] | str) == "a"
+
+
+def test_toml_loader_dict_of_env_list_values_ok() -> None:
+    res = perform_load(
+        {
+            "x": ["a", "b"],
+            "y": [{"product": [["a", "b"], ["1", "2"]]}],
+            "z": [{"product": [["a", "b"], {"prefix": "f", "start": 1, "stop": 2}]}],
+        },
+        dict[str, EnvList],
+    )
+    assert isinstance(res, dict)
+    assert all(isinstance(v, EnvList) for v in res.values())
+    assert list(res["x"]) == ["a", "b"]
+    assert list(res["y"]) == ["a-1", "a-2", "b-1", "b-2"]
+    assert list(res["z"]) == ["a-f1", "a-f2", "b-f1", "b-f2"]
+
+
+def test_toml_loader_dict_of_env_list_values_nok() -> None:
+    with pytest.raises(HandledError, match=_PREFIX + r"env_list items must be strings or product dicts, got int"):
+        perform_load({"x": ["a", 1]}, dict[str, EnvList])
+
+
+def test_toml_loader_list_of_env_list_ok() -> None:
+    res = perform_load(
+        [
+            ["a", "b"],
+            [{"product": [["a", "b"], ["1", "2"]]}],
+            [{"product": [["a", "b"], {"prefix": "f", "start": 1, "stop": 2}]}],
+        ],
+        list[EnvList],
+    )
+    assert isinstance(res, list)
+    assert all(isinstance(v, EnvList) for v in res)
+    assert list(res[0]) == ["a", "b"]
+    assert list(res[1]) == ["a-1", "a-2", "b-1", "b-2"]
+    assert list(res[2]) == ["a-f1", "a-f2", "b-f1", "b-f2"]
+
+
+def test_toml_loader_list_of_env_list_nok() -> None:
+    with pytest.raises(HandledError, match=_PREFIX + r"env_list must be a list, got str"):
+        perform_load(["a"], list[EnvList])
