@@ -8,24 +8,13 @@ import sysconfig
 from itertools import chain, groupby, product
 from typing import TYPE_CHECKING
 
+from python_discovery import KNOWN_ARCHITECTURES
+
 if TYPE_CHECKING:
     from collections.abc import Iterator
 
 LATEST_PYTHON_MINOR_MIN: int = 10
 LATEST_PYTHON_MINOR_MAX: int = 14
-
-_KNOWN_ARCHITECTURES: frozenset[str] = frozenset({
-    "x86_64",
-    "arm64",
-    "aarch64",
-    "amd64",
-    "x86",
-    "i686",
-    "i386",
-    "s390x",
-    "ppc64le",
-    "ppc64",
-})
 
 
 def filter_for_env(value: str, name: str | None) -> str:
@@ -40,7 +29,7 @@ def filter_for_env(value: str, name: str | None) -> str:
         # Add machine ISA implicitly only when the env name does not already contain
         # an architecture factor; when it does the explicit ISA takes precedence and
         # adding the machine ISA would cause cross-architecture conflicts (#3903).
-        if not (env_factors & _KNOWN_ARCHITECTURES):
+        if not (env_factors & KNOWN_ARCHITECTURES):
             current.add(machine)
     overall: list[str] = []
     active_continuation = False

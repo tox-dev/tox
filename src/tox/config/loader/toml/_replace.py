@@ -10,7 +10,9 @@ from itertools import chain
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, cast
 
-from tox.config.loader.ini.factor import _KNOWN_ARCHITECTURES, find_factor_groups
+from python_discovery import KNOWN_ARCHITECTURES
+
+from tox.config.loader.ini.factor import find_factor_groups
 from tox.config.loader.replacer import (
     MatchError,
     MatchRecursionError,
@@ -53,7 +55,7 @@ class Unroll:
         parts = sysconfig.get_platform().rsplit("-", 1)
         if len(parts) > 1:
             machine = parts[-1]
-            if not (factors & _KNOWN_ARCHITECTURES):
+            if not (factors & KNOWN_ARCHITECTURES):
                 factors.add(machine)
         return factors
 
