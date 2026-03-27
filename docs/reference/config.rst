@@ -1483,8 +1483,9 @@ Python options
 
     1. Python factor extracted from the environment name (e.g. ``3.13``, ``py313``)
     2. Explicit :ref:`base_python` setting on the environment
-    3. ``default_base_python`` (this setting)
-    4. The Python running tox (``sys.executable``)
+    3. :ref:`base_python_file` — read from a version file
+    4. ``default_base_python`` (this setting)
+    5. The Python running tox (``sys.executable``)
 
     .. tab:: TOML
 
@@ -1499,6 +1500,36 @@ Python options
 
             [testenv]
             default_base_python = 3.14, 3.13
+
+.. conf::
+    :keys: base_python_file
+    :default: <empty string>
+    :version_added: 4.51
+
+    A path to a file containing the Python version to use for the environment (e.g. ``.python-version``). The first
+    non-blank, non-comment line in the file is used as the Python version specifier. This is useful for tool
+    environments (such as ``mypy`` or ``coverage``) where you want a single source of truth for the default Python
+    version without hardcoding it in the tox configuration.
+
+    This option is only consulted when :ref:`base_python` is not explicitly set **and** the environment name does not
+    contain a Python factor (e.g. ``py314``). See :ref:`default_base_python` for the full resolution order.
+
+    .. tab:: TOML
+
+       .. code-block:: toml
+
+          [env.mypy]
+          base_python_file = [".python-version", ".python-version-default"]
+
+    .. tab:: INI
+
+       .. code-block:: ini
+
+          [testenv:mypy]
+          base_python_file = .python-version, .python-version-default
+
+    The file format is the same as used by ``pyenv`` and GitHub Actions' ``python-version-file``: one version per file,
+    lines starting with ``#`` are comments, blank lines are ignored.
 
 .. conf::
     :keys: env_site_packages_dir, envsitepackagesdir

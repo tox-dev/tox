@@ -95,8 +95,23 @@ class Python(ToxEnv, ABC):
             post_process=_ensure_list,
         )
 
+        self.conf.add_config(  # ty: ignore[no-matching-overload] # https://github.com/astral-sh/ty/issues/2428
+            keys=["base_python_file"],
+            of_type=list[str] | str,
+            default=[],
+            desc="file(s) containing the Python version to use (e.g. .python-version), first one found wins; "
+            "used when base_python is not explicitly set and the env name has no Python factor",
+            post_process=_ensure_list,
+        )
+
+        self._base_python_explicitly_set = True  # track whether base_python was explicitly configured
+
         def validate_base_python(value: list[str] | str) -> list[str]:
-            return self._validate_base_python(self.name, _ensure_list(value), self.core["ignore_base_python_conflict"])
+            result = _ensure_list(value)
+            if self._base_python_explicitly_set and self.conf["base_python_file"]:
+                msg = "cannot set both base_python and base_python_file"
+                raise Fail(msg)
+            return self._validate_base_python(self.name, result, self.core["ignore_base_python_conflict"])
 
         self.conf.add_config(  # ty: ignore[no-matching-overload] # https://github.com/astral-sh/ty/issues/2428
             keys=["base_python", "basepython"],
@@ -174,6 +189,7 @@ class Python(ToxEnv, ABC):
         return env
 
     def _base_python_default(self, conf: Config, env_name: str | None) -> list[str]:  # noqa: ARG002
+        self._base_python_explicitly_set = False
         try:
             base_python = None if env_name is None else self.extract_base_python(env_name)
         except ValueError:
@@ -181,7 +197,27 @@ class Python(ToxEnv, ABC):
                 base_python = None
             else:
                 raise
-        return self.conf["default_base_python"] if base_python is None else [base_python]
+        if base_python is not None:
+            return [base_python]
+        base_python_files: list[str] = self.conf["base_python_file"]
+        if base_python_files:
+            return self._read_python_version_file(base_python_files)
+        return self.conf["default_base_python"]
+
+    def _read_python_version_file(self, file_paths: list[str]) -> list[str]:
+        tox_root: Path = self.core["toxinidir"]
+        for file_path in file_paths:
+            path = tox_root / file_path
+            if not path.exists():
+                continue
+            content = path.read_text(encoding="utf-8")
+            for line in content.splitlines():
+                stripped = line.strip()
+                if stripped and not stripped.startswith("#"):
+                    return [stripped]
+        paths = ", ".join(repr(f) for f in file_paths)
+        msg = f"base_python_file: no valid Python version found in {paths}"
+        raise Fail(msg)
 
     @classmethod
     def extract_base_python(cls, env_name: str) -> str | None:
