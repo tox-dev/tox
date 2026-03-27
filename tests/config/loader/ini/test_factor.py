@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import sys
+import sysconfig
 from textwrap import dedent
 from typing import TYPE_CHECKING
 
@@ -511,3 +512,33 @@ def test_platform_factor(tox_ini_conf: ToxIniCreator) -> None:
         assert 'print("Windows")' in str(commands)
         assert 'print("Linux")' not in str(commands)
         assert 'print("Darwin")' not in str(commands)
+
+
+def test_machine_isa_does_not_override_explicit_env_factor() -> None:
+    """Regression test for #3903: explicit ISA in env name takes precedence over machine ISA."""
+    parts = sysconfig.get_platform().rsplit("-", 1)
+    if len(parts) < 2:
+        pytest.skip("sysconfig.get_platform() has no machine component")
+    machine = parts[-1]
+    other_isa = "x86_64" if machine != "x86_64" else "arm64"
+
+    value = f"{other_isa}: {other_isa}_value\n{machine}: {machine}_value"
+    # When the env name explicitly contains an ISA factor different from the machine,
+    # only the env factor's condition should match, not the machine ISA.
+    result = filter_for_env(value, name=f"py39-{other_isa}")
+    assert f"{other_isa}_value" in result
+    assert f"{machine}_value" not in result
+
+
+def test_machine_isa_implicit_when_no_env_isa() -> None:
+    """Machine ISA is added implicitly when no ISA factor is in the env name."""
+    parts = sysconfig.get_platform().rsplit("-", 1)
+    if len(parts) < 2:
+        pytest.skip("sysconfig.get_platform() has no machine component")
+    machine = parts[-1]
+
+    value = f"{machine}: {machine}_value\nother: other_value"
+    # No ISA in the env name, so machine ISA should be added implicitly.
+    result = filter_for_env(value, name="py39")
+    assert f"{machine}_value" in result
+    assert "other_value" not in result

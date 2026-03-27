@@ -10,6 +10,8 @@ from itertools import chain
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, cast
 
+from python_discovery import KNOWN_ARCHITECTURES
+
 from tox.config.loader.ini.factor import find_factor_groups
 from tox.config.loader.replacer import (
     MatchError,
@@ -42,18 +44,19 @@ class Unroll:
         self.loader = loader
         self.args = args
         self.factors = self._extract_factors(args.env_name)
+        self.factors.add(sys.platform)
 
     @staticmethod
     def _extract_factors(env_name: str | None) -> set[str]:
-        """Extract factors from environment name and add platform."""
         if env_name is None:
-            factors = set()
+            factors: set[str] = set()
         else:
             factors = set(chain.from_iterable([(i for i, _ in a) for a in find_factor_groups(env_name)]))
-        factors.add(sys.platform)
         parts = sysconfig.get_platform().rsplit("-", 1)
         if len(parts) > 1:
-            factors.add(parts[-1])
+            machine = parts[-1]
+            if not (factors & KNOWN_ARCHITECTURES):
+                factors.add(machine)
         return factors
 
     def __call__(  # noqa: C901, PLR0912
