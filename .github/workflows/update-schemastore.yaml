@@ -1,6 +1,5 @@
 name: Update SchemaStore
 on:
-  workflow_dispatch: # temporary: manual trigger for testing
   push:
     tags: ["*"]
 
