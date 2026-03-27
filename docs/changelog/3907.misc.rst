@@ -1,2 +1,0 @@
-Enable ``persist-credentials: true`` in the ``actions/checkout`` step of the prepare-release workflow so that git push
-operations succeed during automated releases - by :user:`rahuldevikar`.

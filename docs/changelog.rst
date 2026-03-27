@@ -7,6 +7,31 @@
 .. towncrier release notes start
 
 **********************
+ v4.51.0 (2026-03-27)
+**********************
+
+Features - 4.51.0
+=================
+
+- Add ``base_python_file`` configuration option to read the base Python version from a file (e.g. ``.python-version``),
+  similar to GitHub Actions' ``python-version-file`` - by :user:`rahuldevikar` (:issue:`3894`)
+
+Bug fixes - 4.51.0
+==================
+
+- Prevent implicit machine ISA (e.g. ``arm64``, ``x86_64``) from overriding explicit architecture factors in environment
+  names, fixing cross-architecture conflicts in multiline factor conditionals - by :user:`rahuldevikar`. (:issue:`3903`)
+- Nested environment list configuration values are now properly parsed, validated and expanded by the TOML parser. This
+  allows you to use generative environment lists in ``tox-gh`` via the TOML format. Previously this was only possible
+  with the INI format. - by :user:`Daverball` (:issue:`3905`)
+
+Miscellaneous internal changes - 4.51.0
+=======================================
+
+- Enable ``persist-credentials: true`` in the ``actions/checkout`` step of the prepare-release workflow so that git push
+  operations succeed during automated releases - by :user:`rahuldevikar`. (:issue:`3907`)
+
+**********************
  v4.50.3 (2026-03-20)
 **********************
 

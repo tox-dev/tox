@@ -1,2 +1,0 @@
-Add ``base_python_file`` configuration option to read the base Python version from a file (e.g. ``.python-version``),
-similar to GitHub Actions' ``python-version-file`` - by :user:`rahuldevikar`

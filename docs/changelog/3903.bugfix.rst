@@ -1,2 +1,0 @@
-Prevent implicit machine ISA (e.g. ``arm64``, ``x86_64``) from overriding explicit architecture factors in environment
-names, fixing cross-architecture conflicts in multiline factor conditionals - by :user:`rahuldevikar`.
