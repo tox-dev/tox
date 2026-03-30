@@ -58,6 +58,8 @@ def generate_manpage_rst(parser: ArgumentParser) -> str:
 
 
 def _get_subcommands(parser: ArgumentParser) -> list[str]:
+    if parser._subparsers is None:  # noqa: SLF001
+        return []
     for action in parser._subparsers._actions:  # noqa: SLF001
         if isinstance(action, _SubParsersAction):
             return [ca.dest for ca in action._choices_actions]  # noqa: SLF001
@@ -66,6 +68,8 @@ def _get_subcommands(parser: ArgumentParser) -> list[str]:
 
 def _commands_section(parser: ArgumentParser) -> list[str]:
     lines = ["COMMANDS", "--------", ""]
+    if parser._subparsers is None:  # noqa: SLF001
+        return lines
     for action in parser._subparsers._actions:  # noqa: SLF001
         if isinstance(action, _SubParsersAction):
             for choice_action in action._choices_actions:  # noqa: SLF001
