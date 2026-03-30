@@ -245,6 +245,46 @@ invocation. No configuration changes will be needed.
 **Change detection** works the same as for ``deps``: tox caches the resolved requirements. When packages are added, only
 the new ones are installed. When packages are removed, the environment is recreated.
 
+.. _pep723-explanation:
+
+Inline script metadata (PEP 723)
+================================
+
+.. versionadded:: 4.52
+
+:PEP:`723` lets Python scripts declare their dependencies and required Python version directly in comments at the top of
+the file:
+
+.. code-block:: python
+
+    # /// script
+    # requires-python = ">=3.12"
+    # dependencies = ["requests>=2.31", "rich"]
+    # ///
+
+    import requests
+    from rich import print
+
+    print(requests.get("https://httpbin.org/get").json())
+
+The ``virtualenv-pep-723`` runner reads this metadata so that a tox environment needs only a ``runner`` and ``script``
+key — no ``deps`` or ``base_python`` duplication. Both ``requires-python`` and ``dependencies`` are optional per the PEP
+723 spec; omitting ``requires-python`` uses the host Python, and omitting ``dependencies`` installs nothing.
+
+**How it differs from the default runner:** the ``virtualenv-pep-723`` runner skips ``PythonRun`` in the class
+hierarchy. Config keys like ``deps``, ``extras``, ``dependency_groups``, and ``pylock`` are structurally absent — they
+do not exist for this runner. Packaging is unconditionally disabled since scripts are not packages. Setting
+``base_python`` explicitly is rejected to prevent conflicts with the script's ``requires-python`` specifier.
+
+**Python version resolution:** the runner uses the normal Python discovery (env name factors, ``.python-version`` files,
+or the host Python running tox). When ``requires-python`` is present, tox validates that the discovered Python satisfies
+the constraint and fails with a clear error if it does not. This works correctly with free-threaded interpreters and
+avoids forcing an unnecessarily old Python version.
+
+**Plugin support:** the ``Pep723Mixin`` class at ``tox.tox_env.python.pep723`` contains all the PEP 723 logic
+independent of the venv backend. Third-party plugins (e.g. tox-uv) can compose it with their own venv implementation
+without duplicating code.
+
 Open-ended range bounds
 =======================
 

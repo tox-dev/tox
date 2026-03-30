@@ -1102,7 +1102,33 @@ Run
     :version_added: 4.0.0
 
     The tox execute used to evaluate this environment. Defaults to Python virtual environments, however may be
-    overwritten by plugins.
+    overwritten by plugins. Set to ``virtualenv-pep-723`` to use inline script metadata (see :ref:`script`).
+
+.. conf::
+    :keys: script
+    :default: <empty string>
+    :version_added: 4.52
+
+    Path to a Python script with :PEP:`723` inline metadata, relative to :ref:`tox_root`. Only available when
+    ``runner = virtualenv-pep-723``. The script's ``requires-python`` and ``dependencies`` fields drive the environment's
+    Python version and installed packages. ``commands`` defaults to running the script with ``{posargs}`` forwarded, but
+    can be overridden. See :ref:`pep723-explanation` for details.
+
+    .. tab:: TOML
+
+        .. code-block:: toml
+
+            [env.check]
+            runner = "virtualenv-pep-723"
+            script = "tools/check.py"
+
+    .. tab:: INI
+
+        .. code-block:: ini
+
+            [testenv:check]
+            runner = virtualenv-pep-723
+            script = tools/check.py
 
 .. conf::
     :keys: description

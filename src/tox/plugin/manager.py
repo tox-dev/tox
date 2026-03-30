@@ -12,7 +12,7 @@ from tox import provision
 from tox.config.loader import api as loader_api
 from tox.session.cmd.run import parallel, sequential
 from tox.tox_env import package as package_api
-from tox.tox_env.python.virtual_env import runner
+from tox.tox_env.python.virtual_env import pep723_runner, runner
 from tox.tox_env.python.virtual_env.package import cmd_builder, pyproject
 from tox.tox_env.register import REGISTER, ToxEnvRegister
 
@@ -59,6 +59,7 @@ class Plugin:
         internal_plugins = (
             loader_api,
             provision,
+            pep723_runner,
             runner,
             pyproject,
             cmd_builder,

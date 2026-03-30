@@ -607,6 +607,70 @@ subcommand, use the ``run`` subcommand explicitly:
 
 .. ------------------------------------------------------------------------------------------
 
+.. _howto_pep723:
+
+**********************
+ Run a PEP 723 script
+**********************
+
+.. versionadded:: 4.52
+
+If you have a standalone Python script with :PEP:`723` inline metadata:
+
+.. code-block:: python
+
+    # /// script
+    # requires-python = ">=3.12"
+    # dependencies = ["requests>=2.31", "rich"]
+    # ///
+
+    import requests
+    from rich import print
+
+    print(requests.get("https://httpbin.org/get").json())
+
+You can run it through tox without duplicating the dependency list:
+
+.. tab:: TOML
+
+    .. code-block:: toml
+
+        [env.fetch]
+        runner = "virtualenv-pep-723"
+        script = "tools/fetch.py"
+
+.. tab:: INI
+
+    .. code-block:: ini
+
+        [testenv:fetch]
+        runner = virtualenv-pep-723
+        script = tools/fetch.py
+
+Run it with ``tox r -e fetch``. Positional arguments are forwarded: ``tox r -e fetch -- --verbose``.
+
+To override the default command (which runs the script), set ``commands`` as usual:
+
+.. tab:: TOML
+
+    .. code-block:: toml
+
+        [env.fetch]
+        runner = "virtualenv-pep-723"
+        script = "tools/fetch.py"
+        commands = [["python", "-m", "pytest", "tests/"]]
+
+.. tab:: INI
+
+    .. code-block:: ini
+
+        [testenv:fetch]
+        runner = virtualenv-pep-723
+        script = tools/fetch.py
+        commands = python -m pytest tests/
+
+See :ref:`pep723-explanation` for how Python version resolution and dependency installation work.
+
 .. _faq_custom_pypi_server:
 
 .. _howto_custom_pypi_server:
