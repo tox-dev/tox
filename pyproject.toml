@@ -148,6 +148,7 @@ build.dev-mode-dirs = [
 build.hooks.custom = {}
 build.hooks.vcs.version-file = "src/tox/version.py"
 build.targets.sdist.include = [
+  "/docs/man",
   "/src",
   "/tests",
   "/tox.toml",

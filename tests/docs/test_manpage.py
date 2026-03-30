@@ -3,20 +3,25 @@ from __future__ import annotations
 import re
 import subprocess
 import sys
+from pathlib import Path
 
 import pytest
 
 if sys.platform == "win32":
     pytest.skip("man command not available on Windows", allow_module_level=True)
 
+ROOT = Path(__file__).parents[2]
+RST_PATH = ROOT / "docs" / "man" / "tox.1.rst"
+
 
 @pytest.fixture
 def manpage_troff() -> bytes:
     from docutils.core import publish_string  # noqa: PLC0415
 
-    from hatch_build import generate_manpage_rst  # noqa: PLC0415
-
-    return publish_string(generate_manpage_rst(), writer="manpage", settings_overrides={"report_level": 5})
+    content = "\n".join(
+        line for line in RST_PATH.read_text(encoding="utf-8").splitlines() if line.strip() != ":orphan:"
+    )
+    return publish_string(content, writer="manpage", settings_overrides={"report_level": 5})
 
 
 @pytest.fixture
@@ -90,25 +95,26 @@ def test_manpage_header_shows_tox(manpage_rendered: str) -> None:
 def test_manpage_documents_all_commands() -> None:
     from argparse import _SubParsersAction  # noqa: PLC0415, PLC2701
 
-    from hatch_build import generate_manpage_rst  # noqa: PLC0415
     from tox.config.cli.parse import _get_parser_doc  # noqa: PLC0415, PLC2701
 
     parser = _get_parser_doc()
-    rst = generate_manpage_rst()
+    rst = RST_PATH.read_text(encoding="utf-8")
     for action in parser._subparsers._actions:  # noqa: SLF001
         if isinstance(action, _SubParsersAction):
             for choice_action in action._choices_actions:  # noqa: SLF001
-                assert choice_action.dest in rst, f"command {choice_action.dest!r} missing from manpage"
+                assert choice_action.dest in rst, (
+                    f"command {choice_action.dest!r} missing from manpage, regenerate with: "
+                    f"python tools/generate_manpage.py"
+                )
 
 
 def test_manpage_documents_all_options() -> None:
     from argparse import SUPPRESS, _SubParsersAction  # noqa: PLC0415, PLC2701
 
-    from hatch_build import generate_manpage_rst  # noqa: PLC0415
     from tox.config.cli.parse import _get_parser_doc  # noqa: PLC0415, PLC2701
 
     parser = _get_parser_doc()
-    rst = generate_manpage_rst()
+    rst = RST_PATH.read_text(encoding="utf-8")
     seen: set[int] = set()
     for action in parser._actions:  # noqa: SLF001
         if id(action) in seen or action.help == SUPPRESS or isinstance(action, _SubParsersAction):
@@ -117,4 +123,6 @@ def test_manpage_documents_all_options() -> None:
         if not action.option_strings:
             continue
         long_opt = next((o for o in action.option_strings if o.startswith("--")), action.option_strings[0])
-        assert long_opt in rst, f"option {long_opt!r} missing from manpage"
+        assert long_opt in rst, (
+            f"option {long_opt!r} missing from manpage, regenerate with: python tools/generate_manpage.py"
+        )
