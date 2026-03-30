@@ -219,7 +219,7 @@ class Replacer:
         #     If we can't replace, keep what was there, and continue looking for additional replaces
         #     NOTE: can't raise because the content may be a factorial expression where we don't
         #           want to enforce escaping curly braces, for example`env_list = {py39,py38}-{,dep}` should work
-        return f"{REPLACE_START}%s{REPLACE_END}" % ARG_DELIMITER.join(flattened_args)
+        return f"{REPLACE_START}{ARG_DELIMITER.join(flattened_args)}{REPLACE_END}"
 
     def _resolve_replace(
         self, of_type: str, args: list[str], flattened_args: list[str], conf_args: ConfigLoadArgs
