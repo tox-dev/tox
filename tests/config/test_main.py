@@ -276,6 +276,16 @@ package_glob = "{env_tmp_dir}/dist/*.whl"
         assert "{env_tmp_dir}" not in cmd_str, f"env_tmp_dir not expanded in command: {cmd}"
 
 
+def test_config_override_escaped_dot_namespace(tox_ini_conf: ToxIniCreator) -> None:
+    example = """
+    [testenv:3.14]
+    deps = original
+    """
+    conf = tox_ini_conf(example, override=[Override("testenv:3\\.14.deps=replaced")]).get_env("3.14")
+    conf.add_config("deps", of_type=str, default="", desc="desc")
+    assert conf["deps"] == "replaced"
+
+
 def test_relative_config_paths_resolve(tox_project: ToxProjectCreator) -> None:
     project = tox_project({"tox.ini": "[tox]"})
     ini = str(Path(project.path.name) / "tox.ini")
