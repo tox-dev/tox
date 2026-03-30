@@ -7,6 +7,30 @@
 .. towncrier release notes start
 
 **********************
+ v4.52.0 (2026-03-30)
+**********************
+
+Features - 4.52.0
+=================
+
+- Add ``virtualenv-pep-723`` runner that reads dependencies and Python version from :PEP:`723` inline script metadata —
+  no need to duplicate them in tox config - by :user:`gaborbernat`. (:issue:`3897`)
+- Support escaped dots (``\.``) in ``-x``/``--override`` keys, allowing overrides to target environments with dots in
+  their names such as ``py3.14`` - by :user:`gaborbernat`. (:issue:`3910`)
+
+Bug fixes - 4.52.0
+==================
+
+- Auto-generate the manpage from the CLI argparse parser at wheel build time, fixing broken section headers and
+  documenting all commands and options - by :user:`gaborbernat`. (:issue:`3878`)
+
+Miscellaneous internal changes - 4.52.0
+=======================================
+
+- Remove unsupported ``--remote`` flag from ``gh repo fork`` in the update-schemastore workflow, as recent versions of
+  ``gh`` no longer accept it - by :user:`rahuldevikar`. (:issue:`3908`)
+
+**********************
  v4.51.0 (2026-03-27)
 **********************
 

@@ -1,2 +1,0 @@
-Remove unsupported ``--remote`` flag from ``gh repo fork`` in the update-schemastore workflow, as recent versions of
-``gh`` no longer accept it - by :user:`rahuldevikar`.
