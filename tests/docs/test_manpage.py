@@ -25,7 +25,7 @@ def manpage_troff() -> bytes:
 
 
 @pytest.fixture
-def manpage_rendered(manpage_troff: bytes, tmp_path: pytest.TempPathFactory) -> str:
+def manpage_rendered(manpage_troff: bytes, tmp_path: Path) -> str:
     man_file = tmp_path / "tox.1"
     man_file.write_bytes(manpage_troff)
     result = subprocess.run(
@@ -99,6 +99,7 @@ def test_manpage_documents_all_commands() -> None:
 
     parser = _get_parser_doc()
     rst = RST_PATH.read_text(encoding="utf-8")
+    assert parser._subparsers is not None  # noqa: SLF001
     for action in parser._subparsers._actions:  # noqa: SLF001
         if isinstance(action, _SubParsersAction):
             for choice_action in action._choices_actions:  # noqa: SLF001
