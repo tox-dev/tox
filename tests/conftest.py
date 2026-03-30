@@ -21,9 +21,9 @@ from tox.tox_env.python.virtual_env.api import VirtualEnv
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterator, Sequence
 
+    from build import DistributionType
     from pytest_mock import MockerFixture
 
-    from build import DistributionType
     from tox.config.loader.api import Override
 
 pytest_plugins = "tox.pytest"
