@@ -332,3 +332,4 @@ Now that you have a working tox setup, explore these topics:
   with :ref:`virtualenv_spec`)
 - :ref:`configuration` -- full configuration reference
 - :ref:`cli` -- complete CLI reference
+- :ref:`howto_pep723` -- run standalone scripts with inline dependencies (:PEP:`723`)

@@ -1,0 +1,2 @@
+Add ``virtualenv-pep-723`` runner that reads dependencies and Python version from :PEP:`723` inline script metadata — no
+need to duplicate them in tox config - by :user:`gaborbernat`.
