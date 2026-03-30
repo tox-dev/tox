@@ -231,7 +231,7 @@ def test_pyproject_invalid_extra_no_optional_deps(tox_project: ToxProjectCreator
         ),
     ],
 )
-def test_pyproject_deps_static_with_dynamic(  # noqa: PLR0913
+def test_pyproject_deps_static_with_dynamic(
     tox_project: ToxProjectCreator,
     demo_pkg_inline: Path,
     monkeypatch: pytest.MonkeyPatch,

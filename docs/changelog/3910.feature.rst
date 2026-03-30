@@ -1,0 +1,2 @@
+Support escaped dots (``\.``) in ``-x``/``--override`` keys, allowing overrides to target environments with dots in
+their names such as ``py3.14`` - by :user:`gaborbernat`.

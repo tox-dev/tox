@@ -2191,6 +2191,30 @@ Or reset override and append to that (note the first override is ``=`` and not `
 
        tox -x testenv.deps=pytest-xdist -x testenv.deps+=pytest-cov
 
+Escaping dots in override keys
+==============================
+
+.. versionadded:: 4.52
+
+Environment names can contain literal dots (e.g., ``py3.14``). Since ``.`` is also the separator between namespace
+components and the config key, you need to escape literal dots with a backslash (``\.``) so they are not treated as
+separators:
+
+.. tab:: TOML
+
+    .. code-block:: bash
+
+       tox -x 'env.3\.14.deps=pytest-xdist'
+
+.. tab:: INI
+
+    .. code-block:: bash
+
+       tox -x 'testenv:3\.14.deps=pytest-xdist'
+
+Multiple dots can be escaped in the same key: ``-x 'some\.dotted\.name.key=val'``. A backslash not followed by a dot
+passes through literally.
+
 ***********
  TOML only
 ***********

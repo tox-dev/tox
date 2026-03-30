@@ -63,7 +63,7 @@ def _create_mock_env() -> MagicMock:
     ["RED", "YELLOW", "RESET"],
     ids=["stderr_color_default", "stderr_color_yellow", "stderr_color_reset"],
 )
-def test_local_execute_basic_pass(  # noqa: PLR0913
+def test_local_execute_basic_pass(
     caplog: LogCaptureFixture,
     os_env: dict[str, str],
     out: str,

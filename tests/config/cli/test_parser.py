@@ -37,7 +37,7 @@ def test_parser_const_with_default_none(monkeypatch: MonkeyPatch) -> None:
 @pytest.mark.parametrize("tox_color", [None, "bad", "no", "yes"])
 @pytest.mark.parametrize("tty_compatible", [None, "", "0", "1", "other"])
 @pytest.mark.parametrize("term", [None, "xterm", "dumb"])
-def test_parser_color(  # noqa: PLR0913
+def test_parser_color(
     monkeypatch: MonkeyPatch,
     mocker: MockerFixture,
     no_color: str | None,

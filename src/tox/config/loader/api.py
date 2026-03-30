@@ -34,13 +34,17 @@ class Override:  # noqa: PLW1641
             key = key[:-1]
             self.append = True
 
-        self.namespace, _, self.key = key.rpartition(".")
+        parts = self._split_on_unescaped_dot(key)
+        self._namespace_parts = parts[:-1]
+        self.namespace = ".".join(self._namespace_parts)
+        self.key = parts[-1]
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}('{self}')"
 
     def __str__(self) -> str:
-        return f"{self.namespace}{'.' if self.namespace else ''}{self.key}={self.value}"
+        escaped_ns = ".".join(part.replace(".", "\\.") for part in self._namespace_parts)
+        return f"{escaped_ns}{'.' if escaped_ns else ''}{self.key}{'+' if self.append else ''}={self.value}"
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, Override):
@@ -53,6 +57,25 @@ class Override:  # noqa: PLW1641
 
     def __ne__(self, other: object) -> bool:
         return not (self == other)
+
+    @staticmethod
+    def _split_on_unescaped_dot(value: str) -> list[str]:
+        parts: list[str] = []
+        current: list[str] = []
+        pos = 0
+        while pos < len(value):
+            if value[pos] == "\\" and pos + 1 < len(value) and value[pos + 1] == ".":
+                current.append(".")
+                pos += 2
+            elif value[pos] == ".":
+                parts.append("".join(current))
+                current = []
+                pos += 1
+            else:
+                current.append(value[pos])
+                pos += 1
+        parts.append("".join(current))
+        return parts
 
 
 class ConfigLoadArgs:

@@ -522,7 +522,7 @@ commands = [["python", "-c", "print('ok')"]]
         ("cpython", 3, 12, 64, None, "macosx-14.0-arm64", "arm64"),
     ],
 )
-def test_python_spec_for_sys_executable(  # noqa: PLR0913
+def test_python_spec_for_sys_executable(
     impl: str,
     major: int,
     minor: int,
@@ -602,7 +602,7 @@ _PY_VER_NODOT = f"{sys.version_info[0]}{sys.version_info[1]}"
         ),
     ],
 )
-def test_base_python_file(  # noqa: PLR0913
+def test_base_python_file(
     tox_project: ToxProjectCreator,
     config_file: str,
     config: str,

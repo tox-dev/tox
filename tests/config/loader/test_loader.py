@@ -62,3 +62,26 @@ def test_override_not_equals_different_type() -> None:
 
 def test_override_repr() -> None:
     assert repr(Override("b.a=c")) == "Override('b.a=c')"
+
+
+@pytest.mark.parametrize(
+    ("raw", "namespace", "key", "value", "append", "expected_str"),
+    [
+        pytest.param("env.3\\.14.deps=foo", "env.3.14", "deps", "foo", False, "env.3\\.14.deps=foo", id="escaped_dot"),
+        pytest.param("a\\.b\\.c.key=val", "a.b.c", "key", "val", False, "a\\.b\\.c.key=val", id="multiple_escaped"),
+        pytest.param(
+            "env.3\\.14.deps+=bar", "env.3.14", "deps", "bar", True, "env.3\\.14.deps+=bar", id="escaped_append"
+        ),
+        pytest.param("testenv.deps=foo", "testenv", "deps", "foo", False, "testenv.deps=foo", id="no_escape_compat"),
+        pytest.param(
+            "test\\env.key=val", "test\\env", "key", "val", False, "test\\env.key=val", id="backslash_not_before_dot"
+        ),
+    ],
+)
+def test_override_escaped_dot(raw: str, namespace: str, key: str, value: str, append: bool, expected_str: str) -> None:
+    override = Override(raw)
+    assert override.namespace == namespace
+    assert override.key == key
+    assert override.value == value
+    assert override.append is append
+    assert str(override) == expected_str
