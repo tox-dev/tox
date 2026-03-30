@@ -51,7 +51,7 @@ environment names (``tox run -e`` lists environments from your tox configuration
 **********
 
 tox ships a Unix man page accessible via ``man tox`` (see :ref:`howto` for setup). The man page source is at
-``docs/man/tox.1.rst`` and can be regenerated from the CLI parser with ``python tools/generate_manpage.py``.
+``docs/man/tox.1.rst`` and can be regenerated from the CLI parser with ``tox run -e manpage``.
 
 **********************
  Command-line options

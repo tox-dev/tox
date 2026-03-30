@@ -112,25 +112,10 @@ system ``MANPATH``. Use the ``tox man`` command to set it up:
 Building from Source
 ====================
 
-The man page is compiled from ``docs/man/tox.1.rst`` during wheel build. Package maintainers building from source can
-generate the troff file directly:
+The man page is compiled from ``docs/man/tox.1.rst`` during wheel build. To regenerate the RST source after CLI changes:
 
 .. code-block:: bash
 
-    python -c "
-    from docutils.core import publish_string
-    from pathlib import Path
-    rst = Path('docs/man/tox.1.rst').read_text()
-    content = '\n'.join(l for l in rst.splitlines() if l.strip() != ':orphan:')
-    Path('tox.1').write_bytes(publish_string(content, writer='manpage', settings_overrides={'report_level': 5}))
-    "
-    install -D -m 644 tox.1 /usr/share/man/man1/tox.1
-    gzip -9 /usr/share/man/man1/tox.1
-
-To regenerate the RST source after CLI changes:
-
-.. code-block:: bash
-
-    python tools/generate_manpage.py
+    tox run -e manpage
 
 After installation, view with ``man tox``.
