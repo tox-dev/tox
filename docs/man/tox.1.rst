@@ -1,34 +1,33 @@
 :orphan:
 
-===
-tox
-===
+#####
+ tox
+#####
 
----------------------------------------------------
-virtualenv-based automation of test activities
----------------------------------------------------
+************************************************
+ virtualenv-based automation of test activities
+************************************************
 
 :Manual section: 1
 :Manual group: User Commands
 
 SYNOPSIS
---------
+========
 
-**tox** [*options*] [**run** | **run-parallel** | **depends** | **man** | **list** | **devenv** | **schema** | **config** | **quickstart** | **exec** | **legacy**] [*command-options*]
+**tox** [*options*] [**run** | **run-parallel** | **depends** | **man** | **list** | **devenv** | **schema** |
+**config** | **quickstart** | **exec** | **legacy**] [*command-options*]
 
 DESCRIPTION
------------
+===========
 
-tox aims to automate and standardize testing in Python.
-It is part of a larger vision of easing the packaging,
-testing and release process of Python software.
+tox aims to automate and standardize testing in Python. It is part of a larger vision of easing the packaging, testing
+and release process of Python software.
 
-tox creates virtual environments for multiple Python versions,
-installs project dependencies, and runs tests in each environment.
-It supports parallel execution, custom test commands, and extensive configuration.
+tox creates virtual environments for multiple Python versions, installs project dependencies, and runs tests in each
+environment. It supports parallel execution, custom test commands, and extensive configuration.
 
 COMMANDS
---------
+========
 
 **run** (*or* **r**)
     run environments
@@ -46,7 +45,7 @@ COMMANDS
     list environments
 
 **devenv** (*or* **d**)
-    sets up a development environment at ENVDIR based on the tox configuration specified 
+    sets up a development environment at ENVDIR based on the tox configuration specified
 
 **schema**
     Generate schema for tox configuration
@@ -66,7 +65,7 @@ COMMANDS
 For command-specific help, use: **tox** *command* **--help**
 
 OPTIONS
--------
+=======
 
 **-h**, **--help**
     show this help message and exit
@@ -114,7 +113,7 @@ OPTIONS
     configuration override(s), e.g., -x testenv:pypy3.ignore_errors=True
 
 FILES
------
+=====
 
 **tox.toml**
     Primary configuration file in TOML format (recommended).
@@ -131,7 +130,7 @@ FILES
 The configuration files are searched in the order listed above. The first file found is used.
 
 ENVIRONMENT VARIABLES
----------------------
+=====================
 
 ``TOX_*``
     Any tox configuration setting can be overridden via environment variables with the ``TOX_`` prefix.
@@ -146,14 +145,14 @@ ENVIRONMENT VARIABLES
     When set, disables the progress spinner during parallel execution.
 
 SEE ALSO
---------
+========
 
 Full documentation: https://tox.wiki/
 
 **pip**\(1), **pytest**\(1), **virtualenv**\(1)
 
 AUTHOR
-------
+======
 
 tox development team
 
