@@ -2,15 +2,13 @@
 
 from __future__ import annotations
 
-import sys
 from argparse import SUPPRESS, Action, ArgumentParser, _SubParsersAction  # noqa: PLC2701
 from pathlib import Path
 
+from tox.config.cli.parse import _get_parser_doc  # noqa: PLC2701
+
 
 def main() -> None:
-    sys.path.insert(0, str(Path(__file__).parents[1] / "src"))
-    from tox.config.cli.parse import _get_parser_doc  # noqa: PLC0415, PLC2701
-
     parser = _get_parser_doc()
     rst = generate_manpage_rst(parser)
     output = Path(__file__).parents[1] / "docs" / "man" / "tox.1.rst"
@@ -54,7 +52,8 @@ def generate_manpage_rst(parser: ArgumentParser) -> str:
     lines.extend(_commands_section(parser))
     lines.extend(_global_options_section(parser))
     lines.extend(_static_sections())
-    return "\n".join(lines) + "\n"
+    result = "\n".join(lines)
+    return f"{result}\n"
 
 
 def _get_subcommands(parser: ArgumentParser) -> list[str]:
