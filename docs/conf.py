@@ -89,9 +89,6 @@ extlinks_detect_hardcoded_links = True
 
 issues_github_path = f"{company}/{name}"  # `sphinx-issues` ext
 
-# Man page configuration
-man_pages = [("man/tox.1", "tox", "virtualenv-based automation of test activities", [], 1)]
-man_show_urls = True
 
 redirects = {
     "config": "reference/config.html",
