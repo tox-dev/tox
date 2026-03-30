@@ -1,21 +1,35 @@
 requires = [ "tox>=4.27" ]
-env_list = [ "fix", "3.15t", "3.15", "3.14t", "3.14", "3.13", "3.12", "3.11", "3.10", "cov", "type", "type-min", "docs", "pkg_meta" ]
+env_list = [
+  "3.15",
+  "3.14",
+  "3.13",
+  "3.12",
+  "3.11",
+  "3.10",
+  "3.14t",
+  "3.15t",
+  "cov",
+  "docs",
+  "fix",
+  "pkg_meta",
+  "type",
+  "type-min",
+]
 skip_missing_interpreters = true
 
 [env_run_base]
 description = "run the tests with pytest under {env_name}"
 package = "wheel"
 wheel_build_env = ".pkg"
-uv_seed = true
-extras = [ "completion" ]
 dependency_groups = [ "test" ]
+extras = [ "completion" ]
 pass_env = [ "PYTEST_*", "SSL_CERT_FILE" ]
 set_env.COVERAGE_FILE = { replace = "env", name = "COVERAGE_FILE", default = "{work_dir}{/}.coverage.{env_name}" }
 set_env.COVERAGE_FILECOVERAGE_PROCESS_START = "{tox_root}{/}pyproject.toml"
 commands = [
   [
     "pytest",
-    { replace = "posargs", extend = true, default = [
+    { replace = "posargs", default = [
       "--durations",
       "0",
       "--durations-min",
@@ -41,13 +55,38 @@ commands = [
       "xml:{work_dir}{/}coverage.{env_name}.xml",
       "tests",
       "--run-integration",
-    ] },
+    ], extend = true },
   ],
   [
     "diff-cover",
     "--compare-branch",
     { replace = "env", name = "DIFF_AGAINST", default = "origin/main" },
     "{work_dir}{/}coverage.{env_name}.xml",
+  ],
+]
+uv_seed = true
+
+[env.docs]
+description = "build documentation"
+base_python = [ "3.14" ]
+dependency_groups = [ "docs" ]
+commands = [
+  [
+    "sphinx-build",
+    "-d",
+    "{env_tmp_dir}{/}docs_tree",
+    "docs",
+    "{env:READTHEDOCS_OUTPUT:{work_dir}{/}docs_out}/html",
+    "--color",
+    "-b",
+    "html",
+    { replace = "posargs", default = [], extend = true },
+    "-W",
+  ],
+  [
+    "python",
+    "-c",
+    'print(r"documentation available under file://{work_dir}{/}docs_out{/}html{/}index.html")',
   ],
 ]
 
@@ -60,48 +99,10 @@ pass_env = [
     "env_run_base",
     "pass_env",
   ], extend = true },
-  "PROGRAMDATA",
   "DISABLE_PRE_COMMIT_UV_PATCH",
+  "PROGRAMDATA",
 ]
 commands = [ [ "pre-commit", "run", "--all-files", "--show-diff-on-failure", { replace = "posargs", extend = true } ] ]
-
-[env.type]
-base_python = ["3.14"]
-description = "run type check on code base"
-extras = [ "completion" ]
-dependency_groups = [ "type" ]
-commands = [ [ "ty", "check", "--python-platform", "all", "--output-format", "concise", "--error-on-warning", "." ] ]
-
-[env.type-min]
-base_python = ["3.10"]
-description = "run type check on code base for the minimum supported Python"
-extras = [ "completion" ]
-dependency_groups = [ "type-min" ]
-commands = [ [ "ty", "check", "--python-version", "3.10", "--python-platform", "all", "--output-format", "concise", "--error-on-warning", "src", "tests" ] ]
-
-[env.docs]
-description = "build documentation"
-dependency_groups = [ "docs" ]
-base_python = ["3.14"]
-commands = [
-  [
-    "sphinx-build",
-    "-d",
-    "{env_tmp_dir}{/}docs_tree",
-    "docs",
-    "{env:READTHEDOCS_OUTPUT:{work_dir}{/}docs_out}/html",
-    "--color",
-    "-b",
-    "html",
-    { replace = "posargs", default = [  ], extend = true },
-    "-W",
-  ],
-  [
-    "python",
-    "-c",
-    'print(r"documentation available under file://{work_dir}{/}docs_out{/}html{/}index.html")',
-  ],
-]
 
 [env.pkg_meta]
 description = "check that the long description is valid"
@@ -129,18 +130,39 @@ commands = [
   ],
 ]
 
-[env.release]
-description = "do a release, required posargs of the version number"
-skip_install = true
-dependency_groups = [ "release" ]
-pass_env = [ "GH_TOKEN" ]
-commands = [ [ "python", "{tox_root}/tasks/release.py", "--version", "{posargs}" ] ]
+[env.type]
+description = "run type check on code base"
+base_python = [ "3.14" ]
+dependency_groups = [ "type" ]
+extras = [ "completion" ]
+commands = [ [ "ty", "check", "--python-platform", "all", "--output-format", "concise", "--error-on-warning", "." ] ]
+
+[env.type-min]
+description = "run type check on code base for the minimum supported Python"
+base_python = [ "3.10" ]
+dependency_groups = [ "type-min" ]
+extras = [ "completion" ]
+commands = [
+  [
+    "ty",
+    "check",
+    "--python-version",
+    "3.10",
+    "--python-platform",
+    "all",
+    "--output-format",
+    "concise",
+    "--error-on-warning",
+    "src",
+    "tests",
+  ],
+]
 
 [env.dev]
 description = "dev environment with all deps at {envdir}"
 package = "editable"
-extras = [ "completion" ]
 dependency_groups = [ "dev" ]
+extras = [ "completion" ]
 commands = [ [ "python", "-m", "pip", "list", "--format=columns" ], [ "python", "-c", 'print(r"{env_python}")' ] ]
 uv_seed = true
 
@@ -151,7 +173,7 @@ dependency_groups = [ "test" ]
 commands = [
   [
     "pytest",
-    { replace = "posargs", extend = true, default = [
+    { replace = "posargs", default = [
       "-m",
       "not integration and not slow",
       "-n",
@@ -159,6 +181,21 @@ commands = [
       "--no-cov",
       "-q",
       "tests",
-    ] },
+    ], extend = true },
   ],
 ]
+
+[env.manpage]
+description = "generate the manpage RST from the CLI parser"
+package = "editable"
+skip_install = false
+dependency_groups = [ "docs" ]
+extras = [ "completion" ]
+commands = [ [ "python", "{tox_root}/tools/generate_manpage.py" ] ]
+
+[env.release]
+description = "do a release, required posargs of the version number"
+skip_install = true
+dependency_groups = [ "release" ]
+pass_env = [ "GH_TOKEN" ]
+commands = [ [ "python", "{tox_root}/tasks/release.py", "--version", "{posargs}" ] ]

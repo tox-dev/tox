@@ -112,14 +112,10 @@ system ``MANPATH``. Use the ``tox man`` command to set it up:
 Building from Source
 ====================
 
-Package maintainers building from source can generate the man page using Sphinx:
+The man page is compiled from ``docs/man/tox.1.rst`` during wheel build. To regenerate the RST source after CLI changes:
 
 .. code-block:: bash
 
-    tox run -e docs
-
-    # Man page is generated at .tox/docs_out/man/tox.1
-    install -D -m 644 .tox/docs_out/man/tox.1 /usr/share/man/man1/tox.1
-    gzip -9 /usr/share/man/man1/tox.1
+    tox run -e manpage
 
 After installation, view with ``man tox``.

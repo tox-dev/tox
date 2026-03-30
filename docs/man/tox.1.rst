@@ -1,14 +1,24 @@
 :orphan:
 
-##########
- SYNOPSIS
-##########
+#####
+ tox
+#####
 
-**tox** [*options*] [*command* [*command-options*]]
+************************************************
+ virtualenv-based automation of test activities
+************************************************
 
-#############
- DESCRIPTION
-#############
+:Manual section: 1
+:Manual group: User Commands
+
+SYNOPSIS
+========
+
+**tox** [*options*] [**run** | **run-parallel** | **depends** | **man** | **list** | **devenv** | **schema** |
+**config** | **quickstart** | **exec** | **legacy**] [*command-options*]
+
+DESCRIPTION
+===========
 
 tox aims to automate and standardize testing in Python. It is part of a larger vision of easing the packaging, testing
 and release process of Python software.
@@ -16,65 +26,94 @@ and release process of Python software.
 tox creates virtual environments for multiple Python versions, installs project dependencies, and runs tests in each
 environment. It supports parallel execution, custom test commands, and extensive configuration.
 
-##########
- COMMANDS
-##########
+COMMANDS
+========
 
-**run** (*default*)
-    Execute test environments. This is the default command if none is specified.
+**run** (*or* **r**)
+    run environments
+
+**run-parallel** (*or* **p**)
+    run environments in parallel
+
+**depends** (*or* **de**)
+    visualize tox environment dependencies
+
+**man**
+    Set up tox man page for current shell
 
 **list** (*or* **l**)
-    List configured environments with their descriptions.
-
-**config** (*or* **c**)
-    Show tox configuration details for debugging and inspection.
-
-**exec** (*or* **e**)
-    Execute a command in a tox environment without running the full test suite.
+    list environments
 
 **devenv** (*or* **d**)
-    Create a development environment from a tox environment definition.
+    sets up a development environment at ENVDIR based on the tox configuration specified
 
-**legacy**
-    Legacy tox 3.x compatibility mode for older configurations.
+**schema**
+    Generate schema for tox configuration
+
+**config** (*or* **c**)
+    show tox configuration
+
+**quickstart** (*or* **q**)
+    Command line script to quickly create a tox config file for a Python project
+
+**exec** (*or* **e**)
+    execute an arbitrary command within a tox environment
+
+**legacy** (*or* **le**)
+    legacy entry-point command
 
 For command-specific help, use: **tox** *command* **--help**
 
-#########
- OPTIONS
-#########
+OPTIONS
+=======
 
-For a complete list of options, run ``tox --help`` or see the online documentation at https://tox.wiki/
+**-h**, **--help**
+    show this help message and exit
 
-Common options:
+**--colored**
+    should output be enriched with colors, default is yes unless TERM=dumb or NO_COLOR is defined.
 
-**-h, --help**
-    Show help message and exit.
+**--stderr-color**
+    color for stderr output, use RESET for terminal defaults.
 
-**-v, --verbose**
-    Increase verbosity (can be used multiple times).
+**-v**, **--verbose**
+    increase verbosity
 
-**-q, --quiet**
-    Decrease verbosity (can be used multiple times).
+**-q**, **--quiet**
+    decrease verbosity
 
-**-r, --recreate**
-    Recreate the test environment.
+**--exit-and-dump-after** *seconds*
+    dump tox threads after n seconds and exit the app - useful to debug when tox hangs, 0 means disabled
 
-**-e** *ENV*
-    Run specific test environments (comma-separated).
+**-c**, **--conf** *file*
+    configuration file/folder for tox (if not specified will discover one)
 
-**--conf** *FILE*
-    Configuration file to use.
+**--workdir** *dir*
+    tox working directory (if not specified will be the folder of the config file)
 
-**--workdir** *DIR*
-    tox working directory (default: .tox).
+**--root** *dir*
+    project root directory (if not specified will be the folder of the config file)
 
-**--override** *KEY=VALUE*, **-x** *KEY=VALUE*
-    Override a configuration value.
+**--runner**
+    the tox run engine to use when not explicitly stated in tox env configuration
 
-#######
- FILES
-#######
+**--version**
+    show program's and plugins version number and exit
+
+**--no-provision** *REQ_JSON*
+    do not perform provision, but fail and if a path was provided write provision metadata as JSON to it
+
+**--no-recreate-provision**
+    if recreate is set do not recreate provision tox environment
+
+**-r**, **--recreate**
+    recreate the tox environments
+
+**-x**, **--override**
+    configuration override(s), e.g., -x testenv:pypy3.ignore_errors=True
+
+FILES
+=====
 
 **tox.toml**
     Primary configuration file in TOML format (recommended).
@@ -90,13 +129,11 @@ Common options:
 
 The configuration files are searched in the order listed above. The first file found is used.
 
-#######################
- ENVIRONMENT VARIABLES
-#######################
+ENVIRONMENT VARIABLES
+=====================
 
 ``TOX_*``
-    Any tox configuration setting can be overridden via environment variables with the ``TOX_`` prefix. For example,
-    ``TOX_SKIP_ENV`` can override the ``skip_env`` setting.
+    Any tox configuration setting can be overridden via environment variables with the ``TOX_`` prefix.
 
 **NO_COLOR**
     When set to any non-empty value, disables colored output.
@@ -107,17 +144,15 @@ The configuration files are searched in the order listed above. The first file f
 **TOX_PARALLEL_NO_SPINNER**
     When set, disables the progress spinner during parallel execution.
 
-##########
- SEE ALSO
-##########
+SEE ALSO
+========
 
 Full documentation: https://tox.wiki/
 
 **pip**\(1), **pytest**\(1), **virtualenv**\(1)
 
-########
- AUTHOR
-########
+AUTHOR
+======
 
 tox development team
 

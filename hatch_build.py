@@ -19,7 +19,7 @@ class CustomBuildHook(BuildHookInterface):
                         for line in (root / "docs" / "man" / "tox.1.rst").read_text(encoding="utf-8").splitlines()
                         if line.strip() != ":orphan:"
                     ),
-                    writer_name="manpage",
+                    writer="manpage",
                     settings_overrides={"report_level": 5},
                 )
             )

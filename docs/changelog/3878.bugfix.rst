@@ -1,0 +1,2 @@
+Auto-generate the manpage from the CLI argparse parser at wheel build time, fixing broken section headers and
+documenting all commands and options - by :user:`gaborbernat`.
