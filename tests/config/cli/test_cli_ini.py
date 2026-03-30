@@ -67,7 +67,7 @@ def default_options() -> dict[str, Any]:
 
 
 @pytest.mark.parametrize("content", ["[tox]", ""])
-def test_ini_empty(  # noqa: PLR0913
+def test_ini_empty(
     tmp_path: Path,
     core_handlers: dict[str, Callable[[State], int]],
     default_options: dict[str, Any],

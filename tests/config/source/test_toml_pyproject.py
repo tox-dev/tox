@@ -553,7 +553,7 @@ def test_config_in_toml_replace_glob_extend(tox_project: ToxProjectCreator, tmp_
         pytest.param({"CI": "1"}, "not env.CI", "local", "ci", "ci", id="not_false"),
     ],
 )
-def test_config_in_toml_replace_if(  # noqa: PLR0913
+def test_config_in_toml_replace_if(
     tox_project: ToxProjectCreator,
     monkeypatch: pytest.MonkeyPatch,
     env_vars: dict[str, str],
