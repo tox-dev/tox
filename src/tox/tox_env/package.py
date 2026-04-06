@@ -8,7 +8,7 @@ from threading import RLock
 from types import MethodType
 from typing import TYPE_CHECKING, Any, cast
 
-from filelock import FileLock
+from filelock import BaseFileLock, FileLock
 
 from .api import ToxEnv, ToxEnvCreateArgs
 
@@ -37,7 +37,7 @@ class PathPackage(Package):
 locked = False
 
 
-def _lock_method(thread_lock: RLock, file_lock: FileLock | None, meth: Callable[..., Any]) -> Callable[..., Any]:
+def _lock_method(thread_lock: RLock, file_lock: BaseFileLock | None, meth: Callable[..., Any]) -> Callable[..., Any]:
     def _func(*args: Any, **kwargs: Any) -> Any:
         with thread_lock:
             file_locks = False
@@ -48,7 +48,7 @@ def _lock_method(thread_lock: RLock, file_lock: FileLock | None, meth: Callable[
                 return meth(*args, **kwargs)
             finally:
                 if file_locks:
-                    cast("FileLock", file_lock).release()
+                    cast("BaseFileLock", file_lock).release()
 
     return _func
 
@@ -56,7 +56,7 @@ def _lock_method(thread_lock: RLock, file_lock: FileLock | None, meth: Callable[
 class PackageToxEnv(ToxEnv, ABC):
     def __init__(self, create_args: ToxEnvCreateArgs) -> None:
         self._thread_lock = RLock()
-        self._file_lock: FileLock | None = None
+        self._file_lock: BaseFileLock | None = None
         super().__init__(create_args)
         self._envs: set[str] = set()
 
