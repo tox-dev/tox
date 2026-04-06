@@ -10,7 +10,7 @@ from itertools import chain
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, cast
 
-from python_discovery import KNOWN_ARCHITECTURES
+from python_discovery import KNOWN_ARCHITECTURES, normalize_isa
 
 from tox.config.loader.ini.factor import find_factor_groups
 from tox.config.loader.replacer import (
@@ -54,9 +54,9 @@ class Unroll:
             factors = set(chain.from_iterable([(i for i, _ in a) for a in find_factor_groups(env_name)]))
         parts = sysconfig.get_platform().rsplit("-", 1)
         if len(parts) > 1:
-            machine = parts[-1]
-            if not (factors & KNOWN_ARCHITECTURES):
-                factors.add(machine)
+            machine_isa = normalize_isa(parts[-1])
+            if not (factors & KNOWN_ARCHITECTURES) and not any(normalize_isa(f) == machine_isa for f in factors):
+                factors.add(machine_isa)
         return factors
 
     def __call__(  # noqa: C901, PLR0912

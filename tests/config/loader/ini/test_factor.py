@@ -6,6 +6,7 @@ from textwrap import dedent
 from typing import TYPE_CHECKING
 
 import pytest
+from python_discovery import normalize_isa
 
 from tox.config.loader.ini import IniLoader
 from tox.config.loader.ini.factor import LATEST_PYTHON_MINOR_MAX, LATEST_PYTHON_MINOR_MIN, filter_for_env, find_envs
@@ -519,7 +520,7 @@ def test_machine_isa_does_not_override_explicit_env_factor() -> None:
     parts = sysconfig.get_platform().rsplit("-", 1)
     if len(parts) < 2:
         pytest.skip("sysconfig.get_platform() has no machine component")
-    machine = parts[-1]
+    machine = normalize_isa(parts[-1])
     other_isa = "x86_64" if machine != "x86_64" else "arm64"
 
     value = f"{other_isa}: {other_isa}_value\n{machine}: {machine}_value"
@@ -535,7 +536,7 @@ def test_machine_isa_implicit_when_no_env_isa() -> None:
     parts = sysconfig.get_platform().rsplit("-", 1)
     if len(parts) < 2:
         pytest.skip("sysconfig.get_platform() has no machine component")
-    machine = parts[-1]
+    machine = normalize_isa(parts[-1])
 
     value = f"{machine}: {machine}_value\nother: other_value"
     # No ISA in the env name, so machine ISA should be added implicitly.
