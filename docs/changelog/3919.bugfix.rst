@@ -1,1 +1,2 @@
-Use ``normalize_isa`` from ``python-discovery`` for architecture factor matching, supporting aliases like ``i686`` → ``x86`` and ``aarch64`` → ``arm64`` - by :user:`rahuldevikar`.
+Use ``normalize_isa`` from ``python-discovery`` for architecture factor matching, supporting aliases like ``i686`` →
+``x86`` and ``aarch64`` → ``arm64`` - by :user:`rahuldevikar`.
