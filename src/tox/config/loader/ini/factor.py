@@ -8,7 +8,7 @@ import sysconfig
 from itertools import chain, groupby, product
 from typing import TYPE_CHECKING
 
-from python_discovery import KNOWN_ARCHITECTURES
+from python_discovery import KNOWN_ARCHITECTURES, normalize_isa
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
@@ -25,12 +25,12 @@ def filter_for_env(value: str, name: str | None) -> str:
     current.add(sys.platform)
     parts = sysconfig.get_platform().rsplit("-", 1)
     if len(parts) > 1:
-        machine = parts[-1]
+        machine_isa = normalize_isa(parts[-1])
         # Add machine ISA implicitly only when the env name does not already contain
         # an architecture factor; when it does the explicit ISA takes precedence and
         # adding the machine ISA would cause cross-architecture conflicts (#3903).
-        if not (env_factors & KNOWN_ARCHITECTURES):
-            current.add(machine)
+        if not (env_factors & KNOWN_ARCHITECTURES) and not any(normalize_isa(f) == machine_isa for f in env_factors):
+            current.add(machine_isa)
     overall: list[str] = []
     active_continuation = False
     pending_skip = False

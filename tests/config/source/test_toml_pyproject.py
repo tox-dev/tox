@@ -6,6 +6,7 @@ from textwrap import dedent
 from typing import TYPE_CHECKING
 
 import pytest
+from python_discovery import normalize_isa
 
 from tox.config.loader.replacer import MatchError
 
@@ -1078,7 +1079,7 @@ def test_toml_machine_isa_does_not_override_explicit_env_factor(tox_project: Tox
     parts = sysconfig.get_platform().rsplit("-", 1)
     if len(parts) < 2:
         pytest.skip("sysconfig.get_platform() has no machine component")
-    machine = parts[-1]
+    machine = normalize_isa(parts[-1])
     other_isa = "x86_64" if machine != "x86_64" else "arm64"
 
     project = tox_project({
@@ -1103,7 +1104,7 @@ def test_toml_machine_isa_implicit_when_no_env_isa(tox_project: ToxProjectCreato
     parts = sysconfig.get_platform().rsplit("-", 1)
     if len(parts) < 2:
         pytest.skip("sysconfig.get_platform() has no machine component")
-    machine = parts[-1]
+    machine = normalize_isa(parts[-1])
 
     project = tox_project({
         "pyproject.toml": dedent(f"""
