@@ -1,3 +1,2 @@
-Changing a resolution-affecting environment variable via ``set_env`` (e.g. ``PIP_INDEX_URL``) now
-invalidates the install cache and triggers a reinstall, rather than incorrectly reusing the cached
-environment - by :user:`gaborbernat`.
+Changing a resolution-affecting environment variable via ``set_env`` (e.g. ``PIP_INDEX_URL``) now invalidates the
+install cache and triggers a reinstall, rather than incorrectly reusing the cached environment - by :user:`gaborbernat`.
