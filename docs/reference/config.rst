@@ -965,6 +965,15 @@ Base options
     For conditional settings that should differ per target Python environment (e.g., based on Python version), use
     tox's :ref:`conditional settings <conditional-settings>` mechanism with environment factors instead.
 
+    .. note::
+
+       Changing installer-relevant environment variables via ``set_env`` (e.g. ``PIP_INDEX_URL``,
+       ``PIP_EXTRA_INDEX_URL``) invalidates the install cache and triggers a reinstall on the next
+       run. Only variables known to affect package resolution are tracked; cosmetic or performance
+       variables such as ``PIP_TIMEOUT`` or ``PIP_VERBOSE`` do not affect the cache.
+       Plugin-based installers (e.g. ``tox-uv``) extend this list with their own
+       resolution-affecting variables.
+
     More environment variable-related information
     can be found in :ref:`environment variable substitutions`.
 
