@@ -7,6 +7,19 @@
 .. towncrier release notes start
 
 **********************
+ v4.52.1 (2026-04-09)
+**********************
+
+Bug fixes - 4.52.1
+==================
+
+- Changing a resolution-affecting environment variable via ``set_env`` (e.g. ``PIP_INDEX_URL``) now invalidates the
+  install cache and triggers a reinstall, rather than incorrectly reusing the cached environment - by
+  :user:`gaborbernat`. (:issue:`3917`)
+- Use ``normalize_isa`` from ``python-discovery`` for architecture factor matching, supporting aliases like ``i686`` →
+  ``x86`` and ``aarch64`` → ``arm64`` - by :user:`rahuldevikar`. (:issue:`3919`)
+
+**********************
  v4.52.0 (2026-03-30)
 **********************
 
