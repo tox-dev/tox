@@ -101,10 +101,6 @@ class Pip(PythonInstallerListDependencies):
             desc="Use the exact versions of installed deps as constraints, otherwise use the listed deps.",
         )
 
-    def _install_env_vars(self) -> dict[str, str]:
-        """Return env vars that affect pip resolution and should be part of the install cache key."""
-        return {k: v for k, v in self._env.environment_variables.items() if k in _PIP_RESOLUTION_ENV_VARS}
-
     def freeze_cmd(self) -> list[str]:  # noqa: PLR6301
         return ["python", "-m", "pip", "freeze", "--all"]
 
@@ -283,6 +279,10 @@ class Pip(PythonInstallerListDependencies):
             # we intentionally ignore constraints when installing the package itself
             # https://github.com/tox-dev/tox/issues/3550
             self._execute_installer(install_args, of_type)
+
+    def _install_env_vars(self) -> dict[str, str]:
+        """Return env vars that affect pip resolution and should be part of the install cache key."""
+        return {k: v for k, v in self._env.environment_variables.items() if k in _PIP_RESOLUTION_ENV_VARS}
 
     def _apply_force_deps(self, deps: Sequence[Requirement]) -> list[str]:
         forced: dict[str, Requirement] = {r.name: r for r in getattr(self._env.options, "force_dep", [])}
