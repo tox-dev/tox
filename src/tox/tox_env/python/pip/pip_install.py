@@ -50,6 +50,18 @@ class PythonInstallerListDependencies(Installer[Python], ABC):
         return result.out.splitlines()
 
 
+_PIP_RESOLUTION_ENV_VARS: frozenset[str] = frozenset({
+    "PIP_CONSTRAINT",
+    "PIP_EXTRA_INDEX_URL",
+    "PIP_FIND_LINKS",
+    "PIP_INDEX_URL",
+    "PIP_NO_INDEX",
+    "PIP_PRE",
+    "PIP_REQUIRE_HASHES",
+    "PIP_TRUSTED_HOST",
+})
+
+
 class Pip(PythonInstallerListDependencies):
     """Pip is a python installer that can install packages as defined by PEP-508 and PEP-517."""
 
@@ -88,6 +100,10 @@ class Pip(PythonInstallerListDependencies):
             default=False,
             desc="Use the exact versions of installed deps as constraints, otherwise use the listed deps.",
         )
+
+    def _install_env_vars(self) -> dict[str, str]:
+        """Return env vars that affect pip resolution and should be part of the install cache key."""
+        return {k: v for k, v in self._env.environment_variables.items() if k in _PIP_RESOLUTION_ENV_VARS}
 
     def freeze_cmd(self) -> list[str]:  # noqa: PLR6301
         return ["python", "-m", "pip", "freeze", "--all"]
@@ -166,6 +182,7 @@ class Pip(PythonInstallerListDependencies):
             "requirements": new_requirements,
             "constraints": new_constraints,
             "constraint_options": constraint_options,
+            "env": self._install_env_vars(),
         }
         # if option or constraint change in any way recreate, if the requirements change only if some are removed
         with self._env.cache.compare(new, section, of_type) as (eq, old):
@@ -242,13 +259,15 @@ class Pip(PythonInstallerListDependencies):
         req_of_type = f"{of_type}_deps" if groups["pkg"] or groups["dev_pkg"] else of_type
         for value in groups.values():
             value.sort()
-        with self._env.cache.compare(groups["req"], section, req_of_type) as (eq, old):
+        cache_value = {"req": groups["req"], "env": self._install_env_vars()}
+        with self._env.cache.compare(cache_value, section, req_of_type) as (eq, old):
             if not eq:  # pragma: no branch
-                miss = sorted(set(old or []) - set(groups["req"]))
+                old_req: list[str] = old["req"] if isinstance(old, dict) else (old or [])
+                miss = sorted(set(old_req) - set(groups["req"]))
                 if miss:  # no way yet to know what to uninstall here (transitive dependencies?)
                     msg = f"dependencies removed: {', '.join(str(i) for i in miss)}"
                     raise Recreate(msg)  # pragma: no branch
-                new_deps = sorted(set(groups["req"]) - set(old or []))
+                new_deps = sorted(set(groups["req"]) - set(old_req)) or list(groups["req"])
                 if new_deps:  # pragma: no branch
                     new_deps.extend(self.constraints.as_root_args)
                     self._execute_installer(new_deps, req_of_type)

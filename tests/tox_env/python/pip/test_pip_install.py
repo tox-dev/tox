@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+from textwrap import dedent
 from typing import TYPE_CHECKING, Any
 from unittest.mock import Mock
 
@@ -454,6 +455,63 @@ def test_constrain_package_deps(
                 assert c in constraints
     else:
         assert not constraints_file.exists()
+
+
+def test_pip_resolution_env_var_change_reinstalls(tox_project: ToxProjectCreator) -> None:
+    proj = tox_project({
+        "tox.ini": """
+                [testenv:py]
+                deps = a
+                skip_install = true
+            """,
+    })
+    execute_calls = proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
+
+    result = proj.run("r")
+    result.assert_success()
+    assert execute_calls.call_count == 1
+    execute_calls.reset_mock()
+
+    (proj.path / "tox.ini").write_text(
+        dedent("""
+            [testenv:py]
+            deps = a
+            skip_install = true
+            setenv = PIP_INDEX_URL = https://example.com
+        """)
+    )
+    result = proj.run("r")
+    result.assert_success()
+    assert execute_calls.call_count == 1
+
+
+def test_pip_non_resolution_env_var_change_no_reinstall(tox_project: ToxProjectCreator) -> None:
+    proj = tox_project({
+        "tox.ini": """
+                [testenv:py]
+                deps = a
+                skip_install = true
+                setenv = PIP_TIMEOUT = 30
+            """,
+    })
+    execute_calls = proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
+
+    result = proj.run("r")
+    result.assert_success()
+    assert execute_calls.call_count == 1
+    execute_calls.reset_mock()
+
+    (proj.path / "tox.ini").write_text(
+        dedent("""
+            [testenv:py]
+            deps = a
+            skip_install = true
+            setenv = PIP_TIMEOUT = 60
+        """)
+    )
+    result = proj.run("r")
+    result.assert_success()
+    assert execute_calls.call_count == 0
 
 
 @pytest.mark.parametrize("conf_key", ["constrain_package_deps", "use_frozen_constraints"])
