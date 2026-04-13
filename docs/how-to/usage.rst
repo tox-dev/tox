@@ -1020,7 +1020,7 @@ expressed as an explicit structured item. For a single axis use the bare range d
 
          env_list = [
              "lint",
-             { prefix = "py3", start = 12, stop = 14 },
+             { prefix = "3.", start = 12, stop = 14 },
          ]
 
 .. tab:: INI
@@ -1028,7 +1028,7 @@ expressed as an explicit structured item. For a single axis use the bare range d
     .. code-block:: ini
 
          [tox]
-         env_list = lint, py3{12-14}
+         env_list = lint, 3.{12-14}
 
 For multi-dimensional matrices, use a ``product`` dict whose items are arrays of strings or range/labeled dicts.
 Combinations are joined with ``-``:
@@ -1040,7 +1040,7 @@ Combinations are joined with ``-``:
          env_list = [
              "lint",
              { product = [
-                 { prefix = "py3", start = 12, stop = 14 },
+                 { prefix = "3.", start = 12, stop = 14 },
                  ["django42", "django50"],
              ] },
          ]
@@ -1673,7 +1673,7 @@ Instead of updating ``env_list`` every time a new Python version is released, us
     .. code-block:: toml
 
         env_list = [
-            { prefix = "py3", start = 10 },
+            { prefix = "3.", start = 10 },
             "lint",
         ]
 
@@ -1682,7 +1682,7 @@ Instead of updating ``env_list`` every time a new Python version is released, us
     .. code-block:: ini
 
         [tox]
-        env_list = py3{10-}, lint
+        env_list = 3.{10-}, lint
 
 This expands up to the latest `supported CPython version <https://devguide.python.org/versions/>`_ known to tox. When
 you upgrade tox after a new Python release, the range automatically includes the new version. The bare range dict is the
@@ -1695,7 +1695,7 @@ To start from the oldest supported version:
     .. code-block:: toml
 
         env_list = [
-            { prefix = "py3", stop = 13 },
+            { prefix = "3.", stop = 13 },
             "lint",
         ]
 
@@ -1704,7 +1704,7 @@ To start from the oldest supported version:
     .. code-block:: ini
 
         [tox]
-        env_list = py3{-13}, lint
+        env_list = 3.{-13}, lint
 
 This expands down from the oldest supported CPython version. Both forms can be mixed with explicit values:
 
@@ -1713,8 +1713,8 @@ This expands down from the oldest supported CPython version. Both forms can be m
     .. code-block:: toml
 
         env_list = [
-            { prefix = "py3", start = 10 },
-            "py38",
+            { prefix = "3.", start = 10 },
+            "3.8",
             "lint",
         ]
 
@@ -1723,7 +1723,7 @@ This expands down from the oldest supported CPython version. Both forms can be m
     .. code-block:: ini
 
         [tox]
-        env_list = py3{10-, 8}, lint
+        env_list = 3.{10-, 8}, lint
 
 See :ref:`generative-environment-list` for the full range syntax reference.
 

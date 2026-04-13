@@ -289,7 +289,7 @@ Open-ended range bounds
 =======================
 
 Both INI and TOML support generative environment lists with open-ended ranges. INI uses curly-brace syntax
-(``py3{10-}``), while TOML uses range dicts that appear directly in ``env_list`` (``{ prefix = "py3", start = 10 }``) --
+(``3.{10-}``), while TOML uses range dicts that appear directly in ``env_list`` (``{ prefix = "3.", start = 10 }``) --
 no ``product`` wrapper is needed for a single axis. Instead of probing the system for available interpreters (which
 would be slow and environment-dependent), tox tracks the `supported CPython versions
 <https://devguide.python.org/versions/>`_ via two constants:

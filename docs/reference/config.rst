@@ -119,12 +119,12 @@ Platform factors work in any environment without requiring the platform name in 
 
         env_list = [
             "lint",
-            { prefix = "py3", start = 12, stop = 14 },
-            { product = [["py312", "py313", "py314"], ["django42", "django50"]] },
+            { prefix = "3.", start = 12, stop = 14 },
+            { product = [["3.12", "3.13", "3.14"], ["django42", "django50"]] },
         ]
 
     Each ``env_list`` item is one of four structured shapes: a literal string, a bare range dict
-    (``{ prefix = "py3", start = 12, stop = 14 }``) for a single axis, a labeled dict
+    (``{ prefix = "3.", start = 12, stop = 14 }``) for a single axis, a labeled dict
     (``{ ecosystem = ["oci", "python"] }``) that also registers a ``{factor:label}`` name, or a ``product`` dict
     that computes the Cartesian product of multiple factor groups and joins each combination with ``-``.
     A ``product`` dict also accepts an ``exclude`` key to skip specific combinations. TOML never interprets curly
@@ -2802,14 +2802,14 @@ TOML ``env_list`` item shapes
 -----------------------------
 
 TOML replaces INI's curly-brace expansion with four structured item shapes. Composition happens through these dicts only
-— TOML never interprets ``{...}`` inside a string item, so a literal ``"py3{12-14}"`` is the env name ``py3{12-14}``,
-not a range.
+— TOML never interprets ``{...}`` inside a string item, so a literal ``"3.{12-14}"`` is the env name ``3.{12-14}``, not
+a range.
 
 **Literal string** -- a single environment name.
 
 .. code-block:: toml
 
-    env_list = ["lint", "py312"]
+    env_list = ["lint", "3.12"]
 
 **Bare range dict** -- a single range axis. Accepts ``prefix``, ``start``, and ``stop``. Omit ``stop`` to expand up to
 the latest supported CPython minor version (currently **14**), or omit ``start`` to expand down from the oldest
@@ -2819,11 +2819,11 @@ there is only one axis:
 .. code-block:: toml
 
     env_list = [
-        { prefix = "py3", start = 10 },
+        { prefix = "3.", start = 10 },
         "lint",
     ]
 
-``{ prefix = "py3", start = 10 }`` is equivalent to ``py3{10-}`` in INI.
+``{ prefix = "3.", start = 10 }`` is equivalent to ``3.{10-}`` in INI.
 
 **Bare labeled dict** -- a single-key dict mapping a label to a list of factor values. The label also registers for
 ``{factor:label}`` substitution (see :ref:`factor-label-substitution`):
@@ -2840,7 +2840,7 @@ there is only one axis:
 .. code-block:: toml
 
     env_list = [
-        { product = [{ prefix = "py3", start = 12, stop = 14 }, ["django42", "django50"]] },
+        { product = [{ prefix = "3.", start = 12, stop = 14 }, ["django42", "django50"]] },
     ]
 
 An ``exclude`` key removes specific combinations from the product -- a capability not available in INI:
@@ -2848,7 +2848,7 @@ An ``exclude`` key removes specific combinations from the product -- a capabilit
 .. code-block:: toml
 
     env_list = [
-        { product = [["py312", "py313"], ["django42", "django50"]], exclude = ["py312-django50"] },
+        { product = [["3.12", "3.13"], ["django42", "django50"]], exclude = ["3.12-django50"] },
     ]
 
 **Common mistake** -- wrapping a range or labeled dict inside a list factor group. Factor-group lists may only contain
@@ -2859,12 +2859,12 @@ of its arrays. The following is rejected with a clear error:
 
     # wrong — the inner list contains a dict
     env_list = [
-        { product = [["min"], [{ prefix = "py3", start = 9, stop = 14 }]] },
+        { product = [["min"], [{ prefix = "3.", start = 9, stop = 14 }]] },
     ]
 
     # right — the range dict is a sibling factor group
     env_list = [
-        { product = [["min"], { prefix = "py3", start = 9, stop = 14 }] },
+        { product = [["min"], { prefix = "3.", start = 9, stop = 14 }] },
     ]
 
 Generative section names

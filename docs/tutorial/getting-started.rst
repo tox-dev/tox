@@ -104,9 +104,9 @@ Core settings affect all environments or configure how tox itself behaves. They 
 
 The :ref:`env_list` setting defines which environments run by default when you invoke ``tox`` without specifying any.
 Both formats support generating environment matrices from factor combinations — INI uses curly-brace expansion
-(``3.{10-}``), while TOML composes from structured dicts. A single axis is a bare range dict (``{ prefix = "py3", start
-= 10 }``); multi-dimensional matrices use a ``product`` dict. See :ref:`generative-environment-list` for details. For
-the full list of core options, see :ref:`conf-core`.
+(``3.{10-}``), while TOML composes from structured dicts. A single axis is a bare range dict (``{ prefix = "3.", start =
+10 }``); multi-dimensional matrices use a ``product`` dict. See :ref:`generative-environment-list` for details. For the
+full list of core options, see :ref:`conf-core`.
 
 Environment settings
 ====================
