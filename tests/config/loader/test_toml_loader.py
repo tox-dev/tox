@@ -129,8 +129,58 @@ def test_toml_loader_env_list_ok() -> None:
 
 
 def test_toml_loader_env_list_nok() -> None:
-    with pytest.raises(HandledError, match=_PREFIX + r"env_list items must be strings or product dicts, got int"):
+    with pytest.raises(
+        HandledError,
+        match=_PREFIX + r"env_list items must be strings, product dicts, range dicts, or labeled dicts, got int",
+    ):
         perform_load(["a", 1], EnvList)
+
+
+@pytest.mark.parametrize(
+    ("raw", "expected"),
+    [
+        pytest.param(
+            [{"prefix": "py3", "start": 12, "stop": 14}],
+            ["py312", "py313", "py314"],
+            id="bare-range",
+        ),
+        pytest.param(
+            ["lint", {"prefix": "py3", "start": 12, "stop": 13}, "docs"],
+            ["lint", "py312", "py313", "docs"],
+            id="mixed-literal-and-range",
+        ),
+        pytest.param(
+            [{"ecosystem": ["oci", "python"]}],
+            ["oci", "python"],
+            id="bare-labeled",
+        ),
+        pytest.param(
+            [
+                {"prefix": "py3", "start": 12, "stop": 13},
+                {"product": [["min"], {"prefix": "py3", "start": 12, "stop": 13}]},
+            ],
+            ["py312", "py313", "min-py312", "min-py313"],
+            id="bare-range-plus-product",
+        ),
+    ],
+)
+def test_toml_loader_env_list_shorthand(raw: list[Any], expected: list[str]) -> None:
+    res = perform_load(raw, EnvList)
+    assert isinstance(res, EnvList)
+    assert list(res) == expected
+
+
+def test_toml_loader_env_list_prefix_and_product_rejected() -> None:
+    with pytest.raises(HandledError, match=_PREFIX + r"env_list dict items cannot combine 'product' with 'prefix'"):
+        perform_load([{"prefix": "py3", "product": [["a"]]}], EnvList)
+
+
+def test_toml_loader_env_list_nested_dict_in_list_rejects_with_hint() -> None:
+    with pytest.raises(
+        HandledError,
+        match=_PREFIX + r"factor group list items must be strings, got dict.*sibling factor groups",
+    ):
+        perform_load([{"product": [[{"prefix": "py3", "start": 9, "stop": 14}]]}], EnvList)
 
 
 def test_toml_loader_list_optional_ok() -> None:
@@ -176,7 +226,10 @@ def test_toml_loader_dict_of_env_list_values_ok() -> None:
 
 
 def test_toml_loader_dict_of_env_list_values_nok() -> None:
-    with pytest.raises(HandledError, match=_PREFIX + r"env_list items must be strings or product dicts, got int"):
+    with pytest.raises(
+        HandledError,
+        match=_PREFIX + r"env_list items must be strings, product dicts, range dicts, or labeled dicts, got int",
+    ):
         perform_load({"x": ["a", 1]}, dict[str, EnvList])
 
 

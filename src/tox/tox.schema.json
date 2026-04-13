@@ -35,70 +35,7 @@
     "env_list": {
       "type": "array",
       "items": {
-        "oneOf": [
-          {
-            "$ref": "#/definitions/subs"
-          },
-          {
-            "type": "object",
-            "required": ["product"],
-            "properties": {
-              "product": {
-                "type": "array",
-                "items": {
-                  "oneOf": [
-                    {
-                      "type": "array",
-                      "items": {
-                        "type": "string"
-                      }
-                    },
-                    {
-                      "type": "object",
-                      "required": ["prefix"],
-                      "properties": {
-                        "prefix": {
-                          "type": "string"
-                        },
-                        "start": {
-                          "type": "integer"
-                        },
-                        "stop": {
-                          "type": "integer"
-                        }
-                      },
-                      "additionalProperties": false
-                    },
-                    {
-                      "type": "object",
-                      "minProperties": 1,
-                      "maxProperties": 1,
-                      "not": {
-                        "required": ["prefix"]
-                      },
-                      "additionalProperties": {
-                        "type": "array",
-                        "items": {
-                          "type": "string"
-                        }
-                      },
-                      "description": "labeled factor group for {factor:label} substitution"
-                    }
-                  ]
-                },
-                "description": "factor groups for cartesian product expansion"
-              },
-              "exclude": {
-                "type": "array",
-                "items": {
-                  "type": "string"
-                },
-                "description": "environment names to exclude from product"
-              }
-            },
-            "additionalProperties": false
-          }
-        ]
+        "$ref": "#/definitions/env_list_item"
       },
       "description": "define environments to automatically run"
     },
@@ -139,70 +76,7 @@
       "additionalProperties": {
         "type": "array",
         "items": {
-          "oneOf": [
-            {
-              "$ref": "#/definitions/subs"
-            },
-            {
-              "type": "object",
-              "required": ["product"],
-              "properties": {
-                "product": {
-                  "type": "array",
-                  "items": {
-                    "oneOf": [
-                      {
-                        "type": "array",
-                        "items": {
-                          "type": "string"
-                        }
-                      },
-                      {
-                        "type": "object",
-                        "required": ["prefix"],
-                        "properties": {
-                          "prefix": {
-                            "type": "string"
-                          },
-                          "start": {
-                            "type": "integer"
-                          },
-                          "stop": {
-                            "type": "integer"
-                          }
-                        },
-                        "additionalProperties": false
-                      },
-                      {
-                        "type": "object",
-                        "minProperties": 1,
-                        "maxProperties": 1,
-                        "not": {
-                          "required": ["prefix"]
-                        },
-                        "additionalProperties": {
-                          "type": "array",
-                          "items": {
-                            "type": "string"
-                          }
-                        },
-                        "description": "labeled factor group for {factor:label} substitution"
-                      }
-                    ]
-                  },
-                  "description": "factor groups for cartesian product expansion"
-                },
-                "exclude": {
-                  "type": "array",
-                  "items": {
-                    "type": "string"
-                  },
-                  "description": "environment names to exclude from product"
-                }
-              },
-              "additionalProperties": false
-            }
-          ]
+          "$ref": "#/definitions/env_list_item"
         }
       },
       "description": "core labels"
@@ -286,70 +160,7 @@
         "depends": {
           "type": "array",
           "items": {
-            "oneOf": [
-              {
-                "$ref": "#/definitions/subs"
-              },
-              {
-                "type": "object",
-                "required": ["product"],
-                "properties": {
-                  "product": {
-                    "type": "array",
-                    "items": {
-                      "oneOf": [
-                        {
-                          "type": "array",
-                          "items": {
-                            "type": "string"
-                          }
-                        },
-                        {
-                          "type": "object",
-                          "required": ["prefix"],
-                          "properties": {
-                            "prefix": {
-                              "type": "string"
-                            },
-                            "start": {
-                              "type": "integer"
-                            },
-                            "stop": {
-                              "type": "integer"
-                            }
-                          },
-                          "additionalProperties": false
-                        },
-                        {
-                          "type": "object",
-                          "minProperties": 1,
-                          "maxProperties": 1,
-                          "not": {
-                            "required": ["prefix"]
-                          },
-                          "additionalProperties": {
-                            "type": "array",
-                            "items": {
-                              "type": "string"
-                            }
-                          },
-                          "description": "labeled factor group for {factor:label} substitution"
-                        }
-                      ]
-                    },
-                    "description": "factor groups for cartesian product expansion"
-                  },
-                  "exclude": {
-                    "type": "array",
-                    "items": {
-                      "type": "string"
-                    },
-                    "description": "environment names to exclude from product"
-                  }
-                },
-                "additionalProperties": false
-              }
-            ]
+            "$ref": "#/definitions/env_list_item"
           },
           "description": "tox environments that this environment depends on (must be run after those)"
         },
@@ -776,6 +587,88 @@
           },
           "required": ["replace", "of"],
           "additionalProperties": false
+        }
+      ]
+    },
+    "factor_range_dict": {
+      "type": "object",
+      "required": ["prefix"],
+      "properties": {
+        "prefix": {
+          "type": "string"
+        },
+        "start": {
+          "type": "integer"
+        },
+        "stop": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false,
+      "description": "range factor group: expands to prefix+N for N in [start, stop]"
+    },
+    "factor_labeled_dict": {
+      "type": "object",
+      "minProperties": 1,
+      "maxProperties": 1,
+      "not": {
+        "required": ["prefix"]
+      },
+      "additionalProperties": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "description": "labeled factor group for {factor:label} substitution"
+    },
+    "product_factor_group": {
+      "oneOf": [
+        {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        {
+          "$ref": "#/definitions/factor_range_dict"
+        },
+        {
+          "$ref": "#/definitions/factor_labeled_dict"
+        }
+      ]
+    },
+    "env_list_item": {
+      "oneOf": [
+        {
+          "$ref": "#/definitions/subs"
+        },
+        {
+          "type": "object",
+          "required": ["product"],
+          "properties": {
+            "product": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/product_factor_group"
+              },
+              "description": "factor groups for cartesian product expansion"
+            },
+            "exclude": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "environment names to exclude from product"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "$ref": "#/definitions/factor_range_dict"
+        },
+        {
+          "$ref": "#/definitions/factor_labeled_dict"
         }
       ]
     }

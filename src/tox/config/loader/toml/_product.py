@@ -32,7 +32,18 @@ _RESERVED_LABELS: frozenset[str] = frozenset({"env", "posargs", "tty", "glob", "
 
 def expand_factor_group(group: Any) -> list[str]:
     if isinstance(group, list):
-        return [str(item) for item in group]
+        result: list[str] = []
+        for item in group:
+            if not isinstance(item, str):
+                hint = (
+                    " — pass range or labeled dicts directly as sibling factor groups, not nested inside a list"
+                    if isinstance(item, dict)
+                    else ""
+                )
+                msg = f"factor group list items must be strings, got {type(item).__name__}{hint}"
+                raise TypeError(msg)
+            result.append(item)
+        return result
     if isinstance(group, dict):
         if "prefix" in group:
             return _expand_range(group)

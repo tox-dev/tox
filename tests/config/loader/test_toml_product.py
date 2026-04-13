@@ -69,6 +69,16 @@ def test_expand_factor_group_dict_no_prefix() -> None:
         expand_factor_group({"start": 1, "stop": 3})
 
 
+def test_expand_factor_group_list_with_dict_item_hints_unnesting() -> None:
+    with pytest.raises(TypeError, match=r"factor group list items must be strings, got dict.*sibling factor groups"):
+        expand_factor_group([{"prefix": "py3", "start": 9, "stop": 14}])
+
+
+def test_expand_factor_group_list_with_int_item_plain_error() -> None:
+    with pytest.raises(TypeError, match=r"factor group list items must be strings, got int$"):
+        expand_factor_group(["py312", 42])
+
+
 def test_expand_factor_group_keyed_dict() -> None:
     assert expand_factor_group({"ecosystem": ["oci", "python"]}) == ["oci", "python"]
 
@@ -253,6 +263,62 @@ def test_product_keyed_groups_listed(tox_project: ToxProjectCreator) -> None:
     result = proj.run("l")
     result.assert_success()
     for env in ("sync-oci-pw", "sync-oci-tt", "sync-python-pw", "sync-python-tt"):
+        assert env in result.out
+
+
+def test_env_list_bare_range_dict(tox_project: ToxProjectCreator) -> None:
+    proj = tox_project({
+        "tox.toml": textwrap.dedent("""\
+            env_list = [
+                "lint",
+                { prefix = "py3", start = 12, stop = 14 },
+            ]
+
+            [env_run_base]
+            package = "skip"
+            commands = [["python", "-c", "print('ok')"]]
+        """),
+    })
+    result = proj.run("l")
+    result.assert_success()
+    for env in ("lint", "py312", "py313", "py314"):
+        assert env in result.out
+
+
+def test_env_list_bare_labeled_dict(tox_project: ToxProjectCreator) -> None:
+    proj = tox_project({
+        "tox.toml": textwrap.dedent("""\
+            env_list = [
+                { ecosystem = ["oci", "python"] },
+            ]
+
+            [env_run_base]
+            package = "skip"
+            commands = [["python", "-c", "print('ok')"]]
+        """),
+    })
+    result = proj.run("l")
+    result.assert_success()
+    for env in ("oci", "python"):
+        assert env in result.out
+
+
+def test_env_list_bare_range_mixed_with_product(tox_project: ToxProjectCreator) -> None:
+    proj = tox_project({
+        "tox.toml": textwrap.dedent("""\
+            env_list = [
+                { prefix = "py3", start = 12, stop = 13 },
+                { product = [["min"], { prefix = "py3", start = 12, stop = 13 }] },
+            ]
+
+            [env_run_base]
+            package = "skip"
+            commands = [["python", "-c", "print('ok')"]]
+        """),
+    })
+    result = proj.run("l")
+    result.assert_success()
+    for env in ("py312", "py313", "min-py312", "min-py313"):
         assert env in result.out
 
 

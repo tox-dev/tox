@@ -129,7 +129,7 @@ class TomlLoader(Loader[TomlTypes]):
 
     @staticmethod
     def to_env_list(value: TomlTypes) -> EnvList:
-        from ._product import expand_product  # noqa: PLC0415
+        from ._product import expand_factor_group, expand_product  # noqa: PLC0415
 
         if not isinstance(value, list):
             msg = f"env_list must be a list, got {type(value).__name__}"
@@ -138,10 +138,19 @@ class TomlLoader(Loader[TomlTypes]):
         for item in value:
             if isinstance(item, str):
                 envs.append(item)
-            elif isinstance(item, dict) and "product" in item:
-                envs.extend(expand_product(item))
+            elif isinstance(item, dict):
+                if "product" in item:
+                    if "prefix" in item:
+                        msg = "env_list dict items cannot combine 'product' with 'prefix'"
+                        raise TypeError(msg)
+                    envs.extend(expand_product(item))
+                else:
+                    envs.extend(expand_factor_group(item))
             else:
-                msg = f"env_list items must be strings or product dicts, got {type(item).__name__}"
+                msg = (
+                    f"env_list items must be strings, product dicts, range dicts, or labeled dicts, "
+                    f"got {type(item).__name__}"
+                )
                 raise TypeError(msg)
         return EnvList(envs=envs)
 
