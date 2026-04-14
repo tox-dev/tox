@@ -1,2 +1,0 @@
-Nesting a range or labeled dict inside a ``product`` factor-group list now raises a clear error pointing at the
-un-nesting fix, instead of silently producing a malformed environment name - by :user:`gaborbernat`.

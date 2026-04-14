@@ -7,6 +7,23 @@
 .. towncrier release notes start
 
 **********************
+ v4.53.0 (2026-04-14)
+**********************
+
+Features - 4.53.0
+=================
+
+- TOML ``env_list`` now accepts bare range dicts (``{ prefix = "3.", start = 12, stop = 14 }``) and bare labeled dicts
+  (``{ ecosystem = ["oci", "python"] }``) as top-level items, removing the ``{ product = [...] }`` wrapper when there is
+  only a single factor group - by :user:`gaborbernat`. (:issue:`3923`)
+
+Bug fixes - 4.53.0
+==================
+
+- Nesting a range or labeled dict inside a ``product`` factor-group list now raises a clear error pointing at the
+  un-nesting fix, instead of silently producing a malformed environment name - by :user:`gaborbernat`. (:issue:`3923`)
+
+**********************
  v4.52.1 (2026-04-09)
 **********************
 
