@@ -289,8 +289,9 @@ Open-ended range bounds
 =======================
 
 Both INI and TOML support generative environment lists with open-ended ranges. INI uses curly-brace syntax
-(``py3{10-}``), while TOML uses range dicts (``{ prefix = "py3", start = 10 }``). Instead of probing the system for
-available interpreters (which would be slow and environment-dependent), tox tracks the `supported CPython versions
+(``3.{10-}``), while TOML uses range dicts that appear directly in ``env_list`` (``{ prefix = "3.", start = 10 }``) --
+no ``product`` wrapper is needed for a single axis. Instead of probing the system for available interpreters (which
+would be slow and environment-dependent), tox tracks the `supported CPython versions
 <https://devguide.python.org/versions/>`_ via two constants:
 
 - ``LATEST_PYTHON_MINOR_MIN`` -- the oldest supported CPython minor version (currently **10**, for Python 3.10)
@@ -302,6 +303,20 @@ upper bound; a left-open range ``{-13}`` uses ``LATEST_PYTHON_MINOR_MIN`` as its
 This design is deterministic and fast -- the expansion happens at configuration load time with no I/O -- while keeping
 environment lists future-proof across tox upgrades. Environments for interpreters not installed on the system are
 naturally skipped by the :ref:`skip_missing_interpreters` setting.
+
+Why TOML composes with structured dicts instead of a string DSL
+---------------------------------------------------------------
+
+INI's ``py3{10-14}-django{42,50}`` expression is a compact mini-language that parses curly-brace groups and numeric
+ranges out of the string itself. TOML deliberately does not do this. String items in ``env_list`` are always literal
+environment names; composition happens exclusively through structured dicts (range, labeled, and ``product``).
+
+This keeps the contract between configuration and parser minimal: TOML already handles quoting, escaping, and types, so
+there is no second grammar to learn and no ambiguity between "env name that happens to contain braces" and
+"expand-this-pattern". It also keeps the loader trivial — there is no string expansion pass, no recursive brace
+tokeniser, and no interaction with tox's other ``{...}`` substitutions (``{env_name}``, ``{posargs}``,
+``{factor:label}``). New matrix ergonomics are added by introducing a new dict shape, not by growing the DSL inside
+strings.
 
 Environment templates (``env_base``)
 ====================================

@@ -1012,7 +1012,7 @@ _CMD = 'commands = [["python", "--version"]]'
         pytest.param(
             f"depends = [1]\n{_CMD}",
             "depends",
-            "env_list items must be strings or product dicts, got int",
+            "env_list items must be strings, product dicts, range dicts, or labeled dicts, got int",
             id="depends-int-item",
         ),
         # --- factory fields ---

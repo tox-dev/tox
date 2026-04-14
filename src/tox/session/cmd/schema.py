@@ -132,6 +132,56 @@ def gen_schema(state: State) -> int:
                     },
                 ],
             },
+            "factor_range_dict": {
+                "type": "object",
+                "required": ["prefix"],
+                "properties": {
+                    "prefix": {"type": "string"},
+                    "start": {"type": "integer"},
+                    "stop": {"type": "integer"},
+                },
+                "additionalProperties": False,
+                "description": "range factor group: expands to prefix+N for N in [start, stop]",
+            },
+            "factor_labeled_dict": {
+                "type": "object",
+                "minProperties": 1,
+                "maxProperties": 1,
+                "not": {"required": ["prefix"]},
+                "additionalProperties": {"type": "array", "items": {"type": "string"}},
+                "description": "labeled factor group for {factor:label} substitution",
+            },
+            "product_factor_group": {
+                "oneOf": [
+                    {"type": "array", "items": {"type": "string"}},
+                    {"$ref": "#/definitions/factor_range_dict"},
+                    {"$ref": "#/definitions/factor_labeled_dict"},
+                ],
+            },
+            "env_list_item": {
+                "oneOf": [
+                    {"$ref": "#/definitions/subs"},
+                    {
+                        "type": "object",
+                        "required": ["product"],
+                        "properties": {
+                            "product": {
+                                "type": "array",
+                                "items": {"$ref": "#/definitions/product_factor_group"},
+                                "description": "factor groups for cartesian product expansion",
+                            },
+                            "exclude": {
+                                "type": "array",
+                                "items": {"type": "string"},
+                                "description": "environment names to exclude from product",
+                            },
+                        },
+                        "additionalProperties": False,
+                    },
+                    {"$ref": "#/definitions/factor_range_dict"},
+                    {"$ref": "#/definitions/factor_labeled_dict"},
+                ],
+            },
         },
     }
     print(json.dumps(json_schema, indent=2))  # noqa: T201
@@ -182,56 +232,7 @@ def _process_type(of_type: typing.Any) -> dict[str, typing.Any]:  # noqa: C901, 
     if typing.get_origin(of_type) is typing.Literal:
         return {"enum": list(typing.get_args(of_type))}
     if of_type is tox.config.types.EnvList:
-        return {
-            "type": "array",
-            "items": {
-                "oneOf": [
-                    {"$ref": "#/definitions/subs"},
-                    {
-                        "type": "object",
-                        "required": ["product"],
-                        "properties": {
-                            "product": {
-                                "type": "array",
-                                "items": {
-                                    "oneOf": [
-                                        {"type": "array", "items": {"type": "string"}},
-                                        {
-                                            "type": "object",
-                                            "required": ["prefix"],
-                                            "properties": {
-                                                "prefix": {"type": "string"},
-                                                "start": {"type": "integer"},
-                                                "stop": {"type": "integer"},
-                                            },
-                                            "additionalProperties": False,
-                                        },
-                                        {
-                                            "type": "object",
-                                            "minProperties": 1,
-                                            "maxProperties": 1,
-                                            "not": {"required": ["prefix"]},
-                                            "additionalProperties": {
-                                                "type": "array",
-                                                "items": {"type": "string"},
-                                            },
-                                            "description": "labeled factor group for {factor:label} substitution",
-                                        },
-                                    ],
-                                },
-                                "description": "factor groups for cartesian product expansion",
-                            },
-                            "exclude": {
-                                "type": "array",
-                                "items": {"type": "string"},
-                                "description": "environment names to exclude from product",
-                            },
-                        },
-                        "additionalProperties": False,
-                    },
-                ],
-            },
-        }
+        return {"type": "array", "items": {"$ref": "#/definitions/env_list_item"}}
     if of_type is tox.config.types.Command:
         return {"type": "array", "items": {"$ref": "#/definitions/subs"}}
     if typing.get_origin(of_type) in {list, set}:
