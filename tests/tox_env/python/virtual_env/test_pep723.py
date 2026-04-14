@@ -6,6 +6,8 @@ from typing import TYPE_CHECKING
 import pytest
 
 if TYPE_CHECKING:
+    from pytest_mock import MockerFixture
+
     from tox.pytest import ToxProjectCreator
 
 
@@ -125,3 +127,31 @@ def test_base_python_rejected(tox_project: ToxProjectCreator) -> None:
     )
     result.assert_failed()
     assert "cannot set base_python" in result.out
+
+
+def _tox_ini_with_script(script_value: str) -> str:
+    return f"[testenv:check]\nrunner = virtualenv-pep-723\nscript = {script_value}\n"
+
+
+def test_script_path_outside_tox_root_rejected(tox_project: ToxProjectCreator) -> None:
+    proj = tox_project({"tox.ini": _tox_ini_with_script("../escape.py")})
+    result = proj.run("r", "-e", "check", "--discover", sys.executable)
+    result.assert_failed()
+    assert "escapes tox_root" in result.out
+
+
+def test_script_path_traversal_via_dot_dot_rejected(tox_project: ToxProjectCreator) -> None:
+    proj = tox_project({"tox.ini": _tox_ini_with_script("subdir/../../etc/passwd")})
+    result = proj.run("r", "-e", "check", "--discover", sys.executable)
+    result.assert_failed()
+    assert "escapes tox_root" in result.out
+
+
+def test_script_file_too_large_rejected(tox_project: ToxProjectCreator, mocker: MockerFixture) -> None:
+    script = "# /// script\n# dependencies = []\n# ///\nprint('ok')\n"
+    proj = tox_project({"tox.ini": _tox_ini(), "check.py": script})
+    proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
+    mocker.patch("tox.tox_env.python.pep723._MAX_SCRIPT_BYTES", 1)
+    result = proj.run("r", "-e", "check", "--discover", sys.executable)
+    result.assert_failed()
+    assert "exceeds the 1 byte limit" in result.out

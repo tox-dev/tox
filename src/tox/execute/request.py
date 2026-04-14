@@ -7,6 +7,8 @@ from enum import Enum
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+from tox.util.redact import redact_argv
+
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
@@ -58,12 +60,21 @@ class ExecuteRequest:
     @property
     def shell_cmd(self) -> str:
         """:returns: the command to run as a shell command"""
+        return self._shell_cmd(redact=False)
+
+    @property
+    def shell_cmd_redacted(self) -> str:
+        """:returns: the command to run as a shell command with secret-looking flag values masked"""
+        return self._shell_cmd(redact=True)
+
+    def _shell_cmd(self, *, redact: bool) -> str:
         try:
             exe = str(Path(self.cmd[0]).relative_to(self.cwd))
         except ValueError:
             exe = self.cmd[0]
-        cmd = [exe]
-        cmd.extend(self.cmd[1:])
+        cmd = [exe, *self.cmd[1:]]
+        if redact:
+            cmd = redact_argv(cmd)
         return shell_cmd(cmd)
 
     def __repr__(self) -> str:

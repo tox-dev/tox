@@ -268,7 +268,7 @@ class Outcome:
     def __repr__(self) -> str:
         return (
             f"{self.__class__.__name__}: exit {self.exit_code} in {self.elapsed:.2f} seconds"
-            f" for {self.request.shell_cmd}"
+            f" for {self.request.shell_cmd_redacted}"
         )
 
     def assert_success(self) -> None:
@@ -314,7 +314,7 @@ class Outcome:
             self.exit_code,
             self.elapsed,
             req.cwd,
-            req.shell_cmd,
+            req.shell_cmd_redacted,
             metadata,
         )
 

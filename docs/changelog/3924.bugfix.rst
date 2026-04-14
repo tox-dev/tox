@@ -1,0 +1,10 @@
+Hardening pass on user-facing logging and config parsing:
+
+- Mask secret-looking ``--key=value`` flag values in command logs (terminal warnings, ``.tox/<env>/log/*.log``, and
+  ``Outcome`` ``__repr__``) using the same keyword regex previously applied to environment variable values.
+- Resolve PEP 723 ``script`` paths and reject any that escape ``tox_root``; cap the script read at 5 MiB so a symlink to
+  ``/dev/zero`` cannot exhaust memory.
+- Replace ``eval()`` of a constructed ``Literal[...]`` string in the CLI parser with a direct
+  ``Literal[tuple(action.choices)]`` subscript.
+- Pass ``timeout=30`` to ``urlopen`` when fetching a remote requirements file so a slow or unresponsive mirror cannot
+  hang ``tox`` indefinitely.

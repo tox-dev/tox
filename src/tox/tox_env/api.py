@@ -17,6 +17,7 @@ from tox.execute.request import ExecuteRequest
 from tox.tox_env.errors import Fail, Recreate, Skip
 from tox.tox_env.info import Info
 from tox.util.path import ensure_cachedir_tag, ensure_empty_dir, ensure_gitignore
+from tox.util.redact import redact_value
 
 if TYPE_CHECKING:
     from collections.abc import Iterator, Sequence
@@ -32,37 +33,6 @@ if TYPE_CHECKING:
     from tox.tox_env.installer import Installer
 
 LOGGER = logging.getLogger(__name__)
-# Based on original gitleaks rule named generic-api-key
-# See: https://github.com/gitleaks/gitleaks/blob/master/config/gitleaks.toml#L587
-SECRET_KEYWORDS = [
-    "access",
-    "api",
-    "auth",
-    "client",
-    "cred",
-    "key",
-    "passwd",
-    "password",
-    "private",
-    "pwd",
-    "secret",
-    "token",
-]
-SECRET_ENV_VAR_REGEX = re.compile(
-    r"""
-    .*                  # any prefix
-    ( {keywords} )      # one of the secret keywords
-    .*                  # any suffix
-    """.format(keywords="|".join(SECRET_KEYWORDS)),
-    re.VERBOSE | re.IGNORECASE,
-)
-
-
-def redact_value(name: str, value: str) -> str:
-    """Returns a redacted text if the key name looks like a secret."""
-    if SECRET_ENV_VAR_REGEX.match(name):
-        return "*" * len(value)
-    return value
 
 
 class ToxEnvCreateArgs(NamedTuple):
@@ -512,7 +482,7 @@ class ToxEnv(ABC):  # noqa: PLR0904
                 repr_cwd = f" {_CWD.relative_to(cwd)}"
             except ValueError:
                 repr_cwd = f" {cwd}"
-        LOGGER.warning("%s%s> %s", run_id, repr_cwd, request.shell_cmd)
+        LOGGER.warning("%s%s> %s", run_id, repr_cwd, request.shell_cmd_redacted)
         out_err = self.log_handler.stdout, self.log_handler.stderr
         if executor is None:
             executor = self.executor
@@ -553,7 +523,7 @@ class ToxEnv(ABC):  # noqa: PLR0904
             file.write(f"cwd: {request.cwd}\n")
             allow = ["*"] if request.allow is None else request.allow
             file.write(f"allow: {':'.join(allow)}\n")
-            file.write(f"cmd: {request.shell_cmd}\n")
+            file.write(f"cmd: {request.shell_cmd_redacted}\n")
             file.write(f"exit_code: {status.exit_code}\n")
         with log_file.open("ab") as file_b:
             if status.out:

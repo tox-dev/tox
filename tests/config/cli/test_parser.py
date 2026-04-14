@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import sys
 from argparse import Action
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Literal, get_args
 
 import pytest
 
@@ -86,6 +86,15 @@ def test_parser_unsupported_type() -> None:
     action = context.value.args[0]
     assert isinstance(action, Action)
     assert action.dest == "magic"
+
+
+def test_parser_choices_become_literal_type(monkeypatch: MonkeyPatch) -> None:
+    monkeypatch.setenv("TOX_MODE", "fast")
+    parser = ToxParser.base()
+    action = parser.add_argument("--mode", choices=["fast", "slow", "medium"], default="fast")
+    of_type = parser.get_type(action)
+    assert of_type == Literal["fast", "slow", "medium"]
+    assert set(get_args(of_type)) == {"fast", "slow", "medium"}
 
 
 def test_sub_sub_command() -> None:

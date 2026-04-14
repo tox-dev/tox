@@ -74,6 +74,20 @@ def test_env_log(tox_project: ToxProjectCreator) -> None:
     assert filename == {"1-commands[0].log"}
 
 
+def test_env_log_redacts_secret_argv(tox_project: ToxProjectCreator) -> None:
+    cmd = "commands=python -c 'pass' --token=hunter2 --cov=tox"
+    prj = tox_project({"tox.ini": f"[testenv]\npackage=skip\n{cmd}"})
+    result = prj.run("r")
+    result.assert_success()
+    log_dir = prj.path / ".tox" / "py" / "log"
+    content = (log_dir / "1-commands[0].log").read_text()
+    cmd_line = next(line for line in content.splitlines() if line.startswith("cmd:"))
+    assert "hunter2" not in cmd_line
+    assert "--token=*******" in cmd_line
+    assert "--cov=tox" in cmd_line  # innocuous flags untouched
+    assert "hunter2" not in result.out  # also masked in the LOGGER warning shown to the user
+
+
 def test_tox_env_pass_env_literal_exist() -> None:
     with patch("os.environ", {"A": "1"}):
         env = ToxEnv._load_pass_env(["A"])  # noqa: SLF001
