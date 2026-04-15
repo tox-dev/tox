@@ -71,10 +71,7 @@ class ArgumentParserWithEnvAndConfig(ArgumentParser):
                 else:
                     of_type = list[action.type]  # ty: ignore[invalid-type-form] # runtime generic from argparse action type
             elif isinstance(action, argparse._StoreAction) and action.choices:  # noqa: SLF001
-                loc = locals()
-                loc["Literal"] = Literal
-                as_literal = f"Literal[{', '.join(repr(i) for i in action.choices)}]"
-                of_type = eval(as_literal, globals(), loc)  # noqa: S307
+                of_type = Literal[tuple(action.choices)]  # ty: ignore[invalid-type-form] # dynamic Literal from choices
             elif action.default is not None:
                 of_type = type(action.default)
             elif isinstance(action, argparse._StoreConstAction) and action.const is not None:  # noqa: SLF001

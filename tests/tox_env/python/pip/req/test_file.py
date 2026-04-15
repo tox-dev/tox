@@ -506,11 +506,13 @@ def test_req_over_http(tmp_path: Path, flag: str, mocker: MockerFixture) -> None
     assert vars(req_file.options) == {"index_url": ["i"]}
     found = [str(i) for i in req_file.requirements]
     assert found == [f"{'-c ' if is_constraint else ''}a"]
+    # urlopen must be called with a timeout to avoid hanging on slow / unresponsive mirrors
+    assert url_open.call_args.kwargs.get("timeout") is not None
 
 
 def test_req_over_http_has_req(tmp_path: Path, mocker: MockerFixture) -> None:
     @contextmanager
-    def enter(url: str) -> Iterator[IO[bytes]]:
+    def enter(url: str, timeout: float | None = None) -> Iterator[IO[bytes]]:  # noqa: ARG001
         if url == "https://root.org/a.txt":
             yield BytesIO(b"-r b.txt")
         elif url == "https://root.org/b.txt":

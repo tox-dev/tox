@@ -43,6 +43,7 @@ _SCRIPT_METADATA_RE: Final = re.compile(
     """,
     re.VERBOSE,
 )
+_MAX_SCRIPT_BYTES: Final[int] = 5 * 1024 * 1024  # 5 MiB; PEP 723 metadata blocks are tiny in practice
 
 
 @dataclass(frozen=True)
@@ -92,11 +93,8 @@ class Pep723Mixin(Python, RunToxEnv):
         if self._base_python_explicitly_set:
             msg = "cannot set base_python with virtualenv-pep-723 runner; use requires-python in the script"
             raise Fail(msg)
-        if script := self.conf["script"]:
-            tox_root: Path = self.core["tox_root"]
-            if not (tox_root / script).is_file():
-                msg = f"script file not found: {tox_root / script}"
-                raise Fail(msg)
+        if self.conf["script"]:
+            self._resolve_script_path()  # validates containment and existence, raises Fail on issue
         metadata = self._get_script_metadata()
         if metadata.requires_python:
             info = self.base_python
@@ -114,16 +112,38 @@ class Pep723Mixin(Python, RunToxEnv):
 
     def _get_script_metadata(self) -> ScriptMetadata:
         if self._script_metadata is None:
-            if not (script := self.conf["script"]):
+            full_path = self._resolve_script_path()
+            if full_path is None:
                 self._script_metadata = ScriptMetadata()
                 return self._script_metadata
-            tox_root: Path = self.core["tox_root"]
-            full_path = tox_root / script
-            if not full_path.is_file():
-                self._script_metadata = ScriptMetadata()
-                return self._script_metadata
+            if (size := full_path.stat().st_size) > _MAX_SCRIPT_BYTES:
+                msg = f"script file {full_path} is {size} bytes, exceeds the {_MAX_SCRIPT_BYTES} byte limit"
+                raise Fail(msg)
             self._script_metadata = _parse_script_metadata(full_path.read_text(encoding="utf-8"))
         return self._script_metadata
+
+    def _resolve_script_path(self) -> Path | None:
+        """Resolve the configured script path and verify it stays inside ``tox_root``.
+
+        :returns: the resolved absolute path if the script exists, ``None`` if no script is configured.
+
+        :raises Fail: if the script escapes ``tox_root`` or does not exist when configured.
+
+        """
+        if not (script := self.conf["script"]):
+            return None
+        tox_root: Path = self.core["tox_root"]
+        root_resolved = tox_root.resolve()
+        full_path = (tox_root / script).resolve()
+        try:
+            full_path.relative_to(root_resolved)
+        except ValueError as exc:
+            msg = f"script path {script!r} escapes tox_root {tox_root}"
+            raise Fail(msg) from exc
+        if not full_path.is_file():
+            msg = f"script file not found: {tox_root / script}"
+            raise Fail(msg)
+        return full_path
 
 
 def _parse_script_metadata(script: str) -> ScriptMetadata:

@@ -12,7 +12,7 @@ import urllib.parse
 from argparse import ArgumentParser, Namespace
 from collections.abc import Iterator
 from pathlib import Path
-from typing import IO, Any, cast
+from typing import IO, Any, Final, cast
 from urllib.request import urlopen
 
 from packaging.requirements import InvalidRequirement, Requirement
@@ -81,6 +81,7 @@ _VERSION_SPECIFIER = re.compile(
 ReqFileLines = Iterator[tuple[int, str]]
 
 DEFAULT_INDEX_URL = "https://pypi.org/simple"
+_HTTP_TIMEOUT: Final[int] = 30  # seconds; bound on remote requirement file fetches to avoid hangs
 
 
 class ParsedRequirement:
@@ -300,7 +301,7 @@ class RequirementsFile:
         """
         scheme = get_url_scheme(url)
         if scheme in {"http", "https"}:
-            with urlopen(url) as response:  # noqa: S310
+            with urlopen(url, timeout=_HTTP_TIMEOUT) as response:  # noqa: S310
                 return self._read_decode(response)
         elif scheme == "file":
             url = url_to_path(url)
