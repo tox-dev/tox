@@ -23,7 +23,7 @@ repos:
     hooks:
       - id: validate-pyproject
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: "v0.15.10"
+    rev: "v0.15.11"
     hooks:
       - id: ruff-check
         args: ["--fix", "--unsafe-fixes", "--exit-non-zero-on-fix"]
@@ -44,7 +44,7 @@ repos:
     hooks:
       - id: rst-backticks
   - repo: https://github.com/rbubley/mirrors-prettier
-    rev: "v3.8.2"
+    rev: "v3.8.3"
     hooks:
       - id: prettier
   - repo: local
@@ -56,7 +56,7 @@ repos:
         exclude: ^docs/changelog/(\d+\.(feature|bugfix|doc|removal|misc).rst|template.jinja2)
         files: ^docs/changelog/
   - repo: https://github.com/zizmorcore/zizmor-pre-commit
-    rev: v1.24.0
+    rev: v1.24.1
     hooks:
       - id: zizmor
   - repo: meta
