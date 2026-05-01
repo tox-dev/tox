@@ -400,7 +400,17 @@
           "deprecated": true
         },
         "deps": {
-          "type": "string",
+          "oneOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/subs"
+              }
+            }
+          ],
           "description": "python dependencies with optional version specifiers, as specified by PEP-440"
         },
         "dependency_groups": {
@@ -553,7 +563,9 @@
               "type": "boolean"
             }
           },
-          "required": ["replace"],
+          "required": [
+            "replace"
+          ],
           "additionalProperties": false
         },
         {
@@ -585,14 +597,19 @@
               "type": "boolean"
             }
           },
-          "required": ["replace", "of"],
+          "required": [
+            "replace",
+            "of"
+          ],
           "additionalProperties": false
         }
       ]
     },
     "factor_range_dict": {
       "type": "object",
-      "required": ["prefix"],
+      "required": [
+        "prefix"
+      ],
       "properties": {
         "prefix": {
           "type": "string"
@@ -612,7 +629,9 @@
       "minProperties": 1,
       "maxProperties": 1,
       "not": {
-        "required": ["prefix"]
+        "required": [
+          "prefix"
+        ]
       },
       "additionalProperties": {
         "type": "array",
@@ -645,7 +664,9 @@
         },
         {
           "type": "object",
-          "required": ["product"],
+          "required": [
+            "product"
+          ],
           "properties": {
             "product": {
               "type": "array",

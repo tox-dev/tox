@@ -1,0 +1,1 @@
+Allow the generated TOML schema to validate array values for ``deps``.

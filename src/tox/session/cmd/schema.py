@@ -209,12 +209,18 @@ def _get_schema(conf: ConfigSet, path: str) -> dict[str, dict[str, typing.Any]]:
 
 
 def _process_type(of_type: typing.Any) -> dict[str, typing.Any]:  # noqa: C901, PLR0911, PLR0912
+    if of_type is tox.tox_env.python.pip.req_file.PythonDeps:
+        return {
+            "oneOf": [
+                {"type": "string"},
+                {"type": "array", "items": {"$ref": "#/definitions/subs"}},
+            ]
+        }
     if of_type in {
         Path,
         str,
         packaging.version.Version,
         packaging.requirements.Requirement,
-        tox.tox_env.python.pip.req_file.PythonDeps,
         tox.tox_env.python.pip.req_file.PythonConstraints,
     }:
         return {"type": "string"}
