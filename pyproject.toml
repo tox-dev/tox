@@ -104,6 +104,7 @@ test = [
 ]
 type = [
   "ty>=0.0.19",
+  "types-docutils>=0.21",
   { include-group = "docs" },
   { include-group = "release" },
   { include-group = "test" },

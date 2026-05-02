@@ -10,7 +10,7 @@ import sys
 from argparse import SUPPRESS, Action, ArgumentDefaultsHelpFormatter, ArgumentError, ArgumentParser, Namespace
 from pathlib import Path
 from types import UnionType
-from typing import TYPE_CHECKING, Any, Literal, TypeVar, cast
+from typing import TYPE_CHECKING, Any, Literal, TypeVar, cast, overload
 
 from colorama import Fore
 
@@ -26,9 +26,11 @@ else:  # pragma: <3.11 cover
     from typing_extensions import Self
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, Sequence
+    from collections.abc import Callable, Iterable, Sequence
 
     from tox.session.state import State
+
+_N = TypeVar("_N", bound=Namespace)
 
 
 class ArgumentParserWithEnvAndConfig(ArgumentParser):
@@ -80,12 +82,21 @@ class ArgumentParserWithEnvAndConfig(ArgumentParser):
                 raise TypeError(action)
         return of_type
 
-    def parse_args(  # avoid defining all overloads
+    @overload
+    def parse_args(self, args: Iterable[str] | None = None, namespace: None = None) -> Namespace: ...
+
+    @overload
+    def parse_args(self, args: Iterable[str] | None, namespace: _N) -> _N: ...
+
+    @overload
+    def parse_args(self, *, namespace: _N) -> _N: ...
+
+    def parse_args(
         self,
-        args: Sequence[str] | None = None,
-        namespace: Namespace | None = None,
-    ) -> Namespace:
-        res, argv = self.parse_known_args(args, namespace)
+        args: Iterable[str] | None = None,
+        namespace: _N | None = None,
+    ) -> _N:
+        res, argv = self.parse_known_args(list(args) if args is not None else None, namespace)
         if argv:
             self.error(
                 f"unrecognized arguments: {' '.join(argv)}\n"
@@ -93,7 +104,7 @@ class ArgumentParserWithEnvAndConfig(ArgumentParser):
             )
         if getattr(res, "no_capture", False) and getattr(res, "result_json", None):
             self.error("argument -i/--no-capture: not allowed with argument --result-json")
-        return cast("Namespace", res)
+        return cast("_N", res)
 
 
 class HelpFormatter(ArgumentDefaultsHelpFormatter):
@@ -374,29 +385,41 @@ class ToxParser(ArgumentParserWithEnvAndConfig):
         add_core_arguments(self)
         self.fix_defaults()
 
+    @overload
+    def parse_known_args(
+        self, args: Iterable[str] | None = None, namespace: None = None
+    ) -> tuple[Parsed, list[str]]: ...
+
+    @overload
+    def parse_known_args(self, args: Iterable[str] | None, namespace: _N) -> tuple[_N, list[str]]: ...
+
+    @overload
+    def parse_known_args(self, *, namespace: _N) -> tuple[_N, list[str]]: ...
+
     def parse_known_args(
         self,
-        args: Sequence[str] | None = None,
-        namespace: Parsed | None = None,
-    ) -> tuple[Parsed, list[str]]:
-        if args is None:
-            args = sys.argv[1:]
+        args: Iterable[str] | None = None,
+        namespace: _N | None = None,
+    ) -> tuple[_N, list[str]]:
+        args_list: list[str] = list(args) if args is not None else sys.argv[1:]
         cmd_at: int | None = None
-        if self._cmd is not None and args:
-            for at, arg in enumerate(args):
+        if self._cmd is not None and args_list:
+            for at, arg in enumerate(args_list):
                 if arg in self._cmd.choices:
                     cmd_at = at
                     break
             else:
                 cmd_at = None
         if cmd_at is not None:  # if we found a command move it to the start
-            args = args[cmd_at], *args[:cmd_at], *args[cmd_at + 1 :]
-        elif tuple(args) not in {("--help",), ("-h",)} and (self._cmd is not None and "legacy" in self._cmd.choices):
+            args_list = [args_list[cmd_at], *args_list[:cmd_at], *args_list[cmd_at + 1 :]]
+        elif tuple(args_list) not in {("--help",), ("-h",)} and (
+            self._cmd is not None and "legacy" in self._cmd.choices
+        ):
             # on help no mangling needed, and we also want to insert once we have legacy to insert
-            args = "legacy", *args
+            args_list = ["legacy", *args_list]
         result = Parsed() if namespace is None else namespace
-        _, args = super().parse_known_args(args, namespace=result)
-        return result, args
+        _, remainder = super().parse_known_args(args_list, namespace=result)
+        return cast("tuple[_N, list[str]]", (result, remainder))
 
 
 def add_core_arguments(parser: ArgumentParser) -> None:

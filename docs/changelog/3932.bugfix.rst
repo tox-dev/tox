@@ -1,0 +1,5 @@
+Correct type annotations for ``ArgumentParser.parse_args`` and ``parse_known_args`` overrides following `typeshed PR
+#15613 <https://github.com/python/typeshed/pull/15613>`_, which widened the ``args`` parameter from ``Sequence[str]`` to
+``Iterable[str]``. The narrower type in tox's overrides violated the Liskov substitution principle and caused
+``invalid-method-override`` errors with ``ty`` 0.0.33. Also correct the ``option_spec`` annotation in
+``docs/tox_conf.py`` to ``ClassVar[dict[str, Callable[[str], Any]]]`` matching the docutils stubs type.
