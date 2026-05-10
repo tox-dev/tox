@@ -1,4 +1,3 @@
-Tolerate ``virtualenv.discovery.py_spec.PythonSpec`` instances that do not expose the
-``machine`` and ``free_threaded`` attributes (e.g. ``virtualenv < 20.30``), so
-``tox`` does not crash with ``AttributeError`` on older system-packaged virtualenv -
-by :user:`SAY-5`.
+Tolerate ``virtualenv.discovery.py_spec.PythonSpec`` instances that do not expose the ``machine`` and ``free_threaded``
+attributes (e.g. ``virtualenv < 20.30``), so ``tox`` does not crash with ``AttributeError`` on older system-packaged
+virtualenv - by :user:`SAY-5`.
