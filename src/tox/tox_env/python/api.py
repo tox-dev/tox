@@ -276,9 +276,9 @@ class Python(ToxEnv, ABC):
                     else:
                         spec_base = cls.python_spec_for_path(path)
                 if any(
-                    getattr(spec_base, key) != getattr(spec_name, key)
+                    getattr(spec_base, key, None) != getattr(spec_name, key, None)
                     for key in ("implementation", "major", "minor", "micro", "architecture", "machine", "free_threaded")
-                    if getattr(spec_name, key) is not None
+                    if getattr(spec_name, key, None) is not None
                 ):
                     msg = f"env name {env_name} conflicting with base python {base_python}"
                     if ignore_base_python_conflict:

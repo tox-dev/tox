@@ -78,6 +78,24 @@ def test_validate_base_python_conflicting_factors_no_ignore() -> None:
         Python._validate_base_python("unit-py3.10-2.16", ["python3"], ignore_base_python_conflict=False)  # noqa: SLF001
 
 
+def test_validate_base_python_old_virtualenv_missing_attrs(mocker: MockerFixture) -> None:
+    # Older virtualenv versions ship a PythonSpec without ``machine`` / ``free_threaded``.
+    # ``_validate_base_python`` must not raise AttributeError on those platforms.
+    major, minor = sys.version_info[0:2]
+    legacy_spec = SimpleNamespace(
+        implementation="CPython",
+        major=major,
+        minor=minor,
+        micro=None,
+        architecture=None,
+        path=None,
+    )
+    mocker.patch("tox.tox_env.python.api.PythonSpec.from_string_spec", return_value=legacy_spec)
+    base = [f"python{major}.{minor}"]
+    result = Python._validate_base_python(f"py{major}{minor}", base, ignore_base_python_conflict=False)  # noqa: SLF001
+    assert result == base
+
+
 def test_build_wheel_in_non_base_pkg_env(
     tox_project: ToxProjectCreator,
     patch_prev_py: PatchPrevPy,
