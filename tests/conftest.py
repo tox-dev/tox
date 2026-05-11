@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import contextlib
 import os
+import site
 import sys
 import sysconfig
 from pathlib import Path
@@ -28,6 +30,26 @@ if TYPE_CHECKING:
 
 pytest_plugins = "tox.pytest"
 HERE = Path(__file__).absolute().parent
+
+
+def _strip_broken_namespace_pth_files() -> None:
+    # Legacy setuptools-generated *-nspkg.pth files (from PasteDeploy and repoze.lru, pulled in
+    # transitively by devpi-server) read sys._getframe(1).f_locals['sitedir']. Python 3.13
+    # rewrote site.py as a frozen module and this lookup no longer resolves, so each Python
+    # startup emits a KeyError to stderr that breaks tests asserting on subprocess stderr.
+    # Removing the files is safe: the paste and repoze namespaces still resolve via PEP 420.
+    legacy = b"sys._getframe(1).f_locals['sitedir']"
+    for raw in site.getsitepackages():
+        site_dir = Path(raw)
+        if not site_dir.is_dir():
+            continue
+        for pth in site_dir.glob("*-nspkg.pth"):
+            with contextlib.suppress(OSError):
+                if legacy in pth.read_bytes():
+                    pth.unlink()
+
+
+_strip_broken_namespace_pth_files()
 
 
 @pytest.fixture(scope="session")
