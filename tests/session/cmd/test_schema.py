@@ -177,6 +177,7 @@ def test_schema_covers_every_replace_type(
 
     Catches the failure mode behind issue #3939, where a new replace form (``if``) was added to the loader but never
     wired into the JSON schema.
+
     """
     in_schema = {
         name.removeprefix("replace_") for name in committed_schema["definitions"] if name.startswith("replace_")
