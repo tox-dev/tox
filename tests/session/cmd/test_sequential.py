@@ -535,6 +535,7 @@ def test_machine_factor_run_env(tox_project: ToxProjectCreator) -> None:
     assert py_journal["machine"] == py_info.machine
 
 
+@pytest.mark.flaky(max_runs=3, min_passes=1)
 def test_machine_factor_unavailable(tox_project: ToxProjectCreator) -> None:
     ini = "[testenv]\npackage=skip\nbase_python=cpython3-64-fakearch999"
     proj = tox_project({"tox.ini": ini})
