@@ -281,30 +281,51 @@
         "commands_pre": {
           "type": "array",
           "items": {
-            "type": "array",
-            "items": {
-              "$ref": "#/definitions/subs"
-            }
+            "oneOf": [
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/definitions/subs"
+                }
+              },
+              {
+                "$ref": "#/definitions/replace_object"
+              }
+            ]
           },
           "description": "the commands to be called before testing"
         },
         "commands": {
           "type": "array",
           "items": {
-            "type": "array",
-            "items": {
-              "$ref": "#/definitions/subs"
-            }
+            "oneOf": [
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/definitions/subs"
+                }
+              },
+              {
+                "$ref": "#/definitions/replace_object"
+              }
+            ]
           },
           "description": "the commands to be called for testing"
         },
         "commands_post": {
           "type": "array",
           "items": {
-            "type": "array",
-            "items": {
-              "$ref": "#/definitions/subs"
-            }
+            "oneOf": [
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/definitions/subs"
+                }
+              },
+              {
+                "$ref": "#/definitions/replace_object"
+              }
+            ]
           },
           "description": "the commands to be called after testing"
         },
@@ -315,10 +336,17 @@
         "recreate_commands": {
           "type": "array",
           "items": {
-            "type": "array",
-            "items": {
-              "$ref": "#/definitions/subs"
-            }
+            "oneOf": [
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/definitions/subs"
+                }
+              },
+              {
+                "$ref": "#/definitions/replace_object"
+              }
+            ]
           },
           "description": "commands to run before the environment is removed during recreation (e.g. cache cleanup)"
         },
@@ -434,10 +462,17 @@
         "extra_setup_commands": {
           "type": "array",
           "items": {
-            "type": "array",
-            "items": {
-              "$ref": "#/definitions/subs"
-            }
+            "oneOf": [
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/definitions/subs"
+                }
+              },
+              {
+                "$ref": "#/definitions/replace_object"
+              }
+            ]
           },
           "description": "commands to execute after setup (deps and package install) but before test commands"
         },
@@ -538,71 +573,214 @@
           "type": "string"
         },
         {
-          "type": "object",
-          "properties": {
-            "replace": {
-              "type": "string"
-            },
-            "name": {
-              "type": "string"
-            },
-            "default": {
-              "oneOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/definitions/subs"
-                  }
-                }
-              ]
-            },
-            "extend": {
-              "type": "boolean"
-            }
-          },
-          "required": ["replace"],
-          "additionalProperties": false
+          "$ref": "#/definitions/replace_env"
         },
         {
-          "type": "object",
-          "properties": {
-            "replace": {
+          "$ref": "#/definitions/replace_ref"
+        },
+        {
+          "$ref": "#/definitions/replace_posargs"
+        },
+        {
+          "$ref": "#/definitions/replace_glob"
+        },
+        {
+          "$ref": "#/definitions/replace_if"
+        }
+      ]
+    },
+    "replace_env": {
+      "type": "object",
+      "description": "substitute the value of an environment variable",
+      "properties": {
+        "replace": {
+          "const": "env"
+        },
+        "name": {
+          "type": "string"
+        },
+        "default": {
+          "oneOf": [
+            {
               "type": "string"
             },
-            "of": {
+            {
               "type": "array",
               "items": {
-                "type": "string"
+                "$ref": "#/definitions/subs"
               }
-            },
-            "default": {
-              "oneOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/definitions/subs"
-                  }
-                }
-              ]
-            },
-            "extend": {
-              "type": "boolean"
             }
-          },
-          "required": ["replace", "of"],
-          "additionalProperties": false
+          ]
+        },
+        "extend": {
+          "type": "boolean"
+        },
+        "marker": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "replace",
+        "name"
+      ],
+      "additionalProperties": false
+    },
+    "replace_ref": {
+      "type": "object",
+      "description": "substitute the value of another configuration key",
+      "properties": {
+        "replace": {
+          "const": "ref"
+        },
+        "of": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "env": {
+          "type": "string"
+        },
+        "key": {
+          "type": "string"
+        },
+        "default": {
+          "oneOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/subs"
+              }
+            }
+          ]
+        },
+        "extend": {
+          "type": "boolean"
+        },
+        "marker": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "replace"
+      ],
+      "additionalProperties": false
+    },
+    "replace_posargs": {
+      "type": "object",
+      "description": "substitute the positional arguments passed to tox",
+      "properties": {
+        "replace": {
+          "const": "posargs"
+        },
+        "default": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/subs"
+          }
+        },
+        "extend": {
+          "type": "boolean"
+        },
+        "marker": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "replace"
+      ],
+      "additionalProperties": false
+    },
+    "replace_glob": {
+      "type": "object",
+      "description": "substitute matches of a filesystem glob pattern",
+      "properties": {
+        "replace": {
+          "const": "glob"
+        },
+        "pattern": {
+          "type": "string"
+        },
+        "default": {
+          "oneOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/subs"
+              }
+            }
+          ]
+        },
+        "extend": {
+          "type": "boolean"
+        },
+        "marker": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "replace",
+        "pattern"
+      ],
+      "additionalProperties": false
+    },
+    "replace_if": {
+      "type": "object",
+      "description": "conditional substitution based on env vars, factors, or env_name",
+      "properties": {
+        "replace": {
+          "const": "if"
+        },
+        "condition": {
+          "type": "string"
+        },
+        "then": true,
+        "else": true,
+        "extend": {
+          "type": "boolean"
+        },
+        "marker": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "replace",
+        "condition",
+        "then"
+      ],
+      "additionalProperties": false
+    },
+    "replace_object": {
+      "description": "any of the table-form replacements; usable wherever a list item can be a replacement",
+      "anyOf": [
+        {
+          "$ref": "#/definitions/replace_env"
+        },
+        {
+          "$ref": "#/definitions/replace_ref"
+        },
+        {
+          "$ref": "#/definitions/replace_posargs"
+        },
+        {
+          "$ref": "#/definitions/replace_glob"
+        },
+        {
+          "$ref": "#/definitions/replace_if"
         }
       ]
     },
     "factor_range_dict": {
       "type": "object",
-      "required": ["prefix"],
+      "required": [
+        "prefix"
+      ],
       "properties": {
         "prefix": {
           "type": "string"
@@ -622,7 +800,9 @@
       "minProperties": 1,
       "maxProperties": 1,
       "not": {
-        "required": ["prefix"]
+        "required": [
+          "prefix"
+        ]
       },
       "additionalProperties": {
         "type": "array",
@@ -655,7 +835,9 @@
         },
         {
           "type": "object",
-          "required": ["product"],
+          "required": [
+            "product"
+          ],
           "properties": {
             "product": {
               "type": "array",

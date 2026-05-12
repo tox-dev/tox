@@ -98,38 +98,103 @@ def gen_schema(state: State) -> int:
             "subs": {
                 "anyOf": [
                     {"type": "string"},
-                    {
-                        "type": "object",
-                        "properties": {
-                            "replace": {"type": "string"},
-                            "name": {"type": "string"},
-                            "default": {
-                                "oneOf": [
-                                    {"type": "string"},
-                                    {"type": "array", "items": {"$ref": "#/definitions/subs"}},
-                                ]
-                            },
-                            "extend": {"type": "boolean"},
-                        },
-                        "required": ["replace"],
-                        "additionalProperties": False,
+                    {"$ref": "#/definitions/replace_env"},
+                    {"$ref": "#/definitions/replace_ref"},
+                    {"$ref": "#/definitions/replace_posargs"},
+                    {"$ref": "#/definitions/replace_glob"},
+                    {"$ref": "#/definitions/replace_if"},
+                ],
+            },
+            "replace_env": {
+                "type": "object",
+                "description": "substitute the value of an environment variable",
+                "properties": {
+                    "replace": {"const": "env"},
+                    "name": {"type": "string"},
+                    "default": {
+                        "oneOf": [
+                            {"type": "string"},
+                            {"type": "array", "items": {"$ref": "#/definitions/subs"}},
+                        ]
                     },
-                    {
-                        "type": "object",
-                        "properties": {
-                            "replace": {"type": "string"},
-                            "of": {"type": "array", "items": {"type": "string"}},
-                            "default": {
-                                "oneOf": [
-                                    {"type": "string"},
-                                    {"type": "array", "items": {"$ref": "#/definitions/subs"}},
-                                ]
-                            },
-                            "extend": {"type": "boolean"},
-                        },
-                        "required": ["replace", "of"],
-                        "additionalProperties": False,
+                    "extend": {"type": "boolean"},
+                    "marker": {"type": "string"},
+                },
+                "required": ["replace", "name"],
+                "additionalProperties": False,
+            },
+            "replace_ref": {
+                "type": "object",
+                "description": "substitute the value of another configuration key",
+                "properties": {
+                    "replace": {"const": "ref"},
+                    "of": {"type": "array", "items": {"type": "string"}},
+                    "env": {"type": "string"},
+                    "key": {"type": "string"},
+                    "default": {
+                        "oneOf": [
+                            {"type": "string"},
+                            {"type": "array", "items": {"$ref": "#/definitions/subs"}},
+                        ]
                     },
+                    "extend": {"type": "boolean"},
+                    "marker": {"type": "string"},
+                },
+                "required": ["replace"],
+                "additionalProperties": False,
+            },
+            "replace_posargs": {
+                "type": "object",
+                "description": "substitute the positional arguments passed to tox",
+                "properties": {
+                    "replace": {"const": "posargs"},
+                    "default": {"type": "array", "items": {"$ref": "#/definitions/subs"}},
+                    "extend": {"type": "boolean"},
+                    "marker": {"type": "string"},
+                },
+                "required": ["replace"],
+                "additionalProperties": False,
+            },
+            "replace_glob": {
+                "type": "object",
+                "description": "substitute matches of a filesystem glob pattern",
+                "properties": {
+                    "replace": {"const": "glob"},
+                    "pattern": {"type": "string"},
+                    "default": {
+                        "oneOf": [
+                            {"type": "string"},
+                            {"type": "array", "items": {"$ref": "#/definitions/subs"}},
+                        ]
+                    },
+                    "extend": {"type": "boolean"},
+                    "marker": {"type": "string"},
+                },
+                "required": ["replace", "pattern"],
+                "additionalProperties": False,
+            },
+            "replace_if": {
+                "type": "object",
+                "description": "conditional substitution based on env vars, factors, or env_name",
+                "properties": {
+                    "replace": {"const": "if"},
+                    "condition": {"type": "string"},
+                    "then": True,
+                    "else": True,
+                    "extend": {"type": "boolean"},
+                    "marker": {"type": "string"},
+                },
+                "required": ["replace", "condition", "then"],
+                "additionalProperties": False,
+            },
+            "replace_object": {
+                "description": "any of the table-form replacements; usable wherever a list item can be a replacement",
+                "anyOf": [
+                    {"$ref": "#/definitions/replace_env"},
+                    {"$ref": "#/definitions/replace_ref"},
+                    {"$ref": "#/definitions/replace_posargs"},
+                    {"$ref": "#/definitions/replace_glob"},
+                    {"$ref": "#/definitions/replace_if"},
                 ],
             },
             "factor_range_dict": {
@@ -245,7 +310,15 @@ def _process_type(of_type: typing.Any) -> dict[str, typing.Any]:  # noqa: C901, 
         if typing.get_args(of_type)[0] in {str, packaging.requirements.Requirement}:
             return {"type": "array", "items": {"$ref": "#/definitions/subs"}}
         if typing.get_args(of_type)[0] is tox.config.types.Command:
-            return {"type": "array", "items": _process_type(typing.get_args(of_type)[0])}
+            return {
+                "type": "array",
+                "items": {
+                    "oneOf": [
+                        _process_type(typing.get_args(of_type)[0]),
+                        {"$ref": "#/definitions/replace_object"},
+                    ]
+                },
+            }
         msg = f"Unknown list type: {of_type}"
         raise ValueError(msg)
     if of_type is tox.config.set_env.SetEnv:

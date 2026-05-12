@@ -100,6 +100,7 @@ test = [
   "re-assert>=1.1",
   "setuptools<82,>=81",
   "time-machine>=3.2; implementation_name!='pypy'",
+  "tombi>=0.11.3",
   "wheel>=0.46.3",
 ]
 type = [

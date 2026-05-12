@@ -1,0 +1,5 @@
+Extend the generated TOML schema to cover every ``replace`` table form
+(``env``, ``ref``, ``posargs``, ``glob``, ``if``), including conditional
+replacements used inside ``commands``. A guard test asserts the schema stays
+in sync with the loader implementation so future replace types cannot be
+added without a corresponding schema entry.
