@@ -153,3 +153,18 @@ session
 
 .. autoclass:: tox.tox_env.info.Info
     :members:
+
+testing
+=======
+
+.. automodule:: tox.pytest
+    :no-members:
+
+.. autoclass:: tox.pytest.ToxProject
+    :members:
+
+.. autoclass:: tox.pytest.ToxProjectCreator
+    :members:
+
+.. autoclass:: tox.pytest.ToxRunOutcome
+    :members:

@@ -70,6 +70,7 @@ uv_seed = true
 description = "build documentation"
 base_python = [ "3.14" ]
 dependency_groups = [ "docs" ]
+extras = [ "testing" ]
 commands = [
   [
     "sphinx-build",
