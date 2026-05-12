@@ -1,0 +1,2 @@
+Declare the runtime dependencies of the ``tox.pytest`` plugin (``pytest``, ``devpi-process`` and ``pytest-mock``) under
+a new ``testing`` extra, so plugin authors can pull them in via ``tox[testing]`` - by :user:`gaborbernat`.

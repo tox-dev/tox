@@ -65,6 +65,11 @@ dependencies = [
 optional-dependencies.completion = [
   "argcomplete>=3.6.3",
 ]
+optional-dependencies.testing = [
+  "devpi-process>=1.1.1",
+  "pytest>=9.0.2",
+  "pytest-mock>=3.15.1",
+]
 urls."Release Notes" = "https://tox.wiki/en/latest/changelog.html"
 urls.Documentation = "https://tox.wiki"
 urls.Homepage = "http://tox.readthedocs.org"

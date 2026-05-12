@@ -200,6 +200,27 @@ In ``src/tox_myplugin/__init__.py``, define your hooks exactly as in ``toxfile.p
 
 After ``pip install tox-myplugin``, tox discovers the plugin automatically via the entry point.
 
+*****************
+ Testing plugins
+*****************
+
+tox ships a pytest plugin at :mod:`tox.pytest` with fixtures for spinning up isolated tox projects, faking package
+indexes, and capturing output. To use it, declare a dependency on the ``testing`` extra so that ``pytest``,
+``pytest-mock`` and ``devpi-process`` are pulled in:
+
+.. code-block:: toml
+
+    [dependency-groups]
+    test = [
+      "tox[testing]",
+    ]
+
+Then register the plugin in your ``conftest.py``:
+
+.. code-block:: python
+
+    pytest_plugins = "tox.pytest"
+
 *********
  Logging
 *********
