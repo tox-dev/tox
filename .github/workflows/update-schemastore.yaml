@@ -19,10 +19,12 @@ jobs:
           persist-credentials: false
       - name: Fork and clone SchemaStore
         run: gh repo fork SchemaStore/schemastore --clone -- /tmp/schemastore
-      - name: Create or reset branch from upstream
+      - name: Sync fork's master with upstream
+        run: gh repo sync "$(gh api user --jq .login)/schemastore" -b master
+      - name: Create or reset branch from synced fork
         run: |
-          git fetch upstream master
-          git switch -C "$BRANCH" upstream/master
+          git fetch origin master
+          git switch -C "$BRANCH" origin/master
         working-directory: /tmp/schemastore
       - name: Update schema and check for changes
         id: diff
