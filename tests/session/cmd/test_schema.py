@@ -120,8 +120,9 @@ def _discover_replace_types() -> set[str]:
 def test_schema_covers_every_replace_type() -> None:
     """Guard: every `replace_type == "..."` in _replace.py needs a schema variant.
 
-    This catches the failure mode behind issue #3939, where a new replace form
-    (`if`) was added to the loader but never wired into the JSON schema.
+    This catches the failure mode behind issue #3939, where a new replace form (`if`) was added to the loader but never
+    wired into the JSON schema.
+
     """
     implemented = _discover_replace_types()
     schema = json.loads(SCHEMA_PATH.read_text())
