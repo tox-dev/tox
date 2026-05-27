@@ -36,7 +36,7 @@ from tox.tox_env.python.package import (
 from tox.tox_env.python.virtual_env.api import VirtualEnv
 from tox.util.file_view import create_session_view
 
-from .util import dependencies_with_extras, dependencies_with_extras_from_markers
+from .util import dependencies_with_extras, dependencies_with_extras_from_markers, safe_extractall
 
 if TYPE_CHECKING:
     from collections.abc import Generator, Iterator, Sequence
@@ -320,22 +320,7 @@ class Pep517VenvPackager(PythonPackageToxEnv, ABC):
             # Step 2: Extract sdist to env_tmp_dir (auto-cleaned by tox lifecycle)
             (extract_dir := self.env_tmp_dir / "sdist-extract").mkdir(parents=True, exist_ok=True)
             with tarfile.open(str(sdist), "r:*") as tar:
-                if sys.version_info >= (3, 12):  # pragma: >=3.12 cover
-                    try:
-                        tar.extractall(path=str(extract_dir), filter="data")
-                    except tarfile.OutsideDestinationError as exc:
-                        msg = f"tar member {exc.tarinfo.name!r} would extract outside of {extract_dir}"
-                        raise Fail(msg) from exc
-                else:  # pragma: <3.12 cover
-                    dest_resolved = extract_dir.resolve()
-                    safe_members: list[tarfile.TarInfo] = []
-                    for member in tar.getmembers():
-                        member_path = (extract_dir / member.name).resolve()
-                        if not str(member_path).startswith(f"{dest_resolved}{os.sep}") and member_path != dest_resolved:
-                            msg = f"tar member {member.name!r} would extract outside of {extract_dir}"
-                            raise Fail(msg)
-                        safe_members.append(member)
-                    tar.extractall(path=str(extract_dir), members=safe_members)  # noqa: S202
+                safe_extractall(tar, extract_dir)
             sdist_source_root = self._find_sdist_root(extract_dir)
 
             # Step 3: Get wheel_build_env child and point it at extracted sdist
