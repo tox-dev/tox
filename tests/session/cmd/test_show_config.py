@@ -207,7 +207,7 @@ def test_pass_env_config_default(tox_project: ToxProjectCreator, stdout_is_atty:
         + (["SSH_AGENT_PID", "SSH_AUTH_SOCK"] if not is_win else [])
         + ["SSL_CERT_FILE"]
         + (["SYSTEMDRIVE", "SYSTEMROOT", "TEMP"] if is_win else [])
-        + (["TERM"] if stdout_is_atty else [])
+        + (["TERM", "TERMINFO"] if stdout_is_atty else [])
         + (["TMP", "USERPROFILE"] if is_win else ["TMPDIR"])
         + ["VIRTUALENV_*"]
         + (["WINDIR"] if is_win else [])

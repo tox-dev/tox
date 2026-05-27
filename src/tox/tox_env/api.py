@@ -235,8 +235,8 @@ class ToxEnv(ABC):  # noqa: PLR0904
             "NETRC",  # used by pip and netrc modules
             "PYTHON_GIL",  # allows controlling python gil
         ]
-        if sys.stdout.isatty():  # if we're on a interactive shell pass on the TERM
-            env.append("TERM")
+        if sys.stdout.isatty():  # if we're on a interactive shell pass on the TERM and TERMINFO
+            env.extend(("TERM", "TERMINFO"))  # needed when TERM isn't in system terminfo db
         if sys.platform == "win32":  # pragma: win32 cover
             env.extend(
                 [

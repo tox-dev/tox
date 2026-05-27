@@ -1,0 +1,2 @@
+Automatically pass the TERMINFO environment variable to tox subprocesses if the output is a TTY. This variable is used
+by Ghostty to communicate terminal capabilities to programs.
