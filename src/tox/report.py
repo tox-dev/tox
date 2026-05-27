@@ -81,14 +81,14 @@ class _LogThreadLocal(local):
     @contextmanager
     def suspend_out_err(self, yes: bool, out_err: OutErr | None = None) -> Iterator[OutErr]:  # noqa: FBT001
         previous_out, previous_err = self.out_err
+        if yes:
+            if out_err is None:  # pragma: no branch
+                out = self._make(f"out-{self.name}", previous_out)
+                err = self._make(f"err-{self.name}", previous_err)
+            else:
+                out, err = out_err  # pragma: no cover
+            self.out_err = out, err
         try:
-            if yes:
-                if out_err is None:  # pragma: no branch
-                    out = self._make(f"out-{self.name}", previous_out)
-                    err = self._make(f"err-{self.name}", previous_err)
-                else:
-                    out, err = out_err  # pragma: no cover
-                self.out_err = out, err
             yield self.out_err
         finally:
             if yes:

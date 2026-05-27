@@ -157,17 +157,19 @@ def run_provision(name: str, state: State) -> int:
     lock_path.parent.mkdir(parents=True, exist_ok=True)
     with FileLock(lock_path):
         try:
-            tox_env.setup()
-            args: list[str] = [str(env_python), "-m", "tox"]
-            if state.conf.options.is_colored and "--colored" not in state.args:
-                args.extend(["--colored", "yes"])
-            args.extend(state.args)
-            outcome = tox_env.execute(
-                cmd=args, stdin=StdinSource.user_only(), show=True, run_id="provision", cwd=Path.cwd()
-            )
-            return cast("int", outcome.exit_code)
+            return _setup_and_execute(tox_env, env_python, state)
         except Skip as exception:
             msg = f"cannot provision tox environment {tox_env.conf['env_name']} because {exception}"
             raise HandledError(msg) from exception
         finally:
             tox_env.teardown()
+
+
+def _setup_and_execute(tox_env: PythonRun, env_python: Path, state: State) -> int:
+    tox_env.setup()
+    args: list[str] = [str(env_python), "-m", "tox"]
+    if state.conf.options.is_colored and "--colored" not in state.args:
+        args.extend(["--colored", "yes"])
+    args.extend(state.args)
+    outcome = tox_env.execute(cmd=args, stdin=StdinSource.user_only(), show=True, run_id="provision", cwd=Path.cwd())
+    return cast("int", outcome.exit_code)

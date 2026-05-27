@@ -32,15 +32,18 @@ class IniConfig:
         if self.has_config_file:
             self.config_file = self.config_file.absolute()
             try:
-                parser = ConfigParser(interpolation=None)
-                with self.config_file.open() as file_handler:
-                    parser.read_file(file_handler)
-                self.has_tox_section = parser.has_section(CORE.key)
-                if self.has_tox_section:
-                    self.ini = IniLoader(CORE, parser, overrides=[], core_section=CORE)
+                self._parse_config_file()
             except Exception as exception:  # noqa: BLE001
                 logging.error("failed to read config file %s because %r", self.config_file, exception)  # noqa: TRY400
                 self.has_config_file = None
+
+    def _parse_config_file(self) -> None:
+        parser = ConfigParser(interpolation=None)
+        with self.config_file.open() as file_handler:
+            parser.read_file(file_handler)
+        self.has_tox_section = parser.has_section(CORE.key)
+        if self.has_tox_section:
+            self.ini = IniLoader(CORE, parser, overrides=[], core_section=CORE)
 
     def get(self, key: str, of_type: type[Any]) -> Any:
         cache_key = key, of_type
@@ -48,13 +51,7 @@ class IniConfig:
             result = self._cache[cache_key]
         else:
             try:
-                if self.ini is None:  # pragma: no cover # this can only happen if we don't call __bool__ firsts
-                    result = None
-                else:
-                    source = "file"
-                    args = ConfigLoadArgs(chain=[key], name=CORE.prefix, env_name=None)
-                    value = self.ini.load(key, of_type=of_type, conf=None, factory=None, args=args)
-                    result = value, source
+                result = self._load_key(key, of_type)
             except KeyError:  # just not found
                 result = None
             except Exception as exception:  # noqa: BLE001
@@ -62,6 +59,13 @@ class IniConfig:
                 result = None
         self._cache[cache_key] = result
         return result
+
+    def _load_key(self, key: str, of_type: type[Any]) -> Any:
+        if self.ini is None:  # pragma: no cover # this can only happen if we don't call __bool__ first
+            return None
+        args = ConfigLoadArgs(chain=[key], name=CORE.prefix, env_name=None)
+        value = self.ini.load(key, of_type=of_type, conf=None, factory=None, args=args)
+        return value, "file"
 
     def __bool__(self) -> bool:
         return bool(self.has_config_file) and bool(self.has_tox_section)

@@ -18,6 +18,7 @@ if TYPE_CHECKING:
     from types import FrameType
 
     from tox.execute import Outcome
+    from tox.execute.api import ExecuteStatus
 
 logging.basicConfig(level=logging.DEBUG, format="%(relativeCreated)d\t%(levelname).1s\t%(message)s")
 bad_process = Path(__file__).parent / "bad_process.py"
@@ -55,20 +56,26 @@ def handler(s: int, f: FrameType | None) -> None:
         logging.info("interrupt finished via %s", status)
 
 
+def _wait_for_exit(status: ExecuteStatus) -> None:
+    logging.info("wait on %r", status)
+    while status.exit_code is None:
+        status.wait(timeout=0.01)  # use wait here with timeout to not block the main thread
+    logging.info("wait over on %r", status)
+
+
 interrupt_done = False
 signal.signal(signal.SIGINT, handler)
 logging.info("PID %d start %r", os.getpid(), request)
 tox_env = MagicMock(conf={"suicide_timeout": 0.01, "interrupt_timeout": 0.05, "terminate_timeout": 0.07})
 tox_env.options.no_capture = False
+status_outcome: Outcome | None = None
 try:
     with executor.call(request, show=False, out_err=out_err, env=tox_env) as status:
-        logging.info("wait on %r", status)
-        while status.exit_code is None:
-            status.wait(timeout=0.01)  # use wait here with timeout to not block the main thread
-        logging.info("wait over on %r", status)
-    show_outcome(status.outcome)
+        _wait_for_exit(status)
+    status_outcome = status.outcome
 except Exception as exception:  # pragma: no cover
     logging.exception(exception)  # noqa: TRY401 # pragma: no cover
 finally:
     logging.info("done")
     logging.shutdown()
+show_outcome(status_outcome)

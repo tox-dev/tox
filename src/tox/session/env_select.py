@@ -485,21 +485,31 @@ class EnvSelector:
             try:
                 package_tox_env = self._get_package_env(core_type, name, active.get(name, missing_active))
                 self._pkg_env_counter[name] += 1
-                assert self._defined_envs_ is not None  # noqa: S101
-                run_env = cast("RunToxEnv", self._defined_envs_[run_env_name].env)
-                child_package_envs = package_tox_env.register_run_env(run_env)
-                try:
-                    name_type = next(child_package_envs)
-                    while True:
-                        child_pkg_env = self._build_pkg_env(name_type, run_env_name, active)
-                        self._pkg_env_counter[name_type[0]] += 1
-                        name_type = child_package_envs.send(child_pkg_env)
-                except StopIteration:
-                    pass
+                if (
+                    child_name_type := self._register_child_packages(package_tox_env, run_env_name, active)
+                ) is not None:
+                    name_type = child_name_type
             except Skip as exception:
                 assert self._defined_envs_ is not None  # noqa: S101
                 self._defined_envs_[run_env_name].package_skip = (name_type[0], exception)
             return package_tox_env
+
+    def _register_child_packages(
+        self, package_tox_env: PackageToxEnv, run_env_name: str, active: dict[str, bool]
+    ) -> tuple[str, str] | None:
+        assert self._defined_envs_ is not None  # noqa: S101
+        run_env = cast("RunToxEnv", self._defined_envs_[run_env_name].env)
+        child_package_envs = package_tox_env.register_run_env(run_env)
+        name_type: tuple[str, str] | None = None
+        try:
+            name_type = next(child_package_envs)
+            while True:
+                child_pkg_env = self._build_pkg_env(name_type, run_env_name, active)
+                self._pkg_env_counter[name_type[0]] += 1
+                name_type = child_package_envs.send(child_pkg_env)
+        except StopIteration:
+            pass
+        return name_type
 
     def _get_package_env(self, packager: str, name: str, is_active: bool) -> PackageToxEnv:  # noqa: FBT001
         assert self._defined_envs_ is not None  # noqa: S101

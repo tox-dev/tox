@@ -55,7 +55,7 @@ class ReadViaThreadUnix(ReadViaThread):  # pragma: win32 no cover
         except (OSError, ValueError):  # pragma: no cover
             return
 
-        try:
+        with contextlib.closing(selector):
             while selector.get_map():
                 try:
                     ready = selector.select(timeout=0)
@@ -69,8 +69,6 @@ class ReadViaThreadUnix(ReadViaThread):  # pragma: win32 no cover
 
                 for key, _ in ready:
                     self._read_chunk(selector, key)
-        finally:
-            selector.close()
 
     def _read_chunk(self, selector: selectors.DefaultSelector, key: selectors.SelectorKey) -> None:
         try:

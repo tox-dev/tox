@@ -29,11 +29,11 @@ _p(f"start {__name__} with {sys.argv!r}")
 signal.signal(signal.SIGINT, handler)
 signal.signal(signal.SIGTERM, handler)
 
+start_file = Path(sys.argv[1])
+_p(f"create {start_file}")
+start_file.write_text("", encoding="utf-8")
+_p(f"created {start_file}")
 try:
-    start_file = Path(sys.argv[1])
-    _p(f"create {start_file}")
-    start_file.write_text("", encoding="utf-8")
-    _p(f"created {start_file}")
     while True:
         time.sleep(0.01)
 finally:
