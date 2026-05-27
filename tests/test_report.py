@@ -15,6 +15,21 @@ if TYPE_CHECKING:
     from tox.pytest import CaptureFixture
 
 
+def _emit_test_log_messages() -> None:
+    logging.critical("critical")
+    logging.error("error")
+    logging.warning("%s%s> %s", "warning", "foo", "bar")  # special warning: auto-colored
+    logging.info("info")
+    logging.debug("debug")
+    logging.log(logging.NOTSET, "not-set")  # this should not be logged
+    for name in ("distlib.util", "filelock"):
+        logger = logging.getLogger(name)
+        logger.warning("%s-warn", name)
+        logger.info("%s-info", name)
+        logger.debug("%s-debug", name)
+        logger.log(logging.NOTSET, "%s-notset", name)
+
+
 @pytest.mark.parametrize("color", [True, False], ids=["on", "off"])
 @pytest.mark.parametrize("verbosity", range(7))
 def test_setup_report(mocker: MockerFixture, capsys: CaptureFixture, verbosity: int, color: bool) -> None:
@@ -22,20 +37,7 @@ def test_setup_report(mocker: MockerFixture, capsys: CaptureFixture, verbosity: 
 
     setup_report(verbosity=verbosity, is_colored=color)
     try:
-        logging.critical("critical")
-        logging.error("error")
-        # special warning line that should be auto-colored
-        logging.warning("%s%s> %s", "warning", "foo", "bar")
-        logging.info("info")
-        logging.debug("debug")
-        logging.log(logging.NOTSET, "not-set")  # this should not be logged
-        disabled = "distlib.util", "filelock"
-        for name in disabled:
-            logger = logging.getLogger(name)
-            logger.warning("%s-warn", name)
-            logger.info("%s-info", name)
-            logger.debug("%s-debug", name)
-            logger.log(logging.NOTSET, "%s-notset", name)
+        _emit_test_log_messages()
     finally:
         deinit()
 

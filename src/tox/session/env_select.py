@@ -485,7 +485,10 @@ class EnvSelector:
             try:
                 package_tox_env = self._get_package_env(core_type, name, active.get(name, missing_active))
                 self._pkg_env_counter[name] += 1
-                name_type = self._register_child_packages(package_tox_env, run_env_name, active)
+                if (
+                    child_name_type := self._register_child_packages(package_tox_env, run_env_name, active)
+                ) is not None:
+                    name_type = child_name_type
             except Skip as exception:
                 assert self._defined_envs_ is not None  # noqa: S101
                 self._defined_envs_[run_env_name].package_skip = (name_type[0], exception)

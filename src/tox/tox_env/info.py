@@ -53,15 +53,19 @@ class Info:
         if old == value:
             yield True, old
         else:
-            yield False, old
-            # if no exception thrown update
-            if sub_section is None:
-                self._content[section] = value
-            elif self._content.get(section) is None:
-                self._content[section] = {sub_section: value}
-            else:
-                self._content[section][sub_section] = value
-            self._write()
+            raised = True
+            try:
+                yield False, old
+                raised = False
+            finally:
+                if not raised:  # only update when the body did not raise
+                    if sub_section is None:
+                        self._content[section] = value
+                    elif self._content.get(section) is None:
+                        self._content[section] = {sub_section: value}
+                    else:
+                        self._content[section][sub_section] = value
+                    self._write()
 
     def reset(self) -> None:
         self._content = {}
