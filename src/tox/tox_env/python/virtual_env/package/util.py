@@ -19,25 +19,6 @@ if TYPE_CHECKING:
     from packaging.requirements import Requirement
 
 
-def safe_extractall(tar: tarfile.TarFile, path: Path) -> None:
-    if sys.version_info >= (3, 12):  # pragma: >=3.12 cover
-        try:
-            tar.extractall(path=str(path), filter="data")
-        except tarfile.OutsideDestinationError as exc:
-            msg = f"tar member {exc.tarinfo.name!r} would extract outside of {path}"
-            raise Fail(msg) from exc
-    else:  # pragma: <3.12 cover
-        dest_resolved = path.resolve()
-        safe_members: list[tarfile.TarInfo] = []
-        for member in tar.getmembers():
-            member_path = (path / member.name).resolve()
-            if not str(member_path).startswith(f"{dest_resolved}{os.sep}") and member_path != dest_resolved:
-                msg = f"tar member {member.name!r} would extract outside of {path}"
-                raise Fail(msg)
-            safe_members.append(member)
-        tar.extractall(path=str(path), members=safe_members)  # noqa: S202
-
-
 def dependencies_with_extras(
     deps: list[Requirement],
     extras: set[str],
@@ -131,3 +112,22 @@ def _get_extra(
     if hasattr(left, "value") and left.value == "extra" and hasattr(op, "value") and op.value == "==":
         return right.value if hasattr(right, "value") else None
     return None
+
+
+def safe_extractall(tar: tarfile.TarFile, path: Path) -> None:
+    if sys.version_info >= (3, 12):  # pragma: >=3.12 cover
+        try:
+            tar.extractall(path=str(path), filter="data")
+        except tarfile.OutsideDestinationError as exc:
+            msg = f"tar member {exc.tarinfo.name!r} would extract outside of {path}"
+            raise Fail(msg) from exc
+    else:  # pragma: <3.12 cover
+        dest_resolved = path.resolve()
+        safe_members: list[tarfile.TarInfo] = []
+        for member in tar.getmembers():
+            member_path = (path / member.name).resolve()
+            if not str(member_path).startswith(f"{dest_resolved}{os.sep}") and member_path != dest_resolved:
+                msg = f"tar member {member.name!r} would extract outside of {path}"
+                raise Fail(msg)
+            safe_members.append(member)
+        tar.extractall(path=str(path), members=safe_members)  # noqa: S202
