@@ -25,7 +25,7 @@ class ReplaceReferenceIni(ReplaceReference):
         self.conf = conf
         self.loader = loader
 
-    def __call__(self, value: str, conf_args: ConfigLoadArgs) -> str | None:  # noqa: C901
+    def __call__(self, value: str, conf_args: ConfigLoadArgs) -> str | None:
         # a return value of None indicates could not replace
         pattern = _replace_ref(self.loader.section.prefix or self.loader.section.name)
         match = pattern.match(value)
@@ -38,16 +38,7 @@ class ReplaceReferenceIni(ReplaceReference):
 
             exception: Exception | None = None
             try:
-                for src in self._config_value_sources(settings["env"], settings["section"], conf_args.env_name):
-                    try:
-                        if isinstance(src, SectionProxy):
-                            return self._resolve_section_proxy(src, key, conf_args.env_name)
-                        value = src.load(key, conf_args.chain)
-                    except KeyError as exc:  # if fails, keep trying maybe another source can satisfy # noqa: PERF203
-                        exception = exc
-                    else:
-                        as_str, _ = stringify(value)
-                        return as_str.replace("#", r"\#")  # escape comment characters as these will be stripped
+                return self._load_from_sources(settings, key, conf_args)
             except Exception as exc:  # noqa: BLE001
                 exception = exc
             if exception is not None:
@@ -60,6 +51,19 @@ class ReplaceReferenceIni(ReplaceReference):
                 else:
                     raise exception
         return None
+
+    def _load_from_sources(self, settings: dict[str, str | None], key: str, conf_args: ConfigLoadArgs) -> str:
+        for src in self._config_value_sources(settings["env"], settings["section"], conf_args.env_name):
+            try:
+                if isinstance(src, SectionProxy):
+                    return self._resolve_section_proxy(src, key, conf_args.env_name)
+                value = src.load(key, conf_args.chain)
+            except KeyError:  # if fails, keep trying maybe another source can satisfy # noqa: PERF203
+                pass
+            else:
+                as_str, _ = stringify(value)
+                return as_str.replace("#", r"\#")  # escape comment characters as these will be stripped
+        raise KeyError(key)
 
     def _resolve_section_proxy(self, src: SectionProxy, key: str, env_name: str | None) -> str:
         """Resolve a key from a SectionProxy, returning empty string when factor filtering empties the value."""

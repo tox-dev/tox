@@ -143,15 +143,12 @@ class Execute(ABC):
                             colorama.ansitowin32.enable_vt_processing(stream.buffer.fileno())
                 except ImportError:
                     pass
+        # collector is what forwards the content from the file streams to the standard streams
+        out = cast("IO[bytes]", out_err[0].buffer)
+        err = cast("IO[bytes]", out_err[1].buffer)
+        out_sync = SyncWrite(out.name, out if show else None)
+        err_sync = SyncWrite(err.name, err if show else None, str(stderr_color) if stderr_color is not None else None)
         try:
-            # collector is what forwards the content from the file streams to the standard streams
-            out = cast("IO[bytes]", out_err[0].buffer)
-            err = cast("IO[bytes]", out_err[1].buffer)
-            out_sync = SyncWrite(out.name, out if show else None)
-            err_sync = SyncWrite(
-                err.name, err if show else None, str(stderr_color) if stderr_color is not None else None
-            )
-
             with out_sync, err_sync:
                 instance = self.build_instance(request, self._option_class(env), out_sync, err_sync)
                 with instance as status:

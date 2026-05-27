@@ -2,6 +2,7 @@
 
 from __future__ import annotations  # pragma: win32 cover
 
+import contextlib  # pragma: win32 cover
 import sys  # pragma: win32 cover
 
 if sys.platform == "win32":  # pragma: win32 cover
@@ -25,45 +26,47 @@ class ReadViaThreadWindows(ReadViaThread):  # pragma: win32 cover
         super().__init__(file_no, handler, name, drain)
 
     def _read_stream(self) -> None:
-        try:
-            while not self.stop.is_set():
-                ov = _overlapped.Overlapped(0)
+        with contextlib.suppress(OSError):  # pragma: no cover
+            self._do_read_stream()
+
+    def _do_read_stream(self) -> None:
+        while not self.stop.is_set():
+            ov = _overlapped.Overlapped(0)
+            try:
+                ov.ReadFile(self.file_no, READ_CHUNK_SIZE)
+            except OSError:
+                break
+
+            while True:
                 try:
-                    ov.ReadFile(self.file_no, READ_CHUNK_SIZE)
-                except OSError:
+                    data = ov.getresult(False)  # noqa: FBT003
                     break
+                except OSError as exception:
+                    if getattr(exception, "winerror", None) != ERROR_IO_INCOMPLETE:
+                        return
+                    time.sleep(POLL_INTERVAL)
 
-                while True:
-                    try:
-                        data = ov.getresult(False)  # noqa: FBT003
-                        break
-                    except OSError as exception:
-                        if getattr(exception, "winerror", None) != ERROR_IO_INCOMPLETE:
-                            return
-                        time.sleep(POLL_INTERVAL)
-
-                if not data:
-                    break
-                self.handler(data)
-        except OSError:  # pragma: no cover
-            pass
+            if not data:
+                break
+            self.handler(data)
 
     def _drain_stream(self) -> None:
-        try:
-            while True:
-                ov = _overlapped.Overlapped(0)
-                try:
-                    ov.ReadFile(self.file_no, READ_CHUNK_SIZE)
-                except OSError:
-                    break
+        with contextlib.suppress(OSError):  # pragma: no cover
+            self._do_drain_stream()
 
-                try:
-                    data = ov.getresult(True)  # noqa: FBT003
-                except OSError:
-                    break
+    def _do_drain_stream(self) -> None:
+        while True:
+            ov = _overlapped.Overlapped(0)
+            try:
+                ov.ReadFile(self.file_no, READ_CHUNK_SIZE)
+            except OSError:
+                break
 
-                if not data:
-                    break
-                self.handler(data)
-        except OSError:  # pragma: no cover
-            pass
+            try:
+                data = ov.getresult(True)  # noqa: FBT003
+            except OSError:
+                break
+
+            if not data:
+                break
+            self.handler(data)

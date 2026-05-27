@@ -107,25 +107,28 @@ class LocalSubprocessExecuteStatus(ExecuteStatus):
         stdin = self._process.stdin
         if stdin is None:  # pragma: no branch
             return  # pragma: no cover
-        bytes_content = content.encode()
         try:
-            if sys.platform == "win32":  # explicit check for mypy  # pragma: win32 cover
-                # on Windows we have a PipeHandle object here rather than a file stream
-                import _overlapped  # noqa: PLC0415,PLC2701
-
-                ov = _overlapped.Overlapped(0)
-                ov.WriteFile(stdin.handle, bytes_content)  # ty: ignore[unresolved-attribute] # PipeHandle on Windows
-                result = ov.getresult(10)  # wait up to 10ms to perform the operation
-                if result != len(bytes_content):
-                    msg = f"failed to write to {stdin!r}"
-                    raise RuntimeError(msg)
-            else:
-                stdin.write(bytes_content)
-                stdin.flush()
+            self._write_stdin_bytes(stdin, content.encode())
         except OSError:  # pragma: no cover
             if self._interrupted:  # pragma: no cover
                 pass  # pragma: no cover  # if the process was asked to exit in the meantime ignore write errors
             raise  # pragma: no cover
+
+    @staticmethod
+    def _write_stdin_bytes(stdin: Any, bytes_content: bytes) -> None:
+        if sys.platform == "win32":  # explicit check for mypy  # pragma: win32 cover
+            # on Windows we have a PipeHandle object here rather than a file stream
+            import _overlapped  # noqa: PLC0415,PLC2701
+
+            ov = _overlapped.Overlapped(0)
+            ov.WriteFile(stdin.handle, bytes_content)  # ty: ignore[unresolved-attribute] # PipeHandle on Windows
+            result = ov.getresult(10)  # wait up to 10ms to perform the operation
+            if result != len(bytes_content):
+                msg = f"failed to write to {stdin!r}"
+                raise RuntimeError(msg)
+        else:
+            stdin.write(bytes_content)
+            stdin.flush()
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}(pid={self._process.pid}, returncode={self._process.returncode!r})"
