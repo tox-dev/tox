@@ -210,6 +210,44 @@ def _print_unused(is_colored: bool, section: str, unused: list[str]) -> None:  #
     print(f"{Fore.YELLOW if is_colored else ''}{msg}{Fore.RESET if is_colored else ''}")  # noqa: T201
 
 
+def _run_thread(  # noqa: PLR0913
+    has_spinner: bool,  # noqa: FBT001
+    state: State,
+    to_run_list: list[str],
+    results: list[ToxEnvRunResult],
+    future_to_env: dict[Future[ToxEnvRunResult], ToxEnv],
+    interrupt: Event,
+    done: Event,
+    max_workers: int | None,
+    live: bool,  # noqa: FBT001
+) -> tuple[Any, bool]:
+    spinner = ToxSpinner(has_spinner, state, len(to_run_list))
+    thread = Thread(
+        target=_queue_and_wait,
+        name="tox-interrupt",
+        args=(state, to_run_list, results, future_to_env, interrupt, done, max_workers, spinner, live),
+    )
+    thread.start()
+    try:
+        while thread.is_alive():
+            thread.join(timeout=1)
+    except KeyboardInterrupt:
+        previous = signal(SIGINT, Handlers.SIG_IGN)
+        spinner.print_report = False  # no need to print reports at this point, final report coming up
+        logger.error("[%s] KeyboardInterrupt - teardown started", os.getpid())  # noqa: TRY400
+        interrupt.set()
+        # cancel in reverse order to not allow submitting new jobs as we cancel running ones
+        for future, tox_env in reversed(list(future_to_env.items())):
+            canceled = future.cancel()
+            # if cannot be canceled and not done -> still runs
+            if canceled is False and not future.done():  # pragma: no branch
+                tox_env.interrupt()
+        done.wait()
+        thread.join()
+        return previous, True
+    return None, False
+
+
 def execute(state: State, max_workers: int | None, has_spinner: bool, live: bool) -> int:  # noqa: FBT001
     interrupt, done = Event(), Event()
     results: list[ToxEnvRunResult] = []
@@ -220,29 +258,9 @@ def execute(state: State, max_workers: int | None, has_spinner: bool, live: bool
         cast("RunToxEnv", state.envs[name]).mark_active()
     previous, has_previous = None, False
     try:
-        spinner = ToxSpinner(has_spinner, state, len(to_run_list))
-        thread = Thread(
-            target=_queue_and_wait,
-            name="tox-interrupt",
-            args=(state, to_run_list, results, future_to_env, interrupt, done, max_workers, spinner, live),
+        previous, has_previous = _run_thread(
+            has_spinner, state, to_run_list, results, future_to_env, interrupt, done, max_workers, live
         )
-        thread.start()
-        try:
-            while thread.is_alive():
-                thread.join(timeout=1)
-        except KeyboardInterrupt:
-            previous, has_previous = signal(SIGINT, Handlers.SIG_IGN), True
-            spinner.print_report = False  # no need to print reports at this point, final report coming up
-            logger.error("[%s] KeyboardInterrupt - teardown started", os.getpid())  # noqa: TRY400
-            interrupt.set()
-            # cancel in reverse order to not allow submitting new jobs as we cancel running ones
-            for future, tox_env in reversed(list(future_to_env.items())):
-                canceled = future.cancel()
-                # if cannot be canceled and not done -> still runs
-                if canceled is False and not future.done():  # pragma: no branch
-                    tox_env.interrupt()
-            done.wait()
-            thread.join()
     finally:
         name_to_run = {r.name: r for r in results}
         ordered_results: list[ToxEnvRunResult] = []

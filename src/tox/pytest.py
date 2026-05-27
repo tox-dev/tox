@@ -88,29 +88,32 @@ def check_os_environ() -> Iterator[None]:
         for k in (ENV_VAR_KEY, "TOX_WORK_DIR", "PYTHONPATH", "COV_CORE_CONTEXT", "TOX_DISABLED_EXTERNAL_PLUGINS")
     }
 
-    yield
+    try:
+        yield
+    finally:
+        for key, value in to_clean.items():
+            if value is not None:
+                os.environ[key] = value
 
-    for key, value in to_clean.items():
-        if value is not None:
-            os.environ[key] = value
-
-    new = os.environ
-    extra = {k: new[k] for k in set(new) - set(old)}
-    extra.pop("PLAT", None)
-    extra.pop("TOX_DISABLED_EXTERNAL_PLUGINS", None)
-    miss = {k: old[k] for k in set(old) - set(new)}
-    diff = {
-        f"{k} = {old[k]} vs {new[k]}" for k in set(old) & set(new) if old[k] != new[k] and not k.startswith("PYTEST_")
-    }
-    if extra or miss or diff:
-        msg = "test changed environ"
-        if extra:
-            msg += f" extra {extra}"
-        if miss:
-            msg += f" miss {miss}"
-        if diff:
-            msg += f" diff {diff}"
-        pytest.fail(msg)
+        new = os.environ
+        extra = {k: new[k] for k in set(new) - set(old)}
+        extra.pop("PLAT", None)
+        extra.pop("TOX_DISABLED_EXTERNAL_PLUGINS", None)
+        miss = {k: old[k] for k in set(old) - set(new)}
+        diff = {
+            f"{k} = {old[k]} vs {new[k]}"
+            for k in set(old) & set(new)
+            if old[k] != new[k] and not k.startswith("PYTEST_")
+        }
+        if extra or miss or diff:
+            msg = "test changed environ"
+            if extra:
+                msg += f" extra {extra}"
+            if miss:
+                msg += f" miss {miss}"
+            if diff:
+                msg += f" diff {diff}"
+            pytest.fail(msg)
 
 
 @pytest.fixture(autouse=True)
