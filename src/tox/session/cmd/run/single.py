@@ -44,33 +44,37 @@ def run_one(tox_env: RunToxEnv, no_test: bool, suspend_display: bool) -> ToxEnvR
 
 
 def _evaluate(tox_env: RunToxEnv, no_test: bool) -> tuple[bool, int, list[Outcome]]:  # noqa: FBT001
+    try:
+        return _run_with_teardown(tox_env, no_test)
+    except SystemExit as exception:  # setup command fails (interrupted or via invocation)
+        return False, cast("int", exception.code), []
+
+
+def _run_with_teardown(tox_env: RunToxEnv, no_test: bool) -> tuple[bool, int, list[Outcome]]:  # noqa: FBT001
     skipped = False
     code: int = 0
     outcomes: list[Outcome] = []
     try:
-        try:
-            tox_env.setup()
-            code, outcomes = run_commands(tox_env, no_test)
-        except Skip as exception:
-            LOGGER.warning("skipped because %s", exception)
-            code = 0
-            skipped = True
-        except ToxBackendFailed as exception:
-            LOGGER.error("%s", exception)  # noqa: TRY400
-            raise SystemExit(exception.code)  # noqa: B904
-        except Fail as exception:
-            LOGGER.error("failed with %s", exception)  # noqa: TRY400
-            code = 1
-        except HandledError as exception:
-            LOGGER.error("%s", exception)  # noqa: TRY400
-            code = 1
-        except Exception:  # pragma: no cover
-            LOGGER.exception("internal error")  # pragma: no cover
-            code = 2  # pragma: no cover
-        finally:
-            tox_env.teardown()
-    except SystemExit as exception:  # setup command fails (interrupted or via invocation)
-        code = cast("int", exception.code)
+        tox_env.setup()
+        code, outcomes = run_commands(tox_env, no_test)
+    except Skip as exception:
+        LOGGER.warning("skipped because %s", exception)
+        code = 0
+        skipped = True
+    except ToxBackendFailed as exception:
+        LOGGER.error("%s", exception)  # noqa: TRY400
+        raise SystemExit(exception.code)  # noqa: B904
+    except Fail as exception:
+        LOGGER.error("failed with %s", exception)  # noqa: TRY400
+        code = 1
+    except HandledError as exception:
+        LOGGER.error("%s", exception)  # noqa: TRY400
+        code = 1
+    except Exception:  # pragma: no cover
+        LOGGER.exception("internal error")  # pragma: no cover
+        code = 2  # pragma: no cover
+    finally:
+        tox_env.teardown()
     return skipped, code, outcomes
 
 
@@ -89,16 +93,14 @@ def run_commands(tox_env: RunToxEnv, no_test: bool) -> tuple[int, list[Outcome]]
         MANAGER.tox_before_run_commands(tox_env)
         status_pre, status_main, status_post = -1, -1, -1
         try:
-            try:
-                status_pre = run_command_set(tox_env, "commands_pre", chdir, ignore_errors, outcomes, retry_count)
-                if status_pre == Outcome.OK or ignore_errors:
-                    status_main = run_command_set(tox_env, "commands", chdir, ignore_errors, outcomes, retry_count)
-                else:
-                    status_main = Outcome.OK
-            finally:
-                with tox_env.allow_post_commands_after_interrupt(interrupt_post_commands):
-                    status_post = run_command_set(tox_env, "commands_post", chdir, ignore_errors, outcomes, retry_count)
+            status_pre = run_command_set(tox_env, "commands_pre", chdir, ignore_errors, outcomes, retry_count)
+            if status_pre == Outcome.OK or ignore_errors:
+                status_main = run_command_set(tox_env, "commands", chdir, ignore_errors, outcomes, retry_count)
+            else:
+                status_main = Outcome.OK
         finally:
+            with tox_env.allow_post_commands_after_interrupt(interrupt_post_commands):
+                status_post = run_command_set(tox_env, "commands_post", chdir, ignore_errors, outcomes, retry_count)
             exit_code = status_pre or status_main or status_post  # first non-success
             MANAGER.tox_after_run_commands(tox_env, exit_code, outcomes)
     return exit_code, outcomes
