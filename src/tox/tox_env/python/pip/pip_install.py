@@ -200,7 +200,7 @@ class Pip(PythonInstallerListDependencies):
                 if args:  # pragma: no branch
                     args.extend(self.constraints.as_root_args)
                     self._execute_installer(args, of_type)
-                    if self.constrain_package_deps and not self.use_frozen_constraints:
+                    if self.constrain_package_deps and not self.use_frozen_constraints and not self._has_constraints:
                         combined_constraints = new_requirements + [c.removeprefix("-c ") for c in new_constraints]
                         self.constraints_file().write_text("\n".join(combined_constraints))
 
@@ -288,8 +288,12 @@ class Pip(PythonInstallerListDependencies):
         forced: dict[str, Requirement] = {r.name: r for r in getattr(self._env.options, "force_dep", [])}
         return [str(forced.get(dep.name, dep)) for dep in deps]
 
+    @property
+    def _has_constraints(self) -> bool:
+        return bool(self.constraints.lines())
+
     def _execute_installer(self, deps: Sequence[Any], of_type: str) -> None:
-        if of_type == "package_deps" and self.constrain_package_deps:
+        if of_type == "package_deps" and self.constrain_package_deps and not self._has_constraints:
             constraints_file = self.constraints_file()
             if constraints_file.exists():
                 deps = [*deps, f"-c{constraints_file}"]
@@ -298,8 +302,12 @@ class Pip(PythonInstallerListDependencies):
         outcome = self._env.execute(cmd, stdin=StdinSource.OFF, run_id=f"install_{of_type}")
         outcome.assert_success()
 
-        if of_type == "deps" and self.constrain_package_deps and self.use_frozen_constraints:
-            # freeze installed deps for use as constraints
+        if (
+            of_type == "deps"
+            and self.constrain_package_deps
+            and self.use_frozen_constraints
+            and not self._has_constraints
+        ):
             self.constraints_file().write_text("\n".join(self.installed()))
 
     def build_install_cmd(self, args: Sequence[str]) -> list[str]:

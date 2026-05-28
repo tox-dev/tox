@@ -2068,6 +2068,9 @@ Pip installer
     package dependencies during ``install_package_deps`` stage. When this value is set to false, any conflicting package
     dependencies will override explicit dependencies and constraints passed to :ref:`deps`.
 
+    This option has no effect when :ref:`constraints` is set, as the constraints option already applies to package
+    dependency installation.
+
 .. conf::
     :keys: use_frozen_constraints
     :default: false
@@ -2076,7 +2079,7 @@ Pip installer
     When ``use_frozen_constraints`` is true, then tox will use the ``list_dependencies_command`` to enumerate package
     versions in order to create ``{env_dir}{/}constraints.txt``. Otherwise the package specifications explicitly listed
     under ``deps`` (or in requirements / constraints files referenced in ``deps``) will be used as the constraints. If
-    ``constrain_package_deps`` is false, then this setting has no effect.
+    ``constrain_package_deps`` is false or :ref:`constraints` is set, then this setting has no effect.
 
 ********************
  User configuration
