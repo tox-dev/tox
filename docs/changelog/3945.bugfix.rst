@@ -1,4 +1,4 @@
 When the ``constraints`` configuration option is set, ``constrain_package_deps`` and ``use_frozen_constraints`` are now
 ignored. Previously, both the user-provided constraints file and the auto-generated constraints file were passed to pip
-during ``install_package_deps``, which could cause resolver conflicts when the same package appeared in both files -
-by :user:`gaborbernat`. (:issue:`3945`)
+during ``install_package_deps``, which could cause resolver conflicts when the same package appeared in both files - by
+:user:`gaborbernat`. (:issue:`3945`)
