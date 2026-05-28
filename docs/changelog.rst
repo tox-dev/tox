@@ -7,6 +7,24 @@
 .. towncrier release notes start
 
 **********************
+ v4.55.0 (2026-05-28)
+**********************
+
+Features - 4.55.0
+=================
+
+- Automatically pass the TERMINFO environment variable to tox subprocesses if the output is a TTY. This variable is used
+  by Ghostty to communicate terminal capabilities to programs. (:issue:`3946`)
+
+Bug fixes - 4.55.0
+==================
+
+- When the ``constraints`` configuration option is set, ``constrain_package_deps`` and ``use_frozen_constraints`` are
+  now ignored. Previously, both the user-provided constraints file and the auto-generated constraints file were passed
+  to pip during ``install_package_deps``, which could cause resolver conflicts when the same package appeared in both
+  files - by :user:`gaborbernat`. (:issue:`3945`) (:issue:`3945`)
+
+**********************
  v4.54.0 (2026-05-12)
 **********************
 
