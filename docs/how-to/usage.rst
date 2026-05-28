@@ -765,6 +765,13 @@ For stronger guarantees, set ``use_frozen_constraints = true`` to generate const
 
 .. note::
 
+    When :ref:`constraints` is set, ``constrain_package_deps`` and ``use_frozen_constraints`` have no effect. The
+    :ref:`constraints` option already applies to both ``install_deps`` and ``install_package_deps`` phases, so the
+    auto-generated constraints file is not created. If you need to pin specific dependency versions during package
+    installation, add them to your constraints file directly.
+
+.. note::
+
     Constraint files are a subset of requirement files. You can pass a constraint file wherever a requirement file is
     accepted.
 

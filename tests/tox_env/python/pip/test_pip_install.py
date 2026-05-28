@@ -457,6 +457,54 @@ def test_constrain_package_deps(
         assert not constraints_file.exists()
 
 
+@pytest.mark.parametrize("use_frozen_constraints", [True, False])
+def test_constraints_option_disables_constrain_package_deps(
+    tox_project: ToxProjectCreator,
+    demo_pkg_inline: Path,
+    use_frozen_constraints: bool,
+) -> None:
+    toml = (demo_pkg_inline / "pyproject.toml").read_text()
+    proj = tox_project({
+        "pyproject.toml": toml.replace("requires = []", 'requires = ["setuptools"]')
+        + '\n[project]\nname = "demo"\nversion = "0.1"\ndependencies = ["foo > 2"]',
+        "build.py": (demo_pkg_inline / "build.py").read_text(),
+        "constraints.txt": "coo==1.2.3",
+        "tox.ini": (
+            "[testenv]\npackage=wheel\n"
+            "constrain_package_deps = true\n"
+            f"use_frozen_constraints = {use_frozen_constraints}\n"
+            "deps = coo==1.2.3\n"
+            "constraints = constraints.txt"
+        ),
+    })
+    execute_calls = proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
+    result = proj.run("r")
+    result.assert_success()
+
+    constraints_file = proj.path / ".tox" / "py" / "constraints.txt"
+    assert not constraints_file.exists()
+
+    for call in execute_calls.call_args_list:
+        if call[0][3].run_id == "install_package_deps":
+            cmd = call[0][3].cmd
+            assert f"-c{constraints_file}" not in cmd
+            assert "-c" in cmd
+            assert "constraints.txt" in cmd
+
+    exp_run_ids = ["install_deps"]
+    exp_run_ids.extend([
+        "install_requires",
+        "_optional_hooks",
+        "get_requires_for_build_wheel",
+        "build_wheel",
+        "install_package_deps",
+        "install_package",
+        "_exit",
+    ])
+    run_ids = [i[0][3].run_id for i in execute_calls.call_args_list]
+    assert run_ids == exp_run_ids
+
+
 def test_pip_resolution_env_var_change_reinstalls(tox_project: ToxProjectCreator) -> None:
     proj = tox_project({
         "tox.ini": """

@@ -746,7 +746,8 @@ The concrete installer (`tox_env/python/pip/ <https://github.com/tox-dev/tox/blo
 has the following features:
 
 - **Incremental installs** compare new vs cached requirements and only install changes.
-- It supports ``pip_pre``, constraints, and ``use_frozen_constraints``.
+- It supports ``pip_pre``, constraints, and ``use_frozen_constraints``. When the ``constraints`` option is set, it takes
+  precedence over ``constrain_package_deps``/``use_frozen_constraints``.
 - The ``{packages}`` placeholder in ``install_command`` is replaced with actual arguments.
 - See :ref:`exec-execution` for how installation commands are executed.
 
