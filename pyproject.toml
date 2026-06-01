@@ -149,19 +149,19 @@ type-min = [
 ]
 
 [tool.hatch]
+version.source = "vcs"
 build.dev-mode-dirs = [
   "src",
 ]
 build.hooks.custom = {}
 build.hooks.vcs.version-file = "src/tox/version.py"
+build.targets.wheel.shared-data = { "build/man" = "share/man/man1" }
 build.targets.sdist.include = [
   "/docs/man",
   "/src",
   "/tests",
   "/tox.toml",
 ]
-build.targets.wheel.shared-data = { "build/man" = "share/man/man1" }
-version.source = "vcs"
 
 [tool.ruff]
 line-length = 120
@@ -210,9 +210,9 @@ lint.preview = true
 
 [tool.codespell]
 builtin = "clear,usage,en-GB_to_en-US"
-write-changes = true
-skip = "*.svg"
 ignore-words = "ignore-words.txt"
+skip = "*.svg"
+write-changes = true
 count = true
 
 [tool.pyproject-fmt]
@@ -220,26 +220,26 @@ max_supported_python = "3.14"
 
 [tool.ty]
 src.exclude = []
-environment.python-version = "3.14"
 environment.extra-paths = [ "typestubs" ]
+environment.python-version = "3.14"
 
 [tool.pytest]
 ini_options.testpaths = [
   "tests",
 ]
 ini_options.addopts = "--no-success-flaky-report"
-ini_options.verbosity_assertions = 2
 ini_options.markers = [
   "integration: marks tests as integration tests requiring external services (deselect with '-m \"not integration\"')",
   "slow: marks tests as slow (>1s) (deselect with '-m \"not slow\"')",
 ]
 ini_options.filterwarnings = [
   "error",
+  "ignore:os.path.commonprefix\\(\\) is deprecated:DeprecationWarning",          # https://github.com/pygments/pygments/issues/3039 https://github.com/pypa/pyproject-hooks/issues/223
+  "ignore:subprocess .* is still running:ResourceWarning",
   "ignore:unclosed database in <sqlite3.Connection object at:ResourceWarning",
   "ignore:unclosed file <_io.TextIOWrapper:ResourceWarning",
-  "ignore:subprocess .* is still running:ResourceWarning",
-  "ignore:os.path.commonprefix\\(\\) is deprecated:DeprecationWarning",          # https://github.com/pygments/pygments/issues/3039 https://github.com/pypa/pyproject-hooks/issues/223
 ]
+ini_options.verbosity_assertions = 2
 ini_options.tmp_path_retention_policy = "failed"
 ini_options.timeout = 30
 
@@ -267,11 +267,11 @@ html.skip_covered = false
 
 [tool.towncrier]
 name = "tox"
-filename = "docs/changelog.rst"
 directory = "docs/changelog"
+filename = "docs/changelog.rst"
+template = "docs/changelog/template.jinja2"
 title_format = false
 issue_format = ":issue:`{issue}`"
-template = "docs/changelog/template.jinja2"
 type = [
   { directory = "breaking", name = "Backward incompatible changes", showcontent = true },
   { directory = "deprecation", name = "Deprecations (removal in next major release)", showcontent = true },
