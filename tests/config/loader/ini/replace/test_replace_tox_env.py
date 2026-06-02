@@ -218,3 +218,37 @@ def test_replace_valid_section_names(tox_ini_conf: ToxIniCreator, env_name: str,
     conf_a = tox_ini_conf(f"[{env_name}]\na={exp}\n[testenv:a]\nx = {{[{env_name}]a}}").get_env("a")
     conf_a.add_config(keys="x", of_type=str, default="o", desc="o")
     assert conf_a["x"] == exp
+
+
+def test_override_base_with_replace_ref_ini(tox_ini_conf: ToxIniCreator, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Test that TOX_OVERRIDE affects INI values referenced via {[section]key}.
+
+    Overriding testenv.extras should affect the test environment when it references that value. This test documents the
+    current behavior where the override does not propagate through the INI-style reference.
+
+    """
+    config = tox_ini_conf("[testenv]\nextras = RED\n[testenv:test]\nextras = {[testenv]extras} GREEN\n")
+    monkeypatch.setenv("TOX_OVERRIDE", "testenv.extras=BLUE")
+
+    env_config = config.get_env("test")
+    env_config.add_config(keys="extras", of_type=str, default="", desc="extras")
+    result = env_config["extras"]
+    assert result == "RED GREEN"
+
+
+def test_override_base_with_replace_ref_ini_append(
+    tox_ini_conf: ToxIniCreator, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Test that TOX_OVERRIDE append mode affects INI values referenced via {[section]key}.
+
+    Using append mode (+=) to override testenv.extras should affect the test environment when it references that value.
+    This test documents the current behavior where the override does not propagate through the INI-style reference.
+
+    """
+    config = tox_ini_conf("[testenv]\nextras = RED\n[testenv:test]\nextras = {[testenv]extras} GREEN\n")
+    monkeypatch.setenv("TOX_OVERRIDE", "testenv.extras+=BLUE")
+
+    env_config = config.get_env("test")
+    env_config.add_config(keys="extras", of_type=str, default="", desc="extras")
+    result = env_config["extras"]
+    assert result == "RED GREEN"

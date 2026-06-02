@@ -1074,6 +1074,88 @@ def test_config_in_toml_replace_ref_command(tox_project: ToxProjectCreator) -> N
     assert "freeze" in outcome.out
 
 
+def test_override_base_with_replace_ref_of(tox_project: ToxProjectCreator, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Test that TOX_OVERRIDE affects values referenced via {replace ref}.
+
+    Overriding env_run_base.extras should affect the test environment when it references that value. This test documents
+    the current behavior where the override does not propagate through the reference.
+
+    """
+    project = tox_project({
+        "pyproject.toml": """
+        [tool.tox.env_run_base]
+        extras = ["RED"]
+
+        [tool.tox.env.test]
+        extras = [
+          {replace = "ref", of = ["tool", "tox", "env_run_base", "extras"], extend = true},
+          "GREEN"
+        ]
+        """
+    })
+    monkeypatch.setenv("TOX_OVERRIDE", "tool.tox.env_run_base.extras=BLUE")
+
+    outcome = project.run("c", "-e", "test", "-k", "extras")
+    outcome.assert_success()
+    outcome.assert_out_err("[testenv:test]\nextras =\n  green\n  red\n", "")
+
+
+def test_override_base_with_replace_ref_of_append(
+    tox_project: ToxProjectCreator, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Test that TOX_OVERRIDE append mode affects values referenced via {replace ref}.
+
+    Using append mode (+=) to override env_run_base.extras should affect the test environment when it references that
+    value. This test documents the current behavior where the override does not propagate through the reference.
+
+    """
+    project = tox_project({
+        "pyproject.toml": """
+        [tool.tox.env_run_base]
+        extras = ["RED"]
+
+        [tool.tox.env.test]
+        extras = [
+          {replace = "ref", of = ["tool", "tox", "env_run_base", "extras"], extend = true},
+          "GREEN"
+        ]
+        """
+    })
+    monkeypatch.setenv("TOX_OVERRIDE", "tool.tox.env_run_base.extras+=BLUE")
+
+    outcome = project.run("c", "-e", "test", "-k", "extras")
+    outcome.assert_success()
+    outcome.assert_out_err("[testenv:test]\nextras =\n  green\n  red\n", "")
+
+
+def test_override_direct_without_replace_ref(tox_project: ToxProjectCreator, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Test that TOX_OVERRIDE works when applied directly to the final environment.
+
+    Overrides work when targeting the environment directly rather than a base environment that is referenced. This
+    serves as a control test and demonstrates the workaround.
+
+    """
+    project = tox_project({
+        "pyproject.toml": """
+        [tool.tox.env_run_base]
+        extras = ["RED"]
+
+        [tool.tox.env.test]
+        extras = [
+          {replace = "ref", of = ["tool", "tox", "env_run_base", "extras"], extend = true},
+          "GREEN"
+        ]
+        """
+    })
+    # Override the test environment directly (not the base)
+    monkeypatch.setenv("TOX_OVERRIDE", "tool.tox.env.test.extras=BLUE")
+
+    outcome = project.run("c", "-e", "test", "-k", "extras")
+    outcome.assert_success()
+    # This works correctly - override replaces the entire list
+    outcome.assert_out_err("[testenv:test]\nextras = blue\n", "")
+
+
 def test_toml_machine_isa_does_not_override_explicit_env_factor(tox_project: ToxProjectCreator) -> None:
     """Regression test for #3903: explicit ISA in env name takes precedence over machine ISA in TOML."""
     parts = sysconfig.get_platform().rsplit("-", 1)
