@@ -134,6 +134,11 @@ class Config:
         return self._options
 
     @property
+    def overrides(self) -> OverrideMap:
+        """:returns: the configuration overrides keyed by their target namespace"""
+        return self._overrides
+
+    @property
     def factor_labels(self) -> dict[str, list[str]]:
         return getattr(self._src, "_factor_labels", {})
 

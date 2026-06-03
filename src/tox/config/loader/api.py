@@ -220,6 +220,41 @@ class Loader(Convert[T]):
         return self.to(raw, of_type, factory)
 
 
+def apply_overrides_to_raw(overrides: Iterable[Override], key: str, value: T) -> T:
+    """Fold the overrides targeting ``key`` onto a raw (pre-conversion) value.
+
+    Reference resolution reads values straight from the parsed config, sidestepping :meth:`Loader.load` where overrides
+    are normally applied. This re-applies them so that ``TOX_OVERRIDE`` propagates through ``{[section]key}`` (ini) and
+    ``{replace = "ref", of = [...]}`` (toml) references.
+
+    """
+    for override in overrides:
+        if override.key == key:
+            value = _apply_override_to_raw(value, override)
+    return value
+
+
+def _apply_override_to_raw(value: T, override: Override) -> T:
+    converted: Any
+    if override.append:
+        if isinstance(value, list):
+            converted = [*value, *_STR_CONVERT.to_list(override.value, str)]
+        elif isinstance(value, dict):
+            converted = {**value, **dict(_STR_CONVERT.to_dict(override.value, (str, str)))}
+        elif isinstance(value, str):
+            converted = f"{value}\n{override.value}"
+        else:
+            msg = "Only able to append to lists, dicts and strings"
+            raise ValueError(msg)
+    elif isinstance(value, list):
+        converted = list(_STR_CONVERT.to_list(override.value, str))
+    elif isinstance(value, dict):
+        converted = dict(_STR_CONVERT.to_dict(override.value, (str, str)))
+    else:
+        converted = override.value
+    return cast("T", converted)
+
+
 @impl
 def tox_add_option(parser: ToxParser) -> None:
     override_short_option = "-x"

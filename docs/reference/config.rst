@@ -2234,6 +2234,50 @@ Or reset override and append to that (note the first override is ``=`` and not `
 
        tox -x testenv.deps=pytest-xdist -x testenv.deps+=pytest-cov
 
+Overrides propagate through references
+======================================
+
+.. versionadded:: 4.56
+
+An override targeting a base value is applied before that value is referenced elsewhere, so overriding shared
+configuration once updates every environment that references it. Given a base ``extras`` that the ``test`` environment
+extends:
+
+.. tab:: TOML
+
+    .. code-block:: toml
+
+       [tool.tox.env_run_base]
+       extras = [ "red" ]
+
+       [tool.tox.env.test]
+       extras = [
+         { replace = "ref", of = [ "tool", "tox", "env_run_base", "extras" ], extend = true },
+         "green",
+       ]
+
+    Overriding the base propagates into ``test`` (``test`` resolves to ``blue, green``):
+
+    .. code-block:: bash
+
+       tox c -e test -k extras -x tool.tox.env_run_base.extras=blue
+
+.. tab:: INI
+
+    .. code-block:: ini
+
+       [testenv]
+       extras = red
+
+       [testenv:test]
+       extras = {[testenv]extras} green
+
+    Overriding the base propagates into ``test`` (``test`` resolves to ``blue green``):
+
+    .. code-block:: bash
+
+       tox c -e test -k extras -x testenv.extras=blue
+
 Escaping dots in override keys
 ==============================
 

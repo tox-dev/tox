@@ -2,10 +2,12 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from pathlib import Path
+from textwrap import dedent
 from typing import TYPE_CHECKING
 
 import pytest
 
+from tox.config.loader.api import Override
 from tox.config.loader.replacer import MAX_REPLACE_DEPTH
 from tox.config.sets import ConfigSet
 from tox.report import HandledError
@@ -220,35 +222,25 @@ def test_replace_valid_section_names(tox_ini_conf: ToxIniCreator, env_name: str,
     assert conf_a["x"] == exp
 
 
-def test_override_base_with_replace_ref_ini(tox_ini_conf: ToxIniCreator, monkeypatch: pytest.MonkeyPatch) -> None:
-    """Test that TOX_OVERRIDE affects INI values referenced via {[section]key}.
-
-    Overriding testenv.extras should affect the test environment when it references that value. This test documents the
-    current behavior where the override does not propagate through the INI-style reference.
-
-    """
-    config = tox_ini_conf("[testenv]\nextras = RED\n[testenv:test]\nextras = {[testenv]extras} GREEN\n")
-    monkeypatch.setenv("TOX_OVERRIDE", "testenv.extras=BLUE")
-
-    env_config = config.get_env("test")
-    env_config.add_config(keys="extras", of_type=str, default="", desc="extras")
-    result = env_config["extras"]
-    assert result == "RED GREEN"
-
-
-def test_override_base_with_replace_ref_ini_append(
-    tox_ini_conf: ToxIniCreator, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    """Test that TOX_OVERRIDE append mode affects INI values referenced via {[section]key}.
-
-    Using append mode (+=) to override testenv.extras should affect the test environment when it references that value.
-    This test documents the current behavior where the override does not propagate through the INI-style reference.
-
-    """
-    config = tox_ini_conf("[testenv]\nextras = RED\n[testenv:test]\nextras = {[testenv]extras} GREEN\n")
-    monkeypatch.setenv("TOX_OVERRIDE", "testenv.extras+=BLUE")
+@pytest.mark.parametrize(
+    ("override", "expected"),
+    [
+        pytest.param("testenv.extras=BLUE", "BLUE GREEN", id="replace"),
+        pytest.param("testenv.extras+=BLUE", "RED\nBLUE GREEN", id="append"),
+    ],
+)
+def test_override_propagates_through_section_ref(tox_ini_conf: ToxIniCreator, override: str, expected: str) -> None:
+    """An override on a base section propagates through a ``{[section]key}`` reference (#3950)."""
+    config = tox_ini_conf(
+        dedent("""
+            [testenv]
+            extras = RED
+            [testenv:test]
+            extras = {[testenv]extras} GREEN
+            """),
+        override=[Override(override)],
+    )
 
     env_config = config.get_env("test")
     env_config.add_config(keys="extras", of_type=str, default="", desc="extras")
-    result = env_config["extras"]
-    assert result == "RED GREEN"
+    assert env_config["extras"] == expected
