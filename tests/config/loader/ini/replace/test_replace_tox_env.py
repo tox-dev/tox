@@ -2,10 +2,12 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from pathlib import Path
+from textwrap import dedent
 from typing import TYPE_CHECKING
 
 import pytest
 
+from tox.config.loader.api import Override
 from tox.config.loader.replacer import MAX_REPLACE_DEPTH
 from tox.config.sets import ConfigSet
 from tox.report import HandledError
@@ -218,3 +220,27 @@ def test_replace_valid_section_names(tox_ini_conf: ToxIniCreator, env_name: str,
     conf_a = tox_ini_conf(f"[{env_name}]\na={exp}\n[testenv:a]\nx = {{[{env_name}]a}}").get_env("a")
     conf_a.add_config(keys="x", of_type=str, default="o", desc="o")
     assert conf_a["x"] == exp
+
+
+@pytest.mark.parametrize(
+    ("override", "expected"),
+    [
+        pytest.param("testenv.extras=BLUE", "BLUE GREEN", id="replace"),
+        pytest.param("testenv.extras+=BLUE", "RED\nBLUE GREEN", id="append"),
+    ],
+)
+def test_override_propagates_through_section_ref(tox_ini_conf: ToxIniCreator, override: str, expected: str) -> None:
+    """An override on a base section propagates through a ``{[section]key}`` reference (#3950)."""
+    config = tox_ini_conf(
+        dedent("""
+            [testenv]
+            extras = RED
+            [testenv:test]
+            extras = {[testenv]extras} GREEN
+            """),
+        override=[Override(override)],
+    )
+
+    env_config = config.get_env("test")
+    env_config.add_config(keys="extras", of_type=str, default="", desc="extras")
+    assert env_config["extras"] == expected

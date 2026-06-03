@@ -8,6 +8,7 @@ from functools import cache
 from re import Pattern
 from typing import TYPE_CHECKING
 
+from tox.config.loader.api import apply_overrides_to_raw
 from tox.config.loader.replacer import ReplaceReference
 from tox.config.loader.stringify import stringify
 
@@ -67,8 +68,9 @@ class ReplaceReferenceIni(ReplaceReference):
 
     def _resolve_section_proxy(self, src: SectionProxy, key: str, env_name: str | None) -> str:
         """Resolve a key from a SectionProxy, returning empty string when factor filtering empties the value."""
+        raw = apply_overrides_to_raw(self.conf.overrides.get(src.name, []), key, src[key])
         try:
-            return self.loader.process_raw(self.conf, env_name, src[key])
+            return self.loader.process_raw(self.conf, env_name, raw)
         except KeyError:
             if key in src:
                 # Key exists but factor filtering emptied the value.

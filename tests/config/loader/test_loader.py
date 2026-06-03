@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 import pytest
 
 from tox.config.cli.parse import get_options
-from tox.config.loader.api import Override
+from tox.config.loader.api import Override, apply_overrides_to_raw
 
 if TYPE_CHECKING:
     from tox.pytest import CaptureFixture
@@ -85,3 +85,27 @@ def test_override_escaped_dot(raw: str, namespace: str, key: str, value: str, ap
     assert override.value == value
     assert override.append is append
     assert str(override) == expected_str
+
+
+@pytest.mark.parametrize(
+    ("override", "raw", "expected"),
+    [
+        pytest.param("ns.k=blue", ["red"], ["blue"], id="list-replace"),
+        pytest.param("ns.k+=blue", ["red"], ["red", "blue"], id="list-append"),
+        pytest.param("ns.k=blue", "red", "blue", id="scalar-replace"),
+        pytest.param("ns.k+=blue", "red", "red\nblue", id="str-append"),
+        pytest.param("ns.k=a=1", {"b": "2"}, {"a": "1"}, id="dict-replace"),
+        pytest.param("ns.k+=a=1", {"b": "2"}, {"b": "2", "a": "1"}, id="dict-append"),
+    ],
+)
+def test_apply_overrides_to_raw(override: str, raw: object, expected: object) -> None:
+    assert apply_overrides_to_raw([Override(override)], "k", raw) == expected
+
+
+def test_apply_overrides_to_raw_ignores_other_keys() -> None:
+    assert apply_overrides_to_raw([Override("ns.other=blue")], "k", ["red"]) == ["red"]
+
+
+def test_apply_overrides_to_raw_append_unsupported_type() -> None:
+    with pytest.raises(ValueError, match="Only able to append to lists, dicts and strings"):
+        apply_overrides_to_raw([Override("ns.k+=1")], "k", 0)

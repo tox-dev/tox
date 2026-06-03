@@ -13,7 +13,7 @@ from tox.config.loader.replacer import MatchError
 if TYPE_CHECKING:
     from pathlib import Path
 
-    from tox.pytest import ToxProjectCreator
+    from tox.pytest import ToxProject, ToxProjectCreator
 
 
 def test_config_in_toml_core(tox_project: ToxProjectCreator) -> None:
@@ -1072,6 +1072,47 @@ def test_config_in_toml_replace_ref_command(tox_project: ToxProjectCreator) -> N
     assert "python" in outcome.out
     assert "pip" in outcome.out
     assert "freeze" in outcome.out
+
+
+@pytest.fixture
+def extras_replace_ref_project(tox_project: ToxProjectCreator) -> ToxProject:
+    return tox_project({
+        "pyproject.toml": dedent("""
+            [tool.tox.env_run_base]
+            extras = ["RED"]
+
+            [tool.tox.env.test]
+            extras = [
+              {replace = "ref", of = ["tool", "tox", "env_run_base", "extras"], extend = true},
+              "GREEN"
+            ]
+            """)
+    })
+
+
+@pytest.mark.parametrize(
+    ("override", "expected"),
+    [
+        pytest.param(
+            "tool.tox.env_run_base.extras=BLUE", "[testenv:test]\nextras =\n  blue\n  green\n", id="base-replace"
+        ),
+        pytest.param(
+            "tool.tox.env_run_base.extras+=BLUE",
+            "[testenv:test]\nextras =\n  blue\n  green\n  red\n",
+            id="base-append",
+        ),
+        pytest.param("tool.tox.env.test.extras=BLUE", "[testenv:test]\nextras = blue\n", id="direct"),
+    ],
+)
+def test_override_propagates_through_replace_ref_of(
+    extras_replace_ref_project: ToxProject, monkeypatch: pytest.MonkeyPatch, override: str, expected: str
+) -> None:
+    """TOX_OVERRIDE on a referenced base value propagates through a ``{replace = "ref", of = [...]}`` ref (#3950)."""
+    monkeypatch.setenv("TOX_OVERRIDE", override)
+
+    outcome = extras_replace_ref_project.run("c", "-e", "test", "-k", "extras")
+    outcome.assert_success()
+    outcome.assert_out_err(expected, "")
 
 
 def test_toml_machine_isa_does_not_override_explicit_env_factor(tox_project: ToxProjectCreator) -> None:

@@ -12,6 +12,7 @@ from typing import TYPE_CHECKING, Any, cast
 
 from python_discovery import KNOWN_ARCHITECTURES, normalize_isa
 
+from tox.config.loader.api import apply_overrides_to_raw
 from tox.config.loader.ini.factor import find_factor_groups
 from tox.config.loader.replacer import (
     MatchError,
@@ -128,6 +129,10 @@ class Unroll:
         if of := value.get("of"):
             validated_of = validate(of, list[str])
             loaded = self.loader.load_raw_from_root(self.loader.section.SEP.join(validated_of))
+            if self.conf is not None:
+                *namespace_parts, ref_key = validated_of
+                namespace = self.loader.section.SEP.join(namespace_parts)
+                loaded = apply_overrides_to_raw(self.conf.overrides.get(namespace, []), ref_key, loaded)
             return self(loaded, depth, skip_str=skip_str)
         return value
 
