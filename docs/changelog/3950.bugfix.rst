@@ -1,4 +1,0 @@
-``TOX_OVERRIDE`` (and ``-x``/``--override``) now propagates through configuration references. Previously, overriding a
-base value that was later referenced via ``{[section]key}`` (ini) or ``{replace = "ref", of = [...]}`` (toml) was
-ignored because reference resolution read the raw file value, bypassing the override system - by
-:user:`tales-aparecida`. (:issue:`3950`)

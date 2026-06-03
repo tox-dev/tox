@@ -7,6 +7,18 @@
 .. towncrier release notes start
 
 **********************
+ v4.55.1 (2026-06-03)
+**********************
+
+Bug fixes - 4.55.1
+==================
+
+- ``TOX_OVERRIDE`` (and ``-x``/``--override``) now propagates through configuration references. Previously, overriding a
+  base value that was later referenced via ``{[section]key}`` (ini) or ``{replace = "ref", of = [...]}`` (toml) was
+  ignored because reference resolution read the raw file value, bypassing the override system - by
+  :user:`tales-aparecida`. (:issue:`3950`) (:issue:`3950`)
+
+**********************
  v4.55.0 (2026-05-28)
 **********************
 
