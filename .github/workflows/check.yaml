@@ -20,8 +20,8 @@ concurrency:
 
 jobs:
   test:
-    name: test ${{ matrix.py }} on ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
+    name: test ${{ matrix.py }} on ${{ matrix.os.name }}
+    runs-on: ${{ matrix.os.image }}
     strategy:
       fail-fast: false
       matrix:
@@ -32,9 +32,9 @@ jobs:
           - "3.11"
           - "3.10"
         os:
-          - ubuntu-24.04
-          - windows-2025-vs2026
-          - macos-15
+          - { image: ubuntu-24.04, name: ubuntu }
+          - { image: windows-2025-vs2026, name: windows }
+          - { image: macos-15, name: macos }
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         with:
@@ -71,8 +71,8 @@ jobs:
           PYTEST_XDIST_AUTO_NUM_WORKERS: 0
 
   check:
-    name: tox env ${{ matrix.tox_env }} on ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
+    name: tox env ${{ matrix.tox_env }} on ${{ matrix.os.name }}
+    runs-on: ${{ matrix.os.image }}
     strategy:
       fail-fast: false
       matrix:
@@ -83,10 +83,10 @@ jobs:
           - docs
           - pkg_meta
         os:
-          - ubuntu-24.04
-          - windows-2025-vs2026
+          - { image: ubuntu-24.04, name: ubuntu }
+          - { image: windows-2025-vs2026, name: windows }
         exclude:
-          - { os: windows-2025-vs2026, tox_env: docs }
+          - { os: { image: windows-2025-vs2026, name: windows }, tox_env: docs }
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         with:
