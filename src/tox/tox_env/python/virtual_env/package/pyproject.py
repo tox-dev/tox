@@ -41,6 +41,7 @@ from .util import dependencies_with_extras, dependencies_with_extras_from_marker
 if TYPE_CHECKING:
     from collections.abc import Generator, Iterator, Sequence
 
+    from tox.config.of_type import ConfigConstantDefinition
     from tox.config.sets import EnvConfigSet
     from tox.execute.api import ExecuteStatus, Outcome
     from tox.tox_env.api import ToxEnvCreateArgs
@@ -262,7 +263,7 @@ class Pep517VenvPackager(PythonPackageToxEnv, ABC):
                 cast("Pep517VirtualEnvFrontend", self._frontend_).backend,
             )
             for env in targets:
-                env._defined["package"].value = "editable-legacy"  # noqa: SLF001  # ty: ignore[unresolved-attribute] # ConfigDefinition.value is dynamically typed
+                cast("ConfigConstantDefinition[str]", env._defined["package"]).value = "editable-legacy"  # noqa: SLF001
                 self.builds["editable-legacy"].append(env)
             self._run_state["setup"] = False  # force setup again as we need to provision wheel to get dependencies
             deps = self._load_deps(for_env)

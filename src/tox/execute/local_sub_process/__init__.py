@@ -121,7 +121,7 @@ class LocalSubprocessExecuteStatus(ExecuteStatus):
             import _overlapped  # noqa: PLC0415,PLC2701
 
             ov = _overlapped.Overlapped(0)
-            ov.WriteFile(stdin.handle, bytes_content)  # ty: ignore[unresolved-attribute] # PipeHandle on Windows
+            ov.WriteFile(stdin.handle, bytes_content)
             result = ov.getresult(10)  # wait up to 10ms to perform the operation
             if result != len(bytes_content):
                 msg = f"failed to write to {stdin!r}"

@@ -25,7 +25,7 @@ from tox.tox_env.runner import RunToxEnv
 if TYPE_CHECKING:
     import sys
     from argparse import Action, ArgumentParser, Namespace
-    from collections.abc import Iterable, Iterator
+    from collections.abc import Callable, Iterable, Iterator
 
     if sys.version_info >= (3, 11):  # pragma: >=3.11 cover
         from typing import Self
@@ -104,6 +104,8 @@ class CliEnv:  # noqa: PLW1641
 
 
 class _CliEnvAction(argparse.Action):
+    completer: Callable[[str, Action, ArgumentParser, Namespace], list[str]]
+
     def __call__(
         self,
         parser: argparse.ArgumentParser,  # noqa: ARG002
@@ -124,7 +126,7 @@ def register_env_select_flags(
     default: CliEnv | None,
     multiple: bool = True,  # noqa: FBT001, FBT002
     group_only: bool = False,  # noqa: FBT001, FBT002
-) -> ArgumentParser:
+) -> argparse._ActionsContainer:
     """Register environment selection flags.
 
     :param parser: the parser to register to
@@ -136,7 +138,7 @@ def register_env_select_flags(
     if multiple:
         group = parser.add_argument_group("select target environment(s)")
         # _MutuallyExclusiveGroup is private in argparse https://github.com/python/cpython/issues/144812
-        add_to: ArgumentParser = group.add_mutually_exclusive_group(required=False)  # ty: ignore[invalid-assignment]
+        add_to: argparse._ActionsContainer = group.add_mutually_exclusive_group(required=False)
     else:
         add_to = parser
     if not group_only:
@@ -146,7 +148,7 @@ def register_env_select_flags(
             help_msg = "environment to run"
         action = add_to.add_argument("-e", dest="env", help=help_msg, default=default, action=_CliEnvAction)
         if find_spec("argcomplete"):
-            action.completer = _env_completer  # type: ignore[attr-defined,ty:unresolved-attribute]  # argcomplete extension
+            cast("_CliEnvAction", action).completer = _env_completer
     if multiple:
         help_msg = "labels to evaluate"
         add_to.add_argument("-m", dest="labels", metavar="label", help=help_msg, default=[], type=str, nargs="+")

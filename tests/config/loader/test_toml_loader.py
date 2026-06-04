@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Literal, NoReturn, TypeVar
+from typing import TYPE_CHECKING, Any, Literal, TypeVar
 
 import pytest
 
@@ -30,11 +30,11 @@ def test_toml_loader_found_keys() -> None:
     assert loader.found_keys() == {"a", "c"}
 
 
-def factory_na(obj: object) -> NoReturn:
-    raise NotImplementedError
-
-
 V = TypeVar("V")
+
+
+def factory_na(obj: object) -> V:
+    raise NotImplementedError
 
 
 def perform_load(value: Any, of_type: type[V] | UnionType) -> V:

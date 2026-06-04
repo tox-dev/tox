@@ -58,7 +58,9 @@ class ConfigConstantDefinition(ConfigDefinition[T]):  # noqa: PLW1641
         loaders: list[Loader[T]],  # noqa: ARG002
         args: ConfigLoadArgs,  # noqa: ARG002
     ) -> T:
-        return self.value() if callable(self.value) else self.value  # ty: ignore[call-top-callable]
+        if callable(self.value):
+            return cast("Callable[[], T]", self.value)()
+        return self.value
 
     def __eq__(self, o: object) -> bool:
         if not isinstance(o, ConfigConstantDefinition):
@@ -118,7 +120,10 @@ class ConfigDynamicDefinition(ConfigDefinition[T]):  # noqa: PLW1641
                 finally:
                     del args.chain[-1]
             else:
-                value = self.default(conf, args.env_name) if callable(self.default) else self.default  # ty: ignore[call-top-callable]
+                if callable(self.default):
+                    value = cast("Callable[[Config, str | None], T]", self.default)(conf, args.env_name)
+                else:
+                    value = self.default
             if self.post_process is not None:
                 value = self.post_process(value)
             self._cache = value

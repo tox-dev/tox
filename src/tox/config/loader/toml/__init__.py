@@ -3,6 +3,7 @@ from __future__ import annotations
 import inspect
 import logging
 from pathlib import Path
+from types import GenericAlias
 from typing import TYPE_CHECKING, Any, TypeVar, cast
 
 from tox.config.loader.api import ConfigLoadArgs, Loader, Override
@@ -104,17 +105,17 @@ class TomlLoader(Loader[TomlTypes]):
 
     @staticmethod
     def to_list(value: TomlTypes, of_type: type[_T]) -> Iterator[_T]:
-        result = validate(value, cast("type[list[Any]]", list[of_type]))  # ty: ignore[invalid-type-form] # runtime generic from type variable
+        result = validate(value, cast("type[list[Any]]", GenericAlias(list, (of_type,))))
         return iter(cast("list[_T]", result))
 
     @staticmethod
     def to_set(value: TomlTypes, of_type: type[_T]) -> Iterator[_T]:
-        result = validate(value, cast("type[list[Any]]", list[of_type]))  # ty: ignore[invalid-type-form] # runtime generic from type variable
+        result = validate(value, cast("type[list[Any]]", GenericAlias(list, (of_type,))))
         return iter(cast("list[_T]", result))
 
     @staticmethod
     def to_dict(value: TomlTypes, of_type: tuple[type[_T], type[_V]]) -> Iterator[tuple[_T, _V]]:
-        result = validate(value, cast("type[dict[Any, Any]]", dict[of_type[0], of_type[1]]))  # ty: ignore[invalid-type-form] # runtime generic from type variables
+        result = validate(value, cast("type[dict[Any, Any]]", GenericAlias(dict, of_type)))
         return iter(cast("dict[_T, _V]", result).items())
 
     @staticmethod
