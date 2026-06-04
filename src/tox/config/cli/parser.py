@@ -9,7 +9,7 @@ import random
 import sys
 from argparse import SUPPRESS, Action, ArgumentDefaultsHelpFormatter, ArgumentError, ArgumentParser, Namespace
 from pathlib import Path
-from types import UnionType
+from types import GenericAlias, UnionType
 from typing import TYPE_CHECKING, Any, Literal, TypeVar, cast, overload
 
 from colorama import Fore
@@ -69,9 +69,9 @@ class ArgumentParserWithEnvAndConfig(ArgumentParser):
         if of_type is None:
             if isinstance(action, argparse._AppendAction):  # noqa: SLF001
                 if action.nargs in {"+", "*"} or (isinstance(action.nargs, int) and action.nargs > 1):
-                    of_type = list[list[action.type]]  # ty: ignore[invalid-type-form] # nargs produces list per invocation
+                    of_type = cast("type[Any]", GenericAlias(list, (GenericAlias(list, (action.type,)),)))
                 else:
-                    of_type = list[action.type]  # ty: ignore[invalid-type-form] # runtime generic from argparse action type
+                    of_type = cast("type[Any]", GenericAlias(list, (action.type,)))
             elif isinstance(action, argparse._StoreAction) and action.choices:  # noqa: SLF001
                 of_type = Literal[tuple(action.choices)]  # ty: ignore[invalid-type-form] # dynamic Literal from choices
             elif action.default is not None:
