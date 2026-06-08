@@ -521,11 +521,17 @@ Common architecture values (after normalization):
  Set values based on a condition
 *********************************
 
-.. versionadded:: 4.40 Conditional value replacement with ``env.VAR`` lookups.
+.. versionadded:: 4.40
 
-.. versionchanged:: 4.42 Added ``factor.NAME`` lookups for environment name factors and platform.
+    Conditional value replacement with ``env.VAR`` lookups.
 
-.. versionchanged:: 4.50 Added ``factor['NAME']``/``env['VAR']`` subscript syntax and ``env_name`` variable.
+.. versionchanged:: 4.42
+
+    Added ``factor.NAME`` lookups for environment name factors and platform.
+
+.. versionchanged:: 4.50
+
+    Added ``factor['NAME']``/``env['VAR']`` subscript syntax and ``env_name`` variable.
 
 TOML configurations can conditionally select values based on environment variables and factors using ``replace = "if"``.
 The ``condition`` field accepts expressions with ``env.VAR`` lookups for environment variables, ``factor.NAME`` lookups

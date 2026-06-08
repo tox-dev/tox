@@ -2488,11 +2488,17 @@ When no files match and no default is given, the result is an empty string (or e
 Conditional value reference
 ===========================
 
-.. versionadded:: 4.40 Conditional value replacement with ``env.VAR`` lookups.
+.. versionadded:: 4.40
 
-.. versionchanged:: 4.42 Added ``factor.NAME`` lookups for environment name factors and platform.
+    Conditional value replacement with ``env.VAR`` lookups.
 
-.. versionchanged:: 4.50 Added ``factor['NAME']`` and ``env['VAR']`` subscript syntax and ``env_name`` variable.
+.. versionchanged:: 4.42
+
+    Added ``factor.NAME`` lookups for environment name factors and platform.
+
+.. versionchanged:: 4.50
+
+    Added ``factor['NAME']`` and ``env['VAR']`` subscript syntax and ``env_name`` variable.
 
 You can conditionally select values based on environment variables and factors via the ``if`` replacement. The
 ``condition`` field accepts an expression language that supports ``env.VAR_NAME`` lookups for environment variables,
