@@ -95,10 +95,11 @@ The primary tox states are:
 
    Steps 2 and 3 can be selectively skipped with CLI flags:
 
-   - ``--skip-pkg-install`` skips step 3 only (packaging and package installation), while still installing dependencies.
-   - ``--skip-env-install`` skips both steps 2 and 3 entirely, reusing the environment as-is. This is useful when
-     working offline or when the environment is already fully set up from a previous run. See :ref:`skip-env-install`
-     for practical usage.
+   3. ``--skip-pkg-install`` skips step 3 only (packaging and package installation), while still installing
+      dependencies.
+   4. ``--skip-env-install`` skips both steps 2 and 3 entirely, reusing the environment as-is. This is useful when
+      working offline or when the environment is already fully set up from a previous run. See :ref:`skip-env-install`
+      for practical usage.
 
    4. **Extra setup commands** (optional): run the :ref:`extra_setup_commands` specified. These execute after all
       installations complete but before test commands, and run during the ``--notest`` phase.
@@ -173,7 +174,9 @@ Conditional value evaluation
 
 .. versionadded:: 4.40
 
-.. versionchanged:: 4.50 Added ``factor['NAME']``/``env['VAR']`` subscript syntax and ``env_name`` variable.
+.. versionchanged:: 4.50
+
+    Added ``factor['NAME']``/``env['VAR']`` subscript syntax and ``env_name`` variable.
 
 TOML configurations support ``replace = "if"`` to conditionally select values at configuration load time. The
 ``condition`` field accepts expressions that are parsed using Python's ``ast`` module and evaluated against the host

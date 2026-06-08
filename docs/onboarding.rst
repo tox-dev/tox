@@ -546,12 +546,12 @@ for configuration in this order:
 1. If ``--conf`` is specified, it uses that file directly.
 2. Otherwise, it walks up from CWD looking for:
 
-   - ``tox.toml`` which uses `TomlSource <https://github.com/tox-dev/tox/blob/main/src/tox/config/source/toml_.py>`_.
-   - ``pyproject.toml`` (with ``[tool.tox]``) which uses `PyProjectTomlSource
-     <https://github.com/tox-dev/tox/blob/main/src/tox/config/source/pyproject.py>`_.
-   - ``tox.ini`` which uses `IniSource <https://github.com/tox-dev/tox/blob/main/src/tox/config/source/ini.py>`_.
-   - ``setup.cfg`` (with ``[tox:tox]``) which uses `SetupCfgSource
-     <https://github.com/tox-dev/tox/blob/main/src/tox/config/source/setup_cfg.py>`_.
+   3. ``tox.toml`` which uses `TomlSource <https://github.com/tox-dev/tox/blob/main/src/tox/config/source/toml_.py>`_.
+   4. ``pyproject.toml`` (with ``[tool.tox]``) which uses `PyProjectTomlSource
+      <https://github.com/tox-dev/tox/blob/main/src/tox/config/source/pyproject.py>`_.
+   5. ``tox.ini`` which uses `IniSource <https://github.com/tox-dev/tox/blob/main/src/tox/config/source/ini.py>`_.
+   6. ``setup.cfg`` (with ``[tox:tox]``) which uses `SetupCfgSource
+      <https://github.com/tox-dev/tox/blob/main/src/tox/config/source/setup_cfg.py>`_.
 
 3. If nothing is found, it creates an empty `IniSource
    <https://github.com/tox-dev/tox/blob/main/src/tox/config/source/ini.py>`_ at CWD.

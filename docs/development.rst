@@ -304,10 +304,10 @@ Navigate to `Actions > Prepare Release <https://github.com/tox-dev/tox/actions/w
 2. Select the branch (usually ``main``).
 3. Choose the version bump type:
 
-   - ``auto`` (default) - Automatically bump minor if feature changelogs exist, otherwise bump patch.
-   - ``major`` - Bump major version (e.g., 4.0.0 → 5.0.0).
-   - ``minor`` - Bump minor version (e.g., 4.27.0 → 4.28.0).
-   - ``patch`` - Bump patch version (e.g., 4.27.0 → 4.27.1).
+   4. ``auto`` (default) - Automatically bump minor if feature changelogs exist, otherwise bump patch.
+   5. ``major`` - Bump major version (e.g., 4.0.0 → 5.0.0).
+   6. ``minor`` - Bump minor version (e.g., 4.27.0 → 4.28.0).
+   7. ``patch`` - Bump patch version (e.g., 4.27.0 → 4.27.1).
 
 4. Click "Run workflow".
 
