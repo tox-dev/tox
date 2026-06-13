@@ -65,7 +65,7 @@ def parallel_flags(
         type=parse_num_processes,
         default=default_parallel,
         metavar="VAL",
-        **({"nargs": "?"} if no_args else {}),  # ty: ignore[invalid-argument-type] # https://github.com/astral-sh/ty/issues/2586
+        **({"nargs": "?"} if no_args else {}),
     )
     our.add_argument(
         "-o",
