@@ -273,7 +273,7 @@ class EnvConfigSet(ConfigSet):
                 if isinstance(v, str):
                     return True
                 if isinstance(v, dict):
-                    return "value" in v and isinstance(v.get("value"), str)  # ty: ignore[invalid-argument-type] # https://github.com/astral-sh/ty/issues/2374
+                    return "value" in v and isinstance(v.get("value"), str)
                 return False
 
             if not (
