@@ -53,14 +53,14 @@ if fs_supports_symlink():  # pragma: no cover # used to speed up test suite run 
     os.environ["VIRTUALENV_SYMLINKS"] = "1"
 
 
-@pytest.fixture(autouse=True)
+@pytest.fixture(autouse=True)  # noqa: RUF076
 def ensure_logging_framework_not_altered() -> Iterator[None]:
     before_handlers = list(LOGGER.handlers)
     yield
     LOGGER.handlers = before_handlers
 
 
-@pytest.fixture(autouse=True)
+@pytest.fixture(autouse=True)  # noqa: RUF076
 def _disable_root_tox_py(request: SubRequest, mocker: MockerFixture) -> Iterator[None]:
     """Unless this is a plugin test do not allow loading toxfile.py."""
     if request.node.get_closest_marker("plugin_test"):  # unregister inline plugin
@@ -116,14 +116,14 @@ def check_os_environ() -> Iterator[None]:
             pytest.fail(msg)
 
 
-@pytest.fixture(autouse=True)
+@pytest.fixture(autouse=True)  # noqa: RUF076
 def check_os_environ_stable(monkeypatch: pytest.MonkeyPatch) -> Iterator[None]:
     with check_os_environ():
         yield
         monkeypatch.undo()
 
 
-@pytest.fixture(autouse=True)
+@pytest.fixture(autouse=True)  # noqa: RUF076
 def no_color(monkeypatch: pytest.MonkeyPatch, check_os_environ_stable: None) -> None:  # noqa: ARG001
     monkeypatch.setenv("NO_COLOR", "yes")
 
@@ -304,7 +304,7 @@ class ToxProject:
         return f"{type(self).__name__}(path={self.path}) at {id(self)}"
 
 
-@pytest.fixture(autouse=True, scope="session")
+@pytest.fixture(autouse=True, scope="session")  # noqa: RUF076
 def enable_pep517_backend_coverage() -> Iterator[None]:
     try:
         import coverage  # noqa: F401, PLC0415
@@ -499,7 +499,7 @@ def _invalid_index_fake_port() -> int:
         return cast("int", socket_handler.getsockname()[1])
 
 
-@pytest.fixture(autouse=True)
+@pytest.fixture(autouse=True)  # noqa: RUF076
 def disable_pip_pypi_access(_invalid_index_fake_port: int, monkeypatch: pytest.MonkeyPatch) -> tuple[str, str | None]:
     """Set a fake pip index url, tests that want to use a pypi server should create and overwrite this."""
     previous_url = os.environ.get("PIP_INDEX_URL")

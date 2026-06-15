@@ -18,7 +18,7 @@ if TYPE_CHECKING:
     from tox.tox_env.api import ToxEnv
 
 
-@pytest.fixture(autouse=True)
+@pytest.fixture(autouse=True)  # noqa: RUF076
 def _custom_config_set(mocker: MockerFixture) -> None:
     class DockerConfigSet(ConfigSet):
         def register_config(self) -> None:
