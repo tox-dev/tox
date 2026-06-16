@@ -38,7 +38,7 @@ section. This section contains only highlights; it's not a substitute for readin
     generated HTML files under :file:`.tox/docs_out/html/`. The required changelog entry can be viewed at the "Release
     History" link at the left.
   - ``tox -e fix`` to lint code, documentation and any other changes to the repo. This will also fix the code and write
-    out the changed files; you can update your commit with `git commit --amend`.
+    out the changed files; you can update your commit with ``git commit --amend``.
 
 *****************
  Getting started
