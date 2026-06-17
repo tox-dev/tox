@@ -943,7 +943,7 @@ Base options
        For platform-specific conditions (e.g., ``sys_platform``, ``os_name``), this is typically the desired behavior
        since the target environment runs on the same platform.
 
-     .. tab:: TOML
+    .. tab:: TOML
 
         .. code-block:: toml
 
@@ -954,7 +954,7 @@ Base options
            # Can also be combined with replace directives
            set_env.CONDITIONAL = { replace = "env", name = "MY_VAR", default = "fallback", marker = "sys_platform == 'linux'" }
 
-     .. tab:: INI
+    .. tab:: INI
 
         .. code-block:: ini
 
@@ -1496,13 +1496,13 @@ Python options
         does for version mismatches. This is useful on machines with multi-architecture support (e.g. Apple Silicon
         running both ``arm64`` and ``x86_64`` via Rosetta, or Linux with ``aarch64`` and ``x86_64`` via ``qemu-user``).
 
-     .. versionchanged:: 3.1
+    .. versionchanged:: 3.1
 
          After resolving this value if the interpreter reports back a different version number than implied from the name
          a warning will be printed by default. However, if :ref:`ignore_basepython_conflict` is set, the value is
          ignored and we force the :ref:`base_python` implied from the factor name.
 
-     .. note::
+    .. note::
 
        Leaving this unset will cause an error if the package under test has a different Python requires than tox itself
        and tox is installed into a Python that's not supported by the package. For example, if your package requires
