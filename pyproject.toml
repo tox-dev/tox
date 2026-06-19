@@ -72,7 +72,7 @@ optional-dependencies.testing = [
 ]
 urls."Release Notes" = "https://tox.wiki/en/latest/changelog.html"
 urls.Documentation = "https://tox.wiki"
-urls.Homepage = "http://tox.readthedocs.org"
+urls.Homepage = "https://tox.wiki"
 urls.Source = "https://github.com/tox-dev/tox"
 urls.Tracker = "https://github.com/tox-dev/tox/issues"
 scripts.tox = "tox.run:run"
