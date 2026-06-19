@@ -1,7 +1,7 @@
 <!-- Thank you for your contribution!
 
 Please, make sure you address all the checklists (for details on how see
-[development documentation](http://tox.readthedocs.org/en/latest/development.html#development))! -->
+[development documentation](https://tox.wiki/en/latest/development.html))! -->
 
 - [ ] ran the linter to address style issues (`tox -e fix`)
 - [ ] wrote descriptive pull request text

@@ -7,5 +7,5 @@ As a reminder, all contributors are expected to follow our [Code of Conduct][coc
 
 ## Development Documentation
 
-Our [development documentation](http://tox.readthedocs.org/en/latest/development.html#development) contains details on
+Our [development documentation](https://tox.wiki/en/latest/development.html) contains details on
 how to get started with contributing to `tox`, and details of our development processes.
