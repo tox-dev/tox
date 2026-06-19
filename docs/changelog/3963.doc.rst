@@ -1,0 +1,1 @@
+Replace stale ``http://tox.readthedocs.org`` URL with ``https://tox.wiki`` in ``pyproject.toml`` (``Homepage``), ``.github/CONTRIBUTING.md``, and ``.github/PULL_REQUEST_TEMPLATE.md``.
