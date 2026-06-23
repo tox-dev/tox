@@ -95,11 +95,10 @@ The primary tox states are:
 
    Steps 2 and 3 can be selectively skipped with CLI flags:
 
-   3. ``--skip-pkg-install`` skips step 3 only (packaging and package installation), while still installing
-      dependencies.
-   4. ``--skip-env-install`` skips both steps 2 and 3 entirely, reusing the environment as-is. This is useful when
-      working offline or when the environment is already fully set up from a previous run. See :ref:`skip-env-install`
-      for practical usage.
+   - ``--skip-pkg-install`` skips step 3 only (packaging and package installation), while still installing dependencies.
+   - ``--skip-env-install`` skips both steps 2 and 3 entirely, reusing the environment as-is. This is useful when
+     working offline or when the environment is already fully set up from a previous run. See :ref:`skip-env-install`
+     for practical usage.
 
    4. **Extra setup commands** (optional): run the :ref:`extra_setup_commands` specified. These execute after all
       installations complete but before test commands, and run during the ``--notest`` phase.
@@ -677,8 +676,14 @@ installed virtualenv supports all target Python versions, but breaks down at the
 only import one virtualenv version per process, projects that need both old and new Pythons in a single ``tox.toml`` hit
 a wall.
 
-The :ref:`virtualenv_spec` setting resolves this by decoupling the virtualenv used for environment creation from the one
-tox imports. When set, tox:
+tox closes this gap automatically: for each environment it checks the targeted :ref:`base_python` against the installed
+virtualenv's `version support timeline <https://virtualenv.pypa.io/en/latest/reference/compatibility.html>`_, and when
+that interpreter can no longer be created, it derives a :ref:`virtualenv_spec` pinning the newest virtualenv that still
+can. To stay conservative it only downgrades when *every* ``base_python`` candidate is unsupported -- otherwise tox may
+resolve to a creatable interpreter and no bootstrap is needed.
+
+The :ref:`virtualenv_spec` setting (whether derived or set explicitly) resolves this by decoupling the virtualenv used
+for environment creation from the one tox imports. When non-empty, tox:
 
 1. Creates a bootstrap venv (using the stdlib ``venv`` module) in ``.tox/.virtualenv-bootstrap/``.
 2. Installs the specified virtualenv version into that bootstrap venv via pip.
@@ -688,9 +693,9 @@ The bootstrap is content-addressed by a hash of the spec string, so different sp
 file lock protects against concurrent bootstrap creation (relevant in parallel mode). Once bootstrapped, subsequent runs
 skip directly to step 3.
 
-When ``virtualenv_spec`` is empty (the default), tox uses the imported virtualenv with zero overhead -- the subprocess
-path only activates when explicitly configured. The spec is included in the environment cache key, so changing it
-triggers automatic recreation.
+When ``virtualenv_spec`` resolves to empty, tox uses the imported virtualenv with zero overhead -- the subprocess path
+only activates for a non-empty spec. The spec is included in the environment cache key, so changing it (or a virtualenv
+upgrade that changes the derived value) triggers automatic recreation.
 
 This design mirrors tox's own auto-provisioning mechanism (``requires`` / ``min_version``), where tox bootstraps itself
 into a separate environment when the running installation doesn't meet the declared requirements.

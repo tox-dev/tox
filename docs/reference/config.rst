@@ -1907,15 +1907,22 @@ Python virtual environment
     :keys: virtualenv_spec
     :default: ""
     :version_added: 4.42
+    :version_changed: 4.56
 
     A :pep:`440` version specifier for virtualenv (e.g. ``virtualenv<20.22.0``). When set, tox bootstraps the specified
     virtualenv version into an isolated environment and drives it via subprocess, instead of using the imported
     virtualenv library. This enables environments targeting Python versions that are incompatible with the virtualenv
     installed alongside tox.
 
+    Left empty (the default), tox derives the value automatically: it inspects the environment's :ref:`base_python` and,
+    only when the installed virtualenv can no longer *create* that interpreter, pins the newest virtualenv that still
+    can. The pin is applied for that environment alone, so environments targeting supported Pythons keep using the
+    imported virtualenv with zero overhead. tox downgrades only when every ``base_python`` candidate is unsupported by
+    the installed virtualenv -- if any candidate would resolve to a creatable interpreter, no pin is applied. Set the
+    value explicitly to override this choice.
+
     The bootstrap environment is cached under ``.tox/.virtualenv-bootstrap/`` (keyed by a hash of the spec string) and
-    reused across runs. Concurrent access is protected by a file lock. When the spec is empty (the default), tox uses
-    the imported virtualenv with zero overhead.
+    reused across runs. Concurrent access is protected by a file lock.
 
     .. tab:: TOML
 

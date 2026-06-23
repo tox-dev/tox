@@ -1,0 +1,5 @@
+Derive :ref:`virtualenv_spec` automatically: when an environment targets a Python version the installed
+:pypi:`virtualenv` can no longer create (e.g. ``py38`` with virtualenv ``21.5+``), tox now pins the newest virtualenv
+that still supports it and bootstraps it for that environment only. The downgrade happens only when every ``base_python``
+candidate is unsupported, so environments targeting current interpreters are unaffected. This fixes ``py38`` (and other
+end-of-life interpreters) being silently skipped after a virtualenv upgrade - by :user:`gaborbernat`. (:issue:`3965`)

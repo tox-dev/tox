@@ -24,6 +24,7 @@ class ToxConfig(SphinxDirective):
     option_spec: ClassVar[dict[str, Callable[[str], Any]]] = {
         "keys": unchanged_required,
         "version_added": unchanged,
+        "version_changed": unchanged,
         "version_deprecated": unchanged,
         "default": unchanged,
         "constant": flag,
@@ -70,6 +71,10 @@ class ToxConfig(SphinxDirective):
         if "version_added" in self.options:
             line += Text(" 📢 added in ")
             ver = self.options["version_added"]
+            line += literal(ver, ver)
+        if "version_changed" in self.options:
+            line += Text(" 🔄 changed in ")
+            ver = self.options["version_changed"]
             line += literal(ver, ver)
         if "version_deprecated" in self.options:
             line += Text(" ⚠️ deprecated in ")
