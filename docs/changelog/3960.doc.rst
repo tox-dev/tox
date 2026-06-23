@@ -1,0 +1,2 @@
+Fix nested list items being rendered with continued numbering instead of as sub-items in ``development.rst``,
+``onboarding.rst`` and ``explanation.rst``.

@@ -12,9 +12,11 @@ from virtualenv import __version__ as virtualenv_version
 from virtualenv import session_via_cli
 from virtualenv.config.cli.parser import VirtualEnvOptions
 
-from tox.tox_env.python.virtual_env.api import VirtualEnv, _auto_virtualenv_spec  # noqa: PLC2701
+from tox.tox_env.python.virtual_env.api import VirtualEnv
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     from pytest_mock import MockerFixture
 
     from tox.execute import ExecuteRequest
@@ -282,6 +284,32 @@ def test_get_virtualenv_py_info_raises_on_none(mocker: MockerFixture) -> None:
         VirtualEnv.get_virtualenv_py_info(Path("/no/such/python"))
 
 
+@pytest.fixture
+def resolve_virtualenv_spec(
+    tox_project: ToxProjectCreator,
+    mocker: MockerFixture,
+) -> Callable[[list[str], str], str]:
+    def _resolve(base_pythons: list[str], installed: str) -> str:
+        mocker.patch("tox.tox_env.python.virtual_env.api.virtualenv_version", installed)
+        candidates = ", ".join(f'"{base_python}"' for base_python in base_pythons)
+        proj = tox_project({
+            "tox.toml": dedent(
+                f"""\
+                [env.foo]
+                package = "skip"
+                base_python = [{candidates}]
+                commands = [["python", "-c", "print(1)"]]
+                """,
+            ),
+        })
+        result = proj.run("c", "-e", "foo", "-k", "virtualenv_spec")
+        result.assert_success()
+        line = next(ln for ln in result.out.splitlines() if ln.strip().startswith("virtualenv_spec ="))
+        return line.split("=", 1)[1].strip()
+
+    return _resolve
+
+
 @pytest.mark.parametrize(
     ("base_pythons", "installed", "expected"),
     [
@@ -298,80 +326,36 @@ def test_get_virtualenv_py_info_raises_on_none(mocker: MockerFixture) -> None:
         pytest.param(["py3"], "21.5.1", "", id="underspecified-minor-unknown"),
         pytest.param(["/usr/bin/python3.8"], "21.5.1", "", id="bare-path-version-unknown"),
         pytest.param(["python3.8"], "21.5.1", "virtualenv<21.5.0", id="command-form-pins"),
+        pytest.param([], "21.5.1", "", id="no-candidates"),
     ],
 )
-def test_auto_virtualenv_spec(base_pythons: list[str], installed: str, expected: str) -> None:
-    assert _auto_virtualenv_spec(base_pythons, installed) == expected
+def test_virtualenv_spec_auto(
+    resolve_virtualenv_spec: Callable[[list[str], str], str],
+    base_pythons: list[str],
+    installed: str,
+    expected: str,
+) -> None:
+    assert resolve_virtualenv_spec(base_pythons, installed) == expected
 
 
-def test_auto_virtualenv_spec_no_candidates() -> None:
-    assert not _auto_virtualenv_spec([], "21.5.1")
-
-
-def test_virtualenv_spec_auto_pins_eol_python(tox_project: ToxProjectCreator, mocker: MockerFixture) -> None:
-    mocker.patch("tox.tox_env.python.virtual_env.api.virtualenv_version", "21.5.1")
-    proj = tox_project({
-        "tox.toml": dedent(
-            """\
-            [env_run_base]
-            package = "skip"
-            commands = [["python", "-c", "print(1)"]]
-            """,
-        ),
-    })
-    result = proj.run("c", "-e", "py38", "-k", "virtualenv_spec")
-    result.assert_success()
-    assert "virtualenv_spec = virtualenv<21.5.0" in result.out
-
-
-def test_virtualenv_spec_auto_empty_for_supported_python(tox_project: ToxProjectCreator, mocker: MockerFixture) -> None:
-    mocker.patch("tox.tox_env.python.virtual_env.api.virtualenv_version", "21.5.1")
-    proj = tox_project({
-        "tox.toml": dedent(
-            """\
-            [env_run_base]
-            package = "skip"
-            commands = [["python", "-c", "print(1)"]]
-            """,
-        ),
-    })
-    result = proj.run("c", "-e", "py313", "-k", "virtualenv_spec")
-    result.assert_success()
-    assert "virtualenv_spec =\n" in result.out or "virtualenv_spec = \n" in result.out
-
-
-def test_virtualenv_spec_subprocess_interpreter_unresolved(
+@pytest.mark.parametrize(
+    "resolves",
+    [
+        pytest.param(False, id="interpreter-unresolved"),
+        pytest.param(True, id="resolved-but-probe-fails"),
+    ],
+)
+def test_virtualenv_spec_subprocess_missing_interpreter(
     tox_project: ToxProjectCreator,
     mocker: MockerFixture,
+    resolves: bool,
 ) -> None:
     mocker.patch(
         "tox.tox_env.python.virtual_env.subprocess_adapter.ensure_bootstrap",
         return_value=Path(sys.executable),
     )
-    mocker.patch("tox.tox_env.python.virtual_env.api.get_interpreter", return_value=None)
-    proj = tox_project({
-        "tox.toml": dedent(
-            """\
-            [env_run_base]
-            package = "skip"
-            virtualenv_spec = "virtualenv<20.22.0"
-            """,
-        ),
-    })
-    result = proj.run("r", "-e", "py")
-    result.assert_failed()
-    assert "could not find python interpreter" in result.out
-
-
-def test_virtualenv_spec_subprocess_probe_fails(tox_project: ToxProjectCreator, mocker: MockerFixture) -> None:
-    mocker.patch(
-        "tox.tox_env.python.virtual_env.subprocess_adapter.ensure_bootstrap",
-        return_value=Path(sys.executable),
-    )
-    mocker.patch(
-        "tox.tox_env.python.virtual_env.api.get_interpreter",
-        return_value=MagicMock(system_executable=sys.executable),
-    )
+    resolved = MagicMock(system_executable=sys.executable) if resolves else None
+    mocker.patch("tox.tox_env.python.virtual_env.api.get_interpreter", return_value=resolved)
     mocker.patch("tox.tox_env.python.virtual_env.subprocess_adapter.probe_python", return_value=None)
     proj = tox_project({
         "tox.toml": dedent(
