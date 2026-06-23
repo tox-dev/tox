@@ -136,7 +136,6 @@ class VirtualEnv(Python, ABC):
     def _create_subprocess_session(self, spec: str, env: dict[str, str]) -> SubprocessSession:
         from .subprocess_adapter import ensure_bootstrap, probe_python  # noqa: PLC0415
 
-        bootstrap_python = ensure_bootstrap(cast("Path", self.core["work_dir"]), spec)
         try_first_with = getattr(self.options, "discover", None)
         interpreter: SubprocessPythonInfo | None = None
         for base_python in cast("list[str]", self.conf["base_python"]):
@@ -145,7 +144,9 @@ class VirtualEnv(Python, ABC):
                 continue
             if (interpreter := probe_python(executable)) is not None:
                 break
-        return SubprocessSession(self.env_dir, bootstrap_python, env, interpreter)
+        # only pay the bootstrap cost once an interpreter is found; a missing one skips without it
+        bootstrap = ensure_bootstrap(cast("Path", self.core["work_dir"]), spec) if interpreter is not None else None
+        return SubprocessSession(self.env_dir, bootstrap, env, interpreter)
 
     def _create_imported_session(self, env: dict[str, str]) -> Session:
         env_dir = [str(self.env_dir)]

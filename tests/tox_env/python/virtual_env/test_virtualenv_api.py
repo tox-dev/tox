@@ -350,7 +350,7 @@ def test_virtualenv_spec_subprocess_missing_interpreter(
     mocker: MockerFixture,
     resolves: bool,
 ) -> None:
-    mocker.patch(
+    ensure_bootstrap = mocker.patch(
         "tox.tox_env.python.virtual_env.subprocess_adapter.ensure_bootstrap",
         return_value=Path(sys.executable),
     )
@@ -369,3 +369,4 @@ def test_virtualenv_spec_subprocess_missing_interpreter(
     result = proj.run("r", "-e", "py")
     result.assert_failed()
     assert "could not find python interpreter" in result.out
+    ensure_bootstrap.assert_not_called()  # a missing interpreter must skip without bootstrapping
