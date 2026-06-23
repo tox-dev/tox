@@ -226,7 +226,7 @@ def add_skip_missing_interpreters_to_core(core: CoreConfigSet, options: Parsed) 
 
     core.add_config(
         keys=["skip_missing_interpreters"],
-        default=True,
+        default=False,
         of_type=bool,
         post_process=skip_missing_interpreters_post_process,
         desc="skip running missing interpreters",

@@ -1,0 +1,4 @@
+The default value of ``skip_missing_interpreters`` changed from ``True`` to ``False`` — missing interpreters now fail
+the run by default, matching tox 3 behavior. The tox 4 rewrite unintentionally changed this default. To restore the
+previous (incorrect) behavior, set ``skip_missing_interpreters = true`` in your tox configuration or pass
+``--skip-missing-interpreters`` on the command line.
