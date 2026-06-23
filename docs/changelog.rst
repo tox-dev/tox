@@ -7,6 +7,36 @@
 .. towncrier release notes start
 
 **********************
+ v4.56.0 (2026-06-23)
+**********************
+
+Features - 4.56.0
+=================
+
+- Derive :ref:`virtualenv_spec` automatically: when an environment targets a Python version the installed
+  :pypi:`virtualenv` can no longer create (e.g. ``py38`` with virtualenv ``21.5+``), tox now pins the newest virtualenv
+  that still supports it and bootstraps it for that environment only. The downgrade happens only when every
+  ``base_python`` candidate is unsupported, so environments targeting current interpreters are unaffected. This fixes
+  ``py38`` (and other end-of-life interpreters) being silently skipped after a virtualenv upgrade - by
+  :user:`gaborbernat`. (:issue:`3965`) (:issue:`3965`)
+
+Bug fixes - 4.56.0
+==================
+
+- The default value of ``skip_missing_interpreters`` changed from ``True`` to ``False`` — missing interpreters now fail
+  the run by default, matching tox 3 behavior. The tox 4 rewrite unintentionally changed this default. To restore the
+  previous (incorrect) behavior, set ``skip_missing_interpreters = true`` in your tox configuration or pass
+  ``--skip-missing-interpreters`` on the command line. (:issue:`3965`)
+
+Improved documentation - 4.56.0
+===============================
+
+- Fix nested list items being rendered with continued numbering instead of as sub-items in ``development.rst``,
+  ``onboarding.rst`` and ``explanation.rst``. (:issue:`3960`)
+- Replace stale ``http://tox.readthedocs.org`` URL with ``https://tox.wiki`` in ``pyproject.toml`` (``Homepage``),
+  ``.github/CONTRIBUTING.md``, and ``.github/PULL_REQUEST_TEMPLATE.md``. (:issue:`3963`)
+
+**********************
  v4.55.1 (2026-06-03)
 **********************
 
