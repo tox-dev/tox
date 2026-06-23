@@ -300,6 +300,7 @@ def _auto_virtualenv_spec(base_pythons: list[str], installed: str) -> str:
     Returns an empty string unless *every* candidate in ``base_pythons`` targets a Python the installed virtualenv can
     no longer create an environment for -- only then is a downgrade guaranteed to be required, since tox picks the first
     candidate that resolves on the host and any supported candidate offers a path to success without bootstrapping.
+
     """
     installed_version = Version(installed)
     floors: list[Version] = []

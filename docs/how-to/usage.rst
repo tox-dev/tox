@@ -1771,8 +1771,8 @@ virtualenv, so a single ``tox.toml`` can mix end-of-life and current interpreter
          env_list = py38, py313
 
 Set :ref:`virtualenv_spec` explicitly only to override the automatically chosen pin. Prefer it over pinning virtualenv
-through the top-level ``requires``: ``requires`` swaps the virtualenv for the whole tox process, which then cannot create
-the newer interpreters, whereas ``virtualenv_spec`` is resolved per environment.
+through the top-level ``requires``: ``requires`` swaps the virtualenv for the whole tox process, which then cannot
+create the newer interpreters, whereas ``virtualenv_spec`` is resolved per environment.
 
 ***************************************
  Use tox with different build backends
