@@ -167,6 +167,12 @@ def test_config_skip_missing_interpreters(
     assert result.code == (0 if expected else 1)
 
 
+def test_skip_missing_interpreters_default_is_false(tox_project: ToxProjectCreator) -> None:
+    project = tox_project({"tox.toml": 'env_list = ["py4"]'})
+    result = project.run()
+    assert result.code == 1
+
+
 SYS_PY_VER = "".join(str(i) for i in sys.version_info[0:2]) + (
     "t" if sysconfig.get_config_var("Py_GIL_DISABLED") == 1 else ""
 )
