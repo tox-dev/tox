@@ -6,10 +6,13 @@ import os
 import sys
 from abc import ABC
 from contextlib import redirect_stderr
+from dataclasses import dataclass
 from io import StringIO
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, cast
 
+from packaging.version import Version
+from python_discovery import get_interpreter
 from virtualenv import __version__ as virtualenv_version
 from virtualenv import app_data, session_via_cli
 from virtualenv.discovery.py_spec import PythonSpec
@@ -19,14 +22,16 @@ from tox.execute.local_sub_process import LocalSubProcessExecutor
 from tox.tox_env.errors import Skip
 from tox.tox_env.python.api import Python, PythonInfo, VersionInfo
 from tox.tox_env.python.pip.pip_install import Pip
-from tox.tox_env.python.virtual_env.subprocess_adapter import SubprocessCreator, SubprocessSession
+from tox.tox_env.python.virtual_env.subprocess_adapter import SubprocessCreator, SubprocessPythonInfo, SubprocessSession
 
 if TYPE_CHECKING:
+    from python_discovery import PyInfoCache
     from virtualenv.create.creator import Creator
     from virtualenv.create.describe import Describe
     from virtualenv.discovery.py_info import PythonInfo as VirtualenvPythonInfo
     from virtualenv.run.session import Session
 
+    from tox.config.main import Config
     from tox.execute.api import Execute
     from tox.tox_env.api import ToxEnvCreateArgs
 
@@ -72,11 +77,15 @@ class VirtualEnv(Python, ABC):
         self.conf.add_config(
             keys=["virtualenv_spec"],
             of_type=str,
-            default="",
+            default=self._default_virtualenv_spec,
             desc="PEP 440 version spec for virtualenv (e.g. virtualenv<20.22.0). When set, tox bootstraps this "
             "version in an isolated environment and runs it via subprocess, enabling Python versions "
-            "incompatible with the installed virtualenv.",
+            "incompatible with the installed virtualenv. Left empty it is derived automatically: tox pins an "
+            "older virtualenv only when the installed one can no longer create the targeted Python version.",
         )
+
+    def _default_virtualenv_spec(self, conf: Config, name: str | None) -> str:  # noqa: ARG002
+        return _auto_virtualenv_spec(self.conf["base_python"], virtualenv_version)
 
     @property
     def executor(self) -> Execute:
@@ -128,10 +137,18 @@ class VirtualEnv(Python, ABC):
     def _create_subprocess_session(self, spec: str, env: dict[str, str]) -> SubprocessSession:
         from .subprocess_adapter import ensure_bootstrap, probe_python  # noqa: PLC0415
 
-        bootstrap_python = ensure_bootstrap(cast("Path", self.core["work_dir"]), spec)
-        base_pythons: list[str] = self.conf["base_python"]
-        interpreter = next((info for bp in base_pythons if (info := probe_python(bp)) is not None), None)
-        return SubprocessSession(self.env_dir, bootstrap_python, env, interpreter)
+        try_first_with = getattr(self.options, "discover", None)
+        cache = _shared_app_data()
+        interpreter: SubprocessPythonInfo | None = None
+        for base_python in cast("list[str]", self.conf["base_python"]):
+            resolved = get_interpreter(base_python, try_first_with=try_first_with, cache=cache, env=env)
+            if resolved is None or (executable := resolved.system_executable) is None:
+                continue
+            if (interpreter := probe_python(executable)) is not None:
+                break
+        # only pay the bootstrap cost once an interpreter is found; a missing one skips without it
+        bootstrap = ensure_bootstrap(cast("Path", self.core["work_dir"]), spec) if interpreter is not None else None
+        return SubprocessSession(self.env_dir, bootstrap, env, interpreter)
 
     def _create_imported_session(self, env: dict[str, str]) -> Session:
         env_dir = [str(self.env_dir)]
@@ -253,12 +270,61 @@ class VirtualEnv(Python, ABC):
         from virtualenv.discovery import cached_py_info  # noqa: PLC0415
         from virtualenv.discovery.py_info import PythonInfo as VirtualenvPythonInfo  # noqa: PLC0415
 
-        result = cached_py_info.from_exe(
-            VirtualenvPythonInfo,
-            app_data.make_app_data(None, read_only=False, env=os.environ),
-            str(path),
-        )
+        result = cached_py_info.from_exe(VirtualenvPythonInfo, _shared_app_data(), str(path))
         if result is None:
             msg = f"could not query python information for {path}"
             raise RuntimeError(msg)
         return result
+
+
+def _shared_app_data() -> PyInfoCache:
+    """Interpreter metadata cache, shared so tox discovery reuses what virtualenv already probed (and vice versa)."""
+    return app_data.make_app_data(None, read_only=False, env=os.environ)
+
+
+def _auto_virtualenv_spec(base_pythons: list[str], installed: str) -> str:
+    """Pin an older virtualenv when the installed one cannot create the targeted Python.
+
+    Returns an empty string unless *every* candidate in ``base_pythons`` targets a Python the installed virtualenv can
+    no longer create an environment for -- only then is a downgrade guaranteed to be required, since tox picks the first
+    candidate that resolves on the host and any supported candidate offers a path to success without bootstrapping.
+
+    """
+    installed_version = Version(installed)
+    floors: list[Version] = []
+    for base_python in base_pythons:
+        spec = PythonSpec.from_string_spec(base_python)
+        if spec.major is None or spec.minor is None:
+            return ""  # target version is unknown, so we cannot be sure creation would fail
+        target = _PyVersion(major=spec.major, minor=spec.minor)
+        floor = min((d.dropped_in for d in _VIRTUALENV_DROPS if target <= d.newest_unsupported), default=None)
+        if floor is None or installed_version < floor:
+            return ""  # the installed virtualenv can still create this target
+        floors.append(floor)
+    if not floors:
+        return ""
+    return f"virtualenv<{min(floors)}"
+
+
+@dataclass(frozen=True, kw_only=True, order=True)
+class _PyVersion:
+    """A ``(major, minor)`` Python version, ordered oldest-to-newest."""
+
+    major: int
+    minor: int
+
+
+@dataclass(frozen=True, kw_only=True)
+class _VirtualenvDrop:
+    """A virtualenv release that dropped the ability to create environments for older Python versions."""
+
+    newest_unsupported: _PyVersion
+    dropped_in: Version
+
+
+# virtualenv releases that dropped the ability to *create* environments for a target Python, with the newest
+# (major, minor) each stopped supporting -- https://virtualenv.pypa.io/en/latest/reference/compatibility.html
+_VIRTUALENV_DROPS: tuple[_VirtualenvDrop, ...] = (
+    _VirtualenvDrop(newest_unsupported=_PyVersion(major=3, minor=8), dropped_in=Version("21.5.0")),
+    _VirtualenvDrop(newest_unsupported=_PyVersion(major=3, minor=6), dropped_in=Version("20.22.0")),
+)

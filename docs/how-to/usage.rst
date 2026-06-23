@@ -985,7 +985,8 @@ logged as warnings and never block the recreation itself.
 *****************************************
 
 When a project must support both very old (e.g. Python 3.6) and very new (e.g. Python 3.15) interpreters, no single
-virtualenv release covers both. Use :ref:`virtualenv_spec` to pin a different virtualenv version per environment:
+virtualenv release covers both. tox handles this automatically -- each environment whose target Python the installed
+virtualenv can no longer create transparently bootstraps a compatible older virtualenv (see :ref:`virtualenv_spec`):
 
 .. tab:: TOML
 
@@ -996,9 +997,6 @@ virtualenv release covers both. Use :ref:`virtualenv_spec` to pin a different vi
          [env_run_base]
          deps = ["pytest"]
          commands = [["pytest"]]
-
-         [env."3.6"]
-         virtualenv_spec = "virtualenv<20.22.0"
 
 .. tab:: INI
 
@@ -1011,11 +1009,9 @@ virtualenv release covers both. Use :ref:`virtualenv_spec` to pin a different vi
          deps = pytest
          commands = pytest
 
-         [testenv:3.6]
-         virtualenv_spec = virtualenv<20.22.0
-
-The ``3.6`` environment uses an older virtualenv that still supports Python 3.6, while other environments use the
+The ``3.6`` environment automatically uses an older virtualenv that still supports Python 3.6, while the others use the
 default (imported) virtualenv. The first run bootstraps the pinned version; subsequent runs reuse the cached bootstrap.
+Set :ref:`virtualenv_spec` on an environment to override the version tox picks.
 
 .. _howto_generate_matrix:
 
@@ -1748,26 +1744,35 @@ See :ref:`generative-environment-list` for the full range syntax reference.
  Test end-of-life Python versions
 **********************************
 
-tox uses :pypi:`virtualenv` under the hood. Newer virtualenv versions drop support for older Python interpreters:
+tox uses :pypi:`virtualenv` under the hood, and newer virtualenv versions drop the ability to create environments for
+older Python interpreters:
 
 - `virtualenv 20.22.0 <https://virtualenv.pypa.io/en/latest/changelog.html#v20-22-0-2023-04-19>`_ dropped Python 3.6 and
   earlier
-- `virtualenv 20.27.0 <https://virtualenv.pypa.io/en/latest/changelog.html#v20-27-0-2024-10-17>`_ dropped Python 3.7
+- `virtualenv 21.5.0 <https://virtualenv.pypa.io/en/latest/changelog.html#v21-5-0-2026-06-13>`_ dropped Python 3.8 and
+  earlier
 
-To test against these versions, pin virtualenv:
+You do not need to configure anything for this: tox inspects the :ref:`base_python` of each environment and, when the
+installed virtualenv can no longer create that interpreter, automatically pins a compatible older virtualenv for that
+environment only (see :ref:`virtualenv_spec`). Environments targeting supported Pythons keep using the installed
+virtualenv, so a single ``tox.toml`` can mix end-of-life and current interpreters:
 
 .. tab:: TOML
 
     .. code-block:: toml
 
-         requires = ["virtualenv<20.22.0"]
+         env_list = ["py38", "py313"]  # py38 transparently bootstraps an older virtualenv, py313 does not
 
 .. tab:: INI
 
     .. code-block:: ini
 
          [tox]
-         requires = virtualenv<20.22.0
+         env_list = py38, py313
+
+Set :ref:`virtualenv_spec` explicitly only to override the automatically chosen pin. Prefer it over pinning virtualenv
+through the top-level ``requires``: ``requires`` swaps the virtualenv for the whole tox process, which then cannot
+create the newer interpreters, whereas ``virtualenv_spec`` is resolved per environment.
 
 ***************************************
  Use tox with different build backends

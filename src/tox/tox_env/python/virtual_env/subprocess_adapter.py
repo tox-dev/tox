@@ -101,7 +101,7 @@ class SubprocessSession:
     def __init__(
         self,
         env_dir: Path,
-        bootstrap_python: Path,
+        bootstrap_python: Path | None,
         env_vars: dict[str, str],
         interpreter: SubprocessPythonInfo | None,
     ) -> None:
@@ -111,6 +111,9 @@ class SubprocessSession:
         self._creator = SubprocessCreator(env_dir, interpreter) if interpreter is not None else None
 
     def run(self) -> None:
+        if self._bootstrap_python is None:
+            msg = "no interpreter discovered"
+            raise RuntimeError(msg)
         cmd = [str(self._bootstrap_python), "-m", "virtualenv", str(self._env_dir)]
         try:
             result = subprocess.run(cmd, env=self._env_vars, capture_output=True, text=True, check=False)
