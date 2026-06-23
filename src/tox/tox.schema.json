@@ -504,7 +504,7 @@
         },
         "virtualenv_spec": {
           "type": "string",
-          "description": "PEP 440 version spec for virtualenv (e.g. virtualenv<20.22.0). When set, tox bootstraps this version in an isolated environment and runs it via subprocess, enabling Python versions incompatible with the installed virtualenv."
+          "description": "PEP 440 version spec for virtualenv (e.g. virtualenv<20.22.0). When set, tox bootstraps this version in an isolated environment and runs it via subprocess, enabling Python versions incompatible with the installed virtualenv. Left empty it is derived automatically: tox pins an older virtualenv only when the installed one can no longer create the targeted Python version."
         },
         "skip_install": {
           "type": "boolean",
