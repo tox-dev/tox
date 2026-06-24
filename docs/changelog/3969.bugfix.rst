@@ -1,3 +1,2 @@
-Fix ``{ replace = "if" ... extend = true }`` corrupting the resulting list when
-``then`` or ``else`` is a scalar string (e.g. ``then = "-v"``) by iterating the
-string character-by-character instead of appending it as a single element.
+Fix ``{ replace = "if" ... extend = true }`` corrupting the resulting list when ``then`` or ``else`` is a scalar string
+(e.g. ``then = "-v"``) by iterating the string character-by-character instead of appending it as a single element.

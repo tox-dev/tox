@@ -646,9 +646,10 @@ def test_config_in_toml_replace_if_extend_scalar_string(
 ) -> None:
     """Scalar-string then/else with extend=true must append as one item, not characters.
 
-    Regression for a bug where ``commands = [["echo", { replace = "if", condition = "env.Q",
-    then = "-v", else = "-q", extend = true }]]`` produced ``commands = echo - v`` because
-    ``list.extend(string)`` iterates over the string's characters.
+    Regression for a bug where ``commands = [["echo", { replace = "if", condition = "env.Q", then = "-v", else = "-q",
+    extend = true }]]`` produced ``commands = echo - v`` because ``list.extend(string)`` iterates over the string's
+    characters.
+
     """
     monkeypatch.delenv("V", raising=False)
     monkeypatch.delenv("Q", raising=False)
@@ -668,9 +669,7 @@ def test_config_in_toml_replace_if_extend_scalar_string(
         f"commands line should end with the literal arg {expected_arg!r}, got: {commands_line!r}"
     )
     # The buggy output looked like "echo - v" or "echo - q"; assert no per-char splitting.
-    assert " - " not in commands_line, (
-        f"commands line has per-character splitting: {commands_line!r}"
-    )
+    assert " - " not in commands_line, f"commands line has per-character splitting: {commands_line!r}"
 
 
 @pytest.mark.parametrize(
