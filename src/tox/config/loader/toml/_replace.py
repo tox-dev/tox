@@ -78,7 +78,13 @@ class Unroll:
             for val in value:  # apply replacement for every entry
                 got = self(val, depth, skip_str=skip_str)
                 if isinstance(val, dict) and val.get("replace") and val.get("extend"):
-                    res_list.extend(cast("list[Any]", got))
+                    # ``got`` may be a string (e.g. an ``if`` replacement whose then/else is a
+                    # scalar string); iterating a str would split it character by character
+                    # and corrupt the resulting list. Treat a bare string as a single item.
+                    if isinstance(got, str):
+                        res_list.append(cast("TomlTypes", got))
+                    else:
+                        res_list.extend(cast("list[Any]", got))
                 else:
                     res_list.append(got)
             value = res_list

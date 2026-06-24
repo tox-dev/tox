@@ -632,6 +632,48 @@ def test_config_in_toml_replace_if_extend(tox_project: ToxProjectCreator, monkey
 
 
 @pytest.mark.parametrize(
+    ("set_q", "expected_arg"),
+    [
+        pytest.param(True, "-v", id="then_string_selected"),
+        pytest.param(False, "-q", id="else_string_selected"),
+    ],
+)
+def test_config_in_toml_replace_if_extend_scalar_string(
+    tox_project: ToxProjectCreator,
+    monkeypatch: pytest.MonkeyPatch,
+    set_q: bool,
+    expected_arg: str,
+) -> None:
+    """Scalar-string then/else with extend=true must append as one item, not characters.
+
+    Regression for a bug where ``commands = [["echo", { replace = "if", condition = "env.Q",
+    then = "-v", else = "-q", extend = true }]]`` produced ``commands = echo - v`` because
+    ``list.extend(string)`` iterates over the string's characters.
+    """
+    monkeypatch.delenv("V", raising=False)
+    monkeypatch.delenv("Q", raising=False)
+    if set_q:
+        # Condition is env.Q; setting it flips the condition true (then branch).
+        monkeypatch.setenv("Q", "1")
+    # else: env.Q is unset, so the condition is false and the else branch ("-q") runs.
+    toml = """\
+    [tool.tox.env.A]
+    commands = [["echo", { replace = "if", condition = "env.Q", then = "-v", else = "-q", extend = true }]]
+    """
+    project = tox_project({"pyproject.toml": toml})
+    outcome = project.run("c", "-e", "A", "-k", "commands")
+    outcome.assert_success()
+    commands_line = outcome.out.split("commands = ", 1)[1].rstrip()
+    assert commands_line.endswith(expected_arg), (
+        f"commands line should end with the literal arg {expected_arg!r}, got: {commands_line!r}"
+    )
+    # The buggy output looked like "echo - v" or "echo - q"; assert no per-char splitting.
+    assert " - " not in commands_line, (
+        f"commands line has per-character splitting: {commands_line!r}"
+    )
+
+
+@pytest.mark.parametrize(
     ("condition_toml", "error_match"),
     [
         pytest.param(
