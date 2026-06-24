@@ -672,6 +672,32 @@ def test_config_in_toml_replace_if_extend_scalar_string(
     assert " - " not in commands_line, f"commands line has per-character splitting: {commands_line!r}"
 
 
+def test_config_in_toml_replace_if_extend_no_match_contributes_nothing(
+    tox_project: ToxProjectCreator,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A false ``if`` with no ``else`` and extend=true adds nothing, not an empty element.
+
+    Regression for a bug where such an entry yielded ``commands = ''`` (failing as "'' is not list")
+    because the empty-string no-match result was appended instead of spread away.
+
+    """
+    monkeypatch.delenv("Q", raising=False)
+    toml = """\
+    [tool.tox.env.A]
+    commands = [
+        ["echo", "hi"],
+        { replace = "if", condition = "env.Q", then = [["echo", "bye"]], extend = true },
+    ]
+    """
+    project = tox_project({"pyproject.toml": toml})
+    outcome = project.run("c", "-e", "A", "-k", "commands")
+    outcome.assert_success()
+    commands_line = outcome.out.split("commands = ", 1)[1].rstrip()
+    assert "echo hi" in commands_line
+    assert "bye" not in commands_line
+
+
 @pytest.mark.parametrize(
     ("condition_toml", "error_match"),
     [

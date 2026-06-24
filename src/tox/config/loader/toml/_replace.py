@@ -78,14 +78,15 @@ class Unroll:
             for val in value:  # apply replacement for every entry
                 got = self(val, depth, skip_str=skip_str)
                 if isinstance(val, dict) and val.get("replace") and val.get("extend"):
-                    # ``extend`` spreads a list result into the parent; any non-list result
-                    # (e.g. an ``if`` replacement whose then/else is a scalar string) is a single
-                    # item. Extending a scalar would iterate it (splitting a str character by
-                    # character, raising for an int/bool) and corrupt the list.
-                    if isinstance(got, list):
-                        res_list.extend(cast("list[Any]", got))
+                    # ``extend`` spreads an iterable result (list, set of extras, ...) into the
+                    # parent. A scalar string is the exception: iterating it would split it
+                    # character by character, so a non-empty one is appended as a single item while
+                    # an empty one (a false ``if`` with no ``else``, yielding "") contributes nothing.
+                    if isinstance(got, str):
+                        if got:
+                            res_list.append(cast("TomlTypes", got))
                     else:
-                        res_list.append(cast("TomlTypes", got))
+                        res_list.extend(cast("list[Any]", got))
                 else:
                     res_list.append(got)
             value = res_list

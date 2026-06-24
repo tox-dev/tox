@@ -1,3 +1,4 @@
-Fix ``{ replace = "if" ... extend = true }`` corrupting the resulting list when ``then`` or ``else`` is a scalar (e.g.
-``then = "-v"``) rather than a list: only a list result is spread into the parent now, any scalar is appended as a
-single element instead of being iterated (which split a string character-by-character and raised for numbers/booleans).
+Fix ``{ replace = "if" ... extend = true }`` corrupting the resulting list when ``then`` or ``else`` is a scalar
+string (e.g. ``then = "-v"``): a non-empty scalar string is now appended as a single element instead of being iterated
+character-by-character, while a false ``if`` with no ``else`` (yielding ``""``) contributes nothing rather than an empty
+element, and list/set results are still spread into the parent.
