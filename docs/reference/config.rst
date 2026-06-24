@@ -2368,7 +2368,10 @@ You can reference other configurations via the ``ref`` replacement. This can eit
   In this case ``dest`` environments ``extras`` will be ``A``, ``dest``, ``B``.
 
 The ``extend`` flag controls if after replacement the value should be replaced as is in the host structure (when flag is
-false -- by default) or be extended into. This flag only operates when the host is a list.
+false -- by default) or be extended into. This flag only operates when the host is a list. A list (or set) result is
+spread into the host, while a scalar string result is appended as a single element -- so a scalar ``then``/``else``
+(e.g. ``then = "-v"``) adds one item rather than its individual characters, and a false ``if`` with no ``else`` adds
+nothing.
 
 When referencing Command-type configuration values (like ``list_dependencies_command``), the reference automatically
 extracts the command's argument list, making it compatible with TOML's structured ``commands`` format. For example:
