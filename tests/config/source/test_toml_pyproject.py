@@ -678,8 +678,8 @@ def test_config_in_toml_replace_if_extend_no_match_contributes_nothing(
 ) -> None:
     """A false ``if`` with no ``else`` and extend=true adds nothing, not an empty element.
 
-    Regression for a bug where such an entry yielded ``commands = ''`` (failing as "'' is not list")
-    because the empty-string no-match result was appended instead of spread away.
+    Regression for a bug where such an entry yielded ``commands = ''`` (failing as "'' is not list") because the
+    empty-string no-match result was appended instead of spread away.
 
     """
     monkeypatch.delenv("Q", raising=False)
