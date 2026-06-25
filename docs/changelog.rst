@@ -7,6 +7,18 @@
 .. towncrier release notes start
 
 **********************
+ v4.56.1 (2026-06-25)
+**********************
+
+Bug fixes - 4.56.1
+==================
+
+- Fix ``{ replace = "if" ... extend = true }`` corrupting the resulting list when ``then`` or ``else`` is a scalar
+  string (e.g. ``then = "-v"``): a non-empty scalar string is now appended as a single element instead of being iterated
+  character-by-character, while a false ``if`` with no ``else`` (yielding ``""``) contributes nothing rather than an
+  empty element, and list/set results are still spread into the parent. (:issue:`3969`)
+
+**********************
  v4.56.0 (2026-06-23)
 **********************
 
