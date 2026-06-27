@@ -52,7 +52,7 @@ class _LogThreadLocal(local):
             old_start(self)
 
         old_start = Thread.start
-        Thread.start = new_start  # ty: ignore[invalid-assignment]
+        Thread.start = new_start
         try:
             yield
         finally:

@@ -178,5 +178,5 @@ def setup(app: Sphinx) -> None:
         return prev_check(self, refnode)
 
     prev_check = ExternalLinksChecker.check_uri
-    ExternalLinksChecker.check_uri = check_uri  # ty: ignore[invalid-assignment] # monkey-patching instance method onto class
+    ExternalLinksChecker.check_uri = check_uri
     inject_into_ssl()
