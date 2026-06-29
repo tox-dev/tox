@@ -138,7 +138,7 @@ def patch_prev_py(mocker: MockerFixture) -> PatchPrevPy:
     return _func
 
 
-@pytest.fixture(scope="session", autouse=True)  # noqa: RUF076
+@pytest.fixture(scope="session", autouse=True)
 def _do_not_share_virtualenv_for_parallel_runs(tmp_path_factory: pytest.TempPathFactory, worker_id: str) -> None:
     # virtualenv uses locks to manage access to its cache, when running with xdist this may throw off test timings
     if worker_id != "master":  # pragma: no branch
@@ -178,7 +178,7 @@ def pkg_builder() -> Callable[[Path, Path, Sequence[DistributionType], bool], Pa
     return build_pkg
 
 
-@pytest.fixture(autouse=True)  # noqa: RUF076
+@pytest.fixture(autouse=True)
 def _ensure_demo_pkg_clean() -> Iterator[None]:
     yield
     for path in HERE.iterdir():
@@ -187,7 +187,7 @@ def _ensure_demo_pkg_clean() -> Iterator[None]:
             raise AssertionError(msg)
 
 
-@pytest.fixture(scope="session", autouse=True)  # noqa: RUF076
+@pytest.fixture(scope="session", autouse=True)
 def no_default_config_ini(session_mocker: MockerFixture) -> None:
     filename = str(uuid4())
     session_mocker.patch("tox.config.cli.ini.DEFAULT_CONFIG_FILE", Path(filename))
