@@ -577,6 +577,26 @@ def test_dependency_groups_missing(tox_project: ToxProjectCreator) -> None:
     assert "py: failed with dependency group 'type' not found\n" in result.out
 
 
+def test_dependency_groups_no_table(tox_project: ToxProjectCreator) -> None:
+    project = tox_project(
+        {
+            "tox.toml": """
+            [env_run_base]
+            skip_install = true
+            dependency_groups = ["test"]
+            """,
+            "pyproject.toml": """
+            [project]
+            name = "demo_pkg"
+            """,
+        },
+    )
+    result = project.run("r", "-e", "py")
+
+    result.assert_failed()
+    assert "py: failed with no dependency groups defined in" in result.out
+
+
 def test_dependency_groups_not_list(tox_project: ToxProjectCreator) -> None:
     project = tox_project(
         {

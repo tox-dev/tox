@@ -73,6 +73,9 @@ def resolve(root: Path, groups: set[str]) -> set[Requirement]:
         return set()
     with pyproject_file.open("rb") as file_handler:
         pyproject = tomllib.load(file_handler)
+    if "dependency-groups" not in pyproject:
+        msg = f"no dependency groups defined in {pyproject_file}"
+        raise Fail(msg)
     dependency_groups_raw = pyproject["dependency-groups"]
     if not isinstance(dependency_groups_raw, dict):
         msg = f"dependency-groups is {type(dependency_groups_raw).__name__} instead of table"
