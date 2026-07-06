@@ -4,11 +4,12 @@ import io
 import json
 import tarfile
 from textwrap import dedent
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 
 import pytest
 
 from tox.execute.local_sub_process import LocalSubprocessExecuteStatus
+from tox.tox_env.python.virtual_env.package import pyproject as pyproject_pkg
 from tox.tox_env.python.virtual_env.package.pyproject import Pep517VirtualEnvFrontend
 
 if TYPE_CHECKING:
@@ -73,6 +74,26 @@ def test_package_root_via_root(tox_project: ToxProjectCreator, demo_pkg_inline: 
     proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
     result = proj.run("r", "--notest")
     result.assert_success()
+
+
+def test_root_setter_no_frontend_rebuild_when_unbuilt(
+    tox_project: ToxProjectCreator, demo_pkg_inline: Path, mocker: MockerFixture, tmp_path: Path
+) -> None:
+    """Swapping root before a frontend exists must not build a throwaway one for the old root."""
+    ini = f"[tox]\npackage_root={demo_pkg_inline}\n[testenv]\npackage=wheel\nwheel_build_env=.pkg"
+    proj = tox_project({"tox.ini": ini, "pyproject.toml": ""})
+    proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
+    result = proj.run("r", "--notest")
+    result.assert_success()
+
+    pkg = cast("pyproject_pkg.Pep517VenvPackager", result.state.envs[".pkg"])
+    pkg._frontend_ = None  # no frontend built yet
+    spy = mocker.spy(pyproject_pkg, "Pep517VirtualEnvFrontend")
+
+    pkg.root = tmp_path
+
+    spy.assert_not_called()
+    assert pkg._root == tmp_path  # noqa: SLF001
 
 
 def test_package_root_via_testenv(tox_project: ToxProjectCreator, demo_pkg_inline: Path) -> None:
