@@ -98,6 +98,13 @@ _REQ_FILE_TEST_CASES = [
         ["--extra-index-url", "a"],
         id="extra-index-url dup different line",
     ),
+    pytest.param(
+        "--extra-index-url a\n--extra-index-url a --extra-index-url b",
+        {"index_url": ["https://pypi.org/simple", "a", "b"]},
+        [],
+        ["--extra-index-url", "a", "--extra-index-url", "b"],
+        id="extra-index-url mix seen and new",
+    ),
     pytest.param("-e a", {}, ["-e a"], ["-e", "a"], id="e"),
     pytest.param("--editable a", {}, ["-e a"], ["-e", "a"], id="editable"),
     pytest.param("--editable .[2,1]", {}, ["-e .[1,2]"], ["-e", ".[1,2]"], id="editable extra"),

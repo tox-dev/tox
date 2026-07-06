@@ -396,7 +396,7 @@ class RequirementsFile:
                 base_opt.index_url = [DEFAULT_INDEX_URL]
             for url in opt.extra_index_url:
                 if url not in base_opt.index_url:
-                    base_opt.index_url.extend(opt.extra_index_url)
+                    base_opt.index_url.append(url)
         if opt.find_links:
             # relative to a requirements file.
             if not hasattr(base_opt, "find_links"):
