@@ -5,6 +5,7 @@ from unittest.mock import ANY
 
 import pytest
 
+from tox.config.cli.env_var import get_env_var
 from tox.config.cli.parse import get_options
 from tox.config.loader.api import Override
 from tox.session.env_select import CliEnv
@@ -75,6 +76,11 @@ def test_verbose_no_test() -> None:
         "list_dependencies": is_ci(),
         "remainder": [],
     }
+
+
+def test_env_var_empty_list_is_empty(monkeypatch: MonkeyPatch) -> None:
+    monkeypatch.setenv("TOX_DISCOVER", "")
+    assert get_env_var("discover", of_type=list[str]) == ([], "env var TOX_DISCOVER")
 
 
 def test_env_var_exhaustive_parallel_values(
