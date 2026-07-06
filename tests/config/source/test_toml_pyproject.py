@@ -299,6 +299,27 @@ def test_config_in_toml_replace_env_circular_unset(
     assert "COVERAGE_FILE=a" in outcome.out, outcome.out
 
 
+def test_config_in_toml_replace_env_repeated_in_list(
+    tox_project: ToxProjectCreator, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    project = tox_project({
+        "pyproject.toml": """
+        [tool.tox.env.a]
+        deps = [
+          { replace = "env", name = "A", default = "aa" },
+          { replace = "env", name = "B", default = "bb" },
+          { replace = "env", name = "A", default = "cc" },
+        ]
+        """
+    })
+    monkeypatch.delenv("A", raising=False)
+    monkeypatch.delenv("B", raising=False)
+
+    outcome = project.run("c", "-e", "a", "-k", "deps")
+    outcome.assert_success()
+    outcome.assert_out_err("[testenv:a]\ndeps =\n  aa\n  bb\n  cc\n", "")
+
+
 def test_config_in_toml_replace_fails(tox_project: ToxProjectCreator) -> None:
     project = tox_project({
         "pyproject.toml": """
