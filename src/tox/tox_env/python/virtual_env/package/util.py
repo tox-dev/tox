@@ -54,7 +54,7 @@ def dependencies_with_extras_from_markers(
         new_extras: set[str | None] = set()
         for req, extra_markers in deps_with_markers:
             if todo & extra_markers:
-                if req.name == package_name:  # support for recursive extras
+                if canonicalize_name(req.name) == canonicalize_name(package_name):  # support for recursive extras
                     new_extras.update(canonicalize_name(e) for e in (req.extras or set()))
                 else:
                     req_str = str(req)

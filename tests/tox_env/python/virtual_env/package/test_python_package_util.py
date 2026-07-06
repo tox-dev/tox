@@ -68,6 +68,17 @@ def test_loads_deps_recursive_extras() -> None:
     assert [str(i) for i in result] == ["no-extra", "dep1[magic]", "dep1", "dep2[a,b]"]
 
 
+def test_loads_deps_recursive_extras_non_canonical_name() -> None:
+    """A self-referential extra resolves even when the package name is not canonical."""
+    requires = [
+        Requirement('dep1; extra == "dev"'),
+        Requirement('my-pkg[sub]; extra == "dev"'),
+        Requirement('dep2; extra == "sub"'),
+    ]
+    result = dependencies_with_extras(requires, {"dev"}, "my_pkg")
+    assert sorted(str(i) for i in result) == ["dep1", "dep2"]
+
+
 def test_load_dependency_requirement_or_extras() -> None:
     requires = [Requirement('filelock<4.0.0,>=3.9.0; extra == "extras1" or extra == "extras2"')]
     for extras in ["extras1", "extras2"]:
