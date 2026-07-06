@@ -9,7 +9,13 @@ import pytest
 from python_discovery import normalize_isa
 
 from tox.config.loader.ini import IniLoader
-from tox.config.loader.ini.factor import LATEST_PYTHON_MINOR_MAX, LATEST_PYTHON_MINOR_MIN, filter_for_env, find_envs
+from tox.config.loader.ini.factor import (
+    LATEST_PYTHON_MINOR_MAX,
+    LATEST_PYTHON_MINOR_MIN,
+    expand_ranges,
+    filter_for_env,
+    find_envs,
+)
 from tox.config.source.ini_section import IniSection
 
 if TYPE_CHECKING:
@@ -180,6 +186,18 @@ def test_factor_config_no_env_list_creates_env(tox_ini_conf: ToxIniCreator) -> N
     )
 
     assert list(config) == ["py37-django15", "py37-django16", "py36"]
+
+
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    [
+        pytest.param("x2-4y-{2-4}", "x2-4y-{2,3,4}", id="literal range text before an identical braced range"),
+        pytest.param("{2-4}", "{2,3,4}", id="braced range only"),
+        pytest.param("a{1-2}-b{1-2}", "a{1,2}-b{1,2}", id="two identical braced ranges"),
+    ],
+)
+def test_expand_ranges_targets_matched_range(value: str, expected: str) -> None:
+    assert expand_ranges(value) == expected
 
 
 @pytest.mark.parametrize(
