@@ -542,9 +542,9 @@ class RequirementsFile:
         for feature in getattr(opt, "features_enabled", []):
             result.extend(("--use-feature", feature))
         if hasattr(opt, "no_binary"):
-            result.extend(("--no-binary", opt.no_binary))
+            result.extend(("--no-binary", ",".join(sorted(opt.no_binary))))
         if hasattr(opt, "only_binary"):
-            result.extend(("--only-binary", opt.only_binary))
+            result.extend(("--only-binary", ",".join(sorted(opt.only_binary))))
         return result
 
 
