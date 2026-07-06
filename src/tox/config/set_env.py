@@ -138,9 +138,9 @@ class SetEnv:
                 elif char == quote_char:
                     in_quotes = False
             elif char == ";" and not in_quotes and (i == 0 or value[i - 1] != "\\"):
-                return value[:i].strip(), value[i + 1 :].strip()
+                return value[:i].strip().replace("\\;", ";"), value[i + 1 :].strip()
             i += 1
-        return value, ""
+        return value.replace("\\;", ";"), ""
 
     def load(self, item: str, args: ConfigLoadArgs | None = None) -> str:
         if item in self._materialized:

@@ -438,6 +438,11 @@ def test_set_env_cross_section_override_direct(tox_project: ToxProjectCreator) -
     assert result.out.splitlines()[1] == "THISISGOOD"
 
 
+def test_set_env_escaped_semicolon() -> None:
+    set_env = SetEnv(r"FOO=a\;b", "py", "py", Path())
+    assert set_env.load("FOO") == "a;b"
+
+
 def test_set_env_marker_mixed(eval_set_env: EvalSetEnv) -> None:
     marker = f"sys_platform == '{sys.platform}'"
     config = (
