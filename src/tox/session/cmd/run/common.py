@@ -340,7 +340,9 @@ def _do_queue_and_wait(  # noqa: C901, PLR0913, PLR0915, PLR0912
 ) -> None:
     options = state._options  # noqa: SLF001
     with spinner:  # noqa: PLR1702
-        max_workers = len(to_run_list) if max_workers is None else max_workers
+        # an unbounded pool (-p all) sizes to the selection; keep at least one worker so an empty
+        # selection does not raise ValueError from ThreadPoolExecutor
+        max_workers = max(1, len(to_run_list)) if max_workers is None else max_workers
         completed: set[str] = set()
         envs_to_run_generator = ready_to_run_envs(state, to_run_list, completed)
 
