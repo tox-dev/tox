@@ -108,7 +108,7 @@ class Config:
 
     def __contains__(self, item: str) -> bool:
         """:returns: check if an environment already exists"""
-        return any(name for name in self if name == item)
+        return any(name == item for name in self)
 
     @classmethod
     def make(cls, parsed: Parsed, pos_args: Sequence[str] | None, source: Source, extra_envs: Iterable[str]) -> Config:

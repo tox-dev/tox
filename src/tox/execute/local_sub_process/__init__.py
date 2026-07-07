@@ -7,6 +7,7 @@ import logging
 import os
 import shutil
 import sys
+from contextlib import suppress
 from subprocess import DEVNULL, PIPE, TimeoutExpired
 from typing import TYPE_CHECKING, Any
 
@@ -171,6 +172,7 @@ class LocalSubProcessExecuteInstance(ExecuteInstance):
         self._cmd: list[str] | None = None
         self._read_stderr: ReadViaThread | None = None
         self._read_stdout: ReadViaThread | None = None
+        self._file_no_generators: list[Generator[int, Popen[bytes], None]] = []
         self._on_exit_drain = on_exit_drain
 
     @property
@@ -212,6 +214,7 @@ class LocalSubProcessExecuteInstance(ExecuteInstance):
         # Allows terminal APIs to query console dimensions and interact with the terminal directly.
         inherit_console = self.options.no_capture
         stdout, stderr = self.get_stream_file_no("stdout"), self.get_stream_file_no("stderr")
+        self._file_no_generators = [stdout, stderr]
         try:
             self.process = process = Popen(
                 self.cmd,
@@ -253,15 +256,26 @@ class LocalSubProcessExecuteInstance(ExecuteInstance):
                         stream.close()
                     except OSError as exc:  # pragma: no cover
                         logging.warning("error while trying to close %r with %r", stream, exc)  # pragma: no cover
+        # release any file descriptors the stream generators still own (e.g. a pty master fd, which is not
+        # exposed as a process stream and would otherwise leak); the read threads above have already stopped
+        for generator in self._file_no_generators:
+            generator.close()
+        self._file_no_generators = []
 
     @staticmethod
     def get_stream_file_no(key: str) -> Generator[int, Popen[bytes], None]:
         allocated_pty = _pty(key)
         if allocated_pty is not None:
             main_fd, child_fd = allocated_pty
-            yield child_fd
-            os.close(child_fd)  # close the child process pipe
-            yield main_fd
+            try:
+                yield child_fd
+                os.close(child_fd)  # close the child process pipe once the child inherited it
+                yield main_fd
+            finally:
+                # close on generator teardown; the master fd is not a process stream so nobody else closes it
+                for fd in (child_fd, main_fd):
+                    with suppress(OSError):
+                        os.close(fd)
         else:
             process = yield PIPE
             stream = getattr(process, key)
@@ -319,7 +333,9 @@ def _pty(key: str) -> tuple[int, int] | None:
         mode = termios.tcgetattr(stream)  # Unix-only
         termios.tcsetattr(child, termios.TCSANOW, mode)  # Unix-only
     except (termios.error, OSError):  # could not inherit traits
-        return None  # pragma: no cover
+        os.close(main)
+        os.close(child)
+        return None
 
     # adjust sub-process terminal size
     columns, lines = shutil.get_terminal_size(fallback=(-1, -1))

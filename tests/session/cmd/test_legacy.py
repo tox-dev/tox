@@ -12,6 +12,18 @@ if TYPE_CHECKING:
     from tox.pytest import ToxProjectCreator
 
 
+def test_legacy_env_name_matches_command(tox_project: ToxProjectCreator, mocker: MockerFixture) -> None:
+    """An env selected via -e whose name matches a subcommand must not be parsed as that command."""
+    run_sequential = mocker.patch("tox.session.cmd.legacy.run_sequential", return_value=0)
+
+    outcome = tox_project({"tox.toml": 'env_list = ["list"]'}).run("-e", "list")
+
+    outcome.assert_success()
+    assert run_sequential.call_count == 1
+    assert outcome.state.conf.options.command == "legacy"
+    assert list(outcome.state.conf.options.env) == ["list"]
+
+
 def test_legacy_show_config(tox_project: ToxProjectCreator, mocker: MockerFixture) -> None:
     show_config = mocker.patch("tox.session.cmd.legacy.show_config")
 

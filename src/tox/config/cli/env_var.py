@@ -28,7 +28,7 @@ def get_env_var(key: str, of_type: type[Any]) -> tuple[Any, str] | None:
             try:
                 if origin is list:
                     entry_type = of_type.__args__[0]
-                    result = [CONVERT.to(raw=v, of_type=entry_type, factory=None) for v in value.split(";")]
+                    result = [CONVERT.to(raw=v, of_type=entry_type, factory=None) for v in value.split(";") if v]
                 else:
                     result = CONVERT.to(raw=value, of_type=of_type, factory=None)
             except Exception as exception:  # noqa: BLE001

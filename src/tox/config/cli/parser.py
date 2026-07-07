@@ -404,12 +404,24 @@ class ToxParser(ArgumentParserWithEnvAndConfig):
         args_list: list[str] = list(args) if args is not None else sys.argv[1:]
         cmd_at: int | None = None
         if self._cmd is not None and args_list:
+            # options that consume a value; a subcommand name appearing as such a value (e.g. ``-e list``) must not
+            # be mistaken for the command. Options live on the subparsers (``-e`` on legacy), so consult those too.
+            value_opts = {
+                name
+                for parser in (self, self._cmd.choices.get("legacy"))
+                if parser is not None
+                for name, action in parser._option_string_actions.items()  # noqa: SLF001
+                if action.nargs != 0
+            }
+            skip_next = False
             for at, arg in enumerate(args_list):
-                if arg in self._cmd.choices:
+                if skip_next:
+                    skip_next = False
+                elif arg in value_opts:
+                    skip_next = True
+                elif arg in self._cmd.choices:
                     cmd_at = at
                     break
-            else:
-                cmd_at = None
         if cmd_at is not None:  # if we found a command move it to the start
             args_list = [args_list[cmd_at], *args_list[:cmd_at], *args_list[cmd_at + 1 :]]
         elif tuple(args_list) not in {("--help",), ("-h",)} and (

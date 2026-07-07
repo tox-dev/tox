@@ -179,6 +179,15 @@ def test_parallel_requires_arg(tox_project: ToxProjectCreator) -> None:
     assert "argument -p/--parallel: expected one argument" in outcome.err
 
 
+def test_parallel_all_empty_selection(tox_project: ToxProjectCreator) -> None:
+    """``-p all`` with nothing selected must not crash the driver thread with a ValueError."""
+    project = tox_project({"tox.toml": 'env_list = ["py"]\n[env_run_base]\npackage = "skip"\n'})
+    outcome = project.run("p", "-p", "all", "--skip-env", ".*")
+    outcome.assert_failed()  # nothing to run gracefully fails evaluation
+    assert "max_workers must be greater than 0" not in outcome.out
+    assert "Traceback" not in outcome.out
+
+
 def test_parallel_no_spinner(tox_project: ToxProjectCreator) -> None:
     """Ensure passing `--parallel-no-spinner` implies `--parallel`."""
     with mock.patch.object(parallel, "execute") as mocked:

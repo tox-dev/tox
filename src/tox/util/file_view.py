@@ -24,8 +24,11 @@ def create_session_view(package: Path, temp_path: Path) -> Path:
     session_package = session_dir / package.name
 
     shutil.copyfile(package, session_package)
-    operation = "copied"
-    common = commonpath((session_package, package))
-    rel_session, rel_package = session_package.relative_to(common), package.relative_to(common)
-    logging.debug("package %s %s to %s (%s)", rel_session, operation, rel_package, common)
+    try:
+        common = commonpath((session_package, package))
+    except ValueError:  # no shared base (e.g. different Windows drives); only the debug log needs it
+        logging.debug("package copied from %s to %s", package, session_package)
+    else:
+        rel_session, rel_package = session_package.relative_to(common), package.relative_to(common)
+        logging.debug("package %s copied to %s (%s)", rel_session, rel_package, common)
     return session_package

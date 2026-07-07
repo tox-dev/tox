@@ -103,13 +103,15 @@ class Unroll:
                     )
                     return {"value": posargs_result, "marker": marker} if marker else posargs_result
                 if replace_type == "env":
+                    # use a copy of the chain so this substitution's env references do not leak into
+                    # adjacent entries of the same value tree and spuriously trip the circular check (#2869)
                     env_result: TomlTypes = replace_env(
                         self.conf,
                         [
                             validate(value["name"], str),
                             validate(self(value.get("default", ""), depth, skip_str=skip_str), str),
                         ],
-                        self.args,
+                        self.args.copy(),
                     )
                     return {"value": env_result, "marker": marker} if marker else env_result
                 if replace_type == "glob":

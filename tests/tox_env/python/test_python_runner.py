@@ -577,6 +577,26 @@ def test_dependency_groups_missing(tox_project: ToxProjectCreator) -> None:
     assert "py: failed with dependency group 'type' not found\n" in result.out
 
 
+def test_dependency_groups_no_table(tox_project: ToxProjectCreator) -> None:
+    project = tox_project(
+        {
+            "tox.toml": """
+            [env_run_base]
+            skip_install = true
+            dependency_groups = ["test"]
+            """,
+            "pyproject.toml": """
+            [project]
+            name = "demo_pkg"
+            """,
+        },
+    )
+    result = project.run("r", "-e", "py")
+
+    result.assert_failed()
+    assert "py: failed with no dependency groups defined in" in result.out
+
+
 def test_dependency_groups_not_list(tox_project: ToxProjectCreator) -> None:
     project = tox_project(
         {
@@ -751,6 +771,39 @@ def test_deps_only_multiple_extras(tox_project: ToxProjectCreator) -> None:
             "py",
             "install_package_deps",
             ["python", "-I", "-m", "pip", "install", "httpx>=0.27", "pytest>=8", "sphinx>=7"],
+        )
+    ]
+
+
+def test_deps_only_non_canonical_extra_key(tox_project: ToxProjectCreator) -> None:
+    project = tox_project(
+        {
+            "tox.toml": """
+            [env_run_base]
+            package = "deps-only"
+            extras = ["foo-bar"]
+            """,
+            "pyproject.toml": """
+            [project]
+            name = "demo"
+            version = "1.0"
+            dependencies = ["httpx>=0.27"]
+            [project.optional-dependencies]
+            Foo_Bar = ["sphinx>=7"]
+            """,
+        },
+    )
+    execute_calls = project.patch_execute()
+    result = project.run("r", "-e", "py")
+
+    result.assert_success()
+
+    found_calls = [(i[0][0].conf.name, i[0][3].run_id, i[0][3].cmd) for i in execute_calls.call_args_list]
+    assert found_calls == [
+        (
+            "py",
+            "install_package_deps",
+            ["python", "-I", "-m", "pip", "install", "httpx>=0.27", "sphinx>=7"],
         )
     ]
 

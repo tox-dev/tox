@@ -12,6 +12,7 @@ import shutil
 import stat
 import subprocess
 import sys
+import time
 from io import TextIOWrapper
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, NoReturn
@@ -22,8 +23,14 @@ import pytest
 from colorama import Fore
 from psutil import AccessDenied
 
+from tox.execute import local_sub_process
 from tox.execute.api import ExecuteOptions, Outcome
-from tox.execute.local_sub_process import SIG_INTERRUPT, LocalSubProcessExecuteInstance, LocalSubProcessExecutor
+from tox.execute.local_sub_process import (
+    SIG_INTERRUPT,
+    LocalSubProcessExecuteInstance,
+    LocalSubProcessExecutor,
+    read_via_thread_windows,
+)
 from tox.execute.local_sub_process.read_via_thread_unix import ReadViaThreadUnix
 from tox.execute.request import ExecuteRequest, StdinSource
 from tox.execute.stream import SyncWrite
@@ -334,6 +341,74 @@ def test_command_keyboard_interrupt(tmp_path: Path, monkeypatch: MonkeyPatch, ca
     assert float(outs[3]) > 0  # duration
     assert "how about no signal 2" in outs[1], outs[1]  # 2 - Interrupt
     assert "how about no signal 15" in outs[1], outs[1]  # 15 - Terminated
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="pty is Unix-only")
+def test_pty_closes_fds_when_termios_fails(mocker: MockerFixture) -> None:
+    """If terminal attributes cannot be inherited, the freshly opened pty fds must be released."""
+    termios = pytest.importorskip("termios")
+    pty = pytest.importorskip("pty")
+    mocker.patch("sys.stdout.isatty", return_value=True)
+    mocker.patch.object(termios, "tcgetattr", side_effect=termios.error)
+    openpty_spy = mocker.spy(pty, "openpty")
+    close_spy = mocker.spy(os, "close")
+
+    result = local_sub_process._pty("stdout")  # noqa: SLF001
+
+    assert result is None
+    main, child = openpty_spy.spy_return
+    assert {call.args[0] for call in close_spy.call_args_list} == {main, child}
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="pty is Unix-only")
+def test_local_subprocess_tty_closes_master_fd(monkeypatch: MonkeyPatch, mocker: MockerFixture) -> None:
+    """The pty master fd is not a process stream, so it must be closed explicitly and not leaked."""
+    pytest.importorskip("termios")
+    monkeypatch.setenv("COLUMNS", "100")
+    monkeypatch.setenv("LINES", "100")
+    mocker.patch("sys.stdout.isatty", return_value=True)
+    mocker.patch("sys.stderr.isatty", return_value=True)
+    mocker.patch("termios.tcgetattr")
+    mocker.patch("termios.tcsetattr")
+    pty_spy = mocker.spy(local_sub_process, "_pty")
+
+    executor = LocalSubProcessExecutor(colored=False)
+    cmd = [sys.executable, str(Path(__file__).parent / "tty_check.py")]
+    request = ExecuteRequest(cmd=cmd, stdin=StdinSource.API, cwd=Path.cwd(), env=dict(os.environ), run_id="")
+    out_err = FakeOutErr()
+    with executor.call(request, show=False, out_err=out_err.out_err, env=_create_mock_env()) as status:
+        while status.exit_code is None:  # pragma: no branch
+            status.wait()
+
+    master_fds = [result[0] for result in pty_spy.spy_return_list]
+    assert len(master_fds) == 2  # tty path taken for stdout and stderr
+    for fd in master_fds:
+        with pytest.raises(OSError, match="Bad file descriptor"):
+            os.fstat(fd)
+
+
+@pytest.mark.skipif(sys.platform != "win32", reason="overlapped I/O reader is Windows-only")
+def test_read_via_thread_windows_stops_while_read_pending(mocker: MockerFixture) -> None:
+    """A never-completing overlapped read must not keep the reader thread alive after stop is set."""
+    pending = OSError()
+    pending.winerror = read_via_thread_windows.ERROR_IO_INCOMPLETE
+    overlapped = mocker.MagicMock()
+    overlapped.getresult.side_effect = pending  # the read never completes
+    mocker.patch.object(
+        read_via_thread_windows, "_overlapped", mocker.MagicMock(Overlapped=mocker.MagicMock(return_value=overlapped))
+    )
+
+    reader = read_via_thread_windows.ReadViaThreadWindows(
+        file_no=0, handler=mocker.MagicMock(return_value=0), name="pending", drain=False
+    )
+    reader.thread.start()
+    deadline = time.monotonic() + 5
+    while not overlapped.getresult.called and time.monotonic() < deadline:
+        time.sleep(0.01)
+    reader.stop.set()
+    reader.thread.join(timeout=5)
+
+    assert not reader.thread.is_alive()
 
 
 @pytest.mark.parametrize("tty_mode", ["on", "off"])

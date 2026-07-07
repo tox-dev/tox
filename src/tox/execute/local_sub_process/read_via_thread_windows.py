@@ -44,6 +44,8 @@ class ReadViaThreadWindows(ReadViaThread):  # pragma: win32 cover
                 except OSError as exception:
                     if getattr(exception, "winerror", None) != ERROR_IO_INCOMPLETE:
                         return
+                    if self.stop.is_set():  # stop requested while the read is still pending; abandon it
+                        return
                     time.sleep(POLL_INTERVAL)
 
             if not data:

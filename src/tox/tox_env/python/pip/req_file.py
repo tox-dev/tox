@@ -63,7 +63,7 @@ class PythonDeps(RequirementsFile):
 
     def _pre_process(self, content: str) -> ReqFileLines:
         for at, line in super()._pre_process(content):
-            if line.startswith("-r") or (line.startswith("-c") and line[2].isalpha()):
+            if line.startswith("-r") or (line.startswith("-c") and line[2:3].isalpha()):
                 found_line = f"{line[0:2]} {line[2:]}"  # normalize
             else:
                 found_line = line
@@ -98,7 +98,9 @@ class PythonDeps(RequirementsFile):
             values = line[len(arg_match) :]
             line = f"{arg_match} {values}"
         # escape spaces
-        escape_match = next((e for e in ONE_ARG_ESCAPE if line.startswith(e) and line[len(e)].isspace()), None)
+        escape_match = next(
+            (e for e in ONE_ARG_ESCAPE if line.startswith(e) and len(line) > len(e) and line[len(e)].isspace()), None
+        )
         if escape_match is not None:
             # escape not already escaped spaces
             escaped = _UNESCAPED_SPACE_RE.sub(r"\\\1", line[len(escape_match) + 1 :])
@@ -170,7 +172,7 @@ class PythonConstraints(RequirementsFile):
 
     def _pre_process(self, content: str) -> ReqFileLines:
         for at, line in super()._pre_process(content):
-            if line.startswith("-r") or (line.startswith("-c") and line[2].isalpha()):
+            if line.startswith("-r") or (line.startswith("-c") and line[2:3].isalpha()):
                 found_line = f"{line[0:2]} {line[2:]}"  # normalize
             else:
                 found_line = line
@@ -210,7 +212,9 @@ class PythonConstraints(RequirementsFile):
             values = line[len(arg_match) :]
             line = f"{arg_match} {values}"
         # escape spaces
-        escape_match = next((e for e in ONE_ARG_ESCAPE if line.startswith(e) and line[len(e)].isspace()), None)
+        escape_match = next(
+            (e for e in ONE_ARG_ESCAPE if line.startswith(e) and len(line) > len(e) and line[len(e)].isspace()), None
+        )
         if escape_match is not None:
             # escape not already escaped spaces
             escaped = _UNESCAPED_SPACE_RE.sub(r"\\\1", line[len(escape_match) + 1 :])

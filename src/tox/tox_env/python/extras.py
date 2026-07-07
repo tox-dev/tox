@@ -4,6 +4,7 @@ import sys
 from typing import TYPE_CHECKING
 
 from packaging.requirements import Requirement
+from packaging.utils import canonicalize_name
 
 from .virtual_env.package.util import dependencies_with_extras_from_markers
 
@@ -33,7 +34,7 @@ def resolve_extras_static(root: Path, extras: set[str]) -> list[Requirement] | N
     ]
     optional_deps = project.get("optional-dependencies", {})
     for extra, reqs in optional_deps.items():
-        deps_with_markers.extend((Requirement(req), {extra}) for req in (reqs or []))
+        deps_with_markers.extend((Requirement(req), {canonicalize_name(extra)}) for req in (reqs or []))
     return dependencies_with_extras_from_markers(
         deps_with_markers=deps_with_markers,
         extras=extras,

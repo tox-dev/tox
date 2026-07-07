@@ -167,7 +167,23 @@ def expand_ranges(value: str) -> str:
     left-open ``{-13}`` (lower bound = :data:`LATEST_PYTHON_MINOR_MIN`).
 
     """
-    matches = re.findall(
+
+    def _expand(match: re.Match[str]) -> str:
+        src, start_, end_, open_start, open_end = match.groups()
+        delimiter = match.group()[-1]  # the ',' or '}' that terminated the match
+        if src and start_ and end_:
+            start, end = int(start_), int(end_)
+            direction = 1 if start < end else -1
+            expansion = ",".join(str(x) for x in range(start, end + direction, direction))
+        elif open_start:
+            expansion = ",".join(str(x) for x in range(int(open_start), LATEST_PYTHON_MINOR_MAX + 1))
+        elif open_end:
+            expansion = ",".join(str(x) for x in range(LATEST_PYTHON_MINOR_MIN, int(open_end) + 1))
+        else:  # a single number, leave untouched
+            return match.group()
+        return f"{expansion}{delimiter}"
+
+    return re.sub(
         r"""
         (                       # outer capture group
             ( \d+ ) - ( \d+ )   # closed range: start-end
@@ -180,22 +196,10 @@ def expand_ranges(value: str) -> str:
         )
         (?: , | \} )            # followed by comma or closing brace
         """,
+        _expand,
         value,
-        re.VERBOSE,
+        flags=re.VERBOSE,
     )
-    for src, start_, end_, open_start, open_end in matches:
-        if src and start_ and end_:
-            start, end = int(start_), int(end_)
-            direction = 1 if start < end else -1
-            expansion = ",".join(str(x) for x in range(start, end + direction, direction))
-            value = value.replace(src, expansion, 1)
-        elif open_start:
-            expansion = ",".join(str(x) for x in range(int(open_start), LATEST_PYTHON_MINOR_MAX + 1))
-            value = value.replace(f"{open_start}-", expansion, 1)
-        elif open_end:
-            expansion = ",".join(str(x) for x in range(LATEST_PYTHON_MINOR_MIN, int(open_end) + 1))
-            value = value.replace(f"-{open_end}", expansion, 1)
-    return value
 
 
 __all__ = (

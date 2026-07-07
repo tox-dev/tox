@@ -36,6 +36,18 @@ def test_empty_conf_get(empty_config: Config) -> None:
     assert loaders == ["testenv"]
 
 
+def test_config_contains_env(tox_ini_conf: ToxIniCreator) -> None:
+    config = tox_ini_conf("[tox]\nenv_list = py38\n[testenv]\n")
+    assert "py38" in config
+    assert "missing" not in config
+
+
+def test_config_contains_empty_env_name(empty_config: Config) -> None:
+    # a falsy (empty) environment name must still be reported as present, not swallowed by a truthiness check
+    empty_config._extra_envs = [""]  # noqa: SLF001
+    assert "" in empty_config
+
+
 def test_config_some_envs(tox_ini_conf: ToxIniCreator) -> None:
     example = """
     [tox]

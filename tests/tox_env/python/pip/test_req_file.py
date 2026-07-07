@@ -20,6 +20,14 @@ def test_legacy_requirement_file(tmp_path: Path, legacy_flag: str) -> None:
     assert [str(i) for i in python_deps.requirements] == ["b" if legacy_flag == "-r" else "-c b"]
 
 
+@pytest.mark.parametrize("flag", ["-c", "-r", "-f", "-e"])
+def test_deps_bare_flag_no_argument(tmp_path: Path, flag: str) -> None:
+    """A one-argument flag with no argument reports a clean error, not an IndexError."""
+    python_deps = PythonDeps(raw=flag, root=tmp_path)
+    with pytest.raises(ValueError, match="expected one argument"):
+        python_deps.requirements  # noqa: B018
+
+
 def test_deps_with_hash(tmp_path: Path) -> None:
     """deps with --hash should raise an exception."""
     python_deps = PythonDeps(

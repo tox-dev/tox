@@ -396,7 +396,7 @@ class RequirementsFile:
                 base_opt.index_url = [DEFAULT_INDEX_URL]
             for url in opt.extra_index_url:
                 if url not in base_opt.index_url:
-                    base_opt.index_url.extend(opt.extra_index_url)
+                    base_opt.index_url.append(url)
         if opt.find_links:
             # relative to a requirements file.
             if not hasattr(base_opt, "find_links"):
@@ -542,9 +542,9 @@ class RequirementsFile:
         for feature in getattr(opt, "features_enabled", []):
             result.extend(("--use-feature", feature))
         if hasattr(opt, "no_binary"):
-            result.extend(("--no-binary", opt.no_binary))
+            result.extend(("--no-binary", ",".join(sorted(opt.no_binary))))
         if hasattr(opt, "only_binary"):
-            result.extend(("--only-binary", opt.only_binary))
+            result.extend(("--only-binary", ",".join(sorted(opt.only_binary))))
         return result
 
 
