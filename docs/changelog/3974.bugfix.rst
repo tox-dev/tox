@@ -23,4 +23,6 @@ Fix a batch of latent defects found in a codebase audit:
 - avoid crashing ``create_session_view`` when the package and its session copy share no common path (e.g. different
   Windows drives);
 - close the pseudo-terminal file descriptors that leaked on every command run under a tty and on the terminal-attribute
-  inheritance error path.
+  inheritance error path;
+- honor the stop signal in the Windows overlapped-I/O reader while a read is still pending, so shutdown no longer risks
+  hanging on a child that holds its pipe open without producing output.

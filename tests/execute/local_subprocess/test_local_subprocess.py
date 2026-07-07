@@ -12,6 +12,7 @@ import shutil
 import stat
 import subprocess
 import sys
+import time
 from io import TextIOWrapper
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, NoReturn
@@ -24,7 +25,12 @@ from psutil import AccessDenied
 
 from tox.execute import local_sub_process
 from tox.execute.api import ExecuteOptions, Outcome
-from tox.execute.local_sub_process import SIG_INTERRUPT, LocalSubProcessExecuteInstance, LocalSubProcessExecutor
+from tox.execute.local_sub_process import (
+    SIG_INTERRUPT,
+    LocalSubProcessExecuteInstance,
+    LocalSubProcessExecutor,
+    read_via_thread_windows,
+)
 from tox.execute.local_sub_process.read_via_thread_unix import ReadViaThreadUnix
 from tox.execute.request import ExecuteRequest, StdinSource
 from tox.execute.stream import SyncWrite
@@ -388,6 +394,30 @@ def test_local_subprocess_tty_closes_master_fd(monkeypatch: MonkeyPatch, mocker:
     for fd in master_fds:
         with pytest.raises(OSError, match="Bad file descriptor"):
             os.fstat(fd)
+
+
+@pytest.mark.skipif(sys.platform != "win32", reason="overlapped I/O reader is Windows-only")
+def test_read_via_thread_windows_stops_while_read_pending(mocker: MockerFixture) -> None:
+    """A never-completing overlapped read must not keep the reader thread alive after stop is set."""
+    pending = OSError()
+    pending.winerror = read_via_thread_windows.ERROR_IO_INCOMPLETE
+    overlapped = mocker.MagicMock()
+    overlapped.getresult.side_effect = pending  # the read never completes
+    mocker.patch.object(
+        read_via_thread_windows, "_overlapped", mocker.MagicMock(Overlapped=mocker.MagicMock(return_value=overlapped))
+    )
+
+    reader = read_via_thread_windows.ReadViaThreadWindows(
+        file_no=0, handler=mocker.MagicMock(return_value=0), name="pending", drain=False
+    )
+    reader.thread.start()
+    deadline = time.monotonic() + 5
+    while not overlapped.getresult.called and time.monotonic() < deadline:
+        time.sleep(0.01)
+    reader.stop.set()
+    reader.thread.join(timeout=5)
+
+    assert not reader.thread.is_alive()
 
 
 @pytest.mark.parametrize("tty_mode", ["on", "off"])
