@@ -338,6 +338,23 @@ def test_command_keyboard_interrupt(tmp_path: Path, monkeypatch: MonkeyPatch, ca
 
 
 @pytest.mark.skipif(sys.platform == "win32", reason="pty is Unix-only")
+def test_pty_closes_fds_when_termios_fails(mocker: MockerFixture) -> None:
+    """If terminal attributes cannot be inherited, the freshly opened pty fds must be released."""
+    termios = pytest.importorskip("termios")
+    pty = pytest.importorskip("pty")
+    mocker.patch("sys.stdout.isatty", return_value=True)
+    mocker.patch.object(termios, "tcgetattr", side_effect=termios.error)
+    openpty_spy = mocker.spy(pty, "openpty")
+    close_spy = mocker.spy(os, "close")
+
+    result = local_sub_process._pty("stdout")  # noqa: SLF001
+
+    assert result is None
+    main, child = openpty_spy.spy_return
+    assert {call.args[0] for call in close_spy.call_args_list} == {main, child}
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="pty is Unix-only")
 def test_local_subprocess_tty_closes_master_fd(monkeypatch: MonkeyPatch, mocker: MockerFixture) -> None:
     """The pty master fd is not a process stream, so it must be closed explicitly and not leaked."""
     pytest.importorskip("termios")

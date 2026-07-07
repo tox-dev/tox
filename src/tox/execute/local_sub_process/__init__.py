@@ -333,7 +333,9 @@ def _pty(key: str) -> tuple[int, int] | None:
         mode = termios.tcgetattr(stream)  # Unix-only
         termios.tcsetattr(child, termios.TCSANOW, mode)  # Unix-only
     except (termios.error, OSError):  # could not inherit traits
-        return None  # pragma: no cover
+        os.close(main)
+        os.close(child)
+        return None
 
     # adjust sub-process terminal size
     columns, lines = shutil.get_terminal_size(fallback=(-1, -1))
