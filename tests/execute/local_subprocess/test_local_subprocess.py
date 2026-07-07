@@ -370,17 +370,7 @@ def test_local_subprocess_tty_closes_master_fd(monkeypatch: MonkeyPatch, mocker:
     mocker.patch("sys.stderr.isatty", return_value=True)
     mocker.patch("termios.tcgetattr")
     mocker.patch("termios.tcsetattr")
-
-    real_pty = local_sub_process._pty  # noqa: SLF001
-    master_fds: list[int] = []
-
-    def spy_pty(key: str) -> tuple[int, int] | None:
-        result = real_pty(key)
-        if result is not None:
-            master_fds.append(result[0])
-        return result
-
-    mocker.patch.object(local_sub_process, "_pty", side_effect=spy_pty)
+    pty_spy = mocker.spy(local_sub_process, "_pty")
 
     executor = LocalSubProcessExecutor(colored=False)
     cmd = [sys.executable, str(Path(__file__).parent / "tty_check.py")]
@@ -390,6 +380,7 @@ def test_local_subprocess_tty_closes_master_fd(monkeypatch: MonkeyPatch, mocker:
         while status.exit_code is None:  # pragma: no branch
             status.wait()
 
+    master_fds = [result[0] for result in pty_spy.spy_return_list]
     assert len(master_fds) == 2  # tty path taken for stdout and stderr
     for fd in master_fds:
         with pytest.raises(OSError, match="Bad file descriptor"):
