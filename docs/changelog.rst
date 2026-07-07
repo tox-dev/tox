@@ -7,6 +7,43 @@
 .. towncrier release notes start
 
 **********************
+ v4.56.2 (2026-07-07)
+**********************
+
+Bug fixes - 4.56.2
+==================
+
+- Fix a batch of latent defects found in a codebase audit:
+
+  - stop duplicating ``--extra-index-url`` when a merged requirements line repeats an already-seen index;
+  - render ``--no-binary``/``--only-binary`` as comma-joined strings instead of leaking the internal ``set`` into the
+    pip command line;
+  - report a clear error instead of ``IndexError`` for a bare one-argument flag (``-c``, ``-r``, ``-f``, ``-e``) in
+    ``deps`` or constraints;
+  - canonicalize ``optional-dependencies`` keys and self-referential (recursive) extra names so non-canonical spellings
+    no longer silently drop dependencies;
+  - raise a clear error instead of ``KeyError`` when ``dependency_groups`` is requested without a
+    ``[dependency-groups]`` table;
+  - stop a native TOML ``{ replace = "env" }`` reference from leaking its resolution chain into sibling list entries and
+    tripping a spurious ``circular chain`` error;
+  - expand the range that actually matched in a factor expression rather than the first identical digit-range substring;
+  - strip the backslash from an escaped ``\;`` in ``set_env`` values;
+  - skip option values during command auto-detection so an environment named like a subcommand (e.g. ``tox -e list``) is
+    no longer misread;
+  - treat an empty list-typed environment variable (e.g. ``TOX_DISCOVER=``) as an empty list rather than ``[""]``;
+  - report an environment whose name is an empty string as present in ``Config`` membership tests;
+  - fail evaluation gracefully instead of crashing the driver thread when ``tox p -p all`` is run with an empty
+    selection;
+  - avoid rebuilding a throwaway PEP 517 frontend against the previous root when a package environment's ``root`` is
+    reassigned before a frontend exists;
+  - avoid crashing ``create_session_view`` when the package and its session copy share no common path (e.g. different
+    Windows drives);
+  - close the pseudo-terminal file descriptors that leaked on every command run under a tty and on the
+    terminal-attribute inheritance error path;
+  - honor the stop signal in the Windows overlapped-I/O reader while a read is still pending, so shutdown no longer
+    risks hanging on a child that holds its pipe open without producing output. (:issue:`3974`)
+
+**********************
  v4.56.1 (2026-06-25)
 **********************
 
