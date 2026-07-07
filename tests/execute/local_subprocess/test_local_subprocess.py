@@ -22,6 +22,7 @@ import pytest
 from colorama import Fore
 from psutil import AccessDenied
 
+from tox.execute import local_sub_process
 from tox.execute.api import ExecuteOptions, Outcome
 from tox.execute.local_sub_process import SIG_INTERRUPT, LocalSubProcessExecuteInstance, LocalSubProcessExecutor
 from tox.execute.local_sub_process.read_via_thread_unix import ReadViaThreadUnix
@@ -334,6 +335,42 @@ def test_command_keyboard_interrupt(tmp_path: Path, monkeypatch: MonkeyPatch, ca
     assert float(outs[3]) > 0  # duration
     assert "how about no signal 2" in outs[1], outs[1]  # 2 - Interrupt
     assert "how about no signal 15" in outs[1], outs[1]  # 15 - Terminated
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="pty is Unix-only")
+def test_local_subprocess_tty_closes_master_fd(monkeypatch: MonkeyPatch, mocker: MockerFixture) -> None:
+    """The pty master fd is not a process stream, so it must be closed explicitly and not leaked."""
+    pytest.importorskip("termios")
+    monkeypatch.setenv("COLUMNS", "100")
+    monkeypatch.setenv("LINES", "100")
+    mocker.patch("sys.stdout.isatty", return_value=True)
+    mocker.patch("sys.stderr.isatty", return_value=True)
+    mocker.patch("termios.tcgetattr")
+    mocker.patch("termios.tcsetattr")
+
+    real_pty = local_sub_process._pty  # noqa: SLF001
+    master_fds: list[int] = []
+
+    def spy_pty(key: str) -> tuple[int, int] | None:
+        result = real_pty(key)
+        if result is not None:
+            master_fds.append(result[0])
+        return result
+
+    mocker.patch.object(local_sub_process, "_pty", side_effect=spy_pty)
+
+    executor = LocalSubProcessExecutor(colored=False)
+    cmd = [sys.executable, str(Path(__file__).parent / "tty_check.py")]
+    request = ExecuteRequest(cmd=cmd, stdin=StdinSource.API, cwd=Path.cwd(), env=dict(os.environ), run_id="")
+    out_err = FakeOutErr()
+    with executor.call(request, show=False, out_err=out_err.out_err, env=_create_mock_env()) as status:
+        while status.exit_code is None:  # pragma: no branch
+            status.wait()
+
+    assert len(master_fds) == 2  # tty path taken for stdout and stderr
+    for fd in master_fds:
+        with pytest.raises(OSError, match="Bad file descriptor"):
+            os.fstat(fd)
 
 
 @pytest.mark.parametrize("tty_mode", ["on", "off"])
