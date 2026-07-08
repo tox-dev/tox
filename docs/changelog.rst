@@ -7,6 +7,17 @@
 .. towncrier release notes start
 
 **********************
+ v4.56.4 (2026-07-08)
+**********************
+
+Bug fixes - 4.56.4
+==================
+
+- Discover debug (``Py_DEBUG``) interpreters set as ``base_python``, such as Debian's ``python3.13-dbg`` - the spec was
+  misread as a machine named ``dbg`` and no interpreter matched. Requires ``python-discovery>=1.4.4`` - by
+  :user:`gaborbernat`. (:issue:`3977`)
+
+**********************
  v4.56.3 (2026-07-08)
 **********************
 
