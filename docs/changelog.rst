@@ -7,6 +7,17 @@
 .. towncrier release notes start
 
 **********************
+ v4.56.3 (2026-07-08)
+**********************
+
+Bug fixes - 4.56.3
+==================
+
+- Stop double-closing the child pty file descriptor when running under a tty, which could race a parallel run that had
+  reused the freed descriptor number and cause intermittent ``Bad file descriptor``/``Input/output error`` failures - by
+  :user:`apoorvdarshan`. (:issue:`3975`)
+
+**********************
  v4.56.2 (2026-07-07)
 **********************
 

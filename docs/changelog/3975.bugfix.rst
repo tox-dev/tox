@@ -1,3 +1,0 @@
-Stop double-closing the child pty file descriptor when running under a tty, which could race a parallel run that had
-reused the freed descriptor number and cause intermittent ``Bad file descriptor``/``Input/output error`` failures - by
-:user:`apoorvdarshan`.
