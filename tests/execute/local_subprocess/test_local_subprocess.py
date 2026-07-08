@@ -391,8 +391,9 @@ def test_local_subprocess_tty_closes_master_fd(monkeypatch: MonkeyPatch, mocker:
 def test_get_stream_file_no_closes_each_pty_fd_once(mocker: MockerFixture) -> None:
     """Each pty fd must be closed exactly once.
 
-    The child fd is closed once the child has inherited it; closing it a second time on generator teardown
-    can race a parallel run that has reused the freed fd number, corrupting the sibling's fd (see #3975).
+    The child fd is closed once the child has inherited it; closing it a second time on generator teardown can race a
+    parallel run that has reused the freed fd number, corrupting the sibling's fd (see #3975).
+
     """
     main_fd, child_fd = 11, 22
     mocker.patch.object(local_sub_process, "_pty", return_value=(main_fd, child_fd))

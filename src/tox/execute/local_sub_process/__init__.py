@@ -277,7 +277,7 @@ class LocalSubProcessExecuteInstance(ExecuteInstance):
                 # close on generator teardown; the master fd is not a process stream so nobody else closes it.
                 # Skip the child fd if it was already closed above: re-closing a freed fd number can race with a
                 # parallel run that has since reused it, corrupting the sibling's fd (see #3975).
-                for fd in ((child_fd, main_fd) if child_fd_open else (main_fd,)):
+                for fd in (child_fd, main_fd) if child_fd_open else (main_fd,):
                     with suppress(OSError):
                         os.close(fd)
         else:
