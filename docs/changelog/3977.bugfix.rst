@@ -1,0 +1,3 @@
+Discover debug (``Py_DEBUG``) interpreters set as ``base_python``, such as Debian's ``python3.13-dbg`` - the spec was
+misread as a machine named ``dbg`` and no interpreter matched. Requires ``python-discovery>=1.4.4`` - by
+:user:`gaborbernat`.
