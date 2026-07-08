@@ -267,13 +267,17 @@ class LocalSubProcessExecuteInstance(ExecuteInstance):
         allocated_pty = _pty(key)
         if allocated_pty is not None:
             main_fd, child_fd = allocated_pty
+            child_fd_open = True
             try:
                 yield child_fd
                 os.close(child_fd)  # close the child process pipe once the child inherited it
+                child_fd_open = False
                 yield main_fd
             finally:
-                # close on generator teardown; the master fd is not a process stream so nobody else closes it
-                for fd in (child_fd, main_fd):
+                # close on generator teardown; the master fd is not a process stream so nobody else closes it.
+                # Skip the child fd if it was already closed above: re-closing a freed fd number can race with a
+                # parallel run that has since reused it, corrupting the sibling's fd (see #3975).
+                for fd in ((child_fd, main_fd) if child_fd_open else (main_fd,)):
                     with suppress(OSError):
                         os.close(fd)
         else:

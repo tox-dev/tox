@@ -387,6 +387,27 @@ def test_local_subprocess_tty_closes_master_fd(monkeypatch: MonkeyPatch, mocker:
             os.fstat(fd)
 
 
+@pytest.mark.skipif(sys.platform == "win32", reason="pty is Unix-only")
+def test_get_stream_file_no_closes_each_pty_fd_once(mocker: MockerFixture) -> None:
+    """Each pty fd must be closed exactly once.
+
+    The child fd is closed once the child has inherited it; closing it a second time on generator teardown
+    can race a parallel run that has reused the freed fd number, corrupting the sibling's fd (see #3975).
+    """
+    main_fd, child_fd = 11, 22
+    mocker.patch.object(local_sub_process, "_pty", return_value=(main_fd, child_fd))
+    close_spy = mocker.patch.object(os, "close")
+
+    gen = LocalSubProcessExecuteInstance.get_stream_file_no("stdout")
+    assert next(gen) == child_fd
+    assert gen.send(MagicMock()) == main_fd
+    gen.close()
+
+    closed = [call.args[0] for call in close_spy.call_args_list]
+    assert closed.count(child_fd) == 1
+    assert closed.count(main_fd) == 1
+
+
 @pytest.mark.skipif(sys.platform != "win32", reason="overlapped I/O reader is Windows-only")
 def test_read_via_thread_windows_stops_while_read_pending(mocker: MockerFixture) -> None:
     """A never-completing overlapped read must not keep the reader thread alive after stop is set."""
