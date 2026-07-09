@@ -1,3 +1,5 @@
-github: gaborbernat
+github:
+  - gaborbernat
+  - tox-dev
 tidelift: "pypi/tox"
 thanks_dev: u/gh/gaborbernat
