@@ -12,13 +12,10 @@ on:
           - minor
           - patch
         default: auto
-
 permissions:
   contents: write
-
 env:
   FORCE_COLOR: 1
-
 jobs:
   prepare-release:
     runs-on: ubuntu-24.04
@@ -31,25 +28,21 @@ jobs:
           fetch-depth: 0
           token: ${{ secrets.RELEASE_PAT }}
           persist-credentials: true
-
       - name: Install the latest version of uv
         uses: astral-sh/setup-uv@11f9893b081a58869d3b5fccaea48c9e9e46f990 # v8.3.2
         with:
           enable-cache: true
           cache-dependency-glob: "pyproject.toml"
           github-token: ${{ secrets.GITHUB_TOKEN }}
-
       - name: Configure git
         run: |
           git config user.name "${GITHUB_ACTOR}"
           git config user.email "${GITHUB_ACTOR}@users.noreply.github.com"
-
       - name: Set up remote tracking
         run: |
           git remote -v
           git fetch origin
           git branch -a
-
       - name: Calculate next version
         id: version
         run: |
@@ -84,16 +77,13 @@ jobs:
 
           echo "Next version: $next"
           echo "version=$next" >> $GITHUB_OUTPUT
-
       - name: Install tox
         run: uv tool install --python-preference only-managed --python 3.14 tox@.
-
       - name: Run release process
         run: tox run -e release -- ${STEPS_VERSION_OUTPUTS_VERSION}
         env:
           GH_TOKEN: ${{ secrets.RELEASE_PAT }}
           STEPS_VERSION_OUTPUTS_VERSION: ${{ steps.version.outputs.version }}
-
       - name: Display completion message
         run: echo "Release ${STEPS_VERSION_OUTPUTS_VERSION} prepared and pushed successfully!"
         env:

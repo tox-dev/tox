@@ -43,10 +43,20 @@ repos:
     rev: v1.10.0
     hooks:
       - id: rst-backticks
-  - repo: https://github.com/rbubley/mirrors-prettier
-    rev: "v3.9.5"
+  - repo: https://github.com/google/yamlfmt
+    rev: "v0.21.0"
     hooks:
-      - id: prettier
+      - id: yamlfmt
+  - repo: local
+    hooks:
+      - id: mdformat
+        name: mdformat
+        entry: mdformat --wrap 120
+        language: python
+        types: [markdown]
+        additional_dependencies:
+          - mdformat-gfm>=1
+          - mdformat-ruff>=0.1.3
   - repo: local
     hooks:
       - id: changelogs-rst
