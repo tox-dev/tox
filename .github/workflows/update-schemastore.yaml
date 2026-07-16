@@ -2,10 +2,8 @@ name: Update SchemaStore
 on:
   push:
     tags: ["*"]
-
 permissions:
   contents: read
-
 jobs:
   update-schemastore:
     runs-on: ubuntu-24.04

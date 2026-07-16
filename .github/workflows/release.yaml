@@ -2,14 +2,11 @@ name: Release to PyPI
 on:
   push:
     tags: ["*"]
-
 permissions:
   contents: read
-
 env:
   dists-artifact-name: python-package-distributions
   FORCE_COLOR: 1
-
 jobs:
   build:
     runs-on: ubuntu-24.04
@@ -31,7 +28,6 @@ jobs:
         with:
           name: ${{ env.dists-artifact-name }}
           path: dist/*
-
   release:
     needs:
       - build

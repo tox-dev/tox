@@ -9,17 +9,13 @@ on:
       - .github/workflows/weekly.yaml
   schedule:
     - cron: "0 8 * * 1"
-
 permissions:
   contents: read
-
 env:
   FORCE_COLOR: 1
-
 concurrency:
   group: weekly-${{ github.ref }}
   cancel-in-progress: true
-
 jobs:
   test:
     name: test ${{ matrix.py }} on ${{ matrix.os.name }}
@@ -30,9 +26,9 @@ jobs:
         py:
           - "3.15"
         os:
-          - { image: ubuntu-24.04, name: ubuntu }
-          - { image: windows-2025-vs2026, name: windows }
-          - { image: macos-15, name: macos }
+          - {image: ubuntu-24.04, name: ubuntu}
+          - {image: windows-2025-vs2026, name: windows}
+          - {image: macos-15, name: macos}
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
