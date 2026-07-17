@@ -37,6 +37,7 @@ class PythonInfo:
     platform: str
     extra: dict[str, Any]
     free_threaded: bool = False
+    debug: bool = False
     machine: str | None = None
 
     @property
@@ -59,6 +60,7 @@ PY_FACTORS_RE = re.compile(
     (?:
     (?P<version>[2-9]\.?[0-9]?[0-9]?)                      # the version; one of: MAJORMINOR, MAJOR.MINOR
     (?P<threaded>t?)                                       # version followed by t for free-threading
+    (?P<debug>d?)                                          # version followed by d for a debug build
     )?$
     """,
     re.VERBOSE,
@@ -69,6 +71,7 @@ PY_FACTORS_RE_EXPLICIT_VERSION = re.compile(
     ( (?P<impl> cpython | pypy ) - )?   # optional interpreter prefix with dash
     (?P<version> [23] \. [0-9]+ )        # explicit major.minor version (Python 2.x or 3.x)
     (?P<threaded> t? )                   # optional free-threaded suffix
+    (?P<debug> d? )                      # optional debug-build suffix
     $
     """,
     re.VERBOSE,
@@ -149,6 +152,7 @@ class Python(ToxEnv, ABC):
         self.conf.add_constant("py_dot_ver", "<python major>.<python minor>", value=self.py_dot_ver)
         self.conf.add_constant("py_impl", "python implementation", value=self.py_impl)
         self.conf.add_constant("py_free_threaded", "is no-gil interpreted", value=self.py_free_threaded)
+        self.conf.add_constant("py_debug", "is a debug build", value=self.py_debug)
 
     def _default_set_env(self) -> dict[str, str]:
         env = super()._default_set_env()
@@ -162,6 +166,9 @@ class Python(ToxEnv, ABC):
 
     def py_free_threaded(self) -> bool:
         return self.base_python.free_threaded
+
+    def py_debug(self) -> bool:
+        return self.base_python.debug
 
     def py_impl(self) -> str:
         return self.base_python.impl_lower
@@ -223,17 +230,13 @@ class Python(ToxEnv, ABC):
     def extract_base_python(cls, env_name: str) -> str | None:
         candidates: list[str] = []
         if match := PY_FACTORS_RE_EXPLICIT_VERSION.match(env_name):
-            found = match.groupdict()
-            candidates.append(f"{'pypy' if found['impl'] == 'pypy' else ''}{found['version']}{found['threaded']}")
+            candidates.append(cls._explicit_version_spec(match.groupdict()))
         else:
             for factor in env_name.split("-"):
                 if match := PY_FACTORS_RE.match(factor):
                     candidates.append(factor)
                 elif match := PY_FACTORS_RE_EXPLICIT_VERSION.match(factor):
-                    found = match.groupdict()
-                    candidates.append(
-                        f"{'pypy' if found['impl'] == 'pypy' else ''}{found['version']}{found['threaded']}"
-                    )
+                    candidates.append(cls._explicit_version_spec(match.groupdict()))
         if candidates:
             if len(candidates) > 1:
                 msg = f"conflicting factors {', '.join(candidates)} in {env_name}"
@@ -241,15 +244,21 @@ class Python(ToxEnv, ABC):
             return next(iter(candidates))
         return None
 
+    @staticmethod
+    def _explicit_version_spec(found: dict[str, str | None]) -> str:
+        prefix = "pypy" if found["impl"] == "pypy" else ""
+        return f"{prefix}{found['version']}{found['threaded']}{found['debug']}"
+
     @classmethod
     def _python_spec_for_sys_executable(cls) -> PythonSpec:
         implementation = sys.implementation.name
         version = sys.version_info
         bits = "64" if sys.maxsize > 2**32 else "32"
         threaded = "t" if sysconfig.get_config_var("Py_GIL_DISABLED") == 1 else ""
+        debug = "d" if sysconfig.get_config_var("Py_DEBUG") else ""
         parts = sysconfig.get_platform().rsplit("-", 1)
         machine_suffix = f"-{isa}" if len(parts) > 1 and (isa := parts[-1]) else ""
-        string_spec = f"{implementation}{version.major}{version.minor}{threaded}-{bits}{machine_suffix}"
+        string_spec = f"{implementation}{version.major}{version.minor}{threaded}{debug}-{bits}{machine_suffix}"
         return PythonSpec.from_string_spec(string_spec)
 
     @classmethod
@@ -277,7 +286,16 @@ class Python(ToxEnv, ABC):
                         spec_base = cls.python_spec_for_path(path)
                 if any(
                     getattr(spec_base, key) != getattr(spec_name, key)
-                    for key in ("implementation", "major", "minor", "micro", "architecture", "machine", "free_threaded")
+                    for key in (
+                        "implementation",
+                        "major",
+                        "minor",
+                        "micro",
+                        "architecture",
+                        "machine",
+                        "free_threaded",
+                        "debug",
+                    )
                     if getattr(spec_name, key) is not None
                 ):
                     msg = f"env name {env_name} conflicting with base python {base_python}"
@@ -403,6 +421,7 @@ class Python(ToxEnv, ABC):
             "sysplatform": self.base_python.platform,
             "extra_version_info": None,
             "free_threaded": self.base_python.free_threaded,
+            "debug": self.base_python.debug,
             "machine": self.base_python.machine,
         }
 
