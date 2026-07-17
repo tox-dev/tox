@@ -11,6 +11,7 @@ import pytest
 
 from tox.tox_env.errors import Fail
 from tox.tox_env.python.api import Python
+from tox.tox_env.python.virtual_env.api import VirtualEnv
 
 if TYPE_CHECKING:
     from pytest_mock import MockerFixture
@@ -559,6 +560,40 @@ def test_python_spec_for_sys_executable(
     assert spec.architecture == arch
     assert spec.free_threaded == bool(free_threaded)
     assert spec.machine == expected_machine
+
+
+@pytest.mark.parametrize(
+    ("impl", "major", "minor", "arch", "free_threaded", "machine"),
+    [
+        ("cpython", 3, 13, 64, True, "x86_64"),
+        ("cpython", 3, 13, 64, False, "x86_64"),
+        ("cpython", 3, 12, 64, None, None),
+    ],
+)
+def test_python_spec_for_path(
+    impl: str,
+    major: int,
+    minor: int,
+    arch: int,
+    free_threaded: bool | None,
+    machine: str | None,
+    mocker: MockerFixture,
+) -> None:
+    info = SimpleNamespace(
+        implementation=impl,
+        version_info=SimpleNamespace(major=major, minor=minor, micro=5),
+        architecture=arch,
+        free_threaded=free_threaded,
+        machine=machine,
+    )
+    mocker.patch.object(VirtualEnv, "get_virtualenv_py_info", return_value=info)
+    spec = VirtualEnv.python_spec_for_path(Path("/does/not/matter"))
+    assert spec.implementation == impl
+    assert spec.major == major
+    assert spec.minor == minor
+    assert spec.architecture == arch
+    assert spec.free_threaded == bool(free_threaded)
+    assert spec.machine == machine
 
 
 _PY_VER = f"{sys.version_info[0]}.{sys.version_info[1]}"
