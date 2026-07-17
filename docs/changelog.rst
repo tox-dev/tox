@@ -7,6 +7,25 @@
 .. towncrier release notes start
 
 **********************
+ v4.57.0 (2026-07-17)
+**********************
+
+Features - 4.57.0
+=================
+
+- Support debug (``Py_DEBUG``) interpreters the way free-threaded builds are already handled. The ``py313d`` and
+  ``py313td`` factors select a debug build, a ``base_python`` pointing at one matches those factors and conflicts with
+  factors that lack the suffix, and a debug build gets its own ``d``-tagged wheel build environment - by
+  :user:`chuenchen309`. (:issue:`3986`)
+
+Bug fixes - 4.57.0
+==================
+
+- Keep the free-threaded ``t`` suffix when deriving the base python spec from a path, so a ``base_python`` pointing at a
+  free-threaded interpreter matches ``py313t`` factors and conflicts with factors that lack the suffix - by
+  :user:`chuenchen309`. (:issue:`3986`)
+
+**********************
  v4.56.4 (2026-07-08)
 **********************
 
