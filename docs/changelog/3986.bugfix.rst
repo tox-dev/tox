@@ -1,0 +1,3 @@
+Keep the free-threaded ``t`` suffix when deriving the base python spec from a path, so a ``base_python`` pointing at a
+free-threaded interpreter matches ``py313t`` factors and conflicts with factors that lack the suffix - by
+:user:`chuenchen309`.

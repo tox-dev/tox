@@ -67,7 +67,9 @@ if sys.implementation.name == "pypy":
 
 
 class PatchPrevPy(Protocol):
-    def __call__(self, has_prev: bool, free_threaded: bool | None = None) -> tuple[str, str, bool]: ...
+    def __call__(
+        self, has_prev: bool, free_threaded: bool | None = None, debug: bool | None = None
+    ) -> tuple[str, str, bool]: ...
 
 
 class ToxIniCreator(Protocol):
@@ -107,12 +109,13 @@ def demo_pkg_inline() -> Path:
 
 @pytest.fixture
 def patch_prev_py(mocker: MockerFixture) -> PatchPrevPy:
-    def _func(has_prev: bool, free_threaded: bool | None = None) -> tuple[str, str, bool]:
+    def _func(has_prev: bool, free_threaded: bool | None = None, debug: bool | None = None) -> tuple[str, str, bool]:
         ver = sys.version_info[0:2]
         prev_ver = "".join(str(i) for i in (ver[0], ver[1] - 1))
         prev_py = f"py{prev_ver}"
         impl = sys.implementation.name.lower()
         is_free_threaded = sysconfig.get_config_var("Py_GIL_DISABLED") == 1 if free_threaded is None else free_threaded
+        is_debug = bool(sysconfig.get_config_var("Py_DEBUG")) if debug is None else debug
 
         def get_python(self: VirtualEnv, base_python: list[str]) -> PythonInfo | None:  # noqa: ARG001
             if base_python[0] == "py31" or (base_python[0] == prev_py and not has_prev):
@@ -129,6 +132,7 @@ def patch_prev_py(mocker: MockerFixture) -> PatchPrevPy:
                 platform=sys.platform,
                 extra={"executable": Path(sys.executable)},
                 free_threaded=is_free_threaded,
+                debug=is_debug,
                 machine=sysconfig.get_platform().rsplit("-", 1)[-1] or None,
             )
 

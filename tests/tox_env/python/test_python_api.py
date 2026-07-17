@@ -8,9 +8,11 @@ from typing import TYPE_CHECKING
 from unittest.mock import MagicMock, patch
 
 import pytest
+from virtualenv.discovery.py_spec import PythonSpec
 
 from tox.tox_env.errors import Fail
 from tox.tox_env.python.api import Python
+from tox.tox_env.python.virtual_env.api import VirtualEnv
 
 if TYPE_CHECKING:
     from pytest_mock import MockerFixture
@@ -142,6 +144,38 @@ def test_build_wheel_in_free_threaded_pkg_env(
     ]
 
 
+def test_build_wheel_in_debug_pkg_env(
+    tox_project: ToxProjectCreator,
+    patch_prev_py: PatchPrevPy,
+    demo_pkg_inline: Path,
+    mocker: MockerFixture,
+) -> None:
+    def _fake_session(env_dir: list[str], **_: object) -> MagicMock:
+        bin_dir = Path(env_dir[0]) / "bin"
+        bin_dir.mkdir(parents=True, exist_ok=True)
+        (bin_dir / "python").symlink_to(sys.executable)
+        mock = MagicMock()
+        mock.creator.bin_dir = bin_dir
+        mock.creator.script_dir = bin_dir
+        return mock
+
+    mocker.patch("tox.tox_env.python.virtual_env.api.session_via_cli", side_effect=_fake_session)
+    prev_ver, impl, _ = patch_prev_py(True, debug=True)
+    prev_py = f"py{prev_ver}"
+    prj = tox_project({"tox.ini": f"[tox]\nenv_list= {prev_py}\n[testenv]\npackage=wheel"})
+    execute_calls = prj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
+    result = prj.run("-r", "--root", str(demo_pkg_inline), "--workdir", str(prj.path / ".tox"))
+    result.assert_success()
+    calls = [(i[0][0].conf.name, i[0][3].run_id) for i in execute_calls.call_args_list]
+    assert calls == [
+        (f".pkg-{impl}{prev_ver}d", "_optional_hooks"),
+        (f".pkg-{impl}{prev_ver}d", "get_requires_for_build_wheel"),
+        (f".pkg-{impl}{prev_ver}d", "build_wheel"),
+        (f"py{prev_ver}", "install_package"),
+        (f".pkg-{impl}{prev_ver}d", "_exit"),
+    ]
+
+
 def test_diff_msg_added_removed_changed() -> None:
     before = {"A": "1", "F": "8", "C": "3", "D": "4", "E": "6"}
     after = {"G": "9", "B": "2", "C": "3", "D": "5", "E": "7"}
@@ -212,6 +246,19 @@ def test_diff_msg_no_diff() -> None:
         ("tests-3.10", "3.10"),
         ("tests-3.10t", "3.10t"),
         ("foo-3.14-bar", "3.14"),
+        ("py311d", "py311d"),
+        ("py311td", "py311td"),
+        ("py3.12d", "py3.12d"),
+        ("cpython3.8d", "cpython3.8d"),
+        ("functional-py310d", "py310d"),
+        ("bar-pypy2d-foo", "pypy2d"),
+        ("3.10d", "3.10d"),
+        ("3.10td", "3.10td"),
+        ("pypy-3.10d", "pypy3.10d"),
+        ("3.10d-tests", "3.10d"),
+        ("pyd", None),
+        ("graalpyd", None),
+        ("django-32d", None),
     ],
     ids=lambda a: "|".join(a) if isinstance(a, list) else str(a),
 )
@@ -513,13 +560,13 @@ commands = [["python", "-c", "print('ok')"]]
 
 
 @pytest.mark.parametrize(
-    ("impl", "major", "minor", "arch", "free_threaded", "platform_str", "expected_machine"),
+    ("impl", "major", "minor", "arch", "free_threaded", "debug", "platform_str", "expected_machine"),
     [
-        ("cpython", 3, 12, 64, None, "linux-x86_64", "x86_64"),
-        ("cpython", 3, 13, 64, True, "linux-aarch64", "arm64"),
-        ("cpython", 3, 13, 64, False, "win-amd64", "x86_64"),
-        ("pypy", 3, 9, 32, None, "win32", None),
-        ("cpython", 3, 12, 64, None, "macosx-14.0-arm64", "arm64"),
+        ("cpython", 3, 12, 64, None, False, "linux-x86_64", "x86_64"),
+        ("cpython", 3, 13, 64, True, True, "linux-aarch64", "arm64"),
+        ("cpython", 3, 13, 64, False, True, "win-amd64", "x86_64"),
+        ("pypy", 3, 9, 32, None, False, "win32", None),
+        ("cpython", 3, 12, 64, None, False, "macosx-14.0-arm64", "arm64"),
     ],
 )
 def test_python_spec_for_sys_executable(
@@ -528,6 +575,7 @@ def test_python_spec_for_sys_executable(
     minor: int,
     arch: int,
     free_threaded: bool | None,
+    debug: bool,
     platform_str: str,
     expected_machine: str,
     mocker: MockerFixture,
@@ -537,6 +585,8 @@ def test_python_spec_for_sys_executable(
     def get_config_var(name: str) -> object:
         if name == "Py_GIL_DISABLED":
             return free_threaded
+        if name == "Py_DEBUG":
+            return debug
         return get_config_var_(name)
 
     version_info = SimpleNamespace(major=major, minor=minor, micro=5, releaselevel="final", serial=0)
@@ -558,7 +608,65 @@ def test_python_spec_for_sys_executable(
     assert spec.minor == minor
     assert spec.architecture == arch
     assert spec.free_threaded == bool(free_threaded)
+    assert spec.debug is (True if debug else None)
     assert spec.machine == expected_machine
+
+
+@pytest.mark.parametrize(
+    ("impl", "major", "minor", "arch", "free_threaded", "debug_build", "machine"),
+    [
+        ("cpython", 3, 13, 64, True, False, "x86_64"),
+        ("cpython", 3, 13, 64, False, True, "x86_64"),
+        ("cpython", 3, 13, 64, True, True, "x86_64"),
+        ("cpython", 3, 12, 64, None, False, None),
+    ],
+)
+def test_python_spec_for_path(
+    impl: str,
+    major: int,
+    minor: int,
+    arch: int,
+    free_threaded: bool | None,
+    debug_build: bool,
+    machine: str | None,
+    mocker: MockerFixture,
+) -> None:
+    info = SimpleNamespace(
+        implementation=impl,
+        version_info=SimpleNamespace(major=major, minor=minor, micro=5),
+        architecture=arch,
+        free_threaded=free_threaded,
+        debug_build=debug_build,
+        machine=machine,
+    )
+    mocker.patch.object(VirtualEnv, "get_virtualenv_py_info", return_value=info)
+    spec = VirtualEnv.python_spec_for_path(Path("/does/not/matter"))
+    assert spec.implementation == impl
+    assert spec.major == major
+    assert spec.minor == minor
+    assert spec.architecture == arch
+    assert spec.free_threaded == bool(free_threaded)
+    assert spec.debug is (True if debug_build else None)
+    assert spec.machine == machine
+
+
+@pytest.mark.parametrize(
+    ("env", "base_debug", "conflicts"),
+    [
+        ("py313d", True, False),
+        ("py313d", False, True),
+        ("py313", True, False),
+    ],
+)
+def test_validate_base_python_debug(env: str, base_debug: bool, conflicts: bool, mocker: MockerFixture) -> None:
+    spec = PythonSpec.from_string_spec(f"cpython313{'d' if base_debug else ''}-64-x86_64")
+    mocker.patch.object(VirtualEnv, "python_spec_for_path", return_value=spec)
+    base_python = [str(Path("/opt/python3.13").absolute())]
+    if conflicts:
+        with pytest.raises(Fail, match=f"env name {env} conflicting with base python"):
+            VirtualEnv._validate_base_python(env, base_python, False)  # noqa: SLF001
+    else:
+        assert VirtualEnv._validate_base_python(env, base_python, False) == base_python  # noqa: SLF001
 
 
 _PY_VER = f"{sys.version_info[0]}.{sys.version_info[1]}"

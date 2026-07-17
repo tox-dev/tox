@@ -176,6 +176,7 @@ def test_legacy_cli_flags(tox_project: ToxProjectCreator, mocker: MockerFixture)
     interpreter.architecture = 64
     interpreter.platform = "darwin"
     interpreter.free_threaded = False
+    interpreter.debug_build = False
     interpreter.version_info.major = 3
     interpreter.version_info.minor = 14
     interpreter.version_info.micro = 0

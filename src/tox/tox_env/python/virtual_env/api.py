@@ -197,6 +197,7 @@ class VirtualEnv(Python, ABC):
             platform=interpreter.platform,
             extra={"executable": Path(sys_exe).resolve()},
             free_threaded=interpreter.free_threaded,
+            debug=interpreter.debug_build,
             machine=getattr(interpreter, "machine", None),
         )
 
@@ -254,8 +255,11 @@ class VirtualEnv(Python, ABC):
         """
         info = cls.get_virtualenv_py_info(path)
         machine_suffix = f"-{m}" if (m := getattr(info, "machine", None)) else ""
+        threaded = "t" if getattr(info, "free_threaded", False) else ""
+        debug = "d" if getattr(info, "debug_build", False) else ""
         return PythonSpec.from_string_spec(
-            f"{info.implementation}{info.version_info.major}{info.version_info.minor}-{info.architecture}{machine_suffix}"
+            f"{info.implementation}{info.version_info.major}{info.version_info.minor}{threaded}{debug}"
+            f"-{info.architecture}{machine_suffix}"
         )
 
     @staticmethod

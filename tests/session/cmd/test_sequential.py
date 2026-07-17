@@ -121,6 +121,7 @@ def test_result_json_sequential(
         "version": py_info.version,
         "version_info": list(py_info.version_info),
         "free_threaded": py_info.free_threaded,
+        "debug": py_info.debug_build,
         "machine": py_info.machine,
     }
     packaging_setup = get_cmd_exit_run_id(log_report, ".pkg", "setup")

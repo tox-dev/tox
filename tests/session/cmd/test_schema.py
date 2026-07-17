@@ -35,7 +35,12 @@ def replace_py(repo_root: Path) -> Path:
 
 @pytest.fixture(scope="session")
 def default_tombi_cfg() -> str:
+    # empty catalog: tombi's bundled pyproject.json schema $refs an external partial-tox.json it cannot
+    # fetch under --offline, so leaving the default catalog on turns that miss into an error-on-warnings failure
     return dedent("""\
+        [schema.catalog]
+        paths = []
+
         [[schemas]]
         path = "tox.schema.json"
         include = ["tox.toml"]
@@ -152,6 +157,9 @@ def project_lint_case(request: pytest.FixtureRequest, repo_root: Path, default_t
         return "tox.toml", (repo_root / "tox.toml").read_text(), default_tombi_cfg
     if request.param == "pyproject.toml":
         cfg = dedent("""\
+            [schema.catalog]
+            paths = []
+
             [[schemas]]
             root = "tool.tox"
             path = "tox.schema.json"

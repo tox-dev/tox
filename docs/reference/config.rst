@@ -1623,6 +1623,14 @@ Python options
     ``True`` if the Python interpreter in the tox environment is a free-threaded CPython build,
     else ``False``.
 
+.. conf::
+    :keys: py_debug
+    :constant:
+    :version_added: 4.57
+
+    ``True`` if the Python interpreter in the tox environment is a debug (``Py_DEBUG``) build,
+    else ``False``.
+
 Python run
 ==========
 
@@ -3199,6 +3207,8 @@ or via ``{name}`` in INI.
       - Python implementation name in lowercase (e.g. ``cpython``, ``pypy``).
     - - ``{py_free_threaded}``
       - ``True`` if the environment Python is a free-threaded build, else ``False``.
+    - - ``{py_debug}``
+      - ``True`` if the environment Python is a debug (``Py_DEBUG``) build, else ``False``.
     - - ``{env:KEY}`` / ``{env:KEY:DEFAULT}``
       - Value of environment variable ``KEY``, with optional default.
     - - ``{posargs}`` / ``{posargs:DEFAULTS}``

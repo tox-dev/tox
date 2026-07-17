@@ -27,6 +27,7 @@ print(json.dumps({
     "platform": sys.platform,
     "system_executable": sys.executable,
     "free_threaded": sysconfig.get_config_var("Py_GIL_DISABLED") == 1,
+    "debug_build": bool(sysconfig.get_config_var("Py_DEBUG")),
     "sysconfig_platform": sysconfig.get_platform(),
 }))
 """
@@ -52,6 +53,7 @@ class SubprocessPythonInfo:
     platform: str
     system_executable: str
     free_threaded: bool
+    debug_build: bool = False
     sysconfig_platform: str | None = None
 
     @property
@@ -152,6 +154,7 @@ def probe_python(python_path: str) -> SubprocessPythonInfo | None:
         platform=raw["platform"],
         system_executable=raw["system_executable"],
         free_threaded=raw["free_threaded"],
+        debug_build=raw.get("debug_build", False),
         sysconfig_platform=raw.get("sysconfig_platform"),
     )
 
