@@ -1,2 +1,2 @@
-Stop a lone quote in a ``set_env`` value (e.g. an apostrophe in ``can't``) from swallowing the ``;`` platform
-marker, which silently set the variable unconditionally with the marker text left in the value - by :user:`chuenchen309`.
+Stop a lone quote in a ``set_env`` value (e.g. an apostrophe in ``can't``) from swallowing the ``;`` platform marker,
+which silently set the variable unconditionally with the marker text left in the value - by :user:`chuenchen309`.
