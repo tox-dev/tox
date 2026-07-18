@@ -327,6 +327,20 @@ def test_set_env_environment_with_file_and_expanded_substitution(
             id="ini-marker-false",
         ),
         pytest.param(
+            "ini",
+            f"[testenv]\npackage=skip\nset_env=CONDITIONAL=can't; sys_platform == '{sys.platform}'",
+            True,
+            "can't",
+            id="ini-marker-true-apostrophe-value",
+        ),
+        pytest.param(
+            "ini",
+            "[testenv]\npackage=skip\nset_env=CONDITIONAL=can't; sys_platform == 'nonexistent'",
+            False,
+            None,
+            id="ini-marker-false-apostrophe-value",
+        ),
+        pytest.param(
             "toml",
             f'[env_run_base]\npackage="skip"\nset_env.CONDITIONAL = {{ value = "value", '
             f"marker = \"sys_platform == '{sys.platform}'\" }}",
