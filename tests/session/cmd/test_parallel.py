@@ -48,6 +48,16 @@ def test_parse_num_processes_minus_one() -> None:
         parse_num_processes("-1")
 
 
+def test_parallel_zero_turns_off(tox_project: ToxProjectCreator, mocker: MockerFixture) -> None:
+    # The -p help says "zero is turn off", so -p 0 must run sequentially (one
+    # worker) rather than auto-detecting the CPU count like -p auto.
+    execute = mocker.patch.object(parallel, "execute", return_value=0)
+    project = tox_project({"tox.ini": "[tox]\nno_package=true\nenv_list=a,b\n[testenv]\ncommands=python -c 'pass'\n"})
+    project.run("p", "-p", "0")
+
+    assert execute.call_args.kwargs["max_workers"] == 1
+
+
 def test_parallel_general(tox_project: ToxProjectCreator, monkeypatch: MonkeyPatch, mocker: MockerFixture) -> None:
     def setup(self: ToxEnv) -> None:
         if self.name == "f":
