@@ -1,2 +1,2 @@
-Make ``tox run-parallel -p 0`` turn parallelism off and run sequentially, as the ``-p`` help ("zero is turn off")
-and the legacy command already promise, instead of running at the CPU count - by :user:`chuenchen309`.
+Make ``tox run-parallel -p 0`` turn parallelism off and run sequentially, as the ``-p`` help ("zero is turn off") and
+the legacy command already promise, instead of running at the CPU count - by :user:`chuenchen309`.
