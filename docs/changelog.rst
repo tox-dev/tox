@@ -7,6 +7,19 @@
 .. towncrier release notes start
 
 **********************
+ v4.57.1 (2026-07-20)
+**********************
+
+Bug fixes - 4.57.1
+==================
+
+- Stop a lone quote in a ``set_env`` value (e.g. an apostrophe in ``can't``) from swallowing the ``;`` platform marker,
+  which silently set the variable unconditionally with the marker text left in the value - by :user:`chuenchen309`.
+  (:issue:`3988`)
+- Make ``tox run-parallel -p 0`` turn parallelism off and run sequentially, as the ``-p`` help ("zero is turn off") and
+  the legacy command already promise, instead of running at the CPU count - by :user:`chuenchen309`. (:issue:`3989`)
+
+**********************
  v4.57.0 (2026-07-17)
 **********************
 
