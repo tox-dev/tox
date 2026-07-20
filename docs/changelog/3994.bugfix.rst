@@ -1,2 +1,0 @@
-Mark the run environment as package-skipped instead of crashing with ``UnboundLocalError`` when a plugin raises
-``Skip`` for a package environment from its ``tox_add_env_config`` hook.

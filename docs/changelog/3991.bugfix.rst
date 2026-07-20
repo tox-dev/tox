@@ -1,3 +1,11 @@
-Report circular ``depends`` between environments as a clear error naming the cycle instead of dumping a raw traceback
-(from the scheduler thread for ``tox run``/``tox run-parallel``, and directly for ``tox depends``); scheduler failures
-in general now propagate to the main thread instead of being printed by the default thread exception hook.
+Fix state corruption in the environment creation machinery:
+
+- a failed run environment build no longer removes shared package environments other run environments already use
+  (previously the package could get built twice against the same environment directory, or the original failure be
+  silently swallowed);
+- a run environment whose wheel build tag resolves to the package environment itself is registered with it exactly once,
+  instead of twice with a triple-counted usage;
+- circular ``depends`` between environments is reported as a clear error naming the cycle instead of a raw traceback
+  (scheduler failures in general now propagate to the main thread);
+- a plugin raising ``Skip`` for a package environment from ``tox_add_env_config`` marks the run environment as
+  package-skipped instead of crashing with ``UnboundLocalError``.

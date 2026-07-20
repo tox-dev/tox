@@ -1,2 +1,0 @@
-Register a run environment with its package environment exactly once when the wheel build tag resolves to the package
-environment itself, instead of twice (which duplicated build bookkeeping and triple-counted package environment usage).
