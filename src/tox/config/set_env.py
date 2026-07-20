@@ -126,20 +126,25 @@ class SetEnv:
     @staticmethod
     def _split_value_marker(value: str) -> tuple[str, str]:
         # Parse value; marker format (PEP-496 style)
-        # Handle escaped semicolons (\;) and quoted strings
-        in_quotes = False
-        quote_char = ""
-        i = 0
-        while i < len(value):
-            char = value[i]
-            if char in {'"', "'"} and (i == 0 or value[i - 1] != "\\"):
-                if not in_quotes:
-                    in_quotes, quote_char = True, char
-                elif char == quote_char:
-                    in_quotes = False
-            elif char == ";" and not in_quotes and (i == 0 or value[i - 1] != "\\"):
-                return value[:i].strip().replace("\\;", ";"), value[i + 1 :].strip()
-            i += 1
+        # Handle escaped semicolons (\;) and quoted strings. Quotes keep a ";" inside a quoted value from being read
+        # as the marker separator, but only when balanced -- a lone quote (e.g. an apostrophe in the value) must not
+        # swallow the marker, so retry ignoring quotes if one is left open.
+        for respect_quotes in (True, False):
+            in_quotes = False
+            quote_char = ""
+            index = 0
+            while index < len(value):
+                char = value[index]
+                if respect_quotes and char in {'"', "'"} and (index == 0 or value[index - 1] != "\\"):
+                    if not in_quotes:
+                        in_quotes, quote_char = True, char
+                    elif char == quote_char:
+                        in_quotes = False
+                elif char == ";" and not in_quotes and (index == 0 or value[index - 1] != "\\"):
+                    return value[:index].strip().replace("\\;", ";"), value[index + 1 :].strip()
+                index += 1
+            if not in_quotes:
+                break  # quotes balanced or absent: the first pass is authoritative
         return value.replace("\\;", ";"), ""
 
     def load(self, item: str, args: ConfigLoadArgs | None = None) -> str:
