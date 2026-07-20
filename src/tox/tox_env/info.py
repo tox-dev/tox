@@ -25,7 +25,8 @@ class Info:
             value = json.loads(self._path.read_text())
         except (ValueError, OSError):
             value = {}
-        self._content = value
+        # a corrupted file must trigger recreation rather than crash, whatever shape the corruption takes
+        self._content = value if isinstance(value, dict) else {}
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}(path={self._path})"
@@ -47,8 +48,9 @@ class Info:
 
         """
         old = self._content.get(section)
-        if sub_section is not None and old is not None:
-            old = old.get(sub_section)
+        if sub_section is not None:
+            # a non-dict section is corruption: treat it as absent so it gets replaced below
+            old = old.get(sub_section) if isinstance(old, dict) else None
 
         if old == value:
             yield True, old
@@ -61,10 +63,10 @@ class Info:
                 if not raised:  # only update when the body did not raise
                     if sub_section is None:
                         self._content[section] = value
-                    elif self._content.get(section) is None:
-                        self._content[section] = {sub_section: value}
-                    else:
+                    elif isinstance(self._content.get(section), dict):
                         self._content[section][sub_section] = value
+                    else:
+                        self._content[section] = {sub_section: value}
                     self._write()
 
     def reset(self) -> None:
