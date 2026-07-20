@@ -637,3 +637,15 @@ def test_pkg_env_rollback_keeps_shared_env(tox_project: ToxProjectCreator) -> No
     outcome.assert_success()
     envs = outcome.state.envs
     assert envs["a"].package_env is envs[".pkg"]
+
+
+def test_pkg_env_register_run_env_once(tox_project: ToxProjectCreator) -> None:
+    """A run env whose wheel tag matches the package env must register with it exactly once."""
+    project = tox_project({"tox.ini": "[tox]\nenv_list = a,b\n[testenv]\npackage = wheel\n", "pyproject.toml": ""})
+
+    outcome = project.run("l")
+
+    outcome.assert_success()
+    pkg_env = outcome.state.envs[".pkg"]
+    assert isinstance(pkg_env, Pep517VenvPackager)
+    assert [conf.name for conf in pkg_env.builds["wheel"]] == ["a", "b"]

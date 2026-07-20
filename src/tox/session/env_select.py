@@ -508,8 +508,13 @@ class EnvSelector:
         try:
             name_type = next(child_package_envs)
             while True:
-                child_pkg_env = self._build_pkg_env(name_type, run_env_name, active)
-                self._pkg_env_counter[name_type[0]] += 1
+                # a child naming the parent itself (e.g. the wheel tag matches the package env) needs no build and
+                # must not re-register the run environment with it; _build_pkg_env already counts each built child
+                child_pkg_env = (
+                    package_tox_env
+                    if name_type[0] == package_tox_env.name
+                    else self._build_pkg_env(name_type, run_env_name, active)
+                )
                 name_type = child_package_envs.send(child_pkg_env)
         except StopIteration:
             pass
