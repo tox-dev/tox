@@ -671,3 +671,14 @@ def test_sdist_wheel_rejects_path_traversal(
     result = proj.run("r", "--notest")
     result.assert_failed()
     assert "tar member '../escape.txt' would extract outside of" in result.out
+
+
+def test_config_inspection_does_not_read_pyproject(tox_project: ToxProjectCreator) -> None:
+    """Registering the packaging env config must not build the PEP 517 frontend (which reads pyproject.toml)."""
+    project = tox_project({
+        "tox.ini": "[testenv]\npackage = wheel\n",
+        "pyproject.toml": "[build-system\nbroken toml\n",
+    })
+    result = project.run("c", "-e", "py", "-k", "env_name")
+    result.assert_success()
+    assert "[testenv:py]\nenv_name = py\n" in result.out

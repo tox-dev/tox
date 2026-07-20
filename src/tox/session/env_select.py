@@ -403,17 +403,18 @@ class EnvSelector:
                     # build package env and assign it, then register the run environment which can trigger generation
                     # of additional run environments
                     start_package_env_use_counter = self._pkg_env_counter.copy()
+                    start_defined = set(self._defined_envs_)
                     try:
                         run_env.package_env = self._build_pkg_env(pkg_name_type, name, env_name_to_active)
                     except Exception as exception:  # ruff:ignore[blind-except]
                         # if it's not a run environment, wait to see if ends up being a packaging one -> rollback
                         failed[name] = exception
-                        for key in self._pkg_env_counter - start_package_env_use_counter:
+                        # only remove envs created during this attempt: pre-existing ones (e.g. a shared package
+                        # env) are still referenced by earlier run environments and must survive
+                        for key in (set(self._defined_envs_) - start_defined) | {name}:
                             del self._defined_envs_[key]
                             self._state.conf.clear_env(key)
                         self._pkg_env_counter = start_package_env_use_counter
-                        del self._defined_envs_[name]
-                        self._state.conf.clear_env(name)
                     else:
                         try:
                             for env in run_env.package_envs:
@@ -425,9 +426,10 @@ class EnvSelector:
                                         self._pkg_env_counter[pkg_env.name] -= 1  # pragma: no cover
                         except Exception:  # ruff:ignore[blind-except]
                             assert self._defined_envs_[name].package_skip is not None  # ruff:ignore[assert]
-            failed_to_create = failed.keys() - self._defined_envs_.keys()
-            if failed_to_create:
-                raise failed[next(iter(failed_to_create))]
+            # report the first failure in definition order - later ones may be fallout from it
+            first_failed = next((name for name in failed if name not in self._defined_envs_), None)
+            if first_failed is not None:
+                raise failed[first_failed]
             for name, count in self._pkg_env_counter.items():
                 if not count:
                     self._defined_envs_.pop(name)  # pragma: no cover
@@ -484,6 +486,7 @@ class EnvSelector:
                 msg = f"{run_env_name} cannot self-package"
                 raise HandledError(msg)
             missing_active = self._cli_envs is not None and self._cli_envs.is_all
+            package_tox_env: PackageToxEnv | None = None
             try:
                 package_tox_env = self._get_package_env(core_type, name, active.get(name, missing_active))
                 self._pkg_env_counter[name] += 1
@@ -494,6 +497,14 @@ class EnvSelector:
             except Skip as exception:
                 assert self._defined_envs_ is not None  # ruff:ignore[assert]
                 self._defined_envs_[run_env_name].package_skip = (name_type[0], exception)
+                if package_tox_env is None:
+                    # Skip escaped env creation itself (e.g. from a plugin hook): hand back the env when it got
+                    # registered before the skip, otherwise let the caller treat this as a creation failure
+                    info = self._defined_envs_.get(name)
+                    if info is None:
+                        raise  # pragma: no cover # needs a plugin packager whose registration raises Skip
+                    package_tox_env = cast("PackageToxEnv", info.env)
+                    self._pkg_env_counter[name] += 1
             return package_tox_env
 
     def _register_child_packages(
@@ -506,8 +517,13 @@ class EnvSelector:
         try:
             name_type = next(child_package_envs)
             while True:
-                child_pkg_env = self._build_pkg_env(name_type, run_env_name, active)
-                self._pkg_env_counter[name_type[0]] += 1
+                # a child naming the parent itself (e.g. the wheel tag matches the package env) needs no build and
+                # must not re-register the run environment with it; _build_pkg_env already counts each built child
+                child_pkg_env = (
+                    package_tox_env
+                    if name_type[0] == package_tox_env.name
+                    else self._build_pkg_env(name_type, run_env_name, active)
+                )
                 name_type = child_package_envs.send(child_pkg_env)
         except StopIteration:
             pass
@@ -527,8 +543,14 @@ class EnvSelector:
         pkg_conf = self._state.conf.get_env(name, package=True)
         journal = self._journal.get_env_journal(name)
         args = ToxEnvCreateArgs(pkg_conf, self._state.conf.core, self._state.conf.options, journal, self._log_handler)
-        pkg_env: PackageToxEnv = package_type(args)
-        pkg_env.register_config()
+        try:
+            pkg_env: PackageToxEnv = package_type(args)
+            pkg_env.register_config()
+        except Exception:
+            # drop the partially registered config set so the next run env needing this package env starts clean,
+            # instead of hitting a duplicate-configuration error that masks this failure (#3987)
+            self._state.conf.clear_env(name)
+            raise
         self._defined_envs_[name] = _ToxEnvInfo(pkg_env, is_active)
         self._manager.tox_add_env_config(pkg_conf, self._state)
         return pkg_env

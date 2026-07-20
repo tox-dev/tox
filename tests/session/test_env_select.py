@@ -1,19 +1,25 @@
 from __future__ import annotations
 
 import sys
-from typing import TYPE_CHECKING
+from itertools import count
+from typing import TYPE_CHECKING, Final
 
 import pytest
 
 from tox.config.cli.parse import get_options
 from tox.session.env_select import _DYNAMIC_ENV_FACTORS, CliEnv, EnvSelector  # ruff:ignore[import-private-name]
 from tox.session.state import State
+from tox.tox_env.python.virtual_env.package.pyproject import Pep517VenvPackager
 
 if TYPE_CHECKING:
+    from pytest_mock import MockerFixture
+
+    from tox.config.sets import EnvConfigSet
     from tox.pytest import MonkeyPatch, ToxProjectCreator
 
 
 CURRENT_PY_ENV = f"py{sys.version_info[0]}{sys.version_info[1]}"  # e.g. py310
+_TWO_WHEEL_ENVS_INI: Final[str] = "[tox]\nenv_list = a,b\n[testenv]\npackage = wheel\n"
 
 
 @pytest.mark.parametrize(
@@ -570,3 +576,103 @@ def test_dotted_env_multiple_suggestions(tox_project: ToxProjectCreator) -> None
     outcome.assert_failed(code=-2)
     assert "py3.10-lint - did you mean py310-lint?" in outcome.out
     assert "py3.11-cov - did you mean py311-cov?" in outcome.out
+
+
+def test_pkg_env_creation_failure_is_not_masked(tox_project: ToxProjectCreator, mocker: MockerFixture) -> None:
+    """A package env whose registration fails must surface its error, not a duplicate-config cascade (#3987)."""
+    real_register_config = Pep517VenvPackager.register_config
+
+    def failing_register_config(self: Pep517VenvPackager) -> None:
+        real_register_config(self)
+        msg = "no such device"
+        raise OSError(msg)
+
+    mocker.patch.object(Pep517VenvPackager, "register_config", failing_register_config)
+    project = tox_project({
+        "tox.ini": _TWO_WHEEL_ENVS_INI,
+        "pyproject.toml": "",
+    })
+
+    with pytest.raises(OSError, match="no such device"):
+        project.run("r", "--notest")
+
+
+def test_pkg_env_creation_failure_reports_first_error(tox_project: ToxProjectCreator, mocker: MockerFixture) -> None:
+    """When several environments fail to create, the first failure in definition order is the one reported."""
+    real_register_config = Pep517VenvPackager.register_config
+    attempt = count(1)
+
+    def failing_register_config(self: Pep517VenvPackager) -> None:
+        real_register_config(self)
+        msg = f"creation failure {next(attempt)}"
+        raise OSError(msg)
+
+    mocker.patch.object(Pep517VenvPackager, "register_config", failing_register_config)
+    project = tox_project({
+        "tox.ini": _TWO_WHEEL_ENVS_INI,
+        "pyproject.toml": "",
+    })
+
+    with pytest.raises(OSError, match="creation failure 1"):
+        project.run("r", "--notest")
+
+
+def test_pkg_env_rollback_keeps_shared_env(tox_project: ToxProjectCreator) -> None:
+    """One env's failed build must not destroy a package env other envs already use."""
+    ini = """
+    [tox]
+    env_list = a,b,c
+    skip_missing_interpreters = false
+    [testenv]
+    package = wheel
+    [testenv:a]
+    package = sdist
+    [testenv:c]
+    wheel_build_env = b
+    [testenv:.pkg]
+    base_python = /nonexistent/python
+    """
+    project = tox_project({"tox.ini": ini, "pyproject.toml": ""})
+
+    outcome = project.run("l")
+
+    outcome.assert_success()
+    envs = outcome.state.envs
+    assert envs["a"].package_env is envs[".pkg"]
+
+
+def test_pkg_env_register_run_env_once(tox_project: ToxProjectCreator) -> None:
+    """A run env whose wheel tag matches the package env must register with it exactly once."""
+    project = tox_project({"tox.ini": _TWO_WHEEL_ENVS_INI, "pyproject.toml": ""})
+
+    outcome = project.run("l")
+
+    outcome.assert_success()
+    pkg_env = outcome.state.envs[".pkg"]
+    assert isinstance(pkg_env, Pep517VenvPackager)
+    assert [conf.name for conf in pkg_env.builds["wheel"]] == ["a", "b"]
+
+
+@pytest.mark.plugin_test
+def test_pkg_env_skip_from_plugin_hook(tox_project: ToxProjectCreator) -> None:
+    """A plugin raising Skip for a package env must mark the run env skipped, not crash."""
+
+    def plugin() -> None:  # pragma: no cover # the code is copied to a python file
+        from tox.plugin import impl  # ruff:ignore[import-outside-top-level]
+        from tox.tox_env.errors import Skip  # ruff:ignore[import-outside-top-level]
+
+        @impl
+        def tox_add_env_config(env_conf: EnvConfigSet) -> None:
+            if env_conf.name == ".pkg":
+                msg = "plugin opted out of packaging"
+                raise Skip(msg)
+
+    project = tox_project({
+        "tox.ini": "[tox]\nenv_list = a\n[testenv]\npackage = wheel\n",
+        "pyproject.toml": "",
+        "toxfile.py": plugin,
+    })
+
+    outcome = project.run("l")
+
+    outcome.assert_success()
