@@ -1,0 +1,3 @@
+PEP 723 scripts saved with a UTF-8 byte order mark now have their inline metadata honored (previously
+``requires-python`` and ``dependencies`` were silently ignored), and a script with invalid metadata reports a clear
+configuration error instead of an internal one.
