@@ -22,7 +22,6 @@ class Source(ABC):
 
     def __init__(self, path: Path) -> None:
         self.path: Path = path  #: the path to the configuration source
-        self._section_to_loaders: dict[str, list[Loader[Any]]] = {}
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}(path={self.path})"
@@ -44,16 +43,11 @@ class Source(ABC):
         :returns: the loaders to use
 
         """
+        # loaders are built fresh per config set: their parent chain depends on the base sections, and a section can
+        # be redefined with another base (a run env re-created as a package env); the config set is what gets cached
         section = self.transform_section(section)
-        key = section.key
-        if key in self._section_to_loaders:
-            yield from self._section_to_loaders[key]
-            return
-        loaders: list[Loader[Any]] = []
-        self._section_to_loaders[key] = loaders
         loader: Loader[Any] | None = self.get_loader(section, override_map)
         if loader is not None:
-            loaders.append(loader)
             yield loader
 
         if base is not None:
@@ -72,7 +66,6 @@ class Source(ABC):
                 if child is not None and loader is not None:
                     child.parent = loader
                 yield loader
-                loaders.append(loader)
 
     @abstractmethod
     def transform_section(self, section: Section) -> Section:
