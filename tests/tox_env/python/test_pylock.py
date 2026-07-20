@@ -12,7 +12,7 @@ from tox.tox_env.python.pylock import Pylock
 if TYPE_CHECKING:
     from pathlib import Path
 
-    from tox.pytest import ToxProjectCreator
+    from tox.pytest import ToxProject, ToxProjectCreator
 
 PYLOCK_TOML = dedent("""\
     lock-version = "1.0"
@@ -61,7 +61,9 @@ def test_pylock_install(tox_project: ToxProjectCreator) -> None:
     assert found_calls == [
         ("py", "install_pylock", ["python", "-I", "-m", "pip", "install", "--no-deps", "-r", req_file]),
     ]
-    assert (project.path / ".tox" / "py" / "pylock.txt").read_text() == "alpha==1.0.0\nbeta==2.0.0"
+    assert (
+        project.path / ".tox" / "py" / "pylock.txt"
+    ).read_text() == "alpha==1.0.0 --hash=sha256:abc123\nbeta==2.0.0 --hash=sha256:def456"
 
 
 def test_pylock_empty(tox_project: ToxProjectCreator) -> None:
@@ -246,7 +248,9 @@ def test_pylock_filters_by_extras(tox_project: ToxProjectCreator) -> None:
     result = project.run("r", "-e", "py")
 
     result.assert_success()
-    assert (project.path / ".tox" / "py" / "pylock.txt").read_text() == "alpha==1.0.0\nsphinx==7.0.0"
+    assert (
+        project.path / ".tox" / "py" / "pylock.txt"
+    ).read_text() == "alpha==1.0.0 --hash=sha256:abc\nsphinx==7.0.0 --hash=sha256:def"
 
 
 def test_pylock_filters_by_dependency_groups(tox_project: ToxProjectCreator) -> None:
@@ -301,7 +305,9 @@ def test_pylock_filters_by_dependency_groups(tox_project: ToxProjectCreator) -> 
     result = project.run("r", "-e", "py")
 
     result.assert_success()
-    assert (project.path / ".tox" / "py" / "pylock.txt").read_text() == "alpha==1.0.0\nruff==0.5.0"
+    assert (
+        project.path / ".tox" / "py" / "pylock.txt"
+    ).read_text() == "alpha==1.0.0 --hash=sha256:abc\nruff==0.5.0 --hash=sha256:def"
 
 
 def test_pylock_filters_by_platform_marker(tox_project: ToxProjectCreator) -> None:
@@ -372,9 +378,7 @@ def test_pylock_requirements(tmp_path: Path) -> None:
     lock_file.write_text(PYLOCK_TOML)
     pylock = Pylock(path=lock_file)
 
-    result = [str(r) for r in pylock.requirements()]
-
-    assert result == ["alpha==1.0.0", "beta==2.0.0"]
+    assert pylock.install_lines() == ["alpha==1.0.0 --hash=sha256:abc123", "beta==2.0.0 --hash=sha256:def456"]
 
 
 def test_pylock_requirements_filters_extras(tmp_path: Path) -> None:
@@ -408,11 +412,11 @@ def test_pylock_requirements_filters_extras(tmp_path: Path) -> None:
     """),
     )
 
-    with_extras = [str(r) for r in Pylock(path=lock_file, extras=frozenset({"docs"})).requirements()]
-    assert with_extras == ["alpha==1.0.0", "sphinx==7.0.0"]
+    with_extras = Pylock(path=lock_file, extras=frozenset({"docs"})).install_lines()
+    assert with_extras == ["alpha==1.0.0 --hash=sha256:abc", "sphinx==7.0.0 --hash=sha256:def"]
 
-    without_extras = [str(r) for r in Pylock(path=lock_file).requirements()]
-    assert without_extras == ["alpha==1.0.0"]
+    without_extras = Pylock(path=lock_file).install_lines()
+    assert without_extras == ["alpha==1.0.0 --hash=sha256:abc"]
 
 
 def test_pylock_requirements_invalid(tmp_path: Path) -> None:
@@ -427,7 +431,7 @@ def test_pylock_requirements_invalid(tmp_path: Path) -> None:
     pylock = Pylock(path=lock_file)
 
     with pytest.raises(Fail, match="invalid pylock file"):
-        pylock.requirements()
+        pylock.install_lines()
 
 
 @pytest.mark.slow
@@ -456,7 +460,7 @@ def test_pylock_install_integration(
                 url = "https://files.pythonhosted.org/packages/b7/ce/149a00dd41f10bc29e5921b496af8b574d8413afcd5e30f4c7e48bb4cb87/six-1.17.0-py2.py3-none-any.whl"
 
                 [packages.wheels.hashes]
-                sha256 = "4721f391ed90541fddacab5acf947aa0d3dc7d27b2e1e8ez91c67d35ad282f3"
+                sha256 = "4721f391ed90541fddacab5acf947aa0d3dc7d27b2e1e8eda2be8970586c3274"
             """),
         },
     )
@@ -464,3 +468,144 @@ def test_pylock_install_integration(
 
     result.assert_success()
     assert "1.17.0" in result.out
+
+
+@pytest.fixture
+def pylock_run_base() -> str:
+    return dedent("""\
+        [env_run_base]
+        skip_install = true
+        pylock = "pylock.toml"
+    """)
+
+
+def _pylock_txt(project: ToxProject) -> str:
+    return (project.path / ".tox" / "py" / "pylock.txt").read_text()
+
+
+@pytest.mark.parametrize(
+    ("lock", "expected"),
+    [
+        pytest.param(
+            dedent("""\
+                lock-version = "1.0"
+                created-by = "test-tool"
+
+                [[packages]]
+                name = "example-pkg"
+                version = "1.0"
+                requires-python = "<3.9"
+
+                [[packages.wheels]]
+                url = "https://files.example.com/example_pkg-1.0-py3-none-any.whl"
+
+                [packages.wheels.hashes]
+                sha256 = "aaa111"
+
+                [[packages]]
+                name = "example-pkg"
+                version = "2.0"
+                requires-python = ">=3.9"
+
+                [[packages.wheels]]
+                url = "https://files.example.com/example_pkg-2.0-py3-none-any.whl"
+
+                [packages.wheels.hashes]
+                sha256 = "bbb222"
+            """),
+            "example-pkg==2.0 --hash=sha256:bbb222",
+            id="requires-python selects the matching entry",
+        ),
+        pytest.param(
+            dedent("""\
+                lock-version = "1.0"
+                created-by = "test-tool"
+
+                [[packages]]
+                name = "my-local-pkg"
+
+                [packages.directory]
+                path = "sub/my_local_pkg"
+            """),
+            "my-local-pkg @ {project_uri}/sub/my_local_pkg",
+            id="directory installs from the locked path",
+        ),
+        pytest.param(
+            dedent("""\
+                lock-version = "1.0"
+                created-by = "test-tool"
+
+                [[packages]]
+                name = "my-local-pkg"
+
+                [packages.directory]
+                path = "."
+                editable = true
+            """),
+            "-e {project_uri}",
+            id="editable directory installs with -e",
+        ),
+        pytest.param(
+            dedent("""\
+                lock-version = "1.0"
+                created-by = "test-tool"
+
+                [[packages]]
+                name = "my-vcs-pkg"
+
+                [packages.vcs]
+                type = "git"
+                url = "https://example.com/repo.git"
+                commit-id = "abc123"
+            """),
+            "my-vcs-pkg @ git+https://example.com/repo.git@abc123",
+            id="vcs installs from the locked commit",
+        ),
+        pytest.param(
+            dedent("""\
+                lock-version = "1.0"
+                created-by = "test-tool"
+
+                [[packages]]
+                name = "my-archive-pkg"
+                version = "1.0"
+
+                [packages.archive]
+                url = "https://example.com/my-archive-pkg-1.0.tar.gz"
+
+                [packages.archive.hashes]
+                sha256 = "abc123"
+            """),
+            "my-archive-pkg @ https://example.com/my-archive-pkg-1.0.tar.gz --hash=sha256:abc123",
+            id="archive installs from the locked url with its hash",
+        ),
+    ],
+)
+def test_pylock_locked_sources_install_as_locked(
+    tox_project: ToxProjectCreator, pylock_run_base: str, lock: str, expected: str
+) -> None:
+    project = tox_project({"tox.toml": pylock_run_base, "pylock.toml": lock})
+    project.patch_execute()
+
+    result = project.run("r", "-e", "py")
+
+    result.assert_success()
+    assert _pylock_txt(project) == expected.format(project_uri=project.path.as_uri())
+
+
+def test_pylock_reinstall_on_resolution_env_change(tox_project: ToxProjectCreator, pylock_run_base: str) -> None:
+    """Changing a pip resolution environment variable invalidates the pylock install cache."""
+    project = tox_project({"tox.toml": pylock_run_base, "pylock.toml": PYLOCK_TOML})
+    execute_calls = project.patch_execute()
+    result = project.run("r", "-e", "py")
+    result.assert_success()
+    assert len(execute_calls.call_args_list) == 1
+
+    (project.path / "tox.toml").write_text(
+        f'{pylock_run_base}set_env = {{ PIP_INDEX_URL = "https://mirror.invalid/simple" }}\n'
+    )
+    execute_calls.reset_mock()
+    result_second = project.run("r", "-e", "py")
+
+    result_second.assert_success()
+    assert len(execute_calls.call_args_list) == 1
