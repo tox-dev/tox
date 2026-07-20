@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import sys
 from itertools import count
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Final
 
 import pytest
 
@@ -19,6 +19,7 @@ if TYPE_CHECKING:
 
 
 CURRENT_PY_ENV = f"py{sys.version_info[0]}{sys.version_info[1]}"  # e.g. py310
+_TWO_WHEEL_ENVS_INI: Final[str] = "[tox]\nenv_list = a,b\n[testenv]\npackage = wheel\n"
 
 
 @pytest.mark.parametrize(
@@ -588,7 +589,7 @@ def test_pkg_env_creation_failure_is_not_masked(tox_project: ToxProjectCreator, 
 
     mocker.patch.object(Pep517VenvPackager, "register_config", failing_register_config)
     project = tox_project({
-        "tox.ini": "[tox]\nenv_list = a,b\n[testenv]\npackage = wheel\n",
+        "tox.ini": _TWO_WHEEL_ENVS_INI,
         "pyproject.toml": "",
     })
 
@@ -608,7 +609,7 @@ def test_pkg_env_creation_failure_reports_first_error(tox_project: ToxProjectCre
 
     mocker.patch.object(Pep517VenvPackager, "register_config", failing_register_config)
     project = tox_project({
-        "tox.ini": "[tox]\nenv_list = a,b\n[testenv]\npackage = wheel\n",
+        "tox.ini": _TWO_WHEEL_ENVS_INI,
         "pyproject.toml": "",
     })
 
@@ -642,7 +643,7 @@ def test_pkg_env_rollback_keeps_shared_env(tox_project: ToxProjectCreator) -> No
 
 def test_pkg_env_register_run_env_once(tox_project: ToxProjectCreator) -> None:
     """A run env whose wheel tag matches the package env must register with it exactly once."""
-    project = tox_project({"tox.ini": "[tox]\nenv_list = a,b\n[testenv]\npackage = wheel\n", "pyproject.toml": ""})
+    project = tox_project({"tox.ini": _TWO_WHEEL_ENVS_INI, "pyproject.toml": ""})
 
     outcome = project.run("l")
 
