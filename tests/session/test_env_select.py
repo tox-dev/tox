@@ -613,3 +613,27 @@ def test_pkg_env_creation_failure_reports_first_error(tox_project: ToxProjectCre
 
     with pytest.raises(OSError, match="creation failure 1"):
         project.run("r", "--notest")
+
+
+def test_pkg_env_rollback_keeps_shared_env(tox_project: ToxProjectCreator) -> None:
+    """One env's failed build must not destroy a package env other envs already use."""
+    ini = """
+    [tox]
+    env_list = a,b,c
+    skip_missing_interpreters = false
+    [testenv]
+    package = wheel
+    [testenv:a]
+    package = sdist
+    [testenv:c]
+    wheel_build_env = b
+    [testenv:.pkg]
+    base_python = /nonexistent/python
+    """
+    project = tox_project({"tox.ini": ini, "pyproject.toml": ""})
+
+    outcome = project.run("l")
+
+    outcome.assert_success()
+    envs = outcome.state.envs
+    assert envs["a"].package_env is envs[".pkg"]

@@ -1,0 +1,3 @@
+Keep a shared package environment intact when a later run environment fails to build: the rollback now removes only
+environments created during the failed attempt, so earlier run environments no longer end up referencing an orphaned
+package environment instance (which could build the package twice against the same environment directory).

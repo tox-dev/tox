@@ -403,17 +403,18 @@ class EnvSelector:
                     # build package env and assign it, then register the run environment which can trigger generation
                     # of additional run environments
                     start_package_env_use_counter = self._pkg_env_counter.copy()
+                    start_defined = set(self._defined_envs_)
                     try:
                         run_env.package_env = self._build_pkg_env(pkg_name_type, name, env_name_to_active)
                     except Exception as exception:  # ruff:ignore[blind-except]
                         # if it's not a run environment, wait to see if ends up being a packaging one -> rollback
                         failed[name] = exception
-                        for key in self._pkg_env_counter - start_package_env_use_counter:
+                        # only remove envs created during this attempt: pre-existing ones (e.g. a shared package
+                        # env) are still referenced by earlier run environments and must survive
+                        for key in (set(self._defined_envs_) - start_defined) | {name}:
                             del self._defined_envs_[key]
                             self._state.conf.clear_env(key)
                         self._pkg_env_counter = start_package_env_use_counter
-                        del self._defined_envs_[name]
-                        self._state.conf.clear_env(name)
                     else:
                         try:
                             for env in run_env.package_envs:
