@@ -8,8 +8,11 @@ import pytest
 from tox.config.cli.parse import get_options
 from tox.session.env_select import _DYNAMIC_ENV_FACTORS, CliEnv, EnvSelector  # ruff:ignore[import-private-name]
 from tox.session.state import State
+from tox.tox_env.python.virtual_env.package.pyproject import Pep517VenvPackager
 
 if TYPE_CHECKING:
+    from pytest_mock import MockerFixture
+
     from tox.pytest import MonkeyPatch, ToxProjectCreator
 
 
@@ -570,3 +573,22 @@ def test_dotted_env_multiple_suggestions(tox_project: ToxProjectCreator) -> None
     outcome.assert_failed(code=-2)
     assert "py3.10-lint - did you mean py310-lint?" in outcome.out
     assert "py3.11-cov - did you mean py311-cov?" in outcome.out
+
+
+def test_pkg_env_creation_failure_is_not_masked(tox_project: ToxProjectCreator, mocker: MockerFixture) -> None:
+    """A package env whose registration fails must surface its error, not a duplicate-config cascade (#3987)."""
+    real_register_config = Pep517VenvPackager.register_config
+
+    def failing_register_config(self: Pep517VenvPackager) -> None:
+        real_register_config(self)
+        msg = "no such device"
+        raise OSError(msg)
+
+    mocker.patch.object(Pep517VenvPackager, "register_config", failing_register_config)
+    project = tox_project({
+        "tox.ini": "[tox]\nenv_list = a,b\n[testenv]\npackage = wheel\n",
+        "pyproject.toml": "",
+    })
+
+    with pytest.raises(OSError, match="no such device"):
+        project.run("r", "--notest")

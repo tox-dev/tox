@@ -527,8 +527,14 @@ class EnvSelector:
         pkg_conf = self._state.conf.get_env(name, package=True)
         journal = self._journal.get_env_journal(name)
         args = ToxEnvCreateArgs(pkg_conf, self._state.conf.core, self._state.conf.options, journal, self._log_handler)
-        pkg_env: PackageToxEnv = package_type(args)
-        pkg_env.register_config()
+        try:
+            pkg_env: PackageToxEnv = package_type(args)
+            pkg_env.register_config()
+        except Exception:
+            # drop the partially registered config set so the next run env needing this package env starts clean,
+            # instead of hitting a duplicate-configuration error that masks this failure (#3987)
+            self._state.conf.clear_env(name)
+            raise
         self._defined_envs_[name] = _ToxEnvInfo(pkg_env, is_active)
         self._manager.tox_add_env_config(pkg_conf, self._state)
         return pkg_env

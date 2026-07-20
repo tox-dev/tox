@@ -1,0 +1,3 @@
+Surface the real error when creating a package environment fails: the partially registered configuration is now
+discarded, so later run environments sharing the package environment no longer crash with a spurious
+``duplicate configuration definition`` that masked the original failure.
