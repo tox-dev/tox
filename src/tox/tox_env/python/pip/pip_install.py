@@ -216,14 +216,15 @@ class Pip(PythonInstallerListDependencies):
         raise Recreate(msg)
 
     def _install_pylock(self, pylock: Pylock, section: str, of_type: str) -> None:
-        requirements = pylock.requirements()
-        new_reqs = sorted(str(r) for r in requirements)
-        with self._env.cache.compare(new_reqs, section, of_type) as (eq, old):
+        new_reqs = sorted(pylock.install_lines())
+        cache_value = {"req": new_reqs, "env": self._install_env_vars()}
+        with self._env.cache.compare(cache_value, section, of_type) as (eq, old):
             if not eq:
-                if old is not None and (missing := sorted(set(old) - set(new_reqs))):
+                old_req: list[str] = old["req"] if isinstance(old, dict) else (old or [])
+                if missing := sorted(set(old_req) - set(new_reqs)):
                     msg = f"pylock dependencies removed: {' '.join(missing)}"
                     raise Recreate(msg)
-                if new_deps := sorted(set(new_reqs) - set(old or [])):
+                if new_deps := sorted(set(new_reqs) - set(old_req)) or new_reqs:
                     req_file = Path(self._env.env_dir) / "pylock.txt"
                     req_file.write_text("\n".join(new_deps))
                     self._execute_installer(["--no-deps", "-r", str(req_file)], of_type)
