@@ -1,0 +1,2 @@
+A corrupted environment status file (``.tox-info.json``) now always triggers an environment recreation instead of
+crashing tox with an internal error for some corruption shapes.
