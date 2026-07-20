@@ -1,4 +1,6 @@
 Surface the real error when creating a package environment fails: the partially registered configuration is now
 discarded, so later run environments sharing the package environment no longer crash with a spurious
 ``duplicate configuration definition`` that masked the original failure, and when several environments fail to create
-the first failure in definition order is reported instead of a hash-random one.
+the first failure in definition order is reported instead of a hash-random one. The PEP 517 frontend is also no longer
+built during configuration registration, so inspecting configuration (``tox c``, ``tox l``) works even when
+``pyproject.toml`` cannot be read or parsed.

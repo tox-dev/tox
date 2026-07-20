@@ -160,7 +160,8 @@ class Pep517VenvPackager(PythonPackageToxEnv, ABC):
         self.conf.add_config(
             keys=["fresh_subprocess"],
             of_type=bool,
-            default=self._frontend.backend.split(".")[0] == "setuptools",
+            # lazy: building the frontend reads pyproject.toml, which must not happen during config registration
+            default=lambda conf, name: self._frontend.backend.split(".")[0] == "setuptools",  # ruff:ignore[unused-lambda-argument]
             desc="create a fresh subprocess for every backend request",
         )
 
