@@ -488,7 +488,7 @@ class EnvSelector:
             missing_active = self._cli_envs is not None and self._cli_envs.is_all
             package_tox_env: PackageToxEnv | None = None
             try:
-                package_tox_env = self._get_package_env(core_type, name, active.get(name, missing_active))
+                package_tox_env = self._get_package_env(core_type, name, run_env_name, active.get(name, missing_active))
                 self._pkg_env_counter[name] += 1
                 if (
                     child_name_type := self._register_child_packages(package_tox_env, run_env_name, active)
@@ -529,8 +529,16 @@ class EnvSelector:
             pass
         return name_type
 
-    def _get_package_env(self, packager: str, name: str, is_active: bool) -> PackageToxEnv:  # ruff:ignore[boolean-type-hint-positional-argument]
+    def _get_package_env(self, packager: str, name: str, run_env_name: str, is_active: bool) -> PackageToxEnv:  # ruff:ignore[boolean-type-hint-positional-argument]
         assert self._defined_envs_ is not None  # ruff:ignore[assert]
+        if name in set(cast("EnvList", self._state.conf.core["env_list"]).envs):
+            # an env cannot both be asked to run and serve as a builder - fail here with the full picture rather
+            # than late at execution with "cannot run packaging environment"
+            msg = (
+                f"{name} is listed in env_list but is used as a package environment by {run_env_name}; "
+                f"remove it from env_list or rename the package environment"
+            )
+            raise HandledError(msg)
         if name in self._defined_envs_:
             env = self._defined_envs_[name].env
             if isinstance(env, PackageToxEnv):

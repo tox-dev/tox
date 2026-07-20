@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import sys
 from itertools import count
+from textwrap import dedent
 from typing import TYPE_CHECKING, Final
 
 import pytest
@@ -621,12 +622,12 @@ def test_pkg_env_rollback_keeps_shared_env(tox_project: ToxProjectCreator) -> No
     """One env's failed build must not destroy a package env other envs already use."""
     ini = """
     [tox]
-    env_list = a,b,c
     skip_missing_interpreters = false
     [testenv]
     package = wheel
     [testenv:a]
     package = sdist
+    [testenv:b]
     [testenv:c]
     wheel_build_env = b
     [testenv:.pkg]
@@ -634,7 +635,7 @@ def test_pkg_env_rollback_keeps_shared_env(tox_project: ToxProjectCreator) -> No
     """
     project = tox_project({"tox.ini": ini, "pyproject.toml": ""})
 
-    outcome = project.run("l")
+    outcome = project.run("c", "-e", "a,b,c", "-k", "env_name")
 
     outcome.assert_success()
     envs = outcome.state.envs
@@ -676,3 +677,107 @@ def test_pkg_env_skip_from_plugin_hook(tox_project: ToxProjectCreator) -> None:
     outcome = project.run("l")
 
     outcome.assert_success()
+
+
+@pytest.mark.parametrize(
+    ("files", "expected_base", "expected_marker"),
+    [
+        pytest.param(
+            {
+                "tox.ini": dedent("""\
+                    [testenv]
+                    package = wheel
+                    package_env = mypkg
+                    set_env = MARKER=from_testenv
+                    [testenv:mypkg]
+                    package = skip
+                    [pkgenv]
+                    set_env = MARKER=from_pkgenv
+                """),
+                "pyproject.toml": "",
+            },
+            ["pkgenv"],
+            "from_pkgenv",
+            id="ini",
+        ),
+        pytest.param(
+            {
+                "tox.toml": dedent("""\
+                    [env_run_base]
+                    package = "wheel"
+                    package_env = "mypkg"
+                    set_env = { MARKER = "from_run_base" }
+                    [env.mypkg]
+                    package = "skip"
+                    [env_pkg_base]
+                    set_env = { MARKER = "from_pkg_base" }
+                """),
+                "pyproject.toml": "",
+            },
+            None,
+            "from_pkg_base",
+            id="toml",
+        ),
+    ],
+)
+def test_pkg_env_redefined_uses_pkg_base(
+    tox_project: ToxProjectCreator,
+    files: dict[str, str],
+    expected_base: list[str] | None,
+    expected_marker: str,
+) -> None:
+    """An env first built as a run env and then redefined as a package env must load the package base chain."""
+    project = tox_project(files)
+
+    outcome = project.run("c", "-e", "mypkg,py", "-k", "set_env", "base")
+
+    outcome.assert_success()
+    pkg_conf = outcome.state.conf.get_env("mypkg")
+    if expected_base is not None:
+        assert pkg_conf["base"] == expected_base
+    assert pkg_conf["set_env"].load("MARKER") == expected_marker
+
+
+@pytest.mark.parametrize(
+    "files",
+    [
+        pytest.param(
+            {
+                "tox.ini": dedent("""\
+                    [tox]
+                    env_list = mypkg, py
+                    [testenv]
+                    package = wheel
+                    package_env = mypkg
+                    [testenv:mypkg]
+                    package = skip
+                """),
+                "pyproject.toml": "",
+            },
+            id="ini",
+        ),
+        pytest.param(
+            {
+                "tox.toml": dedent("""\
+                    env_list = ["mypkg", "py"]
+                    [env_run_base]
+                    package = "wheel"
+                    package_env = "mypkg"
+                    [env.mypkg]
+                    package = "skip"
+                """),
+                "pyproject.toml": "",
+            },
+            id="toml",
+        ),
+    ],
+)
+def test_pkg_env_in_env_list_fails(tox_project: ToxProjectCreator, files: dict[str, str]) -> None:
+    """An env cannot be asked to run and serve as a package environment; the conflict is reported, not hidden."""
+    project = tox_project(files)
+
+    outcome = project.run("l")
+
+    outcome.assert_failed()
+    msg = "mypkg is listed in env_list but is used as a package environment by py; remove it from env_list or rename"
+    assert msg in outcome.out, outcome.out
