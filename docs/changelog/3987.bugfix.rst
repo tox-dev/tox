@@ -1,3 +1,4 @@
 Surface the real error when creating a package environment fails: the partially registered configuration is now
 discarded, so later run environments sharing the package environment no longer crash with a spurious
-``duplicate configuration definition`` that masked the original failure.
+``duplicate configuration definition`` that masked the original failure, and when several environments fail to create
+the first failure in definition order is reported instead of a hash-random one.

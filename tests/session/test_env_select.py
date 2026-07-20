@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import sys
+from itertools import count
 from typing import TYPE_CHECKING
 
 import pytest
@@ -591,4 +592,24 @@ def test_pkg_env_creation_failure_is_not_masked(tox_project: ToxProjectCreator, 
     })
 
     with pytest.raises(OSError, match="no such device"):
+        project.run("r", "--notest")
+
+
+def test_pkg_env_creation_failure_reports_first_error(tox_project: ToxProjectCreator, mocker: MockerFixture) -> None:
+    """When several environments fail to create, the first failure in definition order is the one reported."""
+    real_register_config = Pep517VenvPackager.register_config
+    attempt = count(1)
+
+    def failing_register_config(self: Pep517VenvPackager) -> None:
+        real_register_config(self)
+        msg = f"creation failure {next(attempt)}"
+        raise OSError(msg)
+
+    mocker.patch.object(Pep517VenvPackager, "register_config", failing_register_config)
+    project = tox_project({
+        "tox.ini": "[tox]\nenv_list = a,b\n[testenv]\npackage = wheel\n",
+        "pyproject.toml": "",
+    })
+
+    with pytest.raises(OSError, match="creation failure 1"):
         project.run("r", "--notest")

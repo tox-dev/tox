@@ -425,9 +425,10 @@ class EnvSelector:
                                         self._pkg_env_counter[pkg_env.name] -= 1  # pragma: no cover
                         except Exception:  # ruff:ignore[blind-except]
                             assert self._defined_envs_[name].package_skip is not None  # ruff:ignore[assert]
-            failed_to_create = failed.keys() - self._defined_envs_.keys()
-            if failed_to_create:
-                raise failed[next(iter(failed_to_create))]
+            # report the first failure in definition order - later ones may be mere fallout from it
+            first_failed = next((name for name in failed if name not in self._defined_envs_), None)
+            if first_failed is not None:
+                raise failed[first_failed]
             for name, count in self._pkg_env_counter.items():
                 if not count:
                     self._defined_envs_.pop(name)  # pragma: no cover
