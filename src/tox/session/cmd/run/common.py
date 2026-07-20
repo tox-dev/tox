@@ -20,6 +20,7 @@ from colorama import Fore
 
 from tox.execute import Outcome
 from tox.journal import write_journal
+from tox.report import HandledError
 from tox.session.cmd.run.single import ToxEnvRunResult, run_one
 from tox.util.graph import stable_topological_sort
 from tox.util.spinner import MISS_DURATION, Spinner
@@ -219,12 +220,25 @@ def execute(state: State, max_workers: int | None, has_spinner: bool, live: bool
     for name in to_run_list:
         cast("RunToxEnv", state.envs[name]).mark_active()
 
+    scheduler_error: list[BaseException] = []
+
     def _run_thread() -> tuple[Any, bool]:
         spinner = ToxSpinner(has_spinner, state, len(to_run_list))
         thread = Thread(
             target=_queue_and_wait,
             name="tox-interrupt",
-            args=(state, to_run_list, results, future_to_env, interrupt, done, max_workers, spinner, live),
+            args=(
+                state,
+                to_run_list,
+                results,
+                future_to_env,
+                interrupt,
+                done,
+                max_workers,
+                spinner,
+                live,
+                scheduler_error,
+            ),
         )
         thread.start()
         try:
@@ -249,22 +263,10 @@ def execute(state: State, max_workers: int | None, has_spinner: bool, live: bool
     previous, has_previous = None, False
     try:
         previous, has_previous = _run_thread()
+        if scheduler_error:
+            raise scheduler_error[0]
     finally:
-        name_to_run = {r.name: r for r in results}
-        ordered_results: list[ToxEnvRunResult] = []
-        for env in to_run_list:
-            if env in name_to_run:
-                ordered_results.append(name_to_run[env])
-            else:
-                ordered_results.append(
-                    ToxEnvRunResult(name=env, skipped=True, code=-2, outcomes=[], duration=MISS_DURATION)
-                )
-        # add results for unavailable environments
-        ordered_results.extend(
-            ToxEnvRunResult(name=env_name, skipped=False, code=0, outcomes=[], duration=MISS_DURATION, unavailable=True)
-            for env_name in state.envs.unavailable_envs()
-            if env_name not in name_to_run
-        )
+        ordered_results = _order_results(state, results, to_run_list)
         # write the journal
         write_journal(getattr(state.conf.options, "result_json", None), state._journal)  # ruff:ignore[private-member-access]
         # warn about unused config keys
@@ -279,6 +281,21 @@ def execute(state: State, max_workers: int | None, has_spinner: bool, live: bool
         if has_previous:
             signal(SIGINT, previous)
     return exit_code
+
+
+def _order_results(state: State, results: list[ToxEnvRunResult], to_run_list: list[str]) -> list[ToxEnvRunResult]:
+    name_to_run = {r.name: r for r in results}
+    ordered: list[ToxEnvRunResult] = [
+        name_to_run.get(env, ToxEnvRunResult(name=env, skipped=True, code=-2, outcomes=[], duration=MISS_DURATION))
+        for env in to_run_list
+    ]
+    # add results for unavailable environments
+    ordered.extend(
+        ToxEnvRunResult(name=env_name, skipped=False, code=0, outcomes=[], duration=MISS_DURATION, unavailable=True)
+        for env_name in state.envs.unavailable_envs()
+        if env_name not in name_to_run
+    )
+    return ordered
 
 
 class ToxSpinner(Spinner):
@@ -317,9 +334,13 @@ def _queue_and_wait(  # ruff:ignore[too-many-arguments]
     max_workers: int | None,
     spinner: ToxSpinner,
     live: bool,  # ruff:ignore[boolean-type-hint-positional-argument]
+    error: list[BaseException],
 ) -> None:
     try:
-        _do_queue_and_wait(state, to_run_list, results, future_to_env, interrupt, max_workers, spinner, live)
+        try:
+            _do_queue_and_wait(state, to_run_list, results, future_to_env, interrupt, max_workers, spinner, live)
+        except BaseException as exception:  # ruff:ignore[blind-except] # re-raised in the main thread
+            error.append(exception)
     finally:
         try:
             for name in to_run_list:
@@ -475,5 +496,9 @@ def run_order(state: State, to_run: list[str]) -> tuple[list[str], dict[str, set
         run_env = cast("RunToxEnv", state.envs[env])
         depends = set(cast("EnvList", run_env.conf["depends"]).envs)
         todo[env] = {name for dep in depends for name in to_run_set if fnmatchcase(name, dep)} - {env}
-    order = stable_topological_sort(todo)
+    try:
+        order = stable_topological_sort(todo)
+    except ValueError as exception:
+        msg = f"circular dependency detected between environments: {exception}"
+        raise HandledError(msg) from exception
     return order, todo

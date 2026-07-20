@@ -341,3 +341,24 @@ def test_depends_ini_glob_excludes_self(tox_project: ToxProjectCreator) -> None:
 def test_depends_help(tox_project: ToxProjectCreator) -> None:
     outcome = tox_project({"tox.ini": ""}).run("de", "-h")
     outcome.assert_success()
+
+
+def test_depends_circular(tox_project: ToxProjectCreator) -> None:
+    ini = "[tox]\nenv_list = a,b\n[testenv]\npackage = skip\n[testenv:a]\ndepends = b\n[testenv:b]\ndepends = a\n"
+    project = tox_project({"tox.ini": ini})
+
+    outcome = project.run("de")
+
+    outcome.assert_failed(code=-2)
+    assert "circular dependency detected between environments: a | b" in outcome.out, outcome.out
+
+
+def test_depends_circular_run(tox_project: ToxProjectCreator) -> None:
+    ini = "[tox]\nenv_list = a,b\n[testenv]\npackage = skip\n[testenv:a]\ndepends = b\n[testenv:b]\ndepends = a\n"
+    project = tox_project({"tox.ini": ini})
+
+    outcome = project.run("r", "--notest")
+
+    outcome.assert_failed(code=-2)
+    assert "circular dependency detected between environments: a | b" in outcome.out, outcome.out
+    assert "Traceback" not in outcome.err, outcome.err

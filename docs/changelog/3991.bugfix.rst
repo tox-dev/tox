@@ -1,0 +1,3 @@
+Report circular ``depends`` between environments as a clear error naming the cycle instead of dumping a raw traceback
+(from the scheduler thread for ``tox run``/``tox run-parallel``, and directly for ``tox depends``); scheduler failures
+in general now propagate to the main thread instead of being printed by the default thread exception hook.
