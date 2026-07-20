@@ -126,7 +126,7 @@ class PythonDeps(RequirementsFile):
             if not self.requirements and opts_dict:
                 msg = "no dependencies"
                 raise ValueError(msg)
-            result_opts: list[str] = [f"{key}={value}" for key, value in opts_dict.items()]
+            result_opts = _render_options(opts_dict)
             result_req = [str(req) for req in self.requirements]
             self._unroll = result_opts, result_req
         return self._unroll
@@ -239,7 +239,7 @@ class PythonConstraints(RequirementsFile):
             if not self.requirements and opts_dict:
                 msg = "no dependencies"
                 raise ValueError(msg)
-            result_opts: list[str] = [f"{key}={value}" for key, value in opts_dict.items()]
+            result_opts = _render_options(opts_dict)
             result_req = [str(req) for req in self.requirements]
             self._unroll = result_opts, result_req
         return self._unroll
@@ -294,6 +294,13 @@ ONE_ARG_ESCAPE = {
     "-e",
     "--editable",
 }
+
+
+def _render_options(options: dict[str, object]) -> list[str]:
+    # set-valued options (e.g. no_binary) render sorted so the value is stable across hash seeds - the install
+    # cache compares these strings and an order change would force a spurious recreate
+    return [f"{key}={','.join(sorted(value)) if isinstance(value, set) else value}" for key, value in options.items()]
+
 
 __all__ = (
     "ONE_ARG",
