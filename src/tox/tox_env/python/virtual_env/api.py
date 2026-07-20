@@ -272,7 +272,7 @@ class VirtualEnv(Python, ABC):
 
         """
         from virtualenv.discovery import cached_py_info  # ruff:ignore[import-outside-top-level]
-        from virtualenv.discovery.py_info import (
+        from virtualenv.discovery.py_info import (  # ruff:ignore[import-outside-top-level]
             PythonInfo as VirtualenvPythonInfo,
         )
 

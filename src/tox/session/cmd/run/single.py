@@ -83,9 +83,8 @@ def run_commands(tox_env: RunToxEnv, no_test: bool) -> tuple[int, list[Outcome]]
     if no_test:
         exit_code = Outcome.OK
     else:
-        from tox.plugin.manager import (
-            MANAGER,  # importing this here to avoid circular import
-        )
+        # importing this here to avoid circular import
+        from tox.plugin.manager import MANAGER  # ruff:ignore[import-outside-top-level]
 
         chdir: Path = tox_env.conf["change_dir"]
         chdir.mkdir(exist_ok=True, parents=True)

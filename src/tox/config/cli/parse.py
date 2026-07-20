@@ -58,9 +58,8 @@ def _get_base(args: Sequence[str]) -> tuple[int, ToxHandler, Source]:
         ...  # ignore parse errors, such as -va raises ignored explicit argument 'a'
     guess_verbosity = parsed.verbosity
     handler = setup_report(guess_verbosity, parsed.is_colored)
-    from tox.plugin.manager import (
-        MANAGER,  # load the plugin system right after we set up report
-    )
+    # load the plugin system right after we set up report
+    from tox.plugin.manager import MANAGER  # ruff:ignore[import-outside-top-level]
 
     try:
         source = discover_source(parsed.config_file, parsed.root_dir)

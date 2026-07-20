@@ -43,7 +43,7 @@ jobs:
           cache-dependency-glob: "pyproject.toml"
           github-token: ${{ secrets.GITHUB_TOKEN }}
       - name: Cache wheel downloads
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v5
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: .wheel_cache
           key: wheel-cache-${{ runner.os }}-${{ matrix.py }}-${{ hashFiles('pyproject.toml') }}
@@ -94,7 +94,7 @@ jobs:
           cache-dependency-glob: "pyproject.toml"
           github-token: ${{ secrets.GITHUB_TOKEN }}
       - name: Cache wheel downloads
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v5
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: .wheel_cache
           key: wheel-cache-${{ runner.os }}-3.14-${{ hashFiles('pyproject.toml') }}

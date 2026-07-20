@@ -312,7 +312,7 @@ def enable_pep517_backend_coverage() -> Iterator[None]:
         yield  # pragma: no cover
         return  # pragma: no cover
     # the COV_ env variables needs to be passed on for the PEP-517 backend
-    from tox.tox_env.python.virtual_env.package.pyproject import (
+    from tox.tox_env.python.virtual_env.package.pyproject import (  # ruff:ignore[import-outside-top-level]
         Pep517VirtualEnvPackager,
     )
 
