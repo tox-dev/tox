@@ -1,0 +1,6 @@
+Fix two packaging regressions:
+
+- ``package = editable`` on a build backend without PEP-660 support now falls back to ``editable-legacy`` with a warning
+  instead of crashing, also when the project metadata is static;
+- editable and wheel environments running after an ``sdist-wheel`` environment build from the project sources again,
+  instead of a stale temporary copy that made source edits invisible.

@@ -682,3 +682,61 @@ def test_config_inspection_does_not_read_pyproject(tox_project: ToxProjectCreato
     result = project.run("c", "-e", "py", "-k", "env_name")
     result.assert_success()
     assert "[testenv:py]\nenv_name = py\n" in result.out
+
+
+def test_pyproject_no_build_editable_fallback_from_config(
+    tox_project: ToxProjectCreator, demo_pkg_inline: Path
+) -> None:
+    """The editable-legacy fallback must also work when package=editable comes from configuration (not --develop)."""
+    toml_cfg = dedent("""\
+        env_list = ["a", "b"]
+        [env_run_base]
+        package = "editable"
+    """)
+    proj = tox_project({"tox.toml": toml_cfg}, base=demo_pkg_inline)
+    proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
+    result = proj.run("r", "-e", "a,b", "--notest")
+    result.assert_success()
+    warning = (
+        ".pkg: package config for a, b is editable, however the build backend build does not support PEP-660, "
+        "falling back to editable-legacy - change your configuration to it"
+    )
+    assert warning in result.out.splitlines()
+
+
+def test_pyproject_no_build_editable_fallback_static_meta(
+    tox_project: ToxProjectCreator, demo_pkg_inline: Path
+) -> None:
+    """The fallback must fire even when static metadata delays the missing PEP-660 detection to build time."""
+    toml = f"{(demo_pkg_inline / 'pyproject.toml').read_text()}[project]\nname='demo'\nversion='1.0'\n"
+    toml_cfg = dedent("""\
+        env_list = ["a"]
+        [env_run_base]
+        package = "editable"
+    """)
+    proj = tox_project({"tox.toml": toml_cfg, "pyproject.toml": toml}, base=demo_pkg_inline)
+    proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
+    result = proj.run("r", "-e", "a", "--notest")
+    result.assert_success()
+    warning = (
+        ".pkg: package config for a is editable, however the build backend build does not support PEP-660, "
+        "falling back to editable-legacy - change your configuration to it"
+    )
+    assert warning in result.out.splitlines()
+
+
+def test_build_wheel_via_sdist_restores_root(tox_project: ToxProjectCreator, demo_pkg_inline: Path) -> None:
+    """The sdist-based wheel build must not leave the builder pointed at the extracted sdist tree."""
+    toml_cfg = dedent("""\
+        env_list = ["a"]
+        [env_run_base]
+        package = "sdist-wheel"
+    """)
+    proj = tox_project({"tox.toml": toml_cfg}, base=demo_pkg_inline)
+    proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
+
+    result = proj.run("r", "-e", "a", "--notest")
+
+    result.assert_success()
+    pkg = cast("pyproject_pkg.Pep517VenvPackager", result.state.envs[".pkg"])
+    assert pkg.root == pkg.conf["package_root"]

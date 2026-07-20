@@ -31,6 +31,11 @@ class ConfigDefinition(ABC, Generic[T]):  # ruff:ignore[eq-without-hash]
     def __call__(self, conf: Config, loaders: list[Loader[T]], args: ConfigLoadArgs) -> T:
         raise NotImplementedError
 
+    @abstractmethod
+    def overwrite(self, value: T) -> None:
+        """Force the configuration to the given value, replacing any constant or already loaded one."""
+        raise NotImplementedError
+
     def __eq__(self, o: object) -> bool:
         if not isinstance(o, ConfigDefinition):
             return False
@@ -61,6 +66,9 @@ class ConfigConstantDefinition(ConfigDefinition[T]):  # ruff:ignore[eq-without-h
         if callable(self.value):
             return cast("Callable[[], T]", self.value)()
         return self.value
+
+    def overwrite(self, value: T) -> None:
+        self.value = value
 
     def __eq__(self, o: object) -> bool:
         if not isinstance(o, ConfigConstantDefinition):
@@ -128,6 +136,9 @@ class ConfigDynamicDefinition(ConfigDefinition[T]):  # ruff:ignore[eq-without-ha
                 value = self.post_process(value)
             self._cache = value
         return cast("T", self._cache)
+
+    def overwrite(self, value: T) -> None:
+        self._cache = value
 
     def __repr__(self) -> str:
         values = ((k, v) for k, v in vars(self).items() if k not in {"post_process", "_cache"} and v is not None)
