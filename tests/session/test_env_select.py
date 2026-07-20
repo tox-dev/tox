@@ -14,6 +14,7 @@ from tox.tox_env.python.virtual_env.package.pyproject import Pep517VenvPackager
 if TYPE_CHECKING:
     from pytest_mock import MockerFixture
 
+    from tox.config.sets import EnvConfigSet
     from tox.pytest import MonkeyPatch, ToxProjectCreator
 
 
@@ -649,3 +650,28 @@ def test_pkg_env_register_run_env_once(tox_project: ToxProjectCreator) -> None:
     pkg_env = outcome.state.envs[".pkg"]
     assert isinstance(pkg_env, Pep517VenvPackager)
     assert [conf.name for conf in pkg_env.builds["wheel"]] == ["a", "b"]
+
+
+@pytest.mark.plugin_test
+def test_pkg_env_skip_from_plugin_hook(tox_project: ToxProjectCreator) -> None:
+    """A plugin raising Skip for a package env must mark the run env skipped, not crash."""
+
+    def plugin() -> None:  # pragma: no cover # the code is copied to a python file
+        from tox.plugin import impl  # ruff:ignore[import-outside-top-level]
+        from tox.tox_env.errors import Skip  # ruff:ignore[import-outside-top-level]
+
+        @impl
+        def tox_add_env_config(env_conf: EnvConfigSet) -> None:
+            if env_conf.name == ".pkg":
+                msg = "plugin opted out of packaging"
+                raise Skip(msg)
+
+    project = tox_project({
+        "tox.ini": "[tox]\nenv_list = a\n[testenv]\npackage = wheel\n",
+        "pyproject.toml": "",
+        "toxfile.py": plugin,
+    })
+
+    outcome = project.run("l")
+
+    outcome.assert_success()

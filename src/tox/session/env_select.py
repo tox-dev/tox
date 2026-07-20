@@ -486,6 +486,7 @@ class EnvSelector:
                 msg = f"{run_env_name} cannot self-package"
                 raise HandledError(msg)
             missing_active = self._cli_envs is not None and self._cli_envs.is_all
+            package_tox_env: PackageToxEnv | None = None
             try:
                 package_tox_env = self._get_package_env(core_type, name, active.get(name, missing_active))
                 self._pkg_env_counter[name] += 1
@@ -496,6 +497,14 @@ class EnvSelector:
             except Skip as exception:
                 assert self._defined_envs_ is not None  # ruff:ignore[assert]
                 self._defined_envs_[run_env_name].package_skip = (name_type[0], exception)
+                if package_tox_env is None:
+                    # Skip escaped env creation itself (e.g. from a plugin hook): hand back the env when it got
+                    # registered before the skip, otherwise let the caller treat this as a creation failure
+                    info = self._defined_envs_.get(name)
+                    if info is None:
+                        raise  # pragma: no cover # needs a plugin packager whose registration raises Skip
+                    package_tox_env = cast("PackageToxEnv", info.env)
+                    self._pkg_env_counter[name] += 1
             return package_tox_env
 
     def _register_child_packages(
