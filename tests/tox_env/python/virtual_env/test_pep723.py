@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import sys
+from textwrap import dedent
 from typing import TYPE_CHECKING
 
 import pytest
@@ -92,24 +93,44 @@ def test_skip_env_install(tox_project: ToxProjectCreator) -> None:
 
 
 @pytest.mark.parametrize(
-    ("script", "error_fragment"),
+    "script",
     [
         pytest.param(
-            '# /// script\n# requires-python = ">=3.12"\n# ///\n\n# /// script\n# dependencies = []\n# ///\n',
-            "multiple",
+            dedent("""\
+                # /// script
+                # requires-python = ">=3.12"
+                # ///
+
+                # /// script
+                # dependencies = []
+                # ///
+            """),
             id="multiple-script-blocks",
         ),
         pytest.param(
-            "# /// script\n# requires-python = not valid toml\n# ///\n",
-            "Invalid",
+            dedent("""\
+                # /// script
+                # requires-python = not valid toml
+                # ///
+            """),
             id="malformed-toml",
+        ),
+        pytest.param(
+            dedent("""\
+                # /// script
+                # dependencies = [broken
+                # ///
+                print('ok')
+            """),
+            id="unclosed-list",
         ),
     ],
 )
-def test_invalid_script_metadata(tox_project: ToxProjectCreator, script: str, error_fragment: str) -> None:
+def test_invalid_script_metadata(tox_project: ToxProjectCreator, script: str) -> None:
     result, _ = _run(tox_project, {"tox.ini": _tox_ini(), "check.py": script})
     result.assert_failed()
-    assert error_fragment in result.out
+    assert "invalid inline script metadata" in result.out, result.out
+    assert "internal error" not in result.out
 
 
 def test_missing_script_file(tox_project: ToxProjectCreator) -> None:
@@ -155,3 +176,21 @@ def test_script_file_too_large_rejected(tox_project: ToxProjectCreator, mocker: 
     result = proj.run("r", "-e", "check", "--discover", sys.executable)
     result.assert_failed()
     assert "exceeds the 1 byte limit" in result.out
+
+
+def test_metadata_honored_with_bom(tox_project: ToxProjectCreator) -> None:
+    """A UTF-8 BOM (common Windows editor artifact) must not silently disable the metadata block."""
+    script = "\ufeff" + dedent("""\
+        # /// script
+        # requires-python = ">=99.0"
+        # ///
+        print("ok")
+    """)
+    tox_toml = dedent("""\
+        [env.check]
+        runner = "virtualenv-pep-723"
+        script = "check.py"
+    """)
+    result, _ = _run(tox_project, {"tox.toml": tox_toml, "check.py": script})
+    result.assert_failed()
+    assert "does not satisfy requires-python" in result.out

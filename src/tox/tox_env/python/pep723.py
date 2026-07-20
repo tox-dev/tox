@@ -119,7 +119,12 @@ class Pep723Mixin(Python, RunToxEnv):
             if (size := full_path.stat().st_size) > _MAX_SCRIPT_BYTES:
                 msg = f"script file {full_path} is {size} bytes, exceeds the {_MAX_SCRIPT_BYTES} byte limit"
                 raise Fail(msg)
-            self._script_metadata = _parse_script_metadata(full_path.read_text(encoding="utf-8"))
+            try:
+                # utf-8-sig: a BOM would otherwise hide a metadata block starting on the first line
+                self._script_metadata = _parse_script_metadata(full_path.read_text(encoding="utf-8-sig"))
+            except ValueError as exc:  # config error, not a tox defect - includes TOMLDecodeError
+                msg = f"invalid inline script metadata in {full_path}: {exc}"
+                raise Fail(msg) from exc
         return self._script_metadata
 
     def _resolve_script_path(self) -> Path | None:
