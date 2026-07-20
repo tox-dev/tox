@@ -60,7 +60,7 @@ class Unroll:
                 factors.add(machine_isa)
         return factors
 
-    def __call__(  # noqa: C901, PLR0912
+    def __call__(  # ruff:ignore[complex-structure, too-many-branches]
         self, value: TomlTypes, depth: int = 0, *, skip_str: bool = False
     ) -> TomlTypes:
         """Replace all active tokens within value according to the config."""
@@ -155,7 +155,7 @@ def _replace_glob_toml(conf: Config | None, value: dict[str, Any]) -> list[str] 
     if conf is not None and not Path(pattern).is_absolute():
         pattern = str(conf.core["tox_root"] / pattern)
     extending = value.get("extend", False)
-    if matches := sorted(glob.glob(pattern, recursive=True)):  # noqa: PTH207
+    if matches := sorted(glob.glob(pattern, recursive=True)):  # ruff:ignore[glob]
         return matches if extending else " ".join(matches)
     default = value.get("default")
     if default is None:
@@ -270,11 +270,11 @@ class TomlReplaceLoader(ReplaceReference):
                 for src in self._config_value_sources(settings["section"], conf_args.env_name):
                     try:
                         value = src.load(settings["key"], conf_args.chain)
-                    except KeyError as exc:  # if fails, keep trying maybe another source can satisfy # noqa: PERF203
+                    except KeyError as exc:  # if fails, keep trying maybe another source can satisfy # ruff:ignore[try-except-in-loop]
                         exception = exc
                     else:
                         return stringify(value)[0]
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:  # ruff:ignore[blind-except]
                 exception = exc
             if exception is not None:
                 if isinstance(exception, KeyError):  # if the lookup failed replace - else keep
@@ -311,7 +311,7 @@ class RawLoader:
         self._loader = loader
         self._section = section
 
-    def load(self, item: str, chain: list[str] | None = None) -> Any:  # noqa: ARG002
+    def load(self, item: str, chain: list[str] | None = None) -> Any:  # ruff:ignore[unused-method-argument]
         return self._loader.load_raw_from_root(f"{self._section}{self._loader.section.SEP}{item}")
 
 

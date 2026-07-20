@@ -11,9 +11,9 @@ from tox.tox_env.python.virtual_env.subprocess_adapter import (
     SubprocessCreator,
     SubprocessPythonInfo,
     SubprocessSession,
-    _bootstrap_path,  # noqa: PLC2701
-    _has_correct_virtualenv,  # noqa: PLC2701
-    _VersionInfo,  # noqa: PLC2701
+    _bootstrap_path,  # ruff:ignore[import-private-name]
+    _has_correct_virtualenv,  # ruff:ignore[import-private-name]
+    _VersionInfo,  # ruff:ignore[import-private-name]
     ensure_bootstrap,
     probe_python,
 )

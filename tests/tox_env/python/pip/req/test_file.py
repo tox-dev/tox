@@ -526,7 +526,7 @@ def test_req_over_http(tmp_path: Path, flag: str, mocker: MockerFixture) -> None
 
 def test_req_over_http_has_req(tmp_path: Path, mocker: MockerFixture) -> None:
     @contextmanager
-    def enter(url: str, timeout: float | None = None) -> Iterator[IO[bytes]]:  # noqa: ARG001
+    def enter(url: str, timeout: float | None = None) -> Iterator[IO[bytes]]:  # ruff:ignore[unused-function-argument]
         if url == "https://root.org/a.txt":
             yield BytesIO(b"-r b.txt")
         elif url == "https://root.org/b.txt":

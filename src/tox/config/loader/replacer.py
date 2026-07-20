@@ -72,7 +72,7 @@ def replace(conf: Config, reference: ReplaceReference, value: str, args: ConfigL
     return Replacer(conf, reference, conf_args=args, depth=depth).join(find_replace_expr(value))
 
 
-class MatchExpression:  # noqa: PLW1641
+class MatchExpression:  # ruff:ignore[eq-without-hash]
     """An expression that is handled specially by the Replacer."""
 
     def __init__(self, expr: Sequence[MatchArg], term_pos: int | None = None) -> None:
@@ -312,7 +312,7 @@ def replace_glob(conf: Config | None, args: list[str]) -> str:
         default_args = args[1:]
     if conf is not None and not Path(pattern).is_absolute():
         pattern = str(conf.core["tox_root"] / pattern)
-    if matches := sorted(glob.glob(pattern, recursive=True)):  # noqa: PTH207
+    if matches := sorted(glob.glob(pattern, recursive=True)):  # ruff:ignore[glob]
         return " ".join(matches)
     return ARG_DELIMITER.join(default_args) if default_args else ""
 

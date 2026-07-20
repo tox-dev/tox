@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections import OrderedDict, defaultdict
 
 
-def stable_topological_sort(graph: dict[str, set[str]]) -> list[str]:  # noqa: C901
+def stable_topological_sort(graph: dict[str, set[str]]) -> list[str]:  # ruff:ignore[complex-structure]
     to_order = set(graph.keys())  # keep a log of what  we need to order
 
     # normalize graph - fill missing nodes (assume no dependency)

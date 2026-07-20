@@ -24,7 +24,7 @@ if TYPE_CHECKING:
 class LocalSubProcessPep517Executor(Execute):
     """Executor holding the backend process."""
 
-    def __init__(self, colored: bool, cmd: Sequence[str], env: dict[str, str], cwd: Path) -> None:  # noqa: FBT001
+    def __init__(self, colored: bool, cmd: Sequence[str], env: dict[str, str], cwd: Path) -> None:  # ruff:ignore[boolean-type-hint-positional-argument]
         super().__init__(colored)
         self.cmd = cmd
         self.env = env
@@ -55,7 +55,7 @@ class LocalSubProcessPep517Executor(Execute):
                 err=SyncWrite(name="pep517-err", target=None, color=None),  # not enabled no need to enter/exit
                 on_exit_drain=False,
             )
-            status = instance.__enter__()  # noqa: PLC2801
+            status = instance.__enter__()  # ruff:ignore[unnecessary-dunder-call]
             self._local_execute = instance, status
             process_exited = instance.process is None  # Popen failed (e.g. ENOENT)
             while True:
@@ -63,7 +63,9 @@ class LocalSubProcessPep517Executor(Execute):
                     self.is_alive = True
                     break
                 if b"failed to start backend" in status.err or process_exited:
-                    from tox.tox_env.python.virtual_env.package.pyproject import ToxBackendFailed  # noqa: PLC0415
+                    from tox.tox_env.python.virtual_env.package.pyproject import (
+                        ToxBackendFailed,
+                    )
 
                     failure = BackendFailed(
                         result={

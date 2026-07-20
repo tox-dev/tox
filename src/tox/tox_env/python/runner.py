@@ -135,7 +135,7 @@ class PythonRun(Python, RunToxEnv, ABC):
         root: Path = self.core["package_root"]
         if (deps := resolve_extras_static(root, extras)) is None:
             package_env = self.package_env
-            assert package_env is not None  # noqa: S101
+            assert package_env is not None  # ruff:ignore[assert]
             with package_env.display_context(self._has_display_suspended):
                 deps = package_env.load_deps_for_env(self.conf)
         if deps and not self.options.package_only:
@@ -208,7 +208,7 @@ class PythonRun(Python, RunToxEnv, ABC):
 
     def _build_packages(self) -> list[Package]:
         package_env = self.package_env
-        assert package_env is not None  # noqa: S101
+        assert package_env is not None  # ruff:ignore[assert]
         with package_env.display_context(self._has_display_suspended):
             try:
                 packages = package_env.perform_packaging(self.conf)
@@ -219,7 +219,7 @@ class PythonRun(Python, RunToxEnv, ABC):
 
 
 def add_skip_missing_interpreters_to_core(core: CoreConfigSet, options: Parsed) -> None:
-    def skip_missing_interpreters_post_process(value: bool) -> bool:  # noqa: FBT001
+    def skip_missing_interpreters_post_process(value: bool) -> bool:  # ruff:ignore[boolean-type-hint-positional-argument]
         if getattr(options, "skip_missing_interpreters", "config") != "config":
             return StrConvert().to_bool(options.skip_missing_interpreters)
         return value
@@ -234,10 +234,10 @@ def add_skip_missing_interpreters_to_core(core: CoreConfigSet, options: Parsed) 
 
 
 def add_skip_missing_interpreters_to_env(conf: EnvConfigSet, core: CoreConfigSet, options: Parsed) -> None:
-    def _default_skip_missing(conf: Config, env_name: str | None) -> bool:  # noqa: ARG001
+    def _default_skip_missing(conf: Config, env_name: str | None) -> bool:  # ruff:ignore[unused-function-argument]
         return core["skip_missing_interpreters"]
 
-    def _post_process(value: bool) -> bool:  # noqa: FBT001
+    def _post_process(value: bool) -> bool:  # ruff:ignore[boolean-type-hint-positional-argument]
         if getattr(options, "skip_missing_interpreters", "config") != "config":
             return StrConvert().to_bool(options.skip_missing_interpreters)
         return value

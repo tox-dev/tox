@@ -16,7 +16,7 @@ RST_PATH = ROOT / "docs" / "man" / "tox.1.rst"
 
 @pytest.fixture
 def manpage_troff() -> bytes:
-    from docutils.core import publish_string  # noqa: PLC0415
+    from docutils.core import publish_string  # ruff:ignore[import-outside-top-level]
 
     content = "\n".join(
         line for line in RST_PATH.read_text(encoding="utf-8").splitlines() if line.strip() != ":orphan:"
@@ -29,7 +29,7 @@ def manpage_rendered(manpage_troff: bytes, tmp_path: Path) -> str:
     man_file = tmp_path / "tox.1"
     man_file.write_bytes(manpage_troff)
     result = subprocess.run(
-        ["man", str(man_file)],  # noqa: S607
+        ["man", str(man_file)],  # ruff:ignore[start-process-with-partial-path]
         capture_output=True,
         text=True,
         env={"COLUMNS": "200", "LANG": "en_US.UTF-8", "PATH": "/usr/bin:/bin", "MANPAGER": "cat", "PAGER": "cat"},
@@ -93,16 +93,16 @@ def test_manpage_header_shows_tox(manpage_rendered: str) -> None:
 
 
 def test_manpage_documents_all_commands() -> None:
-    from argparse import _SubParsersAction  # noqa: PLC0415, PLC2701
+    from argparse import _SubParsersAction  # ruff:ignore[import-outside-top-level, import-private-name]
 
-    from tox.config.cli.parse import _get_parser_doc  # noqa: PLC0415, PLC2701
+    from tox.config.cli.parse import _get_parser_doc  # ruff:ignore[import-outside-top-level, import-private-name]
 
     parser = _get_parser_doc()
     rst = RST_PATH.read_text(encoding="utf-8")
-    assert parser._subparsers is not None  # noqa: SLF001
-    for action in parser._subparsers._actions:  # noqa: SLF001
+    assert parser._subparsers is not None  # ruff:ignore[private-member-access]
+    for action in parser._subparsers._actions:  # ruff:ignore[private-member-access]
         if isinstance(action, _SubParsersAction):
-            for choice_action in action._choices_actions:  # noqa: SLF001
+            for choice_action in action._choices_actions:  # ruff:ignore[private-member-access]
                 assert choice_action.dest in rst, (
                     f"command {choice_action.dest!r} missing from manpage, regenerate with: "
                     f"python tools/generate_manpage.py"
@@ -110,14 +110,14 @@ def test_manpage_documents_all_commands() -> None:
 
 
 def test_manpage_documents_all_options() -> None:
-    from argparse import SUPPRESS, _SubParsersAction  # noqa: PLC0415, PLC2701
+    from argparse import SUPPRESS, _SubParsersAction  # ruff:ignore[import-outside-top-level, import-private-name]
 
-    from tox.config.cli.parse import _get_parser_doc  # noqa: PLC0415, PLC2701
+    from tox.config.cli.parse import _get_parser_doc  # ruff:ignore[import-outside-top-level, import-private-name]
 
     parser = _get_parser_doc()
     rst = RST_PATH.read_text(encoding="utf-8")
     seen: set[int] = set()
-    for action in parser._actions:  # noqa: SLF001
+    for action in parser._actions:  # ruff:ignore[private-member-access]
         if id(action) in seen or action.help == SUPPRESS or isinstance(action, _SubParsersAction):
             continue
         seen.add(id(action))

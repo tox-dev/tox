@@ -27,7 +27,7 @@ class StdinSource(Enum):
 class ExecuteRequest:
     """Defines a commands execution request."""
 
-    def __init__(  # noqa: PLR0913
+    def __init__(  # ruff:ignore[too-many-arguments]
         self,
         cmd: Sequence[str | Path],
         cwd: Path,
@@ -83,11 +83,11 @@ class ExecuteRequest:
 
 def shell_cmd(cmd: Sequence[str]) -> str:
     if sys.platform == "win32":  # pragma: win32 cover
-        from subprocess import list2cmdline  # noqa: PLC0415
+        from subprocess import list2cmdline  # ruff:ignore[import-outside-top-level]
 
         return list2cmdline(tuple(str(x) for x in cmd))
     # pragma: win32 no cover
-    from shlex import quote as shlex_quote  # noqa: PLC0415
+    from shlex import quote as shlex_quote  # ruff:ignore[import-outside-top-level]
 
     return " ".join(shlex_quote(str(x)) for x in cmd)
 

@@ -195,7 +195,7 @@ class Python(ToxEnv, ABC):
         env.extend(["REQUESTS_CA_BUNDLE"])
         return env
 
-    def _base_python_default(self, conf: Config, env_name: str | None) -> list[str]:  # noqa: ARG002
+    def _base_python_default(self, conf: Config, env_name: str | None) -> list[str]:  # ruff:ignore[unused-method-argument]
         self._base_python_explicitly_set = False
         try:
             base_python = None if env_name is None else self.extract_base_python(env_name)
@@ -266,7 +266,7 @@ class Python(ToxEnv, ABC):
         cls,
         env_name: str,
         base_pythons: list[str],
-        ignore_base_python_conflict: bool,  # noqa: FBT001
+        ignore_base_python_conflict: bool,  # ruff:ignore[boolean-type-hint-positional-argument]
     ) -> list[str]:
         try:
             env_base_python = cls.extract_base_python(env_name)

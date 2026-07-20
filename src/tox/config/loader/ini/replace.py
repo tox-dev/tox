@@ -40,7 +40,7 @@ class ReplaceReferenceIni(ReplaceReference):
             exception: Exception | None = None
             try:
                 return self._load_from_sources(settings, key, conf_args)
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:  # ruff:ignore[blind-except]
                 exception = exc
             if exception is not None:
                 if isinstance(exception, KeyError):  # if the lookup failed replace - else keep
@@ -59,7 +59,7 @@ class ReplaceReferenceIni(ReplaceReference):
                 if isinstance(src, SectionProxy):
                     return self._resolve_section_proxy(src, key, conf_args.env_name)
                 value = src.load(key, conf_args.chain)
-            except KeyError:  # if fails, keep trying maybe another source can satisfy # noqa: PERF203
+            except KeyError:  # if fails, keep trying maybe another source can satisfy # ruff:ignore[try-except-in-loop]
                 pass
             else:
                 as_str, _ = stringify(value)

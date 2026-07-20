@@ -26,7 +26,7 @@ T = TypeVar("T", bound=ConfigSet)
 class Config:
     """Main configuration object for tox."""
 
-    def __init__(  # noqa: PLR0913  # <- no way around many args
+    def __init__(  # ruff:ignore[too-many-arguments]  # <- no way around many args
         self,
         config_source: Source,
         options: Parsed,
@@ -60,7 +60,7 @@ class Config:
         if self._pos_args is not None and to_path is not None and Path.cwd() != to_path:
             args = []
             # we use os.path to unroll .. in path without resolve
-            to_path_str = os.path.abspath(str(to_path))  # noqa: PTH100
+            to_path_str = os.path.abspath(str(to_path))  # ruff:ignore[os-path-abspath]
             for arg in self._pos_args:
                 path_arg = Path(arg)
                 try:
@@ -70,7 +70,7 @@ class Config:
                     is_existing_path = False
                 if is_existing_path and not path_arg.is_absolute():
                     # we use os.path to unroll .. in path without resolve
-                    path_arg_str = os.path.abspath(str(path_arg))  # noqa: PTH100
+                    path_arg_str = os.path.abspath(str(path_arg))  # ruff:ignore[os-path-abspath]
                     try:
                         relative = os.path.relpath(path_arg_str, to_path_str)
                     except ValueError:  # on Windows, relpath fails across drives (e.g. subst mounts)
@@ -178,7 +178,7 @@ class Config:
     def get_env(
         self,
         item: str,
-        package: bool = False,  # noqa: FBT001, FBT002
+        package: bool = False,  # ruff:ignore[boolean-type-hint-positional-argument, boolean-default-value-positional-argument]
         loaders: Sequence[Loader[Any]] | None = None,
     ) -> EnvConfigSet:
         """Return the configuration for a given tox environment (will create if not exist yet).

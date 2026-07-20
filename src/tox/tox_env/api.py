@@ -45,7 +45,7 @@ class ToxEnvCreateArgs(NamedTuple):
     log_handler: ToxHandler
 
 
-class ToxEnv(ABC):  # noqa: PLR0904
+class ToxEnv(ABC):  # ruff:ignore[too-many-public-methods]
     """A tox environment."""
 
     def __init__(self, create_args: ToxEnvCreateArgs) -> None:
@@ -94,7 +94,7 @@ class ToxEnv(ABC):  # noqa: PLR0904
         raise NotImplementedError
 
     def _install(self, arguments: Any, section: str, of_type: str) -> None:
-        from tox.plugin.manager import MANAGER  # noqa: PLC0415
+        from tox.plugin.manager import MANAGER  # ruff:ignore[import-outside-top-level]
 
         MANAGER.tox_on_install(self, arguments, section, of_type)
         self.installer.install(arguments, section, of_type)
@@ -117,19 +117,19 @@ class ToxEnv(ABC):  # noqa: PLR0904
         self.conf.add_config(
             keys=["env_dir", "envdir"],
             of_type=Path,
-            default=lambda conf, name: cast("Path", conf.core["work_dir"]) / self.name,  # noqa: ARG005
+            default=lambda conf, name: cast("Path", conf.core["work_dir"]) / self.name,  # ruff:ignore[unused-lambda-argument]
             desc="directory assigned to the tox environment",
         )
         self.conf.add_config(
             keys=["env_tmp_dir", "envtmpdir"],
             of_type=Path,
-            default=lambda conf, name: cast("Path", conf.core["work_dir"]) / self.name / "tmp",  # noqa: ARG005
+            default=lambda conf, name: cast("Path", conf.core["work_dir"]) / self.name / "tmp",  # ruff:ignore[unused-lambda-argument]
             desc="a folder that is always reset at the start of the run",
         )
         self.conf.add_config(
             keys=["env_log_dir", "envlogdir"],
             of_type=Path,
-            default=lambda conf, name: cast("Path", conf.core["work_dir"]) / self.name / "log",  # noqa: ARG005
+            default=lambda conf, name: cast("Path", conf.core["work_dir"]) / self.name / "log",  # ruff:ignore[unused-lambda-argument]
             desc="a folder for logging where tox will put logs of tool invocation",
         )
         self.executor.register_conf(self)
@@ -186,9 +186,9 @@ class ToxEnv(ABC):  # noqa: PLR0904
             default=[],
             desc="external command glob to allow calling",
         )
-        assert self.installer is not None  # noqa: S101 # trigger installer creation to allow config registration
+        assert self.installer is not None  # ruff:ignore[assert] # trigger installer creation to allow config registration
 
-    def _recreate_default(self, conf: Config, value: str | None) -> bool:  # noqa: ARG002
+    def _recreate_default(self, conf: Config, value: str | None) -> bool:  # ruff:ignore[unused-method-argument]
         return cast("bool", self.options.recreate)
 
     @property
@@ -210,10 +210,10 @@ class ToxEnv(ABC):  # noqa: PLR0904
     def name(self) -> str:
         return cast("str", self.conf["env_name"])
 
-    def _default_set_env(self) -> dict[str, str]:  # noqa: PLR6301
+    def _default_set_env(self) -> dict[str, str]:  # ruff:ignore[no-self-use]
         return {}
 
-    def _default_pass_env(self) -> list[str]:  # noqa: PLR6301
+    def _default_pass_env(self) -> list[str]:  # ruff:ignore[no-self-use]
         env = [
             "https_proxy",  # HTTP proxy configuration
             "http_proxy",  # HTTP proxy configuration
@@ -286,12 +286,12 @@ class ToxEnv(ABC):  # noqa: PLR0904
             try:
                 self._teardown()
             finally:
-                from tox.plugin.manager import MANAGER  # noqa: PLC0415
+                from tox.plugin.manager import MANAGER  # ruff:ignore[import-outside-top-level]
 
                 MANAGER.tox_env_teardown(self)
                 self._run_state["teardown"] = True
 
-    def _teardown(self) -> None:  # noqa: B027 # empty abstract base class
+    def _teardown(self) -> None:  # ruff:ignore[empty-method-without-abstract-decorator] # empty abstract base class
         pass
 
     def _platform_check(self) -> None:
@@ -321,10 +321,10 @@ class ToxEnv(ABC):  # noqa: PLR0904
         self._handle_env_tmp_dir()
         self._handle_core_tmp_dir()
 
-    def _setup_with_env(self) -> None:  # noqa: B027 # empty abstract base class
+    def _setup_with_env(self) -> None:  # ruff:ignore[empty-method-without-abstract-decorator] # empty abstract base class
         pass
 
-    def _done_with_setup(self) -> None:  # noqa: B027 # empty abstract base class
+    def _done_with_setup(self) -> None:  # ruff:ignore[empty-method-without-abstract-decorator] # empty abstract base class
         """Called when setup is done."""
 
     def _handle_env_tmp_dir(self) -> None:
@@ -340,7 +340,7 @@ class ToxEnv(ABC):  # noqa: PLR0904
         ensure_cachedir_tag(self.core["work_dir"])
         ensure_gitignore(cast("Path", self.core["work_dir"]))
 
-    def _clean(self, transitive: bool = False) -> None:  # noqa: ARG002, FBT001, FBT002
+    def _clean(self, transitive: bool = False) -> None:  # ruff:ignore[unused-method-argument, boolean-type-hint-positional-argument, boolean-default-value-positional-argument]
         if self._run_state["clean"]:  # pragma: no branch
             return  # pragma: no cover
         env_dir = self.env_dir
@@ -421,11 +421,11 @@ class ToxEnv(ABC):  # noqa: PLR0904
         values.update(dict.fromkeys((existing or os.environ.get("PATH", "")).split(os.pathsep)))
         return os.pathsep.join(values)
 
-    def execute(  # noqa: PLR0913
+    def execute(  # ruff:ignore[too-many-arguments]
         self,
         cmd: Sequence[Path | str],
         stdin: StdinSource,
-        show: bool | None = None,  # noqa: FBT001
+        show: bool | None = None,  # ruff:ignore[boolean-type-hint-positional-argument]
         cwd: Path | None = None,
         run_id: str = "",
         executor: Execute | None = None,
@@ -449,7 +449,7 @@ class ToxEnv(ABC):  # noqa: PLR0904
             status.interrupt()
 
     @contextmanager
-    def allow_post_commands_after_interrupt(self, enabled: bool) -> Iterator[None]:  # noqa: FBT001
+    def allow_post_commands_after_interrupt(self, enabled: bool) -> Iterator[None]:  # ruff:ignore[boolean-type-hint-positional-argument]
         """Context manager to allow commands_post execution after interrupt when enabled."""
         if enabled and self._interrupted and not self._fully_interrupted:
             self._allow_interrupted_execution = True
@@ -459,11 +459,11 @@ class ToxEnv(ABC):  # noqa: PLR0904
             self._allow_interrupted_execution = False
 
     @contextmanager
-    def execute_async(  # noqa: PLR0913
+    def execute_async(  # ruff:ignore[too-many-arguments]
         self,
         cmd: Sequence[Path | str],
         stdin: StdinSource,
-        show: bool | None = None,  # noqa: FBT001
+        show: bool | None = None,  # ruff:ignore[boolean-type-hint-positional-argument]
         cwd: Path | None = None,
         run_id: str = "",
         executor: Execute | None = None,
@@ -473,7 +473,7 @@ class ToxEnv(ABC):  # noqa: PLR0904
         if cwd is None:
             cwd = self.core["tox_root"]
         if show is None:
-            show = self.options.verbosity > 3  # noqa: PLR2004
+            show = self.options.verbosity > 3  # ruff:ignore[magic-value-comparison]
         request = ExecuteRequest(cmd, cwd, self.environment_variables, stdin, run_id, allow=self._allow_externals)
         if request.cwd == _CWD:
             repr_cwd = ""
@@ -540,7 +540,7 @@ class ToxEnv(ABC):  # noqa: PLR0904
         executor: Execute,
         out_err: OutErr,
         request: ExecuteRequest,
-        show: bool,  # noqa: FBT001
+        show: bool,  # ruff:ignore[boolean-type-hint-positional-argument]
     ) -> Iterator[ExecuteStatus]:
         with executor.call(
             request=request,
@@ -551,7 +551,7 @@ class ToxEnv(ABC):  # noqa: PLR0904
             yield execute_status
 
     @contextmanager
-    def display_context(self, suspend: bool) -> Iterator[None]:  # noqa: FBT001
+    def display_context(self, suspend: bool) -> Iterator[None]:  # ruff:ignore[boolean-type-hint-positional-argument]
         with self._log_context(), self.log_handler.suspend_out_err(suspend, self._suspended_out_err) as out_err:
             if suspend:  # only set if suspended
                 self._suspended_out_err = out_err

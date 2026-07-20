@@ -153,7 +153,7 @@ class RunToxEnv(ToxEnv, ABC):
             with package_env.display_context(suspend=self._has_display_suspended):
                 getattr(package_env, method_name)(*args)
 
-    def _clean(self, transitive: bool = False) -> None:  # noqa: FBT001, FBT002
+    def _clean(self, transitive: bool = False) -> None:  # ruff:ignore[boolean-type-hint-positional-argument, boolean-default-value-positional-argument]
         if not self._run_state["clean"] and self.env_dir.exists():
             try:
                 self._run_recreate_commands()
@@ -164,10 +164,10 @@ class RunToxEnv(ToxEnv, ABC):
             for pkg_env in self.package_envs:
                 if cast("bool", pkg_env.conf["recreate"]):
                     with pkg_env.display_context(suspend=self._has_display_suspended):
-                        pkg_env._clean()  # noqa: SLF001
+                        pkg_env._clean()  # ruff:ignore[private-member-access]
 
     def _run_recreate_commands(self) -> None:
-        from tox.session.cmd.run.single import run_command_set  # noqa: PLC0415
+        from tox.session.cmd.run.single import run_command_set  # ruff:ignore[import-outside-top-level]
 
         command_set: list[Command] = self.conf["recreate_commands"]
         if not command_set:

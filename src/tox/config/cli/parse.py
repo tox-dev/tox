@@ -58,7 +58,9 @@ def _get_base(args: Sequence[str]) -> tuple[int, ToxHandler, Source]:
         ...  # ignore parse errors, such as -va raises ignored explicit argument 'a'
     guess_verbosity = parsed.verbosity
     handler = setup_report(guess_verbosity, parsed.is_colored)
-    from tox.plugin.manager import MANAGER  # load the plugin system right after we set up report  # noqa: PLC0415
+    from tox.plugin.manager import (
+        MANAGER,  # load the plugin system right after we set up report
+    )
 
     try:
         source = discover_source(parsed.config_file, parsed.root_dir)
@@ -74,7 +76,7 @@ def _get_base(args: Sequence[str]) -> tuple[int, ToxHandler, Source]:
 
 
 def _empty_source() -> Source:
-    from tox.config.source.tox_ini import ToxIni  # noqa: PLC0415
+    from tox.config.source.tox_ini import ToxIni  # ruff:ignore[import-outside-top-level]
 
     return ToxIni(Path.cwd() / "tox.ini", content="")
 
@@ -83,7 +85,7 @@ def _get_all(args: Sequence[str]) -> tuple[Parsed, dict[str, Callable[[State], i
     """Parse all the options."""
     tox_parser = _get_parser()
     try:
-        import argcomplete  # noqa: PLC0415
+        import argcomplete  # ruff:ignore[import-outside-top-level]
 
         argcomplete.autocomplete(tox_parser)
     except ImportError:
@@ -99,7 +101,7 @@ def _get_all(args: Sequence[str]) -> tuple[Parsed, dict[str, Callable[[State], i
 def _get_parser() -> ToxParser:
     tox_parser = ToxParser.core()  # load the core options
     # plus options setup by plugins
-    from tox.plugin.manager import MANAGER  # noqa: PLC0415
+    from tox.plugin.manager import MANAGER  # ruff:ignore[import-outside-top-level]
 
     MANAGER.tox_add_option(tox_parser)
     tox_parser.fix_defaults()
@@ -108,7 +110,7 @@ def _get_parser() -> ToxParser:
 
 def _get_parser_doc() -> ToxParser:
     # trigger register of tox env types (during normal run we call this later to handle plugins)
-    from tox.plugin.manager import MANAGER  # pragma: no cover  # noqa: PLC0415
+    from tox.plugin.manager import MANAGER  # pragma: no cover  # ruff:ignore[import-outside-top-level]
 
     MANAGER.load_plugins(Path.cwd())
 

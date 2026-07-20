@@ -44,7 +44,7 @@ class State:
 
 @impl
 def tox_add_option(parser: ToxParser) -> None:
-    from tox.tox_env.register import REGISTER  # noqa: PLC0415
+    from tox.tox_env.register import REGISTER  # ruff:ignore[import-outside-top-level]
 
     parser.add_argument(
         "--runner",

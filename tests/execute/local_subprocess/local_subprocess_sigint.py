@@ -39,16 +39,16 @@ out_err = (
 
 def show_outcome(outcome: Outcome | None) -> None:
     if outcome is not None:  # pragma: no branch
-        print(outcome.exit_code)  # noqa: T201
-        print(repr(outcome.out))  # noqa: T201
-        print(repr(outcome.err))  # noqa: T201
-        print(outcome.elapsed, end="")  # noqa: T201
-        print("done show outcome", file=sys.stderr)  # noqa: T201
+        print(outcome.exit_code)  # ruff:ignore[print]
+        print(repr(outcome.out))  # ruff:ignore[print]
+        print(repr(outcome.err))  # ruff:ignore[print]
+        print(outcome.elapsed, end="")  # ruff:ignore[print]
+        print("done show outcome", file=sys.stderr)  # ruff:ignore[print]
 
 
 def handler(s: int, f: FrameType | None) -> None:
     logging.info("signal %s at %s", s, f)
-    global interrupt_done  # noqa: PLW0603
+    global interrupt_done  # ruff:ignore[global-statement]
     if interrupt_done is False:  # pragma: no branch
         interrupt_done = True
         logging.info("interrupt via %s", status)
@@ -74,7 +74,7 @@ try:
         _wait_for_exit(status)
     status_outcome = status.outcome
 except Exception as exception:  # pragma: no cover
-    logging.exception(exception)  # noqa: TRY401 # pragma: no cover
+    logging.exception(exception)  # ruff:ignore[verbose-log-message] # pragma: no cover
 finally:
     logging.info("done")
     logging.shutdown()

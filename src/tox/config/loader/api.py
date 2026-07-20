@@ -20,7 +20,7 @@ if TYPE_CHECKING:
     from .section import Section
 
 
-class Override:  # noqa: PLW1641
+class Override:  # ruff:ignore[eq-without-hash]
     """An override for config definitions."""
 
     def __init__(self, value: str) -> None:
@@ -143,7 +143,7 @@ class Loader(Convert[T]):
     def __contains__(self, item: str) -> bool:
         return item in self.found_keys()
 
-    def load(  # noqa: PLR0913
+    def load(  # ruff:ignore[too-many-arguments]
         self,
         key: str,
         of_type: type[V] | UnionType,
@@ -164,7 +164,7 @@ class Loader(Convert[T]):
         :returns: the converted type
 
         """
-        from tox.config.set_env import SetEnv  # noqa: PLC0415
+        from tox.config.set_env import SetEnv  # ruff:ignore[import-outside-top-level]
 
         overrides = [o for alias in (key, *all_keys) for o in self.overrides.get(alias, [])]
         converted = None
@@ -198,14 +198,14 @@ class Loader(Convert[T]):
 
         return cast("V", converted)  # guaranteed non-None: either build() succeeded or overrides set it
 
-    def build(  # noqa: PLR0913
+    def build(  # ruff:ignore[too-many-arguments]
         self,
-        key: str,  # noqa: ARG002
+        key: str,  # ruff:ignore[unused-method-argument]
         of_type: type[V] | UnionType,
         factory: Factory[V],
-        conf: Config | None,  # noqa: ARG002
+        conf: Config | None,  # ruff:ignore[unused-method-argument]
         raw: T,
-        args: ConfigLoadArgs,  # noqa: ARG002
+        args: ConfigLoadArgs,  # ruff:ignore[unused-method-argument]
     ) -> V:
         """Materialize the raw configuration value from the loader.
 

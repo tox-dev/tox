@@ -87,7 +87,7 @@ def _load_exact_source(config_file: Path) -> Source:
     for src_type in exact_match or SOURCE_TYPES:  # pragma: no branch
         try:
             return src_type(config_file)
-        except MissingRequiredConfigKeyError:  # noqa: PERF203
+        except MissingRequiredConfigKeyError:  # ruff:ignore[try-except-in-loop]
             pass
         except ValueError as exc:
             msg = f"{src_type.__name__} failed loading {config_file.resolve()} due to {exc}"

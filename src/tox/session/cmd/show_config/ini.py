@@ -27,7 +27,7 @@ def show_config_ini(state: State) -> int:
         if is_first:
             is_first = False
         else:
-            print()  # noqa: T201
+            print()  # ruff:ignore[print]
         _print_section_header(is_colored, f"[testenv:{tox_env.conf.name}]")
         if not keys:
             _print_key_value(is_colored, "type", type(tox_env).__name__)
@@ -41,43 +41,43 @@ def show_config_ini(state: State) -> int:
         _print_env(state.envs[name])
 
     if show_everything or state.conf.options.show_core:
-        print()  # noqa: T201
+        print()  # ruff:ignore[print]
         _print_section_header(is_colored, "[tox]")
         if _print_conf(is_colored, state.conf.core, keys):
             has_exception = True
     return -1 if has_exception else 0
 
 
-def _colored(is_colored: bool, color: int, msg: str) -> str:  # noqa: FBT001
+def _colored(is_colored: bool, color: int, msg: str) -> str:  # ruff:ignore[boolean-type-hint-positional-argument]
     return f"{color}{msg}{Fore.RESET}" if is_colored else msg
 
 
-def _print_section_header(is_colored: bool, name: str) -> None:  # noqa: FBT001
-    print(_colored(is_colored, Fore.YELLOW, name))  # noqa: T201
+def _print_section_header(is_colored: bool, name: str) -> None:  # ruff:ignore[boolean-type-hint-positional-argument]
+    print(_colored(is_colored, Fore.YELLOW, name))  # ruff:ignore[print]
 
 
-def _print_comment(is_colored: bool, comment: str) -> None:  # noqa: FBT001
-    print(_colored(is_colored, Fore.CYAN, comment))  # noqa: T201
+def _print_comment(is_colored: bool, comment: str) -> None:  # ruff:ignore[boolean-type-hint-positional-argument]
+    print(_colored(is_colored, Fore.CYAN, comment))  # ruff:ignore[print]
 
 
-def _print_key_value(is_colored: bool, key: str, value: str, multi_line: bool = False) -> None:  # noqa: FBT001, FBT002
-    print(_colored(is_colored, Fore.GREEN, key), end="")  # noqa: T201
-    print(" =", end="")  # noqa: T201
+def _print_key_value(is_colored: bool, key: str, value: str, multi_line: bool = False) -> None:  # ruff:ignore[boolean-type-hint-positional-argument, boolean-default-value-positional-argument]
+    print(_colored(is_colored, Fore.GREEN, key), end="")  # ruff:ignore[print]
+    print(" =", end="")  # ruff:ignore[print]
     if multi_line:
-        print()  # noqa: T201
+        print()  # ruff:ignore[print]
         value_str = indent(value, prefix="  ")
     else:
-        print(" ", end="")  # noqa: T201
+        print(" ", end="")  # ruff:ignore[print]
         value_str = value
-    print(value_str)  # noqa: T201
+    print(value_str)  # ruff:ignore[print]
 
 
-def _print_conf(is_colored: bool, conf: ConfigSet, keys: Iterable[str]) -> bool:  # noqa: FBT001
+def _print_conf(is_colored: bool, conf: ConfigSet, keys: Iterable[str]) -> bool:  # ruff:ignore[boolean-type-hint-positional-argument]
     has_exception = False
     for key in keys or conf:
         if key not in conf:
             continue
-        key = conf.primary_key(key)  # noqa: PLW2901
+        key = conf.primary_key(key)  # ruff:ignore[redefined-loop-name]
         try:
             value = conf[key]
             as_str, multi_line = stringify(value)

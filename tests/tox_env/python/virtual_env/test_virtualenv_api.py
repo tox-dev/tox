@@ -31,7 +31,7 @@ def virtualenv_opt(monkeypatch: MonkeyPatch, mocker: MockerFixture) -> VirtualEn
     opts = VirtualEnvOptions()
     mocker.patch(
         "tox.tox_env.python.virtual_env.api.session_via_cli",
-        side_effect=lambda args, options, setup_logging, env: session_via_cli(  # noqa: ARG005
+        side_effect=lambda args, options, setup_logging, env: session_via_cli(  # ruff:ignore[unused-lambda-argument]
             args,
             opts,
             setup_logging,
@@ -142,7 +142,7 @@ def test_recreate_when_virtualenv_changes(tox_project: ToxProjectCreator, mocker
     proj = tox_project({"tox.ini": "[testenv]\npackage=skip"})
     proj.run("r")
 
-    from tox.tox_env.python.virtual_env import api  # noqa: PLC0415
+    from tox.tox_env.python.virtual_env import api  # ruff:ignore[import-outside-top-level]
 
     mocker.patch.object(api, "virtualenv_version", "1.0")
     result = proj.run("r")

@@ -94,5 +94,5 @@ def test_dont_replace(replace_one: ReplaceOne, value: str, exp_exception: str | 
     ],
 )
 def test_match_expression_repr(match_expression: MatchExpression, exp_repr: str) -> None:
-    print(match_expression)  # noqa: T201
+    print(match_expression)  # ruff:ignore[print]
     assert repr(match_expression) == exp_repr

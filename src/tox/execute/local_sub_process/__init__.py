@@ -48,7 +48,7 @@ IS_WIN = sys.platform == "win32"
 
 
 class LocalSubProcessExecutor(Execute):
-    def build_instance(  # noqa: PLR6301
+    def build_instance(  # ruff:ignore[no-self-use]
         self,
         request: ExecuteRequest,
         options: ExecuteOptions,
@@ -119,7 +119,7 @@ class LocalSubprocessExecuteStatus(ExecuteStatus):
     def _write_stdin_bytes(stdin: Any, bytes_content: bytes) -> None:
         if sys.platform == "win32":  # explicit check for mypy  # pragma: win32 cover
             # on Windows we have a PipeHandle object here rather than a file stream
-            import _overlapped  # noqa: PLC0415,PLC2701
+            import _overlapped  # ruff:ignore[import-outside-top-level, import-private-name]
 
             ov = _overlapped.Overlapped(0)
             ov.WriteFile(stdin.handle, bytes_content)
@@ -148,13 +148,13 @@ class LocalSubprocessExecuteFailedStatus(ExecuteStatus):
     def exit_code(self) -> int | None:
         return self._exit_code
 
-    def wait(self, timeout: float | None = None) -> int | None:  # noqa: ARG002
+    def wait(self, timeout: float | None = None) -> int | None:  # ruff:ignore[unused-method-argument]
         return self._exit_code  # pragma: no cover
 
     def write_stdin(self, content: str) -> None:
         """Cannot write."""
 
-    def interrupt(self) -> None:  # noqa: PLR6301
+    def interrupt(self) -> None:  # ruff:ignore[no-self-use]
         return None  # pragma: no cover # nothing running so nothing to interrupt
 
 
@@ -165,7 +165,7 @@ class LocalSubProcessExecuteInstance(ExecuteInstance):
         options: ExecuteOptions,
         out: SyncWrite,
         err: SyncWrite,
-        on_exit_drain: bool = True,  # noqa: FBT001, FBT002
+        on_exit_drain: bool = True,  # ruff:ignore[boolean-type-hint-positional-argument, boolean-default-value-positional-argument]
     ) -> None:
         super().__init__(request, options, out, err)
         self.process: Popen[bytes] | None = None
@@ -227,7 +227,7 @@ class LocalSubProcessExecuteInstance(ExecuteInstance):
         except OSError as exception:
             # We log a nice error message to avout returning opaque error codes,
             # like exit code 2 (filenotfound).
-            logging.error("Exception running subprocess %s", exception)  # noqa: TRY400
+            logging.error("Exception running subprocess %s", exception)  # ruff:ignore[error-instead-of-exception]
             return LocalSubprocessExecuteFailedStatus(self.options, self._out, self._err, exception.errno)
 
         status = LocalSubprocessExecuteStatus(self.options, self._out, self._err, process)
@@ -321,10 +321,10 @@ def _pty(key: str) -> tuple[int, int] | None:
         return None
 
     try:
-        import fcntl  # noqa: PLC0415
-        import pty  # noqa: PLC0415
-        import struct  # noqa: PLC0415
-        import termios  # noqa: PLC0415
+        import fcntl  # ruff:ignore[import-outside-top-level]
+        import pty  # ruff:ignore[import-outside-top-level]
+        import struct  # ruff:ignore[import-outside-top-level]
+        import termios  # ruff:ignore[import-outside-top-level]
     except ImportError:  # pragma: no cover
         return None  # cannot proceed on platforms without pty support
 

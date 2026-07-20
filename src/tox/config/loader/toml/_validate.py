@@ -22,7 +22,7 @@ if TYPE_CHECKING:
 T = TypeVar("T")
 
 
-def validate(val: TomlTypes, of_type: type[T]) -> T:  # noqa: C901, PLR0912
+def validate(val: TomlTypes, of_type: type[T]) -> T:  # ruff:ignore[complex-structure, too-many-branches]
     casting_to = get_origin(of_type) or of_type.__class__
     type_args = get_args(of_type)
     msg = ""
@@ -69,7 +69,7 @@ def validate(val: TomlTypes, of_type: type[T]) -> T:  # noqa: C901, PLR0912
             try:  # check if it can be converted
                 of_type(val)
                 fail = False
-            except Exception:  # noqa: BLE001
+            except Exception:  # ruff:ignore[blind-except]
                 fail = True
         if fail:
             msg = f"{val!r} is not of type {of_type.__name__!r}"

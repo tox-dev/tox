@@ -41,13 +41,13 @@ def build_structured_result(state: State) -> tuple[dict[str, Any], bool]:
 def write_output(
     output: str,
     output_file: Path | None,
-    is_colored: bool,  # noqa: FBT001
+    is_colored: bool,  # ruff:ignore[boolean-type-hint-positional-argument]
     colorize: Callable[[str], str],
 ) -> None:
     if output_file is not None:
         Path(output_file).write_text(output + "\n", encoding="utf-8")
     else:
-        print(colorize(output) if is_colored else output)  # noqa: T201
+        print(colorize(output) if is_colored else output)  # ruff:ignore[print]
 
 
 def _collect_conf(conf: ConfigSet, keys: list[str]) -> tuple[dict[str, Any], bool]:
@@ -56,7 +56,7 @@ def _collect_conf(conf: ConfigSet, keys: list[str]) -> tuple[dict[str, Any], boo
     for key in keys or conf:
         if key not in conf:
             continue
-        key = conf.primary_key(key)  # noqa: PLW2901
+        key = conf.primary_key(key)  # ruff:ignore[redefined-loop-name]
         try:
             data[key] = to_native(conf[key])
         except Exception as exception:

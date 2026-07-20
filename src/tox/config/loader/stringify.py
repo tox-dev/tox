@@ -9,7 +9,7 @@ from tox.config.types import Command, EnvList
 from tox.tox_env.python.pip.req_file import PythonDeps
 
 
-def stringify(value: Any) -> tuple[str, bool]:  # noqa: PLR0911
+def stringify(value: Any) -> tuple[str, bool]:  # ruff:ignore[too-many-return-statements]
     """Transform a value into a string representation.
 
     :param value: the value in question

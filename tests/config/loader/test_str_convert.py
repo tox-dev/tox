@@ -45,12 +45,12 @@ from typing import Literal
         pytest.param("a", Path("a"), Path, id="str_a_to_path"),
         pytest.param("a", Command(["a"]), Command, id="str_a_to_command"),
         pytest.param("a,b", EnvList(["a", "b"]), EnvList, id="str_a_b_to_envlist"),
-        pytest.param("", None, Optional[int], id="empty_to_optional_int"),  # noqa: UP045
-        pytest.param("1", 1, Optional[int], id="str_1_to_optional_int"),  # noqa: UP045
-        pytest.param("", None, Optional[str], id="empty_to_optional_str"),  # noqa: UP045
-        pytest.param("1", "1", Optional[str], id="str_1_to_optional_str"),  # noqa: UP045
-        pytest.param("", None, Optional[list[str]], id="empty_to_optional_list_str"),  # noqa: UP045
-        pytest.param("1,2", ["1", "2"], Optional[list[str]], id="str_1_2_to_optional_list_str"),  # noqa: UP045
+        pytest.param("", None, Optional[int], id="empty_to_optional_int"),  # ruff:ignore[non-pep604-annotation-optional]
+        pytest.param("1", 1, Optional[int], id="str_1_to_optional_int"),  # ruff:ignore[non-pep604-annotation-optional]
+        pytest.param("", None, Optional[str], id="empty_to_optional_str"),  # ruff:ignore[non-pep604-annotation-optional]
+        pytest.param("1", "1", Optional[str], id="str_1_to_optional_str"),  # ruff:ignore[non-pep604-annotation-optional]
+        pytest.param("", None, Optional[list[str]], id="empty_to_optional_list_str"),  # ruff:ignore[non-pep604-annotation-optional]
+        pytest.param("1,2", ["1", "2"], Optional[list[str]], id="str_1_2_to_optional_list_str"),  # ruff:ignore[non-pep604-annotation-optional]
         pytest.param("", None, int | None, id="empty_to_int_or_none"),
         pytest.param("1", 1, int | None, id="str_1_to_int_or_none"),
         pytest.param("", None, str | None, id="empty_to_str_or_none"),
@@ -72,7 +72,7 @@ def test_str_convert_ok(raw: str, value: Any, of_type: type[Any]) -> None:
         pytest.param("3", Literal["1", "2"], ValueError, r"3 must be one of \('1', '2'\)", id="fail_literal_1_2"),
         pytest.param(
             "3",
-            Union[str, int],  # noqa: UP007
+            Union[str, int],  # ruff:ignore[non-pep604-annotation-union]
             TypeError,
             r"3 cannot cast to (typing.Union\[str, int\]|str \| int)",
             id="fail_union_str_int",

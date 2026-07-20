@@ -68,7 +68,7 @@ class IniLoader(StrConvert, Loader[str]):
                 raise KeyError(value)
         return factor_filtered.replace("\\\n", "")
 
-    def build(  # noqa: PLR0913
+    def build(  # ruff:ignore[too-many-arguments]
         self,
         key: str,
         of_type: type[V] | UnionType,

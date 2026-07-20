@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set  # noqa: UP035
+from typing import Any, Dict, List, Optional, Set  # ruff:ignore[deprecated-import]
 
 import pytest
 
@@ -31,16 +31,16 @@ def test_memory_loader_override() -> None:
         pytest.param(1, int, 1, id="int_1"),
         pytest.param("magic", str, "magic", id="str_magic"),
         pytest.param({"1"}, set[str], {"1"}, id="set_str_1"),
-        pytest.param({"1"}, Set[str], {"1"}, id="set_typing_str_1"),  # noqa: UP006
+        pytest.param({"1"}, Set[str], {"1"}, id="set_typing_str_1"),  # ruff:ignore[non-pep585-annotation]
         pytest.param([1], list[int], [1], id="list_int_1"),
-        pytest.param([1], List[int], [1], id="list_typing_int_1"),  # noqa: UP006
+        pytest.param([1], List[int], [1], id="list_typing_int_1"),  # ruff:ignore[non-pep585-annotation]
         pytest.param({1: 2}, dict[int, int], {1: 2}, id="dict_int_int_1_2"),
-        pytest.param({1: 2}, Dict[int, int], {1: 2}, id="dict_int_int_1_2"),  # noqa: UP006
+        pytest.param({1: 2}, Dict[int, int], {1: 2}, id="dict_int_int_1_2"),  # ruff:ignore[non-pep585-annotation]
         pytest.param(Path.cwd(), Path, Path.cwd(), id="path_cwd"),
         pytest.param(Command(["a"]), Command, Command(["a"]), id="command_a"),
         pytest.param(EnvList("a,b"), EnvList, EnvList("a,b"), id="envlist_a_b"),
-        pytest.param(1, Optional[int], 1, id="optional_int_1"),  # noqa: UP045
-        pytest.param("1", Optional[str], "1", id="optional_str_1"),  # noqa: UP045
+        pytest.param(1, Optional[int], 1, id="optional_int_1"),  # ruff:ignore[non-pep604-annotation-optional]
+        pytest.param("1", Optional[str], "1", id="optional_str_1"),  # ruff:ignore[non-pep604-annotation-optional]
         pytest.param(1, int | None, 1, id="int_or_none_1"),
         pytest.param("1", str | None, "1", id="str_or_none_1"),
         pytest.param(0, bool, False, id="bool_false_from_0"),
@@ -50,10 +50,10 @@ def test_memory_loader_override() -> None:
         pytest.param({1}, set[str], {"1"}, id="set_str_from_int_1"),
         pytest.param({"1"}, list[int], [1], id="list_int_from_str_1"),
         pytest.param({"1": "2"}, dict[int, int], {1: 2}, id="dict_int_int_from_str_1_2"),
-        pytest.param(os.getcwd(), Path, Path.cwd(), id="path_from_getcwd"),  # noqa: PTH109
+        pytest.param(os.getcwd(), Path, Path.cwd(), id="path_from_getcwd"),  # ruff:ignore[os-getcwd]
         pytest.param("pip list", Command, Command(["pip", "list"]), id="command_pip_list"),
         pytest.param("a\nb", EnvList, EnvList(["a", "b"]), id="envlist_a_b_newline"),
-        pytest.param("1", Optional[int], 1, id="optional_int_from_str_1"),  # noqa: UP045
+        pytest.param("1", Optional[int], 1, id="optional_int_from_str_1"),  # ruff:ignore[non-pep604-annotation-optional]
         pytest.param("1", int | None, 1, id="int_or_none_from_str_1"),
     ],
 )

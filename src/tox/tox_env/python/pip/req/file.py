@@ -100,7 +100,7 @@ class ParsedRequirement:
                 match = _EXTRA_PATH.fullmatch(Path(req).name)
                 if match:
                     for extra in match.group(2).split(","):
-                        extra = extra.strip()  # noqa: PLW2901
+                        extra = extra.strip()  # ruff:ignore[redefined-loop-name]
                         if not extra:
                             continue
                         if not _EXTRA_ELEMENT.fullmatch(extra):
@@ -172,7 +172,7 @@ class ParsedLine:
         lineno: int,
         args: str,
         opts: Namespace,
-        constraint: bool,  # noqa: FBT001
+        constraint: bool,  # ruff:ignore[boolean-type-hint-positional-argument]
     ) -> None:
         self.filename = filename
         self.lineno = lineno
@@ -192,7 +192,7 @@ class ParsedLine:
 
 
 class RequirementsFile:
-    def __init__(self, path: Path, constraint: bool) -> None:  # noqa: FBT001
+    def __init__(self, path: Path, constraint: bool) -> None:  # ruff:ignore[boolean-type-hint-positional-argument]
         self._path = path
         self._is_constraint: bool = constraint
         self._opt = Namespace()
@@ -238,7 +238,7 @@ class RequirementsFile:
         if self._requirements is None:
             self._requirements = self._parse_requirements(opt=self._opt, recurse=True)
 
-    def _parse_requirements(self, opt: Namespace, recurse: bool) -> list[ParsedRequirement]:  # noqa: FBT001
+    def _parse_requirements(self, opt: Namespace, recurse: bool) -> list[ParsedRequirement]:  # ruff:ignore[boolean-type-hint-positional-argument]
         result, found = [], set()
         for parsed_line in self._parse_and_recurse(str(self._path), self.is_constraint, recurse):
             if parsed_line.is_requirement:
@@ -252,7 +252,7 @@ class RequirementsFile:
         result.sort(key=self._key_func)
         return result
 
-    def _key_func(self, line: ParsedRequirement) -> tuple[int, tuple[int, str, str]]:  # noqa: PLR6301
+    def _key_func(self, line: ParsedRequirement) -> tuple[int, tuple[int, str, str]]:  # ruff:ignore[no-self-use]
         order: dict[type, int] = {Requirement: 0, Path: 1, str: 2}
         of_type = order[type(line.requirement)]
         between = of_type, str(line.requirement).lower(), str(line.options)
@@ -265,8 +265,8 @@ class RequirementsFile:
     def _parse_and_recurse(
         self,
         filename: str,
-        constraint: bool,  # noqa: FBT001
-        recurse: bool,  # noqa: FBT001
+        constraint: bool,  # ruff:ignore[boolean-type-hint-positional-argument]
+        recurse: bool,  # ruff:ignore[boolean-type-hint-positional-argument]
     ) -> Iterator[ParsedLine]:
         for line in self._parse_file(filename, constraint):
             if not line.is_requirement and (line.opts.requirements or line.opts.constraints):
@@ -279,14 +279,14 @@ class RequirementsFile:
                 elif not _SCHEME_RE.search(req_path):  # original file and nested file are paths
                     req_path = str(Path(filename).parent / req_path)  # do a join so relative paths work
                 if recurse:
-                    yield from self._req_parser._parse_and_recurse(req_path, nested_constraint, recurse)  # noqa: SLF001
+                    yield from self._req_parser._parse_and_recurse(req_path, nested_constraint, recurse)  # ruff:ignore[private-member-access]
                 else:
                     line.filename = req_path
                     yield line
             else:
                 yield line
 
-    def _parse_file(self, url: str, constraint: bool) -> Iterator[ParsedLine]:  # noqa: FBT001
+    def _parse_file(self, url: str, constraint: bool) -> Iterator[ParsedLine]:  # ruff:ignore[boolean-type-hint-positional-argument]
         content = self._get_file_content(url)
         for line_number, line in self._pre_process(content):
             args_str, opts = self._parse_line(line)
@@ -302,7 +302,7 @@ class RequirementsFile:
         """
         scheme = get_url_scheme(url)
         if scheme in {"http", "https"}:
-            with urlopen(url, timeout=_HTTP_TIMEOUT) as response:  # noqa: S310
+            with urlopen(url, timeout=_HTTP_TIMEOUT) as response:  # ruff:ignore[suspicious-url-open-usage]
                 return self._read_decode(response)
         elif scheme == "file":
             url = url_to_path(url)
@@ -358,7 +358,7 @@ class RequirementsFile:
             req_options["hash"] = hash_values
         return ParsedRequirement(line.requirement, req_options, line.filename, line.lineno)
 
-    def _merge_option_line(  # noqa: C901, PLR0912, PLR0915, PLR6301
+    def _merge_option_line(  # ruff:ignore[complex-structure, too-many-branches, too-many-statements, no-self-use]
         self,
         base_opt: Namespace,
         opt: Namespace,
@@ -404,7 +404,7 @@ class RequirementsFile:
             value = opt.find_links[0]
             req_dir = Path(filename).absolute().parent
             relative_to_reqs_file = req_dir / value
-            if os.path.exists(str(relative_to_reqs_file)):  # noqa: PTH110 # Path.exists fails on win32 <=3.7 with URI
+            if os.path.exists(str(relative_to_reqs_file)):  # ruff:ignore[os-path-exists] # Path.exists fails on win32 <=3.7 with URI
                 value = str(relative_to_reqs_file)  # pragma: no cover
             if value not in base_opt.find_links:
                 base_opt.find_links.append(value)
@@ -452,10 +452,10 @@ class RequirementsFile:
         for line_number, line in lines_enum:
             if not line.endswith("\\") or _COMMENT_RE.match(line):
                 if _COMMENT_RE.match(line):
-                    line = f" {line}"  # noqa: PLW2901 # this ensures comments are always matched later
+                    line = f" {line}"  # ruff:ignore[redefined-loop-name] # this ensures comments are always matched later
                 if new_line:
                     new_line.append(line)
-                    assert primary_line_number is not None  # noqa: S101
+                    assert primary_line_number is not None  # ruff:ignore[assert]
                     yield primary_line_number, "".join(new_line)
                     new_line = []
                 else:
@@ -466,7 +466,7 @@ class RequirementsFile:
                 new_line.append(line.strip("\\"))
         # last line contains \
         if new_line:
-            assert primary_line_number is not None  # noqa: S101
+            assert primary_line_number is not None  # ruff:ignore[assert]
             yield primary_line_number, "".join(new_line)
 
     @staticmethod
@@ -514,7 +514,7 @@ class RequirementsFile:
             self._as_root_args = result
         return self._as_root_args
 
-    def _option_to_args(self, opt: Namespace) -> list[str]:  # noqa: C901, PLR0912, PLR6301
+    def _option_to_args(self, opt: Namespace) -> list[str]:  # ruff:ignore[complex-structure, too-many-branches, no-self-use]
         result: list[str] = []
         for req in getattr(opt, "requirements", []):
             result.extend(("-r", req))

@@ -132,7 +132,7 @@ def test_plugin_can_set_core_conf(
     tmp_path: Path,
 ) -> None:
     @impl
-    def tox_add_core_config(core_conf: CoreConfigSet, state: State) -> None:  # noqa: ARG001
+    def tox_add_core_config(core_conf: CoreConfigSet, state: State) -> None:  # ruff:ignore[unused-function-argument]
         core_conf.loaders.insert(0, MemoryLoader(**{dir_name: tmp_path}))
 
     register_inline_plugin(mocker, tox_add_core_config)
@@ -146,7 +146,7 @@ def test_plugin_can_set_core_conf(
 
 def test_plugin_can_read_env_list(tox_project: ToxProjectCreator, mocker: MockerFixture) -> None:
     @impl
-    def tox_add_core_config(core_conf: CoreConfigSet, state: State) -> None:  # noqa: ARG001
+    def tox_add_core_config(core_conf: CoreConfigSet, state: State) -> None:  # ruff:ignore[unused-function-argument]
         logging.warning("All envs: %s", ", ".join(state.envs.iter(only_active=False)))
         logging.warning("Default envs: %s", ", ".join(state.envs.iter(only_active=True)))
 
@@ -168,7 +168,7 @@ def test_plugin_can_read_env_list(tox_project: ToxProjectCreator, mocker: Mocker
 
 def test_plugin_can_read_sections(tox_project: ToxProjectCreator, mocker: MockerFixture) -> None:
     @impl
-    def tox_add_core_config(core_conf: CoreConfigSet, state: State) -> None:  # noqa: ARG001
+    def tox_add_core_config(core_conf: CoreConfigSet, state: State) -> None:  # ruff:ignore[unused-function-argument]
         logging.warning("Sections: %s", ", ".join(i.key for i in state.conf.sections()))
 
     register_inline_plugin(mocker, tox_add_core_config)
@@ -187,7 +187,7 @@ def test_plugin_can_read_sections(tox_project: ToxProjectCreator, mocker: Mocker
 
 def test_plugin_injects_invalid_python_run(tox_project: ToxProjectCreator, mocker: MockerFixture) -> None:
     @impl
-    def tox_add_env_config(env_conf: EnvConfigSet, state: State) -> None:  # noqa: ARG001
+    def tox_add_env_config(env_conf: EnvConfigSet, state: State) -> None:  # ruff:ignore[unused-function-argument]
         env_conf.loaders.insert(0, MemoryLoader(deps=[1]))
         with pytest.raises(TypeError, match="deps expected"):
             assert env_conf["deps"]
@@ -201,7 +201,7 @@ def test_plugin_injects_invalid_python_run(tox_project: ToxProjectCreator, mocke
 
 def test_plugin_extend_pass_env(tox_project: ToxProjectCreator, mocker: MockerFixture) -> None:
     @impl
-    def tox_add_env_config(env_conf: EnvConfigSet, state: State) -> None:  # noqa: ARG001
+    def tox_add_env_config(env_conf: EnvConfigSet, state: State) -> None:  # ruff:ignore[unused-function-argument]
         env_conf["pass_env"].append("MAGIC_*")
 
     register_inline_plugin(mocker, tox_add_env_config)
@@ -224,7 +224,7 @@ def test_plugin_extend_pass_env(tox_project: ToxProjectCreator, mocker: MockerFi
 
 def test_plugin_extend_set_env(tox_project: ToxProjectCreator, mocker: MockerFixture) -> None:
     @impl
-    def tox_add_env_config(env_conf: EnvConfigSet, state: State) -> None:  # noqa: ARG001
+    def tox_add_env_config(env_conf: EnvConfigSet, state: State) -> None:  # ruff:ignore[unused-function-argument]
         env_conf["set_env"].update({"MAGI_CAL": "magi_cal"})
 
     register_inline_plugin(mocker, tox_add_env_config)
@@ -252,8 +252,8 @@ def test_plugin_config_frozen_past_add_env(tox_project: ToxProjectCreator, mocke
             try:
                 conf(config_set)  # call to not typed function
                 raise NotImplementedError
-            except RuntimeError as exc:  # noqa: PERF203
-                assert str(exc) == "config set has been marked final and cannot be extended"  # noqa: PT017
+            except RuntimeError as exc:  # ruff:ignore[try-except-in-loop]
+                assert str(exc) == "config set has been marked final and cannot be extended"  # ruff:ignore[pytest-assert-in-except]
 
     @impl
     def tox_before_run_commands(tox_env: ToxEnv) -> None:
@@ -261,7 +261,7 @@ def test_plugin_config_frozen_past_add_env(tox_project: ToxProjectCreator, mocke
         _cannot_extend_config(tox_env.core)
 
     @impl
-    def tox_after_run_commands(tox_env: ToxEnv, exit_code: int, outcomes: list[Outcome]) -> None:  # noqa: ARG001
+    def tox_after_run_commands(tox_env: ToxEnv, exit_code: int, outcomes: list[Outcome]) -> None:  # ruff:ignore[unused-function-argument]
         _cannot_extend_config(tox_env.conf)
         _cannot_extend_config(tox_env.core)
 
@@ -290,16 +290,16 @@ def test_disable_external_plugins(
     class DummyPluginA:
         @staticmethod
         @impl
-        def tox_add_option(parser: ToxParser) -> None:  # noqa: ARG004
+        def tox_add_option(parser: ToxParser) -> None:  # ruff:ignore[unused-static-method-argument]
             logging.warning("dummy plugin A called")
 
     class DummyPluginB:
         @staticmethod
         @impl
-        def tox_add_option(parser: ToxParser) -> None:  # noqa: ARG004
+        def tox_add_option(parser: ToxParser) -> None:  # ruff:ignore[unused-static-method-argument]
             logging.warning("dummy plugin B called")
 
-    def fake_load_entrypoints(self: pluggy.PluginManager, name: str) -> None:  # noqa: ARG001
+    def fake_load_entrypoints(self: pluggy.PluginManager, name: str) -> None:  # ruff:ignore[unused-function-argument]
         self.register(DummyPluginA(), name="dummy_plugin_a")
         self.register(DummyPluginB(), name="dummy_plugin_b")
 

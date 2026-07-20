@@ -53,9 +53,9 @@ def tox_add_option(parser: ToxParser) -> None:
 
 
 def show_config(state: State) -> int:
-    from .ini import show_config_ini  # noqa: PLC0415
-    from .json_format import show_config_json  # noqa: PLC0415
-    from .toml_format import show_config_toml  # noqa: PLC0415
+    from .ini import show_config_ini  # ruff:ignore[import-outside-top-level]
+    from .json_format import show_config_json  # ruff:ignore[import-outside-top-level]
+    from .toml_format import show_config_toml  # ruff:ignore[import-outside-top-level]
 
     fmt: ConfigFormat = state.conf.options.config_format
     if fmt == "json":

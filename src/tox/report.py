@@ -79,7 +79,7 @@ class _LogThreadLocal(local):
             self.name = previous
 
     @contextmanager
-    def suspend_out_err(self, yes: bool, out_err: OutErr | None = None) -> Iterator[OutErr]:  # noqa: FBT001
+    def suspend_out_err(self, yes: bool, out_err: OutErr | None = None) -> Iterator[OutErr]:  # ruff:ignore[boolean-type-hint-positional-argument]
         previous_out, previous_err = self.out_err
         if yes:
             if out_err is None:  # pragma: no branch
@@ -96,7 +96,7 @@ class _LogThreadLocal(local):
 
     @staticmethod
     def _make(prefix: str, based_of: TextIOWrapper) -> TextIOWrapper:
-        return TextIOWrapper(NamedBytesIO(f"{prefix}-{based_of.name}"), encoding=locale.getpreferredencoding(False))  # noqa: FBT003
+        return TextIOWrapper(NamedBytesIO(f"{prefix}-{based_of.name}"), encoding=locale.getpreferredencoding(False))  # ruff:ignore[boolean-positional-value-in-call]
 
 
 class NamedBytesIO(BytesIO):
@@ -108,7 +108,7 @@ class NamedBytesIO(BytesIO):
 class ToxHandler(logging.StreamHandler):  # is generic but at runtime doesn't take a type arg
     # """Controls tox output."""
 
-    def __init__(self, level: int, is_colored: bool, out_err: OutErr) -> None:  # noqa: FBT001
+    def __init__(self, level: int, is_colored: bool, out_err: OutErr) -> None:  # ruff:ignore[boolean-type-hint-positional-argument]
         self._local = _LogThreadLocal(out_err)
         super().__init__(stream=self.stdout)
         if is_colored:
@@ -116,7 +116,7 @@ class ToxHandler(logging.StreamHandler):  # is generic but at runtime doesn't ta
         self._is_colored = is_colored
         self._setup_level(is_colored, level)
 
-    def _setup_level(self, is_colored: bool, level: int) -> None:  # noqa: FBT001
+    def _setup_level(self, is_colored: bool, level: int) -> None:  # ruff:ignore[boolean-type-hint-positional-argument]
         self.setLevel(level)
         self._error_formatter = self._get_formatter(logging.ERROR, level, is_colored)
         self._warning_formatter = self._get_formatter(logging.WARNING, level, is_colored)
@@ -157,7 +157,7 @@ class ToxHandler(logging.StreamHandler):  # is generic but at runtime doesn't ta
         """Ignore anyone changing this."""
 
     @contextmanager
-    def suspend_out_err(self, yes: bool, out_err: OutErr | None = None) -> Iterator[OutErr]:  # noqa: FBT001
+    def suspend_out_err(self, yes: bool, out_err: OutErr | None = None) -> Iterator[OutErr]:  # ruff:ignore[boolean-type-hint-positional-argument]
         with self._local.suspend_out_err(yes, out_err) as out_err_res:
             yield out_err_res
 
@@ -167,7 +167,7 @@ class ToxHandler(logging.StreamHandler):  # is generic but at runtime doesn't ta
         self.stderr.buffer.write(out_err[1])
 
     @staticmethod
-    def _get_formatter(level: int, enabled_level: int, is_colored: bool) -> logging.Formatter:  # noqa: FBT001
+    def _get_formatter(level: int, enabled_level: int, is_colored: bool) -> logging.Formatter:  # ruff:ignore[boolean-type-hint-positional-argument]
         color: int | str = ""
         if is_colored:
             if level >= logging.ERROR:
@@ -216,7 +216,7 @@ class ToxHandler(logging.StreamHandler):  # is generic but at runtime doesn't ta
         self._setup_level(self._is_colored, level)
 
 
-def setup_report(verbosity: int, is_colored: bool) -> ToxHandler:  # noqa: FBT001
+def setup_report(verbosity: int, is_colored: bool) -> ToxHandler:  # ruff:ignore[boolean-type-hint-positional-argument]
     _clean_handlers(LOGGER)
     level = _get_level(verbosity)
     LOGGER.setLevel(level)

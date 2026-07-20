@@ -16,7 +16,7 @@ from types import ModuleType, TracebackType
 from typing import TYPE_CHECKING, Any, Protocol, cast
 
 import pytest
-from _pytest.fixtures import SubRequest  # noqa: PLC2701
+from _pytest.fixtures import SubRequest  # ruff:ignore[import-private-name]
 from devpi_process import IndexServer
 from virtualenv.info import fs_supports_symlink
 
@@ -64,7 +64,7 @@ def ensure_logging_framework_not_altered() -> Iterator[None]:
 def _disable_root_tox_py(request: SubRequest, mocker: MockerFixture) -> Iterator[None]:
     """Unless this is a plugin test do not allow loading toxfile.py."""
     if request.node.get_closest_marker("plugin_test"):  # unregister inline plugin
-        module, load_inline = None, manager._load_inline  # noqa: SLF001
+        module, load_inline = None, manager._load_inline  # ruff:ignore[private-member-access]
 
         def _load_inline(path: Path) -> ModuleType | None:  # register only on first run, and unregister at end
             nonlocal module
@@ -124,12 +124,12 @@ def check_os_environ_stable(monkeypatch: pytest.MonkeyPatch) -> Iterator[None]:
 
 
 @pytest.fixture(autouse=True)
-def no_color(monkeypatch: pytest.MonkeyPatch, check_os_environ_stable: None) -> None:  # noqa: ARG001
+def no_color(monkeypatch: pytest.MonkeyPatch, check_os_environ_stable: None) -> None:  # ruff:ignore[unused-function-argument]
     monkeypatch.setenv("NO_COLOR", "yes")
 
 
 class ToxProject:
-    def __init__(  # noqa: PLR0913
+    def __init__(  # ruff:ignore[too-many-arguments]
         self,
         files: dict[str, Any],
         base: Path | None,
@@ -155,8 +155,8 @@ class ToxProject:
                 raise TypeError(msg)  # pragma: no cover
             at_path = dest / key
             if callable(value):
-                value = textwrap.dedent("\n".join(inspect.getsourcelines(value)[0][1:]))  # noqa: PLW2901
-                value = f"from __future__ import annotations\n{value}"  # noqa: PLW2901
+                value = textwrap.dedent("\n".join(inspect.getsourcelines(value)[0][1:]))  # ruff:ignore[redefined-loop-name]
+                value = f"from __future__ import annotations\n{value}"  # ruff:ignore[redefined-loop-name]
             if isinstance(value, dict):
                 at_path.mkdir(exist_ok=True)
                 ToxProject._setup_files(at_path, None, value)
@@ -168,9 +168,9 @@ class ToxProject:
                 msg = f"could not handle {at_path / key} with content {value!r}"  # pragma: no cover
                 raise TypeError(msg)  # pragma: no cover
 
-    def patch_execute(self, handle: Callable[[ExecuteRequest], int | None] | None = None) -> MagicMock:  # noqa: C901
+    def patch_execute(self, handle: Callable[[ExecuteRequest], int | None] | None = None) -> MagicMock:  # ruff:ignore[complex-structure]
         class MockExecute(Execute):
-            def __init__(self, colored: bool, exit_code: int) -> None:  # noqa: FBT001
+            def __init__(self, colored: bool, exit_code: int) -> None:  # ruff:ignore[boolean-type-hint-positional-argument]
                 self.exit_code = exit_code
                 super().__init__(colored)
 
@@ -192,13 +192,13 @@ class ToxProject:
             def exit_code(self) -> int | None:
                 return self._exit_code
 
-            def wait(self, timeout: float | None = None) -> int | None:  # noqa: ARG002
+            def wait(self, timeout: float | None = None) -> int | None:  # ruff:ignore[unused-method-argument]
                 return self._exit_code
 
-            def write_stdin(self, content: str) -> None:  # noqa: ARG002, PLR6301
+            def write_stdin(self, content: str) -> None:  # ruff:ignore[unused-method-argument, no-self-use]
                 return None  # pragma: no cover
 
-            def interrupt(self) -> None:  # noqa: PLR6301
+            def interrupt(self) -> None:  # ruff:ignore[no-self-use]
                 return None  # pragma: no cover
 
         class MockExecuteInstance(ExecuteInstance):
@@ -234,15 +234,15 @@ class ToxProject:
             executor: Execute,
             out_err: OutErr,
             request: ExecuteRequest,
-            show: bool,  # noqa: FBT001
+            show: bool,  # ruff:ignore[boolean-type-hint-positional-argument]
         ) -> Iterator[ExecuteStatus]:
             exit_code = 0 if handle is None else handle(request)
             if exit_code is not None:
-                executor = MockExecute(colored=executor._colored, exit_code=exit_code)  # noqa: SLF001
+                executor = MockExecute(colored=executor._colored, exit_code=exit_code)  # ruff:ignore[private-member-access]
             with original_execute_call(self, executor, out_err, request, show) as status:
                 yield status
 
-        original_execute_call = ToxEnv._execute_call  # noqa: SLF001
+        original_execute_call = ToxEnv._execute_call  # ruff:ignore[private-member-access]
         return self.mocker.patch.object(ToxEnv, "_execute_call", side_effect=_execute_call, autospec=True)
 
     @property
@@ -307,12 +307,14 @@ class ToxProject:
 @pytest.fixture(autouse=True, scope="session")
 def enable_pep517_backend_coverage() -> Iterator[None]:
     try:
-        import coverage  # noqa: F401, PLC0415
+        import coverage  # ruff:ignore[unused-import, import-outside-top-level]
     except ImportError:  # pragma: no cover
         yield  # pragma: no cover
         return  # pragma: no cover
     # the COV_ env variables needs to be passed on for the PEP-517 backend
-    from tox.tox_env.python.virtual_env.package.pyproject import Pep517VirtualEnvPackager  # noqa: PLC0415
+    from tox.tox_env.python.virtual_env.package.pyproject import (
+        Pep517VirtualEnvPackager,
+    )
 
     def default_pass_env(self: Pep517VirtualEnvPackager) -> list[str]:
         result = previous(self)
@@ -320,16 +322,16 @@ def enable_pep517_backend_coverage() -> Iterator[None]:
         return result
 
     # monkey-patch to inject COV_* env vars, session-scoped so mocker unavailable
-    previous = Pep517VirtualEnvPackager._default_pass_env  # noqa: SLF001
+    previous = Pep517VirtualEnvPackager._default_pass_env  # ruff:ignore[private-member-access]
     try:
-        Pep517VirtualEnvPackager._default_pass_env = default_pass_env  # noqa: SLF001  # ty: ignore[invalid-assignment]
+        Pep517VirtualEnvPackager._default_pass_env = default_pass_env  # ruff:ignore[private-member-access]  # ty: ignore[invalid-assignment]
         yield
     finally:
-        Pep517VirtualEnvPackager._default_pass_env = previous  # noqa: SLF001
+        Pep517VirtualEnvPackager._default_pass_env = previous  # ruff:ignore[private-member-access]
 
 
 class ToxRunOutcome:
-    def __init__(  # noqa: PLR0913
+    def __init__(  # ruff:ignore[too-many-arguments]
         self,
         cmd: Sequence[str],
         cwd: Path,
@@ -362,11 +364,11 @@ class ToxRunOutcome:
         return self.code == Outcome.OK
 
     def assert_success(self) -> None:
-        assert self.success, repr(self)  # noqa: S101
+        assert self.success, repr(self)  # ruff:ignore[assert]
 
     def assert_failed(self, code: int | None = None) -> None:
         status_match = self.code != 0 if code is None else self.code == code
-        assert status_match, f"should be {code}, got {self}"  # noqa: S101
+        assert status_match, f"should be {code}, got {self}"  # ruff:ignore[assert]
 
     def __repr__(self) -> str:
         return "\n".join(
@@ -391,25 +393,25 @@ class ToxRunOutcome:
         if regex:
             self.matches(out, self.out, re.MULTILINE | re.DOTALL)
         else:
-            assert self.out == out  # noqa: S101
+            assert self.out == out  # ruff:ignore[assert]
         if dedent:
             err = textwrap.dedent(err).lstrip()
         if regex:
             self.matches(err, self.err, re.MULTILINE | re.DOTALL)
         else:
-            assert self.err == err  # noqa: S101
+            assert self.err == err  # ruff:ignore[assert]
 
     @staticmethod
     def matches(pattern: str, text: str, flags: int = 0) -> None:
         try:
-            from re_assert import Matches  # noqa: PLC0415
+            from re_assert import Matches  # ruff:ignore[import-outside-top-level]
         except ImportError:  # pragma: no cover # hard to test
             match = re.match(pattern, text, flags)
             if match is None:
                 warnings.warn("install the re-assert PyPI package for bette error message", UserWarning, stacklevel=1)
-            assert match  # noqa: S101
+            assert match  # ruff:ignore[assert]
         else:
-            assert Matches(pattern, flags=flags) == text  # noqa: S101
+            assert Matches(pattern, flags=flags) == text  # ruff:ignore[assert]
 
 
 class ToxProjectCreator(Protocol):
@@ -524,7 +526,7 @@ def enable_pip_pypi_access_fixture(
 def register_inline_plugin(mocker: MockerFixture, *args: Callable[..., Any]) -> None:
     frame_info = inspect.stack()[1]
     caller_module = inspect.getmodule(frame_info[0])
-    assert caller_module is not None  # noqa: S101
+    assert caller_module is not None  # ruff:ignore[assert]
     plugin = ModuleType(f"{caller_module.__name__}|{frame_info[3]}")
     plugin.__file__ = caller_module.__file__
     plugin.__dict__.update({f.__name__: f for f in args})  # ty: ignore[unresolved-attribute] # https://github.com/astral-sh/ty/issues/1495

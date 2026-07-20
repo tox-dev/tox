@@ -22,7 +22,7 @@ class _OurArgumentParser(ArgumentParser):
     def print_usage(self, file: _SupportsWrite[str] | None = None) -> None:
         pass
 
-    def exit(self, status: int = 0, message: str | None = None) -> NoReturn:  # noqa: ARG002, PLR6301
+    def exit(self, status: int = 0, message: str | None = None) -> NoReturn:  # ruff:ignore[unused-method-argument, no-self-use]
         message = "" if message is None else message
         msg = message.lstrip(": ").rstrip()
         msg = msg.removeprefix("error: ")
@@ -86,10 +86,10 @@ def _validate_hash(value: str) -> str:
 class AddSortedUniqueAction(Action):
     def __call__(
         self,
-        parser: ArgumentParser,  # noqa: ARG002
+        parser: ArgumentParser,  # ruff:ignore[unused-method-argument]
         namespace: Namespace,
         values: str | Sequence[Any] | None,
-        option_string: str | None = None,  # noqa: ARG002
+        option_string: str | None = None,  # ruff:ignore[unused-method-argument]
     ) -> None:
         if getattr(namespace, self.dest, None) is None:
             setattr(namespace, self.dest, [])
@@ -101,10 +101,10 @@ class AddSortedUniqueAction(Action):
 class AddUniqueAction(Action):
     def __call__(
         self,
-        parser: ArgumentParser,  # noqa: ARG002
+        parser: ArgumentParser,  # ruff:ignore[unused-method-argument]
         namespace: Namespace,
         values: str | Sequence[Any] | None,
-        option_string: str | None = None,  # noqa: ARG002
+        option_string: str | None = None,  # ruff:ignore[unused-method-argument]
     ) -> None:
         if getattr(namespace, self.dest, None) is None:
             setattr(namespace, self.dest, [])
@@ -116,10 +116,10 @@ class AddUniqueAction(Action):
 class BinaryAction(Action):
     def __call__(
         self,
-        parser: ArgumentParser,  # noqa: ARG002
+        parser: ArgumentParser,  # ruff:ignore[unused-method-argument]
         namespace: Namespace,
         values: str | Sequence[Any] | None,
-        option_string: str | None = None,  # noqa: ARG002
+        option_string: str | None = None,  # ruff:ignore[unused-method-argument]
     ) -> None:
         if getattr(namespace, "no_binary", None) is None:
             namespace.no_binary = set()
@@ -131,5 +131,5 @@ class BinaryAction(Action):
             if self.dest == "no_binary"
             else (namespace.only_binary, namespace.no_binary)
         )
-        assert values is not None  # noqa: S101
+        assert values is not None  # ruff:ignore[assert]
         handle_binary_option(values[0], *args)

@@ -117,7 +117,7 @@ def legacy(state: State) -> int:
     return run_sequential(state)
 
 
-def _handle_legacy_only_flags(option: Parsed, envs: EnvSelector) -> None:  # noqa: C901
+def _handle_legacy_only_flags(option: Parsed, envs: EnvSelector) -> None:  # ruff:ignore[complex-structure]
     override = {}
     if getattr(option, "site_packages", False):
         override["system_site_packages"] = True

@@ -43,7 +43,7 @@ class StrConvert(Convert[str]):
         yield from StrConvert.to_list(value, of_type)
 
     @staticmethod
-    def to_dict(value: str, of_type: tuple[type[Any], type[Any]]) -> Iterator[tuple[str, str]]:  # noqa: ARG004
+    def to_dict(value: str, of_type: tuple[type[Any], type[Any]]) -> Iterator[tuple[str, str]]:  # ruff:ignore[unused-static-method-argument]
         for row in value.split("\n"):
             if row.strip():
                 key, sep, value = row.partition("=")
@@ -98,7 +98,7 @@ class StrConvert(Convert[str]):
             for arg in splitter:
                 if is_win and len(arg) > 1 and arg[0] == arg[-1] and arg.startswith(("'", '"')):  # pragma: win32 cover
                     # on Windows quoted arguments will remain quoted, strip it
-                    arg = arg[1:-1]  # noqa: PLW2901
+                    arg = arg[1:-1]  # ruff:ignore[redefined-loop-name]
                 args.append(arg)
                 pos = cast("StringIO", splitter.instream).tell()
         except ValueError:
@@ -113,7 +113,7 @@ class StrConvert(Convert[str]):
 
     @staticmethod
     def to_env_list(value: str) -> EnvList:
-        from tox.config.loader.ini.factor import extend_factors  # noqa: PLC0415
+        from tox.config.loader.ini.factor import extend_factors  # ruff:ignore[import-outside-top-level]
 
         elements = list(chain.from_iterable(extend_factors(expr) for expr in value.split("\n")))
         return EnvList(elements)

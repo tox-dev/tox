@@ -38,8 +38,8 @@ class Plugin:
         self.inline_module: ModuleType | None = None
 
     def _register_plugins(self, inline: ModuleType | None) -> None:
-        from tox.session import state  # noqa: PLC0415
-        from tox.session.cmd import (  # noqa: PLC0415
+        from tox.session import state  # ruff:ignore[import-outside-top-level]
+        from tox.session.cmd import (  # ruff:ignore[import-outside-top-level]
             depends,
             devenv,
             exec_,
@@ -98,7 +98,7 @@ class Plugin:
     def tox_extend_envs(self) -> list[Iterable[str]]:
         additional_env_names_hook_value = self.manager.hook.tox_extend_envs()
         # NOTE: S101 is suppressed below to allow for type narrowing in MyPy
-        assert isinstance(additional_env_names_hook_value, list)  # noqa: S101
+        assert isinstance(additional_env_names_hook_value, list)  # ruff:ignore[assert]
         return additional_env_names_hook_value
 
     def tox_add_option(self, parser: ToxParser) -> None:
@@ -130,7 +130,7 @@ class Plugin:
             self.manager.unregister(plugin)
         inline = _load_inline(path)
         self._register_plugins(inline)
-        REGISTER._register_tox_env_types(self)  # noqa: SLF001
+        REGISTER._register_tox_env_types(self)  # ruff:ignore[private-member-access]
 
 
 def _load_inline(path: Path) -> ModuleType | None:  # used to be able to unregister plugin tests

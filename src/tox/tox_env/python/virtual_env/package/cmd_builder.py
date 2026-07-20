@@ -77,7 +77,7 @@ class VenvCmdBuilder(PythonPackageToxEnv, ABC):
         return cast("PythonDeps", self.conf["deps"])
 
     def load_deps_for_env(self, for_env: EnvConfigSet) -> list[Requirement]:
-        assert self._sdist_meta_tox_env is not None  # noqa: S101
+        assert self._sdist_meta_tox_env is not None  # ruff:ignore[assert]
         return self._sdist_meta_tox_env.load_deps_for_env(for_env)
 
     def perform_packaging(self, for_env: EnvConfigSet) -> list[Package]:
@@ -96,7 +96,7 @@ class VenvCmdBuilder(PythonPackageToxEnv, ABC):
             msg = "stopping as failed to build package"
             raise Fail(msg)
         package_glob = self.conf["package_glob"]
-        found = glob.glob(package_glob)  # noqa: PTH207
+        found = glob.glob(package_glob)  # ruff:ignore[glob]
         if not found:
             msg = f"no package found in {package_glob}"
             raise Fail(msg)
@@ -122,7 +122,7 @@ class VenvCmdBuilder(PythonPackageToxEnv, ABC):
             with tarfile.open(str(path), "r:gz") as tar:
                 safe_extractall(tar, work_dir)
             # the register run env is guaranteed to be called before this
-            assert self._sdist_meta_tox_env is not None  # noqa: S101
+            assert self._sdist_meta_tox_env is not None  # ruff:ignore[assert]
             with self._sdist_meta_tox_env.display_context(self._has_display_suspended):
                 self._sdist_meta_tox_env.root = next(work_dir.iterdir())  # contains a single egg info folder
                 deps = self._sdist_meta_tox_env.get_package_dependencies(for_env)
@@ -137,7 +137,7 @@ class VenvCmdBuilder(PythonPackageToxEnv, ABC):
         result = yield f"{self.conf.name}_sdist_meta", Pep517VirtualEnvPackager.id()
         self._sdist_meta_tox_env = cast("Pep517VirtualEnvPackager", result)
 
-    def child_pkg_envs(self, run_conf: EnvConfigSet) -> Iterator[PackageToxEnv]:  # noqa: ARG002
+    def child_pkg_envs(self, run_conf: EnvConfigSet) -> Iterator[PackageToxEnv]:  # ruff:ignore[unused-method-argument]
         if self._sdist_meta_tox_env is not None:  # pragma: no branch
             yield self._sdist_meta_tox_env
 
