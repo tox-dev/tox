@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from argparse import Namespace
+from textwrap import dedent
 from typing import TYPE_CHECKING
 
 import pytest
@@ -110,3 +111,16 @@ def test_constraints_factory_invalid_type(tmp_path: Path) -> None:
     ) as exc_info:
         PythonConstraints.factory(tmp_path, {"key": "val"})
     assert "got dict: {'key': 'val'}" in str(exc_info.value)
+
+
+def test_deps_unroll_binary_options_deterministic(tmp_path: Path) -> None:
+    """Set-valued options must render in a stable order, or the install cache breaks across hash seeds."""
+    raw = dedent("""\
+        --no-binary six,packaging
+        pkg
+    """)
+    python_deps = PythonDeps(raw=raw, root=tmp_path)
+
+    options, _ = python_deps.unroll()
+
+    assert options == ["no_binary=packaging,six"]
