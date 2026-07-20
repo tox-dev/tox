@@ -115,14 +115,14 @@ class Execute(ABC):
 
     _option_class: type[ExecuteOptions] = ExecuteOptions
 
-    def __init__(self, colored: bool) -> None:  # noqa: FBT001
+    def __init__(self, colored: bool) -> None:  # ruff:ignore[boolean-type-hint-positional-argument]
         self._colored = colored
 
     @contextmanager
     def call(
         self,
         request: ExecuteRequest,
-        show: bool,  # noqa: FBT001
+        show: bool,  # ruff:ignore[boolean-type-hint-positional-argument]
         out_err: OutErr,
         env: ToxEnv,
     ) -> Iterator[ExecuteStatus]:
@@ -130,13 +130,13 @@ class Execute(ABC):
         stderr_color = None
         if self._colored:
             try:
-                cfg_color = env.conf._conf.options.stderr_color  # noqa: SLF001
+                cfg_color = env.conf._conf.options.stderr_color  # ruff:ignore[private-member-access]
                 stderr_color = getattr(Fore, cfg_color)
             except (AttributeError, KeyError, TypeError):  # many tests have a mocked 'env'
                 stderr_color = Fore.RED
             if sys.platform == "win32" and show:
                 try:
-                    import colorama.ansitowin32  # noqa: PLC0415
+                    import colorama.ansitowin32  # ruff:ignore[import-outside-top-level]
 
                     for stream in out_err:
                         with suppress(AttributeError, OSError):
@@ -224,10 +224,10 @@ class Outcome:
 
     OK = 0
 
-    def __init__(  # noqa: PLR0913
+    def __init__(  # ruff:ignore[too-many-arguments]
         self,
         request: ExecuteRequest,
-        show_on_standard: bool,  # noqa: FBT001
+        show_on_standard: bool,  # ruff:ignore[boolean-type-hint-positional-argument]
         exit_code: int | None,
         out: str,
         err: str,

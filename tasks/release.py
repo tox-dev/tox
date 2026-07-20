@@ -11,7 +11,7 @@ from packaging.version import Version
 ROOT_SRC_DIR = Path(__file__).parents[1]
 
 
-def cleanup_failed_release(  # noqa: PLR0913
+def cleanup_failed_release(  # ruff:ignore[too-many-arguments]
     repo: Repo,
     upstream: Remote,
     version: Version,
@@ -22,30 +22,30 @@ def cleanup_failed_release(  # noqa: PLR0913
     tag_pushed: bool,
     main_pushed: bool,
 ) -> None:
-    print("Release failed! Cleaning up...")  # noqa: T201
+    print("Release failed! Cleaning up...")  # ruff:ignore[print]
     if release_created:
-        print(f"Deleting GitHub release {version}")  # noqa: T201
+        print(f"Deleting GitHub release {version}")  # ruff:ignore[print]
         try:
-            check_call(["gh", "release", "delete", str(version), "--yes"], cwd=str(ROOT_SRC_DIR))  # noqa: S607
-        except Exception as cleanup_error:  # noqa: BLE001
-            print(f"Warning: Failed to delete GitHub release: {cleanup_error}")  # noqa: T201
+            check_call(["gh", "release", "delete", str(version), "--yes"], cwd=str(ROOT_SRC_DIR))  # ruff:ignore[start-process-with-partial-path]
+        except Exception as cleanup_error:  # ruff:ignore[blind-except]
+            print(f"Warning: Failed to delete GitHub release: {cleanup_error}")  # ruff:ignore[print]
     if tag_pushed:
-        print(f"Deleting remote tag {version}")  # noqa: T201
+        print(f"Deleting remote tag {version}")  # ruff:ignore[print]
         try:
             repo.git.push(upstream.name, f":refs/tags/{version}", "--no-verify")
-        except Exception as cleanup_error:  # noqa: BLE001
-            print(f"Warning: Failed to delete remote tag: {cleanup_error}")  # noqa: T201
+        except Exception as cleanup_error:  # ruff:ignore[blind-except]
+            print(f"Warning: Failed to delete remote tag: {cleanup_error}")  # ruff:ignore[print]
     if main_pushed:
-        print(f"Reverting main to {original_main_sha[:8]}")  # noqa: T201
+        print(f"Reverting main to {original_main_sha[:8]}")  # ruff:ignore[print]
         try:
             repo.git.push(upstream.name, f"{original_main_sha}:main", "-f", "--no-verify")
-        except Exception as cleanup_error:  # noqa: BLE001
-            print(f"Warning: Failed to revert main: {cleanup_error}")  # noqa: T201
-    print("Deleting remote release branch")  # noqa: T201
+        except Exception as cleanup_error:  # ruff:ignore[blind-except]
+            print(f"Warning: Failed to revert main: {cleanup_error}")  # ruff:ignore[print]
+    print("Deleting remote release branch")  # ruff:ignore[print]
     try:
         repo.git.push(upstream.name, f":{release_branch}", "--no-verify")
-    except Exception as cleanup_error:  # noqa: BLE001
-        print(f"Warning: Failed to delete remote branch: {cleanup_error}")  # noqa: T201
+    except Exception as cleanup_error:  # ruff:ignore[blind-except]
+        print(f"Warning: Failed to delete remote branch: {cleanup_error}")  # ruff:ignore[print]
 
 
 def main(version_str: str) -> None:
@@ -77,27 +77,27 @@ def main(version_str: str) -> None:
 def _perform_release(repo: Repo, upstream: Remote, release_branch: Head, version: Version) -> tuple[bool, bool, bool]:
     release_commit = release_changelog(repo, version)
     tag = tag_release_commit(release_commit, repo, version)
-    print("push release commit")  # noqa: T201
+    print("push release commit")  # ruff:ignore[print]
     repo.git.push(upstream.name, f"{release_branch}:main", "-f")
     main_pushed = True
-    print("push release tag")  # noqa: T201
+    print("push release tag")  # ruff:ignore[print]
     repo.git.push(upstream.name, tag, "-f")
     tag_pushed = True
     create_github_release(version)
     release_created = True
-    print("checkout main to new release and delete release branch")  # noqa: T201
+    print("checkout main to new release and delete release branch")  # ruff:ignore[print]
     repo.heads.main.checkout()
     repo.delete_head(release_branch, force=True)
-    print("delete remote release branch")  # noqa: T201
+    print("delete remote release branch")  # ruff:ignore[print]
     repo.git.push(upstream.name, f":{release_branch}", "--no-verify")
     upstream.fetch()
     repo.git.reset("--hard", f"{upstream.name}/main")
-    print("All done! ✨ 🍰 ✨")  # noqa: T201
+    print("All done! ✨ 🍰 ✨")  # ruff:ignore[print]
     return main_pushed, tag_pushed, release_created
 
 
 def create_release_branch(repo: Repo, version: Version) -> tuple[Remote, Head]:
-    print("create release branch from upstream main")  # noqa: T201
+    print("create release branch from upstream main")  # ruff:ignore[print]
     upstream = get_upstream(repo)
     upstream.fetch()
     branch_name = f"release-{version}"
@@ -117,47 +117,47 @@ def get_upstream(repo: Repo) -> Remote:
 
 
 def release_changelog(repo: Repo, version: Version) -> Commit:
-    print("generate release commit")  # noqa: T201
-    check_call(["towncrier", "build", "--yes", "--version", version.public], cwd=str(ROOT_SRC_DIR))  # noqa: S607
-    print("format changelog with pre-commit")  # noqa: T201
+    print("generate release commit")  # ruff:ignore[print]
+    check_call(["towncrier", "build", "--yes", "--version", version.public], cwd=str(ROOT_SRC_DIR))  # ruff:ignore[start-process-with-partial-path]
+    print("format changelog with pre-commit")  # ruff:ignore[print]
     changelog_path = ROOT_SRC_DIR / "docs" / "changelog.rst"
     try:
-        check_call(["pre-commit", "run", "--files", str(changelog_path)], cwd=str(ROOT_SRC_DIR))  # noqa: S607
+        check_call(["pre-commit", "run", "--files", str(changelog_path)], cwd=str(ROOT_SRC_DIR))  # ruff:ignore[start-process-with-partial-path]
     except CalledProcessError:
-        print("pre-commit made formatting changes, staging them")  # noqa: T201
+        print("pre-commit made formatting changes, staging them")  # ruff:ignore[print]
     repo.index.add([str(changelog_path)])
     return repo.index.commit(f"release {version}")
 
 
 def tag_release_commit(release_commit: Commit, repo: Repo, version: Version) -> TagReference:
-    print("tag release commit")  # noqa: T201
+    print("tag release commit")  # ruff:ignore[print]
     existing_tags = [x.name for x in repo.tags]
     if version in existing_tags:
-        print(f"delete existing tag {version}")  # noqa: T201
+        print(f"delete existing tag {version}")  # ruff:ignore[print]
         repo.delete_tag(version)  # ty: ignore[invalid-argument-type] # Version has __str__, gitpython uses it
-    print(f"create tag {version}")  # noqa: T201
+    print(f"create tag {version}")  # ruff:ignore[print]
     return repo.create_tag(version, ref=release_commit, force=True)  # ty: ignore[invalid-argument-type] # Version has __str__, gitpython uses it
 
 
 def create_github_release(version: Version) -> None:
-    print("create github release")  # noqa: T201
+    print("create github release")  # ruff:ignore[print]
     version_str = str(version)
     try:
         result = run(
-            ["gh", "release", "create", version_str, "--title", f"v{version_str}", "--generate-notes"],  # noqa: S607
+            ["gh", "release", "create", version_str, "--title", f"v{version_str}", "--generate-notes"],  # ruff:ignore[start-process-with-partial-path]
             cwd=str(ROOT_SRC_DIR),
             capture_output=True,
             text=True,
             check=True,
         )
         if result.stdout:
-            print(result.stdout)  # noqa: T201
+            print(result.stdout)  # ruff:ignore[print]
     except CalledProcessError as e:
-        print(f"gh release create failed with exit code {e.returncode}")  # noqa: T201
+        print(f"gh release create failed with exit code {e.returncode}")  # ruff:ignore[print]
         if e.stdout:
-            print(f"stdout: {e.stdout}")  # noqa: T201
+            print(f"stdout: {e.stdout}")  # ruff:ignore[print]
         if e.stderr:
-            print(f"stderr: {e.stderr}")  # noqa: T201
+            print(f"stderr: {e.stderr}")  # ruff:ignore[print]
         raise
 
 

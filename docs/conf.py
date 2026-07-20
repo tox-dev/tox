@@ -22,7 +22,7 @@ if TYPE_CHECKING:
 company, name = "tox-dev", "tox"
 project = name
 release, version = __version__, ".".join(__version__.split(".")[:2])
-copyright = f"{company}"  # noqa: A001
+copyright = f"{company}"  # ruff:ignore[builtin-variable-shadowing]
 master_doc = "index"
 source_suffix = {".rst": "restructuredtext"}
 
@@ -126,14 +126,14 @@ towncrier_draft_include_empty = True
 towncrier_draft_working_directory = Path(__file__).parent.parent
 
 
-def process_signature(  # noqa: PLR0913
-    app: Sphinx,  # noqa: ARG001
+def process_signature(  # ruff:ignore[too-many-arguments]
+    app: Sphinx,  # ruff:ignore[unused-function-argument]
     objtype: str,
-    name: str,  # noqa: ARG001
-    obj: Any,  # noqa: ARG001
+    name: str,  # ruff:ignore[unused-function-argument]
+    obj: Any,  # ruff:ignore[unused-function-argument]
     options: Options,
-    args: str | None,  # noqa: ARG001
-    retann: str | None,  # noqa: ARG001
+    args: str | None,  # ruff:ignore[unused-function-argument]
+    retann: str | None,  # ruff:ignore[unused-function-argument]
 ) -> tuple[None, None] | None:
     # skip-member is not checked for class level docs, so disable via signature processing
     if objtype == "class" and (exclude := options.get("exclude-members")) and "__init__" in exclude:
@@ -145,12 +145,12 @@ def setup(app: Sphinx) -> None:
     here = Path(__file__).parent
 
     class PatchedPythonDomain(PythonDomain):
-        def resolve_xref(  # noqa: PLR0913
+        def resolve_xref(  # ruff:ignore[too-many-arguments]
             self,
             env: BuildEnvironment,
             fromdocname: str,
             builder: Builder,
-            type: str,  # noqa: A002
+            type: str,  # ruff:ignore[builtin-argument-shadowing]
             target: str,
             node: pending_xref,
             contnode: Element,

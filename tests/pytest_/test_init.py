@@ -63,7 +63,7 @@ def test_env_var(monkeypatch: MonkeyPatch, ops: list[str]) -> None:
             if "MISS" in ops:
                 m.delenv("MISS")
 
-            from tox.pytest import pytest as tox_pytest  # noqa: PLC0415
+            from tox.pytest import pytest as tox_pytest  # ruff:ignore[import-outside-top-level]
 
             exp = "test changed environ"
             if "EXTRA" in ops:
@@ -115,9 +115,9 @@ def test_tox_run_outcome_repr(tox_project: ToxProjectCreator) -> None:
 def test_tox_run_assert_out_err_no_dedent(tox_project: ToxProjectCreator, mocker: MockerFixture) -> None:
     project = tox_project({"tox.ini": ""})
 
-    def _main(args: Sequence[str]) -> int:  # noqa: ARG001
-        print(" goes on out", file=sys.stdout)  # noqa: T201
-        print(" goes on err", file=sys.stderr)  # noqa: T201
+    def _main(args: Sequence[str]) -> int:  # ruff:ignore[unused-function-argument]
+        print(" goes on out", file=sys.stdout)  # ruff:ignore[print]
+        print(" goes on err", file=sys.stderr)  # ruff:ignore[print]
         return 0
 
     mocker.patch("tox.run.main", side_effect=_main)

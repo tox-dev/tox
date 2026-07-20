@@ -92,7 +92,7 @@ class PackageToxEnv(ToxEnv, ABC):
     def perform_packaging(self, for_env: EnvConfigSet) -> list[Package]:
         raise NotImplementedError
 
-    def register_run_env(self, run_env: RunToxEnv) -> Generator[tuple[str, str], PackageToxEnv, None]:  # noqa: ARG002, PLR6301
+    def register_run_env(self, run_env: RunToxEnv) -> Generator[tuple[str, str], PackageToxEnv, None]:  # ruff:ignore[unused-method-argument, no-self-use]
         return  # empty generator by default
         yield ("", "")  # unreachable, exists to establish yield type
 

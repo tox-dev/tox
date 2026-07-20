@@ -11,7 +11,7 @@ if TYPE_CHECKING:
 class EnvJournal:
     """Report the status of a tox environment."""
 
-    def __init__(self, enabled: bool, name: str) -> None:  # noqa: FBT001
+    def __init__(self, enabled: bool, name: str) -> None:  # ruff:ignore[boolean-type-hint-positional-argument]
         self._enabled = enabled
         self.name = name
         self._content: dict[str, Any] = {}

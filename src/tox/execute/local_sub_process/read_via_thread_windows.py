@@ -6,7 +6,7 @@ import contextlib  # pragma: win32 cover
 import sys  # pragma: win32 cover
 
 if sys.platform == "win32":  # pragma: win32 cover
-    import _overlapped  # pragma: win32 cover # noqa: PLC2701
+    import _overlapped  # pragma: win32 cover # ruff:ignore[import-private-name]
 
 import time  # pragma: win32 cover
 from typing import TYPE_CHECKING
@@ -22,7 +22,7 @@ ERROR_IO_INCOMPLETE = 996  # pragma: win32 cover
 
 
 class ReadViaThreadWindows(ReadViaThread):  # pragma: win32 cover
-    def __init__(self, file_no: int, handler: Callable[[bytes], int], name: str, drain: bool) -> None:  # noqa: FBT001
+    def __init__(self, file_no: int, handler: Callable[[bytes], int], name: str, drain: bool) -> None:  # ruff:ignore[boolean-type-hint-positional-argument]
         super().__init__(file_no, handler, name, drain)
 
     def _read_stream(self) -> None:
@@ -39,7 +39,7 @@ class ReadViaThreadWindows(ReadViaThread):  # pragma: win32 cover
 
             while True:
                 try:
-                    data = ov.getresult(False)  # noqa: FBT003
+                    data = ov.getresult(False)  # ruff:ignore[boolean-positional-value-in-call]
                     break
                 except OSError as exception:
                     if getattr(exception, "winerror", None) != ERROR_IO_INCOMPLETE:
@@ -65,7 +65,7 @@ class ReadViaThreadWindows(ReadViaThread):  # pragma: win32 cover
                 break
 
             try:
-                data = ov.getresult(True)  # noqa: FBT003
+                data = ov.getresult(True)  # ruff:ignore[boolean-positional-value-in-call]
             except OSError:
                 break
 

@@ -14,7 +14,7 @@ from .env import EnvJournal
 class Journal:
     """The result of a tox session."""
 
-    def __init__(self, enabled: bool) -> None:  # noqa: FBT001
+    def __init__(self, enabled: bool) -> None:  # ruff:ignore[boolean-type-hint-positional-argument]
         self._enabled = enabled
         self._content: dict[str, Any] = {}
         self._env: dict[str, EnvJournal] = {}

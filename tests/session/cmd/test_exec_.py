@@ -52,7 +52,7 @@ def test_exec_always_no_capture(tox_project: ToxProjectCreator) -> None:
 
     captured_options: list[MagicMock] = []
 
-    def capture_options(request):  # noqa: ANN001, ANN202
+    def capture_options(request):  # ruff:ignore[missing-type-function-argument, missing-return-type-private-function]
         captured_options.append(request)
         return 0
 

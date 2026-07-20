@@ -172,7 +172,7 @@ def test_define_custom_set(tox_project: ToxProjectCreator) -> None:
     exp = "MagicConfigSet(loaders=[IniLoader(section=magic, overrides={}), IniLoader(section=A, overrides={})])"
     assert repr(conf) == exp
 
-    assert isinstance(result.state.conf._options, Parsed)  # noqa: SLF001
+    assert isinstance(result.state.conf._options, Parsed)  # ruff:ignore[private-member-access]
 
 
 def test_do_not_allow_create_config_set(mocker: MockerFixture) -> None:

@@ -50,7 +50,7 @@ class VirtualEnv(Python, ABC):
         self.conf.add_config(
             keys=["system_site_packages", "sitepackages"],
             of_type=bool,
-            default=lambda conf, name: StrConvert().to_bool(  # noqa: ARG005
+            default=lambda conf, name: StrConvert().to_bool(  # ruff:ignore[unused-lambda-argument]
                 self.environment_variables.get("VIRTUALENV_SYSTEM_SITE_PACKAGES", "False"),
             ),
             desc="create virtual environments that also have access to globally installed packages.",
@@ -58,7 +58,7 @@ class VirtualEnv(Python, ABC):
         self.conf.add_config(
             keys=["always_copy", "alwayscopy"],
             of_type=bool,
-            default=lambda conf, name: StrConvert().to_bool(  # noqa: ARG005
+            default=lambda conf, name: StrConvert().to_bool(  # ruff:ignore[unused-lambda-argument]
                 self.environment_variables.get(
                     "VIRTUALENV_COPIES",
                     self.environment_variables.get("VIRTUALENV_ALWAYS_COPY", "False"),
@@ -69,7 +69,7 @@ class VirtualEnv(Python, ABC):
         self.conf.add_config(
             keys=["download"],
             of_type=bool,
-            default=lambda conf, name: StrConvert().to_bool(  # noqa: ARG005
+            default=lambda conf, name: StrConvert().to_bool(  # ruff:ignore[unused-lambda-argument]
                 self.environment_variables.get("VIRTUALENV_DOWNLOAD", "False"),
             ),
             desc="true if you want virtualenv to upgrade pip/wheel/setuptools to the latest version",
@@ -84,7 +84,7 @@ class VirtualEnv(Python, ABC):
             "older virtualenv only when the installed one can no longer create the targeted Python version.",
         )
 
-    def _default_virtualenv_spec(self, conf: Config, name: str | None) -> str:  # noqa: ARG002
+    def _default_virtualenv_spec(self, conf: Config, name: str | None) -> str:  # ruff:ignore[unused-method-argument]
         return _auto_virtualenv_spec(self.conf["base_python"], virtualenv_version)
 
     @property
@@ -135,7 +135,7 @@ class VirtualEnv(Python, ABC):
         return self._virtualenv_session
 
     def _create_subprocess_session(self, spec: str, env: dict[str, str]) -> SubprocessSession:
-        from .subprocess_adapter import ensure_bootstrap, probe_python  # noqa: PLC0415
+        from .subprocess_adapter import ensure_bootstrap, probe_python  # ruff:ignore[import-outside-top-level]
 
         try_first_with = getattr(self.options, "discover", None)
         cache = _shared_app_data()
@@ -180,7 +180,7 @@ class VirtualEnv(Python, ABC):
     def create_python_env(self) -> None:
         self.session.run()
 
-    def _get_python(self, base_python: list[str]) -> PythonInfo | None:  # noqa: ARG002
+    def _get_python(self, base_python: list[str]) -> PythonInfo | None:  # ruff:ignore[unused-method-argument]
         # the base pythons are injected into the virtualenv_env_vars, so we don't need to use it here
         try:
             interpreter = self.creator.interpreter
@@ -193,7 +193,7 @@ class VirtualEnv(Python, ABC):
             implementation=interpreter.implementation,
             version_info=VersionInfo(vi.major, vi.minor, vi.micro, vi.releaselevel, vi.serial),
             version=interpreter.version,
-            is_64=(interpreter.architecture == 64),  # noqa: PLR2004
+            is_64=(interpreter.architecture == 64),  # ruff:ignore[magic-value-comparison]
             platform=interpreter.platform,
             extra={"executable": Path(sys_exe).resolve()},
             free_threaded=interpreter.free_threaded,
@@ -271,8 +271,10 @@ class VirtualEnv(Python, ABC):
         :returns: the found information (cached)
 
         """
-        from virtualenv.discovery import cached_py_info  # noqa: PLC0415
-        from virtualenv.discovery.py_info import PythonInfo as VirtualenvPythonInfo  # noqa: PLC0415
+        from virtualenv.discovery import cached_py_info  # ruff:ignore[import-outside-top-level]
+        from virtualenv.discovery.py_info import (  # ruff:ignore[import-outside-top-level]
+            PythonInfo as VirtualenvPythonInfo,
+        )
 
         result = cached_py_info.from_exe(VirtualenvPythonInfo, _shared_app_data(), str(path))
         if result is None:

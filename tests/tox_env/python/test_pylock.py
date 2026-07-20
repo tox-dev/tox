@@ -434,7 +434,7 @@ def test_pylock_requirements_invalid(tmp_path: Path) -> None:
 @pytest.mark.integration
 def test_pylock_install_integration(
     tox_project: ToxProjectCreator,
-    enable_pip_pypi_access: str | None,  # noqa: ARG001
+    enable_pip_pypi_access: str | None,  # ruff:ignore[unused-function-argument]
 ) -> None:
     project = tox_project(
         {

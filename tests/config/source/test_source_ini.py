@@ -50,7 +50,7 @@ def test_source_ini_custom_non_testenv_sections(tox_ini_conf: ToxIniCreator) -> 
             )
 
     config = tox_ini_conf("[testenv:foo]\n[custom:foo]\na = b")
-    known_envs = list(config._src.envs(config.core))  # noqa: SLF001
+    known_envs = list(config._src.envs(config.core))  # ruff:ignore[private-member-access]
     assert known_envs
     custom_section = config.get_section_config(
         section=Section("custom", "foo"),

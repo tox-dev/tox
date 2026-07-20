@@ -8,7 +8,7 @@ from hatchling.builders.hooks.plugin.interface import BuildHookInterface
 
 
 class CustomBuildHook(BuildHookInterface):
-    def initialize(self, version: str, build_data: dict[str, Any]) -> None:  # noqa: ARG002
+    def initialize(self, version: str, build_data: dict[str, Any]) -> None:  # ruff:ignore[unused-method-argument]
         if self.target_name == "wheel":
             root = Path(self.root)
             (output := root / "build" / "man").mkdir(parents=True, exist_ok=True)

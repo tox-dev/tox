@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
-from argparse import SUPPRESS, Action, ArgumentParser, _SubParsersAction  # noqa: PLC2701
+from argparse import SUPPRESS, Action, ArgumentParser, _SubParsersAction  # ruff:ignore[import-private-name]
 from pathlib import Path
 
-from tox.config.cli.parse import _get_parser_doc  # noqa: PLC2701
+from tox.config.cli.parse import _get_parser_doc  # ruff:ignore[import-private-name]
 
 
 def main() -> None:
@@ -57,21 +57,21 @@ def generate_manpage_rst(parser: ArgumentParser) -> str:
 
 
 def _get_subcommands(parser: ArgumentParser) -> list[str]:
-    if parser._subparsers is None:  # noqa: SLF001
+    if parser._subparsers is None:  # ruff:ignore[private-member-access]
         return []
-    for action in parser._subparsers._actions:  # noqa: SLF001
+    for action in parser._subparsers._actions:  # ruff:ignore[private-member-access]
         if isinstance(action, _SubParsersAction):
-            return [ca.dest for ca in action._choices_actions]  # noqa: SLF001
+            return [ca.dest for ca in action._choices_actions]  # ruff:ignore[private-member-access]
     return []
 
 
 def _commands_section(parser: ArgumentParser) -> list[str]:
     lines = ["COMMANDS", "--------", ""]
-    if parser._subparsers is None:  # noqa: SLF001
+    if parser._subparsers is None:  # ruff:ignore[private-member-access]
         return lines
-    for action in parser._subparsers._actions:  # noqa: SLF001
+    for action in parser._subparsers._actions:  # ruff:ignore[private-member-access]
         if isinstance(action, _SubParsersAction):
-            for choice_action in action._choices_actions:  # noqa: SLF001
+            for choice_action in action._choices_actions:  # ruff:ignore[private-member-access]
                 name = choice_action.dest
                 subparser = action.choices[name]
                 aliases = [a for a, s in action.choices.items() if s is subparser and a != name]
@@ -85,7 +85,7 @@ def _commands_section(parser: ArgumentParser) -> list[str]:
 def _global_options_section(parser: ArgumentParser) -> list[str]:
     lines = ["OPTIONS", "-------", ""]
     seen: set[int] = set()
-    for action in parser._actions:  # noqa: SLF001
+    for action in parser._actions:  # ruff:ignore[private-member-access]
         if id(action) in seen or action.help == SUPPRESS or isinstance(action, _SubParsersAction):
             continue
         seen.add(id(action))

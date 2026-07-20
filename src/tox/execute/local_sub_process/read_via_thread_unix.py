@@ -18,7 +18,7 @@ READ_CHUNK_SIZE = 32768  # pragma: win32 no cover
 
 
 class ReadViaThreadUnix(ReadViaThread):  # pragma: win32 no cover
-    def __init__(self, file_no: int, handler: Callable[[bytes], int], name: str, drain: bool) -> None:  # noqa: FBT001
+    def __init__(self, file_no: int, handler: Callable[[bytes], int], name: str, drain: bool) -> None:  # ruff:ignore[boolean-type-hint-positional-argument]
         super().__init__(file_no, handler, name, drain)
 
     def _read_stream(self) -> None:

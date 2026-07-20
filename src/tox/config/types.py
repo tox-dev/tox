@@ -21,7 +21,7 @@ class MissingRequiredConfigKeyError(ValueError):
     """
 
 
-class Command:  # noqa: PLW1641
+class Command:  # ruff:ignore[eq-without-hash]
     """A command to execute."""
 
     def __init__(self, args: list[str]) -> None:
@@ -58,7 +58,7 @@ class Command:  # noqa: PLW1641
         return shell_cmd(self.args)
 
 
-class EnvList:  # noqa: PLW1641
+class EnvList:  # ruff:ignore[eq-without-hash]
     """A tox environment list."""
 
     def __init__(self, envs: Sequence[str]) -> None:

@@ -154,7 +154,7 @@ def test_pip_req_path(tox_project: ToxProjectCreator) -> None:
 
 def test_deps_remove_recreate(tox_project: ToxProjectCreator) -> None:
     proj = tox_project({"tox.ini": "[testenv]\npackage=skip\ndeps=wheel\n setuptools"})
-    execute_calls = proj.patch_execute(lambda request: 0)  # noqa: ARG005
+    execute_calls = proj.patch_execute(lambda request: 0)  # ruff:ignore[unused-lambda-argument]
     result_first = proj.run("r")
     result_first.assert_success()
     assert execute_calls.call_count == 1

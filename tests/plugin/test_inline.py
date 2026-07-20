@@ -12,9 +12,9 @@ if TYPE_CHECKING:
 
 def test_inline_tox_py(tox_project: ToxProjectCreator) -> None:
     def plugin() -> None:  # pragma: no cover # the code is copied to a python file
-        import logging  # noqa: PLC0415
+        import logging  # ruff:ignore[import-outside-top-level]
 
-        from tox.plugin import impl  # noqa: PLC0415
+        from tox.plugin import impl  # ruff:ignore[import-outside-top-level]
 
         @impl
         def tox_add_option(parser: ToxParser) -> None:
@@ -29,7 +29,7 @@ def test_inline_tox_py(tox_project: ToxProjectCreator) -> None:
 
 def test_toxfile_unknown_hook_skipped(tox_project: ToxProjectCreator) -> None:
     def plugin() -> None:  # pragma: no cover
-        from tox.plugin import impl  # noqa: PLC0415
+        from tox.plugin import impl  # ruff:ignore[import-outside-top-level]
 
         @impl
         def tox_nonexistent_hook() -> None: ...
@@ -44,8 +44,8 @@ def test_toxfile_py_w_ephemeral_envs(tox_project: ToxProjectCreator) -> None:
     """Ensure additional ephemeral tox envs can be plugin-injected."""
 
     def plugin() -> None:  # pragma: no cover # the code is copied to a python file
-        from tox.config.loader.memory import MemoryLoader  # noqa: PLC0415
-        from tox.plugin import impl  # noqa: PLC0415
+        from tox.config.loader.memory import MemoryLoader  # ruff:ignore[import-outside-top-level]
+        from tox.plugin import impl  # ruff:ignore[import-outside-top-level]
 
         env_name = "sentinel-env-name"
 
@@ -54,7 +54,7 @@ def test_toxfile_py_w_ephemeral_envs(tox_project: ToxProjectCreator) -> None:
             return (env_name,)
 
         @impl
-        def tox_add_core_config(core_conf: ConfigSet, state: State) -> None:  # noqa: ARG001
+        def tox_add_core_config(core_conf: ConfigSet, state: State) -> None:  # ruff:ignore[unused-function-argument]
             in_memory_config_loader = MemoryLoader(
                 base=["sentinel-base"],
                 commands_pre=["sentinel-cmd"],

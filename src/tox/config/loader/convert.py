@@ -21,7 +21,7 @@ Factory = Callable[[object], T] | None  # note the argument is anything, due e.g
 class Convert(ABC, Generic[T]):
     """A class that converts a raw type to a given tox (python) type."""
 
-    def to(self, raw: T, of_type: type[V] | UnionType, factory: Factory[V]) -> V:  # noqa: PLR0911
+    def to(self, raw: T, of_type: type[V] | UnionType, factory: Factory[V]) -> V:  # ruff:ignore[too-many-return-statements]
         """Convert given raw type to python type.
 
         :param raw: the raw type
@@ -56,7 +56,7 @@ class Convert(ABC, Generic[T]):
             return factory(raw)
         return cast("type[V]", of_type)(raw)
 
-    def _to_typing(self, raw: T, of_type: type[V] | UnionType, factory: Factory[V]) -> V:  # noqa: C901, PLR0912
+    def _to_typing(self, raw: T, of_type: type[V] | UnionType, factory: Factory[V]) -> V:  # ruff:ignore[complex-structure, too-many-branches]
         origin = get_origin(of_type) or of_type.__class__
         result: Any = _NO_MAPPING
         type_args = get_args(of_type)
@@ -77,7 +77,7 @@ class Convert(ABC, Generic[T]):
         elif origin in {Union, UnionType}:
             args: list[type[Any]] = list(type_args)
             none = type(None)
-            if len(args) == 2 and none in args:  # noqa: PLR2004
+            if len(args) == 2 and none in args:  # ruff:ignore[magic-value-comparison]
                 if isinstance(raw, str):
                     raw = cast("T", raw.strip())
                 if raw is None or (isinstance(raw, str) and not raw):

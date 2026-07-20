@@ -4,7 +4,7 @@ import operator
 
 import pytest
 
-from tox.util.ci import _ENV_VARS, is_ci  # noqa: PLC2701
+from tox.util.ci import _ENV_VARS, is_ci  # ruff:ignore[import-private-name]
 
 
 @pytest.mark.parametrize(

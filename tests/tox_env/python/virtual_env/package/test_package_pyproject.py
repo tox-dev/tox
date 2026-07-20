@@ -93,7 +93,7 @@ def test_root_setter_no_frontend_rebuild_when_unbuilt(
     pkg.root = tmp_path
 
     spy.assert_not_called()
-    assert pkg._root == tmp_path  # noqa: SLF001
+    assert pkg._root == tmp_path  # ruff:ignore[private-member-access]
 
 
 def test_package_root_via_testenv(tox_project: ToxProjectCreator, demo_pkg_inline: Path) -> None:

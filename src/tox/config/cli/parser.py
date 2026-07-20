@@ -56,27 +56,27 @@ class ArgumentParserWithEnvAndConfig(ArgumentParser):
             if outcome is not None:
                 action.default, default_value = outcome
                 action.default_source = default_value  # ty: ignore[unresolved-attribute] # dynamic attr for HelpFormatter
-        if isinstance(action, argparse._SubParsersAction):  # noqa: SLF001
+        if isinstance(action, argparse._SubParsersAction):  # ruff:ignore[private-member-access]
             for values in action.choices.values():
                 if not isinstance(values, ToxParser):  # pragma: no cover
                     msg = "detected sub-parser added without using our own add command"
-                    raise RuntimeError(msg)  # noqa: TRY004
+                    raise RuntimeError(msg)  # ruff:ignore[type-check-without-type-error]
                 values.fix_defaults()
 
     @staticmethod
     def get_type(action: Action) -> type[Any]:
         of_type: type[Any] | None = getattr(action, "of_type", None)
         if of_type is None:
-            if isinstance(action, argparse._AppendAction):  # noqa: SLF001
+            if isinstance(action, argparse._AppendAction):  # ruff:ignore[private-member-access]
                 if action.nargs in {"+", "*"} or (isinstance(action.nargs, int) and action.nargs > 1):
                     of_type = cast("type[Any]", GenericAlias(list, (GenericAlias(list, (action.type,)),)))
                 else:
                     of_type = cast("type[Any]", GenericAlias(list, (action.type,)))
-            elif isinstance(action, argparse._StoreAction) and action.choices:  # noqa: SLF001
+            elif isinstance(action, argparse._StoreAction) and action.choices:  # ruff:ignore[private-member-access]
                 of_type = Literal[tuple(action.choices)]  # ty: ignore[invalid-type-form] # dynamic Literal from choices
             elif action.default is not None:
                 of_type = type(action.default)
-            elif isinstance(action, argparse._StoreConstAction) and action.const is not None:  # noqa: SLF001
+            elif isinstance(action, argparse._StoreConstAction) and action.const is not None:  # ruff:ignore[private-member-access]
                 of_type = type(action.const)
             else:
                 raise TypeError(action)
@@ -230,11 +230,11 @@ class ToxParser(ArgumentParserWithEnvAndConfig):
                     for a_args, _, a_kwargs in arguments:
                         defaults[self._dest_from(a_args, a_kwargs)] = a_kwargs.get("default")
 
-    def _add_env_arguments(self, sub_parser: ToxParser, defaults: dict[str, Any]) -> None:  # noqa: PLR6301
+    def _add_env_arguments(self, sub_parser: ToxParser, defaults: dict[str, Any]) -> None:  # ruff:ignore[no-self-use]
         if os.environ.get("PYTHONHASHSEED", "random") != "random":
             hashseed_default = int(os.environ["PYTHONHASHSEED"])
         else:
-            hashseed_default = random.randint(1, 1024 if sys.platform == "win32" else 4294967295)  # noqa: S311
+            hashseed_default = random.randint(1, 1024 if sys.platform == "win32" else 4294967295)  # ruff:ignore[suspicious-non-cryptographic-random-usage]
 
         if ENV not in sub_parser.inherit:
             defaults.update(
@@ -268,10 +268,10 @@ class ToxParser(ArgumentParserWithEnvAndConfig):
         class SeedAction(Action):
             def __call__(
                 self,
-                parser: ArgumentParser,  # noqa: ARG002
+                parser: ArgumentParser,  # ruff:ignore[unused-method-argument]
                 namespace: Namespace,
                 values: str | Sequence[Any] | None,
-                option_string: str | None = None,  # noqa: ARG002
+                option_string: str | None = None,  # ruff:ignore[unused-method-argument]
             ) -> None:
                 if values == "notset":
                     result = None
@@ -280,7 +280,7 @@ class ToxParser(ArgumentParserWithEnvAndConfig):
                         result = int(cast("str", values))
                         if result <= 0:
                             msg = "must be greater than zero"
-                            raise ValueError(msg)  # noqa: TRY301
+                            raise ValueError(msg)  # ruff:ignore[raise-within-try]
                     except ValueError as exc:
                         raise ArgumentError(self, str(exc)) from exc
                 setattr(namespace, self.dest, result)
@@ -410,7 +410,7 @@ class ToxParser(ArgumentParserWithEnvAndConfig):
                 name
                 for parser in (self, self._cmd.choices.get("legacy"))
                 if parser is not None
-                for name, action in parser._option_string_actions.items()  # noqa: SLF001
+                for name, action in parser._option_string_actions.items()  # ruff:ignore[private-member-access]
                 if action.nargs != 0
             }
             skip_next = False
@@ -495,7 +495,7 @@ def add_color_flags(parser: ArgumentParser) -> None:
 
 
 def add_verbosity_flags(parser: ArgumentParser) -> None:
-    from tox.report import LEVELS  # noqa: PLC0415
+    from tox.report import LEVELS  # ruff:ignore[import-outside-top-level]
 
     level_map = "|".join(f"{c}={logging.getLevelName(level)}" for c, level in sorted(LEVELS.items()))
     verbosity_group = parser.add_argument_group("verbosity")

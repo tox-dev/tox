@@ -26,7 +26,7 @@ if TYPE_CHECKING:
 
 
 class PythonInstallerListDependencies(Installer[Python], ABC):
-    def __init__(self, tox_env: Python, with_list_deps: bool = True) -> None:  # noqa: FBT001, FBT002
+    def __init__(self, tox_env: Python, with_list_deps: bool = True) -> None:  # ruff:ignore[boolean-type-hint-positional-argument, boolean-default-value-positional-argument]
         self._with_list_deps = with_list_deps
         super().__init__(tox_env)
 
@@ -101,11 +101,11 @@ class Pip(PythonInstallerListDependencies):
             desc="Use the exact versions of installed deps as constraints, otherwise use the listed deps.",
         )
 
-    def freeze_cmd(self) -> list[str]:  # noqa: PLR6301
+    def freeze_cmd(self) -> list[str]:  # ruff:ignore[no-self-use]
         return ["python", "-m", "pip", "freeze", "--all"]
 
-    def default_install_command(self, conf: Config, env_name: str | None) -> Command:  # noqa: ARG002
-        isolated_flag = "-E" if self._env.base_python.version_info.major == 2 else "-I"  # noqa: PLR2004
+    def default_install_command(self, conf: Config, env_name: str | None) -> Command:  # ruff:ignore[unused-method-argument]
+        isolated_flag = "-E" if self._env.base_python.version_info.major == 2 else "-I"  # ruff:ignore[magic-value-comparison]
         cmd = Command(["python", isolated_flag, "-m", "pip", "install", "{opts}", "{packages}"])
         return self.post_process_install_command(cmd)
 
@@ -228,7 +228,7 @@ class Pip(PythonInstallerListDependencies):
                     req_file.write_text("\n".join(new_deps))
                     self._execute_installer(["--no-deps", "-r", str(req_file)], of_type)
 
-    def _install_list_of_deps(  # noqa: C901, PLR0912
+    def _install_list_of_deps(  # ruff:ignore[complex-structure, too-many-branches]
         self,
         arguments: Sequence[
             Requirement | WheelPackage | SdistPackage | EditableLegacyPackage | EditablePackage | PathPackage

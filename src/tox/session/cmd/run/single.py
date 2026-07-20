@@ -32,7 +32,7 @@ class ToxEnvRunResult(NamedTuple):
     unavailable: bool = False
 
 
-def run_one(tox_env: RunToxEnv, no_test: bool, suspend_display: bool) -> ToxEnvRunResult:  # noqa: FBT001
+def run_one(tox_env: RunToxEnv, no_test: bool, suspend_display: bool) -> ToxEnvRunResult:  # ruff:ignore[boolean-type-hint-positional-argument]
     start_one = time.monotonic()
     name = tox_env.conf.name
     with tox_env.display_context(suspend_display):
@@ -43,14 +43,14 @@ def run_one(tox_env: RunToxEnv, no_test: bool, suspend_display: bool) -> ToxEnvR
     )
 
 
-def _evaluate(tox_env: RunToxEnv, no_test: bool) -> tuple[bool, int, list[Outcome]]:  # noqa: FBT001
+def _evaluate(tox_env: RunToxEnv, no_test: bool) -> tuple[bool, int, list[Outcome]]:  # ruff:ignore[boolean-type-hint-positional-argument]
     try:
         return _run_with_teardown(tox_env, no_test)
     except SystemExit as exception:  # setup command fails (interrupted or via invocation)
         return False, cast("int", exception.code), []
 
 
-def _run_with_teardown(tox_env: RunToxEnv, no_test: bool) -> tuple[bool, int, list[Outcome]]:  # noqa: FBT001
+def _run_with_teardown(tox_env: RunToxEnv, no_test: bool) -> tuple[bool, int, list[Outcome]]:  # ruff:ignore[boolean-type-hint-positional-argument]
     skipped = False
     code: int = 0
     outcomes: list[Outcome] = []
@@ -62,13 +62,13 @@ def _run_with_teardown(tox_env: RunToxEnv, no_test: bool) -> tuple[bool, int, li
         code = 0
         skipped = True
     except ToxBackendFailed as exception:
-        LOGGER.error("%s", exception)  # noqa: TRY400
-        raise SystemExit(exception.code)  # noqa: B904
+        LOGGER.error("%s", exception)  # ruff:ignore[error-instead-of-exception]
+        raise SystemExit(exception.code)  # ruff:ignore[raise-without-from-inside-except]
     except Fail as exception:
-        LOGGER.error("failed with %s", exception)  # noqa: TRY400
+        LOGGER.error("failed with %s", exception)  # ruff:ignore[error-instead-of-exception]
         code = 1
     except HandledError as exception:
-        LOGGER.error("%s", exception)  # noqa: TRY400
+        LOGGER.error("%s", exception)  # ruff:ignore[error-instead-of-exception]
         code = 1
     except Exception:  # pragma: no cover
         LOGGER.exception("internal error")  # pragma: no cover
@@ -78,12 +78,13 @@ def _run_with_teardown(tox_env: RunToxEnv, no_test: bool) -> tuple[bool, int, li
     return skipped, code, outcomes
 
 
-def run_commands(tox_env: RunToxEnv, no_test: bool) -> tuple[int, list[Outcome]]:  # noqa: FBT001
+def run_commands(tox_env: RunToxEnv, no_test: bool) -> tuple[int, list[Outcome]]:  # ruff:ignore[boolean-type-hint-positional-argument]
     outcomes: list[Outcome] = []
     if no_test:
         exit_code = Outcome.OK
     else:
-        from tox.plugin.manager import MANAGER  # importing this here to avoid circular import  # noqa: PLC0415
+        # importing this here to avoid circular import
+        from tox.plugin.manager import MANAGER  # ruff:ignore[import-outside-top-level]
 
         chdir: Path = tox_env.conf["change_dir"]
         chdir.mkdir(exist_ok=True, parents=True)
@@ -106,11 +107,11 @@ def run_commands(tox_env: RunToxEnv, no_test: bool) -> tuple[int, list[Outcome]]
     return exit_code, outcomes
 
 
-def run_command_set(  # noqa: PLR0913
+def run_command_set(  # ruff:ignore[too-many-arguments]
     tox_env: ToxEnv,
     key: str,
     cwd: Path,
-    ignore_errors: bool,  # noqa: FBT001
+    ignore_errors: bool,  # ruff:ignore[boolean-type-hint-positional-argument]
     outcomes: list[Outcome],
     retry_count: int = 0,
 ) -> int:

@@ -17,7 +17,7 @@ if TYPE_CHECKING:
 
 @impl
 def tox_add_option(parser: ToxParser) -> None:
-    from tox.config.cli.parser import CORE  # noqa: PLC0415
+    from tox.config.cli.parser import CORE  # ruff:ignore[import-outside-top-level]
 
     our = parser.add_command(
         "quickstart",
@@ -40,7 +40,7 @@ def quickstart(state: State) -> int:
     root = state.conf.options.quickstart_root.absolute()
     tox_ini = root / "tox.ini"
     if tox_ini.exists():
-        print(f"{tox_ini} already exist, refusing to overwrite")  # noqa: T201
+        print(f"{tox_ini} already exist, refusing to overwrite")  # ruff:ignore[print]
         return 1
     version = str(Version(__version__.split("+")[0]))
     text = f"""
@@ -60,8 +60,8 @@ def quickstart(state: State) -> int:
     """
     content = dedent(text).lstrip()
 
-    print(f"tox {__version__} quickstart utility, will create {tox_ini}:")  # noqa: T201
-    print(content, end="")  # noqa: T201
+    print(f"tox {__version__} quickstart utility, will create {tox_ini}:")  # ruff:ignore[print]
+    print(content, end="")  # ruff:ignore[print]
 
     root.mkdir(parents=True, exist_ok=True)
     tox_ini.write_text(content)

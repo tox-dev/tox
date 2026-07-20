@@ -207,7 +207,7 @@ def test_tox_install_pkg_with_skip_install(
 def test_run_installpkg_targz(
     tox_project: ToxProjectCreator,
     pkg_with_sdist: Path,
-    enable_pip_pypi_access: str | None,  # noqa: ARG001
+    enable_pip_pypi_access: str | None,  # ruff:ignore[unused-function-argument]
 ) -> None:
     project = tox_project({
         "tox.ini": """

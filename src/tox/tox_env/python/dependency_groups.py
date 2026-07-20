@@ -38,7 +38,7 @@ def _add_extra_to_deps(
     for dep_str in dependency_groups[normed_extra]:
         try:
             dependencies.add(Requirement(dep_str))
-        except InvalidRequirement as exc:  # noqa: PERF203
+        except InvalidRequirement as exc:  # ruff:ignore[try-except-in-loop]
             msg = f"{dep_str!r} is not valid requirement due to {exc}"
             raise Fail(msg) from exc
 

@@ -23,7 +23,7 @@ def run(args: Sequence[str] | None = None) -> None:
             result = main(sys.argv[1:] if args is None else args)
     except Exception as exception:
         if isinstance(exception, HandledError):
-            logging.error("%s| %s", type(exception).__name__, exception)  # noqa: TRY400
+            logging.error("%s| %s", type(exception).__name__, exception)  # ruff:ignore[error-instead-of-exception]
             result = -2
         else:
             raise
@@ -31,21 +31,21 @@ def run(args: Sequence[str] | None = None) -> None:
         result = -2
     finally:
         if "_TOX_SHOW_THREAD" in os.environ:  # pragma: no cover
-            import threading  # pragma: no cover  # noqa: PLC0415
+            import threading  # pragma: no cover  # ruff:ignore[import-outside-top-level]
 
             for thread in threading.enumerate():  # pragma: no cover
-                print(thread)  # pragma: no cover  # noqa: T201
+                print(thread)  # pragma: no cover  # ruff:ignore[print]
     raise SystemExit(result)
 
 
 def main(args: Sequence[str]) -> int:
     state = setup_state(args)
-    from tox.provision import provision  # noqa: PLC0415
+    from tox.provision import provision  # ruff:ignore[import-outside-top-level]
 
     result = provision(state)
     if result is not False:
         return result
-    handler = state._options.cmd_handlers[state.conf.options.command]  # noqa: SLF001
+    handler = state._options.cmd_handlers[state.conf.options.command]  # ruff:ignore[private-member-access]
     return handler(state)
 
 

@@ -47,7 +47,7 @@ def gen_schema(state: State) -> int:
     # interface includes the internal storage tuple
     sections = {
         key: conf
-        for s, conf in state.conf._key_to_conf_set.items()  # noqa: SLF001
+        for s, conf in state.conf._key_to_conf_set.items()  # ruff:ignore[private-member-access]
         if (key := s[0].split(".")[0]) not in {"env_run_base", "env_pkg_base", "env"}
     }
     for key, conf in sections.items():
@@ -249,7 +249,7 @@ def gen_schema(state: State) -> int:
             },
         },
     }
-    print(json.dumps(json_schema, indent=2))  # noqa: T201
+    print(json.dumps(json_schema, indent=2))  # ruff:ignore[print]
     return 0
 
 
@@ -263,7 +263,7 @@ def _get_schema(conf: ConfigSet, path: str) -> dict[str, dict[str, typing.Any]]:
         try:
             properties[name] = {**_process_type(of_type), "description": desc}
         except ValueError:
-            print(name, "has unrecoginsed type:", of_type, file=sys.stderr)  # noqa: T201
+            print(name, "has unrecoginsed type:", of_type, file=sys.stderr)  # ruff:ignore[print]
         for alias in aliases:
             properties[alias] = {
                 "$ref": f"{path}/{name}",
@@ -273,7 +273,7 @@ def _get_schema(conf: ConfigSet, path: str) -> dict[str, dict[str, typing.Any]]:
     return properties
 
 
-def _process_type(of_type: typing.Any) -> dict[str, typing.Any]:  # noqa: C901, PLR0911, PLR0912
+def _process_type(of_type: typing.Any) -> dict[str, typing.Any]:  # ruff:ignore[complex-structure, too-many-return-statements, too-many-branches]
     if of_type is tox.tox_env.python.pip.req_file.PythonDeps:
         return {
             "oneOf": [

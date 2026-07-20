@@ -96,7 +96,7 @@ def _extract_extra_markers(req: Requirement) -> tuple[Requirement, set[str | Non
             new_markers.append(marker)
             marker = markers.pop(0) if markers else None
     if new_markers:
-        cast("Marker", req.marker)._markers = new_markers  # noqa: SLF001
+        cast("Marker", req.marker)._markers = new_markers  # ruff:ignore[private-member-access]
     else:
         req.marker = None
     return req, cast("set[str | None]", extra_markers) or {None}
@@ -105,7 +105,7 @@ def _extract_extra_markers(req: Requirement) -> tuple[Requirement, set[str | Non
 def _get_extra(
     _marker: MarkerList | tuple[Variable | Value, Op, Variable | Value] | Sequence[MarkerAtom] | Literal["and", "or"],
 ) -> str | None:
-    if not isinstance(_marker, tuple) or len(_marker) != 3:  # noqa: PLR2004
+    if not isinstance(_marker, tuple) or len(_marker) != 3:  # ruff:ignore[magic-value-comparison]
         return None
     marker_tuple = cast("tuple[Variable | Value, Op, Variable | Value]", _marker)
     left, op, right = marker_tuple
@@ -130,4 +130,4 @@ def safe_extractall(tar: tarfile.TarFile, path: Path) -> None:
                 msg = f"tar member {member.name!r} would extract outside of {path}"
                 raise Fail(msg)
             safe_members.append(member)
-        tar.extractall(path=str(path), members=safe_members)  # noqa: S202
+        tar.extractall(path=str(path), members=safe_members)  # ruff:ignore[tarfile-unsafe-members]

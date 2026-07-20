@@ -83,7 +83,7 @@ def test_local_execute_basic_pass(
     executor = LocalSubProcessExecutor(colored=color)
 
     tox_env = _create_mock_env()
-    tox_env.conf._conf.options.stderr_color = stderr_color  # noqa: SLF001
+    tox_env.conf._conf.options.stderr_color = stderr_color  # ruff:ignore[private-member-access]
     code = f"import sys; print({out!r}, end=''); print({err!r}, end='', file=sys.stderr)"
     request = ExecuteRequest(cmd=[sys.executable, "-c", code], cwd=Path(), env=os_env, stdin=StdinSource.OFF, run_id="")
     out_err = FakeOutErr()
@@ -176,7 +176,7 @@ def test_local_execute_write_a_lot(os_env: dict[str, str]) -> None:
 @pytest.mark.skipif(sys.platform == "win32", reason="Unix terminal size test")
 def test_local_execute_terminal_size(os_env: dict[str, str], monkeypatch: MonkeyPatch) -> None:
     """Regression test for #2999 - check terminal size is set correctly in tox subprocess."""
-    import pty  # noqa: PLC0415
+    import pty  # ruff:ignore[import-outside-top-level]
 
     terminal_size = os.terminal_size((84, 42))
     main, child = pty.openpty()  # Unix-only
@@ -186,7 +186,7 @@ def test_local_execute_terminal_size(os_env: dict[str, str], monkeypatch: Monkey
     with (
         pipe_out,
         monkeypatch.context() as monkey,
-        open(  # noqa: PTH123
+        open(  # ruff:ignore[builtin-open]
             child, "w", encoding=locale.getpreferredencoding(False)
         ) as stdout_mock,
     ):
@@ -320,7 +320,7 @@ def test_command_keyboard_interrupt(tmp_path: Path, monkeypatch: MonkeyPatch, ca
         pytest.skip(str(exc))  # pragma: no cover
         raise  # pragma: no cover
 
-    print(f"test running in {os.getpid()} and sending CTRL+C to {process.pid}", file=sys.stderr)  # noqa: T201
+    print(f"test running in {os.getpid()} and sending CTRL+C to {process.pid}", file=sys.stderr)  # ruff:ignore[print]
     process.send_signal(SIG_INTERRUPT)
     try:
         process.communicate(timeout=3)
@@ -353,7 +353,7 @@ def test_pty_closes_fds_when_termios_fails(mocker: MockerFixture) -> None:
     openpty_spy = mocker.spy(pty, "openpty")
     close_spy = mocker.spy(os, "close")
 
-    result = local_sub_process._pty("stdout")  # noqa: SLF001
+    result = local_sub_process._pty("stdout")  # ruff:ignore[private-member-access]
 
     assert result is None
     main, child = openpty_spy.spy_return
@@ -441,7 +441,7 @@ def test_local_subprocess_tty(monkeypatch: MonkeyPatch, mocker: MockerFixture, t
     mocker.patch("sys.stdout.isatty", return_value=tty)
     mocker.patch("sys.stderr.isatty", return_value=tty)
     try:
-        import termios  # noqa: F401, PLC0415
+        import termios  # ruff:ignore[unused-import, import-outside-top-level]
     except ImportError:
         exp_tty = False  # platforms without tty support at all
     else:
@@ -619,7 +619,7 @@ def test_read_via_thread_ebadf_during_read(mocker: MockerFixture) -> None:
         data_received.append(data)
         return len(data)
 
-    def mock_read(fd: int, n: int) -> NoReturn:  # noqa: ARG001
+    def mock_read(fd: int, n: int) -> NoReturn:  # ruff:ignore[unused-function-argument]
         err = OSError("Bad file descriptor")
         err.errno = errno.EBADF
         raise err
@@ -651,7 +651,7 @@ def test_read_via_thread_drain_no_data() -> None:
     try:
         os.close(write_fd)
         reader = ReadViaThreadUnix(read_fd, handler, "test", drain=True)
-        reader._drain_stream()  # noqa: SLF001
+        reader._drain_stream()  # ruff:ignore[private-member-access]
     finally:
         with contextlib.suppress(OSError):
             os.close(read_fd)

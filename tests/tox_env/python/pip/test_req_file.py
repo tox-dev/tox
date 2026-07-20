@@ -25,7 +25,7 @@ def test_deps_bare_flag_no_argument(tmp_path: Path, flag: str) -> None:
     """A one-argument flag with no argument reports a clean error, not an IndexError."""
     python_deps = PythonDeps(raw=flag, root=tmp_path)
     with pytest.raises(ValueError, match="expected one argument"):
-        python_deps.requirements  # noqa: B018
+        python_deps.requirements  # ruff:ignore[useless-expression]
 
 
 def test_deps_with_hash(tmp_path: Path) -> None:
@@ -67,7 +67,7 @@ def test_req_with_no_deps(tmp_path: Path) -> None:
     (tmp_path / "r.txt").write_text("--no-deps")
     python_deps = PythonDeps(raw="-rr.txt", root=tmp_path)
     with pytest.raises(ValueError, match="unrecognized arguments: --no-deps"):
-        python_deps.requirements  # noqa: B018
+        python_deps.requirements  # ruff:ignore[useless-expression]
 
 
 def test_opt_only_req_file(tmp_path: Path) -> None:

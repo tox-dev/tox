@@ -44,7 +44,7 @@ def test_config_contains_env(tox_ini_conf: ToxIniCreator) -> None:
 
 def test_config_contains_empty_env_name(empty_config: Config) -> None:
     # a falsy (empty) environment name must still be reported as present, not swallowed by a truthiness check
-    empty_config._extra_envs = [""]  # noqa: SLF001
+    empty_config._extra_envs = [""]  # ruff:ignore[private-member-access]
     assert "" in empty_config
 
 
@@ -278,7 +278,7 @@ commands = [["python", "-c", "print('{env_tmp_dir}')"]]
 package_glob = "{env_tmp_dir}/dist/*.whl"
 """,
     })
-    execute_calls = project.patch_execute(lambda r: 0)  # noqa: ARG005
+    execute_calls = project.patch_execute(lambda r: 0)  # ruff:ignore[unused-lambda-argument]
     project.run("r", "-e", "a")
     calls = [(i[0][0].conf.name, i[0][3].cmd) for i in execute_calls.call_args_list]
     pkg_cmds = [cmd for name, cmd in calls if name == ".build-a"]

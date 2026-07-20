@@ -33,8 +33,8 @@ class IniConfig:
             self.config_file = self.config_file.absolute()
             try:
                 self._parse_config_file()
-            except Exception as exception:  # noqa: BLE001
-                logging.error("failed to read config file %s because %r", self.config_file, exception)  # noqa: TRY400
+            except Exception as exception:  # ruff:ignore[blind-except]
+                logging.error("failed to read config file %s because %r", self.config_file, exception)  # ruff:ignore[error-instead-of-exception]
                 self.has_config_file = None
 
     def _parse_config_file(self) -> None:
@@ -54,7 +54,7 @@ class IniConfig:
                 result = self._load_key(key, of_type)
             except KeyError:  # just not found
                 result = None
-            except Exception as exception:  # noqa: BLE001
+            except Exception as exception:  # ruff:ignore[blind-except]
                 logging.warning("%s key %s as type %r failed with %r", self.config_file, key, of_type, exception)
                 result = None
         self._cache[cache_key] = result

@@ -71,7 +71,7 @@ class ConfigSet(ABC):
         factory: Factory[Any] | None = None,
     ) -> ConfigDynamicDefinition[V | None]: ...
 
-    def add_config(  # noqa: PLR0913
+    def add_config(  # ruff:ignore[too-many-arguments]
         self,
         keys: str | Sequence[str],
         of_type: type[V] | UnionType,
@@ -159,7 +159,7 @@ class ConfigSet(ABC):
 
         """
         config_definition = self._defined[item]
-        return config_definition.__call__(self._conf, self.loaders, ConfigLoadArgs(chain, self.name, self.env_name))  # noqa: PLC2801
+        return config_definition.__call__(self._conf, self.loaders, ConfigLoadArgs(chain, self.name, self.env_name))  # ruff:ignore[unnecessary-dunder-call]
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}(loaders={self.loaders!r})"
@@ -218,10 +218,10 @@ class CoreConfigSet(ConfigSet):
         desc = "define environments to automatically run"
         self.add_config(keys=["env_list", "envlist"], of_type=EnvList, default=EnvList([]), desc=desc)
 
-    def _default_work_dir(self, conf: Config, env_name: str | None) -> Path:  # noqa: ARG002
+    def _default_work_dir(self, conf: Config, env_name: str | None) -> Path:  # ruff:ignore[unused-method-argument]
         return cast("Path", self["tox_root"] / ".tox")
 
-    def _default_temp_dir(self, conf: Config, env_name: str | None) -> Path:  # noqa: ARG002
+    def _default_temp_dir(self, conf: Config, env_name: str | None) -> Path:  # ruff:ignore[unused-method-argument]
         return cast("Path", self["work_dir"] / ".tmp")
 
     def _work_dir_post_process(self, folder: Path) -> Path:

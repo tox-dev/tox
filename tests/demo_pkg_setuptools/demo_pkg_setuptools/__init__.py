@@ -2,4 +2,4 @@ from __future__ import annotations
 
 
 def do() -> None:
-    print("greetings from demo_pkg_setuptools")  # noqa: T201
+    print("greetings from demo_pkg_setuptools")  # ruff:ignore[print]

@@ -37,7 +37,7 @@ class IniSource(Source):
         self._parser.read_string(content, str(path))
         self._section_mapping: defaultdict[str, list[str]] = defaultdict(list)
 
-    def transform_section(self, section: Section) -> Section:  # noqa: PLR6301
+    def transform_section(self, section: Section) -> Section:  # ruff:ignore[no-self-use]
         return IniSection(section.prefix, section.name)
 
     def sections(self) -> Iterator[IniSection]:
@@ -65,13 +65,13 @@ class IniSource(Source):
     def get_core_section(self) -> Section:
         return self.CORE_SECTION
 
-    def get_base_sections(self, base: list[str], in_section: Section) -> Iterator[Section]:  # noqa: PLR6301
+    def get_base_sections(self, base: list[str], in_section: Section) -> Iterator[Section]:  # ruff:ignore[no-self-use]
         for a_base in base:
             yield IniSection.from_key(a_base)
             if in_section.prefix is not None:  # no prefix specified, so this could imply our own prefix
                 yield IniSection(in_section.prefix, a_base)
 
-    def get_tox_env_section(self, item: str) -> tuple[Section, list[str], list[str]]:  # noqa: PLR6301
+    def get_tox_env_section(self, item: str) -> tuple[Section, list[str], list[str]]:  # ruff:ignore[no-self-use]
         return IniSection.test_env(item), [TEST_ENV_PREFIX], [PKG_ENV_PREFIX]
 
     def envs(self, core_conf: CoreConfigSet) -> Iterator[str]:

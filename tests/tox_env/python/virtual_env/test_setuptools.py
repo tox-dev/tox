@@ -21,7 +21,7 @@ if TYPE_CHECKING:
 def test_setuptools_package(
     tox_project: ToxProjectCreator,
     demo_pkg_setuptools: Path,
-    enable_pip_pypi_access: str | None,  # noqa: ARG001
+    enable_pip_pypi_access: str | None,  # ruff:ignore[unused-function-argument]
 ) -> None:
     tox_ini = """
         [testenv]

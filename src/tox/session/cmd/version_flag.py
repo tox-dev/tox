@@ -28,13 +28,13 @@ def tox_add_option(parser: ToxParser) -> None:
         def __call__(
             self,
             parser: ArgumentParser,
-            namespace: Namespace,  # noqa: ARG002
-            values: str | Sequence[Any] | None,  # noqa: ARG002
-            option_string: str | None = None,  # noqa: ARG002
+            namespace: Namespace,  # ruff:ignore[unused-method-argument]
+            values: str | Sequence[Any] | None,  # ruff:ignore[unused-method-argument]
+            option_string: str | None = None,  # ruff:ignore[unused-method-argument]
         ) -> None:
-            formatter = cast("HelpFormatter", parser._get_formatter())  # noqa: SLF001
+            formatter = cast("HelpFormatter", parser._get_formatter())  # ruff:ignore[private-member-access]
             formatter.add_raw_text(get_version_info())
-            parser._print_message(formatter.format_help(), sys.stdout)  # noqa: SLF001
+            parser._print_message(formatter.format_help(), sys.stdout)  # ruff:ignore[private-member-access]
             parser.exit()
 
     parser.add_argument("--version", action=_V)

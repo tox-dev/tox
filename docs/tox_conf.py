@@ -31,7 +31,7 @@ class ToxConfig(SphinxDirective):
         "ref_suffix": unchanged,
     }
 
-    def __init__(  # noqa: PLR0913
+    def __init__(  # ruff:ignore[too-many-arguments]
         self,
         name: str,
         arguments: list[str],

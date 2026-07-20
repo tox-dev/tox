@@ -117,7 +117,7 @@ def patch_prev_py(mocker: MockerFixture) -> PatchPrevPy:
         is_free_threaded = sysconfig.get_config_var("Py_GIL_DISABLED") == 1 if free_threaded is None else free_threaded
         is_debug = bool(sysconfig.get_config_var("Py_DEBUG")) if debug is None else debug
 
-        def get_python(self: VirtualEnv, base_python: list[str]) -> PythonInfo | None:  # noqa: ARG001
+        def get_python(self: VirtualEnv, base_python: list[str]) -> PythonInfo | None:  # ruff:ignore[unused-function-argument]
             if base_python[0] == "py31" or (base_python[0] == prev_py and not has_prev):
                 return None
             major, minor, micro, release_level, serial = sys.version_info
@@ -171,7 +171,7 @@ def demo_pkg_inline_wheel(tmp_path_factory: pytest.TempPathFactory, demo_pkg_inl
 
 
 def build_pkg(dist_dir: Path, of: Path, distributions: Sequence[DistributionType], isolation: bool = True) -> Path:
-    from build.__main__ import build_package  # noqa: PLC0415
+    from build.__main__ import build_package  # ruff:ignore[import-outside-top-level]
 
     build_package(str(of), str(dist_dir), distributions=distributions, isolation=isolation)
     return next(dist_dir.iterdir())

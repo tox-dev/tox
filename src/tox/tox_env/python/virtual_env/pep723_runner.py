@@ -20,7 +20,7 @@ class Pep723Runner(Pep723Mixin, VirtualEnv, RunToxEnv):
     def id() -> str:
         return "virtualenv-pep-723"
 
-    def _register_package_conf(self) -> bool:  # noqa: PLR6301
+    def _register_package_conf(self) -> bool:  # ruff:ignore[no-self-use]
         return False
 
     @property
@@ -31,7 +31,7 @@ class Pep723Runner(Pep723Mixin, VirtualEnv, RunToxEnv):
     def _external_pkg_tox_env_type(self) -> str:
         raise NotImplementedError
 
-    def _build_packages(self) -> list[Package]:  # noqa: PLR6301
+    def _build_packages(self) -> list[Package]:  # ruff:ignore[no-self-use]
         return []
 
 

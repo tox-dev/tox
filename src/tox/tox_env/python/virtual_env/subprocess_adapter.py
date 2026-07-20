@@ -189,7 +189,7 @@ def _has_correct_virtualenv(python: Path, virtualenv_spec: str) -> bool:
         )
         if result.returncode != 0:
             return False
-        from packaging.specifiers import SpecifierSet  # noqa: PLC0415
+        from packaging.specifiers import SpecifierSet  # ruff:ignore[import-outside-top-level]
 
         installed = result.stdout.strip()
         spec = virtualenv_spec.removeprefix("virtualenv")
@@ -212,7 +212,7 @@ def ensure_bootstrap(work_dir: Path, virtualenv_spec: str) -> Path:
             return python
         logging.info("bootstrapping %s into %s", virtualenv_spec, base)
         if base.exists():
-            import shutil  # noqa: PLC0415
+            import shutil  # ruff:ignore[import-outside-top-level]
 
             shutil.rmtree(base)
         venv.create(str(base), with_pip=True, clear=True)

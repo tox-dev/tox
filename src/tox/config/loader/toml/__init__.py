@@ -47,7 +47,7 @@ class TomlLoader(Loader[TomlTypes]):
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}({self.section.name}, {self.content!r})"
 
-    def load_raw(self, key: str, conf: Config | None, env_name: str | None) -> TomlTypes:  # noqa: ARG002
+    def load_raw(self, key: str, conf: Config | None, env_name: str | None) -> TomlTypes:  # ruff:ignore[unused-method-argument]
         return self.content[key]
 
     def load_raw_from_root(self, path: str) -> TomlTypes:
@@ -61,7 +61,7 @@ class TomlLoader(Loader[TomlTypes]):
                 raise KeyError(msg)
         return current
 
-    def build(  # noqa: PLR0913
+    def build(  # ruff:ignore[too-many-arguments]
         self,
         key: str,
         of_type: type[_T] | UnionType,
@@ -130,7 +130,7 @@ class TomlLoader(Loader[TomlTypes]):
 
     @staticmethod
     def to_env_list(value: TomlTypes) -> EnvList:
-        from ._product import expand_factor_group, expand_product  # noqa: PLC0415
+        from ._product import expand_factor_group, expand_product  # ruff:ignore[import-outside-top-level]
 
         if not isinstance(value, list):
             msg = f"env_list must be a list, got {type(value).__name__}"

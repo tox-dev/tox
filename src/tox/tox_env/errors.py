@@ -3,17 +3,17 @@
 from __future__ import annotations
 
 
-class Recreate(Exception):  # noqa: N818
+class Recreate(Exception):  # ruff:ignore[error-suffix-on-exception-name]
     """Recreate the tox environment."""
 
 
-class Skip(Exception):  # noqa: N818
+class Skip(Exception):  # ruff:ignore[error-suffix-on-exception-name]
     """Skip this tox environment."""
 
 
-class Fail(Exception):  # noqa: N818
+class Fail(Exception):  # ruff:ignore[error-suffix-on-exception-name]
     """Failed creating env."""
 
 
-class RunnerUnavailable(Exception):  # noqa: N818
+class RunnerUnavailable(Exception):  # ruff:ignore[error-suffix-on-exception-name]
     """Runner for this environment is not available."""

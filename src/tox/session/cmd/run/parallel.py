@@ -51,7 +51,7 @@ def parse_num_processes(str_value: str) -> int | None:
 def parallel_flags(
     our: ArgumentParser,
     default_parallel: int | str,
-    no_args: bool = False,  # noqa: FBT001, FBT002
+    no_args: bool = False,  # ruff:ignore[boolean-type-hint-positional-argument, boolean-default-value-positional-argument]
     *,
     default_spinner: bool = False,
 ) -> None:

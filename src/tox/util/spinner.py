@@ -62,9 +62,9 @@ class Spinner:
 
     def __init__(
         self,
-        enabled: bool = True,  # noqa: FBT001, FBT002
+        enabled: bool = True,  # ruff:ignore[boolean-type-hint-positional-argument, boolean-default-value-positional-argument]
         refresh_rate: float = 0.1,
-        colored: bool = True,  # noqa: FBT001, FBT002
+        colored: bool = True,  # ruff:ignore[boolean-type-hint-positional-argument, boolean-default-value-positional-argument]
         stream: IO[str] | None = None,
         total: int | None = None,
     ) -> None:
@@ -195,7 +195,7 @@ def td_human_readable(seconds: float) -> str:
     texts: list[str] = []
     for period_name, period_seconds in _PERIODS:
         period_str = None
-        if period_name == "second" and (seconds >= 0.01 or not texts):  # noqa: PLR2004
+        if period_name == "second" and (seconds >= 0.01 or not texts):  # ruff:ignore[magic-value-comparison]
             period_str = f"{seconds:.2f}".rstrip("0").rstrip(".")
         elif seconds >= period_seconds:
             period_value, seconds = divmod(seconds, period_seconds)
