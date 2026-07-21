@@ -7,6 +7,15 @@
 .. towncrier release notes start
 
 **********************
+ v4.58.0 (2026-07-21)
+**********************
+
+Miscellaneous internal changes - 4.58.0
+=======================================
+
+- Test against Python 3.15 (beta) in CI and declare its classifier - by :user:`gaborbernat`. (:issue:`4001`)
+
+**********************
  v4.57.2 (2026-07-21)
 **********************
 
