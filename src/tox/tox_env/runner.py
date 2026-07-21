@@ -11,6 +11,7 @@ from tox.config.types import Command, EnvList
 from tox.execute import Outcome
 
 from .api import ToxEnv, ToxEnvCreateArgs
+from .errors import Fail
 from .package import Package, PackageToxEnv, PathPackage
 from .util import add_change_dir_conf
 
@@ -151,7 +152,7 @@ class RunToxEnv(ToxEnv, ABC):
     def _call_pkg_envs(self, method_name: str, *args: Any) -> None:
         for package_env in self.package_envs:
             with package_env.display_context(suspend=self._has_display_suspended):
-                getattr(package_env, method_name)(*args)
+                _call_guarded(package_env, method_name, *args)
 
     def _clean(self, transitive: bool = False) -> None:  # ruff:ignore[boolean-type-hint-positional-argument, boolean-default-value-positional-argument]
         if not self._run_state["clean"] and self.env_dir.exists():
@@ -275,3 +276,10 @@ class RunToxEnv(ToxEnv, ABC):
     def mark_active(self) -> None:
         for pkg_env in self.package_envs:
             pkg_env.mark_active_run_env(self)
+
+
+def _call_guarded(package_env: PackageToxEnv, method_name: str, *args: Any) -> None:
+    try:
+        getattr(package_env, method_name)(*args)
+    except (Fail, OSError):  # one package env failing must not leak the others' resources
+        logging.warning("failed to %s package environment %s", method_name, package_env.name, exc_info=True)

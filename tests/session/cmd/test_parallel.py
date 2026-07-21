@@ -4,6 +4,7 @@ import sys
 from argparse import ArgumentTypeError
 from signal import SIGINT
 from subprocess import PIPE, Popen
+from textwrap import dedent
 from time import sleep
 from typing import TYPE_CHECKING
 from unittest import mock
@@ -286,3 +287,23 @@ def test_no_capture_short_flag_with_parallel_fails(tox_project: ToxProjectCreato
     ini = "[testenv]\npackage=skip\ncommands=python --version"
     result = tox_project({"tox.ini": ini}).run("p", "-e", "py", "-i")
     result.assert_failed()
+
+
+def test_parallel_fail_fast_lets_running_finish(tox_project: ToxProjectCreator) -> None:
+    """Documented contract: on fail fast, running environments finish; only pending ones are skipped."""
+    toml = dedent("""\
+        env_list = ["a", "b"]
+        [env_run_base]
+        package = "skip"
+        [env.a]
+        commands = [["python", "-c", "raise SystemExit(7)"]]
+        [env.b]
+        commands = [["python", "-c", "import time, pathlib; time.sleep(2); pathlib.Path('done.txt').write_text('x')"]]
+    """)
+    project = tox_project({"tox.toml": toml})
+
+    outcome = project.run("p", "-p", "2", "--fail-fast")
+
+    outcome.assert_failed(code=7)
+    assert (project.path / "done.txt").exists()
+    assert "b: OK" in outcome.out
