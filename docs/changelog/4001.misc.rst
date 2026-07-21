@@ -1,0 +1,1 @@
+Test against Python 3.15 (beta) in CI and declare its classifier - by :user:`gaborbernat`.
