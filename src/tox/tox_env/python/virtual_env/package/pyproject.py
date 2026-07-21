@@ -247,14 +247,17 @@ class Pep517VenvPackager(PythonPackageToxEnv, ABC):
             try:
                 if executor.is_alive:
                     self._frontend._send("_exit")  # try first on amicable shutdown  # ruff:ignore[private-member-access]
-            except (SystemExit, BrokenPipeError):  # pragma: no cover  # if interrupted or backend dead, ignore
+            except (SystemExit, BrokenPipeError, Fail):  # pragma: no cover  # if interrupted or backend dead, ignore
                 pass
             finally:
                 executor.close()
         for path in self._package_paths:
             if path.exists():
                 logging.debug("delete package %s", path)
-                path.unlink()
+                try:
+                    path.unlink()
+                except OSError as exception:  # e.g. still open on Windows; cleanup must reach the wheel build envs
+                    logging.warning("failed to delete package %s: %s", path, exception)
         super()._teardown()
 
     def perform_packaging(self, for_env: EnvConfigSet) -> list[Package]:

@@ -22,6 +22,7 @@ from tox.execute import Outcome
 from tox.journal import write_journal
 from tox.report import HandledError
 from tox.session.cmd.run.single import ToxEnvRunResult, run_one
+from tox.tox_env.errors import Fail
 from tox.util.graph import stable_topological_sort
 from tox.util.spinner import MISS_DURATION, Spinner
 
@@ -149,7 +150,9 @@ def env_run_create_flags(parser: ArgumentParser, mode: str) -> None:
         )
 
 
-def report(start: float, runs: list[ToxEnvRunResult], is_colored: bool, verbosity: int) -> int:  # ruff:ignore[boolean-type-hint-positional-argument]
+def report(
+    start: float, runs: list[ToxEnvRunResult], *, is_colored: bool, verbosity: int, fail_fast: bool = False
+) -> int:
     def _print(color_: int, message: str) -> None:
         if verbosity:
             print(f"{color_ if is_colored else ''}{message}{Fore.RESET if is_colored else ''}")  # ruff:ignore[print]
@@ -173,6 +176,14 @@ def report(start: float, runs: list[ToxEnvRunResult], is_colored: bool, verbosit
     _print(Fore.RED, f"  evaluation failed :( ({duration:.2f} seconds)")
     if len(runs) == 1:
         return runs[0].code if not runs[0].skipped else 1
+    if fail_fast:
+        # under fail fast the run stops at the first failure, whose code is the documented overall exit code
+        first_failed = next(
+            (r for r in runs if not r.skipped and not r.ignore_outcome and not r.unavailable and r.code != Outcome.OK),
+            None,
+        )
+        if first_failed is not None:
+            return first_failed.code
     return 1
 
 
@@ -275,8 +286,10 @@ def execute(state: State, max_workers: int | None, has_spinner: bool, live: bool
         exit_code = report(
             state.conf.options.start,
             ordered_results,
-            state.conf.options.is_colored,
-            state.conf.options.verbosity,
+            is_colored=state.conf.options.is_colored,
+            verbosity=state.conf.options.verbosity,
+            fail_fast=state.conf.options.fail_fast
+            or any(cast("RunToxEnv", state.envs[env]).conf["fail_fast"] for env in to_run_list),
         )
         if has_previous:
             signal(SIGINT, previous)
@@ -344,9 +357,16 @@ def _queue_and_wait(  # ruff:ignore[too-many-arguments]
     finally:
         try:
             for name in to_run_list:
-                state.envs[name].teardown()
+                _tear_down(state.envs[name])
         finally:
             done.set()
+
+
+def _tear_down(tox_env: ToxEnv) -> None:
+    try:
+        tox_env.teardown()
+    except (Fail, OSError):  # one environment failing to clean up must not leak the others' resources
+        logger.warning("failed to tear down environment %s", tox_env.conf.name, exc_info=True)
 
 
 def _do_queue_and_wait(  # ruff:ignore[complex-structure, too-many-arguments, too-many-statements, too-many-branches]
@@ -376,6 +396,7 @@ def _do_queue_and_wait(  # ruff:ignore[complex-structure, too-many-arguments, to
             )
 
         env_list: list[str] = []
+        stop_scheduling = False
         fail_fast_enabled = options.parsed.fail_fast or any(
             cast("RunToxEnv", state.envs[env]).conf["fail_fast"] for env in to_run_list
         )
@@ -413,11 +434,11 @@ def _do_queue_and_wait(  # ruff:ignore[complex-structure, too-many-arguments, to
                             result = completed_future.result()
                         except CancelledError:
                             tox_env_done.teardown()
-                            name = tox_env_done.conf.name
+                            was_interrupted = interrupt.is_set()
                             result = ToxEnvRunResult(
-                                name=name,
-                                skipped=False,
-                                code=-3,
+                                name=tox_env_done.conf.name,
+                                skipped=not was_interrupted,
+                                code=-3 if was_interrupted else -2,
                                 outcomes=[],
                                 duration=MISS_DURATION,
                             )
@@ -425,15 +446,18 @@ def _do_queue_and_wait(  # ruff:ignore[complex-structure, too-many-arguments, to
                         completed.add(result.name)
                         if (
                             result.code != Outcome.OK
+                            and not result.skipped
                             and not result.ignore_outcome
                             and (options.parsed.fail_fast or result.fail_fast)
                         ):
-                            interrupt.set()
+                            # stop scheduling new work but let running environments finish: only a user interrupt
+                            # abandons them (cancel only stops futures the executor has not started yet)
+                            stop_scheduling = True
                             env_list = []
                             for pending_future in list(future_to_env.keys()):
                                 pending_future.cancel()
 
-                if not interrupt.is_set() and not env_list:
+                if not interrupt.is_set() and not stop_scheduling and not env_list:
                     env_list = next(envs_to_run_generator, [])
                 # if nothing running and nothing more to run we're done
                 final_run = not env_list and not future_to_env

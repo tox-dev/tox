@@ -1,0 +1,8 @@
+Restore the documented fail-fast contract and make cleanup resilient:
+
+- ``--fail-fast`` in parallel mode lets already running environments finish and report their real outcomes, instead of
+  interrupting them after a second and mislabeling them as skipped;
+- environments canceled by fail fast before starting report as skipped;
+- the overall exit code under fail fast is the first failed environment's exit code, as documented;
+- one environment failing to clean up no longer prevents the remaining environments from cleaning up (which could leave
+  tox hanging on exit).

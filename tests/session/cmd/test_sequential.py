@@ -8,6 +8,7 @@ import sys
 import sysconfig
 from pathlib import Path
 from subprocess import PIPE, Popen
+from textwrap import dedent
 from time import sleep
 from typing import TYPE_CHECKING, Any
 
@@ -17,9 +18,12 @@ from virtualenv.discovery.py_info import PythonInfo
 
 from tox import __version__
 from tox.tox_env.api import ToxEnv
+from tox.tox_env.errors import Fail
 from tox.tox_env.info import Info
 
 if TYPE_CHECKING:
+    from pytest_mock import MockerFixture
+
     from tox.pytest import ToxProjectCreator
 
 
@@ -830,3 +834,52 @@ def test_second_interrupt_stops_post_commands(tox_project: ToxProjectCreator, tm
     assert marker_post_start.exists(), "commands_post should have started"
     assert not marker_post_end.exists(), "second SIGINT should have stopped commands_post"
     assert "second interrupt received" in out
+
+
+def test_fail_fast_exit_code_is_first_failure(tox_project: ToxProjectCreator) -> None:
+    """Documented contract: the overall exit code under fail fast is the first failed environment's code."""
+    toml = dedent("""\
+        env_list = ["a", "b"]
+        [env_run_base]
+        package = "skip"
+        [env.a]
+        commands = [["python", "-c", "raise SystemExit(7)"]]
+        [env.b]
+        commands = [["python", "-c", "print('ok')"]]
+    """)
+    project = tox_project({"tox.toml": toml})
+
+    outcome = project.run("r", "--fail-fast")
+
+    outcome.assert_failed(code=7)
+
+
+def test_teardown_continues_after_failure(tox_project: ToxProjectCreator, mocker: MockerFixture) -> None:
+    """One environment's teardown failure must not leave the remaining environments' resources alive."""
+    toml = dedent("""\
+        env_list = ["a", "b"]
+        [env_run_base]
+        package = "skip"
+        [env.a]
+        depends = ["b"]
+        [env.b]
+        depends = ["a"]
+    """)
+    project = tox_project({"tox.toml": toml})
+    torn_down: list[str] = []
+    original_teardown = ToxEnv.teardown
+
+    def recording_teardown(self: ToxEnv) -> None:
+        torn_down.append(self.conf.name)
+        if self.conf.name == "a":
+            msg = "teardown boom"
+            raise Fail(msg)
+        original_teardown(self)
+
+    mocker.patch.object(ToxEnv, "teardown", recording_teardown)
+
+    outcome = project.run("r", "--notest")
+
+    outcome.assert_failed()
+    assert "circular dependency detected" in outcome.out
+    assert torn_down == ["a", "b"]
