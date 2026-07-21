@@ -10,7 +10,7 @@ from tox.util.ci import _ENV_VARS, is_ci  # ruff:ignore[import-private-name]
 @pytest.mark.parametrize(
     "env_var",
     {
-        "CI": None,  # generic flag
+        "CI": "true",  # generic flag
         "TF_BUILD": "true",  # Azure Pipelines
         "bamboo.buildKey": None,  # Bamboo
         "BUILDKITE": "true",  # Buildkite
@@ -65,3 +65,12 @@ def test_is_ci_not_teamcity_local(monkeypatch: pytest.MonkeyPatch) -> None:
 
     monkeypatch.setenv("TEAMCITY_VERSION", "LOCAL")
     assert not is_ci()
+
+
+@pytest.mark.parametrize("value", ["false", "0", ""])
+def test_is_ci_generic_flag_opted_out(value: str, monkeypatch: pytest.MonkeyPatch) -> None:
+    for var in _ENV_VARS:
+        monkeypatch.delenv(var, raising=False)
+    monkeypatch.setenv("CI", value)
+
+    assert is_ci() is False

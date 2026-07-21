@@ -145,7 +145,7 @@ def test_result_json_sequential(
 
     result_py = log_report["testenvs"]["py"].pop("result")
     assert result_py.pop("duration") > 0
-    assert result_py == {"success": True, "exit_code": 0}
+    assert result_py == {"success": True, "exit_code": 0, "skipped": False}
 
     py_setup = get_cmd_exit_run_id(log_report, "py", "setup")
     assert py_setup == [(0, "install_package_deps"), (0, "install_package"), (0, "freeze")]
@@ -883,3 +883,21 @@ def test_teardown_continues_after_failure(tox_project: ToxProjectCreator, mocker
     outcome.assert_failed()
     assert "circular dependency detected" in outcome.out
     assert torn_down == ["a", "b"]
+
+
+def test_result_json_marks_skipped(tox_project: ToxProjectCreator) -> None:
+    """A consumer of the JSON report can tell a skipped environment from a passing one."""
+    toml = dedent("""\
+        env_list = ["a", "b"]
+        [env_run_base]
+        package = "skip"
+        [env.a]
+        platform = "nonexistent"
+    """)
+    project = tox_project({"tox.toml": toml})
+
+    outcome = project.run("r", "--result-json", "out.json")
+
+    outcome.assert_success()
+    result = json.loads((project.path / "out.json").read_text())["testenvs"]["a"]["result"]
+    assert result == {"success": True, "exit_code": 0, "duration": result["duration"], "skipped": True}

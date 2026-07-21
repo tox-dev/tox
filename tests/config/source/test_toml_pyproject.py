@@ -1248,3 +1248,16 @@ def test_toml_machine_isa_implicit_when_no_env_isa(tox_project: ToxProjectCreato
     outcome = project.run("c", "-e", "py39", "-k", "description")
     outcome.assert_success()
     assert "matched" in outcome.out
+
+
+def test_empty_tool_tox_table_defers_to_tox_toml(tox_project: ToxProjectCreator) -> None:
+    """A leftover empty [tool.tox] stub has no usable configuration and must not shadow tox.toml."""
+    project = tox_project({
+        "pyproject.toml": "[project]\nname='demo'\nversion='1.0'\n[tool.tox]\n",
+        "tox.toml": 'env_list = ["special"]\n',
+    })
+
+    outcome = project.run("l", "--no-desc", "-q")
+
+    outcome.assert_success()
+    outcome.assert_out_err("special\n", "")
