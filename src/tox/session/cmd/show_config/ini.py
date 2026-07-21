@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import os
+import sys
+from pathlib import Path
 from textwrap import indent
 from typing import TYPE_CHECKING
 
@@ -9,7 +11,7 @@ from colorama import Fore
 from tox.config.loader.stringify import stringify
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable
+    from collections.abc import Callable, Iterable
 
     from tox.config.sets import ConfigSet
     from tox.session.state import State
@@ -17,62 +19,45 @@ if TYPE_CHECKING:
 
 
 def show_config_ini(state: State) -> int:
-    is_colored = state.conf.options.is_colored
+    output_file = state.conf.options.output_file
+    # color belongs to the terminal only - a file must hold plain text
+    is_colored = state.conf.options.is_colored and output_file is None
     keys: list[str] = state.conf.options.list_keys_only
-    is_first = True
+    # the terminal streams each line as its value materializes (evaluation can be slow); a file is written whole
+    lines: list[str] = []
+    emit: Callable[[str], None] = lines.append if output_file is not None else _write_line
     has_exception = False
+    is_first = True
 
-    def _print_env(tox_env: ToxEnv) -> None:
-        nonlocal is_first, has_exception
-        if is_first:
-            is_first = False
-        else:
-            print()  # ruff:ignore[print]
-        _print_section_header(is_colored, f"[testenv:{tox_env.conf.name}]")
+    def _emit_env(tox_env: ToxEnv) -> None:
+        nonlocal has_exception, is_first
+        if not is_first:
+            emit("")
+        is_first = False
+        emit(_colored(f"[testenv:{tox_env.conf.name}]", Fore.YELLOW, enabled=is_colored))
         if not keys:
-            _print_key_value(is_colored, "type", type(tox_env).__name__)
-        if _print_conf(is_colored, tox_env.conf, keys):
+            emit(_key_value("type", type(tox_env).__name__, is_colored=is_colored))
+        if _emit_conf(emit, tox_env.conf, keys, is_colored=is_colored):
             has_exception = True
 
-    show_everything = state.conf.options.env.is_all
-    done: set[str] = set()
     for name in state.envs.iter(package=True):
-        done.add(name)
-        _print_env(state.envs[name])
+        _emit_env(state.envs[name])
 
-    if show_everything or state.conf.options.show_core:
-        print()  # ruff:ignore[print]
-        _print_section_header(is_colored, "[tox]")
-        if _print_conf(is_colored, state.conf.core, keys):
+    if state.conf.options.env.is_all or state.conf.options.show_core:
+        emit("")
+        emit(_colored("[tox]", Fore.YELLOW, enabled=is_colored))
+        if _emit_conf(emit, state.conf.core, keys, is_colored=is_colored):
             has_exception = True
+    if output_file is not None:
+        Path(output_file).write_text("\n".join(lines) + "\n", encoding="utf-8")
     return -1 if has_exception else 0
 
 
-def _colored(is_colored: bool, color: int, msg: str) -> str:  # ruff:ignore[boolean-type-hint-positional-argument]
-    return f"{color}{msg}{Fore.RESET}" if is_colored else msg
+def _write_line(line: str) -> None:
+    sys.stdout.write(line + "\n")
 
 
-def _print_section_header(is_colored: bool, name: str) -> None:  # ruff:ignore[boolean-type-hint-positional-argument]
-    print(_colored(is_colored, Fore.YELLOW, name))  # ruff:ignore[print]
-
-
-def _print_comment(is_colored: bool, comment: str) -> None:  # ruff:ignore[boolean-type-hint-positional-argument]
-    print(_colored(is_colored, Fore.CYAN, comment))  # ruff:ignore[print]
-
-
-def _print_key_value(is_colored: bool, key: str, value: str, multi_line: bool = False) -> None:  # ruff:ignore[boolean-type-hint-positional-argument, boolean-default-value-positional-argument]
-    print(_colored(is_colored, Fore.GREEN, key), end="")  # ruff:ignore[print]
-    print(" =", end="")  # ruff:ignore[print]
-    if multi_line:
-        print()  # ruff:ignore[print]
-        value_str = indent(value, prefix="  ")
-    else:
-        print(" ", end="")  # ruff:ignore[print]
-        value_str = value
-    print(value_str)  # ruff:ignore[print]
-
-
-def _print_conf(is_colored: bool, conf: ConfigSet, keys: Iterable[str]) -> bool:  # ruff:ignore[boolean-type-hint-positional-argument]
+def _emit_conf(emit: Callable[[str], None], conf: ConfigSet, keys: Iterable[str], *, is_colored: bool) -> bool:
     has_exception = False
     for key in keys or conf:
         if key not in conf:
@@ -84,12 +69,27 @@ def _print_conf(is_colored: bool, conf: ConfigSet, keys: Iterable[str]) -> bool:
         except Exception as exception:  # because e.g. the interpreter cannot be found
             if os.environ.get("_TOX_SHOW_CONFIG_RAISE"):  # pragma: no branch
                 raise  # pragma: no cover
-            as_str, multi_line = _colored(is_colored, Fore.LIGHTRED_EX, f"# Exception: {exception!r}"), False
+            as_str, multi_line = _colored(f"# Exception: {exception!r}", Fore.LIGHTRED_EX, enabled=is_colored), False
             has_exception = True
         if multi_line and "\n" not in as_str:
             multi_line = False
-        _print_key_value(is_colored, key, as_str, multi_line=multi_line)
+        emit(_key_value(key, as_str, is_colored=is_colored, multi_line=multi_line))
     unused = conf.unused()
     if unused and not keys:
-        _print_comment(is_colored, f"# !!! unused: {', '.join(unused)}")
+        emit(_colored(f"# !!! unused: {', '.join(unused)}", Fore.CYAN, enabled=is_colored))
     return has_exception
+
+
+def _key_value(key: str, value: str, *, is_colored: bool, multi_line: bool = False) -> str:
+    if multi_line:
+        return f"{_colored(key, Fore.GREEN, enabled=is_colored)} =\n{indent(value, prefix='  ')}"
+    return f"{_colored(key, Fore.GREEN, enabled=is_colored)} = {value}"
+
+
+def _colored(msg: str, color: int, *, enabled: bool) -> str:
+    return f"{color}{msg}{Fore.RESET}" if enabled else msg
+
+
+__all__ = [
+    "show_config_ini",
+]

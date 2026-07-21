@@ -18,9 +18,9 @@ from packaging.requirements import Requirement
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterator, Sequence
 
-    from build import DistributionType
     from devpi_process import Index, IndexServer
 
+    from build import DistributionType
     from tox.execute.request import ExecuteRequest
     from tox.pytest import MonkeyPatch, TempPathFactory, ToxProjectCreator
 
@@ -406,3 +406,14 @@ def test_provision_colored_passed_to_subprocess(tox_project: ToxProjectCreator) 
     assert captured_cmd is not None, "provision command not captured"
     assert "--colored" in captured_cmd, f"--colored not in command: {captured_cmd}"
     assert "yes" in captured_cmd, f"'yes' not in command: {captured_cmd}"
+
+
+def test_provision_no_recreate_json_pinned_tox(tox_project: ToxProjectCreator) -> None:
+    """A == pin on tox lands in the report as the version, not an empty string."""
+    project = tox_project({"tox.ini": "[tox]\nrequires = tox==999\nskipsdist=true\n"})
+
+    result = project.run("c", "-e", "py", "--no-provision", "out.json")
+
+    result.assert_failed()
+    requires = json.loads((project.path / "out.json").read_text())
+    assert requires == {"minversion": "999", "requires": ["tox==999", "tox"]}
