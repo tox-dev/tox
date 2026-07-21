@@ -313,10 +313,12 @@ def _order_results(state: State, results: list[ToxEnvRunResult], to_run_list: li
 
 class ToxSpinner(Spinner):
     def __init__(self, enabled: bool, state: State, total: int) -> None:  # ruff:ignore[boolean-type-hint-positional-argument]
+        stream = state._options.log_handler.stdout  # ruff:ignore[private-member-access]
         super().__init__(
-            enabled=enabled,
+            # animation frames and erase sequences belong to an interactive terminal, never to redirected output
+            enabled=enabled and stream.isatty(),
             colored=state.conf.options.is_colored,
-            stream=state._options.log_handler.stdout,  # ruff:ignore[private-member-access]
+            stream=stream,
             total=total,
         )
 
@@ -483,6 +485,7 @@ def _handle_one_run_done(
             "success": success,
             "exit_code": result.code,
             "duration": result.duration,
+            "skipped": result.skipped,
         }
     if live is False and state.conf.options.parallel_live is False:  # teardown background run
         out_err = tox_env.close_and_read_out_err()  # sync writes from buffer to stdout/stderr

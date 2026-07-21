@@ -100,7 +100,7 @@ class TomlPyProject(Source):
             self._our_content = our_content
         except KeyError as exc:
             raise MissingRequiredConfigKeyError(path) from exc
-        if set(self._our_content.keys()) == {"legacy_tox_ini"}:
+        if set(self._our_content.keys()) <= {"legacy_tox_ini"}:  # an empty stub or a legacy pointer holds no config
             raise MissingRequiredConfigKeyError(path)
         self._env_base_generated, self._factor_labels = _build_env_base_map(
             dict(self._our_content.get(self._Section.ENV_BASE, {})),

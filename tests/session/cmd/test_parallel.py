@@ -307,3 +307,19 @@ def test_parallel_fail_fast_lets_running_finish(tox_project: ToxProjectCreator) 
     outcome.assert_failed(code=7)
     assert (project.path / "done.txt").exists()
     assert "b: OK" in outcome.out
+
+
+def test_parallel_spinner_stays_out_of_non_tty_output(tox_project: ToxProjectCreator) -> None:
+    """Redirected output must hold plain text, not spinner control sequences."""
+    toml = dedent("""\
+        env_list = ["a"]
+        [env_run_base]
+        package = "skip"
+        commands = [["python", "-c", "print('hi')"]]
+    """)
+    project = tox_project({"tox.toml": toml})
+
+    outcome = project.run("p")
+
+    outcome.assert_success()
+    assert "\x1b[" not in outcome.out
