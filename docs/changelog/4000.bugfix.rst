@@ -1,6 +1,0 @@
-Polish four behaviors around the edges of a run:
-
-- an empty ``[tool.tox]`` stub in ``pyproject.toml`` no longer hides a ``tox.toml`` next to it;
-- setting ``CI=false`` (or empty) is respected as opting out of CI behavior;
-- spinner animation frames stay out of redirected output, which now holds plain text only;
-- the JSON report marks skipped environments with ``"skipped": true`` so they are distinguishable from passes.

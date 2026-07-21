@@ -1,6 +1,0 @@
-Fix package environment creation failures being misreported:
-
-- discard the partially registered configuration on failure, so the real error surfaces instead of a spurious
-  ``duplicate configuration definition``;
-- report the first creation failure in definition order, not a hash-random one;
-- build the PEP 517 frontend lazily, so ``tox c`` and ``tox l`` work when ``pyproject.toml`` cannot be read.

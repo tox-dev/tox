@@ -1,7 +1,0 @@
-``pylock.toml`` installs now match the lock file:
-
-- a package locked once per Python range installs only the version matching the environment's interpreter;
-- packages locked to a local directory, VCS repository, or archive install from that source instead of resolving the
-  name against the package index;
-- locked hashes are verified when every entry carries one;
-- changing a pip environment variable such as ``PIP_INDEX_URL`` reinstalls, as it already did for ``deps``.

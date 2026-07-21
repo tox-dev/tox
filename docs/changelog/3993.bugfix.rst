@@ -1,6 +1,0 @@
-An environment serving as both a run environment and a package environment now behaves predictably:
-
-- one defined through a ``[testenv:...]``-style section and referenced by ``package_env`` inherits from
-  ``pkgenv``/``env_pkg_base`` as documented, instead of silently keeping run environment defaults;
-- one listed in ``env_list`` while referenced as a package environment is reported as a configuration conflict up front,
-  instead of failing late with ``cannot run packaging environment`` or silently disappearing from ``tox l``.

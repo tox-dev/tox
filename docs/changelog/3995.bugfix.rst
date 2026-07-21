@@ -1,2 +1,0 @@
-Re-running tox no longer rebuilds an environment at random when ``deps`` uses ``--no-binary`` or ``--only-binary`` with
-more than one package name.

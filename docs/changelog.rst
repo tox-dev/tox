@@ -7,6 +7,84 @@
 .. towncrier release notes start
 
 **********************
+ v4.57.2 (2026-07-21)
+**********************
+
+Bug fixes - 4.57.2
+==================
+
+- Fix package environment creation failures being misreported:
+
+  - discard the partially registered configuration on failure, so the real error surfaces instead of a spurious
+    ``duplicate configuration definition``;
+  - report the first creation failure in definition order, not a hash-random one;
+  - build the PEP 517 frontend lazily, so ``tox c`` and ``tox l`` work when ``pyproject.toml`` cannot be read.
+    (:issue:`3987`)
+
+- Fix state corruption in the environment creation machinery:
+
+  - a failed run environment build no longer removes shared package environments other run environments still use;
+  - a run environment registers with its package environment once, not twice with triple-counted usage;
+  - circular ``depends`` reports the cycle as an error instead of a raw traceback;
+  - ``Skip`` raised by a plugin for a package environment marks the run environment package-skipped instead of crashing
+    with ``UnboundLocalError``. (:issue:`3991`)
+
+- Fix two packaging regressions:
+
+  - ``package = editable`` on a build backend without PEP-660 support now falls back to ``editable-legacy`` with a
+    warning instead of crashing, also when the project metadata is static;
+  - editable and wheel environments running after an ``sdist-wheel`` environment build from the project sources again,
+    instead of a stale temporary copy that made source edits invisible. (:issue:`3992`)
+
+- An environment serving as both a run environment and a package environment now behaves predictably:
+
+  - one defined through a ``[testenv:...]``-style section and referenced by ``package_env`` inherits from
+    ``pkgenv``/``env_pkg_base`` as documented, instead of silently keeping run environment defaults;
+  - one listed in ``env_list`` while referenced as a package environment is reported as a configuration conflict up
+    front, instead of failing late with ``cannot run packaging environment`` or silently disappearing from ``tox l``.
+    (:issue:`3993`)
+
+- ``pylock.toml`` installs now match the lock file:
+
+  - a package locked once per Python range installs only the version matching the environment's interpreter;
+  - packages locked to a local directory, VCS repository, or archive install from that source instead of resolving the
+    name against the package index;
+  - locked hashes are verified when every entry carries one;
+  - changing a pip environment variable such as ``PIP_INDEX_URL`` reinstalls, as it already did for ``deps``.
+    (:issue:`3994`)
+
+- Re-running tox no longer rebuilds an environment at random when ``deps`` uses ``--no-binary`` or ``--only-binary``
+  with more than one package name. (:issue:`3995`)
+- A corrupted environment status file (``.tox-info.json``) now always triggers an environment recreation instead of
+  crashing tox with an internal error for some corruption shapes. (:issue:`3996`)
+- PEP 723 scripts saved with a UTF-8 byte order mark now have their inline metadata honored (previously
+  ``requires-python`` and ``dependencies`` were silently ignored), and a script with invalid metadata reports a clear
+  configuration error instead of an internal one. (:issue:`3997`)
+- Fix three command line defects:
+
+  - ``tox c -o FILE`` writes the default (ini) format to the file like the json and toml formats, without color codes;
+  - ``tox devenv -e ALL`` reports that exactly one environment is required instead of crashing;
+  - ``--no-provision FILE`` records the pinned version for a ``tox==X`` requirement instead of an empty string.
+    (:issue:`3998`)
+
+- Restore the documented fail-fast contract and make cleanup resilient:
+
+  - ``--fail-fast`` in parallel mode lets already running environments finish and report their real outcomes, instead of
+    interrupting them after a second and mislabeling them as skipped;
+  - environments canceled by fail fast before starting report as skipped;
+  - the overall exit code under fail fast is the first failed environment's exit code, as documented;
+  - one environment failing to clean up no longer prevents the remaining environments from cleaning up (which could
+    leave tox hanging on exit). (:issue:`3999`)
+
+- Polish four behaviors around the edges of a run:
+
+  - an empty ``[tool.tox]`` stub in ``pyproject.toml`` no longer hides a ``tox.toml`` next to it;
+  - setting ``CI=false`` (or empty) is respected as opting out of CI behavior;
+  - spinner animation frames stay out of redirected output, which now holds plain text only;
+  - the JSON report marks skipped environments with ``"skipped": true`` so they are distinguishable from passes.
+    (:issue:`4000`)
+
+**********************
  v4.57.1 (2026-07-20)
 **********************
 

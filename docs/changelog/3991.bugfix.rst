@@ -1,7 +1,0 @@
-Fix state corruption in the environment creation machinery:
-
-- a failed run environment build no longer removes shared package environments other run environments still use;
-- a run environment registers with its package environment once, not twice with triple-counted usage;
-- circular ``depends`` reports the cycle as an error instead of a raw traceback;
-- ``Skip`` raised by a plugin for a package environment marks the run environment package-skipped instead of crashing
-  with ``UnboundLocalError``.
