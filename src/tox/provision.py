@@ -119,9 +119,9 @@ def provision(state: State) -> int | bool:
         msg = f"provisioning explicitly disabled within {sys.executable}, but {miss_msg}"
         if isinstance(no_provision, str):
             msg += f" and wrote to {no_provision}"
-            min_version = str(next(i.specifier for i in requires if i.name == "tox")).split("=")
+            tox_specifier = next(i.specifier for i in requires if i.name == "tox")
             requires_dict = {
-                "minversion": min_version[1] if len(min_version) >= 2 else None,  # ruff:ignore[magic-value-comparison]
+                "minversion": next((s.version for s in tox_specifier if s.operator in {">=", "=="}), None),
                 "requires": [str(i) for i in requires],
             }
             Path(no_provision).write_text(

@@ -32,6 +32,10 @@ def devenv(state: State) -> int:
     opt.no_test = True
     opt.package_only = False
     opt.install_pkg = None
+    if opt.env.is_all or len(list(opt.env)) != 1:
+        found = ", ".join(opt.env) or "ALL"
+        msg = f"exactly one target environment allowed in devenv mode but found {found}"
+        raise HandledError(msg)
     opt.fail_fast = False
     opt.skip_pkg_install = False
     loader = MemoryLoader(  # these configuration values are loaded from in-memory always (no file conf)

@@ -1,0 +1,5 @@
+Fix three command line defects:
+
+- ``tox c -o FILE`` writes the default (ini) format to the file like the json and toml formats, without color codes;
+- ``tox devenv -e ALL`` reports that exactly one environment is required instead of crashing;
+- ``--no-provision FILE`` records the pinned version for a ``tox==X`` requirement instead of an empty string.

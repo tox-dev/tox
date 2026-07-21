@@ -438,3 +438,14 @@ def test_core_on_platform(tox_project: ToxProjectCreator) -> None:
     result = project.run("c", "-e", "py", "--core", "-k", "on_platform")
     result.assert_success()
     assert result.out == f"[testenv:py]\n\n[tox]\non_platform = {sys.platform}\n"
+
+
+def test_show_config_ini_output_file(tox_project: ToxProjectCreator) -> None:
+    """The default format honors -o like the json and toml formats do."""
+    project = tox_project({"tox.toml": '[env_run_base]\npackage = "skip"\n'})
+
+    outcome = project.run("c", "-e", "py", "-k", "env_name", "-o", "out.txt")
+
+    outcome.assert_success()
+    assert (project.path / "out.txt").read_text() == "[testenv:py]\nenv_name = py\n"
+    assert not outcome.out
