@@ -2452,7 +2452,7 @@ You can reference environment variables via the ``env`` replacement:
     [env.A]
     set_env.COVERAGE_FILE = { replace = "env", name = "COVERAGE_FILE", default = "ok" }
 
-If the environment variable is set the the ``COVERAGE_FILE`` will become that, otherwise will default to ``ok``.
+If the environment variable is set then the ``COVERAGE_FILE`` will become that, otherwise will default to ``ok``.
 
 References within set_env
 =========================
