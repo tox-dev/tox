@@ -15,7 +15,7 @@ repos:
       - id: codespell
         additional_dependencies: ["tomli>=2.4"]
   - repo: https://github.com/tox-dev/pyproject-fmt
-    rev: "v2.25.3"
+    rev: "v2.26.0"
     hooks:
       - id: pyproject-fmt
   - repo: https://github.com/abravalheri/validate-pyproject
@@ -23,7 +23,7 @@ repos:
     hooks:
       - id: validate-pyproject
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: "v0.15.22"
+    rev: "v0.16.0"
     hooks:
       - id: ruff-check
         args: ["--fix", "--unsafe-fixes", "--exit-non-zero-on-fix"]
@@ -66,7 +66,7 @@ repos:
         exclude: ^docs/changelog/(\d+\.(feature|bugfix|doc|removal|misc).rst|template.jinja2)
         files: ^docs/changelog/
   - repo: https://github.com/zizmorcore/zizmor-pre-commit
-    rev: v1.27.0
+    rev: v1.28.0
     hooks:
       - id: zizmor
   - repo: meta
