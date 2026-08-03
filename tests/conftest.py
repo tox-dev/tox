@@ -5,7 +5,10 @@ import os
 import site
 import sys
 import sysconfig
+from functools import partial
 from pathlib import Path
+from shutil import rmtree
+from tempfile import mkdtemp
 from typing import TYPE_CHECKING, Protocol
 from unittest.mock import patch
 from uuid import uuid4
@@ -142,15 +145,17 @@ def patch_prev_py(mocker: MockerFixture) -> PatchPrevPy:
     return _func
 
 
-@pytest.fixture(scope="session", autouse=True)
-def _do_not_share_virtualenv_for_parallel_runs(tmp_path_factory: pytest.TempPathFactory, worker_id: str) -> None:
-    # virtualenv uses locks to manage access to its cache, when running with xdist this may throw off test timings
-    if worker_id != "master":  # pragma: no branch
-        temp_app_data = str(tmp_path_factory.mktemp(f"virtualenv-app-{worker_id}"))  # pragma: no cover
-        os.environ["VIRTUALENV_APP_DATA"] = temp_app_data  # pragma: no cover
-        seed_env_folder = str(tmp_path_factory.mktemp(f"seed-cache-{worker_id}"))  # pragma: no cover
-        args = [seed_env_folder, "--without-pip", "--activators", ""]  # pragma: no cover
-        cli_run(args, setup_logging=False)  # pragma: no cover
+def pytest_configure(config: pytest.Config) -> None:
+    if (worker_id := os.environ.get("PYTEST_XDIST_WORKER")) is not None:  # pragma: no cover
+        # virtualenv locks its app data, so sharing one across xdist workers throws off test timings
+        app_data = mkdtemp(prefix=f"virtualenv-app-{worker_id}-")
+        os.environ["VIRTUALENV_APP_DATA"] = app_data
+        config.add_cleanup(partial(rmtree, app_data, ignore_errors=True))
+    seed_env = mkdtemp(prefix="virtualenv-seed-")
+    config.add_cleanup(partial(rmtree, seed_env, ignore_errors=True))
+    # seeding builds the pip wheel image, a compileall over pip's tree that is slow on Windows CI; pay it here so it
+    # does not land inside the timeout of whichever test happens to create the first environment
+    cli_run([seed_env, "--activators", ""], setup_logging=False)
 
 
 @pytest.fixture(scope="session")
