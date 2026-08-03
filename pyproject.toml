@@ -282,5 +282,4 @@ type = [
   { directory = "doc", name = "Improved documentation", showcontent = true },
   { directory = "packaging", name = "Packaging updates and notes for downstreams", showcontent = true },
   { directory = "contrib", name = "Contributor-facing changes", showcontent = true },
-  { directory = "misc", name = "Miscellaneous internal changes", showcontent = true },
 ]

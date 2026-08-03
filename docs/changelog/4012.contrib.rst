@@ -1,0 +1,2 @@
+Remove the ``misc`` changelog category, and align the changelog filename check with the categories towncrier accepts -
+by :user:`gaborbernat`.
