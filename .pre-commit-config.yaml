@@ -62,8 +62,8 @@ repos:
       - id: changelogs-rst
         name: changelog filenames
         language: fail
-        entry: "changelog files must be named ####.(feature|bugfix|doc|removal|misc).rst"
-        exclude: ^docs/changelog/(\d+\.(feature|bugfix|doc|removal|misc).rst|template.jinja2)
+        entry: "changelog files must be named ####.(breaking|deprecation|feature|bugfix|doc|packaging|contrib).rst"
+        exclude: ^docs/changelog/(\d+\.(breaking|deprecation|feature|bugfix|doc|packaging|contrib).rst|template.jinja2)
         files: ^docs/changelog/
   - repo: https://github.com/zizmorcore/zizmor-pre-commit
     rev: v1.29.0

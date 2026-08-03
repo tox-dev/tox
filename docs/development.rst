@@ -25,7 +25,7 @@ section. This section contains only highlights; it's not a substitute for readin
   changes *must* be checked visually (see below).
 - All PRs that make changes visible to an end user require a changelog entry. This should reference an issue if it
   closes that issue, otherwise reference the PR. Create one or more (if there's more than one issue)
-  ``docs/changelog/####.{breaking,deprecation,feature,bugfix,doc,packaging,contrib,misc}.rst`` per the `changelog entry
+  ``docs/changelog/####.{breaking,deprecation,feature,bugfix,doc,packaging,contrib}.rst`` per the `changelog entry
   <#changelog-entries>`_ section below.
 - GitHub Actions will do a full set of `tests and checks <#automated-testing>`_ when the PR is submitted. For local
   testing you'll need to install your own "top-level" tox (using pipx_ or similar is fine) and use the following targets
@@ -205,8 +205,7 @@ directory named after that issue number with an extension of:
 - ``bugfix.rst`` - bug fixes,
 - ``doc.rst`` - documentation improvements,
 - ``packaging.rst`` - packaging updates and notes for downstreams,
-- ``contrib.rst`` - contributor-facing changes,
-- ``misc.rst`` - miscellaneous internal changes.
+- ``contrib.rst`` - contributor-facing changes.
 
 Thus if your issue or PR number is ``1234`` and this change is fixing a bug, then you would create a file
 ``docs/changelog/1234.bugfix.rst``. PRs can span multiple categories by creating multiple files (for instance, if you
