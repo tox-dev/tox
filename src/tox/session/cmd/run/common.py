@@ -9,6 +9,7 @@ from argparse import Action, ArgumentError, ArgumentParser, Namespace
 from concurrent.futures import FIRST_COMPLETED, CancelledError, Future, ThreadPoolExecutor
 from concurrent.futures import wait as wait_futures
 from fnmatch import fnmatchcase
+from operator import itemgetter
 from pathlib import Path
 from signal import SIGINT, Handlers, signal
 from threading import Event, Thread
@@ -25,6 +26,7 @@ from tox.report import HandledError
 from tox.session.cmd.run.single import ToxEnvRunResult, run_one
 from tox.tox_env.errors import Fail
 from tox.util.graph import stable_topological_sort
+from tox.util.python_envs import record_python_envs
 from tox.util.spinner import MISS_DURATION, Spinner
 
 if TYPE_CHECKING:
@@ -282,6 +284,8 @@ def execute(state: State, max_workers: int | None, has_spinner: bool, live: bool
         ordered_results = _order_results(state, results, to_run_list)
         # write the journal
         write_journal(state.conf.options.result_json, state._journal)  # ruff:ignore[private-member-access]
+        # let editors discover the environments
+        _record_python_envs(state)
         # warn about unused config keys
         _warn_unused_config(state)
         # report the outcome
@@ -311,6 +315,22 @@ def _order_results(state: State, results: list[ToxEnvRunResult], to_run_list: li
         if env_name not in name_to_run
     )
     return ordered
+
+
+def _record_python_envs(state: State) -> None:
+    core = state.conf.core
+    if not core["python_envs"]:
+        return
+    ranked: list[tuple[tuple[bool, bool, int], Path]] = []
+    for at, name in enumerate(state.envs.iter(only_active=False)):
+        env = state.envs[name]
+        if not (env.env_dir / "pyvenv.cfg").exists():  # not a Python environment a reader could use
+            continue
+        develop = "package" in env.conf and env.conf["package"] in {"editable", "editable-legacy"}
+        # the default environment goes last: prefer one named dev, then a develop install, then the env list order
+        ranked.append(((name == "dev", develop, -at), env.env_dir))
+    envs = [env_dir for _, env_dir in sorted(ranked, key=itemgetter(0))]
+    record_python_envs(cast("Path", core["tox_root"]), cast("Path", core["work_dir"]), envs)
 
 
 class ToxSpinner(Spinner):

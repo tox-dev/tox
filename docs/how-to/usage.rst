@@ -162,6 +162,44 @@ The ``tox exec`` subcommand runs an arbitrary command inside a tox environment w
 The command must be in the environment's ``PATH`` or listed in :ref:`allowlist_externals`. ``tox exec`` is useful for
 debugging, running one-off scripts, or interactively exploring an environment without modifying your configuration.
 
+.. _howto_editor_env:
+
+***************************************
+ Open a tox environment in your editor
+***************************************
+
+Editors pick up interpreters through the :PEP:`832` ``.python-envs`` file, which tox writes next to your configuration
+file after each run. Name the environment you develop against ``dev`` and tox puts it on the last line, the one readers
+treat as the default:
+
+.. code-block:: toml
+
+    [env.dev]
+    description = "development environment"
+    package = "editable"
+    dependency_groups = [ "dev" ]
+
+Create it, then reload your editor window:
+
+.. code-block:: bash
+
+    tox run -e dev --notest
+
+The file lists one directory per line, so you can check what an editor will see:
+
+.. code-block:: bash
+
+    $ cat .python-envs
+    .tox/3.13
+    .tox/dev
+
+Commit the file when your team keeps environments in the same place, otherwise add it to your ``.gitignore``. To keep
+tox from writing it at all, set :ref:`python_envs` in the core section:
+
+.. code-block:: toml
+
+    python_envs = false
+
 .. ------------------------------------------------------------------------------------------
 
 .. Configuration (frequently needed)

@@ -540,6 +540,21 @@ the top level of ``tox.toml``. Placing these options in an environment section (
     will have its own copy of the project package - e.g. the source distribution).
 
 .. conf::
+    :keys: python_envs
+    :default: true
+    :version_added: 4.59.0
+
+    Catalog the created tox environments in a :pep:`832` ``.python-envs`` file next to the configuration file, so that
+    editors such as VS Code or PyCharm offer them as interpreters. The file holds one environment directory per line,
+    with the default one last. tox prefers an environment named ``dev`` for that spot, then one that installs the
+    project in development mode, then the first entry of :ref:`env_list`. It lists only environments that exist, and
+    takes one out of the catalog while it recreates it.
+
+    Lines pointing outside the :ref:`work_dir` come from another tool, so tox keeps them, including their claim on the
+    last line. Commit the file when everyone working on the project has their environments in the same place, otherwise
+    ignore it.
+
+.. conf::
     :keys: no_package, skipsdist
     :default: false
     :version_added: 1.6

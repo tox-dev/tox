@@ -287,6 +287,23 @@ has changed), use ``--skip-env-install``:
 
     tox run -e 3.13 --skip-env-install
 
+******************************
+ Using an environment at hand
+******************************
+
+After a run, tox records the environments it created in a ``.python-envs`` file next to your configuration, following
+:PEP:`832`. Editors such as VS Code read it and offer those interpreters, so you can pick one instead of hunting for a
+path under ``.tox``:
+
+.. code-block:: bash
+
+    $ tox run -e 3.13
+    $ cat .python-envs
+    .tox/3.13
+
+The last line is the default. Name an environment ``dev`` and tox puts it there, which is what you want for the
+environment you edit code against - see :ref:`howto_editor_env`.
+
 ********************************
  Listing available environments
 ********************************
