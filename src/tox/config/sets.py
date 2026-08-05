@@ -338,6 +338,18 @@ class CoreConfigSet(ConfigSet):
             default=self._default_temp_dir,
             desc="a folder for temporary files (is not cleaned at start)",
         )
+        self.add_config(
+            keys=["venv_redirect"],
+            of_type=bool,
+            default=True,
+            desc="(provisional) point a PEP-832 .venv redirect file at a tox environment, so editors can discover it",
+        )
+        self.add_config(
+            keys=["venv_redirect_env"],
+            of_type=str,
+            default=None,
+            desc="(provisional) the tox environment the .venv redirect file points at, picked automatically when unset",
+        )
         self.add_constant("host_python", "the host python executable path", sys.executable)
 
     @override

@@ -162,6 +162,51 @@ The ``tox exec`` subcommand runs an arbitrary command inside a tox environment w
 The command must be in the environment's ``PATH`` or listed in :ref:`allowlist_externals`. ``tox exec`` is useful for
 debugging, running one-off scripts, or interactively exploring an environment without modifying your configuration.
 
+.. _howto_editor_env:
+
+***************************************
+ Open a tox environment in your editor
+***************************************
+
+Editors find the project interpreter through the :PEP:`832` ``.venv`` redirect file, which tox writes next to your
+configuration file after each run. The feature is provisional while the PEP is a draft, so a minor or patch release may
+change it in backward incompatible ways. Name the environment you develop against ``dev`` and tox points the file at it:
+
+.. code-block:: toml
+
+    [env.dev]
+    description = "development environment"
+    package = "editable"
+    dependency_groups = [ "dev" ]
+
+Create it, then reload your editor window:
+
+.. code-block:: bash
+
+    tox run -e dev --notest
+
+The file holds one path, so you can check what an editor will see:
+
+.. code-block:: bash
+
+    $ cat .venv
+    .tox/dev
+
+To point it at another environment without renaming it, set :ref:`venv_redirect_env` in the core section:
+
+.. code-block:: toml
+
+    venv_redirect_env = "3.13"
+
+The path is relative with forward slashes, so you can commit the file when everyone keeps environments under ``.tox``;
+otherwise leave ``.venv`` in your ``.gitignore``. tox leaves a ``.venv`` directory alone, and a redirect file pointing
+outside its environments too, so editors keep using a ``.venv`` that ``python -m venv``, uv or you created. To keep tox
+from writing the file at all, set :ref:`venv_redirect`:
+
+.. code-block:: toml
+
+    venv_redirect = false
+
 .. ------------------------------------------------------------------------------------------
 
 .. Configuration (frequently needed)

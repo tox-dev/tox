@@ -20,6 +20,7 @@ from tox.tox_env.info import Info
 from tox.util.path import ensure_cachedir_tag, ensure_empty_dir, ensure_gitignore
 from tox.util.redact import redact_value
 from tox.util.typing_compat import override
+from tox.util.venv_redirect import forget_venv_redirect
 
 if TYPE_CHECKING:
     from collections.abc import Iterator, Sequence
@@ -348,6 +349,10 @@ class ToxEnv(ABC):  # ruff:ignore[too-many-public-methods]
         env_dir = self.env_dir
         if env_dir.exists():
             LOGGER.warning("remove tox env folder %s", env_dir)
+            if self.core.get(
+                "venv_redirect", bool
+            ):  # retract it so nothing points at the environment while it rebuilds
+                forget_venv_redirect(self.core.get("tox_root", Path), env_dir)
             ensure_empty_dir(env_dir, except_filename="file.lock")
         self._log_id = 0  # we deleted logs, so start over counter
         self.cache.reset()

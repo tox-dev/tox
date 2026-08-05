@@ -9,6 +9,7 @@ from argparse import Action, ArgumentError, ArgumentParser, Namespace
 from concurrent.futures import FIRST_COMPLETED, CancelledError, Future, ThreadPoolExecutor
 from concurrent.futures import wait as wait_futures
 from fnmatch import fnmatchcase
+from operator import itemgetter
 from pathlib import Path
 from signal import SIGINT, Handlers, signal
 from threading import Event, Thread
@@ -27,6 +28,7 @@ from tox.tox_env.errors import Fail
 from tox.util.graph import stable_topological_sort
 from tox.util.spinner import MISS_DURATION, Spinner
 from tox.util.typing_compat import override
+from tox.util.venv_redirect import record_venv_redirect
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterator, Sequence
@@ -285,6 +287,8 @@ def execute(state: State, max_workers: int | None, has_spinner: bool, live: bool
         ordered_results = _order_results(state, results, to_run_list)
         # write the journal
         write_journal(state.conf.options.result_json, state._journal)  # ruff:ignore[private-member-access]
+        # let editors discover an environment
+        _record_venv_redirect(state)
         # warn about unused config keys
         _warn_unused_config(state)
         # report the outcome
@@ -314,6 +318,35 @@ def _order_results(state: State, results: list[ToxEnvRunResult], to_run_list: li
         if env_name not in name_to_run
     )
     return ordered
+
+
+def _record_venv_redirect(state: State) -> None:
+    core = state.conf.core
+    if not core.get("venv_redirect", bool):
+        return
+    env_dirs = {name: state.envs[name].env_dir for name in state.envs.iter(only_active=False)}
+    if (target := _venv_redirect_target(state, env_dirs)) is None:
+        return
+    work_dir, ours = core.get("work_dir", Path), set(env_dirs.values())
+    record_venv_redirect(core.get("tox_root", Path), target, lambda path: path in ours or path.is_relative_to(work_dir))
+
+
+def _venv_redirect_target(state: State, env_dirs: dict[str, Path]) -> Path | None:
+    usable = {name: env_dir for name, env_dir in env_dirs.items() if (env_dir / "pyvenv.cfg").exists()}
+    if (pinned := state.conf.core.get_optional("venv_redirect_env", str)) is not None:
+        if pinned not in env_dirs:
+            logger.warning("venv_redirect_env names %s, which is not a tox environment", pinned)
+        return usable.get(pinned)
+    # prefer what someone edits code against: an environment named dev, then a develop install, then env list order
+    ranked = [
+        ((name == "dev", _installs_develop(state.envs[name]), -at), env_dir)
+        for at, (name, env_dir) in enumerate(usable.items())
+    ]
+    return max(ranked, key=itemgetter(0))[1] if ranked else None
+
+
+def _installs_develop(env: ToxEnv) -> bool:
+    return "package" in env.conf and env.conf["package"] in {"editable", "editable-legacy"}
 
 
 class ToxSpinner(Spinner):

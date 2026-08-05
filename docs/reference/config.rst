@@ -616,6 +616,37 @@ the top level of ``tox.toml``. Placing these options in an environment section (
     will have its own copy of the project package - e.g. the source distribution).
 
 .. conf::
+    :keys: venv_redirect
+    :default: true
+    :version_added: 4.64.0
+
+    .. warning::
+
+        This option is provisional because :pep:`832` is still a draft, and tox follows the PEP as it changes. A minor or
+        patch release may change this option, :ref:`venv_redirect_env` and the file tox writes in backward incompatible
+        ways.
+
+    Point a :pep:`832` ``.venv`` redirect file next to the configuration file at a tox environment, so that editors such
+    as VS Code or PyCharm offer it as the project interpreter. The file holds a single line: the environment directory,
+    relative to the file with forward slashes when it lives under the project, absolute otherwise. tox writes it at the
+    end of a run, picking the environment named by :ref:`venv_redirect_env` or, when that is unset, one named ``dev``,
+    then one that installs the project in development mode, then the first entry of :ref:`env_list`. Only environments
+    that exist count, and tox removes the file while it recreates the environment it points at.
+
+    tox leaves a ``.venv`` directory or symlink alone, and a redirect file pointing outside the :ref:`work_dir` and the
+    tox environments, since then the user or another tool chose the environment.
+
+.. conf::
+    :keys: venv_redirect_env
+    :version_added: 4.64.0
+
+    This option is provisional, like :ref:`venv_redirect`.
+
+    The name of the tox environment the ``.venv`` redirect file points at, overriding the pick described under
+    :ref:`venv_redirect`. tox writes nothing while that environment does not exist, and warns when no environment has the
+    name.
+
+.. conf::
     :keys: no_package, skipsdist
     :default: false
     :version_added: 1.6
