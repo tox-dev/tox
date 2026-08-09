@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import inspect
 import re
-from typing import TYPE_CHECKING, TypeVar
+from typing import TYPE_CHECKING, TypeVar, cast
 
 from tox.config.loader.api import ConfigLoadArgs, Loader, Override
 from tox.config.loader.ini.factor import filter_for_env
@@ -97,7 +97,7 @@ class IniLoader(StrConvert, Loader[str]):
         prepared = replacer(raw, args) if not delay_replace else raw
         converted = self.to(prepared, of_type, factory)
         if delay_replace:
-            converted.use_replacer(replacer, args)  # this can be only set_env that has it
+            cast("SetEnv", converted).use_replacer(replacer, args)  # delay_replace means of_type is SetEnv
         return converted
 
     def found_keys(self) -> set[str]:

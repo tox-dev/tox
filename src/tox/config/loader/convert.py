@@ -54,7 +54,7 @@ class Convert(ABC, Generic[T]):
             return raw
         if factory:
             return factory(raw)
-        return cast("type[V]", of_type)(raw)
+        return cast("Callable[[T], V]", of_type)(raw)
 
     def _to_typing(self, raw: T, of_type: type[V] | UnionType, factory: Factory[V]) -> V:  # ruff:ignore[complex-structure, too-many-branches]
         origin = get_origin(of_type) or of_type.__class__

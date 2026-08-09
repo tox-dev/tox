@@ -4,11 +4,14 @@ from __future__ import annotations
 
 import socket
 import sys
-from typing import Any
+from typing import TYPE_CHECKING
 
 from tox.version import version
 
 from .env import EnvJournal
+
+if TYPE_CHECKING:
+    from tox.util.json_types import JsonValue
 
 
 class Journal:
@@ -16,7 +19,7 @@ class Journal:
 
     def __init__(self, enabled: bool) -> None:  # ruff:ignore[boolean-type-hint-positional-argument]
         self._enabled = enabled
-        self._content: dict[str, Any] = {}
+        self._content: dict[str, JsonValue] = {}
         self._env: dict[str, EnvJournal] = {}
 
         if self._enabled:
@@ -37,8 +40,8 @@ class Journal:
         return self._env[name]
 
     @property
-    def content(self) -> dict[str, Any]:
-        test_env_journals: dict[str, Any] = {}
+    def content(self) -> dict[str, JsonValue]:
+        test_env_journals: dict[str, JsonValue] = {}
         for name, value in self._env.items():
             test_env_journals[name] = value.content
         if test_env_journals:

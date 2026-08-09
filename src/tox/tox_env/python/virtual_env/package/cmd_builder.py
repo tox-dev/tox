@@ -74,7 +74,7 @@ class VenvCmdBuilder(PythonPackageToxEnv, ABC):
         )
 
     def requires(self) -> PythonDeps:
-        return cast("PythonDeps", self.conf["deps"])
+        return self.conf.get("deps", PythonDeps)
 
     def load_deps_for_env(self, for_env: EnvConfigSet) -> list[Requirement]:
         assert self._sdist_meta_tox_env is not None  # ruff:ignore[assert]

@@ -458,7 +458,7 @@ class EnvSelector:
         env_conf = self._state.conf.get_env(name, package=False)
         desc = "the tox execute used to evaluate this environment"
         env_conf.add_config(keys="runner", desc=desc, of_type=str, default=self._state.conf.options.default_runner)
-        runner_name = cast("str", env_conf["runner"])
+        runner_name = env_conf.get("runner", str)
         try:
             runner = REGISTER.runner(runner_name)
         except KeyError as exc:
@@ -531,7 +531,7 @@ class EnvSelector:
 
     def _get_package_env(self, packager: str, name: str, run_env_name: str, is_active: bool) -> PackageToxEnv:  # ruff:ignore[boolean-type-hint-positional-argument]
         assert self._defined_envs_ is not None  # ruff:ignore[assert]
-        if name in set(cast("EnvList", self._state.conf.core["env_list"]).envs):
+        if name in set(self._state.conf.core.get("env_list", EnvList).envs):
             # an env cannot both be asked to run and serve as a builder - fail here with the full picture rather
             # than late at execution with "cannot run packaging environment"
             msg = (

@@ -6,11 +6,14 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 from threading import RLock
 from types import MethodType
-from typing import TYPE_CHECKING, Any, cast
+from typing import TYPE_CHECKING, Any, ParamSpec, TypeVar, cast
 
 from filelock import BaseFileLock, FileLock
 
 from .api import ToxEnv, ToxEnvCreateArgs
+
+_P = ParamSpec("_P")
+_R = TypeVar("_R")
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Generator, Iterator
@@ -34,11 +37,8 @@ class PathPackage(Package):
         return str(self.path)
 
 
-locked = False
-
-
-def _lock_method(thread_lock: RLock, file_lock: BaseFileLock | None, meth: Callable[..., Any]) -> Callable[..., Any]:
-    def _func(*args: Any, **kwargs: Any) -> Any:
+def _lock_method(thread_lock: RLock, file_lock: BaseFileLock | None, meth: Callable[_P, _R]) -> Callable[_P, _R]:
+    def _func(*args: _P.args, **kwargs: _P.kwargs) -> _R:
         with thread_lock:
             file_locks = False
             if file_lock is not None and file_lock.is_locked is False:  # file_lock is to lock from other tox processes
@@ -75,13 +75,13 @@ class PackageToxEnv(ToxEnv, ABC):
         self.core.add_config(
             keys=["package_root", "setupdir"],
             of_type=Path,
-            default=cast("Path", self.core["tox_root"]),
+            default=self.core.get("tox_root", Path),
             desc="indicates where the packaging root file exists (historically setup.py file or pyproject.toml now)",
         )
         self.conf.add_config(
             keys=["package_root", "setupdir"],
             of_type=Path,
-            default=cast("Path", self.core["package_root"]),
+            default=self.core.get("package_root", Path),
             desc="indicates where the packaging root file exists (historically setup.py file or pyproject.toml now)",
         )
 

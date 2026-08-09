@@ -7,14 +7,14 @@ from collections import defaultdict
 from collections.abc import Callable, Sequence
 from functools import partial
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, cast
+from typing import TYPE_CHECKING, Any
 
 from packaging.requirements import Requirement
 
 from tox.config.types import Command
 from tox.execute.request import StdinSource
 from tox.tox_env.errors import Fail, Recreate
-from tox.tox_env.installer import Installer
+from tox.tox_env.installer import InstallArguments, Installer
 from tox.tox_env.python.api import Python
 from tox.tox_env.python.package import EditableLegacyPackage, EditablePackage, SdistPackage, WheelPackage
 from tox.tox_env.python.pip.req_file import PythonConstraints, PythonDeps
@@ -22,7 +22,7 @@ from tox.tox_env.python.pylock import Pylock
 
 if TYPE_CHECKING:
     from tox.config.main import Config
-    from tox.tox_env.package import PathPackage
+    from tox.tox_env.package import Package
 
 
 class PythonInstallerListDependencies(Installer[Python], ABC):
@@ -74,7 +74,7 @@ class Pip(PythonInstallerListDependencies):
             default=False,
             desc="install the latest available pre-release (alpha/beta/rc) of dependencies without a specified version",
         )
-        self._env.conf.add_config(  # ty: ignore[no-matching-overload] # https://github.com/astral-sh/ty/issues/2428
+        self._env.conf.add_config(
             keys=["install_command"],
             of_type=Command,
             default=self.default_install_command,
@@ -124,7 +124,7 @@ class Pip(PythonInstallerListDependencies):
                 install_command.pop(opts_at)
         return cmd
 
-    def install(self, arguments: Any, section: str, of_type: str) -> None:
+    def install(self, arguments: InstallArguments, section: str, of_type: str) -> None:
         if isinstance(arguments, PythonDeps):
             self._install_requirement_file(arguments, section, of_type)
         elif isinstance(arguments, Pylock):
@@ -137,7 +137,7 @@ class Pip(PythonInstallerListDependencies):
 
     @property
     def constraints(self) -> PythonConstraints:
-        return cast("PythonConstraints", self._env.conf["constraints"])
+        return self._env.conf.get("constraints", PythonConstraints)
 
     def constraints_file(self) -> Path:
         return Path(self._env.env_dir) / "constraints.txt"
@@ -231,9 +231,7 @@ class Pip(PythonInstallerListDependencies):
 
     def _install_list_of_deps(  # ruff:ignore[complex-structure, too-many-branches]
         self,
-        arguments: Sequence[
-            Requirement | WheelPackage | SdistPackage | EditableLegacyPackage | EditablePackage | PathPackage
-        ],
+        arguments: Sequence[Requirement | Package],
         section: str,
         of_type: str,
     ) -> None:

@@ -74,7 +74,8 @@ intersphinx_mapping = {
     "packaging": ("https://packaging.pypa.io/en/latest", None),
 }
 nitpicky = True
-nitpick_ignore = []
+# a private stdlib class we cannot document, the stdlib itself has no public name for it
+nitpick_ignore = [("py:class", "argparse._ArgumentGroup")]
 linkcheck_workers = 10
 linkcheck_ignore = [
     re.escape(i)
@@ -160,7 +161,8 @@ def setup(app: Sphinx) -> None:
                 "tox.config.of_type.T": "typing.TypeVar",  # used by Sphinx bases
                 "tox.config.loader.api.T": "typing.TypeVar",  # used by Sphinx bases
                 "tox.config.loader.convert.T": "typing.TypeVar",  # used by Sphinx bases
-                "tox.tox_env.installer.T": "typing.TypeVar",  # used by Sphinx bases
+                "tox.tox_env.installer.EnvT_co": "typing.TypeVar",  # used by Sphinx bases
+                "tox.tox_env.installer.ArgsT": "typing.TypeVar",  # used by Sphinx bases
                 "pathlib._local.Path": "pathlib.Path",
             }
             if target in mapping:

@@ -11,6 +11,7 @@ from argparse import SUPPRESS, Action, ArgumentDefaultsHelpFormatter, ArgumentEr
 from pathlib import Path
 from types import GenericAlias, UnionType
 from typing import TYPE_CHECKING, Any, Literal, TypeVar, cast, overload
+from weakref import WeakKeyDictionary
 
 from colorama import Fore
 
@@ -26,11 +27,21 @@ else:  # pragma: <3.11 cover
     from typing_extensions import Self
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, Iterable, Sequence
+    from collections.abc import Callable, Iterable, MutableMapping, Sequence
 
+    from packaging.requirements import Requirement
+
+    from tox.config.loader.api import Override
+    from tox.session.env_select import CliEnv
     from tox.session.state import State
 
-_N = TypeVar("_N", bound=Namespace)
+_N = TypeVar("_N")  # unbounded to match typeshed, argparse accepts any object as namespace
+
+_ACTION_OF_TYPE: MutableMapping[Action, type[Any] | UnionType] = WeakKeyDictionary()
+"""The value type an action's option was declared with (actions come from argparse, so no attribute can be added)."""
+
+_ACTION_DEFAULT_SOURCE: MutableMapping[Action, str] = WeakKeyDictionary()
+"""Where an action's default was overridden from (environment variable or user level configuration file)."""
 
 
 class ArgumentParserWithEnvAndConfig(ArgumentParser):
@@ -55,7 +66,7 @@ class ArgumentParserWithEnvAndConfig(ArgumentParser):
                 outcome = self.file_config.get(key, of_type=of_type)
             if outcome is not None:
                 action.default, default_value = outcome
-                action.default_source = default_value  # ty: ignore[unresolved-attribute] # dynamic attr for HelpFormatter
+                _ACTION_DEFAULT_SOURCE[action] = default_value
         if isinstance(action, argparse._SubParsersAction):  # ruff:ignore[private-member-access]
             for values in action.choices.values():
                 if not isinstance(values, ToxParser):  # pragma: no cover
@@ -64,8 +75,8 @@ class ArgumentParserWithEnvAndConfig(ArgumentParser):
                 values.fix_defaults()
 
     @staticmethod
-    def get_type(action: Action) -> type[Any]:
-        of_type: type[Any] | None = getattr(action, "of_type", None)
+    def get_type(action: Action) -> type[Any] | UnionType:
+        of_type = _ACTION_OF_TYPE.get(action)
         if of_type is None:
             if isinstance(action, argparse._AppendAction):  # ruff:ignore[private-member-access]
                 if action.nargs in {"+", "*"} or (isinstance(action.nargs, int) and action.nargs > 1):
@@ -73,7 +84,7 @@ class ArgumentParserWithEnvAndConfig(ArgumentParser):
                 else:
                     of_type = cast("type[Any]", GenericAlias(list, (action.type,)))
             elif isinstance(action, argparse._StoreAction) and action.choices:  # ruff:ignore[private-member-access]
-                of_type = Literal[tuple(action.choices)]  # ty: ignore[invalid-type-form] # dynamic Literal from choices
+                of_type = cast("type[Any]", Literal[tuple(action.choices)])  # ty: ignore[invalid-type-form] # pyrefly: ignore[invalid-literal] # dynamic Literal from choices
             elif action.default is not None:
                 of_type = type(action.default)
             elif isinstance(action, argparse._StoreConstAction) and action.const is not None:  # ruff:ignore[private-member-access]
@@ -115,10 +126,11 @@ class HelpFormatter(ArgumentDefaultsHelpFormatter):
 
     def _get_help_string(self, action: Action) -> str | None:
         text: str = super()._get_help_string(action) or ""
-        if hasattr(action, "default_source"):
+        if (source := _ACTION_DEFAULT_SOURCE.get(action)) is not None:
             default = " (default: %(default)s)"
             if text.endswith(default):  # pragma: no branch
-                text = f"{text[: -len(default)]} (default: %(default)s -> from %(default_source)s)"
+                # escape % as the result goes through one more %-formatting pass with the action variables
+                text = f"{text[: -len(default)]} (default: %(default)s -> from {source.replace('%', '%%')})"
         return text
 
     def add_raw_text(self, text: str | None) -> None:
@@ -138,7 +150,59 @@ _INHERIT_ALL: frozenset[str] = frozenset({CORE, ENV})
 
 
 class Parsed(Namespace):
-    """CLI options."""
+    """CLI options.
+
+    The annotations below declare the type each option has once its command registered it; an option belonging to
+    another command is absent at runtime, so shared code paths read it via ``getattr`` with a fallback.
+
+    """
+
+    verbose: int
+    quiet: int
+    colored: Literal["yes", "no"]
+    stderr_color: str
+    exit_and_dump_after: int
+    config_file: Path | None
+    work_dir: Path | None
+    root_dir: Path | None
+    override: list[Override]
+    command: str
+    remainder: list[str]
+
+    env: CliEnv
+    labels: list[str]
+    factors: list[str]
+    skip_env: str
+    default_runner: str
+
+    result_json: Path | None
+    no_capture: bool
+    hash_seed: int | None
+    discover: list[str]
+    list_dependencies: bool
+
+    recreate: bool
+    no_test: bool
+    package_only: bool
+    install_pkg: Path | None
+    fail_fast: bool
+    develop: bool
+    no_recreate_pkg: bool
+    skip_pkg_install: bool
+    skip_env_install: bool
+    skip_missing_interpreters: Literal["config", "true", "false"] | bool  # devenv forces False after parsing
+    parallel: int
+    parallel_live: bool
+    parallel_no_spinner: bool
+
+    no_provision: bool | str
+    no_recreate_provision: bool
+    devenv_path: Path
+
+    force_dep: list[Requirement]
+    site_packages: bool
+    always_copy: bool
+    pre: bool
 
     @property
     def verbosity(self) -> int:
@@ -149,9 +213,7 @@ class Parsed(Namespace):
     @property
     def is_colored(self) -> bool:
         """:returns: flag indicating if the output is colored or not"""
-        return cast("bool", self.colored == "yes")
-
-    exit_and_dump_after: int
+        return self.colored == "yes"
 
 
 ArgumentArgs = tuple[tuple[str, ...], type[Any] | UnionType | None, dict[str, Any]]
@@ -163,15 +225,21 @@ class ToxParser(ArgumentParserWithEnvAndConfig):
     def __init__(self, *args: Any, root: bool = False, add_cmd: bool = False, **kwargs: Any) -> None:
         self.of_cmd: str | None = None
         self.inherit: frozenset[str] = _INHERIT_ALL
-        self.handlers: dict[str, tuple[Any, Callable[[State], int]]] = {}
+        self.handlers: dict[str, tuple[ToxParser, Callable[[State], int]]] = {}
         self._arguments: list[ArgumentArgs] = []
-        self._groups: list[tuple[Any, dict[str, Any], list[tuple[dict[str, Any], list[ArgumentArgs]]]]] = []
+        self._groups: list[
+            tuple[tuple[str | None, ...], dict[str, Any], list[tuple[dict[str, Any], list[ArgumentArgs]]]]
+        ] = []
         super().__init__(*args, **kwargs)
         if root is True:
             self._add_base_options()
         if add_cmd is True:
             msg = "tox command to execute (by default legacy)"
-            self._cmd: Any | None = self.add_subparsers(title="subcommands", description=msg, dest="command")
+            # the subparsers action instantiates parser_class, which defaults to type(self), hence the cast holds
+            self._cmd: argparse._SubParsersAction[ToxParser] | None = cast(
+                "argparse._SubParsersAction[ToxParser]",  # ruff:ignore[private-member-access]
+                self.add_subparsers(title="subcommands", description=msg, dest="command"),
+            )
             self._cmd.required = False
             self._cmd.default = "legacy"
         else:
@@ -320,7 +388,7 @@ class ToxParser(ArgumentParserWithEnvAndConfig):
 
     @staticmethod
     def _dest_from(args: tuple[str, ...], kwargs: dict[str, Any]) -> str:
-        if dest := kwargs.get("dest"):
+        if dest := cast("str | None", kwargs.get("dest")):
             return dest
         args_list = list(args)
         args_list.sort(key=len, reverse=True)
@@ -329,28 +397,14 @@ class ToxParser(ArgumentParserWithEnvAndConfig):
                 return arg.lstrip("-").replace("-", "_")
         return args[0].lstrip("-").replace("-", "_")
 
-    def add_argument_group(self, *args: Any, **kwargs: Any) -> Any:
-        result = super().add_argument_group(*args, **kwargs)
-        if self.of_cmd is None and args not in {("positional arguments",), ("optional arguments",)}:
-
-            def add_mutually_exclusive_group(**e_kwargs: Any) -> Any:
-                def add_argument(*a_args: str, of_type: type[Any] | None = None, **a_kwargs: Any) -> Action:
-                    res_args: Action = prev_add_arg(*a_args, **a_kwargs)
-                    arguments.append((a_args, of_type, a_kwargs))
-                    return res_args
-
-                arguments: list[ArgumentArgs] = []
-                excl.append((e_kwargs, arguments))
-                res_excl = prev_excl(**kwargs)
-                prev_add_arg = res_excl.add_argument
-                res_excl.add_argument = add_argument  # ty: ignore[invalid-assignment] # wrapping to record args
-                return res_excl
-
-            prev_excl = result.add_mutually_exclusive_group
-            result.add_mutually_exclusive_group = add_mutually_exclusive_group  # ty: ignore[invalid-assignment] # wrapping to record exclusions
-            excl: list[tuple[dict[str, Any], list[ArgumentArgs]]] = []
-            self._groups.append((args, kwargs, excl))
-        return result
+    def add_argument_group(self, *args: Any, **kwargs: Any) -> argparse._ArgumentGroup:
+        if self.of_cmd is not None or args in {("positional arguments",), ("optional arguments",)}:
+            return super().add_argument_group(*args, **kwargs)
+        excl: list[tuple[dict[str, Any], list[ArgumentArgs]]] = []
+        group = _RecordingArgumentGroup(self, *args, excl=excl, **kwargs)
+        self._action_groups.append(group)  # the same bookkeeping argparse add_argument_group performs
+        self._groups.append((args, kwargs, excl))
+        return group
 
     def add_argument(self, *args: str, of_type: type[Any] | UnionType | None = None, **kwargs: Any) -> Action:
         result = super().add_argument(*args, **kwargs)
@@ -363,7 +417,7 @@ class ToxParser(ArgumentParserWithEnvAndConfig):
                     else:
                         parser.set_defaults(**{result.dest: result.default})
         if of_type is not None:
-            result.of_type = of_type  # ty: ignore[unresolved-attribute] # dynamic attr read by get_type
+            _ACTION_OF_TYPE[result] = of_type
         return result
 
     @classmethod
@@ -432,6 +486,36 @@ class ToxParser(ArgumentParserWithEnvAndConfig):
         result = Parsed() if namespace is None else namespace
         _, remainder = super().parse_known_args(args_list, namespace=result)
         return cast("tuple[_N, list[str]]", (result, remainder))
+
+
+class _RecordingArgumentGroup(argparse._ArgumentGroup):  # ruff:ignore[private-member-access]
+    """Argument group that records its exclusive sub-groups so they replay onto later added sub-parsers."""
+
+    def __init__(
+        self, container: ToxParser, *args: Any, excl: list[tuple[dict[str, Any], list[ArgumentArgs]]], **kwargs: Any
+    ) -> None:
+        super().__init__(container, *args, **kwargs)
+        self._excl = excl
+
+    def add_mutually_exclusive_group(self, **kwargs: Any) -> _RecordingMutuallyExclusiveGroup:
+        arguments: list[ArgumentArgs] = []
+        self._excl.append((kwargs, arguments))
+        group = _RecordingMutuallyExclusiveGroup(self, recorded=arguments, **kwargs)
+        self._mutually_exclusive_groups.append(group)  # the same bookkeeping argparse performs
+        return group
+
+
+class _RecordingMutuallyExclusiveGroup(argparse._MutuallyExclusiveGroup):  # ruff:ignore[private-member-access]
+    """Exclusive group that records added arguments so they replay onto later added sub-parsers."""
+
+    def __init__(self, container: _RecordingArgumentGroup, *, recorded: list[ArgumentArgs], **kwargs: Any) -> None:
+        super().__init__(container, **kwargs)
+        self._recorded = recorded
+
+    def add_argument(self, *args: str, of_type: type[Any] | UnionType | None = None, **kwargs: Any) -> Action:
+        action = super().add_argument(*args, **kwargs)
+        self._recorded.append((args, of_type, kwargs))
+        return action
 
 
 def add_core_arguments(parser: ArgumentParser) -> None:

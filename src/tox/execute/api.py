@@ -8,7 +8,7 @@ import time
 from abc import ABC, abstractmethod
 from collections.abc import Callable, Iterator, Sequence
 from contextlib import contextmanager, suppress
-from typing import IO, TYPE_CHECKING, Any, NoReturn, cast
+from typing import IO, TYPE_CHECKING, NoReturn, cast
 
 from colorama import Fore
 
@@ -20,6 +20,7 @@ if TYPE_CHECKING:
 
     from tox.report import OutErr
     from tox.tox_env.api import ToxEnv
+    from tox.util.json_types import JsonValue
 
 ContentHandler = Callable[[bytes], int]
 Executor = Callable[[ExecuteRequest, ContentHandler, ContentHandler], int]
@@ -106,7 +107,7 @@ class ExecuteStatus(ABC):
         return self._err.content
 
     @property
-    def metadata(self) -> dict[str, Any]:
+    def metadata(self) -> dict[str, JsonValue]:
         return {}
 
 
@@ -136,11 +137,11 @@ class Execute(ABC):
                 stderr_color = Fore.RED
             if sys.platform == "win32" and show:
                 try:
-                    import colorama.ansitowin32  # ruff:ignore[import-outside-top-level]
+                    from colorama.winterm import enable_vt_processing  # ruff:ignore[import-outside-top-level]
 
                     for stream in out_err:
                         with suppress(AttributeError, OSError):
-                            colorama.ansitowin32.enable_vt_processing(stream.buffer.fileno())
+                            enable_vt_processing(stream.buffer.fileno())  # pragma: win32 cover
                 except ImportError:
                     pass
         # collector is what forwards the content from the file streams to the standard streams
@@ -234,7 +235,7 @@ class Outcome:
         start: float,
         end: float,
         cmd: Sequence[str],
-        metadata: dict[str, Any],
+        metadata: dict[str, JsonValue],
     ) -> None:
         """Create a new execution outcome.
 

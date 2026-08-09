@@ -1,16 +1,33 @@
 from __future__ import annotations
 
+import sys
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, Any, Generic, TypeVar
+from collections.abc import Sequence
+from typing import Generic, TypeAlias
 
-if TYPE_CHECKING:
-    from tox.tox_env.api import ToxEnv
+from packaging.requirements import Requirement
 
-T = TypeVar("T", bound="ToxEnv")
+from tox.tox_env.api import ToxEnv
+from tox.tox_env.package import Package
+from tox.tox_env.python.pip.req_file import PythonDeps
+from tox.tox_env.python.pylock import Pylock
+
+if sys.version_info >= (3, 13):  # pragma: >=3.13 cover
+    from typing import TypeVar
+else:  # pragma: <3.13 cover
+    from typing_extensions import TypeVar
+
+InstallArguments: TypeAlias = PythonDeps | Pylock | Sequence[Requirement | Package]
+"""Argument types tox itself passes to :meth:`Installer.install` and the ``tox_on_install`` hook."""
+
+EnvT_co = TypeVar("EnvT_co", bound=ToxEnv, covariant=True)
+ArgsT = TypeVar("ArgsT", default=InstallArguments)
 
 
-class Installer(ABC, Generic[T]):
-    def __init__(self, tox_env: T) -> None:
+class Installer(ABC, Generic[EnvT_co, ArgsT]):
+    """Install packages into a tox environment; ``ArgsT`` is what :meth:`install` accepts."""
+
+    def __init__(self, tox_env: EnvT_co) -> None:
         self._env = tox_env
         self._register_config()
 
@@ -20,10 +37,16 @@ class Installer(ABC, Generic[T]):
         raise NotImplementedError
 
     @abstractmethod
-    def installed(self) -> Any:
+    def installed(self) -> list[str]:
         """:returns: a list of packages installed (JSON dump-able)"""
         raise NotImplementedError
 
     @abstractmethod
-    def install(self, arguments: Any, section: str, of_type: str) -> None:
+    def install(self, arguments: ArgsT, section: str, of_type: str) -> None:
         raise NotImplementedError
+
+
+__all__ = [
+    "InstallArguments",
+    "Installer",
+]

@@ -22,6 +22,7 @@ if TYPE_CHECKING:
     from types import TracebackType
 
     from tox.execute.stream import SyncWrite
+    from tox.util.json_types import JsonValue
 
 # mypy: warn-unused-ignores=false
 
@@ -135,7 +136,7 @@ class LocalSubprocessExecuteStatus(ExecuteStatus):
         return f"{self.__class__.__name__}(pid={self._process.pid}, returncode={self._process.returncode!r})"
 
     @property
-    def metadata(self) -> dict[str, Any]:
+    def metadata(self) -> dict[str, JsonValue]:
         return {"pid": self._process.pid} if self._process.pid else {}
 
 

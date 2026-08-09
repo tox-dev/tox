@@ -60,7 +60,7 @@ dependencies = [
   "python-discovery>=1.4.4",
   "tomli>=2.4; python_version<'3.11'",
   "tomli-w>=1.2",
-  "typing-extensions>=4.15; python_version<'3.11'",
+  "typing-extensions>=4.15; python_version<'3.13'",
   "virtualenv>=21.1",
 ]
 optional-dependencies.completion = [
@@ -110,7 +110,10 @@ test = [
   "wheel>=0.46.3",
 ]
 type = [
+  "mypy>=2.3",
+  "pyrefly>=1.2",
   "ty>=0.0.19",
+  "types-colorama>=0.4.15",
   "types-docutils>=0.21",
   { include-group = "docs" },
   { include-group = "release" },
@@ -146,6 +149,7 @@ release = [
 ]
 type-min = [
   "ty>=0.0.19",
+  "types-colorama>=0.4.15",
   { include-group = "test" },
 ]
 
@@ -204,6 +208,8 @@ lint.per-file-ignores."tests/**/*.py" = [
 lint.isort = { known-first-party = [
   "tox",
   "tests",
+], known-third-party = [
+  "build", # the local build artifact directory must not sway the classification
 ], required-imports = [
   "from __future__ import annotations",
 ] }
@@ -218,6 +224,19 @@ count = true
 
 [tool.pyproject-fmt]
 max_supported_python = "3.15"
+
+[tool.mypy]
+mypy_path = "typestubs"
+files = [ "src/tox", "tests/type_check" ]
+warn_redundant_casts = false  # ty requires casts after callable() narrowing that mypy deems redundant
+strict = true
+# re_assert publishes no stubs or py.typed marker
+overrides = [ { module = [ "re_assert" ], ignore_missing_imports = true } ]
+
+[tool.pyrefly]
+project-includes = [ "src/tox", "tests/type_check" ]
+python-platform = "linux"  # ty --python-platform all covers the other platforms; keeps pyrefly output identical on every runner
+search-path = [ "src", "typestubs" ]
 
 [tool.ty]
 src.exclude = []

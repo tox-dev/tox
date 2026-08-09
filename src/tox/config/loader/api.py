@@ -167,7 +167,7 @@ class Loader(Convert[T]):
         from tox.config.set_env import SetEnv  # ruff:ignore[import-outside-top-level]
 
         overrides = [o for alias in (key, *all_keys) for o in self.overrides.get(alias, [])]
-        converted = None
+        converted: Any = None  # merged across loader/overrides, only the final cast can name the type
         for alias in (key, *all_keys):
             try:
                 raw = self.load_raw(alias, conf, args.env_name)

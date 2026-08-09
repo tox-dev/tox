@@ -3,7 +3,7 @@ from __future__ import annotations
 import sys
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, TypeVar, cast, overload
+from typing import TYPE_CHECKING, Any, TypeVar, cast, get_origin, overload
 
 from .of_type import ConfigConstantDefinition, ConfigDefinition, ConfigDynamicDefinition, ConfigLoadArgs
 from .set_env import SetEnv, SetEnvRaw
@@ -54,7 +54,40 @@ class ConfigSet(ABC):
         self,
         keys: str | Sequence[str],
         of_type: type[V],
-        default: Callable[[Config, str | None], V] | V,
+        default: Callable[[Config, str | None], V],
+        desc: str,
+        post_process: Callable[[V], V] | None = None,
+        factory: Factory[Any] | None = None,
+    ) -> ConfigDynamicDefinition[V]: ...
+
+    @overload
+    def add_config(
+        self,
+        keys: str | Sequence[str],
+        of_type: type[V],
+        default: None,
+        desc: str,
+        post_process: Callable[[V | None], V | None] | None = None,
+        factory: Factory[Any] | None = None,
+    ) -> ConfigDynamicDefinition[V | None]: ...
+
+    @overload
+    def add_config(
+        self,
+        keys: str | Sequence[str],
+        of_type: type[V],
+        default: V,
+        desc: str,
+        post_process: Callable[[V], V] | None = None,
+        factory: Factory[Any] | None = None,
+    ) -> ConfigDynamicDefinition[V]: ...
+
+    @overload
+    def add_config(
+        self,
+        keys: str | Sequence[str],
+        of_type: UnionType,
+        default: Callable[[Config, str | None], V],
         desc: str,
         post_process: Callable[[V], V] | None = None,
         factory: Factory[Any] | None = None,
@@ -71,11 +104,22 @@ class ConfigSet(ABC):
         factory: Factory[Any] | None = None,
     ) -> ConfigDynamicDefinition[V | None]: ...
 
+    @overload
+    def add_config(
+        self,
+        keys: str | Sequence[str],
+        of_type: UnionType,
+        default: Callable[[Config, str | None], V] | V,
+        desc: str,
+        post_process: Callable[[V], V] | None = None,
+        factory: Factory[Any] | None = None,
+    ) -> ConfigDynamicDefinition[V]: ...
+
     def add_config(  # ruff:ignore[too-many-arguments]
         self,
         keys: str | Sequence[str],
         of_type: type[V] | UnionType,
-        default: Callable[[Config, str | None], V] | V,
+        default: Callable[[Config, str | None], V] | V | None,
         desc: str,
         post_process: Callable[[V], V] | None = None,
         factory: Factory[Any] | None = None,
@@ -161,6 +205,26 @@ class ConfigSet(ABC):
         config_definition = self._defined[item]
         return config_definition.__call__(self._conf, self.loaders, ConfigLoadArgs(chain, self.name, self.env_name))  # ruff:ignore[unnecessary-dunder-call]
 
+    def get(self, item: str, of_type: type[V]) -> V:
+        """Get the config value for a given key, verified to be of the declared type.
+
+        Unlike :meth:`load` and ``[]`` — which return ``Any`` — the value is checked against ``of_type`` at runtime
+        (container types by their unsubscripted origin, so ``list[str]`` checks ``list``) and returned as that type.
+
+        .. versionadded:: 4.59
+
+        :param item: the config key
+        :param of_type: the type the config value was registered with
+
+        :returns: the configuration value
+
+        """
+        value = self.load(item)
+        if isinstance(value, get_origin(of_type) or of_type):
+            return cast("V", value)
+        msg = f"{item} is {type(value).__name__}, expected {of_type!r}"
+        raise TypeError(msg)
+
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}(loaders={self.loaders!r})"
 
@@ -219,10 +283,10 @@ class CoreConfigSet(ConfigSet):
         self.add_config(keys=["env_list", "envlist"], of_type=EnvList, default=EnvList([]), desc=desc)
 
     def _default_work_dir(self, conf: Config, env_name: str | None) -> Path:  # ruff:ignore[unused-method-argument]
-        return cast("Path", self["tox_root"] / ".tox")
+        return self.get("tox_root", Path) / ".tox"
 
     def _default_temp_dir(self, conf: Config, env_name: str | None) -> Path:  # ruff:ignore[unused-method-argument]
-        return cast("Path", self["work_dir"] / ".tmp")
+        return self.get("work_dir", Path) / ".tmp"
 
     def _work_dir_post_process(self, folder: Path) -> Path:
         return self._conf.work_dir if self._conf.options.work_dir else folder
@@ -236,7 +300,7 @@ class CoreConfigSet(ConfigSet):
             desc="the root directory (where the configuration file is found)",
         )
 
-        self.add_config(  # ty: ignore[no-matching-overload] # https://github.com/astral-sh/ty/issues/2428
+        self.add_config(
             keys=["work_dir", "toxworkdir"],
             of_type=Path,
             default=self._default_work_dir,

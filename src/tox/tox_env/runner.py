@@ -5,7 +5,7 @@ import os
 import re
 from abc import ABC, abstractmethod
 from hashlib import sha256
-from typing import TYPE_CHECKING, Any, cast
+from typing import TYPE_CHECKING, Any
 
 from tox.config.types import Command, EnvList
 from tox.execute import Outcome
@@ -163,7 +163,7 @@ class RunToxEnv(ToxEnv, ABC):
         super()._clean(transitive)
         if transitive:
             for pkg_env in self.package_envs:
-                if cast("bool", pkg_env.conf["recreate"]):
+                if pkg_env.conf.get("recreate", bool):
                     with pkg_env.display_context(suspend=self._has_display_suspended):
                         pkg_env._clean()  # ruff:ignore[private-member-access]
 

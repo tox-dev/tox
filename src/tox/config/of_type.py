@@ -91,7 +91,7 @@ class ConfigDynamicDefinition(ConfigDefinition[T]):  # ruff:ignore[eq-without-ha
         keys: Iterable[str],
         desc: str,
         of_type: type[T] | UnionType,
-        default: Callable[[Config, str | None], T] | T,
+        default: Callable[[Config, str | None], T] | T | None,
         post_process: Callable[[T], T] | None = None,
         factory: Factory[T] | None = None,
     ) -> None:
@@ -131,7 +131,7 @@ class ConfigDynamicDefinition(ConfigDefinition[T]):  # ruff:ignore[eq-without-ha
                 if callable(self.default):
                     value = cast("Callable[[Config, str | None], T]", self.default)(conf, args.env_name)
                 else:
-                    value = self.default
+                    value = cast("T", self.default)  # when the default is None the overloads guarantee T includes None
             if self.post_process is not None:
                 value = self.post_process(value)
             self._cache = value

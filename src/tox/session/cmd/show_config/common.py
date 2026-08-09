@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 from tox.config.loader.native import to_native
 
@@ -11,15 +11,16 @@ if TYPE_CHECKING:
 
     from tox.config.sets import ConfigSet
     from tox.session.state import State
+    from tox.util.json_types import JsonValue
 
 
-def build_structured_result(state: State) -> tuple[dict[str, Any], bool]:
+def build_structured_result(state: State) -> tuple[dict[str, JsonValue], bool]:
     keys: list[str] = state.conf.options.list_keys_only
     show_everything = state.conf.options.env.is_all
     has_exception = False
-    result: dict[str, Any] = {}
+    result: dict[str, JsonValue] = {}
 
-    envs: dict[str, Any] = {}
+    envs: dict[str, JsonValue] = {}
     for name in state.envs.iter(package=True):
         tox_env = state.envs[name]
         env_data, exc = _collect_conf(tox_env.conf, keys)
@@ -50,8 +51,8 @@ def write_output(
         print(colorize(output) if is_colored else output)  # ruff:ignore[print]
 
 
-def _collect_conf(conf: ConfigSet, keys: list[str]) -> tuple[dict[str, Any], bool]:
-    data: dict[str, Any] = {}
+def _collect_conf(conf: ConfigSet, keys: list[str]) -> tuple[dict[str, JsonValue], bool]:
+    data: dict[str, JsonValue] = {}
     has_exception = False
     for key in keys or conf:
         if key not in conf:

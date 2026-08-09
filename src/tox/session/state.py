@@ -31,7 +31,7 @@ class State:
         )
         self._options = options
         self.args = args
-        self._journal: Journal = Journal(getattr(options.parsed, "result_json", None) is not None)
+        self._journal: Journal = Journal(options.parsed.result_json is not None)
         self._selector: EnvSelector | None = None
 
     @property

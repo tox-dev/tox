@@ -1,0 +1,14 @@
+The plugin and internal APIs now declare their types, and the code base passes ``mypy --strict`` and ``pyrefly`` next to
+``ty`` - by :user:`gaborjbernat`.
+
+- :meth:`ConfigSet.get <tox.config.sets.ConfigSet.get>` returns a configuration value after checking it against its
+  declared type, so plugins can drop ``cast`` around ``conf["key"]`` reads.
+- The :func:`tox_on_install <tox.plugin.spec.tox_on_install>` hook and :class:`Installer
+  <tox.tox_env.installer.Installer>` type their ``arguments`` as :data:`InstallArguments
+  <tox.tox_env.installer.InstallArguments>`; installer subclasses may narrow it through the new second type parameter.
+- :class:`Parsed <tox.config.cli.parser.Parsed>` declares the CLI option surface, so ``options.<name>`` reads
+  type-check.
+- :meth:`ConfigSet.add_config <tox.config.sets.ConfigSet.add_config>` accepts ``default=None`` for optional values and
+  infers the value type from callable defaults.
+- The journal, the environment cache, and execute metadata hold ``JsonValue`` content; structured ``set_env`` entries
+  match the ``SetEnvEntry`` shape.

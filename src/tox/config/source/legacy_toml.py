@@ -28,7 +28,7 @@ class LegacyToml(IniSource):
             toml_content = tomllib.load(file_handler)
         try:
             content = toml_content["tool"]["tox"]["legacy_tox_ini"]
-        except KeyError as exc:
+        except (KeyError, TypeError) as exc:  # TypeError when tool or tool.tox is not a table
             msg = f"`tool.tox.legacy_tox_ini` missing from {path}"
             raise MissingRequiredConfigKeyError(msg) from exc
         super().__init__(path, content=content)

@@ -1,17 +1,31 @@
 from __future__ import annotations
 
+import sys
 from collections.abc import Callable, Iterator, Mapping
 from functools import reduce
 from pathlib import Path
-from typing import Any
 
 from packaging.markers import Marker
 
 from tox.config.loader.api import ConfigLoadArgs
 from tox.tox_env.errors import Fail
 
+if sys.version_info >= (3, 11):  # pragma: >=3.11 cover
+    from typing import NotRequired, TypedDict
+else:  # pragma: <3.11 cover
+    from typing_extensions import NotRequired, TypedDict
+
 Replacer = Callable[[str, ConfigLoadArgs], str]
-SetEnvRaw = str | dict[str, Any] | list[dict[str, Any]]
+
+
+class SetEnvEntry(TypedDict):
+    """A single ``set_env`` value in structured (TOML) form."""
+
+    value: str
+    marker: NotRequired[str]
+
+
+SetEnvRaw = str | dict[str, "str | SetEnvEntry"] | list[dict[str, "str | SetEnvEntry"]]
 
 
 class SetEnv:
@@ -61,18 +75,18 @@ class SetEnv:
                         if marker:
                             self._markers[key] = Marker(marker)
 
-    def _parse_dict(self, raw: dict[str, Any]) -> None:
+    def _parse_dict(self, raw: dict[str, str | SetEnvEntry]) -> None:
         keys_after_file: set[str] = set()
         for key, value in raw.items():
-            if key == "file":
-                self._env_files.append((value, keys_after_file := set()))
-            elif isinstance(value, dict):
+            if not isinstance(value, str):
                 if "value" in value:
                     self._raw[key] = value["value"]
                     self._defined_keys.add(key)
                     keys_after_file.add(key)
                     if marker := value.get("marker"):
                         self._markers[key] = Marker(marker)
+            elif key == "file":
+                self._env_files.append((value, keys_after_file := set()))
             else:
                 self._raw[key] = value
                 self._defined_keys.add(key)
@@ -205,4 +219,8 @@ class SetEnv:
                 self.changed = True
 
 
-__all__ = ("SetEnv",)
+__all__ = (
+    "SetEnv",
+    "SetEnvEntry",
+    "SetEnvRaw",
+)

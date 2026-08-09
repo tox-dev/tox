@@ -383,6 +383,29 @@ def test_config_in_toml_bad_type_env(tox_project: ToxProjectCreator) -> None:
     outcome.assert_out_err("ROOT: HandledError| tool.tox.env.a must be a table, is 'int'\n", "")
 
 
+def test_config_in_toml_core_not_table(tox_project: ToxProjectCreator) -> None:
+    project = tox_project({
+        "pyproject.toml": """
+        [tool]
+        tox = false
+        """
+    })
+    outcome = project.run("l", "-c", "pyproject.toml")
+    assert "could not recognize config file pyproject.toml" in outcome.out, outcome.out
+
+
+def test_config_in_toml_bad_type_env_base(tox_project: ToxProjectCreator) -> None:
+    project = tox_project({
+        "pyproject.toml": """
+        [tool.tox]
+        env_base = 1
+        """
+    })
+    outcome = project.run("l")
+    outcome.assert_failed()
+    outcome.assert_out_err("ROOT: HandledError| env_base must be a table\n", "")
+
+
 def test_config_deps(tox_project: ToxProjectCreator) -> None:
     project = tox_project({
         "pyproject.toml": """

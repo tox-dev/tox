@@ -11,12 +11,13 @@ from io import BytesIO, TextIOWrapper
 from pathlib import Path
 from threading import Thread, current_thread, local
 from threading import enumerate as enumerate_threads
-from typing import IO, TYPE_CHECKING, ClassVar, cast
+from typing import TYPE_CHECKING, ClassVar, cast
+from weakref import WeakKeyDictionary
 
 from colorama import Fore, Style, init
 
 if TYPE_CHECKING:
-    from collections.abc import Iterator
+    from collections.abc import Iterator, MutableMapping
 
 LEVELS = {
     0: logging.CRITICAL,
@@ -32,6 +33,9 @@ LOGGER = logging.getLogger()
 OutErr = tuple[TextIOWrapper, TextIOWrapper]
 
 
+_THREAD_PARENT_IDENT: MutableMapping[Thread, int | None] = WeakKeyDictionary()
+
+
 class _LogThreadLocal(local):
     """A thread local variable that inherits values from its parent."""
 
@@ -39,8 +43,7 @@ class _LogThreadLocal(local):
 
     def __init__(self, out_err: OutErr) -> None:
         thread = current_thread()
-        parent_ident: int | None = getattr(thread, "parent_ident", None)
-        self.name = self._ident_to_data.get(parent_ident, "ROOT")
+        self.name = self._ident_to_data.get(_THREAD_PARENT_IDENT.get(thread), "ROOT")
         self.out_err = out_err
 
     @staticmethod
@@ -48,15 +51,15 @@ class _LogThreadLocal(local):
     def patch_thread() -> Iterator[None]:
         # CPython has no parent thread tracking, monkey-patch needed https://github.com/python/cpython/issues/86718
         def new_start(self: Thread) -> None:
-            self.parent_ident = current_thread().ident  # ty: ignore[unresolved-attribute]
+            _THREAD_PARENT_IDENT[self] = current_thread().ident
             old_start(self)
 
         old_start = Thread.start
-        Thread.start = new_start
+        Thread.start = new_start  # type: ignore[method-assign] # the monkey-patch is deliberate
         try:
             yield
         finally:
-            Thread.start = old_start
+            Thread.start = old_start  # type: ignore[method-assign] # the monkey-patch is deliberate
 
     @property
     def name(self) -> str:
@@ -105,8 +108,14 @@ class NamedBytesIO(BytesIO):
         self.name: str = name
 
 
-class ToxHandler(logging.StreamHandler):  # is generic but at runtime doesn't take a type arg
-    # """Controls tox output."""
+if TYPE_CHECKING:
+    _STREAM_HANDLER_BASE = logging.StreamHandler[TextIOWrapper]
+else:
+    _STREAM_HANDLER_BASE = logging.StreamHandler  # at runtime StreamHandler is not subscriptable
+
+
+class ToxHandler(_STREAM_HANDLER_BASE):
+    """Controls tox output."""
 
     def __init__(self, level: int, is_colored: bool, out_err: OutErr) -> None:  # ruff:ignore[boolean-type-hint-positional-argument]
         self._local = _LogThreadLocal(out_err)
@@ -133,9 +142,13 @@ class ToxHandler(logging.StreamHandler):  # is generic but at runtime doesn't ta
             yield
 
     @property
-    def name(self) -> str:
+    def name(self) -> str:  # pyrefly: ignore[bad-override] # property over typeshed attribute: https://github.com/facebook/pyrefly/issues/2771
         """:returns: the current tox environment name"""
         return self._local.name  # pragma: no cover
+
+    @name.setter
+    def name(self, value: str) -> None:
+        """Ignore anyone changing this, the name always reflects the active tox environment."""
 
     @property
     def stdout(self) -> TextIOWrapper:
@@ -148,12 +161,12 @@ class ToxHandler(logging.StreamHandler):  # is generic but at runtime doesn't ta
         return self._local.out_err[1]
 
     @property
-    def stream(self) -> IO[str]:
+    def stream(self) -> TextIOWrapper:  # pyrefly: ignore[bad-override] # property over typeshed attribute: https://github.com/facebook/pyrefly/issues/2771
         """:returns: the current stream to write to (alias for the current standard output)"""
         return self.stdout
 
     @stream.setter
-    def stream(self, value: IO[str]) -> None:
+    def stream(self, value: TextIOWrapper) -> None:
         """Ignore anyone changing this."""
 
     @contextmanager
@@ -168,7 +181,7 @@ class ToxHandler(logging.StreamHandler):  # is generic but at runtime doesn't ta
 
     @staticmethod
     def _get_formatter(level: int, enabled_level: int, is_colored: bool) -> logging.Formatter:  # ruff:ignore[boolean-type-hint-positional-argument]
-        color: int | str = ""
+        color = ""
         if is_colored:
             if level >= logging.ERROR:
                 color = Fore.RED
@@ -177,8 +190,8 @@ class ToxHandler(logging.StreamHandler):  # is generic but at runtime doesn't ta
             else:
                 color = Fore.WHITE
 
-        def _c(val: int) -> str:
-            return str(val) if color else ""
+        def _c(val: str) -> str:
+            return val if color else ""
 
         fmt = f"{color} %(message)s{_c(Style.RESET_ALL)}"
         if enabled_level <= logging.DEBUG:

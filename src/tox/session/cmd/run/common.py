@@ -12,12 +12,13 @@ from fnmatch import fnmatchcase
 from pathlib import Path
 from signal import SIGINT, Handlers, signal
 from threading import Event, Thread
-from typing import TYPE_CHECKING, Any, cast
+from typing import TYPE_CHECKING, Any, Literal, cast
 from urllib.parse import unquote, urlparse
 from urllib.request import url2pathname
 
 from colorama import Fore
 
+from tox.config.types import EnvList
 from tox.execute import Outcome
 from tox.journal import write_journal
 from tox.report import HandledError
@@ -27,9 +28,9 @@ from tox.util.graph import stable_topological_sort
 from tox.util.spinner import MISS_DURATION, Spinner
 
 if TYPE_CHECKING:
-    from collections.abc import Iterator, Sequence
+    from collections.abc import Callable, Iterator, Sequence
+    from types import FrameType
 
-    from tox.config.types import EnvList
     from tox.session.state import State
     from tox.tox_env.api import ToxEnv
     from tox.tox_env.runner import RunToxEnv
@@ -78,8 +79,9 @@ class InstallPackageAction(Action):
         return path.absolute()
 
 
-def env_run_create_flags(parser: ArgumentParser, mode: str) -> None:
-    # mode can be one of: run, run-parallel, legacy, devenv, config
+def env_run_create_flags(
+    parser: ArgumentParser, mode: Literal["run", "run-parallel", "legacy", "devenv", "config", "depends", "exec"]
+) -> None:
     if mode not in {"devenv", "depends"}:
         parser.add_argument(
             "-s",
@@ -153,7 +155,7 @@ def env_run_create_flags(parser: ArgumentParser, mode: str) -> None:
 def report(
     start: float, runs: list[ToxEnvRunResult], *, is_colored: bool, verbosity: int, fail_fast: bool = False
 ) -> int:
-    def _print(color_: int, message: str) -> None:
+    def _print(color_: str, message: str) -> None:
         if verbosity:
             print(f"{color_ if is_colored else ''}{message}{Fore.RESET if is_colored else ''}")  # ruff:ignore[print]
 
@@ -187,7 +189,7 @@ def report(
     return 1
 
 
-def _get_outcome_message(run: ToxEnvRunResult) -> tuple[str, int]:
+def _get_outcome_message(run: ToxEnvRunResult) -> tuple[str, str]:
     if run.unavailable:
         msg, color = "NOT AVAILABLE", Fore.YELLOW
     elif run.skipped:
@@ -233,7 +235,7 @@ def execute(state: State, max_workers: int | None, has_spinner: bool, live: bool
 
     scheduler_error: list[BaseException] = []
 
-    def _run_thread() -> tuple[Any, bool]:
+    def _run_thread() -> tuple[Callable[[int, FrameType | None], Any] | int | Handlers | None, bool]:
         spinner = ToxSpinner(has_spinner, state, len(to_run_list))
         thread = Thread(
             target=_queue_and_wait,
@@ -279,7 +281,7 @@ def execute(state: State, max_workers: int | None, has_spinner: bool, live: bool
     finally:
         ordered_results = _order_results(state, results, to_run_list)
         # write the journal
-        write_journal(getattr(state.conf.options, "result_json", None), state._journal)  # ruff:ignore[private-member-access]
+        write_journal(state.conf.options.result_json, state._journal)  # ruff:ignore[private-member-access]
         # warn about unused config keys
         _warn_unused_config(state)
         # report the outcome
@@ -521,7 +523,7 @@ def run_order(state: State, to_run: list[str]) -> tuple[list[str], dict[str, set
     todo: dict[str, set[str]] = {}
     for env in to_run:
         run_env = cast("RunToxEnv", state.envs[env])
-        depends = set(cast("EnvList", run_env.conf["depends"]).envs)
+        depends = set(run_env.conf.get("depends", EnvList).envs)
         todo[env] = {name for dep in depends for name in to_run_set if fnmatchcase(name, dep)} - {env}
     try:
         order = stable_topological_sort(todo)

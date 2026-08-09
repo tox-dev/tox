@@ -86,7 +86,7 @@ def _key_value(key: str, value: str, *, is_colored: bool, multi_line: bool = Fal
     return f"{_colored(key, Fore.GREEN, enabled=is_colored)} = {value}"
 
 
-def _colored(msg: str, color: int, *, enabled: bool) -> str:
+def _colored(msg: str, color: str, *, enabled: bool) -> str:
     return f"{color}{msg}{Fore.RESET}" if enabled else msg
 
 

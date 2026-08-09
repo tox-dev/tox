@@ -31,6 +31,22 @@ def test_parser_const_with_default_none(monkeypatch: MonkeyPatch) -> None:
     assert result.alpha == 2
 
 
+def test_parser_command_without_core_inherit() -> None:
+    parser = ToxParser.core()
+    parser.add_command("noop", [], "a command without inherited core flags", lambda _: 0, inherit=frozenset())
+
+    result = parser.parse_args(["noop"])
+    assert result.command == "noop"
+    assert result.work_dir is None
+
+
+def test_parser_help_shows_default_source(monkeypatch: MonkeyPatch) -> None:
+    monkeypatch.setenv("TOX_VERBOSE", "5")
+    parser = ToxParser.core()
+
+    assert "-> from env var TOX_VERBOSE" in parser.format_help()
+
+
 @pytest.mark.parametrize("is_atty", [True, False])
 @pytest.mark.parametrize("no_color", [None, "0", "1", "", "\t", " ", "false", "true"])
 @pytest.mark.parametrize("force_color", [None, "", "0", "1", "always", "not an empty string"])

@@ -7,7 +7,7 @@ import logging
 import os
 import sys
 from abc import ABC, abstractmethod
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Final, Union
 
@@ -228,7 +228,7 @@ class Replacer:
             return os.sep
         if not of_type and args == [""]:
             return os.pathsep
-        dispatch: dict[str, Any] = {
+        dispatch: dict[str, Callable[[], str | None]] = {
             "env": lambda: replace_env(self.conf, args, conf_args),
             "tty": lambda: replace_tty(args),
             "posargs": lambda: replace_pos_args(self.conf, args, conf_args),

@@ -3,12 +3,15 @@
 from __future__ import annotations
 
 from itertools import product
-from typing import Any
+from typing import TYPE_CHECKING
 
 from tox.config.loader.ini.factor import LATEST_PYTHON_MINOR_MAX, LATEST_PYTHON_MINOR_MIN
 
+if TYPE_CHECKING:
+    from tox.config.loader.toml._api import TomlTypes
 
-def expand_product(value: dict[str, Any]) -> list[str]:
+
+def expand_product(value: dict[str, TomlTypes]) -> list[str]:
     """Expand a product dict into a flat list of environment names.
 
     :param value: dict with ``product`` (list of factor groups) and optional ``exclude`` (list of env names to skip)
@@ -23,14 +26,18 @@ def expand_product(value: dict[str, Any]) -> list[str]:
     if not raw_groups:
         return []
     expanded = [expand_factor_group(g) for g in raw_groups]
-    exclude = set(value.get("exclude") or [])
+    exclude_raw = value.get("exclude") or []
+    if not isinstance(exclude_raw, list):
+        msg = f"product exclude must be a list, got {type(exclude_raw).__name__}"
+        raise TypeError(msg)
+    exclude = set(exclude_raw)
     return [name for combo in product(*expanded) if (name := "-".join(combo)) not in exclude]
 
 
 _RESERVED_LABELS: frozenset[str] = frozenset({"env", "posargs", "tty", "glob", "factor"})
 
 
-def expand_factor_group(group: Any) -> list[str]:
+def expand_factor_group(group: TomlTypes) -> list[str]:
     if isinstance(group, list):
         result: list[str] = []
         for item in group:
@@ -60,13 +67,13 @@ def expand_factor_group(group: Any) -> list[str]:
     raise TypeError(msg)
 
 
-def extract_label(group: Any) -> str | None:
+def extract_label(group: TomlTypes) -> str | None:
     if isinstance(group, dict) and "prefix" not in group and len(group) == 1:
         return str(next(iter(group)))
     return None
 
 
-def _expand_range(range_dict: dict[str, Any]) -> list[str]:
+def _expand_range(range_dict: dict[str, TomlTypes]) -> list[str]:
     prefix: str = str(range_dict["prefix"])
     has_start = "start" in range_dict
     has_stop = "stop" in range_dict
