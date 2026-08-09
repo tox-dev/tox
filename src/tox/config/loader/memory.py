@@ -15,14 +15,14 @@ if TYPE_CHECKING:
     from tox.config.main import Config
 
 
-class MemoryLoader(Loader[Any]):
+class MemoryLoader(Loader[object]):
     """Loads configuration directly from data in memory."""
 
     def __init__(self, **kwargs: Any) -> None:
         super().__init__(Section(prefix="<memory>", name=str(id(self))), [])
         self.raw: dict[str, Any] = {**kwargs}
 
-    def load_raw(self, key: Any, conf: Config | None, env_name: str | None) -> Any:  # ruff:ignore[unused-method-argument]
+    def load_raw(self, key: str, conf: Config | None, env_name: str | None) -> object:  # ruff:ignore[unused-method-argument]
         return self.raw[key]
 
     def found_keys(self) -> set[str]:
@@ -46,7 +46,7 @@ class MemoryLoader(Loader[Any]):
 
     @staticmethod
     def to_dict(value: Any, of_type: tuple[type[Any], type[Any]]) -> Iterator[tuple[Any, Any]]:  # ruff:ignore[unused-static-method-argument]
-        return value.items()
+        return iter(value.items())
 
     @staticmethod
     def to_path(value: Any) -> Path:

@@ -6,13 +6,16 @@ import logging
 import os
 from configparser import ConfigParser
 from pathlib import Path
-from typing import Any, ClassVar
+from typing import TYPE_CHECKING, Any, ClassVar
 
 from platformdirs import user_config_dir
 
 from tox.config.loader.api import ConfigLoadArgs
 from tox.config.loader.ini import IniLoader
 from tox.config.source.ini_section import CORE
+
+if TYPE_CHECKING:
+    from types import UnionType
 
 DEFAULT_CONFIG_FILE = Path(user_config_dir("tox")) / "config.ini"
 
@@ -25,7 +28,7 @@ class IniConfig:
         config_file = os.environ.get(self.TOX_CONFIG_FILE_ENV_VAR, None)
         self.is_env_var = config_file is not None
         self.config_file = Path(config_file if config_file is not None else DEFAULT_CONFIG_FILE)
-        self._cache: dict[tuple[str, type[Any]], Any] = {}
+        self._cache: dict[tuple[str, type[Any] | UnionType], Any] = {}
         self.has_config_file: bool | None = self.config_file.exists()
         self.ini: IniLoader | None = None
 
@@ -45,7 +48,7 @@ class IniConfig:
         if self.has_tox_section:
             self.ini = IniLoader(CORE, parser, overrides=[], core_section=CORE)
 
-    def get(self, key: str, of_type: type[Any]) -> Any:
+    def get(self, key: str, of_type: type[Any] | UnionType) -> Any:
         cache_key = key, of_type
         if cache_key in self._cache:
             result = self._cache[cache_key]
@@ -60,7 +63,7 @@ class IniConfig:
         self._cache[cache_key] = result
         return result
 
-    def _load_key(self, key: str, of_type: type[Any]) -> Any:
+    def _load_key(self, key: str, of_type: type[Any] | UnionType) -> Any:
         if self.ini is None:  # pragma: no cover # this can only happen if we don't call __bool__ first
             return None
         args = ConfigLoadArgs(chain=[key], name=CORE.prefix, env_name=None)

@@ -4,14 +4,17 @@ from __future__ import annotations
 
 import logging
 import os
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from tox.config.loader.str_convert import StrConvert
+
+if TYPE_CHECKING:
+    from types import UnionType
 
 CONVERT = StrConvert()
 
 
-def get_env_var(key: str, of_type: type[Any]) -> tuple[Any, str] | None:
+def get_env_var(key: str, of_type: type[Any] | UnionType) -> tuple[Any, str] | None:
     """Get the environment variable option.
 
     :param key: the config key requested

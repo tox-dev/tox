@@ -14,8 +14,8 @@ if TYPE_CHECKING:
     from collections.abc import Sequence
     from pathlib import Path
 
-    from packaging._parser import Op, Value, Variable
-    from packaging.markers import Marker, MarkerAtom, MarkerList
+    from packaging._parser import MarkerAtom, MarkerList, Op, Value, Variable
+    from packaging.markers import Marker
     from packaging.requirements import Requirement
 
 
@@ -38,7 +38,7 @@ def dependencies_with_extras_from_markers(
     *,
     available_extras: set[str] | None = None,
 ) -> list[Requirement]:
-    normalized_extras = {canonicalize_name(e) for e in extras}
+    normalized_extras: set[str] = {canonicalize_name(e) for e in extras}
     if available_extras is not None and normalized_extras:
         normalized_available = {canonicalize_name(e) for e in available_extras}
         if unknown := normalized_extras - normalized_available:

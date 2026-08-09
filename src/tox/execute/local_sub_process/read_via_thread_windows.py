@@ -4,12 +4,12 @@ from __future__ import annotations  # pragma: win32 cover
 
 import contextlib  # pragma: win32 cover
 import sys  # pragma: win32 cover
+from typing import TYPE_CHECKING, cast
 
-if sys.platform == "win32":  # pragma: win32 cover
+if TYPE_CHECKING or sys.platform == "win32":  # pragma: win32 cover
     import _overlapped  # pragma: win32 cover # ruff:ignore[import-private-name]
 
 import time  # pragma: win32 cover
-from typing import TYPE_CHECKING
 
 from .read_via_thread import ReadViaThread  # pragma: win32 cover
 
@@ -39,7 +39,7 @@ class ReadViaThreadWindows(ReadViaThread):  # pragma: win32 cover
 
             while True:
                 try:
-                    data = ov.getresult(False)  # ruff:ignore[boolean-positional-value-in-call]
+                    data = cast("bytes", ov.getresult(False))  # ruff:ignore[boolean-positional-value-in-call]
                     break
                 except OSError as exception:
                     if getattr(exception, "winerror", None) != ERROR_IO_INCOMPLETE:
@@ -65,7 +65,7 @@ class ReadViaThreadWindows(ReadViaThread):  # pragma: win32 cover
                 break
 
             try:
-                data = ov.getresult(True)  # ruff:ignore[boolean-positional-value-in-call]
+                data = cast("bytes", ov.getresult(True))  # ruff:ignore[boolean-positional-value-in-call]
             except OSError:
                 break
 

@@ -2,10 +2,11 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from tox.execute import Outcome
+    from tox.util.json_types import JsonValue
 
 
 class EnvJournal:
@@ -14,10 +15,10 @@ class EnvJournal:
     def __init__(self, enabled: bool, name: str) -> None:  # ruff:ignore[boolean-type-hint-positional-argument]
         self._enabled = enabled
         self.name = name
-        self._content: dict[str, Any] = {}
+        self._content: dict[str, JsonValue] = {}
         self._executes: list[tuple[str, Outcome]] = []
 
-    def __setitem__(self, key: str, value: Any) -> None:
+    def __setitem__(self, key: str, value: JsonValue) -> None:
         """Add a new entry under key into the event journal.
 
         :param key: the key under what to add the data
@@ -40,12 +41,12 @@ class EnvJournal:
         self._executes.append((run_id, outcome))
 
     @property
-    def content(self) -> dict[str, Any]:
+    def content(self) -> dict[str, JsonValue]:
         """:returns: the env journal content (merges explicit keys and execution commands)"""
-        tests: list[dict[str, Any]] = []
-        setup: list[dict[str, Any]] = []
+        tests: list[JsonValue] = []
+        setup: list[JsonValue] = []
         for run_id, outcome in self._executes:
-            one = {
+            one: dict[str, JsonValue] = {
                 "command": outcome.cmd,
                 "output": outcome.out,
                 "err": outcome.err,

@@ -16,6 +16,8 @@ from typing import (
 from tox.config.types import Command, EnvList
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     from ._api import TomlTypes
 
 
@@ -64,10 +66,10 @@ def validate(val: TomlTypes, of_type: type[T]) -> T:  # ruff:ignore[complex-stru
             msg = f"{val!r} is not one of literal {','.join(repr(i) for i in choice)}"
     elif not isinstance(val, of_type):
         if issubclass(of_type, (bool, str, int)):
-            fail = not isinstance(val, of_type)
+            fail = True  # the enclosing branch established the value is not an instance already
         else:
             try:  # check if it can be converted
-                of_type(val)
+                cast("Callable[[TomlTypes], object]", of_type)(val)
                 fail = False
             except Exception:  # ruff:ignore[blind-except]
                 fail = True

@@ -51,6 +51,11 @@ def test_expand_product_not_list() -> None:
         expand_product({"product": "bad"})
 
 
+def test_expand_product_exclude_not_list() -> None:
+    with pytest.raises(TypeError, match="product exclude must be a list, got str"):
+        expand_product({"product": [["a"]], "exclude": "a"})
+
+
 def test_expand_factor_group_list() -> None:
     assert expand_factor_group(["py312", "py313"]) == ["py312", "py313"]
 

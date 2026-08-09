@@ -9,7 +9,7 @@ from contextlib import redirect_stderr
 from dataclasses import dataclass
 from io import StringIO
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, cast
+from typing import TYPE_CHECKING, cast
 
 from packaging.version import Version
 from python_discovery import get_interpreter
@@ -34,6 +34,7 @@ if TYPE_CHECKING:
     from tox.config.main import Config
     from tox.execute.api import Execute
     from tox.tox_env.api import ToxEnvCreateArgs
+    from tox.util.json_types import JsonValue
 
 
 class VirtualEnv(Python, ABC):
@@ -99,7 +100,7 @@ class VirtualEnv(Python, ABC):
             self._installer = Pip(self)
         return self._installer
 
-    def python_cache(self) -> dict[str, Any]:
+    def python_cache(self) -> dict[str, JsonValue]:
         base = super().python_cache()
         base["executable"] = str(self.base_python.extra["executable"])
         if spec := self.conf["virtualenv_spec"]:
@@ -108,7 +109,7 @@ class VirtualEnv(Python, ABC):
             base["virtualenv version"] = virtualenv_version
         return base
 
-    def _get_env_journal_python(self) -> dict[str, Any]:
+    def _get_env_journal_python(self) -> dict[str, JsonValue]:
         base = super()._get_env_journal_python()
         base["executable"] = str(self.base_python.extra["executable"])
         return base
@@ -140,14 +141,14 @@ class VirtualEnv(Python, ABC):
         try_first_with = getattr(self.options, "discover", None)
         cache = _shared_app_data()
         interpreter: SubprocessPythonInfo | None = None
-        for base_python in cast("list[str]", self.conf["base_python"]):
+        for base_python in self.conf.get("base_python", list[str]):
             resolved = get_interpreter(base_python, try_first_with=try_first_with, cache=cache, env=env)
             if resolved is None or (executable := resolved.system_executable) is None:
                 continue
             if (interpreter := probe_python(executable)) is not None:
                 break
         # only pay the bootstrap cost once an interpreter is found; a missing one skips without it
-        bootstrap = ensure_bootstrap(cast("Path", self.core["work_dir"]), spec) if interpreter is not None else None
+        bootstrap = ensure_bootstrap(self.core.get("work_dir", Path), spec) if interpreter is not None else None
         return SubprocessSession(self.env_dir, bootstrap, env, interpreter)
 
     def _create_imported_session(self, env: dict[str, str]) -> Session:
@@ -223,9 +224,8 @@ class VirtualEnv(Python, ABC):
 
     def _describe_path(self, attr: str) -> Path:
         creator = self._creator_with_skip()
-        if isinstance(creator, SubprocessCreator):
-            return getattr(creator, attr)
-        return cast("Path", getattr(cast("Describe", creator), attr))
+        source = creator if isinstance(creator, SubprocessCreator) else cast("Describe", creator)
+        return cast("Path", getattr(source, attr))
 
     def _creator_with_skip(self) -> Creator | SubprocessCreator:
         try:

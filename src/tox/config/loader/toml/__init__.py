@@ -89,7 +89,7 @@ class TomlLoader(Loader[TomlTypes]):
                     return value
                 return replace(conf, TomlReplaceLoader(conf, loader), value, args_)
 
-            result.use_replacer(_toml_replacer, args=args)
+            cast("SetEnv", result).use_replacer(_toml_replacer, args=args)  # delay_replace means of_type is SetEnv
         return result
 
     def found_keys(self) -> set[str]:

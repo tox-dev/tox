@@ -191,7 +191,7 @@ class Pep517VenvPackager(PythonPackageToxEnv, ABC):
 
     @property
     def pkg_dir(self) -> Path:
-        return cast("Path", self.conf["pkg_dir"])
+        return self.conf.get("pkg_dir", Path)
 
     @property
     def meta_folder(self) -> Path:
@@ -372,7 +372,7 @@ class Pep517VenvPackager(PythonPackageToxEnv, ABC):
 
     @property
     def _package_temp_path(self) -> Path:
-        return cast("Path", self.core["temp_dir"]) / "package"
+        return self.core.get("temp_dir", Path) / "package"
 
     def load_deps_for_env(self, for_env: EnvConfigSet) -> list[Requirement]:
         return self._load_deps(for_env)

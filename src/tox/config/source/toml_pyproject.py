@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import sys
-from collections.abc import Iterator, Mapping
 from itertools import product
 from typing import TYPE_CHECKING, Any, Final, cast
 
@@ -21,10 +20,11 @@ else:  # pragma: <3.11 cover
     import tomli as tomllib
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable
+    from collections.abc import Iterable, Iterator
     from pathlib import Path
 
     from tox.config.loader.api import Loader, OverrideMap
+    from tox.config.loader.toml._api import TomlTypes
     from tox.config.sets import CoreConfigSet
 
 
@@ -94,17 +94,16 @@ class TomlPyProject(Source):
         with path.open("rb") as file_handler:
             self._content = tomllib.load(file_handler)
         try:
-            our_content: Mapping[str, Any] = self._content
-            for key in self._Section.PREFIX:
-                our_content = our_content[key]
-            self._our_content = our_content
+            self._our_content = _table_at(self._content, self._Section.PREFIX)
         except KeyError as exc:
             raise MissingRequiredConfigKeyError(path) from exc
         if set(self._our_content.keys()) <= {"legacy_tox_ini"}:  # an empty stub or a legacy pointer holds no config
             raise MissingRequiredConfigKeyError(path)
-        self._env_base_generated, self._factor_labels = _build_env_base_map(
-            dict(self._our_content.get(self._Section.ENV_BASE, {})),
-        )
+        env_base = self._our_content.get(self._Section.ENV_BASE, {})
+        if not isinstance(env_base, dict):
+            msg = f"{self._Section.ENV_BASE} must be a table"
+            raise HandledError(msg)
+        self._env_base_generated, self._factor_labels = _build_env_base_map(env_base)
         self._factor_labels.update(_extract_env_list_labels(self._our_content.get("env_list")))
         super().__init__(path)
 
@@ -115,14 +114,13 @@ class TomlPyProject(Source):
         return self._Section(section.prefix, section.name)
 
     def get_loader(self, section: Section, override_map: OverrideMap) -> Loader[Any] | None:
-        current = self._our_content
+        current: TomlTypes = self._our_content
         sec = cast("TomlSection", section)
         for key in sec.keys:
-            if key in current:
-                current = current[key]
-            else:
+            if not isinstance(current, dict) or key not in current:
                 return None
-        if not isinstance(current, Mapping):
+            current = current[key]
+        if not isinstance(current, dict):
             msg = f"{sec.key} must be a table, is {current.__class__.__name__!r}"
             raise HandledError(msg)
         is_core = section.prefix is None
@@ -146,7 +144,8 @@ class TomlPyProject(Source):
         yield from self._env_base_generated
 
     def sections(self) -> Iterator[Section]:
-        for env_name in self._our_content.get(self._Section.ENV, {}):
+        # iterating a table gives its keys, but a list of names is tolerated too, hence the Iterable cast
+        for env_name in cast("Iterable[object]", self._our_content.get(self._Section.ENV, {})):
             if not isinstance(env_name, str):
                 msg = f"Environment key must be string, got {env_name!r}"
                 raise HandledError(msg)
@@ -175,11 +174,20 @@ class TomlPyProject(Source):
         return self._Section.test_env(item), [self._Section.run_env_base()], [self._Section.package_env_base()]
 
 
-def _build_env_base_map(env_base_content: dict[str, Any]) -> tuple[dict[str, str], dict[str, list[str]]]:
+def _table_at(content: dict[str, TomlTypes], keys: tuple[str, ...]) -> dict[str, TomlTypes]:
+    for key in keys:
+        step = content[key]
+        if not isinstance(step, dict):
+            raise KeyError(key)  # a scalar where a table is required means the config is not for us
+        content = step
+    return content
+
+
+def _build_env_base_map(env_base_content: dict[str, TomlTypes]) -> tuple[dict[str, str], dict[str, list[str]]]:
     result: dict[str, str] = {}
     all_labels: dict[str, list[str]] = {}
     for base_name, config in env_base_content.items():
-        if not isinstance(config, Mapping):
+        if not isinstance(config, dict):
             msg = f"env_base.{base_name} must be a table"
             raise HandledError(msg)
         factors_raw = config.get("factors")
@@ -205,7 +213,7 @@ def _build_env_base_map(env_base_content: dict[str, Any]) -> tuple[dict[str, str
     return result, all_labels
 
 
-def _extract_env_list_labels(env_list_raw: Any) -> dict[str, list[str]]:
+def _extract_env_list_labels(env_list_raw: TomlTypes) -> dict[str, list[str]]:
     if not isinstance(env_list_raw, list):
         return {}
     labels: dict[str, list[str]] = {}

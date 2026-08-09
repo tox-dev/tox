@@ -99,7 +99,7 @@ class Unroll:
                     posargs_result: TomlTypes = (
                         [self(v, depth, skip_str=skip_str) for v in cast("list[str]", value.get("default", []))]
                         if got_posargs is None
-                        else list(got_posargs)
+                        else cast("list[TomlTypes]", list(got_posargs))
                     )
                     return {"value": posargs_result, "marker": marker} if marker else posargs_result
                 if replace_type == "env":
@@ -147,7 +147,7 @@ class Unroll:
         return value
 
 
-def _replace_glob_toml(conf: Config | None, value: dict[str, Any]) -> list[str] | str:
+def _replace_glob_toml(conf: Config | None, value: dict[str, Any]) -> list[TomlTypes] | str:
     pattern = validate(value.get("pattern"), str)
     if not pattern:
         msg = "No pattern was supplied in glob replacement"
@@ -156,7 +156,8 @@ def _replace_glob_toml(conf: Config | None, value: dict[str, Any]) -> list[str] 
         pattern = str(conf.core["tox_root"] / pattern)
     extending = value.get("extend", False)
     if matches := sorted(glob.glob(pattern, recursive=True)):  # ruff:ignore[glob]
-        return matches if extending else " ".join(matches)
+        extended: list[TomlTypes] = list(matches)
+        return extended if extending else " ".join(matches)
     default = value.get("default")
     if default is None:
         return [] if extending else ""

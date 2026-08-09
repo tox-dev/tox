@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 import os
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 import pluggy
 
@@ -29,6 +29,7 @@ if TYPE_CHECKING:
     from tox.execute import Outcome
     from tox.session.state import State
     from tox.tox_env.api import ToxEnv
+    from tox.tox_env.installer import InstallArguments
 
 
 class Plugin:
@@ -119,7 +120,7 @@ class Plugin:
     def tox_after_run_commands(self, tox_env: ToxEnv, exit_code: int, outcomes: list[Outcome]) -> None:
         self.manager.hook.tox_after_run_commands(tox_env=tox_env, exit_code=exit_code, outcomes=outcomes)
 
-    def tox_on_install(self, tox_env: ToxEnv, arguments: Any, section: str, of_type: str) -> None:
+    def tox_on_install(self, tox_env: ToxEnv, arguments: InstallArguments, section: str, of_type: str) -> None:
         self.manager.hook.tox_on_install(tox_env=tox_env, arguments=arguments, section=section, of_type=of_type)
 
     def tox_env_teardown(self, tox_env: ToxEnv) -> None:

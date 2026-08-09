@@ -135,7 +135,11 @@ description = "run type check on code base"
 base_python = [ "3.14" ]
 dependency_groups = [ "type" ]
 extras = [ "completion" ]
-commands = [ [ "ty", "check", "--python-platform", "all", "--output-format", "concise", "--error-on-warning", "." ] ]
+commands = [
+  [ "ty", "check", "--python-platform", "all", "--output-format", "concise", "--error-on-warning", "." ],
+  [ "mypy" ],
+  [ "pyrefly", "check" ],
+]
 
 [env.type-min]
 description = "run type check on code base for the minimum supported Python"

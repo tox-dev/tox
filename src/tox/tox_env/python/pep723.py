@@ -135,7 +135,8 @@ class Pep723Mixin(Python, RunToxEnv):
         :raises Fail: if the script escapes ``tox_root`` or does not exist when configured.
 
         """
-        if not (script := self.conf["script"]):
+        script: str = self.conf["script"]
+        if not script:
             return None
         tox_root: Path = self.core["tox_root"]
         root_resolved = tox_root.resolve()

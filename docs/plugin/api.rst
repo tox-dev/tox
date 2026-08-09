@@ -139,6 +139,14 @@ execute
 installer
 =========
 
+.. autodata:: tox.tox_env.installer.InstallArguments
+
+.. autoclass:: tox.tox_env.python.pip.req.file.RequirementsFile
+
+.. autoclass:: tox.tox_env.python.pip.req_file.PythonDeps
+
+.. autoclass:: tox.tox_env.python.pylock.Pylock
+
 .. autoclass:: tox.tox_env.installer.Installer
     :members:
 

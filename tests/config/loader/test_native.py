@@ -112,9 +112,9 @@ def test_fallback_unknown_type() -> None:
 
 
 def test_empty_str() -> None:
-    assert to_native("") is not None
-    assert isinstance(to_native(""), str)
-    assert len(to_native("")) == 0
+    result = to_native("")
+    assert isinstance(result, str)
+    assert not result
 
 
 def test_zero() -> None:

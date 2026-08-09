@@ -5,7 +5,7 @@ from __future__ import annotations
 import logging
 from abc import ABC
 from functools import partial
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Literal, TypeAlias, get_args
 
 from packaging.utils import canonicalize_name
 
@@ -22,6 +22,12 @@ from tox.tox_env.runner import RunToxEnv
 from .api import Python
 from .dependency_groups import resolve as resolve_dependency_groups
 from .extras import resolve_extras_static
+
+PackageType: TypeAlias = Literal[
+    "wheel", "sdist", "sdist-wheel", "editable", "editable-legacy", "deps-only", "skip", "external"
+]
+"""Package installation modes tox itself supports; subclasses may define additional ones."""
+
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -86,7 +92,8 @@ class PythonRun(Python, RunToxEnv, ABC):
 
     @property
     def _package_types(self) -> tuple[str, ...]:
-        return "wheel", "sdist", "sdist-wheel", "editable", "editable-legacy", "deps-only", "skip", "external"
+        # tuple[str, ...] rather than tuple[PackageType, ...] so subclasses can add their own package types
+        return get_args(PackageType)
 
     def _register_package_conf(self) -> bool:
         # provision package type
@@ -221,7 +228,7 @@ class PythonRun(Python, RunToxEnv, ABC):
 def add_skip_missing_interpreters_to_core(core: CoreConfigSet, options: Parsed) -> None:
     def skip_missing_interpreters_post_process(value: bool) -> bool:  # ruff:ignore[boolean-type-hint-positional-argument]
         if getattr(options, "skip_missing_interpreters", "config") != "config":
-            return StrConvert().to_bool(options.skip_missing_interpreters)
+            return StrConvert().to_bool(str(options.skip_missing_interpreters))
         return value
 
     core.add_config(
@@ -235,14 +242,14 @@ def add_skip_missing_interpreters_to_core(core: CoreConfigSet, options: Parsed) 
 
 def add_skip_missing_interpreters_to_env(conf: EnvConfigSet, core: CoreConfigSet, options: Parsed) -> None:
     def _default_skip_missing(conf: Config, env_name: str | None) -> bool:  # ruff:ignore[unused-function-argument]
-        return core["skip_missing_interpreters"]
+        return core.get("skip_missing_interpreters", bool)
 
     def _post_process(value: bool) -> bool:  # ruff:ignore[boolean-type-hint-positional-argument]
         if getattr(options, "skip_missing_interpreters", "config") != "config":
-            return StrConvert().to_bool(options.skip_missing_interpreters)
+            return StrConvert().to_bool(str(options.skip_missing_interpreters))
         return value
 
-    conf.add_config(  # ty: ignore[no-matching-overload] # https://github.com/astral-sh/ty/issues/2428
+    conf.add_config(
         keys=["skip_missing_interpreters"],
         default=_default_skip_missing,
         of_type=bool,
@@ -268,6 +275,7 @@ def _normalize_extras(values: set[str]) -> set[str]:
 
 
 __all__ = [
+    "PackageType",
     "PythonRun",
     "add_extras_to_env",
     "add_skip_missing_interpreters_to_core",

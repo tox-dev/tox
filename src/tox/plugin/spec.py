@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 import pluggy
 
@@ -14,6 +14,7 @@ if TYPE_CHECKING:
     from tox.execute import Outcome
     from tox.session.state import State
     from tox.tox_env.api import ToxEnv
+    from tox.tox_env.installer import InstallArguments
     from tox.tox_env.register import ToxEnvRegister
 
 _spec = pluggy.HookspecMarker(NAME)
@@ -102,8 +103,13 @@ def tox_after_run_commands(tox_env: ToxEnv, exit_code: int, outcomes: list[Outco
 
 
 @_spec
-def tox_on_install(tox_env: ToxEnv, arguments: Any, section: str, of_type: str) -> None:
+def tox_on_install(tox_env: ToxEnv, arguments: InstallArguments, section: str, of_type: str) -> None:
     """Called before executing an installation command.
+
+    .. versionchanged:: 4.59.0
+
+        ``arguments`` is now typed as :data:`InstallArguments <tox.tox_env.installer.InstallArguments>` — the union of
+        argument types tox itself installs; environments provided by plugins may pass their own types.
 
     :param tox_env: the tox environment where the command runs in
     :param arguments: installation arguments

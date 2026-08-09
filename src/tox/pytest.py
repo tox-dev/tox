@@ -12,7 +12,7 @@ import textwrap
 import warnings
 from contextlib import closing, contextmanager
 from pathlib import Path
-from types import ModuleType, TracebackType
+from types import FunctionType, ModuleType, TracebackType
 from typing import TYPE_CHECKING, Any, Protocol, cast
 
 import pytest
@@ -323,11 +323,9 @@ def enable_pep517_backend_coverage() -> Iterator[None]:
 
     # monkey-patch to inject COV_* env vars, session-scoped so mocker unavailable
     previous = Pep517VirtualEnvPackager._default_pass_env  # ruff:ignore[private-member-access]
-    try:
-        Pep517VirtualEnvPackager._default_pass_env = default_pass_env  # ruff:ignore[private-member-access]  # ty: ignore[invalid-assignment]
+    with pytest.MonkeyPatch.context() as monkey_patch:
+        monkey_patch.setattr(Pep517VirtualEnvPackager, "_default_pass_env", default_pass_env)
         yield
-    finally:
-        Pep517VirtualEnvPackager._default_pass_env = previous  # ruff:ignore[private-member-access]
 
 
 class ToxRunOutcome:
@@ -523,13 +521,14 @@ def enable_pip_pypi_access_fixture(
     return previous_url
 
 
-def register_inline_plugin(mocker: MockerFixture, *args: Callable[..., Any]) -> None:
+def register_inline_plugin(mocker: MockerFixture, *args: FunctionType) -> None:
     frame_info = inspect.stack()[1]
     caller_module = inspect.getmodule(frame_info[0])
     assert caller_module is not None  # ruff:ignore[assert]
     plugin = ModuleType(f"{caller_module.__name__}|{frame_info[3]}")
     plugin.__file__ = caller_module.__file__
-    plugin.__dict__.update({f.__name__: f for f in args})  # ty: ignore[unresolved-attribute] # https://github.com/astral-sh/ty/issues/1495
+    for hook in args:
+        setattr(plugin, hook.__name__, hook)
     mocker.patch("tox.plugin.manager.load_inline", return_value=plugin)
 
 

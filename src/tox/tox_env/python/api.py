@@ -18,6 +18,7 @@ from tox.tox_env.errors import Fail, Recreate, Skip
 
 if TYPE_CHECKING:
     from tox.config.main import Config
+    from tox.util.json_types import JsonValue
 
 
 class VersionInfo(NamedTuple):
@@ -90,7 +91,7 @@ class Python(ToxEnv, ABC):
         def _ensure_list(value: list[str] | str) -> list[str]:
             return [value] if isinstance(value, str) else value
 
-        self.conf.add_config(  # ty: ignore[no-matching-overload] # https://github.com/astral-sh/ty/issues/2428
+        self.conf.add_config(
             keys=["default_base_python"],
             of_type=list[str] | str,
             default=[sys.executable],
@@ -98,7 +99,7 @@ class Python(ToxEnv, ABC):
             post_process=_ensure_list,
         )
 
-        self.conf.add_config(  # ty: ignore[no-matching-overload] # https://github.com/astral-sh/ty/issues/2428
+        self.conf.add_config(
             keys=["base_python_file"],
             of_type=list[str] | str,
             default=[],
@@ -116,7 +117,7 @@ class Python(ToxEnv, ABC):
                 raise Fail(msg)
             return self._validate_base_python(self.name, result, self.core["ignore_base_python_conflict"])
 
-        self.conf.add_config(  # ty: ignore[no-matching-overload] # https://github.com/astral-sh/ty/issues/2428
+        self.conf.add_config(
             keys=["base_python", "basepython"],
             of_type=list[str] | str,
             default=self._base_python_default,
@@ -209,7 +210,7 @@ class Python(ToxEnv, ABC):
         base_python_files: list[str] = self.conf["base_python_file"]
         if base_python_files:
             return self._read_python_version_file(base_python_files)
-        return self.conf["default_base_python"]
+        return self.conf.get("default_base_python", list[str])
 
     def _read_python_version_file(self, file_paths: list[str]) -> list[str]:
         tox_root: Path = self.core["toxinidir"]
@@ -387,7 +388,7 @@ class Python(ToxEnv, ABC):
             if self.options.list_dependencies:
                 logging.warning(",".join(outcome))
 
-    def python_cache(self) -> dict[str, Any]:
+    def python_cache(self) -> dict[str, JsonValue]:
         return {
             "version_info": list(self.base_python.version_info),
         }
@@ -412,7 +413,7 @@ class Python(ToxEnv, ABC):
 
         return self._base_python
 
-    def _get_env_journal_python(self) -> dict[str, Any]:
+    def _get_env_journal_python(self) -> dict[str, JsonValue]:
         return {
             "implementation": self.base_python.implementation,
             "version_info": tuple(self.base_python.version_info),

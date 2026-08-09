@@ -11,7 +11,7 @@ import sys
 from abc import ABC, abstractmethod
 from contextlib import contextmanager
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, NamedTuple, cast
+from typing import TYPE_CHECKING, NamedTuple, cast
 
 from tox.execute.request import ExecuteRequest
 from tox.tox_env.errors import Fail, Recreate, Skip
@@ -30,7 +30,7 @@ if TYPE_CHECKING:
     from tox.execute.api import Execute, ExecuteStatus, Outcome, StdinSource
     from tox.journal import EnvJournal
     from tox.report import OutErr, ToxHandler
-    from tox.tox_env.installer import Installer
+    from tox.tox_env.installer import InstallArguments, Installer
 
 LOGGER = logging.getLogger(__name__)
 
@@ -90,10 +90,10 @@ class ToxEnv(ABC):  # ruff:ignore[too-many-public-methods]
 
     @property
     @abstractmethod
-    def installer(self) -> Installer[Any]:
+    def installer(self) -> Installer[ToxEnv]:
         raise NotImplementedError
 
-    def _install(self, arguments: Any, section: str, of_type: str) -> None:
+    def _install(self, arguments: InstallArguments, section: str, of_type: str) -> None:
         from tox.plugin.manager import MANAGER  # ruff:ignore[import-outside-top-level]
 
         MANAGER.tox_on_install(self, arguments, section, of_type)
@@ -117,19 +117,19 @@ class ToxEnv(ABC):  # ruff:ignore[too-many-public-methods]
         self.conf.add_config(
             keys=["env_dir", "envdir"],
             of_type=Path,
-            default=lambda conf, name: cast("Path", conf.core["work_dir"]) / self.name,  # ruff:ignore[unused-lambda-argument]
+            default=lambda conf, name: conf.core.get("work_dir", Path) / self.name,  # ruff:ignore[unused-lambda-argument]
             desc="directory assigned to the tox environment",
         )
         self.conf.add_config(
             keys=["env_tmp_dir", "envtmpdir"],
             of_type=Path,
-            default=lambda conf, name: cast("Path", conf.core["work_dir"]) / self.name / "tmp",  # ruff:ignore[unused-lambda-argument]
+            default=lambda conf, name: conf.core.get("work_dir", Path) / self.name / "tmp",  # ruff:ignore[unused-lambda-argument]
             desc="a folder that is always reset at the start of the run",
         )
         self.conf.add_config(
             keys=["env_log_dir", "envlogdir"],
             of_type=Path,
-            default=lambda conf, name: cast("Path", conf.core["work_dir"]) / self.name / "log",  # ruff:ignore[unused-lambda-argument]
+            default=lambda conf, name: conf.core.get("work_dir", Path) / self.name / "log",  # ruff:ignore[unused-lambda-argument]
             desc="a folder for logging where tox will put logs of tool invocation",
         )
         self.executor.register_conf(self)
@@ -189,26 +189,26 @@ class ToxEnv(ABC):  # ruff:ignore[too-many-public-methods]
         assert self.installer is not None  # ruff:ignore[assert] # trigger installer creation to allow config registration
 
     def _recreate_default(self, conf: Config, value: str | None) -> bool:  # ruff:ignore[unused-method-argument]
-        return cast("bool", self.options.recreate)
+        return self.options.recreate
 
     @property
     def env_dir(self) -> Path:
         """:returns: the tox environments environment folder"""
-        return cast("Path", self.conf["env_dir"])
+        return self.conf.get("env_dir", Path)
 
     @property
     def env_tmp_dir(self) -> Path:
         """:returns: the tox environments temp folder"""
-        return cast("Path", self.conf["env_tmp_dir"])
+        return self.conf.get("env_tmp_dir", Path)
 
     @property
     def env_log_dir(self) -> Path:
         """:returns: the tox environments log folder"""
-        return cast("Path", self.conf["env_log_dir"])
+        return self.conf.get("env_log_dir", Path)
 
     @property
     def name(self) -> str:
-        return cast("str", self.conf["env_name"])
+        return self.conf.get("env_name", str)
 
     def _default_set_env(self) -> dict[str, str]:  # ruff:ignore[no-self-use]
         return {}
@@ -264,7 +264,7 @@ class ToxEnv(ABC):  # ruff:ignore[too-many-public-methods]
         """Setup the tox environment."""
         if self._run_state["setup"] is False:  # pragma: no branch
             self._platform_check()
-            recreate = cast("bool", self.conf["recreate"])
+            recreate = self.conf.get("recreate", bool)
             if recreate:
                 self._clean(transitive=True)
             try:
@@ -338,7 +338,7 @@ class ToxEnv(ABC):  # ruff:ignore[too-many-public-methods]
     def _handle_core_tmp_dir(self) -> None:
         self.core["temp_dir"].mkdir(parents=True, exist_ok=True)
         ensure_cachedir_tag(self.core["work_dir"])
-        ensure_gitignore(cast("Path", self.core["work_dir"]))
+        ensure_gitignore(self.core.get("work_dir", Path))
 
     def _clean(self, transitive: bool = False) -> None:  # ruff:ignore[unused-method-argument, boolean-type-hint-positional-argument, boolean-default-value-positional-argument]
         if self._run_state["clean"]:  # pragma: no branch
