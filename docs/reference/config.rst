@@ -26,8 +26,8 @@ on a best effort approach.
 
 With regards to the configuration format, at the moment we support the following formats:
 
-- `INI <https://en.wikipedia.org/wiki/INI_file>`_.
 - `TOML <https://toml.io/en/v1.0.0>`_.
+- `INI <https://en.wikipedia.org/wiki/INI_file>`_ (deprecated).
 
 Out of box tox supports five configuration locations prioritized in the following order:
 
@@ -35,9 +35,9 @@ Out of box tox supports five configuration locations prioritized in the followin
 
     flowchart TD
         search[tox searches current directory] --> tox_ini
-        tox_ini[tox.ini — INI] -- not found --> setup_cfg[setup.cfg — INI]
+        tox_ini[tox.ini — INI, deprecated] -- not found --> setup_cfg[setup.cfg — INI, deprecated]
         setup_cfg -- not found --> pyproject_native[pyproject.toml — tool.tox]
-        pyproject_native -- not found --> pyproject_legacy[pyproject.toml — legacy_tox_ini]
+        pyproject_native -- not found --> pyproject_legacy[pyproject.toml — legacy_tox_ini, deprecated]
         pyproject_legacy -- not found --> tox_toml[tox.toml — TOML]
 
         classDef ini fill:#dbeafe,stroke:#3b82f6,stroke-width:2px,color:#1e3a5f
@@ -48,15 +48,17 @@ Out of box tox supports five configuration locations prioritized in the followin
         class pyproject_native,tox_toml toml
         class search start
 
-1. ``tox.ini`` (INI),
-2. ``setup.cfg`` (INI),
+1. ``tox.ini`` (INI, deprecated),
+2. ``setup.cfg`` (INI, deprecated),
 3. Native ``pyproject.toml`` under the ``tool.tox`` table (TOML),
-4. ``pyproject.toml`` with the ``tool.tox`` table, having ``legacy_tox_ini`` key (containing INI),
+4. ``pyproject.toml`` with the ``tool.tox`` table, having ``legacy_tox_ini`` key (containing INI, deprecated),
 5. ``tox.toml`` (TOML).
 
-Historically, the INI format was created first, and TOML was added in 2024. **TOML is the recommended format for new
-projects** -- it is more robust, has proper type support, and avoids ambiguities inherent in INI parsing (e.g.
-multi-line values, comment escaping). INI remains supported and is more concise for some patterns.
+Historically, the INI format was created first, and TOML was added in 2024. **The INI format is deprecated** -- it keeps
+working for existing projects, but it is frozen: no new features will be added to it, and it may be removed in a future
+major release. Use TOML instead -- it is more robust, has proper type support, and avoids ambiguities inherent in INI
+parsing (e.g. multi-line values, comment escaping). For existing INI configurations, see :ref:`how to migrate to TOML
+<migrate-ini-to-toml>`.
 
 .. _toml-feature-gaps:
 
@@ -91,7 +93,7 @@ factor.
     Use ``replace = "if"`` with ``factor.NAME`` conditions. Supports boolean operations (``and``, ``or``, ``not``) and
     can combine with environment variable checks (``env.VAR``).
 
-.. tab:: INI
+.. tab:: INI (deprecated)
 
     .. code-block:: ini
 
@@ -130,7 +132,7 @@ Platform factors work in any environment without requiring the platform name in 
     A ``product`` dict also accepts an ``exclude`` key to skip specific combinations. TOML never interprets curly
     braces inside string items — composition is always via these dicts.
 
-.. tab:: INI
+.. tab:: INI (deprecated)
 
     .. code-block:: ini
 
@@ -441,7 +443,7 @@ the top level of ``tox.toml``. Placing these options in an environment section (
              "virtualenv>20.2",
            ]
 
-     .. tab:: INI
+     .. tab:: INI (deprecated)
 
         .. code-block:: ini
 
@@ -561,7 +563,7 @@ the top level of ``tox.toml``. Placing these options in an environment section (
            [tool.tox]
            labels = { test = ["3.14t", "3.14", "3.13", "3.12"], static = ["ruff", "mypy"] }
 
-     .. tab:: INI
+     .. tab:: INI (deprecated)
 
         .. code-block:: ini
 
@@ -868,7 +870,7 @@ Base options
           pass_env = ["FOO_*"]
           disallow_pass_env = ["FOO_SECRET"]
 
-    .. tab:: INI
+    .. tab:: INI (deprecated)
 
        .. code-block:: ini
 
@@ -893,7 +895,7 @@ Base options
            [tool.tox.env_run_base]
            set_env = { file = "conf{/}local.env", TEST_TIMEOUT = "30" }
 
-     .. tab:: INI
+     .. tab:: INI (deprecated)
 
         .. code-block:: ini
 
@@ -912,7 +914,7 @@ Base options
            [tool.tox.env_run_base]
            set_env = { file = "{env:variable}" }
 
-     .. tab:: INI
+     .. tab:: INI (deprecated)
 
         .. code-block:: ini
 
@@ -954,7 +956,7 @@ Base options
            # Can also be combined with replace directives
            set_env.CONDITIONAL = { replace = "env", name = "MY_VAR", default = "fallback", marker = "sys_platform == 'linux'" }
 
-    .. tab:: INI
+    .. tab:: INI (deprecated)
 
         .. code-block:: ini
 
@@ -1062,7 +1064,7 @@ always set regardless of the ``pass_env`` or ``set_env`` configuration and canno
            [tool.tox.env.flake8]
            labels = ["mypy"]
 
-     .. tab:: INI
+     .. tab:: INI (deprecated)
 
         .. code-block:: ini
 
@@ -1136,7 +1138,7 @@ Run
             runner = "virtualenv-pep-723"
             script = "tools/check.py"
 
-    .. tab:: INI
+    .. tab:: INI (deprecated)
 
         .. code-block:: ini
 
@@ -1172,7 +1174,7 @@ Run
           [env.coverage]
           depends = ["3.*"]
 
-    .. tab:: INI
+    .. tab:: INI (deprecated)
 
        .. code-block:: ini
 
@@ -1218,7 +1220,7 @@ Run
             ["pre-commit", "run", "--all-files"],
           ]
 
-    .. tab:: INI
+    .. tab:: INI (deprecated)
 
        .. code-block:: ini
 
@@ -1248,7 +1250,7 @@ Run
           deps = ["pre-commit"]
           recreate_commands = [["{env_python}", "-Im", "pre_commit", "clean"]]
 
-    .. tab:: INI
+    .. tab:: INI (deprecated)
 
        .. code-block:: ini
 
@@ -1358,7 +1360,7 @@ Run
           commands_retry = 2
           commands = [["pytest", "tests"]]
 
-    .. tab:: INI
+    .. tab:: INI (deprecated)
 
        .. code-block:: ini
 
@@ -1429,7 +1431,7 @@ environments when needed.
        [env.".pkg-cpython311"]
        pass_env = ["PKG_CONFIG", "PKG_CONFIG_PATH", "PKG_CONFIG_SYSROOT_DIR", "IS_311"]
 
-.. tab:: INI
+.. tab:: INI (deprecated)
 
     .. code-block:: ini
 
@@ -1534,7 +1536,7 @@ Python options
             [env_run_base]
             default_base_python = ["3.14", "3.13"]
 
-    .. tab:: INI
+    .. tab:: INI (deprecated)
 
         .. code-block:: ini
 
@@ -1561,7 +1563,7 @@ Python options
           [env.mypy]
           base_python_file = [".python-version", ".python-version-default"]
 
-    .. tab:: INI
+    .. tab:: INI (deprecated)
 
        .. code-block:: ini
 
@@ -1658,7 +1660,7 @@ Python run
              "test",
            ]
 
-     .. tab:: INI
+     .. tab:: INI (deprecated)
 
         .. code-block:: ini
 
@@ -1694,7 +1696,7 @@ Python run
            [tool.tox.env_run_base]
            pylock = "pylock.toml"
 
-     .. tab:: INI
+     .. tab:: INI (deprecated)
 
         .. code-block:: ini
 
@@ -1731,7 +1733,7 @@ Python run
              "-c constraints.txt",
            ]
 
-     .. tab:: INI
+     .. tab:: INI (deprecated)
 
         .. code-block:: ini
 
@@ -1945,7 +1947,7 @@ Python virtual environment
             base_python = ["python3.15"]
             commands = [["python", "-c", "import sys; print(sys.version)"]]
 
-    .. tab:: INI
+    .. tab:: INI (deprecated)
 
         .. code-block:: ini
 
@@ -2167,7 +2169,7 @@ You can override options in the configuration file, from the command line. For e
        set_env = { foo = "bar" }
        commands = [[ "pytest", "tests" ]]
 
-.. tab:: INI
+.. tab:: INI (deprecated)
 
     .. code-block:: ini
 
@@ -2185,7 +2187,7 @@ You could enable ``ignore_errors`` by running:
 
        tox --override env_run_base.ignore_errors=True
 
-.. tab:: INI
+.. tab:: INI (deprecated)
 
     .. code-block:: bash
 
@@ -2199,7 +2201,7 @@ You could add additional dependencies by running:
 
        tox --override env_run_base.deps+=pytest-xdist
 
-.. tab:: INI
+.. tab:: INI (deprecated)
 
     .. code-block:: bash
 
@@ -2213,7 +2215,7 @@ You could set additional environment variables by running:
 
        tox --override env_run_base.set_env+=baz=quux
 
-.. tab:: INI
+.. tab:: INI (deprecated)
 
     .. code-block:: bash
 
@@ -2228,7 +2230,7 @@ You can specify overrides multiple times on the command line to append multiple 
        tox -x env_run_base.set_env+=foo=bar -x env_run_base.set_env+=baz=quux
        tox -x testenv_run_baseenv.deps+=pytest-xdist -x env_run_base.deps+=pytest-covt
 
-.. tab:: INI
+.. tab:: INI (deprecated)
 
     .. code-block:: bash
 
@@ -2243,7 +2245,7 @@ Or reset override and append to that (note the first override is ``=`` and not `
 
        tox -x env_run_base.deps=pytest-xdist -x env_run_base.deps+=pytest-cov
 
-.. tab:: INI
+.. tab:: INI (deprecated)
 
     .. code-block:: bash
 
@@ -2277,7 +2279,7 @@ extends:
 
        tox c -e test -k extras -x tool.tox.env_run_base.extras=blue
 
-.. tab:: INI
+.. tab:: INI (deprecated)
 
     .. code-block:: ini
 
@@ -2308,7 +2310,7 @@ separators:
 
        tox -x 'env.3\.14.deps=pytest-xdist'
 
-.. tab:: INI
+.. tab:: INI (deprecated)
 
     .. code-block:: bash
 
@@ -2787,7 +2789,7 @@ and conditional settings to express that in a concise form:
             { replace = "if", condition = "(factor.py311 or factor.py310) and factor.sqlite", then = ["mock"], extend = true },
         ]
 
-.. tab:: INI
+.. tab:: INI (deprecated)
 
     .. code-block:: ini
 
@@ -2944,7 +2946,7 @@ Generative section names
 Suppose you have some binary packages, and need to run tests both in 32 and 64 bits. You also want an environment to
 create your virtual env for the developers. This also supports ranges in the same way as generative environment lists.
 
-.. tab:: INI
+.. tab:: INI (deprecated)
 
     .. code-block:: ini
 
@@ -3004,7 +3006,7 @@ In substitutions, the backslash character ``\`` will act as an escape when prece
           ["python", "-c", 'print("host: \{}".format("{env:HOSTNAME:host\: not set}")'],
         ]
 
-.. tab:: INI
+.. tab:: INI (deprecated)
 
     .. code-block:: ini
 
@@ -3147,7 +3149,7 @@ Relative patterns are resolved against ``tox_root``. Use ``**`` for recursive ma
         [env.A]
         commands = [["twine", "upload", { replace = "glob", pattern = "dist/*.whl", extend = true }]]
 
-.. tab:: INI
+.. tab:: INI (deprecated)
 
     .. code-block:: ini
 

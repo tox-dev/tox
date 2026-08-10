@@ -61,7 +61,7 @@ A typical pytest configuration:
          deps = ["pytest>=8"]
          commands = [["pytest", { replace = "posargs", default = ["tests"], extend = true }]]
 
-.. tab:: INI
+.. tab:: INI (deprecated)
 
     .. code-block:: ini
 
@@ -82,7 +82,7 @@ directory:
          [env_run_base]
          commands = [["pytest", "--basetemp={env_tmp_dir}", { replace = "posargs", default = ["tests"], extend = true }]]
 
-.. tab:: INI
+.. tab:: INI (deprecated)
 
     .. code-block:: ini
 
@@ -115,7 +115,7 @@ ensure coverage runs after all test environments:
              ["coverage", "report", "--fail-under=80"],
          ]
 
-.. tab:: INI
+.. tab:: INI (deprecated)
 
     .. code-block:: ini
 
@@ -218,7 +218,7 @@ Labels let you assign tags to environments and run them as a group with ``tox ru
          deps = ["mypy"]
          commands = [["mypy", "src"]]
 
-.. tab:: INI
+.. tab:: INI (deprecated)
 
     .. code-block:: ini
 
@@ -265,7 +265,7 @@ For example, given:
          deps = ["pytest"]
          commands = [["pytest"]]
 
-.. tab:: INI
+.. tab:: INI (deprecated)
 
     .. code-block:: ini
 
@@ -314,7 +314,7 @@ platform without encoding the platform name in the environment:
              ["python", "-m", "pytest"],
          ]
 
-.. tab:: INI
+.. tab:: INI (deprecated)
 
     .. code-block:: ini
 
@@ -370,7 +370,7 @@ factors ``py313``, ``django50``, and the current platform:
             ["pytest"],
         ]
 
-.. tab:: INI
+.. tab:: INI (deprecated)
 
     .. code-block:: ini
 
@@ -399,7 +399,7 @@ Negation also works with platform factors:
             { replace = "if", condition = "not factor.darwin", then = ["pyinotify"], extend = true },
         ]
 
-.. tab:: INI
+.. tab:: INI (deprecated)
 
     .. code-block:: ini
 
@@ -425,7 +425,7 @@ There are two ways to handle platform differences:
             { replace = "if", condition = "factor.darwin or factor.win32", then = [["pytest"]], extend = true },
         ]
 
-.. tab:: INI
+.. tab:: INI (deprecated)
 
     .. code-block:: ini
 
@@ -445,7 +445,7 @@ Settings without a platform factor apply to all platforms. This is ideal for mos
         [env_run_base]
         platform = "linux"
 
-.. tab:: INI
+.. tab:: INI (deprecated)
 
     .. code-block:: ini
 
@@ -489,7 +489,7 @@ and normalized by :pypi:`virtualenv` (``amd64`` → ``x86_64``, ``aarch64`` → 
         base_python = ["cpython3.12-64-x86_64"]
         commands = [["pytest"]]
 
-.. tab:: INI
+.. tab:: INI (deprecated)
 
     .. code-block:: ini
 
@@ -645,7 +645,7 @@ You can run it through tox without duplicating the dependency list:
         runner = "virtualenv-pep-723"
         script = "tools/fetch.py"
 
-.. tab:: INI
+.. tab:: INI (deprecated)
 
     .. code-block:: ini
 
@@ -666,7 +666,7 @@ To override the default command (which runs the script), set ``commands`` as usu
         script = "tools/fetch.py"
         commands = [["python", "-m", "pytest", "tests/"]]
 
-.. tab:: INI
+.. tab:: INI (deprecated)
 
     .. code-block:: ini
 
@@ -702,7 +702,7 @@ environment variables:
          [env_run_base]
          set_env = { PIP_INDEX_URL = { replace = "env", name = "PIP_INDEX_URL", default = "https://my.pypi.example/simple" } }
 
-.. tab:: INI
+.. tab:: INI (deprecated)
 
     .. code-block:: ini
 
@@ -732,7 +732,7 @@ When not all dependencies are found on a single index, use ``PIP_EXTRA_INDEX_URL
          set_env.PIP_INDEX_URL = { replace = "env", name = "PIP_INDEX_URL", default = "https://primary.example/simple" }
          set_env.PIP_EXTRA_INDEX_URL = { replace = "env", name = "PIP_EXTRA_INDEX_URL", default = "https://secondary.example/simple" }
 
-.. tab:: INI
+.. tab:: INI (deprecated)
 
     .. code-block:: ini
 
@@ -807,7 +807,7 @@ environments via the :ref:`extras` configuration:
          extras = ["docs"]
          commands = [["sphinx-build", "-W", "docs", "docs/_build/html"]]
 
-.. tab:: INI
+.. tab:: INI (deprecated)
 
     .. code-block:: ini
 
@@ -849,7 +849,7 @@ coverage combining, documentation builds, or linting environments that share the
          extras = ["docs"]
          commands = [["sphinx-build", "-W", "docs", "docs/_build/html"]]
 
-.. tab:: INI
+.. tab:: INI (deprecated)
 
     .. code-block:: ini
 
@@ -879,7 +879,7 @@ lock file changes.
          [env_run_base]
          pylock = "pylock.toml"
 
-.. tab:: INI
+.. tab:: INI (deprecated)
 
     .. code-block:: ini
 
@@ -904,7 +904,7 @@ matching the selected extras/groups (and the target Python's platform markers) a
          pylock = "pylock.toml"
          dependency_groups = ["dev"]
 
-.. tab:: INI
+.. tab:: INI (deprecated)
 
     .. code-block:: ini
 
@@ -937,7 +937,7 @@ variables:
          set_env.VIRTUALENV_PIP = "22.1"
          set_env.VIRTUALENV_SYSTEM_SITE_PACKAGES = "true"
 
-.. tab:: INI
+.. tab:: INI (deprecated)
 
     .. code-block:: ini
 
@@ -968,7 +968,7 @@ commands inside the old environment before it is removed:
          recreate_commands = [["{env_python}", "-Im", "pre_commit", "clean"]]
          commands = [["pre-commit", "run", "--all-files"]]
 
-.. tab:: INI
+.. tab:: INI (deprecated)
 
     .. code-block:: ini
 
@@ -998,7 +998,7 @@ virtualenv can no longer create transparently bootstraps a compatible older virt
          deps = ["pytest"]
          commands = [["pytest"]]
 
-.. tab:: INI
+.. tab:: INI (deprecated)
 
     .. code-block:: ini
 
@@ -1032,7 +1032,7 @@ expressed as an explicit structured item. For a single axis use the bare range d
              { prefix = "3.", start = 12, stop = 14 },
          ]
 
-.. tab:: INI
+.. tab:: INI (deprecated)
 
     .. code-block:: ini
 
@@ -1063,7 +1063,7 @@ Combinations are joined with ``-``:
          ]
          commands = [["pytest"]]
 
-.. tab:: INI
+.. tab:: INI (deprecated)
 
     .. code-block:: ini
 
@@ -1146,7 +1146,7 @@ When multiple commands are defined in :ref:`commands`, tox runs them sequentiall
              ["python", "--version"],
          ]
 
-.. tab:: INI
+.. tab:: INI (deprecated)
 
     .. code-block:: ini
 
@@ -1167,7 +1167,7 @@ To invert the exit code (fail if the command returns 0, succeed otherwise), use 
              ["python", "--version"],
          ]
 
-.. tab:: INI
+.. tab:: INI (deprecated)
 
     .. code-block:: ini
 
@@ -1194,7 +1194,7 @@ command is attempted up to 3 times total. Retries apply to :ref:`commands_pre`, 
          commands_retry = 2
          commands = [["pytest", "tests/integration"]]
 
-.. tab:: INI
+.. tab:: INI (deprecated)
 
     .. code-block:: ini
 
@@ -1358,7 +1358,7 @@ Orchestrate Sphinx documentation builds with tox to integrate them into CI:
              ["python", "-c", "print(f'documentation available under file://{work_dir}/docs_out/index.html')"],
          ]
 
-.. tab:: INI
+.. tab:: INI (deprecated)
 
     .. code-block:: ini
 
@@ -1402,7 +1402,7 @@ Define separate environments for developing and deploying mkdocs documentation:
          ]
          commands = [["mkdocs", "gh-deploy", "--clean"]]
 
-.. tab:: INI
+.. tab:: INI (deprecated)
 
     .. code-block:: ini
 
@@ -1482,7 +1482,7 @@ When an environment fails, use these techniques to investigate:
 
    Given a ``tox.ini`` with ``deps = pytest`` and ``commands = pytest {posargs}``, the output looks like:
 
-   .. tab:: INI
+   .. tab:: INI (deprecated)
 
        .. code-block:: ini
 
@@ -1658,7 +1658,7 @@ Set :ref:`default_base_python` to pin a fallback interpreter for all environment
         [env_run_base]
         default_base_python = ["3.14", "3.13"]
 
-.. tab:: INI
+.. tab:: INI (deprecated)
 
     .. code-block:: ini
 
@@ -1686,7 +1686,7 @@ Instead of updating ``env_list`` every time a new Python version is released, us
             "lint",
         ]
 
-.. tab:: INI
+.. tab:: INI (deprecated)
 
     .. code-block:: ini
 
@@ -1708,7 +1708,7 @@ To start from the oldest supported version:
             "lint",
         ]
 
-.. tab:: INI
+.. tab:: INI (deprecated)
 
     .. code-block:: ini
 
@@ -1727,7 +1727,7 @@ This expands down from the oldest supported CPython version. Both forms can be m
             "lint",
         ]
 
-.. tab:: INI
+.. tab:: INI (deprecated)
 
     .. code-block:: ini
 
@@ -1763,7 +1763,7 @@ virtualenv, so a single ``tox.toml`` can mix end-of-life and current interpreter
 
          env_list = ["py38", "py313"]  # py38 transparently bootstraps an older virtualenv, py313 does not
 
-.. tab:: INI
+.. tab:: INI (deprecated)
 
     .. code-block:: ini
 
@@ -1830,7 +1830,7 @@ and installed.
         deps = ["twine"]
         commands = [["twine", "check", { replace = "env", name = "TOX_PACKAGE" }]]
 
-.. tab:: INI
+.. tab:: INI (deprecated)
 
     .. code-block:: ini
 
@@ -1847,11 +1847,13 @@ example both an sdist and a wheel), the paths are joined with ``os.pathsep``.
     If you need a glob-based approach instead (e.g. matching files produced outside of tox), use the ``{glob:PATTERN}``
     substitution — see :ref:`substitution-reference`.
 
+.. _migrate-ini-to-toml:
+
 **********************************
  Migrate from tox.ini to tox.toml
 **********************************
 
-TOML is the recommended configuration format for new projects. Here is how common INI patterns translate to TOML:
+The INI format is deprecated -- migrate existing projects to TOML. Here is how common INI patterns translate to TOML:
 
 **Basic structure**:
 
@@ -1874,7 +1876,7 @@ TOML is the recommended configuration format for new projects. Here is how commo
          deps = ["ruff"]
          commands = [["ruff", "check", "."]]
 
-.. tab:: INI
+.. tab:: INI (deprecated)
 
     .. code-block:: ini
 
@@ -1925,7 +1927,7 @@ opinionated formatters for both TOML and INI configurations, available as pre-co
 
     Also available as a standalone command via ``pipx install tox-toml-fmt``.
 
-.. tab:: INI
+.. tab:: INI (deprecated)
 
     Use :pypi:`tox-ini-fmt` for ``tox.ini`` files. It normalizes boolean fields, orders sections consistently, and
     formats multi-line values with uniform indentation:

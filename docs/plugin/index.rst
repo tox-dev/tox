@@ -28,7 +28,7 @@ For example:
 
          requires = ["tox>=4", "tox-uv>=1"]
 
-.. tab:: INI
+.. tab:: INI (deprecated)
 
     .. code-block:: ini
 

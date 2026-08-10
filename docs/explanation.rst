@@ -148,7 +148,7 @@ virtualenv resolution:
        [env_run_base]
        set_env.PATH = "{env_bin_dir}{:}/usr/local/bin{:}{env:PATH}"
 
-.. tab:: INI
+.. tab:: INI (deprecated)
 
     .. code-block:: ini
 
@@ -444,7 +444,7 @@ the wheel is built once and reused for all tox environments:
          package = "wheel"
          wheel_build_env = ".pkg"
 
-.. tab:: INI
+.. tab:: INI (deprecated)
 
     .. code-block:: ini
 
@@ -466,7 +466,7 @@ conflicting with packaging settings.
        [env_pkg_base]
        pass_env = ["PKG_CONFIG", "PKG_CONFIG_PATH"]
 
-.. tab:: INI
+.. tab:: INI (deprecated)
 
     .. code-block:: ini
 
@@ -514,7 +514,7 @@ For example given:
 
          requires = ["tox>=4", "tox-uv>=1"]
 
-.. tab:: INI
+.. tab:: INI (deprecated)
 
     .. code-block:: ini
 
@@ -614,7 +614,7 @@ You can also enable it per-environment via the ``fail_fast`` configuration:
        fail_fast = true
        commands = [["pytest", "tests/critical"]]
 
-.. tab:: INI
+.. tab:: INI (deprecated)
 
     .. code-block:: ini
 
@@ -652,7 +652,7 @@ it falls back to the base section (:ref:`base` configuration). For ``tox.toml`` 
          [env.test]
          description = "run the test suite with pytest"
 
-.. tab:: INI
+.. tab:: INI (deprecated)
 
     .. code-block:: ini
 
@@ -780,7 +780,7 @@ To detect misplaced keys:
 
 For example, putting ``ignore_base_python_conflict`` in ``[testenv]`` instead of ``[tox]``:
 
-.. tab:: INI
+.. tab:: INI (deprecated)
 
     .. code-block:: text
 
