@@ -296,6 +296,7 @@ def test_backend_not_found(tox_project: ToxProjectCreator) -> None:
 
 
 @pytest.mark.slow
+@pytest.mark.timeout(120)
 def test_missing_interpreter_skip_on(tox_project: ToxProjectCreator) -> None:
     ini = "[tox]\nskip_missing_interpreters=true\n[testenv]\npackage=skip\nbase_python=missing-interpreter"
     proj = tox_project({"tox.ini": ini})
@@ -306,6 +307,7 @@ def test_missing_interpreter_skip_on(tox_project: ToxProjectCreator) -> None:
 
 
 @pytest.mark.slow
+@pytest.mark.timeout(120)
 def test_missing_interpreter_skip_off(tox_project: ToxProjectCreator) -> None:
     ini = "[tox]\nskip_missing_interpreters=false\n[testenv]\npackage=skip\nbase_python=missing-interpreter"
     proj = tox_project({"tox.ini": ini})
@@ -317,6 +319,7 @@ def test_missing_interpreter_skip_off(tox_project: ToxProjectCreator) -> None:
 
 
 @pytest.mark.slow
+@pytest.mark.timeout(120)
 def test_missing_interpreter_skip_set_env_substitution_ini(tox_project: ToxProjectCreator) -> None:
     ini = """\
 [tox]
@@ -339,6 +342,7 @@ set_env =
 
 
 @pytest.mark.slow
+@pytest.mark.timeout(120)
 def test_missing_interpreter_skip_set_env_substitution_toml(tox_project: ToxProjectCreator) -> None:
     toml = """\
 env_list = ["ok", "bad"]
