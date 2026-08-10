@@ -7,6 +7,44 @@
 .. towncrier release notes start
 
 **********************
+ v4.59.0 (2026-08-10)
+**********************
+
+Features - 4.59.0
+=================
+
+- The plugin and internal APIs now declare their types, and the code base passes ``mypy --strict`` and ``pyrefly`` next
+  to ``ty`` - by :user:`gaborjbernat`.
+
+  - :meth:`ConfigSet.get <tox.config.sets.ConfigSet.get>` returns a configuration value after checking it against its
+    declared type, so plugins can drop ``cast`` around ``conf["key"]`` reads.
+  - The :func:`tox_on_install <tox.plugin.spec.tox_on_install>` hook and :class:`Installer
+    <tox.tox_env.installer.Installer>` type their ``arguments`` as :data:`InstallArguments
+    <tox.tox_env.installer.InstallArguments>`; installer subclasses may narrow it through the new second type parameter.
+  - :class:`Parsed <tox.config.cli.parser.Parsed>` declares the CLI option surface, so ``options.<name>`` reads
+    type-check.
+  - :meth:`ConfigSet.add_config <tox.config.sets.ConfigSet.add_config>` accepts ``default=None`` for optional values and
+    infers the value type from callable defaults.
+  - The journal, the environment cache, and execute metadata hold ``JsonValue`` content; structured ``set_env`` entries
+    match the ``SetEnvEntry`` shape. (:issue:`4014`)
+
+Improved documentation - 4.59.0
+===============================
+
+- Mark the INI configuration format as deprecated throughout the documentation - by :user:`gaborbernat`.
+
+  - The tutorial, the configuration reference, and the migration how-to state that INI keeps working for existing
+    projects but is frozen and receives no new features.
+  - Every INI example tab, the configuration discovery diagram, and the man page carry a deprecation marker.
+  - The tutorial no longer suggests generating a ``tox.ini`` via ``tox quickstart``. (:issue:`4017`)
+
+Contributor-facing changes - 4.59.0
+===================================
+
+- Remove the ``misc`` changelog category, and align the changelog filename check with the categories towncrier accepts -
+  by :user:`gaborbernat`. (:issue:`4012`)
+
+**********************
  v4.58.0 (2026-07-21)
 **********************
 
