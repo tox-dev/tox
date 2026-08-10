@@ -119,7 +119,7 @@ FILES
     Primary configuration file in TOML format (recommended).
 
 **tox.ini**
-    Configuration file in INI format.
+    Configuration file in INI format (deprecated).
 
 **pyproject.toml**
     Alternative configuration location under the ``[tool.tox]`` section.

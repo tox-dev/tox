@@ -1,0 +1,6 @@
+Mark the INI configuration format as deprecated throughout the documentation - by :user:`gaborbernat`.
+
+- The tutorial, the configuration reference, and the migration how-to state that INI keeps working for existing projects
+  but is frozen and receives no new features.
+- Every INI example tab, the configuration discovery diagram, and the man page carry a deprecation marker.
+- The tutorial no longer suggests generating a ``tox.ini`` via ``tox quickstart``.

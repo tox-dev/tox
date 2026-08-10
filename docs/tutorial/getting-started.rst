@@ -28,10 +28,11 @@ Verify tox is available:
 ***********************************
 
 tox needs a configuration file where you define what tools to run and how to set up environments for them. tox supports
-two configuration formats: TOML and INI. **TOML is the recommended format for new projects** -- it is more robust, has
-proper type support, and avoids ambiguities inherent in INI parsing. INI remains supported for existing projects.
+two configuration formats: TOML and INI. **Use TOML** -- it is more robust, has proper type support, and avoids
+ambiguities inherent in INI parsing. The INI format is deprecated: it keeps working for existing projects, but it is
+frozen and receives no new features.
 
-Create a ``tox.toml`` (or ``tox.ini``) at the root of your project:
+Create a ``tox.toml`` at the root of your project:
 
 .. tab:: TOML
 
@@ -52,7 +53,7 @@ Create a ``tox.toml`` (or ``tox.ini``) at the root of your project:
          deps = ["ruff"]
          commands = [["ruff", "check", { replace = "posargs", default = ["."], extend = true }]]
 
-.. tab:: INI
+.. tab:: INI (deprecated)
 
     .. code-block:: ini
 
@@ -73,10 +74,6 @@ Create a ``tox.toml`` (or ``tox.ini``) at the root of your project:
              ruff
          commands = ruff check {posargs:.}
 
-.. tip::
-
-    You can also generate a ``tox.ini`` file automatically by running ``tox quickstart`` and answering a few questions.
-
 *********************************
  Understanding the configuration
 *********************************
@@ -95,7 +92,7 @@ Core settings affect all environments or configure how tox itself behaves. They 
 
        env_list = ["3.13", "3.12", "lint"]
 
-.. tab:: INI
+.. tab:: INI (deprecated)
 
     .. code-block:: ini
 
@@ -130,7 +127,7 @@ Each tox environment has its own configuration. Settings defined at the base lev
          deps = ["ruff"]
          commands = [["ruff", "check", "."]]
 
-.. tab:: INI
+.. tab:: INI (deprecated)
 
     .. code-block:: ini
 
