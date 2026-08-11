@@ -193,3 +193,18 @@ def test_config_work_dir(tox_project: ToxProjectCreator, work_dir: str) -> None:
     result = project.run("c", *(["--workdir", str(project.path / work_dir)] if work_dir else []))
     expected = project.path / work_dir if work_dir else Path("b")
     assert expected == result.state.conf.core["work_dir"]
+
+
+def test_config_work_dir_placeholders(tox_project: ToxProjectCreator, monkeypatch: pytest.MonkeyPatch) -> None:
+    project = tox_project({"tox.toml": 'work_dir = "${home}/.local/state/tox/{tox_root_name}"'})
+    home = project.path.parent / "home"
+    monkeypatch.setenv("HOME", str(home))  # used by Path.home() on POSIX
+    monkeypatch.setenv("USERPROFILE", str(home))  # used by Path.home() on Windows
+    result = project.run("c")
+    assert result.state.conf.core["work_dir"] == home / ".local" / "state" / "tox" / project.path.name
+
+
+def test_config_work_dir_placeholders_cli_override(tox_project: ToxProjectCreator) -> None:
+    project = tox_project({"tox.toml": 'work_dir = "${home}/.local/state/tox/{tox_root_name}"'})
+    result = project.run("c", "--workdir", str(project.path / "wd"))
+    assert result.state.conf.core["work_dir"] == project.path / "wd"

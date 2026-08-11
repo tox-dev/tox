@@ -1,0 +1,2 @@
+:ref:`work_dir` now expands the ``${home}`` and ``{tox_root_name}`` placeholders. Use this to keep environments outside
+of the project tree, e.g.: ``work_dir = "${home}/.local/state/tox/{tox_root_name}"`` in ``tox.toml``.
