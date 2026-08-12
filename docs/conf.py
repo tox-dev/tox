@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import re
 from importlib.machinery import SourceFileLoader
 from pathlib import Path
@@ -38,6 +39,7 @@ html_js_files = ["mermaid-reset.js"]
 html_logo, html_favicon = "_static/img/tox.svg", "_static/img/toxfavi.ico"
 
 extensions = [
+    "sphinx_llm.txt",
     "sphinx.ext.autodoc",
     "sphinx.ext.autosectionlabel",
     "sphinx.ext.extlinks",
@@ -182,3 +184,6 @@ def setup(app: Sphinx) -> None:
     prev_check = ExternalLinksChecker.check_uri
     ExternalLinksChecker.check_uri = check_uri
     inject_into_ssl()
+
+
+markdown_http_base = os.environ.get("READTHEDOCS_CANONICAL_URL", "")
