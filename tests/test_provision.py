@@ -178,6 +178,21 @@ def test_provision_requires_checks_true_markers(tox_project: ToxProjectCreator) 
     assert "pkg-does-not-exist" in outcome.out
 
 
+def test_provision_before_loading_env_list(tox_project: ToxProjectCreator) -> None:
+    project = tox_project({
+        "tox.toml": """
+            requires = ["tox>=999"]
+            env_list = [1]
+        """,
+    })
+    project.patch_execute(lambda _: 0)
+
+    outcome = project.run("l")
+
+    outcome.assert_success()
+    assert "will run in automatically provisioned tox" in outcome.out
+
+
 @pytest.mark.integration
 @pytest.mark.usefixtures("_pypi_index_self")
 @pytest.mark.timeout(120)
