@@ -250,8 +250,9 @@ pass after ``--``.
  Understanding the output
 **************************
 
-On the first run, tox creates virtual environments and installs dependencies. Subsequent runs reuse existing
-environments unless dependencies change:
+On the first run, tox creates virtual environments and installs dependencies. The environments land in a ``.tox``
+directory next to your configuration file; add it to your version control ignore file, or relocate it entirely as shown
+in :ref:`howto_out_of_tree_envs`. Subsequent runs reuse existing environments unless dependencies change:
 
 .. code-block:: bash
 

@@ -191,6 +191,43 @@ location can be changed via the ``TOX_CONFIG_FILE`` environment variable.
     # Force editable install for a specific environment
     tox run -e 3.13 -x "testenv:3.13.package=editable"
 
+.. _howto_out_of_tree_envs:
+
+********************************************
+ Keep environments outside the project tree
+********************************************
+
+By default tox creates its environments in a ``.tox`` directory next to the configuration file. To keep them out of the
+project tree, point :ref:`work_dir` at a location built from the ``{home}`` and ``{tox_root_name}`` substitutions:
+
+.. tab:: TOML
+
+    .. code-block:: toml
+
+        work_dir = "{home}/.local/state/tox/{tox_root_name}"
+
+.. tab:: INI (deprecated)
+
+    .. code-block:: ini
+
+        [tox]
+        work_dir = {home}/.local/state/tox/{tox_root_name}
+
+With this configuration a project checked out at ``~/src/magic`` keeps its environments in ``~/.local/state/tox/magic``.
+Verify the resolved location with:
+
+.. code-block:: bash
+
+    $ tox config --core -k work_dir
+    [tox]
+    work_dir = /home/user/.local/state/tox/magic
+
+Substitutions resolve in the project configuration file only: the ``--workdir`` CLI flag and the user-level
+configuration file take literal paths, so this setting belongs in ``tox.toml``. Since ``{tox_root_name}`` is the name of
+the project directory, two projects checked out under the same directory name share a work directory; give one of them
+an explicit path if that happens. See :ref:`work-dir-placement` for the trade-offs of moving environments out of the
+tree.
+
 **********************************
  Use labels to group environments
 **********************************

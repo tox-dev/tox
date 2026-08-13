@@ -299,6 +299,8 @@ class CoreConfigSet(ConfigSet):
             default=self._root,
             desc="the root directory (where the configuration file is found)",
         )
+        self.add_constant("tox_root_name", "name of the root directory", self._root.name)
+        self.add_constant("home", "the user's home directory", Path.home)
 
         self.add_config(
             keys=["work_dir", "toxworkdir"],

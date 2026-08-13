@@ -515,8 +515,20 @@ the top level of ``tox.toml``. Placing these options in an environment section (
     :keys: work_dir, toxworkdir
     :default: {tox_root}/.tox
     :version_added: 1.0
+    :version_changed: 4.60
 
     Directory for tox to generate its environments into, will be created if it does not exist.
+
+    Use the ``{home}`` and ``{tox_root_name}`` substitutions to keep tox environments outside of the project tree, in a
+    location unique per project, similar to ``virtualenvwrapper``:
+
+    .. code-block:: toml
+
+        work_dir = "{home}/.local/state/tox/{tox_root_name}"
+
+    The ``--workdir`` CLI flag and the user-level configuration file take the value as a literal path, without
+    substitution. See :ref:`howto_out_of_tree_envs` for a walk-through and :ref:`work-dir-placement` for the
+    trade-offs.
 
 .. conf::
     :keys: temp_dir
@@ -3181,6 +3193,10 @@ or via ``{name}`` in INI.
       - Description
     - - ``{tox_root}`` / ``{toxinidir}``
       - The directory where the configuration file is located (project root).
+    - - ``{tox_root_name}``
+      - Name of the project root directory (the last path component of ``{tox_root}``).
+    - - ``{home}``
+      - The current user's home directory.
     - - ``{work_dir}`` / ``{toxworkdir}``
       - The tox working directory (default: ``{tox_root}/.tox``).
     - - ``{temp_dir}``

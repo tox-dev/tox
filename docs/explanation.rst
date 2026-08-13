@@ -341,6 +341,27 @@ environments (template name + factor suffix) appear in ``tox list`` and can be r
 
 For the configuration reference, see :ref:`env-base-templates`. For practical recipes, see :ref:`howto_env_base_matrix`.
 
+.. _work-dir-placement:
+
+Work directory placement
+========================
+
+Everything tox generates lives under one directory, :ref:`work_dir`: the virtual environments, their logs, packaging
+artifacts, and the provisioned tox itself when :ref:`auto-provisioning` kicks in. The default is ``.tox`` next to the
+configuration file, which makes a project self-contained: deleting the checkout deletes its environments, and two
+checkouts of the same project never share state.
+
+Placing environments in the tree also has costs. Editor indexers and file watchers crawl the virtual environments unless
+told otherwise, and backup or cloud-sync tools pick up thousands of files tox can regenerate at will. A project on a
+network or otherwise slow filesystem drags each environment operation down with it too. In those situations move the
+environments to a per-project directory under your home folder, the way ``virtualenvwrapper`` centralizes its virtual
+environments; the ``{home}`` and ``{tox_root_name}`` substitutions in :ref:`work_dir` express this without hard-coding a
+path.
+
+The trade-off mirrors the benefit of the default: ``{tox_root_name}`` is only the name of the project directory, so two
+projects checked out under the same name resolve to the same work directory, and removing a checkout leaves its
+environments behind until you delete them yourself. For the recipe, see :ref:`howto_out_of_tree_envs`.
+
 ***************
  Main features
 ***************

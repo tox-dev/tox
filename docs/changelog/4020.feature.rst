@@ -1,0 +1,2 @@
+Add ``{home}`` and ``{tox_root_name}`` substitutions; set :ref:`work_dir` to e.g.
+``"{home}/.local/state/tox/{tox_root_name}"`` to keep environments outside of the project tree - by :user:`WhyNotHugo`.
