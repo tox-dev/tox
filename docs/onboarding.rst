@@ -448,8 +448,7 @@ Command flow
    <https://github.com/tox-dev/tox/blob/main/src/tox/execute/local_sub_process/__init__.py>`_ spawns a
    :class:`subprocess.Popen` subprocess and starts drain threads.
 4. `LocalSubprocessExecuteStatus.wait()
-   <https://github.com/tox-dev/tox/blob/main/src/tox/execute/local_sub_process/__init__.py>`_ blocks until
-   completion.
+   <https://github.com/tox-dev/tox/blob/main/src/tox/execute/local_sub_process/__init__.py>`_ blocks until completion.
 5. An `Outcome <https://github.com/tox-dev/tox/blob/main/src/tox/execute/request.py>`_ is constructed with exit code,
    captured output, and timing.
 
