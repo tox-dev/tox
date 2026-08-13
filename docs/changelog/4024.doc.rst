@@ -1,2 +1,0 @@
-Fix nine source-code links in the onboarding guide that pointed at paths which no longer exist, and correct the class
-names of the TOML configuration sources and loaders they refer to - by :user:`Yusuf-Gadelrab`.

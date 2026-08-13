@@ -1,2 +1,0 @@
-Provision the requested tox version before reading ``env_list``, allowing configuration syntax introduced by that
-version - by :user:`CAOShurong`

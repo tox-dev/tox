@@ -7,6 +7,29 @@
 .. towncrier release notes start
 
 **********************
+ v4.60.0 (2026-08-13)
+**********************
+
+Features - 4.60.0
+=================
+
+- Add ``{home}`` and ``{tox_root_name}`` substitutions; set :ref:`work_dir` to e.g.
+  ``"{home}/.local/state/tox/{tox_root_name}"`` to keep environments outside of the project tree - by
+  :user:`WhyNotHugo`. (:issue:`4020`)
+
+Bug fixes - 4.60.0
+==================
+
+- Provision the requested tox version before reading ``env_list``, allowing configuration syntax introduced by that
+  version - by :user:`CAOShurong` (:issue:`4021`)
+
+Improved documentation - 4.60.0
+===============================
+
+- Fix nine source-code links in the onboarding guide that pointed at paths which no longer exist, and correct the class
+  names of the TOML configuration sources and loaders they refer to - by :user:`Yusuf-Gadelrab`. (:issue:`4024`)
+
+**********************
  v4.59.0 (2026-08-10)
 **********************
 
