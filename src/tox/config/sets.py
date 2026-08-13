@@ -289,10 +289,7 @@ class CoreConfigSet(ConfigSet):
         return self.get("work_dir", Path) / ".tmp"
 
     def _work_dir_post_process(self, folder: Path) -> Path:
-        if self._conf.options.work_dir:
-            return self._conf.work_dir
-        raw = str(folder).replace("{tox_root_name}", self._root.name).replace("${home}", str(Path.home()))
-        return Path(raw)
+        return self._conf.work_dir if self._conf.options.work_dir else folder
 
     def register_config(self) -> None:
         self.add_constant(keys=["config_file_path"], desc="path to the configuration file", value=self._src_path)
@@ -302,6 +299,8 @@ class CoreConfigSet(ConfigSet):
             default=self._root,
             desc="the root directory (where the configuration file is found)",
         )
+        self.add_constant("tox_root_name", "name of the root directory", self._root.name)
+        self.add_constant("home", "the user's home directory", Path.home)
 
         self.add_config(
             keys=["work_dir", "toxworkdir"],
