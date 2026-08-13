@@ -301,11 +301,12 @@ Built-in subcommands
       - Run environments in parallel
     - - ``list``
       - ``l``
-      - `session/cmd/list_envs.py <https://github.com/tox-dev/tox/blob/main/src/tox/session/cmd/list_envs.py>`_
+      - `session/cmd/list_env.py <https://github.com/tox-dev/tox/blob/main/src/tox/session/cmd/list_env.py>`_
       - List available environments
     - - ``config``
       - ``c``
-      - `session/cmd/show_config.py <https://github.com/tox-dev/tox/blob/main/src/tox/session/cmd/show_config.py>`_
+      - `session/cmd/show_config/
+        <https://github.com/tox-dev/tox/blob/main/src/tox/session/cmd/show_config/__init__.py>`_
       - Show materialised configuration
     - - ``devenv``
       - ``d``
@@ -367,8 +368,8 @@ subcommand handler starts iterating environments.
 CliEnv
 ------
 
-`CliEnv <https://github.com/tox-dev/tox/blob/main/src/tox/config/cli/env.py>`_ captures the user's ``-e`` flag in three
-modes:
+`CliEnv <https://github.com/tox-dev/tox/blob/main/src/tox/session/env_select.py>`_ captures the user's ``-e`` flag in
+three modes:
 
 - **Specific list** (``-e py39,py310``) — run exactly these envs.
 - **ALL** (``-e ALL``) — run every defined env.
@@ -443,12 +444,11 @@ Command flow
    <https://github.com/tox-dev/tox/blob/main/src/tox/execute/request.py>`_.
 2. `Execute.call() <https://github.com/tox-dev/tox/blob/main/src/tox/execute/api.py>`_ — context manager — creates
    `SyncWrite <https://github.com/tox-dev/tox/blob/main/src/tox/execute/stream.py>`_ streams for stdout/stderr.
-3. `ExecuteInstance.start()
-   <https://github.com/tox-dev/tox/blob/main/src/tox/execute/local_sub_process/execute_instance.py>`_ spawns a
+3. `LocalSubProcessExecuteInstance.start()
+   <https://github.com/tox-dev/tox/blob/main/src/tox/execute/local_sub_process/__init__.py>`_ spawns a
    :class:`subprocess.Popen` subprocess and starts drain threads.
-4. `ExecuteStatus.wait()
-   <https://github.com/tox-dev/tox/blob/main/src/tox/execute/local_sub_process/execute_status.py>`_ blocks until
-   completion.
+4. `LocalSubprocessExecuteStatus.wait()
+   <https://github.com/tox-dev/tox/blob/main/src/tox/execute/local_sub_process/__init__.py>`_ blocks until completion.
 5. An `Outcome <https://github.com/tox-dev/tox/blob/main/src/tox/execute/request.py>`_ is constructed with exit code,
    captured output, and timing.
 
@@ -546,9 +546,9 @@ for configuration in this order:
 1. If ``--conf`` is specified, it uses that file directly.
 2. Otherwise, it walks up from CWD looking for:
 
-   - ``tox.toml`` which uses `TomlSource <https://github.com/tox-dev/tox/blob/main/src/tox/config/source/toml_.py>`_.
-   - ``pyproject.toml`` (with ``[tool.tox]``) which uses `PyProjectTomlSource
-     <https://github.com/tox-dev/tox/blob/main/src/tox/config/source/pyproject.py>`_.
+   - ``tox.toml`` which uses `TomlTox <https://github.com/tox-dev/tox/blob/main/src/tox/config/source/toml_tox.py>`_.
+   - ``pyproject.toml`` (with ``[tool.tox]``) which uses `TomlPyProject
+     <https://github.com/tox-dev/tox/blob/main/src/tox/config/source/toml_pyproject.py>`_.
    - ``tox.ini`` which uses `IniSource <https://github.com/tox-dev/tox/blob/main/src/tox/config/source/ini.py>`_.
    - ``setup.cfg`` (with ``[tox:tox]``) which uses `SetupCfgSource
      <https://github.com/tox-dev/tox/blob/main/src/tox/config/source/setup_cfg.py>`_.
@@ -586,9 +586,9 @@ Loaders
 
     - - Loader
       - Reads from
-    - - `IniLoader <https://github.com/tox-dev/tox/blob/main/src/tox/config/loader/ini.py>`_
+    - - `IniLoader <https://github.com/tox-dev/tox/blob/main/src/tox/config/loader/ini/__init__.py>`_
       - INI ``[section]`` key=value pairs
-    - - `TomlLoader <https://github.com/tox-dev/tox/blob/main/src/tox/config/loader/toml.py>`_
+    - - `TomlLoader <https://github.com/tox-dev/tox/blob/main/src/tox/config/loader/toml/__init__.py>`_
       - TOML ``[table]`` key-value pairs
     - - `MemoryLoader <https://github.com/tox-dev/tox/blob/main/src/tox/config/loader/memory.py>`_
       - In-memory dict (provisioning, plugins)
