@@ -179,6 +179,55 @@ def test_provision_requires_checks_true_markers(tox_project: ToxProjectCreator) 
 
 
 @pytest.mark.integration
+@pytest.mark.timeout(120)
+@pytest.mark.parametrize("subcommand", ["l", "c"])
+def test_provision_before_loading_env_list(
+    tox_project: ToxProjectCreator,
+    tmp_path: Path,
+    monkeypatch: MonkeyPatch,
+    pkg_builder: Callable[[Path, Path, Sequence[DistributionType], bool], Path],
+    subcommand: str,
+) -> None:
+    future_tox = tmp_path / "future-tox"
+    (future_tox / "tox").mkdir(parents=True)
+    (future_tox / "pyproject.toml").write_text(
+        """
+        [build-system]
+        requires = ["hatchling"]
+        build-backend = "hatchling.build"
+
+        [project]
+        name = "tox"
+        version = "999"
+        """,
+        encoding="utf-8",
+    )
+    (future_tox / "tox" / "__init__.py").write_text("", encoding="utf-8")
+    (future_tox / "tox" / "__main__.py").write_text(
+        "import sys\n\n"
+        'command = next(arg for arg in sys.argv[1:] if arg in {"l", "c"})\n'
+        'print(f"future tox ran {command}")\n',
+        encoding="utf-8",
+    )
+    wheel = pkg_builder(tmp_path / "dist", future_tox, ["wheel"], False)
+    monkeypatch.setenv("PIP_FIND_LINKS", str(wheel.parent))
+    monkeypatch.setenv("PIP_NO_INDEX", "1")
+
+    project = tox_project({
+        "tox.toml": """
+            requires = ["tox>=999"]
+            env_list = [1]
+        """,
+    })
+
+    outcome = project.run(subcommand)
+
+    outcome.assert_success()
+    assert "will run in automatically provisioned tox" in outcome.out
+    assert f"future tox ran {subcommand}" in outcome.out
+
+
+@pytest.mark.integration
 @pytest.mark.usefixtures("_pypi_index_self")
 @pytest.mark.timeout(120)
 def test_provision_requires_ok(tox_project: ToxProjectCreator, tmp_path: Path) -> None:

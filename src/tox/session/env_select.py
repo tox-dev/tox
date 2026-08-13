@@ -257,6 +257,9 @@ class EnvSelector:
         """:returns: sources of tox environments defined with name and if is marked as target to run"""
         if self._provision is not None:  # pragma: no branch
             yield (self._provision[1],), False
+            if self._provision[0]:
+                # The provisioned tox may support configuration that this version does not.
+                return
         env_list, everything_active = self._state.conf.core["env_list"], False
         if self._cli_envs is None or self._cli_envs.is_default_list:
             yield env_list, True
