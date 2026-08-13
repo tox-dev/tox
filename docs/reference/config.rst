@@ -526,6 +526,10 @@ the top level of ``tox.toml``. Placing these options in an environment section (
 
         work_dir = "{home}/.local/state/tox/{tox_root_name}"
 
+    The ``--workdir`` CLI flag and the user-level configuration file take the value as a literal path, without
+    substitution. See :ref:`howto_out_of_tree_envs` for a walk-through and :ref:`work-dir-placement` for the
+    trade-offs.
+
 .. conf::
     :keys: temp_dir
     :default: {work_dir}/.tmp
