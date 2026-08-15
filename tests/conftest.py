@@ -153,9 +153,20 @@ def pytest_configure(config: pytest.Config) -> None:
         config.add_cleanup(partial(rmtree, app_data, ignore_errors=True))
     seed_env = mkdtemp(prefix="virtualenv-seed-")
     config.add_cleanup(partial(rmtree, seed_env, ignore_errors=True))
-    # seeding builds the pip wheel image, a compileall over pip's tree that is slow on Windows CI; pay it here so it
-    # does not land inside the timeout of whichever test happens to create the first environment
-    cli_run([seed_env, "--activators", ""], setup_logging=False)
+    # seeding builds the pip and setuptools wheel images, a compileall over their trees that is slow on Windows CI; pay
+    # it here so it does not land inside the timeout of whichever test happens to create the first environment (the
+    # setuptools image is not built by default on 3.12+, but tox.pytest forces it via VIRTUALENV_SETUPTOOLS=embed)
+    cli_run([seed_env, "--activators", "", "--pip", "embed", "--setuptools", "embed"], setup_logging=False)
+
+
+def pytest_collection_modifyitems(items: list[pytest.Item]) -> None:
+    if sys.platform != "win32":
+        return  # pragma: win32 no cover
+    # integration tests install from PyPI or a local devpi, which on Windows CI regularly overruns even an explicit
+    # 120s budget; pytest-timeout kills the whole worker, so flaky reruns cannot rescue the job
+    for item in items:  # pragma: win32 cover
+        if item.get_closest_marker("integration") is not None:
+            item.add_marker(pytest.mark.timeout(240), append=False)
 
 
 @pytest.fixture(scope="session")
