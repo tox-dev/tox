@@ -86,6 +86,7 @@ def test_install_pkg_via(tox_project: ToxProjectCreator, mode: str, pkg_with_ext
     assert calls == [("py", "install_package_deps"), ("py", "install_package")]
 
 
+@pytest.mark.integration
 @pytest.mark.usefixtures("enable_pip_pypi_access")
 def test_build_wheel_external_runs_once(
     tox_project: ToxProjectCreator, demo_pkg_inline: Path, monkeypatch: pytest.MonkeyPatch
@@ -112,6 +113,7 @@ def test_build_wheel_external_runs_once(
     assert result.out.count("greetings from demo_pkg_inline") == 2
 
 
+@pytest.mark.integration
 @pytest.mark.usefixtures("enable_pip_pypi_access")
 def test_build_wheel_external(
     tox_project: ToxProjectCreator, demo_pkg_inline: Path, monkeypatch: pytest.MonkeyPatch
