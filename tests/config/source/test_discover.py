@@ -67,6 +67,17 @@ def test_malformed_toml_in_dir_reports_error(tox_project: ToxProjectCreator) -> 
     assert "failed loading" in outcome.out
 
 
+def test_malformed_ini_in_dir_reports_error(tox_project: ToxProjectCreator) -> None:
+    """Config discovery in a directory should report ini parse errors instead of raising a traceback."""
+    project = tox_project({})
+    # Write a tox.ini with an unterminated section header
+    (project.path / "tox.ini").write_text("[tox\nenv_list = a\n", encoding="utf-8")
+    outcome = project.run("l", "-c", str(project.path))
+    outcome.assert_failed()
+    assert "failed loading" in outcome.out
+    assert "File contains no section headers" in outcome.out
+
+
 def test_toml_native_preferred_over_legacy_tox_ini(tox_project: ToxProjectCreator) -> None:
     """When pyproject.toml has both legacy_tox_ini and native TOML config, native TOML should win."""
     pyproject = """\

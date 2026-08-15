@@ -1,0 +1,2 @@
+Report a malformed ``tox.ini`` or ``setup.cfg`` as a handled error during config discovery instead of raising an
+unhandled :class:`configparser.Error` traceback - by :user:`VXNCXNX`
