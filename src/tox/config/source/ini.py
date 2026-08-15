@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections import defaultdict
 from configparser import ConfigParser
+from configparser import Error as ConfigParserError
 from itertools import chain
 from typing import TYPE_CHECKING
 
@@ -34,7 +35,12 @@ class IniSource(Source):
             if not path.exists():
                 raise ValueError
             content = path.read_text(encoding="utf-8")
-        self._parser.read_string(content, str(path))
+        try:
+            self._parser.read_string(content, str(path))
+        except ConfigParserError as exc:
+            # configparser errors do not derive from ValueError, unlike tomllib ones, so translate them to let
+            # config discovery report them as a handled error instead of leaking a traceback
+            raise ValueError(exc) from exc
         self._section_mapping: defaultdict[str, list[str]] = defaultdict(list)
 
     def transform_section(self, section: Section) -> Section:  # ruff:ignore[no-self-use]
