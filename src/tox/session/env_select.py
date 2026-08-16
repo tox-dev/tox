@@ -247,7 +247,15 @@ class EnvSelector:
 
         self._state.conf.core.add_config("labels", dict[str, EnvList], {}, "core labels")
         tox_env_filter_regex = getattr(state.conf.options, "skip_env", "").strip()
-        self._filter_re = re.compile(tox_env_filter_regex) if tox_env_filter_regex else None
+        self._filter_re = self._compile_filter(tox_env_filter_regex) if tox_env_filter_regex else None
+
+    @staticmethod
+    def _compile_filter(pattern: str) -> re.Pattern[str]:
+        try:
+            return re.compile(pattern)
+        except re.error as exc:
+            msg = f"invalid environment skip filter {pattern!r}: {exc}"
+            raise HandledError(msg) from exc
 
     @property
     def _cli_envs(self) -> CliEnv | None:

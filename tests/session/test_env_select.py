@@ -246,6 +246,22 @@ def test_tox_skip_env_logs(tox_project: ToxProjectCreator, monkeypatch: MonkeyPa
     outcome.assert_out_err("ROOT: skip environment mypy, matches filter 'm[y]py'\npy310\npy39\n", "")
 
 
+@pytest.mark.parametrize("bad_filter", ["[", "(", "*"])
+def test_tox_skip_env_invalid_regex(tox_project: ToxProjectCreator, monkeypatch: MonkeyPatch, bad_filter: str) -> None:
+    monkeypatch.delenv("TOX_SKIP_ENV", raising=False)
+    project = tox_project({"tox.ini": "[tox]\nenv_list = py3{10,9},mypy"})
+
+    leaked: BaseException | None = None
+    try:
+        outcome = project.run("l", "--no-desc", "--skip-env", bad_filter)
+    except Exception as exception:  # ruff:ignore[blind-except]
+        leaked = exception
+    assert leaked is None, f"unhandled {type(leaked).__name__}: {leaked}"
+
+    outcome.assert_failed()
+    assert f"HandledError| invalid environment skip filter {bad_filter!r}" in outcome.out
+
+
 def test_multiple_e_flags_are_additive(tox_project: ToxProjectCreator) -> None:
     proj = tox_project({"tox.ini": "[tox]\nenv_list=a,b,c"})
     outcome = proj.run("c", "-e", "a", "-e", "b", "-k", "env_name")
