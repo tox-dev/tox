@@ -117,6 +117,29 @@ def test_malformed_ini_in_dir_reports_error(tox_project: ToxProjectCreator) -> N
     assert "File contains no section headers" in outcome.out
 
 
+@pytest.mark.parametrize(
+    ("core_value", "message"),
+    [
+        pytest.param("min_version = notaversion", "min_version: Invalid version", id="min_version"),
+        pytest.param("requires = ===bad!!!", "requires: Expected package name", id="requires"),
+        pytest.param("env_list = {py39,py310", "env_list: {py39", id="env_list"),
+    ],
+)
+def test_bad_ini_core_value_reports_error(tox_project: ToxProjectCreator, core_value: str, message: str) -> None:
+    """A bad value in the ini core section should be a handled error rather than an unhandled traceback."""
+    project = tox_project({"tox.ini": f"[tox]\n{core_value}\n"})
+    outcome, leaked = None, None
+    try:
+        outcome = project.run("l")
+    except Exception as exception:  # ruff:ignore[blind-except]  # a leaked traceback is the bug under test
+        leaked = exception
+    assert leaked is None, f"unhandled {type(leaked).__name__}: {leaked}"
+    assert outcome is not None
+    outcome.assert_failed()
+    assert "failed to load tox." in outcome.out
+    assert message in outcome.out
+
+
 def test_toml_native_preferred_over_legacy_tox_ini(tox_project: ToxProjectCreator) -> None:
     """When pyproject.toml has both legacy_tox_ini and native TOML config, native TOML should win."""
     pyproject = """\
