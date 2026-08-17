@@ -265,11 +265,11 @@ ini_options.tmp_path_retention_policy = "failed"
 ini_options.timeout = 30
 
 [tool.coverage]
-run.core = "ctrace"  # sysmon (the 3.14+ default) cannot record the dynamic contexts pytest-cov sets
 run.parallel = true
 run.plugins = [
   "covdefaults",
 ]
+run.core = "ctrace"  # sysmon (the 3.14+ default) cannot record the dynamic contexts pytest-cov sets
 paths.source = [
   "src",
   ".tox*/*/lib/python*/site-packages",
