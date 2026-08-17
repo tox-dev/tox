@@ -2,8 +2,12 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+import pytest
+
 if TYPE_CHECKING:
     from pathlib import Path
+
+    from pytest_mock import MockerFixture
 
     from tox.pytest import ToxProjectCreator
 
@@ -76,6 +80,29 @@ def test_malformed_ini_in_dir_reports_error(tox_project: ToxProjectCreator) -> N
     outcome.assert_failed()
     assert "failed loading" in outcome.out
     assert "File contains no section headers" in outcome.out
+
+
+@pytest.mark.parametrize("config_mode", ["auto", "directory", "file"])
+def test_unreadable_config_reports_error(
+    tox_project: ToxProjectCreator,
+    mocker: MockerFixture,
+    config_mode: str,
+) -> None:
+    project = tox_project({"tox.ini": "[tox]\n"})
+    config_file = project.path / "tox.ini"
+    error = PermissionError(13, "Permission denied", str(config_file))
+    mocker.patch("tox.config.source.tox_ini.ToxIni.__init__", side_effect=error)
+    args = {
+        "auto": (),
+        "directory": ("-c", str(project.path)),
+        "file": ("-c", str(config_file)),
+    }[config_mode]
+
+    outcome = project.run("l", *args)
+
+    outcome.assert_failed()
+    assert f"ToxIni failed loading {config_file} due to {error}" in outcome.out
+    assert "Traceback" not in outcome.out
 
 
 def test_toml_native_preferred_over_legacy_tox_ini(tox_project: ToxProjectCreator) -> None:

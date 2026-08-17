@@ -1,0 +1,1 @@
+Report unreadable configuration files as handled errors instead of leaking an ``OSError`` traceback.
