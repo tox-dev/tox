@@ -70,11 +70,12 @@ def test_bad_src_content(tox_project: ToxProjectCreator, tmp_path: Path) -> None
 def test_unreadable_config_raises_handled_error(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, named: bool) -> None:
     """Reading the file raises an OSError subclass, not ValueError.
 
-    Without handling it, discovery lets PermissionError escape and the CLI
-    prints a traceback instead of the one-line error used for malformed files.
+    Without handling it, discovery lets PermissionError escape and the CLI prints a traceback instead of the one-line
+    error used for malformed files.
 
-    This exercises discover_source directly: the tox_project fixture converts
-    exceptions on its own, so it cannot tell the two cases apart.
+    This exercises discover_source directly: the tox_project fixture converts exceptions on its own, so it cannot tell
+    the two cases apart.
+
     """
     config = tmp_path / "tox.ini"
     config.write_text("[tox]\nenv_list = py\n")
