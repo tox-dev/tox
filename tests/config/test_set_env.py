@@ -237,6 +237,23 @@ def test_set_env_environment_file_combined_with_normal_setting(
     }
 
 
+def test_set_env_file_keeps_semicolon_in_value(tox_project: ToxProjectCreator) -> None:
+    ini = """\
+    [testenv]
+    skip_install = true
+    set_env =
+        file|.env
+    """
+    env_file = "DATABASE_URL=postgresql://host/db?opt=1;sslmode=require\nFLAGS=a;b\n"
+    project = tox_project({"tox.ini": ini, ".env": env_file})
+    result = project.run("c", "-e", "py", "-k", "set_env")
+    result.assert_success()
+    set_env = result.env_conf("py")["set_env"]
+    content = {k: set_env.load(k) for k in set_env}
+    assert content["DATABASE_URL"] == "postgresql://host/db?opt=1;sslmode=require"
+    assert content["FLAGS"] == "a;b"
+
+
 def test_set_env_file_does_not_override_later_values(tox_project: ToxProjectCreator) -> None:
     ini = """\
     [testenv]

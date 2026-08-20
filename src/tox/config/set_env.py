@@ -125,8 +125,16 @@ class SetEnv:
             env_line = env_line.strip()  # ruff:ignore[redefined-loop-name]
             if not env_line or env_line.startswith("#"):
                 continue
-            key, value, _ = self._extract_key_value_marker(env_line)
-            yield key, value
+            yield self._extract_key_value(env_line)
+
+    @staticmethod
+    def _extract_key_value(line: str) -> tuple[str, str]:
+        """Split an environment file line; markers do not apply here, so ``;`` is a plain value character."""
+        key, sep, value = line.partition("=")
+        if not sep:
+            msg = f"invalid line {line!r} in set_env"
+            raise ValueError(msg)
+        return key.strip(), value.strip()
 
     @staticmethod
     def _extract_key_value_marker(line: str) -> tuple[str, str, str]:
