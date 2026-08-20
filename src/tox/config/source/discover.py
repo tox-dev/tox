@@ -50,7 +50,7 @@ def discover_source(config_file: Path | None, root_dir: Path | None) -> Source:
                 break
             except MissingRequiredConfigKeyError:
                 continue
-            except ValueError as exc:
+            except (ValueError, OSError) as exc:
                 msg = f"{src_type.__name__} failed loading {candidate.resolve()} due to {exc}"
                 raise HandledError(msg) from exc
         if src is None:
@@ -72,7 +72,7 @@ def _locate_source() -> Source | None:
                 except MissingRequiredConfigKeyError as exc:
                     msg = f"{src_type.__name__} skipped loading {candidate.resolve()} due to {exc}"
                     logging.info(msg)
-                except ValueError as exc:
+                except (ValueError, OSError) as exc:
                     msg = f"{src_type.__name__} failed loading {candidate.resolve()} due to {exc}"
                     raise HandledError(msg) from exc
     return None
@@ -89,7 +89,7 @@ def _load_exact_source(config_file: Path) -> Source:
             return src_type(config_file)
         except MissingRequiredConfigKeyError:  # ruff:ignore[try-except-in-loop]
             pass
-        except ValueError as exc:
+        except (ValueError, OSError) as exc:
             msg = f"{src_type.__name__} failed loading {config_file.resolve()} due to {exc}"
             raise HandledError(msg) from exc
     msg = f"could not recognize config file {config_file}"

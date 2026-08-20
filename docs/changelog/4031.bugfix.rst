@@ -1,0 +1,2 @@
+Report a handled configuration error instead of leaking a traceback when the
+selected configuration file exists but cannot be read - by :user:`SirHegel`.

@@ -1,11 +1,26 @@
 from __future__ import annotations
 
+import os
+import sys
 from typing import TYPE_CHECKING
+
+import pytest
+
+from tox.config.source.discover import discover_source
+from tox.report import HandledError
 
 if TYPE_CHECKING:
     from pathlib import Path
 
     from tox.pytest import ToxProjectCreator
+
+
+# Root ignores the permission bits, and Windows does not model them this way,
+# so the file stays readable and there is nothing to assert.
+unreadable_files_possible = pytest.mark.skipif(
+    sys.platform == "win32" or os.getuid() == 0,
+    reason="cannot make a file unreadable as root or on Windows",
+)
 
 
 def out_no_src(path: Path) -> str:
@@ -48,6 +63,29 @@ def test_bad_src_content(tox_project: ToxProjectCreator, tmp_path: Path) -> None
     outcome = project.run("l", "-c", str(tmp_path / "setup.cfg"))
     outcome.assert_failed()
     assert outcome.out == f"ROOT: HandledError| config file {tmp_path / 'setup.cfg'} does not exist\n"
+
+
+@unreadable_files_possible
+@pytest.mark.parametrize("named", [True, False], ids=["explicit-path", "discovery"])
+def test_unreadable_config_raises_handled_error(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, named: bool) -> None:
+    """Reading the file raises an OSError subclass, not ValueError.
+
+    Without handling it, discovery lets PermissionError escape and the CLI
+    prints a traceback instead of the one-line error used for malformed files.
+
+    This exercises discover_source directly: the tox_project fixture converts
+    exceptions on its own, so it cannot tell the two cases apart.
+    """
+    config = tmp_path / "tox.ini"
+    config.write_text("[tox]\nenv_list = py\n")
+    config.chmod(0o000)
+    monkeypatch.chdir(tmp_path)
+
+    try:
+        with pytest.raises(HandledError, match="failed loading"):
+            discover_source(config if named else None, None)
+    finally:
+        config.chmod(0o644)
 
 
 def test_malformed_config_does_not_prevent_help(tox_project: ToxProjectCreator) -> None:
