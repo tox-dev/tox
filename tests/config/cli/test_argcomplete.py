@@ -2,11 +2,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-import pytest
+import argcomplete
 
 from tox.config.cli.parse import get_options
-
-argcomplete = pytest.importorskip("argcomplete")
 
 if TYPE_CHECKING:
     from pytest_mock import MockerFixture
