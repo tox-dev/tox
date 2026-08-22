@@ -31,8 +31,7 @@ section. This section contains only highlights; it's not a substitute for readin
   testing you'll need to install your own "top-level" tox (using pipx_ or similar is fine) and use the following targets
   (tox environments):
 
-  - :samp:`tox -e py [-- {pytest-arg ...}]` to `test code changes <#running-tests>`_. This will skip tests for which you
-    are missing dependencies, but those tests will still be run by GitHub Actions.
+  - :samp:`tox -e py [-- {pytest-arg ...}]` to `test code changes <#running-tests>`_.
   - ``tox -e type`` to typecheck changes. (All new code should have complete type annotations.)
   - ``tox -e docs`` to build documentation changes and update the changelog, followed by viewing (with a browser) the
     generated HTML files under :file:`.tox/docs_out/html/`. The required changelog entry can be viewed at the "Release
