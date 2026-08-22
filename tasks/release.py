@@ -103,7 +103,7 @@ def create_release_branch(repo: Repo, version: Version) -> tuple[Remote, Head]:
     branch_name = f"release-{version}"
     release_branch = repo.create_head(branch_name, upstream.refs.main, force=True)
     upstream.push(refspec=f"{branch_name}:{branch_name}", force=True)
-    release_branch.set_tracking_branch(repo.refs[f"{upstream.name}/{branch_name}"])  # ty: ignore[invalid-argument-type] # gitpython types Reference broadly
+    release_branch.set_tracking_branch(repo.refs[f"{upstream.name}/{branch_name}"])
     release_branch.checkout()
     return upstream, release_branch
 
