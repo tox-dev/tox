@@ -122,6 +122,16 @@ def test_toml_loader_command_nok() -> None:
         perform_load([["a", 1]], list[Command])
 
 
+def test_toml_loader_command_list_drops_empty() -> None:
+    commands = perform_load([[], ["c"]], list[Command])
+    assert [i.args for i in commands] == [["c"]]
+
+
+def test_toml_loader_command_empty_nok() -> None:
+    with pytest.raises(HandledError, match=_PREFIX + r"attempting to parse \[\] into a command failed"):
+        perform_load([], Command)
+
+
 def test_toml_loader_env_list_ok() -> None:
     res = perform_load(["a", "b"], EnvList)
     assert isinstance(res, EnvList)

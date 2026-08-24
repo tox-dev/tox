@@ -53,7 +53,7 @@ class MemoryLoader(Loader[object]):
         return Path(value)
 
     @staticmethod
-    def to_command(value: Any) -> Command | None:
+    def to_command(value: Any) -> Command:
         if isinstance(value, Command):
             return value
         if isinstance(value, str):

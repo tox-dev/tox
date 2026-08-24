@@ -63,8 +63,6 @@ class Convert(ABC, Generic[T]):
         if origin in {list, list}:
             entry_type = type_args[0]
             result = [self.to(i, entry_type, factory) for i in self.to_list(raw, entry_type)]
-            if isclass(entry_type) and issubclass(entry_type, Command):
-                result = [i for i in result if i is not None]
         elif origin in {set, set}:
             entry_type = type_args[0]
             result = {self.to(i, entry_type, factory) for i in self.to_set(raw, entry_type)}
@@ -180,7 +178,7 @@ class Convert(ABC, Generic[T]):
 
     @staticmethod
     @abstractmethod
-    def to_command(value: T) -> Command | None:
+    def to_command(value: T) -> Command:
         """Convert to a command to execute.
 
         :param value: the value to convert
