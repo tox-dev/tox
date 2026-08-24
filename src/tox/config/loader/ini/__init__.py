@@ -95,7 +95,19 @@ class IniLoader(StrConvert, Loader[str]):
             return replaced
 
         prepared = replacer(raw, args) if not delay_replace else raw
-        converted = self.to(prepared, of_type, factory)
+        if conf is None or args.env_name is not None:
+            # the CLI config file and tox environments have their own handling for a bad value
+            converted = self.to(prepared, of_type, factory)
+        else:
+            try:
+                converted = self.to(prepared, of_type, factory)
+            except (HandledError, Skip):
+                raise
+            except Exception as exception:
+                # core values are loaded before any guard is in place, so mirror the TOML loader and report a bad
+                # value as a handled error instead of leaking a traceback
+                msg = f"failed to load {self.core_section.key}.{key}: {exception}"
+                raise HandledError(msg) from exception
         if delay_replace:
             cast("SetEnv", converted).use_replacer(replacer, args)  # delay_replace means of_type is SetEnv
         return converted
