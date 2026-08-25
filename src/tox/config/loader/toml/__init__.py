@@ -105,13 +105,15 @@ class TomlLoader(Loader[TomlTypes]):
 
     @staticmethod
     def to_list(value: TomlTypes, of_type: type[_T]) -> Iterator[_T]:
-        result = validate(value, cast("type[list[Any]]", GenericAlias(list, (of_type,))))
-        return iter(cast("list[_T]", result))
+        result = cast("list[_T]", validate(value, cast("type[list[Any]]", GenericAlias(list, (of_type,)))))
+        if inspect.isclass(of_type) and issubclass(of_type, Command):
+            # a generated command list leaves gaps rather than compacting itself, so drop them here (see #3388)
+            return iter([i for i in result if i])
+        return iter(result)
 
     @staticmethod
     def to_set(value: TomlTypes, of_type: type[_T]) -> Iterator[_T]:
-        result = validate(value, cast("type[list[Any]]", GenericAlias(list, (of_type,))))
-        return iter(cast("list[_T]", result))
+        return TomlLoader.to_list(value, of_type)
 
     @staticmethod
     def to_dict(value: TomlTypes, of_type: tuple[type[_T], type[_V]]) -> Iterator[tuple[_T, _V]]:
@@ -123,10 +125,11 @@ class TomlLoader(Loader[TomlTypes]):
         return Path(TomlLoader.to_str(value))
 
     @staticmethod
-    def to_command(value: TomlTypes) -> Command | None:
-        if value:
-            return Command(args=cast("list[str]", value))  # validated during load in _ensure_type_correct
-        return None
+    def to_command(value: TomlTypes) -> Command:
+        if not value:
+            msg = f"attempting to parse {value!r} into a command failed"
+            raise ValueError(msg)
+        return Command(args=cast("list[str]", value))  # validated during load in _ensure_type_correct
 
     @staticmethod
     def to_env_list(value: TomlTypes) -> EnvList:

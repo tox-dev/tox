@@ -8,9 +8,11 @@ from unittest.mock import Mock
 import pytest
 from packaging.requirements import Requirement
 
+from tox.report import HandledError
 from tox.tox_env.errors import Fail
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
     from pathlib import Path
 
     from tox.pytest import CaptureFixture, SubRequest, ToxProject, ToxProjectCreator
@@ -48,6 +50,25 @@ def test_pip_install_empty_command_error(tox_project: ToxProjectCreator) -> None
 
     with pytest.raises(Fail, match="unable to determine pip install command"):
         pip.install([Requirement("name")], "section", "type")
+
+
+@pytest.mark.parametrize(
+    ("key", "use"),
+    [
+        pytest.param(
+            "install_command",
+            lambda pip: pip.install([Requirement("name")], "section", "type"),
+            id="install_command",
+        ),
+        pytest.param("list_dependencies_command", lambda pip: pip.installed(), id="list_dependencies_command"),
+    ],
+)
+def test_pip_toml_empty_command_error(tox_project: ToxProjectCreator, key: str, use: Callable[[Any], object]) -> None:
+    proj = tox_project({"tox.toml": f"[env.py]\n{key} = []"})
+    pip = proj.run("l").state.envs["py"].installer
+
+    with pytest.raises(HandledError, match=rf"failed to load py\.{key}: attempting to parse \[\] into a command"):
+        use(pip)
 
 
 def test_pip_install_flags_only_error(tox_project: ToxProjectCreator) -> None:
