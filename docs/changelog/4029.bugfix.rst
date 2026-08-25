@@ -1,2 +1,0 @@
-Report an invalid ``--skip-env``/``TOX_SKIP_ENV`` regular expression as a handled error instead of raising an unhandled
-``re.error`` traceback - by :user:`VXNCXNX`

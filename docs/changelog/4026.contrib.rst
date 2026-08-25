@@ -1,2 +1,0 @@
-Pre-seed the setuptools wheel image alongside pip before the test session and give integration tests a 240s budget on
-Windows, so pytest-timeout no longer kills Windows CI workers - by :user:`gaborbernat`.

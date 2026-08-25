@@ -7,6 +7,35 @@
 .. towncrier release notes start
 
 **********************
+ v4.60.1 (2026-08-25)
+**********************
+
+Bug fixes - 4.60.1
+==================
+
+- Report a malformed ``tox.ini`` or ``setup.cfg`` as a handled error during config discovery instead of raising an
+  unhandled :class:`configparser.Error` traceback - by :user:`VXNCXNX` (:issue:`4027`)
+- Report an invalid value in the ini ``[tox]`` core section (such as ``min_version``, ``requires`` or ``env_list``) as a
+  handled error instead of an unhandled traceback, matching the existing TOML loader behavior - by :user:`VXNCXNX`
+  (:issue:`4028`)
+- Report an invalid ``--skip-env``/``TOX_SKIP_ENV`` regular expression as a handled error instead of raising an
+  unhandled ``re.error`` traceback - by :user:`VXNCXNX` (:issue:`4029`)
+- Keep ``;`` inside values read from a ``set_env`` environment file (``file|.env``). Environment file lines are plain
+  ``KEY=VALUE`` pairs and were incorrectly parsed with the PEP-508 marker splitter, which truncated values such as
+  ``DATABASE_URL=postgresql://host/db?opt=1;sslmode=require`` at the first semicolon - by :user:`VXNCXNX`
+  (:issue:`4030`)
+- Report a handled configuration error instead of leaking a traceback when the selected configuration file exists but
+  cannot be read - by :user:`SirHegel`. (:issue:`4031`)
+- Report an empty ``install_command`` or ``list_dependencies_command`` in a TOML configuration as a handled error
+  instead of an unhandled traceback - by :user:`dylanpulver` (:issue:`4041`)
+
+Contributor-facing changes - 4.60.1
+===================================
+
+- Pre-seed the setuptools wheel image alongside pip before the test session and give integration tests a 240s budget on
+  Windows, so pytest-timeout no longer kills Windows CI workers - by :user:`gaborbernat`. (:issue:`4026`)
+
+**********************
  v4.60.0 (2026-08-13)
 **********************
 

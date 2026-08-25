@@ -1,3 +1,0 @@
-Keep ``;`` inside values read from a ``set_env`` environment file (``file|.env``). Environment file lines are plain
-``KEY=VALUE`` pairs and were incorrectly parsed with the PEP-508 marker splitter, which truncated values such as
-``DATABASE_URL=postgresql://host/db?opt=1;sslmode=require`` at the first semicolon - by :user:`VXNCXNX`

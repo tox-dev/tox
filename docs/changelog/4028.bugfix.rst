@@ -1,2 +1,0 @@
-Report an invalid value in the ini ``[tox]`` core section (such as ``min_version``, ``requires`` or ``env_list``) as a
-handled error instead of an unhandled traceback, matching the existing TOML loader behavior - by :user:`VXNCXNX`

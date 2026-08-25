@@ -1,2 +1,0 @@
-Report an empty ``install_command`` or ``list_dependencies_command`` in a TOML configuration as a handled error instead
-of an unhandled traceback - by :user:`dylanpulver`
