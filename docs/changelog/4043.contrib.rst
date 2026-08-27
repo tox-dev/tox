@@ -1,0 +1,2 @@
+Replace the deprecated ``load_module`` call in the documentation configuration, which Python 3.15 removes - by
+:user:`gaborbernat`.

@@ -4,6 +4,7 @@ import os
 import re
 from importlib.machinery import SourceFileLoader
 from pathlib import Path
+from types import ModuleType
 from typing import TYPE_CHECKING, Any
 
 from sphinx.domains.python import PythonDomain
@@ -173,7 +174,10 @@ def setup(app: Sphinx) -> None:
 
     app.connect("autodoc-process-signature", process_signature, priority=400)
     app.add_domain(PatchedPythonDomain, override=True)
-    tox_cfg = SourceFileLoader("tox_conf", str(here / "tox_conf.py")).load_module().ToxConfig
+    tox_conf_loader = SourceFileLoader("tox_conf", str(here / "tox_conf.py"))
+    tox_conf = ModuleType(tox_conf_loader.name)
+    tox_conf_loader.exec_module(tox_conf)
+    tox_cfg = tox_conf.ToxConfig
     app.add_directive(tox_cfg.name, tox_cfg)
 
     def check_uri(self: ExternalLinksChecker, refnode: reference) -> None:
