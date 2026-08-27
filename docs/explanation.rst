@@ -77,7 +77,7 @@ The primary tox states are:
 
    1. **Creation**: create a fresh environment; by default :pypi:`virtualenv` is used, but configurable via
       :ref:`runner`. For ``virtualenv`` tox will use the `virtualenv discovery logic
-      <https://virtualenv.pypa.io/en/latest/user_guide.html#python-discovery>`_ where the python specification is
+      <https://virtualenv.pypa.io/en/stable/how-to/usage.html#select-a-python-version>`_ where the python specification is
       defined by the tox environments :ref:`base_python` (if not set will try to extract it from the environment name,
       then fall back to :ref:`default_base_python`, and finally to the Python running tox). The specification can
       include a CPU architecture suffix (e.g. ``cpython3.12-64-arm64``) to constrain discovery to a specific ISA — the
