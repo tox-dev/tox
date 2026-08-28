@@ -191,6 +191,13 @@ location can be changed via the ``TOX_CONFIG_FILE`` environment variable.
     # Force editable install for a specific environment
     tox run -e 3.13 -x "testenv:3.13.package=editable"
 
+An override value takes substitutions, so it can reach the same values the configuration file can:
+
+.. code-block:: bash
+
+    # Swap the test command for one run, keeping the positional arguments working
+    tox run -e 3.13 -x 'env_run_base.commands=pytest {posargs:tests}' -- -k slow
+
 .. _howto_out_of_tree_envs:
 
 ********************************************

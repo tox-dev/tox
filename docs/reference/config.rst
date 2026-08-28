@@ -2264,6 +2264,21 @@ Or reset override and append to that (note the first override is ``=`` and not `
 
        tox -x testenv.deps=pytest-xdist -x testenv.deps+=pytest-cov
 
+Substitutions inside an override
+================================
+
+.. versionadded:: 4.61
+
+An override value goes through the same substitution pass as a value written in the configuration file, so
+``{posargs}``, ``{env:VAR}``, ``{env_name}`` and the rest resolve there too:
+
+.. code-block:: bash
+
+    $ tox -x env_run_base.commands='pytest {posargs:tests}' -e py -- -k slow
+
+This runs ``pytest -k slow``. Overrides carry a command line string whatever the configuration file format, so the ini
+spelling of a substitution applies in a TOML project as well.
+
 Overrides propagate through references
 ======================================
 

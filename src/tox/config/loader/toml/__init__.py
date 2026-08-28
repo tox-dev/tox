@@ -92,6 +92,9 @@ class TomlLoader(Loader[TomlTypes]):
             cast("SetEnv", result).use_replacer(_toml_replacer, args=args)  # delay_replace means of_type is SetEnv
         return result
 
+    def substitute(self, value: str, conf: Config, args: ConfigLoadArgs) -> str:
+        return replace(conf, TomlReplaceLoader(conf, self), value, args)
+
     def found_keys(self) -> set[str]:
         return set(self.content.keys()) - self._unused_exclude
 

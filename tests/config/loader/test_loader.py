@@ -8,7 +8,7 @@ from tox.config.cli.parse import get_options
 from tox.config.loader.api import Override, apply_overrides_to_raw
 
 if TYPE_CHECKING:
-    from tox.pytest import CaptureFixture
+    from tox.pytest import CaptureFixture, ToxProjectCreator
 
 
 @pytest.mark.parametrize("flag", ["-x", "--override"])
@@ -109,3 +109,46 @@ def test_apply_overrides_to_raw_ignores_other_keys() -> None:
 def test_apply_overrides_to_raw_append_unsupported_type() -> None:
     with pytest.raises(ValueError, match="Only able to append to lists, dicts and strings"):
         apply_overrides_to_raw([Override("ns.k+=1")], "k", 0)
+
+
+@pytest.mark.parametrize(
+    ("filename", "content", "namespace"),
+    [
+        pytest.param(
+            "tox.toml",
+            'env_list = ["a"]\n[env_run_base]\nskip_install = true\ncommands = [["python"]]\n',
+            "env_run_base",
+            id="toml",
+        ),
+        pytest.param(
+            "tox.ini",
+            "[tox]\nenv_list = a\n[testenv]\nskip_install = true\ncommands = python\n",
+            "testenv",
+            id="ini",
+        ),
+    ],
+)
+@pytest.mark.parametrize(
+    ("override", "posargs", "expected"),
+    [
+        pytest.param("python {posargs}", ["--", "tests", "src"], "python tests src", id="posargs"),
+        pytest.param("python {posargs:tests}", [], "python tests", id="posargs-default"),
+        pytest.param("python {env:MAGIC}", [], "python from-env", id="env"),
+        pytest.param("python {env_name}", [], "python a", id="env-name"),
+    ],
+)
+def test_override_value_is_substituted(
+    tox_project: ToxProjectCreator,
+    monkeypatch: pytest.MonkeyPatch,
+    filename: str,
+    content: str,
+    namespace: str,
+    override: str,
+    posargs: list[str],
+    expected: str,
+) -> None:
+    monkeypatch.setenv("MAGIC", "from-env")
+    project = tox_project({filename: content})
+    outcome = project.run("c", "-e", "a", "-k", "commands", "-x", f"{namespace}.commands={override}", *posargs)
+    outcome.assert_success()
+    outcome.assert_out_err(f"[testenv:a]\ncommands = {expected}\n", "")

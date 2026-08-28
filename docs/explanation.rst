@@ -341,6 +341,18 @@ environments (template name + factor suffix) appear in ``tox list`` and can be r
 
 For the configuration reference, see :ref:`env-base-templates`. For practical recipes, see :ref:`howto_env_base_matrix`.
 
+Overrides and substitution
+==========================
+
+An override arrives as one command line string, whatever the configuration file format, so tox converts it with the ini
+string rules rather than the TOML ones. That is why ``-x env_run_base.commands=pytest tests`` works in a TOML project
+even though the file itself spells commands as a list of lists.
+
+The value still goes through the substitution pass belonging to the loader it overrides, which is what lets
+``{posargs}`` and ``{env:VAR}`` resolve inside it. Skipping that pass would make an override the one place in tox where
+a ``{...}`` reference means nothing, and a command overridden for a single run would stop forwarding the arguments given
+to it with no sign that it had.
+
 .. _work-dir-placement:
 
 Work directory placement
