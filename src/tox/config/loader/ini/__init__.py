@@ -112,6 +112,9 @@ class IniLoader(StrConvert, Loader[str]):
             cast("SetEnv", converted).use_replacer(replacer, args)  # delay_replace means of_type is SetEnv
         return converted
 
+    def substitute(self, value: str, conf: Config, args: ConfigLoadArgs) -> str:
+        return replace(conf, ReplaceReferenceIni(conf, self), value, args)
+
     def found_keys(self) -> set[str]:
         return set(self._section_proxy.keys())
 

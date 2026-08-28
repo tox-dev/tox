@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import inspect
 from abc import abstractmethod
 from argparse import ArgumentTypeError
 from collections.abc import Iterable, Mapping
@@ -179,8 +180,15 @@ class Loader(Convert[T]):
             if not overrides:
                 raise KeyError(key)
 
+        delay_replace = inspect.isclass(of_type) and issubclass(of_type, SetEnv)
         for override in overrides:
-            converted_override = _STR_CONVERT.to(override.value, of_type, factory)
+            # an override arrives as a raw CLI string, so it has not been through the loader's substitution pass yet
+            raw_override = (
+                override.value
+                if delay_replace or conf is None  # set_env expands later, the CLI config file never does
+                else self.substitute(override.value, conf, args)
+            )
+            converted_override = _STR_CONVERT.to(raw_override, of_type, factory)
             if override.append and converted is not None:
                 if isinstance(converted, list) and isinstance(converted_override, list):
                     converted += converted_override
@@ -218,6 +226,18 @@ class Loader(Convert[T]):
 
         """
         return self.to(raw, of_type, factory)
+
+    def substitute(self, value: str, conf: Config, args: ConfigLoadArgs) -> str:
+        """Apply this loader's replacements to a raw string.
+
+        :param value: the raw string
+        :param conf: the global config
+        :param args: env args
+
+        :returns: the string with every substitution this loader understands resolved
+
+        """
+        raise NotImplementedError
 
 
 def apply_overrides_to_raw(overrides: Iterable[Override], key: str, value: T) -> T:

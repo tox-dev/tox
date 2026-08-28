@@ -257,7 +257,8 @@ Pass extra arguments to the underlying tool using ``--``:
     tox run -e lint -- src/mymodule.py
 
 The ``{ replace = "posargs" }`` in TOML (or ``{posargs}`` in INI) is a placeholder that gets replaced by whatever you
-pass after ``--``.
+pass after ``--``. The same placeholder works in a ``-x`` override, so you can swap a command for one run without losing
+the arguments you pass it.
 
 **************************
  Understanding the output
