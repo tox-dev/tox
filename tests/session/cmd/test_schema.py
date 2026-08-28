@@ -11,6 +11,8 @@ from typing import TYPE_CHECKING, Any, Protocol
 import pytest
 
 if TYPE_CHECKING:
+    from collections.abc import Iterator
+
     from tox.pytest import MonkeyPatch, ToxProjectCreator
 
 
@@ -141,6 +143,29 @@ def test_schema_freshness(
     assert generated == committed_schema, (
         "tox.schema.json is out of date — regenerate with: tox schema > src/tox/tox.schema.json"
     )
+
+
+def _subschemas(node: Any, pointer: str = "#") -> Iterator[tuple[str, dict[str, Any]]]:
+    if isinstance(node, dict):
+        yield pointer, node
+        for key, value in node.items():
+            yield from _subschemas(value, f"{pointer}/{key}")
+    elif isinstance(node, list):
+        for index, value in enumerate(node):
+            yield from _subschemas(value, f"{pointer}/{index}")
+
+
+def test_schema_required_properties_are_declared(committed_schema: dict[str, Any]) -> None:
+    # SchemaStore compiles the published schema with ajv strict mode, which rejects a required property that the
+    # schema never declares, so catch it here rather than in a release-time sync PR (see tox-dev/tox#4051)
+    undeclared = [
+        f"{pointer} requires {name!r}"
+        for pointer, schema in _subschemas(committed_schema)
+        if isinstance(schema.get("required"), list)
+        for name in schema["required"]
+        if name not in schema.get("properties", {})
+    ]
+    assert undeclared == []
 
 
 def test_schema_allows_deps_array(committed_schema: dict[str, Any]) -> None:
