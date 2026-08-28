@@ -339,6 +339,12 @@ The inheritance chain resolves bottom-up: ``env.{name}`` > ``env_base.{template}
 Templates themselves are not runnable environments -- they exist only to define shared configuration. Only the generated
 environments (template name + factor suffix) appear in ``tox list`` and can be run.
 
+Nesting a group under a name labels it. That works for a list and for a range alike. The alternative was a ``label`` key
+sitting beside ``prefix``, ``start`` and ``stop``, which suits a range but has nowhere to live in a plain list. It would
+have labeled one shape and left the other out. Nesting covers both with one rule: a single-key table names the group,
+and the value describes its factors. Adding a shape later means describing another value, not teaching every earlier
+shape one more key.
+
 For the configuration reference, see :ref:`env-base-templates`. For practical recipes, see :ref:`howto_env_base_matrix`.
 
 .. _work-dir-placement:

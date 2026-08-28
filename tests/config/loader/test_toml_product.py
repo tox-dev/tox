@@ -89,8 +89,21 @@ def test_expand_factor_group_keyed_dict() -> None:
 
 
 def test_expand_factor_group_keyed_dict_bad_value_type() -> None:
-    with pytest.raises(TypeError, match="labeled factor group 'ecosystem' must map to a list"):
+    with pytest.raises(TypeError, match="labeled factor group 'ecosystem' must map to a list or a range dict"):
         expand_factor_group({"ecosystem": "oci"})
+
+
+def test_expand_factor_group_keyed_range_dict() -> None:
+    assert expand_factor_group({"py_version": {"prefix": "3.", "start": 12, "stop": 14}}) == ["3.12", "3.13", "3.14"]
+
+
+def test_expand_factor_group_keyed_dict_without_prefix() -> None:
+    with pytest.raises(TypeError, match="labeled factor group 'py_version' maps to a dict without a 'prefix' key"):
+        expand_factor_group({"py_version": {"start": 12, "stop": 14}})
+
+
+def test_extract_label_keyed_range_dict() -> None:
+    assert extract_label({"py_version": {"prefix": "3.", "start": 12}}) == "py_version"
 
 
 def test_expand_factor_group_reserved_label() -> None:

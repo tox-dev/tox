@@ -787,10 +787,17 @@
         "required": ["prefix"]
       },
       "additionalProperties": {
-        "type": "array",
-        "items": {
-          "type": "string"
-        }
+        "oneOf": [
+          {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/definitions/factor_range_dict"
+          }
+        ]
       },
       "description": "labeled factor group for {factor:label} substitution"
     },

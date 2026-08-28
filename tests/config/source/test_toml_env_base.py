@@ -515,3 +515,57 @@ def test_env_base_factor_label_with_default(tox_project: ToxProjectCreator) -> N
     outcome = project.run("c", "-e", "task-oci", "-k", "description")
     outcome.assert_success()
     outcome.assert_out_err("[testenv:task-oci]\ndescription = Type is fallback\n", "")
+
+
+def test_env_base_labeled_range_factor_group(tox_project: ToxProjectCreator) -> None:
+    project = tox_project({
+        "tox.toml": textwrap.dedent("""\
+            [env_base.task]
+            factors = [
+                {py_version = {prefix = "3.", start = 12, stop = 13}},
+                {django_version = ["django42", "django50"]},
+            ]
+            package = "skip"
+            description = "{factor:py_version} with {factor:django_version}"
+            commands = [["python", "-c", "print('ok')"]]
+        """),
+    })
+    outcome = project.run("c", "-e", "task-3.12-django42", "-k", "description")
+    outcome.assert_success()
+    outcome.assert_out_err("[testenv:task-3.12-django42]\ndescription = 3.12 with django42\n", "")
+    outcome = project.run("c", "-e", "task-3.13-django50", "-k", "description")
+    outcome.assert_success()
+    outcome.assert_out_err("[testenv:task-3.13-django50]\ndescription = 3.13 with django50\n", "")
+
+
+def test_env_base_labeled_range_factor_group_generates_envs(tox_project: ToxProjectCreator) -> None:
+    project = tox_project({
+        "tox.toml": textwrap.dedent("""\
+            [env_base.task]
+            factors = [{py_version = {prefix = "py3", start = 12, stop = 14}}]
+            package = "skip"
+            commands = [["python", "-c", "print('ok')"]]
+        """),
+    })
+    result = project.run("l")
+    result.assert_success()
+    for env in ("task-py312", "task-py313", "task-py314"):
+        assert env in result.out
+
+
+def test_env_list_product_labeled_range_factor_group(tox_project: ToxProjectCreator) -> None:
+    project = tox_project({
+        "tox.toml": textwrap.dedent("""\
+            env_list = [
+                { product = [["sync"], {py_version = {prefix = "3.", start = 12, stop = 13}}] },
+            ]
+
+            [env_run_base]
+            package = "skip"
+            description = "Sync on {factor:py_version}"
+            commands = [["python", "-c", "print('ok')"]]
+        """),
+    })
+    outcome = project.run("c", "-e", "sync-3.13", "-k", "description")
+    outcome.assert_success()
+    outcome.assert_out_err("[testenv:sync-3.13]\ndescription = Sync on 3.13\n", "")
