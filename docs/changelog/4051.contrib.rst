@@ -1,2 +1,0 @@
-Check tox's JSON Schema against SchemaStore's own validator on every pull request that touches it, and before the
-release sync opens a pull request there - by :user:`gaborbernat`.

@@ -1,2 +1,0 @@
-Declare ``prefix`` inside the labeled factor group's ``not`` clause of the generated JSON Schema, so the published
-schema compiles under the strict mode SchemaStore validates with - by :user:`gaborbernat`.

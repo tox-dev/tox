@@ -7,6 +7,22 @@
 .. towncrier release notes start
 
 **********************
+ v4.61.1 (2026-08-28)
+**********************
+
+Bug fixes - 4.61.1
+==================
+
+- Declare ``prefix`` inside the labeled factor group's ``not`` clause of the generated JSON Schema, so the published
+  schema compiles under the strict mode SchemaStore validates with - by :user:`gaborbernat`. (:issue:`4051`)
+
+Contributor-facing changes - 4.61.1
+===================================
+
+- Check tox's JSON Schema against SchemaStore's own validator on every pull request that touches it, and before the
+  release sync opens a pull request there - by :user:`gaborbernat`. (:issue:`4051`)
+
+**********************
  v4.61.0 (2026-08-28)
 **********************
 
