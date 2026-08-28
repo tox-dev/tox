@@ -4,6 +4,7 @@ import json
 import re
 import shutil
 import subprocess
+from collections.abc import Mapping, Sequence
 from pathlib import Path
 from textwrap import dedent
 from typing import TYPE_CHECKING, Any, Protocol
@@ -11,7 +12,10 @@ from typing import TYPE_CHECKING, Any, Protocol
 import pytest
 
 if TYPE_CHECKING:
+    from collections.abc import Iterator
+
     from tox.pytest import MonkeyPatch, ToxProjectCreator
+    from tox.util.json_types import JsonValue
 
 
 class LintWorkspace(Protocol):
@@ -141,6 +145,30 @@ def test_schema_freshness(
     assert generated == committed_schema, (
         "tox.schema.json is out of date — regenerate with: tox schema > src/tox/tox.schema.json"
     )
+
+
+def _subschemas(node: JsonValue, pointer: str = "#") -> Iterator[tuple[str, Mapping[str, JsonValue]]]:
+    if isinstance(node, Mapping):
+        yield pointer, node
+        for key, value in node.items():
+            yield from _subschemas(value, f"{pointer}/{key}")
+    elif isinstance(node, Sequence) and not isinstance(node, str):
+        for index, value in enumerate(node):
+            yield from _subschemas(value, f"{pointer}/{index}")
+
+
+def test_schema_required_properties_are_declared(committed_schema: Mapping[str, JsonValue]) -> None:
+    # SchemaStore compiles the published schema with ajv strict mode, which rejects a required property that the
+    # schema never declares, so catch it here rather than in a release-time sync PR (see tox-dev/tox#4051)
+    undeclared: list[str] = []
+    for pointer, schema in _subschemas(committed_schema):
+        required = schema.get("required")
+        if not isinstance(required, Sequence) or isinstance(required, str):
+            continue
+        properties = schema.get("properties")
+        declared = set(properties) if isinstance(properties, Mapping) else set()
+        undeclared += [f"{pointer} requires {name!r}" for name in required if name not in declared]
+    assert undeclared == []
 
 
 def test_schema_allows_deps_array(committed_schema: dict[str, Any]) -> None:

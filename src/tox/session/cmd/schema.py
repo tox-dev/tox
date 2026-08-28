@@ -223,7 +223,8 @@ def gen_schema(state: State) -> int:
                 "type": "object",
                 "minProperties": 1,
                 "maxProperties": 1,
-                "not": {"required": ["prefix"]},
+                # ``properties`` declares the key so ajv strict mode can see it; ``{}`` adds no constraint of its own
+                "not": {"properties": {"prefix": {}}, "required": ["prefix"]},
                 "additionalProperties": {
                     "oneOf": [
                         {"type": "array", "items": {"type": "string"}},
