@@ -7,6 +7,38 @@
 .. towncrier release notes start
 
 **********************
+ v4.61.0 (2026-08-28)
+**********************
+
+Features - 4.61.0
+=================
+
+- A labeled factor group can now declare a ``default`` for ``{factor:label}`` to fall back on when no factor of that
+  group is active in the environment name. Setting ``TOX_FACTOR_<label>`` resolves that label to a given value for a
+  single run - by :user:`gaborbernat`. (:issue:`4045`)
+- A factor range can now carry a label by nesting it under one, as in ``factors = [{ py_version = { prefix = "3.", start
+  = 12, stop = 14 } }]``, which makes ``{factor:py_version}`` available for ranges - by :user:`gaborbernat`.
+  (:issue:`4046`)
+
+Bug fixes - 4.61.0
+==================
+
+- Values passed via ``--override``/``-x`` or ``TOX_OVERRIDE`` now resolve substitutions such as ``{posargs}``,
+  ``{env:VAR}`` and ``{env_name}``, instead of reaching the environment as literal text - by :user:`gaborbernat`.
+  (:issue:`4047`)
+
+Improved documentation - 4.61.0
+===============================
+
+- Point the virtualenv discovery link in the explanation documentation at its current location. (:issue:`4042`)
+
+Contributor-facing changes - 4.61.0
+===================================
+
+- Replace the deprecated ``load_module`` call in the documentation configuration, which Python 3.15 removes - by
+  :user:`gaborbernat`. (:issue:`4043`)
+
+**********************
  v4.60.1 (2026-08-25)
 **********************
 

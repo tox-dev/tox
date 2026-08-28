@@ -1,3 +1,0 @@
-A labeled factor group can now declare a ``default`` for ``{factor:label}`` to fall back on when no factor of that group
-is active in the environment name. Setting ``TOX_FACTOR_<label>`` resolves that label to a given value for a single run
-- by :user:`gaborbernat`.

@@ -1,2 +1,0 @@
-Values passed via ``--override``/``-x`` or ``TOX_OVERRIDE`` now resolve substitutions such as ``{posargs}``,
-``{env:VAR}`` and ``{env_name}``, instead of reaching the environment as literal text - by :user:`gaborbernat`.
