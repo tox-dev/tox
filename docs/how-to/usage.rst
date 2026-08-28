@@ -1164,6 +1164,18 @@ To override a specific generated environment, add an explicit ``[env.NAME]`` sec
 
 The inheritance chain is: ``[env.{name}]`` > ``[env_base.{template}]`` > ``[env_run_base]``.
 
+Nest a group under a name to label it, so ``{factor:label}`` reaches the value the current environment picked. Both
+lists and range dicts take a label:
+
+.. code-block:: toml
+
+    [env_base.django]
+    factors = [
+        { py_version = { prefix = "py3", start = 13, stop = 14 } },
+        { django_version = ["django42", "django50"] },
+    ]
+    description = "Test {factor:django_version} on {factor:py_version}"
+
 See :ref:`env-base-templates` for the full reference.
 
 ***************************

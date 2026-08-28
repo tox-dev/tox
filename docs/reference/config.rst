@@ -207,6 +207,8 @@ This generates 4 environments: ``django-py312-django42``, ``django-py312-django5
 - A list of strings: ``["a", "b"]``
 - A range dict: ``{ prefix = "py3", start = 12, stop = 14 }`` (generates ``py312``, ``py313``, ``py314``)
 - A labeled dict: ``{ ecosystem = ["oci", "python"] }`` (same as a list, but registers the label for substitution)
+- A labeled range dict: ``{ py_version = { prefix = "3.", start = 12, stop = 14 } }`` (a range that also registers a
+  label)
 - Mixed in the same ``factors`` list for Cartesian products
 
 The template name itself does not appear as a runnable environment -- only the generated names do.
@@ -234,6 +236,21 @@ labeled group is an active factor in the current environment. Every factor group
 
 For ``sync-oci-pw``, the description resolves to ``Sync oci artifacts to pw`` and the command receives ``--ecosystem
 oci``.
+
+A range dict carries a label when you nest it under one:
+
+.. code-block:: toml
+
+    [env_base.test]
+    factors = [
+        { py_version = { prefix = "3.", start = 12, stop = 14 } },
+        { django_version = ["django42", "django50"] },
+    ]
+    description = "Test on Python {factor:py_version} against {factor:django_version}"
+
+.. versionadded:: 4.61
+
+    Labels on range dicts.
 
 **Positional labels** -- plain lists automatically get index-based labels:
 

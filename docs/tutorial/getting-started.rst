@@ -209,7 +209,20 @@ environments from factor combinations:
     commands = [["pytest"]]
 
 This generates ``test-3.13`` and ``test-3.14``, each inheriting deps and commands from the template. The template itself
-inherits from ``env_run_base``, so global defaults still apply. See :ref:`env-base-templates` for details.
+inherits from ``env_run_base``, so global defaults still apply.
+
+Ranges save spelling out every version, and nesting one under a name lets the rest of the section refer back to
+whichever value the environment picked:
+
+.. code-block:: toml
+
+    [env_base.test]
+    factors = [{ py_version = { prefix = "3.", start = 13, stop = 14 } }]
+    deps = ["pytest>=8"]
+    commands = [["pytest"]]
+    description = "run the tests under Python {factor:py_version}"
+
+See :ref:`env-base-templates` for details.
 
 ***************************
  Running your environments

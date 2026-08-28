@@ -1,0 +1,2 @@
+A factor range can now carry a label by nesting it under one, as in ``factors = [{ py_version = { prefix = "3.", start =
+12, stop = 14 } }]``, which makes ``{factor:py_version}`` available for ranges - by :user:`gaborbernat`.

@@ -213,7 +213,12 @@ def gen_schema(state: State) -> int:
                 "minProperties": 1,
                 "maxProperties": 1,
                 "not": {"required": ["prefix"]},
-                "additionalProperties": {"type": "array", "items": {"type": "string"}},
+                "additionalProperties": {
+                    "oneOf": [
+                        {"type": "array", "items": {"type": "string"}},
+                        {"$ref": "#/definitions/factor_range_dict"},
+                    ]
+                },
                 "description": "labeled factor group for {factor:label} substitution",
             },
             "product_factor_group": {

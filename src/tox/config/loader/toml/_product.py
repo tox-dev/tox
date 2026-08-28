@@ -55,14 +55,7 @@ def expand_factor_group(group: TomlTypes) -> list[str]:
         if "prefix" in group:
             return _expand_range(group)
         if len(group) == 1:
-            label, values = next(iter(group.items()))
-            if label in _RESERVED_LABELS:
-                msg = f"'{label}' is reserved and cannot be used as a factor label"
-                raise TypeError(msg)
-            if not isinstance(values, list):
-                msg = f"labeled factor group '{label}' must map to a list, got {type(values).__name__}"
-                raise TypeError(msg)
-            return [str(v) for v in values]
+            return _expand_labeled(*next(iter(group.items())))
     msg = f"factor group must be a list, a range dict, or a labeled dict, got {type(group).__name__}"
     raise TypeError(msg)
 
@@ -71,6 +64,21 @@ def extract_label(group: TomlTypes) -> str | None:
     if isinstance(group, dict) and "prefix" not in group and len(group) == 1:
         return str(next(iter(group)))
     return None
+
+
+def _expand_labeled(label: str, values: TomlTypes) -> list[str]:
+    if label in _RESERVED_LABELS:
+        msg = f"'{label}' is reserved and cannot be used as a factor label"
+        raise TypeError(msg)
+    if isinstance(values, dict):
+        if "prefix" not in values:
+            msg = f"labeled factor group '{label}' maps to a dict without a 'prefix' key, so it is not a range"
+            raise TypeError(msg)
+        return _expand_range(values)
+    if not isinstance(values, list):
+        msg = f"labeled factor group '{label}' must map to a list or a range dict, got {type(values).__name__}"
+        raise TypeError(msg)
+    return [str(v) for v in values]
 
 
 def _expand_range(range_dict: dict[str, TomlTypes]) -> list[str]:
