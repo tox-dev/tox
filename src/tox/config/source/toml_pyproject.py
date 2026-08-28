@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, Any, Final, cast
 
 from tox.config.loader.section import Section
 from tox.config.loader.toml import TomlLoader
-from tox.config.loader.toml._product import expand_factor_group, extract_label
+from tox.config.loader.toml._product import FactorGroup, expand_factor_group, extract_default, extract_label
 from tox.config.types import MissingRequiredConfigKeyError
 from tox.report import HandledError
 
@@ -183,9 +183,9 @@ def _table_at(content: dict[str, TomlTypes], keys: tuple[str, ...]) -> dict[str,
     return content
 
 
-def _build_env_base_map(env_base_content: dict[str, TomlTypes]) -> tuple[dict[str, str], dict[str, list[str]]]:
+def _build_env_base_map(env_base_content: dict[str, TomlTypes]) -> tuple[dict[str, str], dict[str, FactorGroup]]:
     result: dict[str, str] = {}
-    all_labels: dict[str, list[str]] = {}
+    all_labels: dict[str, FactorGroup] = {}
     for base_name, config in env_base_content.items():
         if not isinstance(config, dict):
             msg = f"env_base.{base_name} must be a table"
@@ -202,9 +202,10 @@ def _build_env_base_map(env_base_content: dict[str, TomlTypes]) -> tuple[dict[st
             for idx, g in enumerate(factors_raw):
                 values = expand_factor_group(g)
                 expanded.append(values)
-                all_labels[str(idx)] = values
+                group = FactorGroup(values=values, default=extract_default(g, values))
+                all_labels[str(idx)] = group
                 if (label := extract_label(g)) is not None:
-                    all_labels[label] = values
+                    all_labels[label] = group
             names = ["-".join(combo) for combo in product(*expanded)]
         else:
             names = [str(f) for f in factors_raw]
@@ -213,10 +214,10 @@ def _build_env_base_map(env_base_content: dict[str, TomlTypes]) -> tuple[dict[st
     return result, all_labels
 
 
-def _extract_env_list_labels(env_list_raw: TomlTypes) -> dict[str, list[str]]:
+def _extract_env_list_labels(env_list_raw: TomlTypes) -> dict[str, FactorGroup]:
     if not isinstance(env_list_raw, list):
         return {}
-    labels: dict[str, list[str]] = {}
+    labels: dict[str, FactorGroup] = {}
     for item in env_list_raw:
         if isinstance(item, dict) and "product" in item:
             raw_groups = item["product"]
@@ -224,9 +225,10 @@ def _extract_env_list_labels(env_list_raw: TomlTypes) -> dict[str, list[str]]:
                 continue
             for idx, g in enumerate(raw_groups):
                 values = expand_factor_group(g)
-                labels[str(idx)] = values
+                group = FactorGroup(values=values, default=extract_default(g, values))
+                labels[str(idx)] = group
                 if (label := extract_label(g)) is not None:
-                    labels[label] = values
+                    labels[label] = group
     return labels
 
 

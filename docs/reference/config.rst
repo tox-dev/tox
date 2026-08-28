@@ -209,6 +209,8 @@ This generates 4 environments: ``django-py312-django42``, ``django-py312-django5
 - A labeled dict: ``{ ecosystem = ["oci", "python"] }`` (same as a list, but registers the label for substitution)
 - A labeled range dict: ``{ py_version = { prefix = "3.", start = 12, stop = 14 } }`` (a range that also registers a
   label)
+- A labeled values dict: ``{ django_version = { values = ["django42", "django50"], default = "django50" } }`` (a list
+  with a declared default)
 - Mixed in the same ``factors`` list for Cartesian products
 
 The template name itself does not appear as a runnable environment -- only the generated names do.
@@ -276,6 +278,42 @@ For ``task-oci-pw``, the description resolves to ``Run oci on pw``. Labeled dict
 
 **Defaults** -- ``{factor:label:fallback}`` uses ``fallback`` when the label is unknown, following the same convention
 as ``{env:VAR:default}``.
+
+A factor group can declare its own default instead, so every use site stays short:
+
+.. code-block:: toml
+
+    [env_base.test]
+    factors = [
+        { py_version = { prefix = "3.", start = 12, stop = 14 } },
+        { django_version = { values = ["django42", "django50"], default = "django50" } },
+    ]
+    description = "Test {factor:django_version} on Python {factor:py_version}"
+
+A range dict takes ``default`` in the same table as ``prefix``.
+
+The declared default must be one of the group's own factors. It applies when no factor of the group is active in the
+environment name, which happens in an ``[env.NAME]`` section outside the matrix. A ``{factor:label:fallback}`` written
+at the use site wins over it.
+
+.. versionadded:: 4.61
+
+    The ``values`` and ``default`` keys.
+
+**Overriding a label for one run** -- set ``TOX_FACTOR_<label>`` to make ``{factor:<label>}`` resolve to that value,
+whatever the environment name says:
+
+.. code-block:: console
+
+    $ env TOX_FACTOR_django_version=django61 tox run -e test-3.14-django50
+
+This installs ``Django61`` while still running the ``test-3.14-django50`` environment, which is useful for a one-off
+check against a version the matrix does not list. The variable only applies to labels the configuration declares, and it
+does not change which environments exist or what they are called.
+
+.. versionadded:: 4.61
+
+    The ``TOX_FACTOR_<label>`` override.
 
 **Comparison with conditionals** -- ``{factor:label}`` replaces nested ``replace = "if"`` chains when the substituted
 value equals the factor name itself. For values that don't match factor names (e.g., mapping ``pw`` to

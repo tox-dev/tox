@@ -28,6 +28,8 @@ REPLACE_START: Final[str] = "{"
 REPLACE_END: Final[str] = "}"
 BACKSLASH_ESCAPE_CHARS: Final[tuple[str, ...]] = (ARG_DELIMITER, REPLACE_START, REPLACE_END, "[", "]")
 MAX_REPLACE_DEPTH: Final[int] = 100
+# lets a run resolve a labeled factor to a value the configuration does not list, without renaming environments
+_FACTOR_ENV_PREFIX: Final[str] = "TOX_FACTOR_"
 
 
 class MatchRecursionError(ValueError):
@@ -323,14 +325,16 @@ def replace_factor(conf: Config, args: list[str], conf_args: ConfigLoadArgs) -> 
         raise MatchError(msg)
     label = args[0]
     default = ARG_DELIMITER.join(args[1:]) if len(args) > 1 else ""
-    labels = conf.factor_labels
-    if label not in labels or conf_args.env_name is None:
+    group = conf.factor_labels.get(label)
+    if group is None or conf_args.env_name is None:
         return default
+    if override := os.environ.get(f"{_FACTOR_ENV_PREFIX}{label}"):
+        return override
     env_factors = set(conf_args.env_name.split("-"))
-    for value in labels[label]:
+    for value in group.values:
         if value in env_factors:
             return value
-    return default
+    return default or group.default or ""
 
 
 __all__ = [

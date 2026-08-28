@@ -345,6 +345,12 @@ have labeled one shape and left the other out. Nesting covers both with one rule
 and the value describes its factors. Adding a shape later means describing another value, not teaching every earlier
 shape one more key.
 
+A labeled factor value is part of the environment name, which is what makes ``tox run -e test-3.14-django50`` mean one
+thing. That leaves no way to name a version the matrix does not list on the command line, since ``>=4.2,<4.3`` cannot
+serve as a factor. ``TOX_FACTOR_<label>`` sidesteps that by leaving the name alone. The run goes through the environment
+the matrix generated, and only ``{factor:label}`` resolves elsewhere. The cost is a name that no longer tells the whole
+story, so the override suits a one-off check rather than a recorded configuration.
+
 For the configuration reference, see :ref:`env-base-templates`. For practical recipes, see :ref:`howto_env_base_matrix`.
 
 Overrides and substitution
