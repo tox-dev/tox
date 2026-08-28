@@ -3,6 +3,8 @@ from __future__ import annotations
 import textwrap
 from typing import TYPE_CHECKING
 
+import pytest
+
 if TYPE_CHECKING:
     from tox.pytest import ToxProjectCreator
 
@@ -569,3 +571,76 @@ def test_env_list_product_labeled_range_factor_group(tox_project: ToxProjectCrea
     outcome = project.run("c", "-e", "sync-3.13", "-k", "description")
     outcome.assert_success()
     outcome.assert_out_err("[testenv:sync-3.13]\ndescription = Sync on 3.13\n", "")
+
+
+@pytest.mark.parametrize(
+    ("env", "expected"),
+    [
+        pytest.param("task-django42", "django42", id="active-factor-wins"),
+        pytest.param("other", "django50", id="group-default"),
+        pytest.param("inline", "django42", id="inline-default-wins"),
+    ],
+)
+def test_env_base_factor_group_default(tox_project: ToxProjectCreator, env: str, expected: str) -> None:
+    project = tox_project({
+        "tox.toml": textwrap.dedent("""\
+            [env_base.task]
+            factors = [{django_version = {values = ["django42", "django50"], default = "django50"}}]
+            package = "skip"
+            description = "Test {factor:django_version}"
+            commands = [["python", "-c", "print('ok')"]]
+
+            [env.other]
+            description = "Test {factor:django_version}"
+
+            [env.inline]
+            description = "Test {factor:django_version:django42}"
+        """),
+    })
+    outcome = project.run("c", "-e", env, "-k", "description")
+    outcome.assert_success()
+    outcome.assert_out_err(f"[testenv:{env}]\ndescription = Test {expected}\n", "")
+
+
+@pytest.mark.parametrize(
+    ("variable", "reference", "expected"),
+    [
+        pytest.param("TOX_FACTOR_django_version", "{factor:django_version}", "django60", id="declared-label"),
+        pytest.param("TOX_FACTOR_unknown", "{factor:unknown:fallback}", "fallback", id="unknown-label"),
+    ],
+)
+def test_env_base_factor_env_override(
+    tox_project: ToxProjectCreator,
+    monkeypatch: pytest.MonkeyPatch,
+    variable: str,
+    reference: str,
+    expected: str,
+) -> None:
+    monkeypatch.setenv(variable, "django60")
+    project = tox_project({
+        "tox.toml": textwrap.dedent(f"""\
+            [env_base.task]
+            factors = [{{django_version = ["django42", "django50"]}}]
+            package = "skip"
+            description = "Test {reference}"
+            commands = [["python", "-c", "print('ok')"]]
+        """),
+    })
+    outcome = project.run("c", "-e", "task-django42", "-k", "description")
+    outcome.assert_success()
+    outcome.assert_out_err(f"[testenv:task-django42]\ndescription = Test {expected}\n", "")
+
+
+def test_env_base_factor_group_default_reaches_deps(tox_project: ToxProjectCreator) -> None:
+    project = tox_project({
+        "tox.toml": textwrap.dedent("""\
+            [env_base.task]
+            factors = [{django_version = {values = ["42", "50"], default = "50"}}]
+            package = "skip"
+            deps = ["Django=={factor:django_version}"]
+            commands = [["python", "-c", "print('ok')"]]
+        """),
+    })
+    outcome = project.run("c", "-e", "task-42", "-k", "deps")
+    outcome.assert_success()
+    outcome.assert_out_err("[testenv:task-42]\ndeps = Django==42\n", "")

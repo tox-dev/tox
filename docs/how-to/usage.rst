@@ -1176,6 +1176,12 @@ lists and range dicts take a label:
     ]
     description = "Test {factor:django_version} on {factor:py_version}"
 
+To try a version the matrix does not list, set ``TOX_FACTOR_<label>`` for that run:
+
+.. code-block:: console
+
+    $ env TOX_FACTOR_django_version=django61 tox run -e django-py314-django50
+
 See :ref:`env-base-templates` for the full reference.
 
 ***************************

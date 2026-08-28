@@ -13,6 +13,7 @@ if TYPE_CHECKING:
     from collections.abc import Iterable, Iterator, Sequence
 
     from tox.config.loader.api import Loader, OverrideMap
+    from tox.config.loader.toml._product import FactorGroup
 
     from .cli.parser import Parsed
     from .loader.memory import MemoryLoader
@@ -139,7 +140,7 @@ class Config:
         return self._overrides
 
     @property
-    def factor_labels(self) -> dict[str, list[str]]:
+    def factor_labels(self) -> dict[str, FactorGroup]:
         return getattr(self._src, "_factor_labels", {})
 
     @property

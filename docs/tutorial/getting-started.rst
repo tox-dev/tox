@@ -222,6 +222,10 @@ whichever value the environment picked:
     commands = [["pytest"]]
     description = "run the tests under Python {factor:py_version}"
 
+A group can also name the value to assume when an environment carries none of its factors, which saves repeating a
+fallback at every mention. To check one run against a version the matrix does not list, set ``TOX_FACTOR_py_version``
+for that run.
+
 See :ref:`env-base-templates` for details.
 
 ***************************

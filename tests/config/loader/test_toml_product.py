@@ -10,10 +10,12 @@ from tox.config.loader.toml._product import (  # ruff:ignore[import-private-name
     _expand_range,
     expand_factor_group,
     expand_product,
+    extract_default,
     extract_label,
 )
 
 if TYPE_CHECKING:
+    from tox.config.loader.toml._api import TomlTypes
     from tox.pytest import ToxProjectCreator
 
 
@@ -89,17 +91,12 @@ def test_expand_factor_group_keyed_dict() -> None:
 
 
 def test_expand_factor_group_keyed_dict_bad_value_type() -> None:
-    with pytest.raises(TypeError, match="labeled factor group 'ecosystem' must map to a list or a range dict"):
+    with pytest.raises(TypeError, match="labeled factor group 'ecosystem' must map to a list, a range dict, or a"):
         expand_factor_group({"ecosystem": "oci"})
 
 
 def test_expand_factor_group_keyed_range_dict() -> None:
     assert expand_factor_group({"py_version": {"prefix": "3.", "start": 12, "stop": 14}}) == ["3.12", "3.13", "3.14"]
-
-
-def test_expand_factor_group_keyed_dict_without_prefix() -> None:
-    with pytest.raises(TypeError, match="labeled factor group 'py_version' maps to a dict without a 'prefix' key"):
-        expand_factor_group({"py_version": {"start": 12, "stop": 14}})
 
 
 def test_extract_label_keyed_range_dict() -> None:
@@ -114,6 +111,65 @@ def test_expand_factor_group_reserved_label() -> None:
 def test_expand_factor_group_reserved_label_factor() -> None:
     with pytest.raises(TypeError, match="'factor' is reserved and cannot be used as a factor label"):
         expand_factor_group({"factor": ["a", "b"]})
+
+
+def test_expand_factor_group_keyed_values_dict() -> None:
+    assert expand_factor_group({"django_version": {"values": ["django42", "django50"]}}) == ["django42", "django50"]
+
+
+def test_expand_factor_group_keyed_values_not_a_list() -> None:
+    with pytest.raises(TypeError, match="labeled factor group 'django_version' 'values' must be a list, got str"):
+        expand_factor_group({"django_version": {"values": "django42"}})
+
+
+def test_expand_factor_group_keyed_dict_without_prefix_or_values() -> None:
+    with pytest.raises(TypeError, match="labeled factor group 'py_version' maps to a dict with neither a 'prefix'"):
+        expand_factor_group({"py_version": {"start": 12, "stop": 14}})
+
+
+@pytest.mark.parametrize(
+    ("group", "values", "expected"),
+    [
+        pytest.param(
+            {"django_version": {"values": ["django42", "django50"], "default": "django50"}},
+            ["django42", "django50"],
+            "django50",
+            id="values-dict",
+        ),
+        pytest.param(
+            {"prefix": "py3", "start": 12, "stop": 13, "default": "py313"},
+            ["py312", "py313"],
+            "py313",
+            id="range-dict",
+        ),
+        pytest.param({"ecosystem": ["oci", "python"]}, ["oci", "python"], None, id="labeled-list"),
+        pytest.param(["oci", "python"], ["oci", "python"], None, id="plain-list"),
+    ],
+)
+def test_extract_default(group: TomlTypes, values: list[str], expected: str | None) -> None:
+    assert extract_default(group, values) == expected
+
+
+@pytest.mark.parametrize(
+    ("group", "values", "message"),
+    [
+        pytest.param(
+            {"py_version": {"values": ["a"], "default": 3}},
+            ["a"],
+            "factor group 'default' must be a string, got int",
+            id="not-a-string",
+        ),
+        pytest.param(
+            {"py_version": {"values": ["a", "b"], "default": "nope"}},
+            ["a", "b"],
+            "factor group 'default' 'nope' is not one of its factors: a, b",
+            id="not-a-factor",
+        ),
+    ],
+)
+def test_extract_default_invalid(group: TomlTypes, values: list[str], message: str) -> None:
+    with pytest.raises(TypeError, match=message):
+        extract_default(group, values)
 
 
 def test_extract_label_keyed_dict() -> None:
