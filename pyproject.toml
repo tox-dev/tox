@@ -18,6 +18,7 @@ keywords = [
   "virtual",
 ]
 license = "MIT"
+license-files = [ "LICENSE" ]
 maintainers = [
   { name = "Bernát Gábor", email = "gaborjbernat@gmail.com" },
   { name = "Jürgen Gmach", email = "juergen.gmach@googlemail.com" },
@@ -31,7 +32,6 @@ classifiers = [
   "Development Status :: 5 - Production/Stable",
   "Framework :: tox",
   "Intended Audience :: Developers",
-  "License :: OSI Approved :: MIT License",
   "Operating System :: MacOS :: MacOS X",
   "Operating System :: Microsoft :: Windows",
   "Operating System :: POSIX",
