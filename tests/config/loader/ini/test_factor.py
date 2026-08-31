@@ -199,6 +199,11 @@ def test_factor_config_no_env_list_creates_env(tox_ini_conf: ToxIniCreator) -> N
             "py313-django4-2,py313-django5-1",
             id="digit run continuing a factor name is not a range",
         ),
+        pytest.param(
+            "3.10-2,3.11-2",
+            "3.10-2,3.11-2",
+            id="digit run continuing a dotted version is not a range",
+        ),
     ],
 )
 def test_expand_ranges_targets_matched_range(value: str, expected: str) -> None:
@@ -289,6 +294,11 @@ def test_expand_ranges_targets_matched_range(value: str, expected: str) -> None:
             "py313-django4-2,py313-django5-1",
             ["py313-django4-2", "py313-django5-1"],
             id="Don't expand a digit run that continues a factor name",
+        ),
+        pytest.param(
+            "3.10-2,3.11-2",
+            ["3.10-2", "3.11-2"],
+            id="Don't expand a digit run that continues a dotted version",
         ),
         pytest.param(
             "py3{10-11, 13-14}",

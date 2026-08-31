@@ -1,2 +1,2 @@
-Only expand a generative digit range at a factor boundary, so a name like ``py313-django4-2`` is no longer split into
-separate environments.
+A generative digit range now expands only where a factor starts, so an environment such as ``py313-django4-2`` keeps its
+name instead of splitting into ``py313-django4``, ``3`` and ``2`` - by :user:`MohammedAlkindi`.
