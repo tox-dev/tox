@@ -235,8 +235,8 @@ strict = true
 overrides = [ { module = [ "re_assert" ], ignore_missing_imports = true } ]
 
 [tool.pyrefly]
-project-includes = [ "src/tox", "tests/type_check" ]
 python-platform = "linux"  # ty --python-platform all covers the other platforms; keeps pyrefly output identical on every runner
+project-includes = [ "src/tox", "tests/type_check" ]
 search-path = [ "src", "typestubs" ]
 
 [tool.ty]
@@ -255,7 +255,7 @@ ini_options.markers = [
 ]
 ini_options.filterwarnings = [
   "error",
-  "ignore:os.path.commonprefix\\(\\) is deprecated:DeprecationWarning",          # https://github.com/pygments/pygments/issues/3039 https://github.com/pypa/pyproject-hooks/issues/223
+  "ignore:os.path.commonprefix\\(\\) is deprecated:DeprecationWarning",        # https://github.com/pygments/pygments/issues/3039 https://github.com/pypa/pyproject-hooks/issues/223
   "ignore:subprocess .* is still running:ResourceWarning",
   "ignore:unclosed database in <sqlite3.Connection object at:ResourceWarning",
   "ignore:unclosed file <_io.TextIOWrapper:ResourceWarning",
