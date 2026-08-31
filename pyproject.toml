@@ -197,14 +197,18 @@ lint.ignore = [
   "S404",    # Using subprocess is alright.
   "S603",    # Using subprocess is alright.
 ]
+lint.per-file-ignores."src/tox/pytest.py" = [
+  "pytest-fixture-autouse", # the plugin's shared setup fixtures are meant to apply to every test
+]
 lint.per-file-ignores."tests/**/*.py" = [
-  "D",       # don't care about documentation in tests
-  "FBT",     # don't care about booleans as positional arguments in tests
-  "INP001",  # no implicit namespace
-  "PLR0913", # too many arguments to function definition
-  "PLR2004", # Magic value used in comparison, consider replacing with a constant variable
-  "S101",    # asserts allowed in tests
-  "S603",    # `subprocess` call: check for execution of untrusted input
+  "D",                      # don't care about documentation in tests
+  "FBT",                    # don't care about booleans as positional arguments in tests
+  "INP001",                 # no implicit namespace
+  "PLR0913",                # too many arguments to function definition
+  "PLR2004",                # Magic value used in comparison, consider replacing with a constant variable
+  "pytest-fixture-autouse", # shared setup fixtures are meant to apply to every test
+  "S101",                   # asserts allowed in tests
+  "S603",                   # `subprocess` call: check for execution of untrusted input
 ]
 lint.isort = { known-first-party = [
   "tox",
@@ -235,8 +239,8 @@ strict = true
 overrides = [ { module = [ "re_assert" ], ignore_missing_imports = true } ]
 
 [tool.pyrefly]
-project-includes = [ "src/tox", "tests/type_check" ]
 python-platform = "linux"  # ty --python-platform all covers the other platforms; keeps pyrefly output identical on every runner
+project-includes = [ "src/tox", "tests/type_check" ]
 search-path = [ "src", "typestubs" ]
 
 [tool.ty]
@@ -255,7 +259,7 @@ ini_options.markers = [
 ]
 ini_options.filterwarnings = [
   "error",
-  "ignore:os.path.commonprefix\\(\\) is deprecated:DeprecationWarning",          # https://github.com/pygments/pygments/issues/3039 https://github.com/pypa/pyproject-hooks/issues/223
+  "ignore:os.path.commonprefix\\(\\) is deprecated:DeprecationWarning",        # https://github.com/pygments/pygments/issues/3039 https://github.com/pypa/pyproject-hooks/issues/223
   "ignore:subprocess .* is still running:ResourceWarning",
   "ignore:unclosed database in <sqlite3.Connection object at:ResourceWarning",
   "ignore:unclosed file <_io.TextIOWrapper:ResourceWarning",
