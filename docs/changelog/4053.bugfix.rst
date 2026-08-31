@@ -1,0 +1,1 @@
+Only expand a generative digit range at a factor boundary, so a name like ``py313-django4-2`` is no longer split into separate environments.
