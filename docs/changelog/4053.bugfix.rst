@@ -1,2 +1,0 @@
-tox now expands a generative digit range only where a factor starts, so an environment such as ``py313-django4-2`` keeps
-its name rather than becoming ``py313-django4``, ``3`` and ``2`` - by :user:`MohammedAlkindi`.

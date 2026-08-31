@@ -1,2 +1,0 @@
-Improve license metadata (PEP 639), add ``license-files`` and remove license classifier in ``pyproject.toml`` - by
-:user:`mwtoews`.

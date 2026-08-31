@@ -1,3 +1,0 @@
-Document how factors work in one place, covering what a factor is, the characters tox accepts in one, the platform and
-architecture factors that apply to conditions without appearing in a name, and how selecting by factor differs from
-selecting by name - by :user:`gaborbernat`.

@@ -7,6 +7,32 @@
 .. towncrier release notes start
 
 **********************
+ v4.61.2 (2026-08-31)
+**********************
+
+Bug fixes - 4.61.2
+==================
+
+- tox now expands a generative digit range only where a factor starts, so an environment such as ``py313-django4-2``
+  keeps its name rather than becoming ``py313-django4``, ``3`` and ``2`` - by :user:`MohammedAlkindi`. (:issue:`4053`)
+
+Improved documentation - 4.61.2
+===============================
+
+- Document how factors work in one place, covering what a factor is, the characters tox accepts in one, the platform and
+  architecture factors that apply to conditions without appearing in a name, and how selecting by factor differs from
+  selecting by name - by :user:`gaborbernat`. (:issue:`4055`)
+- Give a reference entry to the configuration keys that had none. ``interrupt_post_commands`` runs ``commands_post``
+  after an interrupt, and ``config_file_path``, ``host_python``, ``home`` and ``tox_root_name`` are constants a
+  configuration can substitute - by :user:`gaborbernat`. (:issue:`4056`)
+
+Contributor-facing changes - 4.61.2
+===================================
+
+- Improve license metadata (PEP 639), add ``license-files`` and remove license classifier in ``pyproject.toml`` - by
+  :user:`mwtoews`. (:issue:`4052`)
+
+**********************
  v4.61.1 (2026-08-28)
 **********************
 
