@@ -335,8 +335,8 @@ Platform-dependent commands
 ===========================
 
 The current platform (``sys.platform`` value like ``linux``, ``darwin``, ``win32``) is automatically available as an
-implicit factor in all environments. Use platform factors to run different commands or set different dependencies per
-platform without encoding the platform name in the environment:
+implicit factor in all environments, alongside the machine architecture (see :ref:`factors`). Use platform factors to
+run different commands or set different dependencies per platform without encoding the platform name in the environment:
 
 .. tab:: TOML
 

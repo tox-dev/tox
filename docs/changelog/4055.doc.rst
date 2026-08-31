@@ -1,0 +1,3 @@
+Document how factors work in one place, covering what a factor is, which characters it may hold, the platform and
+architecture factors that reach conditions without appearing in a name, and how selecting by factor differs from
+selecting by name - by :user:`gaborbernat`.
