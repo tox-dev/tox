@@ -29,8 +29,8 @@ Improved documentation - 4.61.2
 Contributor-facing changes - 4.61.2
 ===================================
 
-- Improve license metadata (PEP 639), add ``license-files`` and remove license classifier in ``pyproject.toml`` - by
-  :user:`mwtoews`. (:issue:`4052`)
+- Declare license metadata per PEP 639, adding ``license-files`` and dropping the license classifier in
+  ``pyproject.toml`` - by :user:`mwtoews`. (:issue:`4052`)
 
 **********************
  v4.61.1 (2026-08-28)
@@ -39,13 +39,13 @@ Contributor-facing changes - 4.61.2
 Bug fixes - 4.61.1
 ==================
 
-- Declare ``prefix`` inside the labeled factor group's ``not`` clause of the generated JSON Schema, so the published
-  schema compiles under the strict mode SchemaStore validates with - by :user:`gaborbernat`. (:issue:`4051`)
+- Publish a JSON Schema that compiles under SchemaStore's validator again, so editors pick up the configuration keys
+  added since 4.56 - by :user:`gaborbernat`. (:issue:`4051`)
 
 Contributor-facing changes - 4.61.1
 ===================================
 
-- Check tox's JSON Schema against SchemaStore's own validator on every pull request that touches it, and before the
+- Check tox's JSON Schema with SchemaStore's own validator on every pull request that changes it, and again before the
   release sync opens a pull request there - by :user:`gaborbernat`. (:issue:`4051`)
 
 **********************
@@ -58,7 +58,7 @@ Features - 4.61.0
 - A labeled factor group can now declare a ``default`` for ``{factor:label}`` to fall back on when no factor of that
   group is active in the environment name. Setting ``TOX_FACTOR_<label>`` resolves that label to a given value for a
   single run - by :user:`gaborbernat`. (:issue:`4045`)
-- A factor range can now carry a label by nesting it under one, as in ``factors = [{ py_version = { prefix = "3.", start
+- A factor range now takes a label when you nest it under one, as in ``factors = [{ py_version = { prefix = "3.", start
   = 12, stop = 14 } }]``, which makes ``{factor:py_version}`` available for ranges - by :user:`gaborbernat`.
   (:issue:`4046`)
 
