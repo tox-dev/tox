@@ -186,9 +186,9 @@ def expand_ranges(value: str) -> str:
     return re.sub(
         r"""
         (                       # outer capture group
-            ( \d+ ) - ( \d+ )   # closed range: start-end
+            (?<! [\w.] ) ( \d+ ) - ( \d+ )   # closed range: start-end
             |
-            ( \d+ ) -           # right-open range: start-
+            (?<! [\w.] ) ( \d+ ) -           # right-open range: start-
             |
             (?<= [{,] ) - ( \d+ )  # left-open range: -end (preceded by { or ,)
             |
