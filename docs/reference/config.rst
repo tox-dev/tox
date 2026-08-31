@@ -567,6 +567,25 @@ the top level of ``tox.toml``. Placing these options in an environment section (
     The root directory for the tox project (where the configuration file is found).
 
 .. conf::
+    :keys: config_file_path
+    :constant:
+
+    A constant holding the path of the configuration file tox loaded.
+
+.. conf::
+    :keys: tox_root_name
+    :constant:
+
+    A constant holding the name of the :ref:`tox_root` directory. Pairs with ``{home}`` to give each project its own
+    location outside the project tree, as shown under :ref:`work_dir`.
+
+.. conf::
+    :keys: home
+    :constant:
+
+    A constant holding the user's home directory.
+
+.. conf::
     :keys: work_dir, toxworkdir
     :default: {tox_root}/.tox
     :version_added: 1.0
@@ -645,6 +664,13 @@ the top level of ``tox.toml``. Placing these options in an environment section (
     :version_added: 4.17
 
     A constant holding the platform of the tox runtime environment.
+
+.. conf::
+    :keys: host_python
+    :constant:
+
+    A constant holding the path of the Python interpreter running tox itself, which is not the interpreter of any tox
+    environment.
 
 Python language core options
 ============================
@@ -1383,6 +1409,15 @@ Run
 
     Commands to run after running the :ref:`commands`. Execute regardless of the outcome of both :ref:`commands` and
     :ref:`commands_pre`. All evaluation and configuration logic applies from :ref:`commands`.
+
+.. conf::
+    :keys: interrupt_post_commands
+    :default: false
+
+    Run :ref:`commands_post` even when you interrupt the run with :kbd:`Ctrl-C`, so teardown such as stopping a
+    container or removing a fixture database still happens. A second :kbd:`Ctrl-C` gives up on those commands too.
+
+    By default an interrupt stops the environment where it is, and :ref:`commands_post` does not run.
 
 .. conf::
     :keys: change_dir, changedir
