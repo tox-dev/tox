@@ -1242,8 +1242,8 @@ To invert the exit code (fail if the command returns 0, succeed otherwise), use 
  Clean up after an interrupt
 *****************************
 
-An interrupt with :kbd:`Ctrl-C` stops the environment where it stands, so a container left running or a fixture database
-left behind stays that way. Set :ref:`interrupt_post_commands` to give :ref:`commands_post` a chance to run first:
+Pressing :kbd:`Ctrl-C` stops the environment at once, leaving a started container running and a fixture database in
+place. Set :ref:`interrupt_post_commands` to run :ref:`commands_post` before tox exits:
 
 .. tab:: TOML
 
