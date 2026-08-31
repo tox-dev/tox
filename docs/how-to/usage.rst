@@ -191,7 +191,7 @@ location can be changed via the ``TOX_CONFIG_FILE`` environment variable.
     # Force editable install for a specific environment
     tox run -e 3.13 -x "testenv:3.13.package=editable"
 
-An override value takes substitutions, so it can reach the same values the configuration file can:
+tox substitutes into an override value, so it reaches the same values a configuration file can:
 
 .. code-block:: bash
 
@@ -1171,7 +1171,7 @@ To override a specific generated environment, add an explicit ``[env.NAME]`` sec
 
 The inheritance chain is: ``[env.{name}]`` > ``[env_base.{template}]`` > ``[env_run_base]``.
 
-Nest a group under a name to label it, so ``{factor:label}`` reaches the value the current environment picked. Both
+Nest a group under a name to label it, so ``{factor:label}`` resolves to the value in the current environment name. Both
 lists and range dicts take a label:
 
 .. code-block:: toml

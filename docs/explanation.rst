@@ -345,25 +345,25 @@ have labeled one shape and left the other out. Nesting covers both with one rule
 and the value describes its factors. Adding a shape later means describing another value, not teaching every earlier
 shape one more key.
 
-A labeled factor value is part of the environment name, which is what makes ``tox run -e test-3.14-django50`` mean one
-thing. That leaves no way to name a version the matrix does not list on the command line, since ``>=4.2,<4.3`` cannot
-serve as a factor. ``TOX_FACTOR_<label>`` sidesteps that by leaving the name alone. The run goes through the environment
-the matrix generated, and only ``{factor:label}`` resolves elsewhere. The cost is a name that no longer tells the whole
-story, so the override suits a one-off check rather than a recorded configuration.
+A labeled factor value is part of the environment name, so ``tox run -e test-3.14-django50`` means one thing. That
+leaves no way to name a version the matrix does not list on the command line, since ``>=4.2,<4.3`` cannot be a factor.
+Set ``TOX_FACTOR_<label>`` instead, which leaves the name alone. tox runs the environment the matrix generated, and only
+``{factor:label}`` resolves elsewhere. The cost is a name that no longer records everything about the run, so the
+override suits a one-off check rather than a recorded configuration.
 
 For the configuration reference, see :ref:`env-base-templates`. For practical recipes, see :ref:`howto_env_base_matrix`.
 
 Overrides and substitution
 ==========================
 
-An override arrives as one command line string, whatever the configuration file format, so tox converts it with the ini
-string rules rather than the TOML ones. That is why ``-x env_run_base.commands=pytest tests`` works in a TOML project
-even though the file itself spells commands as a list of lists.
+tox receives an override as one command line string, whatever the configuration file format, so it converts the value
+with the ini string rules rather than the TOML ones. That is why ``-x env_run_base.commands=pytest tests`` works in a
+TOML project even though the file itself spells commands as a list of lists.
 
-The value still goes through the substitution pass belonging to the loader it overrides, which is what lets
-``{posargs}`` and ``{env:VAR}`` resolve inside it. Skipping that pass would make an override the one place in tox where
-a ``{...}`` reference means nothing, and a command overridden for a single run would stop forwarding the arguments given
-to it with no sign that it had.
+tox still runs the value through the substitution pass of the loader it overrides, so ``{posargs}`` and ``{env:VAR}``
+resolve inside it. Skipping that pass would make an override the one place in tox where a ``{...}`` reference means
+nothing, and a command overridden for a single run would stop forwarding the arguments given to it with no sign that it
+had.
 
 .. _work-dir-placement:
 

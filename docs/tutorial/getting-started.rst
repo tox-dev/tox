@@ -212,8 +212,8 @@ environments from factor combinations:
 This generates ``test-3.13`` and ``test-3.14``, each inheriting deps and commands from the template. The template itself
 inherits from ``env_run_base``, so global defaults still apply.
 
-Ranges save spelling out every version, and nesting one under a name lets the rest of the section refer back to
-whichever value the environment picked:
+Ranges save spelling out every version, and nesting one under a name lets the rest of the section refer to the value in
+the environment name:
 
 .. code-block:: toml
 
@@ -223,7 +223,7 @@ whichever value the environment picked:
     commands = [["pytest"]]
     description = "run the tests under Python {factor:py_version}"
 
-A group can also name the value to assume when an environment carries none of its factors, which saves repeating a
+A group can also name the value to assume when an environment contains none of its factors, which saves repeating a
 fallback at every mention. To check one run against a version the matrix does not list, set ``TOX_FACTOR_py_version``
 for that run.
 

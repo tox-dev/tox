@@ -239,7 +239,7 @@ labeled group is an active factor in the current environment. Every factor group
 For ``sync-oci-pw``, the description resolves to ``Sync oci artifacts to pw`` and the command receives ``--ecosystem
 oci``.
 
-A range dict carries a label when you nest it under one:
+A range dict takes a label when you nest it under one:
 
 .. code-block:: toml
 
@@ -2366,7 +2366,7 @@ An override value goes through the same substitution pass as a value written in 
 
     $ tox -x env_run_base.commands='pytest {posargs:tests}' -e py -- -k slow
 
-This runs ``pytest -k slow``. Overrides carry a command line string whatever the configuration file format, so the ini
+This runs ``pytest -k slow``. An override is a command line string whatever the configuration file format, so the ini
 spelling of a substitution applies in a TOML project as well.
 
 Overrides propagate through references
