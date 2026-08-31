@@ -1,3 +1,3 @@
-Give a reference entry to the configuration keys that had none. ``interrupt_post_commands`` keeps ``commands_post``
-running through an interrupt, and ``config_file_path``, ``host_python``, ``home`` and ``tox_root_name`` are constants a
-configuration can substitute - by :user:`gaborbernat`.
+Give a reference entry to the configuration keys that had none. ``interrupt_post_commands`` runs ``commands_post`` after
+an interrupt, and ``config_file_path``, ``host_python``, ``home`` and ``tox_root_name`` are constants a configuration
+can substitute - by :user:`gaborbernat`.

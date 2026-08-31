@@ -158,8 +158,8 @@ def _subschemas(node: JsonValue, pointer: str = "#") -> Iterator[tuple[str, Mapp
 
 
 def test_schema_required_properties_are_declared(committed_schema: Mapping[str, JsonValue]) -> None:
-    # SchemaStore compiles the published schema with ajv strict mode, which rejects a required property that the
-    # schema never declares, so catch it here rather than in a release-time sync PR (see tox-dev/tox#4051)
+    # ajv strict mode, which SchemaStore runs, rejects a required property the schema never declares; catching that
+    # here beats hearing it from a release sync (tox-dev/tox#4051)
     undeclared: list[str] = []
     for pointer, schema in _subschemas(committed_schema):
         required = schema.get("required")

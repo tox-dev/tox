@@ -1,2 +1,2 @@
-A generative digit range now expands only where a factor starts, so an environment such as ``py313-django4-2`` keeps its
-name instead of splitting into ``py313-django4``, ``3`` and ``2`` - by :user:`MohammedAlkindi`.
+tox now expands a generative digit range only where a factor starts, so an environment such as ``py313-django4-2`` keeps
+its name rather than becoming ``py313-django4``, ``3`` and ``2`` - by :user:`MohammedAlkindi`.

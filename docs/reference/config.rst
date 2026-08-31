@@ -576,8 +576,8 @@ the top level of ``tox.toml``. Placing these options in an environment section (
     :keys: tox_root_name
     :constant:
 
-    A constant holding the name of the :ref:`tox_root` directory. Pairs with ``{home}`` to give each project its own
-    location outside the project tree, as shown under :ref:`work_dir`.
+    A constant holding the name of the :ref:`tox_root` directory. Combine it with ``{home}`` to give each project its
+    own location outside the project tree, as :ref:`work_dir` shows.
 
 .. conf::
     :keys: home
@@ -669,7 +669,7 @@ the top level of ``tox.toml``. Placing these options in an environment section (
     :keys: host_python
     :constant:
 
-    A constant holding the path of the Python interpreter running tox itself, which is not the interpreter of any tox
+    A constant holding the path of the Python interpreter running tox itself, rather than that of any tox
     environment.
 
 Python language core options
@@ -1414,10 +1414,10 @@ Run
     :keys: interrupt_post_commands
     :default: false
 
-    Run :ref:`commands_post` even when you interrupt the run with :kbd:`Ctrl-C`, so teardown such as stopping a
-    container or removing a fixture database still happens. A second :kbd:`Ctrl-C` gives up on those commands too.
+    Run :ref:`commands_post` even after you interrupt with :kbd:`Ctrl-C`, so teardown such as stopping a container or
+    removing a fixture database still happens. A second :kbd:`Ctrl-C` gives up on those commands too.
 
-    By default an interrupt stops the environment where it is, and :ref:`commands_post` does not run.
+    By default an interrupt stops the environment at once, and :ref:`commands_post` does not run.
 
 .. conf::
     :keys: change_dir, changedir
@@ -2443,27 +2443,27 @@ passes through literally.
  Factors
 *********
 
-An environment name is a list of factors joined by ``-``. ``py313-django50-cov`` carries the factors ``py313``,
-``django50`` and ``cov``. Factors are what let one environment section serve a whole matrix: combinations of them decide
-which environments exist, and each setting can pick a value per factor.
+An environment name is a list of factors joined by ``-``. ``py313-django50-cov`` has the factors ``py313``, ``django50``
+and ``cov``. One environment section then covers a whole matrix. Combinations of factors decide which environments
+exist, and each setting picks a value per factor.
 
 Naming
 ======
 
-A factor holds letters, digits, underscores and dots, so ``3.14`` and ``django_5`` are both names tox accepts. ``-``
-separates factors and ``,`` separates environment names, so a factor can contain neither:
+tox accepts letters, digits, underscores and dots in a factor, so ``3.14`` and ``django_5`` are both valid. ``-``
+separates factors and ``,`` separates environment names, so a factor contains neither:
 
 .. code-block:: ini
 
     [tox]
     env_list = 3.14-django50, 3.14-django42, lint
 
-tox compares factors as plain text, so ``*`` and ``?`` sit in a name without matching anything.
+tox compares factors as plain text, so ``*`` and ``?`` in a name match nothing.
 
 Implicit factors
 ================
 
-Two factors reach conditions without appearing in an environment name:
+tox adds two factors to every condition that no environment name contains:
 
 - the platform, which :data:`sys.platform` reports as ``linux``, ``darwin`` or ``win32``
 - the machine architecture, such as ``arm64`` or ``x86_64``, unless the environment name already carries one
@@ -2475,22 +2475,21 @@ Two factors reach conditions without appearing in an environment name:
         pytest
         linux: pytest-xvfb
 
-Both belong to the environment tox is configuring, not to its name, so neither can select an environment: ``tox run -f
-darwin`` matches nothing.
+Neither is part of an environment name, so neither can select an environment. ``tox run -f darwin`` matches nothing.
 
 Where factors apply
 ===================
 
-Factors reach settings through conditions. INI writes a condition as a prefix, TOML as a ``replace = "if"`` table.
-:ref:`conditional-settings` and :ref:`conditional-value-reference` cover the syntax of each.
+A condition applies a setting only in environments containing a factor. INI writes it as a prefix, TOML as a ``replace =
+"if"`` table; :ref:`conditional-settings` and :ref:`conditional-value-reference` cover the syntax of each.
 
-Factors create environments through generation. INI expands braces in ``env_list`` and in section names, TOML composes
-structured dicts. :ref:`generative-environment-list` covers both.
+Generation creates environments from factor combinations. INI expands braces in ``env_list`` and in section names, TOML
+composes structured dicts; :ref:`generative-environment-list` covers both.
 
 Selecting environments by factor
 ================================
 
-``-f`` runs every environment whose name carries the factors you name. Given ``env_list = 3.14-django50, 3.14-django42,
+``-f`` runs the environments whose name contains the factors you give. Given ``env_list = 3.14-django50, 3.14-django42,
 lint``:
 
 .. code-block:: console
@@ -2499,8 +2498,8 @@ lint``:
     $ tox run -f 3.14 django50     # 3.14-django50, since both factors must be present
     $ tox run -f django50 -f lint  # 3.14-django50 and lint, since either group will do
 
-Naming several factors after one ``-f`` requires all of them; repeating ``-f`` accepts any of the groups. Use ``-e`` to
-name environments outright instead.
+Several factors after one ``-f`` require all of them; repeating ``-f`` accepts any of the groups. Use ``-e`` to name
+environments outright instead.
 
 Pitfalls
 ========
@@ -2508,7 +2507,7 @@ Pitfalls
 A condition needs whitespace after its colon. ``django50: pytest`` is a condition. ``django50:pytest`` is an ordinary
 value holding a colon, and tox installs a dependency by that name.
 
-In INI, naming a factor in a condition also teaches tox that environment name. A ``[testenv]`` holding ``docs: sphinx``
+In INI, tox also treats a factor named in a condition as an environment name. A ``[testenv]`` with ``docs: sphinx``
 answers to ``tox run -e docs`` even when ``docs`` appears in no ``env_list``.
 
 ***********
