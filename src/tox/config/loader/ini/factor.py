@@ -186,9 +186,12 @@ def expand_ranges(value: str) -> str:
     return re.sub(
         r"""
         (                       # outer capture group
-            ( \d+ ) - ( \d+ )   # closed range: start-end
-            |
-            ( \d+ ) -           # right-open range: start-
+            (?<! [\w.] )        # a range opens a factor, so digits carrying on a name are not one (py313-django4-2)
+            (?:
+                ( \d+ ) - ( \d+ ) # closed range: start-end
+                |
+                ( \d+ ) -         # right-open range: start-
+            )
             |
             (?<= [{,] ) - ( \d+ )  # left-open range: -end (preceded by { or ,)
             |

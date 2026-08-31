@@ -194,6 +194,16 @@ def test_factor_config_no_env_list_creates_env(tox_ini_conf: ToxIniCreator) -> N
         pytest.param("x2-4y-{2-4}", "x2-4y-{2,3,4}", id="literal range text before an identical braced range"),
         pytest.param("{2-4}", "{2,3,4}", id="braced range only"),
         pytest.param("a{1-2}-b{1-2}", "a{1,2}-b{1,2}", id="two identical braced ranges"),
+        pytest.param(
+            "py313-django4-2,py313-django5-1",
+            "py313-django4-2,py313-django5-1",
+            id="digit run continuing a factor name is not a range",
+        ),
+        pytest.param(
+            "3.10-2,3.11-2",
+            "3.10-2,3.11-2",
+            id="digit run continuing a dotted version is not a range",
+        ),
     ],
 )
 def test_expand_ranges_targets_matched_range(value: str, expected: str) -> None:
@@ -280,6 +290,21 @@ def test_expand_ranges_targets_matched_range(value: str, expected: str) -> None:
         pytest.param("foo{a-11}", ["fooa-11"], id="Don't expand alpha-umerical range"),
         pytest.param("foo{13-a}", ["foo13-a"], id="Don't expand numerical-alpha range"),
         pytest.param("foo{a-b}", ["fooa-b"], id="Don't expand non-numerical range"),
+        pytest.param(
+            "py313-django4-2,py313-django5-1",
+            ["py313-django4-2", "py313-django5-1"],
+            id="Don't expand a digit run that continues a factor name",
+        ),
+        pytest.param(
+            "3.10-2,3.11-2",
+            ["3.10-2", "3.11-2"],
+            id="Don't expand a digit run that continues a dotted version",
+        ),
+        pytest.param(
+            "py3{10-11, 13-14}",
+            ["py310", "py311", "py313", "py314"],
+            id="Expand a range that follows a comma and whitespace",
+        ),
     ],
 )
 def test_env_list_expands_ranges(env_list: str, expected_envs: list[str], tox_ini_conf: ToxIniCreator) -> None:
