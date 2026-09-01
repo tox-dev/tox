@@ -1,0 +1,2 @@
+A ``set_env`` environment file (``file|.env``) is now read as UTF-8 instead of the platform's locale encoding, so
+non-ASCII values no longer arrive mangled on Windows - by :user:`MohammedAlkindi`.
