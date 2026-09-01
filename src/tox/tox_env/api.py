@@ -17,6 +17,7 @@ from tox.execute.request import ExecuteRequest
 from tox.tox_env.errors import Fail, Recreate, Skip
 from tox.tox_env.info import Info
 from tox.util.path import ensure_cachedir_tag, ensure_empty_dir, ensure_gitignore
+from tox.util.python_envs import forget_python_env
 from tox.util.redact import redact_value
 
 if TYPE_CHECKING:
@@ -347,6 +348,8 @@ class ToxEnv(ABC):  # ruff:ignore[too-many-public-methods]
         if env_dir.exists():
             LOGGER.warning("remove tox env folder %s", env_dir)
             ensure_empty_dir(env_dir, except_filename="file.lock")
+            if self.core["python_envs"]:  # drop it so nothing points at the environment while it rebuilds
+                forget_python_env(cast("Path", self.core["tox_root"]), cast("Path", self.core["work_dir"]), env_dir)
         self._log_id = 0  # we deleted logs, so start over counter
         self.cache.reset()
         self._run_state.update({"setup": False, "clean": True})

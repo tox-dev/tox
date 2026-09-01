@@ -147,7 +147,7 @@ class ToxProject:
     @staticmethod
     def _setup_files(dest: Path, base: Path | None, content: dict[str, Any]) -> None:
         if base is not None:
-            shutil.copytree(str(base), str(dest), ignore=shutil.ignore_patterns(".tox"))
+            shutil.copytree(str(base), str(dest), ignore=shutil.ignore_patterns(".tox", ".python-envs"))
         dest.mkdir(exist_ok=True)
         for key, value in content.items():
             if not isinstance(key, str):

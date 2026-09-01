@@ -1,0 +1,6 @@
+Catalog the created tox environments in a :PEP:`832` ``.python-envs`` file next to the configuration file, so that
+editors such as VS Code or PyCharm offer them as interpreters instead of asking you for a path under ``.tox``. The
+default environment comes last, and tox prefers one named ``dev`` for that spot, then one that installs the project in
+development mode, then the first of :ref:`env_list`. tox leaves the lines other tools wrote alone, and takes an
+environment out of the catalog while it recreates it. Set :ref:`python_envs` to ``false`` to skip the file - by
+:user:`gaborbernat`. (:issue:`4013`)
