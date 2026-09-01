@@ -201,6 +201,14 @@ def test_set_env_environment_file(
     }
 
 
+def test_set_env_environment_file_is_utf8(eval_set_env: EvalSetEnv) -> None:
+    set_env = eval_set_env(
+        "[testenv]\npackage=skip\nset_env=file|.env",
+        extra_files={".env": "GREETING=Grüße\n"},
+    )
+    assert set_env.load("GREETING") == "Grüße"
+
+
 @pytest.mark.parametrize(
     ("of_type", "config"),
     [
