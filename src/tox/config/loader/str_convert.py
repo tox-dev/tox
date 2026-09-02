@@ -55,7 +55,7 @@ class StrConvert(Convert[str]):
 
     @staticmethod
     def _win32_process_path_backslash(value: str, escape: str, special_chars: str) -> str:
-        """Escape backslash in value that is not followed by a special character.
+        r"""Escape backslash in value that is not followed by a special character.
 
         This allows windows paths to be written without double backslash, while retaining the POSIX backslash escape
         semantics for quotes and escapes.
