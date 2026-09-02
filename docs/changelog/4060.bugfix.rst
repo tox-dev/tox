@@ -1,0 +1,2 @@
+A UNC or extended-length path in ``commands`` no longer loses one of its two leading backslashes, so
+``\\server\share\file.txt`` survives tokenization on Windows - by :user:`MohammedAlkindi`.
