@@ -60,11 +60,11 @@ class StrConvert(Convert[str]):
         This allows windows paths to be written without double backslash, while retaining the POSIX backslash escape
         semantics for quotes and escapes.
 
-        A backslash pair at the very start of a word, immediately followed by more path text, is the exception: a
-        UNC path (``\\\\server\\share``) or an extended-length path prefix requires exactly two literal leading
-        backslashes, so that leading pair must survive as-is rather than being collapsed the way an interior
-        ``\\\\`` (the POSIX-escaped form of a single literal backslash) is elsewhere in a path. A bare ``\\\\`` with
-        nothing (or only whitespace) after it is not a path prefix, and keeps the ordinary collapsing behavior.
+        A backslash pair at the very start of a word, immediately followed by more path text, is the exception: a UNC
+        path (``\\server\share``) or an extended-length path prefix requires exactly two literal leading backslashes, so
+        that leading pair must survive as-is rather than being collapsed the way an interior ``\\`` (the POSIX-escaped
+        form of a single literal backslash) is elsewhere in a path. A bare ``\\`` with nothing (or only whitespace)
+        after it is not a path prefix, and keeps the ordinary collapsing behavior.
 
         """
         result = []
