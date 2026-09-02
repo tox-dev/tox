@@ -159,6 +159,11 @@ WINDOWS_PATH_ARGS = [
 WINDOWS_TRAILING_SEP_ARGS = [
     (r"command path\to\trailing\sep\ -b foo", ["command", "path\\to\\trailing\\sep\\", "-b", "foo"]),
 ]
+WINDOWS_UNC_PATH_ARGS = [
+    (r"xcopy \\server\share\file.txt .", ["xcopy", r"\\server\share\file.txt", "."]),
+    (r"\\server\share", [r"\\server\share"]),
+    (r"copy a \\srv\share\a b", ["copy", "a", r"\\srv\share\a", "b"]),
+]
 WACKY_SLASH_ARGS = [
     ("\\\\\\", ["\\\\\\"]),
     (" \\'\\'\\ '", [" \\'\\'\\ '"]),
@@ -224,6 +229,15 @@ def test_shlex_platform_specific(sys_platform: str, value: str, expected: list[s
 def test_shlex_win32_trailing_sep(sys_platform: str, value: str, expected: list[str]) -> None:
     if sys_platform != "win32":
         pytest.skip("trailing path separator only relevant on Windows")
+    result = StrConvert().to_command(value)
+    assert result is not None
+    assert result.args == expected
+
+
+@pytest.mark.parametrize(("value", "expected"), WINDOWS_UNC_PATH_ARGS)
+def test_shlex_win32_unc_path(sys_platform: str, value: str, expected: list[str]) -> None:
+    if sys_platform != "win32":
+        pytest.skip("UNC path prefix only relevant on Windows")
     result = StrConvert().to_command(value)
     assert result is not None
     assert result.args == expected
