@@ -55,22 +55,48 @@ class StrConvert(Convert[str]):
 
     @staticmethod
     def _win32_process_path_backslash(value: str, escape: str, special_chars: str) -> str:
-        """Escape backslash in value that is not followed by a special character.
+        r"""Escape backslash in value that is not followed by a special character.
 
         This allows windows paths to be written without double backslash, while retaining the POSIX backslash escape
         semantics for quotes and escapes.
 
+        A backslash pair at the very start of a word, immediately followed by more path text, is the exception: a UNC
+        path (``\\server\share``) or an extended-length path prefix requires exactly two literal leading backslashes, so
+        that leading pair must survive as-is rather than being collapsed the way an interior ``\\`` (the POSIX-escaped
+        form of a single literal backslash) is elsewhere in a path. A bare ``\\`` with nothing (or only whitespace)
+        after it is not a path prefix, and keeps the ordinary collapsing behavior.
+
         """
         result = []
-        for ix, char in enumerate(value):
+        ix = 0
+        at_word_start = True
+        n = len(value)
+        while ix < n:
+            char = value[ix]
+            if char.isspace():
+                result.append(char)
+                at_word_start = True
+                ix += 1
+                continue
+            starts_backslash_pair = at_word_start and char == escape and value[ix + 1 : ix + 2] == escape
+            if starts_backslash_pair:
+                after_run = value[ix + 2 : ix + 3]
+                if after_run and after_run != escape and not after_run.isspace():
+                    # exactly two leading backslashes starting a word, followed by more text: a UNC/extended-path
+                    # prefix - keep both backslashes literal instead of collapsing them
+                    result.extend((escape * 2, escape * 2))
+                    ix += 2
+                    at_word_start = False
+                    continue
             result.append(char)
+            at_word_start = False
             if char == escape:
                 last_char = value[ix - 1 : ix]
-                if last_char == escape:
-                    continue
-                next_char = value[ix + 1 : ix + 2]
-                if next_char not in {escape, *special_chars}:
-                    result.append(escape)  # escape escapes that are not themselves escaping a special character
+                if last_char != escape:
+                    next_char = value[ix + 1 : ix + 2]
+                    if next_char not in {escape, *special_chars}:
+                        result.append(escape)  # escape escapes that are not themselves escaping a special character
+            ix += 1
         return "".join(result)
 
     @staticmethod
