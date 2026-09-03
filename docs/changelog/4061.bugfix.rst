@@ -1,0 +1,3 @@
+A ``dependency-groups`` self-reference such as ``demo_pkg[extra_1]`` now matches the project name and the
+``project.optional-dependencies`` keys after PEP 503 normalization, so a non-canonical spelling no longer fails
+with ``extra not found`` nor reaches pip unresolved - by :user:`MohammedAlkindi`.
