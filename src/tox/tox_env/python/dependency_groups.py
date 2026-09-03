@@ -53,9 +53,10 @@ def unwrap_nested_extras(
     if not project_name:
         return dependencies
 
+    normed_project_name = canonicalize_name(project_name)
     extras_to_unwrap: set[Requirement] = set()
     for dependency in dependencies:
-        if dependency.name == project_name:
+        if canonicalize_name(dependency.name) == normed_project_name:
             extras_to_unwrap.add(dependency)
     if not extras_to_unwrap:
         return dependencies
@@ -86,7 +87,10 @@ def resolve(root: Path, groups: set[str]) -> set[Requirement]:
         result = result.union(_resolve_dependency_group(dependency_groups, group, original_names_lookup))
 
     project_name = pyproject.get("project", {}).get("name")
-    optional_dependencies = pyproject.get("project", {}).get("optional-dependencies", {})
+    optional_dependencies: dict[str, list[str]] = {
+        canonicalize_name(name): deps
+        for name, deps in pyproject.get("project", {}).get("optional-dependencies", {}).items()
+    }
 
     return unwrap_nested_extras(optional_dependencies, project_name, result, set())
 
