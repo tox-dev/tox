@@ -116,6 +116,46 @@ def test_config_in_toml_replace_from_section_absolute(tox_project: ToxProjectCre
     outcome.assert_out_err("[testenv:B]\ndescription = o\n", "")
 
 
+def test_config_in_toml_env_list_bare_labeled_factor_description(tox_project: ToxProjectCreator) -> None:
+    project = tox_project({
+        "tox.toml": textwrap.dedent("""\
+            env_list = [
+                { ecosystem = ["oci", "python"] },
+            ]
+
+            [env_run_base]
+            package = "skip"
+            description = "Sync {factor:ecosystem} artifacts"
+            commands = [["python", "-c", "print('ok')"]]
+        """),
+    })
+    outcome = project.run("c", "-e", "oci", "-k", "description")
+    outcome.assert_success()
+    outcome.assert_out_err("[testenv:oci]\ndescription = Sync oci artifacts\n", "")
+    outcome = project.run("c", "-e", "python", "-k", "description")
+    outcome.assert_success()
+    outcome.assert_out_err("[testenv:python]\ndescription = Sync python artifacts\n", "")
+
+
+def test_config_in_toml_env_list_bare_labeled_factor_default(tox_project: ToxProjectCreator) -> None:
+    project = tox_project({
+        "tox.toml": textwrap.dedent("""\
+            env_list = [
+                { ecosystem = { values = ["oci", "python"], default = "oci" } },
+            ]
+
+            [env_run_base]
+            package = "skip"
+
+            [env.lint]
+            description = "Lint {factor:ecosystem} artifacts"
+        """),
+    })
+    outcome = project.run("c", "-e", "lint", "-k", "description")
+    outcome.assert_success()
+    outcome.assert_out_err("[testenv:lint]\ndescription = Lint oci artifacts\n", "")
+
+
 def test_config_in_toml_env_list_keyed_factor_description(tox_project: ToxProjectCreator) -> None:
     project = tox_project({
         "tox.toml": textwrap.dedent("""\

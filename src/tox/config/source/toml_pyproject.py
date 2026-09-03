@@ -219,7 +219,9 @@ def _extract_env_list_labels(env_list_raw: TomlTypes) -> dict[str, FactorGroup]:
         return {}
     labels: dict[str, FactorGroup] = {}
     for item in env_list_raw:
-        if isinstance(item, dict) and "product" in item:
+        if not isinstance(item, dict):
+            continue
+        if "product" in item:
             raw_groups = item["product"]
             if not isinstance(raw_groups, list):
                 continue
@@ -229,6 +231,9 @@ def _extract_env_list_labels(env_list_raw: TomlTypes) -> dict[str, FactorGroup]:
                 labels[str(idx)] = group
                 if (label := extract_label(g)) is not None:
                     labels[label] = group
+        elif (label := extract_label(item)) is not None:  # a bare labeled dict is its own single factor group
+            values = expand_factor_group(item)
+            labels[label] = FactorGroup(values=values, default=extract_default(item, values))
     return labels
 
 

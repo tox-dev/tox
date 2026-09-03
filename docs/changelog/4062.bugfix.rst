@@ -1,0 +1,2 @@
+Register the ``{factor:label}`` name for a bare labeled dict in ``env_list``, as the configuration reference documents;
+previously only a labeled group nested inside a ``product`` dict registered one - by :user:`dylanpulver`.
