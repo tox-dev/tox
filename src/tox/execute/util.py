@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import shlex
 from pathlib import Path
 
 
@@ -25,7 +26,11 @@ def shebang(exe: str) -> list[str] | None:
         decoded = shebang_line.decode("UTF-8")
     except UnicodeDecodeError:
         return None
-    return [i.strip() for i in decoded.strip().split() if i.strip()]
+    try:
+        parts = shlex.split(decoded.strip(), posix=True)
+    except ValueError:
+        return None
+    return parts or None
 
 
 __all__ = [

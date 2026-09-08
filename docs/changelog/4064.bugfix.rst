@@ -1,0 +1,2 @@
+Shebang parsing now uses ``shlex``, so a quoted interpreter path that contains spaces is kept as one argument when
+``TOX_LIMITED_SHEBANG`` rewrites the invocation - by :user:`r3wretrhy`.

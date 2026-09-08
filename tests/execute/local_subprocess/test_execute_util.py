@@ -14,6 +14,12 @@ def test_shebang_found(tmp_path: Path) -> None:
     assert shebang(str(script_path)) == ["/bin/python", "-c"]
 
 
+def test_shebang_quoted_interpreter_path(tmp_path: Path) -> None:
+    script_path = tmp_path / "a"
+    script_path.write_text('#! "/Program Files/Python/python.exe" -c\n', encoding="utf-8")
+    assert shebang(str(script_path)) == ["/Program Files/Python/python.exe", "-c"]
+
+
 def test_shebang_file_missing(tmp_path: Path) -> None:
     script_path = tmp_path / "a"
     assert shebang(str(script_path)) is None
