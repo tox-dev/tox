@@ -1,1 +1,0 @@
-Register factor labels and defaults for bare labeled dicts in ``env_list`` - by :user:`dylanpulver`.

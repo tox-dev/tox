@@ -1,1 +1,0 @@
-Preserve UNC and extended-length paths in Windows commands, including quoted paths - by :user:`MohammedAlkindi`.

@@ -7,6 +7,20 @@
 .. towncrier release notes start
 
 **********************
+ v4.61.3 (2026-09-08)
+**********************
+
+Bug fixes - 4.61.3
+==================
+
+- A ``set_env`` environment file (``file|.env``) is now read as UTF-8 instead of the platform's locale encoding, so
+  non-ASCII values no longer arrive mangled on Windows - by :user:`MohammedAlkindi`. (:issue:`4059`)
+- Preserve UNC and extended-length paths in Windows commands, including quoted paths - by :user:`MohammedAlkindi`.
+  (:issue:`4060`)
+- Normalize project and extra names in dependency-group self-references - by :user:`MohammedAlkindi`. (:issue:`4061`)
+- Register factor labels and defaults for bare labeled dicts in ``env_list`` - by :user:`dylanpulver`. (:issue:`4062`)
+
+**********************
  v4.61.2 (2026-08-31)
 **********************
 
