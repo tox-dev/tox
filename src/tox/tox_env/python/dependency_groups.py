@@ -11,6 +11,9 @@ from tox.tox_env.errors import Fail
 
 if TYPE_CHECKING:
     from pathlib import Path
+    from typing import Final
+
+    from packaging.utils import NormalizedName
 
 
 if sys.version_info >= (3, 11):  # pragma: >=3.11 cover
@@ -19,52 +22,6 @@ else:  # pragma: <3.11 cover
     import tomli as tomllib
 
 _IncludeGroup = TypedDict("_IncludeGroup", {"include-group": str})
-
-
-def _add_extra_to_deps(
-    dependency_groups: dict[str, list[str]],
-    dependencies: set[Requirement],
-    extra: str,
-    seen_extras: set[str],
-) -> None:
-    """Add dependencies for a given extra to the dependencies set."""
-    normed_extra = canonicalize_name(extra)
-    if normed_extra in seen_extras:
-        return
-    seen_extras.add(normed_extra)
-    if normed_extra not in dependency_groups:
-        msg = f"extra {extra!r} not found in dependency groups"
-        raise Fail(msg)
-    for dep_str in dependency_groups[normed_extra]:
-        try:
-            dependencies.add(Requirement(dep_str))
-        except InvalidRequirement as exc:  # ruff:ignore[try-except-in-loop]
-            msg = f"{dep_str!r} is not valid requirement due to {exc}"
-            raise Fail(msg) from exc
-
-
-def unwrap_nested_extras(
-    dependency_groups: dict[str, list[str]],
-    project_name: str | None,
-    dependencies: set[Requirement],
-    seen_extras: set[str],
-) -> set[Requirement]:
-    """Unwrap nested dependency groups into a flat set of dependencies."""
-    if not project_name:
-        return dependencies
-
-    extras_to_unwrap: set[Requirement] = set()
-    for dependency in dependencies:
-        if dependency.name == project_name:
-            extras_to_unwrap.add(dependency)
-    if not extras_to_unwrap:
-        return dependencies
-
-    for dependency in extras_to_unwrap:
-        dependencies.remove(dependency)
-        for extra in dependency.extras:
-            _add_extra_to_deps(dependency_groups, dependencies, extra, seen_extras)
-    return unwrap_nested_extras(dependency_groups, project_name, dependencies, seen_extras)
 
 
 def resolve(root: Path, groups: set[str]) -> set[Requirement]:
@@ -85,10 +42,14 @@ def resolve(root: Path, groups: set[str]) -> set[Requirement]:
     for group in groups:
         result = result.union(_resolve_dependency_group(dependency_groups, group, original_names_lookup))
 
-    project_name = pyproject.get("project", {}).get("name")
-    optional_dependencies = pyproject.get("project", {}).get("optional-dependencies", {})
+    project: Final = pyproject.get("project", {})
+    if not (project_name := project.get("name")):
+        return result
+    optional_dependencies: Final[dict[str, list[str]]] = {
+        canonicalize_name(name): deps for name, deps in project.get("optional-dependencies", {}).items()
+    }
 
-    return unwrap_nested_extras(optional_dependencies, project_name, result, set())
+    return _unwrap_nested_extras(optional_dependencies, canonicalize_name(project_name), result)
 
 
 def _normalize_group_names(
@@ -143,14 +104,7 @@ def _resolve_dependency_group(
     result = set()
     for item in raw_group:
         if isinstance(item, str):
-            # packaging.requirements.Requirement parsing ensures that this is a valid
-            # PEP 508 Dependency Specifier
-            # raises InvalidRequirement on failure
-            try:
-                result.add(Requirement(item))
-            except InvalidRequirement as exc:
-                msg = f"{item!r} is not valid requirement due to {exc}"
-                raise Fail(msg) from exc
+            result.add(_parse_requirement(item))
         elif isinstance(item, dict) and tuple(item.keys()) == ("include-group",):
             include_group = canonicalize_name(str(next(iter(item.values()))))
             result = result.union(
@@ -162,6 +116,44 @@ def _resolve_dependency_group(
             msg = f"invalid dependency group item: {item!r}"
             raise Fail(msg)
     return result
+
+
+def _parse_requirement(requirement: str) -> Requirement:
+    try:
+        return Requirement(requirement)
+    except InvalidRequirement as exc:
+        msg = f"{requirement!r} is not valid requirement due to {exc}"
+        raise Fail(msg) from exc
+
+
+def _unwrap_nested_extras(
+    optional_dependencies: dict[str, list[str]],
+    project_name: NormalizedName,
+    dependencies: set[Requirement],
+) -> set[Requirement]:
+    seen_extras: Final[set[str]] = set()
+    while extras_to_unwrap := {dep for dep in dependencies if canonicalize_name(dep.name) == project_name}:
+        dependencies.difference_update(extras_to_unwrap)
+        for dependency in extras_to_unwrap:
+            for extra in dependency.extras:
+                _add_extra_to_deps(optional_dependencies, dependencies, extra, seen_extras)
+    return dependencies
+
+
+def _add_extra_to_deps(
+    optional_dependencies: dict[str, list[str]],
+    dependencies: set[Requirement],
+    extra: str,
+    seen_extras: set[str],
+) -> None:
+    normalized_extra: Final = canonicalize_name(extra)
+    if normalized_extra in seen_extras:
+        return
+    seen_extras.add(normalized_extra)
+    if normalized_extra not in optional_dependencies:
+        msg = f"extra {extra!r} not found in dependency groups"
+        raise Fail(msg)
+    dependencies.update(_parse_requirement(requirement) for requirement in optional_dependencies[normalized_extra])
 
 
 __all__ = [

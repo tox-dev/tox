@@ -1758,6 +1758,20 @@ Python run
     A list of names of dependency groups (as defined by :pep:`735`) to install into this Python environment. The
     installation will happen before installing the package or any of its dependencies.
 
+    A self-reference such as ``demo_pkg[extra_1]`` expands the project's ``optional-dependencies``. Project and extra
+    names ignore case and treat each run of ``-``, ``_``, or ``.`` as ``-``. This example resolves to ``pytest>=8``:
+
+    .. code-block:: toml
+
+        [project]
+        name = "demo-pkg"
+
+        [project.optional-dependencies]
+        extra_1 = ["pytest>=8"]
+
+        [dependency-groups]
+        test = ["Demo.Pkg[extra-1]"]
+
     For example:
 
      .. tab:: TOML

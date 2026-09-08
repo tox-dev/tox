@@ -1,0 +1,1 @@
+Normalize project and extra names in dependency-group self-references - by :user:`MohammedAlkindi`.
