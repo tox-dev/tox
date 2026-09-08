@@ -3099,8 +3099,18 @@ there is only one axis:
 .. code-block:: toml
 
     env_list = [
-        { ecosystem = ["oci", "python"] },
+        { ecosystem = { values = ["oci", "python"], default = "python" } },
     ]
+
+    [env_run_base]
+    description = "Sync {factor:ecosystem} artifacts"
+
+    [env.lint]
+
+The description is ``Sync oci artifacts`` in ``oci`` and ``Sync python artifacts`` in ``python``. The ``default`` also
+supplies ``python`` in environments outside the list, such as ``lint``. Omit ``default`` to use an empty string when no
+factor matches. Bare labeled dicts register their name; numeric labels such as ``{factor:0}`` refer to positions in a
+``product`` or ``env_base`` factor list.
 
 **Product dict** -- a Cartesian product of multiple factor groups, joined with ``-``. Each factor group inside
 ``product`` is itself an array of strings, a range dict, or a labeled dict:

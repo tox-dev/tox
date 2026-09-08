@@ -4,8 +4,10 @@ import sys
 import textwrap
 from typing import TYPE_CHECKING
 
+import pytest
+
 if TYPE_CHECKING:
-    import pytest
+    from typing import Final
 
     from tox.pytest import ToxProjectCreator
 
@@ -114,6 +116,50 @@ def test_config_in_toml_replace_from_section_absolute(tox_project: ToxProjectCre
     outcome = project.run("c", "-e", "B", "-k", "description")
     outcome.assert_success()
     outcome.assert_out_err("[testenv:B]\ndescription = o\n", "")
+
+
+@pytest.mark.parametrize("filename", ["tox.toml", "pyproject.toml"])
+@pytest.mark.parametrize(
+    ("factor", "env_name", "expected"),
+    [
+        pytest.param('{ ecosystem = ["oci", "python"] }', "oci", "oci", id="first-value"),
+        pytest.param('{ ecosystem = ["oci", "python"] }', "python", "python", id="second-value"),
+        pytest.param('{ ecosystem = ["oci", "python"] }', "lint", "", id="no-match"),
+        pytest.param('{ ecosystem = { values = ["oci", "python"], default = "oci" } }', "lint", "oci", id="default"),
+        pytest.param(
+            '{ ecosystem = { values = ["oci", "python"], default = "oci" } }',
+            "python",
+            "python",
+            id="match-over-default",
+        ),
+        pytest.param(
+            '{ ecosystem = { prefix = "py", start = 312, stop = 313 } }', "py313", "py313", id="labeled-range"
+        ),
+        pytest.param(
+            '{ ecosystem = { prefix = "py", start = 312, stop = 313, default = "py312" } }',
+            "lint",
+            "py312",
+            id="range-default",
+        ),
+        pytest.param('{ prefix = "py", start = 312, stop = 313 }', "py313", "", id="unlabeled-range"),
+    ],
+)
+def test_config_in_toml_env_list_bare_factor(
+    tox_project: ToxProjectCreator, filename: str, factor: str, env_name: str, expected: str
+) -> None:
+    prefix: Final = "tool.tox." if filename == "pyproject.toml" else ""
+    project: Final = tox_project({
+        filename: f"""
+            {"[tool.tox]" if prefix else ""}
+            env_list = [{factor}]
+            [{prefix}env_run_base]
+            description = "{{factor:ecosystem}}"
+            [{prefix}env.lint]
+        """,
+    })
+    outcome: Final = project.run("c", "-e", env_name, "-k", "description")
+    outcome.assert_success()
+    outcome.assert_out_err(f"[testenv:{env_name}]\ndescription = {expected}\n", "")
 
 
 def test_config_in_toml_env_list_keyed_factor_description(tox_project: ToxProjectCreator) -> None:
