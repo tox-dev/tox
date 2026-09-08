@@ -1,10 +1,8 @@
 from __future__ import annotations
 
-import importlib
 import sys
 from pathlib import Path
 from textwrap import dedent
-from types import ModuleType
 from typing import TYPE_CHECKING, Any, Optional, TypeVar, Union
 
 import pytest
@@ -13,6 +11,10 @@ from tox.config.loader.str_convert import StrConvert
 from tox.config.types import Command, EnvList
 
 if TYPE_CHECKING:
+    from typing import Final
+
+    from pytest_mock import MockerFixture
+
     from tox.pytest import MonkeyPatch, SubRequest, ToxProjectCreator
 
 from typing import Literal
@@ -143,14 +145,16 @@ WINDOWS_PATH_ARGS = [
     ('cc --arg "C:\\\\Users\\\\"', ["cc", "--arg", "C:\\Users\\"]),
     ('cc --arg "C:\\\\Users\\\\ "', ["cc", "--arg", "C:\\Users\\ "]),
     (
-        r'cc --arg C:\\Users\\ --arg2 "SPECIAL:\Temp\f o o" --arg3="\\FOO\share\Path name" --arg4 SPECIAL:\Temp\ '[:-1],
+        r'cc --arg C:\\Users\\ --arg2 "SPECIAL:\Temp\f o o" --arg3="\\\\FOO\share\Path name" --arg4 SPECIAL:\Temp\ '[
+            :-1
+        ],
         [
             "cc",
             "--arg",
             "C:\\Users\\",
             "--arg2",
             "SPECIAL:\\Temp\\f o o",
-            "--arg3=\\FOO\\share\\Path name",
+            r"--arg3=\\FOO\share\Path name",
             "--arg4",
             "SPECIAL:\\Temp\\",
         ],
@@ -178,25 +182,8 @@ WACKY_SLASH_ARGS_WIN32 = {
 
 
 @pytest.fixture(params=["win32", "linux2"])
-def sys_platform(request: SubRequest, monkeypatch: MonkeyPatch) -> str:
-    class _SelectiveSys(ModuleType):
-        """A sys-like proxy that only overrides `platform`."""
-
-        def __init__(self, patched_platform: str) -> None:
-            super().__init__("sys")
-            self.__dict__["_real"] = sys
-            self.__dict__["_patched_platform"] = patched_platform
-
-        def __getattr__(self, name: str) -> Any:
-            if name == "platform":
-                return self.__dict__["_patched_platform"]
-            return getattr(self.__dict__["_real"], name)
-
-    # Patches sys.platform only for the tox.config.loader.str_convert module.
-    # Everywhere else, sys.platform remains the real value.
-    mod = importlib.import_module("tox.config.loader.str_convert")
-    proxy = _SelectiveSys(str(request.param))
-    monkeypatch.setattr(mod, "sys", proxy, raising=True)
+def sys_platform(request: SubRequest, mocker: MockerFixture) -> str:
+    mocker.patch("tox.config.loader.str_convert.sys", mocker.create_autospec(sys, platform=request.param))
     return str(request.param)
 
 
@@ -227,6 +214,43 @@ def test_shlex_win32_trailing_sep(sys_platform: str, value: str, expected: list[
     result = StrConvert().to_command(value)
     assert result is not None
     assert result.args == expected
+
+
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    [
+        pytest.param(r"xcopy \\server\share\file.txt .", ["xcopy", r"\\server\share\file.txt", "."], id="unc-argument"),
+        pytest.param(r"\\server\share", [r"\\server\share"], id="unc-command"),
+        pytest.param(
+            r'copy "\\server\share\file name" .', ["copy", r"\\server\share\file name", "."], id="double-quoted"
+        ),
+        pytest.param(
+            r"copy '\\server\share\file name' .", ["copy", r"\\server\share\file name", "."], id="single-quoted"
+        ),
+        pytest.param(r'copy --source="\\server\share"', ["copy", r"--source=\\server\share"], id="quoted-option"),
+        pytest.param(r"copy --source=\\server\share", ["copy", r"--source=\\server\share"], id="unquoted-option"),
+        pytest.param(r"copy \\?\C:\file .", ["copy", r"\\?\C:\file", "."], id="extended-drive"),
+        pytest.param(r"copy \\?\UNC\server\share .", ["copy", r"\\?\UNC\server\share", "."], id="extended-unc"),
+        pytest.param(r"copy \\.\pipe\name .", ["copy", r"\\.\pipe\name", "."], id="device"),
+        pytest.param(r"copy \\\\server\share .", ["copy", r"\\server\share", "."], id="escaped-prefix"),
+        pytest.param("copy\t\\\\server\\share", ["copy", r"\\server\share"], id="tab-separator"),
+        pytest.param(r'copy "\\" \\', ["copy", "\\", "\\"], id="bare-pairs"),
+        pytest.param(r'copy "text \\server"', ["copy", r"text \server"], id="quoted-interior"),
+        pytest.param(r"copy path\\part", ["copy", r"path\part"], id="interior-pair"),
+    ],
+)
+@pytest.mark.parametrize("sys_platform", ["win32"], indirect=True)
+@pytest.mark.usefixtures("sys_platform")
+@pytest.mark.parametrize("via_config", [False, True], ids=["direct", "ini"])
+def test_shlex_win32_unc_path(
+    tox_project: ToxProjectCreator, value: str, expected: list[str], via_config: bool
+) -> None:
+    if via_config:
+        outcome: Final = tox_project({"tox.ini": f"[testenv]\ncommands = {value}"}).run("c", "-k", "commands")
+        outcome.assert_success()
+        assert outcome.env_conf("py")["commands"] == [Command(args=expected)]
+    else:
+        assert StrConvert().to_command(value).args == expected
 
 
 @pytest.mark.parametrize(

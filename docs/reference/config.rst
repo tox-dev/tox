@@ -1392,6 +1392,17 @@ Run
         The backslash ``\`` character can be used to escape quotes, whitespace, itself, and
         other characters (except on Windows, where a backslash in a path will not be interpreted as an escape).
         Unescaped single quote will disable the backslash escape until closed by another unescaped single quote.
+        On Windows, UNC and extended-length prefixes retain both leading backslashes, including in quoted paths and
+        option values such as ``--source=\\server\share``. Quote paths containing spaces:
+
+        .. code-block:: ini
+
+            [testenv]
+            commands = xcopy "\\server\share\file name.txt" .
+
+        Inside an unquoted or double-quoted path, double backslashes escape one backslash. Single-quoted text is
+        literal; TOML argument arrays bypass command-line splitting.
+
         For more details, please see :doc:`shlex parsing rules <python:library/shlex>`.
 
     .. note::
@@ -3220,8 +3231,9 @@ In substitutions, the backslash character ``\`` will act as an escape when prece
           python -c 'print("host: \{}".format("{env:HOSTNAME:host\: not set}")'
 
 Note that any backslashes remaining after substitution may be processed by ``shlex`` during command parsing. On POSIX
-platforms, the backslash will escape any following character; on windows, the backslash will escape any following quote,
-whitespace, or backslash character (since it normally acts as a path delimiter).
+platforms, the backslash escapes the following character. On Windows, it escapes quotes and other backslashes;
+backslashes before whitespace remain path separators. UNC prefixes retain their leading pair. Single-quoted text is
+literal on both platforms.
 
 Special substitutions that accept additional colon-delimited ``:`` parameters cannot have a space after the ``:`` at the
 beginning of line (e.g. ``{posargs: magic}`` would be parsed as factorial ``{posargs``, having value magic).
