@@ -7,6 +7,16 @@
 .. towncrier release notes start
 
 **********************
+ v4.61.4 (2026-09-09)
+**********************
+
+Bug fixes - 4.61.4
+==================
+
+- Shebang parsing now uses ``shlex``, so a quoted interpreter path that contains spaces is kept as one argument when
+  ``TOX_LIMITED_SHEBANG`` rewrites the invocation - by :user:`r3wretrhy`. (:issue:`4064`)
+
+**********************
  v4.61.3 (2026-09-08)
 **********************
 
