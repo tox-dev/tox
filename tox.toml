@@ -25,7 +25,7 @@ dependency_groups = [ "test" ]
 extras = [ "completion" ]
 pass_env = [ "PYTEST_*", "SSL_CERT_FILE" ]
 set_env.COVERAGE_FILE = { replace = "env", name = "COVERAGE_FILE", default = "{work_dir}{/}.coverage.{env_name}" }
-set_env.COVERAGE_FILECOVERAGE_PROCESS_START = "{tox_root}{/}pyproject.toml"
+set_env.COVERAGE_PROCESS_START = "{tox_root}{/}pyproject.toml"
 commands = [
   [
     "pytest",

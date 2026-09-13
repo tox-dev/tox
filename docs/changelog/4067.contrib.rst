@@ -1,0 +1,2 @@
+Restore ``COVERAGE_PROCESS_START`` in the test environments; a mangled key had left it unset since the move to
+``tox.toml`` - by :user:`yuefdev`.
