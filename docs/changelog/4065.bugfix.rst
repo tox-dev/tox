@@ -1,0 +1,2 @@
+An empty ``set_env`` list in TOML no longer fails to load; like an empty table, it clears inherited variables - by
+:user:`yuefdev`.
