@@ -120,10 +120,10 @@ def _expand_range(range_dict: dict[str, TomlTypes]) -> list[str]:
         raise TypeError(msg)
     start = range_dict.get("start", LATEST_PYTHON_MINOR_MIN)
     stop = range_dict.get("stop", LATEST_PYTHON_MINOR_MAX)
-    if not isinstance(start, int):
+    if type(start) is not int:  # bool subclasses int, so isinstance accepts true/false
         msg = f"range 'start' must be an integer, got {type(start).__name__}"
         raise TypeError(msg)
-    if not isinstance(stop, int):
+    if type(stop) is not int:
         msg = f"range 'stop' must be an integer, got {type(stop).__name__}"
         raise TypeError(msg)
     return [f"{prefix}{i}" for i in range(start, stop + 1)]
