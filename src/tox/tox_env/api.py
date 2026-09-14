@@ -471,7 +471,7 @@ class ToxEnv(ABC):  # ruff:ignore[too-many-public-methods]
         if self._fully_interrupted or (self._interrupted and not self._allow_interrupted_execution):
             raise SystemExit(-2)  # pragma: no cover
         if cwd is None:
-            cwd = self.core["tox_root"]
+            cwd = cast("Path", self.core["tox_root"])
         if show is None:
             show = self.options.verbosity > 3  # ruff:ignore[magic-value-comparison]
         request = ExecuteRequest(cmd, cwd, self.environment_variables, stdin, run_id, allow=self._allow_externals)
