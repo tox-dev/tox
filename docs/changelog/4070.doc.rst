@@ -1,0 +1,2 @@
+``Loader.build`` documented a ``future`` parameter it no longer takes and left ``factory`` undocumented, so the plugin
+API reference listed a parameter that does not exist - by :user:`hxperl`.
