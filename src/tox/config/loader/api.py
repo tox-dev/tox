@@ -217,9 +217,9 @@ class Loader(Convert[T]):
     ) -> V:
         """Materialize the raw configuration value from the loader.
 
-        :param future: a future which when called will provide the converted config value
         :param key: the config key
         :param of_type: the config type
+        :param factory: factory method to build the object
         :param conf: the global config
         :param raw: the raw value
         :param args: env args
