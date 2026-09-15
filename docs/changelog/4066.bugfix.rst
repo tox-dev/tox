@@ -1,0 +1,2 @@
+A TOML factor range now rejects ``true`` or ``false`` as ``start`` or ``stop`` instead of reading them as ``1`` and
+``0`` - by :user:`yuefdev`.

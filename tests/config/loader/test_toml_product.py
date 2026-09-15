@@ -207,14 +207,19 @@ def test_expand_range_no_bounds() -> None:
         _expand_range({"prefix": "py3"})
 
 
-def test_expand_range_start_not_int() -> None:
-    with pytest.raises(TypeError, match="range 'start' must be an integer"):
-        _expand_range({"prefix": "py3", "start": "12", "stop": 14})
-
-
-def test_expand_range_stop_not_int() -> None:
-    with pytest.raises(TypeError, match="range 'stop' must be an integer"):
-        _expand_range({"prefix": "py3", "start": 12, "stop": "14"})
+@pytest.mark.parametrize("key", ["start", "stop"])
+@pytest.mark.parametrize(
+    "value",
+    [
+        pytest.param("13", id="str"),
+        pytest.param(13.0, id="float"),
+        pytest.param(True, id="true"),
+        pytest.param(False, id="false"),
+    ],
+)
+def test_expand_range_bound_not_int(key: str, value: TomlTypes) -> None:
+    with pytest.raises(TypeError, match=f"range '{key}' must be an integer, got {type(value).__name__}"):
+        _expand_range({"prefix": "py3", "start": 12, "stop": 14, key: value})
 
 
 def test_expand_product_mixed_list_and_range() -> None:
