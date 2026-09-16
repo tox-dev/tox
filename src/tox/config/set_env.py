@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import sys
 from collections.abc import Callable, Iterator, Mapping
-from functools import reduce
 from pathlib import Path
 
 from packaging.markers import Marker
@@ -47,8 +46,7 @@ class SetEnv:
             self._parse_dict(raw)
             return
         if isinstance(raw, list):
-            merged = reduce(lambda a, b: {**a, **b}, raw)
-            self._parse_dict(merged)
+            self._parse_dict({key: value for entry in raw for key, value in entry.items()})
             return
         keys_after_file: set[str] = set()
         for line in raw.splitlines():  # ruff:ignore[too-many-nested-blocks]

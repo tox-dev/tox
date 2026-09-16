@@ -13,6 +13,7 @@ from tox.config.set_env import SetEnv
 if TYPE_CHECKING:
     from pytest_mock import MockerFixture
 
+    from tox.config.set_env import SetEnvRaw
     from tox.pytest import MonkeyPatch, ToxProjectCreator
 
 from typing import Protocol
@@ -51,6 +52,37 @@ def test_set_env_merge() -> None:
 def test_set_env_bad_line() -> None:
     with pytest.raises(ValueError, match="A"):
         SetEnv("A", "py", "py", Path())
+
+
+@pytest.mark.parametrize(
+    ("raw", "expected"),
+    [
+        pytest.param([], {}, id="empty"),
+        pytest.param([{}], {}, id="empty-entry"),
+        pytest.param([{}, {"A": "1"}, {}, {"A": "2", "B": "3"}], {"A": "2", "B": "3"}, id="later-wins"),
+    ],
+)
+def test_set_env_list(raw: SetEnvRaw, expected: dict[str, str]) -> None:
+    set_env = SetEnv(raw, "py", "py", Path())
+    assert {key: set_env.load(key) for key in set_env} == expected
+
+
+@pytest.mark.parametrize("empty", [pytest.param("[]", id="list"), pytest.param("{}", id="table")])
+def test_set_env_empty_override(tox_project: ToxProjectCreator, empty: str) -> None:
+    project = tox_project({
+        "tox.toml": f"""
+        [env_run_base]
+        set_env = {{ INHERITED = "value" }}
+        [env.py]
+        set_env = {empty}
+        """
+    })
+    outcome = project.run("c", "-e", "py", "-k", "set_env", "--hashseed", "1")
+    outcome.assert_success()
+    outcome.assert_out_err(
+        "[testenv:py]\nset_env =\n  PIP_DISABLE_PIP_VERSION_CHECK=1\n  PYTHONHASHSEED=1\n  PYTHONIOENCODING=utf-8\n",
+        "",
+    )
 
 
 ConfigFileFormat = Literal["ini", "toml"]
