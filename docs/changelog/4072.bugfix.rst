@@ -1,1 +1,0 @@
-Preserve an explicitly empty ``{factor:label:}`` fallback instead of using the declared factor group default.

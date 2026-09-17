@@ -7,6 +7,32 @@
 .. towncrier release notes start
 
 **********************
+ v4.61.5 (2026-09-17)
+**********************
+
+Bug fixes - 4.61.5
+==================
+
+- An empty ``set_env`` list in TOML no longer fails to load; like an empty table, it clears inherited variables - by
+  :user:`yuefdev`. (:issue:`4065`)
+- A TOML factor range now rejects ``true`` or ``false`` as ``start`` or ``stop`` instead of reading them as ``1`` and
+  ``0`` - by :user:`yuefdev`. (:issue:`4066`)
+- Preserve an explicitly empty ``{factor:label:}`` fallback instead of using the declared factor group default.
+  (:issue:`4072`)
+
+Improved documentation - 4.61.5
+===============================
+
+- ``Loader.build`` documented a ``future`` parameter it no longer takes and left ``factory`` undocumented, so the plugin
+  API reference listed a parameter that does not exist - by :user:`hxperl`. (:issue:`4070`)
+
+Contributor-facing changes - 4.61.5
+===================================
+
+- Restore ``COVERAGE_PROCESS_START`` in the test environments; a mangled key had left it unset since the move to
+  ``tox.toml`` - by :user:`yuefdev`. (:issue:`4067`)
+
+**********************
  v4.61.4 (2026-09-09)
 **********************
 
