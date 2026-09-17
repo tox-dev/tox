@@ -334,7 +334,7 @@ def replace_factor(conf: Config, args: list[str], conf_args: ConfigLoadArgs) -> 
     for value in group.values:
         if value in env_factors:
             return value
-    return default or group.default or ""
+    return default if len(args) > 1 else group.default or ""
 
 
 __all__ = [

@@ -579,6 +579,7 @@ def test_env_list_product_labeled_range_factor_group(tox_project: ToxProjectCrea
         pytest.param("task-django42", "django42", id="active-factor-wins"),
         pytest.param("other", "django50", id="group-default"),
         pytest.param("inline", "django42", id="inline-default-wins"),
+        pytest.param("empty-inline", "", id="empty-inline-default-wins"),
     ],
 )
 def test_env_base_factor_group_default(tox_project: ToxProjectCreator, env: str, expected: str) -> None:
@@ -595,6 +596,9 @@ def test_env_base_factor_group_default(tox_project: ToxProjectCreator, env: str,
 
             [env.inline]
             description = "Test {factor:django_version:django42}"
+
+            [env.empty-inline]
+            description = "Test {factor:django_version:}"
         """),
     })
     outcome = project.run("c", "-e", env, "-k", "description")
