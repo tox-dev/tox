@@ -309,9 +309,9 @@ whatever the environment name says:
 
 This installs ``Django61`` while still running the ``test-3.14-django50`` environment, which is useful for a one-off
 check against a version the matrix does not list. The variable only applies to labels the configuration declares, and it
-does not change which environments exist or what they are called. Setting the variable to an empty value still counts
-as an override, so ``{factor:<label>}`` resolves to an empty string instead of falling back to the environment's own
-factor or an inline default.
+does not change which environments exist or what they are called. Setting the variable to an empty value still counts as
+an override, so ``{factor:<label>}`` resolves to an empty string instead of falling back to the environment's own factor
+or an inline default.
 
 .. versionadded:: 4.61
 
