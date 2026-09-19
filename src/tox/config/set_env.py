@@ -72,6 +72,8 @@ class SetEnv:
                         keys_after_file.add(key)
                         if marker:
                             self._markers[key] = Marker(marker)
+                        else:
+                            self._markers.pop(key, None)
 
     def _parse_dict(self, raw: dict[str, str | SetEnvEntry]) -> None:
         keys_after_file: set[str] = set()
@@ -109,6 +111,7 @@ class SetEnv:
             for key, val in self._stream_env_file(filename, args):
                 if key not in keys_after:
                     self._raw[key] = val
+                    self._markers.pop(key, None)
 
     def _stream_env_file(self, filename: str, args: ConfigLoadArgs) -> Iterator[tuple[str, str]]:
         # Our rules in the documentation, some upstream environment file rules (we follow mostly the docker one):
