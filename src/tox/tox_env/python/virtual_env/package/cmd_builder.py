@@ -20,6 +20,7 @@ from tox.tox_env.python.package import PythonPackageToxEnv, SdistPackage, WheelP
 from tox.tox_env.python.pip.req_file import PythonDeps
 from tox.tox_env.python.virtual_env.api import VirtualEnv
 from tox.tox_env.util import add_change_dir_conf
+from tox.util.typing_compat import override
 
 from .pyproject import Pep517VirtualEnvPackager
 from .util import dependencies_with_extras, safe_extractall
@@ -43,6 +44,7 @@ class VenvCmdBuilder(PythonPackageToxEnv, ABC):
         self._sdist_meta_tox_env: Pep517VirtualEnvPackager | None = None
         self._built_package_path: Path | None = None
 
+    @override
     def register_config(self) -> None:
         super().register_config()
         root = self.core["toxinidir"]
@@ -73,13 +75,16 @@ class VenvCmdBuilder(PythonPackageToxEnv, ABC):
             desc="when executing the commands keep going even if a sub-command exits with non-zero exit code",
         )
 
+    @override
     def requires(self) -> PythonDeps:
         return self.conf.get("deps", PythonDeps)
 
+    @override
     def load_deps_for_env(self, for_env: EnvConfigSet) -> list[Requirement]:
         assert self._sdist_meta_tox_env is not None  # ruff:ignore[assert]
         return self._sdist_meta_tox_env.load_deps_for_env(for_env)
 
+    @override
     def perform_packaging(self, for_env: EnvConfigSet) -> list[Package]:
         if (path := self._built_package_path) is None:
             path = self._build_package()
@@ -90,8 +95,8 @@ class VenvCmdBuilder(PythonPackageToxEnv, ABC):
         self.setup()
         if (path := getattr(self.options, "install_pkg", None)) is not None:
             return Path(path)
-        chdir: Path = self.conf["change_dir"]
-        ignore_errors: bool = self.conf["ignore_errors"]
+        chdir = self.conf.get("change_dir", Path)
+        ignore_errors = self.conf.get("ignore_errors", bool)
         if run_command_set(self, "commands", chdir, ignore_errors, []) != Outcome.OK:
             msg = "stopping as failed to build package"
             raise Fail(msg)
@@ -106,7 +111,7 @@ class VenvCmdBuilder(PythonPackageToxEnv, ABC):
         return Path(found[0])
 
     def extract_install_info(self, for_env: EnvConfigSet, path: Path) -> list[Package]:
-        extras: set[str] = for_env["extras"]
+        extras = for_env.get("extras", set[str])
         if path.suffix == ".whl":
             wheel_dist = WheelDistribution(path)
             requires: list[str] = wheel_dist.requires or []
@@ -131,12 +136,14 @@ class VenvCmdBuilder(PythonPackageToxEnv, ABC):
             package = SdistPackage(path, dependencies_with_extras(deps, extras, name, available_extras=available))
         return [package]
 
+    @override
     def register_run_env(self, run_env: RunToxEnv) -> Generator[tuple[str, str], PackageToxEnv, None]:
         yield from super().register_run_env(run_env)
         # in case the outcome is a sdist we'll use this to find out its metadata
         result = yield f"{self.conf.name}_sdist_meta", Pep517VirtualEnvPackager.id()
         self._sdist_meta_tox_env = cast("Pep517VirtualEnvPackager", result)
 
+    @override
     def child_pkg_envs(self, run_conf: EnvConfigSet) -> Iterator[PackageToxEnv]:  # ruff:ignore[unused-method-argument]
         if self._sdist_meta_tox_env is not None:  # pragma: no branch
             yield self._sdist_meta_tox_env
@@ -144,6 +151,7 @@ class VenvCmdBuilder(PythonPackageToxEnv, ABC):
 
 class VirtualEnvCmdBuilder(VenvCmdBuilder, VirtualEnv):
     @staticmethod
+    @override
     def id() -> str:
         return "virtualenv-cmd-builder"
 
@@ -167,6 +175,7 @@ class WheelDistribution(Distribution):  # cannot subclass has type Any
                     raise Fail(msg)
         return self._dist_name
 
+    @override
     def read_text(self, filename: str) -> str | None:
         with ZipFile(self._wheel) as zip_file:
             try:
@@ -175,6 +184,7 @@ class WheelDistribution(Distribution):  # cannot subclass has type Any
             except KeyError:
                 return None
 
+    @override
     def locate_file(self, path: str | PathLike[str]) -> Path:
         return self._wheel / path  # pragma: no cover # not used by us, but part of the ABC
 

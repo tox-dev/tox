@@ -6,6 +6,7 @@ import logging
 import re
 import sys
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import TYPE_CHECKING, Final, cast
 
 from packaging.specifiers import SpecifierSet
@@ -16,6 +17,7 @@ from tox.tox_env.errors import Fail
 from tox.tox_env.python.pip.req_file import PythonDeps
 from tox.tox_env.python.runner import add_skip_missing_interpreters_to_core, add_skip_missing_interpreters_to_env
 from tox.tox_env.runner import RunToxEnv
+from tox.util.typing_compat import override
 
 from .api import Python
 
@@ -25,8 +27,6 @@ else:  # pragma: <3.11 cover
     import tomli as tomllib
 
 if TYPE_CHECKING:
-    from pathlib import Path
-
     from tox.config.main import Config
     from tox.config.of_type import ConfigDynamicDefinition
     from tox.tox_env.api import ToxEnvCreateArgs
@@ -65,6 +65,7 @@ class Pep723Mixin(Python, RunToxEnv):
         self._script_metadata = None
         super().__init__(create_args)
 
+    @override
     def register_config(self) -> None:
         super().register_config()
         self.conf.add_config(
@@ -76,7 +77,7 @@ class Pep723Mixin(Python, RunToxEnv):
 
         def default_commands(conf: Config, env_name: str | None) -> list[Command]:  # ruff:ignore[unused-function-argument]
             if script := self.conf["script"]:
-                tox_root: Path = self.core["tox_root"]
+                tox_root = self.core.get("tox_root", Path)
                 args = ["python", str(tox_root / script)]
                 if (pos_args := conf.pos_args(None)) is not None:
                     args.extend(pos_args)
@@ -88,6 +89,7 @@ class Pep723Mixin(Python, RunToxEnv):
         add_skip_missing_interpreters_to_core(self.core, self.options)
         add_skip_missing_interpreters_to_env(self.conf, self.core, self.options)
 
+    @override
     def _setup_env(self) -> None:
         super()._setup_env()
         if self._base_python_explicitly_set:
@@ -106,7 +108,7 @@ class Pep723Mixin(Python, RunToxEnv):
             logging.warning("skip installing dependencies")
             return
         if metadata.dependencies:
-            root: Path = self.core["tox_root"]
+            root = self.core.get("tox_root", Path)
             requirements = PythonDeps(metadata.dependencies, root)
             self._install(requirements, type(self).__name__, "deps")
 
@@ -135,10 +137,10 @@ class Pep723Mixin(Python, RunToxEnv):
         :raises Fail: if the script escapes ``tox_root`` or does not exist when configured.
 
         """
-        script: str = self.conf["script"]
+        script = self.conf.get("script", str)
         if not script:
             return None
-        tox_root: Path = self.core["tox_root"]
+        tox_root = self.core.get("tox_root", Path)
         root_resolved = tox_root.resolve()
         full_path = (tox_root / script).resolve()
         try:

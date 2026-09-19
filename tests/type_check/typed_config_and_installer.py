@@ -11,6 +11,7 @@ from tox.config.of_type import ConfigDynamicDefinition
 from tox.config.sets import ConfigSet
 from tox.tox_env.api import ToxEnv
 from tox.tox_env.installer import Installer
+from tox.util.typing_compat import override
 
 if TYPE_CHECKING:
     from tox.config.main import Config
@@ -18,6 +19,7 @@ if TYPE_CHECKING:
 
 
 class CheckConfigSet(ConfigSet):
+    @override
     def register_config(self) -> None:
         with_callable_default = self.add_config(
             keys="a", of_type=Path, default=self._default_path, desc="d", post_process=self._keep
@@ -41,11 +43,14 @@ class CheckConfigSet(ConfigSet):
 class CheckInstallerDefaultArgs(Installer[ToxEnv]):
     """A single type parameter must keep working, defaulting the arguments to ``InstallArguments``."""
 
+    @override
     def _register_config(self) -> None:
         raise NotImplementedError
 
+    @override
     def installed(self) -> list[str]:
         raise NotImplementedError
 
+    @override
     def install(self, arguments: InstallArguments, section: str, of_type: str) -> None:
         raise NotImplementedError

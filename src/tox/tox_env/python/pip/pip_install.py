@@ -19,6 +19,7 @@ from tox.tox_env.python.api import Python
 from tox.tox_env.python.package import EditableLegacyPackage, EditablePackage, SdistPackage, WheelPackage
 from tox.tox_env.python.pip.req_file import PythonConstraints, PythonDeps
 from tox.tox_env.python.pylock import Pylock
+from tox.util.typing_compat import override
 
 if TYPE_CHECKING:
     from tox.config.main import Config
@@ -30,6 +31,7 @@ class PythonInstallerListDependencies(Installer[Python], ABC):
         self._with_list_deps = with_list_deps
         super().__init__(tox_env)
 
+    @override
     def _register_config(self) -> None:
         if self._with_list_deps:  # pragma: no branch
             self._env.conf.add_config(
@@ -43,8 +45,9 @@ class PythonInstallerListDependencies(Installer[Python], ABC):
     def freeze_cmd(self) -> list[str]:
         raise NotImplementedError
 
+    @override
     def installed(self) -> list[str]:
-        cmd: Command = self._env.conf["list_dependencies_command"]
+        cmd = self._env.conf.get("list_dependencies_command", Command)
         result = self._env.execute(cmd=cmd.args, stdin=StdinSource.OFF, run_id="freeze", show=False)
         result.assert_success()
         return result.out.splitlines()
@@ -65,6 +68,7 @@ _PIP_RESOLUTION_ENV_VARS: frozenset[str] = frozenset({
 class Pip(PythonInstallerListDependencies):
     """Pip is a python installer that can install packages as defined by PEP-508 and PEP-517."""
 
+    @override
     def _register_config(self) -> None:
         super()._register_config()
         root = self._env.core["toxinidir"]
@@ -101,6 +105,7 @@ class Pip(PythonInstallerListDependencies):
             desc="Use the exact versions of installed deps as constraints, otherwise use the listed deps.",
         )
 
+    @override
     def freeze_cmd(self) -> list[str]:  # ruff:ignore[no-self-use]
         return ["python", "-m", "pip", "freeze", "--all"]
 
@@ -111,7 +116,7 @@ class Pip(PythonInstallerListDependencies):
 
     def post_process_install_command(self, cmd: Command) -> Command:
         install_command = cmd.args
-        pip_pre: bool = self._env.conf["pip_pre"]
+        pip_pre = self._env.conf.get("pip_pre", bool)
         try:
             opts_at = install_command.index("{opts}")
         except ValueError:
@@ -124,6 +129,7 @@ class Pip(PythonInstallerListDependencies):
                 install_command.pop(opts_at)
         return cmd
 
+    @override
     def install(self, arguments: InstallArguments, section: str, of_type: str) -> None:
         if isinstance(arguments, PythonDeps):
             self._install_requirement_file(arguments, section, of_type)
@@ -311,7 +317,7 @@ class Pip(PythonInstallerListDependencies):
 
     def build_install_cmd(self, args: Sequence[str]) -> list[str]:
         try:
-            cmd: Command = self._env.conf["install_command"]
+            cmd = self._env.conf.get("install_command", Command)
         except ValueError as exc:
             msg = f"unable to determine pip install command: {exc!s}"
             raise Fail(msg) from exc

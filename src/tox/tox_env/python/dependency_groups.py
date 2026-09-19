@@ -53,10 +53,10 @@ def resolve(root: Path, groups: set[str]) -> set[Requirement]:
 
 
 def _normalize_group_names(
-    dependency_groups: dict[str, list[str] | _IncludeGroup],
-) -> tuple[dict[str, str], dict[str, list[str] | _IncludeGroup]]:
-    original_names = defaultdict(list)
-    normalized_groups = {}
+    dependency_groups: dict[str, list[str | _IncludeGroup]],
+) -> tuple[dict[str, str], dict[str, list[str | _IncludeGroup]]]:
+    original_names: defaultdict[str, list[str]] = defaultdict(list)
+    normalized_groups: dict[str, list[str | _IncludeGroup]] = {}
 
     for group_name, value in dependency_groups.items():
         normed_group_name: str = canonicalize_name(group_name)
@@ -81,7 +81,7 @@ def _normalize_group_names(
 
 
 def _resolve_dependency_group(
-    dependency_groups: dict[str, list[str] | _IncludeGroup],
+    dependency_groups: dict[str, list[str | _IncludeGroup]],
     group: str,
     original_names_lookup: dict[str, str],
     past_groups: tuple[str, ...] = (),

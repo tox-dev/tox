@@ -6,6 +6,8 @@ from typing import IO, TYPE_CHECKING
 
 from colorama import Fore
 
+from tox.util.typing_compat import override
+
 if TYPE_CHECKING:
     import sys
     from collections.abc import Iterator
@@ -37,6 +39,7 @@ class SyncWrite:
         self._color: str | None = color
         self.name = name
 
+    @override
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}(name={self.name!r}, target={self._target!r}, color={self._color!r})"
 

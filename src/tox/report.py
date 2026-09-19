@@ -16,6 +16,8 @@ from weakref import WeakKeyDictionary
 
 from colorama import Fore, Style, init
 
+from tox.util.typing_compat import override
+
 if TYPE_CHECKING:
     from collections.abc import Iterator, MutableMapping
 
@@ -55,11 +57,11 @@ class _LogThreadLocal(local):
             old_start(self)
 
         old_start = Thread.start
-        Thread.start = new_start  # type: ignore[method-assign] # the monkey-patch is deliberate
+        Thread.start = new_start  # type: ignore[method-assign] # no typed way to swap a method, and CPython offers no hook to track the parent thread
         try:
             yield
         finally:
-            Thread.start = old_start  # type: ignore[method-assign] # the monkey-patch is deliberate
+            Thread.start = old_start  # type: ignore[method-assign] # no typed way to swap a method, and CPython offers no hook to track the parent thread
 
     @property
     def name(self) -> str:
@@ -142,11 +144,13 @@ class ToxHandler(_STREAM_HANDLER_BASE):
             yield
 
     @property
-    def name(self) -> str:  # pyrefly: ignore[bad-override] # property over typeshed attribute: https://github.com/facebook/pyrefly/issues/2771
+    @override
+    def name(self) -> str:  # pyrefly: ignore[bad-override] # the value follows the active tox env so it must be a property, pyrefly rejects that over a typeshed attribute: https://github.com/facebook/pyrefly/issues/2771
         """:returns: the current tox environment name"""
         return self._local.name  # pragma: no cover
 
     @name.setter
+    @override
     def name(self, value: str) -> None:
         """Ignore anyone changing this, the name always reflects the active tox environment."""
 
@@ -161,11 +165,13 @@ class ToxHandler(_STREAM_HANDLER_BASE):
         return self._local.out_err[1]
 
     @property
-    def stream(self) -> TextIOWrapper:  # pyrefly: ignore[bad-override] # property over typeshed attribute: https://github.com/facebook/pyrefly/issues/2771
+    @override
+    def stream(self) -> TextIOWrapper:  # pyrefly: ignore[bad-override] # the value follows the active tox env so it must be a property, pyrefly rejects that over a typeshed attribute: https://github.com/facebook/pyrefly/issues/2771
         """:returns: the current stream to write to (alias for the current standard output)"""
         return self.stdout
 
     @stream.setter
+    @override
     def stream(self, value: TextIOWrapper) -> None:
         """Ignore anyone changing this."""
 
@@ -202,6 +208,7 @@ class ToxHandler(_STREAM_HANDLER_BASE):
         fmt = f"{_c(Style.BRIGHT)}{_c(Fore.MAGENTA)}%(env_name)s:{_c(Style.RESET_ALL)}" + fmt
         return logging.Formatter(fmt)
 
+    @override
     def format(self, record: logging.LogRecord) -> str:
         # shorten the pathname to start from within the site-packages folder
         record.env_name = "root" if self._local.name is None else self._local.name

@@ -4,6 +4,7 @@ from collections import OrderedDict
 from typing import TYPE_CHECKING
 
 from tox.execute.request import shell_cmd
+from tox.util.typing_compat import override
 
 if TYPE_CHECKING:
     from collections.abc import Iterator, Sequence
@@ -36,10 +37,12 @@ class Command:  # ruff:ignore[eq-without-hash]
             args[1:] if self.ignore_exit_code or self.invert_exit_code else args
         )  #: the command line arguments
 
+    @override
     def __repr__(self) -> str:
         args = (["-"] if self.ignore_exit_code else ["!"] if self.invert_exit_code else []) + self.args
         return f"{type(self).__name__}(args={args!r})"
 
+    @override
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, Command):
             return False
@@ -49,6 +52,7 @@ class Command:  # ruff:ignore[eq-without-hash]
             other.invert_exit_code,
         )
 
+    @override
     def __ne__(self, other: object) -> bool:
         return not (self == other)
 
@@ -69,14 +73,17 @@ class EnvList:  # ruff:ignore[eq-without-hash]
         """
         self.envs = list(OrderedDict((e, None) for e in envs).keys())
 
+    @override
     def __repr__(self) -> str:
         return f"{type(self).__name__}({self.envs!r})"
 
+    @override
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, EnvList):
             return False
         return self.envs == other.envs
 
+    @override
     def __ne__(self, other: object) -> bool:
         return not (self == other)
 

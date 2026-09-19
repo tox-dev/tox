@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING
 from tox.config.loader.section import Section
 from tox.config.sets import ConfigSet, CoreConfigSet
 from tox.config.source.ini import IniSource
+from tox.util.typing_compat import override
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -41,6 +42,7 @@ def test_source_ini_custom_non_testenv_sections(tox_ini_conf: ToxIniCreator) -> 
     """Validate that a plugin can load section with custom prefix overlapping testenv name."""
 
     class CustomConfigSet(ConfigSet):
+        @override
         def register_config(self) -> None:
             self.add_config(
                 keys=["a"],

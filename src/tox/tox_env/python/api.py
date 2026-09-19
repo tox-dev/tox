@@ -15,6 +15,7 @@ from virtualenv.discovery.py_spec import PythonSpec
 
 from tox.tox_env.api import ToxEnv, ToxEnvCreateArgs
 from tox.tox_env.errors import Fail, Recreate, Skip
+from tox.util.typing_compat import override
 
 if TYPE_CHECKING:
     from tox.config.main import Config
@@ -85,6 +86,7 @@ class Python(ToxEnv, ABC):
         self._base_python_searched: bool = False
         super().__init__(create_args)
 
+    @override
     def register_config(self) -> None:
         super().register_config()
 
@@ -155,6 +157,7 @@ class Python(ToxEnv, ABC):
         self.conf.add_constant("py_free_threaded", "is no-gil interpreted", value=self.py_free_threaded)
         self.conf.add_constant("py_debug", "is a debug build", value=self.py_debug)
 
+    @override
     def _default_set_env(self) -> dict[str, str]:
         env = super()._default_set_env()
         hash_seed: int | None = getattr(self.options, "hash_seed", None)
@@ -174,6 +177,7 @@ class Python(ToxEnv, ABC):
     def py_impl(self) -> str:
         return self.base_python.impl_lower
 
+    @override
     def _default_pass_env(self) -> list[str]:
         env = super()._default_pass_env()
         if sys.platform == "win32":  # pragma: win32 cover
@@ -207,13 +211,13 @@ class Python(ToxEnv, ABC):
                 raise
         if base_python is not None:
             return [base_python]
-        base_python_files: list[str] = self.conf["base_python_file"]
+        base_python_files = self.conf.get("base_python_file", list[str])
         if base_python_files:
             return self._read_python_version_file(base_python_files)
         return self.conf.get("default_base_python", list[str])
 
     def _read_python_version_file(self, file_paths: list[str]) -> list[str]:
-        tox_root: Path = self.core["toxinidir"]
+        tox_root = self.core.get("toxinidir", Path)
         for file_path in file_paths:
             path = tox_root / file_path
             if not path.exists():
@@ -346,6 +350,7 @@ class Python(ToxEnv, ABC):
         """The binary folder within the tox environment."""
         raise NotImplementedError
 
+    @override
     def _setup_env(self) -> None:
         """Setup a virtual python environment."""
         super()._setup_env()
@@ -378,6 +383,7 @@ class Python(ToxEnv, ABC):
     def prepend_env_var_path(self) -> list[Path]:
         raise NotImplementedError
 
+    @override
     def _done_with_setup(self) -> None:
         """Called when setup is done."""
         super()._done_with_setup()
@@ -396,7 +402,7 @@ class Python(ToxEnv, ABC):
     @property
     def base_python(self) -> PythonInfo:
         """Resolve base python."""
-        base_pythons: list[str] = self.conf["base_python"]
+        base_pythons = self.conf.get("base_python", list[str])
 
         if self._base_python_searched is False:
             self._base_python_searched = True
@@ -441,5 +447,6 @@ class NoInterpreter(Fail):
     def __init__(self, base_pythons: list[str]) -> None:
         self.base_pythons = base_pythons
 
+    @override
     def __str__(self) -> str:
         return f"could not find python interpreter matching any of the specs {', '.join(self.base_pythons)}"

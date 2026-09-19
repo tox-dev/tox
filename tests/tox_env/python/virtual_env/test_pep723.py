@@ -7,9 +7,11 @@ from typing import TYPE_CHECKING
 import pytest
 
 if TYPE_CHECKING:
+    from unittest.mock import MagicMock
+
     from pytest_mock import MockerFixture
 
-    from tox.pytest import ToxProjectCreator
+    from tox.pytest import ToxProjectCreator, ToxRunOutcome
 
 
 def _tox_ini(extra: str = "") -> str:
@@ -19,7 +21,7 @@ def _tox_ini(extra: str = "") -> str:
     return "\n".join(lines) + "\n"
 
 
-def _run(project: ToxProjectCreator, files: dict[str, str], *extra_args: str) -> tuple:
+def _run(project: ToxProjectCreator, files: dict[str, str], *extra_args: str) -> tuple[ToxRunOutcome, MagicMock]:
     proj = project(files)
     execute_calls = proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
     result = proj.run("r", "-e", "check", "--discover", sys.executable, *extra_args)

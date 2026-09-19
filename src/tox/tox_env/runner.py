@@ -5,10 +5,12 @@ import os
 import re
 from abc import ABC, abstractmethod
 from hashlib import sha256
+from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 from tox.config.types import Command, EnvList
 from tox.execute import Outcome
+from tox.util.typing_compat import override
 
 from .api import ToxEnv, ToxEnvCreateArgs
 from .errors import Fail
@@ -17,7 +19,6 @@ from .util import add_change_dir_conf
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
-    from pathlib import Path
 
     from tox.journal import EnvJournal
 
@@ -29,6 +30,7 @@ class RunToxEnv(ToxEnv, ABC):
         super().__init__(create_args)
         self._package_envs: list[PackageToxEnv | Exception] | None = None
 
+    @override
     def register_config(self) -> None:
         def ensure_one_line(value: str) -> str:
             return re.sub(
@@ -116,10 +118,12 @@ class RunToxEnv(ToxEnv, ABC):
             desc="if set to true, tox will stop executing remaining environments when this environment fails",
         )
 
+    @override
     def _teardown(self) -> None:
         super()._teardown()
         self._call_pkg_envs("teardown_env", self.conf)
 
+    @override
     def interrupt(self) -> None:
         super().interrupt()
         self._call_pkg_envs("interrupt")
@@ -147,13 +151,14 @@ class RunToxEnv(ToxEnv, ABC):
             desc="tox package type used to generate the package",
             value=self._external_pkg_tox_env_type if is_external else self._package_tox_env_type,
         )
-        return self.conf["package_env"], self.conf["package_tox_env_type"]
+        return self.conf.get("package_env", str), self.conf.get("package_tox_env_type", str)
 
     def _call_pkg_envs(self, method_name: str, *args: Any) -> None:
         for package_env in self.package_envs:
             with package_env.display_context(suspend=self._has_display_suspended):
                 _call_guarded(package_env, method_name, *args)
 
+    @override
     def _clean(self, transitive: bool = False) -> None:  # ruff:ignore[boolean-type-hint-positional-argument, boolean-default-value-positional-argument]
         if not self._run_state["clean"] and self.env_dir.exists():
             try:
@@ -170,10 +175,10 @@ class RunToxEnv(ToxEnv, ABC):
     def _run_recreate_commands(self) -> None:
         from tox.session.cmd.run.single import run_command_set  # ruff:ignore[import-outside-top-level]
 
-        command_set: list[Command] = self.conf["recreate_commands"]
+        command_set = self.conf.get("recreate_commands", list[Command])
         if not command_set:
             return
-        chdir: Path = self.conf["change_dir"]
+        chdir = self.conf.get("change_dir", Path)
         chdir.mkdir(exist_ok=True, parents=True)
         env_dir = self.env_dir
         old_paths = self._paths_private
@@ -200,6 +205,7 @@ class RunToxEnv(ToxEnv, ABC):
     def _external_pkg_tox_env_type(self) -> str:
         raise NotImplementedError
 
+    @override
     def _setup_with_env(self) -> None:
         if self.package_env is not None:
             skip_pkg_install: bool = getattr(self.options, "skip_pkg_install", False) or getattr(
@@ -218,7 +224,7 @@ class RunToxEnv(ToxEnv, ABC):
             default=False,
             desc="is there any packaging involved in this project",
         )
-        core_no_package: bool = self.core["no_package"]
+        core_no_package = self.core.get("no_package", bool)
         if core_no_package is True:
             return False
         self.conf.add_config(
@@ -227,7 +233,7 @@ class RunToxEnv(ToxEnv, ABC):
             default=False,
             desc="skip installation",
         )
-        skip_install: bool = self.conf["skip_install"]
+        skip_install = self.conf.get("skip_install", bool)
         return not skip_install
 
     def _setup_pkg(self) -> None:
@@ -255,6 +261,7 @@ class RunToxEnv(ToxEnv, ABC):
             journal["installpkg"] = installed_meta[0] if len(installed_meta) == 1 else installed_meta
 
     @property
+    @override
     def environment_variables(self) -> dict[str, str]:
         environment_variables = super().environment_variables
         if self.package_env is not None and self._packages:

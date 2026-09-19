@@ -7,6 +7,8 @@ from itertools import chain, tee
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, TypeVar, cast
 
+from tox.util.typing_compat import override
+
 from .sets import ConfigSet, CoreConfigSet, EnvConfigSet
 
 if TYPE_CHECKING:
@@ -43,8 +45,8 @@ class Config:
         self._extra_envs = extra_envs
 
         self._overrides: OverrideMap = defaultdict(list)
-        for override in options.override:
-            self._overrides[override.namespace].append(override)
+        for entry in options.override:
+            self._overrides[entry.namespace].append(entry)
 
         self._src = config_source
         self._key_to_conf_set: dict[tuple[str, str, str], ConfigSet] = OrderedDict()
@@ -104,6 +106,7 @@ class Config:
     def sections(self) -> Iterator[Section]:
         yield from self._src.sections()
 
+    @override
     def __repr__(self) -> str:
         return f"{type(self).__name__}(config_source={self._src!r})"
 

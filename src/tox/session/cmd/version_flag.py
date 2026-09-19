@@ -10,6 +10,7 @@ from typing import TYPE_CHECKING, Any, cast
 import tox
 from tox.plugin import impl
 from tox.plugin.manager import MANAGER
+from tox.util.typing_compat import override
 from tox.version import version
 
 if TYPE_CHECKING:
@@ -25,6 +26,7 @@ def tox_add_option(parser: ToxParser) -> None:
             help_msg = "show program's and plugins version number and exit"
             super().__init__(option_strings=option_strings, dest=dest, nargs=0, help=help_msg, default=SUPPRESS)
 
+        @override
         def __call__(
             self,
             parser: ArgumentParser,

@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from tox.util.typing_compat import override
+
 if TYPE_CHECKING:
     import sys
 
@@ -51,12 +53,15 @@ class Section:  # ruff:ignore[eq-without-hash]
         """:returns: the section key"""
         return self.SEP.join(i for i in (self._prefix, self._name) if i is not None)
 
+    @override
     def __str__(self) -> str:
         return self.key
 
+    @override
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}(prefix={self._prefix!r}, name={self._name!r})"
 
+    @override
     def __eq__(self, other: object) -> bool:
         return isinstance(other, self.__class__) and (self._prefix, self._name) == (
             other._prefix,

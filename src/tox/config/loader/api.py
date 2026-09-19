@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING, Any, TypeVar, cast
 
 from tox.plugin import impl
 from tox.tox_env.python.pip.req_file import PythonDeps
+from tox.util.typing_compat import override
 
 from .convert import Convert, Factory
 from .str_convert import StrConvert
@@ -40,13 +41,16 @@ class Override:  # ruff:ignore[eq-without-hash]
         self.namespace = ".".join(self._namespace_parts)
         self.key = parts[-1]
 
+    @override
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}('{self}')"
 
+    @override
     def __str__(self) -> str:
         escaped_ns = ".".join(part.replace(".", "\\.") for part in self._namespace_parts)
         return f"{escaped_ns}{'.' if escaped_ns else ''}{self.key}{'+' if self.append else ''}={self.value}"
 
+    @override
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, Override):
             return False
@@ -56,6 +60,7 @@ class Override:  # ruff:ignore[eq-without-hash]
             other.value,
         )
 
+    @override
     def __ne__(self, other: object) -> bool:
         return not (self == other)
 
@@ -113,8 +118,8 @@ class Loader(Convert[T]):
     def __init__(self, section: Section, overrides: list[Override]) -> None:
         self._section = section
         self.overrides: dict[str, list[Override]] = {}
-        for override in overrides:
-            self.overrides.setdefault(override.key, []).append(override)
+        for entry in overrides:
+            self.overrides.setdefault(entry.key, []).append(entry)
         self.parent: Loader[Any] | None = None
 
     @property
@@ -138,6 +143,7 @@ class Loader(Convert[T]):
         """A list of configuration keys found within the configuration."""
         raise NotImplementedError
 
+    @override
     def __repr__(self) -> str:
         return f"{type(self).__name__}"
 
@@ -181,15 +187,15 @@ class Loader(Convert[T]):
                 raise KeyError(key)
 
         delay_replace = inspect.isclass(of_type) and issubclass(of_type, SetEnv)
-        for override in overrides:
+        for entry in overrides:
             # an override arrives as a raw CLI string, so it has not been through the loader's substitution pass yet
             raw_override = (
-                override.value
+                entry.value
                 if delay_replace or conf is None  # set_env expands later, the CLI config file never does
-                else self.substitute(override.value, conf, args)
+                else self.substitute(entry.value, conf, args)
             )
             converted_override = _STR_CONVERT.to(raw_override, of_type, factory)
-            if override.append and converted is not None:
+            if entry.append and converted is not None:
                 if isinstance(converted, list) and isinstance(converted_override, list):
                     converted += converted_override
                 elif isinstance(converted, dict) and isinstance(converted_override, dict):
@@ -248,9 +254,9 @@ def apply_overrides_to_raw(overrides: Iterable[Override], key: str, value: T) ->
     ``{replace = "ref", of = [...]}`` (toml) references.
 
     """
-    for override in overrides:
-        if override.key == key:
-            value = _apply_override_to_raw(value, override)
+    for entry in overrides:
+        if entry.key == key:
+            value = _apply_override_to_raw(value, entry)
     return value
 
 

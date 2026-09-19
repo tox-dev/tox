@@ -251,12 +251,7 @@ def test_tox_skip_env_invalid_regex(tox_project: ToxProjectCreator, monkeypatch:
     monkeypatch.delenv("TOX_SKIP_ENV", raising=False)
     project = tox_project({"tox.ini": "[tox]\nenv_list = py3{10,9},mypy"})
 
-    leaked: BaseException | None = None
-    try:
-        outcome = project.run("l", "--no-desc", "--skip-env", bad_filter)
-    except Exception as exception:  # ruff:ignore[blind-except]
-        leaked = exception
-    assert leaked is None, f"unhandled {type(leaked).__name__}: {leaked}"
+    outcome = project.run("l", "--no-desc", "--skip-env", bad_filter)
 
     outcome.assert_failed()
     assert f"HandledError| invalid environment skip filter {bad_filter!r}" in outcome.out

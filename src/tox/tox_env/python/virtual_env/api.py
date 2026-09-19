@@ -23,6 +23,7 @@ from tox.tox_env.errors import Skip
 from tox.tox_env.python.api import Python, PythonInfo, VersionInfo
 from tox.tox_env.python.pip.pip_install import Pip
 from tox.tox_env.python.virtual_env.subprocess_adapter import SubprocessCreator, SubprocessPythonInfo, SubprocessSession
+from tox.util.typing_compat import override
 
 if TYPE_CHECKING:
     from python_discovery import PyInfoCache
@@ -46,6 +47,7 @@ class VirtualEnv(Python, ABC):
         self._installer: Pip | None = None
         super().__init__(create_args)
 
+    @override
     def register_config(self) -> None:
         super().register_config()
         self.conf.add_config(
@@ -89,17 +91,20 @@ class VirtualEnv(Python, ABC):
         return _auto_virtualenv_spec(self.conf["base_python"], virtualenv_version)
 
     @property
+    @override
     def executor(self) -> Execute:
         if self._executor is None:
             self._executor = LocalSubProcessExecutor(self.options.is_colored)
         return self._executor
 
     @property
+    @override
     def installer(self) -> Pip:
         if self._installer is None:
             self._installer = Pip(self)
         return self._installer
 
+    @override
     def python_cache(self) -> dict[str, JsonValue]:
         base = super().python_cache()
         base["executable"] = str(self.base_python.extra["executable"])
@@ -109,17 +114,20 @@ class VirtualEnv(Python, ABC):
             base["virtualenv version"] = virtualenv_version
         return base
 
+    @override
     def _get_env_journal_python(self) -> dict[str, JsonValue]:
         base = super()._get_env_journal_python()
         base["executable"] = str(self.base_python.extra["executable"])
         return base
 
+    @override
     def _default_pass_env(self) -> list[str]:
         env = super()._default_pass_env()
         env.append("PIP_*")  # we use pip as installer
         env.append("VIRTUALENV_*")  # we use virtualenv as isolation creator
         return env
 
+    @override
     def _default_set_env(self) -> dict[str, str]:
         env = super()._default_set_env()
         env["PIP_DISABLE_PIP_VERSION_CHECK"] = "1"
@@ -162,7 +170,7 @@ class VirtualEnv(Python, ABC):
 
     def virtualenv_env_vars(self) -> dict[str, str]:
         env = self.environment_variables.copy()
-        base_python: list[str] = self.conf["base_python"]
+        base_python = self.conf.get("base_python", list[str])
         if "VIRTUALENV_NO_PERIODIC_UPDATE" not in env:
             env["VIRTUALENV_NO_PERIODIC_UPDATE"] = "True"
         env["VIRTUALENV_CLEAR"] = "False"
@@ -178,9 +186,11 @@ class VirtualEnv(Python, ABC):
     def creator(self) -> Creator | SubprocessCreator:
         return self.session.creator
 
+    @override
     def create_python_env(self) -> None:
         self.session.run()
 
+    @override
     def _get_python(self, base_python: list[str]) -> PythonInfo | None:  # ruff:ignore[unused-method-argument]
         # the base pythons are injected into the virtualenv_env_vars, so we don't need to use it here
         try:
@@ -202,6 +212,7 @@ class VirtualEnv(Python, ABC):
             machine=getattr(interpreter, "machine", None),
         )
 
+    @override
     def prepend_env_var_path(self) -> list[Path]:
         """Paths to add to the executable."""
         creator = self._creator_with_skip()
@@ -210,15 +221,19 @@ class VirtualEnv(Python, ABC):
         described = cast("Describe", creator)
         return list(dict.fromkeys((described.bin_dir, described.script_dir)))
 
+    @override
     def env_site_package_dir(self) -> Path:
         return self._describe_path("purelib")
 
+    @override
     def env_site_package_dir_plat(self) -> Path:
         return self._describe_path("platlib")
 
+    @override
     def env_python(self) -> Path:
         return self._describe_path("exe")
 
+    @override
     def env_bin_dir(self) -> Path:
         return self._describe_path("script_dir")
 
@@ -234,10 +249,12 @@ class VirtualEnv(Python, ABC):
             raise Skip(str(exc)) from exc
 
     @property
+    @override
     def runs_on_platform(self) -> str:
         return sys.platform
 
     @property
+    @override
     def environment_variables(self) -> dict[str, str]:
         environment_variables = super().environment_variables
         environment_variables["VIRTUAL_ENV"] = str(self.conf["env_dir"])
@@ -245,6 +262,7 @@ class VirtualEnv(Python, ABC):
         return environment_variables
 
     @classmethod
+    @override
     def python_spec_for_path(cls, path: Path) -> PythonSpec:
         """Get the spec for an absolute path to a Python executable.
 

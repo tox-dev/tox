@@ -15,6 +15,7 @@ from tox.execute.api import Execute, ExecuteInstance, ExecuteOptions, ExecuteSta
 from tox.execute.request import ExecuteRequest, StdinSource
 from tox.execute.util import shebang
 from tox.tox_env.errors import Fail
+from tox.util.typing_compat import override
 
 if TYPE_CHECKING:
     import io
@@ -49,6 +50,7 @@ IS_WIN = sys.platform == "win32"
 
 
 class LocalSubProcessExecutor(Execute):
+    @override
     def build_instance(  # ruff:ignore[no-self-use]
         self,
         request: ExecuteRequest,
@@ -66,45 +68,48 @@ class LocalSubprocessExecuteStatus(ExecuteStatus):
         self._interrupted = False
 
     @property
+    @override
     def exit_code(self) -> int | None:
         # need to poll here, to make sure the returncode we get is current
         self._process.poll()
         return self._process.returncode
 
+    @override
     def interrupt(self) -> None:
         self._interrupted = True
-        if self._process is not None:  # pragma: no branch
-            # A three level stop mechanism for children - INT -> TERM -> KILL
-            # communicate will wait for the app to stop, and then drain the standard streams and close them
-            to_pid, host_pid = self._process.pid, os.getpid()
-            msg = "requested interrupt of %d from %d, activate in %.2f"
-            logging.warning(msg, to_pid, host_pid, self.options.suicide_timeout)
-            if self.wait(self.options.suicide_timeout) is None:  # still alive -> INT
-                # on Windows everyone in the same process group, so they got the message
-                if sys.platform != "win32":  # pragma: win32 cover
-                    msg = "send signal %s to %d from %d with timeout %.2f"
-                    logging.warning(msg, f"SIGINT({SIG_INTERRUPT})", to_pid, host_pid, self.options.interrupt_timeout)
-                    self._process.send_signal(SIG_INTERRUPT)
-                if self.wait(self.options.interrupt_timeout) is None:  # still alive -> TERM # pragma: no branch
-                    terminate_output = self.options.terminate_timeout
-                    msg = "send signal %s to %d from %d with timeout %.2f"
-                    logging.warning(msg, f"SIGTERM({SIGTERM})", to_pid, host_pid, terminate_output)
-                    self._process.terminate()
-                    # Windows terminate is UNIX kill
-                    if sys.platform != "win32" and self.wait(terminate_output) is None:  # pragma: no branch
-                        logging.warning(msg[:-18], f"SIGKILL({SIGKILL})", to_pid, host_pid)
-                        self._process.kill()  # still alive -> KILL
-                    self.wait()  # unconditional wait as kill should soon bring down the process
-                logging.warning("interrupt finished with success")
-            else:  # pragma: no cover # difficult to test, process must die just as it's being interrupted
-                logging.warning("process already dead with %s within %s", self._process.returncode, host_pid)
+        # A three level stop mechanism for children - INT -> TERM -> KILL
+        # communicate will wait for the app to stop, and then drain the standard streams and close them
+        to_pid, host_pid = self._process.pid, os.getpid()
+        msg = "requested interrupt of %d from %d, activate in %.2f"
+        logging.warning(msg, to_pid, host_pid, self.options.suicide_timeout)
+        if self.wait(self.options.suicide_timeout) is None:  # still alive -> INT
+            # on Windows everyone in the same process group, so they got the message
+            if sys.platform != "win32":  # pragma: win32 cover
+                msg = "send signal %s to %d from %d with timeout %.2f"
+                logging.warning(msg, f"SIGINT({SIG_INTERRUPT})", to_pid, host_pid, self.options.interrupt_timeout)
+                self._process.send_signal(SIG_INTERRUPT)
+            if self.wait(self.options.interrupt_timeout) is None:  # still alive -> TERM # pragma: no branch
+                terminate_output = self.options.terminate_timeout
+                msg = "send signal %s to %d from %d with timeout %.2f"
+                logging.warning(msg, f"SIGTERM({SIGTERM})", to_pid, host_pid, terminate_output)
+                self._process.terminate()
+                # Windows terminate is UNIX kill
+                if sys.platform != "win32" and self.wait(terminate_output) is None:  # pragma: no branch
+                    logging.warning(msg[:-18], f"SIGKILL({SIGKILL})", to_pid, host_pid)
+                    self._process.kill()  # still alive -> KILL
+                self.wait()  # unconditional wait as kill should soon bring down the process
+            logging.warning("interrupt finished with success")
+        else:  # pragma: no cover # difficult to test, process must die just as it's being interrupted
+            logging.warning("process already dead with %s within %s", self._process.returncode, host_pid)
 
+    @override
     def wait(self, timeout: float | None = None) -> int | None:
         try:  # note wait in general might deadlock if output large, but we drain in background threads so not an issue
             return self._process.wait(timeout=timeout)
         except TimeoutExpired:
             return None
 
+    @override
     def write_stdin(self, content: str) -> None:
         stdin = self._process.stdin
         if stdin is None:  # pragma: no branch
@@ -132,10 +137,12 @@ class LocalSubprocessExecuteStatus(ExecuteStatus):
             stdin.write(bytes_content)
             stdin.flush()
 
+    @override
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}(pid={self._process.pid}, returncode={self._process.returncode!r})"
 
     @property
+    @override
     def metadata(self) -> dict[str, JsonValue]:
         return {"pid": self._process.pid} if self._process.pid else {}
 
@@ -146,15 +153,19 @@ class LocalSubprocessExecuteFailedStatus(ExecuteStatus):
         self._exit_code = exit_code
 
     @property
+    @override
     def exit_code(self) -> int | None:
         return self._exit_code
 
+    @override
     def wait(self, timeout: float | None = None) -> int | None:  # ruff:ignore[unused-method-argument]
         return self._exit_code  # pragma: no cover
 
+    @override
     def write_stdin(self, content: str) -> None:
         """Cannot write."""
 
+    @override
     def interrupt(self) -> None:  # ruff:ignore[no-self-use]
         return None  # pragma: no cover # nothing running so nothing to interrupt
 
@@ -177,6 +188,7 @@ class LocalSubProcessExecuteInstance(ExecuteInstance):
         self._on_exit_drain = on_exit_drain
 
     @property
+    @override
     def cmd(self) -> Sequence[str]:
         if self._cmd is None:
             base = self.request.cmd[0]
@@ -203,6 +215,7 @@ class LocalSubProcessExecuteInstance(ExecuteInstance):
             self._cmd = cmd
         return self._cmd
 
+    @override
     def __enter__(self) -> ExecuteStatus:
         # adjust sub-process terminal size
         columns, lines = shutil.get_terminal_size(fallback=(-1, -1))
@@ -240,6 +253,7 @@ class LocalSubProcessExecuteInstance(ExecuteInstance):
             self._read_stdout.__enter__()
         return status
 
+    @override
     def __exit__(
         self,
         exc_type: type[BaseException] | None,

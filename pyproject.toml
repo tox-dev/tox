@@ -247,6 +247,12 @@ search-path = [ "src", "typestubs" ]
 src.exclude = []
 environment.extra-paths = [ "typestubs" ]
 environment.python-version = "3.14"
+rules.blanket-ignore-comment = "error"
+rules.division-by-zero = "error"
+rules.missing-direct-dependency = "error"
+rules.possibly-unresolved-reference = "error"
+rules.unsupported-dynamic-base = "error"
+overrides = [ { include = [ "src/**", "tests/**" ], rules = { missing-override-decorator = "error" } } ]
 
 [tool.pytest]
 ini_options.testpaths = [
