@@ -7,6 +7,25 @@
 .. towncrier release notes start
 
 **********************
+ v4.63.0 (2026-09-19)
+**********************
+
+Features - 4.63.0
+=================
+
+- Plugins and test helpers can use ``tox.execute.api.FinishedExecuteStatus`` to report a fixed exit code for a command
+  that already finished or never started - by :user:`gaborbernat`. (:issue:`4080`)
+
+Bug fixes - 4.63.0
+==================
+
+- Interrupting a parallel run with Ctrl-C no longer loses the log lines about stopping the package environment, which
+  could appear or vanish depending on thread timing - by :user:`gaborbernat`. (:issue:`4079`)
+- Optional dependencies declared in ``pyproject.toml`` under a name that is not normalized, such as ``Foo_Bar``, are now
+  installed when requested as ``extras = foo-bar`` while tox installs a package's dependencies - by :user:`gaborbernat`.
+  (:issue:`4080`)
+
+**********************
  v4.62.1 (2026-09-19)
 **********************
 

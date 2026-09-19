@@ -1,2 +1,0 @@
-Interrupting a parallel run with Ctrl-C no longer loses the log lines about stopping the package environment, which
-could appear or vanish depending on thread timing - by :user:`gaborbernat`.
