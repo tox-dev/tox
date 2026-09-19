@@ -338,6 +338,12 @@ class CoreConfigSet(ConfigSet):
             default=self._default_temp_dir,
             desc="a folder for temporary files (is not cleaned at start)",
         )
+        self.add_config(
+            keys=["python_envs"],
+            of_type=bool,
+            default=True,
+            desc="catalog the created tox environments in a PEP-832 .python-envs file, so editors can discover them",
+        )
         self.add_constant("host_python", "the host python executable path", sys.executable)
 
     @override

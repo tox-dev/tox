@@ -745,6 +745,31 @@ upgrade that changes the derived value) triggers automatic recreation.
 This design mirrors tox's own auto-provisioning mechanism (``requires`` / ``min_version``), where tox bootstraps itself
 into a separate environment when the running installation doesn't meet the declared requirements.
 
+***********************
+ Environment discovery
+***********************
+
+Editors need an interpreter path before they can offer completion, navigation or a debugger. tox keeps its environments
+under ``.tox``, a directory editors have no reason to search, so for years the answer was to copy a path out of ``tox
+devenv`` output and paste it into a settings dialog, then repeat it after every recreate.
+
+:PEP:`832` standardizes where tools publish that answer. A project may hold a virtual environment at ``.venv``, and a
+``.python-envs`` file at the project root lists any further environments, one directory per line. The last line is the
+default, so a reader that supports only one environment still knows which to take. VS Code reads the file today and
+PyCharm honors the ``.venv`` half of the convention.
+
+tox writes ``.python-envs`` at the end of a run, listing every environment that exists on disk. Ordering follows how
+useful an environment is to an editor rather than how tox happens to schedule it: an environment named ``dev`` wins,
+then one installing the project in development mode, then the earlier entries of :ref:`env_list`. Since the catalog
+lists the preferred environment last, removing lines from the bottom degrades to the next best choice.
+
+Two rules keep the file honest. tox owns the lines under :ref:`work_dir` and rewrites them wholesale, while lines
+pointing elsewhere came from another tool and survive untouched, including the last line and the default it claims. And
+because a recreated environment is unusable between the moment tox empties the directory and the moment the new
+interpreter lands, tox takes the environment out of the catalog first and puts it back once the run ends.
+
+Set :ref:`python_envs` to ``false`` if you would rather tox left the project root alone.
+
 *******************
  Known limitations
 *******************

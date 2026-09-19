@@ -32,6 +32,10 @@
       "type": "string",
       "description": "a folder for temporary files (is not cleaned at start)"
     },
+    "python_envs": {
+      "type": "boolean",
+      "description": "catalog the created tox environments in a PEP-832 .python-envs file, so editors can discover them"
+    },
     "env_list": {
       "type": "array",
       "items": {
