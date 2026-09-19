@@ -6,6 +6,8 @@ import contextlib  # pragma: win32 cover
 import sys  # pragma: win32 cover
 from typing import TYPE_CHECKING, cast
 
+from tox.util.typing_compat import override
+
 if TYPE_CHECKING or sys.platform == "win32":  # pragma: win32 cover
     import _overlapped  # pragma: win32 cover # ruff:ignore[import-private-name]
 
@@ -25,6 +27,7 @@ class ReadViaThreadWindows(ReadViaThread):  # pragma: win32 cover
     def __init__(self, file_no: int, handler: Callable[[bytes], int], name: str, drain: bool) -> None:  # ruff:ignore[boolean-type-hint-positional-argument]
         super().__init__(file_no, handler, name, drain)
 
+    @override
     def _read_stream(self) -> None:
         with contextlib.suppress(OSError):  # pragma: no cover
             self._do_read_stream()
@@ -52,6 +55,7 @@ class ReadViaThreadWindows(ReadViaThread):  # pragma: win32 cover
                 break
             self.handler(data)
 
+    @override
     def _drain_stream(self) -> None:
         with contextlib.suppress(OSError):  # pragma: no cover
             self._do_drain_stream()

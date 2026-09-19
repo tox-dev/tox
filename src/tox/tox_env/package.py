@@ -10,6 +10,8 @@ from typing import TYPE_CHECKING, Any, ParamSpec, TypeVar, cast
 
 from filelock import BaseFileLock, FileLock
 
+from tox.util.typing_compat import override
+
 from .api import ToxEnv, ToxEnvCreateArgs
 
 _P = ParamSpec("_P")
@@ -33,6 +35,7 @@ class PathPackage(Package):
         super().__init__()
         self.path = path
 
+    @override
     def __str__(self) -> str:
         return str(self.path)
 
@@ -60,6 +63,7 @@ class PackageToxEnv(ToxEnv, ABC):
         super().__init__(create_args)
         self._envs: set[str] = set()
 
+    @override
     def __getattribute__(self, name: str) -> Any:
         # the packaging class might be used by multiple environments in parallel, hold a lock for operations on it
         obj = object.__getattribute__(self, name)
@@ -67,9 +71,10 @@ class PackageToxEnv(ToxEnv, ABC):
             obj = _lock_method(self._thread_lock, self._file_lock, obj)
         return obj
 
+    @override
     def register_config(self) -> None:
         super().register_config()
-        file_lock_path: Path = self.conf["env_dir"] / "file.lock"
+        file_lock_path = self.conf.get("env_dir", Path) / "file.lock"
         self._file_lock = FileLock(file_lock_path)
         file_lock_path.parent.mkdir(parents=True, exist_ok=True)
         self.core.add_config(
@@ -85,6 +90,7 @@ class PackageToxEnv(ToxEnv, ABC):
             desc="indicates where the packaging root file exists (historically setup.py file or pyproject.toml now)",
         )
 
+    @override
     def _recreate_default(self, conf: Config, value: str | None) -> bool:
         return self.options.no_recreate_pkg is False and super()._recreate_default(conf, value)
 

@@ -5,6 +5,8 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, TypeVar, cast, get_origin, overload
 
+from tox.util.typing_compat import override
+
 from .of_type import ConfigConstantDefinition, ConfigDefinition, ConfigDynamicDefinition, ConfigLoadArgs
 from .set_env import SetEnv, SetEnvRaw
 from .types import EnvList
@@ -225,6 +227,26 @@ class ConfigSet(ABC):
         msg = f"{item} is {type(value).__name__}, expected {of_type!r}"
         raise TypeError(msg)
 
+    def get_optional(self, item: str, of_type: type[V]) -> V | None:
+        """Get the config value for a key that may be unset, verified to be of the declared type or ``None``.
+
+        Use this over :meth:`get` for keys registered with a ``None`` default, such as ``min_version``.
+
+        .. versionadded:: 4.62
+
+        :param item: the config key
+        :param of_type: the type the config value was registered with
+
+        :returns: the configuration value, or ``None`` when unset
+
+        """
+        value = self.load(item)
+        if value is None or isinstance(value, get_origin(of_type) or of_type):
+            return cast("V | None", value)
+        msg = f"{item} is {type(value).__name__}, expected {of_type!r} or None"
+        raise TypeError(msg)
+
+    @override
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}(loaders={self.loaders!r})"
 
@@ -291,6 +313,7 @@ class CoreConfigSet(ConfigSet):
     def _work_dir_post_process(self, folder: Path) -> Path:
         return self._conf.work_dir if self._conf.options.work_dir else folder
 
+    @override
     def register_config(self) -> None:
         self.add_constant(keys=["config_file_path"], desc="path to the configuration file", value=self._src_path)
         self.add_config(
@@ -317,6 +340,7 @@ class CoreConfigSet(ConfigSet):
         )
         self.add_constant("host_python", "the host python executable path", sys.executable)
 
+    @override
     def _on_duplicate_conf(self, key: str, definition: ConfigDefinition[V]) -> None:
         pass  # core definitions may be defined multiple times as long as all their options match, first defined wins
 
@@ -328,6 +352,7 @@ class EnvConfigSet(ConfigSet):
         super().__init__(conf, section, env_name)
         self.default_set_env_loader: Callable[[], Mapping[str, str]] = dict
 
+    @override
     def register_config(self) -> None:
         def set_env_post_process(values: SetEnv) -> SetEnv:
             values.update(self.default_set_env_loader(), override=False)
@@ -369,6 +394,7 @@ class EnvConfigSet(ConfigSet):
             post_process=set_env_post_process,
         )
 
+    @override
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}(name={self._env_name!r}, loaders={self.loaders!r})"
 

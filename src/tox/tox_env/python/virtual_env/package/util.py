@@ -81,7 +81,7 @@ def _extract_extra_markers(req: Requirement) -> tuple[Requirement, set[str | Non
     req = deepcopy(req)
     markers: MarkerList = getattr(req.marker, "_markers", []) or []
     new_markers: MarkerList = []
-    extra_markers: set[str] = set()
+    extra_markers: set[str | None] = set()
     marker = markers.pop(0) if markers else None
     while marker:
         extra = _get_extra(marker)
@@ -99,7 +99,7 @@ def _extract_extra_markers(req: Requirement) -> tuple[Requirement, set[str | Non
         cast("Marker", req.marker)._markers = new_markers  # ruff:ignore[private-member-access]
     else:
         req.marker = None
-    return req, cast("set[str | None]", extra_markers) or {None}
+    return req, extra_markers or {None}
 
 
 def _get_extra(

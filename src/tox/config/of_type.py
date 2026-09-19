@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING, Generic, TypeVar, cast
 
 from tox.config.loader.api import ConfigLoadArgs, Loader
 from tox.config.types import CircularChainError
+from tox.util.typing_compat import override
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterable
@@ -36,11 +37,13 @@ class ConfigDefinition(ABC, Generic[T]):  # ruff:ignore[eq-without-hash]
         """Force the configuration to the given value, replacing any constant or already loaded one."""
         raise NotImplementedError
 
+    @override
     def __eq__(self, o: object) -> bool:
         if not isinstance(o, ConfigDefinition):
             return False
         return (self.keys, self.desc) == (o.keys, o.desc)
 
+    @override
     def __ne__(self, o: object) -> bool:
         return not (self == o)
 
@@ -57,6 +60,7 @@ class ConfigConstantDefinition(ConfigDefinition[T]):  # ruff:ignore[eq-without-h
         super().__init__(keys, desc)
         self.value = value
 
+    @override
     def __call__(
         self,
         conf: Config,  # ruff:ignore[unused-method-argument]
@@ -67,14 +71,17 @@ class ConfigConstantDefinition(ConfigDefinition[T]):  # ruff:ignore[eq-without-h
             return cast("Callable[[], T]", self.value)()
         return self.value
 
+    @override
     def overwrite(self, value: T) -> None:
         self.value = value
 
+    @override
     def __eq__(self, o: object) -> bool:
         if not isinstance(o, ConfigConstantDefinition):
             return False
         return super().__eq__(o) and self.value == o.value
 
+    @override
     def __repr__(self) -> str:
         values = ((k, v) for k, v in vars(self).items() if v is not None)
         return f"{type(self).__name__}({', '.join(f'{k}={v}' for k, v in values)})"
@@ -102,6 +109,7 @@ class ConfigDynamicDefinition(ConfigDefinition[T]):  # ruff:ignore[eq-without-ha
         self.factory = factory
         self._cache: object | T = _PLACE_HOLDER
 
+    @override
     def __call__(
         self,
         conf: Config,
@@ -137,13 +145,16 @@ class ConfigDynamicDefinition(ConfigDefinition[T]):  # ruff:ignore[eq-without-ha
             self._cache = value
         return cast("T", self._cache)
 
+    @override
     def overwrite(self, value: T) -> None:
         self._cache = value
 
+    @override
     def __repr__(self) -> str:
         values = ((k, v) for k, v in vars(self).items() if k not in {"post_process", "_cache"} and v is not None)
         return f"{type(self).__name__}({', '.join(f'{k}={v}' for k, v in values)})"
 
+    @override
     def __eq__(self, o: object) -> bool:
         if not isinstance(o, ConfigDynamicDefinition):
             return False

@@ -11,6 +11,7 @@ from typing import TYPE_CHECKING, Any, cast
 
 from tox.config.loader.convert import Convert
 from tox.config.types import Command, EnvList
+from tox.util.typing_compat import override
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
@@ -22,14 +23,17 @@ class StrConvert(Convert[str]):
     """A class converting string values to tox types."""
 
     @staticmethod
+    @override
     def to_str(value: str) -> str:
         return str(value).strip()
 
     @staticmethod
+    @override
     def to_path(value: str) -> Path:
         return Path(value)
 
     @staticmethod
+    @override
     def to_list(value: str, of_type: type[Any]) -> Iterator[str]:
         splitter = "\n" if (isclass(of_type) and issubclass(of_type, Command)) or "\n" in value else ","
         splitter = splitter.replace("\r", "")
@@ -39,10 +43,12 @@ class StrConvert(Convert[str]):
                 yield value
 
     @staticmethod
+    @override
     def to_set(value: str, of_type: type[Any]) -> Iterator[str]:
         yield from StrConvert.to_list(value, of_type)
 
     @staticmethod
+    @override
     def to_dict(value: str, of_type: tuple[type[Any], type[Any]]) -> Iterator[tuple[str, str]]:  # ruff:ignore[unused-static-method-argument]
         for row in value.split("\n"):
             if row.strip():
@@ -54,6 +60,7 @@ class StrConvert(Convert[str]):
                     raise TypeError(msg)
 
     @staticmethod
+    @override
     def to_command(value: str) -> Command:
         """At this point, ``value`` has already been substituted out, and all punctuation / escapes are final.
 
@@ -133,6 +140,7 @@ class StrConvert(Convert[str]):
         return "".join(result)
 
     @staticmethod
+    @override
     def to_env_list(value: str) -> EnvList:
         from tox.config.loader.ini.factor import extend_factors  # ruff:ignore[import-outside-top-level]
 
@@ -144,6 +152,7 @@ class StrConvert(Convert[str]):
     VALID_BOOL = sorted(TRUTHFUL_VALUES | FALSE_VALUES)
 
     @staticmethod
+    @override
     def to_bool(value: str) -> bool:
         norm = str(value).strip().lower()
         if norm in StrConvert.TRUTHFUL_VALUES:

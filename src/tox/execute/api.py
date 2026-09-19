@@ -12,6 +12,8 @@ from typing import IO, TYPE_CHECKING, NoReturn, cast
 
 from colorama import Fore
 
+from tox.util.typing_compat import override
+
 from .request import ExecuteRequest, StdinSource
 from .stream import SyncWrite
 
@@ -263,6 +265,7 @@ class Outcome:
     def __bool__(self) -> bool:
         return self.exit_code == self.OK
 
+    @override
     def __repr__(self) -> str:
         return (
             f"{self.__class__.__name__}: exit {self.exit_code} in {self.elapsed:.2f} seconds"

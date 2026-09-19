@@ -10,7 +10,7 @@ if TYPE_CHECKING:
 def add_change_dir_conf(config: EnvConfigSet, core: CoreConfigSet) -> None:
     def _post_process_change_dir(value: Path) -> Path:
         if not value.is_absolute():
-            value = (core["tox_root"] / value).resolve()
+            value = (core.get("tox_root", Path) / value).resolve()
         return value
 
     config.add_config(

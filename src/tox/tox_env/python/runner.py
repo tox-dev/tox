@@ -5,6 +5,7 @@ from __future__ import annotations
 import logging
 from abc import ABC
 from functools import partial
+from pathlib import Path
 from typing import TYPE_CHECKING, Literal, TypeAlias, get_args
 
 from packaging.utils import canonicalize_name
@@ -18,6 +19,7 @@ from tox.tox_env.errors import Fail, Skip
 from tox.tox_env.python.pip.req_file import PythonDeps
 from tox.tox_env.python.pylock import Pylock
 from tox.tox_env.runner import RunToxEnv
+from tox.util.typing_compat import override
 
 from .api import Python
 from .dependency_groups import resolve as resolve_dependency_groups
@@ -30,8 +32,6 @@ PackageType: TypeAlias = Literal[
 
 
 if TYPE_CHECKING:
-    from pathlib import Path
-
     from tox.config.cli.parser import Parsed
     from tox.config.main import Config
     from tox.config.sets import CoreConfigSet, EnvConfigSet
@@ -43,6 +43,7 @@ class PythonRun(Python, RunToxEnv, ABC):
     def __init__(self, create_args: ToxEnvCreateArgs) -> None:
         super().__init__(create_args)
 
+    @override
     def register_config(self) -> None:
         super().register_config()
         root = self.core["toxinidir"]
@@ -95,6 +96,7 @@ class PythonRun(Python, RunToxEnv, ABC):
         # tuple[str, ...] rather than tuple[PackageType, ...] so subclasses can add their own package types
         return get_args(PackageType)
 
+    @override
     def _register_package_conf(self) -> bool:
         # provision package type
         desc = f"package installation mode - {' | '.join(i for i in self._package_types)} "
@@ -124,13 +126,14 @@ class PythonRun(Python, RunToxEnv, ABC):
 
     @property
     def pkg_type(self) -> str:
-        pkg_type: str = self.conf["package"]
+        pkg_type = self.conf.get("package", str)
         if pkg_type not in self._package_types:
             values = ", ".join(self._package_types)
             msg = f"invalid package config type {pkg_type} requested, must be one of {values}"
             raise HandledError(msg)
         return pkg_type
 
+    @override
     def _setup_pkg(self) -> None:
         if self.pkg_type == "deps-only":
             self._install_package_deps_only()
@@ -138,8 +141,8 @@ class PythonRun(Python, RunToxEnv, ABC):
         super()._setup_pkg()
 
     def _install_package_deps_only(self) -> None:
-        extras: set[str] = self.conf["extras"]
-        root: Path = self.core["package_root"]
+        extras = self.conf.get("extras", set[str])
+        root = self.core.get("package_root", Path)
         if (deps := resolve_extras_static(root, extras)) is None:
             package_env = self.package_env
             assert package_env is not None  # ruff:ignore[assert]
@@ -148,6 +151,7 @@ class PythonRun(Python, RunToxEnv, ABC):
         if deps and not self.options.package_only:
             self._install(deps, PythonRun.__name__, "package_deps")
 
+    @override
     def _setup_env(self) -> None:
         super()._setup_env()
         if getattr(self.options, "skip_env_install", False):
@@ -160,24 +164,24 @@ class PythonRun(Python, RunToxEnv, ABC):
             self._install_dependency_groups()
 
     def _install_deps(self) -> None:
-        requirements_file: PythonDeps = self.conf["deps"]
+        requirements_file = self.conf.get("deps", PythonDeps)
         self._install(requirements_file, PythonRun.__name__, "deps")
 
     def _install_dependency_groups(self) -> None:
-        groups: set[str] = self.conf["dependency_groups"]
+        groups = self.conf.get("dependency_groups", set[str])
         if not groups:
             return
         try:
-            root: Path = self.core["package_root"]
+            root = self.core.get("package_root", Path)
         except KeyError:
             root = self.core["tox_root"]
         requirements = resolve_dependency_groups(root, groups)
         self._install(list(requirements), PythonRun.__name__, "dependency-groups")
 
     def _install_pylock(self) -> None:
-        pylock_path: str = self.conf["pylock"]
+        pylock_path = self.conf.get("pylock", str)
         try:
-            root: Path = self.core["package_root"]
+            root = self.core.get("package_root", Path)
         except KeyError:
             root = self.core["tox_root"]
         if not (path := root / pylock_path).exists():
@@ -191,28 +195,30 @@ class PythonRun(Python, RunToxEnv, ABC):
             "python_full_version": f"{info.version_info.major}.{info.version_info.minor}.{info.version_info.micro}",
             "sys_platform": info.platform,
         }
-        extras: set[str] = self.conf["extras"]
-        groups: set[str] = self.conf["dependency_groups"]
+        extras = self.conf.get("extras", set[str])
+        groups = self.conf.get("dependency_groups", set[str])
         pylock = Pylock(path=path, extras=frozenset(extras), groups=frozenset(groups), marker_env=marker_env)
         self._install(pylock, PythonRun.__name__, "pylock")
 
+    @override
     def _setup_with_env(self) -> None:
         super()._setup_with_env()
         self._run_extra_setup_commands()
 
     def _run_extra_setup_commands(self) -> None:
-        command_set: list[Command] = self.conf["extra_setup_commands"]
+        command_set = self.conf.get("extra_setup_commands", list[Command])
         if not command_set:
             return
-        chdir: Path = self.conf["change_dir"]
+        chdir = self.conf.get("change_dir", Path)
         chdir.mkdir(exist_ok=True, parents=True)
-        ignore_errors: bool = self.conf["ignore_errors"]
+        ignore_errors = self.conf.get("ignore_errors", bool)
         outcomes: list[Outcome] = []
         exit_code = run_command_set(self, "extra_setup_commands", chdir, ignore_errors, outcomes)
         if exit_code != Outcome.OK and not ignore_errors:
             msg = "extra_setup_commands failed"
             raise Fail(msg)
 
+    @override
     def _build_packages(self) -> list[Package]:
         package_env = self.package_env
         assert package_env is not None  # ruff:ignore[assert]

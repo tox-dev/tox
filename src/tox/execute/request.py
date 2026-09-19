@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 from tox.util.redact import redact_argv
+from tox.util.typing_compat import override
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -77,6 +78,7 @@ class ExecuteRequest:
             cmd = redact_argv(cmd)
         return shell_cmd(cmd)
 
+    @override
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}(cmd={self.cmd!r}, cwd={self.cwd!r}, env=..., stdin={self.stdin!r})"
 

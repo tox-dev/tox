@@ -35,6 +35,7 @@ from tox.tox_env.python.package import (
 )
 from tox.tox_env.python.virtual_env.api import VirtualEnv
 from tox.util.file_view import create_session_view
+from tox.util.typing_compat import override
 
 from .util import dependencies_with_extras, dependencies_with_extras_from_markers, safe_extractall
 
@@ -83,6 +84,7 @@ class ToxCmdStatus(CmdStatus):
         self._execute_status = execute_status
 
     @property
+    @override
     def done(self) -> bool:
         # 1. process died
         status = self._execute_status
@@ -91,9 +93,10 @@ class ToxCmdStatus(CmdStatus):
         # 2. the backend output reported back that our command is done
         return b"\n" in status.out.rpartition(b"Backend: Wrote response ")[0]
 
+    @override
     def out_err(self) -> tuple[str, str]:
         status = self._execute_status
-        if status is None or status.outcome is None:  # interrupt before status create # pragma: no branch
+        if status.outcome is None:  # interrupt before the outcome is set # pragma: no branch
             return "", ""  # pragma: no cover
         return status.outcome.out_err()
 
@@ -141,6 +144,7 @@ class Pep517VenvPackager(PythonPackageToxEnv, ABC):
             self.root = previous
 
     @staticmethod
+    @override
     def id() -> str:
         return "virtualenv-pep-517"
 
@@ -150,6 +154,7 @@ class Pep517VenvPackager(PythonPackageToxEnv, ABC):
             self._frontend_ = Pep517VirtualEnvFrontend(self.root, self)
         return self._frontend_
 
+    @override
     def register_config(self) -> None:
         super().register_config()
         self.conf.add_config(
@@ -195,7 +200,7 @@ class Pep517VenvPackager(PythonPackageToxEnv, ABC):
 
     @property
     def meta_folder(self) -> Path:
-        meta_folder: Path = self.conf["meta_dir"]
+        meta_folder = self.conf.get("meta_dir", Path)
         meta_folder.mkdir(exist_ok=True)
         return meta_folder
 
@@ -207,12 +212,14 @@ class Pep517VenvPackager(PythonPackageToxEnv, ABC):
             return meta_folder
         return None
 
+    @override
     def register_run_env(self, run_env: RunToxEnv) -> Generator[tuple[str, str], PackageToxEnv, None]:
         yield from super().register_run_env(run_env)
         build_type = run_env.conf["package"]
         self.call_require_hooks.add("sdist" if build_type == "sdist-wheel" else build_type)
         self.builds[build_type].append(run_env.conf)
 
+    @override
     def _setup_env(self) -> None:
         # Only reject deps for standard PEP-517 build types (sdist, wheel, editable).
         # Non-standard types like editable-legacy legitimately need deps (e.g. the wheel package)
@@ -237,20 +244,20 @@ class Pep517VenvPackager(PythonPackageToxEnv, ABC):
             self._setup_build_requires("editable")
 
     def _setup_build_requires(self, of_type: str) -> None:
-        settings: ConfigSettings = self.conf[f"config_settings_get_requires_for_build_{of_type}"]
+        settings = self.conf.get_optional(f"config_settings_get_requires_for_build_{of_type}", dict[str, Any])
         requires = getattr(self._frontend, f"get_requires_for_build_{of_type}")(config_settings=settings).requires
         self._install(requires, PythonPackageToxEnv.__name__, f"requires_for_build_{of_type}")
 
+    @override
     def _teardown(self) -> None:
         executor = self._frontend.backend_executor
-        if executor is not None:  # pragma: no branch
-            try:
-                if executor.is_alive:
-                    self._frontend._send("_exit")  # try first on amicable shutdown  # ruff:ignore[private-member-access]
-            except (SystemExit, BrokenPipeError, Fail):  # pragma: no cover  # if interrupted or backend dead, ignore
-                pass
-            finally:
-                executor.close()
+        try:
+            if executor.is_alive:
+                self._frontend._send("_exit")  # try first on amicable shutdown  # ruff:ignore[private-member-access]
+        except (SystemExit, BrokenPipeError, Fail):  # pragma: no cover  # if interrupted or backend dead, ignore
+            pass
+        finally:
+            executor.close()
         for path in self._package_paths:
             if path.exists():
                 logging.debug("delete package %s", path)
@@ -260,6 +267,7 @@ class Pep517VenvPackager(PythonPackageToxEnv, ABC):
                     logging.warning("failed to delete package %s: %s", path, exception)
         super()._teardown()
 
+    @override
     def perform_packaging(self, for_env: EnvConfigSet) -> list[Package]:
         """Build the package to install."""
         try:
@@ -267,10 +275,10 @@ class Pep517VenvPackager(PythonPackageToxEnv, ABC):
         except BuildEditableNotSupportedError:
             self._fallback_to_editable_legacy()
             deps = self._load_deps(for_env)
-        of_type: str = for_env["package"]
+        of_type = for_env.get("package", str)
         if of_type == "editable-legacy":
             self.setup()
-            config_settings: ConfigSettings = self.conf["config_settings_get_requires_for_build_sdist"]
+            config_settings = self.conf.get_optional("config_settings_get_requires_for_build_sdist", dict[str, Any])
             sdist_requires = self._frontend.get_requires_for_build_sdist(config_settings=config_settings).requires
             deps = [*self.requires(), *sdist_requires, *deps]
             package: Package = EditableLegacyPackage(self.core["tox_root"], deps)  # the folder itself is the package
@@ -335,7 +343,7 @@ class Pep517VenvPackager(PythonPackageToxEnv, ABC):
         self.setup()
         with self._pkg_lock:
             # Step 1: Build the sdist in this (parent) environment
-            sdist_config: ConfigSettings = self.conf["config_settings_build_sdist"]
+            sdist_config = self.conf.get_optional("config_settings_build_sdist", dict[str, Any])
             sdist = self._frontend.build_sdist(sdist_directory=self.pkg_dir, config_settings=sdist_config).sdist
             logging.info("built sdist %s, now building wheel from it", sdist.name)
 
@@ -355,7 +363,7 @@ class Pep517VenvPackager(PythonPackageToxEnv, ABC):
                     child_env.setup()
 
                 # Step 4: Build the wheel
-                wheel_config: ConfigSettings = child_env.conf["config_settings_build_wheel"]
+                wheel_config = child_env.conf.get_optional("config_settings_build_wheel", dict[str, Any])
                 return child_env._frontend.build_wheel(  # ruff:ignore[private-member-access]
                     wheel_directory=child_env.pkg_dir,
                     metadata_directory=None,
@@ -374,6 +382,7 @@ class Pep517VenvPackager(PythonPackageToxEnv, ABC):
     def _package_temp_path(self) -> Path:
         return self.core.get("temp_dir", Path) / "package"
 
+    @override
     def load_deps_for_env(self, for_env: EnvConfigSet) -> list[Requirement]:
         return self._load_deps(for_env)
 
@@ -393,7 +402,7 @@ class Pep517VenvPackager(PythonPackageToxEnv, ABC):
         if "project" not in pyproject:
             return None  # is not a PEP-621 pyproject
         project = pyproject["project"]
-        extras: set[str] = for_env["extras"]
+        extras = for_env.get("extras", set[str])
         for dynamic in project.get("dynamic", []):
             if dynamic == "dependencies" or (extras and dynamic == "optional-dependencies"):
                 return None  # if any dependencies are dynamic we can just calculate all dynamically
@@ -414,7 +423,7 @@ class Pep517VenvPackager(PythonPackageToxEnv, ABC):
     def _load_deps_from_built_metadata(self, for_env: EnvConfigSet) -> list[Requirement]:
         # dependencies might depend on the python environment we're running in => if we build a wheel use that env
         # to calculate the package metadata, otherwise ourselves
-        of_type: str = for_env["package"]
+        of_type = for_env.get("package", str)
         reqs: list[Requirement] | None = None
         name = ""
         available: set[str] | None = None
@@ -432,7 +441,7 @@ class Pep517VenvPackager(PythonPackageToxEnv, ABC):
             reqs = self.get_package_dependencies(for_env)
             name = self.get_package_name(for_env)
             available = self.get_package_extras(for_env)
-        extras: set[str] = for_env["extras"]
+        extras = for_env.get("extras", set[str])
         return dependencies_with_extras(reqs, extras, name, available_extras=available)
 
     def get_package_dependencies(self, for_env: EnvConfigSet) -> list[Requirement]:
@@ -464,7 +473,7 @@ class Pep517VenvPackager(PythonPackageToxEnv, ABC):
 
         self.setup()
         hook = getattr(self._frontend, f"prepare_metadata_for_build_{target}")
-        config: ConfigSettings = self.conf[f"config_settings_prepare_metadata_for_build_{target}"]
+        config = self.conf.get_optional(f"config_settings_prepare_metadata_for_build_{target}", dict[str, Any])
         result: MetadataForBuildWheelResult | MetadataForBuildEditableResult | None = hook(self.meta_folder, config)
         if result is None:
             config = self.conf[f"config_settings_build_{target}"]
@@ -474,6 +483,7 @@ class Pep517VenvPackager(PythonPackageToxEnv, ABC):
             dist_info = str(result.metadata)
         self._distribution_meta = Distribution.at(dist_info)
 
+    @override
     def requires(self) -> tuple[Requirement, ...]:
         return self._frontend.requires
 
@@ -482,6 +492,7 @@ class Pep517VirtualEnvPackager(Pep517VenvPackager, VirtualEnv):
     """local file system python virtual environment via the virtualenv package."""
 
     @staticmethod
+    @override
     def id() -> str:
         return "virtualenv-pep-517"
 
@@ -508,6 +519,7 @@ class Pep517VirtualEnvFrontend(Frontend):
     def backend_cmd(self) -> Sequence[str]:
         return ["python", *self.backend_args]
 
+    @override
     def _send(self, cmd: str, **kwargs: Any) -> tuple[Any, str, str]:
         try:
             if self._can_skip_prepare(cmd):
@@ -523,6 +535,7 @@ class Pep517VirtualEnvFrontend(Frontend):
         )
 
     @contextmanager
+    @override
     def _send_msg(
         self,
         cmd: str,
@@ -545,6 +558,7 @@ class Pep517VirtualEnvFrontend(Frontend):
             if self._tox_env.conf["fresh_subprocess"]:
                 self.backend_executor.close()
 
+    @override
     def _unexpected_response(
         self,
         cmd: str,
@@ -577,6 +591,7 @@ class Pep517VirtualEnvFrontend(Frontend):
         return self._backend_executor_
 
     @contextmanager
+    @override
     def _wheel_directory(self) -> Iterator[Path]:
         yield self._tox_env.pkg_dir  # use our local wheel directory for building wheel
 

@@ -9,8 +9,9 @@ from typing import TYPE_CHECKING, Any, Final, cast
 from tox.config.loader.section import Section
 from tox.config.loader.toml import TomlLoader
 from tox.config.loader.toml._product import FactorGroup, expand_factor_group, extract_default, extract_label
-from tox.config.types import MissingRequiredConfigKeyError
+from tox.config.types import EnvList, MissingRequiredConfigKeyError
 from tox.report import HandledError
+from tox.util.typing_compat import override
 
 from .api import Source
 
@@ -107,12 +108,15 @@ class TomlPyProject(Source):
         self._factor_labels.update(_extract_env_list_labels(self._our_content.get("env_list")))
         super().__init__(path)
 
+    @override
     def get_core_section(self) -> Section:
         return self._Section(prefix=None, name="")
 
+    @override
     def transform_section(self, section: Section) -> Section:
         return self._Section(section.prefix, section.name)
 
+    @override
     def get_loader(self, section: Section, override_map: OverrideMap) -> Loader[Any] | None:
         current: TomlTypes = self._our_content
         sec = cast("TomlSection", section)
@@ -138,11 +142,13 @@ class TomlPyProject(Source):
             unused_exclude=unused_exclude,
         )
 
+    @override
     def envs(self, core_conf: CoreConfigSet) -> Iterator[str]:
-        yield from core_conf["env_list"]
+        yield from core_conf.get("env_list", EnvList)
         yield from [section.name for section in self.sections()]
         yield from self._env_base_generated
 
+    @override
     def sections(self) -> Iterator[Section]:
         # iterating a table gives its keys, but a list of names is tolerated too, hence the Iterable cast
         for env_name in cast("Iterable[object]", self._our_content.get(self._Section.ENV, {})):
@@ -151,6 +157,7 @@ class TomlPyProject(Source):
                 raise HandledError(msg)
             yield self._Section.test_env(env_name)
 
+    @override
     def get_base_sections(self, base: list[str], in_section: Section) -> Iterator[Section]:
         core_prefix = self._Section.core_prefix()
         strip = f"{core_prefix}{self._Section.SEP}" if core_prefix else ""
@@ -164,6 +171,7 @@ class TomlPyProject(Source):
                 if in_section.prefix is not None:
                     yield self._Section(prefix=in_section.prefix, name=entry)
 
+    @override
     def get_tox_env_section(self, item: str) -> tuple[Section, list[str], list[str]]:
         if base_name := self._env_base_generated.get(item):
             return (

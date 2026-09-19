@@ -6,6 +6,7 @@ from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, Any
 
 from tox.config.loader.section import Section
+from tox.util.typing_compat import override
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
@@ -23,6 +24,7 @@ class Source(ABC):
     def __init__(self, path: Path) -> None:
         self.path: Path = path  #: the path to the configuration source
 
+    @override
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}(path={self.path})"
 
@@ -63,7 +65,7 @@ class Source(ABC):
                 if loader is None:
                     loader = child
                     continue
-                if child is not None and loader is not None:
+                if child is not None:
                     child.parent = loader
                 yield loader
 

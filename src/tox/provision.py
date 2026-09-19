@@ -71,7 +71,7 @@ def provision(state: State) -> int | bool:
     )
 
     def add_tox_requires_min_version(reqs: list[Requirement]) -> list[Requirement]:
-        min_version: Version = state.conf.core["min_version"]
+        min_version = state.conf.core.get_optional("min_version", Version)
         reqs.append(Requirement(f"tox{f'>={min_version}' if min_version else ''}"))
         return reqs
 
@@ -87,7 +87,7 @@ def provision(state: State) -> int | bool:
 
     MANAGER.tox_add_core_config(state.conf.core, state)
 
-    requires: list[Requirement] = state.conf.core["requires"]
+    requires = state.conf.core.get("requires", list[Requirement])
     missing = _get_missing(requires)
 
     deps = ", ".join(f"{p}{'' if v is None else f' ({v})'}" for p, v in missing)
@@ -99,7 +99,7 @@ def provision(state: State) -> int | bool:
         pass_env=["*"],  # do not filter environment variables, will be handled by provisioned tox
         recreate=state.conf.options.recreate and not state.conf.options.no_recreate_provision,
     )
-    provision_tox_env: str = state.conf.core["provision_tox_env"]
+    provision_tox_env = state.conf.core.get("provision_tox_env", str)
     state.conf.memory_seed_loaders[provision_tox_env].append(loader)
     state.envs._mark_provision(bool(missing), provision_tox_env)  # ruff:ignore[private-member-access]
 

@@ -111,8 +111,7 @@ def eval_set_env(tox_project: ToxProjectCreator) -> EvalSetEnv:
         prj = tox_project({f"tox.{of_type}": config, **(extra_files or {})})
         result = prj.run("c", "-k", "set_env", "-e", "py", from_cwd=None if from_cwd is None else prj.path / from_cwd)
         result.assert_success()
-        set_env: SetEnv = result.env_conf("py")["set_env"]
-        return set_env
+        return result.env_conf("py").get("set_env", SetEnv)
 
     return func
 

@@ -3,9 +3,11 @@
 from __future__ import annotations
 
 from tox.config.sets import ConfigSet
+from tox.util.typing_compat import override
 
 
 class EnvDockerConfigSet(ConfigSet):
+    @override
     def register_config(self) -> None:
         def factory(container_name: object) -> str:
             raise NotImplementedError

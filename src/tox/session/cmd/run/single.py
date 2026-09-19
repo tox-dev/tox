@@ -4,17 +4,16 @@ from __future__ import annotations
 
 import logging
 import time
+from pathlib import Path
 from typing import TYPE_CHECKING, NamedTuple, cast
 
+from tox.config.types import Command
 from tox.execute.api import Outcome, StdinSource
 from tox.report import HandledError
 from tox.tox_env.errors import Fail, Skip
 from tox.tox_env.python.virtual_env.package.pyproject import ToxBackendFailed
 
 if TYPE_CHECKING:
-    from pathlib import Path
-
-    from tox.config.types import Command
     from tox.tox_env.api import ToxEnv
     from tox.tox_env.runner import RunToxEnv
 
@@ -86,11 +85,11 @@ def run_commands(tox_env: RunToxEnv, no_test: bool) -> tuple[int, list[Outcome]]
         # importing this here to avoid circular import
         from tox.plugin.manager import MANAGER  # ruff:ignore[import-outside-top-level]
 
-        chdir: Path = tox_env.conf["change_dir"]
+        chdir = tox_env.conf.get("change_dir", Path)
         chdir.mkdir(exist_ok=True, parents=True)
-        ignore_errors: bool = tox_env.conf["ignore_errors"]
-        retry_count: int = tox_env.conf["commands_retry"]
-        interrupt_post_commands: bool = tox_env.conf["interrupt_post_commands"]
+        ignore_errors = tox_env.conf.get("ignore_errors", bool)
+        retry_count = tox_env.conf.get("commands_retry", int)
+        interrupt_post_commands = tox_env.conf.get("interrupt_post_commands", bool)
         MANAGER.tox_before_run_commands(tox_env)
         status_pre, status_main, status_post = -1, -1, -1
         try:
@@ -116,7 +115,7 @@ def run_command_set(  # ruff:ignore[too-many-arguments]
     retry_count: int = 0,
 ) -> int:
     exit_code = Outcome.OK
-    command_set: list[Command] = tox_env.conf[key]
+    command_set = tox_env.conf.get(key, list[Command])
     for at, cmd in enumerate(command_set):
         max_attempts = 1 if cmd.ignore_exit_code else retry_count + 1
         for attempt in range(1, max_attempts + 1):

@@ -9,6 +9,7 @@ from packaging.requirements import Requirement
 
 from tox.tox_env.errors import Skip
 from tox.tox_env.package import Package, PackageToxEnv, PathPackage
+from tox.util.typing_compat import override
 
 from .api import NoInterpreter, Python
 
@@ -59,6 +60,7 @@ class PythonPackageToxEnv(Python, PackageToxEnv, ABC):
         self._wheel_build_envs: dict[str, PythonPackageToxEnv] = {}
         super().__init__(create_args)
 
+    @override
     def _setup_env(self) -> None:
         """Setup the tox environment."""
         super()._setup_env()
@@ -73,6 +75,7 @@ class PythonPackageToxEnv(Python, PackageToxEnv, ABC):
     def load_deps_for_env(self, for_env: EnvConfigSet) -> list[Requirement]:
         raise NotImplementedError
 
+    @override
     def register_run_env(self, run_env: RunToxEnv) -> Generator[tuple[str, str], PackageToxEnv, None]:
         yield from super().register_run_env(run_env)
         if run_env.conf["package"] != "skip" and "deps" not in self.conf:
@@ -127,10 +130,11 @@ class PythonPackageToxEnv(Python, PackageToxEnv, ABC):
             default=default_wheel_tag,
             desc="wheel tag to use for building applications",
         )
-        pkg_env = run_env.conf["wheel_build_env"]
-        result = yield pkg_env, run_env.conf["package_tox_env_type"]
+        pkg_env = run_env.conf.get("wheel_build_env", str)
+        result = yield pkg_env, run_env.conf.get("package_tox_env_type", str)
         self._wheel_build_envs[pkg_env] = cast("PythonPackageToxEnv", result)
 
+    @override
     def child_pkg_envs(self, run_conf: EnvConfigSet) -> Iterator[PackageToxEnv]:
         if run_conf["package"] in {"wheel", "sdist-wheel"}:
             try:
@@ -142,6 +146,7 @@ class PythonPackageToxEnv(Python, PackageToxEnv, ABC):
             if env is not None and env.name != self.name:
                 yield env
 
+    @override
     def _teardown(self) -> None:
         for env in self._wheel_build_envs.values():
             if env is not self:

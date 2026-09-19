@@ -21,6 +21,7 @@ from tox.tox_env.errors import RunnerUnavailable, Skip
 from tox.tox_env.package import PackageToxEnv
 from tox.tox_env.register import REGISTER
 from tox.tox_env.runner import RunToxEnv
+from tox.util.typing_compat import override
 
 if TYPE_CHECKING:
     import sys
@@ -72,17 +73,21 @@ class CliEnv:  # ruff:ignore[eq-without-hash]
         """A `CliEnv` is `True` if it's not the default set of environments."""
         return bool(self._names)
 
+    @override
     def __str__(self) -> str:
         return "ALL" if self.is_all else ("<env_list>" if self.is_default_list else ",".join(self))
 
+    @override
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}({'' if self.is_default_list else repr(str(self))})"
 
+    @override
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, CliEnv):
             return False
         return self._names == other._names
 
+    @override
     def __ne__(self, other: object) -> bool:
         return not (self == other)
 
@@ -106,6 +111,7 @@ class CliEnv:  # ruff:ignore[eq-without-hash]
 class _CliEnvAction(argparse.Action):
     completer: Callable[[str, Action, ArgumentParser, Namespace], list[str]]
 
+    @override
     def __call__(
         self,
         parser: argparse.ArgumentParser,  # ruff:ignore[unused-method-argument]
@@ -268,7 +274,7 @@ class EnvSelector:
             if self._provision[0]:
                 # The provisioned tox may support configuration that this version does not.
                 return
-        env_list, everything_active = self._state.conf.core["env_list"], False
+        env_list, everything_active = self._state.conf.core.get("env_list", EnvList), False
         if self._cli_envs is None or self._cli_envs.is_default_list:
             yield env_list, True
         elif self._cli_envs.is_all:
@@ -277,13 +283,15 @@ class EnvSelector:
             self._ensure_envs_valid()
             yield self._cli_envs, True
         yield self._state.conf, everything_active
-        label_envs = dict.fromkeys(chain.from_iterable(self._state.conf.core["labels"].values()))
+        label_envs = dict.fromkeys(
+            chain.from_iterable(self._state.conf.core.get("labels", dict[str, EnvList]).values())
+        )
         if label_envs:
             yield label_envs.keys(), False
 
     def _combinable_factors(self) -> tuple[set[str], set[str], set[str]]:
         known_envs = set(self._state.conf)
-        env_list = set(self._state.conf.core["env_list"])
+        env_list = set(self._state.conf.core.get("env_list", EnvList))
         # factors that can be freely combined: from env_list entries and known env names themselves
         combinable = set(chain.from_iterable(env.split("-") for env in env_list))
         combinable.update(known_envs)
@@ -311,7 +319,7 @@ class EnvSelector:
             if normalized_env != env and normalized_env in known_envs:
                 invalid_envs[env] = normalized_env
                 continue
-            factors: dict[str, str | None] = dict.fromkeys(env.split("-"))
+            factors: dict[str, str | None] = dict.fromkeys(env.split("-"), None)
             found_factors: set[str] = set()
             for factor in factors:
                 if (

@@ -5,6 +5,8 @@ from typing import TYPE_CHECKING, cast
 
 from packaging.requirements import Requirement
 
+from tox.util.typing_compat import override
+
 from .req.file import ParsedRequirement, ReqFileLines, RequirementsFile
 
 _UNESCAPED_SPACE_RE = re.compile(
@@ -33,14 +35,17 @@ class PythonDeps(RequirementsFile):
         self._unroll: tuple[list[str], list[str]] | None = None
         self._req_parser_: RequirementsFile | None = None
 
+    @override
     def _extend_parser(self, parser: ArgumentParser) -> None:  # ruff:ignore[no-self-use]
         parser.add_argument("--no-deps", action="store_true", dest="no_deps", default=False)
 
+    @override
     def _merge_option_line(self, base_opt: Namespace, opt: Namespace, filename: str) -> None:
         super()._merge_option_line(base_opt, opt, filename)
         if getattr(opt, "no_deps", False):  # if the option comes from a requirements file this flag is missing there
             base_opt.no_deps = True
 
+    @override
     def _option_to_args(self, opt: Namespace) -> list[str]:
         result = super()._option_to_args(opt)
         if getattr(opt, "no_deps", False):
@@ -48,11 +53,13 @@ class PythonDeps(RequirementsFile):
         return result
 
     @property
+    @override
     def _req_parser(self) -> RequirementsFile:
         if self._req_parser_ is None:
             self._req_parser_ = RequirementsFile(path=self._path, constraint=False)
         return self._req_parser_
 
+    @override
     def _get_file_content(self, url: str) -> str:
         if self._is_url_self(url):
             return self._raw
@@ -61,6 +68,7 @@ class PythonDeps(RequirementsFile):
     def _is_url_self(self, url: str) -> bool:
         return url == str(self._path)
 
+    @override
     def _pre_process(self, content: str) -> ReqFileLines:
         for at, line in super()._pre_process(content):
             if line.startswith("-r") or (line.startswith("-c") and line[2:3].isalpha()):
@@ -107,6 +115,7 @@ class PythonDeps(RequirementsFile):
             line = f"{line[: len(escape_match)]} {escaped}"
         return line
 
+    @override
     def _parse_requirements(self, opt: Namespace, recurse: bool) -> list[ParsedRequirement]:  # ruff:ignore[boolean-type-hint-positional-argument]
         # check for any invalid options in the deps list
         # (requirements recursively included from other files are not checked)
@@ -157,11 +166,13 @@ class PythonConstraints(RequirementsFile):
         self._req_parser_: RequirementsFile | None = None
 
     @property
+    @override
     def _req_parser(self) -> RequirementsFile:
         if self._req_parser_ is None:
             self._req_parser_ = RequirementsFile(path=self._path, constraint=True)
         return self._req_parser_
 
+    @override
     def _get_file_content(self, url: str) -> str:
         if self._is_url_self(url):
             return self._raw
@@ -170,6 +181,7 @@ class PythonConstraints(RequirementsFile):
     def _is_url_self(self, url: str) -> bool:
         return url == str(self._path)
 
+    @override
     def _pre_process(self, content: str) -> ReqFileLines:
         for at, line in super()._pre_process(content):
             if line.startswith("-r") or (line.startswith("-c") and line[2:3].isalpha()):
@@ -221,6 +233,7 @@ class PythonConstraints(RequirementsFile):
             line = f"{line[: len(escape_match)]} {escaped}"
         return line
 
+    @override
     def _parse_requirements(self, opt: Namespace, recurse: bool) -> list[ParsedRequirement]:  # ruff:ignore[boolean-type-hint-positional-argument]
         # check for any invalid options in the deps list
         # (requirements recursively included from other files are not checked)
