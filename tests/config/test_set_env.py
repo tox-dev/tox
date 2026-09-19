@@ -513,6 +513,33 @@ def test_set_env_escaped_semicolon() -> None:
     assert set_env.load("FOO") == "a;b"
 
 
+@pytest.mark.parametrize(
+    ("of_type", "config"),
+    [
+        pytest.param(
+            "ini",
+            "[testenv]\npackage=skip\nset_env=FOO=conditional; sys_platform == 'nonexistent'\n FOO=unconditional",
+            id="inline",
+        ),
+        pytest.param(
+            "ini",
+            "[testenv]\npackage=skip\nset_env=FOO=conditional; sys_platform == 'nonexistent'\n file|.env",
+            id="ini-file",
+        ),
+        pytest.param(
+            "toml",
+            '[env_run_base]\npackage="skip"\n'
+            'set_env = {FOO={value="conditional", marker="sys_platform == \'nonexistent\'"}, file=".env"}',
+            id="toml-file",
+        ),
+    ],
+)
+def test_set_env_unconditional_override(eval_set_env: EvalSetEnv, of_type: ConfigFileFormat, config: str) -> None:
+    set_env = eval_set_env(config, of_type=of_type, extra_files={".env": "FOO=unconditional\n"})
+    assert "FOO" in set_env
+    assert set_env.load("FOO") == "unconditional"
+
+
 def test_set_env_marker_mixed(eval_set_env: EvalSetEnv) -> None:
     marker = f"sys_platform == '{sys.platform}'"
     config = (
