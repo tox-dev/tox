@@ -24,6 +24,7 @@ from tox.config.loader.replacer import (
 )
 from tox.config.loader.stringify import stringify
 from tox.config.types import Command
+from tox.util.typing_compat import override
 
 from ._validate import validate
 
@@ -99,7 +100,7 @@ class Unroll:
                     posargs_result: TomlTypes = (
                         [self(v, depth, skip_str=skip_str) for v in cast("list[str]", value.get("default", []))]
                         if got_posargs is None
-                        else cast("list[TomlTypes]", list(got_posargs))
+                        else [*got_posargs]
                     )
                     return {"value": posargs_result, "marker": marker} if marker else posargs_result
                 if replace_type == "env":
@@ -263,6 +264,7 @@ class TomlReplaceLoader(ReplaceReference):
         self.conf = conf
         self.loader = loader
 
+    @override
     def __call__(self, value: str, conf_args: ConfigLoadArgs) -> str | None:
         if match := _REFERENCE_PATTERN.search(value):
             settings = match.groupdict()

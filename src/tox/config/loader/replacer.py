@@ -13,6 +13,7 @@ from typing import TYPE_CHECKING, Any, Final, Union
 
 from tox.config.types import CircularChainError
 from tox.execute.request import shell_cmd
+from tox.util.typing_compat import override
 
 if TYPE_CHECKING:
     from tox.config.loader.api import ConfigLoadArgs
@@ -81,9 +82,11 @@ class MatchExpression:  # ruff:ignore[eq-without-hash]
         self.expr = expr
         self.term_pos = term_pos
 
+    @override
     def __repr__(self) -> str:
         return f"MatchExpression(expr={self.expr!r}, term_pos={self.term_pos!r})"
 
+    @override
     def __eq__(self, other: object) -> bool:
         if isinstance(other, type(self)):
             return self.expr == other.expr
@@ -254,7 +257,7 @@ def load_posargs(conf: Config, conf_args: ConfigLoadArgs) -> tuple[str, ...] | N
         env_conf = conf.get_env(conf_args.env_name)
         try:
             if env_conf["args_are_paths"] and not _loading_change_dir(conf_args):  # pragma: no branch
-                to_path = env_conf["change_dir"]
+                to_path = env_conf.get("change_dir", Path)
         except KeyError:
             pass
     return conf.pos_args(to_path)

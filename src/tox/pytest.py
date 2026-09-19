@@ -30,6 +30,7 @@ from tox.run import setup_state as previous_setup_state
 from tox.session.cmd.run.parallel import ENV_VAR_KEY
 from tox.tox_env import api as tox_env_api
 from tox.tox_env.api import ToxEnv
+from tox.util.typing_compat import override
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterator, Sequence
@@ -174,6 +175,7 @@ class ToxProject:
                 self.exit_code = exit_code
                 super().__init__(colored)
 
+            @override
             def build_instance(
                 self,
                 request: ExecuteRequest,
@@ -189,15 +191,19 @@ class ToxProject:
                 self._exit_code = exit_code
 
             @property
+            @override
             def exit_code(self) -> int | None:
                 return self._exit_code
 
+            @override
             def wait(self, timeout: float | None = None) -> int | None:  # ruff:ignore[unused-method-argument]
                 return self._exit_code
 
+            @override
             def write_stdin(self, content: str) -> None:  # ruff:ignore[unused-method-argument, no-self-use]
                 return None  # pragma: no cover
 
+            @override
             def interrupt(self) -> None:  # ruff:ignore[no-self-use]
                 return None  # pragma: no cover
 
@@ -213,9 +219,11 @@ class ToxProject:
                 super().__init__(request, options, out, err)
                 self.exit_code = exit_code
 
+            @override
             def __enter__(self) -> ExecuteStatus:
                 return MockExecuteStatus(self.options, self._out, self._err, self.exit_code)
 
+            @override
             def __exit__(
                 self,
                 exc_type: type[BaseException] | None,
@@ -225,6 +233,7 @@ class ToxProject:
                 pass
 
             @property
+            @override
             def cmd(self) -> Sequence[str]:
                 return self.request.cmd
 
@@ -300,6 +309,7 @@ class ToxProject:
             out, err = self._capfd.readouterr()
             return ToxRunOutcome(args, self.path, cast("int", code), out, err, state)
 
+    @override
     def __repr__(self) -> str:
         return f"{type(self).__name__}(path={self.path}) at {id(self)}"
 
@@ -368,6 +378,7 @@ class ToxRunOutcome:
         status_match = self.code != 0 if code is None else self.code == code
         assert status_match, f"should be {code}, got {self}"  # ruff:ignore[assert]
 
+    @override
     def __repr__(self) -> str:
         return "\n".join(
             "{}{}{}".format(k, "\n" if "\n" in v else ": ", v)

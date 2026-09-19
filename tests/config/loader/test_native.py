@@ -9,6 +9,7 @@ from tox.config.loader.native import to_native
 from tox.config.set_env import SetEnv
 from tox.config.types import Command, EnvList
 from tox.tox_env.python.pip.req_file import PythonDeps
+from tox.util.typing_compat import override
 
 
 def test_str() -> None:
@@ -105,6 +106,7 @@ def test_python_deps(tmp_path: Path) -> None:
 
 def test_fallback_unknown_type() -> None:
     class Custom:
+        @override
         def __str__(self) -> str:
             return "custom-value"
 

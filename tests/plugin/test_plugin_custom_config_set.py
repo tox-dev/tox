@@ -10,6 +10,7 @@ from tox.config.loader.section import Section
 from tox.config.sets import ConfigSet, EnvConfigSet
 from tox.plugin import impl
 from tox.pytest import ToxProjectCreator, register_inline_plugin
+from tox.util.typing_compat import override
 
 if TYPE_CHECKING:
     from pytest_mock import MockerFixture
@@ -21,6 +22,7 @@ if TYPE_CHECKING:
 @pytest.fixture(autouse=True)
 def _custom_config_set(mocker: MockerFixture) -> None:
     class DockerConfigSet(ConfigSet):
+        @override
         def register_config(self) -> None:
             self.add_config(keys="A", of_type=int, default=0, desc="a config")
 
@@ -41,7 +43,7 @@ def _custom_config_set(mocker: MockerFixture) -> None:
 
     @impl
     def tox_before_run_commands(tox_env: ToxEnv) -> None:
-        docker: DockerConfigSet | None = tox_env.conf["docker"]
+        docker = tox_env.conf.get_optional("docker", DockerConfigSet)
         assert docker is not None
         logging.warning("Name=%s env=%s A=%d", docker.name, docker.env_name, docker["A"])
 

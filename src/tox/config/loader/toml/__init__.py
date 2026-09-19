@@ -11,6 +11,7 @@ from tox.config.loader.replacer import MatchError, replace
 from tox.config.set_env import SetEnv
 from tox.config.types import Command, EnvList
 from tox.report import HandledError
+from tox.util.typing_compat import override
 
 from ._api import TomlTypes
 from ._replace import TomlReplaceLoader, Unroll
@@ -44,9 +45,11 @@ class TomlLoader(Loader[TomlTypes]):
         self._unused_exclude = unused_exclude
         super().__init__(section, overrides)
 
+    @override
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}({self.section.name}, {self.content!r})"
 
+    @override
     def load_raw(self, key: str, conf: Config | None, env_name: str | None) -> TomlTypes:  # ruff:ignore[unused-method-argument]
         return self.content[key]
 
@@ -61,6 +64,7 @@ class TomlLoader(Loader[TomlTypes]):
                 raise KeyError(msg)
         return current
 
+    @override
     def build(  # ruff:ignore[too-many-arguments]
         self,
         key: str,
@@ -92,21 +96,26 @@ class TomlLoader(Loader[TomlTypes]):
             cast("SetEnv", result).use_replacer(_toml_replacer, args=args)  # delay_replace means of_type is SetEnv
         return result
 
+    @override
     def substitute(self, value: str, conf: Config, args: ConfigLoadArgs) -> str:
         return replace(conf, TomlReplaceLoader(conf, self), value, args)
 
+    @override
     def found_keys(self) -> set[str]:
         return set(self.content.keys()) - self._unused_exclude
 
     @staticmethod
+    @override
     def to_str(value: TomlTypes) -> str:
         return validate(value, str)
 
     @staticmethod
+    @override
     def to_bool(value: TomlTypes) -> bool:
         return validate(value, bool)
 
     @staticmethod
+    @override
     def to_list(value: TomlTypes, of_type: type[_T]) -> Iterator[_T]:
         result = cast("list[_T]", validate(value, cast("type[list[Any]]", GenericAlias(list, (of_type,)))))
         if inspect.isclass(of_type) and issubclass(of_type, Command):
@@ -115,19 +124,23 @@ class TomlLoader(Loader[TomlTypes]):
         return iter(result)
 
     @staticmethod
+    @override
     def to_set(value: TomlTypes, of_type: type[_T]) -> Iterator[_T]:
         return TomlLoader.to_list(value, of_type)
 
     @staticmethod
+    @override
     def to_dict(value: TomlTypes, of_type: tuple[type[_T], type[_V]]) -> Iterator[tuple[_T, _V]]:
         result = validate(value, cast("type[dict[Any, Any]]", GenericAlias(dict, of_type)))
         return iter(cast("dict[_T, _V]", result).items())
 
     @staticmethod
+    @override
     def to_path(value: TomlTypes) -> Path:
         return Path(TomlLoader.to_str(value))
 
     @staticmethod
+    @override
     def to_command(value: TomlTypes) -> Command:
         if not value:
             msg = f"attempting to parse {value!r} into a command failed"
@@ -135,6 +148,7 @@ class TomlLoader(Loader[TomlTypes]):
         return Command(args=cast("list[str]", value))  # validated during load in _ensure_type_correct
 
     @staticmethod
+    @override
     def to_env_list(value: TomlTypes) -> EnvList:
         from ._product import expand_factor_group, expand_product  # ruff:ignore[import-outside-top-level]
 

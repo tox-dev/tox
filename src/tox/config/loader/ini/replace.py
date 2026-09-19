@@ -11,6 +11,7 @@ from typing import TYPE_CHECKING
 from tox.config.loader.api import apply_overrides_to_raw
 from tox.config.loader.replacer import ReplaceReference
 from tox.config.loader.stringify import stringify
+from tox.util.typing_compat import override
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
@@ -26,6 +27,7 @@ class ReplaceReferenceIni(ReplaceReference):
         self.conf = conf
         self.loader = loader
 
+    @override
     def __call__(self, value: str, conf_args: ConfigLoadArgs) -> str | None:
         # a return value of None indicates could not replace
         pattern = _replace_ref(self.loader.section.prefix or self.loader.section.name)
@@ -37,20 +39,12 @@ class ReplaceReferenceIni(ReplaceReference):
             if settings["section"] is None and settings["full_env"]:
                 settings["section"] = settings["full_env"]
 
-            exception: Exception | None = None
             try:
                 return self._load_from_sources(settings, key, conf_args)
-            except Exception as exc:  # ruff:ignore[blind-except]
-                exception = exc
-            if exception is not None:
-                if isinstance(exception, KeyError):  # if the lookup failed replace - else keep
-                    default = settings["default"]
-                    if default is not None:
-                        return default
-                    # we cannot raise here as that would mean users could not write factorials:
-                    #   depends = {py39,py38}-{,b}
-                else:
-                    raise exception
+            except KeyError:  # if the lookup failed replace - else keep
+                # we cannot raise here as that would mean users could not write factorials:
+                #   depends = {py39,py38}-{,b}
+                return settings["default"]
         return None
 
     def _load_from_sources(self, settings: dict[str, str | None], key: str, conf_args: ConfigLoadArgs) -> str:

@@ -7,11 +7,12 @@ from typing import TYPE_CHECKING, TypeVar, cast
 from tox.config.loader.api import ConfigLoadArgs, Loader, Override
 from tox.config.loader.ini.factor import filter_for_env
 from tox.config.loader.ini.replace import ReplaceReferenceIni
-from tox.config.loader.replacer import replace
+from tox.config.loader.replacer import replace as replace_references
 from tox.config.loader.str_convert import StrConvert
 from tox.config.set_env import SetEnv
 from tox.report import HandledError
 from tox.tox_env.errors import Skip
+from tox.util.typing_compat import override
 
 if TYPE_CHECKING:
     from configparser import ConfigParser, SectionProxy
@@ -48,6 +49,7 @@ class IniLoader(StrConvert, Loader[str]):
         self.core_section = core_section
         super().__init__(section, overrides)
 
+    @override
     def load_raw(self, key: str, conf: Config | None, env_name: str | None) -> str:
         return self.process_raw(conf, env_name, self._section_proxy[key])
 
@@ -68,6 +70,7 @@ class IniLoader(StrConvert, Loader[str]):
                 raise KeyError(value)
         return factor_filtered.replace("\\\n", "")
 
+    @override
     def build(  # ruff:ignore[too-many-arguments]
         self,
         key: str,
@@ -85,7 +88,7 @@ class IniLoader(StrConvert, Loader[str]):
             else:
                 reference_replacer = ReplaceReferenceIni(conf, self)
                 try:
-                    replaced = replace(conf, reference_replacer, raw_, args_)  # do replacements
+                    replaced = replace_references(conf, reference_replacer, raw_, args_)  # do replacements
                 except Exception as exception:
                     if isinstance(exception, (HandledError, Skip)):
                         raise
@@ -112,9 +115,11 @@ class IniLoader(StrConvert, Loader[str]):
             cast("SetEnv", converted).use_replacer(replacer, args)  # delay_replace means of_type is SetEnv
         return converted
 
+    @override
     def substitute(self, value: str, conf: Config, args: ConfigLoadArgs) -> str:
-        return replace(conf, ReplaceReferenceIni(conf, self), value, args)
+        return replace_references(conf, ReplaceReferenceIni(conf, self), value, args)
 
+    @override
     def found_keys(self) -> set[str]:
         return set(self._section_proxy.keys())
 
@@ -124,5 +129,6 @@ class IniLoader(StrConvert, Loader[str]):
             return self._parser[name]
         return None
 
+    @override
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}(section={self._section.key}, overrides={self.overrides!r})"

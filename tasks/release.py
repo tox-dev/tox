@@ -131,12 +131,12 @@ def release_changelog(repo: Repo, version: Version) -> Commit:
 
 def tag_release_commit(release_commit: Commit, repo: Repo, version: Version) -> TagReference:
     print("tag release commit")  # ruff:ignore[print]
-    existing_tags = [x.name for x in repo.tags]
-    if version in existing_tags:
-        print(f"delete existing tag {version}")  # ruff:ignore[print]
-        repo.delete_tag(version)  # ty: ignore[invalid-argument-type] # Version has __str__, gitpython uses it
-    print(f"create tag {version}")  # ruff:ignore[print]
-    return repo.create_tag(version, ref=release_commit, force=True)  # ty: ignore[invalid-argument-type] # Version has __str__, gitpython uses it
+    tag = str(version)
+    if existing := next((found for found in repo.tags if found.name == tag), None):
+        print(f"delete existing tag {tag}")  # ruff:ignore[print]
+        repo.delete_tag(existing)
+    print(f"create tag {tag}")  # ruff:ignore[print]
+    return repo.create_tag(tag, ref=release_commit.hexsha, force=True)
 
 
 def create_github_release(version: Version) -> None:

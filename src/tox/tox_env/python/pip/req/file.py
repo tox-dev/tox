@@ -17,6 +17,8 @@ from urllib.request import urlopen
 
 from packaging.requirements import InvalidRequirement, Requirement
 
+from tox.util.typing_compat import override
+
 from .args import build_parser
 from .util import VCS, get_url_scheme, is_url, url_to_path
 
@@ -142,12 +144,14 @@ class ParsedRequirement:
     def options(self) -> dict[str, Any]:
         return self._options
 
+    @override
     def __repr__(self) -> str:
         base = f"{self.__class__.__name__}(requirement={self._requirement}, "
         if self._options:
             base += f"options={self._options!r}, "
         return f"{base.rstrip(', ')})"
 
+    @override
     def __str__(self) -> str:
         result = []
         if self.options.get("is_constraint"):
@@ -204,6 +208,7 @@ class RequirementsFile:
     def _req_parser(self) -> RequirementsFile:
         return self
 
+    @override
     def __str__(self) -> str:
         return f"{'-c' if self.is_constraint else '-r'} {self.path}"
 
@@ -239,7 +244,8 @@ class RequirementsFile:
             self._requirements = self._parse_requirements(opt=self._opt, recurse=True)
 
     def _parse_requirements(self, opt: Namespace, recurse: bool) -> list[ParsedRequirement]:  # ruff:ignore[boolean-type-hint-positional-argument]
-        result, found = [], set()
+        result: list[ParsedRequirement] = []
+        found: set[str] = set()
         for parsed_line in self._parse_and_recurse(str(self._path), self.is_constraint, recurse):
             if parsed_line.is_requirement:
                 parsed_req = self._handle_requirement_line(parsed_line)

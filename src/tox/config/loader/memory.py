@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 from tox.config.types import Command, EnvList
+from tox.util.typing_compat import override
 
 from .api import Loader
 from .section import Section
@@ -22,37 +23,46 @@ class MemoryLoader(Loader[object]):
         super().__init__(Section(prefix="<memory>", name=str(id(self))), [])
         self.raw: dict[str, Any] = {**kwargs}
 
+    @override
     def load_raw(self, key: str, conf: Config | None, env_name: str | None) -> object:  # ruff:ignore[unused-method-argument]
         return self.raw[key]
 
+    @override
     def found_keys(self) -> set[str]:
         return set(self.raw.keys())
 
     @staticmethod
+    @override
     def to_bool(value: Any) -> bool:
         return bool(value)
 
     @staticmethod
+    @override
     def to_str(value: Any) -> str:
         return str(value)
 
     @staticmethod
+    @override
     def to_list(value: Any, of_type: type[Any]) -> Iterator[Any]:  # ruff:ignore[unused-static-method-argument]
         return iter(value)
 
     @staticmethod
+    @override
     def to_set(value: Any, of_type: type[Any]) -> Iterator[Any]:  # ruff:ignore[unused-static-method-argument]
         return iter(value)
 
     @staticmethod
+    @override
     def to_dict(value: Any, of_type: tuple[type[Any], type[Any]]) -> Iterator[tuple[Any, Any]]:  # ruff:ignore[unused-static-method-argument]
         return iter(value.items())
 
     @staticmethod
+    @override
     def to_path(value: Any) -> Path:
         return Path(value)
 
     @staticmethod
+    @override
     def to_command(value: Any) -> Command:
         if isinstance(value, Command):
             return value
@@ -62,6 +72,7 @@ class MemoryLoader(Loader[object]):
         raise TypeError(msg)
 
     @staticmethod
+    @override
     def to_env_list(value: Any) -> EnvList:
         if isinstance(value, EnvList):
             return value

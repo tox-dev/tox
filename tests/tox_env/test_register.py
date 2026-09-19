@@ -4,6 +4,7 @@ import pytest
 
 from tox.tox_env.python.virtual_env.runner import VirtualEnvRunner
 from tox.tox_env.register import ToxEnvRegister
+from tox.util.typing_compat import override
 
 
 def test_register_set_new_default_no_register() -> None:
@@ -15,6 +16,7 @@ def test_register_set_new_default_no_register() -> None:
 def test_register_set_new_default_with_register() -> None:
     class B(VirtualEnvRunner):
         @staticmethod
+        @override
         def id() -> str:
             return "B"
 

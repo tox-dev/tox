@@ -13,11 +13,13 @@ from contextlib import contextmanager
 from pathlib import Path
 from typing import TYPE_CHECKING, NamedTuple, cast
 
+from tox.config.set_env import SetEnv
 from tox.execute.request import ExecuteRequest
 from tox.tox_env.errors import Fail, Recreate, Skip
 from tox.tox_env.info import Info
 from tox.util.path import ensure_cachedir_tag, ensure_empty_dir, ensure_gitignore
 from tox.util.redact import redact_value
+from tox.util.typing_compat import override
 
 if TYPE_CHECKING:
     from collections.abc import Iterator, Sequence
@@ -25,7 +27,6 @@ if TYPE_CHECKING:
 
     from tox.config.cli.parser import Parsed
     from tox.config.main import Config
-    from tox.config.set_env import SetEnv
     from tox.config.sets import CoreConfigSet, EnvConfigSet
     from tox.execute.api import Execute, ExecuteStatus, Outcome, StdinSource
     from tox.journal import EnvJournal
@@ -99,6 +100,7 @@ class ToxEnv(ABC):  # ruff:ignore[too-many-public-methods]
         MANAGER.tox_on_install(self, arguments, section, of_type)
         self.installer.install(arguments, section, of_type)
 
+    @override
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}(name={self.conf['env_name']})"
 
@@ -296,7 +298,7 @@ class ToxEnv(ABC):  # ruff:ignore[too-many-public-methods]
 
     def _platform_check(self) -> None:
         """Skip env when platform does not match."""
-        platform_str: str = self.conf["platform"]
+        platform_str = self.conf.get("platform", str)
         if platform_str:
             match = re.fullmatch(platform_str, self.runs_on_platform)
             if match is None:
@@ -361,10 +363,10 @@ class ToxEnv(ABC):  # ruff:ignore[too-many-public-methods]
             result["PATH"] = self._make_path()
             return result
 
-        pass_env: list[str] = self.conf["pass_env"]
+        pass_env = self.conf.get("pass_env", list[str])
         self._resolving_env_vars = True
         try:
-            set_env: SetEnv = self.conf["set_env"]
+            set_env = self.conf.get("set_env", SetEnv)
         finally:
             self._resolving_env_vars = False
         if self._env_vars_pass_env == pass_env and not set_env.changed and self._env_vars is not None:

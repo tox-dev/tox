@@ -8,6 +8,8 @@ import os  # pragma: win32 no cover
 import selectors  # pragma: win32 no cover
 from typing import TYPE_CHECKING, Any
 
+from tox.util.typing_compat import override
+
 from .read_via_thread import ReadViaThread  # pragma: win32 no cover
 
 if TYPE_CHECKING:
@@ -21,6 +23,7 @@ class ReadViaThreadUnix(ReadViaThread):  # pragma: win32 no cover
     def __init__(self, file_no: int, handler: Callable[[bytes], int], name: str, drain: bool) -> None:  # ruff:ignore[boolean-type-hint-positional-argument]
         super().__init__(file_no, handler, name, drain)
 
+    @override
     def _read_stream(self) -> None:
         selector = selectors.DefaultSelector()
         try:
@@ -48,6 +51,7 @@ class ReadViaThreadUnix(ReadViaThread):  # pragma: win32 no cover
             for key, _ in ready:
                 self._read_chunk(selector, key)
 
+    @override
     def _drain_stream(self) -> None:
         selector = selectors.DefaultSelector()
         try:

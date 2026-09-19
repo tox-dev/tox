@@ -11,6 +11,8 @@ from typing import TYPE_CHECKING
 from tox.config.loader.ini import IniLoader
 from tox.config.loader.ini.factor import find_envs
 from tox.config.loader.section import Section
+from tox.config.types import EnvList
+from tox.util.typing_compat import override
 
 from .api import Source
 from .ini_section import CORE, PKG_ENV_PREFIX, TEST_ENV_PREFIX, IniSection
@@ -43,13 +45,16 @@ class IniSource(Source):
             raise ValueError(exc) from exc
         self._section_mapping: defaultdict[str, list[str]] = defaultdict(list)
 
+    @override
     def transform_section(self, section: Section) -> Section:  # ruff:ignore[no-self-use]
         return IniSection(section.prefix, section.name)
 
+    @override
     def sections(self) -> Iterator[IniSection]:
         for section in self._parser.sections():
             yield IniSection.from_key(section)
 
+    @override
     def get_loader(self, section: Section, override_map: OverrideMap) -> IniLoader | None:
         # look up requested section name in the generative testenv mapping to find the real config source
         for key in self._section_mapping.get(section.name) or []:
@@ -68,18 +73,22 @@ class IniSource(Source):
             )
         return None
 
+    @override
     def get_core_section(self) -> Section:
         return self.CORE_SECTION
 
+    @override
     def get_base_sections(self, base: list[str], in_section: Section) -> Iterator[Section]:  # ruff:ignore[no-self-use]
         for a_base in base:
             yield IniSection.from_key(a_base)
             if in_section.prefix is not None:  # no prefix specified, so this could imply our own prefix
                 yield IniSection(in_section.prefix, a_base)
 
+    @override
     def get_tox_env_section(self, item: str) -> tuple[Section, list[str], list[str]]:  # ruff:ignore[no-self-use]
         return IniSection.test_env(item), [TEST_ENV_PREFIX], [PKG_ENV_PREFIX]
 
+    @override
     def envs(self, core_conf: CoreConfigSet) -> Iterator[str]:
         seen = set()
         for name in self._discover_tox_envs(core_conf):
@@ -91,7 +100,7 @@ class IniSource(Source):
         def register_factors(envs: Iterable[str]) -> None:
             known_factors.update(chain.from_iterable(e.split("-") for e in envs))
 
-        explicit = list(core_config["env_list"])
+        explicit = list(core_config.get("env_list", EnvList))
         yield from explicit
         known_factors: set[str] = set()
         register_factors(explicit)

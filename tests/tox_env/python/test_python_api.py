@@ -314,7 +314,7 @@ def test_base_python_env_conflict(
 
 
 @pytest.mark.parametrize("ignore_conflict", [True, False, None])
-def test_base_python_env_conflict_show_conf(tox_project: ToxProjectCreator, ignore_conflict: bool) -> None:
+def test_base_python_env_conflict_show_conf(tox_project: ToxProjectCreator, ignore_conflict: bool | None) -> None:
     py_ver = "".join(str(i) for i in sys.version_info[0:2])
     py_ver_next = "".join(str(i) for i in (sys.version_info[0], sys.version_info[1] + 2))
     ini = f"[testenv]\npackage=skip\nbase_python=py{py_ver_next}"

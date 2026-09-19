@@ -26,6 +26,7 @@ from tox.session.cmd.run.single import ToxEnvRunResult, run_one
 from tox.tox_env.errors import Fail
 from tox.util.graph import stable_topological_sort
 from tox.util.spinner import MISS_DURATION, Spinner
+from tox.util.typing_compat import override
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterator, Sequence
@@ -37,6 +38,7 @@ if TYPE_CHECKING:
 
 
 class SkipMissingInterpreterAction(Action):
+    @override
     def __call__(
         self,
         parser: ArgumentParser,  # ruff:ignore[unused-method-argument]
@@ -51,6 +53,7 @@ class SkipMissingInterpreterAction(Action):
 
 
 class InstallPackageAction(Action):
+    @override
     def __call__(
         self,
         parser: ArgumentParser,  # ruff:ignore[unused-method-argument]

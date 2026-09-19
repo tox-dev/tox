@@ -14,6 +14,7 @@ from tox.execute.api import Execute, ExecuteInstance, ExecuteOptions, ExecuteSta
 from tox.execute.local_sub_process import LocalSubProcessExecuteInstance
 from tox.execute.request import StdinSource
 from tox.execute.stream import SyncWrite
+from tox.util.typing_compat import override
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -33,6 +34,7 @@ class LocalSubProcessPep517Executor(Execute):
         self._exc: Exception | None = None
         self.is_alive: bool = False
 
+    @override
     def build_instance(
         self,
         request: ExecuteRequest,
@@ -117,14 +119,17 @@ class LocalSubProcessPep517ExecuteInstance(ExecuteInstance):
         self._lock = Lock()
 
     @property
+    @override
     def cmd(self) -> Sequence[str]:
         return self._instance.cmd
 
+    @override
     def __enter__(self) -> ExecuteStatus:
         self._lock.acquire()
         self._swap_out_err()
         return self._status
 
+    @override
     def __exit__(
         self,
         exc_type: type[BaseException] | None,

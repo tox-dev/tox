@@ -1,0 +1,3 @@
+Contributors running the type checks get a clean pass again with the latest ``ty`` release, and the checks now cover
+more: configuration values are read through the type-verified accessors instead of as ``Any``, and every method that
+overrides a parent is marked with ``@override`` - by :user:`gaborbernat`.

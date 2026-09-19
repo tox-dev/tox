@@ -6,6 +6,7 @@ from argparse import Action, ArgumentParser, ArgumentTypeError, Namespace
 from typing import TYPE_CHECKING, Any, NoReturn, Protocol, TypeVar, cast
 
 from tox.tox_env.python.pip.req.util import handle_binary_option
+from tox.util.typing_compat import override
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -19,9 +20,11 @@ class _SupportsWrite(Protocol[_T_contra]):
 
 
 class _OurArgumentParser(ArgumentParser):
+    @override
     def print_usage(self, file: _SupportsWrite[str] | None = None) -> None:
         pass
 
+    @override
     def exit(self, status: int = 0, message: str | None = None) -> NoReturn:  # ruff:ignore[unused-method-argument, no-self-use]
         message = "" if message is None else message
         msg = message.lstrip(": ").rstrip()
@@ -84,6 +87,7 @@ def _validate_hash(value: str) -> str:
 
 
 class AddSortedUniqueAction(Action):
+    @override
     def __call__(
         self,
         parser: ArgumentParser,  # ruff:ignore[unused-method-argument]
@@ -99,6 +103,7 @@ class AddSortedUniqueAction(Action):
 
 
 class AddUniqueAction(Action):
+    @override
     def __call__(
         self,
         parser: ArgumentParser,  # ruff:ignore[unused-method-argument]
@@ -114,6 +119,7 @@ class AddUniqueAction(Action):
 
 
 class BinaryAction(Action):
+    @override
     def __call__(
         self,
         parser: ArgumentParser,  # ruff:ignore[unused-method-argument]

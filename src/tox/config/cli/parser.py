@@ -17,6 +17,7 @@ from colorama import Fore
 
 from tox.plugin import NAME
 from tox.util.ci import is_ci
+from tox.util.typing_compat import override
 
 from .env_var import get_env_var
 from .ini import IniConfig
@@ -84,7 +85,7 @@ class ArgumentParserWithEnvAndConfig(ArgumentParser):
                 else:
                     of_type = cast("type[Any]", GenericAlias(list, (action.type,)))
             elif isinstance(action, argparse._StoreAction) and action.choices:  # ruff:ignore[private-member-access]
-                of_type = cast("type[Any]", Literal[tuple(action.choices)])  # ty: ignore[invalid-type-form] # pyrefly: ignore[invalid-literal] # dynamic Literal from choices
+                of_type = cast("type[Any]", Literal[tuple(action.choices)])  # ty: ignore[invalid-type-form] # pyrefly: ignore[invalid-literal] # choices are only known at runtime and no checker can express a Literal built from them
             elif action.default is not None:
                 of_type = type(action.default)
             elif isinstance(action, argparse._StoreConstAction) and action.const is not None:  # ruff:ignore[private-member-access]
@@ -102,6 +103,7 @@ class ArgumentParserWithEnvAndConfig(ArgumentParser):
     @overload
     def parse_args(self, *, namespace: _N) -> _N: ...
 
+    @override
     def parse_args(
         self,
         args: Iterable[str] | None = None,
@@ -124,6 +126,7 @@ class HelpFormatter(ArgumentDefaultsHelpFormatter):
     def __init__(self, prog: str, **kwargs: Any) -> None:
         super().__init__(prog, max_help_position=30, width=240, **kwargs)
 
+    @override
     def _get_help_string(self, action: Action) -> str | None:
         text: str = super()._get_help_string(action) or ""
         if (source := _ACTION_DEFAULT_SOURCE.get(action)) is not None:
@@ -334,6 +337,7 @@ class ToxParser(ArgumentParserWithEnvAndConfig):
             defaults["no_capture"] = False
 
         class SeedAction(Action):
+            @override
             def __call__(
                 self,
                 parser: ArgumentParser,  # ruff:ignore[unused-method-argument]
@@ -397,6 +401,7 @@ class ToxParser(ArgumentParserWithEnvAndConfig):
                 return arg.lstrip("-").replace("-", "_")
         return args[0].lstrip("-").replace("-", "_")
 
+    @override
     def add_argument_group(self, *args: Any, **kwargs: Any) -> argparse._ArgumentGroup:
         if self.of_cmd is not None or args in {("positional arguments",), ("optional arguments",)}:
             return super().add_argument_group(*args, **kwargs)
@@ -406,6 +411,7 @@ class ToxParser(ArgumentParserWithEnvAndConfig):
         self._groups.append((args, kwargs, excl))
         return group
 
+    @override
     def add_argument(self, *args: str, of_type: type[Any] | UnionType | None = None, **kwargs: Any) -> Action:
         result = super().add_argument(*args, **kwargs)
         if self.of_cmd is None and result.dest != "help":
@@ -450,6 +456,7 @@ class ToxParser(ArgumentParserWithEnvAndConfig):
     @overload
     def parse_known_args(self, *, namespace: _N) -> tuple[_N, list[str]]: ...
 
+    @override
     def parse_known_args(
         self,
         args: Iterable[str] | None = None,
@@ -497,6 +504,7 @@ class _RecordingArgumentGroup(argparse._ArgumentGroup):  # ruff:ignore[private-m
         super().__init__(container, *args, **kwargs)
         self._excl = excl
 
+    @override
     def add_mutually_exclusive_group(self, **kwargs: Any) -> _RecordingMutuallyExclusiveGroup:
         arguments: list[ArgumentArgs] = []
         self._excl.append((kwargs, arguments))
@@ -512,6 +520,7 @@ class _RecordingMutuallyExclusiveGroup(argparse._MutuallyExclusiveGroup):  # ruf
         super().__init__(container, **kwargs)
         self._recorded = recorded
 
+    @override
     def add_argument(self, *args: str, of_type: type[Any] | UnionType | None = None, **kwargs: Any) -> Action:
         action = super().add_argument(*args, **kwargs)
         self._recorded.append((args, of_type, kwargs))

@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 from tox.plugin import impl
 from tox.tox_env.python.pep723 import Pep723Mixin
 from tox.tox_env.runner import RunToxEnv
+from tox.util.typing_compat import override
 
 from .api import VirtualEnv
 
@@ -17,20 +18,25 @@ if TYPE_CHECKING:
 
 class Pep723Runner(Pep723Mixin, VirtualEnv, RunToxEnv):
     @staticmethod
+    @override
     def id() -> str:
         return "virtualenv-pep-723"
 
+    @override
     def _register_package_conf(self) -> bool:  # ruff:ignore[no-self-use]
         return False
 
     @property
+    @override
     def _package_tox_env_type(self) -> str:
         raise NotImplementedError
 
     @property
+    @override
     def _external_pkg_tox_env_type(self) -> str:
         raise NotImplementedError
 
+    @override
     def _build_packages(self) -> list[Package]:  # ruff:ignore[no-self-use]
         return []
 

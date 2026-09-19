@@ -13,6 +13,7 @@ from tox.config.loader.memory import MemoryLoader
 from tox.config.main import Config
 from tox.config.sets import ConfigSet, EnvConfigSet
 from tox.config.source.api import Section
+from tox.util.typing_compat import override
 
 if TYPE_CHECKING:
     from pytest_mock import MockerFixture
@@ -74,7 +75,7 @@ def test_config_dict(conf_builder: ConfBuilder) -> None:
 def test_config_bad_type(conf_builder: ConfBuilder) -> None:
     config_set = conf_builder("crazy = something-bad")
 
-    config_set.add_config(keys="crazy", of_type=TypeVar, default=TypeVar("V"), desc="crazy")  # ty: ignore[invalid-legacy-type-variable] # intentionally passing TypeVar as type to test error path
+    config_set.add_config(keys="crazy", of_type=TypeVar, default=TypeVar("V"), desc="crazy")  # ty: ignore[invalid-legacy-type-variable] # the test needs a type the converter cannot handle, to reach its error path
     with pytest.raises(TypeError) as context:
         assert config_set["crazy"]
     assert str(context.value) == f"something-bad cannot cast to {TypeVar!r}"
@@ -159,6 +160,7 @@ def test_define_custom_set(tox_project: ToxProjectCreator) -> None:
     class MagicConfigSet(ConfigSet):
         SECTION = Section(None, "magic")
 
+        @override
         def register_config(self) -> None:
             self.add_config("a", of_type=int, default=0, desc="number")
             self.add_config("b", of_type=str, default="", desc="string")
@@ -177,7 +179,7 @@ def test_define_custom_set(tox_project: ToxProjectCreator) -> None:
 
 def test_do_not_allow_create_config_set(mocker: MockerFixture) -> None:
     with pytest.raises(TypeError, match="Can't instantiate"):
-        ConfigSet(mocker.create_autospec(Config))  # ty: ignore[missing-argument] # intentionally wrong args to test TypeError
+        ConfigSet(mocker.create_autospec(Config))  # ty: ignore[missing-argument, call-non-callable] # the test proves the runtime rejects the same invalid call ty reports
 
 
 def test_set_env_raises_on_non_str(mocker: MockerFixture) -> None:

@@ -11,6 +11,8 @@ import json
 from contextlib import contextmanager
 from typing import TYPE_CHECKING, Any
 
+from tox.util.typing_compat import override
+
 if TYPE_CHECKING:
     from collections.abc import Iterator
     from pathlib import Path
@@ -28,6 +30,7 @@ class Info:
         # a corrupted file must trigger recreation rather than crash, whatever shape the corruption takes
         self._content = value if isinstance(value, dict) else {}
 
+    @override
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}(path={self._path})"
 
