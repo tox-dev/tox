@@ -7,6 +7,29 @@
 .. towncrier release notes start
 
 **********************
+ v4.62.0 (2026-09-19)
+**********************
+
+Features - 4.62.0
+=================
+
+- Plugins can read a configuration value that may be unset through ``ConfigSet.get_optional``, which verifies the value
+  against its declared type and returns ``None`` when it is not set - by :user:`gaborbernat`. (:issue:`4075`)
+
+Bug fixes - 4.62.0
+==================
+
+- Setting ``TOX_FACTOR_<label>`` to an empty value now resolves ``{factor:<label>}`` to an empty string instead of being
+  ignored - by :user:`gaborbernat`. (:issue:`4073`)
+
+Contributor-facing changes - 4.62.0
+===================================
+
+- Contributors running the type checks get a clean pass again with the latest ``ty`` release, and the checks now cover
+  more: configuration values are read through the type-verified accessors instead of as ``Any``, and every method that
+  overrides a parent is marked with ``@override`` - by :user:`gaborbernat`. (:issue:`4075`)
+
+**********************
  v4.61.5 (2026-09-17)
 **********************
 
