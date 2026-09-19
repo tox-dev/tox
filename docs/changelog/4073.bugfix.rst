@@ -1,0 +1,2 @@
+Setting ``TOX_FACTOR_<label>`` to an empty value now resolves ``{factor:<label>}`` to an empty string instead of being
+ignored - by :user:`gaborbernat`.

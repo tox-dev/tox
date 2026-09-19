@@ -607,10 +607,20 @@ def test_env_base_factor_group_default(tox_project: ToxProjectCreator, env: str,
 
 
 @pytest.mark.parametrize(
-    ("variable", "reference", "expected"),
+    ("variable", "reference", "override", "expected"),
     [
-        pytest.param("TOX_FACTOR_django_version", "{factor:django_version}", "django60", id="declared-label"),
-        pytest.param("TOX_FACTOR_unknown", "{factor:unknown:fallback}", "fallback", id="unknown-label"),
+        pytest.param(
+            "TOX_FACTOR_django_version", "{factor:django_version}", "django60", "django60", id="declared-label"
+        ),
+        pytest.param("TOX_FACTOR_unknown", "{factor:unknown:fallback}", "django60", "fallback", id="unknown-label"),
+        pytest.param("TOX_FACTOR_django_version", "{factor:django_version}", "", "", id="empty-override"),
+        pytest.param(
+            "TOX_FACTOR_django_version",
+            "{factor:django_version:fallback}",
+            "",
+            "",
+            id="empty-override-beats-inline-default",
+        ),
     ],
 )
 def test_env_base_factor_env_override(
@@ -618,21 +628,22 @@ def test_env_base_factor_env_override(
     monkeypatch: pytest.MonkeyPatch,
     variable: str,
     reference: str,
+    override: str,
     expected: str,
 ) -> None:
-    monkeypatch.setenv(variable, "django60")
+    monkeypatch.setenv(variable, override)
     project = tox_project({
         "tox.toml": textwrap.dedent(f"""\
             [env_base.task]
             factors = [{{django_version = ["django42", "django50"]}}]
             package = "skip"
-            description = "Test {reference}"
+            description = "Test [{reference}]"
             commands = [["python", "-c", "print('ok')"]]
         """),
     })
     outcome = project.run("c", "-e", "task-django42", "-k", "description")
     outcome.assert_success()
-    outcome.assert_out_err(f"[testenv:task-django42]\ndescription = Test {expected}\n", "")
+    outcome.assert_out_err(f"[testenv:task-django42]\ndescription = Test [{expected}]\n", "")
 
 
 def test_env_base_factor_group_default_reaches_deps(tox_project: ToxProjectCreator) -> None:
