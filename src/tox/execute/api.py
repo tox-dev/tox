@@ -113,6 +113,31 @@ class ExecuteStatus(ABC):
         return {}
 
 
+class FinishedExecuteStatus(ExecuteStatus):
+    """Report a fixed exit code for a command that finished or never started, without running a process."""
+
+    def __init__(self, options: ExecuteOptions, out: SyncWrite, err: SyncWrite, exit_code: int | None) -> None:
+        super().__init__(options, out, err)
+        self._exit_code = exit_code
+
+    @property
+    @override
+    def exit_code(self) -> int | None:
+        return self._exit_code
+
+    @override
+    def wait(self, timeout: float | None = None) -> int | None:
+        return self._exit_code
+
+    @override
+    def write_stdin(self, content: str) -> None:
+        """Cannot write."""
+
+    @override
+    def interrupt(self) -> None:
+        return None  # nothing running so nothing to interrupt
+
+
 class Execute(ABC):
     """Abstract API for execution of a tox environment."""
 
@@ -335,6 +360,7 @@ __all__ = (
     "ExecuteInstance",
     "ExecuteOptions",
     "ExecuteStatus",
+    "FinishedExecuteStatus",
     "Outcome",
     "StdinSource",
 )

@@ -417,7 +417,16 @@ def test_suggest_env(tox_project: ToxProjectCreator) -> None:
     assert outcome.out == msg
 
 
-def test_unavailable_runner_in_config_not_explicitly_requested(tox_project: ToxProjectCreator) -> None:
+@pytest.mark.parametrize(
+    "run_args",
+    [
+        pytest.param(["-e", "available"], id="only-available-requested"),
+        pytest.param([], id="whole-env-list"),
+    ],
+)
+def test_unavailable_runner_in_config_not_explicitly_requested(
+    tox_project: ToxProjectCreator, run_args: list[str]
+) -> None:
     """Unavailable runner in config should be marked NOT AVAILABLE if not explicitly requested."""
     tox_toml = """
         [tool.tox]
@@ -434,7 +443,7 @@ def test_unavailable_runner_in_config_not_explicitly_requested(tox_project: ToxP
         commands = [["python", "-c", "print('unavailable')"]]
         """
     proj = tox_project({"pyproject.toml": tox_toml})
-    outcome = proj.run("r", "-e", "available")
+    outcome = proj.run("r", *run_args)
     outcome.assert_success()
     assert "available: OK" in outcome.out
     assert "unavailable: NOT AVAILABLE" in outcome.out
@@ -454,29 +463,6 @@ def test_unavailable_runner_explicitly_requested(tox_project: ToxProjectCreator)
     outcome = proj.run("r", "-e", "unavailable")
     outcome.assert_failed()
     assert "runner 'nonexistent-runner' for environment 'unavailable' is not available" in outcome.out
-
-
-def test_unavailable_runner_in_env_list(tox_project: ToxProjectCreator) -> None:
-    """Unavailable runner in env_list should be shown as NOT AVAILABLE."""
-    tox_toml = """
-        [tool.tox]
-        env_list = ["available", "unavailable"]
-
-        [tool.tox.env_run_base]
-        skip_install = true
-
-        [tool.tox.env.available]
-        commands = [["python", "-c", "print('available')"]]
-
-        [tool.tox.env.unavailable]
-        runner = "nonexistent-runner"
-        commands = [["python", "-c", "print('unavailable')"]]
-        """
-    proj = tox_project({"pyproject.toml": tox_toml})
-    outcome = proj.run("r")
-    outcome.assert_success()
-    assert "available: OK" in outcome.out
-    assert "unavailable: NOT AVAILABLE" in outcome.out
 
 
 def test_multiple_unavailable_runners_implicit(tox_project: ToxProjectCreator) -> None:

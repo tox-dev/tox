@@ -1,0 +1,2 @@
+Plugins and test helpers can use ``tox.execute.api.FinishedExecuteStatus`` to report a fixed exit code for a command
+that already finished or never started - by :user:`gaborbernat`.

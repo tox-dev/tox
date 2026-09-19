@@ -24,7 +24,7 @@ from colorama import Fore
 from psutil import AccessDenied
 
 from tox.execute import local_sub_process
-from tox.execute.api import ExecuteOptions, Outcome
+from tox.execute.api import ExecuteOptions, FinishedExecuteStatus, Outcome
 from tox.execute.local_sub_process import (
     SIG_INTERRUPT,
     LocalSubProcessExecuteInstance,
@@ -302,6 +302,46 @@ def test_command_does_not_exist(caplog: LogCaptureFixture, os_env: dict[str, str
     assert re.match(
         r".*(No such file or directory|The system cannot find the file specified).*", caplog.records[0].message
     )
+
+
+@pytest.fixture(
+    params=[
+        pytest.param(0, id="success"),
+        pytest.param(-2, id="interrupted"),
+        pytest.param(None, id="not-started"),
+    ]
+)
+def finished_exit_code(request: pytest.FixtureRequest) -> int | None:
+    return request.param
+
+
+@pytest.fixture
+def finished_status(finished_exit_code: int | None, mocker: MockerFixture) -> FinishedExecuteStatus:
+    return FinishedExecuteStatus(
+        mocker.create_autospec(ExecuteOptions), SyncWrite("out", None), SyncWrite("err", None), finished_exit_code
+    )
+
+
+def test_finished_status_exit_code(finished_status: FinishedExecuteStatus, finished_exit_code: int | None) -> None:
+    assert finished_status.exit_code == finished_exit_code
+
+
+def test_finished_status_wait_returns_exit_code(
+    finished_status: FinishedExecuteStatus, finished_exit_code: int | None
+) -> None:
+    assert finished_status.wait(0.5) == finished_exit_code
+
+
+def test_finished_status_interrupt_keeps_exit_code(
+    finished_status: FinishedExecuteStatus, finished_exit_code: int | None
+) -> None:
+    finished_status.interrupt()
+    assert finished_status.exit_code == finished_exit_code
+
+
+def test_finished_status_write_stdin_discards_content(finished_status: FinishedExecuteStatus) -> None:
+    finished_status.write_stdin("content")
+    assert (finished_status.out, finished_status.err) == (bytearray(), bytearray())
 
 
 @pytest.mark.skipif(sys.platform == "win32", reason="You need a conhost shell for keyboard interrupt")

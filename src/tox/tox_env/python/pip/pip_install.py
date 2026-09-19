@@ -106,7 +106,7 @@ class Pip(PythonInstallerListDependencies):
         )
 
     @override
-    def freeze_cmd(self) -> list[str]:  # ruff:ignore[no-self-use]
+    def freeze_cmd(self) -> list[str]:
         return ["python", "-m", "pip", "freeze", "--all"]
 
     def default_install_command(self, conf: Config, env_name: str | None) -> Command:  # ruff:ignore[unused-method-argument]

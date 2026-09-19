@@ -49,7 +49,7 @@ class StrConvert(Convert[str]):
 
     @staticmethod
     @override
-    def to_dict(value: str, of_type: tuple[type[Any], type[Any]]) -> Iterator[tuple[str, str]]:  # ruff:ignore[unused-static-method-argument]
+    def to_dict(value: str, of_type: tuple[type[Any], type[Any]]) -> Iterator[tuple[str, str]]:
         for row in value.split("\n"):
             if row.strip():
                 key, sep, value = row.partition("=")

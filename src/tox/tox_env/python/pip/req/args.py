@@ -25,7 +25,7 @@ class _OurArgumentParser(ArgumentParser):
         pass
 
     @override
-    def exit(self, status: int = 0, message: str | None = None) -> NoReturn:  # ruff:ignore[unused-method-argument, no-self-use]
+    def exit(self, status: int = 0, message: str | None = None) -> NoReturn:
         message = "" if message is None else message
         msg = message.lstrip(": ").rstrip()
         msg = msg.removeprefix("error: ")
@@ -90,10 +90,10 @@ class AddSortedUniqueAction(Action):
     @override
     def __call__(
         self,
-        parser: ArgumentParser,  # ruff:ignore[unused-method-argument]
+        parser: ArgumentParser,
         namespace: Namespace,
         values: str | Sequence[Any] | None,
-        option_string: str | None = None,  # ruff:ignore[unused-method-argument]
+        option_string: str | None = None,
     ) -> None:
         if getattr(namespace, self.dest, None) is None:
             setattr(namespace, self.dest, [])
@@ -106,10 +106,10 @@ class AddUniqueAction(Action):
     @override
     def __call__(
         self,
-        parser: ArgumentParser,  # ruff:ignore[unused-method-argument]
+        parser: ArgumentParser,
         namespace: Namespace,
         values: str | Sequence[Any] | None,
-        option_string: str | None = None,  # ruff:ignore[unused-method-argument]
+        option_string: str | None = None,
     ) -> None:
         if getattr(namespace, self.dest, None) is None:
             setattr(namespace, self.dest, [])
@@ -122,10 +122,10 @@ class BinaryAction(Action):
     @override
     def __call__(
         self,
-        parser: ArgumentParser,  # ruff:ignore[unused-method-argument]
+        parser: ArgumentParser,
         namespace: Namespace,
         values: str | Sequence[Any] | None,
-        option_string: str | None = None,  # ruff:ignore[unused-method-argument]
+        option_string: str | None = None,
     ) -> None:
         if getattr(namespace, "no_binary", None) is None:
             namespace.no_binary = set()

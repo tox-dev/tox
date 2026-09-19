@@ -63,9 +63,9 @@ class ConfigConstantDefinition(ConfigDefinition[T]):  # ruff:ignore[eq-without-h
     @override
     def __call__(
         self,
-        conf: Config,  # ruff:ignore[unused-method-argument]
-        loaders: list[Loader[T]],  # ruff:ignore[unused-method-argument]
-        args: ConfigLoadArgs,  # ruff:ignore[unused-method-argument]
+        conf: Config,
+        loaders: list[Loader[T]],
+        args: ConfigLoadArgs,
     ) -> T:
         if callable(self.value):
             return cast("Callable[[], T]", self.value)()

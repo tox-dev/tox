@@ -2,14 +2,16 @@ from __future__ import annotations
 
 import sys
 import textwrap
+from string import Template
 from typing import TYPE_CHECKING
 
 import pytest
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
     from typing import Final
 
-    from tox.pytest import ToxProjectCreator
+    from tox.pytest import ToxProject, ToxProjectCreator
 
 
 def test_config_in_toml_core(tox_project: ToxProjectCreator) -> None:
@@ -66,53 +68,68 @@ def test_config_in_toml_extra(tox_project: ToxProjectCreator) -> None:
     assert "# !!! unused: " not in outcome.out, outcome.out
 
 
-def test_config_in_toml_replace_default(tox_project: ToxProjectCreator) -> None:
-    project = tox_project({"tox.toml": '[env_run_base]\ndescription = "{missing:miss}"'})
+@pytest.fixture(
+    params=[
+        pytest.param(("tox.toml", ""), id="tox.toml"),
+        pytest.param(("pyproject.toml", "tool.tox."), id="pyproject.toml"),
+    ]
+)
+def toml_project(request: pytest.FixtureRequest, tox_project: ToxProjectCreator) -> Callable[[str], ToxProject]:
+    filename, prefix = request.param
+
+    def create(content: str) -> ToxProject:
+        return tox_project({filename: Template(content).substitute(prefix=prefix)})
+
+    return create
+
+
+def test_config_in_toml_replace_default(toml_project: Callable[[str], ToxProject]) -> None:
+    project = toml_project('[${prefix}env_run_base]\ndescription = "{missing:miss}"')
     outcome = project.run("c", "-k", "description")
     outcome.assert_success()
     outcome.assert_out_err("[testenv:py]\ndescription = miss\n", "")
 
 
-def test_config_in_toml_replace_env_name_via_env(tox_project: ToxProjectCreator) -> None:
-    project = tox_project({"tox.toml": '[env_run_base]\ndescription = "Magic in {env:MAGICAL:{env_name}}"'})
+def test_config_in_toml_replace_env_name_via_env(toml_project: Callable[[str], ToxProject]) -> None:
+    project = toml_project('[${prefix}env_run_base]\ndescription = "Magic in {env:MAGICAL:{env_name}}"')
     outcome = project.run("c", "-k", "description")
     outcome.assert_success()
     outcome.assert_out_err("[testenv:py]\ndescription = Magic in py\n", "")
 
 
 def test_config_in_toml_replace_env_name_via_env_set(
-    tox_project: ToxProjectCreator, monkeypatch: pytest.MonkeyPatch
+    toml_project: Callable[[str], ToxProject], monkeypatch: pytest.MonkeyPatch
 ) -> None:
     monkeypatch.setenv("MAGICAL", "YEAH")
-    project = tox_project({"tox.toml": '[env_run_base]\ndescription = "Magic in {env:MAGICAL:{env_name}}"'})
+    project = toml_project('[${prefix}env_run_base]\ndescription = "Magic in {env:MAGICAL:{env_name}}"')
     outcome = project.run("c", "-k", "description")
     outcome.assert_success()
     outcome.assert_out_err("[testenv:py]\ndescription = Magic in YEAH\n", "")
 
 
-def test_config_in_toml_replace_from_env_section_absolute(tox_project: ToxProjectCreator) -> None:
-    project = tox_project({
-        "tox.toml": """
-        [env.A]
-        description = "a"
-        [env.B]
-        description = "{[env.A]env_name}"
+def test_config_in_toml_replace_from_env_section_absolute(toml_project: Callable[[str], ToxProject]) -> None:
+    project = toml_project(
         """
-    })
+        [${prefix}env.A]
+        description = "a"
+        [${prefix}env.B]
+        description = "{[${prefix}env.A]env_name}"
+        """
+    )
     outcome = project.run("c", "-e", "B", "-k", "description")
     outcome.assert_success()
     outcome.assert_out_err("[testenv:B]\ndescription = A\n", "")
 
 
-def test_config_in_toml_replace_from_section_absolute(tox_project: ToxProjectCreator) -> None:
-    project = tox_project({
-        "tox.toml": """
-        [extra]
-        ok = "o"
-        [env.B]
-        description = "{[extra]ok}"
+def test_config_in_toml_replace_from_section_absolute(toml_project: Callable[[str], ToxProject]) -> None:
+    project = toml_project(
         """
-    })
+        [${prefix}extra]
+        ok = "o"
+        [${prefix}env.B]
+        description = "{[${prefix}extra]ok}"
+        """
+    )
     outcome = project.run("c", "-e", "B", "-k", "description")
     outcome.assert_success()
     outcome.assert_out_err("[testenv:B]\ndescription = o\n", "")

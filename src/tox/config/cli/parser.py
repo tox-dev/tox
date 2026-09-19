@@ -340,10 +340,10 @@ class ToxParser(ArgumentParserWithEnvAndConfig):
             @override
             def __call__(
                 self,
-                parser: ArgumentParser,  # ruff:ignore[unused-method-argument]
+                parser: ArgumentParser,
                 namespace: Namespace,
                 values: str | Sequence[Any] | None,
-                option_string: str | None = None,  # ruff:ignore[unused-method-argument]
+                option_string: str | None = None,
             ) -> None:
                 if values == "notset":
                     result = None

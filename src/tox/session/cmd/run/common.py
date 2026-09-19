@@ -41,10 +41,10 @@ class SkipMissingInterpreterAction(Action):
     @override
     def __call__(
         self,
-        parser: ArgumentParser,  # ruff:ignore[unused-method-argument]
+        parser: ArgumentParser,
         namespace: Namespace,
         values: str | Sequence[Any] | None,
-        option_string: str | None = None,  # ruff:ignore[unused-method-argument]
+        option_string: str | None = None,
     ) -> None:
         value = "true" if values is None else values
         if value not in {"config", "true", "false"}:
@@ -56,10 +56,10 @@ class InstallPackageAction(Action):
     @override
     def __call__(
         self,
-        parser: ArgumentParser,  # ruff:ignore[unused-method-argument]
+        parser: ArgumentParser,
         namespace: Namespace,
         values: str | Sequence[Any] | None,
-        option_string: str | None = None,  # ruff:ignore[unused-method-argument]
+        option_string: str | None = None,
     ) -> None:
         if not values:
             raise ArgumentError(self, "cannot be empty")

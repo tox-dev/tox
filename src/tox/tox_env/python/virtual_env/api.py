@@ -191,7 +191,7 @@ class VirtualEnv(Python, ABC):
         self.session.run()
 
     @override
-    def _get_python(self, base_python: list[str]) -> PythonInfo | None:  # ruff:ignore[unused-method-argument]
+    def _get_python(self, base_python: list[str]) -> PythonInfo | None:
         # the base pythons are injected into the virtualenv_env_vars, so we don't need to use it here
         try:
             interpreter = self.creator.interpreter

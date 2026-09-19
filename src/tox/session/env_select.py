@@ -114,10 +114,10 @@ class _CliEnvAction(argparse.Action):
     @override
     def __call__(
         self,
-        parser: argparse.ArgumentParser,  # ruff:ignore[unused-method-argument]
+        parser: argparse.ArgumentParser,
         namespace: argparse.Namespace,
         values: Any,
-        option_string: str | None = None,  # ruff:ignore[unused-method-argument]
+        option_string: str | None = None,
     ) -> None:
         new = CliEnv(values)
         existing = getattr(namespace, self.dest, None)

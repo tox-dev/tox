@@ -625,42 +625,68 @@ def test_missing_command_success_if_ignored(tox_project: ToxProjectCreator) -> N
     assert "py: command failed but is marked ignore outcome so handling it as success" in result.out
 
 
-def test_fail_fast_cli_flag(tox_project: ToxProjectCreator) -> None:
-    proj = tox_project({
-        "tox.toml": """
-        [env_run_base]
-        package = "skip"
-        [env.env1]
-        commands = [["python", "-c", "print('env1'); exit(0)"]]
-        [env.env2]
-        commands = [["python", "-c", "print('env2'); exit(1)"]]
-        [env.env3]
-        commands = [["python", "-c", "print('env3'); exit(0)"]]
-        """
-    })
-    result = proj.run("r", "-e", "env1,env2,env3", "--fail-fast")
+@pytest.mark.parametrize(
+    ("tox_toml", "run_args", "present"),
+    [
+        pytest.param(
+            """
+            [env_run_base]
+            package = "skip"
+            [env.env1]
+            commands = [["python", "-c", "print('env1'); exit(0)"]]
+            [env.env2]
+            commands = [["python", "-c", "print('env2'); exit(1)"]]
+            [env.env3]
+            commands = [["python", "-c", "print('env3'); exit(0)"]]
+            """,
+            ["r", "-e", "env1,env2,env3", "--fail-fast"],
+            ["env1", "env2"],
+            id="cli-flag",
+        ),
+        pytest.param(
+            """
+            [env_run_base]
+            package = "skip"
+            [env.env1]
+            commands = [["python", "-c", "exit(0)"]]
+            [env.env2]
+            fail_fast = true
+            commands = [["python", "-c", "exit(1)"]]
+            [env.env3]
+            commands = [["python", "-c", "exit(0)"]]
+            """,
+            ["r", "-e", "env1,env2,env3"],
+            [],
+            id="config",
+        ),
+        pytest.param(
+            """
+            [env_run_base]
+            package = "skip"
+            [env.env1]
+            commands = [["python", "-c", "exit(0)"]]
+            [env.env2]
+            depends = ["env1"]
+            commands = [["python", "-c", "exit(1)"]]
+            [env.env3]
+            depends = ["env2"]
+            commands = [["python", "-c", "exit(0)"]]
+            [env.env4]
+            depends = ["env3"]
+            commands = [["python", "-c", "exit(0)"]]
+            """,
+            ["p", "-e", "env1,env2,env3,env4", "--fail-fast"],
+            ["env1", "env2"],
+            id="parallel-mode",
+        ),
+    ],
+)
+def test_fail_fast_skips_remaining_envs(
+    tox_project: ToxProjectCreator, tox_toml: str, run_args: list[str], present: list[str]
+) -> None:
+    result = tox_project({"tox.toml": tox_toml}).run(*run_args)
     assert result.code != 0
-    assert "env1" in result.out
-    assert "env2" in result.out
-    assert "SKIP" in result.out
-
-
-def test_fail_fast_config(tox_project: ToxProjectCreator) -> None:
-    proj = tox_project({
-        "tox.toml": """
-        [env_run_base]
-        package = "skip"
-        [env.env1]
-        commands = [["python", "-c", "exit(0)"]]
-        [env.env2]
-        fail_fast = true
-        commands = [["python", "-c", "exit(1)"]]
-        [env.env3]
-        commands = [["python", "-c", "exit(0)"]]
-        """
-    })
-    result = proj.run("r", "-e", "env1,env2,env3")
-    assert result.code != 0
+    assert [env for env in present if env in result.out] == present
     assert "SKIP" in result.out
 
 
@@ -684,31 +710,6 @@ def test_fail_fast_respects_ignore_outcome(tox_project: ToxProjectCreator) -> No
     assert "env2" in result.out
     assert "env3" in result.out
     assert "IGNORED FAIL" in result.out
-
-
-def test_fail_fast_parallel_mode(tox_project: ToxProjectCreator) -> None:
-    proj = tox_project({
-        "tox.toml": """
-        [env_run_base]
-        package = "skip"
-        [env.env1]
-        commands = [["python", "-c", "exit(0)"]]
-        [env.env2]
-        depends = ["env1"]
-        commands = [["python", "-c", "exit(1)"]]
-        [env.env3]
-        depends = ["env2"]
-        commands = [["python", "-c", "exit(0)"]]
-        [env.env4]
-        depends = ["env3"]
-        commands = [["python", "-c", "exit(0)"]]
-        """
-    })
-    result = proj.run("p", "-e", "env1,env2,env3,env4", "--fail-fast")
-    assert result.code != 0
-    assert "env1" in result.out
-    assert "env2" in result.out
-    assert "SKIP" in result.out
 
 
 def test_no_capture_with_result_json_fails(tox_project: ToxProjectCreator) -> None:

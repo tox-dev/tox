@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import logging
 import os
-import sys
 import tarfile
 from abc import ABC
 from collections import defaultdict
@@ -26,6 +25,7 @@ from tox.execute.pep517_backend import LocalSubProcessPep517Executor
 from tox.execute.request import StdinSource
 from tox.plugin import impl
 from tox.tox_env.errors import Fail
+from tox.tox_env.python.extras import resolve_extras_static
 from tox.tox_env.python.package import (
     EditableLegacyPackage,
     EditablePackage,
@@ -37,7 +37,7 @@ from tox.tox_env.python.virtual_env.api import VirtualEnv
 from tox.util.file_view import create_session_view
 from tox.util.typing_compat import override
 
-from .util import dependencies_with_extras, dependencies_with_extras_from_markers, safe_extractall
+from .util import dependencies_with_extras, safe_extractall
 
 if TYPE_CHECKING:
     from collections.abc import Generator, Iterator, Sequence
@@ -50,11 +50,6 @@ if TYPE_CHECKING:
     from tox.tox_env.runner import RunToxEnv
 
 from importlib.metadata import Distribution, PathDistribution
-
-if sys.version_info >= (3, 11):  # pragma: >=3.11 cover
-    import tomllib
-else:  # pragma: <3.11 cover
-    import tomli as tomllib
 
 ConfigSettings = dict[str, Any] | None
 
@@ -394,31 +389,7 @@ class Pep517VenvPackager(PythonPackageToxEnv, ABC):
         return deps
 
     def _load_deps_from_static(self, for_env: EnvConfigSet) -> list[Requirement] | None:
-        pyproject_file = self.core["package_root"] / "pyproject.toml"
-        if not pyproject_file.exists():  # check if it's static PEP-621 metadata
-            return None
-        with pyproject_file.open("rb") as file_handler:
-            pyproject = tomllib.load(file_handler)
-        if "project" not in pyproject:
-            return None  # is not a PEP-621 pyproject
-        project = pyproject["project"]
-        extras = for_env.get("extras", set[str])
-        for dynamic in project.get("dynamic", []):
-            if dynamic == "dependencies" or (extras and dynamic == "optional-dependencies"):
-                return None  # if any dependencies are dynamic we can just calculate all dynamically
-
-        deps_with_markers: list[tuple[Requirement, set[str | None]]] = [
-            (Requirement(i), {None}) for i in project.get("dependencies", [])
-        ]
-        optional_deps = project.get("optional-dependencies", {})
-        for extra, reqs in optional_deps.items():
-            deps_with_markers.extend((Requirement(req), {extra}) for req in (reqs or []))
-        return dependencies_with_extras_from_markers(
-            deps_with_markers=deps_with_markers,
-            extras=extras,
-            package_name=project.get("name", "."),
-            available_extras=set(optional_deps.keys()),
-        )
+        return resolve_extras_static(self.core.get("package_root", Path), for_env.get("extras", set[str]))
 
     def _load_deps_from_built_metadata(self, for_env: EnvConfigSet) -> list[Requirement]:
         # dependencies might depend on the python environment we're running in => if we build a wheel use that env
@@ -539,7 +510,7 @@ class Pep517VirtualEnvFrontend(Frontend):
     def _send_msg(
         self,
         cmd: str,
-        result_file: Path,  # ruff:ignore[unused-method-argument]
+        result_file: Path,
         msg: str,
     ) -> Iterator[ToxCmdStatus]:
         try:

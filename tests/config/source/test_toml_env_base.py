@@ -9,49 +9,147 @@ if TYPE_CHECKING:
     from tox.pytest import ToxProjectCreator
 
 
-def test_env_base_simple_factors(tox_project: ToxProjectCreator) -> None:
-    project = tox_project({
-        "tox.toml": textwrap.dedent("""\
+@pytest.mark.parametrize(
+    ("tox_toml", "expected"),
+    [
+        pytest.param(
+            """\
             [env_base.task]
             factors = ["x", "y"]
             package = "skip"
             commands = [["python", "-c", "print('ok')"]]
-        """),
-    })
-    result = project.run("l")
-    result.assert_success()
-    assert "task-x" in result.out
-    assert "task-y" in result.out
-
-
-def test_env_base_cartesian_product(tox_project: ToxProjectCreator) -> None:
-    project = tox_project({
-        "tox.toml": textwrap.dedent("""\
+            """,
+            ["task-x", "task-y"],
+            id="simple-factors",
+        ),
+        pytest.param(
+            """\
             [env_base.task]
             factors = [["a", "b"], ["x", "y"]]
             package = "skip"
             commands = [["python", "-c", "print('ok')"]]
-        """),
-    })
-    result = project.run("l")
-    result.assert_success()
-    for env in ("task-a-x", "task-a-y", "task-b-x", "task-b-y"):
-        assert env in result.out
-
-
-def test_env_base_range_factors(tox_project: ToxProjectCreator) -> None:
-    project = tox_project({
-        "tox.toml": textwrap.dedent("""\
+            """,
+            ["task-a-x", "task-a-y", "task-b-x", "task-b-y"],
+            id="cartesian-product",
+        ),
+        pytest.param(
+            """\
             [env_base.task]
             factors = [{"prefix" = "py3", "start" = 12, "stop" = 13}]
             package = "skip"
             commands = [["python", "-c", "print('ok')"]]
-        """),
-    })
-    result = project.run("l")
+            """,
+            ["task-py312", "task-py313"],
+            id="range-factors",
+        ),
+        pytest.param(
+            """\
+            [env_base.lib]
+            factors = ["a"]
+            package = "skip"
+            commands = [["python", "-c", "print('lib')"]]
+
+            [env_base.app]
+            factors = ["x"]
+            package = "skip"
+            commands = [["python", "-c", "print('app')"]]
+            """,
+            ["lib-a", "app-x"],
+            id="multiple-entries",
+        ),
+        pytest.param(
+            """\
+            [env_base.test]
+            factors = [["3.13", "3.14"]]
+            deps = ["pytest>=8"]
+            package = "skip"
+            commands = [["python", "-c", "print('ok')"]]
+            """,
+            ["test-3.13", "test-3.14"],
+            id="doc-getting-started-scaling",
+        ),
+        pytest.param(
+            """\
+            [env_base.build]
+            factors = [["py312", "py313"], ["x86", "x64"]]
+            package = "skip"
+            env_dir = {replace = "if", condition = "factor.x86", then = ".venv-x86", else = ".venv-x64"}
+            commands = [["python", "-c", "print('ok')"]]
+            """,
+            ["build-py312-x86", "build-py312-x64", "build-py313-x86", "build-py313-x64"],
+            id="doc-reference-generative",
+        ),
+        pytest.param(
+            """\
+            [env_base.django]
+            factors = [["py312", "py313"], ["django42", "django50"]]
+            package = "skip"
+            deps = [
+                "pytest",
+                {replace = "if", condition = "factor.django42", then = ["Django>=4.2,<4.3"]},
+                {replace = "if", condition = "factor.django50", then = ["Django>=5.0,<5.1"]},
+            ]
+            commands = [["python", "-c", "print('ok')"]]
+            """,
+            ["django-py312-django42", "django-py312-django50", "django-py313-django42", "django-py313-django50"],
+            id="doc-reference-django-matrix",
+        ),
+        pytest.param(
+            """\
+            [env_base.django]
+            factors = [
+                {"prefix" = "py3", "start" = 13, "stop" = 14},
+                ["django42", "django50"],
+            ]
+            package = "skip"
+            deps = [
+                "pytest",
+                {replace = "if", condition = "factor.django42", then = ["Django>=4.2,<4.3"]},
+                {replace = "if", condition = "factor.django50", then = ["Django>=5.0,<5.1"]},
+            ]
+            commands = [["pytest"]]
+            """,
+            ["django-py313-django42", "django-py313-django50", "django-py314-django42", "django-py314-django50"],
+            id="doc-howto-matrix",
+        ),
+        pytest.param(
+            """\
+            [env_base.py311-venv]
+            factors = [["x86", "x64"]]
+            package = "skip"
+            base_python = {replace = "if", condition = "factor.x86", then = "python3.11-32", else = "python3.11-64"}
+            env_dir = {replace = "if", condition = "factor.x86", then = ".venv-x86", else = ".venv-x64"}
+            commands = [["python", "-c", "print('ok')"]]
+            """,
+            ["py311-venv-x86", "py311-venv-x64"],
+            id="doc-reference-generative-section-names",
+        ),
+        pytest.param(
+            """\
+            [env_base.django]
+            factors = [["a", "b"], {"prefix" = "py3", "start" = 12, "stop" = 13}]
+            package = "skip"
+            commands = [["python", "-c", "print('ok')"]]
+            """,
+            ["django-a-py312", "django-a-py313", "django-b-py312", "django-b-py313"],
+            id="cartesian-with-range",
+        ),
+        pytest.param(
+            """\
+            [env_base.task]
+            factors = [{py_version = {prefix = "py3", start = 12, stop = 14}}]
+            package = "skip"
+            commands = [["python", "-c", "print('ok')"]]
+            """,
+            ["task-py312", "task-py313", "task-py314"],
+            id="labeled-range-factor-group",
+        ),
+    ],
+)
+def test_env_base_lists_generated_envs(tox_project: ToxProjectCreator, tox_toml: str, expected: list[str]) -> None:
+    result = tox_project({"tox.toml": textwrap.dedent(tox_toml)}).run("l")
     result.assert_success()
-    assert "task-py312" in result.out
-    assert "task-py313" in result.out
+    assert [env for env in expected if env in result.out] == expected
 
 
 def test_env_base_config_inheritance(tox_project: ToxProjectCreator) -> None:
@@ -139,26 +237,6 @@ def test_env_base_explicit_env_override(tox_project: ToxProjectCreator) -> None:
     outcome = project.run("c", "-e", "lib-b", "-k", "description")
     outcome.assert_success()
     outcome.assert_out_err("[testenv:lib-b]\ndescription = from base\n", "")
-
-
-def test_env_base_multiple_entries(tox_project: ToxProjectCreator) -> None:
-    project = tox_project({
-        "tox.toml": textwrap.dedent("""\
-            [env_base.lib]
-            factors = ["a"]
-            package = "skip"
-            commands = [["python", "-c", "print('lib')"]]
-
-            [env_base.app]
-            factors = ["x"]
-            package = "skip"
-            commands = [["python", "-c", "print('app')"]]
-        """),
-    })
-    result = project.run("l")
-    result.assert_success()
-    assert "lib-a" in result.out
-    assert "app-x" in result.out
 
 
 def test_env_base_no_unused_warnings(tox_project: ToxProjectCreator) -> None:
@@ -278,81 +356,6 @@ def test_env_base_deps_from_template(tox_project: ToxProjectCreator) -> None:
     outcome.assert_out_err("[testenv:lib-a]\ndeps =\n  pytest>=8\n  coverage\n", "")
 
 
-def test_env_base_doc_getting_started_scaling(tox_project: ToxProjectCreator) -> None:
-    project = tox_project({
-        "tox.toml": textwrap.dedent("""\
-            [env_base.test]
-            factors = [["3.13", "3.14"]]
-            deps = ["pytest>=8"]
-            package = "skip"
-            commands = [["python", "-c", "print('ok')"]]
-        """),
-    })
-    result = project.run("l")
-    result.assert_success()
-    assert "test-3.13" in result.out
-    assert "test-3.14" in result.out
-
-
-def test_env_base_doc_reference_generative(tox_project: ToxProjectCreator) -> None:
-    project = tox_project({
-        "tox.toml": textwrap.dedent("""\
-            [env_base.build]
-            factors = [["py312", "py313"], ["x86", "x64"]]
-            package = "skip"
-            env_dir = {replace = "if", condition = "factor.x86", then = ".venv-x86", else = ".venv-x64"}
-            commands = [["python", "-c", "print('ok')"]]
-        """),
-    })
-    result = project.run("l")
-    result.assert_success()
-    for env in ("build-py312-x86", "build-py312-x64", "build-py313-x86", "build-py313-x64"):
-        assert env in result.out
-
-
-def test_env_base_doc_reference_django_matrix(tox_project: ToxProjectCreator) -> None:
-    project = tox_project({
-        "tox.toml": textwrap.dedent("""\
-            [env_base.django]
-            factors = [["py312", "py313"], ["django42", "django50"]]
-            package = "skip"
-            deps = [
-                "pytest",
-                {replace = "if", condition = "factor.django42", then = ["Django>=4.2,<4.3"]},
-                {replace = "if", condition = "factor.django50", then = ["Django>=5.0,<5.1"]},
-            ]
-            commands = [["python", "-c", "print('ok')"]]
-        """),
-    })
-    result = project.run("l")
-    result.assert_success()
-    for env in ("django-py312-django42", "django-py312-django50", "django-py313-django42", "django-py313-django50"):
-        assert env in result.out
-
-
-def test_env_base_doc_howto_matrix(tox_project: ToxProjectCreator) -> None:
-    project = tox_project({
-        "tox.toml": textwrap.dedent("""\
-            [env_base.django]
-            factors = [
-                {"prefix" = "py3", "start" = 13, "stop" = 14},
-                ["django42", "django50"],
-            ]
-            package = "skip"
-            deps = [
-                "pytest",
-                {replace = "if", condition = "factor.django42", then = ["Django>=4.2,<4.3"]},
-                {replace = "if", condition = "factor.django50", then = ["Django>=5.0,<5.1"]},
-            ]
-            commands = [["pytest"]]
-        """),
-    })
-    result = project.run("l")
-    result.assert_success()
-    for env in ("django-py313-django42", "django-py313-django50", "django-py314-django42", "django-py314-django50"):
-        assert env in result.out
-
-
 def test_env_base_doc_howto_override(tox_project: ToxProjectCreator) -> None:
     project = tox_project({
         "tox.toml": textwrap.dedent("""\
@@ -372,38 +375,6 @@ def test_env_base_doc_howto_override(tox_project: ToxProjectCreator) -> None:
     outcome = project.run("c", "-e", "django-py314-django50", "-k", "description")
     outcome.assert_success()
     outcome.assert_out_err("[testenv:django-py314-django50]\ndescription = bleeding edge\n", "")
-
-
-def test_env_base_doc_reference_generative_section_names(tox_project: ToxProjectCreator) -> None:
-    project = tox_project({
-        "tox.toml": textwrap.dedent("""\
-            [env_base.py311-venv]
-            factors = [["x86", "x64"]]
-            package = "skip"
-            base_python = {replace = "if", condition = "factor.x86", then = "python3.11-32", else = "python3.11-64"}
-            env_dir = {replace = "if", condition = "factor.x86", then = ".venv-x86", else = ".venv-x64"}
-            commands = [["python", "-c", "print('ok')"]]
-        """),
-    })
-    result = project.run("l")
-    result.assert_success()
-    assert "py311-venv-x86" in result.out
-    assert "py311-venv-x64" in result.out
-
-
-def test_env_base_cartesian_with_range(tox_project: ToxProjectCreator) -> None:
-    project = tox_project({
-        "tox.toml": textwrap.dedent("""\
-            [env_base.django]
-            factors = [["a", "b"], {"prefix" = "py3", "start" = 12, "stop" = 13}]
-            package = "skip"
-            commands = [["python", "-c", "print('ok')"]]
-        """),
-    })
-    result = project.run("l")
-    result.assert_success()
-    for env in ("django-a-py312", "django-a-py313", "django-b-py312", "django-b-py313"):
-        assert env in result.out
 
 
 def test_env_base_keyed_factor_description(tox_project: ToxProjectCreator) -> None:
@@ -538,21 +509,6 @@ def test_env_base_labeled_range_factor_group(tox_project: ToxProjectCreator) -> 
     outcome = project.run("c", "-e", "task-3.13-django50", "-k", "description")
     outcome.assert_success()
     outcome.assert_out_err("[testenv:task-3.13-django50]\ndescription = 3.13 with django50\n", "")
-
-
-def test_env_base_labeled_range_factor_group_generates_envs(tox_project: ToxProjectCreator) -> None:
-    project = tox_project({
-        "tox.toml": textwrap.dedent("""\
-            [env_base.task]
-            factors = [{py_version = {prefix = "py3", start = 12, stop = 14}}]
-            package = "skip"
-            commands = [["python", "-c", "print('ok')"]]
-        """),
-    })
-    result = project.run("l")
-    result.assert_success()
-    for env in ("task-py312", "task-py313", "task-py314"):
-        assert env in result.out
 
 
 def test_env_list_product_labeled_range_factor_group(tox_project: ToxProjectCreator) -> None:

@@ -39,6 +39,14 @@ def test_deps_with_hash(tmp_path: Path) -> None:
         _ = python_deps.requirements
 
 
+def test_constraints_with_editable_requirement(tmp_path: Path) -> None:
+    """A requirement smuggled onto a constraints line must be rejected."""
+    (tmp_path / "constraints.txt").write_text("")
+    python_constraints = PythonConstraints("constraints.txt -e ./pkg", tmp_path)
+    with pytest.raises(ValueError, match="Cannot provide options in constraints list"):
+        _ = python_constraints.requirements
+
+
 def test_deps_with_requirements_with_hash(tmp_path: Path) -> None:
     """deps can point to a requirements file that has --hash."""
     exp_hash = "sha256:97a702083b0d906517b79672d8501eee470d60ae55df0fa9d4cfba56c7f65a82"

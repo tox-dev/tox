@@ -196,118 +196,68 @@ def test_pylock_no_reinstall_on_rerun(tox_project: ToxProjectCreator) -> None:
     assert not execute_calls.call_args_list
 
 
-def test_pylock_filters_by_extras(tox_project: ToxProjectCreator) -> None:
+@pytest.mark.parametrize(
+    ("tox_setting", "header", "packages", "expected"),
+    [
+        pytest.param(
+            'extras = ["docs"]',
+            'extras = ["docs", "test"]\n',
+            [
+                ("alpha", "1.0.0", "abc", None),
+                ("sphinx", "7.0.0", "def", "'docs' in extras"),
+                ("pytest", "8.0.0", "ghi", "'test' in extras"),
+            ],
+            "alpha==1.0.0 --hash=sha256:abc\nsphinx==7.0.0 --hash=sha256:def",
+            id="extras",
+        ),
+        pytest.param(
+            'dependency_groups = ["dev"]',
+            'dependency-groups = ["dev", "ci"]\n',
+            [
+                ("alpha", "1.0.0", "abc", None),
+                ("ruff", "0.5.0", "def", "'dev' in dependency_groups"),
+                ("coverage", "7.0.0", "ghi", "'ci' in dependency_groups"),
+            ],
+            "alpha==1.0.0 --hash=sha256:abc\nruff==0.5.0 --hash=sha256:def",
+            id="dependency-groups",
+        ),
+    ],
+)
+def test_pylock_filters_by_selected_group(
+    tox_project: ToxProjectCreator,
+    tox_setting: str,
+    header: str,
+    packages: list[tuple[str, str, str, str | None]],
+    expected: str,
+) -> None:
     project = tox_project(
         {
-            "tox.toml": """
+            "tox.toml": f"""
             [env_run_base]
             skip_install = true
             pylock = "pylock.toml"
-            extras = ["docs"]
+            {tox_setting}
             """,
-            "pylock.toml": dedent("""\
-                lock-version = "1.0"
-                created-by = "test-tool"
-                extras = ["docs", "test"]
-
-                [[packages]]
-                name = "alpha"
-                version = "1.0.0"
-
-                [[packages.wheels]]
-                url = "https://files.example.com/alpha-1.0.0-py3-none-any.whl"
-
-                [packages.wheels.hashes]
-                sha256 = "abc"
-
-                [[packages]]
-                name = "sphinx"
-                version = "7.0.0"
-                marker = "'docs' in extras"
-
-                [[packages.wheels]]
-                url = "https://files.example.com/sphinx-7.0.0-py3-none-any.whl"
-
-                [packages.wheels.hashes]
-                sha256 = "def"
-
-                [[packages]]
-                name = "pytest"
-                version = "8.0.0"
-                marker = "'test' in extras"
-
-                [[packages.wheels]]
-                url = "https://files.example.com/pytest-8.0.0-py3-none-any.whl"
-
-                [packages.wheels.hashes]
-                sha256 = "ghi"
-            """),
+            "pylock.toml": _render_pylock(header, packages),
         },
     )
     project.patch_execute()
     result = project.run("r", "-e", "py")
 
     result.assert_success()
-    assert (
-        project.path / ".tox" / "py" / "pylock.txt"
-    ).read_text() == "alpha==1.0.0 --hash=sha256:abc\nsphinx==7.0.0 --hash=sha256:def"
+    assert (project.path / ".tox" / "py" / "pylock.txt").read_text() == expected
 
 
-def test_pylock_filters_by_dependency_groups(tox_project: ToxProjectCreator) -> None:
-    project = tox_project(
-        {
-            "tox.toml": """
-            [env_run_base]
-            skip_install = true
-            pylock = "pylock.toml"
-            dependency_groups = ["dev"]
-            """,
-            "pylock.toml": dedent("""\
-                lock-version = "1.0"
-                created-by = "test-tool"
-                dependency-groups = ["dev", "ci"]
-
-                [[packages]]
-                name = "alpha"
-                version = "1.0.0"
-
-                [[packages.wheels]]
-                url = "https://files.example.com/alpha-1.0.0-py3-none-any.whl"
-
-                [packages.wheels.hashes]
-                sha256 = "abc"
-
-                [[packages]]
-                name = "ruff"
-                version = "0.5.0"
-                marker = "'dev' in dependency_groups"
-
-                [[packages.wheels]]
-                url = "https://files.example.com/ruff-0.5.0-py3-none-any.whl"
-
-                [packages.wheels.hashes]
-                sha256 = "def"
-
-                [[packages]]
-                name = "coverage"
-                version = "7.0.0"
-                marker = "'ci' in dependency_groups"
-
-                [[packages.wheels]]
-                url = "https://files.example.com/coverage-7.0.0-py3-none-any.whl"
-
-                [packages.wheels.hashes]
-                sha256 = "ghi"
-            """),
-        },
-    )
-    project.patch_execute()
-    result = project.run("r", "-e", "py")
-
-    result.assert_success()
-    assert (
-        project.path / ".tox" / "py" / "pylock.txt"
-    ).read_text() == "alpha==1.0.0 --hash=sha256:abc\nruff==0.5.0 --hash=sha256:def"
+def _render_pylock(header: str, packages: list[tuple[str, str, str, str | None]]) -> str:
+    blocks = [f'lock-version = "1.0"\ncreated-by = "test-tool"\n{header}']
+    for name, version, sha256, marker in packages:
+        marker_line = f'marker = "{marker}"\n' if marker else ""
+        blocks.append(
+            f'[[packages]]\nname = "{name}"\nversion = "{version}"\n{marker_line}\n'
+            f'[[packages.wheels]]\nurl = "https://files.example.com/{name}-{version}-py3-none-any.whl"\n\n'
+            f'[packages.wheels.hashes]\nsha256 = "{sha256}"\n'
+        )
+    return "\n".join(blocks)
 
 
 def test_pylock_filters_by_platform_marker(tox_project: ToxProjectCreator) -> None:

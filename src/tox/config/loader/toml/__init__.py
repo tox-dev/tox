@@ -50,7 +50,7 @@ class TomlLoader(Loader[TomlTypes]):
         return f"{self.__class__.__name__}({self.section.name}, {self.content!r})"
 
     @override
-    def load_raw(self, key: str, conf: Config | None, env_name: str | None) -> TomlTypes:  # ruff:ignore[unused-method-argument]
+    def load_raw(self, key: str, conf: Config | None, env_name: str | None) -> TomlTypes:
         return self.content[key]
 
     def load_raw_from_root(self, path: str) -> TomlTypes:
@@ -65,7 +65,7 @@ class TomlLoader(Loader[TomlTypes]):
         return current
 
     @override
-    def build(  # ruff:ignore[too-many-arguments]
+    def build(
         self,
         key: str,
         of_type: type[_T] | UnionType,
