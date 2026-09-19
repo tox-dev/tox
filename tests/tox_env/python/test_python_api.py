@@ -80,6 +80,7 @@ def test_validate_base_python_conflicting_factors_no_ignore() -> None:
         Python._validate_base_python("unit-py3.10-2.16", ["python3"], ignore_base_python_conflict=False)  # ruff:ignore[private-member-access]
 
 
+@pytest.mark.skipif(sys.platform == "win32", reason="mocks a POSIX venv layout (bin/python symlink)")
 def test_build_wheel_in_non_base_pkg_env(
     tox_project: ToxProjectCreator,
     patch_prev_py: PatchPrevPy,
@@ -112,6 +113,7 @@ def test_build_wheel_in_non_base_pkg_env(
     ]
 
 
+@pytest.mark.skipif(sys.platform == "win32", reason="mocks a POSIX venv layout (bin/python symlink)")
 def test_build_wheel_in_free_threaded_pkg_env(
     tox_project: ToxProjectCreator,
     patch_prev_py: PatchPrevPy,
@@ -144,6 +146,7 @@ def test_build_wheel_in_free_threaded_pkg_env(
     ]
 
 
+@pytest.mark.skipif(sys.platform == "win32", reason="mocks a POSIX venv layout (bin/python symlink)")
 def test_build_wheel_in_debug_pkg_env(
     tox_project: ToxProjectCreator,
     patch_prev_py: PatchPrevPy,
