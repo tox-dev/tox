@@ -323,3 +323,26 @@ def test_parallel_spinner_stays_out_of_non_tty_output(tox_project: ToxProjectCre
 
     outcome.assert_success()
     assert "\x1b[" not in outcome.out
+
+
+def test_interrupt_logs_pkg_env_after_its_output_was_collected(
+    tox_project: ToxProjectCreator, demo_pkg_inline: Path, capfd: pytest.CaptureFixture[str]
+) -> None:
+    project = tox_project({
+        "tox.ini": "[testenv]\npackage=wheel",
+        "pyproject.toml": (demo_pkg_inline / "pyproject.toml").read_text(),
+        "build.py": (demo_pkg_inline / "build.py").read_text(),
+    })
+    result = project.run("c", "-e", "py")
+    result.assert_success()
+    run_env, pkg_env = result.state.envs["py"], result.state.envs[".pkg"]
+    for env in (run_env, pkg_env):
+        with env.display_context(suspend=True):
+            pass
+    pkg_env.close_and_read_out_err()  # the run thread finished and collected the package output already
+
+    run_env.interrupt()
+
+    out, err = capfd.readouterr()
+    assert "interrupt tox environment: .pkg" in out, out
+    assert "Logging error" not in err, err

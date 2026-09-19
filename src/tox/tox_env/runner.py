@@ -126,7 +126,9 @@ class RunToxEnv(ToxEnv, ABC):
     @override
     def interrupt(self) -> None:
         super().interrupt()
-        self._call_pkg_envs("interrupt")
+        # the interrupt arrives on the main thread while the run thread may be collecting and closing the captured
+        # output, so log on the live streams rather than into a buffer that is about to disappear
+        self._call_pkg_envs("interrupt", suspend=False)
 
     def get_package_env_types(self) -> tuple[str, str] | None:
         if not self._register_package_conf():
@@ -153,9 +155,11 @@ class RunToxEnv(ToxEnv, ABC):
         )
         return self.conf.get("package_env", str), self.conf.get("package_tox_env_type", str)
 
-    def _call_pkg_envs(self, method_name: str, *args: Any) -> None:
+    def _call_pkg_envs(self, method_name: str, *args: Any, suspend: bool | None = None) -> None:
+        if suspend is None:
+            suspend = self._has_display_suspended
         for package_env in self.package_envs:
-            with package_env.display_context(suspend=self._has_display_suspended):
+            with package_env.display_context(suspend=suspend):
                 _call_guarded(package_env, method_name, *args)
 
     @override
