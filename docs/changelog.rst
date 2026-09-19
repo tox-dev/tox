@@ -7,6 +7,16 @@
 .. towncrier release notes start
 
 **********************
+ v4.62.1 (2026-09-19)
+**********************
+
+Bug fixes - 4.62.1
+==================
+
+- Clear obsolete markers when unconditional ``set_env`` values override conditional entries, including environment
+  files. (:issue:`4076`)
+
+**********************
  v4.62.0 (2026-09-19)
 **********************
 
