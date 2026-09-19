@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import sys
 import sysconfig
 from pathlib import Path
@@ -18,6 +19,7 @@ from tox.tox_env.python.runner import PythonRun
 from tox.tox_env.python.virtual_env.package.cmd_builder import VenvCmdBuilder
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
     from typing import Final
 
     from tox.pytest import ToxProjectCreator
@@ -207,97 +209,119 @@ def test_skip_missing_interpreters_specified_env(
     assert result.code == retcode
 
 
-def test_per_env_skip_missing_interpreters_override_global_false(tox_project: ToxProjectCreator) -> None:
-    py_ver = ".".join(str(i) for i in sys.version_info[0:2])
-    project = tox_project({
-        "tox.ini": (
-            f"[tox]\nenvlist=py31,py{py_ver}\nskip_missing_interpreters=false\n"
-            "[testenv:py31]\nskip_missing_interpreters=true\n"
+@pytest.mark.parametrize(
+    ("files", "args", "expected_code"),
+    [
+        pytest.param(
+            {
+                "tox.ini": (
+                    "[tox]\nenvlist=py31,py{py_ver}\nskip_missing_interpreters=false\n"
+                    "[testenv:py31]\nskip_missing_interpreters=true\n"
+                ),
+            },
+            [],
+            0,
+            id="env-true-overrides-global-false",
         ),
-    })
-    result = project.run()
-    assert result.code == 0
-
-
-def test_per_env_skip_missing_interpreters_override_global_true(tox_project: ToxProjectCreator) -> None:
-    project = tox_project({
-        "tox.ini": (
-            "[tox]\nenvlist=py31\nskip_missing_interpreters=true\n[testenv:py31]\nskip_missing_interpreters=false\n"
+        pytest.param(
+            {
+                "tox.ini": (
+                    "[tox]\nenvlist=py31\nskip_missing_interpreters=true\n"
+                    "[testenv:py31]\nskip_missing_interpreters=false\n"
+                ),
+            },
+            [],
+            1,
+            id="env-false-overrides-global-true",
         ),
-    })
-    result = project.run()
-    assert result.code == 1
-
-
-def test_per_env_skip_missing_interpreters_cli_overrides_env(tox_project: ToxProjectCreator) -> None:
-    project = tox_project({
-        "tox.ini": (
-            "[tox]\nenvlist=py31\nskip_missing_interpreters=false\n[testenv:py31]\nskip_missing_interpreters=false\n"
+        pytest.param(
+            {
+                "tox.ini": (
+                    "[tox]\nenvlist=py31\nskip_missing_interpreters=false\n"
+                    "[testenv:py31]\nskip_missing_interpreters=false\n"
+                ),
+            },
+            ["--skip-missing-interpreters=true"],
+            1,
+            id="cli-does-not-override-env",
         ),
-    })
-    result = project.run("--skip-missing-interpreters=true")
-    assert result.code == 1
+        pytest.param(
+            {"tox.ini": "[tox]\nenvlist=py31,py{py_ver}\nskip_missing_interpreters=true\n"},
+            [],
+            0,
+            id="unset-falls-back-to-global",
+        ),
+        pytest.param(
+            {
+                "tox.toml": """
+                    env_list = ["py31"]
+                    skip_missing_interpreters = true
+                    [env.py31]
+                    skip_missing_interpreters = false
+                """,
+            },
+            [],
+            1,
+            id="toml-env-false-overrides-global-true",
+        ),
+    ],
+)
+def test_per_env_skip_missing_interpreters(
+    tox_project: ToxProjectCreator, py_ver: str, files: dict[str, str], args: list[str], expected_code: int
+) -> None:
+    rendered = {name: content.format(py_ver=py_ver) for name, content in files.items()}
+    assert tox_project(rendered).run(*args).code == expected_code
 
 
-def test_per_env_skip_missing_interpreters_unset_falls_to_global(tox_project: ToxProjectCreator) -> None:
-    py_ver = ".".join(str(i) for i in sys.version_info[0:2])
-    project = tox_project({
-        "tox.ini": f"[tox]\nenvlist=py31,py{py_ver}\nskip_missing_interpreters=true\n",
-    })
-    result = project.run()
-    assert result.code == 0
+@pytest.fixture
+def py_ver() -> str:
+    return ".".join(str(i) for i in sys.version_info[0:2])
 
 
-def test_per_env_skip_missing_interpreters_toml(tox_project: ToxProjectCreator) -> None:
-    project = tox_project({
-        "tox.toml": """
-            env_list = ["py31"]
-            skip_missing_interpreters = true
-            [env.py31]
-            skip_missing_interpreters = false
-        """,
-    })
-    result = project.run()
-    assert result.code == 1
+@pytest.fixture
+def pip_install() -> list[str]:
+    return ["python", "-I", "-m", "pip", "install"]
 
 
-def test_dependency_groups_single(tox_project: ToxProjectCreator) -> None:
-    project = tox_project(
-        {
-            "tox.toml": """
-            [env_run_base]
-            skip_install = true
-            dependency_groups = ["test"]
-            """,
-            "pyproject.toml": """
+@pytest.fixture
+def install_calls(tox_project: ToxProjectCreator) -> Callable[[dict[str, str]], list[tuple[str, str, list[str]]]]:
+    def _run(files: dict[str, str]) -> list[tuple[str, str, list[str]]]:
+        project = tox_project(files)
+        execute_calls = project.patch_execute()
+        project.run("r", "-e", "py").assert_success()
+        return [(i[0][0].conf.name, i[0][3].run_id, i[0][3].cmd) for i in execute_calls.call_args_list]
+
+    return _run
+
+
+@pytest.fixture
+def failed_output(tox_project: ToxProjectCreator) -> Callable[[dict[str, str]], str]:
+    def _run(files: dict[str, str]) -> str:
+        result = tox_project(files).run("r", "-e", "py")
+        result.assert_failed()
+        return result.out
+
+    return _run
+
+
+@pytest.mark.parametrize(
+    ("dependency_groups", "pyproject", "requirements"),
+    [
+        pytest.param(
+            ["test"],
+            """
             [dependency-groups]
             test = [
               "furo>=2024.8.6",
               "sphinx>=8.0.2",
             ]
             """,
-        },
-    )
-    execute_calls = project.patch_execute()
-    result = project.run("r", "-e", "py")
-
-    result.assert_success()
-
-    found_calls = [(i[0][0].conf.name, i[0][3].run_id, i[0][3].cmd) for i in execute_calls.call_args_list]
-    assert found_calls == [
-        ("py", "install_dependency-groups", ["python", "-I", "-m", "pip", "install", "furo>=2024.8.6", "sphinx>=8.0.2"])
-    ]
-
-
-def test_dependency_groups_extras(tox_project: ToxProjectCreator) -> None:
-    project = tox_project(
-        {
-            "tox.toml": """
-            [env_run_base]
-            skip_install = true
-            dependency_groups = ["test"]
-            """,
-            "pyproject.toml": """
+            ["furo>=2024.8.6", "sphinx>=8.0.2"],
+            id="single",
+        ),
+        pytest.param(
+            ["test"],
+            """
             [project]
             name = "demo_pkg"
 
@@ -310,21 +334,116 @@ def test_dependency_groups_extras(tox_project: ToxProjectCreator) -> None:
               "demo_pkg[extra1]",
             ]
             """,
-        },
-    )
-    execute_calls = project.patch_execute()
-    result = project.run("r", "-e", "py")
+            ["extra_pkg>=1.0", "furo>=2024.8.6", "sphinx>=8.0.2"],
+            id="extras",
+        ),
+        pytest.param(
+            ["test"],
+            """
+            [project]
+            name = "demo_pkg"
 
-    result.assert_success()
+            [project.optional-dependencies]
+            extra1 = ["extra_pkg>=1.0"]
+            extra2 = ["demo_pkg[extra1]"]
+            [dependency-groups]
+            test = [
+              "furo>=2024.8.6",
+              "sphinx>=8.0.2",
+              "demo_pkg[extra2]",
+            ]
+            """,
+            ["extra_pkg>=1.0", "furo>=2024.8.6", "sphinx>=8.0.2"],
+            id="nested-extras",
+        ),
+        pytest.param(
+            ["test"],
+            """
+            [project]
+            name = "demo_pkg"
 
-    found_calls = [(i[0][0].conf.name, i[0][3].run_id, i[0][3].cmd) for i in execute_calls.call_args_list]
-    assert found_calls == [
-        (
-            "py",
-            "install_dependency-groups",
-            ["python", "-I", "-m", "pip", "install", "extra_pkg>=1.0", "furo>=2024.8.6", "sphinx>=8.0.2"],
-        )
-    ]
+            [project.optional-dependencies]
+            extra1 = ["extra_pkg>=1.0"]
+            extra2 = ["extra_pkg2>=1.0"]
+            [dependency-groups]
+            test = [
+              "furo>=2024.8.6",
+              "sphinx>=8.0.2",
+              "demo_pkg[extra1,extra2]",
+            ]
+            """,
+            ["extra_pkg2>=1.0", "extra_pkg>=1.0", "furo>=2024.8.6", "sphinx>=8.0.2"],
+            id="double-extras",
+        ),
+        pytest.param(
+            ["test"],
+            """
+            [project]
+            name = "demo_pkg"
+
+            [project.optional-dependencies]
+            extra1 = ["extra_pkg>=1.0"]
+            extra2 = ["extra_pkg2>=1.0", "demo_pkg[extra1]"]
+            [dependency-groups]
+            test = [
+              "furo>=2024.8.6",
+              "sphinx>=8.0.2",
+              "demo_pkg[extra1,extra2]",
+            ]
+            """,
+            ["extra_pkg2>=1.0", "extra_pkg>=1.0", "furo>=2024.8.6", "sphinx>=8.0.2"],
+            id="duplicate-extras",
+        ),
+        pytest.param(
+            ["test", "type"],
+            """
+            [dependency-groups]
+            test = [
+              "furo>=2024.8.6",
+              "sphinx>=8.0.2",
+            ]
+            type = [
+              "furo>=2024.8.6",
+              "mypy>=1",
+            ]
+            """,
+            ["furo>=2024.8.6", "mypy>=1", "sphinx>=8.0.2"],
+            id="multiple-groups",
+        ),
+        pytest.param(
+            ["test", "type"],
+            """
+            [dependency-groups]
+            test = [
+              "furo>=2024.8.6",
+              "sphinx>=8.0.2",
+            ]
+            "friendly.Bard" = [
+                "bard-song",
+            ]
+            type = [
+              {include-group = "test"},
+              {include-group = "FrIeNdLy-._.-bArD"},
+              "mypy>=1",
+            ]
+            """,
+            ["bard-song", "furo>=2024.8.6", "mypy>=1", "sphinx>=8.0.2"],
+            id="include-group",
+        ),
+    ],
+)
+def test_dependency_groups_install(
+    install_calls: Callable[[dict[str, str]], list[tuple[str, str, list[str]]]],
+    pip_install: list[str],
+    dependency_groups: list[str],
+    pyproject: str,
+    requirements: list[str],
+) -> None:
+    files = {
+        "tox.toml": f"[env_run_base]\nskip_install = true\ndependency_groups = {json.dumps(dependency_groups)}\n",
+        "pyproject.toml": pyproject,
+    }
+    assert install_calls(files) == [("py", "install_dependency-groups", [*pip_install, *requirements])]
 
 
 @pytest.mark.parametrize(
@@ -394,400 +513,102 @@ def test_dependency_groups_extra_errors(tox_project: ToxProjectCreator, requirem
         resolve(project.path, {"test"})
 
 
-def test_dependency_groups_nested_extras(tox_project: ToxProjectCreator) -> None:
-    project = tox_project(
-        {
-            "tox.toml": """
-            [env_run_base]
-            skip_install = true
-            dependency_groups = ["test"]
-            """,
-            "pyproject.toml": """
-            [project]
-            name = "demo_pkg"
-
-            [project.optional-dependencies]
-            extra1 = ["extra_pkg>=1.0"]
-            extra2 = ["demo_pkg[extra1]"]
-            [dependency-groups]
-            test = [
-              "furo>=2024.8.6",
-              "sphinx>=8.0.2",
-              "demo_pkg[extra2]",
-            ]
-            """,
-        },
-    )
-    execute_calls = project.patch_execute()
-    result = project.run("r", "-e", "py")
-
-    result.assert_success()
-
-    found_calls = [(i[0][0].conf.name, i[0][3].run_id, i[0][3].cmd) for i in execute_calls.call_args_list]
-    assert found_calls == [
-        (
-            "py",
-            "install_dependency-groups",
-            ["python", "-I", "-m", "pip", "install", "extra_pkg>=1.0", "furo>=2024.8.6", "sphinx>=8.0.2"],
-        )
-    ]
-
-
-def test_dependency_groups_double_extras(tox_project: ToxProjectCreator) -> None:
-    project = tox_project(
-        {
-            "tox.toml": """
-            [env_run_base]
-            skip_install = true
-            dependency_groups = ["test"]
-            """,
-            "pyproject.toml": """
-            [project]
-            name = "demo_pkg"
-
-            [project.optional-dependencies]
-            extra1 = ["extra_pkg>=1.0"]
-            extra2 = ["extra_pkg2>=1.0"]
-            [dependency-groups]
-            test = [
-              "furo>=2024.8.6",
-              "sphinx>=8.0.2",
-              "demo_pkg[extra1,extra2]",
-            ]
-            """,
-        },
-    )
-    execute_calls = project.patch_execute()
-    result = project.run("r", "-e", "py")
-
-    result.assert_success()
-
-    found_calls = [(i[0][0].conf.name, i[0][3].run_id, i[0][3].cmd) for i in execute_calls.call_args_list]
-    assert found_calls == [
-        (
-            "py",
-            "install_dependency-groups",
-            [
-                "python",
-                "-I",
-                "-m",
-                "pip",
-                "install",
-                "extra_pkg2>=1.0",
-                "extra_pkg>=1.0",
-                "furo>=2024.8.6",
-                "sphinx>=8.0.2",
-            ],
-        )
-    ]
-
-
-def test_dependency_groups_duplicate_extras(tox_project: ToxProjectCreator) -> None:
-    project = tox_project(
-        {
-            "tox.toml": """
-            [env_run_base]
-            skip_install = true
-            dependency_groups = ["test"]
-            """,
-            "pyproject.toml": """
-            [project]
-            name = "demo_pkg"
-
-            [project.optional-dependencies]
-            extra1 = ["extra_pkg>=1.0"]
-            extra2 = ["extra_pkg2>=1.0", "demo_pkg[extra1]"]
-            [dependency-groups]
-            test = [
-              "furo>=2024.8.6",
-              "sphinx>=8.0.2",
-              "demo_pkg[extra1,extra2]",
-            ]
-            """,
-        },
-    )
-    execute_calls = project.patch_execute()
-    result = project.run("r", "-e", "py")
-
-    result.assert_success()
-
-    found_calls = [(i[0][0].conf.name, i[0][3].run_id, i[0][3].cmd) for i in execute_calls.call_args_list]
-    assert found_calls == [
-        (
-            "py",
-            "install_dependency-groups",
-            [
-                "python",
-                "-I",
-                "-m",
-                "pip",
-                "install",
-                "extra_pkg2>=1.0",
-                "extra_pkg>=1.0",
-                "furo>=2024.8.6",
-                "sphinx>=8.0.2",
-            ],
-        )
-    ]
-
-
-def test_dependency_groups_multiple(tox_project: ToxProjectCreator) -> None:
-    project = tox_project(
-        {
-            "tox.toml": """
-            [env_run_base]
-            skip_install = true
-            dependency_groups = ["test", "type"]
-            """,
-            "pyproject.toml": """
-            [dependency-groups]
-            test = [
-              "furo>=2024.8.6",
-              "sphinx>=8.0.2",
-            ]
-            type = [
-              "furo>=2024.8.6",
-              "mypy>=1",
-            ]
-            """,
-        },
-    )
-    execute_calls = project.patch_execute()
-    result = project.run("r", "-e", "py")
-
-    result.assert_success()
-
-    found_calls = [(i[0][0].conf.name, i[0][3].run_id, i[0][3].cmd) for i in execute_calls.call_args_list]
-    assert found_calls == [
-        (
-            "py",
-            "install_dependency-groups",
-            ["python", "-I", "-m", "pip", "install", "furo>=2024.8.6", "mypy>=1", "sphinx>=8.0.2"],
-        )
-    ]
-
-
-def test_dependency_groups_include(tox_project: ToxProjectCreator) -> None:
-    project = tox_project(
-        {
-            "tox.toml": """
-            [env_run_base]
-            skip_install = true
-            dependency_groups = ["test", "type"]
-            """,
-            "pyproject.toml": """
-            [dependency-groups]
-            test = [
-              "furo>=2024.8.6",
-              "sphinx>=8.0.2",
-            ]
-            "friendly.Bard" = [
-                "bard-song",
-            ]
-            type = [
-              {include-group = "test"},
-              {include-group = "FrIeNdLy-._.-bArD"},
-              "mypy>=1",
-            ]
-            """,
-        },
-    )
-    execute_calls = project.patch_execute()
-    result = project.run("r", "-e", "py")
-
-    result.assert_success()
-
-    found_calls = [(i[0][0].conf.name, i[0][3].run_id, i[0][3].cmd) for i in execute_calls.call_args_list]
-    assert found_calls == [
-        (
-            "py",
-            "install_dependency-groups",
-            ["python", "-I", "-m", "pip", "install", "bard-song", "furo>=2024.8.6", "mypy>=1", "sphinx>=8.0.2"],
-        )
-    ]
-
-
-def test_dependency_groups_not_table(tox_project: ToxProjectCreator) -> None:
-    project = tox_project(
-        {
-            "tox.toml": """
-            [env_run_base]
-            skip_install = true
-            dependency_groups = ["test"]
-            """,
-            "pyproject.toml": """
-            dependency-groups = 1
-            """,
-        },
-    )
-    result = project.run("r", "-e", "py")
-
-    result.assert_failed()
-    assert "py: failed with dependency-groups is int instead of table\n" in result.out
-
-
-def test_dependency_groups_missing(tox_project: ToxProjectCreator) -> None:
-    project = tox_project(
-        {
-            "tox.toml": """
-            [env_run_base]
-            skip_install = true
-            dependency_groups = ["type"]
-            """,
-            "pyproject.toml": """
+@pytest.mark.parametrize(
+    ("dependency_groups", "pyproject", "message"),
+    [
+        pytest.param(
+            ["test"],
+            "dependency-groups = 1",
+            "py: failed with dependency-groups is int instead of table\n",
+            id="not-table",
+        ),
+        pytest.param(
+            ["type"],
+            """
             [dependency-groups]
             test = [
               "furo>=2024.8.6",
             ]
             """,
-        },
-    )
-    result = project.run("r", "-e", "py")
-
-    result.assert_failed()
-    assert "py: failed with dependency group 'type' not found\n" in result.out
-
-
-def test_dependency_groups_no_table(tox_project: ToxProjectCreator) -> None:
-    project = tox_project(
-        {
-            "tox.toml": """
-            [env_run_base]
-            skip_install = true
-            dependency_groups = ["test"]
-            """,
-            "pyproject.toml": """
+            "py: failed with dependency group 'type' not found\n",
+            id="missing-group",
+        ),
+        pytest.param(
+            ["test"],
+            """
             [project]
             name = "demo_pkg"
             """,
-        },
-    )
-    result = project.run("r", "-e", "py")
-
-    result.assert_failed()
-    assert "py: failed with no dependency groups defined in" in result.out
-
-
-def test_dependency_groups_not_list(tox_project: ToxProjectCreator) -> None:
-    project = tox_project(
-        {
-            "tox.toml": """
-            [env_run_base]
-            skip_install = true
-            dependency_groups = ["tEst"]
-            """,
-            "pyproject.toml": """
+            "py: failed with no dependency groups defined in",
+            id="no-table",
+        ),
+        pytest.param(
+            ["tEst"],
+            """
             [dependency-groups]
             teSt = 1
             """,
-        },
-    )
-    result = project.run("r", "-e", "py")
-
-    result.assert_failed()
-    assert "py: failed with dependency group 'teSt' is not a list\n" in result.out
-
-
-def test_dependency_groups_bad_requirement(tox_project: ToxProjectCreator) -> None:
-    project = tox_project(
-        {
-            "tox.toml": """
-            [env_run_base]
-            skip_install = true
-            dependency_groups = ["test"]
-            """,
-            "pyproject.toml": """
+            "py: failed with dependency group 'teSt' is not a list\n",
+            id="not-list",
+        ),
+        pytest.param(
+            ["test"],
+            """
             [dependency-groups]
             test = [ "whatever --" ]
             """,
-        },
-    )
-    result = project.run("r", "-e", "py")
-
-    result.assert_failed()
-    assert (
-        "py: failed with 'whatever --' is not valid requirement due to "
-        "Expected semicolon (after name with no version specifier) or end\n    whatever --\n             ^\n"
-        in result.out
-    )
-
-
-def test_dependency_groups_bad_entry(tox_project: ToxProjectCreator) -> None:
-    project = tox_project(
-        {
-            "tox.toml": """
-            [env_run_base]
-            skip_install = true
-            dependency_groups = ["test"]
-            """,
-            "pyproject.toml": """
+            "py: failed with 'whatever --' is not valid requirement due to "
+            "Expected semicolon (after name with no version specifier) or end\n    whatever --\n             ^\n",
+            id="bad-requirement",
+        ),
+        pytest.param(
+            ["test"],
+            """
             [dependency-groups]
             test = [ { magic = "ok" } ]
             """,
-        },
-    )
-    result = project.run("r", "-e", "py")
-
-    result.assert_failed()
-    assert "py: failed with invalid dependency group item: {'magic': 'ok'}\n" in result.out
-
-
-def test_dependency_groups_cyclic(tox_project: ToxProjectCreator) -> None:
-    project = tox_project(
-        {
-            "tox.toml": """
-            [env_run_base]
-            skip_install = true
-            dependency_groups = ["test"]
-            """,
-            "pyproject.toml": """
+            "py: failed with invalid dependency group item: {'magic': 'ok'}\n",
+            id="bad-entry",
+        ),
+        pytest.param(
+            ["test"],
+            """
             [dependency-groups]
             teSt = [ { include-group = "type" } ]
             tyPe = [ { include-group = "test" } ]
             """,
-        },
-    )
-    result = project.run("r", "-e", "py")
+            "py: failed with Cyclic dependency group include: 'teSt' -> ('teSt', 'tyPe')\n",
+            id="cyclic-include",
+        ),
+    ],
+)
+def test_dependency_groups_errors(
+    failed_output: Callable[[dict[str, str]], str], dependency_groups: list[str], pyproject: str, message: str
+) -> None:
+    files = {
+        "tox.toml": f"[env_run_base]\nskip_install = true\ndependency_groups = {json.dumps(dependency_groups)}\n",
+        "pyproject.toml": pyproject,
+    }
+    assert message in failed_output(files)
 
-    result.assert_failed()
-    assert "py: failed with Cyclic dependency group include: 'teSt' -> ('teSt', 'tyPe')\n" in result.out
 
-
-def test_deps_only_static(tox_project: ToxProjectCreator) -> None:
-    project = tox_project(
-        {
-            "tox.toml": """
-            [env_run_base]
-            package = "deps-only"
-            """,
-            "pyproject.toml": """
+@pytest.mark.parametrize(
+    ("env_run_base", "pyproject", "installs"),
+    [
+        pytest.param(
+            "",
+            """
             [project]
             name = "demo"
             version = "1.0"
             dependencies = ["httpx>=0.27", "rich>=13"]
             """,
-        },
-    )
-    execute_calls = project.patch_execute()
-    result = project.run("r", "-e", "py")
-
-    result.assert_success()
-
-    found_calls = [(i[0][0].conf.name, i[0][3].run_id, i[0][3].cmd) for i in execute_calls.call_args_list]
-    assert found_calls == [
-        ("py", "install_package_deps", ["python", "-I", "-m", "pip", "install", "httpx>=0.27", "rich>=13"])
-    ]
-
-
-def test_deps_only_with_extras(tox_project: ToxProjectCreator) -> None:
-    project = tox_project(
-        {
-            "tox.toml": """
-            [env_run_base]
-            package = "deps-only"
-            extras = ["docs"]
-            """,
-            "pyproject.toml": """
+            [("install_package_deps", ["httpx>=0.27", "rich>=13"])],
+            id="static",
+        ),
+        pytest.param(
+            'extras = ["docs"]',
+            """
             [project]
             name = "demo"
             version = "1.0"
@@ -795,32 +616,12 @@ def test_deps_only_with_extras(tox_project: ToxProjectCreator) -> None:
             [project.optional-dependencies]
             docs = ["sphinx>=7", "furo"]
             """,
-        },
-    )
-    execute_calls = project.patch_execute()
-    result = project.run("r", "-e", "py")
-
-    result.assert_success()
-
-    found_calls = [(i[0][0].conf.name, i[0][3].run_id, i[0][3].cmd) for i in execute_calls.call_args_list]
-    assert found_calls == [
-        (
-            "py",
-            "install_package_deps",
-            ["python", "-I", "-m", "pip", "install", "furo", "httpx>=0.27", "sphinx>=7"],
-        )
-    ]
-
-
-def test_deps_only_multiple_extras(tox_project: ToxProjectCreator) -> None:
-    project = tox_project(
-        {
-            "tox.toml": """
-            [env_run_base]
-            package = "deps-only"
-            extras = ["docs", "testing"]
-            """,
-            "pyproject.toml": """
+            [("install_package_deps", ["furo", "httpx>=0.27", "sphinx>=7"])],
+            id="extras",
+        ),
+        pytest.param(
+            'extras = ["docs", "testing"]',
+            """
             [project]
             name = "demo"
             version = "1.0"
@@ -829,32 +630,12 @@ def test_deps_only_multiple_extras(tox_project: ToxProjectCreator) -> None:
             docs = ["sphinx>=7"]
             testing = ["pytest>=8"]
             """,
-        },
-    )
-    execute_calls = project.patch_execute()
-    result = project.run("r", "-e", "py")
-
-    result.assert_success()
-
-    found_calls = [(i[0][0].conf.name, i[0][3].run_id, i[0][3].cmd) for i in execute_calls.call_args_list]
-    assert found_calls == [
-        (
-            "py",
-            "install_package_deps",
-            ["python", "-I", "-m", "pip", "install", "httpx>=0.27", "pytest>=8", "sphinx>=7"],
-        )
-    ]
-
-
-def test_deps_only_non_canonical_extra_key(tox_project: ToxProjectCreator) -> None:
-    project = tox_project(
-        {
-            "tox.toml": """
-            [env_run_base]
-            package = "deps-only"
-            extras = ["foo-bar"]
-            """,
-            "pyproject.toml": """
+            [("install_package_deps", ["httpx>=0.27", "pytest>=8", "sphinx>=7"])],
+            id="multiple-extras",
+        ),
+        pytest.param(
+            'extras = ["foo-bar"]',
+            """
             [project]
             name = "demo"
             version = "1.0"
@@ -862,60 +643,23 @@ def test_deps_only_non_canonical_extra_key(tox_project: ToxProjectCreator) -> No
             [project.optional-dependencies]
             Foo_Bar = ["sphinx>=7"]
             """,
-        },
-    )
-    execute_calls = project.patch_execute()
-    result = project.run("r", "-e", "py")
-
-    result.assert_success()
-
-    found_calls = [(i[0][0].conf.name, i[0][3].run_id, i[0][3].cmd) for i in execute_calls.call_args_list]
-    assert found_calls == [
-        (
-            "py",
-            "install_package_deps",
-            ["python", "-I", "-m", "pip", "install", "httpx>=0.27", "sphinx>=7"],
-        )
-    ]
-
-
-def test_deps_only_with_deps(tox_project: ToxProjectCreator) -> None:
-    project = tox_project(
-        {
-            "tox.toml": """
-            [env_run_base]
-            package = "deps-only"
-            deps = ["coverage[toml]"]
-            """,
-            "pyproject.toml": """
+            [("install_package_deps", ["httpx>=0.27", "sphinx>=7"])],
+            id="non-canonical-extra-key",
+        ),
+        pytest.param(
+            'deps = ["coverage[toml]"]',
+            """
             [project]
             name = "demo"
             version = "1.0"
             dependencies = ["httpx>=0.27"]
             """,
-        },
-    )
-    execute_calls = project.patch_execute()
-    result = project.run("r", "-e", "py")
-
-    result.assert_success()
-
-    found_calls = [(i[0][0].conf.name, i[0][3].run_id, i[0][3].cmd) for i in execute_calls.call_args_list]
-    assert found_calls == [
-        ("py", "install_deps", ["python", "-I", "-m", "pip", "install", "coverage[toml]"]),
-        ("py", "install_package_deps", ["python", "-I", "-m", "pip", "install", "httpx>=0.27"]),
-    ]
-
-
-def test_deps_only_with_dependency_groups(tox_project: ToxProjectCreator) -> None:
-    project = tox_project(
-        {
-            "tox.toml": """
-            [env_run_base]
-            package = "deps-only"
-            dependency_groups = ["test"]
-            """,
-            "pyproject.toml": """
+            [("install_deps", ["coverage[toml]"]), ("install_package_deps", ["httpx>=0.27"])],
+            id="with-deps",
+        ),
+        pytest.param(
+            'dependency_groups = ["test"]',
+            """
             [project]
             name = "demo"
             version = "1.0"
@@ -923,28 +667,12 @@ def test_deps_only_with_dependency_groups(tox_project: ToxProjectCreator) -> Non
             [dependency-groups]
             test = ["pytest>=8"]
             """,
-        },
-    )
-    execute_calls = project.patch_execute()
-    result = project.run("r", "-e", "py")
-
-    result.assert_success()
-
-    found_calls = [(i[0][0].conf.name, i[0][3].run_id, i[0][3].cmd) for i in execute_calls.call_args_list]
-    assert found_calls == [
-        ("py", "install_dependency-groups", ["python", "-I", "-m", "pip", "install", "pytest>=8"]),
-        ("py", "install_package_deps", ["python", "-I", "-m", "pip", "install", "httpx>=0.27"]),
-    ]
-
-
-def test_deps_only_no_extras(tox_project: ToxProjectCreator) -> None:
-    project = tox_project(
-        {
-            "tox.toml": """
-            [env_run_base]
-            package = "deps-only"
-            """,
-            "pyproject.toml": """
+            [("install_dependency-groups", ["pytest>=8"]), ("install_package_deps", ["httpx>=0.27"])],
+            id="with-dependency-groups",
+        ),
+        pytest.param(
+            "",
+            """
             [project]
             name = "demo"
             version = "1.0"
@@ -952,15 +680,20 @@ def test_deps_only_no_extras(tox_project: ToxProjectCreator) -> None:
             [project.optional-dependencies]
             docs = ["sphinx>=7"]
             """,
-        },
-    )
-    execute_calls = project.patch_execute()
-    result = project.run("r", "-e", "py")
-
-    result.assert_success()
-
-    found_calls = [(i[0][0].conf.name, i[0][3].run_id, i[0][3].cmd) for i in execute_calls.call_args_list]
-    assert found_calls == [("py", "install_package_deps", ["python", "-I", "-m", "pip", "install", "httpx>=0.27"])]
+            [("install_package_deps", ["httpx>=0.27"])],
+            id="no-extras-requested",
+        ),
+    ],
+)
+def test_deps_only_install(
+    install_calls: Callable[[dict[str, str]], list[tuple[str, str, list[str]]]],
+    pip_install: list[str],
+    env_run_base: str,
+    pyproject: str,
+    installs: list[tuple[str, list[str]]],
+) -> None:
+    files = {"tox.toml": f'[env_run_base]\npackage = "deps-only"\n{env_run_base}\n', "pyproject.toml": pyproject}
+    assert install_calls(files) == [("py", run_id, [*pip_install, *packages]) for run_id, packages in installs]
 
 
 def test_deps_only_unknown_extra(tox_project: ToxProjectCreator) -> None:
@@ -1003,21 +736,21 @@ def test_resolve_extras_static_no_pyproject(tmp_path: Path) -> None:
     assert resolve_extras_static(tmp_path, set()) is None
 
 
-def test_resolve_extras_static_no_project_table(tmp_path: Path) -> None:
-    (tmp_path / "pyproject.toml").write_text('[build-system]\nrequires = ["setuptools"]')
-    assert resolve_extras_static(tmp_path, set()) is None
-
-
-def test_resolve_extras_static_dynamic_deps(tmp_path: Path) -> None:
-    (tmp_path / "pyproject.toml").write_text('[project]\nname = "demo"\nversion = "1.0"\ndynamic = ["dependencies"]')
-    assert resolve_extras_static(tmp_path, set()) is None
-
-
-def test_resolve_extras_static_dynamic_optional_deps(tmp_path: Path) -> None:
-    (tmp_path / "pyproject.toml").write_text(
-        '[project]\nname = "demo"\nversion = "1.0"\ndynamic = ["optional-dependencies"]'
-    )
-    assert resolve_extras_static(tmp_path, {"docs"}) is None
+@pytest.mark.parametrize(
+    ("pyproject", "extras"),
+    [
+        pytest.param('[build-system]\nrequires = ["setuptools"]', set(), id="no-project-table"),
+        pytest.param('[project]\nname = "demo"\nversion = "1.0"\ndynamic = ["dependencies"]', set(), id="dynamic-deps"),
+        pytest.param(
+            '[project]\nname = "demo"\nversion = "1.0"\ndynamic = ["optional-dependencies"]',
+            {"docs"},
+            id="dynamic-optional-deps",
+        ),
+    ],
+)
+def test_resolve_extras_static_cannot_resolve(tmp_path: Path, pyproject: str, extras: set[str]) -> None:
+    (tmp_path / "pyproject.toml").write_text(pyproject)
+    assert resolve_extras_static(tmp_path, extras) is None
 
 
 def test_cmd_builder_load_deps_for_env() -> None:

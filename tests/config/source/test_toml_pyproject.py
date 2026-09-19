@@ -87,62 +87,6 @@ def test_config_in_toml_explicit_mentioned(tox_project: ToxProjectCreator) -> No
     assert "could not recognize config file pyproject.toml" not in outcome.out, outcome.out
 
 
-def test_config_in_toml_replace_default(tox_project: ToxProjectCreator) -> None:
-    project = tox_project({"pyproject.toml": '[tool.tox.env_run_base]\ndescription = "{missing:miss}"'})
-    outcome = project.run("c", "-k", "description")
-    outcome.assert_success()
-    outcome.assert_out_err("[testenv:py]\ndescription = miss\n", "")
-
-
-def test_config_in_toml_replace_env_name_via_env(tox_project: ToxProjectCreator) -> None:
-    project = tox_project({
-        "pyproject.toml": '[tool.tox.env_run_base]\ndescription = "Magic in {env:MAGICAL:{env_name}}"'
-    })
-    outcome = project.run("c", "-k", "description")
-    outcome.assert_success()
-    outcome.assert_out_err("[testenv:py]\ndescription = Magic in py\n", "")
-
-
-def test_config_in_toml_replace_env_name_via_env_set(
-    tox_project: ToxProjectCreator, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    monkeypatch.setenv("MAGICAL", "YEAH")
-    project = tox_project({
-        "pyproject.toml": '[tool.tox.env_run_base]\ndescription = "Magic in {env:MAGICAL:{env_name}}"'
-    })
-    outcome = project.run("c", "-k", "description")
-    outcome.assert_success()
-    outcome.assert_out_err("[testenv:py]\ndescription = Magic in YEAH\n", "")
-
-
-def test_config_in_toml_replace_from_env_section_absolute(tox_project: ToxProjectCreator) -> None:
-    project = tox_project({
-        "pyproject.toml": """
-        [tool.tox.env.A]
-        description = "a"
-        [tool.tox.env.B]
-        description = "{[tool.tox.env.A]env_name}"
-        """
-    })
-    outcome = project.run("c", "-e", "B", "-k", "description")
-    outcome.assert_success()
-    outcome.assert_out_err("[testenv:B]\ndescription = A\n", "")
-
-
-def test_config_in_toml_replace_from_section_absolute(tox_project: ToxProjectCreator) -> None:
-    project = tox_project({
-        "pyproject.toml": """
-        [tool.tox.extra]
-        ok = "o"
-        [tool.tox.env.B]
-        description = "{[tool.tox.extra]ok}"
-        """
-    })
-    outcome = project.run("c", "-e", "B", "-k", "description")
-    outcome.assert_success()
-    outcome.assert_out_err("[testenv:B]\ndescription = o\n", "")
-
-
 def test_config_in_toml_replace_from_section_absolute_nok(tox_project: ToxProjectCreator) -> None:
     project = tox_project({
         "pyproject.toml": """

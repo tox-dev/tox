@@ -21,7 +21,7 @@ from devpi_process import IndexServer
 from virtualenv.info import fs_supports_symlink
 
 import tox.run
-from tox.execute.api import Execute, ExecuteInstance, ExecuteOptions, ExecuteStatus, Outcome
+from tox.execute.api import Execute, ExecuteInstance, ExecuteOptions, ExecuteStatus, FinishedExecuteStatus, Outcome
 from tox.execute.request import ExecuteRequest, shell_cmd
 from tox.plugin import manager
 from tox.report import LOGGER, OutErr
@@ -169,7 +169,7 @@ class ToxProject:
                 msg = f"could not handle {at_path / key} with content {value!r}"  # pragma: no cover
                 raise TypeError(msg)  # pragma: no cover
 
-    def patch_execute(self, handle: Callable[[ExecuteRequest], int | None] | None = None) -> MagicMock:  # ruff:ignore[complex-structure]
+    def patch_execute(self, handle: Callable[[ExecuteRequest], int | None] | None = None) -> MagicMock:
         class MockExecute(Execute):
             def __init__(self, colored: bool, exit_code: int) -> None:  # ruff:ignore[boolean-type-hint-positional-argument]
                 self.exit_code = exit_code
@@ -185,28 +185,6 @@ class ToxProject:
             ) -> ExecuteInstance:
                 return MockExecuteInstance(request, options, out, err, self.exit_code)
 
-        class MockExecuteStatus(ExecuteStatus):
-            def __init__(self, options: ExecuteOptions, out: SyncWrite, err: SyncWrite, exit_code: int) -> None:
-                super().__init__(options, out, err)
-                self._exit_code = exit_code
-
-            @property
-            @override
-            def exit_code(self) -> int | None:
-                return self._exit_code
-
-            @override
-            def wait(self, timeout: float | None = None) -> int | None:  # ruff:ignore[unused-method-argument]
-                return self._exit_code
-
-            @override
-            def write_stdin(self, content: str) -> None:  # ruff:ignore[unused-method-argument, no-self-use]
-                return None  # pragma: no cover
-
-            @override
-            def interrupt(self) -> None:  # ruff:ignore[no-self-use]
-                return None  # pragma: no cover
-
         class MockExecuteInstance(ExecuteInstance):
             def __init__(
                 self,
@@ -221,7 +199,7 @@ class ToxProject:
 
             @override
             def __enter__(self) -> ExecuteStatus:
-                return MockExecuteStatus(self.options, self._out, self._err, self.exit_code)
+                return FinishedExecuteStatus(self.options, self._out, self._err, self.exit_code)
 
             @override
             def __exit__(

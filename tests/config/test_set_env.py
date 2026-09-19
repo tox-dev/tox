@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 import sys
+import textwrap
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Literal
 from unittest.mock import ANY
@@ -467,45 +468,54 @@ def test_set_env_marker_with_replace_toml(
         assert "CONDITIONAL" not in set_env
 
 
-def test_set_env_cross_section_override(tox_project: ToxProjectCreator) -> None:
-    ini = """\
-    [testenv]
-    skip_install = true
-    set_env =
-        OS_TEST_PATH=./tests/unit
-    commands = python -c "import os; print(os.environ['OS_TEST_PATH'])"
+@pytest.mark.parametrize(
+    ("ini", "env", "expected"),
+    [
+        pytest.param(
+            """\
+            [testenv]
+            skip_install = true
+            set_env =
+                OS_TEST_PATH=./tests/unit
+            commands = python -c "import os; print(os.environ['OS_TEST_PATH'])"
 
-    [testenv:functional]
-    set_env =
-      {[testenv]set_env}
-      OS_TEST_PATH=./tests/functional
-    commands = python -c "import os; print(os.environ['OS_TEST_PATH'])"
+            [testenv:functional]
+            set_env =
+              {[testenv]set_env}
+              OS_TEST_PATH=./tests/functional
+            commands = python -c "import os; print(os.environ['OS_TEST_PATH'])"
 
-    [testenv:functional-py]
-    set_env = {[testenv:functional]set_env}
-    commands = {[testenv:functional]commands}
-    """
-    result = tox_project({"tox.ini": ini}).run("r", "-e", "functional-py")
+            [testenv:functional-py]
+            set_env = {[testenv:functional]set_env}
+            commands = {[testenv:functional]commands}
+            """,
+            "functional-py",
+            "./tests/functional",
+            id="via-referenced-section",
+        ),
+        pytest.param(
+            """\
+            [testenv]
+            skip_install = true
+            set_env =
+                COVERAGE_FILE=THISISBAD
+
+            [testenv:coverage_report]
+            set_env =
+                {[testenv]set_env}
+                COVERAGE_FILE=THISISGOOD
+            commands = python -c "import os; print(os.environ['COVERAGE_FILE'])"
+            """,
+            "coverage_report",
+            "THISISGOOD",
+            id="direct",
+        ),
+    ],
+)
+def test_set_env_cross_section_override(tox_project: ToxProjectCreator, ini: str, env: str, expected: str) -> None:
+    result = tox_project({"tox.ini": textwrap.dedent(ini)}).run("r", "-e", env)
     result.assert_success()
-    assert result.out.splitlines()[1] == "./tests/functional"
-
-
-def test_set_env_cross_section_override_direct(tox_project: ToxProjectCreator) -> None:
-    ini = """\
-    [testenv]
-    skip_install = true
-    set_env =
-        COVERAGE_FILE=THISISBAD
-
-    [testenv:coverage_report]
-    set_env =
-        {[testenv]set_env}
-        COVERAGE_FILE=THISISGOOD
-    commands = python -c "import os; print(os.environ['COVERAGE_FILE'])"
-    """
-    result = tox_project({"tox.ini": ini}).run("r", "-e", "coverage_report")
-    result.assert_success()
-    assert result.out.splitlines()[1] == "THISISGOOD"
+    assert result.out.splitlines()[1] == expected
 
 
 def test_set_env_escaped_semicolon() -> None:

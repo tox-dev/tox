@@ -71,7 +71,7 @@ class IniLoader(StrConvert, Loader[str]):
         return factor_filtered.replace("\\\n", "")
 
     @override
-    def build(  # ruff:ignore[too-many-arguments]
+    def build(
         self,
         key: str,
         of_type: type[V] | UnionType,

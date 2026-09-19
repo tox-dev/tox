@@ -24,7 +24,7 @@ class MemoryLoader(Loader[object]):
         self.raw: dict[str, Any] = {**kwargs}
 
     @override
-    def load_raw(self, key: str, conf: Config | None, env_name: str | None) -> object:  # ruff:ignore[unused-method-argument]
+    def load_raw(self, key: str, conf: Config | None, env_name: str | None) -> object:
         return self.raw[key]
 
     @override
@@ -43,17 +43,17 @@ class MemoryLoader(Loader[object]):
 
     @staticmethod
     @override
-    def to_list(value: Any, of_type: type[Any]) -> Iterator[Any]:  # ruff:ignore[unused-static-method-argument]
+    def to_list(value: Any, of_type: type[Any]) -> Iterator[Any]:
         return iter(value)
 
     @staticmethod
     @override
-    def to_set(value: Any, of_type: type[Any]) -> Iterator[Any]:  # ruff:ignore[unused-static-method-argument]
+    def to_set(value: Any, of_type: type[Any]) -> Iterator[Any]:
         return iter(value)
 
     @staticmethod
     @override
-    def to_dict(value: Any, of_type: tuple[type[Any], type[Any]]) -> Iterator[tuple[Any, Any]]:  # ruff:ignore[unused-static-method-argument]
+    def to_dict(value: Any, of_type: tuple[type[Any], type[Any]]) -> Iterator[tuple[Any, Any]]:
         return iter(value.items())
 
     @staticmethod

@@ -122,6 +122,12 @@ def test_package_root_via_testenv(tox_project: ToxProjectCreator, demo_pkg_inlin
             id="deps_with_two_extra",
         ),
         pytest.param(
+            "[project]\ndependencies=['A']\noptional-dependencies.Foo_Bar=['B']",
+            "foo-bar",
+            ["A", "B"],
+            id="deps_with_non_normalized_extra_name",
+        ),
+        pytest.param(
             "[project]\ndependencies=['A']\noptional-dependencies.alpha=[]",
             "alpha",
             ["A"],

@@ -1,0 +1,2 @@
+Optional dependencies declared in ``pyproject.toml`` under a name that is not normalized, such as ``Foo_Bar``, are now
+installed when requested as ``extras = foo-bar`` while tox installs a package's dependencies - by :user:`gaborbernat`.

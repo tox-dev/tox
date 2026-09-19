@@ -30,9 +30,9 @@ def tox_add_option(parser: ToxParser) -> None:
         def __call__(
             self,
             parser: ArgumentParser,
-            namespace: Namespace,  # ruff:ignore[unused-method-argument]
-            values: str | Sequence[Any] | None,  # ruff:ignore[unused-method-argument]
-            option_string: str | None = None,  # ruff:ignore[unused-method-argument]
+            namespace: Namespace,
+            values: str | Sequence[Any] | None,
+            option_string: str | None = None,
         ) -> None:
             formatter = cast("HelpFormatter", parser._get_formatter())  # ruff:ignore[private-member-access]
             formatter.add_raw_text(get_version_info())

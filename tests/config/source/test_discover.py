@@ -127,14 +127,7 @@ def test_malformed_ini_in_dir_reports_error(tox_project: ToxProjectCreator) -> N
 )
 def test_bad_ini_core_value_reports_error(tox_project: ToxProjectCreator, core_value: str, message: str) -> None:
     """A bad value in the ini core section should be a handled error rather than an unhandled traceback."""
-    project = tox_project({"tox.ini": f"[tox]\n{core_value}\n"})
-    outcome, leaked = None, None
-    try:
-        outcome = project.run("l")
-    except Exception as exception:  # ruff:ignore[blind-except]  # a leaked traceback is the bug under test
-        leaked = exception
-    assert leaked is None, f"unhandled {type(leaked).__name__}: {leaked}"
-    assert outcome is not None
+    outcome = tox_project({"tox.ini": f"[tox]\n{core_value}\n"}).run("l")
     outcome.assert_failed()
     assert "failed to load tox." in outcome.out
     assert message in outcome.out

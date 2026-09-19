@@ -15,7 +15,7 @@ from tox.util.typing_compat import override
 from .api import ToxEnv, ToxEnvCreateArgs
 from .errors import Fail
 from .package import Package, PackageToxEnv, PathPackage
-from .util import add_change_dir_conf
+from .util import add_change_dir_conf, add_commands_conf, add_ignore_errors_conf
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
@@ -62,12 +62,7 @@ class RunToxEnv(ToxEnv, ABC):
             default=[],
             desc="the commands to be called before testing",
         )
-        self.conf.add_config(
-            keys=["commands"],
-            of_type=list[Command],
-            default=[],
-            desc="the commands to be called for testing",
-        )
+        add_commands_conf(self.conf)
         self.conf.add_config(
             keys=["commands_post"],
             of_type=list[Command],
@@ -93,12 +88,7 @@ class RunToxEnv(ToxEnv, ABC):
             default=True,
             desc="if True rewrite relative posargs paths from cwd to change_dir",
         )
-        self.conf.add_config(
-            keys=["ignore_errors"],
-            of_type=bool,
-            default=False,
-            desc="when executing the commands keep going even if a sub-command exits with non-zero exit code",
-        )
+        add_ignore_errors_conf(self.conf)
         self.conf.add_config(
             keys=["commands_retry"],
             of_type=int,
@@ -163,7 +153,7 @@ class RunToxEnv(ToxEnv, ABC):
                 _call_guarded(package_env, method_name, *args)
 
     @override
-    def _clean(self, transitive: bool = False) -> None:  # ruff:ignore[boolean-type-hint-positional-argument, boolean-default-value-positional-argument]
+    def _clean(self, transitive: bool = False) -> None:
         if not self._run_state["clean"] and self.env_dir.exists():
             try:
                 self._run_recreate_commands()

@@ -46,7 +46,7 @@ class IniSource(Source):
         self._section_mapping: defaultdict[str, list[str]] = defaultdict(list)
 
     @override
-    def transform_section(self, section: Section) -> Section:  # ruff:ignore[no-self-use]
+    def transform_section(self, section: Section) -> Section:
         return IniSection(section.prefix, section.name)
 
     @override
@@ -78,14 +78,14 @@ class IniSource(Source):
         return self.CORE_SECTION
 
     @override
-    def get_base_sections(self, base: list[str], in_section: Section) -> Iterator[Section]:  # ruff:ignore[no-self-use]
+    def get_base_sections(self, base: list[str], in_section: Section) -> Iterator[Section]:
         for a_base in base:
             yield IniSection.from_key(a_base)
             if in_section.prefix is not None:  # no prefix specified, so this could imply our own prefix
                 yield IniSection(in_section.prefix, a_base)
 
     @override
-    def get_tox_env_section(self, item: str) -> tuple[Section, list[str], list[str]]:  # ruff:ignore[no-self-use]
+    def get_tox_env_section(self, item: str) -> tuple[Section, list[str], list[str]]:
         return IniSection.test_env(item), [TEST_ENV_PREFIX], [PKG_ENV_PREFIX]
 
     @override

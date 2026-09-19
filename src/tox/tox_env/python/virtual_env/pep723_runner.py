@@ -23,7 +23,7 @@ class Pep723Runner(Pep723Mixin, VirtualEnv, RunToxEnv):
         return "virtualenv-pep-723"
 
     @override
-    def _register_package_conf(self) -> bool:  # ruff:ignore[no-self-use]
+    def _register_package_conf(self) -> bool:
         return False
 
     @property
@@ -37,7 +37,7 @@ class Pep723Runner(Pep723Mixin, VirtualEnv, RunToxEnv):
         raise NotImplementedError
 
     @override
-    def _build_packages(self) -> list[Package]:  # ruff:ignore[no-self-use]
+    def _build_packages(self) -> list[Package]:
         return []
 
 

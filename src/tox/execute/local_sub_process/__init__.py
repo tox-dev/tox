@@ -11,7 +11,7 @@ from contextlib import suppress
 from subprocess import DEVNULL, PIPE, TimeoutExpired
 from typing import TYPE_CHECKING, Any
 
-from tox.execute.api import Execute, ExecuteInstance, ExecuteOptions, ExecuteStatus
+from tox.execute.api import Execute, ExecuteInstance, ExecuteOptions, ExecuteStatus, FinishedExecuteStatus
 from tox.execute.request import ExecuteRequest, StdinSource
 from tox.execute.util import shebang
 from tox.tox_env.errors import Fail
@@ -51,7 +51,7 @@ IS_WIN = sys.platform == "win32"
 
 class LocalSubProcessExecutor(Execute):
     @override
-    def build_instance(  # ruff:ignore[no-self-use]
+    def build_instance(
         self,
         request: ExecuteRequest,
         options: ExecuteOptions,
@@ -147,27 +147,8 @@ class LocalSubprocessExecuteStatus(ExecuteStatus):
         return {"pid": self._process.pid} if self._process.pid else {}
 
 
-class LocalSubprocessExecuteFailedStatus(ExecuteStatus):
-    def __init__(self, options: ExecuteOptions, out: SyncWrite, err: SyncWrite, exit_code: int | None) -> None:
-        super().__init__(options, out, err)
-        self._exit_code = exit_code
-
-    @property
-    @override
-    def exit_code(self) -> int | None:
-        return self._exit_code
-
-    @override
-    def wait(self, timeout: float | None = None) -> int | None:  # ruff:ignore[unused-method-argument]
-        return self._exit_code  # pragma: no cover
-
-    @override
-    def write_stdin(self, content: str) -> None:
-        """Cannot write."""
-
-    @override
-    def interrupt(self) -> None:  # ruff:ignore[no-self-use]
-        return None  # pragma: no cover # nothing running so nothing to interrupt
+class LocalSubprocessExecuteFailedStatus(FinishedExecuteStatus):
+    """The status of a command that could not be started."""
 
 
 class LocalSubProcessExecuteInstance(ExecuteInstance):

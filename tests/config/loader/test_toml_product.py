@@ -232,173 +232,77 @@ def test_expand_product_mixed_list_and_range() -> None:
     assert result == ["py312-django42", "py312-django50", "py313-django42", "py313-django50"]
 
 
-def test_product_envs_listed(tox_project: ToxProjectCreator) -> None:
-    proj = tox_project({
-        "tox.toml": textwrap.dedent("""\
-            env_list = [
-                { product = [["py312", "py313"], ["django42", "django50"]] },
-            ]
+@pytest.mark.parametrize(
+    ("env_list", "present", "absent"),
+    [
+        pytest.param(
+            '{ product = [["py312", "py313"], ["django42", "django50"]] }',
+            ["py312-django42", "py312-django50", "py313-django42", "py313-django50"],
+            [],
+            id="product",
+        ),
+        pytest.param(
+            '"lint", { product = [["py312", "py313"], ["django42"]] }, "docs"',
+            ["lint", "py312-django42", "py313-django42", "docs"],
+            [],
+            id="product-mixed-with-literals",
+        ),
+        pytest.param(
+            '{ product = [{ prefix = "py3", start = 12, stop = 13 }, ["django42"]] }',
+            ["py312-django42", "py313-django42"],
+            [],
+            id="product-with-range",
+        ),
+        pytest.param(
+            '{ product = [["py312", "py313"], ["django42", "django50"]], exclude = ["py312-django50"] }',
+            ["py312-django42", "py313-django42", "py313-django50"],
+            ["py312-django50"],
+            id="product-with-exclusion",
+        ),
+        pytest.param(
+            '{ product = [["py312"], ["django42"]] }, { product = [["py313"], ["flask20"]] }',
+            ["py312-django42", "py313-flask20"],
+            [],
+            id="multiple-products",
+        ),
+        pytest.param(
+            '{ product = [["sync"], {ecosystem = ["oci", "python"]}, {target = ["pw", "tt"]}] }',
+            ["sync-oci-pw", "sync-oci-tt", "sync-python-pw", "sync-python-tt"],
+            [],
+            id="product-keyed-groups",
+        ),
+        pytest.param(
+            '"lint", { prefix = "py3", start = 12, stop = 14 }',
+            ["lint", "py312", "py313", "py314"],
+            [],
+            id="bare-range-dict",
+        ),
+        pytest.param('{ ecosystem = ["oci", "python"] }', ["oci", "python"], [], id="bare-labeled-dict"),
+        pytest.param(
+            (
+                '{ prefix = "py3", start = 12, stop = 13 }, '
+                '{ product = [["min"], { prefix = "py3", start = 12, stop = 13 }] }'
+            ),
+            ["py312", "py313", "min-py312", "min-py313"],
+            [],
+            id="bare-range-mixed-with-product",
+        ),
+    ],
+)
+def test_env_list_lists_expected_envs(
+    tox_project: ToxProjectCreator, env_list: str, present: list[str], absent: list[str]
+) -> None:
+    tox_toml = f"""\
+        env_list = [{env_list}]
 
-            [env_run_base]
-            package = "skip"
-            commands = [["python", "-c", "print('ok')"]]
-        """),
-    })
-    result = proj.run("l")
+        [env_run_base]
+        package = "skip"
+        commands = [["python", "-c", "print('ok')"]]
+    """
+    result = tox_project({"tox.toml": textwrap.dedent(tox_toml)}).run("l")
     result.assert_success()
-    for env in ("py312-django42", "py312-django50", "py313-django42", "py313-django50"):
-        assert env in result.out
-
-
-def test_product_mixed_with_literals(tox_project: ToxProjectCreator) -> None:
-    proj = tox_project({
-        "tox.toml": textwrap.dedent("""\
-            env_list = [
-                "lint",
-                { product = [["py312", "py313"], ["django42"]] },
-                "docs",
-            ]
-
-            [env_run_base]
-            package = "skip"
-            commands = [["python", "-c", "print('ok')"]]
-        """),
-    })
-    result = proj.run("l")
-    result.assert_success()
-    for env in ("lint", "py312-django42", "py313-django42", "docs"):
-        assert env in result.out
-
-
-def test_product_with_range(tox_project: ToxProjectCreator) -> None:
-    proj = tox_project({
-        "tox.toml": textwrap.dedent("""\
-            env_list = [
-                { product = [{ prefix = "py3", start = 12, stop = 13 }, ["django42"]] },
-            ]
-
-            [env_run_base]
-            package = "skip"
-            commands = [["python", "-c", "print('ok')"]]
-        """),
-    })
-    result = proj.run("l")
-    result.assert_success()
-    assert "py312-django42" in result.out
-    assert "py313-django42" in result.out
-
-
-def test_product_with_exclusion(tox_project: ToxProjectCreator) -> None:
-    proj = tox_project({
-        "tox.toml": textwrap.dedent("""\
-            env_list = [
-                { product = [["py312", "py313"], ["django42", "django50"]], exclude = ["py312-django50"] },
-            ]
-
-            [env_run_base]
-            package = "skip"
-            commands = [["python", "-c", "print('ok')"]]
-        """),
-    })
-    result = proj.run("l")
-    result.assert_success()
-    assert "py312-django42" in result.out
-    assert "py313-django42" in result.out
-    assert "py313-django50" in result.out
-    assert "py312-django50" not in result.out
-
-
-def test_product_multiple_in_env_list(tox_project: ToxProjectCreator) -> None:
-    proj = tox_project({
-        "tox.toml": textwrap.dedent("""\
-            env_list = [
-                { product = [["py312"], ["django42"]] },
-                { product = [["py313"], ["flask20"]] },
-            ]
-
-            [env_run_base]
-            package = "skip"
-            commands = [["python", "-c", "print('ok')"]]
-        """),
-    })
-    result = proj.run("l")
-    result.assert_success()
-    assert "py312-django42" in result.out
-    assert "py313-flask20" in result.out
-
-
-def test_product_keyed_groups_listed(tox_project: ToxProjectCreator) -> None:
-    proj = tox_project({
-        "tox.toml": textwrap.dedent("""\
-            env_list = [
-                { product = [["sync"], {ecosystem = ["oci", "python"]}, {target = ["pw", "tt"]}] },
-            ]
-
-            [env_run_base]
-            package = "skip"
-            commands = [["python", "-c", "print('ok')"]]
-        """),
-    })
-    result = proj.run("l")
-    result.assert_success()
-    for env in ("sync-oci-pw", "sync-oci-tt", "sync-python-pw", "sync-python-tt"):
-        assert env in result.out
-
-
-def test_env_list_bare_range_dict(tox_project: ToxProjectCreator) -> None:
-    proj = tox_project({
-        "tox.toml": textwrap.dedent("""\
-            env_list = [
-                "lint",
-                { prefix = "py3", start = 12, stop = 14 },
-            ]
-
-            [env_run_base]
-            package = "skip"
-            commands = [["python", "-c", "print('ok')"]]
-        """),
-    })
-    result = proj.run("l")
-    result.assert_success()
-    for env in ("lint", "py312", "py313", "py314"):
-        assert env in result.out
-
-
-def test_env_list_bare_labeled_dict(tox_project: ToxProjectCreator) -> None:
-    proj = tox_project({
-        "tox.toml": textwrap.dedent("""\
-            env_list = [
-                { ecosystem = ["oci", "python"] },
-            ]
-
-            [env_run_base]
-            package = "skip"
-            commands = [["python", "-c", "print('ok')"]]
-        """),
-    })
-    result = proj.run("l")
-    result.assert_success()
-    for env in ("oci", "python"):
-        assert env in result.out
-
-
-def test_env_list_bare_range_mixed_with_product(tox_project: ToxProjectCreator) -> None:
-    proj = tox_project({
-        "tox.toml": textwrap.dedent("""\
-            env_list = [
-                { prefix = "py3", start = 12, stop = 13 },
-                { product = [["min"], { prefix = "py3", start = 12, stop = 13 }] },
-            ]
-
-            [env_run_base]
-            package = "skip"
-            commands = [["python", "-c", "print('ok')"]]
-        """),
-    })
-    result = proj.run("l")
-    result.assert_success()
-    for env in ("py312", "py313", "min-py312", "min-py313"):
-        assert env in result.out
+    assert [env for env in present if env in result.out] == present
+    assert [env for env in absent if env in result.out] == []
 
 
 def test_product_deduplication(tox_project: ToxProjectCreator) -> None:

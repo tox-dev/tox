@@ -11,7 +11,6 @@ from zipfile import ZipFile
 
 from packaging.requirements import Requirement
 
-from tox.config.types import Command
 from tox.execute import Outcome
 from tox.plugin import impl
 from tox.session.cmd.run.single import run_command_set
@@ -19,7 +18,7 @@ from tox.tox_env.errors import Fail
 from tox.tox_env.python.package import PythonPackageToxEnv, SdistPackage, WheelPackage
 from tox.tox_env.python.pip.req_file import PythonDeps
 from tox.tox_env.python.virtual_env.api import VirtualEnv
-from tox.tox_env.util import add_change_dir_conf
+from tox.tox_env.util import add_change_dir_conf, add_commands_conf, add_ignore_errors_conf
 from tox.util.typing_compat import override
 
 from .pyproject import Pep517VirtualEnvPackager
@@ -55,24 +54,14 @@ class VenvCmdBuilder(PythonPackageToxEnv, ABC):
             default=PythonDeps("", root),
             desc="Name of the python dependencies as specified by PEP-440",
         )
-        self.conf.add_config(
-            keys=["commands"],
-            of_type=list[Command],
-            default=[],
-            desc="the commands to be called for testing",
-        )
+        add_commands_conf(self.conf)
         add_change_dir_conf(self.conf, self.core)
-        self.conf.add_config(
-            keys=["ignore_errors"],
-            of_type=bool,
-            default=False,
-            desc="when executing the commands keep going even if a sub-command exits with non-zero exit code",
-        )
+        add_ignore_errors_conf(self.conf)
         self.conf.add_config(
             keys=["package_glob"],
             of_type=str,
             default=str(self.conf["env_tmp_dir"] / "dist" / "*"),
-            desc="when executing the commands keep going even if a sub-command exits with non-zero exit code",
+            desc="glob used to find the built package to install",
         )
 
     @override
@@ -144,7 +133,7 @@ class VenvCmdBuilder(PythonPackageToxEnv, ABC):
         self._sdist_meta_tox_env = cast("Pep517VirtualEnvPackager", result)
 
     @override
-    def child_pkg_envs(self, run_conf: EnvConfigSet) -> Iterator[PackageToxEnv]:  # ruff:ignore[unused-method-argument]
+    def child_pkg_envs(self, run_conf: EnvConfigSet) -> Iterator[PackageToxEnv]:
         if self._sdist_meta_tox_env is not None:  # pragma: no branch
             yield self._sdist_meta_tox_env
 

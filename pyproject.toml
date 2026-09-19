@@ -210,6 +210,7 @@ lint.per-file-ignores."tests/**/*.py" = [
   "S101",                   # asserts allowed in tests
   "S603",                   # `subprocess` call: check for execution of untrusted input
 ]
+lint.typing-modules = [ "tox.util.typing_compat" ]
 lint.isort = { known-first-party = [
   "tox",
   "tests",

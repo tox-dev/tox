@@ -130,6 +130,9 @@ execute
 .. autoclass:: tox.execute.api.ExecuteStatus
     :members:
 
+.. autoclass:: tox.execute.api.FinishedExecuteStatus
+    :members:
+
 .. autoclass:: tox.execute.api.ExecuteInstance
     :members:
 
@@ -144,6 +147,7 @@ installer
 .. autoclass:: tox.tox_env.python.pip.req.file.RequirementsFile
 
 .. autoclass:: tox.tox_env.python.pip.req_file.PythonDeps
+    :no-show-inheritance:
 
 .. autoclass:: tox.tox_env.python.pylock.Pylock
 

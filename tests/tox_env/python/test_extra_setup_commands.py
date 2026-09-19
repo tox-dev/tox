@@ -2,11 +2,22 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+import pytest
+
 if TYPE_CHECKING:
     from tox.pytest import ToxProjectCreator
 
 
-def test_extra_setup_commands_runs_with_notest(tox_project: ToxProjectCreator) -> None:
+@pytest.mark.parametrize(
+    ("run_args", "main_command_runs"),
+    [
+        pytest.param(["--notest"], False, id="notest"),
+        pytest.param([], True, id="full-run"),
+    ],
+)
+def test_extra_setup_commands_runs(
+    tox_project: ToxProjectCreator, run_args: list[str], main_command_runs: bool
+) -> None:
     ini = """
         [testenv]
         package = skip
@@ -15,25 +26,10 @@ def test_extra_setup_commands_runs_with_notest(tox_project: ToxProjectCreator) -
         commands = python -c 'print("main command")'
     """
     proj = tox_project({"tox.ini": ini})
-    result = proj.run("r", "--notest")
+    result = proj.run("r", *run_args)
     result.assert_success()
     assert "extra setup" in result.out
-    assert "main command" not in result.out
-
-
-def test_extra_setup_commands_runs_without_notest(tox_project: ToxProjectCreator) -> None:
-    ini = """
-        [testenv]
-        package = skip
-        deps = pip
-        extra_setup_commands = python -c 'print("extra setup")'
-        commands = python -c 'print("main command")'
-    """
-    proj = tox_project({"tox.ini": ini})
-    result = proj.run("r")
-    result.assert_success()
-    assert "extra setup" in result.out
-    assert "main command" in result.out
+    assert ("main command" in result.out) is main_command_runs
 
 
 def test_extra_setup_commands_with_package_skip(tox_project: ToxProjectCreator) -> None:
