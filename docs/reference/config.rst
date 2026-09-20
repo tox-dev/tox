@@ -2559,7 +2559,7 @@ others to avoid repeating the same values:
 
     [extra]
     ok = "o"
-    [.env.B]
+    [env.B]
     description = "{[extra]ok}"
 
 If the target table is one of the tox environments variable substitution will be applied on the replaced value,
