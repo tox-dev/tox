@@ -1,0 +1,1 @@
+Fix the invalid table header in the TOML string substitution example.
