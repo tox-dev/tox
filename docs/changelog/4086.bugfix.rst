@@ -1,0 +1,2 @@
+The user configuration file is now read as UTF-8 instead of the platform's locale encoding, so a config
+holding non-ASCII values is no longer silently discarded on Windows - by :user:`MohammedAlkindi`.
