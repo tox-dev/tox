@@ -11,7 +11,7 @@ from colorama import Fore
 from tox.config.loader.stringify import stringify
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, Iterable
+    from collections.abc import Callable, Sequence
 
     from tox.config.sets import ConfigSet
     from tox.session.state import State
@@ -57,7 +57,7 @@ def _write_line(line: str) -> None:
     sys.stdout.write(line + "\n")
 
 
-def _emit_conf(emit: Callable[[str], None], conf: ConfigSet, keys: Iterable[str], *, is_colored: bool) -> bool:
+def _emit_conf(emit: Callable[[str], None], conf: ConfigSet, keys: Sequence[str], *, is_colored: bool) -> bool:
     has_exception = False
     for key in keys or conf:
         if key not in conf:
