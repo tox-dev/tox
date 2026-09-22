@@ -1,2 +1,1 @@
-Narrow the ``keys`` parameter of ``_emit_conf`` to ``Sequence[str]``, which is what callers pass, so ``ty`` no longer
-flags a truthiness test on a possibly empty iterable.
+Narrow the ``keys`` parameter of ``_emit_conf`` to ``Sequence[str]``, which is what callers pass, so ``ty`` no longer flags a truthiness test on a possibly empty iterable.
