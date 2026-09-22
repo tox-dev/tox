@@ -42,7 +42,7 @@ class IniConfig:
 
     def _parse_config_file(self) -> None:
         parser = ConfigParser(interpolation=None)
-        with self.config_file.open() as file_handler:
+        with self.config_file.open(encoding="utf-8") as file_handler:
             parser.read_file(file_handler)
         self.has_tox_section = parser.has_section(CORE.key)
         if self.has_tox_section:
