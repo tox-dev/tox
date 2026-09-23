@@ -64,7 +64,7 @@ jobs:
         run: tox run --skip-pkg-install -e ${{ matrix.py }}
         env:
           PYTEST_ADDOPTS: "-vv --durations=20"
-          DIFF_AGAINST: HEAD
+          DIFF_AGAINST: ${{ github.event.pull_request.base.sha || 'HEAD' }}
           PYTEST_XDIST_AUTO_NUM_WORKERS: 0
   check:
     name: tox env ${{ matrix.tox_env }} on ${{ matrix.os.name }}
