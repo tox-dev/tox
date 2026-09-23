@@ -32,6 +32,14 @@
       "type": "string",
       "description": "a folder for temporary files (is not cleaned at start)"
     },
+    "venv_redirect": {
+      "type": "boolean",
+      "description": "(provisional) point a PEP-832 .venv redirect file at a tox environment, so editors can discover it"
+    },
+    "venv_redirect_env": {
+      "type": "string",
+      "description": "(provisional) the tox environment the .venv redirect file points at, picked automatically when unset"
+    },
     "env_list": {
       "type": "array",
       "items": {

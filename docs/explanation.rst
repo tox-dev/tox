@@ -745,6 +745,37 @@ upgrade that changes the derived value) triggers automatic recreation.
 This design mirrors tox's own auto-provisioning mechanism (``requires`` / ``min_version``), where tox bootstraps itself
 into a separate environment when the running installation doesn't meet the declared requirements.
 
+***********************
+ Environment discovery
+***********************
+
+Editors need an interpreter path before they can offer completion, navigation or a debugger. tox keeps its environments
+under ``.tox``, a directory editors have no reason to search, so for years the answer was to copy a path out of ``tox
+devenv`` output and paste it into a settings dialog, then repeat it after every recreate.
+
+:PEP:`832` standardizes where to look: a ``.venv`` at the project root is either the environment itself or a redirect
+file holding the path of one. An editor that opens the project reads one line and knows its interpreter. A draft of the
+PEP listed every environment of a project in a ``.python-envs`` file. It went back to a single redirect after workflow
+tool authors warned that tools sharing one list would overwrite each other's entries and change the default under the
+user.
+
+tox runs many environments, so it picks the one you most likely edit code against. It prefers an environment named
+``dev``, then one that installs the project in development mode, then the earliest entry of :ref:`env_list`. Set
+:ref:`venv_redirect_env` when the heuristic picks wrong.
+
+The PEP asks tools not to overwrite a redirect file another tool wrote. The file carries no marker of who wrote it, so
+tox judges by the target. It treats a path inside the :ref:`work_dir` or one of its environments as its own and leaves
+any other path in place. tox also leaves a ``.venv`` directory alone, so projects managed by ``python -m venv``, uv or
+PDM keep working as before. And because an environment is unusable between the moment tox empties it and the moment the
+new interpreter lands, tox removes its redirect before a recreate and writes it back once the run ends.
+
+The feature is provisional. :PEP:`832` is still a draft whose format changed twice during review, and tox tracks the PEP
+rather than its own earlier behavior, so a minor or patch release may change what tox writes. Set :ref:`venv_redirect`
+to ``false`` if you need a stable project root until the Steering Council accepts the PEP.
+
+tox writes into the project root by default, because editors gain from a discovery convention when tools follow it
+unprompted. Set :ref:`venv_redirect` to ``false`` if you would rather tox left the project root alone.
+
 *******************
  Known limitations
 *******************

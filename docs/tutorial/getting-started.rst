@@ -306,6 +306,23 @@ has changed), use ``--skip-env-install``:
 
     tox run -e 3.13 --skip-env-install
 
+******************************
+ Using an environment at hand
+******************************
+
+After a run, tox writes a ``.venv`` redirect file next to your configuration, following :PEP:`832`. It holds a single
+line with the path of one of the environments tox created, and editors such as VS Code read it to pick an interpreter,
+so you do not have to hunt for a path under ``.tox``:
+
+.. code-block:: bash
+
+    $ tox run -e 3.13
+    $ cat .venv
+    .tox/3.13
+
+Name an environment ``dev`` and tox points the file at it, which is what you want for the environment you edit code
+against. :ref:`howto_editor_env` shows how. The feature is provisional and may change as the PEP evolves.
+
 ********************************
  Listing available environments
 ********************************
