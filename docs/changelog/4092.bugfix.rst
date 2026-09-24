@@ -1,6 +1,0 @@
-The :PEP:`832` ``.venv`` redirect file now names a deliberate development environment - by :user:`gaborbernat`.
-
-- tox picks :ref:`venv_redirect_env`, else an environment named ``dev``, else the first that installs the project in
-  development mode, and writes nothing without one, so a project that uses tox for tests alone gets no file.
-- ``tox devenv`` points the redirect at the environment it creates, and later runs leave it in place.
-- tox tells virtualenv to write no redirect file of its own beside the environments it builds.

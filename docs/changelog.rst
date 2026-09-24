@@ -7,6 +7,28 @@
 .. towncrier release notes start
 
 **********************
+ v4.64.2 (2026-09-24)
+**********************
+
+Bug fixes - 4.64.2
+==================
+
+- A tox environment with ``env_dir = "{tox_root}/.venv"`` no longer crashes with ``FileExistsError`` after another
+  environment ran (:issue:`4090`) - by :user:`gaborbernat`.
+
+  - With :ref:`venv_redirect` unset, the new default, tox writes the redirect file unless a tox environment lives at
+    ``.venv``; with ``true``, tox fails the run with an error naming that environment.
+  - tox deletes a redirect file it wrote where an environment should live, and fails the environment with an error
+    naming any other file there. (:issue:`4091`)
+
+- The :PEP:`832` ``.venv`` redirect file now names a deliberate development environment - by :user:`gaborbernat`.
+
+  - tox picks :ref:`venv_redirect_env`, else an environment named ``dev``, else the first that installs the project in
+    development mode, and writes nothing without one, so a project that uses tox for tests alone gets no file.
+  - ``tox devenv`` points the redirect at the environment it creates, and later runs leave it in place.
+  - tox tells virtualenv to write no redirect file of its own beside the environments it builds. (:issue:`4092`)
+
+**********************
  v4.64.1 (2026-09-24)
 **********************
 
