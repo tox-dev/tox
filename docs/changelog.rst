@@ -7,6 +7,35 @@
 .. towncrier release notes start
 
 **********************
+ v4.64.0 (2026-09-24)
+**********************
+
+Features - 4.64.0
+=================
+
+- Point a :PEP:`832` ``.venv`` redirect file at a tox environment after each run, so editors such as VS Code or PyCharm
+  pick it as the project interpreter instead of asking you for a path under ``.tox`` - by :user:`gaborbernat`.
+
+  - tox picks an environment named ``dev``, then one installing the project in development mode, then the first of
+    :ref:`env_list`; set :ref:`venv_redirect_env` to choose another.
+  - tox leaves a ``.venv`` directory alone, and a redirect file pointing outside its environments.
+  - tox removes the redirect while it recreates the target and writes it back once the run ends.
+  - Set :ref:`venv_redirect` to ``false`` to opt out.
+  - The feature is provisional while :PEP:`832` is a draft: a minor or patch release may change it in backward
+    incompatible ways to follow the PEP. (:issue:`4013`)
+
+Bug fixes - 4.64.0
+==================
+
+- The user configuration file is now read as UTF-8 instead of the platform's locale encoding, so a config holding
+  non-ASCII values is no longer silently discarded on Windows - by :user:`MohammedAlkindi`. (:issue:`4086`)
+
+Improved documentation - 4.64.0
+===============================
+
+- Fix the invalid table header in the TOML string substitution example. (:issue:`4081`)
+
+**********************
  v4.63.0 (2026-09-19)
 **********************
 
