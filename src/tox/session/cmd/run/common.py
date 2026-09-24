@@ -9,7 +9,6 @@ from argparse import Action, ArgumentError, ArgumentParser, Namespace
 from concurrent.futures import FIRST_COMPLETED, CancelledError, Future, ThreadPoolExecutor
 from concurrent.futures import wait as wait_futures
 from fnmatch import fnmatchcase
-from operator import itemgetter
 from pathlib import Path
 from signal import SIGINT, Handlers, signal
 from threading import Event, Thread
@@ -349,17 +348,13 @@ def _record_venv_redirect(state: State) -> None:
 
 
 def _venv_redirect_target(state: State, env_dirs: dict[str, Path]) -> Path | None:
-    usable = {name: env_dir for name, env_dir in env_dirs.items() if (env_dir / "pyvenv.cfg").exists()}
-    if (pinned := state.conf.core.get_optional("venv_redirect_env", str)) is not None:
-        if pinned not in env_dirs:
-            logger.warning("venv_redirect_env names %s, which is not a tox environment", pinned)
-        return usable.get(pinned)
-    # prefer what someone edits code against: an environment named dev, then a develop install, then env list order
-    ranked = [
-        ((name == "dev", _installs_develop(state.envs[name]), -at), env_dir)
-        for at, (name, env_dir) in enumerate(usable.items())
-    ]
-    return max(ranked, key=itemgetter(0))[1] if ranked else None
+    # the pick depends on the configuration alone, so it stays the same whichever environments ran
+    if (pinned := state.conf.core.get_optional("venv_redirect_env", str)) is not None and pinned not in env_dirs:
+        logger.warning("venv_redirect_env names %s, which is not a tox environment", pinned)
+        return None
+    develop = next((name for name in env_dirs if _installs_develop(state.envs[name])), None)
+    name = pinned or ("dev" if "dev" in env_dirs else develop)
+    return env_dirs[name] if name is not None and (env_dirs[name] / "pyvenv.cfg").exists() else None
 
 
 def _installs_develop(env: ToxEnv) -> bool:

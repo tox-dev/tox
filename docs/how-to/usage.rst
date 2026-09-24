@@ -192,6 +192,15 @@ The file holds one path, so you can check what an editor will see:
     $ cat .venv
     .tox/dev
 
+``tox devenv`` works as well: it points the file at the environment it creates, replacing any redirect file there, and
+later runs leave that redirect in place:
+
+.. code-block:: bash
+
+    $ tox devenv -e 3.13 venv
+    $ cat .venv
+    venv
+
 To point it at another environment without renaming it, set :ref:`venv_redirect_env` in the core section:
 
 .. code-block:: toml

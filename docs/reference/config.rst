@@ -629,9 +629,12 @@ the top level of ``tox.toml``. Placing these options in an environment section (
     Point a :pep:`832` ``.venv`` redirect file next to the configuration file at a tox environment, so that editors such
     as VS Code or PyCharm offer it as the project interpreter. The file holds a single line: the environment directory,
     relative to the file with forward slashes when it lives under the project, absolute otherwise. tox writes it at the
-    end of a run, picking the environment named by :ref:`venv_redirect_env` or, when that is unset, one named ``dev``,
-    then one that installs the project in development mode, then the first entry of :ref:`env_list`. Only environments
-    that exist count, and tox removes the file while it recreates the environment it points at.
+    end of a run for the environment named by :ref:`venv_redirect_env` or, when that is unset, one named ``dev``, else
+    the first that installs the project in development mode. Without such an environment tox writes nothing, and it
+    waits until the picked environment exists instead of pointing at another one. tox removes the file while it
+    recreates the environment it points at. ``tox devenv`` points the file at the environment it creates, replacing any
+    redirect file, and later runs leave that redirect in place. tox tells virtualenv to write no redirect file of its
+    own.
 
     tox leaves a ``.venv`` directory or symlink alone, and a redirect file pointing outside the :ref:`work_dir` and the
     tox environments, since then the user or another tool chose the environment.
