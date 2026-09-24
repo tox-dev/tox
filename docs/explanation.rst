@@ -759,14 +759,17 @@ PEP listed every environment of a project in a ``.python-envs`` file. It went ba
 tool authors warned that tools sharing one list would overwrite each other's entries and change the default under the
 user.
 
-tox runs many environments, so it picks the one you most likely edit code against. It prefers an environment named
-``dev``, then one that installs the project in development mode, then the earliest entry of :ref:`env_list`. Set
-:ref:`venv_redirect_env` when the heuristic picks wrong.
+tox runs many environments, and most exist to run tests, so the redirect names a deliberate choice: the environment in
+:ref:`venv_redirect_env`, else one named ``dev``, else the first that installs the project in development mode. A
+project that uses tox for tests and another tool for its development environment gets no redirect file. The pick depends
+on the configuration rather than on which environments ran, and tox waits until that environment exists. ``tox devenv``
+is an explicit request for a development environment, so it points the redirect at the one it creates, replacing any
+redirect file, and later runs leave it in place.
 
 The PEP asks tools not to overwrite a redirect file another tool wrote. The file carries no marker of who wrote it, so
 tox judges by the target. It treats a path inside the :ref:`work_dir` or one of its environments as its own and leaves
-any other path in place. tox also leaves a ``.venv`` directory alone, so projects managed by ``python -m venv``, uv or
-PDM keep working as before. tox also writes no redirect file while a tox environment's :ref:`env_dir` is ``.venv`` and
+any other path in place. It leaves a ``.venv`` directory alone, so projects managed by ``python -m venv``, uv or PDM
+keep working as before. tox writes no redirect file either while a tox environment's :ref:`env_dir` is ``.venv`` and
 :ref:`venv_redirect` is unset, because that environment is the ``.venv`` the PEP describes. Set :ref:`venv_redirect` to
 ``true`` there and tox stops the run. Before it builds that environment, tox deletes a redirect file an earlier tox run
 left in its place, and fails the environment on any other file it finds there. And because an environment is unusable

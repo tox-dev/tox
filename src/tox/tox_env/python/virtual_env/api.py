@@ -178,6 +178,7 @@ class VirtualEnv(Python, ABC):
         env["VIRTUALENV_COPIES"] = str(self.conf["always_copy"])
         env["VIRTUALENV_DOWNLOAD"] = str(self.conf["download"])
         env["VIRTUALENV_PYTHON"] = "\n".join(base_python)
+        env["VIRTUALENV_NO_VENV_REDIRECT"] = "True"  # tox manages the PEP 832 .venv redirect itself
         if hasattr(self.options, "discover"):
             env["VIRTUALENV_TRY_FIRST_WITH"] = os.pathsep.join(self.options.discover)
         return env
