@@ -20,7 +20,7 @@ from tox.tox_env.info import Info
 from tox.util.path import ensure_cachedir_tag, ensure_empty_dir, ensure_gitignore
 from tox.util.redact import redact_value
 from tox.util.typing_compat import override
-from tox.util.venv_redirect import forget_venv_redirect
+from tox.util.venv_redirect import forget_venv_redirect, release_venv_redirect
 
 if TYPE_CHECKING:
     from collections.abc import Iterator, Sequence
@@ -316,6 +316,11 @@ class ToxEnv(ABC):  # ruff:ignore[too-many-public-methods]
         2. contains a runner with the same type.
 
         """
+        if self.env_dir.is_file() and not release_venv_redirect(
+            self.env_dir, lambda target: target.is_relative_to(self.core.get("work_dir", Path))
+        ):
+            msg = f"{self.env_dir} is a file where this environment should live and not a redirect tox wrote; delete it"
+            raise Fail(msg)
         conf = {"name": self.conf.name, "type": type(self).__name__}
         with self.cache.compare(conf, ToxEnv.__name__) as (eq, old):
             if eq is False and old is not None:  # pragma: no branch  # recreate if already created and not equals
@@ -349,9 +354,8 @@ class ToxEnv(ABC):  # ruff:ignore[too-many-public-methods]
         env_dir = self.env_dir
         if env_dir.exists():
             LOGGER.warning("remove tox env folder %s", env_dir)
-            if self.core.get(
-                "venv_redirect", bool
-            ):  # retract it so nothing points at the environment while it rebuilds
+            # retract the redirect so nothing points at the environment while it rebuilds
+            if self.core.get_optional("venv_redirect", bool) is not False:
                 forget_venv_redirect(self.core.get("tox_root", Path), env_dir)
             ensure_empty_dir(env_dir, except_filename="file.lock")
         self._log_id = 0  # we deleted logs, so start over counter

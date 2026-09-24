@@ -617,7 +617,7 @@ the top level of ``tox.toml``. Placing these options in an environment section (
 
 .. conf::
     :keys: venv_redirect
-    :default: true
+    :default: unset
     :version_added: 4.64.0
 
     .. warning::
@@ -635,6 +635,12 @@ the top level of ``tox.toml``. Placing these options in an environment section (
 
     tox leaves a ``.venv`` directory or symlink alone, and a redirect file pointing outside the :ref:`work_dir` and the
     tox environments, since then the user or another tool chose the environment.
+
+    Left unset, tox writes the redirect file unless a tox environment's :ref:`env_dir` is the ``.venv`` path, since that
+    environment is the project's ``.venv``. With ``true``, tox writes it and fails the run before any environment starts
+    when such an environment exists; with ``false``, tox writes nothing. When a file sits where an environment should
+    live, tox deletes it if it is a redirect file tox wrote, and otherwise fails that environment with an error naming the
+    file.
 
 .. conf::
     :keys: venv_redirect_env

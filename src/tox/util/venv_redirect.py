@@ -14,6 +14,15 @@ _LOGGER: Final[logging.Logger] = logging.getLogger(__name__)
 _FILE_NAME: Final[str] = ".venv"
 
 
+def venv_redirect_path(root: Path) -> Path:
+    """The :PEP:`832` ``.venv`` path under *root*, where a redirect file or the environment itself lives.
+
+    :param root: the project root
+
+    """
+    return root / _FILE_NAME
+
+
 def record_venv_redirect(root: Path, env: Path, is_ours: Callable[[Path], bool]) -> None:
     """Point the :PEP:`832` ``.venv`` redirect file under *root* at *env*.
 
@@ -51,6 +60,21 @@ def forget_venv_redirect(root: Path, env: Path) -> None:
         file.unlink()
 
 
+def release_venv_redirect(path: Path, is_ours: Callable[[Path], bool]) -> bool:
+    """Remove the redirect file an earlier tox run wrote at *path*, so a tox environment configured there can take it.
+
+    :param path: the file sitting where an environment is configured to live
+    :param is_ours: tells whether a redirect target belongs to tox, and so the file may go
+
+    :returns: whether the file was a tox redirect and is gone
+
+    """
+    if (target := _redirect_target(path)) is None or not is_ours(target):
+        return False
+    path.unlink()
+    return True
+
+
 def _redirect_target(file: Path) -> Path | None:
     if file.is_symlink() or not file.is_file():
         return None
@@ -65,4 +89,6 @@ def _redirect_target(file: Path) -> Path | None:
 __all__ = [
     "forget_venv_redirect",
     "record_venv_redirect",
+    "release_venv_redirect",
+    "venv_redirect_path",
 ]

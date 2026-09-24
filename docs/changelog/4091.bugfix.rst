@@ -1,0 +1,7 @@
+A tox environment with ``env_dir = "{tox_root}/.venv"`` no longer crashes with ``FileExistsError`` after another
+environment ran (:issue:`4090`) - by :user:`gaborbernat`.
+
+- With :ref:`venv_redirect` unset, the new default, tox writes the redirect file unless a tox environment lives at
+  ``.venv``; with ``true``, tox fails the run with an error naming that environment.
+- tox deletes a redirect file it wrote where an environment should live, and fails the environment with an error naming
+  any other file there.

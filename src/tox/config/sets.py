@@ -341,8 +341,9 @@ class CoreConfigSet(ConfigSet):
         self.add_config(
             keys=["venv_redirect"],
             of_type=bool,
-            default=True,
-            desc="(provisional) point a PEP-832 .venv redirect file at a tox environment, so editors can discover it",
+            default=None,
+            desc="(provisional) point a PEP-832 .venv redirect file at a tox environment, so editors can discover it; "
+            "unset means on unless a tox environment lives at .venv",
         )
         self.add_config(
             keys=["venv_redirect_env"],
