@@ -7,6 +7,17 @@
 .. towncrier release notes start
 
 **********************
+ v4.64.1 (2026-09-24)
+**********************
+
+Bug fixes - 4.64.1
+==================
+
+- Apply ``-x``/``--override`` and ``TOX_OVERRIDE`` values that target a section the configuration file does not define,
+  such as ``tox.skip_missing_interpreters`` on a ``tox.ini`` without a ``[tox]`` section, instead of dropping them - by
+  :user:`gaborbernat`. (:issue:`4089`)
+
+**********************
  v4.64.0 (2026-09-24)
 **********************
 
