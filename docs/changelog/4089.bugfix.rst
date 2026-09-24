@@ -1,0 +1,3 @@
+Apply ``-x``/``--override`` and ``TOX_OVERRIDE`` values that target a section the configuration file does not define,
+such as ``tox.skip_missing_interpreters`` on a ``tox.ini`` without a ``[tox]`` section, instead of dropping them - by
+:user:`gaborbernat`.

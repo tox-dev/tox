@@ -73,6 +73,18 @@ def test_config_overrides(tox_ini_conf: ToxIniCreator) -> None:
     assert conf["c"] == "ok"
 
 
+def test_config_override_core_without_tox_section(tox_ini_conf: ToxIniCreator) -> None:
+    conf = tox_ini_conf("[testenv]", override=[Override("tox.c=ok")]).core
+    conf.add_config("c", of_type=str, default="d", desc="desc")
+    assert conf["c"] == "ok"
+
+
+def test_config_override_env_without_own_section(tox_ini_conf: ToxIniCreator) -> None:
+    conf = tox_ini_conf("[testenv]", override=[Override("testenv:py.c=ok")]).get_env("py")
+    conf.add_config("c", of_type=str, default="d", desc="desc")
+    assert conf["c"] == "ok"
+
+
 def test_config_override_wins_memory_loader(tox_ini_conf: ToxIniCreator) -> None:
     main_conf = tox_ini_conf("[testenv]", override=[Override("testenv.c=ok")])
     conf = main_conf.get_env("py", loaders=[MemoryLoader(c="something_else")])

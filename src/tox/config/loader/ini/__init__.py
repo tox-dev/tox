@@ -44,7 +44,9 @@ class IniLoader(StrConvert, Loader[str]):
         core_section: Section,
         section_key: str | None = None,
     ) -> None:
-        self._section_proxy: SectionProxy = parser[section_key or section.key]
+        key = section_key or section.key
+        # a section the file lacks behaves as an empty one, which still inherits the DEFAULT section like any other
+        self._section_proxy: SectionProxy = parser[key if parser.has_section(key) else parser.default_section]
         self._parser = parser
         self.core_section = core_section
         super().__init__(section, overrides)
