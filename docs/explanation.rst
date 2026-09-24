@@ -766,8 +766,12 @@ tox runs many environments, so it picks the one you most likely edit code agains
 The PEP asks tools not to overwrite a redirect file another tool wrote. The file carries no marker of who wrote it, so
 tox judges by the target. It treats a path inside the :ref:`work_dir` or one of its environments as its own and leaves
 any other path in place. tox also leaves a ``.venv`` directory alone, so projects managed by ``python -m venv``, uv or
-PDM keep working as before. And because an environment is unusable between the moment tox empties it and the moment the
-new interpreter lands, tox removes its redirect before a recreate and writes it back once the run ends.
+PDM keep working as before. tox also writes no redirect file while a tox environment's :ref:`env_dir` is ``.venv`` and
+:ref:`venv_redirect` is unset, because that environment is the ``.venv`` the PEP describes. Set :ref:`venv_redirect` to
+``true`` there and tox stops the run. Before it builds that environment, tox deletes a redirect file an earlier tox run
+left in its place, and fails the environment on any other file it finds there. And because an environment is unusable
+between the moment tox empties it and the moment the new interpreter lands, tox removes its redirect before a recreate
+and writes it back once the run ends.
 
 The feature is provisional. :PEP:`832` is still a draft whose format changed twice during review, and tox tracks the PEP
 rather than its own earlier behavior, so a minor or patch release may change what tox writes. Set :ref:`venv_redirect`

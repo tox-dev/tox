@@ -28,7 +28,7 @@ from tox.tox_env.errors import Fail
 from tox.util.graph import stable_topological_sort
 from tox.util.spinner import MISS_DURATION, Spinner
 from tox.util.typing_compat import override
-from tox.util.venv_redirect import record_venv_redirect
+from tox.util.venv_redirect import record_venv_redirect, venv_redirect_path
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterator, Sequence
@@ -237,6 +237,7 @@ def execute(state: State, max_workers: int | None, has_spinner: bool, live: bool
     to_run_list: list[str] = list(state.envs.iter())
     for name in to_run_list:
         cast("RunToxEnv", state.envs[name]).mark_active()
+    _venv_redirect_enabled(state, _env_dirs(state))  # reject a conflicting setting before any environment runs
 
     scheduler_error: list[BaseException] = []
 
@@ -305,6 +306,24 @@ def execute(state: State, max_workers: int | None, has_spinner: bool, live: bool
     return exit_code
 
 
+def _env_dirs(state: State) -> dict[str, Path]:
+    return {name: state.envs[name].env_dir for name in state.envs.iter(only_active=False)}
+
+
+def _venv_redirect_enabled(state: State, env_dirs: dict[str, Path]) -> bool:
+    redirect = venv_redirect_path(state.conf.core.get("tox_root", Path))
+    at_redirect = [name for name, env_dir in env_dirs.items() if env_dir == redirect]
+    if (setting := state.conf.core.get_optional("venv_redirect", bool)) is None:
+        return not at_redirect  # unset: an environment living at .venv is the project's .venv
+    if setting and at_redirect:
+        msg = (
+            f"venv_redirect is true, but tox environment {at_redirect[0]} lives at {redirect}, where the redirect file"
+            " goes; set venv_redirect to false or leave it unset"
+        )
+        raise HandledError(msg)
+    return setting
+
+
 def _order_results(state: State, results: list[ToxEnvRunResult], to_run_list: list[str]) -> list[ToxEnvRunResult]:
     name_to_run = {r.name: r for r in results}
     ordered: list[ToxEnvRunResult] = [
@@ -321,12 +340,10 @@ def _order_results(state: State, results: list[ToxEnvRunResult], to_run_list: li
 
 
 def _record_venv_redirect(state: State) -> None:
+    env_dirs = _env_dirs(state)
+    if not _venv_redirect_enabled(state, env_dirs) or (target := _venv_redirect_target(state, env_dirs)) is None:
+        return
     core = state.conf.core
-    if not core.get("venv_redirect", bool):
-        return
-    env_dirs = {name: state.envs[name].env_dir for name in state.envs.iter(only_active=False)}
-    if (target := _venv_redirect_target(state, env_dirs)) is None:
-        return
     work_dir, ours = core.get("work_dir", Path), set(env_dirs.values())
     record_venv_redirect(core.get("tox_root", Path), target, lambda path: path in ours or path.is_relative_to(work_dir))
 

@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from tox.util.venv_redirect import forget_venv_redirect, record_venv_redirect
+from tox.util.venv_redirect import forget_venv_redirect, record_venv_redirect, release_venv_redirect
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -134,3 +134,15 @@ def test_forget_without_redirect(root: Path) -> None:
     forget_venv_redirect(root, root / ".tox" / "dev")
 
     assert not (root / ".venv").exists()
+
+
+@pytest.mark.parametrize(
+    ("target", "released"),
+    [pytest.param(".tox/lint", True, id="ours"), pytest.param("../shared", False, id="foreign")],
+)
+def test_release_redirect_only_when_ours(root: Path, target: str, released: bool) -> None:
+    (root / ".venv").write_text(f"{target}\n", encoding="utf-8")
+
+    outcome = release_venv_redirect(root / ".venv", _is_ours(root))
+
+    assert (outcome, (root / ".venv").exists()) == (released, not released)
