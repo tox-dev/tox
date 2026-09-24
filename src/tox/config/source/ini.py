@@ -63,7 +63,8 @@ class IniSource(Source):
         else:
             # if no matching section/prefix is found, use the requested section key as-is (for custom prefixes)
             key = section.key
-        if self._parser.has_section(key):
+        # overrides can target a section the file lacks, such as [tox] in a minimal tox.ini
+        if self._parser.has_section(key) or section.key in override_map:
             return IniLoader(
                 section=section,
                 parser=self._parser,

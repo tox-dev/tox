@@ -198,3 +198,15 @@ def test_config_in_toml_env_list_keyed_factor_description(tox_project: ToxProjec
     outcome = project.run("c", "-e", "sync-python-tt", "-k", "description")
     outcome.assert_success()
     outcome.assert_out_err("[testenv:sync-python-tt]\ndescription = Sync python to tt\n", "")
+
+
+def test_config_in_toml_override_env_without_own_table(tox_project: ToxProjectCreator) -> None:
+    project = tox_project({
+        "tox.toml": textwrap.dedent("""\
+            [env_run_base]
+            description = "base"
+        """),
+    })
+    outcome = project.run("c", "-e", "py", "-k", "description", "-x", "env.py.description=override")
+    outcome.assert_success()
+    outcome.assert_out_err("[testenv:py]\ndescription = override\n", "")

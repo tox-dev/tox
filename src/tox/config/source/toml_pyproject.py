@@ -122,7 +122,10 @@ class TomlPyProject(Source):
         sec = cast("TomlSection", section)
         for key in sec.keys:
             if not isinstance(current, dict) or key not in current:
-                return None
+                if section.key not in override_map:
+                    return None
+                current = {}  # overrides can target a table the file lacks, such as an env without its own table
+                break
             current = current[key]
         if not isinstance(current, dict):
             msg = f"{sec.key} must be a table, is {current.__class__.__name__!r}"
