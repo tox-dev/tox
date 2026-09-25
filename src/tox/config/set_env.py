@@ -88,12 +88,15 @@ class SetEnv:
                     keys_after_file.add(key)
                     if marker := value.get("marker"):
                         self._markers[key] = Marker(marker)
+                    else:  # an unconditional redefinition drops the marker an earlier entry set, as the INI form does
+                        self._markers.pop(key, None)
             elif key == "file":
                 self._env_files.append((value, keys_after_file := set()))
             else:
                 self._raw[key] = value
                 self._defined_keys.add(key)
                 keys_after_file.add(key)
+                self._markers.pop(key, None)
 
     @staticmethod
     def _is_file_line(line: str) -> bool:

@@ -590,3 +590,24 @@ def test_set_env_marker_mixed(eval_set_env: EvalSetEnv) -> None:
     assert "ALWAYS" in keys
     assert "CONDITIONAL" in keys
     assert "NEVER" not in keys
+
+
+def test_set_env_list_unconditional_entry_drops_earlier_marker(eval_set_env: EvalSetEnv) -> None:
+    config = (
+        "[env_run_base]\npackage='skip'\n"
+        'set_env = [{ FOO = { value = "conditional", marker = "sys_platform == \'nonexistent\'" } },'
+        ' { FOO = "always" }]'
+    )
+    set_env = eval_set_env(config, of_type="toml")
+    assert "FOO" in set_env
+    assert set_env.load("FOO") == "always"
+
+
+def test_set_env_list_keeps_marker_of_last_entry(eval_set_env: EvalSetEnv) -> None:
+    config = (
+        "[env_run_base]\npackage='skip'\n"
+        'set_env = [{ FOO = "always" },'
+        ' { FOO = { value = "conditional", marker = "sys_platform == \'nonexistent\'" } }]'
+    )
+    set_env = eval_set_env(config, of_type="toml")
+    assert "FOO" not in set_env

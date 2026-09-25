@@ -6,3 +6,5 @@ by :user:`Rodrigo-Palma`.
   single table first and a table cannot hold the key twice.
 - A variable set after a ``file`` entry wins over the value the file provides, matching the ``file|`` form in INI;
   previously a repeated variable was pulled back to its first position, letting the file override it.
+- A later entry that sets a variable without a marker clears the marker an earlier entry gave it, again matching the
+  INI form.
