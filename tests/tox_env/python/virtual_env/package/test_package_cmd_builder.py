@@ -223,3 +223,21 @@ def test_run_installpkg_targz(
     })
     outcome = project.run(f"--installpkg={pkg_with_sdist}")
     outcome.assert_success()
+
+
+def test_build_wheel_external_creates_change_dir(tox_project: ToxProjectCreator) -> None:
+    ini = """
+    [testenv]
+    package = external
+    [testenv:.pkg_external]
+    change_dir = {tox_root}{/}build-here
+    commands = python -c 'import pathlib, sys; pathlib.Path(sys.argv[1]).write_bytes(b"")' {envtmpdir}{/}dist{/}out.whl
+    """
+    project = tox_project({"tox.ini": ini})
+    build_dir = project.path / "build-here"
+    assert not build_dir.exists()
+
+    result = project.run("r")
+
+    assert build_dir.is_dir(), result.out
+    assert "No such file or directory" not in result.out, result.out

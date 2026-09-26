@@ -85,6 +85,7 @@ class VenvCmdBuilder(PythonPackageToxEnv, ABC):
         if (path := getattr(self.options, "install_pkg", None)) is not None:
             return Path(path)
         chdir = self.conf.get("change_dir", Path)
+        chdir.mkdir(exist_ok=True, parents=True)
         ignore_errors = self.conf.get("ignore_errors", bool)
         if run_command_set(self, "commands", chdir, ignore_errors, []) != Outcome.OK:
             msg = "stopping as failed to build package"
