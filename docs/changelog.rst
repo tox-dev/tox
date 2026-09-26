@@ -7,6 +7,27 @@
 .. towncrier release notes start
 
 **********************
+ v4.64.3 (2026-09-26)
+**********************
+
+Bug fixes - 4.64.3
+==================
+
+- A ``set_env`` written as a list of tables in TOML now keeps every ``file`` entry and honors the order of the entries,
+  so merging one environment's ``set_env`` into another no longer drops the environment file it referenced
+  (:issue:`4093`) - by :user:`Rodrigo-Palma`.
+
+  - Each ``{ file = "..." }`` entry is read; previously only the last one survived, because the entries were merged into
+    a single table first and a table cannot hold the key twice.
+  - A variable set after a ``file`` entry wins over the value the file provides, matching the ``file|`` form in INI;
+    previously a repeated variable was pulled back to its first position, letting the file override it.
+  - A later entry that sets a variable without a marker clears the marker an earlier entry gave it, again matching the
+    INI form. (:issue:`4093`)
+
+- Create the package build environment ``change_dir`` directory before running the build commands, as the documentation
+  already promises. (:issue:`4095`)
+
+**********************
  v4.64.2 (2026-09-24)
 **********************
 

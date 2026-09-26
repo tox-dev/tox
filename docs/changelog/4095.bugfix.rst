@@ -1,2 +1,0 @@
-Create the package build environment ``change_dir`` directory before running the build commands, as the documentation
-already promises.
