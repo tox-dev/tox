@@ -311,6 +311,36 @@ def test_set_env_file_does_not_override_later_values(tox_project: ToxProjectCrea
     assert content["EXTRA"] == "from_file"
 
 
+def test_set_env_list_keeps_every_file_entry(tox_project: ToxProjectCreator) -> None:
+    toml = """\
+    [env_run_base]
+    skip_install = true
+    set_env = [{ file = "a.env" }, { file = "b.env" }]
+    """
+    project = tox_project({"tox.toml": toml, "a.env": "A=1", "b.env": "B=2"})
+    result = project.run("c", "-e", "py", "-k", "set_env")
+    result.assert_success()
+    set_env = result.env_conf("py")["set_env"]
+    content = {k: set_env.load(k) for k in set_env}
+    assert content["A"] == "1"
+    assert content["B"] == "2"
+
+
+def test_set_env_list_file_does_not_override_later_values(tox_project: ToxProjectCreator) -> None:
+    toml = """\
+    [env_run_base]
+    skip_install = true
+    set_env = [{ FOO = "BAR" }, { file = ".env" }, { FOO = "QUX" }]
+    """
+    project = tox_project({"tox.toml": toml, ".env": "FOO=from_file\nEXTRA=from_file"})
+    result = project.run("c", "-e", "py", "-k", "set_env")
+    result.assert_success()
+    set_env = result.env_conf("py")["set_env"]
+    content = {k: set_env.load(k) for k in set_env}
+    assert content["FOO"] == "QUX"
+    assert content["EXTRA"] == "from_file"
+
+
 def test_set_env_environment_file_missing(tox_project: ToxProjectCreator) -> None:
     project = tox_project({"tox.ini": "[testenv]\npackage=skip\nset_env=file|magic.txt"})
     result = project.run("r")
@@ -560,3 +590,24 @@ def test_set_env_marker_mixed(eval_set_env: EvalSetEnv) -> None:
     assert "ALWAYS" in keys
     assert "CONDITIONAL" in keys
     assert "NEVER" not in keys
+
+
+def test_set_env_list_unconditional_entry_drops_earlier_marker(eval_set_env: EvalSetEnv) -> None:
+    config = (
+        "[env_run_base]\npackage='skip'\n"
+        'set_env = [{ FOO = { value = "conditional", marker = "sys_platform == \'nonexistent\'" } },'
+        ' { FOO = "always" }]'
+    )
+    set_env = eval_set_env(config, of_type="toml")
+    assert "FOO" in set_env
+    assert set_env.load("FOO") == "always"
+
+
+def test_set_env_list_keeps_marker_of_last_entry(eval_set_env: EvalSetEnv) -> None:
+    config = (
+        "[env_run_base]\npackage='skip'\n"
+        'set_env = [{ FOO = "always" },'
+        ' { FOO = { value = "conditional", marker = "sys_platform == \'nonexistent\'" } }]'
+    )
+    set_env = eval_set_env(config, of_type="toml")
+    assert "FOO" not in set_env

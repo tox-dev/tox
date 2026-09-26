@@ -1,0 +1,10 @@
+A ``set_env`` written as a list of tables in TOML now keeps every ``file`` entry and honors the order of the entries, so
+merging one environment's ``set_env`` into another no longer drops the environment file it referenced (:issue:`4093`) -
+by :user:`Rodrigo-Palma`.
+
+- Each ``{ file = "..." }`` entry is read; previously only the last one survived, because the entries were merged into a
+  single table first and a table cannot hold the key twice.
+- A variable set after a ``file`` entry wins over the value the file provides, matching the ``file|`` form in INI;
+  previously a repeated variable was pulled back to its first position, letting the file override it.
+- A later entry that sets a variable without a marker clears the marker an earlier entry gave it, again matching the INI
+  form.

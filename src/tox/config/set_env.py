@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 import sys
-from collections.abc import Callable, Iterator, Mapping
+from collections.abc import Callable, Iterable, Iterator, Mapping
+from itertools import chain
 from pathlib import Path
 
 from packaging.markers import Marker
@@ -43,10 +44,12 @@ class SetEnv:
         from .loader.replacer import MatchExpression, find_replace_expr  # ruff:ignore[import-outside-top-level]
 
         if isinstance(raw, dict):
-            self._parse_dict(raw)
+            self._parse_dict(raw.items())
             return
         if isinstance(raw, list):
-            self._parse_dict({key: value for entry in raw for key, value in entry.items()})
+            # stream the entries in order rather than merging them into a dict first: a dict keeps only the last
+            # ``file`` entry and pulls a repeated key back to its first position, both of which change the meaning
+            self._parse_dict(chain.from_iterable(entry.items() for entry in raw))
             return
         keys_after_file: set[str] = set()
         for line in raw.splitlines():  # ruff:ignore[too-many-nested-blocks]
@@ -75,9 +78,9 @@ class SetEnv:
                         else:
                             self._markers.pop(key, None)
 
-    def _parse_dict(self, raw: dict[str, str | SetEnvEntry]) -> None:
+    def _parse_dict(self, raw: Iterable[tuple[str, str | SetEnvEntry]]) -> None:
         keys_after_file: set[str] = set()
-        for key, value in raw.items():
+        for key, value in raw:
             if not isinstance(value, str):
                 if "value" in value:
                     self._raw[key] = value["value"]
@@ -85,12 +88,15 @@ class SetEnv:
                     keys_after_file.add(key)
                     if marker := value.get("marker"):
                         self._markers[key] = Marker(marker)
+                    else:  # an unconditional redefinition drops the marker an earlier entry set, as the INI form does
+                        self._markers.pop(key, None)
             elif key == "file":
                 self._env_files.append((value, keys_after_file := set()))
             else:
                 self._raw[key] = value
                 self._defined_keys.add(key)
                 keys_after_file.add(key)
+                self._markers.pop(key, None)
 
     @staticmethod
     def _is_file_line(line: str) -> bool:
