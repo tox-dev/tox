@@ -156,10 +156,11 @@ def test_pip_pre(tox_project: ToxProjectCreator, on: bool) -> None:
     execute_calls = proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
     result = proj.run("r", "-e", "py")
     result.assert_success()
+    found_cmd = execute_calls.call_args[0][3].cmd
     if on:
-        assert "--pre" in execute_calls.call_args[0][3].cmd
+        assert found_cmd == ["python", "-I", "-m", "pip", "install", "--pre", "magic"]
     else:
-        assert "--pre" not in execute_calls.call_args[0][3].cmd
+        assert found_cmd == ["python", "-I", "-m", "pip", "install", "magic"]
 
 
 def test_install_command_no_packages(tox_project: ToxProjectCreator, disable_pip_pypi_access: tuple[str, str]) -> None:

@@ -111,8 +111,7 @@ class Pip(PythonInstallerListDependencies):
 
     def default_install_command(self, conf: Config, env_name: str | None) -> Command:  # ruff:ignore[unused-method-argument]
         isolated_flag = "-E" if self._env.base_python.version_info.major == 2 else "-I"  # ruff:ignore[magic-value-comparison]
-        cmd = Command(["python", isolated_flag, "-m", "pip", "install", "{opts}", "{packages}"])
-        return self.post_process_install_command(cmd)
+        return Command(["python", isolated_flag, "-m", "pip", "install", "{opts}", "{packages}"])
 
     def post_process_install_command(self, cmd: Command) -> Command:
         install_command = cmd.args
