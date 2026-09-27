@@ -79,13 +79,19 @@ class ArgumentParserWithEnvAndConfig(ArgumentParser):
     def get_type(action: Action) -> type[Any] | UnionType:
         of_type = _ACTION_OF_TYPE.get(action)
         if of_type is None:
+            # an option taking several values per flag holds a list of them, no matter what argparse does with them
+            many = action.nargs in {"+", "*"} or (isinstance(action.nargs, int) and action.nargs > 1)
             if isinstance(action, argparse._AppendAction):  # ruff:ignore[private-member-access]
-                if action.nargs in {"+", "*"} or (isinstance(action.nargs, int) and action.nargs > 1):
+                if many:
                     of_type = cast("type[Any]", GenericAlias(list, (GenericAlias(list, (action.type,)),)))
                 else:
                     of_type = cast("type[Any]", GenericAlias(list, (action.type,)))
             elif isinstance(action, argparse._StoreAction) and action.choices:  # ruff:ignore[private-member-access]
                 of_type = cast("type[Any]", Literal[tuple(action.choices)])  # ty: ignore[invalid-type-form] # pyrefly: ignore[invalid-literal] # choices are only known at runtime and no checker can express a Literal built from them
+            elif many and isinstance(action.default, list):
+                # the list default is the value, not the type: without this the env var value is read as one entry
+                # per character instead of one per flag value
+                of_type = cast("type[Any]", GenericAlias(list, (action.type or str,)))
             elif action.default is not None:
                 of_type = type(action.default)
             elif isinstance(action, argparse._StoreConstAction) and action.const is not None:  # ruff:ignore[private-member-access]

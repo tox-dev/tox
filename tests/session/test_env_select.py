@@ -222,6 +222,34 @@ def test_factor_select_via_env_var(
     outcome.assert_out_err("{}\n".format("\n".join(expect_envs)), "")
 
 
+@pytest.mark.parametrize(
+    ("env_value", "expect_envs"),
+    [
+        ("old", ("py39",)),
+        ("new", ("py310",)),
+        ("old;new", ("py310", "py39")),
+    ],
+)
+def test_label_select_via_env_var(
+    tox_project: ToxProjectCreator,
+    monkeypatch: MonkeyPatch,
+    env_value: str,
+    expect_envs: tuple[str, ...],
+) -> None:
+    ini = """
+        [tox]
+        env_list = py310, py39
+        labels =
+            old = py39
+            new = py310
+        """
+    monkeypatch.setenv("TOX_LABELS", env_value)
+    project = tox_project({"tox.ini": ini})
+    outcome = project.run("l", "--no-desc")
+    outcome.assert_success()
+    outcome.assert_out_err("{}\n".format("\n".join(expect_envs)), "")
+
+
 def test_tox_skip_env(tox_project: ToxProjectCreator, monkeypatch: MonkeyPatch) -> None:
     monkeypatch.setenv("TOX_SKIP_ENV", "m[y]py")
     project = tox_project({"tox.ini": "[tox]\nenv_list = py3{10,9},mypy"})

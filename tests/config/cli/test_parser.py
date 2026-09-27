@@ -113,6 +113,18 @@ def test_parser_choices_become_literal_type(monkeypatch: MonkeyPatch) -> None:
     assert set(get_args(of_type)) == {"fast", "slow", "medium"}
 
 
+@pytest.mark.parametrize("default_type", [str, None])
+def test_parser_multi_value_become_list_type(monkeypatch: MonkeyPatch, default_type: type[str] | None) -> None:
+    """An option taking several values holds a list of them, so ``TOX_<DEST>`` must not be split per character."""
+    monkeypatch.setenv("TOX_LABELS", "old;new")
+    parser = ToxParser.base()
+    action = parser.add_argument("-m", dest="labels", nargs="+", default=[], type=default_type)
+    of_type = parser.get_type(action)
+    assert of_type == list[str]  # type: ignore[comparison-overlap]
+    parser.fix_defaults()
+    assert parser.parse_args([]).labels == ["old", "new"]
+
+
 def test_sub_sub_command() -> None:
     parser = ToxParser.base()
     with pytest.raises(RuntimeError, match="no sub-command group allowed"):
