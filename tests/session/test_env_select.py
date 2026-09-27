@@ -16,7 +16,7 @@ if TYPE_CHECKING:
     from pytest_mock import MockerFixture
 
     from tox.config.sets import EnvConfigSet
-    from tox.pytest import MonkeyPatch, ToxProjectCreator
+    from tox.pytest import MonkeyPatch, ToxProjectCreator, ToxRunOutcome
 
 
 CURRENT_PY_ENV = f"py{sys.version_info[0]}{sys.version_info[1]}"  # e.g. py310
@@ -225,9 +225,11 @@ def test_factor_select_via_env_var(
 @pytest.mark.parametrize(
     ("env_value", "expect_envs"),
     [
-        ("old", ("py39",)),
-        ("new", ("py310",)),
-        ("old;new", ("py310", "py39")),
+        pytest.param("old", ("py39",), id="old"),
+        pytest.param("new", ("py310",), id="new"),
+        pytest.param("old;new", ("py310", "py39"), id="both"),
+        pytest.param("", ("py310", "py39"), id="empty"),
+        pytest.param("unknown", (), id="unknown"),
     ],
 )
 def test_label_select_via_env_var(
@@ -236,18 +238,18 @@ def test_label_select_via_env_var(
     env_value: str,
     expect_envs: tuple[str, ...],
 ) -> None:
-    ini = """
-        [tox]
-        env_list = py310, py39
-        labels =
-            old = py39
-            new = py310
-        """
     monkeypatch.setenv("TOX_LABELS", env_value)
-    project = tox_project({"tox.ini": ini})
-    outcome = project.run("l", "--no-desc")
+    outcome: Final[ToxRunOutcome] = tox_project({
+        "tox.ini": """
+            [tox]
+            env_list = py310, py39
+            labels =
+                old = py39
+                new = py310
+            """,
+    }).run("l", "--no-desc")
     outcome.assert_success()
-    outcome.assert_out_err("{}\n".format("\n".join(expect_envs)), "")
+    outcome.assert_out_err("".join(f"{env}\n" for env in expect_envs), "")
 
 
 def test_tox_skip_env(tox_project: ToxProjectCreator, monkeypatch: MonkeyPatch) -> None:

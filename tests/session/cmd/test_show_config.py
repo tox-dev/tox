@@ -14,11 +14,12 @@ from tox.execute.request import shell_cmd
 
 if TYPE_CHECKING:
     from pathlib import Path
+    from typing import Final
 
     from pytest_mock import MockerFixture
 
     from tests.conftest import PatchPrevPy
-    from tox.pytest import MonkeyPatch, ToxProjectCreator
+    from tox.pytest import MonkeyPatch, ToxProjectCreator, ToxRunOutcome
 
 
 def test_show_config_default_run_env(tox_project: ToxProjectCreator, monkeypatch: MonkeyPatch) -> None:
@@ -70,6 +71,25 @@ def test_show_config_filter_keys(tox_project: ToxProjectCreator) -> None:
     outcome = project.run("c", "-e", "py", "-k", "no_package", "env_name", "--core")
     outcome.assert_success()
     outcome.assert_out_err("[testenv:py]\nenv_name = py\n\n[tox]\nno_package = False\n", "")
+
+
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    [
+        pytest.param("env_name", "[testenv:py]\nenv_name = py\n", id="single"),
+        pytest.param("env_name;description", "[testenv:py]\nenv_name = py\ndescription = example\n", id="multiple"),
+    ],
+)
+def test_show_config_filter_keys_env_var(
+    tox_project: ToxProjectCreator,
+    monkeypatch: MonkeyPatch,
+    value: str,
+    expected: str,
+) -> None:
+    monkeypatch.setenv("TOX_LIST_KEYS_ONLY", value)
+    outcome: Final[ToxRunOutcome] = tox_project({"tox.ini": "[testenv]\ndescription=example"}).run("c", "-e", "py")
+    outcome.assert_success()
+    outcome.assert_out_err(expected, "")
 
 
 def test_show_config_unused(tox_project: ToxProjectCreator) -> None:

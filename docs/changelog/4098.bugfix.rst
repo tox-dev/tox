@@ -1,5 +1,4 @@
-This change will read a ``TOX_``-prefixed environment variable for a command line option taking several values per flag
-as a list of values again, so ``-m``/``--labels`` and ``-k`` behave like the already working ``-f``/``--factors``.
-
-``TOX_LABELS=old`` was read as one entry per character (``o``, ``l``, ``d``), which selected no environment at all;
-``TOX_LABELS=old;new`` now selects the environments labeled ``old`` and ``new``.
+Fix list conversion for command line defaults from environment variables and user configuration files. For example,
+``TOX_LABELS=old;new`` selects environments labeled ``old`` or ``new``, and ``TOX_LIST_KEYS_ONLY=env_name;deps`` selects
+both configuration keys. Support list-valued options without an explicit default or element type, including append
+actions.

@@ -9,6 +9,9 @@ import pytest
 from tox.config.cli.parser import Parsed, ToxParser
 
 if TYPE_CHECKING:
+    from pathlib import Path
+    from typing import Final
+
     from pytest_mock import MockerFixture
 
     from tox.pytest import CaptureFixture, MonkeyPatch
@@ -113,16 +116,76 @@ def test_parser_choices_become_literal_type(monkeypatch: MonkeyPatch) -> None:
     assert set(get_args(of_type)) == {"fast", "slow", "medium"}
 
 
-@pytest.mark.parametrize("default_type", [str, None])
-def test_parser_multi_value_become_list_type(monkeypatch: MonkeyPatch, default_type: type[str] | None) -> None:
-    """An option taking several values holds a list of them, so ``TOX_<DEST>`` must not be split per character."""
-    monkeypatch.setenv("TOX_LABELS", "old;new")
-    parser = ToxParser.base()
-    action = parser.add_argument("-m", dest="labels", nargs="+", default=[], type=default_type)
-    of_type = parser.get_type(action)
-    assert of_type == list[str]  # type: ignore[comparison-overlap]
+@pytest.mark.parametrize("value_type", [pytest.param(str, id="str"), pytest.param(None, id="implicit-str")])
+@pytest.mark.parametrize("default", [pytest.param([], id="empty-default"), pytest.param(None, id="no-default")])
+@pytest.mark.parametrize("source", [pytest.param("env", id="env"), pytest.param("file", id="file")])
+@pytest.mark.parametrize(
+    ("action", "nargs", "expected"),
+    [
+        pytest.param("store", "+", ["old", "new"], id="store-one-or-more"),
+        pytest.param("store", "*", ["old", "new"], id="store-zero-or-more"),
+        pytest.param("store", 1, ["old", "new"], id="store-one"),
+        pytest.param("store", 2, ["old", "new"], id="store-two"),
+        pytest.param("append", "+", [["old"], ["new"]], id="append-one-or-more"),
+        pytest.param("append", "*", [["old"], ["new"]], id="append-zero-or-more"),
+        pytest.param("append", 1, [["old"], ["new"]], id="append-one"),
+        pytest.param("append", 2, [["old"], ["new"]], id="append-two"),
+        pytest.param("append", None, ["old", "new"], id="append-scalar"),
+    ],
+)
+def test_parser_list_defaults(
+    monkeypatch: MonkeyPatch,
+    value_type: type[str] | None,
+    default: list[str] | None,
+    nargs: str | int | None,
+    action: str,
+    expected: list[str] | list[list[str]],
+    source: str,
+    tmp_path: Path,
+) -> None:
+    if source == "env":
+        monkeypatch.setenv("TOX_LABELS", "old;new")
+    else:
+        config_file: Final[Path] = tmp_path / "user.ini"
+        config_file.write_text("[tox]\nlabels =\n  old\n  new\n", encoding="utf-8")
+        monkeypatch.setenv("TOX_USER_CONFIG_FILE", str(config_file))
+    parser: Final[ToxParser] = ToxParser.base()
+    parser.add_argument("-m", dest="labels", action=action, nargs=nargs, default=default, type=value_type)
     parser.fix_defaults()
-    assert parser.parse_args([]).labels == ["old", "new"]
+    assert parser.parse_args([]).labels == expected
+
+
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    [pytest.param("old;new", ["old", "new"], id="valid"), pytest.param("old;bad", [], id="invalid")],
+)
+def test_parser_multi_value_choices(monkeypatch: MonkeyPatch, value: str, expected: list[str]) -> None:
+    monkeypatch.setenv("TOX_LABELS", value)
+    parser: Final[ToxParser] = ToxParser.base()
+    parser.add_argument("-m", dest="labels", nargs="+", default=[], choices=["old", "new"])
+    parser.fix_defaults()
+    assert parser.parse_args([]).labels == expected
+
+
+@pytest.mark.parametrize(
+    ("action", "nargs", "expected"),
+    [
+        pytest.param("store", "+", [12, 34], id="store"),
+        pytest.param("append", 1, [[12], [34]], id="append-one"),
+        pytest.param("append", "+", [[12], [34]], id="append-many"),
+    ],
+)
+def test_parser_multi_value_integers(
+    monkeypatch: MonkeyPatch,
+    action: str,
+    nargs: str | int,
+    expected: list[int] | list[list[int]],
+) -> None:
+    monkeypatch.setenv("TOX_VALUES", "12;34")
+    parser: Final[ToxParser] = ToxParser.base()
+    parser.add_argument("--values", action=action, nargs=nargs, type=int)
+    parser.fix_defaults()
+    assert parser.parse_args([]).values == expected
 
 
 def test_sub_sub_command() -> None:
