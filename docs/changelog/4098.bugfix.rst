@@ -1,4 +1,0 @@
-Fix list conversion for command line defaults from environment variables and user configuration files. For example,
-``TOX_LABELS=old;new`` selects environments labeled ``old`` or ``new``, and ``TOX_LIST_KEYS_ONLY=env_name;deps`` selects
-both configuration keys. Support list-valued options without an explicit default or element type, including append
-actions.

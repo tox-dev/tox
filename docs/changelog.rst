@@ -7,6 +7,20 @@
 .. towncrier release notes start
 
 **********************
+ v4.64.4 (2026-09-27)
+**********************
+
+Bug fixes - 4.64.4
+==================
+
+- Pass ``--pre`` once, before the packages, in the default ``install_command`` with :ref:`pip_pre` set to ``true``.
+  (:issue:`4097`)
+- Fix list conversion for command line defaults from environment variables and user configuration files. For example,
+  ``TOX_LABELS=old;new`` selects environments labeled ``old`` or ``new``, and ``TOX_LIST_KEYS_ONLY=env_name;deps``
+  selects both configuration keys. Support list-valued options without an explicit default or element type, including
+  append actions. (:issue:`4098`)
+
+**********************
  v4.64.3 (2026-09-26)
 **********************
 

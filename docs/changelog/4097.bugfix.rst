@@ -1,1 +1,0 @@
-Pass ``--pre`` once, before the packages, in the default ``install_command`` with :ref:`pip_pre` set to ``true``.
