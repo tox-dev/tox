@@ -55,6 +55,7 @@ repos:
         language: python
         types: [markdown]
         additional_dependencies:
+          - mdformat-frontmatter>=2
           - mdformat-gfm>=1
           - mdformat-ruff>=0.1.3
   - repo: local

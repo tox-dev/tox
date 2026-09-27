@@ -1,6 +1,8 @@
-______________________________________________________________________
-
-## name: Bug report about: Create a report to help us improve title: "" labels: bug assignees: ""
+---
+name: Bug report
+about: Report a bug in tox
+labels: bug:normal
+---
 
 ## Issue
 
