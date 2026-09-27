@@ -1,6 +1,8 @@
-______________________________________________________________________
-
-## name: Feature request about: Suggest an enhancement for this project title: "" labels: enhancement assignees: ""
+---
+name: Feature request
+about: Suggest a feature for tox
+labels: enhancement
+---
 
 ## What's the problem this feature will solve?
 
