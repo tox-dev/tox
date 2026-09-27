@@ -16,6 +16,7 @@ from tox.tox_env.python.virtual_env.api import VirtualEnv
 
 if TYPE_CHECKING:
     from collections.abc import Callable
+    from typing import Final
 
     from pytest_mock import MockerFixture
 
@@ -150,16 +151,24 @@ def test_recreate_when_virtualenv_changes(tox_project: ToxProjectCreator, mocker
     assert "remove tox env folder" in result.out
 
 
-@pytest.mark.parametrize("on", [True, False])
-def test_pip_pre(tox_project: ToxProjectCreator, on: bool) -> None:
-    proj = tox_project({"tox.ini": f"[testenv]\npackage=skip\npip_pre={on}\ndeps=magic"})
-    execute_calls = proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
-    result = proj.run("r", "-e", "py")
-    result.assert_success()
-    if on:
-        assert "--pre" in execute_calls.call_args[0][3].cmd
-    else:
-        assert "--pre" not in execute_calls.call_args[0][3].cmd
+@pytest.mark.parametrize(
+    ("on", "options"),
+    [pytest.param(True, ["--pre"], id="pre"), pytest.param(False, [], id="stable")],
+)
+@pytest.mark.parametrize(
+    "install_command",
+    [
+        pytest.param("", id="default"),
+        pytest.param("install_command=python -I -m pip install {opts} {packages}", id="custom"),
+    ],
+)
+def test_pip_pre(tox_project: ToxProjectCreator, on: bool, options: list[str], install_command: str) -> None:
+    proj: Final[ToxProject] = tox_project({
+        "tox.ini": f"[testenv]\npackage=skip\npip_pre={on}\ndeps=magic\n{install_command}",
+    })
+    execute_calls: Final[MagicMock] = proj.patch_execute(lambda request: 0 if "install" in request.run_id else None)
+    proj.run("r", "-e", "py").assert_success()
+    assert execute_calls.call_args[0][3].cmd == ["python", "-I", "-m", "pip", "install", *options, "magic"]
 
 
 def test_install_command_no_packages(tox_project: ToxProjectCreator, disable_pip_pypi_access: tuple[str, str]) -> None:
