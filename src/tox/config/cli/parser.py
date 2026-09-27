@@ -29,6 +29,7 @@ else:  # pragma: <3.11 cover
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterable, MutableMapping, Sequence
+    from typing import Final
 
     from packaging.requirements import Requirement
 
@@ -79,13 +80,18 @@ class ArgumentParserWithEnvAndConfig(ArgumentParser):
     def get_type(action: Action) -> type[Any] | UnionType:
         of_type = _ACTION_OF_TYPE.get(action)
         if of_type is None:
+            many: Final[bool] = action.nargs in {"+", "*"} or (isinstance(action.nargs, int) and action.nargs >= 1)
             if isinstance(action, argparse._AppendAction):  # ruff:ignore[private-member-access]
-                if action.nargs in {"+", "*"} or (isinstance(action.nargs, int) and action.nargs > 1):
-                    of_type = cast("type[Any]", GenericAlias(list, (GenericAlias(list, (action.type,)),)))
+                if many:
+                    of_type = cast("type[Any]", GenericAlias(list, (GenericAlias(list, (action.type or str,)),)))
                 else:
-                    of_type = cast("type[Any]", GenericAlias(list, (action.type,)))
+                    of_type = cast("type[Any]", GenericAlias(list, (action.type or str,)))
             elif isinstance(action, argparse._StoreAction) and action.choices:  # ruff:ignore[private-member-access]
                 of_type = cast("type[Any]", Literal[tuple(action.choices)])  # ty: ignore[invalid-type-form] # pyrefly: ignore[invalid-literal] # choices are only known at runtime and no checker can express a Literal built from them
+                if many:
+                    of_type = cast("type[Any]", GenericAlias(list, (of_type,)))
+            elif many:
+                of_type = cast("type[Any]", GenericAlias(list, (action.type or str,)))
             elif action.default is not None:
                 of_type = type(action.default)
             elif isinstance(action, argparse._StoreConstAction) and action.const is not None:  # ruff:ignore[private-member-access]
