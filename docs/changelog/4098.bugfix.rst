@@ -2,4 +2,4 @@ This change will read a ``TOX_``-prefixed environment variable for a command lin
 as a list of values again, so ``-m``/``--labels`` and ``-k`` behave like the already working ``-f``/``--factors``.
 
 ``TOX_LABELS=old`` was read as one entry per character (``o``, ``l``, ``d``), which selected no environment at all;
-``TOX_LABELS=old;new`` now selects the environments labelled ``old`` and ``new``.
+``TOX_LABELS=old;new`` now selects the environments labeled ``old`` and ``new``.
