@@ -1,1 +1,2 @@
-Report an invalid ``platform`` regular expression as a handled failure instead of an internal traceback.
+An invalid ``platform`` regular expression now fails the environment with a one-line error instead of a traceback, also
+for the provisioning environment - by :user:`00200200`.

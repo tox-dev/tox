@@ -7,6 +7,7 @@ import time
 from contextlib import contextmanager
 from pathlib import Path
 from subprocess import check_call
+from textwrap import dedent
 from typing import TYPE_CHECKING
 from unittest import mock
 from zipfile import ZipFile
@@ -270,6 +271,19 @@ def test_provision_platform_check(tox_project: ToxProjectCreator) -> None:
     result = proj.run("r")
     result.assert_failed(-2)
     msg = f"cannot provision tox environment .tox because platform {sys.platform} does not match wrong_platform"
+    assert msg in result.out
+
+
+def test_provision_invalid_platform_regex(tox_project: ToxProjectCreator) -> None:
+    toml = """
+    requires = ["p"]
+    [env.".tox"]
+    platform = "linux("
+    """
+    result = tox_project({"tox.toml": dedent(toml)}).run("r")
+
+    result.assert_failed(-2)
+    msg = "ROOT: HandledError| invalid platform regular expression 'linux(': missing ), unterminated subpattern"
     assert msg in result.out
 
 

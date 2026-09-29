@@ -15,6 +15,7 @@ from typing import TYPE_CHECKING, NamedTuple, cast
 
 from tox.config.set_env import SetEnv
 from tox.execute.request import ExecuteRequest
+from tox.report import HandledError
 from tox.tox_env.errors import Fail, Recreate, Skip
 from tox.tox_env.info import Info
 from tox.util.path import ensure_cachedir_tag, ensure_empty_dir, ensure_gitignore
@@ -298,14 +299,13 @@ class ToxEnv(ABC):  # ruff:ignore[too-many-public-methods]
         pass
 
     def _platform_check(self) -> None:
-        """Skip env when platform does not match."""
         platform_str = self.conf.get("platform", str)
         if platform_str:
             try:
                 match = re.fullmatch(platform_str, self.runs_on_platform)
             except re.error as exc:
                 msg = f"invalid platform regular expression {platform_str!r}: {exc}"
-                raise Fail(msg) from exc
+                raise HandledError(msg) from exc
             if match is None:
                 msg = f"platform {self.runs_on_platform} does not match {platform_str}"
                 raise Skip(msg)
