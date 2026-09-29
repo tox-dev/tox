@@ -1,1 +1,0 @@
-Restore the bug report and feature request templates in GitHub's issue chooser.

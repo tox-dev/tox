@@ -7,6 +7,21 @@
 .. towncrier release notes start
 
 **********************
+ v4.64.5 (2026-09-29)
+**********************
+
+Bug fixes - 4.64.5
+==================
+
+- An invalid ``platform`` regular expression now fails the environment with a one-line error instead of a traceback,
+  also for the provisioning environment - by :user:`00200200`. (:issue:`4103`)
+
+Contributor-facing changes - 4.64.5
+===================================
+
+- Restore the bug report and feature request templates in GitHub's issue chooser. (:issue:`4099`)
+
+**********************
  v4.64.4 (2026-09-27)
 **********************
 
