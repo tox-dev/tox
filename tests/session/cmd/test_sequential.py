@@ -523,6 +523,19 @@ def test_platform_matches_run_env(tox_project: ToxProjectCreator) -> None:
     result.assert_success()
 
 
+def test_platform_invalid_regex_run_env(tox_project: ToxProjectCreator) -> None:
+    toml = """
+    [env_run_base]
+    package = "skip"
+    platform = "linux("
+    """
+    result = tox_project({"tox.toml": dedent(toml)}).run("r")
+
+    result.assert_failed(code=1)
+    msg = "py: invalid platform regular expression 'linux(': missing ), unterminated subpattern at position 5"
+    assert msg in result.out
+
+
 def test_machine_factor_run_env(tox_project: ToxProjectCreator) -> None:
     parts = sysconfig.get_platform().rsplit("-", 1)
     if len(parts) < 2:

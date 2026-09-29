@@ -795,8 +795,8 @@ Base options
 
     Run on platforms that match this regular expression (empty means any platform). If a non-empty expression is defined
     and does not match against the ``sys.platform`` string the entire test environment will be skipped and none of the
-    commands will be executed. Running ``tox -e <platform_name>`` will run commands for a particular platform and skip
-    the rest.
+    commands will be executed. An invalid regular expression fails the environment instead of skipping it. Running
+    ``tox -e <platform_name>`` will run commands for a particular platform and skip the rest.
 
 .. conf::
     :keys: pass_env, passenv
