@@ -1,0 +1,1 @@
+Report an invalid ``platform`` regular expression as a handled failure instead of an internal traceback.

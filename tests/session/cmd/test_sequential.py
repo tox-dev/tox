@@ -523,6 +523,16 @@ def test_platform_matches_run_env(tox_project: ToxProjectCreator) -> None:
     result.assert_success()
 
 
+@pytest.mark.parametrize("bad_platform", ["[", "(", "*"])
+def test_platform_invalid_regex_run_env(tox_project: ToxProjectCreator, bad_platform: str) -> None:
+    ini = f"[testenv]\npackage=skip\nplatform={bad_platform}"
+    proj = tox_project({"tox.ini": ini})
+    result = proj.run("r")
+    result.assert_failed(code=1)
+    assert "internal error" not in result.out
+    assert f"py: failed with invalid platform regular expression {bad_platform!r}" in result.out
+
+
 def test_machine_factor_run_env(tox_project: ToxProjectCreator) -> None:
     parts = sysconfig.get_platform().rsplit("-", 1)
     if len(parts) < 2:

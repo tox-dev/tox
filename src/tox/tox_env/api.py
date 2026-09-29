@@ -301,7 +301,11 @@ class ToxEnv(ABC):  # ruff:ignore[too-many-public-methods]
         """Skip env when platform does not match."""
         platform_str = self.conf.get("platform", str)
         if platform_str:
-            match = re.fullmatch(platform_str, self.runs_on_platform)
+            try:
+                match = re.fullmatch(platform_str, self.runs_on_platform)
+            except re.error as exc:
+                msg = f"invalid platform regular expression {platform_str!r}: {exc}"
+                raise Fail(msg) from exc
             if match is None:
                 msg = f"platform {self.runs_on_platform} does not match {platform_str}"
                 raise Skip(msg)
