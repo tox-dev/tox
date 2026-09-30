@@ -1,0 +1,3 @@
+In INI, ``{env:KEY}`` inside a ``set_env`` pulled in with ``{[testenv]set_env}`` now sees the keys and ``file|`` entries
+that block defines, as it does when written in place, instead of falling back to the host environment - by
+:user:`breken-ai`.
