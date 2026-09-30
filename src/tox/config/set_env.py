@@ -216,8 +216,9 @@ class SetEnv:
                     key, value, marker = self._extract_key_value_marker(sub_line)
                     if key not in self._raw and key not in self._defined_keys:
                         sub_raw[key] = value
-                    if marker:
-                        self._markers[key] = Marker(marker)
+                        # the marker belongs to the value, so only the line that won the key may set it
+                        if marker:
+                            self._markers[key] = Marker(marker)
             self._materialized = {k: v for k, v in self._materialized.items() if k not in sub_raw}
             self._raw.update(sub_raw)
             self.changed = True  # loading while iterating can cause these values to be missed

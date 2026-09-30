@@ -14,6 +14,7 @@ from tox.config.set_env import SetEnv
 if TYPE_CHECKING:
     from pytest_mock import MockerFixture
 
+    from tests.conftest import ToxIniCreator
     from tox.config.set_env import SetEnvRaw
     from tox.pytest import MonkeyPatch, ToxProjectCreator
 
@@ -611,3 +612,81 @@ def test_set_env_list_keeps_marker_of_last_entry(eval_set_env: EvalSetEnv) -> No
     )
     set_env = eval_set_env(config, of_type="toml")
     assert "FOO" not in set_env
+
+
+def test_set_env_spliced_marker_still_gates_a_line_that_won(tox_ini_conf: ToxIniCreator) -> None:
+    # The counterpart to the two tests above, and the guard against over-correcting this bug by
+    # dropping the marker entirely: a spliced line that *does* win the key must keep gating it.
+    conf = tox_ini_conf(
+        textwrap.dedent("""\
+            [testenv:base]
+            set_env =
+                CONDITIONAL = yes; sys_platform == 'nonexistent'
+                PLAIN = always
+
+            [testenv:child]
+            set_env =
+                {[testenv:base]set_env}
+            """)
+    )
+    set_env = conf.get_env("child")["set_env"]
+
+    # The false marker suppresses the key it belongs to...
+    assert "CONDITIONAL" not in set_env
+    # ...while the unconditional line beside it is unaffected.
+    assert set_env.load("PLAIN") == "always"
+
+
+def test_set_env_spliced_marker_does_not_gate_key_it_lost(tox_ini_conf: ToxIniCreator) -> None:
+    # a set_env line pulled in from another section (``{[section]set_env}``) is expanded by
+    # ``SetEnv._iter_needs_replacement``. Its value loses to the later ``SHARED = own`` of the
+    # inheriting section, so its marker must not survive to gate the value that actually won -- the
+    # same rule #4077 applied to the inline and TOML forms. Without this the key is present on the
+    # first read and gone on every read after, so the second read of the same env disagrees with the
+    # first.
+    conf = tox_ini_conf(
+        textwrap.dedent("""\
+            [testenv:base]
+            set_env =
+                SHARED = inherited; sys_platform == 'nonexistent'
+
+            [testenv:child]
+            set_env =
+                {[testenv:base]set_env}
+                SHARED = own
+            """)
+    )
+    # ``sorted(set_env)`` in ``stringify``/``to_native`` and the loop in ``environment_variables`` both
+    # drain the iterator, so read it fully -- twice -- the way a real run does
+
+    def read() -> dict[str, str]:
+        set_env = conf.get_env("child")["set_env"]
+        return {key: set_env.load(key) for key in sorted(set_env)}
+
+    assert read()["SHARED"] == "own"
+    assert read()["SHARED"] == "own", "a marker from a spliced line that lost the value must not resurface"
+
+
+def test_set_env_spliced_unconditional_line_clears_a_spliced_marker(tox_ini_conf: ToxIniCreator) -> None:
+    # The mirror case: the spliced line's *value* loses to an earlier unconditional line, so its
+    # marker has to go with it. Before the fix the key was present on the first read and gone on
+    # every read after, in this order too -- the marker was written whichever way the race went.
+    conf = tox_ini_conf(
+        textwrap.dedent("""\
+            [testenv:base]
+            set_env =
+                SHARED = inherited; sys_platform == 'nonexistent'
+
+            [testenv:child]
+            set_env =
+                SHARED = own
+                {[testenv:base]set_env}
+            """)
+    )
+
+    def read() -> dict[str, str]:
+        set_env = conf.get_env("child")["set_env"]
+        return {key: set_env.load(key) for key in sorted(set_env)}
+
+    assert read()["SHARED"] == "own"
+    assert read()["SHARED"] == "own", "a spliced unconditional line must clear the marker it lost to"
