@@ -1,3 +1,3 @@
-``tox -e`` now accepts the ``cpythonNM``, ``graalpyNM``, ``jythonNM``, ``rustpythonNM`` and ``ironpythonNM`` names and the
-``d`` debug-build suffix (e.g. ``py313d``) for environments the configuration does not declare, and no longer accepts
-``cythonNM``, which silently ran on the host Python - by :user:`breken-ai`.
+``tox -e`` now accepts the ``cpythonNM``, ``graalpyNM``, ``jythonNM``, ``rustpythonNM`` and ``ironpythonNM`` names and
+the ``d`` debug-build suffix (e.g. ``py313d``) for environments the configuration does not declare, and no longer
+accepts ``cythonNM``, which silently ran on the host Python - by :user:`breken-ai`.
