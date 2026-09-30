@@ -389,6 +389,16 @@ def test_matches_combined_env(env_name: str, tox_project: ToxProjectCreator) -> 
         "3.12t",
         "3.12.0",
         "3.12.0t",
+        "py312d",
+        "py312td",
+        "3.12d",
+        "cpython3",
+        "cpython312",
+        "cpython3.12",
+        "graalpy311",
+        "jython2.7",
+        "rustpython3",
+        "ironpython3",
     ],
 )
 def test_dynamic_env_factors_match(env: str) -> None:
@@ -401,10 +411,19 @@ def test_dynamic_env_factors_match(env: str) -> None:
         "cy3",
         "cov",
         "py10.1",
+        "cython312",
     ],
 )
 def test_dynamic_env_factors_not_match(env: str) -> None:
     assert not _DYNAMIC_ENV_FACTORS.fullmatch(env)
+
+
+@pytest.mark.parametrize("env_name", ["cpython313", "cpython-3.13", "graalpy311", "py313d"])
+def test_interpreter_env_not_in_config_accepted(env_name: str, tox_project: ToxProjectCreator) -> None:
+    proj = tox_project({"tox.ini": "[tox]\nenv_list = lint\n[testenv]\npackage = skip\n"})
+    outcome = proj.run("c", "-e", env_name, "-k", "env_name")
+    outcome.assert_success()
+    assert f"[testenv:{env_name}]" in outcome.out
 
 
 @pytest.mark.parametrize("env_name", ["functional-py312", "functional"])
