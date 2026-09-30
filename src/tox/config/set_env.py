@@ -202,10 +202,13 @@ class SetEnv:
         yield from self._iter_needs_replacement()
 
     def _iter_needs_replacement(self) -> Iterator[str]:
+        from .loader.replacer import SET_ENV_SPLICE  # ruff:ignore[import-outside-top-level]
+
         args = ConfigLoadArgs([], self._name, self._env_name)
+        requeued: set[str] = set()
         while self._needs_replacement:
             line = self._needs_replacement.pop(0)
-            expanded_line = self._replacer(line, args)
+            expanded_line = self._replacer(line, ConfigLoadArgs([SET_ENV_SPLICE], self._name, self._env_name))
             sub_raw: dict[str, str] = {}
             for sub_line in filter(None, expanded_line.splitlines()):
                 if self._is_file_line(sub_line):
@@ -213,17 +216,30 @@ class SetEnv:
                         if key not in self._raw and key not in self._defined_keys:
                             sub_raw[key] = value  # ruff:ignore[manual-dict-comprehension]
                 else:
-                    key, value, marker = self._extract_key_value_marker(sub_line)
-                    if key not in self._raw and key not in self._defined_keys:
-                        sub_raw[key] = value
-                    if marker:
-                        self._markers[key] = Marker(marker)
+                    self._splice_line(sub_line, sub_raw, requeued)
             self._materialized = {k: v for k, v in self._materialized.items() if k not in sub_raw}
             self._raw.update(sub_raw)
             self.changed = True  # loading while iterating can cause these values to be missed
             for key in sub_raw:
                 if self._marker_matches(key):
                     yield key
+
+    def _splice_line(self, line: str, sub_raw: dict[str, str], requeued: set[str]) -> None:
+        from .loader.replacer import MatchExpression, find_replace_expr  # ruff:ignore[import-outside-top-level]
+
+        try:
+            key, value, marker = self._extract_key_value_marker(line)
+        except ValueError:  # a whole line left for later, e.g. {env:LINES} inside {[testenv]set_env}
+            if not any(isinstance(expr, MatchExpression) for expr in find_replace_expr(line)):
+                raise
+            if line not in requeued:  # a self-referencing section must not loop forever
+                requeued.add(line)
+                self._needs_replacement.append(line)
+            return
+        if key not in self._raw and key not in self._defined_keys:
+            sub_raw[key] = value
+        if marker:
+            self._markers[key] = Marker(marker)
 
     def update(self, param: Mapping[str, str] | SetEnv, *, override: bool = True) -> None:
         for key in param:

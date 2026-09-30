@@ -611,3 +611,56 @@ def test_set_env_list_keeps_marker_of_last_entry(eval_set_env: EvalSetEnv) -> No
     )
     set_env = eval_set_env(config, of_type="toml")
     assert "FOO" not in set_env
+
+
+def test_set_env_cross_section_value_sees_sibling_keys(tox_project: ToxProjectCreator) -> None:
+    ini = """
+        [testenv]
+        package = skip
+        set_env =
+            file|.env
+            ROOT = /opt
+            BASE = {env:ROOT}/app
+            DATA = {env:BASE}/data
+            FROM_FILE = {env:A}-x
+            HIDDEN = 1; sys_platform == "nonexistent"
+        [testenv:y]
+        set_env =
+            {[testenv]set_env}
+            EXTRA = 1
+    """
+    project = tox_project({"tox.ini": ini, ".env": "A=from_file\n"})
+    result = project.run("c", "-k", "set_env", "-e", "py,y")
+    result.assert_success()
+    expected = {"ROOT": "/opt", "BASE": "/opt/app", "DATA": "/opt/app/data", "FROM_FILE": "from_file-x"}
+    for env in ("py", "y"):
+        set_env = result.env_conf(env)["set_env"]
+        assert {k: set_env.load(k) for k in expected} == expected, env
+        assert "HIDDEN" not in set_env, env
+
+
+def test_set_env_cross_section_line_from_env(tox_project: ToxProjectCreator, monkeypatch: MonkeyPatch) -> None:
+    monkeypatch.setenv("MAGIC", "B=2")
+    ini = """
+        [base]
+        set_env = {env:MAGIC}
+        [testenv]
+        package = skip
+        set_env =
+            A = 1
+            {env:MAGIC}
+        [testenv:y]
+        set_env =
+            {[testenv]set_env}
+            {[base]set_env}
+    """
+    result = tox_project({"tox.ini": ini}).run("c", "-k", "set_env", "-e", "y")
+    result.assert_success()
+    set_env = result.env_conf("y")["set_env"]
+    assert (set_env.load("A"), set_env.load("B")) == ("1", "2")
+
+
+def test_set_env_cross_section_invalid_line(tox_project: ToxProjectCreator) -> None:
+    ini = "[testenv]\npackage=skip\nset_env=\n A=1\n bad\n[testenv:y]\nset_env={[testenv]set_env}\n"
+    result = tox_project({"tox.ini": ini}).run("c", "-k", "set_env", "-e", "y", raise_on_config_fail=False)
+    assert "invalid line 'bad' in set_env" in result.out, result.out

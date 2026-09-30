@@ -31,6 +31,9 @@ BACKSLASH_ESCAPE_CHARS: Final[tuple[str, ...]] = (ARG_DELIMITER, REPLACE_START, 
 MAX_REPLACE_DEPTH: Final[int] = 100
 # lets a run resolve a labeled factor to a value the configuration does not list, without renaming environments
 _FACTOR_ENV_PREFIX: Final[str] = "TOX_FACTOR_"
+# last chain entry while ``set_env`` expands a line such as ``{[testenv]set_env}``: ``{env:...}`` inside the pulled-in
+# text is left for ``SetEnv.load`` so it can see keys the same text defines, as it would if written in place
+SET_ENV_SPLICE: Final[str] = "set_env:splice"
 
 
 class MatchRecursionError(ValueError):
@@ -233,6 +236,8 @@ class Replacer:
             return os.sep
         if not of_type and args == [""]:
             return os.pathsep
+        if of_type == "env" and self.depth and self.conf_args.chain[-1:] == [SET_ENV_SPLICE]:
+            return None  # keep it as written, SetEnv.load resolves it once the whole spliced text is known
         dispatch: dict[str, Callable[[], str | None]] = {
             "env": lambda: replace_env(self.conf, args, conf_args),
             "tty": lambda: replace_tty(args),
@@ -341,6 +346,7 @@ def replace_factor(conf: Config, args: list[str], conf_args: ConfigLoadArgs) -> 
 
 
 __all__ = [
+    "SET_ENV_SPLICE",
     "MatchExpression",
     "MatchRecursionError",
     "find_replace_expr",
