@@ -1,0 +1,1 @@
+Point ``tox man`` at ``~/.profile`` for shells other than fish, bash and zsh, instead of ``~/.zshrc``.
