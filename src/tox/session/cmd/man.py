@@ -96,11 +96,14 @@ def _print_manpath_instructions() -> None:
     shell = os.environ.get("SHELL", "")
     is_fish = "fish" in shell
 
-    rc_file = {
-        True: "~/.config/fish/config.fish",
-        "bash" in shell: "~/.bashrc",
-        "zsh" in shell: "~/.zshrc",
-    }.get(is_fish or any(s in shell for s in ("bash", "zsh")), "~/.profile")
+    if is_fish:
+        rc_file = "~/.config/fish/config.fish"
+    elif "bash" in shell:
+        rc_file = "~/.bashrc"
+    elif "zsh" in shell:
+        rc_file = "~/.zshrc"
+    else:
+        rc_file = "~/.profile"
 
     print(f"To complete setup, add this to {rc_file}:")  # ruff:ignore[print]
     print()  # ruff:ignore[print]
