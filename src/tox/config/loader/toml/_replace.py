@@ -15,6 +15,7 @@ from python_discovery import KNOWN_ARCHITECTURES, normalize_isa
 from tox.config.loader.api import apply_overrides_to_raw
 from tox.config.loader.ini.factor import find_factor_groups
 from tox.config.loader.replacer import (
+    BACKSLASH_ESCAPE_CHARS,
     MatchError,
     MatchRecursionError,
     ReplaceReference,
@@ -45,6 +46,7 @@ class Unroll:
         self.conf = conf
         self.loader = loader
         self.args = args
+        self._refs: list[str] = []
         self.factors = self._extract_factors(args.env_name)
         self.factors.add(sys.platform)
 
@@ -104,15 +106,14 @@ class Unroll:
                     )
                     return {"value": posargs_result, "marker": marker} if marker else posargs_result
                 if replace_type == "env":
-                    # use a copy of the chain so this substitution's env references do not leak into
-                    # adjacent entries of the same value tree and spuriously trip the circular check (#2869)
-                    env_result: TomlTypes = replace_env(
-                        self.conf,
-                        [
-                            validate(value["name"], str),
-                            validate(self(value.get("default", ""), depth, skip_str=skip_str), str),
-                        ],
-                        self.args.copy(),
+                    name = validate(value["name"], str)
+                    default = validate(self(value.get("default", ""), depth, skip_str=skip_str), str)
+                    env_result: TomlTypes = (
+                        _env_expression(name, default)  # set_env resolves it when read, seeing the keys next to it
+                        if skip_str
+                        # use a copy of the chain so this substitution's env references do not leak into
+                        # adjacent entries of the same value tree and spuriously trip the circular check (#2869)
+                        else replace_env(self.conf, [name, default], self.args.copy())
                     )
                     return {"value": env_result, "marker": marker} if marker else env_result
                 if replace_type == "glob":
@@ -139,13 +140,42 @@ class Unroll:
             return cast("TomlTypes", result)
         if of := value.get("of"):
             validated_of = validate(of, list[str])
-            loaded = self.loader.load_raw_from_root(self.loader.section.SEP.join(validated_of))
+            if (path := self.loader.section.SEP.join(validated_of)) in self._refs:
+                msg = f"circular reference {' -> '.join([*self._refs, path])}"
+                raise MatchRecursionError(msg)
+            loaded = self.loader.load_raw_from_root(path)
             if self.conf is not None:
                 *namespace_parts, ref_key = validated_of
                 namespace = self.loader.section.SEP.join(namespace_parts)
                 loaded = apply_overrides_to_raw(self.conf.overrides.get(namespace, []), ref_key, loaded)
-            return self(loaded, depth, skip_str=skip_str)
+            self._refs.append(path)
+            try:
+                return self(loaded, depth, skip_str=skip_str)
+            finally:
+                self._refs.pop()
         return value
+
+
+def _env_expression(name: str, default: str) -> str:
+    """Write an ``env`` table as the ``{env:NAME:DEFAULT}`` string that resolves to the same value."""
+    escaped_name = "".join(f"\\{char}" if char in BACKSLASH_ESCAPE_CHARS else char for char in name)
+    # the default keeps its substitutions, but a brace it does not pair would end the expression early
+    parts: list[str] = []
+    unclosed: list[int] = []
+    pos = 0
+    while pos < len(default):
+        piece = default[pos : pos + 2] if default[pos] == "\\" else default[pos]
+        pos += len(piece)
+        if piece == "{":
+            unclosed.append(len(parts))
+        elif piece == "}" and unclosed:
+            unclosed.pop()
+        elif piece == "}":
+            piece = "\\}"
+        parts.append(piece)
+    for index in unclosed:
+        parts[index] = "\\{"
+    return f"{{env:{escaped_name}:{''.join(parts)}}}"
 
 
 def _replace_glob_toml(conf: Config | None, value: dict[str, Any]) -> list[TomlTypes] | str:

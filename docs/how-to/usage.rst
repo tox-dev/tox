@@ -614,7 +614,55 @@ Common architecture values (after normalization):
 - ``s390x`` — IBM Z mainframe
 - ``ppc64le`` — 64-bit PowerPC little-endian
 
+.. _howto-share-set-env:
+
 .. _howto_conditional_values:
+
+**************************************************
+ Share environment variables between environments
+**************************************************
+
+Define the shared variables once and include them where you need them. Values may refer to each other with
+``{env:KEY}``; tox resolves them in the environment that includes them.
+
+.. tab:: TOML
+
+    .. code-block:: toml
+
+         [env_run_base]
+         set_env = { APP_ROOT = "{tox_root}{/}app", DATA_DIR = "{env:APP_ROOT}{/}data" }
+
+         [env.integration]
+         set_env = [
+             { replace = "ref", of = ["env_run_base", "set_env"] },
+             { DATA_DIR = "{env:APP_ROOT}{/}fixtures" },
+         ]
+
+.. tab:: INI (deprecated)
+
+    .. code-block:: ini
+
+         [testenv]
+         set_env =
+             APP_ROOT = {tox_root}{/}app
+             DATA_DIR = {env:APP_ROOT}{/}data
+
+         [testenv:integration]
+         set_env =
+             {[testenv]set_env}
+             DATA_DIR = {env:APP_ROOT}{/}fixtures
+
+``integration`` keeps ``APP_ROOT`` and replaces ``DATA_DIR``: in TOML the later list entry wins, in INI a line written
+in the environment wins over an included one. Check the result with ``tox config -e integration -k set_env``.
+
+Common pitfalls:
+
+- To extend a host variable, refer to the key you set: ``PATH = {env:PATH}{:}/opt/bin`` reads the host ``PATH``. Under a
+  different name, ``{env:PATH}`` reads the ``set_env`` value when the environment sets ``PATH``.
+- Two sections that include each other, or two values that refer to each other, fail the environment with the chain.
+  Move the shared lines into a third section both include.
+
+See :ref:`set_env resolution rules <set-env-resolution>` for the full rules.
 
 *********************************
  Set values based on a condition

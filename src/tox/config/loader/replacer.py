@@ -75,6 +75,11 @@ def replace(conf: Config, reference: ReplaceReference, value: str, args: ConfigL
     return Replacer(conf, reference, conf_args=args, depth=depth).join(find_replace_expr(value))
 
 
+def replace_once(conf: Config, reference: ReplaceReference, value: str, args: ConfigLoadArgs) -> str:
+    """Replace the active tokens within value, but not the tokens within the text they are replaced with."""
+    return Replacer(conf, reference, conf_args=args, recursive=False).join(find_replace_expr(value))
+
+
 class MatchExpression:  # ruff:ignore[eq-without-hash]
     """An expression that is handled specially by the Replacer."""
 
@@ -193,11 +198,20 @@ def _flatten_string_fragments(seq_of_str_or_other: Sequence[str | Any]) -> Seque
 class Replacer:
     """Recursively expand MatchExpression against the config and loader."""
 
-    def __init__(self, conf: Config, reference: ReplaceReference, conf_args: ConfigLoadArgs, depth: int = 0) -> None:
+    def __init__(
+        self,
+        conf: Config,
+        reference: ReplaceReference,
+        conf_args: ConfigLoadArgs,
+        depth: int = 0,
+        *,
+        recursive: bool = True,
+    ) -> None:
         self.conf = conf
         self.reference = reference
         self.conf_args = conf_args
         self.depth = depth
+        self.recursive = recursive
 
     def __call__(self, value: MatchArg) -> Sequence[str]:
         return [self._replace_match(me) if isinstance(me, MatchExpression) else str(me) for me in value]
@@ -213,7 +227,7 @@ class Replacer:
         replace_value = self._resolve_replace(of_type, args, flattened_args, conf_args)
         if replace_value is not None:
             needs_expansion = any(isinstance(m, MatchExpression) for m in find_replace_expr(replace_value))
-            if needs_expansion:
+            if needs_expansion and self.recursive:
                 try:
                     return replace(self.conf, self.reference, replace_value, conf_args, self.depth + 1)
                 except MatchRecursionError as err:
@@ -348,4 +362,5 @@ __all__ = [
     "replace",
     "replace_env",
     "replace_factor",
+    "replace_once",
 ]

@@ -166,6 +166,29 @@ conditionally set variables based on platform:
         COVERAGE_FILE = {work_dir}/.coverage.{env_name}
         LDFLAGS = -L/usr/local/lib ; sys_platform == "darwin"
 
+.. _set-env-two-phases:
+
+Why set_env resolves values late
+--------------------------------
+
+Most keys resolve in one step: tox loads the key, substitutes its text, and caches the result. ``set_env`` cannot work
+that way, because its values refer to each other. ``DATA = {env:BASE}/data`` needs ``BASE``, which may come from a later
+line, an environment file, or a section another environment includes. tox splits ``set_env`` in two phases:
+
+1. **Structure**, when tox loads the environment. tox collects every key: lines written in place, ``file|`` entries,
+   included sections and TOML ``ref`` tables. It leaves the values as written.
+2. **Values**, when something reads a key. tox substitutes that one value, and an ``{env:...}`` inside it can read any
+   key from phase one.
+
+Earlier releases substituted the values of an included INI section, and ``{ replace = "env" }`` tables in TOML, during
+phase one, before the keys they referred to existed. They read the host variable instead, so an environment that
+included a section could end up with different values than the section itself.
+
+The precedence rule, own lines over included sections and later includes over earlier ones, matches what writing the
+included lines in place gives, and it applies the same way at every depth so a nested section cannot override the
+section that includes it. Cycles cannot resolve in either phase, so tox reports them with the chain of keys or sections
+instead of picking a value.
+
 .. _conditional-values-explained:
 
 Conditional value evaluation

@@ -8,6 +8,7 @@ from tox.config.loader.api import ConfigLoadArgs, Loader, Override
 from tox.config.loader.ini.factor import filter_for_env
 from tox.config.loader.ini.replace import ReplaceReferenceIni
 from tox.config.loader.replacer import replace as replace_references
+from tox.config.loader.replacer import replace_once
 from tox.config.loader.str_convert import StrConvert
 from tox.config.set_env import SetEnv
 from tox.report import HandledError
@@ -84,13 +85,15 @@ class IniLoader(StrConvert, Loader[str]):
     ) -> V:
         delay_replace = inspect.isclass(of_type) and issubclass(of_type, SetEnv)
 
-        def replacer(raw_: str, args_: ConfigLoadArgs) -> str:
+        def replacer(raw_: str, args_: ConfigLoadArgs, *, recursive: bool = True) -> str:
             if conf is None:
                 replaced = raw_  # no replacement supported in the core section
             else:
                 reference_replacer = ReplaceReferenceIni(conf, self)
                 try:
-                    replaced = replace_references(conf, reference_replacer, raw_, args_)  # do replacements
+                    replaced = (replace_references if recursive else replace_once)(
+                        conf, reference_replacer, raw_, args_
+                    )
                 except Exception as exception:
                     if isinstance(exception, (HandledError, Skip)):
                         raise

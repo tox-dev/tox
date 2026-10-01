@@ -7,7 +7,7 @@ from types import GenericAlias
 from typing import TYPE_CHECKING, Any, TypeVar, cast
 
 from tox.config.loader.api import ConfigLoadArgs, Loader, Override
-from tox.config.loader.replacer import MatchError, replace
+from tox.config.loader.replacer import MatchError, MatchRecursionError, replace, replace_once
 from tox.config.set_env import SetEnv
 from tox.config.types import Command, EnvList
 from tox.report import HandledError
@@ -88,10 +88,14 @@ class TomlLoader(Loader[TomlTypes]):
         if delay_replace:
             loader = self
 
-            def _toml_replacer(value: str, args_: ConfigLoadArgs) -> str:
+            def _toml_replacer(value: str, args_: ConfigLoadArgs, *, recursive: bool = True) -> str:
                 if conf is None:
                     return value
-                return replace(conf, TomlReplaceLoader(conf, loader), value, args_)
+                try:
+                    return (replace if recursive else replace_once)(conf, TomlReplaceLoader(conf, loader), value, args_)
+                except MatchRecursionError as exception:
+                    msg = f"failed to load {args.env_name}.{key}: {exception}"
+                    raise HandledError(msg) from exception
 
             cast("SetEnv", result).use_replacer(_toml_replacer, args=args)  # delay_replace means of_type is SetEnv
         return result
