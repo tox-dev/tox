@@ -7,6 +7,40 @@
 .. towncrier release notes start
 
 **********************
+ v4.64.6 (2026-10-01)
+**********************
+
+Bug fixes - 4.64.6
+==================
+
+- ``tox -e`` and ``TOXENV`` accept every interpreter name that picks a ``base_python`` for an environment the
+  configuration does not declare - by :user:`breken-ai`.
+
+  - ``cpython313``, ``cpython-3.13``, ``graalpy311``, ``jython2.7``, ``rustpython3`` and ``ironpython3`` select that
+    interpreter instead of failing with "provided environments not found".
+  - The ``d`` debug-build suffix works too, for example ``py313d``.
+  - ``cython313`` now fails as an unknown environment; it used to run on the Python that tox runs under. (:issue:`4106`)
+
+- A ``set_env`` block pulled in with ``{[section]set_env}`` now applies a PEP-508 marker only to the value it came with,
+  as the inline and TOML forms already do - by :user:`feiiiiii5`. A false marker on an earlier line no longer hides a
+  value that the inheriting environment, a later unconditional line or an environment file supplies. (:issue:`4107`)
+- ``set_env`` values resolve when tox reads them, so ``{env:KEY}`` sees the keys a block pulls in with
+  ``{[section]set_env}``, and a ``{ replace = "env" }`` table sees the keys next to it - by :user:`gaborbernat`, found
+  by :user:`breken-ai`. Configurations that see a difference:
+
+  - A value pulled in from another section that refers to a key of the same block now gets the block's value instead of
+    the host variable.
+  - A pulled-in line that refers to its own key, such as ``PYTHONHASHSEED = {env:PYTHONHASHSEED:0}``, reads the host
+    variable or its default, as the same line written in place does. It used to read the value tox sets.
+  - A key written in an INI ``set_env`` wins over the same key pulled in from another section, and a later pulled-in
+    section wins over an earlier one, at every nesting level. A nested section could override the section that included
+    it before.
+  - ``tox config`` shows the keys of every pulled-in section that ``tox run`` sets.
+  - A section that pulls itself in, a TOML ``ref`` to itself, and values that refer to each other fail the environment
+    with the cycle. They used to fail with a traceback or "could not find python interpreter", and values that referred
+    to each other inside a pulled-in section read the host variables without a warning. (:issue:`4108`)
+
+**********************
  v4.64.5 (2026-09-29)
 **********************
 
