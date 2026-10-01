@@ -1108,6 +1108,61 @@ Base options
     For conditional settings that should differ per target Python environment (e.g., based on Python version), use
     tox's :ref:`conditional settings <conditional-settings>` mechanism with environment factors instead.
 
+    .. _set-env-resolution:
+
+    **How tox resolves set_env**
+
+    ``set_env`` differs from every other key: tox reads its structure when it loads the environment, and substitutes each
+    value only when it reads that value. These rules follow from that and hold for both TOML and INI:
+
+    1. ``{env:KEY}`` in a value sees every key the environment's ``set_env`` ends up with, whether the key comes from the
+       same table, an included section, or an environment file. It falls back to the host variable only when no
+       ``set_env`` key matches, see :ref:`environment variable substitutions`.
+    2. A value that refers to its own key, ``PATH = {env:PATH}{:}/extra``, reads the host variable.
+    3. Including another section's ``set_env`` behaves as if you wrote its lines in place. In INI that is
+       ``{[section]set_env}``; in TOML it is ``{ replace = "ref", of = [...] }``. The included values resolve in the
+       including environment, so ``{env_name}`` and ``{posargs}`` refer to that environment.
+    4. When two lines set the same key, a key written directly in a ``set_env`` wins over the same key from an included
+       section, and a later included section wins over an earlier one. The rule applies again inside every included
+       section. In the TOML list form, the later entry wins.
+    5. A ``{ replace = "env" }`` table resolves like the ``{env:...}`` string it stands for, so rule 1 applies to it too.
+    6. A section that includes itself, directly or through other sections, a TOML ``ref`` that refers to itself, and
+       values that refer to each other (``A = {env:B}``, ``B = {env:A}``) fail the environment with an error that names
+       the chain.
+
+    .. tab:: TOML
+
+        .. code-block:: toml
+
+           [tool.tox.env.base]
+           set_env = { BASE = "/opt/app", DATA = "{env:BASE}/data", LOGS = { replace = "env", name = "BASE" } }
+
+           [tool.tox.env.integration]
+           set_env = { replace = "ref", of = ["tool", "tox", "env", "base", "set_env"] }
+
+    .. tab:: INI (deprecated)
+
+        .. code-block:: ini
+
+           [base]
+           set_env =
+               BASE = /opt/app
+               DATA = {env:BASE}/data
+
+           [testenv:integration]
+           set_env =
+               {[base]set_env}
+               EXTRA = 1
+
+    Both forms set ``DATA`` to ``/opt/app/data`` in ``integration``, whatever ``BASE`` holds on the host. See
+    :ref:`howto-share-set-env` for recipes and :ref:`set-env-two-phases` for the reasoning.
+
+    .. note::
+
+       Earlier releases resolved values pulled in with ``{[section]set_env}`` and ``{ replace = "env" }`` tables before
+       the other keys existed, so they read the host variable. A nested section could override the section that
+       included it, and cycles failed with a traceback or "could not find python interpreter".
+
     .. note::
 
        Changing installer-relevant environment variables via ``set_env`` (e.g. ``PIP_INDEX_URL``,
@@ -2714,6 +2769,9 @@ You can reference environment variables via the ``env`` replacement:
 
 If the environment variable is set then the ``COVERAGE_FILE`` will become that, otherwise will default to ``ok``.
 
+Inside ``set_env`` the table resolves like ``{env:NAME:DEFAULT}``: it reads another ``set_env`` key named ``NAME``
+first, see :ref:`set_env resolution rules <set-env-resolution>`. Naming its own key, as above, reads the host variable.
+
 References within set_env
 =========================
 
@@ -2734,6 +2792,9 @@ dictionaries to ``set_env`` they will be merged together, for example:
     ]
 
 Here the ``magic`` tox environment will have both ``A``, ``B``, ``C`` and ``D`` environments set.
+
+When two entries set the same key, the later entry wins. A ``ref`` that leads back to itself fails with ``circular
+reference`` and the chain of ``of`` paths.
 
 Glob pattern reference
 ======================
@@ -2943,6 +3004,10 @@ others to avoid repeating the same values:
     deps =
         mercurial
         {[base]deps}
+
+tox substitutes the referenced value again in the environment that refers to it. Inside :ref:`set_env`, tox pastes the
+referenced lines as if you wrote them in place and substitutes each value when it reads it, see :ref:`set_env resolution
+rules <set-env-resolution>`.
 
 .. _conditional-settings:
 
@@ -3266,6 +3331,10 @@ create your virtual env for the developers. This also supports ranges in the sam
 **Value substitution** operates through the ``{...}`` string-substitution pattern. The string inside the curly braces
 may reference a global or per-environment config key as described above.
 
+tox substitutes a key's value when it loads the key, and substitutes the result again until no ``{...}`` expression
+remains, so a referenced value may contain substitutions of its own. :ref:`set_env` is the exception: tox substitutes
+each of its values only when it reads that value, see :ref:`set_env resolution rules <set-env-resolution>`.
+
 In substitutions, the backslash character ``\`` will act as an escape when preceding ``{``, ``}``, ``:``, ``[``, or
 ``]``, otherwise the backslash will be reproduced literally:
 
@@ -3307,6 +3376,14 @@ If you specify a substitution string like this:
 
 then the value will be retrieved as ``os.environ['KEY']`` and replaced with an empty string if the environment variable
 does not exist.
+
+Inside a tox environment, tox looks up ``KEY`` in this order:
+
+1. the environment's :ref:`set_env`, unless the substitution sits in the value of ``KEY`` itself,
+2. the host environment (``os.environ``),
+3. the default, or an empty string without one.
+
+So ``commands = echo {env:FOO}`` prints the ``set_env`` value of ``FOO`` when the environment sets one.
 
 Environment variable substitutions with default values
 ======================================================

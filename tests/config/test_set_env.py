@@ -660,3 +660,410 @@ def test_set_env_spliced_marker(
 
     result.assert_success()
     assert result.out.splitlines()[1] == expected
+
+
+@pytest.mark.parametrize(
+    ("of_type", "config", "environ", "expected"),
+    [
+        pytest.param(
+            "ini",
+            """
+            [a]
+            set_env =
+                BASE = /opt/app
+                DATA = {env:BASE}/data
+            [testenv]
+            package = skip
+            set_env = {[a]set_env}
+            """,
+            {},
+            {"DATA": "/opt/app/data"},
+            id="ini-sibling-key",
+        ),
+        pytest.param(
+            "ini",
+            """
+            [a]
+            set_env =
+                BASE = /b
+                VALUE = {posargs:{env:BASE}}
+            [testenv]
+            package = skip
+            set_env = {[a]set_env}
+            """,
+            {},
+            {"VALUE": "/b"},
+            id="ini-posargs-default",
+        ),
+        pytest.param(
+            "ini",
+            """
+            [a]
+            set_env =
+                BASE = /a
+                {env:LINES}
+            [testenv]
+            package = skip
+            set_env = {[a]set_env}
+            """,
+            {"LINES": "FROM_LINES = {env:BASE}/lines"},
+            {"FROM_LINES": "/a/lines"},
+            id="ini-env-lines-see-block",
+        ),
+        pytest.param(
+            "ini",
+            """
+            [a]
+            set_env =
+                {env:KNAME} = 1
+            [testenv]
+            package = skip
+            set_env = {[a]set_env}
+            """,
+            {"KNAME": "FOO"},
+            {"FOO": "1"},
+            id="ini-key-substitution",
+        ),
+        pytest.param(
+            "ini",
+            """
+            [a]
+            set_env =
+                A = fromblock
+                file|a.env
+            [testenv]
+            package = skip
+            set_env = {[a]set_env}
+            """,
+            {},
+            {"A": "fromblock", "FROM_FILE": "fromblock-x"},
+            id="ini-file",
+        ),
+        pytest.param(
+            "ini",
+            """
+            [a]
+            set_env =
+                FOO = a
+                {[b]set_env}
+            [b]
+            set_env =
+                FOO = b
+            [testenv]
+            package = skip
+            set_env = {[a]set_env}
+            """,
+            {},
+            {"FOO": "a"},
+            id="ini-nested-direct-beats-include",
+        ),
+        pytest.param(
+            "ini",
+            """
+            [a]
+            set_env =
+                {[b]set_env}
+                FOO = a
+            [b]
+            set_env =
+                FOO = b
+            [testenv]
+            package = skip
+            set_env = {[a]set_env}
+            """,
+            {},
+            {"FOO": "a"},
+            id="ini-nested-include-then-direct",
+        ),
+        pytest.param(
+            "ini",
+            """
+            [a]
+            set_env =
+                FOO = a
+            [b]
+            set_env =
+                FOO = b
+            [testenv]
+            package = skip
+            set_env =
+                {[a]set_env}
+                {[b]set_env}
+            """,
+            {},
+            {"FOO": "b"},
+            id="ini-later-include-wins",
+        ),
+        pytest.param(
+            "ini",
+            """
+            [a]
+            set_env =
+                {[c]set_env}
+            [b]
+            set_env =
+                FOO = b
+            [c]
+            set_env =
+                FOO = c
+            [testenv]
+            package = skip
+            set_env =
+                {[a]set_env}
+                {[b]set_env}
+            """,
+            {},
+            {"FOO": "b"},
+            id="ini-later-include-wins-over-deeper",
+        ),
+        pytest.param(
+            "ini",
+            """
+            [a]
+            set_env =
+                FOO = a
+                BASE = /a
+                DATA = {env:BASE}/data
+            [testenv]
+            package = skip
+            set_env =
+                FOO = own
+                BASE = /own
+                {[a]set_env}
+            """,
+            {},
+            {"FOO": "own", "DATA": "/own/data"},
+            id="ini-own-key-wins",
+        ),
+        pytest.param(
+            "ini",
+            """
+            [a]
+            set_env =
+                {[c]set_env}
+                A = a
+            [b]
+            set_env =
+                {[c]set_env}
+                B = b
+            [c]
+            set_env =
+                C = c
+            [testenv]
+            package = skip
+            set_env =
+                {[a]set_env}
+                {[b]set_env}
+            """,
+            {},
+            {"A": "a", "B": "b", "C": "c"},
+            id="ini-diamond",
+        ),
+        pytest.param(
+            "ini",
+            """
+            [base]
+            root = /r
+            [a]
+            set_env =
+                PATH_VALUE = {[base]root}/x
+                HASH = a\\#b
+            [testenv]
+            package = skip
+            set_env = {[a]set_env}
+            """,
+            {},
+            {"PATH_VALUE": "/r/x", "HASH": "a#b"},
+            id="ini-section-reference-and-escaped-hash",
+        ),
+        pytest.param(
+            "ini",
+            """
+            [a]
+            set_env =
+                HIDDEN = 1; sys_platform == "nonexistent"
+                SHOWN = 2
+            [testenv]
+            package = skip
+            set_env = {[a]set_env}
+            """,
+            {},
+            {"HIDDEN": None, "SHOWN": "2"},
+            id="ini-marker",
+        ),
+        pytest.param(
+            "toml",
+            """
+            [env_run_base]
+            package = "skip"
+            set_env = { BASE = "/opt/app", DATA = { replace = "env", name = "BASE" } }
+            """,
+            {"BASE": "/host"},
+            {"DATA": "/opt/app"},
+            id="toml-env-table-sibling-key",
+        ),
+        pytest.param(
+            "toml",
+            f"""
+            [env_run_base]
+            package = "skip"
+            set_env.BASE = "/opt/app"
+            set_env.DATA = {{ replace = "env", name = "BASE", marker = "sys_platform == '{sys.platform}'" }}
+            set_env.HIDDEN = {{ replace = "env", name = "BASE", marker = "sys_platform == 'nonexistent'" }}
+            """,
+            {"BASE": "/host"},
+            {"DATA": "/opt/app", "HIDDEN": None},
+            id="toml-env-table-marker",
+        ),
+        pytest.param(
+            "toml",
+            """
+            [env.a]
+            set_env = { BASE = "/opt/app", DATA = { replace = "env", name = "BASE" } }
+            [env_run_base]
+            package = "skip"
+            set_env = { replace = "ref", of = ["env", "a", "set_env"] }
+            """,
+            {"BASE": "/host"},
+            {"DATA": "/opt/app"},
+            id="toml-env-table-in-ref",
+        ),
+        pytest.param(
+            "toml",
+            """
+            [env_run_base]
+            package = "skip"
+            set_env = { BASE = "/opt/app", DATA = { replace = "env", name = "MISSING", default = "{env:BASE}/d" } }
+            """,
+            {"BASE": "/host"},
+            {"DATA": "/opt/app/d"},
+            id="toml-env-table-default",
+        ),
+        pytest.param(
+            "toml",
+            """
+            [env_run_base]
+            package = "skip"
+            set_env = { DATA = { replace = "env", name = "MISSING", default = "a}b{c" } }
+            """,
+            {},
+            {"DATA": "a}b{c"},
+            id="toml-env-table-default-unpaired-braces",
+        ),
+    ],
+)
+def test_set_env_include_resolves_values_when_read(
+    eval_set_env: EvalSetEnv,
+    monkeypatch: MonkeyPatch,
+    of_type: ConfigFileFormat,
+    config: str,
+    environ: dict[str, str],
+    expected: dict[str, str | None],
+) -> None:
+    for key, value in environ.items():
+        monkeypatch.setenv(key, value)
+    set_env = eval_set_env(textwrap.dedent(config), of_type=of_type, extra_files={"a.env": "FROM_FILE={env:A}-x\n"})
+    assert {key: set_env.load(key) if key in set_env else None for key in expected} == expected
+
+
+@pytest.mark.parametrize(
+    ("of_type", "config", "message"),
+    [
+        pytest.param(
+            "ini",
+            """
+            [a]
+            set_env = {[b]set_env}
+            [b]
+            set_env = {[a]set_env}
+            [testenv]
+            package = skip
+            set_env = {[a]set_env}
+            """,
+            "py: circular set_env reference {[a]set_env} -> {[b]set_env} -> {[a]set_env}",
+            id="ini-include-cycle",
+        ),
+        pytest.param(
+            "ini",
+            """
+            [testenv]
+            package = skip
+            set_env =
+                {[testenv]set_env}
+                A = 1
+            """,
+            "py: circular set_env reference {[testenv]set_env} -> {[testenv]set_env}",
+            id="ini-self-include",
+        ),
+        pytest.param(
+            "ini",
+            """
+            [a]
+            set_env =
+                A = {env:B}x
+                B = {env:A}y
+            [testenv]
+            package = skip
+            set_env = {[a]set_env}
+            """,
+            "py: replace failed in py.set_env with MatchRecursionError('circular chain between set env A, B')",
+            id="ini-included-value-cycle",
+        ),
+        pytest.param(
+            "ini",
+            """
+            [testenv]
+            package = skip
+            set_env =
+                A = {env:B}x
+                B = {env:A}y
+            """,
+            "py: replace failed in py.set_env with MatchRecursionError('circular chain between set env A, B')",
+            id="ini-value-cycle",
+        ),
+        pytest.param(
+            "toml",
+            """
+            [env_run_base]
+            package = "skip"
+            set_env = { A = "{env:B}x", B = "{env:A}y" }
+            """,
+            "py: failed to load py.set_env: circular chain between set env A, B",
+            id="toml-value-cycle",
+        ),
+        pytest.param(
+            "toml",
+            """
+            [env_run_base]
+            package = "skip"
+            set_env = { replace = "ref", of = ["env_run_base", "set_env"] }
+            """,
+            "py: failed to load py.set_env: circular reference env_run_base.set_env -> env_run_base.set_env",
+            id="toml-self-ref",
+        ),
+    ],
+)
+def test_set_env_cycle_fails_env(
+    tox_project: ToxProjectCreator, of_type: ConfigFileFormat, config: str, message: str
+) -> None:
+    result = tox_project({f"tox.{of_type}": textwrap.dedent(config)}).run("r", "-e", "py")
+
+    result.assert_failed(code=1)
+    assert f"{message}\n" in result.out
+
+
+def test_set_env_unresolved_include_line(eval_set_env: EvalSetEnv) -> None:
+    with pytest.raises(ValueError, match=r"invalid line '\{\[missing\]set_env\}' in set_env"):
+        eval_set_env("[testenv]\npackage=skip\nset_env={[missing]set_env}")
+
+
+@pytest.mark.parametrize(
+    ("line", "key"),
+    [
+        pytest.param("a-{b: KEY={env:MISSING:value}", "a-{b: KEY", id="unclosed-brace"),
+        pytest.param("{unknown} = {env:MISSING:value}", "{unknown}", id="unknown-substitution"),
+    ],
+)
+def test_set_env_unresolved_key_kept_literal(eval_set_env: EvalSetEnv, line: str, key: str) -> None:
+    set_env = eval_set_env(f"[testenv]\npackage=skip\nset_env={line}")
+    assert set_env.load(key) == "value"

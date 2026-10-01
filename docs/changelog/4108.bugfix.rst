@@ -1,0 +1,15 @@
+``set_env`` values resolve when tox reads them, so ``{env:KEY}`` sees the keys a block pulls in with
+``{[section]set_env}``, and a ``{ replace = "env" }`` table sees the keys next to it - by :user:`gaborbernat`, found by
+:user:`breken-ai`. Configurations that see a difference:
+
+- A value pulled in from another section that refers to a key of the same block now gets the block's value instead of
+  the host variable.
+- A pulled-in line that refers to its own key, such as ``PYTHONHASHSEED = {env:PYTHONHASHSEED:0}``, reads the host
+  variable or its default, as the same line written in place does. It used to read the value tox sets.
+- A key written in an INI ``set_env`` wins over the same key pulled in from another section, and a later pulled-in
+  section wins over an earlier one, at every nesting level. A nested section could override the section that included it
+  before.
+- ``tox config`` shows the keys of every pulled-in section that ``tox run`` sets.
+- A section that pulls itself in, a TOML ``ref`` to itself, and values that refer to each other fail the environment
+  with the cycle. They used to fail with a traceback or "could not find python interpreter", and values that referred to
+  each other inside a pulled-in section read the host variables without a warning.

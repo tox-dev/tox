@@ -19,6 +19,7 @@ from virtualenv.discovery.py_spec import PythonSpec
 
 from tox.config.loader.str_convert import StrConvert
 from tox.execute.local_sub_process import LocalSubProcessExecutor
+from tox.report import HandledError
 from tox.tox_env.errors import Skip
 from tox.tox_env.python.api import Python, PythonInfo, VersionInfo
 from tox.tox_env.python.pip.pip_install import Pip
@@ -196,6 +197,8 @@ class VirtualEnv(Python, ABC):
         # the base pythons are injected into the virtualenv_env_vars, so we don't need to use it here
         try:
             interpreter = self.creator.interpreter
+        except HandledError:  # a configuration error, e.g. in set_env, is a RuntimeError but not a missing interpreter
+            raise
         except (FileNotFoundError, RuntimeError):  # Unable to find the interpreter
             return None
         if (sys_exe := interpreter.system_executable) is None:
