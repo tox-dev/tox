@@ -1,3 +1,7 @@
-``tox -e`` now accepts the ``cpythonNM``, ``graalpyNM``, ``jythonNM``, ``rustpythonNM`` and ``ironpythonNM`` names and
-the ``d`` debug-build suffix (e.g. ``py313d``) for environments the configuration does not declare, and no longer
-accepts ``cythonNM``, which silently ran on the host Python - by :user:`breken-ai`.
+``tox -e`` and ``TOXENV`` accept every interpreter name that picks a ``base_python`` for an environment the
+configuration does not declare - by :user:`breken-ai`.
+
+- ``cpython313``, ``cpython-3.13``, ``graalpy311``, ``jython2.7``, ``rustpython3`` and ``ironpython3`` select that
+  interpreter instead of failing with "provided environments not found".
+- The ``d`` debug-build suffix works too, for example ``py313d``.
+- ``cython313`` now fails as an unknown environment; it used to run on the Python that tox runs under.

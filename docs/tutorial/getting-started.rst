@@ -152,6 +152,8 @@ Here the ``lint`` environment overrides the base settings entirely, while ``3.13
     Options must go in the correct section — placing a core option in an environment section (or vice versa) silently
     has no effect. Run ``tox run -v`` or ``tox config`` to check for misplaced keys.
 
+.. _python-env-names:
+
 Environment names and Python versions
 =====================================
 
@@ -167,6 +169,9 @@ tox recognizes certain naming patterns and automatically sets the Python interpr
 - ``pypyNM``: PyPy N.M
 - ``cpythonNM``: CPython N.M
 - ``graalpyNM``: GraalPy N.M
+- ``jythonNM``, ``rustpythonNM`` and ``ironpythonNM``: Jython, RustPython and IronPython N.M
+
+Add ``t`` after the version for a free-threaded build (``py313t``) or ``d`` for a debug build (``py313d``).
 
 Prefer the ``N.M`` form (e.g. ``3.14``) over ``pyNMM`` (e.g. ``py314``). The dotted form is unambiguous, reads more
 naturally in environment lists and CI output, and avoids confusion for Python versions >= 3.10 where the concatenated

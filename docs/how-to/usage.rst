@@ -372,7 +372,8 @@ For example, given:
          commands = pytest
 
 Running ``tox -e unt`` or ``tox -e unti`` would succeed without running any tests. An exception is made for environments
-that look like Python version specifiers -- ``tox -e 3.13`` or ``tox -e py313`` would still work as intended.
+named after an interpreter -- ``tox -e 3.13``, ``tox -e py313`` or ``tox -e graalpy311`` would still work as intended.
+See :ref:`python-env-names` for every recognized name.
 
 Note that Python versions can be written with or without dots (``py3.10`` vs ``py310``). If you define ``py310-lint`` in
 your configuration and accidentally run ``tox -e py3.10-lint``, tox will detect the mismatch and suggest the correct

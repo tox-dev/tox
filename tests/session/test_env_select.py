@@ -16,7 +16,7 @@ if TYPE_CHECKING:
     from pytest_mock import MockerFixture
 
     from tox.config.sets import EnvConfigSet
-    from tox.pytest import MonkeyPatch, ToxProjectCreator, ToxRunOutcome
+    from tox.pytest import MonkeyPatch, ToxProject, ToxProjectCreator, ToxRunOutcome
 
 
 CURRENT_PY_ENV = f"py{sys.version_info[0]}{sys.version_info[1]}"  # e.g. py310
@@ -389,16 +389,6 @@ def test_matches_combined_env(env_name: str, tox_project: ToxProjectCreator) -> 
         "3.12t",
         "3.12.0",
         "3.12.0t",
-        "py312d",
-        "py312td",
-        "3.12d",
-        "cpython3",
-        "cpython312",
-        "cpython3.12",
-        "graalpy311",
-        "jython2.7",
-        "rustpython3",
-        "ironpython3",
     ],
 )
 def test_dynamic_env_factors_match(env: str) -> None:
@@ -411,19 +401,49 @@ def test_dynamic_env_factors_match(env: str) -> None:
         "cy3",
         "cov",
         "py10.1",
-        "cython312",
     ],
 )
 def test_dynamic_env_factors_not_match(env: str) -> None:
     assert not _DYNAMIC_ENV_FACTORS.fullmatch(env)
 
 
-@pytest.mark.parametrize("env_name", ["cpython313", "cpython-3.13", "graalpy311", "py313d"])
-def test_interpreter_env_not_in_config_accepted(env_name: str, tox_project: ToxProjectCreator) -> None:
-    proj = tox_project({"tox.ini": "[tox]\nenv_list = lint\n[testenv]\npackage = skip\n"})
-    outcome = proj.run("c", "-e", env_name, "-k", "env_name")
+@pytest.fixture
+def lint_only_project(tox_project: ToxProjectCreator) -> ToxProject:
+    toml = """
+    env_list = ["lint"]
+    [env_run_base]
+    package = "skip"
+    """
+    return tox_project({"tox.toml": dedent(toml)})
+
+
+@pytest.mark.parametrize(
+    ("env_name", "base_python"),
+    [
+        pytest.param("cpython313", "cpython313", id="cpython"),
+        pytest.param("cpython-3.13", "3.13", id="cpython-dash-version"),
+        pytest.param("graalpy311", "graalpy311", id="graalpy"),
+        pytest.param("jython2.7", "jython2.7", id="jython"),
+        pytest.param("rustpython3", "rustpython3", id="rustpython"),
+        pytest.param("ironpython3", "ironpython3", id="ironpython"),
+        pytest.param("py313d", "py313d", id="debug-build"),
+        pytest.param("py313td", "py313td", id="free-threaded-debug-build"),
+    ],
+)
+def test_undeclared_interpreter_env_picks_base_python(
+    lint_only_project: ToxProject, env_name: str, base_python: str
+) -> None:
+    outcome = lint_only_project.run("c", "-e", env_name, "-k", "base_python")
+
     outcome.assert_success()
-    assert f"[testenv:{env_name}]" in outcome.out
+    assert f"base_python = {base_python}\n" in outcome.out
+
+
+def test_undeclared_cython_env_rejected(lint_only_project: ToxProject) -> None:
+    outcome = lint_only_project.run("c", "-e", "cython313")
+
+    outcome.assert_failed(code=-2)
+    assert "provided environments not found in configuration file:\ncython313" in outcome.out
 
 
 @pytest.mark.parametrize("env_name", ["functional-py312", "functional"])

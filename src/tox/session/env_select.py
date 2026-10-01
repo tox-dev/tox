@@ -210,7 +210,7 @@ class _ToxEnvInfo:
 
 _DYNAMIC_ENV_FACTORS = re.compile(
     r"""
-    ( py | pypy | cpython | jython | graalpy | rustpython | ironpython | )  # interpreter prefix (or empty)
+    ( pypy | py | cpython | jython | graalpy | rustpython | ironpython | )  # interpreter prefix (or empty)
     (                                # version group
         (
             ( \d                     # major digit
