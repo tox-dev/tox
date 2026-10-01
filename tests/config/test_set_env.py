@@ -611,3 +611,52 @@ def test_set_env_list_keeps_marker_of_last_entry(eval_set_env: EvalSetEnv) -> No
     )
     set_env = eval_set_env(config, of_type="toml")
     assert "FOO" not in set_env
+
+
+@pytest.mark.parametrize(
+    ("base", "child", "expected"),
+    [
+        pytest.param(
+            ["FOO = base; sys_platform == 'nonexistent'"],
+            ["{[testenv:base]set_env}", "FOO = own"],
+            "own",
+            id="own-line-wins-over-spliced-marker",
+        ),
+        pytest.param(
+            ["FOO = base; sys_platform == 'nonexistent'", "FOO = redefined"],
+            ["{[testenv:base]set_env}"],
+            "redefined",
+            id="spliced-redefinition-drops-marker",
+        ),
+        pytest.param(
+            ["FOO = base; sys_platform == 'nonexistent'", "file|.env"],
+            ["{[testenv:base]set_env}"],
+            "from-file",
+            id="spliced-file-drops-marker",
+        ),
+        pytest.param(
+            ["FOO = base; sys_platform == 'nonexistent'"],
+            ["{[testenv:base]set_env}"],
+            "None",
+            id="spliced-marker-gates-its-value",
+        ),
+    ],
+)
+def test_set_env_spliced_marker(
+    tox_project: ToxProjectCreator, base: list[str], child: list[str], expected: str
+) -> None:
+    ini = "\n".join([
+        "[testenv]",
+        "package = skip",
+        """commands = python -c "import os; print(os.environ.get('FOO'))\"""",
+        "[testenv:base]",
+        "set_env =",
+        *(f"    {line}" for line in base),
+        "[testenv:child]",
+        "set_env =",
+        *(f"    {line}" for line in child),
+    ])
+    result = tox_project({"tox.ini": ini, ".env": "FOO=from-file\n"}).run("r", "-e", "child")
+
+    result.assert_success()
+    assert result.out.splitlines()[1] == expected

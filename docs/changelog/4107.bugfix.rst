@@ -1,0 +1,3 @@
+A ``set_env`` block pulled in with ``{[section]set_env}`` now applies a PEP-508 marker only to the value it came with,
+as the inline and TOML forms already do - by :user:`feiiiiii5`. A false marker on an earlier line no longer hides a
+value that the inheriting environment, a later unconditional line or an environment file supplies.
