@@ -7,6 +7,23 @@
 .. towncrier release notes start
 
 **********************
+ v4.64.7 (2026-10-01)
+**********************
+
+Bug fixes - 4.64.7
+==================
+
+- ``tox man`` suggests ``~/.profile`` instead of ``~/.zshrc`` when the shell is not fish, bash, zsh, csh or tcsh, for
+  example ``sh``, ``ksh`` or an unset ``SHELL`` - by :user:`Rodrigo-Palma`.
+
+  - tox picks the shell from the executable name, so ``/home/zshuser/bin/bash`` gets ``~/.bashrc``.
+  - Outside fish, csh and tcsh, the reload hint reads ``. <file>`` instead of ``source <file>``, since ``dash`` has no
+    ``source``.
+  - The fish line keeps the default man path when ``MANPATH`` was unset, instead of hiding every other man page.
+  - csh and tcsh get a ``setenv`` line for ``~/.tcshrc`` or ``~/.cshrc`` instead of an ``export`` line for
+    ``~/.profile``. (:issue:`4109`)
+
+**********************
  v4.64.6 (2026-10-01)
 **********************
 
