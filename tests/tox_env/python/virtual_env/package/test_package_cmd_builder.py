@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Final
 from zipfile import ZipFile
 
 import pytest
@@ -206,12 +206,8 @@ def test_tox_install_pkg_with_skip_install(
     result.assert_success()
 
 
-def test_run_installpkg_targz(
-    tox_project: ToxProjectCreator,
-    pkg_with_sdist: Path,
-    enable_pip_pypi_access: str | None,  # ruff:ignore[unused-function-argument]
-) -> None:
-    project = tox_project({
+def test_run_installpkg_targz(tox_project: ToxProjectCreator, pkg_with_sdist: Path) -> None:
+    project: Final = tox_project({
         "tox.ini": """
      [tox]
     envlist = base, flake8
@@ -221,8 +217,13 @@ def test_run_installpkg_targz(
     [testenv:flake8]
     """
     })
-    outcome = project.run(f"--installpkg={pkg_with_sdist}")
-    outcome.assert_success()
+    execute_calls: Final = project.patch_execute(lambda request: 0 if "install" in request.run_id else None)
+    project.run(f"--installpkg={pkg_with_sdist}").assert_success()
+    assert [
+        (i[0][0].conf.name, i[0][3].cmd[-1])
+        for i in execute_calls.call_args_list
+        if i[0][3].run_id == "install_package"
+    ] == [("base", str(pkg_with_sdist)), ("flake8", str(pkg_with_sdist))]
 
 
 def test_build_wheel_external_creates_change_dir(tox_project: ToxProjectCreator) -> None:

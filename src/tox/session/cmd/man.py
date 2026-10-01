@@ -3,7 +3,7 @@ from __future__ import annotations
 import os
 import subprocess
 import sys
-from pathlib import Path
+from pathlib import Path, PurePath
 from typing import TYPE_CHECKING
 
 from tox.plugin import impl
@@ -93,26 +93,22 @@ def _create_symlink(man_in_wheel: Path) -> int:
 
 
 def _print_manpath_instructions() -> None:
-    shell = os.environ.get("SHELL", "")
-    is_fish = "fish" in shell
-
-    rc_file = {
-        True: "~/.config/fish/config.fish",
-        "bash" in shell: "~/.bashrc",
-        "zsh" in shell: "~/.zshrc",
-    }.get(is_fish or any(s in shell for s in ("bash", "zsh")), "~/.profile")
-
-    print(f"To complete setup, add this to {rc_file}:")  # ruff:ignore[print]
-    print()  # ruff:ignore[print]
-
-    export_line = (
-        'set -x MANPATH "$HOME/.local/share/man" $MANPATH'
-        if is_fish
-        else 'export MANPATH="$HOME/.local/share/man:$MANPATH"'
+    # each export line keeps a trailing ":" when MANPATH is unset, so man still searches its default path
+    if "fish" in (shell := PurePath(os.environ.get("SHELL", "")).name):
+        rc_file = "~/.config/fish/config.fish"
+        export_line = 'set -x MANPATH "$HOME/.local/share/man:$MANPATH"'
+        reload = "source"
+    elif "csh" in shell:
+        # tcsh, which macOS also ships as /bin/csh, skips ~/.cshrc when ~/.tcshrc exists
+        rc_file = "~/.tcshrc" if (Path.home() / ".tcshrc").exists() else "~/.cshrc"
+        # csh aborts on an unset $MANPATH, while printenv expands to nothing
+        export_line = 'setenv MANPATH "$HOME/.local/share/man:`printenv MANPATH`"'
+        reload = "source"
+    else:
+        rc_file = "~/.bashrc" if "bash" in shell else "~/.zshrc" if "zsh" in shell else "~/.profile"
+        export_line = 'export MANPATH="$HOME/.local/share/man:$MANPATH"'
+        reload = "."  # dash has no source builtin
+    sys.stdout.write(
+        f"To complete setup, add this to {rc_file}:\n\n  {export_line}\n\n"
+        f"Then restart your shell or run:\n  {reload} {rc_file}\n\nAfter that, you can use: man tox\n"
     )
-    print(f"  {export_line}")  # ruff:ignore[print]
-    print()  # ruff:ignore[print]
-    print("Then restart your shell or run:")  # ruff:ignore[print]
-    print(f"  source {rc_file}")  # ruff:ignore[print]
-    print()  # ruff:ignore[print]
-    print("After that, you can use: man tox")  # ruff:ignore[print]

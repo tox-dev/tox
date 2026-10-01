@@ -92,12 +92,34 @@ tox ships a compiled man page in its wheel. When installing tox:
 
 For user installs, ensure ``~/.local/share/man`` is in your ``MANPATH``:
 
-.. code-block:: bash
+.. tab:: bash, zsh, sh
 
-    # Add to ~/.bashrc or ~/.zshrc
-    export MANPATH="$HOME/.local/share/man:$MANPATH"
+    Add to ``~/.bashrc``, ``~/.zshrc`` or ``~/.profile``:
 
-After updating your profile, restart your shell or run ``source ~/.bashrc``.
+    .. code-block:: bash
+
+        export MANPATH="$HOME/.local/share/man:$MANPATH"
+
+.. tab:: fish
+
+    Add to ``~/.config/fish/config.fish``:
+
+    .. code-block:: fish
+
+        set -x MANPATH "$HOME/.local/share/man:$MANPATH"
+
+.. tab:: csh, tcsh
+
+    Add to ``~/.tcshrc``, or to ``~/.cshrc`` if ``~/.tcshrc`` does not exist:
+
+    .. code-block:: csh
+
+        setenv MANPATH "$HOME/.local/share/man:`printenv MANPATH`"
+
+When ``MANPATH`` was unset, each line leaves a trailing ``:``, which keeps ``man`` searching its default path. Without
+it, ``man`` finds tox but no other page.
+
+After updating the file, restart your shell or reload it with ``. ~/.profile`` (``source`` in fish, csh and tcsh).
 
 Virtual Environment Installations
 =================================
