@@ -1,0 +1,2 @@
+The JSON schema described :ref:`requires` with the text of :ref:`provision_tox_env`, so editors showed the wrong hover
+for it - by :user:`gaborbernat`.
