@@ -1,11 +1,14 @@
 from __future__ import annotations
 
+import re
 from argparse import Namespace
 from textwrap import dedent
 from typing import TYPE_CHECKING
 
 import pytest
 
+from tox.config.loader.native import to_native
+from tox.config.loader.stringify import stringify
 from tox.tox_env.python.pip.req_file import PythonConstraints, PythonDeps
 
 if TYPE_CHECKING:
@@ -86,11 +89,18 @@ def test_opt_only_req_file(tmp_path: Path) -> None:
     assert python_deps.options == Namespace(features_enabled=["fast-deps"])
 
 
-def test_req_iadd(tmp_path: Path) -> None:
-    a = PythonDeps(raw="foo", root=tmp_path)
-    b = PythonDeps(raw="bar", root=tmp_path)
-    a += b
-    assert a.lines() == ["foo", "bar"]
+@pytest.mark.parametrize(
+    ("first", "shown", "pip_args"),
+    [
+        pytest.param("foo", ["foo", "bar"], ["bar", "foo"], id="requirement"),
+        pytest.param("# note", ["# note", "bar"], ["bar"], id="comment"),
+    ],
+)
+def test_req_iadd_after_read(tmp_path: Path, first: str, shown: list[str], pip_args: list[str]) -> None:
+    deps = PythonDeps(raw=first, root=tmp_path)
+    deps.as_root_args  # ruff:ignore[useless-expression]
+    deps += PythonDeps(raw="bar", root=tmp_path)
+    assert (deps.lines(), deps.as_root_args) == (shown, pip_args)
 
 
 def test_deps_factory_invalid_list(tmp_path: Path) -> None:
@@ -132,3 +142,111 @@ def test_deps_unroll_binary_options_deterministic(tmp_path: Path) -> None:
     options, _ = python_deps.unroll()
 
     assert options == ["no_binary=packaging,six"]
+
+
+def test_deps_binary_options_accumulate_across_lines_and_files(tmp_path: Path) -> None:
+    """Like pip, --no-binary on separate lines (and in a nested requirements file) all apply."""
+    (tmp_path / "nested.txt").write_text("--no-binary nested\n")
+    raw = dedent("""\
+        --no-binary six
+        -r nested.txt
+        --no-binary packaging
+        pkg
+    """)
+    python_deps = PythonDeps(raw=raw, root=tmp_path)
+
+    assert python_deps.unroll() == (["no_binary=nested,packaging,six"], ["pkg"])
+    assert python_deps.as_root_args == ["pkg", "-r", "nested.txt", "--no-binary", "packaging,six"]
+
+
+@pytest.mark.parametrize(
+    ("raw", "shown", "pip_args"),
+    [
+        pytest.param(
+            "--only-binary :all:\n--no-binary pkg\nrequests\n--no-binary other",
+            ["--only-binary :all:", "--no-binary other,pkg", "requests"],
+            ["requests", "--only-binary", ":all:", "--no-binary", "other,pkg"],
+            id="merged-at-first-line",
+        ),
+        pytest.param("--no-binary :all:\nrequests\n--no-binary :none:", ["requests"], ["requests"], id="cleared"),
+        pytest.param(
+            "requests\n--no-binary a\n--only-binary a",
+            ["requests", "--only-binary a"],
+            ["requests", "--only-binary", "a"],
+            id="moved-to-only-binary",
+        ),
+        pytest.param(
+            "# note\n--no-binary a\n--no-binary b  # why\npkg",
+            ["# note", "--no-binary a,b", "pkg"],
+            ["pkg", "--no-binary", "a,b"],
+            id="comment-kept",
+        ),
+        pytest.param(
+            "--no-binary a --pre\nrequests",
+            ["--pre", "--no-binary a", "requests"],
+            ["requests", "--pre", "--no-binary", "a"],
+            id="other-option-on-the-line",
+        ),
+    ],
+)
+def test_deps_show_binary_options_as_pip_gets_them(
+    tmp_path: Path, raw: str, shown: list[str], pip_args: list[str]
+) -> None:
+    python_deps = PythonDeps(raw, tmp_path)
+    assert (stringify(python_deps)[0].splitlines(), to_native(python_deps), python_deps.as_root_args) == (
+        shown,
+        shown,
+        pip_args,
+    )
+
+
+@pytest.mark.parametrize(
+    ("raw", "shown", "pip_args"),
+    [
+        pytest.param(
+            "-i https://a/simple\npkg\n-i https://b/simple",
+            ["-i https://b/simple", "pkg"],
+            ["pkg", "-i", "https://b/simple"],
+            id="last-index-wins",
+        ),
+        pytest.param("--pre\npkg\n--pre", ["--pre", "pkg"], ["pkg", "--pre"], id="repeated-flag"),
+        pytest.param(
+            "--use-feature fast-deps\npkg\n--use-feature fast-deps",
+            ["--use-feature fast-deps", "pkg"],
+            ["pkg", "--use-feature", "fast-deps"],
+            id="repeated-feature",
+        ),
+        pytest.param("-i https://pypi.org/simple\npkg", ["pkg"], ["pkg"], id="default-index"),
+        pytest.param("# only a note", [], [], id="nothing-for-pip"),
+    ],
+)
+def test_deps_show_global_options_as_pip_gets_them(
+    tmp_path: Path, raw: str, shown: list[str], pip_args: list[str]
+) -> None:
+    python_deps = PythonDeps(raw, tmp_path)
+    assert (stringify(python_deps)[0].splitlines(), to_native(python_deps), python_deps.as_root_args) == (
+        shown,
+        shown,
+        pip_args,
+    )
+
+
+@pytest.mark.parametrize(
+    "raw",
+    [pytest.param("--bogus", id="unknown-option"), pytest.param("pkg --hash=sha256:abc", id="hash-in-deps")],
+)
+def test_deps_show_raises_like_install(tmp_path: Path, raw: str) -> None:
+    with pytest.raises(ValueError, match=r".") as from_install:
+        PythonDeps(raw, tmp_path).as_root_args  # ruff:ignore[useless-expression]
+    with pytest.raises(ValueError, match=rf"^{re.escape(str(from_install.value))}$"):
+        PythonDeps(raw, tmp_path).lines()
+
+
+def test_constraints_show_the_configured_entries(tmp_path: Path) -> None:
+    constraints = PythonConstraints("c.txt\nhttps://x/c.txt", tmp_path)
+    shown = ["c.txt", "https://x/c.txt"]
+    assert (stringify(constraints)[0].splitlines(), to_native(constraints), constraints.as_root_args) == (
+        shown,
+        shown,
+        ["-c", "c.txt", "-c", "https://x/c.txt"],
+    )

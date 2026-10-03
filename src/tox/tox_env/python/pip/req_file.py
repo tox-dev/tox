@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import re
+from argparse import Namespace
 from typing import TYPE_CHECKING, cast
 
 from packaging.requirements import Requirement
@@ -19,7 +20,8 @@ _UNESCAPED_SPACE_RE = re.compile(
 
 if TYPE_CHECKING:
     import sys
-    from argparse import ArgumentParser, Namespace
+    from argparse import ArgumentParser
+    from collections.abc import Iterator
     from pathlib import Path
     from typing import ClassVar, Final
 
@@ -61,7 +63,29 @@ class _PythonRequirementsFile(RequirementsFile):
             yield at, found_line
 
     def lines(self) -> list[str]:
-        return self._raw.splitlines()
+        # as_root_args raises what tox run would raise, and when pip gets no arguments there is nothing to show
+        if not self.as_root_args:
+            return []
+        # pip merges global options across lines, so they render from the merged state through the install-argument
+        # renderer, at the first option line, while requirements, comments and -r/-c/-e lines stay as written.
+        lines: list[str] = []
+        merged, at = Namespace(), None
+        for line in self._raw.splitlines():
+            if (opts := self._global_options(line)) is None:
+                lines.append(line)
+            else:
+                at = len(lines) if at is None else at
+                self._merge_option_line(merged, opts, str(self._path))
+        if at is not None:
+            lines[at:at] = [" ".join(group) for group in self._option_groups(merged)]
+        return lines
+
+    def _global_options(self, line: str) -> Namespace | None:
+        for _, content in self._ignore_comments(enumerate([line])):
+            args, opts = self._parse_line(content)
+            if not (args or opts.editables or opts.requirements or opts.constraints):
+                return opts
+        return None
 
     @classmethod
     def _normalize_raw(cls, raw: str) -> str:
@@ -151,11 +175,10 @@ class PythonDeps(_PythonRequirementsFile):
             base_opt.no_deps = True
 
     @override
-    def _option_to_args(self, opt: Namespace) -> list[str]:
-        result = super()._option_to_args(opt)
+    def _option_groups(self, opt: Namespace) -> Iterator[tuple[str, ...]]:
+        yield from super()._option_groups(opt)
         if getattr(opt, "no_deps", False):
-            result.append("--no-deps")
-        return result
+            yield ("--no-deps",)
 
     @override
     def _validate_requirement(self, req: ParsedRequirement) -> None:
@@ -164,9 +187,9 @@ class PythonDeps(_PythonRequirementsFile):
                 msg = f"Cannot use --{illegal_option} in deps list, it must be in requirements file. ({req})"
                 raise ValueError(msg)
 
-    def __iadd__(self, other: PythonDeps) -> Self:
-        self._raw += "\n" + other._raw
-        return self
+    def __add__(self, other: PythonDeps) -> Self:
+        # a new instance, so nothing parsed from the earlier text outlives it
+        return type(self)(f"{self._raw}\n{other._raw}", self._path.parent)
 
 
 class PythonConstraints(_PythonRequirementsFile):
@@ -179,7 +202,12 @@ class PythonConstraints(_PythonRequirementsFile):
         if any(line.startswith("-") for line in lines):
             msg = "only constraints files or URLs can be provided"
             raise ValueError(msg)
-        return [f"-c {line}" for line in lines]
+        return [f"-c {line}" if any(cls._ignore_comments(enumerate([line]))) else line for line in lines]
+
+    @override
+    def lines(self) -> list[str]:
+        # _adjust_lines prefixes each entry with -c for the parser, while the setting holds the bare file or URL
+        return [line.removeprefix("-c ") for line in super().lines()]
 
     @override
     def _validate_requirement(self, req: ParsedRequirement) -> None:
