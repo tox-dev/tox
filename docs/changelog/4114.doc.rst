@@ -1,2 +1,3 @@
-The configuration reference listed the default of :ref:`args_are_paths` as ``False`` and of :ref:`pkg_dir` as
-``{env_dir}/.dist``; the actual defaults are ``True`` and ``{env_dir}/dist`` - by :user:`Rodrigo-Palma`.
+The configuration reference listed wrong defaults for :ref:`args_are_paths` (``True``), :ref:`pkg_dir`
+(``{env_dir}/dist``), :ref:`skip_missing_interpreters` (``False``), :ref:`min_version` (unset) and :ref:`requires`
+(``tox``) - by :user:`Rodrigo-Palma`.

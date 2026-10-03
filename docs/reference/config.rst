@@ -482,13 +482,14 @@ the top level of ``tox.toml``. Placing these options in an environment section (
 
 .. conf::
     :keys: requires
-    :default: <empty list>
+    :default: tox
     :version_added: 3.2.0
 
     Specify a list of :pep:`508` compliant dependencies that must be satisfied in the Python environment hosting tox when
     running the tox command. If any of these dependencies are not satisfied will automatically create a provisioned tox
     environment that does not have this issue, and run the tox command within that environment. See
-    :ref:`provision_tox_env` for more details.
+    :ref:`provision_tox_env` for more details. tox always appends itself to this list, as ``tox>=<min_version>`` when
+    :ref:`min_version` is set.
 
      .. tab:: TOML
 
@@ -511,7 +512,7 @@ the top level of ``tox.toml``. Placing these options in an environment section (
 
 .. conf::
     :keys: min_version, minversion
-    :default: <current version of tox>
+    :default: unset
     :version_deprecated: 4.28.0
     :version_added: 2.4
 
@@ -553,14 +554,13 @@ the top level of ``tox.toml``. Placing these options in an environment section (
 
 .. conf::
     :keys: skip_missing_interpreters
-    :default: config
+    :default: False
     :version_added: 1.7.2
 
     Setting this to ``true`` will force ``tox`` to return success even if some of the specified environments were
     missing. This is useful for some CI systems or when running on a developer box, where you might only have a subset
-    of all your supported interpreters installed but don't want to mark the build as failed because of it. As expected,
-    the command line switch always overrides this setting if passed on the invocation. Setting it to ``config`` means
-    that the value is read from the config file.
+    of all your supported interpreters installed but don't want to mark the build as failed because of it. The
+    ``--skip-missing-interpreters`` command line switch overrides this setting, unless you pass it ``config``.
 
 .. conf::
     :keys: tox_root, toxinidir
