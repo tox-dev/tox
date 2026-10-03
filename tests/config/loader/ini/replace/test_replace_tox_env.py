@@ -10,6 +10,7 @@ import pytest
 from tox.config.loader.api import Override
 from tox.config.loader.replacer import MAX_REPLACE_DEPTH
 from tox.config.sets import ConfigSet
+from tox.config.types import Command
 from tox.report import HandledError
 
 if TYPE_CHECKING:
@@ -52,6 +53,46 @@ def test_replace_within_section_chain(tox_ini_conf: ToxIniCreator) -> None:
     env_config.add_config(keys="d", of_type=str, default="d", desc="d")
     result = env_config["d"]
     assert result == "1/2 1/3"
+
+
+@pytest.fixture
+def load_commands(tox_ini_conf: ToxIniCreator) -> Callable[[str], list[list[str]]]:
+    def func(commands: str) -> list[list[str]]:
+        config = tox_ini_conf(
+            "[testenv:x]\ndeps =\n  requests\n  pytest>=8\ncommands =\n  pip install {[testenv:x]deps}\n  python -V\n"
+            f"[testenv:a]\ncommands = {commands}\n"
+        )
+        env_config = config.get_env("a")
+        env_config.add_config(keys="commands", of_type=list[Command], default=[], desc="commands")
+        return [command.args for command in env_config["commands"]]
+
+    return func
+
+
+def test_replace_section_alone_on_command_line_expands_to_commands(
+    load_commands: Callable[[str], list[list[str]]],
+) -> None:
+    commands = load_commands("{[testenv:x]commands}\n  python -c pass")
+    assert commands == [["pip", "install", "requests", "pytest>=8"], ["python", "-V"], ["python", "-c", "pass"]]
+
+
+@pytest.mark.parametrize(
+    ("command", "expected"),
+    [
+        pytest.param("pip install {[testenv:x]deps}", ["pip", "install", "requests", "pytest>=8"], id="text-before"),
+        pytest.param("{[testenv:x]deps} --pre", ["requests", "pytest>=8", "--pre"], id="text-after"),
+        pytest.param("{[testenv:x]deps}{posargs}", ["requests", "pytest>=8"], id="beside-substitution"),
+        pytest.param(
+            "echo {[testenv:x]commands}",
+            ["echo", "pip", "install", "requests", "pytest>=8", "python", "-V"],
+            id="echo-commands",
+        ),
+    ],
+)
+def test_replace_section_within_command_line_joins_arguments(
+    load_commands: Callable[[str], list[list[str]]], command: str, expected: list[str]
+) -> None:
+    assert load_commands(command) == [expected]
 
 
 @pytest.mark.parametrize("depth", [5, 99, 100, 101, 150, 256])

@@ -71,8 +71,12 @@ def find_replace_expr(value: str) -> MatchArg:
 
 def replace(conf: Config, reference: ReplaceReference, value: str, args: ConfigLoadArgs, depth: int = 0) -> str:
     """Replace all active tokens within value according to the config."""
-    MatchRecursionError.check(depth, value)
-    return Replacer(conf, reference, conf_args=args, depth=depth).join(find_replace_expr(value))
+    return Replacer(conf, reference, conf_args=args, depth=depth).expand(value)
+
+
+def replace_command_lines(conf: Config, reference: ReplaceReference, value: str, args: ConfigLoadArgs) -> str:
+    """Replace all active tokens within value, where each line of value is one command."""
+    return CommandLinesReplacer(conf, reference, conf_args=args).expand(value)
 
 
 def replace_once(conf: Config, reference: ReplaceReference, value: str, args: ConfigLoadArgs) -> str:
@@ -219,6 +223,13 @@ class Replacer:
     def join(self, value: MatchArg) -> str:
         return "".join(self(value))
 
+    def expand(self, value: str) -> str:
+        MatchRecursionError.check(self.depth, value)
+        return self.join_value(find_replace_expr(value))
+
+    def join_value(self, value: MatchArg) -> str:
+        return self.join(value)
+
     def _replace_match(self, value: MatchExpression) -> str:
         # use a copy of conf_args so any changes from this replacement don't, affect adjacent substitutions (#2869)
         conf_args = self.conf_args.copy()
@@ -229,7 +240,7 @@ class Replacer:
             needs_expansion = any(isinstance(m, MatchExpression) for m in find_replace_expr(replace_value))
             if needs_expansion and self.recursive:
                 try:
-                    return replace(self.conf, self.reference, replace_value, conf_args, self.depth + 1)
+                    return type(self)(self.conf, self.reference, conf_args, self.depth + 1).expand(replace_value)
                 except MatchRecursionError as err:
                     LOGGER.warning(str(err))
                     return replace_value
@@ -257,6 +268,32 @@ class Replacer:
         if handler := dispatch.get(of_type):
             return handler()
         return self.reference(ARG_DELIMITER.join(flattened_args), conf_args)
+
+
+class CommandLinesReplacer(Replacer):
+    """Expand a value holding one command per line.
+
+    A token alone on its line may expand into several commands, while a token sharing its line with other text joins its
+    lines into that one command.
+
+    """
+
+    @override
+    def join_value(self, value: MatchArg) -> str:
+        return "".join(
+            " ".join(replaced.splitlines()) if _shares_line(value, at) else replaced
+            for at, replaced in enumerate(self(value))
+        )
+
+
+def _shares_line(value: MatchArg, at: int) -> bool:
+    if not isinstance(value[at], MatchExpression):
+        return False
+    before = value[at - 1] if at else ""
+    after = value[at + 1] if at + 1 < len(value) else ""
+    if isinstance(before, MatchExpression) or isinstance(after, MatchExpression):
+        return True
+    return bool(before.rpartition("\n")[2].strip() or after.partition("\n")[0].strip())
 
 
 def replace_pos_args(conf: Config, args: list[str], conf_args: ConfigLoadArgs) -> str:
@@ -360,6 +397,7 @@ __all__ = [
     "find_replace_expr",
     "load_posargs",
     "replace",
+    "replace_command_lines",
     "replace_env",
     "replace_factor",
     "replace_once",
