@@ -1,0 +1,3 @@
+``--no-binary`` and ``--only-binary`` lines in a ``deps`` list (or in a requirements file) now add up the way they do in
+pip, instead of the last line replacing the earlier ones, and ``--only-binary :all:`` is passed to pip before any
+``--no-binary`` exception so pip keeps the exception - by :user:`SulimanAbdulrazzaq`.
