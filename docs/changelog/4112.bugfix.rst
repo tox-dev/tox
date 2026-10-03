@@ -1,3 +1,0 @@
-A TOML ``ref`` to another environment's ``deps``, ``constraints`` or ``commands`` works in ``tox config`` and ``tox
-run``. It used to fail with ``'PythonDeps' object is not iterable`` or ``Command(args=[...]) is not list`` - by
-:user:`gaborbernat`.

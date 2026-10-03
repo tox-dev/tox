@@ -7,6 +7,41 @@
 .. towncrier release notes start
 
 **********************
+ v4.64.8 (2026-10-03)
+**********************
+
+Bug fixes - 4.64.8
+==================
+
+- tox combines ``--no-binary`` and ``--only-binary`` across the lines of ``deps`` and of requirements files the way pip
+  does, where the last line used to replace the earlier ones. With ``--only-binary :all:`` and a ``--no-binary``
+  exception, tox passes ``--only-binary`` to pip first, so pip keeps the exception. ``tox config`` shows the merged
+  values tox passes to pip - by :user:`SulimanAbdulrazzaq`. (:issue:`4110`)
+- ``tox config`` shows ``deps`` with every global option merged the way tox passes it to pip, a later ``-i`` replacing
+  an earlier one and repeated flags shown once, and reports the error ``tox run`` would raise for invalid ``deps``.
+  ``constraints`` shows the configured files instead of the path of ``tox.ini``, and a comment line in ``constraints``
+  no longer fails the run. ``deps`` that give pip nothing to install no longer conflict with ``pylock``. ``set_env``
+  includes ``PIP_USER``, ``TOX_ENV_DIR``, ``TOX_ENV_NAME``, ``TOX_WORK_DIR`` and ``VIRTUAL_ENV``, the values tox sets
+  for commands - by :user:`gaborbernat`. (:issue:`4111`)
+- A TOML ``ref`` to another environment's ``deps``, ``constraints`` or ``commands`` works in ``tox config`` and ``tox
+  run``. It used to fail with ``'PythonDeps' object is not iterable`` or ``Command(args=[...]) is not list`` - by
+  :user:`gaborbernat`. (:issue:`4112`)
+- In INI ``commands``, ``commands_pre`` and ``commands_post``, a reference such as ``pip install {[testenv:x]deps}``
+  that shares its line with other text joins the referenced lines into that one command as arguments, as in tox 3. tox
+  used to run each referenced line after the first as a separate command. A reference alone on its line still expands to
+  one command per referenced line. This changes ``echo {[testenv:x]commands}``, which now runs one ``echo`` with every
+  referenced command as its arguments - by :user:`gaborbernat`. (:issue:`4113`)
+- The JSON schema described :ref:`requires` with the text of :ref:`provision_tox_env`, so editors showed the wrong hover
+  for it - by :user:`gaborbernat`. (:issue:`4115`)
+
+Improved documentation - 4.64.8
+===============================
+
+- The configuration reference listed wrong defaults for :ref:`args_are_paths` (``True``), :ref:`pkg_dir`
+  (``{env_dir}/dist``), :ref:`skip_missing_interpreters` (``False``), :ref:`min_version` (unset) and :ref:`requires`
+  (``tox``) - by :user:`Rodrigo-Palma`. (:issue:`4114`)
+
+**********************
  v4.64.7 (2026-10-01)
 **********************
 

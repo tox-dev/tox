@@ -1,6 +1,0 @@
-``tox config`` shows ``deps`` with every global option merged the way tox passes it to pip, a later ``-i`` replacing an
-earlier one and repeated flags shown once, and reports the error ``tox run`` would raise for invalid ``deps``.
-``constraints`` shows the configured files instead of the path of ``tox.ini``, and a comment line in ``constraints`` no
-longer fails the run. ``deps`` that give pip nothing to install no longer conflict with ``pylock``. ``set_env`` includes
-``PIP_USER``, ``TOX_ENV_DIR``, ``TOX_ENV_NAME``, ``TOX_WORK_DIR`` and ``VIRTUAL_ENV``, the values tox sets for commands
-- by :user:`gaborbernat`.

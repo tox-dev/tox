@@ -1,5 +1,0 @@
-In INI ``commands``, ``commands_pre`` and ``commands_post``, a reference such as ``pip install {[testenv:x]deps}`` that
-shares its line with other text joins the referenced lines into that one command as arguments, as in tox 3. tox used to
-run each referenced line after the first as a separate command. A reference alone on its line still expands to one
-command per referenced line. This changes ``echo {[testenv:x]commands}``, which now runs one ``echo`` with every
-referenced command as its arguments - by :user:`gaborbernat`.
