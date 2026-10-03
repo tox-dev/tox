@@ -170,7 +170,7 @@ _REQ_FILE_TEST_CASES = [
         id="no-binary multiple joined",
     ),
     pytest.param("--no-binary :all:", {"no_binary": {":all:"}}, [], ["--no-binary", ":all:"], id="no-binary all"),
-    pytest.param("--no-binary :none:", {"no_binary": {":none:"}}, [], [], id="no-binary none"),
+    pytest.param("--no-binary :none:", {}, [], [], id="no-binary none"),
     pytest.param(
         "--only-binary :all:",
         {"only_binary": {":all:"}},
@@ -178,13 +178,7 @@ _REQ_FILE_TEST_CASES = [
         ["--only-binary", ":all:"],
         id="only-binary all",
     ),
-    pytest.param(
-        "--only-binary :none:",
-        {"only_binary": {":none:"}},
-        [],
-        [],
-        id="only-binary none",
-    ),
+    pytest.param("--only-binary :none:", {}, [], [], id="only-binary none"),
     pytest.param(
         "--no-binary=foo --only-binary=foo",
         {"only_binary": {"foo"}},
@@ -205,6 +199,55 @@ _REQ_FILE_TEST_CASES = [
         [],
         ["--no-binary", "foo"],
         id="no-binary-none-first",
+    ),
+    pytest.param(
+        "--no-binary foo\n--no-binary bar",
+        {"no_binary": {"bar", "foo"}},
+        [],
+        ["--no-binary", "bar,foo"],
+        id="no-binary multiple different line",
+    ),
+    pytest.param(
+        "--only-binary foo\n--only-binary bar",
+        {"only_binary": {"bar", "foo"}},
+        [],
+        ["--only-binary", "bar,foo"],
+        id="only-binary multiple different line",
+    ),
+    pytest.param(
+        "--no-binary foo\n--only-binary foo",
+        {"only_binary": {"foo"}},
+        [],
+        ["--only-binary", "foo"],
+        id="no-binary then only-binary on different lines",
+    ),
+    pytest.param(
+        "--no-binary foo\n--no-binary bar\n--no-binary :none:",
+        {},
+        [],
+        [],
+        id="no-binary none on a later line clears earlier lines",
+    ),
+    pytest.param(
+        "--only-binary foo\n--no-binary :all:",
+        {"no_binary": {":all:"}},
+        [],
+        ["--no-binary", ":all:"],
+        id="no-binary all on a later line drops earlier only-binary",
+    ),
+    pytest.param(
+        "--only-binary :all:\n--no-binary foo",
+        {"only_binary": {":all:"}, "no_binary": {"foo"}},
+        [],
+        ["--only-binary", ":all:", "--no-binary", "foo"],
+        id="only-binary all with no-binary exception on different lines",
+    ),
+    pytest.param(
+        "--only-binary :all: --no-binary foo",
+        {"only_binary": {":all:"}, "no_binary": {"foo"}},
+        [],
+        ["--only-binary", ":all:", "--no-binary", "foo"],
+        id="only-binary all with no-binary exception on the same line",
     ),
     pytest.param(
         "--only-binary foo; sys_platform == 'aix'",
@@ -358,7 +401,7 @@ def test_req_file(tmp_path: Path, req: str, opts: dict[str, Any], requirements: 
     req_file = RequirementsFile(requirements_txt, constraint=False)
     assert req_file.as_root_args == as_args
     assert str(req_file) == f"-r {requirements_txt}"
-    assert vars(req_file.options) == (opts if {":none:"} not in opts.values() else {})
+    assert vars(req_file.options) == opts
     found = [str(i) for i in req_file.requirements]
     assert found == requirements
 

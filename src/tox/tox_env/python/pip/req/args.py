@@ -5,7 +5,6 @@ import re
 from argparse import Action, ArgumentParser, ArgumentTypeError, Namespace
 from typing import TYPE_CHECKING, Any, NoReturn, Protocol, TypeVar, cast
 
-from tox.tox_env.python.pip.req.util import handle_binary_option
 from tox.util.typing_compat import override
 
 if TYPE_CHECKING:
@@ -47,8 +46,8 @@ def _global_options(parser: ArgumentParser) -> None:
     parser.add_argument("-r", "--requirement", action=AddUniqueAction, dest="requirements")
     parser.add_argument("-e", "--editable", action=AddUniqueAction, dest="editables")
     parser.add_argument("-f", "--find-links", action=AddUniqueAction)
-    parser.add_argument("--no-binary", action=BinaryAction, nargs="+")
-    parser.add_argument("--only-binary", action=BinaryAction, nargs="+")
+    parser.add_argument("--no-binary", action=BinaryAction, nargs="+", dest="binary_options", const="no_binary")
+    parser.add_argument("--only-binary", action=BinaryAction, nargs="+", dest="binary_options", const="only_binary")
     parser.add_argument("--prefer-binary", action="store_true", default=False)
     parser.add_argument("--require-hashes", action="store_true", default=False)
     parser.add_argument("--pre", action="store_true", default=False)
@@ -119,6 +118,8 @@ class AddUniqueAction(Action):
 
 
 class BinaryAction(Action):
+    # Every line parses into its own namespace, while pip lets a later line edit the sets of an earlier one, so record
+    # the values in order for the merge to apply.
     @override
     def __call__(
         self,
@@ -127,15 +128,5 @@ class BinaryAction(Action):
         values: str | Sequence[Any] | None,
         option_string: str | None = None,
     ) -> None:
-        if getattr(namespace, "no_binary", None) is None:
-            namespace.no_binary = set()
-        if getattr(namespace, "only_binary", None) is None:
-            namespace.only_binary = set()
-
-        args = (
-            (namespace.no_binary, namespace.only_binary)
-            if self.dest == "no_binary"
-            else (namespace.only_binary, namespace.no_binary)
-        )
         assert values is not None  # ruff:ignore[assert]
-        handle_binary_option(values[0], *args)
+        namespace.binary_options = [*(namespace.binary_options or []), (self.const, values[0])]
