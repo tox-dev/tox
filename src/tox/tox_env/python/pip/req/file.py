@@ -20,7 +20,7 @@ from packaging.requirements import InvalidRequirement, Requirement
 from tox.util.typing_compat import override
 
 from .args import build_parser
-from .util import VCS, get_url_scheme, is_url, url_to_path
+from .util import VCS, get_url_scheme, handle_binary_option, is_url, url_to_path
 
 # Matches environment variable-style values in '${MY_VARIABLE_1}' with the variable name consisting of only uppercase
 # letters, digits or the '_' (underscore). This follows the POSIX standard defined in IEEE Std 1003.1, 2013 Edition.
@@ -364,7 +364,7 @@ class RequirementsFile:
             req_options["hash"] = hash_values
         return ParsedRequirement(line.requirement, req_options, line.filename, line.lineno)
 
-    def _merge_option_line(  # ruff:ignore[complex-structure, too-many-branches, too-many-statements, no-self-use]
+    def _merge_option_line(  # ruff:ignore[complex-structure, too-many-branches]
         self,
         base_opt: Namespace,
         opt: Namespace,
@@ -423,10 +423,21 @@ class RequirementsFile:
                 base_opt.trusted_hosts = []
             if host not in base_opt.trusted_hosts:
                 base_opt.trusted_hosts.append(host)
-        if opt.no_binary:
-            base_opt.no_binary = opt.no_binary
-        if opt.only_binary:
-            base_opt.only_binary = opt.only_binary
+        self._merge_binary_options(base_opt, getattr(opt, "binary_options", []))
+
+    @staticmethod
+    def _merge_binary_options(base_opt: Namespace, binary_options: list[tuple[str, str]]) -> None:
+        # like pip, --no-binary/--only-binary accumulate over lines and apply in the order they appear
+        if not binary_options:
+            return
+        sets: dict[str, set[str]] = {
+            name: vars(base_opt).setdefault(name, set()) for name in ("no_binary", "only_binary")
+        }
+        for dest, raw in binary_options:
+            handle_binary_option(raw, sets[dest], sets["no_binary" if dest == "only_binary" else "only_binary"])
+        for name, names in sets.items():
+            if not names:
+                delattr(base_opt, name)
 
     @staticmethod
     def _break_args_options(line: str) -> tuple[str, str]:
@@ -547,10 +558,11 @@ class RequirementsFile:
             result.append("--require-hashes")
         for feature in getattr(opt, "features_enabled", []):
             result.extend(("--use-feature", feature))
-        if hasattr(opt, "no_binary"):
-            result.extend(("--no-binary", ",".join(sorted(opt.no_binary))))
-        if hasattr(opt, "only_binary"):
-            result.extend(("--only-binary", ",".join(sorted(opt.only_binary))))
+        # ``--only-binary :all:`` makes pip forget the ``--no-binary`` names given before it, so it must come first
+        only_binary_first = ":all:" in getattr(opt, "only_binary", ())
+        for name in ("only_binary", "no_binary") if only_binary_first else ("no_binary", "only_binary"):
+            if hasattr(opt, name):
+                result.extend((f"--{name.replace('_', '-')}", ",".join(sorted(getattr(opt, name)))))
         return result
 
 

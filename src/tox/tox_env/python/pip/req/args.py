@@ -139,3 +139,5 @@ class BinaryAction(Action):
         )
         assert values is not None  # ruff:ignore[assert]
         handle_binary_option(values[0], *args)
+        # keep the raw values in order, so lines parsed one by one can be combined the way pip does
+        namespace.binary_options = [*getattr(namespace, "binary_options", []), (self.dest, values[0])]

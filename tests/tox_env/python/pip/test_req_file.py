@@ -132,3 +132,21 @@ def test_deps_unroll_binary_options_deterministic(tmp_path: Path) -> None:
     options, _ = python_deps.unroll()
 
     assert options == ["no_binary=packaging,six"]
+
+
+def test_deps_binary_options_accumulate_across_lines_and_files(tmp_path: Path) -> None:
+    """Like pip, --no-binary on separate lines (and in a nested requirements file) all apply."""
+    (tmp_path / "nested.txt").write_text("--no-binary nested\n")
+    raw = dedent("""\
+        --no-binary six
+        -r nested.txt
+        --no-binary packaging
+        pkg
+    """)
+    python_deps = PythonDeps(raw=raw, root=tmp_path)
+
+    options, requirements = python_deps.unroll()
+
+    assert options == ["no_binary=nested,packaging,six"]
+    assert requirements == ["pkg"]
+    assert python_deps.as_root_args == ["pkg", "-r", "nested.txt", "--no-binary", "packaging,six"]
