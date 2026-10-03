@@ -138,7 +138,7 @@ class Unroll:
             # the referenced value arrives converted for its own key, return it in the raw shape a TOML key parses
             result = self.conf.get_env(cast("str", env))[cast("str", key)]
             if isinstance(result, (PythonDeps, PythonConstraints)):
-                return cast("TomlTypes", result.config_entries())
+                return cast("TomlTypes", result.lines())
             if isinstance(result, Command):
                 return cast("TomlTypes", result.args)
             if isinstance(result, list) and all(isinstance(entry, Command) for entry in result):

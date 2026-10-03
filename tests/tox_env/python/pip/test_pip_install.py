@@ -548,6 +548,29 @@ def test_constraints_option_disables_constrain_package_deps(
     assert run_ids == exp_run_ids
 
 
+def test_comment_only_constraints_keep_constrain_package_deps(
+    tox_project: ToxProjectCreator, demo_pkg_inline: Path
+) -> None:
+    toml = (demo_pkg_inline / "pyproject.toml").read_text()
+    proj = tox_project({
+        "pyproject.toml": toml.replace("requires = []", 'requires = ["setuptools"]')
+        + '\n[project]\nname = "demo"\nversion = "0.1"\ndependencies = ["foo > 2"]',
+        "build.py": (demo_pkg_inline / "build.py").read_text(),
+        "tox.toml": """
+        [env_run_base]
+        package = "wheel"
+        constrain_package_deps = true
+        deps = ["coo==1.2.3"]
+        constraints = ["# pinned once the release lands"]
+        """,
+    })
+    execute_calls = proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
+    result = proj.run("r")
+    result.assert_success()
+    package_deps = next(c[0][3].cmd for c in execute_calls.call_args_list if c[0][3].run_id == "install_package_deps")
+    assert f"-c{proj.path / '.tox' / 'py' / 'constraints.txt'}" in package_deps
+
+
 def test_pip_resolution_env_var_change_reinstalls(tox_project: ToxProjectCreator) -> None:
     proj = tox_project({
         "tox.ini": """

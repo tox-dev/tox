@@ -6,7 +6,7 @@ from typing import Any
 
 from tox.config.set_env import SetEnv
 from tox.config.types import Command, EnvList
-from tox.tox_env.python.pip.req_file import PythonDeps
+from tox.tox_env.python.pip.req_file import PythonConstraints, PythonDeps
 
 
 def stringify(value: Any) -> tuple[str, bool]:  # ruff:ignore[too-many-return-statements]
@@ -34,7 +34,7 @@ def stringify(value: Any) -> tuple[str, bool]:  # ruff:ignore[too-many-return-st
     if isinstance(value, SetEnv):
         env_var_keys = sorted(value)
         return stringify({k: value.load(k) for k in env_var_keys})
-    if isinstance(value, PythonDeps):
+    if isinstance(value, (PythonDeps, PythonConstraints)):
         return stringify(value.lines())
     return str(value), False
 

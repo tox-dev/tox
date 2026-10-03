@@ -27,6 +27,8 @@ from tox.tox_env.python.virtual_env.subprocess_adapter import SubprocessCreator,
 from tox.util.typing_compat import override
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     from python_discovery import PyInfoCache
     from virtualenv.create.creator import Creator
     from virtualenv.create.describe import Describe
@@ -133,6 +135,14 @@ class VirtualEnv(Python, ABC):
         env = super()._default_set_env()
         env["PIP_DISABLE_PIP_VERSION_CHECK"] = "1"
         return env
+
+    @override
+    def _exported_set_env(self) -> dict[str, Callable[[], str]]:
+        return {
+            **super()._exported_set_env(),
+            "VIRTUAL_ENV": lambda: str(self.conf["env_dir"]),
+            "PIP_USER": lambda: "0",
+        }
 
     @property
     def session(self) -> Session | SubprocessSession:
@@ -256,14 +266,6 @@ class VirtualEnv(Python, ABC):
     @override
     def runs_on_platform(self) -> str:
         return sys.platform
-
-    @property
-    @override
-    def environment_variables(self) -> dict[str, str]:
-        environment_variables = super().environment_variables
-        environment_variables["VIRTUAL_ENV"] = str(self.conf["env_dir"])
-        environment_variables["PIP_USER"] = "0"
-        return environment_variables
 
     @classmethod
     @override
