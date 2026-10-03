@@ -1,0 +1,2 @@
+The configuration reference listed the default of :ref:`args_are_paths` as ``False`` and of :ref:`pkg_dir` as
+``{env_dir}/.dist``; the actual defaults are ``True`` and ``{env_dir}/dist`` - by :user:`Rodrigo-Palma`.

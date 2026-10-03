@@ -1537,7 +1537,7 @@ Run
 
 .. conf::
     :keys: args_are_paths
-    :default: False
+    :default: True
     :version_added: 0.5
 
     Treat positional arguments passed to tox as file system paths and - if they exist on the filesystem and are in
@@ -2202,7 +2202,7 @@ Python virtual environment packaging
 .. conf::
     :keys: pkg_dir
     :version_added: 4.0.0
-    :default: {env_dir}/.dist
+    :default: {env_dir}/dist
 
     Directory where to put project packages.
 
