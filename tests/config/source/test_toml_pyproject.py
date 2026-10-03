@@ -1129,6 +1129,65 @@ def test_config_in_toml_replace_ref_command(tox_project: ToxProjectCreator) -> N
     assert "freeze" in outcome.out
 
 
+@pytest.mark.parametrize(
+    ("setting", "key", "expected"),
+    [
+        pytest.param(
+            'deps = [{ replace = "ref", env = "a", key = "deps", extend = true }, "attrs"]',
+            "deps",
+            "  requests\n  pytest>=8\n  attrs\n",
+            id="deps-extend",
+        ),
+        pytest.param(
+            'commands = { replace = "ref", env = "a", key = "commands" }',
+            "commands",
+            "  python -V\n  python -c pass\n",
+            id="commands",
+        ),
+        pytest.param(
+            'commands = [{ replace = "ref", env = "a", key = "commands", extend = true }, ["python", "-W"]]',
+            "commands",
+            "  python -V\n  python -c pass\n  python -W\n",
+            id="commands-extend",
+        ),
+    ],
+)
+def test_config_in_toml_replace_ref_typed_value(
+    tox_project: ToxProjectCreator, setting: str, key: str, expected: str
+) -> None:
+    project = tox_project({
+        "pyproject.toml": dedent("""
+        [tool.tox.env.a]
+        package = "skip"
+        deps = ["requests", "pytest>=8"]
+        commands = [["python", "-V"], ["python", "-c", "pass"]]
+        [tool.tox.env.b]
+        package = "skip"
+        """)
+        + setting,
+    })
+    outcome = project.run("c", "-e", "b", "-k", key)
+    outcome.assert_success()
+    outcome.assert_out_err(f"[testenv:b]\n{key} =\n{expected}", "")
+
+
+def test_config_in_toml_replace_ref_constraints(tox_project: ToxProjectCreator) -> None:
+    project = tox_project({
+        "pyproject.toml": dedent("""
+        [tool.tox.env.a]
+        package = "skip"
+        constraints = ["c.txt"]
+        [tool.tox.env.b]
+        package = "skip"
+        constraints = [{ replace = "ref", env = "a", key = "constraints", extend = true }]
+        """),
+        "c.txt": "urllib3<3",
+    })
+    outcome = project.run("c", "-e", "b", "-k", "constraints")
+    outcome.assert_success()
+    assert outcome.state.envs["b"].conf["constraints"].config_entries() == ["c.txt"]
+
+
 @pytest.fixture
 def extras_replace_ref_project(tox_project: ToxProjectCreator) -> ToxProject:
     return tox_project({
