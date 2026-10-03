@@ -77,7 +77,7 @@
       "items": {
         "$ref": "#/definitions/subs"
       },
-      "description": "Name of the virtual environment used to provision a tox."
+      "description": "Dependencies the Python environment hosting tox must satisfy, provisioned when missing"
     },
     "labels": {
       "type": "object",

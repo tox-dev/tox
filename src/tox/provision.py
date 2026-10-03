@@ -79,7 +79,7 @@ def provision(state: State) -> int | bool:
         keys="requires",
         of_type=list[Requirement],
         default=[],
-        desc="Name of the virtual environment used to provision a tox.",
+        desc="Dependencies the Python environment hosting tox must satisfy, provisioned when missing",
         post_process=add_tox_requires_min_version,
     )
 
