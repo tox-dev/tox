@@ -116,6 +116,28 @@ def test_pip_install_new_flag_recreates(tox_project: ToxProjectCreator) -> None:
     assert "install_deps> python -I -m pip install a -i i" in result_second.out
 
 
+def test_pip_install_no_binary_on_separate_lines(tox_project: ToxProjectCreator) -> None:
+    proj = tox_project({
+        "tox.ini": "[testenv:py]\ndeps=\n --no-binary six\n --no-binary packaging\n a\nskip_install=true"
+    })
+    execute_calls = proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
+
+    result = proj.run("r")
+
+    result.assert_success()
+    assert execute_calls.call_count == 1
+    assert execute_calls.call_args[0][3].cmd == [
+        "python",
+        "-I",
+        "-m",
+        "pip",
+        "install",
+        "a",
+        "--no-binary",
+        "packaging,six",
+    ]
+
+
 def test_pip_install_path(tox_project: ToxProjectCreator) -> None:
     proj = tox_project({"tox.ini": "[testenv:py]\ndeps=.{/}a\nskip_install=true"})
     execute_calls = proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)

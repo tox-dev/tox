@@ -1,0 +1,4 @@
+tox combines ``--no-binary`` and ``--only-binary`` across the lines of ``deps`` and of requirements files the way pip
+does, where the last line used to replace the earlier ones. With ``--only-binary :all:`` and a ``--no-binary``
+exception, tox passes ``--only-binary`` to pip first, so pip keeps the exception. ``tox config`` shows the merged values
+tox passes to pip - by :user:`SulimanAbdulrazzaq`.

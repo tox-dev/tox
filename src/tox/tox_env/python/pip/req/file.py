@@ -20,7 +20,7 @@ from packaging.requirements import InvalidRequirement, Requirement
 from tox.util.typing_compat import override
 
 from .args import build_parser
-from .util import VCS, get_url_scheme, is_url, url_to_path
+from .util import VCS, get_url_scheme, handle_binary_option, is_url, url_to_path
 
 # Matches environment variable-style values in '${MY_VARIABLE_1}' with the variable name consisting of only uppercase
 # letters, digits or the '_' (underscore). This follows the POSIX standard defined in IEEE Std 1003.1, 2013 Edition.
@@ -364,7 +364,7 @@ class RequirementsFile:
             req_options["hash"] = hash_values
         return ParsedRequirement(line.requirement, req_options, line.filename, line.lineno)
 
-    def _merge_option_line(  # ruff:ignore[complex-structure, too-many-branches, too-many-statements, no-self-use]
+    def _merge_option_line(  # ruff:ignore[complex-structure, too-many-branches]
         self,
         base_opt: Namespace,
         opt: Namespace,
@@ -423,10 +423,20 @@ class RequirementsFile:
                 base_opt.trusted_hosts = []
             if host not in base_opt.trusted_hosts:
                 base_opt.trusted_hosts.append(host)
-        if opt.no_binary:
-            base_opt.no_binary = opt.no_binary
-        if opt.only_binary:
-            base_opt.only_binary = opt.only_binary
+        if opt.binary_options:
+            self._merge_binary_options(base_opt, opt.binary_options)
+
+    @staticmethod
+    def _merge_binary_options(base_opt: Namespace, binary_options: list[tuple[str, str]]) -> None:
+        # pip keeps one set per option across all lines, and a later value can clear names an earlier one added
+        sets: dict[str, set[str]] = {
+            name: vars(base_opt).setdefault(name, set()) for name in ("no_binary", "only_binary")
+        }
+        for name, value in binary_options:
+            handle_binary_option(value, sets[name], sets["only_binary" if name == "no_binary" else "no_binary"])
+        for name, names in sets.items():
+            if not names:
+                delattr(base_opt, name)
 
     @staticmethod
     def _break_args_options(line: str) -> tuple[str, str]:
@@ -514,44 +524,41 @@ class RequirementsFile:
             result: list[str] = []
             for req in self._parse_requirements(opt=opt, recurse=False):
                 result.extend(req.as_args())
-            option_args = self._option_to_args(opt)
-            result.extend(option_args)
-
+            result.extend(arg for group in self._option_groups(opt) for arg in group)
             self._as_root_args = result
         return self._as_root_args
 
-    def _option_to_args(self, opt: Namespace) -> list[str]:  # ruff:ignore[complex-structure, too-many-branches, no-self-use]
-        result: list[str] = []
+    def _option_groups(self, opt: Namespace) -> Iterator[tuple[str, ...]]:  # ruff:ignore[complex-structure, too-many-branches, no-self-use]
         for req in getattr(opt, "requirements", []):
-            result.extend(("-r", req))
+            yield "-r", req
         for req in getattr(opt, "constraints", []):
-            result.extend(("-c", req))
+            yield "-c", req
         index_url = getattr(opt, "index_url", None)
         if index_url is not None:
             if index_url:
                 if index_url[0] != DEFAULT_INDEX_URL:
-                    result.extend(("-i", index_url[0]))
+                    yield "-i", index_url[0]
                 for url in index_url[1:]:
-                    result.extend(("--extra-index-url", url))
+                    yield "--extra-index-url", url
             else:
-                result.append("--no-index")
+                yield ("--no-index",)
         for link in getattr(opt, "find_links", []):
-            result.extend(("-f", link))
+            yield "-f", link
         if hasattr(opt, "pre"):
-            result.append("--pre")
+            yield ("--pre",)
         for host in getattr(opt, "trusted_hosts", []):
-            result.extend(("--trusted-host", host))
+            yield "--trusted-host", host
         if hasattr(opt, "prefer_binary"):
-            result.append("--prefer-binary")
+            yield ("--prefer-binary",)
         if hasattr(opt, "require_hashes"):
-            result.append("--require-hashes")
+            yield ("--require-hashes",)
         for feature in getattr(opt, "features_enabled", []):
-            result.extend(("--use-feature", feature))
-        if hasattr(opt, "no_binary"):
-            result.extend(("--no-binary", ",".join(sorted(opt.no_binary))))
-        if hasattr(opt, "only_binary"):
-            result.extend(("--only-binary", ",".join(sorted(opt.only_binary))))
-        return result
+            yield "--use-feature", feature
+        # pip drops the --no-binary names it read before an --only-binary :all:, so that one goes first
+        only_binary_first = ":all:" in getattr(opt, "only_binary", ())
+        for name in ("only_binary", "no_binary") if only_binary_first else ("no_binary", "only_binary"):
+            if hasattr(opt, name):
+                yield f"--{name.replace('_', '-')}", ",".join(sorted(getattr(opt, name)))
 
 
 __all__ = (

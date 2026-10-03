@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 import re
-from typing import TYPE_CHECKING, cast
+from argparse import Namespace
+from typing import TYPE_CHECKING, Final, cast
 
 from packaging.requirements import Requirement
 
@@ -19,9 +20,10 @@ _UNESCAPED_SPACE_RE = re.compile(
 
 if TYPE_CHECKING:
     import sys
-    from argparse import ArgumentParser, Namespace
+    from argparse import ArgumentParser
+    from collections.abc import Iterator
     from pathlib import Path
-    from typing import ClassVar, Final
+    from typing import ClassVar
 
     if sys.version_info >= (3, 11):  # pragma: >=3.11 cover
         from typing import Self
@@ -61,7 +63,20 @@ class _PythonRequirementsFile(RequirementsFile):
             yield at, found_line
 
     def lines(self) -> list[str]:
-        return self._raw.splitlines()
+        # Render merged options through the install-argument renderer, at the first such line, so the config shows
+        # what pip gets.
+        lines: list[str] = []
+        merged, at = Namespace(), None
+        for line in self._raw.splitlines():
+            if line.lstrip().startswith(_MERGED_OPTIONS):
+                at = len(lines) if at is None else at
+                for _, option_line in self._ignore_comments(enumerate([line])):
+                    self._merge_option_line(merged, self._parse_line(option_line)[1], str(self._path))
+            else:
+                lines.append(line)
+        if at is not None:
+            lines[at:at] = [" ".join(group) for group in self._option_groups(merged)]
+        return lines
 
     @classmethod
     def _normalize_raw(cls, raw: str) -> str:
@@ -151,11 +166,10 @@ class PythonDeps(_PythonRequirementsFile):
             base_opt.no_deps = True
 
     @override
-    def _option_to_args(self, opt: Namespace) -> list[str]:
-        result = super()._option_to_args(opt)
+    def _option_groups(self, opt: Namespace) -> Iterator[tuple[str, ...]]:
+        yield from super()._option_groups(opt)
         if getattr(opt, "no_deps", False):
-            result.append("--no-deps")
-        return result
+            yield ("--no-deps",)
 
     @override
     def _validate_requirement(self, req: ParsedRequirement) -> None:
@@ -198,6 +212,8 @@ def _factory_type_error(field: str, raw: object) -> str:
     return f"{field} expected {expected}, got {type(raw).__name__}: {raw!r}"
 
 
+# Options whose lines pip merges into one setting; lines() shows them merged so the config matches the install.
+_MERGED_OPTIONS: Final[tuple[str, ...]] = ("--no-binary", "--only-binary")
 ONE_ARG = {
     "-i",
     "--index-url",
