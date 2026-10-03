@@ -63,6 +63,9 @@ class _PythonRequirementsFile(RequirementsFile):
     def lines(self) -> list[str]:
         return self._raw.splitlines()
 
+    def config_entries(self) -> list[str]:
+        return self.lines()
+
     @classmethod
     def _normalize_raw(cls, raw: str) -> str:
         # a line ending in an unescaped \ is treated as a line continuation and the newline following it is effectively
@@ -180,6 +183,10 @@ class PythonConstraints(_PythonRequirementsFile):
             msg = "only constraints files or URLs can be provided"
             raise ValueError(msg)
         return [f"-c {line}" for line in lines]
+
+    @override
+    def config_entries(self) -> list[str]:
+        return [line.removeprefix("-c ") for line in self.lines()]
 
     @override
     def _validate_requirement(self, req: ParsedRequirement) -> None:
