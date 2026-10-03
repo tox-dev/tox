@@ -1,0 +1,3 @@
+The configuration reference listed wrong defaults for :ref:`args_are_paths` (``True``), :ref:`pkg_dir`
+(``{env_dir}/dist``), :ref:`skip_missing_interpreters` (``False``), :ref:`min_version` (unset) and :ref:`requires`
+(``tox``) - by :user:`Rodrigo-Palma`.
