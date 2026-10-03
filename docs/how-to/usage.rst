@@ -1720,6 +1720,14 @@ When an environment fails, use these techniques to investigate:
 
        tox config -k type --format json | python -c "import json,sys; print(*json.load(sys.stdin)['env'])"
 
+8. **Know where tox config and tox run differ.** ``tox config`` shows the values ``tox run`` uses, with four exceptions:
+
+   - ``PYTHONHASHSEED`` in ``set_env`` gets a new random value on every invocation without ``--hashseed``.
+   - ``tox run`` puts the environment's script directories first on ``PATH``, and finding them needs the interpreter.
+   - ``TOX_PACKAGE`` holds the built package, so it only exists after ``tox run`` builds one.
+   - ``tox run`` passes the variables ``pass_env`` matches from the shell that starts it; ``tox config`` lists only the
+     patterns.
+
 .. _skip-env-install:
 
 **************************************

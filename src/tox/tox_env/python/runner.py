@@ -70,7 +70,7 @@ class PythonRun(Python, RunToxEnv, ABC):
         )
 
         def _validate_pylock_not_with_deps(value: str) -> str:
-            if value and self.conf["deps"].lines():
+            if value and self.conf["deps"].as_root_args:
                 msg = "cannot use both 'deps' and 'pylock' in the same environment"
                 raise Fail(msg)
             return value

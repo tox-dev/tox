@@ -408,8 +408,13 @@ def test_config_set_env_ref(tox_project: ToxProjectCreator) -> None:
         "  C=3\n"
         "  D=4\n"
         "  PIP_DISABLE_PIP_VERSION_CHECK=1\n"
+        "  PIP_USER=0\n"
         "  PYTHONHASHSEED=1\n"
         "  PYTHONIOENCODING=utf-8\n"
+        f"  TOX_ENV_DIR={project.path / '.tox' / 't'}\n"
+        "  TOX_ENV_NAME=t\n"
+        f"  TOX_WORK_DIR={project.path / '.tox'}\n"
+        f"  VIRTUAL_ENV={project.path / '.tox' / 't'}\n"
     )
     outcome.assert_out_err(out, "")
 
@@ -1185,7 +1190,7 @@ def test_config_in_toml_replace_ref_constraints(tox_project: ToxProjectCreator) 
     })
     outcome = project.run("c", "-e", "b", "-k", "constraints")
     outcome.assert_success()
-    assert outcome.state.envs["b"].conf["constraints"].config_entries() == ["c.txt"]
+    outcome.assert_out_err("[testenv:b]\nconstraints = c.txt\n", "")
 
 
 @pytest.fixture

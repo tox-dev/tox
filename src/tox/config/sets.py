@@ -364,12 +364,14 @@ class EnvConfigSet(ConfigSet):
     def __init__(self, conf: Config, section: Section, env_name: str) -> None:
         super().__init__(conf, section, env_name)
         self.default_set_env_loader: Callable[[], Mapping[str, str]] = dict
+        self.exported_set_env_loader: Callable[[], Mapping[str, Callable[[], str]]] = dict
 
     @override
     def register_config(self) -> None:
         def set_env_post_process(values: SetEnv) -> SetEnv:
             values.update(self.default_set_env_loader(), override=False)
             values.update({"PYTHONIOENCODING": "utf-8"}, override=True)
+            values.export(self.exported_set_env_loader())
             return values
 
         def set_env_factory(raw: object) -> SetEnv:

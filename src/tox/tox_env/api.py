@@ -24,7 +24,7 @@ from tox.util.typing_compat import override
 from tox.util.venv_redirect import forget_venv_redirect, release_venv_redirect
 
 if TYPE_CHECKING:
-    from collections.abc import Iterator, Sequence
+    from collections.abc import Callable, Iterator, Sequence
     from io import BytesIO
 
     from tox.config.cli.parser import Parsed
@@ -138,6 +138,7 @@ class ToxEnv(ABC):  # ruff:ignore[too-many-public-methods]
         )
         self.executor.register_conf(self)
         self.conf.default_set_env_loader = self._default_set_env
+        self.conf.exported_set_env_loader = self._exported_set_env
         self.conf.add_config(
             keys=["platform"],
             of_type=str,
@@ -216,6 +217,15 @@ class ToxEnv(ABC):  # ruff:ignore[too-many-public-methods]
 
     def _default_set_env(self) -> dict[str, str]:  # ruff:ignore[no-self-use]
         return {}
+
+    def _exported_set_env(self) -> dict[str, Callable[[], str]]:
+        # Feeds set_env, so tox config shows what commands get. PATH and TOX_PACKAGE stay out: the virtual environment
+        # paths need the interpreter resolved and the package needs a build, neither of which tox config should pay for.
+        return {
+            "TOX_ENV_NAME": lambda: self.name,
+            "TOX_WORK_DIR": lambda: str(self.core["work_dir"]),
+            "TOX_ENV_DIR": lambda: str(self.conf["env_dir"]),
+        }
 
     def _default_pass_env(self) -> list[str]:  # ruff:ignore[no-self-use]
         env = [
@@ -402,9 +412,6 @@ class ToxEnv(ABC):  # ruff:ignore[too-many-public-methods]
         # if set_env modified PATH, re-prepend virtual-env paths (deduped) so they always come first
         if self._paths and "PATH" in set_env:
             result["PATH"] = self._make_path(result["PATH"])
-        result["TOX_ENV_NAME"] = self.name
-        result["TOX_WORK_DIR"] = str(self.core["work_dir"])
-        result["TOX_ENV_DIR"] = str(self.conf["env_dir"])
         if (ci := os.environ.get("CI")) is not None:
             result["__TOX_ENVIRONMENT_VARIABLE_ORIGINAL_CI"] = ci
         return result

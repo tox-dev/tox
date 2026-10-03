@@ -137,6 +137,28 @@ def test_pylock_mutually_exclusive_with_deps(tox_project: ToxProjectCreator) -> 
     assert "cannot use both 'deps' and 'pylock'" in result.out
 
 
+@pytest.mark.parametrize(
+    "deps",
+    [pytest.param('"-i https://pypi.org/simple"', id="default-index"), pytest.param('"# a note"', id="comment")],
+)
+def test_pylock_allows_deps_that_install_nothing(tox_project: ToxProjectCreator, deps: str) -> None:
+    project = tox_project(
+        {
+            "tox.toml": f"""
+            [env_run_base]
+            skip_install = true
+            deps = [{deps}]
+            pylock = "pylock.toml"
+            """,
+            "pylock.toml": PYLOCK_TOML,
+        },
+    )
+    result = project.run("c", "-e", "py", "-k", "pylock")
+
+    result.assert_success()
+    assert result.out == "[testenv:py]\npylock = pylock.toml\n"
+
+
 def test_pylock_recreate_on_change(tox_project: ToxProjectCreator) -> None:
     project = tox_project(
         {
