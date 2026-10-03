@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import re
 from argparse import Namespace
-from typing import TYPE_CHECKING, Final, cast
+from typing import TYPE_CHECKING, cast
 
 from packaging.requirements import Requirement
 
@@ -23,7 +23,7 @@ if TYPE_CHECKING:
     from argparse import ArgumentParser
     from collections.abc import Iterator
     from pathlib import Path
-    from typing import ClassVar
+    from typing import ClassVar, Final
 
     if sys.version_info >= (3, 11):  # pragma: >=3.11 cover
         from typing import Self
@@ -63,20 +63,29 @@ class _PythonRequirementsFile(RequirementsFile):
             yield at, found_line
 
     def lines(self) -> list[str]:
-        # Render merged options through the install-argument renderer, at the first such line, so the config shows
-        # what pip gets.
+        # as_root_args raises what tox run would raise, and when pip gets no arguments there is nothing to show
+        if not self.as_root_args:
+            return []
+        # pip merges global options across lines, so they render from the merged state through the install-argument
+        # renderer, at the first option line, while requirements, comments and -r/-c/-e lines stay as written.
         lines: list[str] = []
         merged, at = Namespace(), None
         for line in self._raw.splitlines():
-            if line.lstrip().startswith(_MERGED_OPTIONS):
-                at = len(lines) if at is None else at
-                for _, option_line in self._ignore_comments(enumerate([line])):
-                    self._merge_option_line(merged, self._parse_line(option_line)[1], str(self._path))
-            else:
+            if (opts := self._global_options(line)) is None:
                 lines.append(line)
+            else:
+                at = len(lines) if at is None else at
+                self._merge_option_line(merged, opts, str(self._path))
         if at is not None:
             lines[at:at] = [" ".join(group) for group in self._option_groups(merged)]
         return lines
+
+    def _global_options(self, line: str) -> Namespace | None:
+        for _, content in self._ignore_comments(enumerate([line])):
+            args, opts = self._parse_line(content)
+            if not (args or opts.editables or opts.requirements or opts.constraints):
+                return opts
+        return None
 
     @classmethod
     def _normalize_raw(cls, raw: str) -> str:
@@ -178,9 +187,9 @@ class PythonDeps(_PythonRequirementsFile):
                 msg = f"Cannot use --{illegal_option} in deps list, it must be in requirements file. ({req})"
                 raise ValueError(msg)
 
-    def __iadd__(self, other: PythonDeps) -> Self:
-        self._raw += "\n" + other._raw
-        return self
+    def __add__(self, other: PythonDeps) -> Self:
+        # a new instance, so nothing parsed from the earlier text outlives it
+        return type(self)(f"{self._raw}\n{other._raw}", self._path.parent)
 
 
 class PythonConstraints(_PythonRequirementsFile):
@@ -193,7 +202,12 @@ class PythonConstraints(_PythonRequirementsFile):
         if any(line.startswith("-") for line in lines):
             msg = "only constraints files or URLs can be provided"
             raise ValueError(msg)
-        return [f"-c {line}" for line in lines]
+        return [f"-c {line}" if any(cls._ignore_comments(enumerate([line]))) else line for line in lines]
+
+    @override
+    def lines(self) -> list[str]:
+        # _adjust_lines prefixes each entry with -c for the parser, while the setting holds the bare file or URL
+        return [line.removeprefix("-c ") for line in super().lines()]
 
     @override
     def _validate_requirement(self, req: ParsedRequirement) -> None:
@@ -212,8 +226,6 @@ def _factory_type_error(field: str, raw: object) -> str:
     return f"{field} expected {expected}, got {type(raw).__name__}: {raw!r}"
 
 
-# Options whose lines pip merges into one setting; lines() shows them merged so the config matches the install.
-_MERGED_OPTIONS: Final[tuple[str, ...]] = ("--no-binary", "--only-binary")
 ONE_ARG = {
     "-i",
     "--index-url",

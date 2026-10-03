@@ -4,7 +4,7 @@ import os
 import sys
 import textwrap
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Literal
+from typing import TYPE_CHECKING, Any, Final, Literal
 from unittest.mock import ANY
 
 import pytest
@@ -80,8 +80,11 @@ def test_set_env_empty_override(tox_project: ToxProjectCreator, empty: str) -> N
     })
     outcome = project.run("c", "-e", "py", "-k", "set_env", "--hashseed", "1")
     outcome.assert_success()
+    work_dir = project.path / ".tox"
     outcome.assert_out_err(
-        "[testenv:py]\nset_env =\n  PIP_DISABLE_PIP_VERSION_CHECK=1\n  PYTHONHASHSEED=1\n  PYTHONIOENCODING=utf-8\n",
+        "[testenv:py]\nset_env =\n  PIP_DISABLE_PIP_VERSION_CHECK=1\n  PIP_USER=0\n  PYTHONHASHSEED=1\n"
+        f"  PYTHONIOENCODING=utf-8\n  TOX_ENV_DIR={work_dir / 'py'}\n  TOX_ENV_NAME=py\n  TOX_WORK_DIR={work_dir}\n"
+        f"  VIRTUAL_ENV={work_dir / 'py'}\n",
         "",
     )
 
@@ -117,12 +120,17 @@ def eval_set_env(tox_project: ToxProjectCreator) -> EvalSetEnv:
     return func
 
 
+_EXPORTED: Final = {"PIP_USER": "0", "TOX_ENV_DIR": ANY, "TOX_ENV_NAME": "py", "TOX_WORK_DIR": ANY, "VIRTUAL_ENV": ANY}
+
+
 def test_set_env_default(eval_set_env: EvalSetEnv) -> None:
     set_env = eval_set_env("")
-    keys = list(set_env)
-    assert keys == ["PYTHONHASHSEED", "PIP_DISABLE_PIP_VERSION_CHECK", "PYTHONIOENCODING"]
-    values = [set_env.load(k) for k in keys]
-    assert values == [ANY, "1", "utf-8"]
+    assert {key: set_env.load(key) for key in set_env} == {
+        "PYTHONHASHSEED": ANY,
+        "PIP_DISABLE_PIP_VERSION_CHECK": "1",
+        "PYTHONIOENCODING": "utf-8",
+        **_EXPORTED,
+    }
 
 
 def test_set_env_self_key(eval_set_env: EvalSetEnv, monkeypatch: MonkeyPatch) -> None:
@@ -186,6 +194,7 @@ def test_set_env_replacer(eval_set_env: EvalSetEnv, monkeypatch: MonkeyPatch) ->
         "b": "2",
         "PYTHONIOENCODING": "utf-8",
         "PYTHONHASHSEED": ANY,
+        **_EXPORTED,
     }
 
 
@@ -230,6 +239,7 @@ def test_set_env_environment_file(
         "E": '"1"',
         "F": "",
         "PYTHONIOENCODING": "utf-8",
+        **_EXPORTED,
     }
 
 
@@ -274,6 +284,7 @@ def test_set_env_environment_file_combined_with_normal_setting(
         "A": "1",
         "X": "y",
         "PYTHONIOENCODING": "utf-8",
+        **_EXPORTED,
     }
 
 
@@ -389,6 +400,8 @@ def test_set_env_environment_with_file_and_expanded_substitution(
         "PRECENDENCE_TEST_1": "1_self_precedence",
         "PRECENDENCE_TEST_2": "2_self_precedence",
         "PRECENDENCE_TEST_3": "3_file_precedence",
+        **_EXPORTED,
+        "TOX_ENV_NAME": "check",
     }
 
     result = project.run("r", "-e", "check")
@@ -1067,3 +1080,20 @@ def test_set_env_unresolved_include_line(eval_set_env: EvalSetEnv) -> None:
 def test_set_env_unresolved_key_kept_literal(eval_set_env: EvalSetEnv, line: str, key: str) -> None:
     set_env = eval_set_env(f"[testenv]\npackage=skip\nset_env={line}")
     assert set_env.load(key) == "value"
+
+
+@pytest.mark.parametrize(
+    "ini",
+    [
+        pytest.param("[testenv]\npackage=skip", id="defaults"),
+        pytest.param("[testenv]\npackage=skip\nset_env=TOX_ENV_NAME=mine", id="tox-value-wins"),
+        pytest.param(
+            "[testenv]\npackage=skip\nset_env=FOO={work_dir}{/}custom\nenv_dir={env:FOO}", id="env-dir-from-set-env"
+        ),
+    ],
+)
+def test_set_env_shows_what_commands_get(tox_project: ToxProjectCreator, ini: str) -> None:
+    result = tox_project({"tox.ini": ini}).run("c", "-e", "py", "-k", "set_env")
+    result.assert_success()
+    shown, used = result.env_conf("py")["set_env"], result.state.envs["py"].environment_variables
+    assert {key: shown.load(key) for key in shown if key in _EXPORTED} == {key: used[key] for key in _EXPORTED}

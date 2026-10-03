@@ -294,7 +294,7 @@ class Pip(PythonInstallerListDependencies):
 
     @property
     def _has_constraints(self) -> bool:
-        return bool(self.constraints.lines())
+        return bool(self.constraints.as_root_args)
 
     def _execute_installer(self, deps: Sequence[Any], of_type: str) -> None:
         if of_type == "package_deps" and self.constrain_package_deps and not self._has_constraints:

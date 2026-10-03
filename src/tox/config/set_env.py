@@ -12,7 +12,7 @@ from tox.report import HandledError
 from tox.tox_env.errors import Fail
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable, Iterator, Mapping
+    from collections.abc import Callable, Iterable, Iterator, Mapping
 
 if sys.version_info >= (3, 11):  # pragma: >=3.11 cover
     from typing import NotRequired, TypedDict
@@ -41,6 +41,7 @@ class SetEnv:
         self.changed = False
         self._materialized: dict[str, str] = {}  # env vars we already loaded
         self._raw: dict[str, str] = {}  # could still need replacement
+        self._exported: dict[str, Callable[[], str]] = {}  # tox's own values, read from settings on first use
         self._defined_keys: set[str] = set()  # keys explicitly defined during parsing (survives load() draining _raw)
         self._markers: dict[str, Marker] = {}  # PEP-496 markers for conditional env vars
         self._needs_replacement: list[str] = []  # env vars that need replacement
@@ -190,6 +191,9 @@ class SetEnv:
     def load(self, item: str, args: ConfigLoadArgs | None = None) -> str:
         if item in self._materialized:
             return self._materialized[item]
+        if item in self._exported:
+            self._materialized[item] = self._exported.pop(item)()
+            return self._materialized[item]
         raw = self._raw[item]
         args = ConfigLoadArgs([], self._name, self._env_name) if args is None else args
         if args.chain[-1:] != [f"env:{item}"]:  # an {env:...} lookup already recorded the key it resolves
@@ -208,6 +212,7 @@ class SetEnv:
         for key in self._materialized:
             if self._marker_matches(key):
                 yield key
+        yield from list(self._exported)
         for key in list(self._raw.keys()):  # iterating over this may trigger materialization and change the dict
             if self._marker_matches(key):
                 yield key
@@ -227,7 +232,7 @@ class SetEnv:
         self._needs_replacement.clear()
         sub_raw: dict[str, str] = {}
         for key, (value, marker) in entries.items():
-            if key not in self._raw and key not in self._defined_keys:
+            if key not in self._raw and key not in self._defined_keys and key not in self._exported:
                 sub_raw[key] = value
                 if marker is None:
                     self._markers.pop(key, None)
@@ -257,6 +262,18 @@ class SetEnv:
             entries.update(self._expand(nested, (*parents, line), args))
         entries.update((key, (value, block._markers.get(key))) for key, value in block._raw.items())
         return entries
+
+    def export(self, values: Mapping[str, Callable[[], str]]) -> None:
+        """Set tox's own variables over the configured ones, resolved on first read.
+
+        They come from settings that may read ``set_env`` through ``{env:...}``, so reading them here would recurse.
+
+        """
+        for key, value in values.items():
+            self._raw.pop(key, None)
+            self._materialized.pop(key, None)
+            self._exported[key] = value
+        self.changed = True
 
     def update(self, param: Mapping[str, str] | SetEnv, *, override: bool = True) -> None:
         for key in param:
