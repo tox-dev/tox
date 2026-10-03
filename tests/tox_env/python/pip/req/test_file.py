@@ -170,7 +170,7 @@ _REQ_FILE_TEST_CASES = [
         id="no-binary multiple joined",
     ),
     pytest.param("--no-binary :all:", {"no_binary": {":all:"}}, [], ["--no-binary", ":all:"], id="no-binary all"),
-    pytest.param("--no-binary :none:", {"no_binary": {":none:"}}, [], [], id="no-binary none"),
+    pytest.param("--no-binary :none:", {}, [], [], id="no-binary none"),
     pytest.param(
         "--only-binary :all:",
         {"only_binary": {":all:"}},
@@ -178,13 +178,7 @@ _REQ_FILE_TEST_CASES = [
         ["--only-binary", ":all:"],
         id="only-binary all",
     ),
-    pytest.param(
-        "--only-binary :none:",
-        {"only_binary": {":none:"}},
-        [],
-        [],
-        id="only-binary none",
-    ),
+    pytest.param("--only-binary :none:", {}, [], [], id="only-binary none"),
     pytest.param(
         "--no-binary=foo --only-binary=foo",
         {"only_binary": {"foo"}},
@@ -407,7 +401,7 @@ def test_req_file(tmp_path: Path, req: str, opts: dict[str, Any], requirements: 
     req_file = RequirementsFile(requirements_txt, constraint=False)
     assert req_file.as_root_args == as_args
     assert str(req_file) == f"-r {requirements_txt}"
-    assert vars(req_file.options) == (opts if {":none:"} not in opts.values() else {})
+    assert vars(req_file.options) == opts
     found = [str(i) for i in req_file.requirements]
     assert found == requirements
 
