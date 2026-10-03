@@ -25,6 +25,7 @@ from tox.config.loader.replacer import (
 )
 from tox.config.loader.stringify import stringify
 from tox.config.types import Command
+from tox.tox_env.python.pip.req_file import PythonConstraints, PythonDeps
 from tox.util.typing_compat import override
 
 from ._validate import validate
@@ -134,9 +135,14 @@ class Unroll:
 
     def _replace_ref(self, value: dict[str, TomlTypes], depth: int, *, skip_str: bool = False) -> TomlTypes:
         if self.conf is not None and (env := value.get("env")) and (key := value.get("key")):
+            # the referenced value arrives converted for its own key, return it in the raw shape a TOML key parses
             result = self.conf.get_env(cast("str", env))[cast("str", key)]
+            if isinstance(result, (PythonDeps, PythonConstraints)):
+                return cast("TomlTypes", result.config_entries())
             if isinstance(result, Command):
                 return cast("TomlTypes", result.args)
+            if isinstance(result, list) and all(isinstance(entry, Command) for entry in result):
+                return cast("TomlTypes", [entry.args for entry in result])
             return cast("TomlTypes", result)
         if of := value.get("of"):
             validated_of = validate(of, list[str])
