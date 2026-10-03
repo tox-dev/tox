@@ -3009,6 +3009,27 @@ tox substitutes the referenced value again in the environment that refers to it.
 referenced lines as if you wrote them in place and substitutes each value when it reads it, see :ref:`set_env resolution
 rules <set-env-resolution>`.
 
+In :ref:`commands`, :ref:`commands_pre` and :ref:`commands_post` a reference alone on its line expands to one command
+per referenced line. A reference that shares its line with other text joins the referenced lines into that command as
+arguments:
+
+.. code-block:: ini
+
+    [testenv:lint]
+    deps =
+        ruff
+        mypy
+    commands =
+        ruff check .
+        mypy src
+
+    [testenv:ci]
+    commands =
+        pip install {[testenv:lint]deps}
+        {[testenv:lint]commands}
+
+Here ``ci`` runs ``pip install ruff mypy``, then ``ruff check .`` and ``mypy src``.
+
 .. _conditional-settings:
 
 Conditional settings
