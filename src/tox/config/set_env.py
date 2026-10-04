@@ -275,6 +275,19 @@ class SetEnv:
             self._exported[key] = value
         self.changed = True
 
+    def extend(self, other: SetEnv) -> None:
+        """Take the lines of ``other`` as if written after these, so their values still expand only when read."""
+        for key, value in other._raw.items():
+            self._materialized.pop(key, None)
+            self._raw[key] = value
+            self._defined_keys.add(key)
+            if key in other._markers:
+                self._markers[key] = other._markers[key]
+            else:
+                self._markers.pop(key, None)
+        self._needs_replacement.extend(other._needs_replacement)
+        self.changed = True
+
     def update(self, param: Mapping[str, str] | SetEnv, *, override: bool = True) -> None:
         for key in param:
             # do not override something already set explicitly

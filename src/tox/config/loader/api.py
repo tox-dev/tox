@@ -150,7 +150,7 @@ class Loader(Convert[T]):
     def __contains__(self, item: str) -> bool:
         return item in self.found_keys()
 
-    def load(  # ruff:ignore[too-many-arguments]
+    def load(  # ruff:ignore[complex-structure, too-many-arguments, too-many-branches]
         self,
         key: str,
         of_type: type[V] | UnionType,
@@ -188,20 +188,24 @@ class Loader(Convert[T]):
 
         delay_replace = inspect.isclass(of_type) and issubclass(of_type, SetEnv)
         for entry in overrides:
-            # an override arrives as a raw CLI string, so it has not been through the loader's substitution pass yet
-            raw_override = (
-                entry.value
-                if delay_replace or conf is None  # set_env expands later, the CLI config file never does
-                else self.substitute(entry.value, conf, args)
-            )
-            converted_override = _STR_CONVERT.to(raw_override, of_type, factory)
+            if delay_replace and conf is not None:
+                # set_env expands when read, so build the override like the loader's own value to attach the replacer
+                converted_override = self.build(key, of_type, factory, conf, cast("T", entry.value), args)
+            else:
+                # an override arrives as a raw CLI string, so it has not been through the loader's substitution pass yet
+                raw_override = (
+                    entry.value
+                    if conf is None  # the CLI config file never substitutes
+                    else self.substitute(entry.value, conf, args)
+                )
+                converted_override = _STR_CONVERT.to(raw_override, of_type, factory)
             if entry.append and converted is not None:
                 if isinstance(converted, list) and isinstance(converted_override, list):
                     converted += converted_override
                 elif isinstance(converted, dict) and isinstance(converted_override, dict):
                     converted.update(converted_override)
                 elif isinstance(converted, SetEnv) and isinstance(converted_override, SetEnv):
-                    converted.update(converted_override, override=True)
+                    converted.extend(converted_override)
                 elif isinstance(converted, PythonDeps) and isinstance(converted_override, PythonDeps):
                     converted += converted_override
                 else:

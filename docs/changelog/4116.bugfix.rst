@@ -1,0 +1,2 @@
+A :ref:`set_env` value passed with ``-x`` or ``TOX_OVERRIDE`` resolves substitutions such as ``{env_name}`` and reads
+``file|`` entries, as other overridden settings do - by :user:`Rodrigo-Palma`.

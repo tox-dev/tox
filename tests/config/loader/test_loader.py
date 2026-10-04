@@ -152,3 +152,36 @@ def test_override_value_is_substituted(
     outcome = project.run("c", "-e", "a", "-k", "commands", "-x", f"{namespace}.commands={override}", *posargs)
     outcome.assert_success()
     outcome.assert_out_err(f"[testenv:a]\ncommands = {expected}\n", "")
+
+
+@pytest.mark.parametrize(
+    ("filename", "content", "namespace"),
+    [
+        pytest.param("tox.toml", 'env_list = ["a"]\n[env_run_base]\nset_env.KEEP = "1"\n', "env_run_base", id="toml"),
+        pytest.param("tox.ini", "[tox]\nenv_list = a\n[testenv]\nset_env = KEEP=1\n", "testenv", id="ini"),
+    ],
+)
+@pytest.mark.parametrize(
+    ("override", "expected"),
+    [
+        pytest.param("set_env+=MAGIC={env_name}", ["MAGIC=a"], id="append"),
+        pytest.param("set_env=MAGIC={env_name}", ["MAGIC=a"], id="replace"),
+        pytest.param("set_env+=MAGIC={env:FROM_SHELL}", ["MAGIC=from-shell"], id="env"),
+        pytest.param("set_env+=file|{env_name}.env", ["MAGIC=from-file"], id="file"),
+        pytest.param("set_env+=MAGIC={env_name}; sys_platform == 'nope'", [], id="marker"),
+    ],
+)
+def test_override_set_env_value_is_substituted(
+    tox_project: ToxProjectCreator,
+    monkeypatch: pytest.MonkeyPatch,
+    filename: str,
+    content: str,
+    namespace: str,
+    override: str,
+    expected: list[str],
+) -> None:
+    monkeypatch.setenv("FROM_SHELL", "from-shell")
+    project = tox_project({filename: content, "a.env": "MAGIC=from-file"})
+    outcome = project.run("c", "-e", "a", "-k", "set_env", "-x", f"{namespace}.{override}")
+    outcome.assert_success()
+    assert [line.strip() for line in outcome.out.splitlines() if "MAGIC" in line] == expected
