@@ -7,6 +7,19 @@
 .. towncrier release notes start
 
 **********************
+ v4.64.9 (2026-10-05)
+**********************
+
+Bug fixes - 4.64.9
+==================
+
+- Resolve substitutions and ``file|`` entries in :ref:`set_env` overrides passed through ``-x`` or ``TOX_OVERRIDE``.
+  Appended blocks replace inherited values while preserving explicit keys in the same or later overrides. Preserve these
+  rules through section references, including native TOML arrays with ``extend = true``. Resolve env-file selectors and
+  values in the consuming environment. Prevent included values from overriding tox's own variables - by
+  :user:`Rodrigo-Palma`. (:issue:`4116`)
+
+**********************
  v4.64.8 (2026-10-03)
 **********************
 
