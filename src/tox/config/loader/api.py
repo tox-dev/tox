@@ -15,6 +15,7 @@ from .str_convert import StrConvert
 
 if TYPE_CHECKING:
     from types import UnionType
+    from typing import Final
 
     from tox.config.cli.parser import ToxParser
     from tox.config.main import Config
@@ -260,13 +261,14 @@ class Loader(Convert[T]):
             return SetEnv(cast("SetEnvRaw", value), "set_env", args.env_name, conf.core["tox_root"])
 
         result = self.build("set_env", SetEnv, factory, conf, raw, args)
+        shape: Final = result.shape
         for entry in overrides:
             appended = self._build_override(entry, SetEnv, factory, conf, args)
             if entry.append:
                 result.extend(appended)
             else:
                 result = appended
-        return SetEnvReference(result, args)
+        return SetEnvReference(result, args, shape)
 
     def substitute(self, value: str, conf: Config, args: ConfigLoadArgs) -> str:
         """Apply this loader's replacements to a raw string.

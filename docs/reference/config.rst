@@ -2451,6 +2451,11 @@ one override, direct assignments take precedence over included blocks. Direct as
 precedence over blocks from an earlier override. Values resolve after merging, so references to other ``set_env`` keys
 read their final values. These rules also apply when another section references the overridden ``set_env``.
 
+TOML references retain the shape of their source: include a table as one entry, and use ``extend = true`` when including
+an array of tables inside another array. A reference used as the whole ``set_env`` value accepts a table, an array, or a
+string. Env-file paths resolve in the consuming environment, after its direct assignments and overrides have registered
+their keys.
+
 You can specify overrides multiple times on the command line to append multiple items:
 
 .. tab:: TOML
