@@ -33,7 +33,7 @@ from tox.tox_env.api import ToxEnv
 from tox.util.typing_compat import override
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, Iterator, Sequence
+    from collections.abc import Callable, Generator, Iterator, Sequence
     from unittest.mock import MagicMock
 
     from pytest_mock import MockerFixture
@@ -82,7 +82,7 @@ def _disable_root_tox_py(request: SubRequest, mocker: MockerFixture) -> Iterator
 
 
 @contextmanager
-def check_os_environ() -> Iterator[None]:
+def check_os_environ() -> Generator[None, None, None]:
     old = os.environ.copy()
     to_clean = {
         k: os.environ.pop(k, None)
@@ -222,7 +222,7 @@ class ToxProject:
             out_err: OutErr,
             request: ExecuteRequest,
             show: bool,  # ruff:ignore[boolean-type-hint-positional-argument]
-        ) -> Iterator[ExecuteStatus]:
+        ) -> Generator[ExecuteStatus, None, None]:
             exit_code = 0 if handle is None else handle(request)
             if exit_code is not None:
                 executor = MockExecute(colored=executor._colored, exit_code=exit_code)  # ruff:ignore[private-member-access]
@@ -246,7 +246,7 @@ class ToxProject:
         return result
 
     @contextmanager
-    def chdir(self, to: Path | None = None) -> Iterator[None]:
+    def chdir(self, to: Path | None = None) -> Generator[None, None, None]:
         cur_dir = Path.cwd()
         os.chdir(to or self.path)
         try:

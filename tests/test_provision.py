@@ -17,7 +17,7 @@ from filelock import FileLock
 from packaging.requirements import Requirement
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, Iterator, Sequence
+    from collections.abc import Callable, Generator, Sequence
 
     from build import DistributionType
     from devpi_process import Index, IndexServer
@@ -31,7 +31,7 @@ ROOT = Path(__file__).parents[1]
 
 
 @contextmanager
-def elapsed(msg: str) -> Iterator[None]:
+def elapsed(msg: str) -> Generator[None, None, None]:
     start = time.monotonic()
     try:
         yield

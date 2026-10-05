@@ -24,7 +24,7 @@ from tox.util.typing_compat import override
 from tox.util.venv_redirect import forget_venv_redirect, release_venv_redirect
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, Iterator, Sequence
+    from collections.abc import Callable, Generator, Sequence
     from io import BytesIO
 
     from tox.config.cli.parser import Parsed
@@ -471,7 +471,7 @@ class ToxEnv(ABC):  # ruff:ignore[too-many-public-methods]
             status.interrupt()
 
     @contextmanager
-    def allow_post_commands_after_interrupt(self, enabled: bool) -> Iterator[None]:  # ruff:ignore[boolean-type-hint-positional-argument]
+    def allow_post_commands_after_interrupt(self, enabled: bool) -> Generator[None, None, None]:  # ruff:ignore[boolean-type-hint-positional-argument]
         """Context manager to allow commands_post execution after interrupt when enabled."""
         if enabled and self._interrupted and not self._fully_interrupted:
             self._allow_interrupted_execution = True
@@ -489,7 +489,7 @@ class ToxEnv(ABC):  # ruff:ignore[too-many-public-methods]
         cwd: Path | None = None,
         run_id: str = "",
         executor: Execute | None = None,
-    ) -> Iterator[ExecuteStatus]:
+    ) -> Generator[ExecuteStatus, None, None]:
         if self._fully_interrupted or (self._interrupted and not self._allow_interrupted_execution):
             raise SystemExit(-2)  # pragma: no cover
         if cwd is None:
@@ -563,7 +563,7 @@ class ToxEnv(ABC):  # ruff:ignore[too-many-public-methods]
         out_err: OutErr,
         request: ExecuteRequest,
         show: bool,  # ruff:ignore[boolean-type-hint-positional-argument]
-    ) -> Iterator[ExecuteStatus]:
+    ) -> Generator[ExecuteStatus, None, None]:
         with executor.call(
             request=request,
             env=self,
@@ -573,7 +573,7 @@ class ToxEnv(ABC):  # ruff:ignore[too-many-public-methods]
             yield execute_status
 
     @contextmanager
-    def display_context(self, suspend: bool) -> Iterator[None]:  # ruff:ignore[boolean-type-hint-positional-argument]
+    def display_context(self, suspend: bool) -> Generator[None, None, None]:  # ruff:ignore[boolean-type-hint-positional-argument]
         with self._log_context(), self.log_handler.suspend_out_err(suspend, self._suspended_out_err) as out_err:
             if suspend:  # only set if suspended
                 self._suspended_out_err = out_err
@@ -589,7 +589,7 @@ class ToxEnv(ABC):  # ruff:ignore[too-many-public-methods]
         return out_b, err_b
 
     @contextmanager
-    def _log_context(self) -> Iterator[None]:
+    def _log_context(self) -> Generator[None, None, None]:
         with self.log_handler.with_context(self.conf.name):
             yield
 
