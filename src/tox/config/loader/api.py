@@ -150,7 +150,7 @@ class Loader(Convert[T]):
     def __contains__(self, item: str) -> bool:
         return item in self.found_keys()
 
-    def load(  # ruff:ignore[complex-structure, too-many-arguments, too-many-branches]
+    def load(  # ruff:ignore[too-many-arguments]
         self,
         key: str,
         of_type: type[V] | UnionType,
@@ -186,19 +186,8 @@ class Loader(Convert[T]):
             if not overrides:
                 raise KeyError(key)
 
-        delay_replace = inspect.isclass(of_type) and issubclass(of_type, SetEnv)
         for entry in overrides:
-            if delay_replace and conf is not None:
-                # set_env expands when read, so build the override like the loader's own value to attach the replacer
-                converted_override = self.build(key, of_type, factory, conf, cast("T", entry.value), args)
-            else:
-                # an override arrives as a raw CLI string, so it has not been through the loader's substitution pass yet
-                raw_override = (
-                    entry.value
-                    if conf is None  # the CLI config file never substitutes
-                    else self.substitute(entry.value, conf, args)
-                )
-                converted_override = _STR_CONVERT.to(raw_override, of_type, factory)
+            converted_override = self._build_override(entry, of_type, factory, conf, args)
             if entry.append and converted is not None:
                 if isinstance(converted, list) and isinstance(converted_override, list):
                     converted += converted_override
@@ -215,6 +204,25 @@ class Loader(Convert[T]):
                 converted = converted_override
 
         return cast("V", converted)  # guaranteed non-None: either build() succeeded or overrides set it
+
+    def _build_override(
+        self,
+        entry: Override,
+        of_type: type[V] | UnionType,
+        factory: Factory[V],
+        conf: Config | None,
+        args: ConfigLoadArgs,
+    ) -> V:
+        from tox.config.set_env import SetEnv  # ruff:ignore[import-outside-top-level]  # SetEnv imports this module.
+
+        if conf is not None and inspect.isclass(of_type) and issubclass(of_type, SetEnv):
+            # The loader attaches the replacer; set_env values must see the merged keys when read.
+            return self.build(
+                entry.key, cast("type[V] | UnionType", of_type), factory, conf, cast("T", entry.value), args
+            )
+        return _STR_CONVERT.to(
+            entry.value if conf is None else self.substitute(entry.value, conf, args), of_type, factory
+        )
 
     def build(  # ruff:ignore[too-many-arguments]
         self,

@@ -45,6 +45,7 @@ class SetEnv:
         self._defined_keys: set[str] = set()  # keys explicitly defined during parsing (survives load() draining _raw)
         self._markers: dict[str, Marker] = {}  # PEP-496 markers for conditional env vars
         self._needs_replacement: list[str] = []  # env vars that need replacement
+        self._override_replacements: list[tuple[list[str], set[str]]] = []
         self._expanding = False
         self._env_files: list[tuple[str, set[str]]] = []
         self._replacer: Replacer = lambda s, c, *, recursive=True: s  # ruff:ignore[unused-lambda-argument]
@@ -208,6 +209,7 @@ class SetEnv:
         return isinstance(item, str) and item in iter(self)
 
     def __iter__(self) -> Iterator[str]:
+        self._resolve_replacements()
         # start with the materialized ones, maybe we don't need to materialize the raw ones
         for key in self._materialized:
             if self._marker_matches(key):
@@ -216,10 +218,10 @@ class SetEnv:
         for key in list(self._raw.keys()):  # iterating over this may trigger materialization and change the dict
             if self._marker_matches(key):
                 yield key
-        yield from self._iter_needs_replacement()
 
-    def _iter_needs_replacement(self) -> Iterator[str]:
-        if self._expanding:  # a lookup made while expanding sees only the keys registered so far
+    def _resolve_replacements(self) -> None:
+        if self._expanding or not (self._needs_replacement or self._override_replacements):
+            # A lookup made while expanding sees only the keys registered so far.
             return
         args = ConfigLoadArgs([], self._name, self._env_name)
         entries: dict[str, tuple[str, Marker | None]] = {}
@@ -227,12 +229,21 @@ class SetEnv:
         try:
             for line in self._needs_replacement:
                 entries.update(self._expand(line, (), args))
+            entries = {
+                key: value for key, value in entries.items() if key not in self._raw and key not in self._defined_keys
+            }
+            for lines, protected in self._override_replacements:
+                for line in lines:
+                    entries.update(
+                        (key, value) for key, value in self._expand(line, (), args).items() if key not in protected
+                    )
         finally:
             self._expanding = False
         self._needs_replacement.clear()
+        self._override_replacements.clear()
         sub_raw: dict[str, str] = {}
         for key, (value, marker) in entries.items():
-            if key not in self._raw and key not in self._defined_keys and key not in self._exported:
+            if key not in self._exported:
                 sub_raw[key] = value
                 if marker is None:
                     self._markers.pop(key, None)
@@ -241,9 +252,6 @@ class SetEnv:
         self._materialized = {k: v for k, v in self._materialized.items() if k not in sub_raw}
         self._raw.update(sub_raw)
         self.changed = True  # loading while iterating can cause these values to be missed
-        for key in sub_raw:
-            if self._marker_matches(key):
-                yield key
 
     def _expand(
         self, line: str, parents: tuple[str, ...], args: ConfigLoadArgs
@@ -276,7 +284,9 @@ class SetEnv:
         self.changed = True
 
     def extend(self, other: SetEnv) -> None:
-        """Take the lines of ``other`` as if written after these, so their values still expand only when read."""
+        """Appended blocks override base keys; explicit keys in the same override win."""
+        for _, protected in self._override_replacements:
+            protected.update(other._raw)
         for key, value in other._raw.items():
             self._materialized.pop(key, None)
             self._raw[key] = value
@@ -285,7 +295,8 @@ class SetEnv:
                 self._markers[key] = other._markers[key]
             else:
                 self._markers.pop(key, None)
-        self._needs_replacement.extend(other._needs_replacement)
+        if other._needs_replacement:
+            self._override_replacements.append((other._needs_replacement.copy(), set(other._raw)))
         self.changed = True
 
     def update(self, param: Mapping[str, str] | SetEnv, *, override: bool = True) -> None:

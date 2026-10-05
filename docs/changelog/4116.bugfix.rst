@@ -1,2 +1,3 @@
-A :ref:`set_env` value passed with ``-x`` or ``TOX_OVERRIDE`` resolves substitutions such as ``{env_name}`` and reads
-``file|`` entries, as other overridden settings do - by :user:`Rodrigo-Palma`.
+Resolve substitutions and ``file|`` entries in :ref:`set_env` overrides passed through ``-x`` or ``TOX_OVERRIDE``.
+Appended blocks replace inherited values while preserving explicit keys in the same or later overrides - by
+:user:`Rodrigo-Palma`.
