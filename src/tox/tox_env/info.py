@@ -14,7 +14,7 @@ from typing import TYPE_CHECKING, Any
 from tox.util.typing_compat import override
 
 if TYPE_CHECKING:
-    from collections.abc import Iterator
+    from collections.abc import Generator
     from pathlib import Path
 
 
@@ -40,7 +40,7 @@ class Info:
         value: Any,
         section: str,
         sub_section: str | None = None,
-    ) -> Iterator[tuple[bool, Any | None]]:
+    ) -> Generator[tuple[bool, Any | None], None, None]:
         """Compare new information with the existing one and update if differs.
 
         :param value: the value stored

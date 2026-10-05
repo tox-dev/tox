@@ -10,7 +10,7 @@ from tox.util.typing_compat import override
 
 if TYPE_CHECKING:
     import sys
-    from collections.abc import Iterator
+    from collections.abc import Generator
     from types import TracebackType
 
     if sys.version_info >= (3, 11):  # pragma: >=3.11 cover
@@ -100,7 +100,7 @@ class SyncWrite:
                     self._at = at
 
     @contextmanager
-    def colored(self) -> Iterator[None]:
+    def colored(self) -> Generator[None, None, None]:
         if self._color is None or self._target is None:
             yield
         else:

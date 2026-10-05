@@ -19,7 +19,7 @@ from colorama import Fore, Style, init
 from tox.util.typing_compat import override
 
 if TYPE_CHECKING:
-    from collections.abc import Iterator, MutableMapping
+    from collections.abc import Generator, MutableMapping
 
 LEVELS = {
     0: logging.CRITICAL,
@@ -50,7 +50,7 @@ class _LogThreadLocal(local):
 
     @staticmethod
     @contextmanager
-    def patch_thread() -> Iterator[None]:
+    def patch_thread() -> Generator[None, None, None]:
         # CPython has no parent thread tracking, monkey-patch needed https://github.com/python/cpython/issues/86718
         def new_start(self: Thread) -> None:
             _THREAD_PARENT_IDENT[self] = current_thread().ident
@@ -76,7 +76,7 @@ class _LogThreadLocal(local):
         self._ident_to_data[current_thread().ident] = value
 
     @contextmanager
-    def with_name(self, name: str) -> Iterator[None]:
+    def with_name(self, name: str) -> Generator[None, None, None]:
         previous, self.name = self.name, name
         try:
             yield
@@ -84,7 +84,7 @@ class _LogThreadLocal(local):
             self.name = previous
 
     @contextmanager
-    def suspend_out_err(self, yes: bool, out_err: OutErr | None = None) -> Iterator[OutErr]:  # ruff:ignore[boolean-type-hint-positional-argument]
+    def suspend_out_err(self, yes: bool, out_err: OutErr | None = None) -> Generator[OutErr, None, None]:  # ruff:ignore[boolean-type-hint-positional-argument]
         previous_out, previous_err = self.out_err
         if yes:
             if out_err is None:  # pragma: no branch
@@ -134,7 +134,7 @@ class ToxHandler(_STREAM_HANDLER_BASE):
         self._remaining_formatter = self._get_formatter(logging.INFO, level, is_colored)
 
     @contextmanager
-    def with_context(self, name: str) -> Iterator[None]:
+    def with_context(self, name: str) -> Generator[None, None, None]:
         """Set a new tox environment context.
 
         :param name: the name of the tox environment
@@ -176,7 +176,7 @@ class ToxHandler(_STREAM_HANDLER_BASE):
         """Ignore anyone changing this."""
 
     @contextmanager
-    def suspend_out_err(self, yes: bool, out_err: OutErr | None = None) -> Iterator[OutErr]:  # ruff:ignore[boolean-type-hint-positional-argument]
+    def suspend_out_err(self, yes: bool, out_err: OutErr | None = None) -> Generator[OutErr, None, None]:  # ruff:ignore[boolean-type-hint-positional-argument]
         with self._local.suspend_out_err(yes, out_err) as out_err_res:
             yield out_err_res
 
@@ -226,7 +226,7 @@ class ToxHandler(_STREAM_HANDLER_BASE):
 
     @staticmethod
     @contextmanager
-    def patch_thread() -> Iterator[None]:
+    def patch_thread() -> Generator[None, None, None]:
         with _LogThreadLocal.patch_thread():
             yield
 

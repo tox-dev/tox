@@ -11,7 +11,7 @@ import pytest
 from tox.tox_env.python.pip.req.file import ParsedRequirement, RequirementsFile
 
 if TYPE_CHECKING:
-    from collections.abc import Iterator
+    from collections.abc import Generator
     from pathlib import Path
 
     from pytest_mock import MockerFixture
@@ -569,7 +569,7 @@ def test_req_over_http(tmp_path: Path, flag: str, mocker: MockerFixture) -> None
 
 def test_req_over_http_has_req(tmp_path: Path, mocker: MockerFixture) -> None:
     @contextmanager
-    def enter(url: str, timeout: float | None = None) -> Iterator[IO[bytes]]:  # ruff:ignore[unused-function-argument]
+    def enter(url: str, timeout: float | None = None) -> Generator[IO[bytes], None, None]:  # ruff:ignore[unused-function-argument]
         if url == "https://root.org/a.txt":
             yield BytesIO(b"-r b.txt")
         elif url == "https://root.org/b.txt":

@@ -6,7 +6,7 @@ import logging
 import sys
 import time
 from abc import ABC, abstractmethod
-from collections.abc import Callable, Iterator, Sequence
+from collections.abc import Callable, Generator, Sequence
 from contextlib import contextmanager, suppress
 from typing import IO, TYPE_CHECKING, NoReturn, cast
 
@@ -153,7 +153,7 @@ class Execute(ABC):
         show: bool,  # ruff:ignore[boolean-type-hint-positional-argument]
         out_err: OutErr,
         env: ToxEnv,
-    ) -> Iterator[ExecuteStatus]:
+    ) -> Generator[ExecuteStatus, None, None]:
         start = time.monotonic()
         stderr_color = None
         if self._colored:
