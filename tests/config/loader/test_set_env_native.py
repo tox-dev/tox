@@ -26,7 +26,7 @@ def test_set_env_override_native_toml_reference_runs(tox_project: ToxProjectCrea
         'commands=[["python", "-c", "import os; print(os.environ[\\"MAGIC\\"])"]]\n'
     }).run("r", "-e", "py", "-x", "env_run_base.set_env+=MAGIC=native")
     result.assert_success()
-    assert "\nnative\n" in result.out
+    assert "native" in result.out.splitlines()
 
 
 @pytest.mark.parametrize(
@@ -65,7 +65,7 @@ def test_set_env_native_reference_file_selector_runs(
         "r", "-e", "py", *flags
     )
     result.assert_success()
-    assert "\nchild\n" in result.out
+    assert "child" in result.out.splitlines()
 
 
 @pytest.mark.parametrize(
@@ -102,7 +102,7 @@ def test_set_env_native_toml_keeps_literal_values(tox_project: ToxProjectCreator
         })
     }).run("r", "-e", "py", "-x", "env_run_base.set_env+=ADDED=yes")
     result.assert_success()
-    assert f"\n{value!r}\n" in result.out
+    assert repr(value) in result.out.splitlines()
 
 
 @pytest.mark.parametrize("reference", [pytest.param(False, id="inline"), pytest.param(True, id="reference")])
@@ -131,7 +131,7 @@ def test_set_env_native_toml_file_selector_from_previous_file(
         "child.env": "MAGIC=child",
     }).run("r", "-e", "py", "-x", "env_run_base.set_env+=ADDED=yes")
     result.assert_success()
-    assert "\nchild\n" in result.out
+    assert "child" in result.out.splitlines()
 
 
 @pytest.mark.parametrize("filename", [pytest.param("tox.ini", id="ini"), pytest.param("tox.toml", id="toml")])
@@ -161,7 +161,7 @@ def test_set_env_override_file_selector_from_previous_override(
         f"{namespace}.set_env+=file|{{env:FILE}}",
     )
     result.assert_success()
-    assert "\nchild\n" in result.out
+    assert "child" in result.out.splitlines()
 
 
 @pytest.mark.parametrize(
