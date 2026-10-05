@@ -2446,11 +2446,10 @@ You could set additional environment variables by running:
 
        tox --override testenv.set_env+=baz=quux
 
-For :ref:`set_env`, an appended override replaces matching keys from the configuration or an earlier override.
-Within one override, direct assignments take precedence over included blocks. Direct assignments in a later override
-also take precedence over blocks from an earlier override. Values resolve after merging, so references to other
-``set_env`` keys read their final values. These rules also apply when another section references the overridden
-``set_env``.
+For :ref:`set_env`, an appended override replaces matching keys from the configuration or an earlier override. Within
+one override, direct assignments take precedence over included blocks. Direct assignments in a later override also take
+precedence over blocks from an earlier override. Values resolve after merging, so references to other ``set_env`` keys
+read their final values. These rules also apply when another section references the overridden ``set_env``.
 
 You can specify overrides multiple times on the command line to append multiple items:
 
