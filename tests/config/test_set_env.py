@@ -1116,3 +1116,18 @@ def test_set_env_extend_replaces_cached_values_and_markers(
         assert values.load("A") == "base"
     values.extend(SetEnv(appended, "py", "py", Path()))
     assert {key: values.load(key) for key in values} == expected
+
+
+def test_set_env_export_callback_can_read_another_export() -> None:
+    values = SetEnv("", "py", "py", Path())
+    values.export({"FIRST": lambda: values.load("SECOND"), "SECOND": lambda: "value"})
+    assert {key: values.load(key) for key in values} == {"FIRST": "value", "SECOND": "value"}
+
+
+@pytest.mark.parametrize("materialize", [pytest.param(False, id="raw"), pytest.param(True, id="cached")])
+def test_set_env_export_clears_configured_marker(materialize: bool) -> None:
+    values = SetEnv("TOX_ENV_NAME=wrong; sys_platform == 'nope'", "py", "py", Path())
+    values.export({"TOX_ENV_NAME": lambda: "py"})
+    if materialize:
+        assert values.load("TOX_ENV_NAME") == "py"
+    assert {key: values.load(key) for key in values} == {"TOX_ENV_NAME": "py"}

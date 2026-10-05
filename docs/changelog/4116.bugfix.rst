@@ -1,3 +1,4 @@
 Resolve substitutions and ``file|`` entries in :ref:`set_env` overrides passed through ``-x`` or ``TOX_OVERRIDE``.
-Appended blocks replace inherited values while preserving explicit keys in the same or later overrides - by
-:user:`Rodrigo-Palma`.
+Appended blocks replace inherited values while preserving explicit keys in the same or later overrides.
+Preserve these rules through section references and resolve values in the consuming environment.
+Prevent included values from overriding tox's own variables - by :user:`Rodrigo-Palma`.

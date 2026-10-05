@@ -24,6 +24,7 @@ from tox.config.loader.replacer import (
     replace_env,
 )
 from tox.config.loader.stringify import stringify
+from tox.config.set_env import SetEnvReference
 from tox.config.types import Command
 from tox.tox_env.python.pip.req_file import PythonConstraints, PythonDeps
 from tox.util.typing_compat import override
@@ -70,7 +71,9 @@ class Unroll:
         """Replace all active tokens within value according to the config."""
         depth += 1
         MatchRecursionError.check(depth, value)
-        if isinstance(value, str):
+        if isinstance(value, SetEnvReference):
+            pass
+        elif isinstance(value, str):
             if not skip_str and self.conf is not None:  # core config does not support string substitution
                 reference = TomlReplaceLoader(self.conf, self.loader)
                 value = replace(self.conf, reference, value, self.args)
@@ -153,7 +156,14 @@ class Unroll:
             if self.conf is not None:
                 *namespace_parts, ref_key = validated_of
                 namespace = self.loader.section.SEP.join(namespace_parts)
-                loaded = apply_overrides_to_raw(self.conf.overrides.get(namespace, []), ref_key, loaded)
+                keys = {"set_env", "setenv"} if ref_key in {"set_env", "setenv"} else {ref_key}
+                overrides = [entry for entry in self.conf.overrides.get(namespace, []) if entry.key in keys]
+                if ref_key in {"set_env", "setenv"} and overrides:
+                    args = self.args.copy()
+                    args.chain.append(path)
+                    loaded = cast("TomlTypes", self.loader.set_env_reference(loaded, overrides, self.conf, args))
+                else:
+                    loaded = apply_overrides_to_raw(overrides, ref_key, loaded)
             self._refs.append(path)
             try:
                 return self(loaded, depth, skip_str=skip_str)

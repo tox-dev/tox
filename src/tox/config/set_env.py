@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import sys
+from collections import UserDict
 from itertools import chain
 from pathlib import Path
 from typing import TYPE_CHECKING, Protocol
@@ -31,7 +32,15 @@ class SetEnvEntry(TypedDict):
     marker: NotRequired[str]
 
 
-SetEnvRaw = str | dict[str, "str | SetEnvEntry"] | list[dict[str, "str | SetEnvEntry"]]
+class SetEnvReference(UserDict[str, SetEnvEntry]):
+    """Keep overrides pending until the consuming environment has registered its keys."""
+
+    def __init__(self, values: SetEnv, args: ConfigLoadArgs) -> None:
+        super().__init__(values.raw(args, resolve=False))
+        self.config, self.args = values, args
+
+
+SetEnvRaw = str | dict[str, str | SetEnvEntry] | SetEnvReference | list[dict[str, str | SetEnvEntry] | SetEnvReference]
 
 
 class SetEnv:
@@ -46,12 +55,25 @@ class SetEnv:
         self._markers: dict[str, Marker] = {}  # PEP-496 markers for conditional env vars
         self._needs_replacement: list[str] = []  # env vars that need replacement
         self._override_replacements: list[tuple[list[str], set[str]]] = []
+        self._reference_entries: list[dict[str, str | SetEnvEntry] | SetEnvReference] = []
+        self._reference_override_keys: set[str] = set()
         self._expanding = False
         self._env_files: list[tuple[str, set[str]]] = []
         self._replacer: Replacer = lambda s, c, *, recursive=True: s  # ruff:ignore[unused-lambda-argument]
         self._name, self._env_name, self._root = name, env_name, root
         from .loader.replacer import MatchExpression, find_replace_expr  # ruff:ignore[import-outside-top-level]
 
+        if isinstance(raw, SetEnvReference) or (
+            isinstance(raw, list) and any(isinstance(entry, SetEnvReference) for entry in raw)
+        ):
+            self._reference_entries = raw.copy() if isinstance(raw, list) else [raw]
+            self._parse_dict(
+                (key, value)
+                for entry in self._reference_entries
+                for key, value in entry.items()
+                if key != "file" or not isinstance(value, str)
+            )
+            return
         if isinstance(raw, dict):
             self._parse_dict(raw.items())
             return
@@ -193,7 +215,7 @@ class SetEnv:
         if item in self._materialized:
             return self._materialized[item]
         if item in self._exported:
-            self._materialized[item] = self._exported.pop(item)()
+            self._materialized[item] = self._exported[item]()
             return self._materialized[item]
         raw = self._raw[item]
         args = ConfigLoadArgs([], self._name, self._env_name) if args is None else args
@@ -214,16 +236,16 @@ class SetEnv:
         for key in self._materialized:
             if self._marker_matches(key):
                 yield key
-        yield from list(self._exported)
+        yield from [key for key in self._exported if key not in self._materialized]
         for key in list(self._raw.keys()):  # iterating over this may trigger materialization and change the dict
             if self._marker_matches(key):
                 yield key
 
-    def _resolve_replacements(self) -> None:
-        if self._expanding or not (self._needs_replacement or self._override_replacements):
+    def _resolve_replacements(self, args: ConfigLoadArgs | None = None) -> None:
+        if self._expanding or not (self._needs_replacement or self._override_replacements or self._reference_entries):
             # A lookup made while expanding sees only the keys registered so far.
             return
-        args = ConfigLoadArgs([], self._name, self._env_name)
+        args = ConfigLoadArgs([], self._name, self._env_name) if args is None else args
         entries: dict[str, tuple[str, Marker | None]] = {}
         self._expanding = True
         try:
@@ -232,6 +254,21 @@ class SetEnv:
             entries = {
                 key: value for key, value in entries.items() if key not in self._raw and key not in self._defined_keys
             }
+            for entry in self._reference_entries:
+                if isinstance(entry, SetEnvReference):
+                    values = entry.config.raw(entry.args)
+                else:
+                    block = SetEnv(entry, self._name, self._env_name, self._root)
+                    block.use_replacer(self._replacer, args)
+                    values = block.raw(args)
+                entries.update({
+                    key: (
+                        value["value"],
+                        Marker(reference_marker) if (reference_marker := value.get("marker")) else None,
+                    )
+                    for key, value in values.items()
+                    if key not in self._reference_override_keys
+                })
             for lines, protected in self._override_replacements:
                 for line in lines:
                     entries.update(
@@ -241,6 +278,7 @@ class SetEnv:
             self._expanding = False
         self._needs_replacement.clear()
         self._override_replacements.clear()
+        self._reference_entries.clear()
         sub_raw: dict[str, str] = {}
         for key, (value, marker) in entries.items():
             if key not in self._exported:
@@ -271,6 +309,17 @@ class SetEnv:
         entries.update((key, (value, block._markers.get(key))) for key, value in block._raw.items())
         return entries
 
+    def raw(self, args: ConfigLoadArgs, *, resolve: bool = True) -> dict[str, SetEnvEntry]:
+        """Preserve lazy values and markers when another section includes this configuration."""
+        if resolve:
+            self._resolve_replacements(args)
+        result: dict[str, SetEnvEntry] = {}
+        for key, value in {**self._materialized, **self._raw}.items():
+            result[key] = {"value": value}
+            if marker := self._markers.get(key):
+                result[key]["marker"] = str(marker)
+        return result
+
     def export(self, values: Mapping[str, Callable[[], str]]) -> None:
         """Set tox's own variables over the configured ones, resolved on first read.
 
@@ -280,6 +329,7 @@ class SetEnv:
         for key, value in values.items():
             self._raw.pop(key, None)
             self._materialized.pop(key, None)
+            self._markers.pop(key, None)
             self._exported[key] = value
         self.changed = True
 
@@ -287,6 +337,7 @@ class SetEnv:
         """Appended blocks override base keys; explicit keys in the same override win."""
         for _, protected in self._override_replacements:
             protected.update(other._raw)
+        self._reference_override_keys.update(other._raw)
         for key, value in other._raw.items():
             self._materialized.pop(key, None)
             self._raw[key] = value
@@ -312,4 +363,5 @@ __all__ = (
     "SetEnv",
     "SetEnvEntry",
     "SetEnvRaw",
+    "SetEnvReference",
 )

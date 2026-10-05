@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, Any, TypeVar, cast, get_origin, overload
 from tox.util.typing_compat import override
 
 from .of_type import ConfigConstantDefinition, ConfigDefinition, ConfigDynamicDefinition, ConfigLoadArgs
-from .set_env import SetEnv, SetEnvRaw
+from .set_env import SetEnv, SetEnvRaw, SetEnvReference
 from .types import EnvList
 
 if TYPE_CHECKING:
@@ -383,12 +383,13 @@ class EnvConfigSet(ConfigSet):
                 return False
 
             if not (
-                isinstance(raw, str)
+                isinstance(raw, (str, SetEnvReference))
                 or (isinstance(raw, dict) and all(isinstance(k, str) and is_valid_value(v) for k, v in raw.items()))
                 or (
                     isinstance(raw, list)
                     and all(
-                        isinstance(e, dict) and all(isinstance(k, str) and is_valid_value(v) for k, v in e.items())
+                        isinstance(e, (dict, SetEnvReference))
+                        and all(isinstance(k, str) and is_valid_value(v) for k, v in e.items())
                         for e in raw
                     )
                 )

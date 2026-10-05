@@ -6,7 +6,7 @@ import re
 from configparser import SectionProxy
 from functools import cache
 from re import Pattern
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Final
 
 from tox.config.loader.api import apply_overrides_to_raw
 from tox.config.loader.replacer import ReplaceReference
@@ -51,7 +51,7 @@ class ReplaceReferenceIni(ReplaceReference):
         for src in self._config_value_sources(settings["env"], settings["section"], conf_args.env_name):
             try:
                 if isinstance(src, SectionProxy):
-                    return self._resolve_section_proxy(src, key, conf_args.env_name)
+                    return self._resolve_section_proxy(src, key, conf_args)
                 value = src.load(key, conf_args.chain)
             except KeyError:  # if fails, keep trying maybe another source can satisfy # ruff:ignore[try-except-in-loop]
                 pass
@@ -60,18 +60,28 @@ class ReplaceReferenceIni(ReplaceReference):
                 return as_str.replace("#", r"\#")  # escape comment characters as these will be stripped
         raise KeyError(key)
 
-    def _resolve_section_proxy(self, src: SectionProxy, key: str, env_name: str | None) -> str:
+    def _resolve_section_proxy(self, src: SectionProxy, key: str, args: ConfigLoadArgs) -> str:
         """Resolve a key from a SectionProxy, returning empty string when factor filtering empties the value."""
-        raw = apply_overrides_to_raw(self.conf.overrides.get(src.name, []), key, src[key])
+        keys = {"set_env", "setenv"} if key in {"set_env", "setenv"} else {key}
+        overrides = [entry for entry in self.conf.overrides.get(src.name, []) if entry.key in keys]
+        set_env_override = key in {"set_env", "setenv"} and bool(overrides)
+        raw = src[key] if set_env_override else apply_overrides_to_raw(overrides, key, src[key])
         try:
-            return self.loader.process_raw(self.conf, env_name, raw)
+            processed = self.loader.process_raw(self.conf, args.env_name, raw)
         except KeyError:
-            if key in src:
-                # Key exists but factor filtering emptied the value.
-                # For cross-section references this is a valid empty result,
-                # not a missing key — the caller explicitly asked for this value.
-                return ""
-            raise
+            # Factor filtering can empty an existing section value.
+            processed = ""
+        if not set_env_override:
+            return processed
+        args = args.copy()
+        args.chain.append(f"{src.name}.{key}")
+        escaped_semicolon: Final[str] = r"\;"
+        values = self.loader.set_env_reference(processed, overrides, self.conf, args).config.raw(args)
+        return "\n".join(
+            f"{name}={value['value'].replace(';', escaped_semicolon)}"
+            + (f"; {marker}" if (marker := value.get("marker")) else "")
+            for name, value in values.items()
+        )
 
     def _config_value_sources(
         self, env: str | None, section: str | None, current_env: str | None

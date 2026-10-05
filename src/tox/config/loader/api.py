@@ -18,6 +18,7 @@ if TYPE_CHECKING:
 
     from tox.config.cli.parser import ToxParser
     from tox.config.main import Config
+    from tox.config.set_env import SetEnvRaw, SetEnvReference
 
     from .section import Section
 
@@ -244,6 +245,28 @@ class Loader(Convert[T]):
 
         """
         return self.to(raw, of_type, factory)
+
+    def set_env_reference(
+        self, raw: T, overrides: list[Override], conf: Config, args: ConfigLoadArgs
+    ) -> SetEnvReference:
+        # SetEnv imports this module.
+        from tox.config.set_env import SetEnv, SetEnvReference  # ruff:ignore[import-outside-top-level]
+
+        if args.chain[-1] in args.chain[:-1]:
+            msg = f"circular set_env reference {' -> '.join(args.chain)}"
+            raise ValueError(msg)
+
+        def factory(value: object) -> SetEnv:
+            return SetEnv(cast("SetEnvRaw", value), "set_env", args.env_name, conf.core["tox_root"])
+
+        result = self.build("set_env", SetEnv, factory, conf, raw, args)
+        for entry in overrides:
+            appended = self._build_override(entry, SetEnv, factory, conf, args)
+            if entry.append:
+                result.extend(appended)
+            else:
+                result = appended
+        return SetEnvReference(result, args)
 
     def substitute(self, value: str, conf: Config, args: ConfigLoadArgs) -> str:
         """Apply this loader's replacements to a raw string.
