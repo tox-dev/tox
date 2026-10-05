@@ -129,7 +129,7 @@ class Pep517VenvPackager(PythonPackageToxEnv, ABC):
         self._frontend_ = None  # force recreating the frontend with new root
 
     @contextmanager
-    def root_at(self, value: Path) -> Iterator[None]:
+    def root_at(self, value: Path) -> Generator[None, None, None]:
         """Point the builder at another source tree for the duration of one build, then restore the project root."""
         previous = self.root
         self.root = value

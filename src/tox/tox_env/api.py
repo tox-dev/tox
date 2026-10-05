@@ -24,7 +24,7 @@ from tox.util.typing_compat import override
 from tox.util.venv_redirect import forget_venv_redirect, release_venv_redirect
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, Generator, Iterator, Sequence
+    from collections.abc import Callable, Generator, Sequence
     from io import BytesIO
 
     from tox.config.cli.parser import Parsed
@@ -489,7 +489,7 @@ class ToxEnv(ABC):  # ruff:ignore[too-many-public-methods]
         cwd: Path | None = None,
         run_id: str = "",
         executor: Execute | None = None,
-    ) -> Iterator[ExecuteStatus]:
+    ) -> Generator[ExecuteStatus, None, None]:
         if self._fully_interrupted or (self._interrupted and not self._allow_interrupted_execution):
             raise SystemExit(-2)  # pragma: no cover
         if cwd is None:
