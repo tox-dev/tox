@@ -24,6 +24,7 @@ from tox.config.loader.replacer import (
     replace_env,
 )
 from tox.config.loader.stringify import stringify
+from tox.config.set_env import SetEnvReference
 from tox.config.types import Command
 from tox.tox_env.python.pip.req_file import PythonConstraints, PythonDeps
 from tox.util.typing_compat import override
@@ -70,7 +71,9 @@ class Unroll:
         """Replace all active tokens within value according to the config."""
         depth += 1
         MatchRecursionError.check(depth, value)
-        if isinstance(value, str):
+        if isinstance(value, SetEnvReference):
+            pass
+        elif isinstance(value, str):
             if not skip_str and self.conf is not None:  # core config does not support string substitution
                 reference = TomlReplaceLoader(self.conf, self.loader)
                 value = replace(self.conf, reference, value, self.args)
@@ -81,7 +84,13 @@ class Unroll:
             res_list: list[TomlTypes] = []
             for val in value:  # apply replacement for every entry
                 got = self(val, depth, skip_str=skip_str)
-                if isinstance(val, dict) and val.get("replace") and val.get("extend"):
+                if isinstance(got, SetEnvReference):
+                    extending = isinstance(val, dict) and bool(val.get("extend"))
+                    if got.shape != ("array" if extending else "table"):
+                        msg = "set_env arrays require table references or array references with extend=true"
+                        raise TypeError(msg)
+                    res_list.append(got)
+                elif isinstance(val, dict) and val.get("replace") and val.get("extend"):
                     # ``extend`` spreads an iterable result (list, set of extras, ...) into the
                     # parent. A scalar string is the exception: iterating it would split it
                     # character by character, so a non-empty one is appended as a single item while
@@ -149,11 +158,18 @@ class Unroll:
             if (path := self.loader.section.SEP.join(validated_of)) in self._refs:
                 msg = f"circular reference {' -> '.join([*self._refs, path])}"
                 raise MatchRecursionError(msg)
-            loaded = self.loader.load_raw_from_root(path)
+            loaded: TomlTypes = self.loader.load_raw_from_root(path)
             if self.conf is not None:
                 *namespace_parts, ref_key = validated_of
                 namespace = self.loader.section.SEP.join(namespace_parts)
-                loaded = apply_overrides_to_raw(self.conf.overrides.get(namespace, []), ref_key, loaded)
+                keys = {"set_env", "setenv"} if ref_key in {"set_env", "setenv"} else {ref_key}
+                overrides = [entry for entry in self.conf.overrides.get(namespace, []) if entry.key in keys]
+                if skip_str and ref_key in {"set_env", "setenv"} and overrides:
+                    args = self.args.copy()
+                    args.chain.append(path)
+                    loaded = self.loader.set_env_reference(loaded, overrides, self.conf, args)
+                else:
+                    loaded = apply_overrides_to_raw(overrides, ref_key, loaded)
             self._refs.append(path)
             try:
                 return self(loaded, depth, skip_str=skip_str)

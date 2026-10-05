@@ -1097,3 +1097,37 @@ def test_set_env_shows_what_commands_get(tox_project: ToxProjectCreator, ini: st
     result.assert_success()
     shown, used = result.env_conf("py")["set_env"], result.state.envs["py"].environment_variables
     assert {key: shown.load(key) for key in shown if key in _EXPORTED} == {key: used[key] for key in _EXPORTED}
+
+
+@pytest.mark.parametrize("materialize", [pytest.param(False, id="raw"), pytest.param(True, id="cached")])
+@pytest.mark.parametrize(
+    ("original", "appended", "expected"),
+    [
+        pytest.param("A=base", "A=override", {"A": "override"}, id="replace-value"),
+        pytest.param("A=base; sys_platform == 'nope'", "A=override", {"A": "override"}, id="remove-marker"),
+        pytest.param("A=base", "A=override; sys_platform == 'nope'", {}, id="add-false-marker"),
+    ],
+)
+def test_set_env_extend_replaces_cached_values_and_markers(
+    original: str, appended: str, expected: dict[str, str], materialize: bool
+) -> None:
+    values = SetEnv(original, "py", "py", Path())
+    if materialize:
+        assert values.load("A") == "base"
+    values.extend(SetEnv(appended, "py", "py", Path()))
+    assert {key: values.load(key) for key in values} == expected
+
+
+def test_set_env_export_callback_can_read_another_export() -> None:
+    values = SetEnv("", "py", "py", Path())
+    values.export({"FIRST": lambda: values.load("SECOND"), "SECOND": lambda: "value"})
+    assert {key: values.load(key) for key in values} == {"FIRST": "value", "SECOND": "value"}
+
+
+@pytest.mark.parametrize("materialize", [pytest.param(False, id="raw"), pytest.param(True, id="cached")])
+def test_set_env_export_clears_configured_marker(materialize: bool) -> None:
+    values = SetEnv("TOX_ENV_NAME=wrong; sys_platform == 'nope'", "py", "py", Path())
+    values.export({"TOX_ENV_NAME": lambda: "py"})
+    if materialize:
+        assert values.load("TOX_ENV_NAME") == "py"
+    assert {key: values.load(key) for key in values} == {"TOX_ENV_NAME": "py"}

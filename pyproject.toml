@@ -178,37 +178,37 @@ lint.select = [
   "ALL",
 ]
 lint.ignore = [
-  "ANN401",  # Dynamically typed expressions (typing.Any) are disallowed in `arg`"
-  "COM812",  # conflicts with formatter
-  "CPY",     # No copyright header
-  "D",       # ignore documentation for now
-  "D203",    # `one-blank-line-before-class` (D203) and `no-blank-line-before-class` (D211) are incompatible
-  "D212",    # `multi-line-summary-first-line` (D212) and `multi-line-summary-second-line` (D213) are incompatible
-  "DOC201",  # no restructuredtext support yet
-  "DOC402",  # no restructuredtext support yet
-  "DOC501",  # broken with sphinx docs
-  "INP001",  # no implicit namespaces here
-  "ISC001",  # conflicts with formatter
-  "LOG015",  # we require use of the root logger for reporting
-  "PLR0914", ## Too many local variables
-  "PLR0917", ## Too many positional arguments
-  "RUF067",  # `__init__` module should only contain docstrings and re-exports
-  "S104",    # Possible binding to all interfaces
-  "S404",    # Using subprocess is alright.
-  "S603",    # Using subprocess is alright.
+  "any-type",                                  # Dynamically typed expressions (typing.Any) are disallowed in `arg`"
+  "CPY",                                       # No copyright header
+  "D",                                         # ignore documentation for now
+  "docstring-missing-exception",               # broken with sphinx docs
+  "docstring-missing-returns",                 # no restructuredtext support yet
+  "docstring-missing-yields",                  # no restructuredtext support yet
+  "hardcoded-bind-all-interfaces",             # Possible binding to all interfaces
+  "implicit-namespace-package",                # no implicit namespaces here
+  "incorrect-blank-line-before-class",         # conflicts with no-blank-line-before-class
+  "missing-trailing-comma",                    # conflicts with formatter
+  "multi-line-summary-first-line",             # conflicts with multi-line-summary-second-line
+  "non-empty-init-module",                     # `__init__` module should only contain docstrings and re-exports
+  "root-logger-call",                          # we require use of the root logger for reporting
+  "single-line-implicit-string-concatenation", # conflicts with formatter
+  "subprocess-without-shell-equals-true",      # Using subprocess is alright.
+  "suspicious-subprocess-import",              # Using subprocess is alright.
+  "too-many-locals",                           ## Too many local variables
+  "too-many-positional-arguments",             ## Too many positional arguments
 ]
 lint.per-file-ignores."src/tox/pytest.py" = [
   "pytest-fixture-autouse", # the plugin's shared setup fixtures are meant to apply to every test
 ]
 lint.per-file-ignores."tests/**/*.py" = [
-  "D",                      # don't care about documentation in tests
-  "FBT",                    # don't care about booleans as positional arguments in tests
-  "INP001",                 # no implicit namespace
-  "PLR0913",                # too many arguments to function definition
-  "PLR2004",                # Magic value used in comparison, consider replacing with a constant variable
-  "pytest-fixture-autouse", # shared setup fixtures are meant to apply to every test
-  "S101",                   # asserts allowed in tests
-  "S603",                   # `subprocess` call: check for execution of untrusted input
+  "assert",                               # asserts allowed in tests
+  "D",                                    # don't care about documentation in tests
+  "FBT",                                  # don't care about booleans as positional arguments in tests
+  "implicit-namespace-package",           # no implicit namespace
+  "magic-value-comparison",               # Magic value used in comparison, consider replacing with a constant variable
+  "pytest-fixture-autouse",               # shared setup fixtures are meant to apply to every test
+  "subprocess-without-shell-equals-true", # `subprocess` call: check for execution of untrusted input
+  "too-many-arguments",                   # too many arguments to function definition
 ]
 lint.typing-modules = [ "tox.util.typing_compat" ]
 lint.isort = { known-first-party = [

@@ -63,6 +63,10 @@ config
 .. autoclass:: tox.config.loader.api.Override
     :members:
 
+.. autoclass:: tox.config.set_env.SetEnvReference
+
+.. autoclass:: tox.config.set_env.SetEnvEntry
+
 .. autoclass:: tox.config.loader.api.Loader
     :members:
 
