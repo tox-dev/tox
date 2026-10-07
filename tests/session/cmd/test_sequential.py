@@ -318,6 +318,16 @@ def test_missing_interpreter_skip_off(tox_project: ToxProjectCreator) -> None:
     assert exp in result.out
 
 
+@pytest.mark.parametrize("args", [("r",), ("c", "-e", "py", "-k", "skip_install")])
+def test_invalid_config_bool(tox_project: ToxProjectCreator, args: tuple[str, ...]) -> None:
+    project = tox_project({"tox.ini": "[testenv]\nskip_install = maybe"})
+
+    result = project.run(*args)
+
+    result.assert_failed(code=-2)
+    assert "HandledError| failed to load py.skip_install: value 'maybe' cannot be transformed to bool" in result.out
+
+
 @pytest.mark.slow
 @pytest.mark.timeout(120)
 def test_missing_interpreter_skip_set_env_substitution_ini(tox_project: ToxProjectCreator) -> None:
