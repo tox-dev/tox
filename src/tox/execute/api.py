@@ -251,6 +251,7 @@ class Outcome:
     """Result of a command execution."""
 
     OK = 0
+    FAILED = 1  #: for a failure that carries no exit code of its own, such as an inverted command that exited 0
 
     def __init__(  # ruff:ignore[too-many-arguments]
         self,
@@ -300,16 +301,16 @@ class Outcome:
     def assert_success(self) -> None:
         """Assert that the execution succeeded."""
         if self.exit_code is not None and self.exit_code != self.OK:
-            self._assert_fail()
+            self._assert_fail(cast("int", self.exit_code))
         self.log_run_done(logging.INFO)
 
     def assert_failure(self) -> None:
-        """Assert that the execution failed."""
+        """Assert that the execution failed, reporting a generic failure as the exit code is the success one."""
         if self.exit_code is not None and self.exit_code == self.OK:
-            self._assert_fail()
+            self._assert_fail(self.FAILED)
         self.log_run_done(logging.INFO)
 
-    def _assert_fail(self) -> NoReturn:
+    def _assert_fail(self, code: int) -> NoReturn:
         if self.show_on_standard is False:
             if self.out:
                 sys.stdout.write(self.out)
@@ -322,7 +323,7 @@ class Outcome:
                 if not self.err.endswith("\n"):
                     sys.stderr.write("\n")
         self.log_run_done(logging.CRITICAL)
-        raise SystemExit(self.exit_code)
+        raise SystemExit(code)
 
     def log_run_done(self, lvl: int) -> None:
         """Log that the run was done.

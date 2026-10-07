@@ -1,0 +1,2 @@
+Fix a command prefixed with ``!`` reporting success when it exits with ``0``, the one outcome the prefix turns into
+a failure; the environment now fails with exit code ``1`` - by :user:`feiiiiii5`.
