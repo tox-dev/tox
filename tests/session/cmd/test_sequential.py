@@ -927,11 +927,7 @@ def test_result_json_marks_skipped(tox_project: ToxProjectCreator) -> None:
 
 
 def test_result_json_creates_missing_parent_dir(tox_project: ToxProjectCreator) -> None:
-    """The directory of the JSON report is created when it does not exist yet."""
     project = tox_project({"tox.toml": '[env_run_base]\npackage = "skip"\n'})
     log = project.path / "reports" / "nested" / "out.json"
-
-    outcome = project.run("r", "-e", "py", "--result-json", str(log))
-
-    outcome.assert_success()
+    project.run("r", "-e", "py", "--result-json", str(log)).assert_success()
     assert "testenvs" in json.loads(log.read_text())
