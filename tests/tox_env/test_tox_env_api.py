@@ -74,6 +74,20 @@ def test_env_log(tox_project: ToxProjectCreator) -> None:
     assert filename == {"1-commands[0].log"}
 
 
+def test_env_log_cleared_without_commands(tox_project: ToxProjectCreator) -> None:
+    config = '[env_run_base]\npackage = "skip"\n'
+    prj = tox_project({"tox.toml": config + 'commands = [["python", "-c", "pass"]]\n'})
+    prj.run("r").assert_success()
+
+    log_dir = prj.path / ".tox" / "py" / "log"
+    assert {path.name for path in log_dir.iterdir()} == {"1-commands[0].log"}
+
+    (prj.path / "tox.toml").write_text(config + "commands = []\n")
+    prj.run("r").assert_success()
+
+    assert not list(log_dir.iterdir())
+
+
 def test_env_log_redacts_secret_argv(tox_project: ToxProjectCreator) -> None:
     cmd = "commands=python -c 'pass' --token=hunter2 --cov=tox"
     prj = tox_project({"tox.ini": f"[testenv]\npackage=skip\n{cmd}"})

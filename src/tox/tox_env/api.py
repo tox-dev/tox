@@ -342,6 +342,8 @@ class ToxEnv(ABC):  # ruff:ignore[too-many-public-methods]
                 raise Recreate(msg)
         self._handle_env_tmp_dir()
         self._handle_core_tmp_dir()
+        if self._log_id == 0:
+            ensure_empty_dir(self.env_log_dir)
 
     def _setup_with_env(self) -> None:  # ruff:ignore[empty-method-without-abstract-decorator] # empty abstract base class
         pass
