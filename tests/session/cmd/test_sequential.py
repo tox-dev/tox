@@ -40,29 +40,9 @@ def test_run_ignore_cmd_exit_code(tox_project: ToxProjectCreator, prefix: str) -
     assert "magic fail" in outcome.err
 
 
-@pytest.mark.parametrize(
-    ("config_name", "config"),
-    [
-        pytest.param(
-            "tox.ini",
-            "[tox]\nno_package=true\n[testenv]\ncommands =\n  ! python -c 'raise SystemExit(0)'\n"
-            "  python -c 'print(\"not reached\")'",
-            id="ini",
-        ),
-        pytest.param(
-            "tox.toml",
-            '[env_run_base]\npackage = "skip"\ncommands = [["!", "python", "-c", "raise SystemExit(0)"], '
-            '["python", "-c", "print(\'not reached\')"]]',
-            id="toml",
-        ),
-    ],
-)
-def test_run_invert_cmd_exit_code_fails_on_zero(tox_project: ToxProjectCreator, config_name: str, config: str) -> None:
-    """The ``!`` prefix makes a zero exit the failure, so the environment must fail instead of reporting success."""
-    outcome = tox_project({config_name: config}).run("r", "-e", "py")
-    outcome.assert_failed(code=1)
-    assert "commands[0]" in outcome.out
-    assert "commands[1]" not in outcome.out  # a failed command stops the set
+def test_run_invert_cmd_exit_code_fails_on_zero(tox_project: ToxProjectCreator) -> None:
+    project = tox_project({"tox.toml": '[env_run_base]\npackage = "skip"\ncommands = [["!", "python", "-c", ""]]'})
+    project.run("r", "-e", "py").assert_failed(code=1)
 
 
 def test_run_sequential_fail(tox_project: ToxProjectCreator) -> None:

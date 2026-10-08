@@ -1,2 +1,2 @@
-Fix a command prefixed with ``!`` reporting success when it exits with ``0``, the one outcome the prefix turns into a
-failure; the environment now fails with exit code ``1`` - by :user:`feiiiiii5`.
+A command prefixed with ``!`` that exits with ``0`` now fails the environment with exit code ``1``; before, tox reported
+it as a success - by :user:`feiiiiii5`.

@@ -251,7 +251,7 @@ class Outcome:
     """Result of a command execution."""
 
     OK = 0
-    FAILED = 1  #: for a failure that carries no exit code of its own, such as an inverted command that exited 0
+    FAILED = 1  #: exit code reported when a ``!`` command exits with :attr:`OK`
 
     def __init__(  # ruff:ignore[too-many-arguments]
         self,
@@ -305,7 +305,7 @@ class Outcome:
         self.log_run_done(logging.INFO)
 
     def assert_failure(self) -> None:
-        """Assert that the execution failed, reporting a generic failure as the exit code is the success one."""
+        """Assert that the execution failed."""
         if self.exit_code is not None and self.exit_code == self.OK:
             self._assert_fail(self.FAILED)
         self.log_run_done(logging.INFO)
