@@ -8,8 +8,6 @@ import pytest
 from tox.execute.request import ExecuteRequest, StdinSource
 
 if TYPE_CHECKING:
-    from unittest.mock import MagicMock
-
     from tox.pytest import ToxProjectCreator
 
 
@@ -47,25 +45,14 @@ def test_exec_help(tox_project: ToxProjectCreator) -> None:
 
 def test_exec_always_no_capture(tox_project: ToxProjectCreator) -> None:
     """Verify tox exec always runs with no_capture enabled for interactive mode."""
-    ini = "[testenv]\npackage=skip"
-    project = tox_project({"tox.ini": ini})
+    project = tox_project({"tox.ini": "[testenv]\npackage=skip"})
+    execute_calls = project.patch_execute(lambda _: 0)
 
-    captured_options: list[MagicMock] = []
-
-    def capture_options(request):  # ruff:ignore[missing-type-function-argument, missing-return-type-private-function]
-        captured_options.append(request)
-        return 0
-
-    execute_calls = project.patch_execute(capture_options)
     result = project.run("e", "-e", "py", "--", "python", "--version")
-    result.assert_success()
 
+    result.assert_success()
     assert execute_calls.call_count > 0
-    for call in execute_calls.call_args_list:
-        _, kwargs = call
-        env_instance = kwargs.get("self")
-        if env_instance and hasattr(env_instance, "options"):
-            assert env_instance.options.no_capture is True
+    assert all(call[0][0].options.no_capture is True for call in execute_calls.call_args_list)
 
 
 def test_exec_passes_stdin_through(tox_project: ToxProjectCreator, monkeypatch: pytest.MonkeyPatch) -> None:
