@@ -46,9 +46,14 @@ def write_output(
     colorize: Callable[[str], str],
 ) -> None:
     if output_file is not None:
-        Path(output_file).write_text(output + "\n", encoding="utf-8")
+        write_output_file(Path(output_file), output)
     else:
         print(colorize(output) if is_colored else output)  # ruff:ignore[print]
+
+
+def write_output_file(output_file: Path, output: str) -> None:
+    output_file.parent.mkdir(parents=True, exist_ok=True)
+    output_file.write_text(f"{output}\n", encoding="utf-8")
 
 
 def _collect_conf(conf: ConfigSet, keys: list[str]) -> tuple[dict[str, JsonValue], bool]:

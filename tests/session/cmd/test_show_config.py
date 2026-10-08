@@ -472,3 +472,19 @@ def test_show_config_ini_output_file(tox_project: ToxProjectCreator) -> None:
     outcome.assert_success()
     assert (project.path / "out.txt").read_text() == "[testenv:py]\nenv_name = py\n"
     assert not outcome.out
+
+
+@pytest.mark.parametrize(
+    ("config_format", "expected"),
+    [
+        pytest.param("ini", "[testenv:py]\nenv_name = py\n", id="ini"),
+        pytest.param("json", '{\n  "env": {\n    "py": {\n      "env_name": "py"\n    }\n  }\n}\n', id="json"),
+    ],
+)
+def test_show_config_output_file_creates_missing_parent_dir(
+    tox_project: ToxProjectCreator, config_format: str, expected: str
+) -> None:
+    project = tox_project({"tox.toml": '[env_run_base]\npackage = "skip"\n'})
+    out = project.path / "reports" / "nested" / "out.txt"
+    project.run("c", "-e", "py", "-k", "env_name", "--format", config_format, "-o", str(out)).assert_success()
+    assert out.read_text() == expected

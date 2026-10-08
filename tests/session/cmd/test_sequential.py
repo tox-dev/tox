@@ -929,3 +929,10 @@ def test_result_json_marks_skipped(tox_project: ToxProjectCreator) -> None:
     outcome.assert_success()
     result = json.loads((project.path / "out.json").read_text())["testenvs"]["a"]["result"]
     assert result == {"success": True, "exit_code": 0, "duration": result["duration"], "skipped": True}
+
+
+def test_result_json_creates_missing_parent_dir(tox_project: ToxProjectCreator) -> None:
+    project = tox_project({"tox.toml": '[env_run_base]\npackage = "skip"\n'})
+    log = project.path / "reports" / "nested" / "out.json"
+    project.run("r", "-e", "py", "--result-json", str(log)).assert_success()
+    assert "testenvs" in json.loads(log.read_text())

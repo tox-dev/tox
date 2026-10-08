@@ -13,6 +13,7 @@ from .main import Journal
 def write_journal(path: Path | None, journal: Journal) -> None:
     if path is None:
         return
+    Path(path).parent.mkdir(parents=True, exist_ok=True)
     with Path(path).open("w", encoding=locale.getpreferredencoding(do_setlocale=False)) as file_handler:
         json.dump(journal.content, file_handler, indent=2, ensure_ascii=False)
 
