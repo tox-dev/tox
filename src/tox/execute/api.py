@@ -301,7 +301,7 @@ class Outcome:
     def assert_success(self) -> None:
         """Assert that the execution succeeded."""
         if self.exit_code is not None and self.exit_code != self.OK:
-            self._assert_fail(cast("int", self.exit_code))
+            self._assert_fail(self.exit_code)
         self.log_run_done(logging.INFO)
 
     def assert_failure(self) -> None:
