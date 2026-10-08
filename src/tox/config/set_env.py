@@ -323,7 +323,15 @@ class SetEnv:
         if not env_file.exists():
             msg = f"{env_file} does not exist for set_env"
             raise Fail(msg)
-        for env_line in env_file.read_text(encoding="utf-8").splitlines():
+        if not env_file.is_file():
+            msg = f"{env_file} is not a file for set_env"
+            raise Fail(msg)
+        try:
+            content = env_file.read_text(encoding="utf-8")
+        except (OSError, UnicodeDecodeError) as exc:
+            msg = f"{env_file} cannot be read for set_env: {exc}"
+            raise Fail(msg) from exc
+        for env_line in content.splitlines():
             env_line = env_line.strip()  # ruff:ignore[redefined-loop-name]
             if not env_line or env_line.startswith("#"):
                 continue

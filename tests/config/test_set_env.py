@@ -359,6 +359,24 @@ def test_set_env_environment_file_missing(tox_project: ToxProjectCreator) -> Non
     assert f"py: failed with {project.path / 'magic.txt'} does not exist for set_env" in result.out
 
 
+def test_set_env_environment_file_is_directory(tox_project: ToxProjectCreator) -> None:
+    project = tox_project({"tox.ini": "[testenv]\npackage=skip\nset_env=file|subdir"})
+    (project.path / "subdir").mkdir()
+    result = project.run("r")
+    result.assert_failed()
+    assert f"py: failed with {project.path / 'subdir'} is not a file for set_env" in result.out
+    assert "Traceback" not in result.out
+
+
+def test_set_env_environment_file_not_utf8(tox_project: ToxProjectCreator) -> None:
+    project = tox_project({"tox.ini": "[testenv]\npackage=skip\nset_env=file|bad.env"})
+    (project.path / "bad.env").write_bytes(b"\xff\xfeF\x00O\x00O\x00=\x001\x00")
+    result = project.run("r")
+    result.assert_failed()
+    assert f"py: failed with {project.path / 'bad.env'} cannot be read for set_env:" in result.out
+    assert "Traceback" not in result.out
+
+
 # https://github.com/tox-dev/tox/issues/2435
 def test_set_env_environment_with_file_and_expanded_substitution(
     tox_project: ToxProjectCreator, monkeypatch: MonkeyPatch
