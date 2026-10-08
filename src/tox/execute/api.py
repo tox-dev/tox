@@ -83,6 +83,11 @@ class ExecuteStatus(ABC):
     def exit_code(self) -> int | None:
         raise NotImplementedError
 
+    @property
+    def start_error(self) -> BaseException | None:
+        """:returns: the error that kept the command from starting, ``None`` once it started"""
+        return None
+
     @abstractmethod
     def wait(self, timeout: float | None = None) -> int | None:
         raise NotImplementedError
@@ -194,6 +199,7 @@ class Execute(ABC):
             end,
             instance.cmd,
             status.metadata,
+            status.start_error,
         )
 
     @abstractmethod
@@ -264,6 +270,7 @@ class Outcome:
         end: float,
         cmd: Sequence[str],
         metadata: dict[str, JsonValue],
+        start_error: BaseException | None = None,
     ) -> None:
         """Create a new execution outcome.
 
@@ -276,6 +283,7 @@ class Outcome:
         :param end: a timer sample for the end of the execution
         :param cmd: the command as executed
         :param metadata: additional metadata attached to the execution
+        :param start_error: the error that kept the command from starting, ``None`` once it started
 
         """
         self.request = request  #: the execution request
@@ -287,6 +295,7 @@ class Outcome:
         self.end = end  #: a timer sample for the end of the execution
         self.cmd = cmd  #: the command as executed
         self.metadata = metadata  #: additional metadata attached to the execution
+        self.start_error = start_error  #: the error that kept the command from starting, ``None`` once it started
 
     def __bool__(self) -> bool:
         return self.exit_code == self.OK
@@ -300,14 +309,14 @@ class Outcome:
 
     def assert_success(self) -> None:
         """Assert that the execution succeeded."""
-        if self.exit_code is not None and self.exit_code != self.OK:
-            self._assert_fail(self.exit_code)
+        if self.start_error is not None or self.exit_code not in {None, self.OK}:
+            self._assert_fail(self.exit_code or self.FAILED)
         self.log_run_done(logging.INFO)
 
     def assert_failure(self) -> None:
         """Assert that the execution failed."""
-        if self.exit_code is not None and self.exit_code == self.OK:
-            self._assert_fail(self.FAILED)
+        if self.start_error is not None or self.exit_code == self.OK:  # never started, so nothing to invert
+            self._assert_fail(self.exit_code or self.FAILED)
         self.log_run_done(logging.INFO)
 
     def _assert_fail(self, code: int) -> NoReturn:

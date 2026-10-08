@@ -1,0 +1,2 @@
+A command prefixed with ``!`` that cannot start, such as a missing executable, now fails the environment instead of
+passing - by :user:`feiiiiii5`.

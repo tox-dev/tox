@@ -1341,6 +1341,8 @@ To invert the exit code (fail if the command returns 0, succeed otherwise), use 
              ! python -c 'import sys; sys.exit(1)'
              python --version
 
+A command that cannot start, such as a missing executable, fails the environment with or without the ``!`` prefix.
+
 *****************************
  Clean up after an interrupt
 *****************************

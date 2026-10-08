@@ -150,6 +150,15 @@ class LocalSubprocessExecuteStatus(ExecuteStatus):
 class LocalSubprocessExecuteFailedStatus(FinishedExecuteStatus):
     """The status of a command that could not be started."""
 
+    def __init__(self, options: ExecuteOptions, out: SyncWrite, err: SyncWrite, start_error: OSError) -> None:
+        super().__init__(options, out, err, start_error.errno)
+        self._start_error = start_error
+
+    @property
+    @override
+    def start_error(self) -> OSError:
+        return self._start_error
+
 
 class LocalSubProcessExecuteInstance(ExecuteInstance):
     def __init__(
@@ -223,7 +232,7 @@ class LocalSubProcessExecuteInstance(ExecuteInstance):
             # We log a nice error message to avout returning opaque error codes,
             # like exit code 2 (filenotfound).
             logging.error("Exception running subprocess %s", exception)  # ruff:ignore[error-instead-of-exception]
-            return LocalSubprocessExecuteFailedStatus(self.options, self._out, self._err, exception.errno)
+            return LocalSubprocessExecuteFailedStatus(self.options, self._out, self._err, exception)
 
         status = LocalSubprocessExecuteStatus(self.options, self._out, self._err, process)
         if not inherit_console:

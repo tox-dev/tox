@@ -45,6 +45,11 @@ def test_run_invert_cmd_exit_code_fails_on_zero(tox_project: ToxProjectCreator) 
     project.run("r", "-e", "py").assert_failed(code=1)
 
 
+def test_run_invert_cmd_exit_code_fails_when_command_missing(tox_project: ToxProjectCreator) -> None:
+    project = tox_project({"tox.toml": '[env_run_base]\npackage = "skip"\ncommands = [["!", "magic-missing-command"]]'})
+    project.run("r", "-e", "py").assert_failed()
+
+
 def test_run_sequential_fail(tox_project: ToxProjectCreator) -> None:
     def _cmd(value: int) -> str:
         return f"python -c 'import sys; print(\"exit {value}\"); sys.exit({value})'"
