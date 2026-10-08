@@ -1,2 +1,2 @@
-A ``set_env`` ``file|`` entry that points to a directory or to a file that is not UTF-8 now fails the environment with a
-configuration error instead of a traceback.
+A ``set_env`` env file that is a directory or not UTF-8 fails the environment with a configuration error instead of a
+traceback, and a leading UTF-8 byte order mark no longer ends up in the first key - by :user:`SulimanAbdulrazzaq`.
