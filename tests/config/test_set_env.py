@@ -179,9 +179,11 @@ def test_set_env_circular_use_os_environ(tox_project: ToxProjectCreator) -> None
     assert "circular chain between set env a, b" in result.out, result.out
 
 
-def test_set_env_invalid_lines(eval_set_env: EvalSetEnv) -> None:
-    with pytest.raises(ValueError, match="a"):
-        eval_set_env("[testenv]\npackage=skip\nset_env=a\n b")
+def test_set_env_invalid_lines(tox_project: ToxProjectCreator) -> None:
+    prj = tox_project({"tox.ini": "[testenv]\npackage=skip\nset_env=a\n b"})
+    result = prj.run("c", "-k", "set_env", "-e", "py", raise_on_config_fail=False)
+    result.assert_failed()
+    assert "failed to load py.set_env: invalid line 'a' in set_env" in result.out
 
 
 def test_set_env_replacer(eval_set_env: EvalSetEnv, monkeypatch: MonkeyPatch) -> None:

@@ -1,0 +1,2 @@
+An invalid boolean value in an ``ini`` configuration (e.g. ``skip_install = maybe``) now fails the environment with a
+one-line error naming the key instead of a traceback - by :user:`VedantBhayani`.

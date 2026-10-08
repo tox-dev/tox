@@ -536,6 +536,21 @@ def test_platform_invalid_regex_run_env(tox_project: ToxProjectCreator) -> None:
     assert msg in result.out
 
 
+def test_invalid_bool_run_env(tox_project: ToxProjectCreator) -> None:
+    ini = """
+    [testenv]
+    package = skip
+    skip_install = maybe
+    """
+    result = tox_project({"tox.ini": dedent(ini)}).run("r", "-e", "py")
+
+    result.assert_failed()
+    assert "internal error" not in result.out
+    assert "Traceback" not in result.out
+    msg = "failed to load py.skip_install: value 'maybe' cannot be transformed to bool"
+    assert msg in result.out
+
+
 def test_machine_factor_run_env(tox_project: ToxProjectCreator) -> None:
     parts = sysconfig.get_platform().rsplit("-", 1)
     if len(parts) < 2:
