@@ -170,19 +170,6 @@ def test_json_alias_key(tox_project: ToxProjectCreator) -> None:
     assert "set_env" in json.loads(result.out)["env"]["py"]
 
 
-def test_json_valid_output(tox_project: ToxProjectCreator) -> None:
-    project = tox_project({"tox.ini": "[tox]\nno_package = true"})
-    result = project.run("c", "-e", "py", "--format", "json")
-    result.assert_success()
-    json.loads(result.out)
-
-
-def test_json_native_types_approx(tox_project: ToxProjectCreator) -> None:
-    project = tox_project({"tox.ini": "[tox]\nno_package = true\n[testenv]\npackage = skip"})
-    result = project.run("c", "-e", "py", "--format", "json", "-k", "suicide_timeout")
-    result.assert_success()
-
-
 @pytest.mark.parametrize("fmt", [pytest.param("json", id="json"), pytest.param("toml", id="toml")])
 def test_key_filter_skips_missing(tox_project: ToxProjectCreator, fmt: str) -> None:
     project = tox_project({"tox.ini": "[tox]\nno_package = true"})

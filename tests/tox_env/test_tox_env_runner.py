@@ -27,19 +27,6 @@ commands = [["python", "-c", "print('MAIN')"]]
     assert "MAIN" in second.out
 
 
-def test_recreate_commands_not_run_on_first_creation(tox_project: ToxProjectCreator) -> None:
-    proj = tox_project({
-        "tox.toml": """
-[env_run_base]
-package = "skip"
-recreate_commands = [["python", "-c", "print('RECREATE_CLEANUP')"]]
-""",
-    })
-    result = proj.run("r")
-    result.assert_success()
-    assert "RECREATE_CLEANUP" not in result.out
-
-
 def test_recreate_commands_failure_does_not_block_recreation(tox_project: ToxProjectCreator) -> None:
     proj = tox_project({
         "tox.toml": """

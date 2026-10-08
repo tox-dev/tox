@@ -753,6 +753,8 @@ def test_resolve_extras_static_cannot_resolve(tmp_path: Path, pyproject: str, ex
     assert resolve_extras_static(tmp_path, extras) is None
 
 
+# kept after test-pruning defense (do not re-nominate): making VenvCmdBuilder.load_deps_for_env return []
+# fails only this test across the whole suite, nothing end-to-end covers the sdist-metadata delegation
 def test_cmd_builder_load_deps_for_env() -> None:
     builder = MagicMock(spec=VenvCmdBuilder)
     mock_meta_env = MagicMock()

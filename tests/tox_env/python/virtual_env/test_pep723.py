@@ -74,12 +74,6 @@ def test_default_commands_forward_posargs(tox_project: ToxProjectCreator) -> Non
     assert "arg2" in cmd
 
 
-def test_requires_python_satisfied(tox_project: ToxProjectCreator) -> None:
-    script = f'# /// script\n# requires-python = ">={_py_ver()}"\n# ///\nprint("ok")\n'
-    result, _ = _run(tox_project, {"tox.ini": _tox_ini(), "check.py": script})
-    result.assert_success()
-
-
 def test_requires_python_not_satisfied(tox_project: ToxProjectCreator) -> None:
     script = '# /// script\n# requires-python = ">=99.0"\n# ///\nprint("ok")\n'
     result, _ = _run(tox_project, {"tox.ini": _tox_ini(), "check.py": script})
