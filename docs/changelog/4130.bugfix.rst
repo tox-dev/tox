@@ -1,0 +1,1 @@
+Clear logs from previous runs when a reused environment has no commands to execute.
