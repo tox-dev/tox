@@ -129,7 +129,7 @@ def test_bad_ini_core_value_reports_error(tox_project: ToxProjectCreator, core_v
     """A bad value in the ini core section should be a handled error rather than an unhandled traceback."""
     outcome = tox_project({"tox.ini": f"[tox]\n{core_value}\n"}).run("l")
     outcome.assert_failed()
-    assert "failed to load tox." in outcome.out
+    assert "failed to load core." in outcome.out
     assert message in outcome.out
 
 

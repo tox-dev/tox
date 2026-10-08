@@ -315,12 +315,7 @@ class Pip(PythonInstallerListDependencies):
             self.constraints_file().write_text("\n".join(self.installed()))
 
     def build_install_cmd(self, args: Sequence[str]) -> list[str]:
-        try:
-            cmd = self._env.conf.get("install_command", Command)
-        except ValueError as exc:
-            msg = f"unable to determine pip install command: {exc!s}"
-            raise Fail(msg) from exc
-        install_command = cmd.args
+        install_command = self._env.conf.get("install_command", Command).args
         try:
             opts_at = install_command.index("{packages}")
         except ValueError:

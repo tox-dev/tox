@@ -114,7 +114,6 @@ def test_bad_option_cli_ini(
     tmp_path: Path,
     monkeypatch: MonkeyPatch,
     caplog: LogCaptureFixture,
-    value_error: Callable[[str], str],
     default_options: dict[str, Any],
 ) -> None:
     caplog.set_level(logging.WARNING)
@@ -133,7 +132,7 @@ def test_bad_option_cli_ini(
     assert caplog.messages == [
         "{} key verbose as type <class 'int'> failed with {}".format(
             to,
-            value_error("invalid literal for int() with base 10: 'what'"),
+            "HandledError(\"failed to load core.verbose: invalid literal for int() with base 10: 'what'\")",
         ),
     ]
     assert vars(parsed) == default_options

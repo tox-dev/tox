@@ -130,7 +130,10 @@ def test_show_config_empty_install_command_exception(tox_project: ToxProjectCrea
     project = tox_project({"tox.ini": "[testenv:a]\ninstall_command="})
     outcome = project.run("c", "-e", "a", "-k", "install_command", raise_on_config_fail=False)
     outcome.assert_failed(code=-1)
-    txt = "\ninstall_command = # Exception: ValueError(\"attempting to parse '' into a command failed\")"
+    txt = (
+        "\ninstall_command = # Exception: "
+        "HandledError(\"failed to load a.install_command: attempting to parse '' into a command failed\")"
+    )
     assert txt in outcome.out
 
 

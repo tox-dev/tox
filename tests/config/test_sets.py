@@ -13,6 +13,7 @@ from tox.config.loader.memory import MemoryLoader
 from tox.config.main import Config
 from tox.config.sets import ConfigSet, EnvConfigSet
 from tox.config.source.api import Section
+from tox.report import HandledError
 from tox.util.typing_compat import override
 
 if TYPE_CHECKING:
@@ -76,27 +77,30 @@ def test_config_bad_type(conf_builder: ConfBuilder) -> None:
     config_set = conf_builder("crazy = something-bad")
 
     config_set.add_config(keys="crazy", of_type=TypeVar, default=TypeVar("V"), desc="crazy")  # ty: ignore[invalid-legacy-type-variable] # the test needs a type the converter cannot handle, to reach its error path
-    with pytest.raises(TypeError) as context:
+    with pytest.raises(HandledError) as context:
         assert config_set["crazy"]
-    assert str(context.value) == f"something-bad cannot cast to {TypeVar!r}"
+    assert str(context.value) == f"failed to load py39.crazy: something-bad cannot cast to {TypeVar!r}"
 
 
 def test_config_bad_dict(conf_builder: ConfBuilder) -> None:
     config_set = conf_builder("bad_dict = something")
 
     config_set.add_config(keys="bad_dict", of_type=dict[str, str], default={}, desc="bad_dict")
-    with pytest.raises(TypeError) as context:
+    with pytest.raises(HandledError) as context:
         assert config_set["bad_dict"]
-    assert str(context.value) == "dictionary lines must be of form key=value, found 'something'"
+    assert (
+        str(context.value)
+        == "failed to load py39.bad_dict: dictionary lines must be of form key=value, found 'something'"
+    )
 
 
 def test_config_bad_bool(conf_builder: ConfBuilder) -> None:
     config_set = conf_builder("bad_bool = whatever")
     config_set.add_config(keys="bad_bool", of_type=bool, default=False, desc="bad_bool")
-    with pytest.raises(TypeError) as context:
+    with pytest.raises(HandledError) as context:
         assert config_set["bad_bool"]
     error = "value 'whatever' cannot be transformed to bool, valid: , 0, 1, false, no, off, on, true, yes"
-    assert str(context.value) == error
+    assert str(context.value) == f"failed to load py39.bad_bool: {error}"
 
 
 def test_config_constant(conf_builder: ConfBuilder) -> None:
@@ -185,7 +189,7 @@ def test_do_not_allow_create_config_set(mocker: MockerFixture) -> None:
 def test_set_env_raises_on_non_str(mocker: MockerFixture) -> None:
     env_set = EnvConfigSet(mocker.create_autospec(Config), Section("a", "b"), "b")
     env_set.loaders.insert(0, MemoryLoader(set_env=1))
-    with pytest.raises(TypeError, match="1"):
+    with pytest.raises(HandledError, match=r"failed to load b\.set_env: set_env expected str.*got int: 1"):
         assert env_set["set_env"]
 
 

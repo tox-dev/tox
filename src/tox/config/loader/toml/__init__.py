@@ -7,7 +7,7 @@ from types import GenericAlias
 from typing import TYPE_CHECKING, Any, TypeVar, cast
 
 from tox.config.loader.api import ConfigLoadArgs, Loader, Override
-from tox.config.loader.replacer import MatchError, MatchRecursionError, replace, replace_once
+from tox.config.loader.replacer import MatchRecursionError, replace, replace_once
 from tox.config.set_env import SetEnv
 from tox.config.types import Command, EnvList
 from tox.report import HandledError
@@ -75,16 +75,9 @@ class TomlLoader(Loader[TomlTypes]):
         args: ConfigLoadArgs,
     ) -> _T:
         delay_replace = inspect.isclass(of_type) and issubclass(of_type, SetEnv)
-        try:
-            unroll = Unroll(conf=conf, loader=self, args=args)
-            exploded = unroll(raw, skip_str=True) if delay_replace else unroll(raw)
-            result = self.to(exploded, of_type, factory)
-        except (HandledError, MatchError):
-            raise
-        except Exception as exception:
-            name = "core" if args.env_name is None else args.env_name
-            msg = f"failed to load {name}.{key}: {exception}"
-            raise HandledError(msg) from exception
+        unroll = Unroll(conf=conf, loader=self, args=args)
+        exploded = unroll(raw, skip_str=True) if delay_replace else unroll(raw)
+        result = self.to(exploded, of_type, factory)
         if delay_replace:
             loader = self
 

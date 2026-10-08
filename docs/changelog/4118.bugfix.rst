@@ -1,0 +1,2 @@
+Report an invalid configuration value as a one-line error naming the environment and key instead of a traceback,
+including ``-x`` overrides and values set by plugins - by :user:`hfycium`.

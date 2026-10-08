@@ -9,6 +9,7 @@ import pytest
 from tox.config.loader.api import ConfigLoadArgs, Override
 from tox.config.loader.memory import MemoryLoader
 from tox.config.types import Command, EnvList
+from tox.report import HandledError
 
 
 def test_memory_loader_repr() -> None:
@@ -65,22 +66,22 @@ def test_memory_loader(value: Any, of_type: type[Any], outcome: Any) -> None:
 
 
 @pytest.mark.parametrize(
-    ("value", "of_type", "exception", "msg"),
+    ("value", "of_type", "msg"),
     [
-        ("m", int, ValueError, "invalid literal for int"),
-        ({"m"}, set[int], ValueError, "invalid literal for int"),
-        (["m"], list[int], ValueError, "invalid literal for int"),
-        ({"m": 1}, dict[int, int], ValueError, "invalid literal for int"),
-        ({1: "m"}, dict[int, int], ValueError, "invalid literal for int"),
-        (object, Path, TypeError, r"str(, bytes)? or (an )?os\.PathLike object"),
-        (1, Command, TypeError, "1"),
-        (1, EnvList, TypeError, "1"),
+        pytest.param("m", int, "invalid literal for int", id="int"),
+        pytest.param({"m"}, set[int], "invalid literal for int", id="set"),
+        pytest.param(["m"], list[int], "invalid literal for int", id="list"),
+        pytest.param({"m": 1}, dict[int, int], "invalid literal for int", id="dict-key"),
+        pytest.param({1: "m"}, dict[int, int], "invalid literal for int", id="dict-value"),
+        pytest.param(object, Path, r"str(, bytes)? or (an )?os\.PathLike object", id="path"),
+        pytest.param(1, Command, "1", id="command"),
+        pytest.param(1, EnvList, "1", id="env-list"),
     ],
 )
-def test_memory_loader_fails_invalid(value: Any, of_type: type[Any], exception: type[Exception], msg: str) -> None:
+def test_memory_loader_fails_invalid(value: Any, of_type: type[Any], msg: str) -> None:
     loader = MemoryLoader(a=value, kwargs={})
     args = ConfigLoadArgs([], "name", None)
-    with pytest.raises(exception, match=msg):
+    with pytest.raises(HandledError, match=rf"failed to load core\.a: .*{msg}"):
         loader.load("a", of_type=of_type, conf=None, factory=None, args=args)
 
 

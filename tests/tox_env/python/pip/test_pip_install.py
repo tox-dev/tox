@@ -9,7 +9,6 @@ import pytest
 from packaging.requirements import Requirement
 
 from tox.report import HandledError
-from tox.tox_env.errors import Fail
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -48,7 +47,9 @@ def test_pip_install_empty_command_error(tox_project: ToxProjectCreator) -> None
     result = proj.run("l")
     pip = result.state.envs["py"].installer
 
-    with pytest.raises(Fail, match="unable to determine pip install command"):
+    with pytest.raises(
+        HandledError, match=r"failed to load py\.install_command: attempting to parse '' into a command"
+    ):
         pip.install([Requirement("name")], "section", "type")
 
 
