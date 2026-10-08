@@ -87,8 +87,9 @@ class ExecuteStatus(ABC):
     def error(self) -> BaseException | None:
         """The error that stopped the command from running, if any.
 
-        A command that could not be started has no result to report: neither
-        success nor failure, because neither happened.
+        A command that could not be started has no result to report: neither success nor failure, because neither
+        happened.
+
         """
         return None
 

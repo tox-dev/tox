@@ -1322,8 +1322,8 @@ When multiple commands are defined in :ref:`commands`, tox runs them sequentiall
 
 To invert the exit code (fail if the command returns 0, succeed otherwise), use the ``!`` prefix:
 
-A command that could not be started has no exit code to invert, so it fails the environment whether or not the
-``!`` prefix is used.
+A command that could not be started has no exit code to invert, so it fails the environment whether or not the ``!``
+prefix is used.
 
 .. tab:: TOML
 
