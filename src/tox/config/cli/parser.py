@@ -244,10 +244,8 @@ class ToxParser(ArgumentParserWithEnvAndConfig):
             self._add_base_options()
         if add_cmd is True:
             msg = "tox command to execute (by default legacy)"
-            # the subparsers action instantiates parser_class, which defaults to type(self), hence the cast holds
-            self._cmd: argparse._SubParsersAction[ToxParser] | None = cast(
-                "argparse._SubParsersAction[ToxParser]",  # ruff:ignore[private-member-access]
-                self.add_subparsers(title="subcommands", description=msg, dest="command"),
+            self._cmd: argparse._SubParsersAction[ToxParser] | None = self.add_subparsers(
+                title="subcommands", description=msg, dest="command"
             )
             self._cmd.required = False
             self._cmd.default = "legacy"
