@@ -49,6 +49,7 @@ def show_config_ini(state: State) -> int:
         if _emit_conf(emit, state.conf.core, keys, is_colored=is_colored):
             has_exception = True
     if output_file is not None:
+        Path(output_file).parent.mkdir(parents=True, exist_ok=True)
         Path(output_file).write_text("\n".join(lines) + "\n", encoding="utf-8")
     return -1 if has_exception else 0
 

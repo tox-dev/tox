@@ -469,3 +469,14 @@ def test_show_config_ini_output_file(tox_project: ToxProjectCreator) -> None:
     outcome.assert_success()
     assert (project.path / "out.txt").read_text() == "[testenv:py]\nenv_name = py\n"
     assert not outcome.out
+
+
+def test_show_config_ini_output_file_creates_missing_parent_dir(tox_project: ToxProjectCreator) -> None:
+    """The directory of the -o file is created when it does not exist yet."""
+    project = tox_project({"tox.toml": '[env_run_base]\npackage = "skip"\n'})
+    out = project.path / "reports" / "nested" / "out.txt"
+
+    outcome = project.run("c", "-e", "py", "-k", "env_name", "-o", str(out))
+
+    outcome.assert_success()
+    assert out.read_text() == "[testenv:py]\nenv_name = py\n"

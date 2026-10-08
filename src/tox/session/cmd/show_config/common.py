@@ -46,6 +46,7 @@ def write_output(
     colorize: Callable[[str], str],
 ) -> None:
     if output_file is not None:
+        Path(output_file).parent.mkdir(parents=True, exist_ok=True)
         Path(output_file).write_text(output + "\n", encoding="utf-8")
     else:
         print(colorize(output) if is_colored else output)  # ruff:ignore[print]
