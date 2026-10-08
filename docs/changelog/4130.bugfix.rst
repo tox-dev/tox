@@ -1,0 +1,2 @@
+A reused environment with ``commands = []`` clears ``env_log_dir`` at the start of the run instead of keeping logs from
+the previous run - by :user:`glaziermag`.
