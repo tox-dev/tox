@@ -1,4 +1,2 @@
-tox reports an invalid configuration value as a one-line error naming the environment and key, such as ``failed to load
-py.skip_install: value 'maybe' cannot be transformed to bool``, instead of a traceback. This covers ``tox.ini``
-environment sections, ``-x`` and ``TOX_OVERRIDE`` values, and values a plugin sets. Errors in the core section read
-``core.<key>`` for every configuration format - by :user:`hfycium`.
+Report an invalid configuration value as a one-line error naming the environment and key instead of a traceback,
+including ``-x`` overrides and values set by plugins - by :user:`hfycium`.
