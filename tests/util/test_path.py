@@ -1,6 +1,9 @@
 from __future__ import annotations
 
+import sys
 from typing import TYPE_CHECKING
+
+import pytest
 
 from tox.util.path import ensure_cachedir_tag, ensure_empty_dir, ensure_gitignore
 
@@ -51,6 +54,16 @@ def test_ensure_empty_dir_file(tmp_path: Path) -> None:
     ensure_empty_dir(dest)
     assert dest.is_dir()
     assert not list(dest.iterdir())
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="creating symlinks needs privileges on Windows")
+def test_ensure_empty_dir_unlinks_dir_symlink(tmp_path: Path) -> None:
+    (target := tmp_path / "target").mkdir()
+    (payload := target / "payload").write_text("keep")
+    (dest := tmp_path / "dest").mkdir()
+    (dest / "link").symlink_to(target, target_is_directory=True)
+    ensure_empty_dir(dest)
+    assert (list(dest.iterdir()), payload.read_text()) == ([], "keep")
 
 
 def test_ensure_gitignore_creates_file(tmp_path: Path) -> None:

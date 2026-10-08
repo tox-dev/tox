@@ -1,0 +1,2 @@
+Recreating an environment or clearing its temporary and log directories removes symlinks to directories, leaving their
+targets intact - by :user:`gaborbernat`.

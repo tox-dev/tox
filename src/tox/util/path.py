@@ -28,7 +28,7 @@ def ensure_empty_dir(path: Path, except_filename: str | None = None) -> None:
             for sub_path in path.iterdir():
                 if sub_path.name == except_filename:
                     continue
-                if sub_path.is_dir():
+                if sub_path.is_dir() and not sub_path.is_symlink():  # unlink a link, keep what it points to
                     rmtree(sub_path, ignore_errors=True)
                 else:
                     sub_path.unlink()
