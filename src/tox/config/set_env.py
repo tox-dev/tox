@@ -320,10 +320,15 @@ class SetEnv:
         # - https://docs.docker.com/compose/env-file/
         env_file = Path(self._replacer(filename, args.copy()))  # apply any replace options
         env_file = env_file if env_file.is_absolute() else self._root / env_file
-        if not env_file.exists():
-            msg = f"{env_file} does not exist for set_env"
+        if not env_file.is_file():
+            msg = f"{env_file} {'is not a file' if env_file.exists() else 'does not exist'} for set_env"
             raise Fail(msg)
-        for env_line in env_file.read_text(encoding="utf-8").splitlines():
+        try:
+            content = env_file.read_text(encoding="utf-8-sig")  # editors on Windows may prepend a BOM
+        except (OSError, UnicodeDecodeError) as exception:
+            msg = f"{env_file} cannot be read for set_env: {exception}"
+            raise Fail(msg) from exception
+        for env_line in content.splitlines():
             env_line = env_line.strip()  # ruff:ignore[redefined-loop-name]
             if not env_line or env_line.startswith("#"):
                 continue

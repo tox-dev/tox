@@ -3,6 +3,7 @@ from __future__ import annotations
 import os
 import sys
 import textwrap
+from functools import partial
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Final, Literal
 from unittest.mock import ANY
@@ -12,6 +13,8 @@ import pytest
 from tox.config.set_env import SetEnv
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     from pytest_mock import MockerFixture
 
     from tox.config.set_env import SetEnvRaw
@@ -358,6 +361,33 @@ def test_set_env_environment_file_missing(tox_project: ToxProjectCreator) -> Non
     result = project.run("r")
     result.assert_failed()
     assert f"py: failed with {project.path / 'magic.txt'} does not exist for set_env" in result.out
+
+
+@pytest.mark.parametrize(
+    ("create", "reason"),
+    [
+        pytest.param(Path.mkdir, "is not a file for set_env", id="directory"),
+        pytest.param(
+            partial(Path.write_bytes, data=b"\xff\xfeF\x00O\x00O\x00=\x001\x00"),
+            "cannot be read for set_env: 'utf-8' codec can't decode byte 0xff",
+            id="utf-16",
+        ),
+    ],
+)
+def test_set_env_environment_file_unreadable(
+    tox_project: ToxProjectCreator, create: Callable[[Path], object], reason: str
+) -> None:
+    project = tox_project({"tox.toml": '[env_run_base]\npackage = "skip"\nset_env = { file = "magic.env" }'})
+    create(project.path / "magic.env")
+    result = project.run("r")
+    result.assert_failed(code=1)
+    assert f"py: failed with {project.path / 'magic.env'} {reason}" in result.out
+
+
+def test_set_env_environment_file_utf8_bom(tox_project: ToxProjectCreator) -> None:
+    project = tox_project({"tox.toml": '[env_run_base]\npackage = "skip"\nset_env = { file = "magic.env" }'})
+    (project.path / "magic.env").write_bytes(b"\xef\xbb\xbfMAGIC=1\n")
+    assert project.run("c", "-e", "py", "-k", "set_env").env_conf("py")["set_env"].load("MAGIC") == "1"
 
 
 # https://github.com/tox-dev/tox/issues/2435
