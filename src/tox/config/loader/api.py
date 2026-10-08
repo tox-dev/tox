@@ -4,9 +4,13 @@ import inspect
 from abc import abstractmethod
 from argparse import ArgumentTypeError
 from collections.abc import Iterable, Mapping
+from contextlib import contextmanager
 from typing import TYPE_CHECKING, Any, TypeVar, cast
 
+from tox.config.loader.replacer import MatchError
 from tox.plugin import impl
+from tox.report import HandledError
+from tox.tox_env.errors import Skip
 from tox.tox_env.python.pip.req_file import PythonDeps
 from tox.util.typing_compat import override
 
@@ -14,6 +18,7 @@ from .convert import Convert, Factory
 from .str_convert import StrConvert
 
 if TYPE_CHECKING:
+    from collections.abc import Generator
     from types import UnionType
     from typing import Final
 
@@ -182,28 +187,30 @@ class Loader(Convert[T]):
                 raw = self.load_raw(alias, conf, args.env_name)
             except KeyError:
                 continue
-            converted = self.build(alias, of_type, factory, conf, raw, args)
+            with _handle_bad_value(alias, args):
+                converted = self.build(alias, of_type, factory, conf, raw, args)
             break
         else:
             if not overrides:
                 raise KeyError(key)
 
-        for entry in overrides:
-            converted_override = self._build_override(entry, of_type, factory, conf, args)
-            if entry.append and converted is not None:
-                if isinstance(converted, list) and isinstance(converted_override, list):
-                    converted += converted_override
-                elif isinstance(converted, dict) and isinstance(converted_override, dict):
-                    converted.update(converted_override)
-                elif isinstance(converted, SetEnv) and isinstance(converted_override, SetEnv):
-                    converted.extend(converted_override)
-                elif isinstance(converted, PythonDeps) and isinstance(converted_override, PythonDeps):
-                    converted += converted_override
+        with _handle_bad_value(key, args):
+            for entry in overrides:
+                converted_override = self._build_override(entry, of_type, factory, conf, args)
+                if entry.append and converted is not None:
+                    if isinstance(converted, list) and isinstance(converted_override, list):
+                        converted += converted_override
+                    elif isinstance(converted, dict) and isinstance(converted_override, dict):
+                        converted.update(converted_override)
+                    elif isinstance(converted, SetEnv) and isinstance(converted_override, SetEnv):
+                        converted.extend(converted_override)
+                    elif isinstance(converted, PythonDeps) and isinstance(converted_override, PythonDeps):
+                        converted += converted_override
+                    else:
+                        msg = "Only able to append to lists and dicts"
+                        raise ValueError(msg)
                 else:
-                    msg = "Only able to append to lists and dicts"
-                    raise ValueError(msg)
-            else:
-                converted = converted_override
+                    converted = converted_override
 
         return cast("V", converted)  # guaranteed non-None: either build() succeeded or overrides set it
 
@@ -281,6 +288,17 @@ class Loader(Convert[T]):
 
         """
         raise NotImplementedError
+
+
+@contextmanager
+def _handle_bad_value(key: str, args: ConfigLoadArgs) -> Generator[None]:
+    try:
+        yield
+    except (HandledError, MatchError, Skip):  # already reported, or control flow the callers handle
+        raise
+    except Exception as exception:  # a bad value is a user error, report it without a traceback
+        msg = f"failed to load {args.env_name or 'core'}.{key}: {exception}"
+        raise HandledError(msg) from exception
 
 
 def apply_overrides_to_raw(overrides: Iterable[Override], key: str, value: T) -> T:

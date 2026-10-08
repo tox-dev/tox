@@ -10,6 +10,7 @@ import pytest
 from tox.config.loader.api import Override
 from tox.config.loader.memory import MemoryLoader
 from tox.config.sets import ConfigSet
+from tox.report import HandledError
 from tox.tox_env.python.pip.req_file import PythonDeps
 
 if TYPE_CHECKING:
@@ -100,6 +101,12 @@ def test_config_override_appends_to_list(tox_ini_conf: ToxIniCreator) -> None:
     conf = tox_ini_conf(example, override=[Override("testenv.passenv+=bar")]).get_env("testenv")
     conf.add_config("passenv", of_type=list[str], default=[], desc="desc")
     assert conf["passenv"] == ["foo", "bar"]
+
+
+def test_config_override_appends_to_dict(tox_ini_conf: ToxIniCreator) -> None:
+    conf = tox_ini_conf("[testenv]\nfoo = a=1", override=[Override("testenv.foo+=b=2")]).get_env("testenv")
+    conf.add_config("foo", of_type=dict[str, str], default={}, desc="desc")
+    assert conf["foo"] == {"a": "1", "b": "2"}
 
 
 def test_config_override_sequence(tox_ini_conf: ToxIniCreator) -> None:
@@ -238,7 +245,7 @@ def test_config_override_cannot_append(tox_ini_conf: ToxIniCreator) -> None:
     """
     conf = tox_ini_conf(example, override=[Override("testenv.foo+=2")]).get_env("testenv")
     conf.add_config("foo", of_type=int, default=0, desc="desc")
-    with pytest.raises(ValueError, match="Only able to append to lists and dicts"):
+    with pytest.raises(HandledError, match=r"failed to load testenv\.foo: Only able to append to lists and dicts"):
         conf["foo"]
 
 

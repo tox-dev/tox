@@ -245,3 +245,23 @@ def test_override_set_env_block_precedence(
     assert [
         line.strip() for line in outcome.out.splitlines() if line.strip().startswith(("MAGIC=", "NEW="))
     ] == expected
+
+
+@pytest.mark.parametrize(
+    ("files", "args"),
+    [
+        pytest.param({"tox.ini": "[testenv]\nskip_install = maybe"}, ("r",), id="ini-run"),
+        pytest.param({"tox.ini": "[testenv]\nskip_install = maybe"}, ("c", "-k", "skip_install"), id="ini-config"),
+        pytest.param(
+            {"tox.toml": "[env_run_base]\nskip_install = true"},
+            ("r", "-x", "env_run_base.skip_install=maybe"),
+            id="override",
+        ),
+    ],
+)
+def test_bad_value_is_handled_error(
+    tox_project: ToxProjectCreator, files: dict[str, str], args: tuple[str, ...]
+) -> None:
+    outcome = tox_project(files).run(*args, "-e", "py")
+    outcome.assert_failed(code=-2)
+    assert "HandledError| failed to load py.skip_install: value 'maybe' cannot be transformed to bool" in outcome.out

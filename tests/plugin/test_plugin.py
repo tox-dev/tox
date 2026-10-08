@@ -15,6 +15,7 @@ from tox.execute import Outcome
 from tox.plugin import impl
 from tox.plugin.manager import Plugin
 from tox.pytest import ToxProjectCreator, register_inline_plugin
+from tox.report import HandledError
 from tox.session.state import State
 from tox.tox_env.api import ToxEnv
 from tox.tox_env.register import ToxEnvRegister
@@ -189,14 +190,14 @@ def test_plugin_injects_invalid_python_run(tox_project: ToxProjectCreator, mocke
     @impl
     def tox_add_env_config(env_conf: EnvConfigSet, state: State) -> None:  # ruff:ignore[unused-function-argument]
         env_conf.loaders.insert(0, MemoryLoader(deps=[1]))
-        with pytest.raises(TypeError, match="deps expected"):
+        with pytest.raises(HandledError, match=r"failed to load py\.deps: deps expected"):
             assert env_conf["deps"]
 
     register_inline_plugin(mocker, tox_add_env_config)
     project = tox_project({"tox.ini": "[testenv]\npackage=skip"})
     result = project.run()
     result.assert_failed()
-    assert "raise TypeError(_factory_type_error" in result.out
+    assert "failed to load py.deps: deps expected" in result.out
 
 
 def test_plugin_extend_pass_env(tox_project: ToxProjectCreator, mocker: MockerFixture) -> None:

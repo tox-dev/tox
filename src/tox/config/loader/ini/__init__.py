@@ -103,14 +103,7 @@ class IniLoader(StrConvert, Loader[str]):
             return replaced
 
         prepared = replacer(raw, args) if not delay_replace else raw
-        try:
-            converted = self.to(prepared, of_type, factory)
-        except (HandledError, Skip):
-            raise
-        except Exception as exception:
-            name = self.core_section.key if args.env_name is None else args.env_name
-            msg = f"failed to load {name}.{key}: {exception}"
-            raise HandledError(msg) from exception
+        converted = self.to(prepared, of_type, factory)
         if delay_replace:
             cast("SetEnv", converted).use_replacer(replacer, args)  # delay_replace means of_type is SetEnv
         return converted
