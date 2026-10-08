@@ -45,6 +45,14 @@ def test_run_invert_cmd_exit_code_fails_on_zero(tox_project: ToxProjectCreator) 
     project.run("r", "-e", "py").assert_failed(code=1)
 
 
+def test_run_invert_cmd_exit_code_fails_when_command_missing(tox_project: ToxProjectCreator) -> None:
+    """A command that could not be started never failed, so there is no failure for ``!`` to invert."""
+    project = tox_project({"tox.toml": '[env_run_base]\npackage = "skip"\ncommands = [["!", "magic-missing-command"]]'})
+    result = project.run("r", "-e", "py")
+    result.assert_failed()
+    assert "Exception running subprocess" in result.out
+
+
 def test_run_sequential_fail(tox_project: ToxProjectCreator) -> None:
     def _cmd(value: int) -> str:
         return f"python -c 'import sys; print(\"exit {value}\"); sys.exit({value})'"
