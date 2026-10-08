@@ -6,6 +6,22 @@
 
 .. towncrier release notes start
 
+***********************
+ v4.64.10 (2026-10-08)
+***********************
+
+Bug fixes - 4.64.10
+===================
+
+- Report an invalid configuration value as a one-line error naming the environment and key instead of a traceback,
+  including ``-x`` overrides and values set by plugins - by :user:`hfycium`. (:issue:`4118`)
+- A command prefixed with ``!`` that exits with ``0`` now fails the environment with exit code ``1``; before, tox
+  reported it as a success - by :user:`feiiiiii5`. (:issue:`4119`)
+- Recreating an environment or clearing its temporary and log directories removes symlinks to directories, leaving their
+  targets intact - by :user:`gaborbernat`. (:issue:`4121`)
+- A command prefixed with ``!`` that cannot start, such as a missing executable, now fails the environment instead of
+  passing - by :user:`feiiiiii5`. (:issue:`4125`)
+
 **********************
  v4.64.9 (2026-10-05)
 **********************
