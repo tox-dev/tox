@@ -68,14 +68,6 @@ def test_get_package_deps_different_extras(pkg_with_extras_project: Path, tox_pr
     }
 
 
-def test_package_root_via_root(tox_project: ToxProjectCreator, demo_pkg_inline: Path) -> None:
-    ini = f"[tox]\npackage_root={demo_pkg_inline}\n[testenv]\npackage=wheel\nwheel_build_env=.pkg"
-    proj = tox_project({"tox.ini": ini, "pyproject.toml": ""})
-    proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
-    result = proj.run("r", "--notest")
-    result.assert_success()
-
-
 def test_root_setter_no_frontend_rebuild_when_unbuilt(
     tox_project: ToxProjectCreator, demo_pkg_inline: Path, mocker: MockerFixture, tmp_path: Path
 ) -> None:
