@@ -1,2 +1,2 @@
-A command prefixed with ``!`` that could not be started, because its executable does not exist for example, now fails
-the environment with the OS errno - before, tox reported the environment as a success - by :user:`feiiiiii5`.
+A command prefixed with ``!`` that cannot start, such as a missing executable, now fails the environment instead of
+passing - by :user:`feiiiiii5`.

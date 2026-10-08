@@ -1322,9 +1322,6 @@ When multiple commands are defined in :ref:`commands`, tox runs them sequentiall
 
 To invert the exit code (fail if the command returns 0, succeed otherwise), use the ``!`` prefix:
 
-A command that could not be started has no exit code to invert, so it fails the environment whether or not the ``!``
-prefix is used.
-
 .. tab:: TOML
 
     .. code-block:: toml
@@ -1343,6 +1340,8 @@ prefix is used.
          commands =
              ! python -c 'import sys; sys.exit(1)'
              python --version
+
+A command that cannot start, such as a missing executable, fails the environment with or without the ``!`` prefix.
 
 *****************************
  Clean up after an interrupt
