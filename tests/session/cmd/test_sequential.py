@@ -40,6 +40,11 @@ def test_run_ignore_cmd_exit_code(tox_project: ToxProjectCreator, prefix: str) -
     assert "magic fail" in outcome.err
 
 
+def test_run_invert_cmd_exit_code_fails_on_zero(tox_project: ToxProjectCreator) -> None:
+    project = tox_project({"tox.toml": '[env_run_base]\npackage = "skip"\ncommands = [["!", "python", "-c", ""]]'})
+    project.run("r", "-e", "py").assert_failed(code=1)
+
+
 def test_run_sequential_fail(tox_project: ToxProjectCreator) -> None:
     def _cmd(value: int) -> str:
         return f"python -c 'import sys; print(\"exit {value}\"); sys.exit({value})'"
