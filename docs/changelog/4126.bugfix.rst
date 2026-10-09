@@ -1,2 +1,0 @@
-``--result-json`` and ``tox config -o`` create the missing parent directory of the output file instead of crashing - by
-:user:`SulimanAbdulrazzaq`.

@@ -6,6 +6,32 @@
 
 .. towncrier release notes start
 
+**********************
+ v4.65.0 (2026-10-09)
+**********************
+
+Features - 4.65.0
+=================
+
+- Bump the default maximum CPython minor version to 3.15 in generative environment lists. (:issue:`4136`)
+
+Bug fixes - 4.65.0
+==================
+
+- ``--result-json`` and ``tox config -o`` create the missing parent directory of the output file instead of crashing -
+  by :user:`SulimanAbdulrazzaq`. (:issue:`4126`)
+- A ``set_env`` env file that is a directory or not UTF-8 fails the environment with a configuration error instead of a
+  traceback, and a leading UTF-8 byte order mark no longer ends up in the first key - by :user:`SulimanAbdulrazzaq`.
+  (:issue:`4127`)
+- A reused environment with ``commands = []`` clears ``env_log_dir`` at the start of the run instead of keeping logs
+  from the previous run - by :user:`glaziermag`. (:issue:`4130`)
+
+Improved documentation - 4.65.0
+===============================
+
+- Drop ``@impl`` from the ``tox_append_version_info`` plugin doc examples, since it made tox skip the inline plugin - by
+  :user:`Rodrigo-Palma`. (:issue:`4135`)
+
 ***********************
  v4.64.10 (2026-10-08)
 ***********************
