@@ -16,6 +16,11 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+      - name: Install uv
+        uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+        with:
+          python-version: "3.15"
+          enable-cache: false
       - name: Clone SchemaStore
         run: git clone --depth 1 https://github.com/SchemaStore/schemastore /tmp/schemastore
       - name: Install SchemaStore's dependencies
@@ -23,7 +28,7 @@ jobs:
         working-directory: /tmp/schemastore
       - name: Stage tox's schema
         run: |
-          python3 -c "
+          uv run --no-project --python 3.15 python -c "
           import json
           with open('${{ github.workspace }}/src/tox/tox.schema.json') as f:
               schema = json.load(f)
@@ -47,6 +52,11 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+      - name: Install uv
+        uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+        with:
+          python-version: "3.15"
+          enable-cache: false
       - name: Fork and clone SchemaStore
         run: gh repo fork SchemaStore/schemastore --clone -- /tmp/schemastore
       - name: Sync fork's master with upstream
@@ -59,7 +69,7 @@ jobs:
       - name: Update schema and check for changes
         id: diff
         run: |
-          python3 -c "
+          uv run --no-project --python 3.15 python -c "
           import json, sys
           with open('${{ github.workspace }}/src/tox/tox.schema.json') as f:
               new = json.load(f)
