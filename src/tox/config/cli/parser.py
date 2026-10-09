@@ -10,7 +10,7 @@ import sys
 from argparse import SUPPRESS, Action, ArgumentDefaultsHelpFormatter, ArgumentError, ArgumentParser, Namespace
 from pathlib import Path
 from types import GenericAlias, UnionType
-from typing import TYPE_CHECKING, Any, Literal, TypeVar, cast, overload
+from typing import TYPE_CHECKING, Any, Literal, Self, TypeVar, cast, overload
 from weakref import WeakKeyDictionary
 
 from colorama import Fore
@@ -21,11 +21,6 @@ from tox.util.typing_compat import override
 
 from .env_var import get_env_var
 from .ini import IniConfig
-
-if sys.version_info >= (3, 11):  # pragma: >=3.11 cover
-    from typing import Self
-else:  # pragma: <3.11 cover
-    from typing_extensions import Self
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterable, MutableMapping, Sequence

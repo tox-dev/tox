@@ -19,16 +19,10 @@ _UNESCAPED_SPACE_RE = re.compile(
 )
 
 if TYPE_CHECKING:
-    import sys
     from argparse import ArgumentParser
     from collections.abc import Iterator
     from pathlib import Path
-    from typing import ClassVar, Final
-
-    if sys.version_info >= (3, 11):  # pragma: >=3.11 cover
-        from typing import Self
-    else:  # pragma: <3.11 cover
-        from typing_extensions import Self
+    from typing import ClassVar, Final, Self
 
 
 class _PythonRequirementsFile(RequirementsFile):

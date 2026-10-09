@@ -23,7 +23,7 @@ Quick facts
     :widths: 25 75
 
     - - **Language**
-      - `Python <https://www.python.org/>`_ ≥ 3.10
+      - `Python <https://www.python.org/>`_ ≥ 3.11
     - - **Build system**
       - `hatchling <https://hatch.pypa.io/latest/config/build/>`_ (`PEP 517 <https://peps.python.org/pep-0517/>`_ / `PEP
         660 <https://peps.python.org/pep-0660/>`_)

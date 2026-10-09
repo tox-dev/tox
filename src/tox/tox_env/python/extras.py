@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import sys
+import tomllib
 from typing import TYPE_CHECKING
 
 from packaging.requirements import Requirement
@@ -10,11 +10,6 @@ from .virtual_env.package.util import dependencies_with_extras_from_markers
 
 if TYPE_CHECKING:
     from pathlib import Path
-
-if sys.version_info >= (3, 11):  # pragma: >=3.11 cover
-    import tomllib
-else:  # pragma: <3.11 cover
-    import tomli as tomllib
 
 
 def resolve_extras_static(root: Path, extras: set[str]) -> list[Requirement] | None:

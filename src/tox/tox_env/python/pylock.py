@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import sys
+import tomllib
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
@@ -14,11 +14,6 @@ if TYPE_CHECKING:
     from pathlib import Path
 
     from packaging.pylock import PackageArchive, PackageVcs
-
-if sys.version_info >= (3, 11):  # pragma: no cover
-    import tomllib
-else:  # pragma: no cover
-    import tomli as tomllib
 
 
 @dataclass(frozen=True, kw_only=True)

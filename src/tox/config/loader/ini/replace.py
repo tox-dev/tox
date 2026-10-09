@@ -53,7 +53,7 @@ class ReplaceReferenceIni(ReplaceReference):
                 if isinstance(src, SectionProxy):
                     return self._resolve_section_proxy(src, key, conf_args)
                 value = src.load(key, conf_args.chain)
-            except KeyError:  # if fails, keep trying maybe another source can satisfy # ruff:ignore[try-except-in-loop]
+            except KeyError:  # if fails, keep trying maybe another source can satisfy
                 pass
             else:
                 as_str, _ = stringify(value)

@@ -1,18 +1,13 @@
 from __future__ import annotations
 
 import json
-import sys
+import tomllib
 from typing import TYPE_CHECKING, Any
 
 import pytest
 
 from tox.session.cmd.show_config.json_format import colorize as colorize_json
 from tox.session.cmd.show_config.toml_format import colorize as colorize_toml
-
-if sys.version_info >= (3, 11):  # pragma: >=3.11 cover
-    import tomllib
-else:  # pragma: <3.11 cover
-    import tomli as tomllib
 
 if TYPE_CHECKING:
     from collections.abc import Callable

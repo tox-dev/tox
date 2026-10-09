@@ -9,14 +9,9 @@ from colorama import Fore
 from tox.util.typing_compat import override
 
 if TYPE_CHECKING:
-    import sys
     from collections.abc import Generator
     from types import TracebackType
-
-    if sys.version_info >= (3, 11):  # pragma: >=3.11 cover
-        from typing import Self
-    else:  # pragma: <3.11 cover
-        from typing_extensions import Self
+    from typing import Self
 
 
 class SyncWrite:

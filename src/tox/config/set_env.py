@@ -1,10 +1,9 @@
 from __future__ import annotations
 
-import sys
 from dataclasses import dataclass
 from itertools import chain
 from pathlib import Path
-from typing import TYPE_CHECKING, Protocol, final
+from typing import TYPE_CHECKING, NotRequired, Protocol, TypedDict, final
 
 from packaging.markers import Marker
 
@@ -15,11 +14,6 @@ from tox.tox_env.errors import Fail
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterable, Iterator, Mapping
     from typing import Final, Literal
-
-if sys.version_info >= (3, 11):  # pragma: >=3.11 cover
-    from typing import NotRequired, TypedDict
-else:  # pragma: <3.11 cover
-    from typing_extensions import NotRequired, TypedDict
 
 
 class Replacer(Protocol):

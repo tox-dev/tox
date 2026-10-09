@@ -22,7 +22,7 @@ jobs:
           cache-dependency-glob: "pyproject.toml"
           github-token: ${{ secrets.GITHUB_TOKEN }}
       - name: Build package
-        run: uv build --python 3.14 --python-preference only-managed . --out-dir dist
+        run: uv build --python 3.15 --python-preference only-managed . --out-dir dist
       - name: Store the distribution packages
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
