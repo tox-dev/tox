@@ -1,13 +1,17 @@
 from __future__ import annotations
 
+import os
 import stat
 import sys
+from contextlib import suppress
 from pathlib import Path
 from shutil import rmtree
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from collections.abc import Callable
+
+    from _typeshed import ExcInfo
 
 _CACHEDIR_TAG = """\
 Signature: 8a477f597d28d172789f06886806bc55
@@ -25,20 +29,6 @@ def ensure_cachedir_tag(work_dir: Path) -> None:
         tag_path.write_text(_CACHEDIR_TAG, encoding="utf-8")
 
 
-def _make_writable(path: Path | str) -> None:
-    entry = Path(path)
-    entry.chmod(entry.stat().st_mode | stat.S_IWRITE)
-
-
-def _remove_read_only(func: Callable[[str], object], path: str, _exc: object) -> None:
-    """Clear the read-only bit and retry once, a second failure is ignored as ``ignore_errors=True`` did."""
-    try:
-        _make_writable(path)
-        func(path)
-    except OSError:
-        pass
-
-
 def ensure_empty_dir(path: Path, except_filename: str | None = None) -> None:
     if path.exists():
         if path.is_dir():
@@ -47,20 +37,34 @@ def ensure_empty_dir(path: Path, except_filename: str | None = None) -> None:
                     continue
                 if sub_path.is_dir() and not sub_path.is_symlink():  # unlink a link, keep what it points to
                     if sys.version_info >= (3, 12):  # pragma: >=3.12 cover
-                        rmtree(sub_path, onexc=_remove_read_only)
+                        rmtree(sub_path, onexc=_retry_unlink)
                     else:  # pragma: <3.12 cover
-                        rmtree(sub_path, onerror=_remove_read_only)
+                        rmtree(sub_path, onerror=_retry_unlink)
                 else:
-                    try:
-                        sub_path.unlink()
-                    except PermissionError:  # a read-only file cannot be removed on Windows
-                        _make_writable(sub_path)
-                        sub_path.unlink()
+                    _unlink(sub_path)
         else:
             path.unlink()
             path.mkdir()
     else:
         path.mkdir(parents=True)
+
+
+def _retry_unlink(func: Callable[..., object], path: str, _exc: BaseException | ExcInfo) -> None:
+    # rmtree also reports failed os.open, os.scandir and os.close calls; retrying those cannot help, so they stay behind
+    if func is os.unlink:
+        with suppress(OSError):
+            _unlink(Path(path))
+
+
+def _unlink(path: Path) -> None:
+    try:
+        path.unlink()
+    except PermissionError:
+        # Windows refuses to delete a read-only file; a symlink is left as is so its target keeps its mode
+        if path.is_symlink() or path.stat().st_mode & stat.S_IWRITE:
+            raise
+        path.chmod(stat.S_IWRITE)
+        path.unlink()
 
 
 def ensure_gitignore(path: Path) -> None:
