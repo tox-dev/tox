@@ -28,14 +28,11 @@ automatically.
  Appending version info
 ************************
 
-A ``toxfile.py`` that appends text to the ``tox --version`` output:
+A ``toxfile.py`` that appends text to the ``tox --version`` output. ``tox_append_version_info`` is a plain function
+looked up by name, not a hook, so it must not carry ``@impl``:
 
 .. code-block:: python
 
-    from tox.plugin import impl
-
-
-    @impl
     def tox_append_version_info() -> str:
         return "magic"
 

@@ -1,0 +1,2 @@
+Drop ``@impl`` from the ``tox_append_version_info`` plugin doc examples, since it made tox skip the inline plugin - by
+:user:`Rodrigo-Palma`.

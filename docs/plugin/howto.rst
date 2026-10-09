@@ -191,10 +191,6 @@ In ``src/tox_myplugin/__init__.py``, define your hooks exactly as in ``toxfile.p
 
 .. code-block:: python
 
-    from tox.plugin import impl
-
-
-    @impl
     def tox_append_version_info() -> str:
         return "myplugin-1.0.0"
 
