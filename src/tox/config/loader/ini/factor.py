@@ -14,7 +14,7 @@ if TYPE_CHECKING:
     from collections.abc import Iterator
 
 LATEST_PYTHON_MINOR_MIN: int = 10
-LATEST_PYTHON_MINOR_MAX: int = 14
+LATEST_PYTHON_MINOR_MAX: int = 15
 
 
 def filter_for_env(value: str, name: str | None) -> str:

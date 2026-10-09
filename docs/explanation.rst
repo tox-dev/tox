@@ -320,7 +320,7 @@ would be slow and environment-dependent), tox tracks the `supported CPython vers
 <https://devguide.python.org/versions/>`_ via two constants:
 
 - ``LATEST_PYTHON_MINOR_MIN`` -- the oldest supported CPython minor version (currently **10**, for Python 3.10)
-- ``LATEST_PYTHON_MINOR_MAX`` -- the latest supported CPython minor version (currently **14**, for Python 3.14)
+- ``LATEST_PYTHON_MINOR_MAX`` -- the latest supported CPython minor version (currently **15**, for Python 3.15)
 
 These values are updated with each tox release. A right-open range ``{10-}`` uses ``LATEST_PYTHON_MINOR_MAX`` as its
 upper bound; a left-open range ``{-13}`` uses ``LATEST_PYTHON_MINOR_MIN`` as its lower bound.

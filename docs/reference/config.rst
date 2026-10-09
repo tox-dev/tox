@@ -3243,7 +3243,7 @@ a range.
     env_list = ["lint", "3.12"]
 
 **Bare range dict** -- a single range axis. Accepts ``prefix``, ``start``, and ``stop``. Omit ``stop`` to expand up to
-the latest supported CPython minor version (currently **14**), or omit ``start`` to expand down from the oldest
+the latest supported CPython minor version (currently **15**), or omit ``start`` to expand down from the oldest
 (currently **10**). The bare range dict is equivalent to a single-group ``product`` and is the preferred spelling when
 there is only one axis:
 
