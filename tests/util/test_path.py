@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import stat
 import sys
 from typing import TYPE_CHECKING
 
@@ -64,6 +65,46 @@ def test_ensure_empty_dir_unlinks_dir_symlink(tmp_path: Path) -> None:
     (dest / "link").symlink_to(target, target_is_directory=True)
     ensure_empty_dir(dest)
     assert (list(dest.iterdir()), payload.read_text()) == ([], "keep")
+
+
+def test_ensure_empty_dir_removes_read_only_file(tmp_path: Path) -> None:
+    (dest := tmp_path / "dest").mkdir()
+    (read_only := dest / "read_only.txt").write_text("data")
+    read_only.chmod(stat.S_IREAD)
+    ensure_empty_dir(dest)
+    assert dest.is_dir()
+    assert not list(dest.iterdir())
+
+
+def test_ensure_empty_dir_removes_read_only_file_in_sub_dir(tmp_path: Path) -> None:
+    (dest := tmp_path / "dest").mkdir()
+    (sub_dir := dest / "sub").mkdir()
+    (read_only := sub_dir / "read_only.txt").write_text("data")
+    read_only.chmod(stat.S_IREAD)
+    ensure_empty_dir(dest)
+    assert dest.is_dir()
+    assert not list(dest.iterdir())
+
+
+def test_ensure_empty_dir_keeps_except_filename(tmp_path: Path) -> None:
+    (dest := tmp_path / "dest").mkdir()
+    (keep := dest / "file.lock").write_text("keep")
+    (dest / "other.txt").write_text("remove")
+    (dest / "sub").mkdir()
+    (dest / "sub" / "nested.txt").write_text("remove")
+    ensure_empty_dir(dest, except_filename="file.lock")
+    assert (list(dest.iterdir()), keep.read_text()) == ([keep], "keep")
+
+
+def test_ensure_empty_dir_unlinks_file_symlink(tmp_path: Path) -> None:
+    (target := tmp_path / "target.txt").write_text("keep")
+    (dest := tmp_path / "dest").mkdir()
+    try:
+        (dest / "link").symlink_to(target)
+    except OSError:  # pragma: no cover # creating symlinks needs privileges on Windows
+        pytest.skip("cannot create symlinks")
+    ensure_empty_dir(dest)
+    assert (list(dest.iterdir()), target.read_text()) == ([], "keep")
 
 
 def test_ensure_gitignore_creates_file(tmp_path: Path) -> None:
