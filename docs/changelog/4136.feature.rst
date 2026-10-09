@@ -1,0 +1,1 @@
+Bump the default maximum CPython minor version to 3.15 in generative environment lists.
