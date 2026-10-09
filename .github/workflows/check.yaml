@@ -58,7 +58,7 @@ jobs:
           DIFF_AGAINST: ${{ github.event.pull_request.base.sha || 'HEAD' }}
           PYTEST_XDIST_AUTO_NUM_WORKERS: 0
       - name: Upload test timings
-        if: ${{ !canceled() }}
+        if: ${{ !cancelled() }}
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: junit-${{ matrix.py }}-${{ matrix.os.name }}
