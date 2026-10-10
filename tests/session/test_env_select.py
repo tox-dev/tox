@@ -287,6 +287,28 @@ def test_tox_skip_env_invalid_regex(tox_project: ToxProjectCreator, monkeypatch:
     assert f"HandledError| invalid environment skip filter {bad_filter!r}" in outcome.out
 
 
+def test_skip_env_cli_combines_with_e(tox_project: ToxProjectCreator, monkeypatch: MonkeyPatch) -> None:
+    """--skip-env filters whatever was selected, so it must be accepted alongside -e, like TOX_SKIP_ENV is."""
+    monkeypatch.delenv("TOX_SKIP_ENV", raising=False)
+    project = tox_project({"tox.ini": "[tox]\nenv_list = py3{10,9},mypy"})
+
+    outcome = project.run("c", "-e", "py310,py39", "--skip-env", "py39", "-k", "env_name")
+
+    outcome.assert_success()
+    assert "[testenv:py310]" in outcome.out
+    assert "[testenv:py39]" not in outcome.out
+
+
+def test_skip_env_cli_combines_with_factor(tox_project: ToxProjectCreator, monkeypatch: MonkeyPatch) -> None:
+    monkeypatch.delenv("TOX_SKIP_ENV", raising=False)
+    project = tox_project({"tox.ini": "[tox]\nenv_list = py3{10,9},mypy"})
+
+    outcome = project.run("l", "--no-desc", "-q", "-f", "py310", "--skip-env", "py310")
+
+    outcome.assert_success()
+    outcome.assert_out_err("", "")
+
+
 def test_multiple_e_flags_are_additive(tox_project: ToxProjectCreator) -> None:
     proj = tox_project({"tox.ini": "[tox]\nenv_list=a,b,c"})
     outcome = proj.run("c", "-e", "a", "-e", "b", "-k", "env_name")
