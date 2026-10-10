@@ -1,11 +1,10 @@
-requires = [ "tox>=4.27" ]
+requires = [ "tox>=4.64.7" ]
 env_list = [
   "3.15",
   "3.14",
   "3.13",
   "3.12",
   "3.11",
-  "3.10",
   "3.14t",
   "3.15t",
   "cov",
@@ -19,6 +18,7 @@ skip_missing_interpreters = true
 
 [env_run_base]
 description = "run the tests with pytest under {env_name}"
+default_base_python = [ "3.15" ]
 package = "wheel"
 wheel_build_env = ".pkg"
 dependency_groups = [ "test" ]
@@ -66,9 +66,12 @@ commands = [
 ]
 uv_seed = true
 
+[env_pkg_base]
+default_base_python = [ "3.15" ]
+
 [env.docs]
 description = "build documentation"
-base_python = [ "3.14" ]
+base_python = [ "3.15" ]
 dependency_groups = [ "docs", "test" ]
 commands = [
   [
@@ -132,7 +135,7 @@ commands = [
 
 [env.type]
 description = "run type check on code base"
-base_python = [ "3.14" ]
+base_python = [ "3.15" ]
 dependency_groups = [ "type" ]
 extras = [ "completion" ]
 commands = [
@@ -143,7 +146,7 @@ commands = [
 
 [env.type-min]
 description = "run type check on code base for the minimum supported Python"
-base_python = [ "3.10" ]
+base_python = [ "3.11" ]
 dependency_groups = [ "type-min" ]
 extras = [ "completion" ]
 commands = [
@@ -151,7 +154,7 @@ commands = [
     "ty",
     "check",
     "--python-version",
-    "3.10",
+    "3.11",
     "--python-platform",
     "all",
     "--output-format",

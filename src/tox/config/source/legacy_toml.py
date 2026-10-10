@@ -1,16 +1,9 @@
 from __future__ import annotations
 
-import sys
+import tomllib
+from typing import TYPE_CHECKING
 
 from tox.config.types import MissingRequiredConfigKeyError
-
-if sys.version_info >= (3, 11):  # pragma: >=3.11 cover
-    import tomllib
-else:  # pragma: <3.11 cover
-    import tomli as tomllib
-
-
-from typing import TYPE_CHECKING
 
 from .ini import IniSource
 

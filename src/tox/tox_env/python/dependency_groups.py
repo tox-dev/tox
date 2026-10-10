@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import sys
+import tomllib
 from collections import defaultdict
 from typing import TYPE_CHECKING, TypedDict
 
@@ -15,11 +15,6 @@ if TYPE_CHECKING:
 
     from packaging.utils import NormalizedName
 
-
-if sys.version_info >= (3, 11):  # pragma: >=3.11 cover
-    import tomllib
-else:  # pragma: <3.11 cover
-    import tomli as tomllib
 
 _IncludeGroup = TypedDict("_IncludeGroup", {"include-group": str})
 

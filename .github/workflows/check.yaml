@@ -27,7 +27,6 @@ jobs:
           - "3.13"
           - "3.12"
           - "3.11"
-          - "3.10"
         os:
           - {image: ubuntu-24.04, name: ubuntu}
           - {image: windows-2025-vs2026, name: windows}
@@ -40,6 +39,7 @@ jobs:
       - name: Install the latest version of uv
         uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
         with:
+          python-version: "3.15"
           enable-cache: false
           cache-dependency-glob: "pyproject.toml"
           github-token: ${{ secrets.GITHUB_TOKEN }}
@@ -47,6 +47,8 @@ jobs:
         if: runner.os == 'Windows'
         shell: bash
         run: echo "$USERPROFILE/.local/bin" >> $GITHUB_PATH
+      - name: Install Python for packaging
+        run: uv python install 3.15
       - name: Install tox@self
         run: uv tool install --python-preference only-managed --python ${{ matrix.py }} tox@.
       - name: Setup test suite
@@ -59,7 +61,7 @@ jobs:
           PYTEST_XDIST_AUTO_NUM_WORKERS: 0
       - name: Upload test timings
         if: ${{ !cancelled() }}
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: junit-${{ matrix.py }}-${{ matrix.os.name }}
           path: .tox/junit.${{ matrix.py }}.xml
@@ -90,6 +92,7 @@ jobs:
       - name: Install the latest version of uv
         uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
         with:
+          python-version: "3.15"
           enable-cache: false
           cache-dependency-glob: "pyproject.toml"
           github-token: ${{ secrets.GITHUB_TOKEN }}
@@ -97,11 +100,13 @@ jobs:
         if: runner.os == 'Windows'
         shell: bash
         run: echo "$USERPROFILE/.local/bin" >> $GITHUB_PATH
+      - name: Install Python for packaging
+        run: uv python install 3.15
       - name: Install tox@self
-        run: uv tool install --python-preference only-managed --python 3.14 tox@.
-      - name: Install Python 3.10 for type-min
+        run: uv tool install --python-preference only-managed --python 3.15 tox@.
+      - name: Install Python 3.11 for type-min
         if: matrix.tox_env == 'type-min'
-        run: uv python install 3.10
+        run: uv python install 3.11
       - name: Setup check suite
         run: tox r -vv --notest --skip-missing-interpreters false -e ${{ matrix.tox_env }}
       - name: Run check for ${{ matrix.tox_env }}

@@ -7,14 +7,9 @@ from threading import Event, Thread
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    import sys
     from collections.abc import Callable
     from types import TracebackType
-
-    if sys.version_info >= (3, 11):  # pragma: >=3.11 cover
-        from typing import Self
-    else:  # pragma: <3.11 cover
-        from typing_extensions import Self
+    from typing import Self
 
 
 WAIT_GENERAL = 0.05

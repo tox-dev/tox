@@ -27,7 +27,7 @@ maintainers = [
 authors = [
   { name = "Bernát Gábor", email = "gaborjbernat@gmail.com" },
 ]
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 classifiers = [
   "Development Status :: 5 - Production/Stable",
   "Framework :: tox",
@@ -36,7 +36,6 @@ classifiers = [
   "Operating System :: Microsoft :: Windows",
   "Operating System :: POSIX",
   "Programming Language :: Python :: 3 :: Only",
-  "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: 3.13",
@@ -58,7 +57,6 @@ dependencies = [
   "pluggy>=1.6",
   "pyproject-api>=1.10",
   "python-discovery>=1.4.4",
-  "tomli>=2.4; python_version<'3.11'",
   "tomli-w>=1.2",
   "typing-extensions>=4.15; python_version<'3.13'",
   "virtualenv>=21.1",
@@ -247,7 +245,7 @@ search-path = [ "src", "typestubs" ]
 [tool.ty]
 src.exclude = []
 environment.extra-paths = [ "typestubs" ]
-environment.python-version = "3.14"
+environment.python-version = "3.15"
 rules.blanket-ignore-comment = "error"
 rules.division-by-zero = "error"
 rules.missing-direct-dependency = "error"

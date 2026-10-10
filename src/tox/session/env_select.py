@@ -24,14 +24,9 @@ from tox.tox_env.runner import RunToxEnv
 from tox.util.typing_compat import override
 
 if TYPE_CHECKING:
-    import sys
     from argparse import Action, ArgumentParser, Namespace
     from collections.abc import Callable, Iterable, Iterator
-
-    if sys.version_info >= (3, 11):  # pragma: >=3.11 cover
-        from typing import Self
-    else:  # pragma: <3.11 cover
-        from typing_extensions import Self
+    from typing import Self
 
     from tox.session.state import State
 

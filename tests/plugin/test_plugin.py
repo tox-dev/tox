@@ -253,7 +253,7 @@ def test_plugin_config_frozen_past_add_env(tox_project: ToxProjectCreator, mocke
             try:
                 conf(config_set)  # call to not typed function
                 raise NotImplementedError
-            except RuntimeError as exc:  # ruff:ignore[try-except-in-loop]
+            except RuntimeError as exc:
                 assert str(exc) == "config set has been marked final and cannot be extended"  # ruff:ignore[pytest-assert-in-except]
 
     @impl

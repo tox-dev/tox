@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 import re
-import sys
+import tomllib
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import TYPE_CHECKING, Final, cast
@@ -20,11 +20,6 @@ from tox.tox_env.runner import RunToxEnv
 from tox.util.typing_compat import override
 
 from .api import Python
-
-if sys.version_info >= (3, 11):  # pragma: >=3.11 cover
-    import tomllib
-else:  # pragma: <3.11 cover
-    import tomli as tomllib
 
 if TYPE_CHECKING:
     from tox.config.main import Config

@@ -325,7 +325,7 @@ class TomlReplaceLoader(ReplaceReference):
                 for src in self._config_value_sources(settings["section"], conf_args.env_name):
                     try:
                         value = src.load(settings["key"], conf_args.chain)
-                    except KeyError as exc:  # if fails, keep trying maybe another source can satisfy # ruff:ignore[try-except-in-loop]
+                    except KeyError as exc:  # if fails, keep trying maybe another source can satisfy
                         exception = exc
                     else:
                         return stringify(value)[0]

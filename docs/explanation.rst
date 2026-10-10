@@ -319,7 +319,7 @@ no ``product`` wrapper is needed for a single axis. Instead of probing the syste
 would be slow and environment-dependent), tox tracks the `supported CPython versions
 <https://devguide.python.org/versions/>`_ via two constants:
 
-- ``LATEST_PYTHON_MINOR_MIN`` -- the oldest supported CPython minor version (currently **10**, for Python 3.10)
+- ``LATEST_PYTHON_MINOR_MIN`` -- the oldest supported CPython minor version (currently **11**, for Python 3.11)
 - ``LATEST_PYTHON_MINOR_MAX`` -- the latest supported CPython minor version (currently **15**, for Python 3.15)
 
 These values are updated with each tox release. A right-open range ``{10-}`` uses ``LATEST_PYTHON_MINOR_MAX`` as its
@@ -422,7 +422,7 @@ environments behind until you delete them yourself. For the recipe, see :ref:`ho
 
 - **plugin system** to modify tox execution with simple hooks
 - uses :pypi:`pip` and :pypi:`virtualenv` by default; plugins can replace either
-- **cross-Python compatible**: tox requires CPython 3.10 and higher, but it can create environments for older versions.
+- **cross-Python compatible**: tox requires CPython 3.11 and higher, but it can create environments for older versions.
   Special configuration might be required: :ref:`eol-version-support`.
 - **cross-platform**: Windows, macOS and Unix style environments
 - **full interoperability with devpi**: is integrated with and is used for testing in the :pypi:`devpi` system, a

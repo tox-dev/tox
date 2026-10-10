@@ -8,14 +8,9 @@ import textwrap
 import threading
 import time
 from collections import OrderedDict
-from typing import IO, TYPE_CHECKING, NamedTuple, TypeVar
+from typing import IO, TYPE_CHECKING, NamedTuple, Self, TypeVar
 
 from colorama import Fore
-
-if sys.version_info >= (3, 11):  # pragma: >=3.11 cover
-    from typing import Self
-else:  # pragma: <3.11 cover
-    from typing_extensions import Self
 
 if TYPE_CHECKING:
     from collections.abc import Sequence

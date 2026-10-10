@@ -6,14 +6,14 @@ import re
 import sys
 import sysconfig
 from itertools import chain, groupby, product
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Final
 
 from python_discovery import KNOWN_ARCHITECTURES, normalize_isa
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
 
-LATEST_PYTHON_MINOR_MIN: int = 10
+LATEST_PYTHON_MINOR_MIN: Final[int] = 11
 LATEST_PYTHON_MINOR_MAX: int = 15
 
 
