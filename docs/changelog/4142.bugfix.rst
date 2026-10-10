@@ -1,2 +1,2 @@
-A ``dependency_groups`` run whose package root has no ``pyproject.toml`` now fails with the path it
-looked at, instead of installing none of the requested groups and reporting success - by :user:`feiiiiii5`.
+A ``dependency_groups`` run whose package root has no ``pyproject.toml`` now fails with the path it looked at, instead
+of installing none of the requested groups and reporting success - by :user:`feiiiiii5`.
