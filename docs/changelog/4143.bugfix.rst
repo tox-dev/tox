@@ -1,3 +1,1 @@
-Accept ``--skip-env`` alongside ``-e``, ``-m`` and ``-f`` on commands that select multiple environments: it filters the
-selected environments (as ``TOX_SKIP_ENV``, which always combined with them, does), but was registered within their
-mutually exclusive selection group, so any combination of the two failed as a usage error
+Allow ``--skip-env`` with ``-e``, ``-m``, and ``-f`` so it filters the selected environments
