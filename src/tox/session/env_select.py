@@ -137,10 +137,11 @@ def register_env_select_flags(
 
     """
     if multiple:
-        group = parser.add_argument_group("select target environment(s)")
+        option_group = parser.add_argument_group("select target environment(s)")
         # _MutuallyExclusiveGroup is private in argparse https://github.com/python/cpython/issues/144812
-        add_to: argparse._ActionsContainer = group.add_mutually_exclusive_group(required=False)
+        add_to: argparse._ActionsContainer = option_group.add_mutually_exclusive_group(required=False)
     else:
+        option_group = parser
         add_to = parser
     if not group_only:
         if multiple:
@@ -167,7 +168,7 @@ def register_env_select_flags(
             action="append",
         )
     help_msg = "exclude all environments selected that match this regular expression"
-    add_to.add_argument("--skip-env", dest="skip_env", metavar="re", help=help_msg, default="", type=str)
+    option_group.add_argument("--skip-env", dest="skip_env", metavar="re", help=help_msg, default="", type=str)
     return add_to
 
 

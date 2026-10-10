@@ -287,6 +287,51 @@ def test_tox_skip_env_invalid_regex(tox_project: ToxProjectCreator, monkeypatch:
     assert f"HandledError| invalid environment skip filter {bad_filter!r}" in outcome.out
 
 
+def test_skip_env_cli_combines_with_e(tox_project: ToxProjectCreator, monkeypatch: MonkeyPatch) -> None:
+    monkeypatch.delenv("TOX_SKIP_ENV", raising=False)
+    project = tox_project({"tox.ini": "[tox]\nenv_list = py3{10,9},mypy"})
+
+    outcome = project.run("c", "--skip-env", "py39", "-e", "py310,py39", "-k", "env_name")
+
+    outcome.assert_success()
+    assert "[testenv:py310]" in outcome.out
+    assert "[testenv:py39]" not in outcome.out
+
+
+@pytest.mark.parametrize(
+    ("selection_arguments", "skip_env", "expected"),
+    [
+        pytest.param(("-m", "test"), "py39", "py310\n", id="label"),
+        pytest.param(("-f", "django20"), "py39-django20", "py310-django20\n", id="factor"),
+    ],
+)
+def test_skip_env_cli_combines_with_group_selection(
+    tox_project: ToxProjectCreator,
+    monkeypatch: MonkeyPatch,
+    selection_arguments: tuple[str, ...],
+    skip_env: str,
+    expected: str,
+) -> None:
+    monkeypatch.delenv("TOX_SKIP_ENV", raising=False)
+    project = tox_project({
+        "tox.ini": "[tox]\nenv_list = py310,py39,py310-django20,py39-django20\nlabels =\n    test = py310,py39",
+    })
+
+    outcome = project.run("l", "--no-desc", "-q", *selection_arguments, "--skip-env", skip_env)
+
+    outcome.assert_success()
+    outcome.assert_out_err(expected, "")
+
+
+def test_skip_env_preserves_selection_exclusivity(tox_project: ToxProjectCreator) -> None:
+    project = tox_project({"tox.ini": "[tox]\nenv_list = py310,py39"})
+
+    outcome = project.run("l", "--no-desc", "-m", "test", "-f", "py310", "--skip-env", "py39")
+
+    outcome.assert_failed()
+    assert "argument -f: not allowed with argument -m" in outcome.err
+
+
 def test_multiple_e_flags_are_additive(tox_project: ToxProjectCreator) -> None:
     proj = tox_project({"tox.ini": "[tox]\nenv_list=a,b,c"})
     outcome = proj.run("c", "-e", "a", "-e", "b", "-k", "env_name")
