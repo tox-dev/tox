@@ -1,0 +1,1 @@
+Run pre-commit.ci hooks with Python 3.14 while the hosted runner lacks Python 3.15.
