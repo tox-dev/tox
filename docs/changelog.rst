@@ -7,6 +7,16 @@
 .. towncrier release notes start
 
 **********************
+ v4.65.2 (2026-10-10)
+**********************
+
+Bug fixes - 4.65.2
+==================
+
+- A ``dependency_groups`` run whose package root has no ``pyproject.toml`` now fails with the path it looked at, instead
+  of installing none of the requested groups and reporting success - by :user:`feiiiiii5`. (:issue:`4142`)
+
+**********************
  v4.65.1 (2026-10-10)
 **********************
 
