@@ -21,8 +21,9 @@ _IncludeGroup = TypedDict("_IncludeGroup", {"include-group": str})
 
 def resolve(root: Path, groups: set[str]) -> set[Requirement]:
     pyproject_file = root / "pyproject.toml"
-    if not pyproject_file.exists():  # check if it's static PEP-621 metadata
-        return set()
+    if not pyproject_file.exists():
+        msg = f"no pyproject.toml found at {pyproject_file} to read dependency groups from"
+        raise Fail(msg)
     with pyproject_file.open("rb") as file_handler:
         pyproject = tomllib.load(file_handler)
     if "dependency-groups" not in pyproject:
