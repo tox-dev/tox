@@ -7,6 +7,26 @@
 .. towncrier release notes start
 
 **********************
+ v4.65.1 (2026-10-10)
+**********************
+
+Bug fixes - 4.65.1
+==================
+
+- tox removes read-only files on Windows when it empties an environment's ``tmp`` or log directory, or the whole
+  environment on recreate - by :user:`SulimanAbdulrazzaq`.
+
+  - A read-only file in the directory itself used to stop every later run with ``internal error``.
+  - A read-only file in a sub-directory used to stay behind without a warning. (:issue:`4138`)
+
+Packaging updates and notes for downstreams - 4.65.1
+====================================================
+
+- Use Python 3.15 for development and automation. (:issue:`4139`)
+- Include the plugin documentation in source distributions so downstream packagers can run the plugin example tests.
+  (:issue:`4140`)
+
+**********************
  v4.65.0 (2026-10-09)
 **********************
 
