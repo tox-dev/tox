@@ -1,0 +1,5 @@
+tox removes read-only files on Windows when it empties an environment's ``tmp`` or log directory, or the whole
+environment on recreate - by :user:`SulimanAbdulrazzaq`.
+
+- A read-only file in the directory itself used to stop every later run with ``internal error``.
+- A read-only file in a sub-directory used to stay behind without a warning.

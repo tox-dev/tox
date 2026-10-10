@@ -151,7 +151,7 @@ class ToxHandler(_STREAM_HANDLER_BASE):
 
     @name.setter
     @override
-    def name(self, value: str) -> None:
+    def name(self, value: str | None) -> None:
         """Ignore anyone changing this, the name always reflects the active tox environment."""
 
     @property
