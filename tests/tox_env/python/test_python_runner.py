@@ -592,6 +592,11 @@ def test_dependency_groups_errors(
     assert message in failed_output(files)
 
 
+def test_dependency_groups_no_pyproject_file(failed_output: Callable[[dict[str, str]], str]) -> None:
+    files = {"tox.toml": '[env_run_base]\nskip_install = true\ndependency_groups = ["test"]\n'}
+    assert "no pyproject.toml found at" in failed_output(files)
+
+
 @pytest.mark.parametrize(
     ("env_run_base", "pyproject", "installs"),
     [
