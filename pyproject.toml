@@ -162,6 +162,7 @@ build.hooks.vcs.version-file = "src/tox/version.py"
 build.targets.wheel.shared-data = { "build/man" = "share/man/man1" }
 build.targets.sdist.include = [
   "/docs/man",
+  "/docs/plugin",
   "/src",
   "/tests",
   "/tox.toml",
