@@ -7,6 +7,15 @@
 .. towncrier release notes start
 
 **********************
+ v4.65.3 (2026-10-11)
+**********************
+
+Bug fixes - 4.65.3
+==================
+
+- Allow ``--skip-env`` with ``-e``, ``-m``, and ``-f`` so it filters the selected environments (:issue:`4143`)
+
+**********************
  v4.65.2 (2026-10-10)
 **********************
 
