@@ -90,8 +90,15 @@ To run tests locally execute:
 
     tox -e py
 
-This will run the test suite for the same Python version as under which ``tox`` is installed. Alternatively you can
-specify a specific version of Python by using the ``pyNN`` format, such as: ``py38``, ``pypy3``, etc.
+The ``py`` environment runs the test suite on Python 3.15, as configured in :file:`tox.toml`. Select another supported
+interpreter using its environment name, for example:
+
+.. code-block:: shell
+
+    tox -e 3.11
+    tox -e 3.14
+
+Run ``tox list`` to see the available test and development environments.
 
 ``tox`` has been configured to forward any additional arguments it is given to ``pytest``. This enables the use of
 pytest's `rich CLI <https://docs.pytest.org/en/latest/how-to/usage.html#specifying-which-tests-to-run>`_. As an example,
