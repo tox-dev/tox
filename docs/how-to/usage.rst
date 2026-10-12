@@ -231,12 +231,13 @@ tox provides several ways to override configuration values without editing the c
 **User-level configuration file**: tox reads a user-level config file whose location is shown in ``tox --help``. The
 location can be changed via the ``TOX_CONFIG_FILE`` environment variable.
 
-**Environment variables**: Any tox setting can be set via an environment variable with the ``TOX_`` prefix:
+**Environment variables**: Use ``TOX_<option>`` to set a CLI option's default. To override a configuration value, set
+``TOX_OVERRIDE`` to the section and key:
 
 .. code-block:: bash
 
-    # Use wheel packaging
-    TOX_PACKAGE=wheel tox run -e 3.13
+    # Use wheel packaging for this run
+    TOX_OVERRIDE=env_run_base.package=wheel tox run -e 3.13
 
 **CLI override**: The ``-x`` (or ``--override``) flag overrides any configuration value:
 

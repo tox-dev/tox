@@ -133,7 +133,7 @@ ENVIRONMENT VARIABLES
 =====================
 
 ``TOX_*``
-    Any tox configuration setting can be overridden via environment variables with the ``TOX_`` prefix.
+    ``TOX_<option>`` sets a CLI option's default. Use ``TOX_OVERRIDE`` to override configuration values.
 
 **NO_COLOR**
     When set to any non-empty value, disables colored output.
