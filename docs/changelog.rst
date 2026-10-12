@@ -7,6 +7,22 @@
 .. towncrier release notes start
 
 **********************
+ v4.65.4 (2026-10-12)
+**********************
+
+Improved documentation - 4.65.4
+===============================
+
+- Clarify how ``TOX_`` environment variables set CLI option defaults and how ``TOX_OVERRIDE`` changes configuration
+  values. (:issue:`4146`)
+
+Contributor-facing changes - 4.65.4
+===================================
+
+- Update contributor test commands to match the configured Python 3.15 default and supported interpreter environments.
+  (:issue:`4145`)
+
+**********************
  v4.65.3 (2026-10-11)
 **********************
 

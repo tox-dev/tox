@@ -1,2 +1,0 @@
-Clarify how ``TOX_`` environment variables set CLI option defaults and how ``TOX_OVERRIDE`` changes configuration
-values.
