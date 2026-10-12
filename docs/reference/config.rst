@@ -2340,9 +2340,9 @@ changed via ``TOX_USER_CONFIG_FILE`` environment variable. Example configuration
  Set CLI flags via environment variables
 *****************************************
 
-All configuration can be overridden via environment variables too, the naming convention here is ``TOX_<option>``. E.g.
-``TOX_WORK_DIR`` sets the ``--workdir`` flag, or ``TOX_OVERRIDE`` sets the ``--override`` flag. For flags accepting more
-than one argument, use the ``;`` character to separate these values:
+Set a CLI option's default with ``TOX_<option>``. For example, ``TOX_WORK_DIR`` sets the default for ``--workdir``; an
+explicit ``--workdir`` flag takes precedence. ``TOX_OVERRIDE`` sets the ``--override`` option. For options accepting
+more than one argument, use ``;`` to separate the values.
 
 All configuration inside the configuration file may be overwritten via the ``TOX_OVERRIDE``, note in this case the
 configuration file and its access (section/table + key) are needed. Here we demonstrate with a ``tox.ini`` file:
