@@ -338,7 +338,7 @@ class TomlReplaceLoader(ReplaceReference):
                         return default
                     return None  # keep original text, consistent with ini loader behavior
                 raise exception
-        return value
+        return None  # not a reference, such as the {} of a format string, keep the original text as ini loader does
 
     def _config_value_sources(self, sec: str | None, current_env: str | None) -> Iterator[ConfigSet | RawLoader]:
         if sec is None:
