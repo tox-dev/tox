@@ -1,0 +1,2 @@
+TOML configurations keep braces that are not a substitution as written, so the ``{}`` of ``find -exec`` or of a
+``str.format`` call and a dict literal in ``python -c`` reach the command intact, as they do in INI.
