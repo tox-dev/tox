@@ -103,28 +103,24 @@ def test_config_in_toml_replace_from_section_absolute_nok(tox_project: ToxProjec
     )
 
 
-def test_config_in_toml_replace_posargs_default(tox_project: ToxProjectCreator) -> None:
+@pytest.mark.parametrize(
+    ("posargs", "expected"),
+    [
+        pytest.param([], "python a b", id="default"),
+        pytest.param(["--"], "python", id="empty"),
+        pytest.param(["--", "c", "d"], "python c d", id="set"),
+    ],
+)
+def test_config_in_toml_replace_posargs(tox_project: ToxProjectCreator, posargs: list[str], expected: str) -> None:
     project = tox_project({
         "pyproject.toml": """
         [tool.tox.env.A]
         commands = [["python", { replace = "posargs", default = ["a", "b"], extend = true } ]]
         """
     })
-    outcome = project.run("c", "-e", "A", "-k", "commands")
+    outcome = project.run("c", "-e", "A", "-k", "commands", *posargs)
     outcome.assert_success()
-    outcome.assert_out_err("[testenv:A]\ncommands = python a b\n", "")
-
-
-def test_config_in_toml_replace_posargs_empty(tox_project: ToxProjectCreator) -> None:
-    project = tox_project({
-        "pyproject.toml": """
-        [tool.tox.env.A]
-        commands = [["python", { replace = "posargs", default = ["a", "b"], extend = true } ]]
-        """
-    })
-    outcome = project.run("c", "-e", "A", "-k", "commands", "--")
-    outcome.assert_success()
-    outcome.assert_out_err("[testenv:A]\ncommands = python\n", "")
+    outcome.assert_out_err(f"[testenv:A]\ncommands = {expected}\n", "")
 
 
 def test_config_in_toml_replace_posargs_empty_optional(tox_project: ToxProjectCreator) -> None:
@@ -137,18 +133,6 @@ def test_config_in_toml_replace_posargs_empty_optional(tox_project: ToxProjectCr
     outcome = project.run("c", "-e", "A", "-k", "commands", "--")
     outcome.assert_success()
     outcome.assert_out_err("[testenv:A]\ncommands = python\n", "")
-
-
-def test_config_in_toml_replace_posargs_set(tox_project: ToxProjectCreator) -> None:
-    project = tox_project({
-        "pyproject.toml": """
-        [tool.tox.env.A]
-        commands = [["python", { replace = "posargs", default = ["a", "b"], extend = true } ]]
-        """
-    })
-    outcome = project.run("c", "-e", "A", "-k", "commands", "--", "c", "d")
-    outcome.assert_success()
-    outcome.assert_out_err("[testenv:A]\ncommands = python c d\n", "")
 
 
 def test_config_in_toml_replace_env_default(tox_project: ToxProjectCreator, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -732,29 +716,30 @@ def test_config_in_toml_replace_if_error(tox_project: ToxProjectCreator, conditi
         project.run("c", "-e", "A", "-k", "description")
 
 
-def test_config_in_toml_replace_if_factor_positive(tox_project: ToxProjectCreator) -> None:
-
+@pytest.mark.parametrize(
+    ("env", "condition", "then", "else_", "expected"),
+    [
+        pytest.param("3.13-django50", "factor.django50", "has django50", "no django50", "has django50", id="positive"),
+        pytest.param("3.13", "factor.django50", "has django50", "no django50", "no django50", id="negative"),
+        pytest.param("py313-django50", "factor.django50 and factor.py313", "both", "not both", "both", id="and"),
+        pytest.param("py313", "factor.django50 or factor.py313", "at least one", "neither", "at least one", id="or"),
+    ],
+)
+def test_config_in_toml_replace_if_factor(
+    tox_project: ToxProjectCreator, env: str, condition: str, then: str, else_: str, expected: str
+) -> None:
     project = tox_project({
-        "pyproject.toml": dedent("""
-        [tool.tox.env."3.13-django50"]
-        description = { replace = "if", condition = "factor.django50", then = "has django50", else = "no django50" }
+        "pyproject.toml": dedent(f"""
+        [tool.tox.env."{env}"]
+        description.replace = "if"
+        description.condition = "{condition}"
+        description.then = "{then}"
+        description.else = "{else_}"
         """),
     })
-    outcome = project.run("c", "-e", "3.13-django50", "-k", "description")
+    outcome = project.run("c", "-e", env, "-k", "description")
     outcome.assert_success()
-    outcome.assert_out_err("[testenv:3.13-django50]\ndescription = has django50\n", "")
-
-
-def test_config_in_toml_replace_if_factor_negative(tox_project: ToxProjectCreator) -> None:
-    project = tox_project({
-        "pyproject.toml": dedent("""
-        [tool.tox.env."3.13"]
-        description = { replace = "if", condition = "factor.django50", then = "has django50", else = "no django50" }
-        """),
-    })
-    outcome = project.run("c", "-e", "3.13", "-k", "description")
-    outcome.assert_success()
-    outcome.assert_out_err("[testenv:3.13]\ndescription = no django50\n", "")
+    outcome.assert_out_err(f"[testenv:{env}]\ndescription = {expected}\n", "")
 
 
 def test_config_in_toml_replace_if_factor_platform(tox_project: ToxProjectCreator) -> None:
@@ -783,36 +768,6 @@ def test_config_in_toml_replace_if_factor_not(tox_project: ToxProjectCreator) ->
     outcome.assert_success()
     expected = "windows" if sys.platform == "win32" else "not windows"
     outcome.assert_out_err(f"[testenv:3.13]\ndescription = {expected}\n", "")
-
-
-def test_config_in_toml_replace_if_factor_and(tox_project: ToxProjectCreator) -> None:
-    project = tox_project({
-        "pyproject.toml": dedent("""
-        [tool.tox.env.py313-django50]
-        description.replace = "if"
-        description.condition = "factor.django50 and factor.py313"
-        description.then = "both"
-        description.else = "not both"
-        """),
-    })
-    outcome = project.run("c", "-e", "py313-django50", "-k", "description")
-    outcome.assert_success()
-    outcome.assert_out_err("[testenv:py313-django50]\ndescription = both\n", "")
-
-
-def test_config_in_toml_replace_if_factor_or(tox_project: ToxProjectCreator) -> None:
-    project = tox_project({
-        "pyproject.toml": dedent("""
-        [tool.tox.env.py313]
-        description.replace = "if"
-        description.condition = "factor.django50 or factor.py313"
-        description.then = "at least one"
-        description.else = "neither"
-        """),
-    })
-    outcome = project.run("c", "-e", "py313", "-k", "description")
-    outcome.assert_success()
-    outcome.assert_out_err("[testenv:py313]\ndescription = at least one\n", "")
 
 
 def test_config_in_toml_replace_if_factor_combined_with_env(

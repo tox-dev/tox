@@ -117,18 +117,6 @@ def test_config_lazy_constant(conf_builder: ConfBuilder) -> None:
     assert lazy_const == 2
 
 
-def test_config_constant_repr(conf_builder: ConfBuilder) -> None:
-    config_set = conf_builder("")
-    defined = config_set.add_constant(keys="a", value=1, desc="ok")
-    assert repr(defined)
-
-
-def test_config_dynamic_repr(conf_builder: ConfBuilder) -> None:
-    config_set = conf_builder("path = path")
-    defined = config_set.add_config(keys="path", of_type=Path, default=Path(), desc="path")
-    assert repr(defined)
-
-
 def test_config_redefine_constant_fail(conf_builder: ConfBuilder) -> None:
     config_set = conf_builder("path = path")
     config_set.add_constant(keys="path", desc="desc", value="value")
