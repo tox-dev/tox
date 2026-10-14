@@ -7,6 +7,16 @@
 .. towncrier release notes start
 
 **********************
+ v4.65.5 (2026-10-14)
+**********************
+
+Bug fixes - 4.65.5
+==================
+
+- Keep braces that are not a substitution in TOML configurations, as INI does, so ``{}`` in ``find -exec`` or a dict
+  literal in ``python -c`` reaches the command intact (:issue:`4150`)
+
+**********************
  v4.65.4 (2026-10-12)
 **********************
 
