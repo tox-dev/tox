@@ -15,13 +15,13 @@ from colorama import Fore
 if TYPE_CHECKING:
     from collections.abc import Sequence
     from types import TracebackType
-    from typing import Any, ClassVar
+    from typing import ClassVar
 
 if sys.platform == "win32":  # pragma: win32 cover
     import ctypes
 
     class _CursorInfo(ctypes.Structure):
-        _fields_: ClassVar[list[tuple[str, Any]]] = [("size", ctypes.c_int), ("visible", ctypes.c_byte)]
+        _fields_ = [("size", ctypes.c_int), ("visible", ctypes.c_byte)]
 
 
 def _file_support_encoding(chars: Sequence[str], file: IO[str]) -> bool:

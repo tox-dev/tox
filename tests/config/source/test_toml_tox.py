@@ -7,6 +7,8 @@ from typing import TYPE_CHECKING
 
 import pytest
 
+from tox.execute.request import shell_cmd
+
 if TYPE_CHECKING:
     from collections.abc import Callable
     from typing import Final
@@ -88,6 +90,14 @@ def test_config_in_toml_replace_default(toml_project: Callable[[str], ToxProject
     outcome = project.run("c", "-k", "description")
     outcome.assert_success()
     outcome.assert_out_err("[testenv:py]\ndescription = miss\n", "")
+
+
+@pytest.mark.parametrize("text", ["{}", "{print(1)}", "{'tool': 'tox'}"])
+def test_config_in_toml_keep_braces_of_non_reference(toml_project: Callable[[str], ToxProject], text: str) -> None:
+    project = toml_project(f'[${{prefix}}env_run_base]\ncommands = [["python", "-c", "x {text} y"]]')
+    outcome = project.run("c", "-k", "commands")
+    outcome.assert_success()
+    outcome.assert_out_err(f"[testenv:py]\ncommands = {shell_cmd(['python', '-c', f'x {text} y'])}\n", "")
 
 
 def test_config_in_toml_replace_env_name_via_env(toml_project: Callable[[str], ToxProject]) -> None:

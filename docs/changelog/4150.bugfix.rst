@@ -1,0 +1,2 @@
+Keep braces that are not a substitution in TOML configurations, as INI does, so ``{}`` in ``find -exec`` or a dict
+literal in ``python -c`` reaches the command intact
