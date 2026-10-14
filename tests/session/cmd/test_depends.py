@@ -1,8 +1,11 @@
 from __future__ import annotations
 
+import json
 import sys
 from textwrap import dedent
 from typing import TYPE_CHECKING
+
+import pytest
 
 if TYPE_CHECKING:
     from tests.conftest import PatchPrevPy
@@ -95,247 +98,110 @@ def test_depends_sdist(tox_project: ToxProjectCreator, patch_prev_py: PatchPrevP
     assert outcome.out == dedent(expected).lstrip()
 
 
-def test_depends_glob_star(tox_project: ToxProjectCreator) -> None:
-    toml = """
-    env_list = ["3.12", "3.13", "3.14", "lint", "cov"]
-    [env_run_base]
-    package = "skip"
-    [env.cov]
-    depends = ["3.*"]
-    """
-    project = tox_project({"tox.toml": toml})
+@pytest.mark.parametrize("fmt", ["toml", "ini"])
+@pytest.mark.parametrize(
+    ("env_list", "depends", "expected"),
+    [
+        pytest.param(
+            ["3.12", "3.13", "3.14", "lint", "cov"],
+            ["3.*"],
+            """\
+            Execution order: 3.12, 3.13, 3.14, lint, cov
+            ALL
+               3.12
+               3.13
+               3.14
+               lint
+               cov
+                  3.12
+                  3.13
+                  3.14
+            """,
+            id="star",
+        ),
+        pytest.param(
+            ["a1", "a2", "ab", "cov"],
+            ["a?"],
+            """\
+            Execution order: a1, a2, ab, cov
+            ALL
+               a1
+               a2
+               ab
+               cov
+                  a1
+                  a2
+                  ab
+            """,
+            id="question_mark",
+        ),
+        pytest.param(
+            ["lint", "cov"],
+            ["py*"],
+            """\
+            Execution order: lint, cov
+            ALL
+               lint
+               cov
+            """,
+            id="no_match",
+        ),
+        pytest.param(
+            ["3.13", "3.14", "lint", "cov"],
+            ["lint", "3.*"],
+            """\
+            Execution order: 3.13, 3.14, lint, cov
+            ALL
+               3.13
+               3.14
+               lint
+               cov
+                  3.13
+                  3.14
+                  lint
+            """,
+            id="mixed",
+        ),
+        pytest.param(
+            ["a", "b", "cov"],
+            ["*"],
+            """\
+            Execution order: a, b, cov
+            ALL
+               a
+               b
+               cov
+                  a
+                  b
+            """,
+            id="excludes_self",
+        ),
+    ],
+)
+def test_depends_glob(
+    tox_project: ToxProjectCreator, fmt: str, env_list: list[str], depends: list[str], expected: str
+) -> None:
+    if fmt == "toml":
+        conf = f"""
+        env_list = {json.dumps(env_list)}
+        [env_run_base]
+        package = "skip"
+        [env.cov]
+        depends = {json.dumps(depends)}
+        """
+    else:
+        conf = f"""
+        [tox]
+        env_list = {",".join(env_list)}
+        [testenv]
+        skip_install = true
+        [testenv:cov]
+        depends = {",".join(depends)}
+        """
+    project = tox_project({f"tox.{fmt}": conf})
     outcome = project.run("de")
     outcome.assert_success()
-    expected = dedent("""\
-    Execution order: 3.12, 3.13, 3.14, lint, cov
-    ALL
-       3.12
-       3.13
-       3.14
-       lint
-       cov
-          3.12
-          3.13
-          3.14
-    """)
-    assert outcome.out == expected
-
-
-def test_depends_glob_question_mark(tox_project: ToxProjectCreator) -> None:
-    toml = """
-    env_list = ["a1", "a2", "ab", "cov"]
-    [env_run_base]
-    package = "skip"
-    [env.cov]
-    depends = ["a?"]
-    """
-    project = tox_project({"tox.toml": toml})
-    outcome = project.run("de")
-    outcome.assert_success()
-    expected = dedent("""\
-    Execution order: a1, a2, ab, cov
-    ALL
-       a1
-       a2
-       ab
-       cov
-          a1
-          a2
-          ab
-    """)
-    assert outcome.out == expected
-
-
-def test_depends_glob_no_match(tox_project: ToxProjectCreator) -> None:
-    toml = """
-    env_list = ["lint", "cov"]
-    [env_run_base]
-    package = "skip"
-    [env.cov]
-    depends = ["py*"]
-    """
-    project = tox_project({"tox.toml": toml})
-    outcome = project.run("de")
-    outcome.assert_success()
-    expected = dedent("""\
-    Execution order: lint, cov
-    ALL
-       lint
-       cov
-    """)
-    assert outcome.out == expected
-
-
-def test_depends_glob_mixed(tox_project: ToxProjectCreator) -> None:
-    toml = """
-    env_list = ["3.13", "3.14", "lint", "cov"]
-    [env_run_base]
-    package = "skip"
-    [env.cov]
-    depends = ["lint", "3.*"]
-    """
-    project = tox_project({"tox.toml": toml})
-    outcome = project.run("de")
-    outcome.assert_success()
-    expected = dedent("""\
-    Execution order: 3.13, 3.14, lint, cov
-    ALL
-       3.13
-       3.14
-       lint
-       cov
-          3.13
-          3.14
-          lint
-    """)
-    assert outcome.out == expected
-
-
-def test_depends_glob_excludes_self(tox_project: ToxProjectCreator) -> None:
-    toml = """
-    env_list = ["a", "b", "cov"]
-    [env_run_base]
-    package = "skip"
-    [env.cov]
-    depends = ["*"]
-    """
-    project = tox_project({"tox.toml": toml})
-    outcome = project.run("de")
-    outcome.assert_success()
-    expected = dedent("""\
-    Execution order: a, b, cov
-    ALL
-       a
-       b
-       cov
-          a
-          b
-    """)
-    assert outcome.out == expected
-
-
-def test_depends_ini_glob_star(tox_project: ToxProjectCreator) -> None:
-    ini = """
-    [tox]
-    env_list = 3.12,3.13,3.14,lint,cov
-    [testenv]
-    skip_install = true
-    [testenv:cov]
-    depends = 3.*
-    """
-    project = tox_project({"tox.ini": ini})
-    outcome = project.run("de")
-    outcome.assert_success()
-    expected = dedent("""\
-    Execution order: 3.12, 3.13, 3.14, lint, cov
-    ALL
-       3.12
-       3.13
-       3.14
-       lint
-       cov
-          3.12
-          3.13
-          3.14
-    """)
-    assert outcome.out == expected
-
-
-def test_depends_ini_glob_question_mark(tox_project: ToxProjectCreator) -> None:
-    ini = """
-    [tox]
-    env_list = a1,a2,ab,cov
-    [testenv]
-    skip_install = true
-    [testenv:cov]
-    depends = a?
-    """
-    project = tox_project({"tox.ini": ini})
-    outcome = project.run("de")
-    outcome.assert_success()
-    expected = dedent("""\
-    Execution order: a1, a2, ab, cov
-    ALL
-       a1
-       a2
-       ab
-       cov
-          a1
-          a2
-          ab
-    """)
-    assert outcome.out == expected
-
-
-def test_depends_ini_glob_no_match(tox_project: ToxProjectCreator) -> None:
-    ini = """
-    [tox]
-    env_list = lint,cov
-    [testenv]
-    skip_install = true
-    [testenv:cov]
-    depends = py*
-    """
-    project = tox_project({"tox.ini": ini})
-    outcome = project.run("de")
-    outcome.assert_success()
-    expected = dedent("""\
-    Execution order: lint, cov
-    ALL
-       lint
-       cov
-    """)
-    assert outcome.out == expected
-
-
-def test_depends_ini_glob_mixed(tox_project: ToxProjectCreator) -> None:
-    ini = """
-    [tox]
-    env_list = 3.13,3.14,lint,cov
-    [testenv]
-    skip_install = true
-    [testenv:cov]
-    depends = lint,3.*
-    """
-    project = tox_project({"tox.ini": ini})
-    outcome = project.run("de")
-    outcome.assert_success()
-    expected = dedent("""\
-    Execution order: 3.13, 3.14, lint, cov
-    ALL
-       3.13
-       3.14
-       lint
-       cov
-          3.13
-          3.14
-          lint
-    """)
-    assert outcome.out == expected
-
-
-def test_depends_ini_glob_excludes_self(tox_project: ToxProjectCreator) -> None:
-    ini = """
-    [tox]
-    env_list = a,b,cov
-    [testenv]
-    skip_install = true
-    [testenv:cov]
-    depends = *
-    """
-    project = tox_project({"tox.ini": ini})
-    outcome = project.run("de")
-    outcome.assert_success()
-    expected = dedent("""\
-    Execution order: a, b, cov
-    ALL
-       a
-       b
-       cov
-          a
-          b
-    """)
-    assert outcome.out == expected
+    assert outcome.out == dedent(expected)
 
 
 def test_depends_help(tox_project: ToxProjectCreator) -> None:

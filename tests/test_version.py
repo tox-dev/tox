@@ -14,10 +14,6 @@ if TYPE_CHECKING:
     from tox.pytest import ToxProjectCreator
 
 
-def test_version() -> None:
-    assert __version__
-
-
 def test_version_without_plugin(tox_project: ToxProjectCreator) -> None:
     outcome = tox_project({"tox.ini": ""}).run("--version")
     outcome.assert_success()
