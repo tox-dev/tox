@@ -380,7 +380,7 @@ class EnvSelector:
         return env_name_to_active_map
 
     @property
-    def _defined_envs(self) -> dict[str, _ToxEnvInfo]:  # ruff:ignore[complex-structure, too-many-branches]
+    def _defined_envs(self) -> dict[str, _ToxEnvInfo]:
         # The problem of classifying run/package environments:
         # There can be two type of tox environments: run or package. Given a tox environment name there's no easy way to
         # find out which it is.  Intuitively, a run environment is any environment not used for packaging by another run
@@ -391,72 +391,90 @@ class EnvSelector:
         # we need to redefine it. E.g., when it shows up in config as [testenv:.package] and afterward by a run env is
         # marked as package_env.
 
-        if self._defined_envs_ is None:  # ruff:ignore[too-many-nested-blocks]
-            self._defined_envs_ = {}
-            failed: dict[str, Exception] = {}
-            env_name_to_active = self._env_name_to_active()
-            for name, is_active in env_name_to_active.items():
-                if name in self._pkg_env_counter:  # already marked as packaging, nothing to do here
-                    continue
-                with self._log_handler.with_context(name):
-                    try:
-                        run_env = self._build_run_env(name)
-                        if run_env is None:
-                            continue
-                        self._defined_envs_[name] = _ToxEnvInfo(run_env, is_active)
-                        pkg_name_type = run_env.get_package_env_types()
-                    except RunnerUnavailable as exc:
-                        LOGGER.warning(
-                            "environment %s marked as unavailable, runner %r is not available",
-                            name,
-                            str(exc),
-                        )
-                        self._unavailable_envs[name] = str(exc)
-                        self._defined_envs_[name] = _ToxEnvInfo(
-                            env=None, is_active=is_active, runner_unavailable=str(exc)
-                        )
-                        continue
-                if pkg_name_type is not None:
-                    # build package env and assign it, then register the run environment which can trigger generation
-                    # of additional run environments
-                    start_package_env_use_counter = self._pkg_env_counter.copy()
-                    start_defined = set(self._defined_envs_)
-                    try:
-                        run_env.package_env = self._build_pkg_env(pkg_name_type, name, env_name_to_active)
-                    except Exception as exception:  # ruff:ignore[blind-except]
-                        # if it's not a run environment, wait to see if ends up being a packaging one -> rollback
-                        failed[name] = exception
-                        # only remove envs created during this attempt: pre-existing ones (e.g. a shared package
-                        # env) are still referenced by earlier run environments and must survive
-                        for key in (set(self._defined_envs_) - start_defined) | {name}:
-                            del self._defined_envs_[key]
-                            self._state.conf.clear_env(key)
-                        self._pkg_env_counter = start_package_env_use_counter
-                    else:
-                        try:
-                            for env in run_env.package_envs:
-                                # check if any packaging envs are already run and remove them
-                                other_env_info = self._defined_envs_.get(env.name)
-                                if other_env_info is not None and isinstance(other_env_info.env, RunToxEnv):
-                                    del self._defined_envs_[env.name]  # pragma: no cover
-                                    for pkg_env in other_env_info.env.package_envs:  # pragma: no cover
-                                        self._pkg_env_counter[pkg_env.name] -= 1  # pragma: no cover
-                        except Exception:  # ruff:ignore[blind-except]
-                            assert self._defined_envs_[name].package_skip is not None  # ruff:ignore[assert]
-            # report the first failure in definition order - later ones may be fallout from it
-            first_failed = next((name for name in failed if name not in self._defined_envs_), None)
-            if first_failed is not None:
-                raise failed[first_failed]
-            for name, count in self._pkg_env_counter.items():
-                if not count:
-                    self._defined_envs_.pop(name)  # pragma: no cover
+        if self._defined_envs_ is not None:
+            return self._defined_envs_
+        self._defined_envs_ = {}
+        failed: dict[str, Exception] = {}
+        env_name_to_active = self._env_name_to_active()
+        for name, is_active in env_name_to_active.items():
+            if name in self._pkg_env_counter:  # already marked as packaging, nothing to do here
+                continue
+            with self._log_handler.with_context(name):
+                defined = self._define_run_env(name, is_active=is_active)
+            if defined is None:
+                continue
+            run_env, pkg_name_type = defined
+            if pkg_name_type is not None:
+                self._define_pkg_env(run_env, name, pkg_name_type, env_name_to_active, failed)
+        # report the first failure in definition order - later ones may be fallout from it
+        first_failed = next((name for name in failed if name not in self._defined_envs_), None)
+        if first_failed is not None:
+            raise failed[first_failed]
+        for name, count in self._pkg_env_counter.items():
+            if not count:
+                self._defined_envs_.pop(name)  # pragma: no cover
 
-            # reorder to as defined rather as found
-            order = chain(env_name_to_active, (i for i in self._defined_envs_ if i not in env_name_to_active))
-            self._defined_envs_ = {name: self._defined_envs_[name] for name in order if name in self._defined_envs_}
-            self._finalize_config()
-            self._mark_active()
+        # reorder to as defined rather as found
+        order = chain(env_name_to_active, (i for i in self._defined_envs_ if i not in env_name_to_active))
+        self._defined_envs_ = {name: self._defined_envs_[name] for name in order if name in self._defined_envs_}
+        self._finalize_config()
+        self._mark_active()
         return self._defined_envs_
+
+    def _define_run_env(self, name: str, *, is_active: bool) -> tuple[RunToxEnv, tuple[str, str] | None] | None:
+        assert self._defined_envs_ is not None  # ruff:ignore[assert]
+        try:
+            run_env = self._build_run_env(name)
+            if run_env is None:
+                return None
+            self._defined_envs_[name] = _ToxEnvInfo(run_env, is_active)
+            pkg_name_type = run_env.get_package_env_types()
+        except RunnerUnavailable as exc:
+            LOGGER.warning(
+                "environment %s marked as unavailable, runner %r is not available",
+                name,
+                str(exc),
+            )
+            self._unavailable_envs[name] = str(exc)
+            self._defined_envs_[name] = _ToxEnvInfo(env=None, is_active=is_active, runner_unavailable=str(exc))
+            return None
+        return run_env, pkg_name_type
+
+    def _define_pkg_env(
+        self,
+        run_env: RunToxEnv,
+        name: str,
+        pkg_name_type: tuple[str, str],
+        env_name_to_active: dict[str, bool],
+        failed: dict[str, Exception],
+    ) -> None:
+        assert self._defined_envs_ is not None  # ruff:ignore[assert]
+        # build package env and assign it, then register the run environment which can trigger generation
+        # of additional run environments
+        start_package_env_use_counter = self._pkg_env_counter.copy()
+        start_defined = set(self._defined_envs_)
+        try:
+            run_env.package_env = self._build_pkg_env(pkg_name_type, name, env_name_to_active)
+        except Exception as exception:  # ruff:ignore[blind-except]
+            # if it's not a run environment, wait to see if ends up being a packaging one -> rollback
+            failed[name] = exception
+            # only remove envs created during this attempt: pre-existing ones (e.g. a shared package
+            # env) are still referenced by earlier run environments and must survive
+            for key in (set(self._defined_envs_) - start_defined) | {name}:
+                del self._defined_envs_[key]
+                self._state.conf.clear_env(key)
+            self._pkg_env_counter = start_package_env_use_counter
+            return
+        try:
+            for env in run_env.package_envs:
+                # check if any packaging envs are already run and remove them
+                other_env_info = self._defined_envs_.get(env.name)
+                if other_env_info is not None and isinstance(other_env_info.env, RunToxEnv):
+                    del self._defined_envs_[env.name]  # pragma: no cover
+                    for pkg_env in other_env_info.env.package_envs:  # pragma: no cover
+                        self._pkg_env_counter[pkg_env.name] -= 1  # pragma: no cover
+        except Exception:  # ruff:ignore[blind-except]
+            assert self._defined_envs_[name].package_skip is not None  # ruff:ignore[assert]
 
     def _finalize_config(self) -> None:
         assert self._defined_envs_ is not None  # ruff:ignore[assert]
