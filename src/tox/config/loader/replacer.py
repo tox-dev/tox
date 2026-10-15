@@ -5,6 +5,8 @@ from __future__ import annotations
 import glob
 import logging
 import os
+import re
+import shlex
 import sys
 from abc import ABC, abstractmethod
 from collections.abc import Callable, Sequence
@@ -12,7 +14,6 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, Final, Union
 
 from tox.config.types import CircularChainError
-from tox.execute.request import shell_cmd
 from tox.util.typing_compat import override
 
 if TYPE_CHECKING:
@@ -298,8 +299,15 @@ def _shares_line(value: MatchArg, at: int) -> bool:
 
 def replace_pos_args(conf: Config, args: list[str], conf_args: ConfigLoadArgs) -> str:
     pos_args = load_posargs(conf, conf_args)
-    # if we use the defaults, join back remaining args else take shell cmd.
-    return ARG_DELIMITER.join(args) if pos_args is None else shell_cmd(pos_args)
+    # if we use the defaults, join back remaining args else quote them for the command splitting that follows.
+    return ARG_DELIMITER.join(args) if pos_args is None else _quote_pos_args(pos_args)
+
+
+def _quote_pos_args(pos_args: Sequence[str]) -> str:
+    if sys.platform != "win32":
+        return shlex.join(pos_args)
+    # Windows command splitting keeps a lone backslash, so paths stay unquoted where a value is not split into a command
+    return " ".join(arg if arg and not re.search(r"[\s'\"]|\\\\", arg) else shlex.quote(arg) for arg in pos_args)
 
 
 def load_posargs(conf: Config, conf_args: ConfigLoadArgs) -> tuple[str, ...] | None:
