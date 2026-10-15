@@ -202,7 +202,6 @@ class _ToxEnvInfo:
     env: PackageToxEnv | RunToxEnv | None  #: the tox environment (None if runner unavailable)
     is_active: bool  #: a flag indicating if the environment is marked as active in the current run
     package_skip: tuple[str, Skip] | None = None  #: if set the creation of the packaging environment failed
-    runner_unavailable: str | None = None  #: if set the runner is not available (contains runner name)
 
 
 _DYNAMIC_ENV_FACTORS = re.compile(
@@ -412,9 +411,7 @@ class EnvSelector:
                             str(exc),
                         )
                         self._unavailable_envs[name] = str(exc)
-                        self._defined_envs_[name] = _ToxEnvInfo(
-                            env=None, is_active=is_active, runner_unavailable=str(exc)
-                        )
+                        self._defined_envs_[name] = _ToxEnvInfo(env=None, is_active=is_active)
                         continue
                 if pkg_name_type is not None:
                     # build package env and assign it, then register the run environment which can trigger generation
