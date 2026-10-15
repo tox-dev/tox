@@ -1,0 +1,2 @@
+The INI and TOML loaders now share one ``active_factors()`` helper for the factors that hold for an environment instead
+of each keeping its own copy - by :user:`gaborbernat`.

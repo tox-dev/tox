@@ -17,9 +17,12 @@ LATEST_PYTHON_MINOR_MIN: Final[int] = 11
 LATEST_PYTHON_MINOR_MAX: int = 15
 
 
-def filter_for_env(value: str, name: str | None) -> str:
+def active_factors(env_name: str | None) -> set[str]:
+    """Factors that hold for an environment: those in its name, the platform and the machine ISA."""
     env_factors = (
-        set(chain.from_iterable([(i for i, _ in a) for a in find_factor_groups(name)])) if name is not None else set()
+        set(chain.from_iterable([(i for i, _ in a) for a in find_factor_groups(env_name)]))
+        if env_name is not None
+        else set()
     )
     current = set(env_factors)
     current.add(sys.platform)
@@ -31,6 +34,11 @@ def filter_for_env(value: str, name: str | None) -> str:
         # adding the machine ISA would cause cross-architecture conflicts (#3903).
         if not (env_factors & KNOWN_ARCHITECTURES) and not any(normalize_isa(f) == machine_isa for f in env_factors):
             current.add(machine_isa)
+    return current
+
+
+def filter_for_env(value: str, name: str | None) -> str:
+    current = active_factors(name)
     overall: list[str] = []
     active_continuation = False
     pending_skip = False
@@ -208,6 +216,7 @@ def expand_ranges(value: str) -> str:
 __all__ = (
     "LATEST_PYTHON_MINOR_MAX",
     "LATEST_PYTHON_MINOR_MIN",
+    "active_factors",
     "expand_factors",
     "expand_ranges",
     "extend_factors",

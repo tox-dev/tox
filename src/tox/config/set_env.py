@@ -41,7 +41,7 @@ SetEnvRaw = str | dict[str, str | SetEnvEntry] | SetEnvReference | list[dict[str
 
 
 class SetEnv:
-    def __init__(  # ruff:ignore[complex-structure, too-many-branches]
+    def __init__(
         self, raw: SetEnvRaw, name: str, env_name: str | None, root: Path, *, substituted: bool = False
     ) -> None:
         self.changed = False
@@ -68,48 +68,54 @@ class SetEnv:
         self._replacer: Replacer = lambda s, c, *, recursive=True: s  # ruff:ignore[unused-lambda-argument]
         self._name, self._env_name, self._root = name, env_name, root
         self._args = ConfigLoadArgs([], name, env_name)
-        from .loader.replacer import MatchExpression, find_replace_expr  # ruff:ignore[import-outside-top-level]
-
         if isinstance(raw, list):
             self._parse_list(raw)
-            return
-        if isinstance(raw, SetEnvReference):
+        elif isinstance(raw, SetEnvReference):
             self._reference_entries = [raw]
             self._parse_dict(raw.config.raw(raw.args, resolve=False).items())
-            return
-        if isinstance(raw, dict):
+        elif isinstance(raw, dict):
             self._parse_dict(raw.items())
-            return
+        else:
+            self._parse_str(raw, substituted=substituted)
+
+    def _parse_str(self, raw: str, *, substituted: bool) -> None:
         keys_after_file: set[str] = set()
-        for line in raw.splitlines():  # ruff:ignore[too-many-nested-blocks]
-            if line.strip():
-                if self._is_file_line(line):
-                    self._env_files.append((self._parse_file_line(line), keys_after_file := set()))
-                else:
-                    try:
-                        key, value, marker = self._extract_key_value_marker(line)
-                        # in substituted text a brace that opens no expression is part of the key, as before
-                        if "{" in key and (
-                            not substituted
-                            or any(isinstance(expr, MatchExpression) for expr in find_replace_expr(line))
-                        ):
-                            msg = f"invalid line {line!r} in set_env"
-                            raise ValueError(msg)  # ruff:ignore[raise-within-try]
-                    except ValueError:
-                        for expr in find_replace_expr(line):
-                            if isinstance(expr, MatchExpression):
-                                self._needs_replacement.append(line)
-                                break
-                        else:
-                            raise
-                    else:
-                        self._raw[key] = value
-                        self._defined_keys.add(key)
-                        keys_after_file.add(key)
-                        if marker:
-                            self._markers[key] = Marker(marker)
-                        else:
-                            self._markers.pop(key, None)
+        for line in raw.splitlines():
+            if not line.strip():
+                continue
+            if self._is_file_line(line):
+                self._env_files.append((self._parse_file_line(line), keys_after_file := set()))
+            elif (entry := self._parse_line(line, substituted=substituted)) is not None:
+                key, value, marker = entry
+                self._define(key, value, marker, keys_after_file)
+
+    def _parse_line(self, line: str, *, substituted: bool) -> tuple[str, str, str] | None:
+        """Split a ``KEY=VALUE`` line, or return ``None`` once it is queued to be split after substitution."""
+        from .loader.replacer import MatchExpression, find_replace_expr  # ruff:ignore[import-outside-top-level]
+
+        try:
+            key, value, marker = self._extract_key_value_marker(line)
+            # in substituted text a brace that opens no expression is part of the key, as before
+            if "{" in key and (
+                not substituted or any(isinstance(expr, MatchExpression) for expr in find_replace_expr(line))
+            ):
+                msg = f"invalid line {line!r} in set_env"
+                raise ValueError(msg)  # ruff:ignore[raise-within-try]
+        except ValueError:
+            if any(isinstance(expr, MatchExpression) for expr in find_replace_expr(line)):
+                self._needs_replacement.append(line)
+                return None
+            raise
+        return key, value, marker
+
+    def _define(self, key: str, value: str, marker: str | None, keys_after_file: set[str]) -> None:
+        self._raw[key] = value
+        self._defined_keys.add(key)
+        keys_after_file.add(key)
+        if marker:
+            self._markers[key] = Marker(marker)
+        else:  # an unconditional redefinition drops the marker an earlier entry set, as the INI form does
+            self._markers.pop(key, None)
 
     def _parse_list(self, raw: list[dict[str, str | SetEnvEntry] | SetEnvReference]) -> None:
         entries = (
@@ -133,20 +139,11 @@ class SetEnv:
         for key, value in raw:
             if not isinstance(value, str):
                 if "value" in value:
-                    self._raw[key] = value["value"]
-                    self._defined_keys.add(key)
-                    keys_after_file.add(key)
-                    if marker := value.get("marker"):
-                        self._markers[key] = Marker(marker)
-                    else:  # an unconditional redefinition drops the marker an earlier entry set, as the INI form does
-                        self._markers.pop(key, None)
+                    self._define(key, value["value"], value.get("marker"), keys_after_file)
             elif key == "file":
                 self._env_files.append((value, keys_after_file := set()))
             else:
-                self._raw[key] = value
-                self._defined_keys.add(key)
-                keys_after_file.add(key)
-                self._markers.pop(key, None)
+                self._define(key, value, None, keys_after_file)
 
     @staticmethod
     def _is_file_line(line: str) -> bool:
