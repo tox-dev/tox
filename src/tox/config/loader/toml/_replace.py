@@ -4,16 +4,11 @@ import ast
 import glob
 import os
 import re
-import sys
-import sysconfig
-from itertools import chain
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, cast
 
-from python_discovery import KNOWN_ARCHITECTURES, normalize_isa
-
 from tox.config.loader.api import apply_overrides_to_raw
-from tox.config.loader.ini.factor import find_factor_groups
+from tox.config.loader.ini.factor import active_factors
 from tox.config.loader.replacer import (
     BACKSLASH_ESCAPE_CHARS,
     MatchError,
@@ -49,21 +44,7 @@ class Unroll:
         self.loader = loader
         self.args = args
         self._refs: list[str] = []
-        self.factors = self._extract_factors(args.env_name)
-        self.factors.add(sys.platform)
-
-    @staticmethod
-    def _extract_factors(env_name: str | None) -> set[str]:
-        if env_name is None:
-            factors: set[str] = set()
-        else:
-            factors = set(chain.from_iterable([(i for i, _ in a) for a in find_factor_groups(env_name)]))
-        parts = sysconfig.get_platform().rsplit("-", 1)
-        if len(parts) > 1:
-            machine_isa = normalize_isa(parts[-1])
-            if not (factors & KNOWN_ARCHITECTURES) and not any(normalize_isa(f) == machine_isa for f in factors):
-                factors.add(machine_isa)
-        return factors
+        self.factors = active_factors(args.env_name)
 
     def __call__(  # ruff:ignore[complex-structure, too-many-branches]
         self, value: TomlTypes, depth: int = 0, *, skip_str: bool = False
