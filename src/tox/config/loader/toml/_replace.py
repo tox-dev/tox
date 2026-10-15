@@ -5,7 +5,7 @@ import glob
 import os
 import re
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, cast
+from typing import TYPE_CHECKING, Any, Protocol, cast
 
 from tox.config.loader.api import apply_overrides_to_raw
 from tox.config.loader.ini.factor import active_factors
@@ -38,6 +38,10 @@ if TYPE_CHECKING:
     from ._api import TomlTypes
 
 
+class _Directive(Protocol):
+    def __call__(self, value: dict[str, TomlTypes], depth: int, /, *, skip_str: bool) -> TomlTypes: ...
+
+
 class Unroll:
     def __init__(self, conf: Config | None, loader: TomlLoader, args: ConfigLoadArgs) -> None:
         self.conf = conf
@@ -46,82 +50,89 @@ class Unroll:
         self._refs: list[str] = []
         self.factors = active_factors(args.env_name)
 
-    def __call__(  # ruff:ignore[complex-structure, too-many-branches]
-        self, value: TomlTypes, depth: int = 0, *, skip_str: bool = False
-    ) -> TomlTypes:
+    def __call__(self, value: TomlTypes, depth: int = 0, *, skip_str: bool = False) -> TomlTypes:
         """Replace all active tokens within value according to the config."""
         depth += 1
         MatchRecursionError.check(depth, value)
         if isinstance(value, SetEnvReference):
-            pass
-        elif isinstance(value, str):
+            return value
+        if isinstance(value, str):
             if not skip_str and self.conf is not None:  # core config does not support string substitution
                 reference = TomlReplaceLoader(self.conf, self.loader)
                 value = replace(self.conf, reference, value, self.args)
-        elif isinstance(value, (int, float, bool)):
-            pass  # no reference or substitution possible
-        elif isinstance(value, list):
-            # need to inspect every entry of the list to check for reference.
-            res_list: list[TomlTypes] = []
-            for val in value:  # apply replacement for every entry
-                got = self(val, depth, skip_str=skip_str)
-                if isinstance(got, SetEnvReference):
-                    extending = isinstance(val, dict) and bool(val.get("extend"))
-                    if got.shape != ("array" if extending else "table"):
-                        msg = "set_env arrays require table references or array references with extend=true"
-                        raise TypeError(msg)
-                    res_list.append(got)
-                elif isinstance(val, dict) and val.get("replace") and val.get("extend"):
-                    # ``extend`` spreads an iterable result (list, set of extras, ...) into the
-                    # parent. A scalar string is the exception: iterating it would split it
-                    # character by character, so a non-empty one is appended as a single item while
-                    # an empty one (a false ``if`` with no ``else``, yielding "") contributes nothing.
-                    if isinstance(got, str):
-                        if got:
-                            res_list.append(cast("TomlTypes", got))
-                    else:
-                        res_list.extend(cast("list[Any]", got))
-                else:
-                    res_list.append(got)
-            value = res_list
-        elif isinstance(value, dict):
-            # need to inspect every entry of the list to check for reference.
-            if replace_type := value.get("replace"):
-                marker = value.get("marker")
-                if replace_type == "posargs" and self.conf is not None:
-                    got_posargs = load_posargs(self.conf, self.args)
-                    posargs_result: TomlTypes = (
-                        [self(v, depth, skip_str=skip_str) for v in cast("list[str]", value.get("default", []))]
-                        if got_posargs is None
-                        else [*got_posargs]
-                    )
-                    return {"value": posargs_result, "marker": marker} if marker else posargs_result
-                if replace_type == "env":
-                    name = validate(value["name"], str)
-                    default = validate(self(value.get("default", ""), depth, skip_str=skip_str), str)
-                    env_result: TomlTypes = (
-                        _env_expression(name, default)  # set_env resolves it when read, seeing the keys next to it
-                        if skip_str
-                        # use a copy of the chain so this substitution's env references do not leak into
-                        # adjacent entries of the same value tree and spuriously trip the circular check (#2869)
-                        else replace_env(self.conf, [name, default], self.args.copy())
-                    )
-                    return {"value": env_result, "marker": marker} if marker else env_result
-                if replace_type == "glob":
-                    glob_result = _replace_glob_toml(self.conf, value)
-                    return {"value": glob_result, "marker": marker} if marker else glob_result
-                if replace_type == "if":
-                    if_result = _replace_if_toml(value, self, depth, self.factors, skip_str=skip_str)
-                    return {"value": if_result, "marker": marker} if marker else if_result
-                if replace_type == "ref":  # pragma: no branch
-                    ref_result = self._replace_ref(value, depth, skip_str=skip_str)
-                    return {"value": ref_result, "marker": marker} if marker else ref_result
+            return value
+        if isinstance(value, list):
+            return self._replace_list(value, depth, skip_str=skip_str)
+        if isinstance(value, dict):
+            return self._replace_dict(value, depth, skip_str=skip_str)
+        return value  # int, float or bool: no reference or substitution possible
 
-            res_dict: dict[str, TomlTypes] = {}
-            for key, val in value.items():  # apply replacement for every entry
-                res_dict[key] = self(val, depth, skip_str=skip_str)
-            value = res_dict
-        return value
+    def _replace_list(self, value: list[TomlTypes], depth: int, *, skip_str: bool) -> TomlTypes:
+        # need to inspect every entry of the list to check for reference.
+        res_list: list[TomlTypes] = []
+        for val in value:  # apply replacement for every entry
+            got = self(val, depth, skip_str=skip_str)
+            if isinstance(got, SetEnvReference):
+                extending = isinstance(val, dict) and bool(val.get("extend"))
+                if got.shape != ("array" if extending else "table"):
+                    msg = "set_env arrays require table references or array references with extend=true"
+                    raise TypeError(msg)
+                res_list.append(got)
+            elif not (isinstance(val, dict) and val.get("replace") and val.get("extend")):
+                res_list.append(got)
+            elif isinstance(got, str):
+                # ``extend`` spreads an iterable result (list, set of extras, ...) into the
+                # parent. A scalar string is the exception: iterating it would split it
+                # character by character, so a non-empty one is appended as a single item while
+                # an empty one (a false ``if`` with no ``else``, yielding "") contributes nothing.
+                if got:
+                    res_list.append(cast("TomlTypes", got))
+            else:
+                res_list.extend(cast("list[Any]", got))
+        return res_list
+
+    def _replace_dict(self, value: dict[str, TomlTypes], depth: int, *, skip_str: bool) -> TomlTypes:
+        replace_type = value.get("replace")
+        if (directive := self._directive(replace_type)) is None:
+            # need to inspect every entry of the table to check for reference.
+            return {key: self(val, depth, skip_str=skip_str) for key, val in value.items()}
+        marker = value.get("marker")
+        result = directive(value, depth, skip_str=skip_str)
+        return {"value": result, "marker": marker} if marker else result
+
+    def _directive(self, replace_type: TomlTypes) -> _Directive | None:
+        if replace_type == "posargs" and self.conf is not None:
+            return self._replace_posargs
+        if replace_type == "env":
+            return self._replace_env
+        if replace_type == "glob":
+            return self._replace_glob
+        if replace_type == "if":
+            return self._replace_if
+        if replace_type == "ref":
+            return self._replace_ref
+        return None
+
+    def _replace_posargs(self, value: dict[str, TomlTypes], depth: int, *, skip_str: bool) -> TomlTypes:
+        got_posargs = load_posargs(cast("Config", self.conf), self.args)
+        if got_posargs is None:
+            return [self(v, depth, skip_str=skip_str) for v in cast("list[str]", value.get("default", []))]
+        return [*got_posargs]
+
+    def _replace_env(self, value: dict[str, TomlTypes], depth: int, *, skip_str: bool) -> TomlTypes:
+        name = validate(value["name"], str)
+        default = validate(self(value.get("default", ""), depth, skip_str=skip_str), str)
+        if skip_str:
+            return _env_expression(name, default)  # set_env resolves it when read, seeing the keys next to it
+        # use a copy of the chain so this substitution's env references do not leak into
+        # adjacent entries of the same value tree and spuriously trip the circular check (#2869)
+        return replace_env(self.conf, [name, default], self.args.copy())
+
+    def _replace_glob(self, value: dict[str, TomlTypes], _depth: int, *, skip_str: bool) -> TomlTypes:  # ruff:ignore[unused-method-argument]
+        return _replace_glob_toml(self.conf, value)
+
+    def _replace_if(self, value: dict[str, TomlTypes], depth: int, *, skip_str: bool) -> TomlTypes:
+        return _replace_if_toml(value, self, depth, self.factors, skip_str=skip_str)
 
     def _replace_ref(self, value: dict[str, TomlTypes], depth: int, *, skip_str: bool = False) -> TomlTypes:
         if self.conf is not None and (env := value.get("env")) and (key := value.get("key")):
