@@ -108,6 +108,12 @@ def test_invalid_shell_expression(value: str, expected: list[str]) -> None:
 
 
 SIMPLE_ARGS = [
+    (r"foo \"bar\"", ["foo", '"bar"']),
+    (r"foo \'bar\'", ["foo", "'bar'"]),
+    ("foo '\"bar baz\"'", ["foo", '"bar baz"']),
+    ("foo \"'bar baz'\"", ["foo", "'bar baz'"]),
+    (r"foo \"\"", ["foo", '""']),
+    (r"foo \'\'", ["foo", "''"]),
     ('foo "bar baz"', ["foo", "bar baz"]),
     ('foo "bar baz"ext', ["foo", "bar bazext"]),
     ('foo="bar baz"', ["foo=bar baz"]),

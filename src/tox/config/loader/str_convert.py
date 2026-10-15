@@ -83,9 +83,6 @@ class StrConvert(Convert[str]):
         pos = 0
         try:
             for arg in splitter:
-                if is_win and len(arg) > 1 and arg[0] == arg[-1] and arg.startswith(("'", '"')):  # pragma: win32 cover
-                    # on Windows quoted arguments will remain quoted, strip it
-                    arg = arg[1:-1]  # ruff:ignore[redefined-loop-name]
                 args.append(arg)
                 pos = cast("StringIO", splitter.instream).tell()
         except ValueError:

@@ -1498,7 +1498,8 @@ Run
             commands = xcopy "\\server\share\file name.txt" .
 
         Inside an unquoted or double-quoted path, double backslashes escape one backslash. Single-quoted text is
-        literal; TOML argument arrays bypass command-line splitting.
+        literal; TOML argument arrays bypass command-line splitting. Escape a quote or wrap it in the other quote type to
+        pass it literally: ``\"value\"`` and ``'"value"'`` both pass ``"value"``.
 
         For more details, please see :doc:`shlex parsing rules <python:library/shlex>`.
 
