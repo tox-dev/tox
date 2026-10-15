@@ -1499,6 +1499,8 @@ Run
 
         Inside an unquoted or double-quoted path, double backslashes escape one backslash. Single-quoted text is
         literal; TOML argument arrays bypass command-line splitting.
+        To pass literal quotes, escape them or enclose them in the other quote type. For example, ``\"value\"`` and
+        ``'"value"'`` both pass ``"value"`` as the argument, including its double quotes.
 
         For more details, please see :doc:`shlex parsing rules <python:library/shlex>`.
 
