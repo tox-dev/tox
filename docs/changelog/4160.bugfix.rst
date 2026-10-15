@@ -1,0 +1,1 @@
+Keep quotes in positional arguments on Windows, so ``tox -- "'x'"`` passes ``'x'`` to the command as on Linux
