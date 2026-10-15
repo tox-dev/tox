@@ -1,1 +1,0 @@
-Split environment discovery in the environment selector into run and package helpers, without changing behavior.

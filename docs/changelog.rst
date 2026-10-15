@@ -7,6 +7,32 @@
 .. towncrier release notes start
 
 **********************
+ v4.65.6 (2026-10-15)
+**********************
+
+Bug fixes - 4.65.6
+==================
+
+- Preserve literal single and double quotes in Windows command arguments. (:issue:`4159`)
+- Keep quotes in positional arguments on Windows, so ``tox -- "'x'"`` passes ``'x'`` to the command as on Linux
+  (:issue:`4160`)
+
+Contributor-facing changes - 4.65.6
+===================================
+
+- Split the TOML ``replace`` walker into one helper per value kind and directive, without changing behavior.
+  (:issue:`4154`)
+- The INI and TOML loaders now share one ``active_factors()`` helper for the factors that hold for an environment
+  instead of each keeping its own copy - by :user:`gaborbernat`. (:issue:`4155`)
+- Move ``set_env`` string parsing out of the ``SetEnv`` constructor into small helpers, without changing behavior.
+  (:issue:`4156`)
+- Split environment discovery in the environment selector into run and package helpers, without changing behavior.
+  (:issue:`4157`)
+- The core and per-environment ``skip_missing_interpreters`` options now share one post-process for the
+  ``--skip-missing-interpreters`` override instead of each keeping its own copy - by :user:`gaborbernat`.
+  (:issue:`4158`)
+
+**********************
  v4.65.5 (2026-10-14)
 **********************
 

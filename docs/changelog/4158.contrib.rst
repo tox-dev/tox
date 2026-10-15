@@ -1,2 +1,0 @@
-The core and per-environment ``skip_missing_interpreters`` options now share one post-process for the
-``--skip-missing-interpreters`` override instead of each keeping its own copy - by :user:`gaborbernat`.
