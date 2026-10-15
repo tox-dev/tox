@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from contextlib import contextmanager
-from threading import Event, Lock, Timer
+from threading import Lock, Timer
 from typing import IO, TYPE_CHECKING
 
 from colorama import Fore
@@ -27,7 +27,6 @@ class SyncWrite:
         self._content = bytearray()
         self._target: IO[bytes] | None = target
         self._target_enabled: bool = target is not None
-        self._keep_printing: Event = Event()
         self._content_lock: Lock = Lock()
         self._lock: Lock = Lock()
         self._at: int = 0
