@@ -231,17 +231,18 @@ class PythonRun(Python, RunToxEnv, ABC):
         return packages
 
 
-def add_skip_missing_interpreters_to_core(core: CoreConfigSet, options: Parsed) -> None:
-    def skip_missing_interpreters_post_process(value: bool) -> bool:  # ruff:ignore[boolean-type-hint-positional-argument]
-        if getattr(options, "skip_missing_interpreters", "config") != "config":
-            return StrConvert().to_bool(str(options.skip_missing_interpreters))
-        return value
+def _skip_missing_interpreters_post_process(options: Parsed, value: bool) -> bool:  # ruff:ignore[boolean-type-hint-positional-argument]
+    if getattr(options, "skip_missing_interpreters", "config") != "config":
+        return StrConvert().to_bool(str(options.skip_missing_interpreters))
+    return value
 
+
+def add_skip_missing_interpreters_to_core(core: CoreConfigSet, options: Parsed) -> None:
     core.add_config(
         keys=["skip_missing_interpreters"],
         default=False,
         of_type=bool,
-        post_process=skip_missing_interpreters_post_process,
+        post_process=partial(_skip_missing_interpreters_post_process, options),
         desc="skip running missing interpreters",
     )
 
@@ -250,16 +251,11 @@ def add_skip_missing_interpreters_to_env(conf: EnvConfigSet, core: CoreConfigSet
     def _default_skip_missing(conf: Config, env_name: str | None) -> bool:  # ruff:ignore[unused-function-argument]
         return core.get("skip_missing_interpreters", bool)
 
-    def _post_process(value: bool) -> bool:  # ruff:ignore[boolean-type-hint-positional-argument]
-        if getattr(options, "skip_missing_interpreters", "config") != "config":
-            return StrConvert().to_bool(str(options.skip_missing_interpreters))
-        return value
-
     conf.add_config(
         keys=["skip_missing_interpreters"],
         default=_default_skip_missing,
         of_type=bool,
-        post_process=_post_process,
+        post_process=partial(_skip_missing_interpreters_post_process, options),
         desc="override core skip_missing_interpreters for this environment",
     )
 
