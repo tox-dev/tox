@@ -147,20 +147,20 @@ class VirtualEnv(Python, ABC):
 
     @property
     def session(self) -> Session | SubprocessSession:
-        if self._virtualenv_session_error is not None:  # discovery already failed, do not scan for it again
+        if self._virtualenv_session_error is not None:
             raise self._virtualenv_session_error
         if self._virtualenv_session is None:
             env = self.virtualenv_env_vars()
-            try:
-                if spec := self.conf["virtualenv_spec"]:
-                    self._virtualenv_session = self._create_subprocess_session(spec, env)
-                else:
+            if spec := self.conf["virtualenv_spec"]:
+                self._virtualenv_session = self._create_subprocess_session(spec, env)
+            else:
+                try:
                     self._virtualenv_session = self._create_imported_session(env)
-            except HandledError:
-                raise
-            except RuntimeError as exc:
-                self._virtualenv_session_error = exc
-                raise
+                except HandledError:
+                    raise
+                except RuntimeError as exc:
+                    self._virtualenv_session_error = exc
+                    raise
         return self._virtualenv_session
 
     def _create_subprocess_session(self, spec: str, env: dict[str, str]) -> SubprocessSession:
