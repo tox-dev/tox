@@ -9,7 +9,7 @@ import shutil
 import sys
 from contextlib import suppress
 from subprocess import DEVNULL, PIPE, TimeoutExpired
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Final
 
 from tox.execute.api import Execute, ExecuteInstance, ExecuteOptions, ExecuteStatus, FinishedExecuteStatus
 from tox.execute.request import ExecuteRequest, StdinSource
@@ -214,12 +214,10 @@ class LocalSubProcessExecuteInstance(ExecuteInstance):
         if lines != -1:  # pragma: no branch
             self.request.env.setdefault("LINES", str(lines))
 
-        # --no-capture inherits console handles for interactive programs (e.g., Python REPL).
-        # Allows terminal APIs to query console dimensions and interact with the terminal directly. Processes tox talks
-        # to over their streams (e.g. the packaging backend) stay captured, otherwise tox never sees their replies.
-        inherit_console = self.options.no_capture and self.request.stdin is not StdinSource.API
         stdout, stderr = self.get_stream_file_no("stdout"), self.get_stream_file_no("stderr")
         self._file_no_generators = [stdout, stderr]
+        # API processes need captured replies; interactive programs need the console's terminal APIs.
+        inherit_console: Final[bool] = self.options.no_capture and self.request.stdin is not StdinSource.API
         try:
             self.process = process = Popen(
                 self.cmd,
