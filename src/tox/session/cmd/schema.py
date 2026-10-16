@@ -149,6 +149,7 @@ def gen_schema(state: State) -> int:
                 "properties": {
                     "replace": {"const": "posargs"},
                     "default": {"type": "array", "items": {"$ref": "#/definitions/subs"}},
+                    "substitute": {"type": "boolean", "default": False},
                     "extend": {"type": "boolean"},
                     "marker": {"type": "string"},
                 },

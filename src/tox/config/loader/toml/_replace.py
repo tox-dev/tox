@@ -117,6 +117,8 @@ class Unroll:
         got_posargs = load_posargs(cast("Config", self.conf), self.args)
         if got_posargs is None:
             return [self(v, depth, skip_str=skip_str) for v in cast("list[str]", value.get("default", []))]
+        if validate(value.get("substitute", False), bool):
+            return [self(arg, depth, skip_str=skip_str) for arg in got_posargs]
         return [*got_posargs]
 
     def _replace_env(self, value: dict[str, TomlTypes], depth: int, *, skip_str: bool) -> TomlTypes:

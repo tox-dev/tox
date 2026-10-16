@@ -76,7 +76,7 @@ def replace_form_content() -> dict[str, str]:
         """),
         "posargs": dedent("""\
             [env_run_base]
-            commands = [["pytest", { replace = "posargs", default = ["tests"] }]]
+            commands = [["pytest", { replace = "posargs", default = ["tests"], substitute = true }]]
         """),
         "glob": dedent("""\
             [env_run_base]
