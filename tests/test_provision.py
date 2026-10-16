@@ -294,6 +294,34 @@ def test_provision_no_recreate(tox_project: ToxProjectCreator) -> None:
     assert f"provisioning explicitly disabled within {sys.executable}, but is missing [requires (has)]: p" in result.out
 
 
+def test_no_provision_before_command_keeps_command(tox_project: ToxProjectCreator) -> None:
+    project = tox_project({"tox.toml": 'env_list = ["py"]\n'})
+    result = project.run("--no-provision", "l")
+    result.assert_success()
+    # the list command ran: it is the only one printing the envs header, and no environment was created
+    assert "default environments:" in result.out
+    assert "congratulations :)" not in result.out
+    assert not (project.path / ".tox").exists()
+    # the command name was not written to a file
+    assert not (project.path / "l").exists()
+
+
+def test_no_provision_path_before_command_still_written(tox_project: ToxProjectCreator) -> None:
+    project = tox_project({"tox.toml": 'requires = ["p"]\n'})
+    result = project.run("--no-provision", "out.json", "l")
+    result.assert_failed(-2)
+    assert "and wrote to out.json" in result.out
+    assert (project.path / "out.json").is_file()
+
+
+def test_no_provision_path_named_like_command_needs_equals(tox_project: ToxProjectCreator) -> None:
+    project = tox_project({"tox.toml": 'requires = ["p"]\n'})
+    result = project.run("--no-provision=l", "l")
+    result.assert_failed(-2)
+    assert "and wrote to l" in result.out
+    assert (project.path / "l").is_file()
+
+
 def test_provision_no_recreate_json(tox_project: ToxProjectCreator) -> None:
     ini = "[tox]\nrequires = p\nskipsdist=true\n"
     project = tox_project({"tox.ini": ini})
