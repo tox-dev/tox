@@ -333,8 +333,7 @@ class SetEnv:
         if not sep:
             msg = f"invalid line {line!r} in set_env"
             raise Fail(msg)
-        # a leading "export " lets the same file be sourced by a shell; dotenv and Docker Compose drop it too
-        key = re.sub(r"^export\s+", "", key.strip())
+        key = re.sub(r"^export[ \t]+", "", key.strip())
         return key, value.strip()
 
     def _expand(

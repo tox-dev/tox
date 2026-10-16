@@ -1,2 +1,1 @@
-``set_env`` environment files now ignore a leading ``export`` keyword, as dotenv and Docker Compose do, so ``export
-KEY=value`` sets ``KEY`` instead of a variable named ``export KEY`` - by :user:`RavSinghChandan`.
+``set_env`` environment files accept ``export KEY=value`` lines, setting ``KEY`` - by :user:`RavSinghChandan`.
