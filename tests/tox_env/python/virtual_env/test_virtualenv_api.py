@@ -293,6 +293,14 @@ def test_get_virtualenv_py_info_raises_on_none(mocker: MockerFixture) -> None:
         VirtualEnv.get_virtualenv_py_info(Path("/no/such/python"))
 
 
+def test_missing_interpreter_discovered_once(tox_project: ToxProjectCreator, mocker: MockerFixture) -> None:
+    spy = mocker.spy(VirtualEnv, "_create_imported_session")
+    proj = tox_project({"tox.ini": "[testenv]\npackage=skip\nbase_python=missing-interp"})
+    result = proj.run("c", "-e", "py", raise_on_config_fail=False)
+    assert "failed to find interpreter for Builtin discover" in result.out
+    assert spy.call_count == 1
+
+
 @pytest.fixture
 def resolve_virtualenv_spec(
     tox_project: ToxProjectCreator,

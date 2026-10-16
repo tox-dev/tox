@@ -46,6 +46,7 @@ class VirtualEnv(Python, ABC):
 
     def __init__(self, create_args: ToxEnvCreateArgs) -> None:
         self._virtualenv_session: Session | SubprocessSession | None = None
+        self._virtualenv_session_error: RuntimeError | None = None
         self._executor: Execute | None = None
         self._installer: Pip | None = None
         super().__init__(create_args)
@@ -146,12 +147,20 @@ class VirtualEnv(Python, ABC):
 
     @property
     def session(self) -> Session | SubprocessSession:
+        if self._virtualenv_session_error is not None:  # discovery already failed, do not scan for it again
+            raise self._virtualenv_session_error
         if self._virtualenv_session is None:
             env = self.virtualenv_env_vars()
-            if spec := self.conf["virtualenv_spec"]:
-                self._virtualenv_session = self._create_subprocess_session(spec, env)
-            else:
-                self._virtualenv_session = self._create_imported_session(env)
+            try:
+                if spec := self.conf["virtualenv_spec"]:
+                    self._virtualenv_session = self._create_subprocess_session(spec, env)
+                else:
+                    self._virtualenv_session = self._create_imported_session(env)
+            except HandledError:
+                raise
+            except RuntimeError as exc:
+                self._virtualenv_session_error = exc
+                raise
         return self._virtualenv_session
 
     def _create_subprocess_session(self, spec: str, env: dict[str, str]) -> SubprocessSession:
