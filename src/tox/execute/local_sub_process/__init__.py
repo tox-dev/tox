@@ -215,8 +215,9 @@ class LocalSubProcessExecuteInstance(ExecuteInstance):
             self.request.env.setdefault("LINES", str(lines))
 
         # --no-capture inherits console handles for interactive programs (e.g., Python REPL).
-        # Allows terminal APIs to query console dimensions and interact with the terminal directly.
-        inherit_console = self.options.no_capture
+        # Allows terminal APIs to query console dimensions and interact with the terminal directly. Processes tox talks
+        # to over their streams (e.g. the packaging backend) stay captured, otherwise tox never sees their replies.
+        inherit_console = self.options.no_capture and self.request.stdin is not StdinSource.API
         stdout, stderr = self.get_stream_file_no("stdout"), self.get_stream_file_no("stderr")
         self._file_no_generators = [stdout, stderr]
         try:
