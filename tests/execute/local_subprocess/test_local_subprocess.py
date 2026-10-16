@@ -112,6 +112,22 @@ def test_local_execute_basic_pass(
     assert not caplog.records
 
 
+def test_local_execute_no_capture_still_captures_api_stdin(os_env: dict[str, str]) -> None:
+    """The packaging backend talks to tox over its streams, so --no-capture must not hand them to the console."""
+    executor = LocalSubProcessExecutor(colored=False)
+    tox_env = _create_mock_env()
+    tox_env.options.no_capture = True
+    code = "import sys; print('out', end=''); print('err', end='', file=sys.stderr)"
+    request = ExecuteRequest(cmd=[sys.executable, "-c", code], cwd=Path(), env=os_env, stdin=StdinSource.API, run_id="")
+    out_err = FakeOutErr()
+
+    with executor.call(request, show=False, out_err=out_err.out_err, env=tox_env) as status:
+        while status.exit_code is None:  # pragma: no branch
+            status.wait()
+    assert status.out == b"out"
+    assert status.err == b"err"
+
+
 def test_local_execute_basic_pass_show_on_standard_newline_flush(caplog: LogCaptureFixture) -> None:
     caplog.set_level(logging.NOTSET)
     executor = LocalSubProcessExecutor(colored=False)
