@@ -15,7 +15,7 @@ import sys
 import time
 from io import TextIOWrapper
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, NoReturn
+from typing import TYPE_CHECKING, Any, Final, NoReturn
 from unittest.mock import MagicMock, create_autospec
 
 import psutil
@@ -39,7 +39,8 @@ from tox.report import NamedBytesIO
 if TYPE_CHECKING:
     from pytest_mock import MockerFixture
 
-    from tox.pytest import CaptureFixture, LogCaptureFixture, MonkeyPatch
+    from tox.pytest import CaptureFixture, LogCaptureFixture, MonkeyPatch, ToxProjectCreator
+    from tox.tox_env.api import ToxEnv
 
 
 class FakeOutErr:
@@ -110,6 +111,38 @@ def test_local_execute_basic_pass(
         assert not out_got
         assert not err_got
     assert not caplog.records
+
+
+@pytest.mark.parametrize(
+    ("no_capture", "stdin", "expected"),
+    [
+        pytest.param(False, StdinSource.API, (b"out", b"err", "", ""), id="capture-api"),
+        pytest.param(False, StdinSource.USER, (b"out", b"err", "", ""), id="capture-user"),
+        pytest.param(False, StdinSource.OFF, (b"out", b"err", "", ""), id="capture-off"),
+        pytest.param(True, StdinSource.API, (b"out", b"err", "", ""), id="no-capture-api"),
+        pytest.param(True, StdinSource.USER, (b"", b"", "out", "err"), id="no-capture-user"),
+        pytest.param(True, StdinSource.OFF, (b"", b"", "out", "err"), id="no-capture-off"),
+    ],
+)
+def test_local_execute_capture(
+    tox_project: ToxProjectCreator,
+    os_env: dict[str, str],
+    capfd: CaptureFixture,
+    no_capture: bool,
+    stdin: StdinSource,
+    expected: tuple[bytes, bytes, str, str],
+) -> None:
+    tox_env: Final[ToxEnv] = tox_project({"tox.ini": ""}).run("l").state.envs["py"]
+    tox_env.options.no_capture = no_capture
+    code: Final[str] = "import sys; print('out', end=''); print('err', end='', file=sys.stderr)"
+    request: Final[ExecuteRequest] = ExecuteRequest(
+        cmd=[sys.executable, "-c", code], cwd=Path(), env=os_env, stdin=stdin, run_id=""
+    )
+    with LocalSubProcessExecutor(colored=False).build_instance(
+        request, ExecuteOptions(tox_env), SyncWrite("out", None), SyncWrite("err", None)
+    ) as status:
+        status.wait()
+    assert (status.out, status.err, *capfd.readouterr()) == expected
 
 
 def test_local_execute_basic_pass_show_on_standard_newline_flush(caplog: LogCaptureFixture) -> None:
