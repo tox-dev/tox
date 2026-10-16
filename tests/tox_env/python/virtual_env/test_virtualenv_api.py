@@ -293,6 +293,39 @@ def test_get_virtualenv_py_info_raises_on_none(mocker: MockerFixture) -> None:
         VirtualEnv.get_virtualenv_py_info(Path("/no/such/python"))
 
 
+def test_missing_interpreter_discovered_once(tox_project: ToxProjectCreator, mocker: MockerFixture) -> None:
+    session_via_cli_mock = mocker.patch("tox.tox_env.python.virtual_env.api.session_via_cli", wraps=session_via_cli)
+    project = tox_project({"tox.ini": "[testenv]\npackage=skip\nbase_python=missing-interp"})
+    result = project.run("c", "-e", "py", raise_on_config_fail=False)
+    assert "failed to find interpreter for Builtin discover" in result.out
+    assert session_via_cli_mock.call_count == 1
+
+
+def test_bootstrap_failure_allows_retry(tox_project: ToxProjectCreator, mocker: MockerFixture) -> None:
+    mocker.patch(
+        "tox.tox_env.python.virtual_env.api.get_interpreter",
+        return_value=MagicMock(system_executable=sys.executable),
+    )
+    mocker.patch(
+        "tox.tox_env.python.virtual_env.subprocess_adapter.ensure_bootstrap",
+        side_effect=[RuntimeError("temporary bootstrap failure"), Path(sys.executable)],
+    )
+    project = tox_project({
+        "tox.toml": dedent("""\
+            [env_run_base]
+            package = "skip"
+            virtualenv_spec = "virtualenv<20.22.0"
+            """),
+    })
+    result = project.run("c", "-e", "py", "-k", "package")
+    result.assert_success()
+    tox_env = result.state.envs["py"]
+    assert isinstance(tox_env, VirtualEnv)
+    with pytest.raises(RuntimeError, match="temporary bootstrap failure"):
+        _ = tox_env.session
+    assert tox_env.session.creator.interpreter.system_executable == sys.executable
+
+
 @pytest.fixture
 def resolve_virtualenv_spec(
     tox_project: ToxProjectCreator,
