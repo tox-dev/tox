@@ -17,8 +17,8 @@ class LegacyToml(IniSource):
     def __init__(self, path: Path) -> None:
         if path.name != self.FILENAME or not path.exists():
             raise ValueError
-        with path.open("rb") as file_handler:
-            toml_content = tomllib.load(file_handler)
+        # editors on Windows may prepend a BOM, which tomllib would reject
+        toml_content = tomllib.loads(path.read_text(encoding="utf-8-sig"))
         try:
             content = toml_content["tool"]["tox"]["legacy_tox_ini"]
         except (KeyError, TypeError) as exc:  # TypeError when tool or tool.tox is not a table

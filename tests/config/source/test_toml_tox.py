@@ -220,3 +220,19 @@ def test_config_in_toml_override_env_without_own_table(tox_project: ToxProjectCr
     outcome = project.run("c", "-e", "py", "-k", "description", "-x", "env.py.description=override")
     outcome.assert_success()
     outcome.assert_out_err("[testenv:py]\ndescription = override\n", "")
+
+
+@pytest.mark.parametrize(
+    ("filename", "content"),
+    [
+        pytest.param("tox.toml", '[env_run_base]\ndescription = "BOM"\n', id="tox.toml"),
+        pytest.param("pyproject.toml", '[tool.tox.env_run_base]\ndescription = "BOM"\n', id="pyproject.toml"),
+    ],
+)
+def test_config_in_toml_with_utf8_bom(filename: str, content: str, tox_project: ToxProjectCreator) -> None:
+    project = tox_project({filename: content})
+    toml_file = project.path / filename
+    toml_file.write_bytes(b"\xef\xbb\xbf" + toml_file.read_bytes())
+    outcome = project.run("c", "-e", "py", "-k", "description")
+    outcome.assert_success()
+    outcome.assert_out_err("[testenv:py]\ndescription = BOM\n", "")
