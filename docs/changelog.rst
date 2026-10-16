@@ -7,6 +7,23 @@
 .. towncrier release notes start
 
 **********************
+ v4.66.0 (2026-10-16)
+**********************
+
+Features - 4.66.0
+=================
+
+- ``set_env`` environment files accept ``export KEY=value`` lines, setting ``KEY`` - by :user:`RavSinghChandan`.
+  (:issue:`4161`)
+
+Bug fixes - 4.66.0
+==================
+
+- Remember a failed interpreter lookup for a virtualenv environment instead of repeating the full ``PATH`` scan for
+  every setting that needs it, so ``tox config`` and ``tox run`` on configurations listing interpreters that are not
+  installed are faster. (:issue:`4162`)
+
+**********************
  v4.65.6 (2026-10-15)
 **********************
 
