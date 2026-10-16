@@ -386,8 +386,20 @@ def test_set_env_environment_file_unreadable(
 
 def test_set_env_file_ignores_export_keyword(eval_set_env: EvalSetEnv) -> None:
     set_env = eval_set_env(
-        "[testenv]\npackage=skip\nset_env=file|.env",
-        extra_files={".env": "export FIRST=1\nexport\tSECOND=2\nexport=3\nexported=4\nexport\u00a0FIFTH=5\n"},
+        textwrap.dedent("""\
+            [testenv]
+            package=skip
+            set_env=file|.env
+            """),
+        extra_files={
+            ".env": textwrap.dedent("""\
+                export FIRST=1
+                export\tSECOND=2
+                export=3
+                exported=4
+                export\u00a0FIFTH=5
+                """)
+        },
     )
     assert {key: set_env.load(key) for key in set_env} == {
         "PIP_DISABLE_PIP_VERSION_CHECK": "1",
