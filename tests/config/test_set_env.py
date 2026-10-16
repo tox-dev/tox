@@ -384,6 +384,26 @@ def test_set_env_environment_file_unreadable(
     assert f"py: failed with {project.path / 'magic.env'} {reason}" in result.out
 
 
+def test_set_env_file_ignores_export_keyword(tox_project: ToxProjectCreator) -> None:
+    ini = """\
+    [testenv]
+    skip_install = true
+    set_env =
+        file|.env
+    """
+    env_file = "export FIRST=1\nexport\tSECOND=2\nexport=3\nexported=4\n"
+    project = tox_project({"tox.ini": ini, ".env": env_file})
+    result = project.run("c", "-e", "py", "-k", "set_env")
+    result.assert_success()
+    set_env = result.env_conf("py")["set_env"]
+    content = {k: set_env.load(k) for k in set_env}
+    assert content["FIRST"] == "1"
+    assert content["SECOND"] == "2"
+    assert content["export"] == "3"
+    assert content["exported"] == "4"
+    assert not any(" " in key or "\t" in key for key in content)
+
+
 def test_set_env_environment_file_utf8_bom(tox_project: ToxProjectCreator) -> None:
     project = tox_project({"tox.toml": '[env_run_base]\npackage = "skip"\nset_env = { file = "magic.env" }'})
     (project.path / "magic.env").write_bytes(b"\xef\xbb\xbfMAGIC=1\n")

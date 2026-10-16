@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
 from itertools import chain
 from pathlib import Path
@@ -332,7 +333,9 @@ class SetEnv:
         if not sep:
             msg = f"invalid line {line!r} in set_env"
             raise Fail(msg)
-        return key.strip(), value.strip()
+        # a leading "export " lets the same file be sourced by a shell; dotenv and Docker Compose drop it too
+        key = re.sub(r"^export\s+", "", key.strip())
+        return key, value.strip()
 
     def _expand(
         self, line: str, parents: tuple[str, ...], args: ConfigLoadArgs
