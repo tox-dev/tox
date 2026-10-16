@@ -1,0 +1,1 @@
+``set_env`` environment files accept ``export KEY=value`` lines, setting ``KEY`` - by :user:`RavSinghChandan`.

@@ -1064,6 +1064,7 @@ Base options
         - blank lines are ignored,
         - lines starting with the ``#`` character are ignored,
         - each line is in KEY=VALUE format; both the key and the value are stripped,
+        - a leading ``export`` followed by a space or tab is ignored, so ``export KEY=value`` sets ``KEY``,
         - there is no special handling of quotation marks, they are part of the key or value,
         - PEP-508 markers are not supported in environment files, so a ``;`` is a plain value character.
 

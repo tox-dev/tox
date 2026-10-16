@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
 from itertools import chain
 from pathlib import Path
@@ -332,7 +333,8 @@ class SetEnv:
         if not sep:
             msg = f"invalid line {line!r} in set_env"
             raise Fail(msg)
-        return key.strip(), value.strip()
+        key = re.sub(r"^export[ \t]+", "", key.strip())
+        return key, value.strip()
 
     def _expand(
         self, line: str, parents: tuple[str, ...], args: ConfigLoadArgs
