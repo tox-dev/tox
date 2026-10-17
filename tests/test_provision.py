@@ -298,11 +298,9 @@ def test_no_provision_before_command_keeps_command(tox_project: ToxProjectCreato
     project = tox_project({"tox.toml": 'env_list = ["py"]\n'})
     result = project.run("--no-provision", "l")
     result.assert_success()
-    # the list command ran: it is the only one printing the envs header, and no environment was created
     assert "default environments:" in result.out
     assert "congratulations :)" not in result.out
     assert not (project.path / ".tox").exists()
-    # the command name was not written to a file
     assert not (project.path / "l").exists()
 
 

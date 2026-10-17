@@ -473,18 +473,15 @@ class ToxParser(ArgumentParserWithEnvAndConfig):
                 for name, action in parser._option_string_actions.items()  # ruff:ignore[private-member-access]
             }
             value_opts = {name for name, action in actions.items() if action.nargs != 0}
-            # options that may be given without a value (nargs '?' or '*') must never swallow a subcommand name
-            # as their value, e.g. '--no-provision list' would otherwise write a file named 'list' instead of
-            # listing the environments
             optional_value_opts = {name for name, action in actions.items() if action.nargs in {"?", "*"}}
             skip_next = False
             for at, arg in enumerate(args_list):
                 if skip_next:
                     skip_next = False
                 elif arg in value_opts:
-                    has_next = bool(args_list[at + 1 : at + 2])
-                    next_is_command = arg in optional_value_opts and has_next and args_list[at + 1] in self._cmd.choices
-                    skip_next = not next_is_command
+                    skip_next = arg not in optional_value_opts or (
+                        at + 1 < len(args_list) and args_list[at + 1] not in self._cmd.choices
+                    )
                 elif arg in self._cmd.choices:
                     cmd_at = at
                     break
