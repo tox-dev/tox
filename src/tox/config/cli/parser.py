@@ -470,7 +470,9 @@ class ToxParser(ArgumentParserWithEnvAndConfig):
                 name: action
                 for parser in (self, self._cmd.choices.get("legacy"))
                 if parser is not None
-                for name, action in parser._option_string_actions.items()  # ruff:ignore[private-member-access]
+                for name, action in (
+                    parser._option_string_actions.items()  # ruff:ignore[private-member-access]  # no public lookup
+                )
             }
             skip_next = False
             for at, arg in enumerate(args_list):
