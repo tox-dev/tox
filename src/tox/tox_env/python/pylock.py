@@ -32,19 +32,21 @@ class Pylock:
         except PylockValidationError as exc:
             msg = f"invalid pylock file {self.path}: {exc}"
             raise Fail(msg) from exc
-        entries = [self._to_entry(pkg) for pkg in parsed.packages if self._is_active(pkg)]
+        # PEP 751: when no dependency groups are selected, the lock's default-groups apply
+        groups = self.groups or frozenset(parsed.default_groups or ())
+        entries = [self._to_entry(pkg) for pkg in parsed.packages if self._is_active(pkg, groups)]
         if all(hashes for _, hashes in entries):
             # pip's hash-checking mode is all-or-nothing for a requirements file: verify when every line can carry
             # a hash, otherwise fall back to unverified installs (directory/VCS sources cannot be hashed)
             return [f"{line} {' '.join(f'--hash={h}' for h in hashes)}" for line, hashes in entries]
         return [line for line, _ in entries]
 
-    def _is_active(self, pkg: Package) -> bool:
+    def _is_active(self, pkg: Package, groups: frozenset[str]) -> bool:
         env: dict[str, str | frozenset[str]] = {**self.marker_env}
         if self.extras:
             env["extras"] = self.extras
-        if self.groups:
-            env["dependency_groups"] = self.groups
+        if groups:
+            env["dependency_groups"] = groups
         if pkg.marker is not None and not pkg.marker.evaluate(env, context="lock_file"):
             return False
         full_version = self.marker_env.get("python_full_version")
