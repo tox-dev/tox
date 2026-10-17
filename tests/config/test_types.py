@@ -1,12 +1,25 @@
 from __future__ import annotations
 
+import pytest
+
 from tox.config.types import Command, EnvList
+
+
+@pytest.mark.parametrize(
+    ("args", "expected"),
+    [
+        pytest.param(["python"], ["python"], id="plain"),
+        pytest.param(["-", "python"], ["-", "python"], id="ignore"),
+        pytest.param(["!", "python"], ["!", "python"], id="invert"),
+    ],
+)
+def test_command_raw_args(args: list[str], expected: list[str]) -> None:
+    assert Command(args).raw_args == expected
 
 
 def tests_command_repr() -> None:
     cmd = Command(["python", "-m", "pip", "list"])
     assert repr(cmd) == "Command(args=['python', '-m', 'pip', 'list'])"
-    assert cmd.raw_args == ["python", "-m", "pip", "list"]
     assert cmd.invert_exit_code is False
     assert cmd.ignore_exit_code is False
 
@@ -14,7 +27,6 @@ def tests_command_repr() -> None:
 def tests_command_repr_ignore() -> None:
     cmd = Command(["-", "python", "-m", "pip", "list"])
     assert repr(cmd) == "Command(args=['-', 'python', '-m', 'pip', 'list'])"
-    assert cmd.raw_args == ["-", "python", "-m", "pip", "list"]
     assert cmd.invert_exit_code is False
     assert cmd.ignore_exit_code is True
 
@@ -22,7 +34,6 @@ def tests_command_repr_ignore() -> None:
 def tests_command_repr_invert() -> None:
     cmd = Command(["!", "python", "-m", "pip", "list"])
     assert repr(cmd) == "Command(args=['!', 'python', '-m', 'pip', 'list'])"
-    assert cmd.raw_args == ["!", "python", "-m", "pip", "list"]
     assert cmd.invert_exit_code is True
     assert cmd.ignore_exit_code is False
 

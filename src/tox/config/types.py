@@ -37,15 +37,13 @@ class Command:  # ruff:ignore[eq-without-hash]
             args[1:] if self.ignore_exit_code or self.invert_exit_code else args
         )  #: the command line arguments
 
-    @property
-    def raw_args(self) -> list[str]:
-        """:returns: the command line arguments including any leading exit code prefix (- or !)"""
-        prefix = ["-"] if self.ignore_exit_code else ["!"] if self.invert_exit_code else []
-        return [*prefix, *self.args]
-
     @override
     def __repr__(self) -> str:
         return f"{type(self).__name__}(args={self.raw_args!r})"
+
+    @property
+    def raw_args(self) -> list[str]:
+        return (["-"] if self.ignore_exit_code else ["!"] if self.invert_exit_code else []) + self.args
 
     @override
     def __eq__(self, other: object) -> bool:
