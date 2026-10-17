@@ -167,9 +167,15 @@ def setup(app: Sphinx) -> None:
                 "tox.tox_env.installer.EnvT_co": "typing.TypeVar",  # used by Sphinx bases
                 "tox.tox_env.installer.ArgsT": "typing.TypeVar",  # used by Sphinx bases
                 "pathlib._local.Path": "pathlib.Path",
+                "argparse._ActionsContainer.add_argument_group": "argparse.ArgumentParser.add_argument_group",
+                "argparse._ActionsContainer.add_argument": "argparse.ArgumentParser.add_argument",
             }
             if target in mapping:
                 target = node["reftarget"] = mapping[target]
+            elif target == "logging.Handler.name":
+                # Python's inventory documents Handler, but not its name attribute.
+                target = node["reftarget"] = "logging.Handler"
+                node["reftype"] = "class"
             return super().resolve_xref(env, fromdocname, builder, type, target, node, contnode)
 
     app.connect("autodoc-process-signature", process_signature, priority=400)
