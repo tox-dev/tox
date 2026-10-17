@@ -1,0 +1,2 @@
+A leading UTF-8 byte order mark in ``tox.ini``, ``setup.cfg``, ``tox.toml`` or a TOML ``pyproject.toml`` no longer stops
+the configuration from loading - editors on Windows may add one.

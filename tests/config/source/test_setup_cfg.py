@@ -51,6 +51,16 @@ def test_setup_cfg_does_not_block_tox_toml(tox_project: ToxProjectCreator) -> No
     assert "b -> [no description]" in outcome.out
 
 
+def test_setup_cfg_with_utf8_bom(tox_project: ToxProjectCreator) -> None:
+    project = tox_project({"setup.cfg": "[tox:tox]\nenv_list=\n a\n b"})
+    cfg_file = project.path / "setup.cfg"
+    cfg_file.write_bytes(b"\xef\xbb\xbf" + cfg_file.read_bytes())
+
+    outcome = project.run("l")
+    outcome.assert_success()
+    assert outcome.out == "default environments:\na -> [no description]\nb -> [no description]\n"
+
+
 def test_setup_cfg_unicode_characters(tox_project: ToxProjectCreator) -> None:
     """Test that setup.cfg files with unicode characters can be read without UnicodeDecodeError."""
     cfg = """
