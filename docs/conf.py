@@ -7,17 +7,14 @@ from pathlib import Path
 from types import ModuleType
 from typing import TYPE_CHECKING, Any
 
-from sphinx.domains.python import PythonDomain
-from sphinx.ext.extlinks import ExternalLinksChecker
 from truststore import inject_into_ssl
 
 from tox import __version__
 
 if TYPE_CHECKING:
-    from docutils.nodes import Element, reference
+    from docutils.nodes import Element
     from sphinx.addnodes import pending_xref
     from sphinx.application import Sphinx
-    from sphinx.builders import Builder
     from sphinx.environment import BuildEnvironment
     from sphinx.ext.autodoc import Options
 
@@ -25,9 +22,6 @@ company, name = "tox-dev", "tox"
 project = name
 release, version = __version__, ".".join(__version__.split(".")[:2])
 copyright = f"{company}"  # ruff:ignore[builtin-variable-shadowing]
-master_doc = "index"
-source_suffix = {".rst": "restructuredtext"}
-
 html_theme = "furo"
 html_theme_options = {
     "sidebar_hide_name": True,
@@ -59,9 +53,8 @@ mermaid_d3_zoom = True
 mermaid_height = "auto"
 
 exclude_patterns = ["_build", "changelog/*"]
-autoclass_content, autodoc_member_order, autodoc_typehints = "class", "bysource", "none"
+autodoc_member_order, autodoc_typehints = "bysource", "none"
 autodoc_default_options = {
-    "member-order": "bysource",
     "undoc-members": True,
     "show-inheritance": True,
 }
@@ -80,6 +73,7 @@ nitpicky = True
 # a private stdlib class we cannot document, the stdlib itself has no public name for it
 nitpick_ignore = [("py:class", "argparse._ArgumentGroup")]
 linkcheck_workers = 10
+linkcheck_exclude_documents = [r"^index$"]
 linkcheck_ignore = [
     re.escape(i)
     for i in (
@@ -130,6 +124,19 @@ towncrier_draft_include_empty = True
 towncrier_draft_working_directory = Path(__file__).parent.parent
 
 
+def setup(app: Sphinx) -> None:
+    app.connect("autodoc-process-signature", process_signature, priority=400)
+    # Rewrite aliases before intersphinx tries to resolve them.
+    app.connect("missing-reference", rewrite_missing_reference, priority=400)
+    tox_conf_loader = SourceFileLoader("tox_conf", str(Path(__file__).parent / "tox_conf.py"))
+    tox_conf = ModuleType(tox_conf_loader.name)
+    tox_conf_loader.exec_module(tox_conf)
+    tox_cfg = tox_conf.ToxConfig
+    app.add_directive(tox_cfg.name, tox_cfg)
+
+    inject_into_ssl()
+
+
 def process_signature(  # ruff:ignore[too-many-arguments]
     app: Sphinx,  # ruff:ignore[unused-function-argument]
     objtype: str,
@@ -145,55 +152,19 @@ def process_signature(  # ruff:ignore[too-many-arguments]
     return None
 
 
-def setup(app: Sphinx) -> None:
-    here = Path(__file__).parent
-
-    class PatchedPythonDomain(PythonDomain):
-        def resolve_xref(  # ruff:ignore[too-many-arguments]
-            self,
-            env: BuildEnvironment,
-            fromdocname: str,
-            builder: Builder,
-            type: str,  # ruff:ignore[builtin-argument-shadowing]
-            target: str,
-            node: pending_xref,
-            contnode: Element,
-        ) -> reference | None:
-            # fixup some wrongly resolved mappings
-            mapping = {
-                "tox.config.of_type.T": "typing.TypeVar",  # used by Sphinx bases
-                "tox.config.loader.api.T": "typing.TypeVar",  # used by Sphinx bases
-                "tox.config.loader.convert.T": "typing.TypeVar",  # used by Sphinx bases
-                "tox.tox_env.installer.EnvT_co": "typing.TypeVar",  # used by Sphinx bases
-                "tox.tox_env.installer.ArgsT": "typing.TypeVar",  # used by Sphinx bases
-                "pathlib._local.Path": "pathlib.Path",
-                "argparse._ActionsContainer.add_argument_group": "argparse.ArgumentParser.add_argument_group",
-                "argparse._ActionsContainer.add_argument": "argparse.ArgumentParser.add_argument",
-            }
-            if target in mapping:
-                target = node["reftarget"] = mapping[target]
-            elif target == "logging.Handler.name":
-                # Python's inventory documents Handler, but not its name attribute.
-                target = node["reftarget"] = "logging.Handler"
-                node["reftype"] = "class"
-            return super().resolve_xref(env, fromdocname, builder, type, target, node, contnode)
-
-    app.connect("autodoc-process-signature", process_signature, priority=400)
-    app.add_domain(PatchedPythonDomain, override=True)
-    tox_conf_loader = SourceFileLoader("tox_conf", str(here / "tox_conf.py"))
-    tox_conf = ModuleType(tox_conf_loader.name)
-    tox_conf_loader.exec_module(tox_conf)
-    tox_cfg = tox_conf.ToxConfig
-    app.add_directive(tox_cfg.name, tox_cfg)
-
-    def check_uri(self: ExternalLinksChecker, refnode: reference) -> None:
-        if refnode.document is not None and refnode.document.attributes["source"].endswith("index.rst"):
-            return None  # do not use for the index file
-        return prev_check(self, refnode)
-
-    prev_check = ExternalLinksChecker.check_uri
-    ExternalLinksChecker.check_uri = check_uri
-    inject_into_ssl()
+def rewrite_missing_reference(_app: Sphinx, _env: BuildEnvironment, node: pending_xref, _contnode: Element) -> None:
+    mapping = {
+        "tox.config.of_type.T": "typing.TypeVar",
+        "tox.config.loader.api.T": "typing.TypeVar",
+        "tox.config.loader.convert.T": "typing.TypeVar",
+        "tox.tox_env.installer.EnvT_co": "typing.TypeVar",
+        "tox.tox_env.installer.ArgsT": "typing.TypeVar",
+        "pathlib._local.Path": "pathlib.Path",
+        "argparse._ActionsContainer.add_argument_group": "argparse.ArgumentParser.add_argument_group",
+        "argparse._ActionsContainer.add_argument": "argparse.ArgumentParser.add_argument",
+    }
+    if target := mapping.get(node["reftarget"]):
+        node["reftarget"] = target
 
 
 markdown_http_base = os.environ.get("READTHEDOCS_CANONICAL_URL", "")

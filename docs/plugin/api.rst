@@ -112,6 +112,16 @@ journal
 report
 ======
 
+.. py:currentmodule:: logging
+
+.. py:attribute:: Handler.name
+    :no-index-entry:
+
+    A standard handler stores its name for lookup. Tox reports the active environment name instead and ignores
+    assignments to this attribute.
+
+.. py:currentmodule:: tox.report
+
 .. autoclass:: tox.report.ToxHandler
     :members:
     :exclude-members: stream, format, patch_thread, write_out_err, suspend_out_err
