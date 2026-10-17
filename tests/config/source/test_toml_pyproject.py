@@ -1183,6 +1183,56 @@ def test_config_in_toml_replace_ref_typed_value(
     outcome.assert_out_err(f"[testenv:b]\n{key} =\n{expected}", "")
 
 
+def test_config_in_toml_replace_ref_command_prefixes(tox_project: ToxProjectCreator) -> None:
+    project = tox_project({
+        "pyproject.toml": dedent("""
+        [tool.tox.env.a]
+        package = "skip"
+        commands = [["-", "python", "-V"], ["!", "python", "-c", "pass"]]
+        install_command = ["-", "python", "-m", "pip", "install"]
+
+        [tool.tox.env.b]
+        package = "skip"
+        commands = { replace = "ref", env = "a", key = "commands" }
+        install_command = { replace = "ref", env = "a", key = "install_command" }
+
+        [tool.tox.env.c]
+        package = "skip"
+        commands = [{ replace = "ref", env = "a", key = "commands", extend = true }, ["python", "-W"]]
+        """),
+    })
+    outcome_b = project.run("c", "-e", "b", "-k", "commands", "install_command")
+    outcome_b.assert_success()
+    outcome_b.assert_out_err(
+        "[testenv:b]\ncommands =\n  python -V\n  python -c pass\ninstall_command = python -m pip install\n", ""
+    )
+    cmds_b = outcome_b.env_conf("b")["commands"]
+    assert cmds_b[0].ignore_exit_code is True
+    assert cmds_b[0].invert_exit_code is False
+    assert cmds_b[0].args == ["python", "-V"]
+    assert cmds_b[0].raw_args == ["-", "python", "-V"]
+
+    assert cmds_b[1].ignore_exit_code is False
+    assert cmds_b[1].invert_exit_code is True
+    assert cmds_b[1].args == ["python", "-c", "pass"]
+    assert cmds_b[1].raw_args == ["!", "python", "-c", "pass"]
+
+    inst_b = outcome_b.env_conf("b")["install_command"]
+    assert inst_b.ignore_exit_code is True
+    assert inst_b.args == ["python", "-m", "pip", "install"]
+    assert inst_b.raw_args == ["-", "python", "-m", "pip", "install"]
+
+    outcome_c = project.run("c", "-e", "c", "-k", "commands")
+    outcome_c.assert_success()
+    outcome_c.assert_out_err("[testenv:c]\ncommands =\n  python -V\n  python -c pass\n  python -W\n", "")
+    cmds_c = outcome_c.env_conf("c")["commands"]
+    assert len(cmds_c) == 3
+    assert cmds_c[0].ignore_exit_code is True
+    assert cmds_c[1].invert_exit_code is True
+    assert cmds_c[2].ignore_exit_code is False
+    assert cmds_c[2].invert_exit_code is False
+
+
 def test_config_in_toml_replace_ref_constraints(tox_project: ToxProjectCreator) -> None:
     project = tox_project({
         "pyproject.toml": dedent("""
