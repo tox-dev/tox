@@ -466,18 +466,25 @@ class ToxParser(ArgumentParserWithEnvAndConfig):
         if self._cmd is not None and args_list:
             # options that consume a value; a subcommand name appearing as such a value (e.g. ``-e list``) must not
             # be mistaken for the command. Options live on the subparsers (``-e`` on legacy), so consult those too.
-            value_opts = {
-                name
+            actions = {
+                name: action
                 for parser in (self, self._cmd.choices.get("legacy"))
                 if parser is not None
-                for name, action in parser._option_string_actions.items()  # ruff:ignore[private-member-access]
-                if action.nargs != 0
+                for name, action in (
+                    parser._option_string_actions.items()  # ruff:ignore[private-member-access]  # no public lookup
+                )
             }
             skip_next = False
             for at, arg in enumerate(args_list):
                 if skip_next:
                     skip_next = False
-                elif arg in value_opts:
+                elif (action := actions.get(arg)) is not None and action.nargs != 0:
+                    if (
+                        action.nargs in {"?", "*"}
+                        and at + 1 < len(args_list)
+                        and args_list[at + 1] in self._cmd.choices
+                    ):
+                        continue
                     skip_next = True
                 elif arg in self._cmd.choices:
                     cmd_at = at
