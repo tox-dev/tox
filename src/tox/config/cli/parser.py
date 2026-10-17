@@ -472,16 +472,18 @@ class ToxParser(ArgumentParserWithEnvAndConfig):
                 if parser is not None
                 for name, action in parser._option_string_actions.items()  # ruff:ignore[private-member-access]
             }
-            value_opts = {name for name, action in actions.items() if action.nargs != 0}
-            optional_value_opts = {name for name, action in actions.items() if action.nargs in {"?", "*"}}
             skip_next = False
             for at, arg in enumerate(args_list):
                 if skip_next:
                     skip_next = False
-                elif arg in value_opts:
-                    skip_next = arg not in optional_value_opts or (
-                        at + 1 < len(args_list) and args_list[at + 1] not in self._cmd.choices
-                    )
+                elif (action := actions.get(arg)) is not None and action.nargs != 0:
+                    if (
+                        action.nargs in {"?", "*"}
+                        and at + 1 < len(args_list)
+                        and args_list[at + 1] in self._cmd.choices
+                    ):
+                        continue
+                    skip_next = True
                 elif arg in self._cmd.choices:
                     cmd_at = at
                     break
