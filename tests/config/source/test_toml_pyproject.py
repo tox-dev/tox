@@ -3,7 +3,7 @@ from __future__ import annotations
 import sys
 import sysconfig
 from textwrap import dedent
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Final
 
 import pytest
 from python_discovery import normalize_isa
@@ -14,7 +14,7 @@ from tox.config.types import Command
 if TYPE_CHECKING:
     from pathlib import Path
 
-    from tox.pytest import ToxProject, ToxProjectCreator
+    from tox.pytest import ToxProject, ToxProjectCreator, ToxRunOutcome
 
 
 def test_config_in_toml_core(tox_project: ToxProjectCreator) -> None:
@@ -1210,7 +1210,7 @@ def test_config_in_toml_replace_ref_typed_value(
 def test_config_in_toml_replace_ref_command_prefixes(
     tox_project: ToxProjectCreator, setting: str, key: str, expected: Command | list[Command]
 ) -> None:
-    project = tox_project({
+    outcome: Final[ToxRunOutcome] = tox_project({
         "pyproject.toml": dedent("""
         [tool.tox.env.a]
         package = "skip"
@@ -1221,8 +1221,7 @@ def test_config_in_toml_replace_ref_command_prefixes(
         package = "skip"
         """)
         + setting,
-    })
-    outcome = project.run("c", "-e", "b", "-k", key)
+    }).run("c", "-e", "b", "-k", key)
     outcome.assert_success()
     assert outcome.env_conf("b")[key] == expected
 
