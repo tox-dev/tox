@@ -6,6 +6,7 @@ from tox.config.types import Command, EnvList
 def tests_command_repr() -> None:
     cmd = Command(["python", "-m", "pip", "list"])
     assert repr(cmd) == "Command(args=['python', '-m', 'pip', 'list'])"
+    assert cmd.raw_args == ["python", "-m", "pip", "list"]
     assert cmd.invert_exit_code is False
     assert cmd.ignore_exit_code is False
 
@@ -13,6 +14,7 @@ def tests_command_repr() -> None:
 def tests_command_repr_ignore() -> None:
     cmd = Command(["-", "python", "-m", "pip", "list"])
     assert repr(cmd) == "Command(args=['-', 'python', '-m', 'pip', 'list'])"
+    assert cmd.raw_args == ["-", "python", "-m", "pip", "list"]
     assert cmd.invert_exit_code is False
     assert cmd.ignore_exit_code is True
 
@@ -20,6 +22,7 @@ def tests_command_repr_ignore() -> None:
 def tests_command_repr_invert() -> None:
     cmd = Command(["!", "python", "-m", "pip", "list"])
     assert repr(cmd) == "Command(args=['!', 'python', '-m', 'pip', 'list'])"
+    assert cmd.raw_args == ["!", "python", "-m", "pip", "list"]
     assert cmd.invert_exit_code is True
     assert cmd.ignore_exit_code is False
 

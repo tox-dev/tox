@@ -1,0 +1,1 @@
+Preserve ignore (``-``) and invert (``!``) exit code prefixes on commands when referenced via TOML ``{ replace = "ref", ... }``.

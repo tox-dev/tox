@@ -143,9 +143,9 @@ class Unroll:
             if isinstance(result, (PythonDeps, PythonConstraints)):
                 return cast("TomlTypes", result.lines())
             if isinstance(result, Command):
-                return cast("TomlTypes", result.args)
+                return cast("TomlTypes", result.raw_args)
             if isinstance(result, list) and all(isinstance(entry, Command) for entry in result):
-                return cast("TomlTypes", [entry.args for entry in result])
+                return cast("TomlTypes", [entry.raw_args for entry in result])
             return cast("TomlTypes", result)
         if of := value.get("of"):
             validated_of = validate(of, list[str])
