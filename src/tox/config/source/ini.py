@@ -36,9 +36,9 @@ class IniSource(Source):
         if content is None:
             if not path.exists():
                 raise ValueError
-            content = path.read_text(encoding="utf-8-sig")  # editors on Windows may prepend a BOM
+            content = path.read_text(encoding="utf-8-sig")
         else:
-            content = content.removeprefix("\ufeff")  # an embedded config (e.g. legacy_tox_ini) may carry one too
+            content = content.removeprefix("\ufeff")
         try:
             self._parser.read_string(content, str(path))
         except ConfigParserError as exc:

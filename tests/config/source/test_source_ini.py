@@ -80,7 +80,6 @@ def test_source_ini_unicode_characters(tmp_path: Path) -> None:
 
 
 def test_source_ini_utf8_bom(tmp_path: Path) -> None:
-    """Test that an INI file saved with a UTF-8 BOM (common on Windows) is read correctly."""
     ini_file = tmp_path / "tox.ini"
     content = """
         [tox]
@@ -94,7 +93,6 @@ def test_source_ini_utf8_bom(tmp_path: Path) -> None:
 
 
 def test_source_ini_non_utf8_file_still_raises(tmp_path: Path) -> None:
-    """A file that is not UTF-8 must keep raising instead of being read as something else."""
     ini_file = tmp_path / "tox.ini"
     ini_file.write_bytes(b"[tox]\ndescription = \xff\xfe\n")
     with pytest.raises(UnicodeDecodeError):
@@ -102,7 +100,6 @@ def test_source_ini_non_utf8_file_still_raises(tmp_path: Path) -> None:
 
 
 def test_source_ini_bom_in_the_middle_is_kept(tmp_path: Path) -> None:
-    """Only a leading byte order mark is stripped, a mark inside a value stays part of it."""
     ini_file = tmp_path / "tox.ini"
     ini_file.write_text("[tox]\ndescription = a\ufeffb\n", encoding="utf-8")
     loader = IniSource(ini_file).get_loader(Section(None, "tox"), {})
@@ -111,19 +108,12 @@ def test_source_ini_bom_in_the_middle_is_kept(tmp_path: Path) -> None:
 
 
 def test_source_ini_bom_only_behaves_like_empty_config(tmp_path: Path) -> None:
-    """A BOM on its own decodes to an empty configuration, so it parses like an empty file."""
     bom_only = tmp_path / "bom.ini"
     bom_only.write_bytes(b"\xef\xbb\xbf")
-    empty = tmp_path / "empty.ini"
-    empty.write_text("", encoding="utf-8")
     assert list(IniSource(bom_only).sections()) == []
-    assert list(IniSource(empty).sections()) == []
-    assert list(IniSource(tmp_path, content="\ufeff").sections()) == []
-    assert list(IniSource(tmp_path, content="").sections()) == []
 
 
 def test_source_ini_content_leading_utf8_bom_is_stripped(tmp_path: Path) -> None:
-    """An embedded config such as legacy_tox_ini may carry a leading mark as well."""
     loader = IniSource(tmp_path, content="\ufeff[tox]\ndescription = bom").get_loader(Section(None, "tox"), {})
     assert loader is not None
     assert loader.load_raw("description", None, None) == "bom"

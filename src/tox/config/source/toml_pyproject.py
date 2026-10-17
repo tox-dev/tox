@@ -87,7 +87,6 @@ class TomlPyProject(Source):
     def __init__(self, path: Path) -> None:
         if path.name != self.FILENAME or not path.exists():
             raise ValueError
-        # editors on Windows may prepend a BOM, which tomllib would reject
         self._content = tomllib.loads(path.read_text(encoding="utf-8-sig"))
         try:
             self._our_content = _table_at(self._content, self._Section.PREFIX)
