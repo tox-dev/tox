@@ -155,7 +155,14 @@ def test_config_in_toml_replace_posargs_substitute(
     assert outcome.env_conf("A")["commands"][0].args == ["pytest", *expected]
 
 
-@pytest.mark.parametrize("substitute", ["", ", substitute = false", ", substitute = true"])
+@pytest.mark.parametrize(
+    "substitute",
+    [
+        pytest.param("", id="default"),
+        pytest.param(", substitute = false", id="false"),
+        pytest.param(", substitute = true", id="true"),
+    ],
+)
 def test_config_in_toml_replace_posargs_substitute_default(tox_project: ToxProjectCreator, substitute: str) -> None:
     project = tox_project({
         "tox.toml": f"""
