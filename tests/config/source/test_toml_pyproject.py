@@ -123,6 +123,58 @@ def test_config_in_toml_replace_posargs(tox_project: ToxProjectCreator, posargs:
     outcome.assert_out_err(f"[testenv:A]\ncommands = {expected}\n", "")
 
 
+@pytest.mark.parametrize(
+    ("substitute", "posargs", "expected"),
+    [
+        pytest.param("", ["--report={env_name}.xml"], ["--report={env_name}.xml"], id="default-literal"),
+        pytest.param(
+            ", substitute = false", ["--report={env_name}.xml"], ["--report={env_name}.xml"], id="explicit-literal"
+        ),
+        pytest.param(", substitute = true", ["--report={env_name}.xml"], ["--report=A.xml"], id="substituted"),
+        pytest.param(", substitute = true", ["--report={env:REPORT}"], ["--report=with spaces.xml"], id="spaces"),
+        pytest.param(", substitute = true", [r"\{env_name}"], ["{env_name}"], id="escaped"),
+        pytest.param(", substitute = true", [], [], id="empty"),
+    ],
+)
+def test_config_in_toml_replace_posargs_substitute(
+    tox_project: ToxProjectCreator,
+    monkeypatch: pytest.MonkeyPatch,
+    substitute: str,
+    posargs: list[str],
+    expected: list[str],
+) -> None:
+    monkeypatch.setenv("REPORT", "with spaces.xml")
+    project = tox_project({
+        "pyproject.toml": f"""
+        [tool.tox.env.A]
+        commands = [["pytest", {{ replace = "posargs", extend = true{substitute} }}]]
+        """
+    })
+    outcome = project.run("c", "-e", "A", "-k", "commands", "--", *posargs)
+    outcome.assert_success()
+    assert outcome.env_conf("A")["commands"][0].args == ["pytest", *expected]
+
+
+@pytest.mark.parametrize(
+    "substitute",
+    [
+        pytest.param("", id="default"),
+        pytest.param(", substitute = false", id="false"),
+        pytest.param(", substitute = true", id="true"),
+    ],
+)
+def test_config_in_toml_replace_posargs_substitute_default(tox_project: ToxProjectCreator, substitute: str) -> None:
+    project = tox_project({
+        "tox.toml": f"""
+        [env.A]
+        commands = [["pytest", {{ replace = "posargs", default = ["{{env_name}}"], extend = true{substitute} }}]]
+        """
+    })
+    outcome = project.run("c", "-e", "A", "-k", "commands")
+    outcome.assert_success()
+    assert outcome.env_conf("A")["commands"][0].args == ["pytest", "A"]
+
+
 def test_config_in_toml_replace_posargs_empty_optional(tox_project: ToxProjectCreator) -> None:
     project = tox_project({
         "pyproject.toml": """

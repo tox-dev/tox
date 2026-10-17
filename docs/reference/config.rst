@@ -2736,6 +2736,18 @@ If the positional arguments are not set commands will become ``python a b``, oth
 The ``extend`` option instructs tox to unroll the positional arguments within the host structure. Without it the result
 would become ``["python", ["a", "b"]`` which would be invalid.
 
+Positional arguments are passed through literally by default. Set ``substitute = true`` to expand tox substitutions
+within each argument, such as ``{env_name}`` for per-environment report paths:
+
+.. code-block:: toml
+
+    [env_run_base]
+    commands = [["pytest", { replace = "posargs", extend = true, substitute = true }]]
+
+For example, ``tox -e py -- --junitxml=reports/{env_name}.xml`` passes ``--junitxml=reports/py.xml`` to pytest. Each
+positional argument remains a separate argument, even if its substituted value contains spaces. Substitutions in
+``default`` values are expanded regardless of this option.
+
 Note that:
 
 .. code-block:: toml

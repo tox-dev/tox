@@ -685,6 +685,10 @@
             "$ref": "#/definitions/subs"
           }
         },
+        "substitute": {
+          "type": "boolean",
+          "default": false
+        },
         "extend": {
           "type": "boolean"
         },
