@@ -7,6 +7,31 @@
 .. towncrier release notes start
 
 **********************
+ v4.67.0 (2026-10-17)
+**********************
+
+Features - 4.67.0
+=================
+
+- Allow opting in to tox substitutions within TOML positional arguments with ``substitute = true``. (:issue:`4165`)
+
+Bug fixes - 4.67.0
+==================
+
+- Keep capturing the output of the packaging backend with ``--no-capture``, so ``tox --no-capture`` no longer hangs at
+  ``started backend`` while waiting for the backend's reply. (:issue:`4163`)
+- A leading UTF-8 byte order mark in ``tox.ini``, ``setup.cfg``, ``tox.toml`` or a TOML ``pyproject.toml`` no longer
+  stops the configuration from loading - editors on Windows may add one. (:issue:`4166`)
+- ``tox --no-provision <command>`` no longer treats the command as the JSON output path: a global option placed before a
+  subcommand now keeps it, so ``tox --no-provision list`` lists the environments instead of writing a file named
+  ``list``. (:issue:`4168`)
+
+Improved documentation - 4.67.0
+===============================
+
+- Link overridden argparse methods and logging.Handler.name in the plugin API reference. (:issue:`4170`)
+
+**********************
  v4.66.0 (2026-10-16)
 **********************
 

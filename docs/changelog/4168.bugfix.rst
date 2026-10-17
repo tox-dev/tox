@@ -1,2 +1,0 @@
-``tox --no-provision <command>`` no longer treats the command as the JSON output path: a global option placed before a
-subcommand now keeps it, so ``tox --no-provision list`` lists the environments instead of writing a file named ``list``.

@@ -1,1 +1,0 @@
-Allow opting in to tox substitutions within TOML positional arguments with ``substitute = true``.

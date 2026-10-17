@@ -1,2 +1,0 @@
-Keep capturing the output of the packaging backend with ``--no-capture``, so ``tox --no-capture`` no longer hangs at
-``started backend`` while waiting for the backend's reply.
