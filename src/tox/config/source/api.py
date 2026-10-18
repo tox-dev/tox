@@ -13,6 +13,7 @@ if TYPE_CHECKING:
     from pathlib import Path
 
     from tox.config.loader.api import Loader, OverrideMap
+    from tox.config.loader.toml._product import FactorGroup
     from tox.config.sets import ConfigSet, CoreConfigSet
 
 
@@ -108,6 +109,10 @@ class Source(ABC):
     def get_core_section(self) -> Section:
         """:returns: the core section"""
         raise NotImplementedError
+
+    def factor_labels(self, env_name: str | None) -> dict[str, FactorGroup]:  # ruff:ignore[unused-method-argument, no-self-use]
+        """:returns: the factor labels in scope for an environment, none unless the source declares some"""
+        return {}
 
 
 __all__ = [

@@ -142,9 +142,8 @@ class Config:
         """:returns: the configuration overrides keyed by their target namespace"""
         return self._overrides
 
-    @property
-    def factor_labels(self) -> dict[str, FactorGroup]:
-        return getattr(self._src, "_factor_labels", {})
+    def factor_labels(self, env_name: str | None) -> dict[str, FactorGroup]:
+        return self._src.factor_labels(env_name)
 
     @property
     def core(self) -> CoreConfigSet:

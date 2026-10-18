@@ -428,6 +428,45 @@ def test_env_base_positional_factor_description(tox_project: ToxProjectCreator) 
     outcome.assert_out_err("[testenv:sync-oci-pw]\ndescription = Sync oci to pw\n", "")
 
 
+def test_env_base_positional_factor_per_base(tox_project: ToxProjectCreator) -> None:
+    project = tox_project({
+        "tox.toml": textwrap.dedent("""\
+            [env_base.sync]
+            factors = [["oci", "python"], ["pw", "tt"]]
+            package = "skip"
+            description = "Sync {factor:0} to {factor:1}"
+            commands = [["python", "-c", "print('ok')"]]
+
+            [env_base.build]
+            factors = [["api", "web"], ["debug", "release"]]
+            package = "skip"
+            description = "Build {factor:0} {factor:1}"
+            commands = [["python", "-c", "print('ok')"]]
+        """),
+    })
+    outcome = project.run("c", "-e", "sync-oci-pw,build-api-debug", "-k", "description")
+    outcome.assert_success()
+    expected = "[testenv:sync-oci-pw]\ndescription = Sync oci to pw\n\n"
+    expected += "[testenv:build-api-debug]\ndescription = Build api debug\n"
+    outcome.assert_out_err(expected, "")
+
+
+def test_env_base_factor_labels_with_env_list_product(tox_project: ToxProjectCreator) -> None:
+    project = tox_project({
+        "tox.toml": textwrap.dedent("""\
+            env_list = [{ product = [["web"], { stack = ["flask", "django"] }] }]
+
+            [env_base.task]
+            factors = [["oci", "python"], ["flask", "django"]]
+            package = "skip"
+            description = "Run {factor:0} on {factor:stack}"
+        """),
+    })
+    outcome = project.run("c", "-e", "task-oci-flask", "-k", "description")
+    outcome.assert_success()
+    outcome.assert_out_err("[testenv:task-oci-flask]\ndescription = Run oci on flask\n", "")
+
+
 def test_env_base_keyed_factor_mixed_with_plain(tox_project: ToxProjectCreator) -> None:
     project = tox_project({
         "tox.toml": textwrap.dedent("""\
