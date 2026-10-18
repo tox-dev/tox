@@ -60,3 +60,24 @@ jobs:
         uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # v1.14.2
         with:
           attestations: true
+  github-release:
+    needs: release
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Publish GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          awk -v tag="$TAG" '
+            index($0, " v" tag " (") == 1 { found = 1; next }
+            found && /^ v[0-9]+\.[0-9]+\.[0-9]+ \(/ { exit }
+            found && $0 !~ /^\*+$/ { print }
+          ' docs/changelog.rst > "$RUNNER_TEMP/release-notes.md"
+          test -s "$RUNNER_TEMP/release-notes.md"
+          gh release create "$TAG" --verify-tag --title "v$TAG" --notes-file "$RUNNER_TEMP/release-notes.md"
