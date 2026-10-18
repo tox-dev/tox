@@ -1,3 +1,0 @@
-Installing from a ``pylock.toml`` with no :ref:`dependency_groups` selected now uses the lock file's ``default-groups``,
-as :PEP:`751` specifies. Previously packages marked ``'default' in dependency_groups`` (as written by ``pdm export -f
-pylock``) were skipped - by :user:`pcbeingused333`.

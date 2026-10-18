@@ -7,6 +7,21 @@
 .. towncrier release notes start
 
 **********************
+ v4.67.1 (2026-10-18)
+**********************
+
+Bug fixes - 4.67.1
+==================
+
+- Preserve ignore (``-``) and invert (``!``) exit code prefixes on commands when referenced via TOML ``{ replace =
+  "ref", ... }``. (:issue:`4169`)
+- Installing from a ``pylock.toml`` with no :ref:`dependency_groups` selected now uses the lock file's
+  ``default-groups``, as :PEP:`751` specifies. Previously packages marked ``'default' in dependency_groups`` (as written
+  by ``pdm export -f pylock``) were skipped - by :user:`pcbeingused333`. (:issue:`4173`)
+- A positional ``{factor:N}`` label in an ``env_base`` now resolves against that table's own ``factors``, so with
+  several ``env_base`` tables or an ``env_list`` ``product`` it no longer expands to an empty string. (:issue:`4174`)
+
+**********************
  v4.67.0 (2026-10-17)
 **********************
 
