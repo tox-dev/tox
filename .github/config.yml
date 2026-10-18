@@ -1,5 +1,0 @@
-chronographer:
-  enforce_name:
-    suffix: .rst
-  labels:
-    skip-changelog: skip news
