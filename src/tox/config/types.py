@@ -39,8 +39,11 @@ class Command:  # ruff:ignore[eq-without-hash]
 
     @override
     def __repr__(self) -> str:
-        args = (["-"] if self.ignore_exit_code else ["!"] if self.invert_exit_code else []) + self.args
-        return f"{type(self).__name__}(args={args!r})"
+        return f"{type(self).__name__}(args={self.raw_args!r})"
+
+    @property
+    def raw_args(self) -> list[str]:
+        return (["-"] if self.ignore_exit_code else ["!"] if self.invert_exit_code else []) + self.args
 
     @override
     def __eq__(self, other: object) -> bool:

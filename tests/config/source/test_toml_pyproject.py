@@ -3,17 +3,18 @@ from __future__ import annotations
 import sys
 import sysconfig
 from textwrap import dedent
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Final
 
 import pytest
 from python_discovery import normalize_isa
 
 from tox.config.loader.replacer import MatchError
+from tox.config.types import Command
 
 if TYPE_CHECKING:
     from pathlib import Path
 
-    from tox.pytest import ToxProject, ToxProjectCreator
+    from tox.pytest import ToxProject, ToxProjectCreator, ToxRunOutcome
 
 
 def test_config_in_toml_core(tox_project: ToxProjectCreator) -> None:
@@ -1181,6 +1182,48 @@ def test_config_in_toml_replace_ref_typed_value(
     outcome = project.run("c", "-e", "b", "-k", key)
     outcome.assert_success()
     outcome.assert_out_err(f"[testenv:b]\n{key} =\n{expected}", "")
+
+
+@pytest.mark.parametrize(
+    ("setting", "key", "expected"),
+    [
+        pytest.param(
+            'commands = { replace = "ref", env = "a", key = "commands" }',
+            "commands",
+            [Command(["-", "python", "-V"]), Command(["!", "python", "-c", "pass"])],
+            id="commands",
+        ),
+        pytest.param(
+            'commands = [{ replace = "ref", env = "a", key = "commands", extend = true }, ["python", "-W"]]',
+            "commands",
+            [Command(["-", "python", "-V"]), Command(["!", "python", "-c", "pass"]), Command(["python", "-W"])],
+            id="commands-extend",
+        ),
+        pytest.param(
+            'install_command = { replace = "ref", env = "a", key = "install_command" }',
+            "install_command",
+            Command(["-", "python", "-m", "pip", "install"]),
+            id="install-command",
+        ),
+    ],
+)
+def test_config_in_toml_replace_ref_command_prefixes(
+    tox_project: ToxProjectCreator, setting: str, key: str, expected: Command | list[Command]
+) -> None:
+    outcome: Final[ToxRunOutcome] = tox_project({
+        "pyproject.toml": dedent("""
+        [tool.tox.env.a]
+        package = "skip"
+        commands = [["-", "python", "-V"], ["!", "python", "-c", "pass"]]
+        install_command = ["-", "python", "-m", "pip", "install"]
+
+        [tool.tox.env.b]
+        package = "skip"
+        """)
+        + setting,
+    }).run("c", "-e", "b", "-k", key)
+    outcome.assert_success()
+    assert outcome.env_conf("b")[key] == expected
 
 
 def test_config_in_toml_replace_ref_constraints(tox_project: ToxProjectCreator) -> None:

@@ -1,6 +1,20 @@
 from __future__ import annotations
 
+import pytest
+
 from tox.config.types import Command, EnvList
+
+
+@pytest.mark.parametrize(
+    ("args", "expected"),
+    [
+        pytest.param(["python"], ["python"], id="plain"),
+        pytest.param(["-", "python"], ["-", "python"], id="ignore"),
+        pytest.param(["!", "python"], ["!", "python"], id="invert"),
+    ],
+)
+def test_command_raw_args(args: list[str], expected: list[str]) -> None:
+    assert Command(args).raw_args == expected
 
 
 def tests_command_repr() -> None:
