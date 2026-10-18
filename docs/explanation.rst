@@ -253,7 +253,8 @@ exact versions, markers, and artifact URLs for every package.
 per-package markers like ``'docs' in extras`` or ``'dev' in dependency_groups``. Use the existing :ref:`extras` and
 :ref:`dependency_groups` settings to select which groups to include — tox evaluates these markers together with platform
 markers (``sys_platform``, ``python_version``, etc.) against the **target** Python interpreter (not the host running
-tox) to filter packages at install time.
+tox) to filter packages at install time. When no dependency groups are selected, the groups listed in the lock file's
+``default-groups`` are used, as :PEP:`751` specifies.
 
 **How it works today:** pip does not yet support installing from ``pylock.toml`` directly. tox parses the lock file
 using the ``packaging.pylock`` module, evaluates markers to filter packages, transpiles matching packages to a temporary

@@ -243,6 +243,26 @@ def test_pylock_no_reinstall_on_rerun(tox_project: ToxProjectCreator) -> None:
             "alpha==1.0.0 --hash=sha256:abc\nruff==0.5.0 --hash=sha256:def",
             id="dependency-groups",
         ),
+        pytest.param(
+            "",
+            'dependency-groups = ["dev"]\ndefault-groups = ["default"]\n',
+            [
+                ("six", "1.17.0", "abc", "'default' in dependency_groups"),
+                ("ruff", "0.5.0", "def", "'dev' in dependency_groups"),
+            ],
+            "six==1.17.0 --hash=sha256:abc",
+            id="default-groups-when-none-selected",
+        ),
+        pytest.param(
+            'dependency_groups = ["dev"]',
+            'dependency-groups = ["dev"]\ndefault-groups = ["default"]\n',
+            [
+                ("six", "1.17.0", "abc", "'default' in dependency_groups"),
+                ("ruff", "0.5.0", "def", "'dev' in dependency_groups"),
+            ],
+            "ruff==0.5.0 --hash=sha256:def",
+            id="selected-group-excludes-default",
+        ),
     ],
 )
 def test_pylock_filters_by_selected_group(
