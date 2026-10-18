@@ -1,0 +1,2 @@
+A positional ``{factor:N}`` label in an ``env_base`` now resolves against that table's own ``factors``, so with several
+``env_base`` tables or an ``env_list`` ``product`` it no longer expands to an empty string.

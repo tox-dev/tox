@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections import OrderedDict
+from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 from tox.execute.request import shell_cmd
@@ -95,7 +96,16 @@ class EnvList:  # ruff:ignore[eq-without-hash]
         return iter(self.envs)
 
 
+@dataclass(frozen=True)
+class FactorGroup:
+    """``default`` stands in wherever an environment name carries none of ``values``."""
+
+    values: list[str]
+    default: str | None = None
+
+
 __all__ = (
     "Command",
     "EnvList",
+    "FactorGroup",
 )

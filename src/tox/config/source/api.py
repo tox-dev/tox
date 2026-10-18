@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Protocol, runtime_checkable
 
 from tox.config.loader.section import Section
 from tox.util.typing_compat import override
@@ -14,6 +14,7 @@ if TYPE_CHECKING:
 
     from tox.config.loader.api import Loader, OverrideMap
     from tox.config.sets import ConfigSet, CoreConfigSet
+    from tox.config.types import FactorGroup
 
 
 class Source(ABC):
@@ -110,7 +111,13 @@ class Source(ABC):
         raise NotImplementedError
 
 
+@runtime_checkable
+class FactorLabelSource(Protocol):
+    def factor_labels(self, env_name: str | None) -> dict[str, FactorGroup]: ...
+
+
 __all__ = [
+    "FactorLabelSource",
     "Section",
     "Source",
 ]

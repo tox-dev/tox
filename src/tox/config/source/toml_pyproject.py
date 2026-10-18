@@ -8,8 +8,8 @@ from typing import TYPE_CHECKING, Any, Final, cast
 
 from tox.config.loader.section import Section
 from tox.config.loader.toml import TomlLoader
-from tox.config.loader.toml._product import FactorGroup, expand_factor_group, extract_default, extract_label
-from tox.config.types import EnvList, MissingRequiredConfigKeyError
+from tox.config.loader.toml._product import expand_factor_group, extract_default, extract_label
+from tox.config.types import EnvList, FactorGroup, MissingRequiredConfigKeyError
 from tox.report import HandledError
 from tox.util.typing_compat import override
 
@@ -98,13 +98,24 @@ class TomlPyProject(Source):
         if not isinstance(env_base, dict):
             msg = f"{self._Section.ENV_BASE} must be a table"
             raise HandledError(msg)
-        self._env_base_generated, self._factor_labels = _build_env_base_map(env_base)
-        self._factor_labels.update(_extract_env_list_labels(self._our_content.get("env_list")))
+        self._env_base_generated, self._env_base_labels = _build_env_base_map(env_base)
+        self._factor_labels: Final[dict[str, FactorGroup]] = {
+            name: group for labels in self._env_base_labels.values() for name, group in labels.items()
+        }
+        self._env_list_labels: Final[dict[str, FactorGroup]] = _extract_env_list_labels(
+            self._our_content.get("env_list")
+        )
+        self._factor_labels.update(self._env_list_labels)
         super().__init__(path)
 
     @override
     def get_core_section(self) -> Section:
         return self._Section(prefix=None, name="")
+
+    def factor_labels(self, env_name: str | None) -> dict[str, FactorGroup]:
+        if env_name in self._env_base_generated:
+            return {**self._env_list_labels, **self._env_base_labels[self._env_base_generated[env_name]]}
+        return self._factor_labels
 
     @override
     def transform_section(self, section: Section) -> Section:
@@ -188,9 +199,11 @@ def _table_at(content: dict[str, TomlTypes], keys: tuple[str, ...]) -> dict[str,
     return content
 
 
-def _build_env_base_map(env_base_content: dict[str, TomlTypes]) -> tuple[dict[str, str], dict[str, FactorGroup]]:
-    result: dict[str, str] = {}
-    all_labels: dict[str, FactorGroup] = {}
+def _build_env_base_map(
+    env_base_content: dict[str, TomlTypes],
+) -> tuple[dict[str, str], dict[str, dict[str, FactorGroup]]]:
+    result: Final[dict[str, str]] = {}
+    all_labels: Final[dict[str, dict[str, FactorGroup]]] = {}
     for base_name, config in env_base_content.items():
         if not isinstance(config, dict):
             msg = f"env_base.{base_name} must be a table"
@@ -202,15 +215,17 @@ def _build_env_base_map(env_base_content: dict[str, TomlTypes]) -> tuple[dict[st
         if not isinstance(factors_raw, list):
             msg = f"env_base.{base_name}.factors must be a list, got {type(factors_raw).__name__}"
             raise HandledError(msg)
+        base_labels: dict[str, FactorGroup] = {}
+        all_labels[base_name] = base_labels
         if factors_raw and isinstance(factors_raw[0], list | dict):
             expanded: list[list[str]] = []
             for idx, g in enumerate(factors_raw):
                 values = expand_factor_group(g)
                 expanded.append(values)
                 group = FactorGroup(values=values, default=extract_default(g, values))
-                all_labels[str(idx)] = group
+                base_labels[str(idx)] = group
                 if (label := extract_label(g)) is not None:
-                    all_labels[label] = group
+                    base_labels[label] = group
             names = ["-".join(combo) for combo in product(*expanded)]
         else:
             names = [str(f) for f in factors_raw]

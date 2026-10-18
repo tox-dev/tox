@@ -387,7 +387,7 @@ def replace_factor(conf: Config, args: list[str], conf_args: ConfigLoadArgs) -> 
         raise MatchError(msg)
     label = args[0]
     default = ARG_DELIMITER.join(args[1:]) if len(args) > 1 else None
-    group = conf.factor_labels.get(label)
+    group = conf.factor_labels(conf_args.env_name).get(label)
     if group is None or conf_args.env_name is None:
         return default or ""
     if (override := os.environ.get(f"{_FACTOR_ENV_PREFIX}{label}")) is not None:
