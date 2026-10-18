@@ -202,6 +202,16 @@ def test_expand_range_open_start() -> None:
     assert result == [f"py3{i}" for i in range(LATEST_PYTHON_MINOR_MIN, 14)]
 
 
+def test_expand_range_open_stop_past_latest() -> None:
+    beyond = LATEST_PYTHON_MINOR_MAX + 1
+    assert _expand_range({"prefix": "py3", "start": beyond}) == [f"py3{beyond}"]
+
+
+def test_expand_range_open_start_below_min() -> None:
+    below = LATEST_PYTHON_MINOR_MIN - 1
+    assert _expand_range({"prefix": "py3", "stop": below}) == [f"py3{below}"]
+
+
 def test_expand_range_no_bounds() -> None:
     with pytest.raises(TypeError, match="range must have at least 'start' or 'stop'"):
         _expand_range({"prefix": "py3"})
