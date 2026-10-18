@@ -1,1 +1,0 @@
-Require a pull request news fragment and a versioned changelog section before publishing.
