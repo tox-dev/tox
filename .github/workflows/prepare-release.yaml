@@ -17,40 +17,29 @@ permissions:
 env:
   FORCE_COLOR: 1
 jobs:
-  prepare-release:
+  assemble:
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-24.04
-    environment: release-auth
     permissions:
       contents: read
+    outputs:
+      version: ${{ steps.version.outputs.version }}
     steps:
-      - id: token
-        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
-        with:
-          client-id: ${{ vars.RELEASE_APP_CLIENT_ID }}
-          private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
-          owner: ${{ github.repository_owner }}
-          repositories: ${{ github.event.repository.name }}
-          permission-contents: write
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          fetch-depth: 0
-          token: ${{ steps.token.outputs.token }}
-          persist-credentials: true # zizmor: ignore[artipacked] the release script pushes main and its tag
-      - name: Install the latest version of uv
+          fetch-depth: 0 # The next version comes from the tags.
+          persist-credentials: false
+      - name: Install uv
         uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
         with:
           python-version: "3.15"
           enable-cache: false
-          cache-dependency-glob: "pyproject.toml"
-      - name: Configure git
-        env:
-          GH_TOKEN: ${{ steps.token.outputs.token }}
-          APP_SLUG: ${{ steps.token.outputs.app-slug }}
+      - name: Require a news fragment
         run: |
-          app_user_id=$(gh api "/users/${APP_SLUG}[bot]" --jq .id)
-          git config user.name "${APP_SLUG}[bot]"
-          git config user.email "${app_user_id}+${APP_SLUG}[bot]@users.noreply.github.com"
+          if ! compgen -G 'docs/changelog/*.*.rst' > /dev/null; then
+            echo '::error::add a docs/changelog/*.rst fragment before preparing a release'
+            exit 1
+          fi
       - name: Set up remote tracking
         run: |
           git remote -v
@@ -58,13 +47,15 @@ jobs:
           git branch -a
       - name: Calculate next version
         id: version
+        env:
+          BUMP: ${{ inputs.bump }}
         run: |
           current=$(git describe --tags --abbrev=0 2>/dev/null || echo "0.0.0")
           echo "Current version: $current"
 
           IFS='.' read -r major minor patch <<< "$current"
 
-          bump_type="${{ inputs.bump }}"
+          bump_type="$BUMP"
           if [ "$bump_type" = "auto" ]; then
             feature_count=$(find docs/changelog -name "*.feature.rst" 2>/dev/null | wc -l)
             if [ "$feature_count" -gt 0 ]; then
@@ -89,21 +80,73 @@ jobs:
           esac
 
           echo "Next version: $next"
-          echo "version=$next" >> $GITHUB_OUTPUT
-      - name: Install tox
-        run: uv tool install --python-preference only-managed --python 3.15 tox@.
-      - name: Require a news fragment
+          echo "version=$next" >> "$GITHUB_OUTPUT"
+      - name: Build release patch
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
         run: |
-          if ! compgen -G 'docs/changelog/*.*.rst' > /dev/null; then
-            echo '::error::add a docs/changelog/*.rst fragment before preparing a release'
-            exit 1
-          fi
-      - name: Run release process
-        run: tox run -e release -- ${STEPS_VERSION_OUTPUTS_VERSION}
+          set -euo pipefail
+          uvx towncrier build --yes --version "$VERSION"
+          uvx --with pre-commit-uv pre-commit run --files docs/changelog.rst ||
+            uvx --with pre-commit-uv pre-commit run --files docs/changelog.rst
+          git diff HEAD --binary > "$RUNNER_TEMP/release.patch"
+          test -s "$RUNNER_TEMP/release.patch"
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: release-patch
+          path: ${{ runner.temp }}/release.patch
+          if-no-files-found: error
+  push:
+    needs: assemble
+    runs-on: ubuntu-24.04
+    environment: release-auth
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: release-patch
+          path: ${{ runner.temp }}/release-patch
+      - name: Validate release patch
         env:
+          VERSION: ${{ needs.assemble.outputs.version }}
+        run: |
+          set -euo pipefail
+          git apply --check "$RUNNER_TEMP/release-patch/release.patch"
+          git apply --index "$RUNNER_TEMP/release-patch/release.patch"
+          while IFS= read -r path; do
+            case "$path" in
+              docs/changelog.rst|docs/changelog/*.rst) ;;
+              *) echo "::error::unexpected release path: $path"; exit 1 ;;
+            esac
+          done < <(git diff --cached --name-only)
+          grep -qE "^ v${VERSION//./\\.} \(" docs/changelog.rst
+          git diff --cached --check
+      - id: token
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          client-id: ${{ vars.RELEASE_APP_CLIENT_ID }}
+          private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: ${{ github.event.repository.name }}
+          permission-contents: write
+      - name: Commit and tag the release
+        env:
+          VERSION: ${{ needs.assemble.outputs.version }}
           GH_TOKEN: ${{ steps.token.outputs.token }}
-          STEPS_VERSION_OUTPUTS_VERSION: ${{ steps.version.outputs.version }}
-      - name: Display completion message
-        run: echo "Release ${STEPS_VERSION_OUTPUTS_VERSION} prepared and pushed successfully!"
-        env:
-          STEPS_VERSION_OUTPUTS_VERSION: ${{ steps.version.outputs.version }}
+          APP_SLUG: ${{ steps.token.outputs.app-slug }}
+        run: |
+          set -euo pipefail
+          app_user_id=$(gh api "/users/${APP_SLUG}[bot]" --jq .id)
+          git config user.name "${APP_SLUG}[bot]"
+          git config user.email "${app_user_id}+${APP_SLUG}[bot]@users.noreply.github.com"
+          git commit -m "release $VERSION"
+          git tag "$VERSION"
+          gh auth setup-git --hostname github.com --force
+          git push origin HEAD:main
+          git push origin "refs/tags/$VERSION"
+          gh release create "$VERSION" --title "v$VERSION" --generate-notes --verify-tag
