@@ -70,8 +70,12 @@ intersphinx_mapping = {
     "packaging": ("https://packaging.pypa.io/en/latest", None),
 }
 nitpicky = True
-# a private stdlib class we cannot document, the stdlib itself has no public name for it
-nitpick_ignore = [("py:class", "argparse._ArgumentGroup")]
+nitpick_ignore = [
+    # a private stdlib class we cannot document, the stdlib itself has no public name for it
+    ("py:class", "argparse._ArgumentGroup"),
+    # private dataclass behind factor_labels, left out of the plugin API docs
+    ("py:class", "tox.config.loader.toml._product.FactorGroup"),
+]
 linkcheck_workers = 10
 linkcheck_exclude_documents = [r"^index$"]
 linkcheck_ignore = [
