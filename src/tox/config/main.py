@@ -15,7 +15,7 @@ if TYPE_CHECKING:
     from collections.abc import Iterable, Iterator, Sequence
 
     from tox.config.loader.api import Loader, OverrideMap
-    from tox.config.loader.toml._product import FactorGroup
+    from tox.config.types import FactorGroup
 
     from .cli.parser import Parsed
     from .loader.memory import MemoryLoader

@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 from itertools import product
 from typing import TYPE_CHECKING
 
@@ -10,14 +9,6 @@ from tox.config.loader.ini.factor import LATEST_PYTHON_MINOR_MAX, LATEST_PYTHON_
 
 if TYPE_CHECKING:
     from tox.config.loader.toml._api import TomlTypes
-
-
-@dataclass(frozen=True)
-class FactorGroup:
-    """``default`` stands in wherever an environment name carries none of ``values``."""
-
-    values: list[str]
-    default: str | None = None
 
 
 def expand_product(value: dict[str, TomlTypes]) -> list[str]:
@@ -131,7 +122,6 @@ def _expand_range(range_dict: dict[str, TomlTypes]) -> list[str]:
 
 __all__ = [
     "_RESERVED_LABELS",
-    "FactorGroup",
     "expand_factor_group",
     "expand_product",
     "extract_default",

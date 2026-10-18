@@ -8,8 +8,8 @@ from typing import TYPE_CHECKING, Any, Final, cast
 
 from tox.config.loader.section import Section
 from tox.config.loader.toml import TomlLoader
-from tox.config.loader.toml._product import FactorGroup, expand_factor_group, extract_default, extract_label
-from tox.config.types import EnvList, MissingRequiredConfigKeyError
+from tox.config.loader.toml._product import expand_factor_group, extract_default, extract_label
+from tox.config.types import EnvList, FactorGroup, MissingRequiredConfigKeyError
 from tox.report import HandledError
 from tox.util.typing_compat import override
 

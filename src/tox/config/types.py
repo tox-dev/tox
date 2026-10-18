@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections import OrderedDict
+from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 from tox.execute.request import shell_cmd
@@ -20,6 +21,14 @@ class MissingRequiredConfigKeyError(ValueError):
     Used by the two toml loaders in order to identify if config keys are present.
 
     """
+
+
+@dataclass(frozen=True)
+class FactorGroup:
+    """``default`` stands in wherever an environment name carries none of ``values``."""
+
+    values: list[str]
+    default: str | None = None
 
 
 class Command:  # ruff:ignore[eq-without-hash]
@@ -95,4 +104,5 @@ class EnvList:  # ruff:ignore[eq-without-hash]
 __all__ = (
     "Command",
     "EnvList",
+    "FactorGroup",
 )

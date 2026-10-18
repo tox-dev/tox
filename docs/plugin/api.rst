@@ -83,6 +83,9 @@ config
 .. autoclass:: tox.config.types.Command
     :members:
 
+.. autoclass:: tox.config.types.FactorGroup
+    :members:
+
 .. autoclass:: tox.config.loader.convert.Factory
     :members:
 

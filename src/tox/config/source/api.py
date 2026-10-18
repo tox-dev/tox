@@ -13,8 +13,8 @@ if TYPE_CHECKING:
     from pathlib import Path
 
     from tox.config.loader.api import Loader, OverrideMap
-    from tox.config.loader.toml._product import FactorGroup
     from tox.config.sets import ConfigSet, CoreConfigSet
+    from tox.config.types import FactorGroup
 
 
 class Source(ABC):
@@ -110,7 +110,10 @@ class Source(ABC):
         """:returns: the core section"""
         raise NotImplementedError
 
-    def factor_labels(self, env_name: str | None) -> dict[str, FactorGroup]:  # ruff:ignore[unused-method-argument, no-self-use]
+    def factor_labels(  # ruff:ignore[no-self-use]  # stateful sources override this default
+        self,
+        env_name: str | None,  # ruff:ignore[unused-method-argument]  # keep the override signature
+    ) -> dict[str, FactorGroup]:
         return {}
 
 
