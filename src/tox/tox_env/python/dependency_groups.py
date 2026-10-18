@@ -24,8 +24,7 @@ def resolve(root: Path, groups: set[str]) -> set[Requirement]:
     if not pyproject_file.exists():
         msg = f"no pyproject.toml found at {pyproject_file} to read dependency groups from"
         raise Fail(msg)
-    with pyproject_file.open("rb") as file_handler:
-        pyproject = tomllib.load(file_handler)
+    pyproject = tomllib.loads(pyproject_file.read_text(encoding="utf-8-sig"))
     if "dependency-groups" not in pyproject:
         msg = f"no dependency groups defined in {pyproject_file}"
         raise Fail(msg)

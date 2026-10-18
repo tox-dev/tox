@@ -1,0 +1,2 @@
+A leading UTF-8 byte order mark in ``pyproject.toml`` no longer breaks ``dependency_groups``, and one in a
+``base_python_file`` such as ``.python-version`` is no longer read as part of the Python version.
