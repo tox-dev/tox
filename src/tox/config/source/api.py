@@ -111,7 +111,6 @@ class Source(ABC):
         raise NotImplementedError
 
     def factor_labels(self, env_name: str | None) -> dict[str, FactorGroup]:  # ruff:ignore[unused-method-argument, no-self-use]
-        """:returns: the factor labels in scope for an environment, none unless the source declares some"""
         return {}
 
 

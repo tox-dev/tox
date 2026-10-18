@@ -1,12 +1,12 @@
 from __future__ import annotations
 
 import textwrap
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Final
 
 import pytest
 
 if TYPE_CHECKING:
-    from tox.pytest import ToxProjectCreator
+    from tox.pytest import ToxProjectCreator, ToxRunOutcome
 
 
 @pytest.mark.parametrize(
@@ -428,8 +428,15 @@ def test_env_base_positional_factor_description(tox_project: ToxProjectCreator) 
     outcome.assert_out_err("[testenv:sync-oci-pw]\ndescription = Sync oci to pw\n", "")
 
 
-def test_env_base_positional_factor_per_base(tox_project: ToxProjectCreator) -> None:
-    project = tox_project({
+@pytest.mark.parametrize(
+    ("env_name", "expected"),
+    [
+        pytest.param("sync-oci-pw", "Sync oci to pw", id="first-base"),
+        pytest.param("build-api-debug", "Build api debug", id="second-base"),
+    ],
+)
+def test_env_base_positional_factor_per_base(tox_project: ToxProjectCreator, env_name: str, expected: str) -> None:
+    outcome: Final[ToxRunOutcome] = tox_project({
         "tox.toml": textwrap.dedent("""\
             [env_base.sync]
             factors = [["oci", "python"], ["pw", "tt"]]
@@ -443,16 +450,13 @@ def test_env_base_positional_factor_per_base(tox_project: ToxProjectCreator) -> 
             description = "Build {factor:0} {factor:1}"
             commands = [["python", "-c", "print('ok')"]]
         """),
-    })
-    outcome = project.run("c", "-e", "sync-oci-pw,build-api-debug", "-k", "description")
+    }).run("c", "-e", env_name, "-k", "description")
     outcome.assert_success()
-    expected = "[testenv:sync-oci-pw]\ndescription = Sync oci to pw\n\n"
-    expected += "[testenv:build-api-debug]\ndescription = Build api debug\n"
-    outcome.assert_out_err(expected, "")
+    outcome.assert_out_err(f"[testenv:{env_name}]\ndescription = {expected}\n", "")
 
 
 def test_env_base_factor_labels_with_env_list_product(tox_project: ToxProjectCreator) -> None:
-    project = tox_project({
+    outcome: Final[ToxRunOutcome] = tox_project({
         "tox.toml": textwrap.dedent("""\
             env_list = [{ product = [["web"], { stack = ["flask", "django"] }] }]
 
@@ -461,10 +465,24 @@ def test_env_base_factor_labels_with_env_list_product(tox_project: ToxProjectCre
             package = "skip"
             description = "Run {factor:0} on {factor:stack}"
         """),
-    })
-    outcome = project.run("c", "-e", "task-oci-flask", "-k", "description")
+    }).run("c", "-e", "task-oci-flask", "-k", "description")
     outcome.assert_success()
     outcome.assert_out_err("[testenv:task-oci-flask]\ndescription = Run oci on flask\n", "")
+
+
+def test_env_base_factor_labels_do_not_cross_bases(tox_project: ToxProjectCreator) -> None:
+    outcome: Final[ToxRunOutcome] = tox_project({
+        "tox.toml": textwrap.dedent("""\
+            [env_base.first]
+            factors = [{target = ["x", "y"]}]
+
+            [env_base.second]
+            factors = [["x", "z"]]
+            description = "Selected [{factor:target:missing}]"
+        """),
+    }).run("c", "-e", "second-x", "-k", "description")
+    outcome.assert_success()
+    outcome.assert_out_err("[testenv:second-x]\ndescription = Selected [missing]\n", "")
 
 
 def test_env_base_keyed_factor_mixed_with_plain(tox_project: ToxProjectCreator) -> None:

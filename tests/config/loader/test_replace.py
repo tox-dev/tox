@@ -86,7 +86,6 @@ def test_dont_replace(replace_one: ReplaceOne, value: str, exp_exception: str | 
 
 
 def test_replace_factor_ini_uses_fallback(replace_one: ReplaceOne) -> None:
-    """An ini file declares no factor labels, so the fallback applies."""
     assert replace_one("{factor:label:fallback}") == "fallback"
 
 

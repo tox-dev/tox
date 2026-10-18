@@ -99,10 +99,13 @@ class TomlPyProject(Source):
             msg = f"{self._Section.ENV_BASE} must be a table"
             raise HandledError(msg)
         self._env_base_generated, self._env_base_labels = _build_env_base_map(env_base)
-        self._factor_labels = {
+        self._factor_labels: Final[dict[str, FactorGroup]] = {
             name: group for labels in self._env_base_labels.values() for name, group in labels.items()
         }
-        self._factor_labels.update(_extract_env_list_labels(self._our_content.get("env_list")))
+        self._env_list_labels: Final[dict[str, FactorGroup]] = _extract_env_list_labels(
+            self._our_content.get("env_list")
+        )
+        self._factor_labels.update(self._env_list_labels)
         super().__init__(path)
 
     @override
@@ -112,7 +115,7 @@ class TomlPyProject(Source):
     @override
     def factor_labels(self, env_name: str | None) -> dict[str, FactorGroup]:
         if env_name in self._env_base_generated:
-            return {**self._factor_labels, **self._env_base_labels[self._env_base_generated[env_name]]}
+            return {**self._env_list_labels, **self._env_base_labels[self._env_base_generated[env_name]]}
         return self._factor_labels
 
     @override
@@ -201,7 +204,7 @@ def _build_env_base_map(
     env_base_content: dict[str, TomlTypes],
 ) -> tuple[dict[str, str], dict[str, dict[str, FactorGroup]]]:
     result: dict[str, str] = {}
-    all_labels: dict[str, dict[str, FactorGroup]] = {}
+    all_labels: Final[dict[str, dict[str, FactorGroup]]] = {}
     for base_name, config in env_base_content.items():
         if not isinstance(config, dict):
             msg = f"env_base.{base_name} must be a table"
@@ -213,7 +216,8 @@ def _build_env_base_map(
         if not isinstance(factors_raw, list):
             msg = f"env_base.{base_name}.factors must be a list, got {type(factors_raw).__name__}"
             raise HandledError(msg)
-        base_labels = all_labels[base_name] = {}
+        base_labels: dict[str, FactorGroup] = {}
+        all_labels[base_name] = base_labels
         if factors_raw and isinstance(factors_raw[0], list | dict):
             expanded: list[list[str]] = []
             for idx, g in enumerate(factors_raw):
