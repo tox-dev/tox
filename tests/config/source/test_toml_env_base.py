@@ -440,15 +440,11 @@ def test_env_base_positional_factor_per_base(tox_project: ToxProjectCreator, env
         "tox.toml": textwrap.dedent("""\
             [env_base.sync]
             factors = [["oci", "python"], ["pw", "tt"]]
-            package = "skip"
             description = "Sync {factor:0} to {factor:1}"
-            commands = [["python", "-c", "print('ok')"]]
 
             [env_base.build]
             factors = [["api", "web"], ["debug", "release"]]
-            package = "skip"
             description = "Build {factor:0} {factor:1}"
-            commands = [["python", "-c", "print('ok')"]]
         """),
     }).run("c", "-e", env_name, "-k", "description")
     outcome.assert_success()
@@ -462,7 +458,6 @@ def test_env_base_factor_labels_with_env_list_product(tox_project: ToxProjectCre
 
             [env_base.task]
             factors = [["oci", "python"], ["flask", "django"]]
-            package = "skip"
             description = "Run {factor:0} on {factor:stack}"
         """),
     }).run("c", "-e", "task-oci-flask", "-k", "description")

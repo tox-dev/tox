@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Protocol, runtime_checkable
 
 from tox.config.loader.section import Section
 from tox.util.typing_compat import override
@@ -110,14 +110,14 @@ class Source(ABC):
         """:returns: the core section"""
         raise NotImplementedError
 
-    def factor_labels(  # ruff:ignore[no-self-use]  # stateful sources override this default
-        self,
-        env_name: str | None,  # ruff:ignore[unused-method-argument]  # keep the override signature
-    ) -> dict[str, FactorGroup]:
-        return {}
+
+@runtime_checkable
+class FactorLabelSource(Protocol):
+    def factor_labels(self, env_name: str | None) -> dict[str, FactorGroup]: ...
 
 
 __all__ = [
+    "FactorLabelSource",
     "Section",
     "Source",
 ]

@@ -112,7 +112,6 @@ class TomlPyProject(Source):
     def get_core_section(self) -> Section:
         return self._Section(prefix=None, name="")
 
-    @override
     def factor_labels(self, env_name: str | None) -> dict[str, FactorGroup]:
         if env_name in self._env_base_generated:
             return {**self._env_list_labels, **self._env_base_labels[self._env_base_generated[env_name]]}
@@ -203,7 +202,7 @@ def _table_at(content: dict[str, TomlTypes], keys: tuple[str, ...]) -> dict[str,
 def _build_env_base_map(
     env_base_content: dict[str, TomlTypes],
 ) -> tuple[dict[str, str], dict[str, dict[str, FactorGroup]]]:
-    result: dict[str, str] = {}
+    result: Final[dict[str, str]] = {}
     all_labels: Final[dict[str, dict[str, FactorGroup]]] = {}
     for base_name, config in env_base_content.items():
         if not isinstance(config, dict):

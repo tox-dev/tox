@@ -10,6 +10,7 @@ from typing import TYPE_CHECKING, Any, TypeVar, cast
 from tox.util.typing_compat import override
 
 from .sets import ConfigSet, CoreConfigSet, EnvConfigSet
+from .source.api import FactorLabelSource
 
 if TYPE_CHECKING:
     from collections.abc import Iterable, Iterator, Sequence
@@ -143,7 +144,7 @@ class Config:
         return self._overrides
 
     def factor_labels(self, env_name: str | None) -> dict[str, FactorGroup]:
-        return self._src.factor_labels(env_name)
+        return self._src.factor_labels(env_name) if isinstance(self._src, FactorLabelSource) else {}
 
     @property
     def core(self) -> CoreConfigSet:

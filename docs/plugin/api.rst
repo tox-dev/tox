@@ -60,6 +60,9 @@ config
 .. autoclass:: tox.config.source.api.Source
     :members:
 
+.. autoclass:: tox.config.source.api.FactorLabelSource
+    :members:
+
 .. autoclass:: tox.config.loader.api.Override
     :members:
 

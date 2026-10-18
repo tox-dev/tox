@@ -23,14 +23,6 @@ class MissingRequiredConfigKeyError(ValueError):
     """
 
 
-@dataclass(frozen=True)
-class FactorGroup:
-    """``default`` stands in wherever an environment name carries none of ``values``."""
-
-    values: list[str]
-    default: str | None = None
-
-
 class Command:  # ruff:ignore[eq-without-hash]
     """A command to execute."""
 
@@ -99,6 +91,14 @@ class EnvList:  # ruff:ignore[eq-without-hash]
     def __iter__(self) -> Iterator[str]:
         """:returns: iterator that goes through the defined env-list"""
         return iter(self.envs)
+
+
+@dataclass(frozen=True)
+class FactorGroup:
+    """``default`` stands in wherever an environment name carries none of ``values``."""
+
+    values: list[str]
+    default: str | None = None
 
 
 __all__ = (
