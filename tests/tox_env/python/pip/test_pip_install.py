@@ -243,7 +243,8 @@ def test_pkg_dep_remove_recreate(tox_project: ToxProjectCreator, demo_pkg_inline
     assert run_ids == ["_optional_hooks", "get_requires_for_build_wheel", "build_wheel", "install_package", "_exit"]
 
 
-def test_force_dep_applies_to_package_deps(tox_project: ToxProjectCreator, demo_pkg_inline: Path) -> None:
+@pytest.mark.parametrize("forced", ["wheel==0.41.0", "Wheel==0.41.0"])
+def test_force_dep_applies_to_package_deps(tox_project: ToxProjectCreator, demo_pkg_inline: Path, forced: str) -> None:
     build = (demo_pkg_inline / "build.py").read_text()
     build_with_dep = build.replace("Summary: UNKNOWN\n", "Summary: UNKNOWN\n        Requires-Dist: wheel\n")
     proj = tox_project(
@@ -254,13 +255,14 @@ def test_force_dep_applies_to_package_deps(tox_project: ToxProjectCreator, demo_
         },
     )
     execute_calls = proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
-    result = proj.run("le", "-e", "py", "--force-dep", "wheel==0.41.0")
+    result = proj.run("le", "-e", "py", "--force-dep", forced)
     result.assert_success()
 
     pkg_deps_calls = [i for i in execute_calls.call_args_list if i[0][3].run_id == "install_package_deps"]
     assert len(pkg_deps_calls) == 1
     cmd = pkg_deps_calls[0][0][3].cmd
-    assert "wheel==0.41.0" in cmd
+    assert forced in cmd
+    assert "wheel" not in cmd
 
 
 def test_pkg_env_dep_remove_recreate(tox_project: ToxProjectCreator, demo_pkg_inline: Path) -> None:
