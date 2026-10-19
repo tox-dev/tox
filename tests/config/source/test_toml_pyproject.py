@@ -567,6 +567,26 @@ def test_config_in_toml_replace_glob_extend(tox_project: ToxProjectCreator, tmp_
     assert "b.whl" in outcome.out
 
 
+def test_config_in_toml_replace_glob_substitutes_pattern_and_default(
+    tox_project: ToxProjectCreator, tmp_path: Path
+) -> None:
+    (tmp_path / "p" / "A").mkdir(parents=True)
+    (tmp_path / "p" / "A" / "a.whl").touch()
+    project = tox_project({
+        "pyproject.toml": dedent("""
+        [tool.tox.env.A]
+        commands = [
+            ["echo", { replace = "glob", pattern = "{env_name}/*.whl", extend = true }],
+            ["echo", { replace = "glob", pattern = "dist/*.xyz", default = ["{env_name}.whl"], extend = true }],
+        ]
+        """),
+    })
+    outcome = project.run("c", "-e", "A", "-k", "commands")
+    outcome.assert_success()
+    assert f"echo {tmp_path / 'p' / 'A' / 'a.whl'}\n" in outcome.out
+    assert "echo A.whl\n" in outcome.out
+
+
 @pytest.mark.parametrize(
     ("env_vars", "condition", "then", "else_val", "expected"),
     [
