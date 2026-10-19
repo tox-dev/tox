@@ -22,6 +22,13 @@ _REQ_FILE_TEST_CASES = [
     pytest.param("--pre", {"pre": True}, [], ["--pre"], id="pre"),
     pytest.param("--no-index", {"index_url": []}, [], ["--no-index"], id="no-index"),
     pytest.param("--no-index\n-i a\n--no-index", {"index_url": []}, [], ["--no-index"], id="no-index overwrites index"),
+    pytest.param("--no-index\n-i a", {"index_url": []}, [], ["--no-index"], id="no-index before index"),
+    pytest.param(
+        "--no-index --extra-index-url a", {"index_url": []}, [], ["--no-index"], id="no-index with extra index"
+    ),
+    pytest.param(
+        "--no-index\n--extra-index-url a", {"index_url": []}, [], ["--no-index"], id="no-index before extra index"
+    ),
     pytest.param("--prefer-binary", {"prefer_binary": True}, [], ["--prefer-binary"], id="prefer-binary"),
     pytest.param("--require-hashes", {"require_hashes": True}, [], ["--require-hashes"], id="requires-hashes"),
     pytest.param("--pre ", {"pre": True}, [], ["--pre"], id="space after"),
