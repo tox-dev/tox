@@ -1,0 +1,3 @@
+Keep the default of a ``{glob:PATTERN:DEFAULT}`` substitution whose pattern is a single letter and whose default is an
+absolute path, e.g. ``{glob:z:/fallback}``. The Windows drive letter heuristic no longer consumes that default on POSIX,
+where drive letters do not exist.
