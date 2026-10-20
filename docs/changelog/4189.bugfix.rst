@@ -1,0 +1,2 @@
+``--force-dep`` matches requirement names after normalization, so ``--force-dep 'django<5'`` replaces a ``Django`` or
+``Demo_Dep``-style spelling in ``deps`` and in the package metadata instead of being ignored or installed beside it.
