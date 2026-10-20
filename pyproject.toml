@@ -92,6 +92,7 @@ test = [
   "distlib>=0.4",
   "docutils>=0.21",
   "flaky>=3.8.1",
+  "hatch-fancy-pypi-readme>=25.1",
   "hatch-vcs>=0.5",
   "hatchling>=1.29",
   "pdm-backend>=2.4.7",
