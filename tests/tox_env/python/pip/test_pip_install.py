@@ -263,6 +263,36 @@ def test_force_dep_applies_to_package_deps(tox_project: ToxProjectCreator, demo_
     assert "wheel==0.41.0" in cmd
 
 
+def test_force_dep_matches_package_deps_by_normalized_name(
+    tox_project: ToxProjectCreator, demo_pkg_inline: Path
+) -> None:
+    build = (demo_pkg_inline / "build.py").read_text()
+    build_with_dep = build.replace("Summary: UNKNOWN\n", "Summary: UNKNOWN\n        Requires-Dist: Demo_Dep>=2\n")
+    proj = tox_project(
+        {
+            "tox.ini": "[testenv]\npackage=wheel",
+            "pyproject.toml": (demo_pkg_inline / "pyproject.toml").read_text(),
+            "build.py": build_with_dep,
+        },
+    )
+    execute_calls = proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
+    result = proj.run("le", "-e", "py", "--force-dep", "demo-dep==1")
+    result.assert_success()
+
+    calls = [i[0][3].cmd[5:] for i in execute_calls.call_args_list if i[0][3].run_id == "install_package_deps"]
+    assert calls == [["demo-dep==1"]]
+
+
+def test_force_dep_matches_deps_by_normalized_name(tox_project: ToxProjectCreator) -> None:
+    proj = tox_project({"tox.ini": "[testenv]\npackage=skip\ndeps = Demo_Dep==2"})
+    execute_calls = proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
+    result = proj.run("le", "-e", "py", "--force-dep", "demo-dep==1")
+    result.assert_success()
+
+    calls = [i[0][3].cmd[5:] for i in execute_calls.call_args_list if i[0][3].run_id == "install_deps"]
+    assert calls == [["demo-dep==1"]]
+
+
 def test_pkg_env_dep_remove_recreate(tox_project: ToxProjectCreator, demo_pkg_inline: Path) -> None:
     toml = (demo_pkg_inline / "pyproject.toml").read_text()
     proj = tox_project(
