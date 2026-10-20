@@ -191,7 +191,10 @@ def _env_expression(name: str, default: str) -> str:
         parts.append(piece)
     for index in unclosed:
         parts[index] = "\\{"
-    return f"{{env:{escaped_name}:{''.join(parts)}}}"
+    # a lone trailing backslash would escape the closing brace and leave the expression unterminated, so it goes
+    # after the brace where the backslash is literal again; a backslash run of even length needs no such care
+    trailing = "\\" if parts and parts[-1] == "\\" else ""
+    return f"{{env:{escaped_name}:{''.join(parts[:-1] if trailing else parts)}}}{trailing}"
 
 
 def _replace_glob_toml(conf: Config | None, value: dict[str, Any]) -> list[TomlTypes] | str:
