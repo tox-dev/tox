@@ -59,6 +59,7 @@ autodoc_default_options = {
     "show-inheritance": True,
 }
 autosectionlabel_prefix_document = True
+autosectionlabel_maxdepth = 2
 
 extlinks = {
     "discussion": ("https://github.com/tox-dev/tox/discussions/%s", "#%s"),
