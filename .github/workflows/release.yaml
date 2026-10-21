@@ -36,6 +36,7 @@ jobs:
           persist-credentials: false
       - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
         with:
+          version: latest-known
           python-version: "3.15"
           enable-cache: false
       - name: Create release-tool environment
@@ -94,6 +95,7 @@ jobs:
           path: ${{ runner.temp }}
       - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
         with:
+          version: latest-known
           python-version: "3.15"
           enable-cache: false
       - name: Create release-tool environment
