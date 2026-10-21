@@ -116,12 +116,10 @@ type = [
   "types-colorama>=0.4.15",
   "types-docutils>=0.21",
   { include-group = "docs" },
-  { include-group = "release" },
   { include-group = "test" },
 ]
 docs = [
   "furo>=2025.12.19",
-  "sphinx>=9.1",
   "sphinx-argparse-cli>=1.21.1",
   "sphinx-autodoc-typehints>=3.9.7",
   "sphinx-copybutton>=0.5.2",
@@ -131,8 +129,8 @@ docs = [
   "sphinx-reredirects>=1.1",
   "sphinxcontrib-mermaid>=2.0.1",
   "sphinxcontrib-towncrier>=0.2.1a0",
-  "towncrier>=25.8",
   "truststore>=0.10.4",
+  { include-group = "release" },
 ]
 fix = [
   "pre-commit-uv>=4.2.1",
@@ -143,9 +141,10 @@ pkg-meta = [
   "uv>=0.10.8",
 ]
 release = [
-  "gitpython>=3.1.46",
-  "packaging>=26",
-  "pre-commit>=4.5.1",
+  "docstrfmt==2.2.1",
+  "prek>=0.2.6",
+  "release-creator @ git+https://github.com/tox-dev/release-creator@96d89f762c1cbbae5381febf37c533967046b9be",
+  "sphinx==9.1.1",
   "towncrier>=25.8",
 ]
 type-min = [
@@ -173,9 +172,10 @@ build.targets.sdist.include = [
 ]
 
 [tool.uv]
-dependency-groups.dev = { requires-python = ">=3.12" }
-dependency-groups.docs = { requires-python = ">=3.12" }
-dependency-groups.type = { requires-python = ">=3.12" }
+dependency-groups.dev = { requires-python = ">=3.15" }
+dependency-groups.docs = { requires-python = ">=3.15" }
+dependency-groups.release = { requires-python = ">=3.15" }
+dependency-groups.type = { requires-python = ">=3.15" }
 
 [tool.ruff]
 line-length = 120
@@ -310,15 +310,19 @@ html.skip_covered = false
 name = "tox"
 directory = "docs/changelog"
 filename = "docs/changelog.rst"
-template = "docs/changelog/template.jinja2"
+template = "release_creator.fragments:template.rst.jinja2"
 title_format = false
 issue_format = ":issue:`{issue}`"
+underlines = [ "*", "-", "~" ]
 type = [
-  { directory = "breaking", name = "Backward incompatible changes", showcontent = true },
-  { directory = "deprecation", name = "Deprecations (removal in next major release)", showcontent = true },
-  { directory = "feature", name = "Features", showcontent = true },
-  { directory = "bugfix", name = "Bug fixes", showcontent = true },
-  { directory = "doc", name = "Improved documentation", showcontent = true },
-  { directory = "packaging", name = "Packaging updates and notes for downstreams", showcontent = true },
-  { directory = "contrib", name = "Contributor-facing changes", showcontent = true },
+  { directory = "feature", name = "Added", showcontent = true },
+  { directory = "change", name = "Changes", showcontent = true },
+  { directory = "bugfix", name = "Fixed", showcontent = true },
+  { directory = "doc", name = "Documentation", showcontent = true },
+  { directory = "breaking", name = "Breaking changes", showcontent = true },
+  { directory = "security", name = "Security", showcontent = true },
+  { directory = "performance", name = "Performance", showcontent = true },
+  { directory = "deprecation", name = "Deprecated", showcontent = true },
+  { directory = "removal", name = "Removed", showcontent = true },
+  { directory = "packaging", name = "Packaging", showcontent = true },
 ]

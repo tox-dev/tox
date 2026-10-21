@@ -199,10 +199,3 @@ skip_install = false
 dependency_groups = [ "docs" ]
 extras = [ "completion" ]
 commands = [ [ "python", "{tox_root}/tools/generate_manpage.py" ] ]
-
-[env.release]
-description = "do a release, required posargs of the version number"
-skip_install = true
-dependency_groups = [ "release" ]
-pass_env = [ "GH_TOKEN" ]
-commands = [ [ "python", "{tox_root}/tasks/release.py", "--version", "{posargs}" ] ]

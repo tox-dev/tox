@@ -23,10 +23,9 @@ section. This section contains only highlights; it's not a substitute for readin
 - Documentation is in `RST <https://docutils.sourceforge.io/docs/user/rst/quickref.html>`_ format; beware the
   differences from GitHub Markdown. The tox ``docs`` and ``fix`` targets will catch only some RST errors; documentation
   changes *must* be checked visually (see below).
-- All PRs that make changes visible to an end user require a changelog entry. This should reference an issue if it
-  closes that issue, otherwise reference the PR. Create one or more (if there's more than one issue)
-  ``docs/changelog/####.{breaking,deprecation,feature,bugfix,doc,packaging,contrib}.rst`` per the `changelog entry
-  <#changelog-entries>`_ section below.
+- User-facing changes need a fragment in ``docs/changelog``. Use a descriptive filename with a category suffix, such as
+  ``fix-windows-quoting.bugfix.rst``. Internal changes use the ``skip news`` label. See the `changelog entry
+  <#changelog-entries>`_ guidance below.
 - GitHub Actions will do a full set of `tests and checks <#automated-testing>`_ when the PR is submitted. For local
   testing you'll need to install your own "top-level" tox (using pipx_ or similar is fine) and use the following targets
   (tox environments):
@@ -195,52 +194,39 @@ pull request. If needed, project maintainers can manually trigger a restart of a
 Changelog entries
 =================
 
-The ``changelog.rst`` file is managed using :pypi:`towncrier` and all changes must be accompanied by a changelog entry.
-To add an entry to the changelog, first you need to have created an issue describing the change you want to make. A pull
-request itself *may* function as such, but it is preferred to have a dedicated issue (for example, in case the PR ends
-up rejected due to code quality reasons).
+The changelog records changes that affect users. Put one reStructuredText fragment in ``docs/changelog`` for each
+user-facing change. The fragment can use a descriptive name, so you do not need an issue or PR number before writing it.
+For example, ``docs/changelog/fix-windows-quoting.bugfix.rst``. A merged squash PR links its named fragments to the PR
+number and credits its human authors. Do not add a ``by`` credit inside the fragment. If a PR needs more than one entry,
+add more than one fragment.
 
-There is no need to create an issue for trivial changes, e.g. for typo fixes.
+Choose the category that describes the effect on users:
 
-Once you have an issue or pull request, you take the number and you create a file inside of the ``docs/changelog``
-directory named after that issue number with an extension of:
+- ``feature`` (Added): new capabilities, including adding or dropping Python support;
+- ``change`` (Changes): changes to existing behavior;
+- ``bugfix`` (Fixed): corrections to existing behavior;
+- ``doc`` (Documentation): guidance users need to use tox;
+- ``breaking`` (Breaking changes): incompatible behavior in a new release;
+- ``security`` (Security): fixes to a security issue;
+- ``performance`` (Performance): user-visible speed or resource improvements;
+- ``deprecation`` (Deprecated): behavior scheduled for removal;
+- ``removal`` (Removed): removed user-facing capabilities;
+- ``packaging`` (Packaging): distribution or installation changes.
 
-- ``breaking.rst`` - backward incompatible changes,
-- ``deprecation.rst`` - deprecations (removal in next major release),
-- ``feature.rst`` - new features,
-- ``bugfix.rst`` - bug fixes,
-- ``doc.rst`` - documentation improvements,
-- ``packaging.rst`` - packaging updates and notes for downstreams,
-- ``contrib.rst`` - contributor-facing changes.
+A Python support change belongs in ``feature`` and leads to a minor release. Older releases remain available for
+interpreters no longer supported by new releases. Changelog entries should explain the effect from a user's point of
+view. Internal refactors, CI changes, and routine dependency updates do not need entries. Apply the ``skip news`` label
+for those PRs; the label can be added after the PR opens. A bot PR gets that label automatically when it has no
+fragment. A bot PR with a fragment is checked and included like any other PR.
 
-Thus if your issue or PR number is ``1234`` and this change is fixing a bug, then you would create a file
-``docs/changelog/1234.bugfix.rst``. PRs can span multiple categories by creating multiple files (for instance, if you
-added a feature and deprecated/removed the old feature at the same time, you would create
-``docs/changelog/1234.bugfix.rst`` and ``docs/changelog/1234.deprecation.rst``). Likewise if a PR touches multiple
-issues/PRs you may create a file for each of them with the same contents and :pypi:`towncrier` will deduplicate them.
+The fragment is a short sentence in RST. For example:
 
-Contents of a changelog entry
------------------------------
+.. code-block:: rst
 
-The content of this file is reStructuredText formatted text that will be used as the content of the changelog entry. You
-do not need to reference the issue or PR numbers here as towncrier will automatically add a reference to all of the
-affected issues when rendering the changelog. You may append ``- by :user:USERNAME``, with a GitHub username in
-backticks, if you wish.
+    Preserve single and double quotes in Windows command arguments.
 
-In order to maintain a consistent style in the ``changelog.rst`` file, it is preferred to keep the entries to the point,
-in sentence case, shorter than 120 characters and in an imperative tone -- an entry should complete the sentence ``This
-change will …``. In rare cases, where one line is not enough, use a summary line in an imperative tone followed by a
-blank line separating it from a description of the feature/change in one or more paragraphs, each wrapped at 120
-characters. Remember that a changelog entry is meant for end users and should only contain details relevant to an end
-user.
-
-An example of ``docs/changelog/####.bugfix.rst`` contents is:
-
-.. code-block::
-
-    Instead of raising ``UnicodeDecodeError`` when command output includes non-utf-8 bytes, ``tox`` will now use
-    ``surrogateescape`` error handling to convert the unrecognized bytes to escape sequences according to :pep:`383`
-    - by :user:`masenf`
+The PR check validates fragment names and contents. It checks a human PR for a fragment unless ``skip news`` is present.
+Release preparation renders the fragments into this page, with permanent anchors for each version and nonempty category.
 
 Becoming a maintainer
 =====================
@@ -265,80 +251,43 @@ maintainers.
 Creating a new release
 ======================
 
-tox supports two methods for preparing releases:
+A maintainer dispatches `Prepare Release <https://github.com/tox-dev/tox/actions/workflows/prepare-release.yaml>`_ on
+``main``. Choose ``auto`` unless there is a reason to force a major, minor, or patch bump. ``auto`` selects a minor
+release when pending fragments include a feature and a patch release otherwise. The version comes from the current tags
+and fragments; no one needs to type it.
 
-Method 1: Local release (requires git access)
----------------------------------------------
+The keyless jobs assemble the changelog, run ``prek`` on the release tree, and validate the resulting patch. A separate
+job verifies the same patch before a repository-scoped GitHub App commits it and pushes the tag. The App's private key
+lives in the ``release-auth`` environment, restricted to ``main``. The workflow uses no personal access token.
+
+The tag starts ``release.yaml``. Its source check runs ``prek``; the build and notes jobs check the tagged changelog and
+distribution. A separate job asks GitHub for contributor metadata. PyPI trusted publishing follows only after those jobs
+pass. The final job creates or updates the GitHub Release with category headings, contributor credits, the PyPI link,
+and the full changelog comparison.
+
+To rehearse a release locally, use a disposable worktree with at least one pending fragment. The tag and commit stay
+local; nothing is pushed or published. The release tools come from the same ``pylock.toml`` selection as CI:
 
 .. code-block:: shell
 
-    tox r -e release -- <version>
+    git worktree add --detach ../tox-release-preview HEAD
+    cd ../tox-release-preview
+    uv venv --python 3.15 .venv-release
+    uv pip sync --preview-features pylock --python .venv-release/bin/python --group release pylock.toml
+    tag=$(git tag --list | .venv-release/bin/release-creator tags --next auto --directory docs/changelog)
+    .venv-release/bin/release-creator fragments --directory docs/changelog --repository tox-dev/tox --git --resolve-authors
+    .venv-release/bin/towncrier build --yes --version "$tag"
+    .venv-release/bin/prek run docstrfmt --files docs/changelog.rst
+    .venv-release/bin/prek run --all-files
+    git -c user.name='Release preview' -c user.email='release-preview@users.noreply.github.com' commit -am "Rehearse tox $tag"
+    git tag "$tag"
+    uv build --python 3.15 --out-dir dist
+    .venv-release/bin/release-creator notes --changelog docs/changelog.rst --tag "$tag" --repository tox-dev/tox \
+      --artifact-url "https://pypi.org/project/tox/$tag/"
+    git tag -d "$tag"
 
-Example:
-
-.. code-block:: shell
-
-    tox r -e release -- 4.27.0
-
-This will:
-
-1. Create a ``release-<version>`` branch from upstream/main.
-2. Generate changelog using towncrier.
-3. Commit changes with message "release <version>".
-4. Tag the commit with the version number.
-5. Force-push to main and push the tag.
-6. Clean up local branches.
-
-Requirements:
-
-- Write access to tox-dev/tox repository.
-- Configured git remote pointing to tox-dev/tox (typically named ``upstream``).
-
-  .. code-block:: shell
-
-      git remote add upstream git@github.com:tox-dev/tox.git
-
-- Local dependencies installed via tox.
-
-Method 2: GitHub Actions workflow dispatch
-------------------------------------------
-
-Navigate to `Actions > Prepare Release <https://github.com/tox-dev/tox/actions/workflows/prepare-release.yaml>`_ and:
-
-1. Click "Run workflow".
-2. Select the branch (usually ``main``).
-3. Choose the version bump type:
-
-   - ``auto`` (default) - Automatically bump minor if feature changelogs exist, otherwise bump patch.
-   - ``major`` - Bump major version (e.g., 4.0.0 → 5.0.0).
-   - ``minor`` - Bump minor version (e.g., 4.27.0 → 4.28.0).
-   - ``patch`` - Bump patch version (e.g., 4.27.0 → 4.27.1).
-
-4. Click "Run workflow".
-
-The workflow executes the same ``tasks/release.py`` script in a clean CI environment.
-
-Requirements:
-
-- Write access to tox-dev/tox repository (workflow permissions).
-- For repositories with branch protection on ``main``, a ``RELEASE_PAT`` secret must be configured in the
-  ``release-auth`` environment with a fine-grained Personal Access Token that has permissions to bypass branch
-  protection rules.
-- Maintainer approval is required to trigger the workflow (configured via environment protection rules).
-
-After release preparation
--------------------------
-
-Both methods push a tag to the repository. The tag push automatically triggers the ``release.yaml`` workflow which:
-
-1. Builds Python packages (sdist + wheel).
-2. Publishes to PyPI via trusted publishing.
-
-.. note::
-
-    - Both methods force-push to main (ensure no concurrent work).
-    - The release process is atomic and should not be interrupted.
-    - Failed releases can be retried with the same version number.
+The GitHub workflow also validates the release patch against the exact source commit. Remove the disposable worktree
+after reviewing the package and notes.
 
 .. _current-maintainers:
 
