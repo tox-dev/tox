@@ -141,10 +141,8 @@ pkg-meta = [
   "uv>=0.10.8",
 ]
 release = [
-  "docstrfmt==2.2.1",
   "prek>=0.2.6",
   "release-creator @ git+https://github.com/tox-dev/release-creator@80ecd0e952a0e0c50d08129ec89aaa8306ea0b05",
-  "sphinx==9.1.1",
   "towncrier>=25.8",
 ]
 type-min = [
