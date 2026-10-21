@@ -390,14 +390,15 @@ class RequirementsFile:
                 if feature not in base_opt.features_enabled:
                     base_opt.features_enabled.append(feature)
             base_opt.features_enabled.sort()
-        if opt.index_url:
+        # pip ignores every index once --no-index is given, wherever the index options appear
+        if opt.no_index is True or getattr(base_opt, "index_url", None) == []:
+            base_opt.index_url = []
+        elif opt.index_url:
             if getattr(base_opt, "index_url", []):
                 base_opt.index_url[0] = opt.index_url
             else:
                 base_opt.index_url = [opt.index_url]
-        if opt.no_index is True:
-            base_opt.index_url = []
-        if opt.extra_index_url:
+        if opt.extra_index_url and getattr(base_opt, "index_url", None) != []:
             if not getattr(base_opt, "index_url", []):
                 base_opt.index_url = [DEFAULT_INDEX_URL]
             for url in opt.extra_index_url:
