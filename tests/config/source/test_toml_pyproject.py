@@ -1226,6 +1226,36 @@ def test_config_in_toml_replace_ref_command_prefixes(
     assert outcome.env_conf("b")[key] == expected
 
 
+def test_config_in_toml_replace_ref_path_set_and_env_list(tox_project: ToxProjectCreator) -> None:
+    project: Final[ToxProject] = tox_project({
+        "pyproject.toml": dedent("""
+        [tool.tox.env.a]
+        package = "skip"
+        change_dir = "sub"
+        extras = ["x", "y"]
+        labels = ["lint"]
+        depends = ["c"]
+
+        [tool.tox.env.b]
+        package = "skip"
+        change_dir = { replace = "ref", env = "a", key = "change_dir" }
+        extras = { replace = "ref", env = "a", key = "extras" }
+        labels = { replace = "ref", env = "a", key = "labels" }
+        depends = { replace = "ref", env = "a", key = "depends" }
+
+        [tool.tox.env.c]
+        package = "skip"
+        """),
+    })
+    outcome: Final[ToxRunOutcome] = project.run("c", "-e", "b", "-k", "change_dir", "extras", "labels", "depends")
+    outcome.assert_success()
+    env_conf = outcome.env_conf("b")
+    assert env_conf["change_dir"] == project.path / "sub"
+    assert env_conf["extras"] == {"x", "y"}
+    assert env_conf["labels"] == {"lint"}
+    assert env_conf["depends"].envs == ["c"]
+
+
 def test_config_in_toml_replace_ref_constraints(tox_project: ToxProjectCreator) -> None:
     project = tox_project({
         "pyproject.toml": dedent("""

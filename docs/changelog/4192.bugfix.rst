@@ -1,0 +1,2 @@
+A TOML ``{ replace = "ref", env = ..., key = ... }`` that takes a whole ``change_dir``, ``extras``, ``labels`` or
+``depends`` value from another environment no longer fails with ``is not of type 'str'`` or ``is not list``.
