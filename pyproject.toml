@@ -143,7 +143,7 @@ pkg-meta = [
 release = [
   "docstrfmt==2.2.1",
   "prek>=0.2.6",
-  "release-creator @ git+https://github.com/tox-dev/release-creator@96d89f762c1cbbae5381febf37c533967046b9be",
+  "release-creator @ git+https://github.com/tox-dev/release-creator@80ecd0e952a0e0c50d08129ec89aaa8306ea0b05",
   "sphinx==9.1.1",
   "towncrier>=25.8",
 ]

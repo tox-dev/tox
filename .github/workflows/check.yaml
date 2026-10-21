@@ -132,7 +132,7 @@ jobs:
             --python "$RUNNER_TEMP/release-tools/bin/python" --group release pylock.toml
       - name: Add release tools to PATH
         run: echo "$RUNNER_TEMP/release-tools/bin" >> "$GITHUB_PATH"
-      - uses: tox-dev/github-workflows/validate-news@5e11f2254a4dcb7102747d312ad7db48a2e9b0cb
+      - uses: tox-dev/github-workflows/validate-news@7afb8fc8fd51942c5deedf9012dd49ed9c7b5bc1
   gate:
     name: Required checks pass
     if: always()

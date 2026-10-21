@@ -12,7 +12,7 @@ env:
 jobs:
   tag-build:
     name: Validate tagged release
-    uses: tox-dev/github-workflows/.github/workflows/validate-python-release.yaml@5e11f2254a4dcb7102747d312ad7db48a2e9b0cb
+    uses: tox-dev/github-workflows/.github/workflows/validate-python-release.yaml@7afb8fc8fd51942c5deedf9012dd49ed9c7b5bc1
     permissions:
       contents: read
       pull-requests: read
@@ -54,6 +54,7 @@ jobs:
   contributor-metadata:
     needs: previous-tag
     runs-on: ubuntu-26.04
+    environment: release
     permissions:
       contents: write
     steps:
@@ -102,7 +103,7 @@ jobs:
           uv pip sync --preview-features pylock --python "$RUNNER_TEMP/release-tools/bin/python" --group release pylock.toml
       - name: Add release tools to PATH
         run: echo "$RUNNER_TEMP/release-tools/bin" >> "$GITHUB_PATH"
-      - uses: tox-dev/github-workflows/render-release-notes@5e11f2254a4dcb7102747d312ad7db48a2e9b0cb
+      - uses: tox-dev/github-workflows/render-release-notes@7afb8fc8fd51942c5deedf9012dd49ed9c7b5bc1
         with:
           tag: ${{ github.ref_name }}
           changelog: docs/changelog.rst
@@ -134,6 +135,7 @@ jobs:
   github-release:
     needs: [publish, github-notes]
     runs-on: ubuntu-26.04
+    environment: release
     permissions:
       contents: write
     steps:
