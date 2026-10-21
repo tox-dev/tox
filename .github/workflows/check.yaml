@@ -134,7 +134,7 @@ jobs:
           uv pip sync --preview-features pylock \
             --python "$RUNNER_TEMP/release-tools/bin/python" --group release pylock.toml
       - name: Add release tools to PATH
-        run: echo "$RUNNER_TEMP/release-tools/bin" >> "$GITHUB_PATH"
+        run: echo "$RUNNER_TEMP/release-tools/bin" >>"$GITHUB_PATH"
       - uses: tox-dev/github-workflows/validate-news@8db87d4730353b61630d66cbc592d6bed0c85d2b
   hook-cooldown:
     name: Hook update cooldown
@@ -167,4 +167,4 @@ jobs:
               .value.result == "success" or
               ((.key == "changelog" or .key == "hook-cooldown") and .value.result == "skipped" and $event != "pull_request")
             )
-          ' <<< "$NEEDS_JSON"
+          ' <<<"$NEEDS_JSON"

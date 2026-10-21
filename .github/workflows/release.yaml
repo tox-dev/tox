@@ -50,7 +50,7 @@ jobs:
         run: |
           set -euo pipefail
           previous=$(git tag --list | "$RUNNER_TEMP/release-tools/bin/release-creator" tags "$TAG" --previous)
-          printf 'previous=%s\n' "$previous" >> "$GITHUB_OUTPUT"
+          printf 'previous=%s\n' "$previous" >>"$GITHUB_OUTPUT"
   contributor-metadata:
     needs: previous-tag
     runs-on: ubuntu-26.04
@@ -65,14 +65,14 @@ jobs:
           TAG: ${{ github.ref_name }}
           PREVIOUS: ${{ needs.previous-tag.outputs.previous }}
         run: >-
-          gh api -X POST "repos/${GITHUB_REPOSITORY}/releases/generate-notes" -f tag_name="$TAG" -f previous_tag_name="$PREVIOUS" --jq .body > "$RUNNER_TEMP/generated-notes.md"
+          gh api -X POST "repos/${GITHUB_REPOSITORY}/releases/generate-notes" -f tag_name="$TAG" -f previous_tag_name="$PREVIOUS" --jq .body >"$RUNNER_TEMP/generated-notes.md"
       - name: Fetch first-release contributor metadata
         if: needs.previous-tag.outputs.previous == ''
         env:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ github.ref_name }}
         run: >-
-          gh api -X POST "repos/${GITHUB_REPOSITORY}/releases/generate-notes" -f tag_name="$TAG" --jq .body > "$RUNNER_TEMP/generated-notes.md"
+          gh api -X POST "repos/${GITHUB_REPOSITORY}/releases/generate-notes" -f tag_name="$TAG" --jq .body >"$RUNNER_TEMP/generated-notes.md"
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: github-generated-notes
@@ -103,7 +103,7 @@ jobs:
         run: >-
           uv pip sync --preview-features pylock --python "$RUNNER_TEMP/release-tools/bin/python" --group release pylock.toml
       - name: Add release tools to PATH
-        run: echo "$RUNNER_TEMP/release-tools/bin" >> "$GITHUB_PATH"
+        run: echo "$RUNNER_TEMP/release-tools/bin" >>"$GITHUB_PATH"
       - uses: tox-dev/github-workflows/render-release-notes@8db87d4730353b61630d66cbc592d6bed0c85d2b
         with:
           tag: ${{ github.ref_name }}
