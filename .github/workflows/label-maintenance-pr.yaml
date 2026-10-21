@@ -7,11 +7,10 @@ jobs:
   label:
     runs-on: ubuntu-26.04
     permissions:
-      contents: read
       issues: write
       pull-requests: read
     steps:
-      - uses: tox-dev/github-workflows/label-bot-news@7afb8fc8fd51942c5deedf9012dd49ed9c7b5bc1
+      - uses: tox-dev/github-workflows/label-bot-news@e8d429040f73cd95af722543a0a09717bf3bb0aa
         with:
           fragments: docs/changelog
           extension: rst

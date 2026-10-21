@@ -43,7 +43,7 @@ jobs:
       - name: Add release tools to PATH
         run: echo "$RUNNER_TEMP/release-tools/bin" >> "$GITHUB_PATH"
       - id: prepare
-        uses: tox-dev/github-workflows/prepare-towncrier@7afb8fc8fd51942c5deedf9012dd49ed9c7b5bc1
+        uses: tox-dev/github-workflows/prepare-towncrier@e8d429040f73cd95af722543a0a09717bf3bb0aa
         with:
           bump: ${{ inputs.bump }}
           changelog: docs/changelog.rst
@@ -83,7 +83,7 @@ jobs:
           uv pip sync --preview-features pylock --python "$RUNNER_TEMP/release-tools/bin/python" --group release pylock.toml
       - name: Add release tools to PATH
         run: echo "$RUNNER_TEMP/release-tools/bin" >> "$GITHUB_PATH"
-      - uses: tox-dev/github-workflows/validate-release-patch@7afb8fc8fd51942c5deedf9012dd49ed9c7b5bc1
+      - uses: tox-dev/github-workflows/validate-release-patch@e8d429040f73cd95af722543a0a09717bf3bb0aa
         with:
           version: ${{ needs.assemble.outputs.version }}
           changelog: docs/changelog.rst
@@ -110,7 +110,7 @@ jobs:
         with:
           name: release-patch
           path: ${{ runner.temp }}/release-patch
-      - uses: tox-dev/github-workflows/validate-release-patch@7afb8fc8fd51942c5deedf9012dd49ed9c7b5bc1
+      - uses: tox-dev/github-workflows/validate-release-patch@e8d429040f73cd95af722543a0a09717bf3bb0aa
         with:
           version: ${{ needs.assemble.outputs.version }}
           changelog: docs/changelog.rst
@@ -127,7 +127,7 @@ jobs:
           owner: ${{ github.repository_owner }}
           repositories: ${{ github.event.repository.name }}
           permission-contents: write
-      - uses: tox-dev/github-workflows/commit-and-tag@7afb8fc8fd51942c5deedf9012dd49ed9c7b5bc1
+      - uses: tox-dev/github-workflows/commit-and-tag@e8d429040f73cd95af722543a0a09717bf3bb0aa
         with:
           version: ${{ needs.assemble.outputs.version }}
           token: ${{ steps.token.outputs.token }}
