@@ -7018,7 +7018,7 @@ Fixed
   ``{x,y}`` generative syntax. Thanks Andrew Pashkin.
 - fix `#212 <https://github.com/tox-dev/tox/issues/212>`_: allow escaping curly brace chars "\{" and "\}" if you need
   the chars "{" and "}" to appear in your commands or other ini values. Thanks John Vandenberg.
-- fix `#275 <https://github.com/tox-dev/tox/issues/275>`_: Introduce hooks ``tox_runtest_pre``` and ``tox_runtest_post``
+- fix `#275 <https://github.com/tox-dev/tox/issues/275>`_: Introduce hooks ``tox_runtest_pre`` and ``tox_runtest_post``
   which run before and after the tests of a venv, respectively. Thanks to Matthew Schinckel and itxaka serrano.
 - fix `#317 <https://github.com/tox-dev/tox/issues/317>`_: evaluate minversion before tox config is parsed completely.
   Thanks Sachi King for the PR.

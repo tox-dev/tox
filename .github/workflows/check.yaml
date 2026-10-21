@@ -135,11 +135,26 @@ jobs:
             --python "$RUNNER_TEMP/release-tools/bin/python" --group release pylock.toml
       - name: Add release tools to PATH
         run: echo "$RUNNER_TEMP/release-tools/bin" >> "$GITHUB_PATH"
-      - uses: tox-dev/github-workflows/validate-news@e8d429040f73cd95af722543a0a09717bf3bb0aa
+      - uses: tox-dev/github-workflows/validate-news@8db87d4730353b61630d66cbc592d6bed0c85d2b
+  hook-cooldown:
+    name: Hook update cooldown
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-26.04
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+      - uses: tox-dev/github-workflows/check-hook-update-cooldown@8db87d4730353b61630d66cbc592d6bed0c85d2b
+        env:
+          GH_TOKEN: ${{ github.token }}
+        with:
+          repository: ${{ github.repository }}
+          pull-request: ${{ github.event.pull_request.number }}
+          head-sha: ${{ github.event.pull_request.head.sha }}
   gate:
     name: Required checks pass
     if: always()
-    needs: [test, check, changelog]
+    needs: [test, check, changelog, hook-cooldown]
     runs-on: ubuntu-26.04
     steps:
       - env:
@@ -150,6 +165,6 @@ jobs:
             all(
               to_entries[];
               .value.result == "success" or
-              (.key == "changelog" and .value.result == "skipped" and $event != "pull_request")
+              ((.key == "changelog" or .key == "hook-cooldown") and .value.result == "skipped" and $event != "pull_request")
             )
           ' <<< "$NEEDS_JSON"
