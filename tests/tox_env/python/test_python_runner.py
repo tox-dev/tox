@@ -491,6 +491,13 @@ def test_dependency_groups_nested_extra_names(tox_project: ToxProjectCreator) ->
     assert resolve(project.path, {"test"}) == {Requirement("first>=1"), Requirement("second>=2")}
 
 
+def test_dependency_groups_pyproject_with_utf8_bom(tox_project: ToxProjectCreator) -> None:
+    project: Final = tox_project({"pyproject.toml": '[dependency-groups]\ntest = ["first>=1"]\n'})
+    pyproject = project.path / "pyproject.toml"
+    pyproject.write_bytes(b"\xef\xbb\xbf" + pyproject.read_bytes())
+    assert resolve(project.path, {"test"}) == {Requirement("first>=1")}
+
+
 @pytest.mark.parametrize(
     ("requirements", "message"),
     [
