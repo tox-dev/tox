@@ -21,7 +21,8 @@ LOGGER = getLogger(__name__)
 class ToxConfig(SphinxDirective):
     name = "conf"
     has_content = True
-    option_spec: ClassVar[dict[str, Callable[[str], str | None]] | None] = {
+    # docutils reads this on the class, though its stub marks it as an instance attribute.
+    option_spec: ClassVar[dict[str, Callable[[str], str | None]] | None] = {  # ty: ignore[invalid-attribute-override]
         "keys": unchanged_required,
         "version_added": unchanged,
         "version_changed": unchanged,
