@@ -130,8 +130,10 @@ class Unroll:
         # adjacent entries of the same value tree and spuriously trip the circular check (#2869)
         return replace_env(self.conf, [name, default], self.args.copy())
 
-    def _replace_glob(self, value: dict[str, TomlTypes], _depth: int, *, skip_str: bool) -> TomlTypes:  # ruff:ignore[unused-method-argument]
-        return _replace_glob_toml(self.conf, value)
+    def _replace_glob(self, value: dict[str, TomlTypes], depth: int, *, skip_str: bool) -> TomlTypes:
+        # substitute the pattern and the fallback like the INI ``{glob:PATTERN:DEFAULT}`` form does
+        resolved = {key: self(value[key], depth, skip_str=skip_str) for key in ("pattern", "default") if key in value}
+        return _replace_glob_toml(self.conf, {**value, **resolved})
 
     def _replace_if(self, value: dict[str, TomlTypes], depth: int, *, skip_str: bool) -> TomlTypes:
         return _replace_if_toml(value, self, depth, self.factors, skip_str=skip_str)
