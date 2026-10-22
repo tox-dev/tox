@@ -1,0 +1,2 @@
+Glob character sets such as ``lint-[ab]`` and ``lint-[!a]`` in an ini ``depends`` now load, as the ``depends`` reference
+documents, instead of failing to load the configuration - by :user:`nk-batman21`.

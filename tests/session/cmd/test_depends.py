@@ -136,6 +136,35 @@ def test_depends_sdist(tox_project: ToxProjectCreator, patch_prev_py: PatchPrevP
             id="question_mark",
         ),
         pytest.param(
+            ["lint-a", "lint-b", "lint-c", "cov"],
+            ["lint-[ab]"],
+            """\
+            Execution order: lint-a, lint-b, lint-c, cov
+            ALL
+               lint-a
+               lint-b
+               lint-c
+               cov
+                  lint-a
+                  lint-b
+            """,
+            id="char_class",
+        ),
+        pytest.param(
+            ["lint-a", "lint-b", "lint-c", "cov"],
+            ["lint-[!ab]"],
+            """\
+            Execution order: lint-a, lint-b, lint-c, cov
+            ALL
+               lint-a
+               lint-b
+               lint-c
+               cov
+                  lint-c
+            """,
+            id="negated_char_class",
+        ),
+        pytest.param(
             ["lint", "cov"],
             ["py*"],
             """\
