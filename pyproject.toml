@@ -145,6 +145,25 @@ release = [
   "release-creator>=0.5.1",
   "towncrier>=25.8",
 ]
+release-check = [
+  "prek>=0.2.6",
+]
+release-news = [
+  "release-creator>=0.5.1",
+  "towncrier>=25.8",
+]
+release-notes = [
+  "release-creator>=0.5.1",
+]
+release-prepare = [
+  "prek>=0.2.6",
+  "release-creator>=0.5.1",
+  "towncrier>=25.8",
+]
+release-validate = [
+  "prek>=0.2.6",
+  "release-creator>=0.5.1",
+]
 type-min = [
   "ty>=0.0.19",
   "types-colorama>=0.4.15",
@@ -173,6 +192,11 @@ build.targets.sdist.include = [
 dependency-groups.dev = { requires-python = ">=3.15" }
 dependency-groups.docs = { requires-python = ">=3.15" }
 dependency-groups.release = { requires-python = ">=3.15" }
+dependency-groups.release-check = { requires-python = ">=3.15" }
+dependency-groups.release-news = { requires-python = ">=3.15" }
+dependency-groups.release-notes = { requires-python = ">=3.15" }
+dependency-groups.release-prepare = { requires-python = ">=3.15" }
+dependency-groups.release-validate = { requires-python = ">=3.15" }
 dependency-groups.type = { requires-python = ">=3.15" }
 
 [tool.ruff]

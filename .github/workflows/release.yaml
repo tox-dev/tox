@@ -12,10 +12,12 @@ env:
 jobs:
   tag-build:
     name: Validate tagged release
-    uses: tox-dev/github-workflows/.github/workflows/validate-python-release.yaml@33db207c963ad07b8d2bff4099143593fd4100b2
+    uses: tox-dev/github-workflows/.github/workflows/validate-python-release.yaml@fcba1cc52c8e8bbb8c3305ee5e4bc454b9ab0c50
     permissions:
       contents: read
     with:
+      check-group: release-check
+      notes-group: release-notes
       changelog: docs/changelog.rst
       issue-role: issue
       artifact-base-url: https://pypi.org/project/tox/
@@ -36,8 +38,9 @@ jobs:
           python-version: "3.15"
           enable-cache: false
       - name: Install locked release tools
-        uses: tox-dev/github-workflows/install-locked-tools@33db207c963ad07b8d2bff4099143593fd4100b2
+        uses: tox-dev/github-workflows/install-locked-tools@fcba1cc52c8e8bbb8c3305ee5e4bc454b9ab0c50
         with:
+          groups: release-notes
           venv: ${{ runner.temp }}/release-tools
       - name: Select previous tag
         id: select
@@ -94,12 +97,13 @@ jobs:
           python-version: "3.15"
           enable-cache: false
       - name: Install locked release tools
-        uses: tox-dev/github-workflows/install-locked-tools@33db207c963ad07b8d2bff4099143593fd4100b2
+        uses: tox-dev/github-workflows/install-locked-tools@fcba1cc52c8e8bbb8c3305ee5e4bc454b9ab0c50
         with:
+          groups: release-notes
           venv: ${{ runner.temp }}/release-tools
       - name: Add release tools to PATH
         run: echo "$RUNNER_TEMP/release-tools/bin" >>"$GITHUB_PATH"
-      - uses: tox-dev/github-workflows/render-release-notes@33db207c963ad07b8d2bff4099143593fd4100b2
+      - uses: tox-dev/github-workflows/render-release-notes@fcba1cc52c8e8bbb8c3305ee5e4bc454b9ab0c50
         with:
           tag: ${{ github.ref_name }}
           changelog: docs/changelog.rst
@@ -125,7 +129,7 @@ jobs:
         with:
           name: github-release-notes
           path: ${{ runner.temp }}
-      - uses: tox-dev/github-workflows/publish-github-release@33db207c963ad07b8d2bff4099143593fd4100b2
+      - uses: tox-dev/github-workflows/publish-github-release@fcba1cc52c8e8bbb8c3305ee5e4bc454b9ab0c50
         env:
           GH_TOKEN: ${{ github.token }}
         with:
@@ -156,9 +160,10 @@ jobs:
           version: latest-known
           python-version: "3.15"
           enable-cache: false
-      - uses: tox-dev/github-workflows/reconcile-pypi-artifacts@33db207c963ad07b8d2bff4099143593fd4100b2
+      - uses: tox-dev/github-workflows/reconcile-pypi-artifacts@fcba1cc52c8e8bbb8c3305ee5e4bc454b9ab0c50
         id: stage
         with:
+          tool-group: release-notes
           project: tox
           version: ${{ github.ref_name }}
           dist: dist
@@ -187,7 +192,7 @@ jobs:
         with:
           name: pypi-missing-manifest
           path: ${{ runner.temp }}/pypi-manifest
-      - uses: tox-dev/github-workflows/select-pypi-artifacts@33db207c963ad07b8d2bff4099143593fd4100b2
+      - uses: tox-dev/github-workflows/select-pypi-artifacts@fcba1cc52c8e8bbb8c3305ee5e4bc454b9ab0c50
         with:
           dist: dist
           manifest: ${{ runner.temp }}/pypi-manifest/pypi-missing-names.txt
@@ -217,8 +222,9 @@ jobs:
           version: latest-known
           python-version: "3.15"
           enable-cache: false
-      - uses: tox-dev/github-workflows/reconcile-pypi-artifacts@33db207c963ad07b8d2bff4099143593fd4100b2
+      - uses: tox-dev/github-workflows/reconcile-pypi-artifacts@fcba1cc52c8e8bbb8c3305ee5e4bc454b9ab0c50
         with:
+          tool-group: release-notes
           project: tox
           version: ${{ github.ref_name }}
           dist: dist
@@ -234,7 +240,7 @@ jobs:
         with:
           name: github-release-notes
           path: ${{ runner.temp }}
-      - uses: tox-dev/github-workflows/publish-github-release@33db207c963ad07b8d2bff4099143593fd4100b2
+      - uses: tox-dev/github-workflows/publish-github-release@fcba1cc52c8e8bbb8c3305ee5e4bc454b9ab0c50
         env:
           GH_TOKEN: ${{ github.token }}
         with:

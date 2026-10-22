@@ -9,12 +9,13 @@ concurrency:
   cancel-in-progress: false
 jobs:
   upgrade:
-    uses: tox-dev/github-workflows/.github/workflows/upgrade-release-tools.yaml@33db207c963ad07b8d2bff4099143593fd4100b2
+    uses: tox-dev/github-workflows/.github/workflows/upgrade-release-tools.yaml@fcba1cc52c8e8bbb8c3305ee5e4bc454b9ab0c50
     permissions:
       contents: read
     secrets:
       RELEASE_APP_PRIVATE_KEY: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
     with:
+      check-group: release-check
       build-requirements: |-
         Cython>=3.0
         setuptools>=80
@@ -24,4 +25,4 @@ jobs:
       pull-request-title: "build(deps): refresh full project lock"
       pull-request-body: |-
         Refresh the full selectable full project lock after the seven-day cooldown.
-        Release and changelog workflows install the `release` selection from `pylock.toml`.
+        Release and changelog jobs install only their required groups from `pylock.toml`.
