@@ -115,8 +115,8 @@ _FACTOR_RE = re.compile(
     r"""
     (?:
         !?              # optional negation prefix
-        [\w.*?]         # first char: word char, dot, or glob wildcards
-        [\w.*?-]*       # remaining chars: word chars, dots, glob wildcards, or hyphens
+        (?: \[!? | [\w.*?\]] )    # first char: word char, dot, glob wildcards, or [seq] / [!seq] brackets
+        (?: \[!? | [\w.*?\]-] )*  # remaining chars: word chars, dots, glob wildcards, set brackets, or hyphens
     |
         ^$              # or an empty string
     )
