@@ -142,7 +142,7 @@ pkg-meta = [
 ]
 release = [
   "prek>=0.2.6",
-  "release-creator>=0.5",
+  "release-creator>=0.5.1",
   "towncrier>=25.8",
 ]
 type-min = [
