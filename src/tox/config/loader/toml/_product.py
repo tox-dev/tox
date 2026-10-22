@@ -117,7 +117,11 @@ def _expand_range(range_dict: dict[str, TomlTypes]) -> list[str]:
     if type(stop) is not int:
         msg = f"range 'stop' must be an integer, got {type(stop).__name__}"
         raise TypeError(msg)
-    return [f"{prefix}{i}" for i in range(start, stop + 1)]
+    expanded = [f"{prefix}{i}" for i in range(start, stop + 1)]
+    if expanded or (has_start and has_stop):
+        return expanded
+    # an open bound that sits outside the supported CPython window still names a version
+    return [f"{prefix}{start if has_start else stop}"]
 
 
 __all__ = [

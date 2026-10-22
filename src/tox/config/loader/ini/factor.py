@@ -184,9 +184,9 @@ def expand_ranges(value: str) -> str:
             direction = 1 if start < end else -1
             expansion = ",".join(str(x) for x in range(start, end + direction, direction))
         elif open_start:
-            expansion = ",".join(str(x) for x in range(int(open_start), LATEST_PYTHON_MINOR_MAX + 1))
+            expansion = ",".join(str(x) for x in range(int(open_start), LATEST_PYTHON_MINOR_MAX + 1)) or open_start
         elif open_end:
-            expansion = ",".join(str(x) for x in range(LATEST_PYTHON_MINOR_MIN, int(open_end) + 1))
+            expansion = ",".join(str(x) for x in range(LATEST_PYTHON_MINOR_MIN, int(open_end) + 1)) or open_end
         else:  # a single number, leave untouched
             return match.group()
         return f"{expansion}{delimiter}"

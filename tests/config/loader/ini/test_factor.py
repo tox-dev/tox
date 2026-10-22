@@ -285,6 +285,16 @@ def test_expand_ranges_targets_matched_range(value: str, expected: str) -> None:
             [f"py3{v}" for v in range(LATEST_PYTHON_MINOR_MIN, 12)],
             id="Expand left-open numerical range",
         ),
+        pytest.param(
+            f"py3{{{LATEST_PYTHON_MINOR_MAX + 1}-}}",
+            [f"py3{LATEST_PYTHON_MINOR_MAX + 1}"],
+            id="Right-open range past LATEST_PYTHON_MINOR_MAX keeps its own start",
+        ),
+        pytest.param(
+            f"py3{{-{LATEST_PYTHON_MINOR_MIN - 1}}}",
+            [f"py3{LATEST_PYTHON_MINOR_MIN - 1}"],
+            id="Left-open range below LATEST_PYTHON_MINOR_MIN keeps its own end",
+        ),
         pytest.param("foo{a-}", ["fooa-"], id="Don't expand right-open range"),
         pytest.param("foo{-a}", ["foo-a"], id="Don't expand left-open range"),
         pytest.param("foo{a-11}", ["fooa-11"], id="Don't expand alpha-umerical range"),
