@@ -143,27 +143,27 @@ pkg-meta = [
 ]
 release = [
   "prek>=0.2.6",
-  "release-creator>=0.6",
+  "release-creator>=0.6.5",
   "towncrier>=25.8",
 ]
 release-check = [
   "prek>=0.2.6",
 ]
 release-news = [
-  "release-creator>=0.6",
+  "release-creator>=0.6.5",
   "towncrier>=25.8",
 ]
 release-notes = [
-  "release-creator>=0.6",
+  "release-creator>=0.6.5",
 ]
 release-prepare = [
   "prek>=0.2.6",
-  "release-creator>=0.6",
+  "release-creator>=0.6.5",
   "towncrier>=25.8",
 ]
 release-validate = [
   "prek>=0.2.6",
-  "release-creator>=0.6",
+  "release-creator>=0.6.5",
 ]
 type-min = [
   "ty>=0.0.19",
