@@ -5,7 +5,7 @@ on:
     branches: ["main"]
     tags-ignore: ["**"]
   pull_request:
-    types: [opened, synchronize, reopened, labeled, unlabeled]
+    types: [opened, synchronize, reopened]
   schedule:
     - cron: "0 8 * * *"
 permissions:
@@ -114,27 +114,6 @@ jobs:
         run: tox r -vv --notest --skip-missing-interpreters false -e ${{ matrix.tox_env }}
       - name: Run check for ${{ matrix.tox_env }}
         run: tox r --skip-pkg-install -e ${{ matrix.tox_env }}
-  changelog:
-    if: github.event_name == 'pull_request'
-    runs-on: ubuntu-26.04
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          fetch-depth: 0
-          persist-credentials: false
-      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
-        with:
-          version: latest-known
-          python-version: "3.15"
-          enable-cache: false
-      - name: Install locked release tools
-        uses: tox-dev/github-workflows/install-locked-tools@cadf58a0dcc5d0c7853b248ab7c2b19bb93675d1
-        with:
-          groups: release-news
-          venv: ${{ runner.temp }}/release-tools
-      - name: Add release tools to PATH
-        run: echo "$RUNNER_TEMP/release-tools/bin" >>"$GITHUB_PATH"
-      - uses: tox-dev/github-workflows/validate-news@cadf58a0dcc5d0c7853b248ab7c2b19bb93675d1
   hook-cooldown:
     name: Hook update cooldown
     if: github.event_name == 'pull_request'
@@ -150,7 +129,7 @@ jobs:
   gate:
     name: Required checks pass
     if: ${{ !cancelled() }} # codespell:ignore cancelled
-    needs: [test, check, changelog, hook-cooldown]
+    needs: [test, check, hook-cooldown]
     runs-on: ubuntu-26.04
     steps:
       - env:
@@ -161,6 +140,6 @@ jobs:
             all(
               to_entries[];
               .value.result == "success" or
-              ((.key == "changelog" or .key == "hook-cooldown") and .value.result == "skipped" and $event != "pull_request")
+              ((.key == "hook-cooldown") and .value.result == "skipped" and $event != "pull_request")
             )
           ' <<<"$NEEDS_JSON"
