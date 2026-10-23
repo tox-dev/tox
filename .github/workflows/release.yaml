@@ -44,7 +44,6 @@ jobs:
         uses: tox-dev/github-workflows/select-previous-tag@cadf58a0dcc5d0c7853b248ab7c2b19bb93675d1
         with:
           tag: ${{ github.ref_name }}
-          executable: ${{ runner.temp }}/release-tools/bin/release-creator
   contributor-metadata:
     needs: previous-tag
     runs-on: ubuntu-26.04
@@ -151,6 +150,7 @@ jobs:
       - uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # v1.14.2
         with:
           packages-dir: dist
+          skip-existing: true
   verify-pypi:
     name: Verify PyPI distributions
     needs:
