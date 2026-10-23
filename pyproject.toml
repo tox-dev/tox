@@ -135,7 +135,6 @@ docs = [
 fix = [
   "pre-commit-uv>=4.2.1",
 ]
-lock-tools = [ "nab==0.0.22" ]
 pkg-meta = [
   "check-wheel-contents>=0.6.3",
   "twine>=6.2",
@@ -360,7 +359,3 @@ decision-order = "stable"
 matrix.python = ">=3.15,<3.16"
 matrix.platforms = [ "linux_x86_64", "linux_aarch64", "macos_arm64", "windows_amd64" ]
 packages.release-creator.uploaded-prior-to = "2026-10-23T19:54:50Z"
-
-[[tool.nab.package-rules]]
-match = [ "nab", "nab-index", "nab-markersets", "nab-project", "nab-provider", "nab-resolver" ]
-uploaded-prior-to = "2026-10-18T05:45:09Z"

@@ -123,7 +123,7 @@ jobs:
       contents: read
       pull-requests: read
     steps:
-      - uses: tox-dev/github-workflows/check-hook-update-cooldown@1b7d58c3e744b505215e1cb11697a80737b0e94d
+      - uses: tox-dev/github-workflows/check-hook-update-cooldown@74472c1a3602ca9b66db058ea31578865e1d208b
         env:
           GH_TOKEN: ${{ github.token }}
   gate:
