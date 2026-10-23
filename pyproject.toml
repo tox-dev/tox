@@ -135,6 +135,7 @@ docs = [
 fix = [
   "pre-commit-uv>=4.2.1",
 ]
+lock-tools = [ "nab==0.0.22" ]
 pkg-meta = [
   "check-wheel-contents>=0.6.3",
   "twine>=6.2",
@@ -142,27 +143,27 @@ pkg-meta = [
 ]
 release = [
   "prek>=0.2.6",
-  "release-creator>=0.5.1",
+  "release-creator>=0.6",
   "towncrier>=25.8",
 ]
 release-check = [
   "prek>=0.2.6",
 ]
 release-news = [
-  "release-creator>=0.5.1",
+  "release-creator>=0.6",
   "towncrier>=25.8",
 ]
 release-notes = [
-  "release-creator>=0.5.1",
+  "release-creator>=0.6",
 ]
 release-prepare = [
   "prek>=0.2.6",
-  "release-creator>=0.5.1",
+  "release-creator>=0.6",
   "towncrier>=25.8",
 ]
 release-validate = [
   "prek>=0.2.6",
-  "release-creator>=0.5.1",
+  "release-creator>=0.6",
 ]
 type-min = [
   "ty>=0.0.19",
@@ -348,3 +349,18 @@ type = [
   { directory = "removal", name = "Removed", showcontent = true },
   { directory = "packaging", name = "Packaging", showcontent = true },
 ]
+
+[tool.nab]
+mode = "universal"
+base-group = "project-runtime"
+build-group = "build"
+default-groups = []
+uploaded-prior-to = "P7D"
+decision-order = "stable"
+matrix.python = ">=3.15,<3.16"
+matrix.platforms = [ "linux_x86_64", "linux_aarch64", "macos_arm64", "windows_amd64" ]
+packages.release-creator.uploaded-prior-to = "2026-10-23T02:44:40Z"
+
+[[tool.nab.package-rules]]
+match = [ "nab", "nab-index", "nab-markersets", "nab-project", "nab-provider", "nab-resolver" ]
+uploaded-prior-to = "2026-10-19T00:00:00Z"

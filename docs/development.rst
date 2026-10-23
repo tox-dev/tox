@@ -275,7 +275,7 @@ local; nothing is pushed or published. The release tools come from the same ``py
     uv venv --python 3.15 .venv-release
     uv pip sync --preview-features pylock --python .venv-release/bin/python --group release pylock.toml
     tag=$(git tag --list | .venv-release/bin/release-creator tags --next auto --directory docs/changelog)
-    .venv-release/bin/release-creator fragments --directory docs/changelog --repository tox-dev/tox --git --resolve-authors
+    .venv-release/bin/release-creator fragments --directory docs/changelog --repository tox-dev/tox
     .venv-release/bin/towncrier build --yes --version "$tag"
     .venv-release/bin/prek run docstrfmt --files docs/changelog.rst
     .venv-release/bin/prek run --all-files
