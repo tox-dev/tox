@@ -225,14 +225,21 @@ def test_parallel_no_spinner_with_parallel(tox_project: ToxProjectCreator) -> No
     )
 
 
+@pytest.mark.parametrize(
+    "args",
+    [
+        pytest.param(("p",), id="run-parallel"),
+        pytest.param(("le", "-p", "auto"), id="legacy"),
+    ],
+)
 def test_parallel_no_spinner_ci(
-    tox_project: ToxProjectCreator, mocker: MockerFixture, monkeypatch: pytest.MonkeyPatch
+    tox_project: ToxProjectCreator, mocker: MockerFixture, monkeypatch: pytest.MonkeyPatch, args: tuple[str, ...]
 ) -> None:
     """Ensure spinner is disabled by default in CI."""
     mocked = mocker.patch.object(parallel, "execute")
     monkeypatch.setenv("CI", "1")
 
-    tox_project({"tox.ini": ""}).run("p")
+    tox_project({"tox.ini": ""}).run(*args)
 
     mocked.assert_called_once_with(
         mock.ANY,
