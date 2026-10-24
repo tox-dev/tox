@@ -142,27 +142,27 @@ pkg-meta = [
 ]
 release = [
   "prek>=0.2.6",
-  "release-creator>=1",
+  "release-creator>=1.1",
   "towncrier>=25.8",
 ]
 release-check = [
   "prek>=0.2.6",
 ]
 release-news = [
-  "release-creator>=1",
+  "release-creator>=1.1",
   "towncrier>=25.8",
 ]
 release-notes = [
-  "release-creator>=1",
+  "release-creator>=1.1",
 ]
 release-prepare = [
   "prek>=0.2.6",
-  "release-creator>=1",
+  "release-creator>=1.1",
   "towncrier>=25.8",
 ]
 release-validate = [
   "prek>=0.2.6",
-  "release-creator>=1",
+  "release-creator>=1.1",
 ]
 type-min = [
   "ty>=0.0.19",
@@ -349,13 +349,5 @@ type = [
   { directory = "packaging", name = "Packaging", showcontent = true },
 ]
 
-[tool.nab]
-mode = "universal"
-base-group = "project-runtime"
-build-group = "build"
-default-groups = []
-uploaded-prior-to = "P7D"
-decision-order = "stable"
-matrix.python = ">=3.15,<3.16"
-matrix.platforms = [ "linux_x86_64", "linux_aarch64", "macos_arm64", "windows_amd64" ]
-packages.release-creator.uploaded-prior-to = "2026-10-24T06:07:46Z"
+[tool.release-creator]
+locks.exclude-newer-package = { release-creator = "2026-10-24T09:08:40Z" }
