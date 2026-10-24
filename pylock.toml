@@ -713,11 +713,12 @@ sha256 = "d76623373421df22fb4cf8817020cbb7ef15c725b9d5e45f17e189bfc384190f"
 
 [[packages]]
 name = "release-creator"
-version = "0.6.5"
+version = "1.0.0"
 marker = "\"release-news\" in dependency_groups or \"release-notes\" in dependency_groups or \"release-prepare\" in dependency_groups or \"release-validate\" in dependency_groups"
 requires-python = ">=3.15"
 dependencies = [
     { name = "docutils" },
+    { name = "markdown-it-py" },
     { name = "mdformat" },
     { name = "mdformat-gfm" },
     { name = "packaging" },
@@ -727,22 +728,22 @@ dependencies = [
 index = "https://pypi.org/simple/"
 
 [packages.sdist]
-name = "release_creator-0.6.5.tar.gz"
-upload-time = 2026-10-23 19:54:49.281646+00:00
-url = "https://files.pythonhosted.org/packages/a0/da/7195823b3d0ab066f518d8bd987f88a39e0e39da33f629e021346209a7cb/release_creator-0.6.5.tar.gz"
-size = 135158
+name = "release_creator-1.0.0.tar.gz"
+upload-time = 2026-10-24 06:07:45.789370+00:00
+url = "https://files.pythonhosted.org/packages/e2/92/dfc1c6e8f52d50d91a05f77f67592c2408cabd9d96079fedbe551f24530d/release_creator-1.0.0.tar.gz"
+size = 134186
 
 [packages.sdist.hashes]
-sha256 = "954247b06b7b9a8c196a782252e3d980d33a9e9b7f9e5aea7647ef6c758d4275"
+sha256 = "1174e3a3fd39e9117eb9c34e3fbc58a8e32c49f5f65d01f39195231b967807f6"
 
 [[packages.wheels]]
-name = "release_creator-0.6.5-py3-none-any.whl"
-upload-time = 2026-10-23 19:54:47.716775+00:00
-url = "https://files.pythonhosted.org/packages/f1/4c/6215690fc2b48f3d927699bb16f5c8bcf26b8862e378df33a2581a45215b/release_creator-0.6.5-py3-none-any.whl"
-size = 46723
+name = "release_creator-1.0.0-py3-none-any.whl"
+upload-time = 2026-10-24 06:07:44.366184+00:00
+url = "https://files.pythonhosted.org/packages/6a/17/b1cd851932786f3e9e9f2187d150bc0860e04adf76cbfd45e6531715bf97/release_creator-1.0.0-py3-none-any.whl"
+size = 53396
 
 [packages.wheels.hashes]
-sha256 = "dd109f7fb64808a83833c332b8563c56bd943c4a8de79b440eab475b5ca9a73e"
+sha256 = "613a26a0d1b0042d9dad60dfc00f3e78208d84ab9f78cec792a407b6a0a75c24"
 
 [[packages]]
 name = "setuptools"
@@ -1025,7 +1026,7 @@ sha256 = "89ca642c5bf0101157a09366be69fad0379db1f700ae39a920e103234573670e"
 
 [tool.nab]
 nab-version = "0.0.22"
-created-at = 2026-10-23 20:06:57.330581+00:00
+created-at = 2026-10-24 06:24:09.387258+00:00
 command-line = [
     "nab",
     "lock",
@@ -1038,6 +1039,7 @@ command-line = [
     "release-validate",
     "--output",
     "pylock.toml",
+    "--upgrade",
 ]
 input-path = "pyproject.toml"
 mode = "universal"

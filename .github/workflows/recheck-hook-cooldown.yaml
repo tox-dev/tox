@@ -12,7 +12,7 @@ jobs:
       contents: read
       pull-requests: read
     steps:
-      - uses: tox-dev/github-workflows/recheck-hook-update-cooldown@74472c1a3602ca9b66db058ea31578865e1d208b
+      - uses: tox-dev/github-workflows/recheck-hook-update-cooldown@e2d5e308194a31710039f3237b7157431c0e38b5 # v2.0.0
         with:
           workflow: check.yaml
           job-name: Hook update cooldown
