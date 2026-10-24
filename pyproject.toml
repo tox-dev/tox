@@ -2,15 +2,15 @@
 build-backend = "hatchling.build"
 requires = [
   "docutils>=0.21",
+  "hatch-fancy-pypi-readme>=25.1",
   "hatch-vcs>=0.5",
   "hatchling>=1.29",
 ]
 
 [project]
 name = "tox"
+import-names = [ "tox" ]
 description = "tox is a generic virtualenv management and test command line tool"
-readme.content-type = "text/markdown"
-readme.file = "README.md"
 keywords = [
   "environments",
   "isolated",
@@ -46,6 +46,7 @@ classifiers = [
   "Topic :: Utilities",
 ]
 dynamic = [
+  "readme",
   "version",
 ]
 dependencies = [
@@ -69,7 +70,7 @@ optional-dependencies.testing = [
   "pytest>=9.0.2",
   "pytest-mock>=3.15.1",
 ]
-urls."Release Notes" = "https://tox.wiki/en/latest/changelog.html"
+urls.Changelog = "https://tox.wiki/en/latest/changelog.html"
 urls.Documentation = "https://tox.wiki"
 urls.Homepage = "https://tox.wiki"
 urls.Source = "https://github.com/tox-dev/tox"
@@ -92,6 +93,7 @@ test = [
   "distlib>=0.4",
   "docutils>=0.21",
   "flaky>=3.8.1",
+  "hatch-fancy-pypi-readme>=25.1",
   "hatch-vcs>=0.5",
   "hatchling>=1.29",
   "pdm-backend>=2.4.7",
@@ -114,12 +116,10 @@ type = [
   "types-colorama>=0.4.15",
   "types-docutils>=0.21",
   { include-group = "docs" },
-  { include-group = "release" },
   { include-group = "test" },
 ]
 docs = [
   "furo>=2025.12.19",
-  "sphinx>=9.1",
   "sphinx-argparse-cli>=1.21.1",
   "sphinx-autodoc-typehints>=3.9.7",
   "sphinx-copybutton>=0.5.2",
@@ -129,8 +129,8 @@ docs = [
   "sphinx-reredirects>=1.1",
   "sphinxcontrib-mermaid>=2.0.1",
   "sphinxcontrib-towncrier>=0.2.1a0",
-  "towncrier>=25.8",
   "truststore>=0.10.4",
+  { include-group = "release" },
 ]
 fix = [
   "pre-commit-uv>=4.2.1",
@@ -141,10 +141,28 @@ pkg-meta = [
   "uv>=0.10.8",
 ]
 release = [
-  "gitpython>=3.1.46",
-  "packaging>=26",
-  "pre-commit>=4.5.1",
+  "prek>=0.2.6",
+  "release-creator>=1.1",
   "towncrier>=25.8",
+]
+release-check = [
+  "prek>=0.2.6",
+]
+release-news = [
+  "release-creator>=1.1",
+  "towncrier>=25.8",
+]
+release-notes = [
+  "release-creator>=1.1",
+]
+release-prepare = [
+  "prek>=0.2.6",
+  "release-creator>=1.1",
+  "towncrier>=25.8",
+]
+release-validate = [
+  "prek>=0.2.6",
+  "release-creator>=1.1",
 ]
 type-min = [
   "ty>=0.0.19",
@@ -154,6 +172,8 @@ type-min = [
 
 [tool.hatch]
 version.source = "vcs"
+metadata.hooks.fancy-pypi-readme.content-type = "text/markdown"
+metadata.hooks.fancy-pypi-readme.fragments = [ { path = "README.md" } ]
 build.dev-mode-dirs = [
   "src",
 ]
@@ -167,6 +187,17 @@ build.targets.sdist.include = [
   "/tests",
   "/tox.toml",
 ]
+
+[tool.uv]
+dependency-groups.dev = { requires-python = ">=3.15" }
+dependency-groups.docs = { requires-python = ">=3.15" }
+dependency-groups.release = { requires-python = ">=3.15" }
+dependency-groups.release-check = { requires-python = ">=3.15" }
+dependency-groups.release-news = { requires-python = ">=3.15" }
+dependency-groups.release-notes = { requires-python = ">=3.15" }
+dependency-groups.release-prepare = { requires-python = ">=3.15" }
+dependency-groups.release-validate = { requires-python = ">=3.15" }
+dependency-groups.type = { requires-python = ">=3.15" }
 
 [tool.ruff]
 line-length = 120
@@ -301,15 +332,22 @@ html.skip_covered = false
 name = "tox"
 directory = "docs/changelog"
 filename = "docs/changelog.rst"
-template = "docs/changelog/template.jinja2"
+template = "release_creator.fragments:template.rst.jinja2"
 title_format = false
 issue_format = ":issue:`{issue}`"
+underlines = [ "*", "-", "~" ]
 type = [
-  { directory = "breaking", name = "Backward incompatible changes", showcontent = true },
-  { directory = "deprecation", name = "Deprecations (removal in next major release)", showcontent = true },
-  { directory = "feature", name = "Features", showcontent = true },
-  { directory = "bugfix", name = "Bug fixes", showcontent = true },
-  { directory = "doc", name = "Improved documentation", showcontent = true },
-  { directory = "packaging", name = "Packaging updates and notes for downstreams", showcontent = true },
-  { directory = "contrib", name = "Contributor-facing changes", showcontent = true },
+  { directory = "feature", name = "Added", showcontent = true },
+  { directory = "change", name = "Changes", showcontent = true },
+  { directory = "bugfix", name = "Fixed", showcontent = true },
+  { directory = "doc", name = "Documentation", showcontent = true },
+  { directory = "breaking", name = "Breaking changes", showcontent = true },
+  { directory = "security", name = "Security", showcontent = true },
+  { directory = "performance", name = "Performance", showcontent = true },
+  { directory = "deprecation", name = "Deprecated", showcontent = true },
+  { directory = "removal", name = "Removed", showcontent = true },
+  { directory = "packaging", name = "Packaging", showcontent = true },
 ]
+
+[tool.release-creator]
+locks.exclude-newer-package = { release-creator = "2026-10-24T09:08:40Z" }

@@ -13,3 +13,4 @@ __pycache__
 /tests/demo_pkg_inline.lock
 /tests/demo_pkg_inline/.tox/
 .venv
+/uv.lock
