@@ -9,7 +9,7 @@ Please, make sure you address all the checklists (for details on how see
 
 - [ ] ensured there are test(s) validating the fix
 
-- [ ] added news fragment in `docs/changelog` folder
+- [ ] added a `docs/changelog` fragment for user-facing changes, or applied `skip news`
 
 - [ ] updated/extended the documentation
 

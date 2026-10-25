@@ -1,4 +1,4 @@
-name: Update SchemaStore
+name: 🔀 Update SchemaStore
 on:
   push:
     tags: ["*"]
@@ -10,23 +10,25 @@ permissions:
   contents: read
 jobs:
   validate:
-    name: schema passes SchemaStore's checks
-    runs-on: ubuntu-24.04
+    name: 🔍 Schema passes SchemaStore's checks
+    runs-on: ubuntu-26.04
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: 📥 Check out code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - name: Install uv
-        uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+      - name: 🐍 Install uv
+        uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e # v10.3.2
         with:
+          version: latest-known
           python-version: "3.15"
           enable-cache: false
-      - name: Clone SchemaStore
+      - name: 📥 Clone SchemaStore
         run: git clone --depth 1 https://github.com/SchemaStore/schemastore /tmp/schemastore
-      - name: Install SchemaStore's dependencies
+      - name: 📦 Install SchemaStore's dependencies
         run: npm ci
         working-directory: /tmp/schemastore
-      - name: Stage tox's schema
+      - name: ⚙️ Stage tox's schema
         run: |
           uv run --no-project --python 3.15 python -c "
           import json
@@ -37,36 +39,39 @@ jobs:
               json.dump(schema, f, indent=2)
               f.write('\n')
           "
-      - name: Run SchemaStore's checks against it
+      - name: 🔍 Run SchemaStore's checks against it
         run: node ./cli.js check --schema-name=tox.json
         working-directory: /tmp/schemastore
   update-schemastore:
+    name: 🔀 Open SchemaStore PR
     needs: validate
     if: github.event_name == 'push'
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     environment: schemastore
     env:
       GH_TOKEN: ${{ secrets.SCHEMASTORE_TOKEN }}
       BRANCH: update-tox-schema
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: 📥 Check out code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - name: Install uv
-        uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+      - name: 🐍 Install uv
+        uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e # v10.3.2
         with:
+          version: latest-known
           python-version: "3.15"
           enable-cache: false
-      - name: Fork and clone SchemaStore
+      - name: 📥 Fork and clone SchemaStore
         run: gh repo fork SchemaStore/schemastore --clone -- /tmp/schemastore
-      - name: Sync fork's master with upstream
+      - name: ⬆️ Sync fork's master with upstream
         run: gh repo sync "$(gh api user --jq .login)/schemastore" -b master
-      - name: Create or reset branch from synced fork
+      - name: ⚙️ Create or reset branch from synced fork
         run: |
           git fetch origin master
           git switch -C "$BRANCH" origin/master
         working-directory: /tmp/schemastore
-      - name: Update schema and check for changes
+      - name: ⚙️ Update schema and check for changes
         id: diff
         run: |
           uv run --no-project --python 3.15 python -c "
@@ -82,7 +87,7 @@ jobs:
               json.dump(new, f, indent=2)
               f.write('\n')
           " && echo "changed=true" >> "$GITHUB_OUTPUT" || echo "changed=false" >> "$GITHUB_OUTPUT"
-      - name: Commit and push
+      - name: ⬆️ Commit and push
         if: steps.diff.outputs.changed == 'true'
         run: |
           gh auth setup-git
@@ -92,7 +97,7 @@ jobs:
           git commit -m "Update tox JSON Schema to ${GITHUB_REF_NAME}"
           git push --force origin "$BRANCH"
         working-directory: /tmp/schemastore
-      - name: Create or update pull request
+      - name: 🔀 Create or update pull request
         if: steps.diff.outputs.changed == 'true'
         run: |
           FORK_OWNER=$(gh api user --jq .login)
