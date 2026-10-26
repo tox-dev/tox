@@ -1498,6 +1498,21 @@ Run
             [testenv]
             commands = xcopy "\\server\share\file name.txt" .
 
+        tox expands substitutions before splitting command strings into arguments. Keep values with spaces unquoted in
+        ``[vars]`` and quote the complete argument where it is used:
+
+        .. code-block:: ini
+
+            [vars]
+            source = {tox_root}/source tree
+            common_source = {[vars]source}/common
+
+            [testenv]
+            commands = python -c 'import sys; print(sys.argv[1])' "--source={[vars]common_source}"
+
+        In INI, quotes in a value are literal characters.
+        Avoid quoting a ``[vars]`` value when the argument is already quoted in ``commands``.
+
         Inside an unquoted or double-quoted path, double backslashes escape one backslash. Single-quoted text is
         literal; TOML argument arrays bypass command-line splitting. Escape a quote or wrap it in the other quote type to
         pass it literally: ``\"value\"`` and ``'"value"'`` both pass ``"value"``.
