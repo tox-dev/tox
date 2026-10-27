@@ -1,3 +1,3 @@
-Keep the default of a ``{glob:PATTERN:DEFAULT}`` substitution whose pattern is a single letter and whose default is an
-absolute path, e.g. ``{glob:z:/fallback}``. The Windows drive letter heuristic no longer consumes that default on POSIX,
-where drive letters do not exist.
+``{glob:PATTERN:DEFAULT}`` with a single-letter pattern and an absolute default, such as ``{glob:z:/fallback}``, no
+longer expands to an empty string on POSIX: tox now looks for a Windows drive letter in the pattern only on Windows - by
+:user:`JingHao-Leon`.

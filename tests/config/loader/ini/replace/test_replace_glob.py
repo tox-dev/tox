@@ -65,16 +65,16 @@ def test_replace_glob_nested_substitution(replace_one: ReplaceOne, tmp_path: Pat
     assert str(tmp_path / "marker.txt") in result
 
 
-@pytest.mark.skipif(
-    sys.platform == "win32", reason="drive letter is valid on Windows, so the default is expected to be split"
+@pytest.mark.skipif(sys.platform == "win32", reason="Windows reads z:/fallback as a drive path")
+@pytest.mark.parametrize(
+    ("existing", "expected"),
+    [
+        pytest.param("z", "z", id="match"),
+        pytest.param("y", "/fallback", id="default"),
+    ],
 )
-def test_replace_glob_single_letter_pattern_absolute_default(replace_one: ReplaceOne, tmp_path: Path) -> None:
-    (tmp_path / "z").touch()
-    assert replace_one("{glob:z:/fallback}") == str(tmp_path / "z")
-
-
-@pytest.mark.skipif(
-    sys.platform == "win32", reason="drive letter is valid on Windows, so the default is expected to be split"
-)
-def test_replace_glob_single_letter_pattern_absolute_default_no_match(replace_one: ReplaceOne) -> None:
-    assert replace_one("{glob:z:/fallback}") == "/fallback"
+def test_replace_glob_single_letter_pattern_absolute_default(
+    replace_one: ReplaceOne, tmp_path: Path, existing: str, expected: str
+) -> None:
+    (tmp_path / existing).touch()
+    assert replace_one("{glob:z:/fallback}") == str(tmp_path / expected)
