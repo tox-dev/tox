@@ -111,7 +111,7 @@ def find_factor_groups(value: str) -> Iterator[list[tuple[str, bool]]]:
         yield [name_with_negate(f) for f in env.split("-")]
 
 
-_FACTOR_RE = re.compile(
+_FACTOR_RE: Final[re.Pattern[str]] = re.compile(
     r"""
     (?:
         !?              # optional negation prefix
