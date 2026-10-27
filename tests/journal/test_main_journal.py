@@ -67,7 +67,7 @@ def test_env_journal_disabled() -> None:
     ],
 )
 def test_write_journal_round_trips_output(tmp_path: Path, mocker: MockerFixture, output: str) -> None:
-    mocker.patch("locale.getpreferredencoding", return_value="cp1252")
+    mocker.patch("locale.getpreferredencoding", autospec=True, return_value="cp1252")
     journal = Journal(enabled=True)
     journal.get_env_journal("py")["output"] = output
     path = tmp_path / "out.json"
