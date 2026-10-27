@@ -5,7 +5,7 @@ from __future__ import annotations
 from itertools import product
 from typing import TYPE_CHECKING
 
-from tox.config.loader.ini.factor import LATEST_PYTHON_MINOR_MAX, LATEST_PYTHON_MINOR_MIN
+from tox.config.loader.ini.factor import open_minor_range
 
 if TYPE_CHECKING:
     from tox.config.loader.toml._api import TomlTypes
@@ -104,24 +104,19 @@ def _expand_labeled(label: str, values: TomlTypes) -> list[str]:
 
 def _expand_range(range_dict: dict[str, TomlTypes]) -> list[str]:
     prefix: str = str(range_dict["prefix"])
-    has_start = "start" in range_dict
-    has_stop = "stop" in range_dict
-    if not has_start and not has_stop:
+    start = range_dict.get("start")
+    stop = range_dict.get("stop")
+    if start is None and stop is None:
         msg = "range must have at least 'start' or 'stop'"
         raise TypeError(msg)
-    start = range_dict.get("start", LATEST_PYTHON_MINOR_MIN)
-    stop = range_dict.get("stop", LATEST_PYTHON_MINOR_MAX)
-    if type(start) is not int:  # bool subclasses int, so isinstance accepts true/false
+    if start is not None and type(start) is not int:  # bool subclasses int, so isinstance accepts true/false
         msg = f"range 'start' must be an integer, got {type(start).__name__}"
         raise TypeError(msg)
-    if type(stop) is not int:
+    if stop is not None and type(stop) is not int:
         msg = f"range 'stop' must be an integer, got {type(stop).__name__}"
         raise TypeError(msg)
-    expanded = [f"{prefix}{i}" for i in range(start, stop + 1)]
-    if expanded or (has_start and has_stop):
-        return expanded
-    # an open bound that sits outside the supported CPython window still names a version
-    return [f"{prefix}{start if has_start else stop}"]
+    minors = open_minor_range(start, stop) if start is None or stop is None else range(start, stop + 1)
+    return [f"{prefix}{i}" for i in minors]
 
 
 __all__ = [

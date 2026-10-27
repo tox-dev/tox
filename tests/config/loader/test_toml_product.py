@@ -202,14 +202,15 @@ def test_expand_range_open_start() -> None:
     assert result == [f"py3{i}" for i in range(LATEST_PYTHON_MINOR_MIN, 14)]
 
 
-def test_expand_range_open_stop_past_latest() -> None:
-    beyond = LATEST_PYTHON_MINOR_MAX + 1
-    assert _expand_range({"prefix": "py3", "start": beyond}) == [f"py3{beyond}"]
-
-
-def test_expand_range_open_start_below_min() -> None:
-    below = LATEST_PYTHON_MINOR_MIN - 1
-    assert _expand_range({"prefix": "py3", "stop": below}) == [f"py3{below}"]
+@pytest.mark.parametrize(
+    ("key", "bound"),
+    [
+        pytest.param("start", LATEST_PYTHON_MINOR_MAX + 1, id="start-past-max"),
+        pytest.param("stop", LATEST_PYTHON_MINOR_MIN - 1, id="stop-below-min"),
+    ],
+)
+def test_expand_range_open_bound_outside_window(key: str, bound: int) -> None:
+    assert expand_factor_group({"prefix": "py3", key: bound}) == [f"py3{bound}"]
 
 
 def test_expand_range_no_bounds() -> None:
