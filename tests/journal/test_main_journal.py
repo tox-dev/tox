@@ -14,6 +14,8 @@ from tox.journal.main import Journal
 if TYPE_CHECKING:
     from pathlib import Path
 
+    from pytest_mock import MockerFixture
+
 
 @pytest.fixture(scope="session")
 def base_info() -> dict[str, Any]:
@@ -57,12 +59,19 @@ def test_env_journal_disabled() -> None:
     assert journal.content == {"testenvs": {"a": {"demo": 2}}}
 
 
-def test_write_journal_is_utf8_regardless_of_locale(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr("locale.getpreferredencoding", lambda do_setlocale=True: "cp1252")  # ruff:ignore[unused-lambda-argument]
+@pytest.mark.parametrize(
+    "output",
+    [
+        pytest.param("\u2713 passed", id="outside-locale-code-page"),
+        pytest.param("caf\udce9", id="undecodable-byte"),
+    ],
+)
+def test_write_journal_round_trips_output(tmp_path: Path, mocker: MockerFixture, output: str) -> None:
+    mocker.patch("locale.getpreferredencoding", return_value="cp1252")
     journal = Journal(enabled=True)
-    journal.get_env_journal("py")["output"] = "\u2713 passed"
+    journal.get_env_journal("py")["output"] = output
     path = tmp_path / "out.json"
 
     write_journal(path, journal)
 
-    assert json.loads(path.read_text(encoding="utf-8"))["testenvs"]["py"]["output"] == "\u2713 passed"
+    assert json.loads(path.read_text(encoding="utf-8"))["testenvs"]["py"]["output"] == output
