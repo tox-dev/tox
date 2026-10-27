@@ -1512,8 +1512,9 @@ Run
             commands = python -c 'import sys; print(sys.argv[1])' "--source={[vars]common_source}"
 
         Quotes stored in a ``[vars]`` value are pasted in too and pair up with the quotes around them. With
-        ``source = "{tox_root}/source tree"``, ``"--source={[vars]source}/sub dir"`` splits at the space in ``sub dir``,
-        and ``common_source = "{[vars]source}/common"`` splits at every space in the path when used unquoted.
+        ``source = "{tox_root}/source tree"``, ``"--source={[vars]source}/sub dir"`` splits at the spaces in
+        the stored path and keeps ``sub dir`` whole, and ``common_source = "{[vars]source}/common"`` splits at every
+        space in the path when used unquoted.
 
         Inside an unquoted or double-quoted path, double backslashes escape one backslash. Single-quoted text is
         literal; TOML argument arrays bypass command-line splitting. Escape a quote or wrap it in the other quote type to
