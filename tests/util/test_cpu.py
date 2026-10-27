@@ -2,24 +2,31 @@ from __future__ import annotations
 
 import os
 import sys
+from typing import TYPE_CHECKING
 
 import pytest
 
 from tox.util.cpu import auto_detect_cpus
 
-
-@pytest.mark.skipif(sys.version_info < (3, 13), reason="os.process_cpu_count is new in 3.13")
-def test_auto_detect_cpus_uses_process_cpu_count(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr(os, "process_cpu_count", lambda: 3)
-    monkeypatch.setattr(os, "cpu_count", lambda: 64)
-    assert auto_detect_cpus() == 3
+if TYPE_CHECKING:
+    from collections.abc import Iterator
 
 
-@pytest.mark.skipif(sys.version_info >= (3, 13), reason="3.13+ asks os.process_cpu_count")
-def test_auto_detect_cpus_honours_affinity(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr(os, "sched_getaffinity", lambda _pid: {0, 2, 5}, raising=False)
-    monkeypatch.setattr(os, "cpu_count", lambda: 64)
-    assert auto_detect_cpus() == 3
+@pytest.fixture
+def two_cpu_affinity() -> Iterator[None]:
+    original = os.sched_getaffinity(0)
+    os.sched_setaffinity(0, sorted(original)[:2])
+    yield
+    os.sched_setaffinity(0, original)
+
+
+@pytest.mark.skipif(
+    not hasattr(os, "sched_setaffinity") or len(os.sched_getaffinity(0)) < 3,
+    reason="needs a CPU affinity API and at least three usable CPUs",
+)
+@pytest.mark.usefixtures("two_cpu_affinity")
+def test_auto_detect_cpus_honours_affinity() -> None:
+    assert auto_detect_cpus() == 2
 
 
 @pytest.mark.skipif(sys.version_info >= (3, 13), reason="3.13+ asks os.process_cpu_count")
