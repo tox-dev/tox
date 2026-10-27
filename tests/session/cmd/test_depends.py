@@ -148,7 +148,7 @@ def test_depends_sdist(tox_project: ToxProjectCreator, patch_prev_py: PatchPrevP
                   lint-a
                   lint-b
             """,
-            id="char_class",
+            id="char_set",
         ),
         pytest.param(
             ["lint-a", "lint-b", "lint-c", "cov"],
@@ -162,7 +162,7 @@ def test_depends_sdist(tox_project: ToxProjectCreator, patch_prev_py: PatchPrevP
                cov
                   lint-c
             """,
-            id="negated_char_class",
+            id="negated_char_set",
         ),
         pytest.param(
             ["lint", "cov"],
