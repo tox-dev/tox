@@ -588,6 +588,29 @@ def test_config_in_toml_replace_glob_substitutes_pattern_and_default(
 
 
 @pytest.mark.parametrize(
+    "pattern",
+    [
+        pytest.param('"{env:D}"', id="sibling-key"),
+        pytest.param('{ replace = "env", name = "D" }', id="env-table"),
+    ],
+)
+def test_config_in_toml_replace_glob_in_set_env_substitutes_pattern(
+    tox_project: ToxProjectCreator, tmp_path: Path, pattern: str
+) -> None:
+    (tmp_path / "p" / "sub").mkdir(parents=True)
+    (tmp_path / "p" / "sub" / "a.txt").touch()
+    project = tox_project({
+        "pyproject.toml": dedent(f"""
+        [tool.tox.env.A]
+        set_env = {{ D = "sub/*.txt", G = {{ replace = "glob", pattern = {pattern} }} }}
+        """),
+    })
+    outcome = project.run("c", "-e", "A", "-k", "set_env")
+    outcome.assert_success()
+    assert f"G={tmp_path / 'p' / 'sub' / 'a.txt'}\n" in outcome.out
+
+
+@pytest.mark.parametrize(
     ("env_vars", "condition", "then", "else_val", "expected"),
     [
         pytest.param({"TAG": "v1"}, "env.TAG", "yes", "no", "yes", id="env_set"),

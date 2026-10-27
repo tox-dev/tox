@@ -10,6 +10,7 @@ from typing import TYPE_CHECKING, Any, Protocol, cast
 from tox.config.loader.api import apply_overrides_to_raw
 from tox.config.loader.ini.factor import active_factors
 from tox.config.loader.replacer import (
+    ARG_DELIMITER,
     BACKSLASH_ESCAPE_CHARS,
     MatchError,
     MatchRecursionError,
@@ -132,7 +133,13 @@ class Unroll:
 
     def _replace_glob(self, value: dict[str, TomlTypes], depth: int, *, skip_str: bool) -> TomlTypes:
         # substitute the pattern and the fallback like the INI ``{glob:PATTERN:DEFAULT}`` form does
-        resolved = {key: self(value[key], depth, skip_str=skip_str) for key in ("pattern", "default") if key in value}
+        resolved: dict[str, TomlTypes] = {
+            key: self(value[key], depth, skip_str=skip_str) for key in ("pattern", "default") if key in value
+        }
+        if skip_str:  # set_env resolves it when read, seeing the keys next to it
+            return _glob_expression(
+                validate(resolved.get("pattern", ""), str), validate(resolved.get("default", ""), str)
+            )
         return _replace_glob_toml(self.conf, {**value, **resolved})
 
     def _replace_if(self, value: dict[str, TomlTypes], depth: int, *, skip_str: bool) -> TomlTypes:
@@ -177,12 +184,18 @@ class Unroll:
 def _env_expression(name: str, default: str) -> str:
     """Write an ``env`` table as the ``{env:NAME:DEFAULT}`` string that resolves to the same value."""
     escaped_name = "".join(f"\\{char}" if char in BACKSLASH_ESCAPE_CHARS else char for char in name)
-    # the default keeps its substitutions, but a brace it does not pair would end the expression early
+    return f"{{env:{escaped_name}:{_keep_substitutions(default, escape_delimiter=False)}}}"
+
+
+def _keep_substitutions(text: str, *, escape_delimiter: bool) -> str:
+    # the text keeps its substitutions, but a brace it does not pair would end the expression early and, for an argument
+    # before the last one, a colon outside its substitutions would split it
     parts: list[str] = []
     unclosed: list[int] = []
+    delimiters: list[tuple[int, int | None]] = []
     pos = 0
-    while pos < len(default):
-        piece = default[pos : pos + 2] if default[pos] == "\\" else default[pos]
+    while pos < len(text):
+        piece = text[pos : pos + 2] if text[pos] == "\\" else text[pos]
         pos += len(piece)
         if piece == "{":
             unclosed.append(len(parts))
@@ -190,10 +203,21 @@ def _env_expression(name: str, default: str) -> str:
             unclosed.pop()
         elif piece == "}":
             piece = "\\}"
+        elif piece == ARG_DELIMITER and escape_delimiter:
+            delimiters.append((len(parts), unclosed[-1] if unclosed else None))
         parts.append(piece)
     for index in unclosed:
         parts[index] = "\\{"
-    return f"{{env:{escaped_name}:{''.join(parts)}}}"
+    for index, opener in delimiters:
+        if opener is None or opener in unclosed:
+            parts[index] = f"\\{ARG_DELIMITER}"
+    return "".join(parts)
+
+
+def _glob_expression(pattern: str, default: str) -> str:
+    """Write a ``glob`` table as the ``{glob:PATTERN:DEFAULT}`` string that resolves to the same value."""
+    escaped_pattern = _keep_substitutions(pattern, escape_delimiter=True)
+    return f"{{glob:{escaped_pattern}:{_keep_substitutions(default, escape_delimiter=False)}}}"
 
 
 def _replace_glob_toml(conf: Config | None, value: dict[str, Any]) -> list[TomlTypes] | str:
