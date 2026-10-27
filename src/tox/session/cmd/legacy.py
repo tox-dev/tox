@@ -14,7 +14,6 @@ from tox.session.cmd.run.parallel import OFF_VALUE, parallel_flags, run_parallel
 from tox.session.cmd.run.sequential import run_sequential
 from tox.session.env_select import CliEnv, EnvSelector, register_env_select_flags
 from tox.tox_env.python.pip.req_file import PythonDeps
-from tox.util.ci import is_ci
 
 from .devenv import devenv
 from .list_env import list_env
@@ -59,7 +58,7 @@ def tox_add_option(parser: ToxParser) -> None:
     )
     register_env_select_flags(our, default=CliEnv())
     env_run_create_flags(our, mode="legacy")
-    parallel_flags(our, default_parallel=OFF_VALUE, no_args=True, default_spinner=is_ci())
+    parallel_flags(our, default_parallel=OFF_VALUE, no_args=True)
     our.add_argument(
         "--pre",
         action="store_true",
