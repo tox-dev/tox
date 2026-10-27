@@ -2,12 +2,14 @@ from __future__ import annotations
 
 import logging
 import operator
+import re
 from abc import ABC, abstractmethod
 from collections import defaultdict
 from collections.abc import Callable, Sequence
 from functools import partial
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
+from urllib.parse import parse_qs, urlsplit
 
 from packaging.requirements import Requirement
 
@@ -24,6 +26,9 @@ from tox.util.typing_compat import override
 if TYPE_CHECKING:
     from tox.config.main import Config
     from tox.tox_env.package import Package
+    from tox.tox_env.python.pip.req.file import ParsedRequirement
+
+_PATH_EXTRAS = re.compile(r"\[[^\]]*\]$")
 
 
 class PythonInstallerListDependencies(Installer[Python], ABC):
@@ -206,7 +211,9 @@ class Pip(PythonInstallerListDependencies):
                     args.extend(self.constraints.as_root_args)
                     self._execute_installer(args, of_type)
                     if self.constrain_package_deps and not self.use_frozen_constraints and not self._has_constraints:
-                        combined_constraints = new_requirements + [c.removeprefix("-c ") for c in new_constraints]
+                        own = (_as_constraint(req) for req in arguments.requirements)
+                        combined_constraints = [c for c in own if c is not None]
+                        combined_constraints.extend(c.removeprefix("-c ") for c in new_constraints)
                         self.constraints_file().write_text("\n".join(combined_constraints))
 
     @staticmethod
@@ -321,6 +328,29 @@ class Pip(PythonInstallerListDependencies):
         except ValueError:
             opts_at = len(install_command)
         return install_command[:opts_at] + list(args) + install_command[opts_at + 1 :]
+
+
+def _as_constraint(req: ParsedRequirement) -> str | None:
+    # pip rejects extras, editables and anything it cannot name (a directory or source archive) in a constraints file
+    if req.options.get("is_constraint") or req.options.get("is_editable"):
+        return None
+    if isinstance(req.requirement, Requirement):
+        named = Requirement(str(req.requirement))
+        named.extras = set()
+        line = str(named)
+    else:
+        line = _PATH_EXTRAS.sub("", str(req.requirement))
+        if not _pip_can_name(line):
+            return None
+    return " ".join([line, *(f"--hash {value}" for value in req.options.get("hash", []))])
+
+
+def _pip_can_name(line: str) -> bool:
+    # pip names a wheel from its file name and a URL from its egg fragment
+    if "://" not in line:
+        return line.endswith(".whl")
+    url = urlsplit(line)
+    return url.path.endswith(".whl") or "egg" in parse_qs(url.fragment)
 
 
 __all__ = [

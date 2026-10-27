@@ -2322,8 +2322,10 @@ Pip installer
 
     When ``use_frozen_constraints`` is true, then tox will use the ``list_dependencies_command`` to enumerate package
     versions in order to create ``{env_dir}{/}constraints.txt``. Otherwise the package specifications explicitly listed
-    under ``deps`` (or in requirements / constraints files referenced in ``deps``) will be used as the constraints. If
-    ``constrain_package_deps`` is false or :ref:`constraints` is set, then this setting has no effect.
+    under ``deps`` (or in requirements / constraints files referenced in ``deps``) will be used as the constraints, with
+    extras removed and editable entries and unnamed directories or source archives left out, since pip does not accept
+    those in a constraints file. If ``constrain_package_deps`` is false or :ref:`constraints` is set, then this setting
+    has no effect.
 
 ********************
  User configuration
