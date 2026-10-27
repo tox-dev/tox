@@ -356,6 +356,16 @@ def test_python_generate_hash_seed(tox_project: ToxProjectCreator) -> None:
     assert 1 <= int(result.out.splitlines()[1]) <= (1024 if sys.platform == "win32" else 4294967295)
 
 
+def test_python_generate_hash_seed_for_empty_env(
+    tox_project: ToxProjectCreator, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("PYTHONHASHSEED", "")
+    ini = "[testenv]\npackage=skip\ncommands=python -c 'import os; print(os.environ[\"PYTHONHASHSEED\"])'"
+    result = tox_project({"tox.ini": ini}).run("r", "-e", "py")
+    result.assert_success()
+    assert 1 <= int(result.out.splitlines()[1]) <= (1024 if sys.platform == "win32" else 4294967295)
+
+
 def test_python_keep_hash_seed(tox_project: ToxProjectCreator) -> None:
     ini = """
     [testenv]
