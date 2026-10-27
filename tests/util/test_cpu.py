@@ -11,6 +11,8 @@ from tox.util.cpu import auto_detect_cpus
 if TYPE_CHECKING:
     from collections.abc import Iterator
 
+    from pytest_mock import MockerFixture
+
 
 @pytest.fixture
 def two_cpu_affinity() -> Iterator[None]:
@@ -30,14 +32,16 @@ def test_auto_detect_cpus_honours_affinity() -> None:
 
 
 @pytest.mark.skipif(sys.version_info >= (3, 13), reason="3.13+ asks os.process_cpu_count")
-def test_auto_detect_cpus_without_affinity(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_auto_detect_cpus_without_affinity(monkeypatch: pytest.MonkeyPatch, mocker: MockerFixture) -> None:
     monkeypatch.delattr(os, "sched_getaffinity", raising=False)
-    monkeypatch.setattr(os, "cpu_count", lambda: 5)
+    mocker.patch.object(os, "cpu_count", return_value=5)
     assert auto_detect_cpus() == 5
 
 
-def test_auto_detect_cpus_returns_one_when_count_is_unknown(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_auto_detect_cpus_returns_one_when_count_is_unknown(
+    monkeypatch: pytest.MonkeyPatch, mocker: MockerFixture
+) -> None:
     monkeypatch.delattr(os, "sched_getaffinity", raising=False)
-    monkeypatch.setattr(os, "process_cpu_count", lambda: None, raising=False)
-    monkeypatch.setattr(os, "cpu_count", lambda: None)
+    mocker.patch.object(os, "process_cpu_count", create=True, return_value=None)
+    mocker.patch.object(os, "cpu_count", return_value=None)
     assert auto_detect_cpus() == 1
