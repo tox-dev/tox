@@ -128,7 +128,7 @@ class Unroll:
         if skip_str:  # set_env resolves it when read, seeing the keys next to it
             # a parsed expression keeps the default verbatim, which the {env:NAME:DEFAULT} text cannot always do
             parsed = find_replace_expr(default if isinstance(default, MatchExpression) else validate(default, str))
-            return cast("TomlTypes", MatchExpression([["env"], [name], parsed]))
+            return MatchExpression([["env"], [name], parsed])
         # use a copy of the chain so this substitution's env references do not leak into
         # adjacent entries of the same value tree and spuriously trip the circular check (#2869)
         return replace_env(self.conf, [name, validate(default, str)], self.args.copy())

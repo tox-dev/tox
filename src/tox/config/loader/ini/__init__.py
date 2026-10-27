@@ -90,9 +90,8 @@ class IniLoader(StrConvert, Loader[str]):
         replace_all = replace_command_lines if of_type == list[Command] else replace_references
 
         def replacer(raw_: str | MatchExpression, args_: ConfigLoadArgs, *, recursive: bool = True) -> str:
-            reference_replacer = ReplaceReferenceIni(conf, self)
             try:
-                return (replace_all if recursive else replace_once)(conf, reference_replacer, raw_, args_)
+                return (replace_all if recursive else replace_once)(conf, ReplaceReferenceIni(conf, self), raw_, args_)
             except Exception as exception:
                 if isinstance(exception, (HandledError, Skip)):
                     raise

@@ -4,7 +4,7 @@ import re
 from dataclasses import dataclass
 from itertools import chain
 from pathlib import Path
-from typing import TYPE_CHECKING, NotRequired, Protocol, TypedDict, cast, final
+from typing import TYPE_CHECKING, NotRequired, Protocol, TypedDict, final
 
 from packaging.markers import Marker
 
@@ -76,8 +76,7 @@ class SetEnv:
         self._override_keys: set[str] = set()
         self._expanding = False
         self._env_files: list[tuple[SetEnvValue, set[str]]] = []
-        # without a loader there is nothing to substitute, and only a loader's TOML tables become parsed expressions
-        self._replacer: Replacer = lambda s, c, *, recursive=True: cast("str", s)  # ruff:ignore[unused-lambda-argument]
+        self._replacer: Replacer = self._keep_text
         self._name, self._env_name, self._root = name, env_name, root
         self._args = ConfigLoadArgs([], name, env_name)
         if isinstance(raw, list):
@@ -89,6 +88,13 @@ class SetEnv:
             self._parse_dict(raw.items())
         else:
             self._parse_str(raw, substituted=substituted)
+
+    @staticmethod
+    def _keep_text(value: SetEnvValue, _args: ConfigLoadArgs, /, *, recursive: bool = True) -> str:  # ruff:ignore[unused-static-method-argument]
+        if isinstance(value, str):  # without a loader there is nothing to substitute
+            return value
+        msg = f"set_env value {value!r} needs a configuration loader to resolve"
+        raise TypeError(msg)
 
     def _parse_str(self, raw: str, *, substituted: bool) -> None:
         keys_after_file: set[str] = set()

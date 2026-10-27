@@ -10,6 +10,7 @@ from unittest.mock import ANY
 
 import pytest
 
+from tox.config.loader.replacer import MatchExpression
 from tox.config.set_env import SetEnv
 
 if TYPE_CHECKING:
@@ -1068,6 +1069,12 @@ def test_set_env_toml_env_table_set_ignores_default(
     monkeypatch.setenv("PRESENT", "/host")
     set_env = eval_set_env(_toml_env_table("PRESENT", default), of_type="toml")
     assert set_env.load("DATA") == "/host"
+
+
+def test_set_env_parsed_expression_without_loader_fails() -> None:
+    set_env = SetEnv({"DATA": MatchExpression([["env"], ["NAME"], []])}, "py", "py", Path())
+    with pytest.raises(TypeError, match="needs a configuration loader to resolve"):
+        set_env.load("DATA")
 
 
 @pytest.mark.parametrize(
