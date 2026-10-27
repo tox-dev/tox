@@ -165,7 +165,7 @@ class Unroll:
         return value
 
     @staticmethod
-    def _to_raw(value: Any) -> TomlTypes:
+    def _to_raw(value: object) -> TomlTypes:
         if isinstance(value, (PythonDeps, PythonConstraints)):
             value = value.lines()
         elif isinstance(value, Command):
