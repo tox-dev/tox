@@ -384,28 +384,28 @@ sha256 = "4cfbebf3eec4040d2073b19c460511ad47eef7b852dbf9a0d385099b4dafa31e"
 
 [[packages]]
 name = "certifi"
-version = "2026.10.18"
+version = "2026.10.19"
 marker = "\"dev\" in dependency_groups or \"docs\" in dependency_groups or \"pkg-meta\" in dependency_groups or \"test\" in dependency_groups or \"type\" in dependency_groups or \"type-min\" in dependency_groups or \"testing\" in extras"
 requires-python = ">=3.7"
 index = "https://pypi.org/simple/"
 
 [packages.sdist]
-name = "certifi-2026.10.18.tar.gz"
-upload-time = 2026-10-18 16:21:07.655710+00:00
-url = "https://files.pythonhosted.org/packages/7e/eb/a2aa1ac3ea30dd3f30ca57f40232138b6b0040719316ecb85daf61167771/certifi-2026.10.18.tar.gz"
-size = 135227
+name = "certifi-2026.10.19.tar.gz"
+upload-time = 2026-10-20 02:24:16.604828+00:00
+url = "https://files.pythonhosted.org/packages/a6/bd/1436c50cc46699de0230fbaacc1d1de7bfec413176099949e9d5112e88f2/certifi-2026.10.19.tar.gz"
+size = 137598
 
 [packages.sdist.hashes]
-sha256 = "b9995d97b64d0431a5af837d8ca8cd6238104d1f319f04bd93ea43124d6c861e"
+sha256 = "035c1e85572b141bf1c3a3eff0e33a8eb74917522f2559075ff8d2fea780a1ae"
 
 [[packages.wheels]]
-name = "certifi-2026.10.18-py3-none-any.whl"
-upload-time = 2026-10-18 16:21:06.276884+00:00
-url = "https://files.pythonhosted.org/packages/08/ba/95dd616042484f7c83a06974388b37b837732740ee70bc5dc715b5fcd55a/certifi-2026.10.18-py3-none-any.whl"
-size = 134093
+name = "certifi-2026.10.19-py3-none-any.whl"
+upload-time = 2026-10-20 02:24:15.072385+00:00
+url = "https://files.pythonhosted.org/packages/c4/51/29046e48f693c54e5b7412216d447a1d8362c9653148d98c02cdf65fa733/certifi-2026.10.19-py3-none-any.whl"
+size = 136464
 
 [packages.wheels.hashes]
-sha256 = "73191c47aaa79da394e8fee2dbc2ec827432cab56311122c9e47abf79e390f62"
+sha256 = "42d35340cc5b9ba78e818ddbff0c5b1c2b779de448a340fd1b989f5fa8670e1b"
 
 [[packages]]
 name = "cffi"
@@ -3446,7 +3446,7 @@ sha256 = "fa30e3ba4809cb81ce1f3209f2fbe3e779fc445f0439bc147a0d7c4601743f21"
 
 [[packages]]
 name = "sphinx"
-version = "9.1.0"
+version = "9.1.1"
 marker = "\"dev\" in dependency_groups or \"docs\" in dependency_groups or \"type\" in dependency_groups"
 requires-python = ">=3.12"
 dependencies = [
@@ -3470,22 +3470,22 @@ dependencies = [
 index = "https://pypi.org/simple/"
 
 [packages.sdist]
-name = "sphinx-9.1.0.tar.gz"
-upload-time = 2025-12-31 15:09:27.646696+00:00
-url = "https://files.pythonhosted.org/packages/cd/bd/f08eb0f4eed5c83f1ba2a3bd18f7745a2b1525fad70660a1c00224ec468a/sphinx-9.1.0.tar.gz"
-size = 8718324
+name = "sphinx-9.1.1.tar.gz"
+upload-time = 2026-10-20 00:41:13.960930+00:00
+url = "https://files.pythonhosted.org/packages/fc/73/567727fc8c8d85bc3adc88a246e12937cfda8d565cf1d80e85bceaa61fe5/sphinx-9.1.1.tar.gz"
+size = 8725638
 
 [packages.sdist.hashes]
-sha256 = "7741722357dd75f8190766926071fed3bdc211c74dd2d7d4df5404da95930ddb"
+sha256 = "48b627f02908f22c601b3ba9c7b17265b4f315dd05c8bc64cd4da41183f44fbc"
 
 [[packages.wheels]]
-name = "sphinx-9.1.0-py3-none-any.whl"
-upload-time = 2025-12-31 15:09:25.561651+00:00
-url = "https://files.pythonhosted.org/packages/73/f7/b1884cb3188ab181fc81fa00c266699dab600f927a964df02ec3d5d1916a/sphinx-9.1.0-py3-none-any.whl"
-size = 3921742
+name = "sphinx-9.1.1-py3-none-any.whl"
+upload-time = 2026-10-20 00:41:11.288695+00:00
+url = "https://files.pythonhosted.org/packages/47/18/3c66ea76da7de47e716b181c35bdbfafbd5e9af0bb247b14578e9de348e9/sphinx-9.1.1-py3-none-any.whl"
+size = 3923559
 
 [packages.wheels.hashes]
-sha256 = "c84fdd4e782504495fe4f2c0b3413d6c2bf388589bb352d439b2a3bb99991978"
+sha256 = "f8b60013ce25017be41a509e5c2d265bc1918410061315c36b809c7f335646c0"
 
 [[packages]]
 name = "sphinx-argparse-cli"
@@ -4397,28 +4397,28 @@ sha256 = "0cf3cae568d36aa9576b28dfb35f11328f1cb974ca7647d9475ebb86c75ac6e3"
 
 [[packages]]
 name = "uv"
-version = "0.13.1"
+version = "0.13.3"
 marker = "\"fix\" in dependency_groups or \"pkg-meta\" in dependency_groups"
 requires-python = ">=3.8"
 index = "https://pypi.org/simple/"
 
 [packages.sdist]
-name = "uv-0.13.1.tar.gz"
-upload-time = 2026-10-14 05:13:35.353145+00:00
-url = "https://files.pythonhosted.org/packages/ef/10/81f499de381ac81e09961e1c19255c5cf49563ac418464def4190b6c7400/uv-0.13.1.tar.gz"
-size = 7434239
+name = "uv-0.13.3.tar.gz"
+upload-time = 2026-10-20 01:13:40.241842+00:00
+url = "https://files.pythonhosted.org/packages/b2/0d/0cf59876b94f537055fdcc6a32126fd9abb841620b6589ae3fcbf6e21f69/uv-0.13.3.tar.gz"
+size = 7477898
 
 [packages.sdist.hashes]
-sha256 = "6df50a86b09be66a413f8f1b16258d585d4dd1cbff591077ae1e6f65c26de2eb"
+sha256 = "fe8587cb414b324753eb2c1b2a54d2f93b2aed7e9cf02e9c1efa3776547a3aae"
 
 [[packages.wheels]]
-name = "uv-0.13.1-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl"
-upload-time = 2026-10-14 05:13:13.069021+00:00
-url = "https://files.pythonhosted.org/packages/14/0b/6602a613533602e7a083e908c4375f9b0e78a94ba2e21c29b21c41a0a611/uv-0.13.1-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl"
-size = 17279385
+name = "uv-0.13.3-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl"
+upload-time = 2026-10-20 01:13:11.825804+00:00
+url = "https://files.pythonhosted.org/packages/7e/fa/45e1751beda39226d5472e6bb068747115a06f19c2559a8810aac9b881b7/uv-0.13.3-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl"
+size = 17301030
 
 [packages.wheels.hashes]
-sha256 = "696dcf6d807d85da978f4db8472da81dccc1254b18b52cbd1367c4d923c421e0"
+sha256 = "8d9ba65db55f3701908b09394cb7d3248be28496aab6bd9a96e8e870261ad372"
 
 [[packages]]
 name = "vcs-versioning"
@@ -4700,7 +4700,7 @@ sha256 = "a0d84e36c426afb6469aa6c4d438d12e18394ace596f5698f835fc434bd0ae1d"
 
 [tool.nab]
 nab-version = "0.0.22"
-created-at = 2026-10-26 20:07:51.647034+00:00
+created-at = 2026-10-27 14:02:56.871793+00:00
 command-line = [
     "nab",
     "lock",
@@ -4708,9 +4708,6 @@ command-line = [
     "--all-extras",
     "--no-cache",
     "--upgrade",
-    "pyproject.toml",
-    "--output",
-    "pylock.toml",
 ]
 input-path = "pyproject.toml"
 mode = "universal"
