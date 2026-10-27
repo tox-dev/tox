@@ -1,2 +1,2 @@
 An empty ``PYTHONHASHSEED`` no longer makes every tox command fail with ``ValueError``. tox treats it as unset, as
-Python does, and picks a random seed - by :user:`devYRPauli`.
+Python does, and picks a random seed.
