@@ -243,10 +243,19 @@ def test_pkg_dep_remove_recreate(tox_project: ToxProjectCreator, demo_pkg_inline
     assert run_ids == ["_optional_hooks", "get_requires_for_build_wheel", "build_wheel", "install_package", "_exit"]
 
 
-@pytest.mark.parametrize("forced", ["wheel==0.41.0", "Wheel==0.41.0"])
-def test_force_dep_applies_to_package_deps(tox_project: ToxProjectCreator, demo_pkg_inline: Path, forced: str) -> None:
+@pytest.mark.parametrize(
+    ("requires", "forced"),
+    [
+        pytest.param("wheel", "wheel==0.41.0", id="same-spelling"),
+        pytest.param("wheel", "Wheel==0.41.0", id="forced-case"),
+        pytest.param("Demo_Dep>=2", "demo-dep==1", id="metadata-unnormalized"),
+    ],
+)
+def test_force_dep_applies_to_package_deps(
+    tox_project: ToxProjectCreator, demo_pkg_inline: Path, requires: str, forced: str
+) -> None:
     build = (demo_pkg_inline / "build.py").read_text()
-    build_with_dep = build.replace("Summary: UNKNOWN\n", "Summary: UNKNOWN\n        Requires-Dist: wheel\n")
+    build_with_dep = build.replace("Summary: UNKNOWN\n", f"Summary: UNKNOWN\n        Requires-Dist: {requires}\n")
     proj = tox_project(
         {
             "tox.ini": "[testenv]\npackage=wheel",
@@ -258,11 +267,8 @@ def test_force_dep_applies_to_package_deps(tox_project: ToxProjectCreator, demo_
     result = proj.run("le", "-e", "py", "--force-dep", forced)
     result.assert_success()
 
-    pkg_deps_calls = [i for i in execute_calls.call_args_list if i[0][3].run_id == "install_package_deps"]
-    assert len(pkg_deps_calls) == 1
-    cmd = pkg_deps_calls[0][0][3].cmd
-    assert forced in cmd
-    assert "wheel" not in cmd
+    calls = [i[0][3].cmd[5:] for i in execute_calls.call_args_list if i[0][3].run_id == "install_package_deps"]
+    assert calls == [[forced]]
 
 
 def test_pkg_env_dep_remove_recreate(tox_project: ToxProjectCreator, demo_pkg_inline: Path) -> None:
