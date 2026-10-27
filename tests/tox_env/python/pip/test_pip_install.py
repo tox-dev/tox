@@ -404,16 +404,11 @@ def use_frozen_constraints(request: SubRequest) -> bool:
 def constrained_mock_project(
     request: SubRequest,
     tox_project: ToxProjectCreator,
-    demo_pkg_inline: Path,
+    demo_pkg_with_deps: dict[str, str],
     constrain_package_deps: bool,
     use_frozen_constraints: bool,
 ) -> tuple[ToxProject, list[str]]:
-    toml = (demo_pkg_inline / "pyproject.toml").read_text()
-    files = {
-        "pyproject.toml": toml.replace("requires = []", 'requires = ["setuptools"]')
-        + '\n[project]\nname = "demo"\nversion = "0.1"\ndependencies = ["foo > 2"]',
-        "build.py": (demo_pkg_inline / "build.py").read_text(),
-    }
+    files: dict[str, str] = {}
     exp_constraints: list[str] = []
     requirement = "coo==1.2.3"
     constraint = "coo<2"
@@ -451,7 +446,16 @@ def constrained_mock_project(
         f"use_frozen_constraints = {use_frozen_constraints}\n"
         f"deps = {deps}"
     )
-    return tox_project(files), exp_constraints if constrain_package_deps else []
+    return tox_project({**demo_pkg_with_deps, **files}), exp_constraints if constrain_package_deps else []
+
+
+@pytest.fixture
+def demo_pkg_with_deps(demo_pkg_inline: Path) -> dict[str, str]:
+    toml = (demo_pkg_inline / "pyproject.toml").read_text().replace("requires = []", 'requires = ["setuptools"]')
+    return {
+        "pyproject.toml": f'{toml}\n[project]\nname = "demo"\nversion = "0.1"\ndependencies = ["foo > 2"]',
+        "build.py": (demo_pkg_inline / "build.py").read_text(),
+    }
 
 
 def test_constrain_package_deps(
@@ -504,14 +508,11 @@ def test_constrain_package_deps(
 @pytest.mark.parametrize("use_frozen_constraints", [True, False])
 def test_constraints_option_disables_constrain_package_deps(
     tox_project: ToxProjectCreator,
-    demo_pkg_inline: Path,
+    demo_pkg_with_deps: dict[str, str],
     use_frozen_constraints: bool,
 ) -> None:
-    toml = (demo_pkg_inline / "pyproject.toml").read_text()
     proj = tox_project({
-        "pyproject.toml": toml.replace("requires = []", 'requires = ["setuptools"]')
-        + '\n[project]\nname = "demo"\nversion = "0.1"\ndependencies = ["foo > 2"]',
-        "build.py": (demo_pkg_inline / "build.py").read_text(),
+        **demo_pkg_with_deps,
         "constraints.txt": "coo==1.2.3",
         "tox.ini": (
             "[testenv]\npackage=wheel\n"
@@ -550,13 +551,10 @@ def test_constraints_option_disables_constrain_package_deps(
 
 
 def test_comment_only_constraints_keep_constrain_package_deps(
-    tox_project: ToxProjectCreator, demo_pkg_inline: Path
+    tox_project: ToxProjectCreator, demo_pkg_with_deps: dict[str, str]
 ) -> None:
-    toml = (demo_pkg_inline / "pyproject.toml").read_text()
     proj = tox_project({
-        "pyproject.toml": toml.replace("requires = []", 'requires = ["setuptools"]')
-        + '\n[project]\nname = "demo"\nversion = "0.1"\ndependencies = ["foo > 2"]',
-        "build.py": (demo_pkg_inline / "build.py").read_text(),
+        **demo_pkg_with_deps,
         "tox.toml": """
         [env_run_base]
         package = "wheel"
@@ -638,15 +636,13 @@ def test_comment_only_constraints_keep_constrain_package_deps(
 )
 def test_constrain_package_deps_constraint_lines(
     tox_project: ToxProjectCreator,
-    demo_pkg_inline: Path,
+    demo_pkg_with_deps: dict[str, str],
     deps: str,
     extra_files: dict[str, str],
     expected: list[str],
 ) -> None:
-    toml = (demo_pkg_inline / "pyproject.toml").read_text().replace("requires = []", 'requires = ["setuptools"]')
     proj = tox_project({
-        "pyproject.toml": f'{toml}\n[project]\nname = "demo"\nversion = "0.1"\ndependencies = ["foo > 2"]',
-        "build.py": (demo_pkg_inline / "build.py").read_text(),
+        **demo_pkg_with_deps,
         "tox.ini": f"[testenv]\npackage=wheel\nconstrain_package_deps = true\ndeps = {deps}",
         **extra_files,
     })
