@@ -573,55 +573,66 @@ def test_comment_only_constraints_keep_constrain_package_deps(
 
 
 @pytest.mark.parametrize(
-    ("deps", "requirements", "expected"),
+    ("deps", "extra_files", "expected"),
     [
-        pytest.param("coo[socks]==1.2.3", "", ["coo==1.2.3"], id="extras"),
-        pytest.param("-rrequirements.txt", "coo[socks]==1.2.3", ["coo==1.2.3"], id="extras-in-requirements-file"),
-        pytest.param("\n\t-e ./sibling\n\tcoo==1.2.3", "", ["coo==1.2.3"], id="editable"),
-        pytest.param("\n\t./sibling\n\tcoo==1.2.3", "", ["coo==1.2.3"], id="directory"),
-        pytest.param("\n\t./coo-1.2.3.tar.gz\n\tbar>1", "", ["bar>1"], id="source-archive"),
+        pytest.param("coo[socks]==1.2.3", {}, ["coo==1.2.3"], id="extras"),
+        pytest.param(
+            "-rrequirements.txt",
+            {"requirements.txt": "coo[socks]==1.2.3"},
+            ["coo==1.2.3"],
+            id="extras-in-requirements-file",
+        ),
+        pytest.param("\n\t-e ./sibling\n\tcoo==1.2.3", {}, ["coo==1.2.3"], id="editable"),
+        pytest.param("\n\t./sibling\n\tcoo==1.2.3", {}, ["coo==1.2.3"], id="directory"),
+        pytest.param("\n\t./coo-1.2.3.tar.gz\n\tbar>1", {}, ["bar>1"], id="source-archive"),
         pytest.param(
             "./coo-1.2.3-py3-none-any.whl[socks]",
-            "",
+            {},
             [f".{os.sep}coo-1.2.3-py3-none-any.whl"],
             id="wheel-extras",
         ),
         pytest.param(
             "./coo-1.2.3-py3-none-any.whl",
-            "",
+            {},
             [f".{os.sep}coo-1.2.3-py3-none-any.whl"],
             id="wheel-kept",
         ),
         pytest.param(
             "git+https://example.com/coo.git\\#egg=coo",
-            "",
+            {},
             ["git+https://example.com/coo.git#egg=coo"],
             id="vcs-egg-kept",
         ),
         pytest.param(
             "git+https://example.com/coo.git\\#subdirectory=src&egg=coo",
-            "",
+            {},
             ["git+https://example.com/coo.git#subdirectory=src&egg=coo"],
             id="vcs-egg-after-subdirectory-kept",
         ),
-        pytest.param("https://example.com/coo-1.2.3.tar.gz", "", [], id="source-archive-url"),
+        pytest.param("https://example.com/coo-1.2.3.tar.gz", {}, [], id="source-archive-url"),
         pytest.param(
             "./build\\#1/coo-1.2.3-py3-none-any.whl",
-            "",
+            {},
             [f"build#1{os.sep}coo-1.2.3-py3-none-any.whl"],
             id="wheel-path-with-hash-sign-kept",
         ),
         pytest.param(
             'coo @ https://example.com/coo.zip ; python_version > "3"',
-            "",
+            {},
             ['coo @ https://example.com/coo.zip ; python_version > "3"'],
             id="named-url-kept",
         ),
         pytest.param(
             "-rrequirements.txt",
-            f"coo==1.2.3 --hash sha256:{'a' * 64}",
+            {"requirements.txt": f"coo==1.2.3 --hash sha256:{'a' * 64}"},
             [f"coo==1.2.3 --hash sha256:{'a' * 64}"],
             id="hash-kept",
+        ),
+        pytest.param(
+            "\n\t-cconstraints.txt\n\tbar>1",
+            {"constraints.txt": "coo<2"},
+            ["bar>1", "coo<2"],
+            id="constraints-file-not-duplicated",
         ),
     ],
 )
@@ -629,19 +640,16 @@ def test_constrain_package_deps_constraint_lines(
     tox_project: ToxProjectCreator,
     demo_pkg_inline: Path,
     deps: str,
-    requirements: str,
+    extra_files: dict[str, str],
     expected: list[str],
 ) -> None:
-    toml = (demo_pkg_inline / "pyproject.toml").read_text()
-    files = {
-        "pyproject.toml": toml.replace("requires = []", 'requires = ["setuptools"]')
-        + '\n[project]\nname = "demo"\nversion = "0.1"\ndependencies = ["foo > 2"]',
+    toml = (demo_pkg_inline / "pyproject.toml").read_text().replace("requires = []", 'requires = ["setuptools"]')
+    proj = tox_project({
+        "pyproject.toml": f'{toml}\n[project]\nname = "demo"\nversion = "0.1"\ndependencies = ["foo > 2"]',
         "build.py": (demo_pkg_inline / "build.py").read_text(),
         "tox.ini": f"[testenv]\npackage=wheel\nconstrain_package_deps = true\ndeps = {deps}",
-    }
-    if requirements:
-        files["requirements.txt"] = requirements
-    proj = tox_project(files)
+        **extra_files,
+    })
     proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
     result = proj.run("r")
     result.assert_success()
