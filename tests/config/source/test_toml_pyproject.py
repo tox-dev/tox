@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import sys
 import sysconfig
+from pathlib import Path
 from textwrap import dedent
 from typing import TYPE_CHECKING, Final
 
@@ -12,8 +13,6 @@ from tox.config.loader.replacer import MatchError
 from tox.config.types import Command
 
 if TYPE_CHECKING:
-    from pathlib import Path
-
     from tox.pytest import ToxProject, ToxProjectCreator, ToxRunOutcome
 
 
@@ -567,24 +566,27 @@ def test_config_in_toml_replace_glob_extend(tox_project: ToxProjectCreator, tmp_
     assert "b.whl" in outcome.out
 
 
-def test_config_in_toml_replace_glob_substitutes_pattern_and_default(
-    tox_project: ToxProjectCreator, tmp_path: Path
+@pytest.mark.parametrize(
+    ("glob_table", "expected"),
+    [
+        pytest.param('pattern = "{env_name}/*.whl"', str(Path("{tmp_path}", "p", "A", "a.whl")), id="pattern"),
+        pytest.param('pattern = "dist/*.xyz", default = ["{env_name}.whl"]', "A.whl", id="default"),
+    ],
+)
+def test_config_in_toml_replace_glob_substitutes(
+    tox_project: ToxProjectCreator, tmp_path: Path, glob_table: str, expected: str
 ) -> None:
     (tmp_path / "p" / "A").mkdir(parents=True)
     (tmp_path / "p" / "A" / "a.whl").touch()
     project = tox_project({
-        "pyproject.toml": dedent("""
+        "pyproject.toml": dedent(f"""
         [tool.tox.env.A]
-        commands = [
-            ["echo", { replace = "glob", pattern = "{env_name}/*.whl", extend = true }],
-            ["echo", { replace = "glob", pattern = "dist/*.xyz", default = ["{env_name}.whl"], extend = true }],
-        ]
+        commands = [["echo", {{ replace = "glob", {glob_table}, extend = true }}]]
         """),
     })
     outcome = project.run("c", "-e", "A", "-k", "commands")
     outcome.assert_success()
-    assert f"echo {tmp_path / 'p' / 'A' / 'a.whl'}\n" in outcome.out
-    assert "echo A.whl\n" in outcome.out
+    assert f"echo {expected.format(tmp_path=tmp_path)}\n" in outcome.out
 
 
 @pytest.mark.parametrize(

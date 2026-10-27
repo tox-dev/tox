@@ -137,9 +137,9 @@ class Unroll:
             key: self(value[key], depth, skip_str=skip_str) for key in ("pattern", "default") if key in value
         }
         if skip_str:  # set_env resolves it when read, seeing the keys next to it
-            return _glob_expression(
-                validate(resolved.get("pattern", ""), str), validate(resolved.get("default", ""), str)
-            )
+            pattern = _keep_substitutions(validate(resolved.get("pattern", ""), str), escape_delimiter=True)
+            default = _keep_substitutions(validate(resolved.get("default", ""), str), escape_delimiter=False)
+            return f"{{glob:{pattern}:{default}}}"
         return _replace_glob_toml(self.conf, {**value, **resolved})
 
     def _replace_if(self, value: dict[str, TomlTypes], depth: int, *, skip_str: bool) -> TomlTypes:
@@ -212,12 +212,6 @@ def _keep_substitutions(text: str, *, escape_delimiter: bool) -> str:
         if opener is None or opener in unclosed:
             parts[index] = f"\\{ARG_DELIMITER}"
     return "".join(parts)
-
-
-def _glob_expression(pattern: str, default: str) -> str:
-    """Write a ``glob`` table as the ``{glob:PATTERN:DEFAULT}`` string that resolves to the same value."""
-    escaped_pattern = _keep_substitutions(pattern, escape_delimiter=True)
-    return f"{{glob:{escaped_pattern}:{_keep_substitutions(default, escape_delimiter=False)}}}"
 
 
 def _replace_glob_toml(conf: Config | None, value: dict[str, Any]) -> list[TomlTypes] | str:
