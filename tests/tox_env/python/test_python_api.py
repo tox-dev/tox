@@ -766,9 +766,8 @@ def test_base_python_file_global_testenv(tox_project: ToxProjectCreator) -> None
 
 
 def test_base_python_file_with_utf8_bom(tox_project: ToxProjectCreator) -> None:
-    ini = "[testenv:mypy]\npackage=skip\nbase_python_file=.python-version\n"
-    project = tox_project({"tox.ini": ini})
-    (project.path / ".python-version").write_bytes(b"\xef\xbb\xbf" + f"{_PY_VER}\n".encode())
+    project = tox_project({"tox.ini": "[testenv:mypy]\npackage=skip\nbase_python_file=.python-version\n"})
+    (project.path / ".python-version").write_bytes(f"\ufeff{_PY_VER}\n".encode())
     result = project.run("c", "-e", "mypy", "-k", "base_python")
     result.assert_success()
     assert f"base_python = {_PY_VER}\n" in result.out

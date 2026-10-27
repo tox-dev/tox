@@ -16,8 +16,7 @@ def resolve_extras_static(root: Path, extras: set[str]) -> list[Requirement] | N
     pyproject_file = root / "pyproject.toml"
     if not pyproject_file.exists():
         return None
-    with pyproject_file.open("rb") as file_handler:
-        pyproject = tomllib.load(file_handler)
+    pyproject = tomllib.loads(pyproject_file.read_text(encoding="utf-8-sig"))
     if "project" not in pyproject:
         return None
     project = pyproject["project"]

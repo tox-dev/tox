@@ -748,6 +748,12 @@ def test_resolve_extras_static_no_pyproject(tmp_path: Path) -> None:
     assert resolve_extras_static(tmp_path, set()) is None
 
 
+def test_resolve_extras_static_pyproject_with_utf8_bom(tmp_path: Path) -> None:
+    content = b'\xef\xbb\xbf[project]\nname = "demo"\nversion = "1.0"\ndependencies = ["first>=1"]\n'
+    (tmp_path / "pyproject.toml").write_bytes(content)
+    assert resolve_extras_static(tmp_path, set()) == [Requirement("first>=1")]
+
+
 @pytest.mark.parametrize(
     ("pyproject", "extras"),
     [
