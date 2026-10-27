@@ -6,7 +6,7 @@ import re
 from configparser import SectionProxy
 from functools import cache
 from re import Pattern
-from typing import TYPE_CHECKING, Final
+from typing import TYPE_CHECKING, Final, cast
 
 from tox.config.loader.api import apply_overrides_to_raw
 from tox.config.loader.replacer import ReplaceReference
@@ -78,7 +78,7 @@ class ReplaceReferenceIni(ReplaceReference):
         escaped_semicolon: Final[str] = r"\;"
         values = self.loader.set_env_reference(processed, overrides, self.conf, args).config.raw(args)
         return "\n".join(
-            f"{name}={value['value'].replace(';', escaped_semicolon)}"
+            f"{name}={cast('str', value['value']).replace(';', escaped_semicolon)}"  # INI values are text
             + (f"; {marker}" if (marker := value.get("marker")) else "")
             for name, value in values.items()
         )

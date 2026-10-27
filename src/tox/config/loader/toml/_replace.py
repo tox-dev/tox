@@ -10,10 +10,11 @@ from typing import TYPE_CHECKING, Any, Protocol, cast
 from tox.config.loader.api import apply_overrides_to_raw
 from tox.config.loader.ini.factor import active_factors
 from tox.config.loader.replacer import (
-    BACKSLASH_ESCAPE_CHARS,
     MatchError,
+    MatchExpression,
     MatchRecursionError,
     ReplaceReference,
+    find_replace_expr,
     load_posargs,
     replace,
     replace_env,
@@ -123,12 +124,14 @@ class Unroll:
 
     def _replace_env(self, value: dict[str, TomlTypes], depth: int, *, skip_str: bool) -> TomlTypes:
         name = validate(value["name"], str)
-        default = validate(self(value.get("default", ""), depth, skip_str=skip_str), str)
-        if skip_str:
-            return _env_expression(name, default)  # set_env resolves it when read, seeing the keys next to it
+        default = self(value.get("default", ""), depth, skip_str=skip_str)
+        if skip_str:  # set_env resolves it when read, seeing the keys next to it
+            # a parsed expression keeps the default verbatim, which the {env:NAME:DEFAULT} text cannot always do
+            parsed = find_replace_expr(default if isinstance(default, MatchExpression) else validate(default, str))
+            return cast("TomlTypes", MatchExpression([["env"], [name], parsed]))
         # use a copy of the chain so this substitution's env references do not leak into
         # adjacent entries of the same value tree and spuriously trip the circular check (#2869)
-        return replace_env(self.conf, [name, default], self.args.copy())
+        return replace_env(self.conf, [name, validate(default, str)], self.args.copy())
 
     def _replace_glob(self, value: dict[str, TomlTypes], _depth: int, *, skip_str: bool) -> TomlTypes:  # ruff:ignore[unused-method-argument]
         return _replace_glob_toml(self.conf, value)
@@ -170,31 +173,6 @@ class Unroll:
             finally:
                 self._refs.pop()
         return value
-
-
-def _env_expression(name: str, default: str) -> str:
-    """Write an ``env`` table as the ``{env:NAME:DEFAULT}`` string that resolves to the same value."""
-    escaped_name = "".join(f"\\{char}" if char in BACKSLASH_ESCAPE_CHARS else char for char in name)
-    # the default keeps its substitutions, but a brace it does not pair would end the expression early
-    parts: list[str] = []
-    unclosed: list[int] = []
-    pos = 0
-    while pos < len(default):
-        piece = default[pos : pos + 2] if default[pos] == "\\" else default[pos]
-        pos += len(piece)
-        if piece == "{":
-            unclosed.append(len(parts))
-        elif piece == "}" and unclosed:
-            unclosed.pop()
-        elif piece == "}":
-            piece = "\\}"
-        parts.append(piece)
-    for index in unclosed:
-        parts[index] = "\\{"
-    # a lone trailing backslash would escape the closing brace and leave the expression unterminated, so it goes
-    # after the brace where the backslash is literal again; a backslash run of even length needs no such care
-    trailing = "\\" if parts and parts[-1] == "\\" else ""
-    return f"{{env:{escaped_name}:{''.join(parts[:-1] if trailing else parts)}}}{trailing}"
 
 
 def _replace_glob_toml(conf: Config | None, value: dict[str, Any]) -> list[TomlTypes] | str:

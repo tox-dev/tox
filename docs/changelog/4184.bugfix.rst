@@ -1,2 +1,2 @@
-Fix a TOML ``{ replace = "env" }`` table whose ``default`` ends with a backslash silently resolving to the literal
-``{env:...}`` text instead of the default, by writing that trailing backslash after the closing brace.
+A TOML ``{ replace = "env" }`` table in ``set_env`` whose ``default`` ends in a backslash now resolves to the variable
+or the default, instead of the literal ``{env:...}`` text.

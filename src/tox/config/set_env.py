@@ -4,11 +4,12 @@ import re
 from dataclasses import dataclass
 from itertools import chain
 from pathlib import Path
-from typing import TYPE_CHECKING, NotRequired, Protocol, TypedDict, final
+from typing import TYPE_CHECKING, NotRequired, Protocol, TypedDict, cast, final
 
 from packaging.markers import Marker
 
 from tox.config.loader.api import ConfigLoadArgs
+from tox.config.loader.replacer import MatchExpression
 from tox.report import HandledError
 from tox.tox_env.errors import Fail
 
@@ -18,13 +19,17 @@ if TYPE_CHECKING:
 
 
 class Replacer(Protocol):
-    def __call__(self, value: str, args: ConfigLoadArgs, /, *, recursive: bool = ...) -> str: ...
+    def __call__(self, value: str | MatchExpression, args: ConfigLoadArgs, /, *, recursive: bool = ...) -> str: ...
+
+
+# a TOML table such as ``{ replace = "env" }`` arrives parsed and resolves when its key is read
+SetEnvValue = str | MatchExpression
 
 
 class SetEnvEntry(TypedDict):
     """A single ``set_env`` value in structured (TOML) form."""
 
-    value: str
+    value: SetEnvValue
     marker: NotRequired[str]
 
 
@@ -38,7 +43,12 @@ class SetEnvReference:
     shape: Literal["string", "table", "array"]
 
 
-SetEnvRaw = str | dict[str, str | SetEnvEntry] | SetEnvReference | list[dict[str, str | SetEnvEntry] | SetEnvReference]
+SetEnvRaw = (
+    str
+    | dict[str, SetEnvValue | SetEnvEntry]
+    | SetEnvReference
+    | list[dict[str, SetEnvValue | SetEnvEntry] | SetEnvReference]
+)
 
 
 class SetEnv:
@@ -56,17 +66,18 @@ class SetEnv:
             else "string"
         )
         self._materialized: dict[str, str] = {}  # env vars we already loaded
-        self._raw: dict[str, str] = {}  # could still need replacement
+        self._raw: dict[str, SetEnvValue] = {}  # could still need replacement
         self._exported: dict[str, Callable[[], str]] = {}  # tox's own values, read from settings on first use
         self._defined_keys: set[str] = set()  # keys explicitly defined during parsing (survives load() draining _raw)
         self._markers: dict[str, Marker] = {}  # PEP-496 markers for conditional env vars
         self._needs_replacement: list[str] = []  # env vars that need replacement
         self._overrides: list[tuple[SetEnv, set[str]]] = []
-        self._reference_entries: list[dict[str, str | SetEnvEntry] | SetEnvReference] = []
+        self._reference_entries: list[dict[str, SetEnvValue | SetEnvEntry] | SetEnvReference] = []
         self._override_keys: set[str] = set()
         self._expanding = False
-        self._env_files: list[tuple[str, set[str]]] = []
-        self._replacer: Replacer = lambda s, c, *, recursive=True: s  # ruff:ignore[unused-lambda-argument]
+        self._env_files: list[tuple[SetEnvValue, set[str]]] = []
+        # without a loader there is nothing to substitute, and only a loader's TOML tables become parsed expressions
+        self._replacer: Replacer = lambda s, c, *, recursive=True: cast("str", s)  # ruff:ignore[unused-lambda-argument]
         self._name, self._env_name, self._root = name, env_name, root
         self._args = ConfigLoadArgs([], name, env_name)
         if isinstance(raw, list):
@@ -109,7 +120,7 @@ class SetEnv:
             raise
         return key, value, marker
 
-    def _define(self, key: str, value: str, marker: str | None, keys_after_file: set[str]) -> None:
+    def _define(self, key: str, value: SetEnvValue, marker: str | None, keys_after_file: set[str]) -> None:
         self._raw[key] = value
         self._defined_keys.add(key)
         keys_after_file.add(key)
@@ -118,7 +129,7 @@ class SetEnv:
         else:  # an unconditional redefinition drops the marker an earlier entry set, as the INI form does
             self._markers.pop(key, None)
 
-    def _parse_list(self, raw: list[dict[str, str | SetEnvEntry] | SetEnvReference]) -> None:
+    def _parse_list(self, raw: list[dict[str, SetEnvValue | SetEnvEntry] | SetEnvReference]) -> None:
         entries = (
             entry.config.raw(entry.args, resolve=False) if isinstance(entry, SetEnvReference) else entry
             for entry in raw
@@ -129,16 +140,16 @@ class SetEnv:
                 (key, value)
                 for entry in entries
                 for key, value in entry.items()
-                if key != "file" or not isinstance(value, str)
+                if key != "file" or not isinstance(value, SetEnvValue)
             )
         else:
             # Merging tables first would discard repeated file entries.
             self._parse_dict(chain.from_iterable(entry.items() for entry in entries))
 
-    def _parse_dict(self, raw: Iterable[tuple[str, str | SetEnvEntry]]) -> None:
+    def _parse_dict(self, raw: Iterable[tuple[str, SetEnvValue | SetEnvEntry]]) -> None:
         keys_after_file: set[str] = set()
         for key, value in raw:
-            if not isinstance(value, str):
+            if not isinstance(value, SetEnvValue):
                 if "value" in value:
                     self._define(key, value["value"], value.get("marker"), keys_after_file)
             elif key == "file":
@@ -233,7 +244,7 @@ class SetEnv:
             # A lookup made while expanding sees only the keys registered so far.
             return
         args = self._args.copy() if args is None else args
-        entries: dict[str, tuple[str, Marker | None]] = {}
+        entries: dict[str, tuple[SetEnvValue, Marker | None]] = {}
         self._expanding = True
         try:
             self._resolve_files(args)
@@ -248,7 +259,9 @@ class SetEnv:
             for entry in reversed(self._reference_entries):
                 protected_keys.append(protected.copy())
                 direct = entry.config.raw(entry.args, resolve=False) if isinstance(entry, SetEnvReference) else entry
-                protected.update(key for key, value in direct.items() if key != "file" or not isinstance(value, str))
+                protected.update(
+                    key for key, value in direct.items() if key != "file" or not isinstance(value, SetEnvValue)
+                )
             for entry, protected in zip(self._reference_entries, reversed(protected_keys), strict=True):
                 if isinstance(entry, SetEnvReference):
                     values = entry.config.raw(entry.args)
@@ -285,8 +298,8 @@ class SetEnv:
         self._merge_entries(entries)
         self.changed = True  # loading while iterating can cause these values to be missed
 
-    def _merge_entries(self, entries: Mapping[str, tuple[str, Marker | None]]) -> None:
-        sub_raw: dict[str, str] = {}
+    def _merge_entries(self, entries: Mapping[str, tuple[SetEnvValue, Marker | None]]) -> None:
+        sub_raw: dict[str, SetEnvValue] = {}
         for key, (value, marker) in entries.items():
             if key not in self._exported:
                 sub_raw[key] = value
@@ -306,7 +319,7 @@ class SetEnv:
                     self._markers.pop(key, None)
         self._env_files.clear()
 
-    def _stream_env_file(self, filename: str, args: ConfigLoadArgs) -> Iterator[tuple[str, str]]:
+    def _stream_env_file(self, filename: SetEnvValue, args: ConfigLoadArgs) -> Iterator[tuple[str, str]]:
         # Our rules in the documentation, some upstream environment file rules (we follow mostly the docker one):
         # - https://www.npmjs.com/package/dotenv#rules
         # - https://docs.docker.com/compose/env-file/
@@ -338,7 +351,7 @@ class SetEnv:
 
     def _expand(
         self, line: str, parents: tuple[str, ...], args: ConfigLoadArgs
-    ) -> dict[str, tuple[str, Marker | None]]:
+    ) -> dict[str, tuple[SetEnvValue, Marker | None]]:
         if line in parents:
             msg = f"circular set_env reference {' -> '.join((*parents, line))}"
             raise HandledError(msg)
@@ -349,7 +362,7 @@ class SetEnv:
         block = SetEnv(text, self._name, self._env_name, self._root, substituted=True)
         block.use_replacer(self._replacer, args)
         block._resolve_files(args)
-        entries: dict[str, tuple[str, Marker | None]] = {}
+        entries: dict[str, tuple[SetEnvValue, Marker | None]] = {}
         for nested in block._needs_replacement:  # the block's own lines win over what it pulls in
             entries.update(self._expand(nested, (*parents, line), args))
         entries.update((key, (value, block._markers.get(key))) for key, value in block._raw.items())
@@ -410,4 +423,5 @@ __all__ = (
     "SetEnvEntry",
     "SetEnvRaw",
     "SetEnvReference",
+    "SetEnvValue",
 )
