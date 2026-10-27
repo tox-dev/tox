@@ -10,7 +10,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 from packaging.requirements import Requirement
-from packaging.utils import canonicalize_name
+from packaging.utils import NormalizedName, canonicalize_name
 
 from tox.config.types import Command
 from tox.execute.request import StdinSource
@@ -290,7 +290,9 @@ class Pip(PythonInstallerListDependencies):
         return {k: v for k, v in self._env.environment_variables.items() if k in _PIP_RESOLUTION_ENV_VARS}
 
     def _apply_force_deps(self, deps: Sequence[Requirement]) -> list[str]:
-        forced = {canonicalize_name(r.name): r for r in getattr(self._env.options, "force_dep", [])}
+        forced: dict[NormalizedName, Requirement] = {
+            canonicalize_name(r.name): r for r in getattr(self._env.options, "force_dep", [])
+        }
         return [str(forced.get(canonicalize_name(dep.name), dep)) for dep in deps]
 
     @property
