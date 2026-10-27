@@ -17,11 +17,12 @@ RST_PATH = ROOT / "docs" / "man" / "tox.1.rst"
 @pytest.fixture
 def manpage_troff() -> bytes:
     from docutils.core import publish_string  # ruff:ignore[import-outside-top-level]
+    from docutils.writers import get_writer_class  # ruff:ignore[import-outside-top-level]
 
     content = "\n".join(
         line for line in RST_PATH.read_text(encoding="utf-8").splitlines() if line.strip() != ":orphan:"
     )
-    return publish_string(content, writer="manpage", settings_overrides={"report_level": 5})
+    return publish_string(content, writer=get_writer_class("manpage")(), settings_overrides={"report_level": 5})
 
 
 @pytest.fixture

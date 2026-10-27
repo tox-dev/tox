@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import Any
 
 from docutils.core import publish_string
+from docutils.writers import get_writer_class
 from hatchling.builders.hooks.plugin.interface import BuildHookInterface
 
 
@@ -19,7 +20,7 @@ class CustomBuildHook(BuildHookInterface):
                         for line in (root / "docs" / "man" / "tox.1.rst").read_text(encoding="utf-8").splitlines()
                         if line.strip() != ":orphan:"
                     ),
-                    writer="manpage",
+                    writer=get_writer_class("manpage")(),
                     settings_overrides={"report_level": 5},
                 )
             )
