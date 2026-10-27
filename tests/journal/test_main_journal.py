@@ -63,7 +63,7 @@ def test_env_journal_disabled() -> None:
     "output",
     [
         pytest.param("\u2713 passed", id="outside-locale-code-page"),
-        pytest.param("caf\udce9", id="undecodable-byte"),
+        pytest.param("calf\udce9", id="undecodable-byte"),
     ],
 )
 def test_write_journal_round_trips_output(tmp_path: Path, mocker: MockerFixture, output: str) -> None:
