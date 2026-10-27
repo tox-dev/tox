@@ -1,3 +1,3 @@
-``--force-dep`` now matches dependency names after PEP 503 normalization, so ``--force-dep typing-extensions==4.9.0``
+``--force-dep`` now matches dependency names after :PEP:`503` normalization, so ``--force-dep typing-extensions==4.9.0``
 replaces ``Typing_Extensions==4.12.2`` in ``deps`` instead of passing both pins to pip, and replaces a
-``Typing_Extensions`` requirement from the package metadata instead of being ignored.
+``Typing_Extensions`` requirement from the package metadata, where tox used to drop the forced pin.

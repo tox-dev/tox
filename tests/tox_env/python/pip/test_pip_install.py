@@ -264,8 +264,7 @@ def test_force_dep_applies_to_package_deps(
         },
     )
     execute_calls = proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
-    result = proj.run("le", "-e", "py", "--force-dep", forced)
-    result.assert_success()
+    proj.run("le", "-e", "py", "--force-dep", forced).assert_success()
 
     calls = [i[0][3].cmd[5:] for i in execute_calls.call_args_list if i[0][3].run_id == "install_package_deps"]
     assert calls == [[forced]]
