@@ -4,6 +4,7 @@ import tomllib
 from collections import defaultdict
 from typing import TYPE_CHECKING, TypedDict
 
+from packaging.markers import Marker
 from packaging.requirements import InvalidRequirement, Requirement
 from packaging.utils import canonicalize_name
 
@@ -126,29 +127,42 @@ def _unwrap_nested_extras(
     project_name: NormalizedName,
     dependencies: set[Requirement],
 ) -> set[Requirement]:
-    seen_extras: Final[set[str]] = set()
-    while extras_to_unwrap := {dep for dep in dependencies if canonicalize_name(dep.name) == project_name}:
-        dependencies.difference_update(extras_to_unwrap)
-        for dependency in extras_to_unwrap:
-            for extra in dependency.extras:
-                _add_extra_to_deps(optional_dependencies, dependencies, extra, seen_extras)
-    return dependencies
+    seen_extras: Final[set[tuple[str, frozenset[Marker]]]] = set()
+    pending: Final[list[tuple[Requirement, frozenset[Marker]]]] = [(dep, frozenset()) for dep in dependencies]
+    resolved: Final[set[Requirement]] = set()
+    while pending:
+        dependency, markers = pending.pop()
+        if canonicalize_name(dependency.name) != project_name:
+            if markers:  # the self-reference this came from only applies where its own marker does
+                dependency.marker = Marker(
+                    " and ".join(f"({marker})" for marker in (*sorted(markers, key=str), dependency.marker) if marker)
+                )
+            resolved.add(dependency)
+            continue
+        if dependency.marker is not None:
+            markers |= {dependency.marker}
+        for extra in dependency.extras:
+            _add_extra_to_deps(optional_dependencies, pending, extra, markers, seen_extras)
+    return resolved
 
 
 def _add_extra_to_deps(
     optional_dependencies: dict[str, list[str]],
-    dependencies: set[Requirement],
+    pending: list[tuple[Requirement, frozenset[Marker]]],
     extra: str,
-    seen_extras: set[str],
+    markers: frozenset[Marker],
+    seen_extras: set[tuple[str, frozenset[Marker]]],
 ) -> None:
     normalized_extra: Final = canonicalize_name(extra)
-    if normalized_extra in seen_extras:
+    if (normalized_extra, markers) in seen_extras:
         return
-    seen_extras.add(normalized_extra)
+    seen_extras.add((normalized_extra, markers))
     if normalized_extra not in optional_dependencies:
         msg = f"extra {extra!r} not found in dependency groups"
         raise Fail(msg)
-    dependencies.update(_parse_requirement(requirement) for requirement in optional_dependencies[normalized_extra])
+    pending.extend(
+        (_parse_requirement(requirement), markers) for requirement in optional_dependencies[normalized_extra]
+    )
 
 
 __all__ = [

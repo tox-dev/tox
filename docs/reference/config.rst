@@ -1889,6 +1889,9 @@ Python run
         [dependency-groups]
         test = ["Demo.Pkg[extra-1]"]
 
+    A marker on the self-reference applies to every requirement it expands to, so with
+    ``"demo-pkg[extra-1]; sys_platform == 'win32'"`` the group resolves to ``pytest>=8; sys_platform == "win32"``.
+
     For example:
 
      .. tab:: TOML

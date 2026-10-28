@@ -491,6 +491,60 @@ def test_dependency_groups_nested_extra_names(tox_project: ToxProjectCreator) ->
     assert resolve(project.path, {"test"}) == {Requirement("first>=1"), Requirement("second>=2")}
 
 
+@pytest.mark.parametrize(
+    ("extras", "group", "expected"),
+    [
+        pytest.param(
+            """
+            dev = ["first>=1", "second>=2; sys_platform == 'win32'", "demo-pkg[extra]; python_version >= '3.10'"]
+            extra = ["third>=3"]
+            """,
+            """["demo-pkg[dev]; python_version < '3.0'", "fourth>=4; os_name == 'nt'"]""",
+            {
+                "first>=1; python_version < '3.0'",
+                "second>=2; python_version < '3.0' and sys_platform == 'win32'",
+                "third>=3; python_version < '3.0' and python_version >= '3.10'",
+                "fourth>=4; os_name == 'nt'",
+            },
+            id="nested",
+        ),
+        pytest.param(
+            'dev = ["first>=1"]',
+            """["demo-pkg[dev]; sys_platform == 'win32'", "demo-pkg[dev]; sys_platform == 'linux'"]""",
+            {"first>=1; sys_platform == 'win32'", "first>=1; sys_platform == 'linux'"},
+            id="same-extra-two-markers",
+        ),
+        pytest.param(
+            """
+            one = ["first>=1", "demo-pkg[two]; python_version >= '3.10'"]
+            two = ["second>=2", "demo-pkg[one]; python_version >= '3.10'"]
+            """,
+            """["demo-pkg[one]; sys_platform == 'win32'"]""",
+            {
+                "first>=1; sys_platform == 'win32'",
+                "first>=1; python_version >= '3.10' and sys_platform == 'win32'",
+                "second>=2; python_version >= '3.10' and sys_platform == 'win32'",
+            },
+            id="cycle",
+        ),
+    ],
+)
+def test_dependency_groups_extra_keeps_self_reference_marker(
+    tox_project: ToxProjectCreator, extras: str, group: str, expected: set[str]
+) -> None:
+    project: Final = tox_project({
+        "pyproject.toml": f"""
+            [project]
+            name = "demo-pkg"
+            [project.optional-dependencies]
+            {extras}
+            [dependency-groups]
+            test = {group}
+        """,
+    })
+    assert resolve(project.path, {"test"}) == {Requirement(requirement) for requirement in expected}
+
+
 def test_dependency_groups_pyproject_with_utf8_bom(tox_project: ToxProjectCreator) -> None:
     project: Final = tox_project({"pyproject.toml": '\ufeff[dependency-groups]\ntest = ["first>=1"]\n'})
     assert resolve(project.path, {"test"}) == {Requirement("first>=1")}
