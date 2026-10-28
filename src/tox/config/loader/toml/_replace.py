@@ -21,7 +21,7 @@ from tox.config.loader.replacer import (
 )
 from tox.config.loader.stringify import stringify
 from tox.config.set_env import SetEnvReference
-from tox.config.types import Command
+from tox.config.types import Command, EnvList
 from tox.tox_env.python.pip.req_file import PythonConstraints, PythonDeps
 from tox.util.typing_compat import override
 
@@ -148,14 +148,7 @@ class Unroll:
     def _replace_ref(self, value: dict[str, TomlTypes], depth: int, *, skip_str: bool = False) -> TomlTypes:
         if self.conf is not None and (env := value.get("env")) and (key := value.get("key")):
             # the referenced value arrives converted for its own key, return it in the raw shape a TOML key parses
-            result = self.conf.get_env(cast("str", env))[cast("str", key)]
-            if isinstance(result, (PythonDeps, PythonConstraints)):
-                return cast("TomlTypes", result.lines())
-            if isinstance(result, Command):
-                return cast("TomlTypes", result.raw_args)
-            if isinstance(result, list) and all(isinstance(entry, Command) for entry in result):
-                return cast("TomlTypes", [entry.raw_args for entry in result])
-            return cast("TomlTypes", result)
+            return self._to_raw(self.conf.get_env(cast("str", env))[cast("str", key)])
         if of := value.get("of"):
             validated_of = validate(of, list[str])
             if (path := self.loader.section.SEP.join(validated_of)) in self._refs:
@@ -179,6 +172,22 @@ class Unroll:
             finally:
                 self._refs.pop()
         return value
+
+    @staticmethod
+    def _to_raw(value: object) -> TomlTypes:
+        if isinstance(value, (PythonDeps, PythonConstraints)):
+            value = value.lines()
+        elif isinstance(value, Command):
+            value = value.raw_args
+        elif isinstance(value, list) and all(isinstance(entry, Command) for entry in value):
+            value = [entry.raw_args for entry in value]
+        elif isinstance(value, Path):
+            value = str(value)
+        elif isinstance(value, EnvList):
+            value = list(value.envs)
+        elif isinstance(value, set):  # sort it like stringify does, so the order is stable
+            value = sorted(value)
+        return cast("TomlTypes", value)
 
 
 def _env_expression(name: str, default: str) -> str:

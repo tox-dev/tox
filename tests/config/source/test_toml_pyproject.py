@@ -10,7 +10,7 @@ import pytest
 from python_discovery import normalize_isa
 
 from tox.config.loader.replacer import MatchError
-from tox.config.types import Command
+from tox.config.types import Command, EnvList
 
 if TYPE_CHECKING:
     from tox.pytest import ToxProject, ToxProjectCreator, ToxRunOutcome
@@ -1266,6 +1266,56 @@ def test_config_in_toml_replace_ref_command_prefixes(
         package = "skip"
         """)
         + setting,
+    }).run("c", "-e", "b", "-k", key)
+    outcome.assert_success()
+    assert outcome.env_conf("b")[key] == expected
+
+
+def test_config_in_toml_replace_ref_path(tox_project: ToxProjectCreator) -> None:
+    project: Final[ToxProject] = tox_project({
+        "pyproject.toml": dedent("""
+        [tool.tox.env.a]
+        package = "skip"
+        change_dir = "sub"
+
+        [tool.tox.env.b]
+        package = "skip"
+        change_dir = { replace = "ref", env = "a", key = "change_dir" }
+        """),
+    })
+    outcome: Final[ToxRunOutcome] = project.run("c", "-e", "b", "-k", "change_dir")
+    outcome.assert_success()
+    assert outcome.env_conf("b")["change_dir"] == project.path / "sub"
+
+
+@pytest.mark.parametrize(
+    ("key", "expected"),
+    [
+        pytest.param("extras", {"x", "y"}, id="extras"),
+        pytest.param("labels", {"lint"}, id="labels"),
+        pytest.param("depends", EnvList(["c"]), id="depends"),
+        pytest.param("description", "demo", id="description"),
+    ],
+)
+def test_config_in_toml_replace_ref_value(
+    tox_project: ToxProjectCreator, key: str, expected: set[str] | EnvList | str
+) -> None:
+    outcome: Final[ToxRunOutcome] = tox_project({
+        "pyproject.toml": dedent(f"""
+        [tool.tox.env.a]
+        package = "skip"
+        extras = ["y", "x"]
+        labels = ["lint"]
+        depends = ["c"]
+        description = "demo"
+
+        [tool.tox.env.b]
+        package = "skip"
+        {key} = {{ replace = "ref", env = "a", key = "{key}" }}
+
+        [tool.tox.env.c]
+        package = "skip"
+        """),
     }).run("c", "-e", "b", "-k", key)
     outcome.assert_success()
     assert outcome.env_conf("b")[key] == expected
