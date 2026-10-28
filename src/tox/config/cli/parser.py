@@ -301,8 +301,9 @@ class ToxParser(ArgumentParserWithEnvAndConfig):
                         defaults[self._dest_from(a_args, a_kwargs)] = a_kwargs.get("default")
 
     def _add_env_arguments(self, sub_parser: ToxParser, defaults: dict[str, Any]) -> None:  # ruff:ignore[no-self-use]
-        if os.environ.get("PYTHONHASHSEED", "random") != "random":
-            hashseed_default = int(os.environ["PYTHONHASHSEED"])
+        # Python treats an empty PYTHONHASHSEED as unset
+        if (hashseed := os.environ.get("PYTHONHASHSEED", "")) not in {"", "random"}:
+            hashseed_default = int(hashseed)
         else:
             hashseed_default = random.randint(1, 1024 if sys.platform == "win32" else 4294967295)  # ruff:ignore[suspicious-non-cryptographic-random-usage]
 
