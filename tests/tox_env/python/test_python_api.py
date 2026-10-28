@@ -715,6 +715,14 @@ _PY_VER_NODOT = f"{sys.version_info[0]}{sys.version_info[1]}"
         ),
         pytest.param(
             "tox.ini",
+            "[testenv:mypy]\npackage=skip\nbase_python_file=.python-version\n",
+            f"\ufeff{_PY_VER}\n",
+            "mypy",
+            _PY_VER,
+            id="utf8-bom",
+        ),
+        pytest.param(
+            "tox.ini",
             "[testenv]\npackage=skip\nbase_python_file=.python-version\n",
             "3.8\n",
             f"py{_PY_VER_NODOT}",
@@ -734,7 +742,7 @@ def test_base_python_file(
     project = tox_project({config_file: config, ".python-version": version_content})
     result = project.run("c", "-e", env, "-k", "base_python")
     result.assert_success()
-    assert expected in result.out
+    assert f"base_python = {expected}\n" in result.out
 
 
 @pytest.mark.parametrize(
@@ -773,14 +781,6 @@ def test_base_python_file_global_testenv(tox_project: ToxProjectCreator) -> None
     result = project.run("c", "-e", f"py{_PY_VER_NODOT}", "-k", "base_python")
     result.assert_success()
     assert f"py{_PY_VER_NODOT}" in result.out
-
-
-def test_base_python_file_with_utf8_bom(tox_project: ToxProjectCreator) -> None:
-    project = tox_project({"tox.ini": "[testenv:mypy]\npackage=skip\nbase_python_file=.python-version\n"})
-    (project.path / ".python-version").write_bytes(f"\ufeff{_PY_VER}\n".encode())
-    result = project.run("c", "-e", "mypy", "-k", "base_python")
-    result.assert_success()
-    assert f"base_python = {_PY_VER}\n" in result.out
 
 
 def test_base_python_file_not_used_when_not_set(tox_project: ToxProjectCreator) -> None:
