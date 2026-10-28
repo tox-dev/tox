@@ -2,12 +2,14 @@ from __future__ import annotations
 
 import logging
 import operator
+import re
 from abc import ABC, abstractmethod
 from collections import defaultdict
 from collections.abc import Callable, Sequence
 from functools import partial
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
+from urllib.parse import parse_qs, urlsplit
 
 from packaging.requirements import Requirement
 
@@ -24,6 +26,7 @@ from tox.util.typing_compat import override
 if TYPE_CHECKING:
     from tox.config.main import Config
     from tox.tox_env.package import Package
+    from tox.tox_env.python.pip.req.file import ParsedRequirement
 
 
 class PythonInstallerListDependencies(Installer[Python], ABC):
@@ -206,7 +209,10 @@ class Pip(PythonInstallerListDependencies):
                     args.extend(self.constraints.as_root_args)
                     self._execute_installer(args, of_type)
                     if self.constrain_package_deps and not self.use_frozen_constraints and not self._has_constraints:
-                        combined_constraints = new_requirements + [c.removeprefix("-c ") for c in new_constraints]
+                        combined_constraints = [
+                            line for req in arguments.requirements if (line := self._as_constraint(req)) is not None
+                        ]
+                        combined_constraints.extend(c.removeprefix("-c ") for c in new_constraints)
                         self.constraints_file().write_text("\n".join(combined_constraints))
 
     @staticmethod
@@ -219,6 +225,27 @@ class Pip(PythonInstallerListDependencies):
         added = f" added {', '.join(sorted(fmt(i) for i in added_opts))}" if added_opts else ""
         msg = f"changed {of_type}{removed}{added}"
         raise Recreate(msg)
+
+    @staticmethod
+    def _as_constraint(req: ParsedRequirement) -> str | None:
+        # pip rejects extras, editables and anything it cannot name (a directory or sdist) in a constraints file
+        if req.options.get("is_constraint") or req.options.get("is_editable"):
+            return None
+        if isinstance(req.requirement, Requirement):
+            named = Requirement(str(req.requirement))
+            named.extras = set()
+            line = str(named)
+        elif not Pip._pip_can_name(line := re.sub(r"\[[^\]]*\]$", "", str(req.requirement))):
+            return None
+        return " ".join([line, *(f"--hash {value}" for value in req.options.get("hash", []))])
+
+    @staticmethod
+    def _pip_can_name(line: str) -> bool:
+        # pip names a wheel from its file name and a URL from its egg fragment
+        if "://" not in line:
+            return line.endswith(".whl")
+        url = urlsplit(line)
+        return url.path.endswith(".whl") or "egg" in parse_qs(url.fragment)
 
     def _install_pylock(self, pylock: Pylock, section: str, of_type: str) -> None:
         new_reqs = sorted(pylock.install_lines())
