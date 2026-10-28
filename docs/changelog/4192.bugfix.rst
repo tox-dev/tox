@@ -1,3 +1,0 @@
-A TOML ``{ replace = "ref", env = ..., key = ... }`` now takes a path (``change_dir``, ``env_dir``), set (``extras``,
-``labels``, ``dependency_groups``) or environment list (``depends``) value from another environment, instead of failing
-validation of the referencing key.

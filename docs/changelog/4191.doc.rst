@@ -1,2 +1,0 @@
-Explain how to quote command arguments built from ``[vars]`` values that contain spaces, and how quotes stored in those
-values pair with the quotes around them.

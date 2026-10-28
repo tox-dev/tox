@@ -6,6 +6,69 @@
 
 .. towncrier release notes start
 
+.. _release-4-67-3:
+
+*********************
+ 4.67.3 (2026-10-28)
+*********************
+
+.. _release-4-67-3-fixed:
+
+Fixed
+-----
+
+- An open-ended factor range whose explicit bound sits outside the supported CPython window no longer expands to
+  nothing. An INI ``env_list`` such as ``py3{16-}`` used to fail with ``ValueError: py3{}``, and a TOML range dict
+  expanded to an empty axis, dropping that dimension from the matrix (:pr:`4176`) by :user:`HyperionBurn` and
+  :user:`gaborbernat`.
+- A TOML ``replace = "glob"`` table now substitutes its ``pattern`` and ``default``, matching the INI
+  ``{glob:PATTERN:DEFAULT}`` form, so ``pattern = "{env_name}/*.whl"`` matches files instead of a literal ``{env_name}``
+  directory (:pr:`4180`) by :user:`ag3ntsc4rn` and :user:`gaborbernat`. (:issue:`4178`)
+- ``--force-dep`` now matches dependency names after :PEP:`503` normalization, so ``--force-dep
+  typing-extensions==4.9.0`` replaces ``Typing_Extensions==4.12.2`` in ``deps`` instead of passing both pins to pip, and
+  replaces a ``Typing_Extensions`` requirement from the package metadata, where tox used to drop the forced pin
+  (:pr:`4181`) by :user:`ag3ntsc4rn` and :user:`gaborbernat`. (:issue:`4179`)
+- ``{glob:PATTERN:DEFAULT}`` with a single-letter pattern and an absolute default, such as ``{glob:z:/fallback}``, no
+  longer expands to an empty string on POSIX: tox now looks for a Windows drive letter in the pattern only on Windows
+  (:pr:`4183`) by :user:`JingHao-Leon` and :user:`gaborbernat`. (:issue:`4182`)
+- A TOML ``{ replace = "env" }`` table in ``set_env`` whose ``default`` ends in a backslash now resolves to the variable
+  or the default, instead of the literal ``{env:...}`` text (:pr:`4185`) by :user:`JingHao-Leon` and
+  :user:`gaborbernat`. (:issue:`4184`)
+- ``--no-index`` in a requirements file or ``deps`` now wins over ``--index-url`` and ``--extra-index-url`` on the same
+  or a later line, as in pip. Previously tox dropped it and installed from those indexes, and from PyPI too when given
+  an ``--extra-index-url`` (:pr:`4187`) by :user:`syahra712` and :user:`gaborbernat`.
+- A leading UTF-8 byte order mark in ``pyproject.toml`` no longer breaks ``dependency_groups`` or reading the package's
+  static dependencies from ``[project]``, and one in a ``base_python_file`` such as ``.python-version`` is no longer
+  read as part of the Python version (:pr:`4188`) by :user:`pcbeingused333` and :user:`gaborbernat`.
+- ``--parallel auto`` now counts the CPUs tox may run on instead of every CPU in the machine, so it respects the CPU
+  affinity mask set by ``taskset`` or a container's cpuset (and ``PYTHON_CPU_COUNT`` on Python 3.13+) (:pr:`4190`) by
+  :user:`mehdimirzafaruk` and :user:`gaborbernat`.
+- A TOML ``{ replace = "ref", env = ..., key = ... }`` now takes a path (``change_dir``, ``env_dir``), set (``extras``,
+  ``labels``, ``dependency_groups``) or environment list (``depends``) value from another environment, instead of
+  failing validation of the referencing key (:pr:`4192`) by :user:`pcbeingused333` and :user:`gaborbernat`.
+- ``--result-json`` is now always written as UTF-8 instead of the locale's preferred encoding. Captured output that a
+  legacy Windows code page cannot represent, or that holds bytes which are not valid UTF-8, no longer crashes the run at
+  the end with a truncated file; the invalid bytes are stored as ``\uXXXX`` escapes (:pr:`4194`) by
+  :user:`mehdimirzafaruk` and :user:`gaborbernat`.
+- Glob character sets such as ``lint-[ab]`` and ``lint-[!a]`` in an ini ``depends`` now load, as the ``depends``
+  reference documents, instead of failing to load the configuration (:pr:`4195`) by :user:`nk-batman21` and
+  :user:`gaborbernat`.
+- Disable the parallel spinner by default in CI for the legacy command, as ``tox run-parallel`` does (:pr:`4196`) by
+  :user:`Rodrigo-Palma` and :user:`gaborbernat`.
+- Leave extras, editables, local directories and source archives out of the :ref:`constrain_package_deps` constraints
+  file, so pip no longer rejects it (:pr:`4203`) by :user:`ericdelorefice` and :user:`gaborbernat`.
+- An empty ``PYTHONHASHSEED`` no longer makes every tox command fail with ``ValueError``. tox treats it as unset, as
+  Python does, and picks a random seed (:pr:`4205`) by :user:`devYRPauli` and :user:`gaborbernat`.
+
+.. _release-4-67-3-documentation:
+
+Documentation
+-------------
+
+- Explain how to quote command arguments built from ``[vars]`` values that contain spaces, and how quotes stored in
+  those values pair with the quotes around them (:pr:`4197`) by :user:`Blues-berry` and :user:`gaborbernat`.
+  (:issue:`4191`)
+
 .. _release-4-67-2:
 
 *********************

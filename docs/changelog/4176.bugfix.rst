@@ -1,3 +1,0 @@
-An open-ended factor range whose explicit bound sits outside the supported CPython window no longer expands to nothing.
-An INI ``env_list`` such as ``py3{16-}`` used to fail with ``ValueError: py3{}``, and a TOML range dict expanded to an
-empty axis, dropping that dimension from the matrix.

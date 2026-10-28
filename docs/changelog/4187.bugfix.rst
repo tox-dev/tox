@@ -1,3 +1,0 @@
-``--no-index`` in a requirements file or ``deps`` now wins over ``--index-url`` and ``--extra-index-url`` on the same or
-a later line, as in pip. Previously tox dropped it and installed from those indexes, and from PyPI too when given an
-``--extra-index-url``.

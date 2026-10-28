@@ -1,3 +1,0 @@
-``--result-json`` is now always written as UTF-8 instead of the locale's preferred encoding. Captured output that a
-legacy Windows code page cannot represent, or that holds bytes which are not valid UTF-8, no longer crashes the run at
-the end with a truncated file; the invalid bytes are stored as ``\uXXXX`` escapes.

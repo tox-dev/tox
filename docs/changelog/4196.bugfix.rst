@@ -1,1 +1,0 @@
-Disable the parallel spinner by default in CI for the legacy command, as ``tox run-parallel`` does.
