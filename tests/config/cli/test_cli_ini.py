@@ -155,6 +155,15 @@ def test_cli_ini_is_utf8(tmp_path: Path, monkeypatch: MonkeyPatch) -> None:
     assert conf.get("a", str) == ("“Grüße”", "file")
 
 
+def test_cli_ini_with_utf8_bom(tmp_path: Path, monkeypatch: MonkeyPatch) -> None:
+    to = tmp_path / "tox.ini"
+    to.write_bytes(b"\xef\xbb\xbf[tox]\na = b\n")
+    monkeypatch.setenv("TOX_USER_CONFIG_FILE", str(to))
+    conf = IniConfig()
+    assert conf.has_config_file is True
+    assert conf.get("a", str) == ("b", "file")
+
+
 @pytest.mark.parametrize(
     ("conf_arg", "filename", "content"),
     [
