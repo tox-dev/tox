@@ -68,6 +68,43 @@ def test_loads_deps_recursive_extras() -> None:
     assert [str(i) for i in result] == ["no-extra", "dep1[magic]", "dep1", "dep2[a,b]"]
 
 
+def test_recursive_extra_keeps_marker_of_self_reference() -> None:
+    """A marker on a self-referencing extra applies to the dependencies it pulls in."""
+    requires = [
+        Requirement('six; extra == "dev"'),
+        Requirement('name[dev]; python_version < "3.0" and extra == "all"'),
+    ]
+    result = dependencies_with_extras(requires, {"all"}, "name")
+    assert [str(i) for i in result] == ['six; python_version < "3.0"']
+
+
+def test_recursive_extra_combines_markers_through_nested_self_references() -> None:
+    requires = [
+        Requirement('six; implementation_name == "cpython" and extra == "dev"'),
+        Requirement('name[dev]; sys_platform == "win32" and extra == "mid"'),
+        Requirement('name[mid]; python_version < "3.0" and extra == "all"'),
+        Requirement('name[dev]; extra == "other"'),
+    ]
+    result = dependencies_with_extras(requires, {"all", "other"}, "name")
+    assert sorted(str(i) for i in result) == [
+        'six; implementation_name == "cpython"',
+        'six; python_version < "3.0" and sys_platform == "win32" and implementation_name == "cpython"',
+    ]
+
+
+def test_recursive_extra_cycle_with_markers_ends() -> None:
+    requires = [
+        Requirement('six; extra == "dev"'),
+        Requirement('name[dev]; python_version < "3.0" and extra == "all"'),
+        Requirement('name[all]; sys_platform == "win32" and extra == "dev"'),
+    ]
+    result = dependencies_with_extras(requires, {"all"}, "name")
+    assert [str(i) for i in result] == [
+        'six; python_version < "3.0"',
+        'six; python_version < "3.0" and sys_platform == "win32"',
+    ]
+
+
 def test_loads_deps_recursive_extras_non_canonical_name() -> None:
     """A self-referential extra resolves even when the package name is not canonical."""
     requires = [

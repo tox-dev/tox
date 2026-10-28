@@ -6,6 +6,7 @@ import tarfile
 from copy import deepcopy
 from typing import TYPE_CHECKING, Literal, cast
 
+from packaging.markers import Marker
 from packaging.utils import canonicalize_name
 
 from tox.tox_env.errors import Fail
@@ -15,7 +16,6 @@ if TYPE_CHECKING:
     from pathlib import Path
 
     from packaging._parser import MarkerAtom, MarkerList, Op, Value, Variable
-    from packaging.markers import Marker
     from packaging.requirements import Requirement
 
 
@@ -48,22 +48,36 @@ def dependencies_with_extras_from_markers(
             raise Fail(msg)
     result: list[Requirement] = []
     found: set[str] = set()
-    todo: set[str | None] = normalized_extras | {None}
-    visited: set[str | None] = set()
+    # an extra is reached together with the markers of the self-references it was reached through
+    todo: set[tuple[str | None, frozenset[Marker]]] = {(extra, frozenset()) for extra in normalized_extras | {None}}
+    visited: set[tuple[str | None, frozenset[Marker]]] = set()
     while todo:
-        new_extras: set[str | None] = set()
+        new_extras: set[tuple[str | None, frozenset[Marker]]] = set()
         for req, extra_markers in deps_with_markers:
-            if todo & extra_markers:
+            for extra, via in sorted(todo, key=_by_extra_and_markers):  # sorted: the output order must not vary
+                if extra not in extra_markers:
+                    continue
                 if canonicalize_name(req.name) == canonicalize_name(package_name):  # support for recursive extras
-                    new_extras.update(canonicalize_name(e) for e in (req.extras or set()))
+                    nested = via | {req.marker} if req.marker is not None else via
+                    new_extras.update((canonicalize_name(e), nested) for e in (req.extras or set()))
                 else:
-                    req_str = str(req)
-                    if req_str not in found:
-                        found.add(req_str)
-                        result.append(req)
+                    dep = req
+                    if via:  # the self-reference this came from only applies where its own marker does
+                        dep = deepcopy(req)
+                        dep.marker = Marker(
+                            " and ".join(f"({m})" for m in (*sorted(via, key=str), req.marker) if m is not None)
+                        )
+                    if (dep_str := str(dep)) not in found:
+                        found.add(dep_str)
+                        result.append(dep)
         visited.update(todo)
         todo = new_extras - visited
     return result
+
+
+def _by_extra_and_markers(state: tuple[str | None, frozenset[Marker]]) -> tuple[str, list[str]]:
+    extra, markers = state
+    return extra or "", sorted(str(marker) for marker in markers)
 
 
 def extract_extra_markers(deps: list[Requirement]) -> list[tuple[Requirement, set[str | None]]]:
