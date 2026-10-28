@@ -738,3 +738,28 @@ def test_build_wheel_via_sdist_restores_root(tox_project: ToxProjectCreator, dem
     result.assert_success()
     pkg = cast("pyproject_pkg.Pep517VenvPackager", result.state.envs[".pkg"])
     assert pkg.root == pkg.conf["package_root"]
+
+
+@pytest.mark.parametrize(
+    ("skip", "message"),
+    [
+        pytest.param(
+            "false", "a: failed with could not find python interpreter matching any of the specs missing", id="fail"
+        ),
+        pytest.param(
+            "true",
+            "a: skipped because could not find python interpreter with spec(s): missing for package environment .pkg",
+            id="skip",
+        ),
+    ],
+)
+def test_pkg_env_missing_interpreter(
+    tox_project: ToxProjectCreator, demo_pkg_inline: Path, skip: str, message: str
+) -> None:
+    toml_cfg = 'env_list = ["a"]\n[env_pkg_base]\nbase_python = ["missing"]\n'
+    proj = tox_project({"tox.toml": toml_cfg}, base=demo_pkg_inline)
+
+    result = proj.run("r", "-e", "a", "--skip-missing-interpreters", skip)
+
+    result.assert_failed()
+    assert message in result.out.splitlines()

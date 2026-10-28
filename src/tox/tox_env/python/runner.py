@@ -10,7 +10,6 @@ from typing import TYPE_CHECKING, Literal, TypeAlias, get_args
 
 from packaging.utils import canonicalize_name
 
-from tox.config.loader.str_convert import StrConvert
 from tox.config.types import Command
 from tox.execute import Outcome
 from tox.report import HandledError
@@ -21,7 +20,7 @@ from tox.tox_env.python.pylock import Pylock
 from tox.tox_env.runner import RunToxEnv
 from tox.util.typing_compat import override
 
-from .api import Python
+from .api import Python, add_skip_missing_interpreters_to_core, add_skip_missing_interpreters_to_env
 from .dependency_groups import resolve as resolve_dependency_groups
 from .extras import resolve_extras_static
 
@@ -32,9 +31,7 @@ PackageType: TypeAlias = Literal[
 
 
 if TYPE_CHECKING:
-    from tox.config.cli.parser import Parsed
-    from tox.config.main import Config
-    from tox.config.sets import CoreConfigSet, EnvConfigSet
+    from tox.config.sets import EnvConfigSet
     from tox.tox_env.api import ToxEnvCreateArgs
     from tox.tox_env.package import Package
 
@@ -229,35 +226,6 @@ class PythonRun(Python, RunToxEnv, ABC):
                 msg = f"{exception.args[0]} for package environment {package_env.conf['env_name']}"
                 raise Skip(msg) from exception
         return packages
-
-
-def _skip_missing_interpreters_post_process(options: Parsed, value: bool) -> bool:  # ruff:ignore[boolean-type-hint-positional-argument]
-    if getattr(options, "skip_missing_interpreters", "config") != "config":
-        return StrConvert().to_bool(str(options.skip_missing_interpreters))
-    return value
-
-
-def add_skip_missing_interpreters_to_core(core: CoreConfigSet, options: Parsed) -> None:
-    core.add_config(
-        keys=["skip_missing_interpreters"],
-        default=False,
-        of_type=bool,
-        post_process=partial(_skip_missing_interpreters_post_process, options),
-        desc="skip running missing interpreters",
-    )
-
-
-def add_skip_missing_interpreters_to_env(conf: EnvConfigSet, core: CoreConfigSet, options: Parsed) -> None:
-    def _default_skip_missing(conf: Config, env_name: str | None) -> bool:  # ruff:ignore[unused-function-argument]
-        return core.get("skip_missing_interpreters", bool)
-
-    conf.add_config(
-        keys=["skip_missing_interpreters"],
-        default=_default_skip_missing,
-        of_type=bool,
-        post_process=partial(_skip_missing_interpreters_post_process, options),
-        desc="override core skip_missing_interpreters for this environment",
-    )
 
 
 def add_extras_to_env(conf: EnvConfigSet) -> None:
