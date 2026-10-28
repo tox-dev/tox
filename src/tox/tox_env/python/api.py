@@ -8,17 +8,21 @@ import sys
 import sysconfig
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
+from functools import partial
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, NamedTuple
 
 from virtualenv.discovery.py_spec import PythonSpec
 
+from tox.config.loader.str_convert import StrConvert
 from tox.tox_env.api import ToxEnv, ToxEnvCreateArgs
 from tox.tox_env.errors import Fail, Recreate, Skip
 from tox.util.typing_compat import override
 
 if TYPE_CHECKING:
+    from tox.config.cli.parser import Parsed
     from tox.config.main import Config
+    from tox.config.sets import CoreConfigSet, EnvConfigSet
     from tox.util.json_types import JsonValue
 
 
@@ -450,3 +454,32 @@ class NoInterpreter(Fail):
     @override
     def __str__(self) -> str:
         return f"could not find python interpreter matching any of the specs {', '.join(self.base_pythons)}"
+
+
+def add_skip_missing_interpreters_to_core(core: CoreConfigSet, options: Parsed) -> None:
+    core.add_config(
+        keys=["skip_missing_interpreters"],
+        default=False,
+        of_type=bool,
+        post_process=partial(_skip_missing_interpreters_post_process, options),
+        desc="skip running missing interpreters",
+    )
+
+
+def _skip_missing_interpreters_post_process(options: Parsed, value: bool) -> bool:  # ruff:ignore[boolean-type-hint-positional-argument]
+    if getattr(options, "skip_missing_interpreters", "config") != "config":
+        return StrConvert().to_bool(str(options.skip_missing_interpreters))
+    return value
+
+
+def add_skip_missing_interpreters_to_env(conf: EnvConfigSet, core: CoreConfigSet, options: Parsed) -> None:
+    def _default_skip_missing(conf: Config, env_name: str | None) -> bool:  # ruff:ignore[unused-function-argument]
+        return core.get("skip_missing_interpreters", bool)
+
+    conf.add_config(
+        keys=["skip_missing_interpreters"],
+        default=_default_skip_missing,
+        of_type=bool,
+        post_process=partial(_skip_missing_interpreters_post_process, options),
+        desc="override core skip_missing_interpreters for this environment",
+    )

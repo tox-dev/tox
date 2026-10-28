@@ -11,7 +11,7 @@ from tox.tox_env.errors import Skip
 from tox.tox_env.package import Package, PackageToxEnv, PathPackage
 from tox.util.typing_compat import override
 
-from .api import NoInterpreter, Python
+from .api import NoInterpreter, Python, add_skip_missing_interpreters_to_core, add_skip_missing_interpreters_to_env
 
 if TYPE_CHECKING:
     from collections.abc import Generator, Iterator, Sequence
@@ -59,6 +59,12 @@ class PythonPackageToxEnv(Python, PackageToxEnv, ABC):
     def __init__(self, create_args: ToxEnvCreateArgs) -> None:
         self._wheel_build_envs: dict[str, PythonPackageToxEnv] = {}
         super().__init__(create_args)
+
+    @override
+    def register_config(self) -> None:
+        super().register_config()
+        add_skip_missing_interpreters_to_core(self.core, self.options)
+        add_skip_missing_interpreters_to_env(self.conf, self.core, self.options)
 
     @override
     def _setup_env(self) -> None:
