@@ -10,6 +10,7 @@ from unittest.mock import ANY
 
 import pytest
 
+from tox.config.loader.replacer import MatchExpression
 from tox.config.set_env import SetEnv
 
 if TYPE_CHECKING:
@@ -1046,6 +1047,17 @@ def test_set_env_spliced_marker(
             {"DATA": "a"},
             id="toml-glob-table-pattern-unpaired-brace",
         ),
+        pytest.param(
+            "toml",
+            """
+            [env_run_base]
+            package = "skip"
+            set_env = { DATA = { replace = "glob", pattern = "x/*", default = "a\\\\" } }
+            """,
+            {},
+            {"DATA": "a\\"},
+            id="toml-glob-table-default-trailing-backslash",
+        ),
     ],
 )
 def test_set_env_include_resolves_values_when_read(
@@ -1060,6 +1072,42 @@ def test_set_env_include_resolves_values_when_read(
         monkeypatch.setenv(key, value)
     set_env = eval_set_env(textwrap.dedent(config), of_type=of_type, extra_files={"a.env": "FROM_FILE={env:A}-x\n"})
     assert {key: set_env.load(key) if key in set_env else None for key in expected} == expected
+
+
+_TOML_ENV_DEFAULTS: Final = pytest.mark.parametrize(
+    "default",
+    [
+        pytest.param("C:\\tools\\", id="trailing-backslash"),
+        pytest.param("a\\\\\\", id="three-trailing-backslashes"),
+        pytest.param("a}b:c{d", id="braces-and-colon"),
+    ],
+)
+
+
+def _toml_env_table(name: str, default: str) -> str:
+    table = f'{{ replace = "env", name = "{name}", default = \'{default}\' }}'
+    return f'[env_run_base]\npackage = "skip"\nset_env.DATA = {table}\n'
+
+
+@_TOML_ENV_DEFAULTS
+def test_set_env_toml_env_table_unset_uses_default_verbatim(eval_set_env: EvalSetEnv, default: str) -> None:
+    set_env = eval_set_env(_toml_env_table("MISSING", default), of_type="toml")
+    assert set_env.load("DATA") == default
+
+
+@_TOML_ENV_DEFAULTS
+def test_set_env_toml_env_table_set_ignores_default(
+    eval_set_env: EvalSetEnv, monkeypatch: MonkeyPatch, default: str
+) -> None:
+    monkeypatch.setenv("PRESENT", "/host")
+    set_env = eval_set_env(_toml_env_table("PRESENT", default), of_type="toml")
+    assert set_env.load("DATA") == "/host"
+
+
+def test_set_env_parsed_expression_without_loader_fails() -> None:
+    set_env = SetEnv({"DATA": MatchExpression([["env"], ["NAME"], []])}, "py", "py", Path())
+    with pytest.raises(TypeError, match="needs a configuration loader to resolve"):
+        set_env.load("DATA")
 
 
 @pytest.mark.parametrize(

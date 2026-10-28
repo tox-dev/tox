@@ -7,7 +7,7 @@ from types import GenericAlias
 from typing import TYPE_CHECKING, Any, TypeVar, cast
 
 from tox.config.loader.api import ConfigLoadArgs, Loader, Override
-from tox.config.loader.replacer import MatchRecursionError, replace, replace_once
+from tox.config.loader.replacer import MatchExpression, MatchRecursionError, replace, replace_once
 from tox.config.set_env import SetEnv
 from tox.config.types import Command, EnvList
 from tox.report import HandledError
@@ -78,12 +78,10 @@ class TomlLoader(Loader[TomlTypes]):
         unroll = Unroll(conf=conf, loader=self, args=args)
         exploded = unroll(raw, skip_str=True) if delay_replace else unroll(raw)
         result = self.to(exploded, of_type, factory)
-        if delay_replace:
+        if delay_replace and conf is not None:  # the core section supports no replacement
             loader = self
 
-            def _toml_replacer(value: str, args_: ConfigLoadArgs, *, recursive: bool = True) -> str:
-                if conf is None:
-                    return value
+            def _toml_replacer(value: str | MatchExpression, args_: ConfigLoadArgs, *, recursive: bool = True) -> str:
                 try:
                     return (replace if recursive else replace_once)(conf, TomlReplaceLoader(conf, loader), value, args_)
                 except MatchRecursionError as exception:

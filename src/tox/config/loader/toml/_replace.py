@@ -10,11 +10,11 @@ from typing import TYPE_CHECKING, Any, Protocol, cast
 from tox.config.loader.api import apply_overrides_to_raw
 from tox.config.loader.ini.factor import active_factors
 from tox.config.loader.replacer import (
-    ARG_DELIMITER,
-    BACKSLASH_ESCAPE_CHARS,
     MatchError,
+    MatchExpression,
     MatchRecursionError,
     ReplaceReference,
+    find_replace_expr,
     load_posargs,
     replace,
     replace_env,
@@ -31,6 +31,7 @@ if TYPE_CHECKING:
     from collections.abc import Iterator
 
     from tox.config.loader.api import ConfigLoadArgs
+    from tox.config.loader.replacer import MatchArg
     from tox.config.loader.toml import TomlLoader
     from tox.config.main import Config
     from tox.config.sets import ConfigSet
@@ -124,12 +125,13 @@ class Unroll:
 
     def _replace_env(self, value: dict[str, TomlTypes], depth: int, *, skip_str: bool) -> TomlTypes:
         name = validate(value["name"], str)
-        default = validate(self(value.get("default", ""), depth, skip_str=skip_str), str)
-        if skip_str:
-            return _env_expression(name, default)  # set_env resolves it when read, seeing the keys next to it
+        default = self(value.get("default", ""), depth, skip_str=skip_str)
+        if skip_str:  # set_env resolves it when read, seeing the keys next to it
+            # a parsed expression keeps the default verbatim, which the {env:NAME:DEFAULT} text cannot always do
+            return MatchExpression([["env"], [name], _parse_arg(default)])
         # use a copy of the chain so this substitution's env references do not leak into
         # adjacent entries of the same value tree and spuriously trip the circular check (#2869)
-        return replace_env(self.conf, [name, default], self.args.copy())
+        return replace_env(self.conf, [name, validate(default, str)], self.args.copy())
 
     def _replace_glob(self, value: dict[str, TomlTypes], depth: int, *, skip_str: bool) -> TomlTypes:
         # substitute the pattern and the fallback like the INI ``{glob:PATTERN:DEFAULT}`` form does
@@ -137,9 +139,7 @@ class Unroll:
             key: self(value[key], depth, skip_str=skip_str) for key in ("pattern", "default") if key in value
         }
         if skip_str:  # set_env resolves it when read, seeing the keys next to it
-            pattern = _keep_substitutions(validate(resolved.get("pattern", ""), str), escape_delimiter=True)
-            default = _keep_substitutions(validate(resolved.get("default", ""), str), escape_delimiter=False)
-            return f"{{glob:{pattern}:{default}}}"
+            return MatchExpression([["glob"], *(_parse_arg(resolved.get(key, "")) for key in ("pattern", "default"))])
         return _replace_glob_toml(self.conf, {**value, **resolved})
 
     def _replace_if(self, value: dict[str, TomlTypes], depth: int, *, skip_str: bool) -> TomlTypes:
@@ -190,37 +190,8 @@ class Unroll:
         return cast("TomlTypes", value)
 
 
-def _env_expression(name: str, default: str) -> str:
-    """Write an ``env`` table as the ``{env:NAME:DEFAULT}`` string that resolves to the same value."""
-    escaped_name = "".join(f"\\{char}" if char in BACKSLASH_ESCAPE_CHARS else char for char in name)
-    return f"{{env:{escaped_name}:{_keep_substitutions(default, escape_delimiter=False)}}}"
-
-
-def _keep_substitutions(text: str, *, escape_delimiter: bool) -> str:
-    # the text keeps its substitutions, but a brace it does not pair would end the expression early and, for an argument
-    # before the last one, a colon outside its substitutions would split it
-    parts: list[str] = []
-    unclosed: list[int] = []
-    delimiters: list[tuple[int, int | None]] = []
-    pos = 0
-    while pos < len(text):
-        piece = text[pos : pos + 2] if text[pos] == "\\" else text[pos]
-        pos += len(piece)
-        if piece == "{":
-            unclosed.append(len(parts))
-        elif piece == "}" and unclosed:
-            unclosed.pop()
-        elif piece == "}":
-            piece = "\\}"
-        elif piece == ARG_DELIMITER and escape_delimiter:
-            delimiters.append((len(parts), unclosed[-1] if unclosed else None))
-        parts.append(piece)
-    for index in unclosed:
-        parts[index] = "\\{"
-    for index, opener in delimiters:
-        if opener is None or opener in unclosed:
-            parts[index] = f"\\{ARG_DELIMITER}"
-    return "".join(parts)
+def _parse_arg(value: TomlTypes) -> MatchArg:
+    return find_replace_expr(value if isinstance(value, MatchExpression) else validate(value, str))
 
 
 def _replace_glob_toml(conf: Config | None, value: dict[str, Any]) -> list[TomlTypes] | str:

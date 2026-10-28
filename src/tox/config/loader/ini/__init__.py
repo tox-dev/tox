@@ -7,8 +7,8 @@ from typing import TYPE_CHECKING, TypeVar, cast
 from tox.config.loader.api import ConfigLoadArgs, Loader, Override
 from tox.config.loader.ini.factor import filter_for_env
 from tox.config.loader.ini.replace import ReplaceReferenceIni
+from tox.config.loader.replacer import MatchExpression, replace_command_lines, replace_once
 from tox.config.loader.replacer import replace as replace_references
-from tox.config.loader.replacer import replace_command_lines, replace_once
 from tox.config.loader.str_convert import StrConvert
 from tox.config.set_env import SetEnv
 from tox.config.types import Command
@@ -84,23 +84,20 @@ class IniLoader(StrConvert, Loader[str]):
         raw: str,
         args: ConfigLoadArgs,
     ) -> V:
+        if conf is None:  # no replacement supported in the core section
+            return self.to(raw, of_type, factory)
         delay_replace = inspect.isclass(of_type) and issubclass(of_type, SetEnv)
         replace_all = replace_command_lines if of_type == list[Command] else replace_references
 
-        def replacer(raw_: str, args_: ConfigLoadArgs, *, recursive: bool = True) -> str:
-            if conf is None:
-                replaced = raw_  # no replacement supported in the core section
-            else:
-                reference_replacer = ReplaceReferenceIni(conf, self)
-                try:
-                    replaced = (replace_all if recursive else replace_once)(conf, reference_replacer, raw_, args_)
-                except Exception as exception:
-                    if isinstance(exception, (HandledError, Skip)):
-                        raise
-                    name = self.core_section.key if args_.env_name is None else args_.env_name
-                    msg = f"replace failed in {name}.{key} with {exception!r}"
-                    raise HandledError(msg) from exception
-            return replaced
+        def replacer(raw_: str | MatchExpression, args_: ConfigLoadArgs, *, recursive: bool = True) -> str:
+            try:
+                return (replace_all if recursive else replace_once)(conf, ReplaceReferenceIni(conf, self), raw_, args_)
+            except Exception as exception:
+                if isinstance(exception, (HandledError, Skip)):
+                    raise
+                name = self.core_section.key if args_.env_name is None else args_.env_name
+                msg = f"replace failed in {name}.{key} with {exception!r}"
+                raise HandledError(msg) from exception
 
         prepared = replacer(raw, args) if not delay_replace else raw
         converted = self.to(prepared, of_type, factory)

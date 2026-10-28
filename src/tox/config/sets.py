@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, Any, TypeVar, cast, get_origin, overload
 from tox.util.typing_compat import override
 
 from .of_type import ConfigConstantDefinition, ConfigDefinition, ConfigDynamicDefinition, ConfigLoadArgs
-from .set_env import SetEnv, SetEnvRaw, SetEnvReference
+from .set_env import SetEnv, SetEnvRaw, SetEnvReference, SetEnvValue
 from .types import EnvList
 
 if TYPE_CHECKING:
@@ -375,10 +375,10 @@ class EnvConfigSet(ConfigSet):
 
         def set_env_factory(raw: object) -> SetEnv:
             def is_valid_value(v: object) -> bool:
-                if isinstance(v, str):
+                if isinstance(v, SetEnvValue):
                     return True
                 if isinstance(v, dict):
-                    return "value" in v and isinstance(v.get("value"), str)
+                    return "value" in v and isinstance(v.get("value"), SetEnvValue)
                 return False
 
             if not (
