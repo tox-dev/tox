@@ -6,11 +6,12 @@ SECURITY.md wins and we fix this file.
 
 ## How tox works
 
-tox finds its configuration (`tox.toml`, `tox.ini`, `pyproject.toml` or `setup.cfg`) in the current directory or the
+tox finds its configuration (`tox.ini`, `setup.cfg`, `pyproject.toml` or `tox.toml`) in the current directory or the
 nearest parent that has one, loads installed plugins and an optional `toxfile.py`, and, if `requires` asks for a newer
 tox or plugins, provisions them first. For each environment it creates a virtual environment, installs the package and
 dependencies through pip or a plugin such as tox-uv, and runs the configured commands with only the variables `pass_env`
-allows plus a default set. Log lines that echo a command mask secret-looking flag values.
+allows plus a default set. Echoed commands mask the values of secret-looking `--name=value` flags, and the per-command
+log files mask variables with secret-looking names.
 
 ```mermaid
 flowchart LR
@@ -52,24 +53,25 @@ An attacker who controls any of these already has what tox could give them:
 
 ## Untrusted inputs
 
-| Input                       | Comes from                                                | What tox guarantees                                                                       |
-| --------------------------- | --------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
-| Values echoed in tox's logs | Commands containing tokens, often shown in public CI logs | Secret-looking flag values are masked, following the gitleaks `generic-api-key` keywords. |
-| Variables not in `pass_env` | The invoking environment                                  | Not passed to environment commands, apart from tox's documented default set.              |
+| Input                       | Comes from                                                | What tox guarantees                                                                                                |
+| --------------------------- | --------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| Values echoed in tox's logs | Commands containing tokens, often shown in public CI logs | Values of `--name=value` flags and variables whose names match the gitleaks `generic-api-key` keywords are masked. |
+| Variables not in `pass_env` | The invoking environment                                  | Not passed to environment commands, apart from tox's documented default set.                                       |
 
 ## Threats and controls
 
-| STRIDE                 | Threat                                                                    | Control                                                             |
-| ---------------------- | ------------------------------------------------------------------------- | ------------------------------------------------------------------- |
-| Information disclosure | A token passed as `--token=...` appears in a public CI log line.          | Redaction of secret-looking flag values in echoed commands.         |
-| Tampering              | Recreating an environment deletes a directory outside the work directory. | Environments live under `work_dir`; report any delete outside it.   |
-| Elevation of privilege | A config file in a parent directory owned by another user is picked up.   | Accepted risk today (see below); run tox only in trees you control. |
+| STRIDE                 | Threat                                                                    | Control                                                                               |
+| ---------------------- | ------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| Information disclosure | A token passed as `--token=...` appears in a public CI log line.          | Redaction of secret-looking flag values in echoed commands.                           |
+| Tampering              | Recreating an environment deletes a directory outside the work directory. | Environments live under `work_dir`; report any delete outside it.                     |
+| Elevation of privilege | A substituted value splits into an extra command or option.               | Commands are argument lists; report any data value that crosses an argument boundary. |
+| Elevation of privilege | A config file in a parent directory owned by another user is picked up.   | Accepted risk today (see below); run tox only in trees you control.                   |
 
 ## Release chain
 
 Releases run on the shared [tox-dev/github-workflows](https://github.com/tox-dev/github-workflows) pipeline. A release
-App, not a person, pushes the release commit and tag; the build installs its tools hash-checked from `pylock.toml` with
-a seven-day upload cooldown; PyPI receives the files through
+App, not a person, pushes the release commit and tag; the build installs its tools from a hash-checked `pylock.toml`
+resolved with a seven-day upload cooldown by default; PyPI receives the files through
 [trusted publishing](https://docs.pypi.org/trusted-publishers/) with attestations, and the GitHub Release is immutable.
 Every workflow pins third-party actions to a commit SHA.
 
@@ -82,11 +84,20 @@ Every workflow pins third-party actions to a commit SHA.
 | Test code reads a CI secret through `/proc/<ppid>/environ`          | Not a vulnerability | `pass_env` is not a sandbox.                         |
 | `tox` in `/tmp/work` uses `/tmp/tox.ini` another user planted       | Accepted risk       | tox walks up parent directories; see accepted risks. |
 
+## Severity
+
+- **High:** a crafted checkout or a race makes tox delete, overwrite or disclose a file outside its work, environment
+  and package directories, or tox prints a credential its redaction rules cover.
+- **Medium:** a data value crosses an argument boundary into an extra command or option, provisioning selects an
+  unintended tox package or interpreter, or a journal stores sensitive data outside the project.
+- **Low:** a crash, hang or terminal effect without code execution, or corruption limited to a disposable environment.
+
 ## Accepted risks
 
 - Configuration discovery walks up parent directories without checking ownership, as Git did before `safe.directory`. Do
   not run tox below a directory other users can write, such as `/tmp`.
-- Redaction is best effort and keyword based; it masks flag values, not arbitrary output.
+- Redaction is keyword based: it masks inline `--name=value` flags and named variables, not space-separated values or
+  arbitrary output.
 
 ## Keeping this current
 

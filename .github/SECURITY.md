@@ -35,9 +35,12 @@ publish no advisory. Classify by who supplies the dangerous input, not by how ba
 
 **In scope**
 
-- A secret-looking flag value that tox's redaction should mask appearing unmasked in tox's own log output.
-- tox writing or deleting outside the work directory and paths the configuration names, for example while recreating an
-  environment.
+- A value tox's redaction rules cover appearing unmasked in tox's own output, log files or result journal.
+- tox writing or deleting outside the work directory and paths the configuration names, for example through a symlink or
+  a race while recreating or cleaning an environment.
+- A data value (a substitution, `posargs`, a CI value such as a branch name, a `set_env` entry) crossing an argument
+  boundary to add a command or option the configuration's documented syntax does not grant.
+- Provisioning installing or re-running a tox other than the one `requires` names.
 - Running a command, installing a package or loading a plugin that neither the configuration, the command line nor an
   installed plugin asked for.
 
@@ -47,7 +50,9 @@ publish no advisory. Classify by who supplies the dangerous input, not by how ba
   purpose, so a malicious project is out of scope, as it is for every task runner.
 - Code under test reading variables or files: `pass_env` keeps environments reproducible, it is not a sandbox against
   code running as the same user.
-- Package installation behavior, which belongs to pip, uv or the installer plugin.
+- Package installation behavior, which belongs to pip, uv or the installer plugin, and dependency confusion caused only
+  by the configured package index.
+- Defects in virtualenv, python-discovery, pyproject-api or a plugin that reproduce when tox invokes them as documented.
 - Secrets printed by the commands tox runs.
 
 If you cannot tell which side a finding falls on, report it privately and we will decide.
