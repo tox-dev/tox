@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 from packaging.requirements import InvalidRequirement, Requirement
+from packaging.utils import canonicalize_name
 
 from tox.config.cli.parser import DEFAULT_VERBOSITY, Parsed, ToxParser
 from tox.config.loader.memory import MemoryLoader
@@ -126,7 +127,7 @@ def _handle_legacy_only_flags(option: Parsed, envs: EnvSelector) -> None:  # ruf
     set_env = {}
     if getattr(option, "pre", False):
         set_env["PIP_PRE"] = "1"
-    forced = {j.name: j for j in getattr(option, "force_dep", [])}
+    forced = {canonicalize_name(j.name): j for j in getattr(option, "force_dep", [])}
     if override or set_env or forced:
         for env in envs.iter(only_active=True, package=False):
             env_conf = envs[env].conf
@@ -143,7 +144,6 @@ def _handle_legacy_only_flags(option: Parsed, envs: EnvSelector) -> None:  # ruf
                         req = Requirement(entry)
                     except InvalidRequirement:
                         continue
-                    if req.name in to_force:
-                        as_root_args[at] = str(to_force[req.name])
-                        del to_force[req.name]
+                    if (name := canonicalize_name(req.name)) in to_force:
+                        as_root_args[at] = str(to_force.pop(name))
                 as_root_args.extend(str(v) for v in to_force.values())

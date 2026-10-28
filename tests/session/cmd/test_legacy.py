@@ -200,3 +200,12 @@ def test_legacy_cli_flags(tox_project: ToxProjectCreator, mocker: MockerFixture)
     v_env = virtualenv_session.call_args_list[0][1]["env"]
     assert v_env["VIRTUALENV_SYSTEM_SITE_PACKAGES"] == "True"
     assert v_env["VIRTUALENV_COPIES"] == "True"
+
+
+def test_legacy_force_dep_matches_normalized_name(tox_project: ToxProjectCreator) -> None:
+    proj = tox_project({"tox.ini": "[testenv]\ndeps = Typing_Extensions>=4\npackage=skip"})
+    execute_calls = proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
+    proj.run("le", "-e", "py", "--force-dep", "typing-extensions<4.10").assert_success()
+
+    install = next(i[0][3].cmd for i in execute_calls.call_args_list if i[0][3].run_id == "install_deps")
+    assert install[5:] == ["typing-extensions<4.10"]
