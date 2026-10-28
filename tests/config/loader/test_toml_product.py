@@ -202,6 +202,17 @@ def test_expand_range_open_start() -> None:
     assert result == [f"py3{i}" for i in range(LATEST_PYTHON_MINOR_MIN, 14)]
 
 
+@pytest.mark.parametrize(
+    ("key", "bound"),
+    [
+        pytest.param("start", LATEST_PYTHON_MINOR_MAX + 1, id="start-past-max"),
+        pytest.param("stop", LATEST_PYTHON_MINOR_MIN - 1, id="stop-below-min"),
+    ],
+)
+def test_expand_range_open_bound_outside_window(key: str, bound: int) -> None:
+    assert expand_factor_group({"prefix": "py3", key: bound}) == [f"py3{bound}"]
+
+
 def test_expand_range_no_bounds() -> None:
     with pytest.raises(TypeError, match="range must have at least 'start' or 'stop'"):
         _expand_range({"prefix": "py3"})
