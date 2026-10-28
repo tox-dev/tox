@@ -1,0 +1,2 @@
+``{glob:PATTERN:DEFAULT}`` with a single-letter pattern and an absolute default, such as ``{glob:z:/fallback}``, no
+longer expands to an empty string on POSIX: tox now looks for a Windows drive letter in the pattern only on Windows.

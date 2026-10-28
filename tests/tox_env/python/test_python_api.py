@@ -348,10 +348,20 @@ def test_python_set_hash_seed(tox_project: ToxProjectCreator) -> None:
     assert result.out.splitlines()[1] == "10"
 
 
-def test_python_generate_hash_seed(tox_project: ToxProjectCreator) -> None:
+@pytest.mark.parametrize(
+    "host_env",
+    [
+        pytest.param({}, id="unset"),
+        pytest.param({"PYTHONHASHSEED": ""}, id="empty"),
+    ],
+)
+def test_python_generate_hash_seed(
+    tox_project: ToxProjectCreator, monkeypatch: pytest.MonkeyPatch, host_env: dict[str, str]
+) -> None:
+    monkeypatch.delenv("PYTHONHASHSEED", raising=False)
     ini = "[testenv]\npackage=skip\ncommands=python -c 'import os; print(os.environ[\"PYTHONHASHSEED\"])'"
-    prj = tox_project({"tox.ini": ini})
-    result = prj.run("r", "-e", "py")
+    with patch.dict("os.environ", host_env):
+        result = tox_project({"tox.ini": ini}).run("r", "-e", "py")
     result.assert_success()
     assert 1 <= int(result.out.splitlines()[1]) <= (1024 if sys.platform == "win32" else 4294967295)
 
@@ -763,6 +773,14 @@ def test_base_python_file_global_testenv(tox_project: ToxProjectCreator) -> None
     result = project.run("c", "-e", f"py{_PY_VER_NODOT}", "-k", "base_python")
     result.assert_success()
     assert f"py{_PY_VER_NODOT}" in result.out
+
+
+def test_base_python_file_with_utf8_bom(tox_project: ToxProjectCreator) -> None:
+    project = tox_project({"tox.ini": "[testenv:mypy]\npackage=skip\nbase_python_file=.python-version\n"})
+    (project.path / ".python-version").write_bytes(f"\ufeff{_PY_VER}\n".encode())
+    result = project.run("c", "-e", "mypy", "-k", "base_python")
+    result.assert_success()
+    assert f"base_python = {_PY_VER}\n" in result.out
 
 
 def test_base_python_file_not_used_when_not_set(tox_project: ToxProjectCreator) -> None:

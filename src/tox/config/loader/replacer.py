@@ -374,7 +374,13 @@ def replace_glob(conf: Config | None, args: list[str]) -> str:
         msg = "No pattern was supplied in glob substitution"
         raise MatchError(msg)
     # rejoin Windows drive letter that was split on colon (e.g. C:\path -> ["C", "\\path"])
-    if len(args[0]) == 1 and args[0].isalpha() and len(args) > 1 and args[1][:1] in {"\\", "/"}:
+    if (
+        sys.platform == "win32"
+        and len(args[0]) == 1
+        and args[0].isalpha()
+        and len(args) > 1
+        and args[1][:1] in {"\\", "/"}
+    ):
         pattern = f"{args[0]}:{args[1]}"
         default_args = args[2:]
     else:

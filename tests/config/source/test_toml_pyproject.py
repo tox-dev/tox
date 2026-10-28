@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import sys
 import sysconfig
+from pathlib import Path
 from textwrap import dedent
 from typing import TYPE_CHECKING, Final
 
@@ -12,8 +13,6 @@ from tox.config.loader.replacer import MatchError
 from tox.config.types import Command
 
 if TYPE_CHECKING:
-    from pathlib import Path
-
     from tox.pytest import ToxProject, ToxProjectCreator, ToxRunOutcome
 
 
@@ -565,6 +564,52 @@ def test_config_in_toml_replace_glob_extend(tox_project: ToxProjectCreator, tmp_
     outcome.assert_success()
     assert "a.whl" in outcome.out
     assert "b.whl" in outcome.out
+
+
+@pytest.mark.parametrize(
+    ("glob_table", "expected"),
+    [
+        pytest.param('pattern = "{env_name}/*.whl"', str(Path("{tmp_path}", "p", "A", "a.whl")), id="pattern"),
+        pytest.param('pattern = "dist/*.xyz", default = ["{env_name}.whl"]', "A.whl", id="default"),
+    ],
+)
+def test_config_in_toml_replace_glob_substitutes(
+    tox_project: ToxProjectCreator, tmp_path: Path, glob_table: str, expected: str
+) -> None:
+    (tmp_path / "p" / "A").mkdir(parents=True)
+    (tmp_path / "p" / "A" / "a.whl").touch()
+    project = tox_project({
+        "pyproject.toml": dedent(f"""
+        [tool.tox.env.A]
+        commands = [["echo", {{ replace = "glob", {glob_table}, extend = true }}]]
+        """),
+    })
+    outcome = project.run("c", "-e", "A", "-k", "commands")
+    outcome.assert_success()
+    assert f"echo {expected.format(tmp_path=tmp_path)}\n" in outcome.out
+
+
+@pytest.mark.parametrize(
+    "pattern",
+    [
+        pytest.param('"{env:D}"', id="sibling-key"),
+        pytest.param('{ replace = "env", name = "D" }', id="env-table"),
+    ],
+)
+def test_config_in_toml_replace_glob_in_set_env_substitutes_pattern(
+    tox_project: ToxProjectCreator, tmp_path: Path, pattern: str
+) -> None:
+    (tmp_path / "p" / "sub").mkdir(parents=True)
+    (tmp_path / "p" / "sub" / "a.txt").touch()
+    project = tox_project({
+        "pyproject.toml": dedent(f"""
+        [tool.tox.env.A]
+        set_env = {{ D = "sub/*.txt", G = {{ replace = "glob", pattern = {pattern} }} }}
+        """),
+    })
+    outcome = project.run("c", "-e", "A", "-k", "set_env")
+    outcome.assert_success()
+    assert f"G={tmp_path / 'p' / 'sub' / 'a.txt'}\n" in outcome.out
 
 
 @pytest.mark.parametrize(

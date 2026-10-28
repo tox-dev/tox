@@ -324,7 +324,9 @@ would be slow and environment-dependent), tox tracks the `supported CPython vers
 - ``LATEST_PYTHON_MINOR_MAX`` -- the latest supported CPython minor version (currently **15**, for Python 3.15)
 
 These values are updated with each tox release. A right-open range ``{10-}`` uses ``LATEST_PYTHON_MINOR_MAX`` as its
-upper bound; a left-open range ``{-13}`` uses ``LATEST_PYTHON_MINOR_MIN`` as its lower bound.
+upper bound; a left-open range ``{-13}`` uses ``LATEST_PYTHON_MINOR_MIN`` as its lower bound. When the explicit bound
+already sits outside that window, the range expands to that bound alone: ``{16-}`` yields ``16`` until a tox release
+raises ``LATEST_PYTHON_MINOR_MAX`` to 16.
 
 This design is deterministic and fast -- the expansion happens at configuration load time with no I/O -- while keeping
 environment lists future-proof across tox upgrades. Environments for interpreters not installed on the system are

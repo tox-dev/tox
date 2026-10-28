@@ -222,7 +222,7 @@ class Python(ToxEnv, ABC):
             path = tox_root / file_path
             if not path.exists():
                 continue
-            content = path.read_text(encoding="utf-8")
+            content = path.read_text(encoding="utf-8-sig")
             for line in content.splitlines():
                 stripped = line.strip()
                 if stripped and not stripped.startswith("#"):

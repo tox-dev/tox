@@ -184,9 +184,9 @@ def expand_ranges(value: str) -> str:
             direction = 1 if start < end else -1
             expansion = ",".join(str(x) for x in range(start, end + direction, direction))
         elif open_start:
-            expansion = ",".join(str(x) for x in range(int(open_start), LATEST_PYTHON_MINOR_MAX + 1))
+            expansion = ",".join(map(str, open_minor_range(start=int(open_start))))
         elif open_end:
-            expansion = ",".join(str(x) for x in range(LATEST_PYTHON_MINOR_MIN, int(open_end) + 1))
+            expansion = ",".join(map(str, open_minor_range(stop=int(open_end))))
         else:  # a single number, leave untouched
             return match.group()
         return f"{expansion}{delimiter}"
@@ -213,6 +213,13 @@ def expand_ranges(value: str) -> str:
     )
 
 
+def open_minor_range(start: int | None = None, stop: int | None = None) -> list[int]:
+    first = LATEST_PYTHON_MINOR_MIN if start is None else start
+    last = LATEST_PYTHON_MINOR_MAX if stop is None else stop
+    # an explicit bound outside the supported window still names a version, so keep it rather than expand to nothing
+    return list(range(first, last + 1)) or [last if start is None else first]
+
+
 __all__ = (
     "LATEST_PYTHON_MINOR_MAX",
     "LATEST_PYTHON_MINOR_MIN",
@@ -222,4 +229,5 @@ __all__ = (
     "extend_factors",
     "filter_for_env",
     "find_envs",
+    "open_minor_range",
 )

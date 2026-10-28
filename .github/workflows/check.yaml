@@ -1,11 +1,11 @@
-name: check
+name: 🧪 check
 on:
   workflow_dispatch:
   push:
     branches: ["main"]
     tags-ignore: ["**"]
   pull_request:
-    types: [opened, synchronize, reopened, labeled, unlabeled]
+    types: [opened, synchronize, reopened]
   schedule:
     - cron: "0 8 * * *"
 permissions:
@@ -17,7 +17,7 @@ concurrency:
   cancel-in-progress: true
 jobs:
   test:
-    name: test ${{ matrix.py }} on ${{ matrix.os.name }}
+    name: 🧪 test ${{ matrix.py }} on ${{ matrix.os.name }}
     runs-on: ${{ matrix.os.image }}
     strategy:
       fail-fast: false
@@ -29,39 +29,41 @@ jobs:
           - "3.12"
           - "3.11"
         os:
-          - {image: ubuntu-24.04, name: ubuntu}
+          - {image: ubuntu-26.04, name: ubuntu}
           - {image: windows-2025-vs2026, name: windows}
-          - {image: macos-15, name: macos}
+          - {image: macos-26, name: macos}
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: 📥 Check out code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
           persist-credentials: false
-      - name: Install the latest version of uv
-        uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+      - name: 🐍 Install uv
+        uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e # v10.3.2
         with:
+          version: latest-known
           python-version: "3.15"
           enable-cache: false
           cache-dependency-glob: "pyproject.toml"
           github-token: ${{ secrets.GITHUB_TOKEN }}
-      - name: Add .local/bin to Windows PATH
+      - name: ⚙️ Add .local/bin to Windows PATH
         if: runner.os == 'Windows'
         shell: bash
         run: echo "$USERPROFILE/.local/bin" >> $GITHUB_PATH
-      - name: Install Python for packaging
+      - name: 🐍 Install Python for packaging
         run: uv python install 3.15
-      - name: Install tox@self
+      - name: 📦 Install tox@self
         run: uv tool install --python-preference only-managed --python ${{ matrix.py }} tox@.
-      - name: Setup test suite
+      - name: 📦 Set up test suite
         run: tox run -vv --notest --skip-missing-interpreters false -e ${{ matrix.py }}
-      - name: Run test suite
+      - name: 🧪 Run test suite
         run: tox run --skip-pkg-install -e ${{ matrix.py }}
         env:
           PYTEST_ADDOPTS: "-vv --durations=20"
           DIFF_AGAINST: ${{ github.event.pull_request.base.sha || 'HEAD' }}
           PYTEST_XDIST_AUTO_NUM_WORKERS: 0
-      - name: Upload test timings
-        if: ${{ !cancelled() }}
+      - name: 📤 Upload test timings
+        if: ${{ !cancelled() }} # codespell:ignore cancelled
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: junit-${{ matrix.py }}-${{ matrix.os.name }}
@@ -69,7 +71,7 @@ jobs:
           if-no-files-found: warn
           retention-days: 30
   check:
-    name: tox env ${{ matrix.tox_env }} on ${{ matrix.os.name }}
+    name: 🔍 tox env ${{ matrix.tox_env }} on ${{ matrix.os.name }}
     runs-on: ${{ matrix.os.image }}
     strategy:
       fail-fast: false
@@ -81,63 +83,46 @@ jobs:
           - docs
           - pkg_meta
         os:
-          - {image: ubuntu-24.04, name: ubuntu}
+          - {image: ubuntu-26.04, name: ubuntu}
           - {image: windows-2025-vs2026, name: windows}
         exclude:
           - {os: {image: windows-2025-vs2026, name: windows}, tox_env: docs}
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: 📥 Check out code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
           persist-credentials: false
-      - name: Install the latest version of uv
-        uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+      - name: 🐍 Install uv
+        uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e # v10.3.2
         with:
+          version: latest-known
           python-version: "3.15"
           enable-cache: false
           cache-dependency-glob: "pyproject.toml"
           github-token: ${{ secrets.GITHUB_TOKEN }}
-      - name: Add .local/bin to Windows PATH
+      - name: ⚙️ Add .local/bin to Windows PATH
         if: runner.os == 'Windows'
         shell: bash
         run: echo "$USERPROFILE/.local/bin" >> $GITHUB_PATH
-      - name: Install Python for packaging
+      - name: 🐍 Install Python for packaging
         run: uv python install 3.15
-      - name: Install tox@self
+      - name: 📦 Install tox@self
         run: uv tool install --python-preference only-managed --python 3.15 tox@.
-      - name: Install Python 3.11 for type-min
+      - name: 🐍 Install Python 3.11 for type-min
         if: matrix.tox_env == 'type-min'
         run: uv python install 3.11
-      - name: Setup check suite
+      - name: 📦 Set up check suite
         run: tox r -vv --notest --skip-missing-interpreters false -e ${{ matrix.tox_env }}
-      - name: Run check for ${{ matrix.tox_env }}
+      - name: 🧪 Run check for ${{ matrix.tox_env }}
         run: tox r --skip-pkg-install -e ${{ matrix.tox_env }}
-  changelog:
-    if: github.event_name == 'pull_request' && !contains(github.event.pull_request.labels.*.name, 'skip news')
-    runs-on: ubuntu-24.04
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          fetch-depth: 0
-          persist-credentials: false
-      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
-        with:
-          python-version: "3.15"
-          enable-cache: false
-      - run: uvx towncrier check --compare-with "origin/${GITHUB_BASE_REF}"
   gate:
-    name: Required checks pass
-    if: always()
-    needs: [test, check, changelog]
-    runs-on: ubuntu-24.04
+    name: 🚦 ${{ github.event_name == 'pull_request' && 'Required checks pass' || 'Non-PR checks pass' }}
+    if: ${{ !cancelled() }} # codespell:ignore cancelled
+    needs: [test, check]
+    runs-on: ubuntu-26.04
     steps:
-      - env:
+      - name: 🚦 Require all needed jobs to pass
+        env:
           NEEDS_JSON: ${{ toJSON(needs) }}
-        run: |
-          jq -e '
-            all(
-              to_entries[];
-              .value.result == "success" or
-              (.key == "changelog" and .value.result == "skipped")
-            )
-          ' <<< "$NEEDS_JSON"
+        run: jq -e 'all(to_entries[]; .value.result == "success")' <<<"$NEEDS_JSON"

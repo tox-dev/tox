@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import sys
 from typing import TYPE_CHECKING
 
 import pytest
@@ -62,3 +63,18 @@ def test_replace_glob_nested_substitution(replace_one: ReplaceOne, tmp_path: Pat
     (tmp_path / "marker.txt").touch()
     result = replace_one("{glob:{tox_root}/*.txt}")
     assert str(tmp_path / "marker.txt") in result
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="Windows reads z:/fallback as a drive path")
+@pytest.mark.parametrize(
+    ("existing", "expected"),
+    [
+        pytest.param("z", "z", id="match"),
+        pytest.param("y", "/fallback", id="default"),
+    ],
+)
+def test_replace_glob_single_letter_pattern_absolute_default(
+    replace_one: ReplaceOne, tmp_path: Path, existing: str, expected: str
+) -> None:
+    (tmp_path / existing).touch()
+    assert replace_one("{glob:z:/fallback}") == str(tmp_path / expected)

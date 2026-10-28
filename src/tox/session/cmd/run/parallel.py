@@ -29,7 +29,7 @@ def tox_add_option(parser: ToxParser) -> None:
     our = parser.add_command("run-parallel", ["p"], "run environments in parallel", run_parallel)
     register_env_select_flags(our, default=CliEnv())
     env_run_create_flags(our, mode="run-parallel")
-    parallel_flags(our, default_parallel=DEFAULT_PARALLEL, default_spinner=is_ci())
+    parallel_flags(our, default_parallel=DEFAULT_PARALLEL)
 
 
 def parse_num_processes(str_value: str) -> int | None:
@@ -52,8 +52,6 @@ def parallel_flags(
     our: ArgumentParser,
     default_parallel: int | str,
     no_args: bool = False,  # ruff:ignore[boolean-type-hint-positional-argument, boolean-default-value-positional-argument]
-    *,
-    default_spinner: bool = False,
 ) -> None:
     extra: dict[str, Any] = {"nargs": "?"} if no_args else {}
     our.add_argument(
@@ -79,7 +77,7 @@ def parallel_flags(
         "--parallel-no-spinner",
         action="store_true",
         dest="parallel_no_spinner",
-        default=default_spinner,
+        default=is_ci(),
         help="disable the spinner when running in parallel, enabled by default in CI",
     )
 

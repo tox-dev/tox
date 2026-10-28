@@ -1025,6 +1025,39 @@ def test_set_env_spliced_marker(
             {"DATA": "a}b{c"},
             id="toml-env-table-default-unpaired-braces",
         ),
+        pytest.param(
+            "toml",
+            """
+            [env_run_base]
+            package = "skip"
+            set_env = { DATA = { replace = "glob", pattern = "x:y/*", default = "a:b" } }
+            """,
+            {},
+            {"DATA": "a:b"},
+            id="toml-glob-table-pattern-colon",
+        ),
+        pytest.param(
+            "toml",
+            """
+            [env_run_base]
+            package = "skip"
+            set_env = { DATA = { replace = "glob", pattern = "{x:y/*", default = "a" } }
+            """,
+            {},
+            {"DATA": "a"},
+            id="toml-glob-table-pattern-unpaired-brace",
+        ),
+        pytest.param(
+            "toml",
+            """
+            [env_run_base]
+            package = "skip"
+            set_env = { DATA = { replace = "glob", pattern = "x/*", default = "a\\\\" } }
+            """,
+            {},
+            {"DATA": "a\\"},
+            id="toml-glob-table-default-trailing-backslash",
+        ),
     ],
 )
 def test_set_env_include_resolves_values_when_read(
