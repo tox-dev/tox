@@ -1,21 +1,47 @@
 from __future__ import annotations
 
-import multiprocessing
+import os
+import sys
 from typing import TYPE_CHECKING
+
+import pytest
 
 from tox.util.cpu import auto_detect_cpus
 
 if TYPE_CHECKING:
+    from collections.abc import Iterator
+
     from pytest_mock import MockerFixture
 
 
-# kept after test-pruning defense (do not re-nominate): making auto_detect_cpus always return 1 fails only
-# this test across the whole suite, the fallback test below cannot tell 1 from the real count
-def test_auto_detect_cpus() -> None:
-    num_cpus_actual = multiprocessing.cpu_count()
-    assert auto_detect_cpus() == num_cpus_actual
+@pytest.fixture
+def two_cpu_affinity() -> Iterator[None]:
+    original = os.sched_getaffinity(0)
+    os.sched_setaffinity(0, sorted(original)[:2])
+    yield
+    os.sched_setaffinity(0, original)
 
 
-def test_auto_detect_cpus_returns_one_when_cpu_count_throws(mocker: MockerFixture) -> None:
-    mocker.patch.object(multiprocessing, "cpu_count", side_effect=NotImplementedError)
+@pytest.mark.skipif(
+    not hasattr(os, "sched_setaffinity") or len(os.sched_getaffinity(0)) < 3,
+    reason="needs a CPU affinity API and at least three usable CPUs",
+)
+@pytest.mark.usefixtures("two_cpu_affinity")
+def test_auto_detect_cpus_honours_affinity() -> None:
+    assert auto_detect_cpus() == 2
+
+
+@pytest.mark.skipif(sys.version_info >= (3, 13), reason="3.13+ asks os.process_cpu_count")
+def test_auto_detect_cpus_without_affinity(monkeypatch: pytest.MonkeyPatch, mocker: MockerFixture) -> None:
+    monkeypatch.delattr(os, "sched_getaffinity", raising=False)
+    mocker.patch.object(os, "cpu_count", return_value=5)
+    assert auto_detect_cpus() == 5
+
+
+def test_auto_detect_cpus_returns_one_when_count_is_unknown(
+    monkeypatch: pytest.MonkeyPatch, mocker: MockerFixture
+) -> None:
+    monkeypatch.delattr(os, "sched_getaffinity", raising=False)
+    mocker.patch.object(os, "process_cpu_count", create=True, return_value=None)
+    mocker.patch.object(os, "cpu_count", return_value=None)
     assert auto_detect_cpus() == 1

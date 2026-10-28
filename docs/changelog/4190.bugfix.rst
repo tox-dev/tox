@@ -1,0 +1,2 @@
+``--parallel auto`` now counts the CPUs tox may run on instead of every CPU in the machine, so it respects the CPU
+affinity mask set by ``taskset`` or a container's cpuset (and ``PYTHON_CPU_COUNT`` on Python 3.13+).

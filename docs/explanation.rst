@@ -619,7 +619,8 @@ tox allows running environments in parallel mode via the ``parallel`` sub-comman
 - The ``--parallel`` flag takes an argument specifying the degree of parallelization, defaulting to ``auto``:
 
   - ``all`` to run all invoked environments in parallel,
-  - ``auto`` to limit it to CPU count,
+  - ``auto`` to limit it to the number of CPUs tox may run on, which respects the CPU affinity mask (``taskset``, a
+    container's cpuset),
   - or pass an integer to set that limit.
 
 - Parallel mode displays a progress spinner while running environments in parallel, and reports outcome as soon as
