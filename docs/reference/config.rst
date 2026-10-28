@@ -2846,6 +2846,10 @@ If no files match and a ``default`` is provided it will be used as fallback:
 
 When no files match and no default is given, the result is an empty string (or empty list with ``extend``).
 
+``pattern`` and ``default`` take substitutions and nested ``replace`` tables, as in ``pattern = "{env_name}/*.whl"``.
+Inside ``set_env`` the table resolves like ``{glob:PATTERN:DEFAULT}`` when the value is read, so ``{env:NAME}`` sees the
+other ``set_env`` keys.
+
 .. _conditional-value-reference:
 
 Conditional value reference
