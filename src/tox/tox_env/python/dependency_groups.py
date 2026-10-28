@@ -129,7 +129,7 @@ def _unwrap_nested_extras(
 ) -> set[Requirement]:
     seen_extras: Final[set[tuple[str, frozenset[Marker]]]] = set()
     pending: Final[list[tuple[Requirement, frozenset[Marker]]]] = [(dep, frozenset()) for dep in dependencies]
-    dependencies.clear()
+    resolved: Final[set[Requirement]] = set()
     while pending:
         dependency, markers = pending.pop()
         if canonicalize_name(dependency.name) != project_name:
@@ -137,13 +137,13 @@ def _unwrap_nested_extras(
                 dependency.marker = Marker(
                     " and ".join(f"({marker})" for marker in (*sorted(markers, key=str), dependency.marker) if marker)
                 )
-            dependencies.add(dependency)
+            resolved.add(dependency)
             continue
         if dependency.marker is not None:
             markers |= {dependency.marker}
         for extra in dependency.extras:
             _add_extra_to_deps(optional_dependencies, pending, extra, markers, seen_extras)
-    return dependencies
+    return resolved
 
 
 def _add_extra_to_deps(
