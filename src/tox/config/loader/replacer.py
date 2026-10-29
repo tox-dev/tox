@@ -48,6 +48,10 @@ class MatchError(Exception):
     """Couldn't find end terminator in MatchExpression."""
 
 
+class RawText(str):  # ruff:ignore[subclass-builtin] # keep the origin through the str replacement interface
+    __slots__ = ()
+
+
 class ReplaceReference(ABC):
     @abstractmethod
     def __call__(self, value: str, conf_args: ConfigLoadArgs) -> str | None:
@@ -56,7 +60,7 @@ class ReplaceReference(ABC):
         :param value: the raw value
         :param conf_args: the configuration loads argument object
 
-        :returns: the replaced value, None if it can't do it.
+        :returns: the replaced value (as :class:`RawText` to have its own tokens replaced), None if it can't do it.
 
         """
         raise NotImplementedError
@@ -244,8 +248,12 @@ class Replacer:
         of_type, *args = flattened_args
         replace_value = self._resolve_replace(of_type, args, flattened_args, conf_args)
         if replace_value is not None:
-            needs_expansion = any(isinstance(m, MatchExpression) for m in find_replace_expr(replace_value))
-            if needs_expansion and self.recursive:
+            # Only raw configuration text gets another pass; positional arguments and file names are data.
+            if (
+                self.recursive
+                and isinstance(replace_value, RawText)
+                and any(isinstance(match, MatchExpression) for match in find_replace_expr(replace_value))
+            ):
                 try:
                     return type(self)(self.conf, self.reference, conf_args, self.depth + 1).expand(replace_value)
                 except MatchRecursionError as err:
@@ -360,7 +368,7 @@ def replace_env(conf: Config | None, args: list[str], conf_args: ConfigLoadArgs)
             raise MatchRecursionError(msg)
 
     if key in os.environ:
-        return os.environ[key]
+        return RawText(os.environ[key])  # a host variable has always been allowed to hold tokens of its own
 
     return "" if len(args) == 1 else ARG_DELIMITER.join(args[1:])
 
@@ -414,6 +422,7 @@ def replace_factor(conf: Config, args: list[str], conf_args: ConfigLoadArgs) -> 
 __all__ = [
     "MatchExpression",
     "MatchRecursionError",
+    "RawText",
     "find_replace_expr",
     "load_posargs",
     "replace",

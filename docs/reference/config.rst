@@ -3403,9 +3403,13 @@ create your virtual env for the developers. This also supports ranges in the sam
 **Value substitution** operates through the ``{...}`` string-substitution pattern. The string inside the curly braces
 may reference a global or per-environment config key as described above.
 
-tox substitutes a key's value when it loads the key, and substitutes the result again until no ``{...}`` expression
-remains, so a referenced value may contain substitutions of its own. :ref:`set_env` is the exception: tox substitutes
-each of its values only when it reads that value, see :ref:`set_env resolution rules <set-env-resolution>`.
+tox substitutes a key's value when it loads the key, and substitutes the text of a referenced key or host environment
+variable again until no ``{...}`` expression remains, so a referenced value may contain substitutions of its own.
+:ref:`set_env` is the exception: tox substitutes each of its values only when it reads that value, see :ref:`set_env
+resolution rules <set-env-resolution>`.
+
+Positional arguments, file names matched by ``{glob:PATTERN}`` and ``TOX_FACTOR_<label>`` overrides are data rather than
+configuration, so tox inserts them as they are: a ``{...}`` or ``[]`` within them is not a substitution.
 
 In substitutions, the backslash character ``\`` will act as an escape when preceding ``{``, ``}``, ``:``, ``[``, or
 ``]``, otherwise the backslash will be reproduced literally:
@@ -3523,7 +3527,9 @@ then the value will be replaced with positional arguments as provided to the tox
 
 In this instance, the positional argument portion will be replaced with ``arg1 arg2``. If no positional arguments were
 specified, the value of DEFAULTS will be used instead. If DEFAULTS contains other substitution strings, such as
-``{env:*}``, they will be interpreted.,
+``{env:*}``, they will be interpreted. The positional arguments themselves are passed through literally, so the command
+receives ``{env:HOME}`` for ``tox run -- '{env:HOME}'``. Only the TOML ``posargs`` replacement can opt in to
+substituting them, with ``substitute = true``.
 
 Use a double ``--`` if you also want to pass options to an underlying test command, for example:
 
