@@ -5,7 +5,7 @@ import glob
 import os
 import re
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Protocol, cast
+from typing import TYPE_CHECKING, Any, Final, Protocol, cast
 
 from tox.config.loader.api import apply_overrides_to_raw
 from tox.config.loader.ini.factor import active_factors
@@ -18,6 +18,7 @@ from tox.config.loader.replacer import (
     load_posargs,
     replace,
     replace_env,
+    replace_program,
 )
 from tox.config.loader.stringify import stringify
 from tox.config.set_env import SetEnvReference
@@ -45,10 +46,14 @@ class _Directive(Protocol):
 
 
 class Unroll:
-    def __init__(self, conf: Config | None, loader: TomlLoader, args: ConfigLoadArgs) -> None:
+    def __init__(
+        self, conf: Config | None, loader: TomlLoader, args: ConfigLoadArgs, *, program_depth: int | None = None
+    ) -> None:
         self.conf = conf
         self.loader = loader
         self.args = args
+        # Spreads can move the first program word through nested lists.
+        self._program_depth = program_depth
         self._refs: list[str] = []
         self.factors = active_factors(args.env_name)
 
@@ -61,7 +66,9 @@ class Unroll:
         if isinstance(value, str):
             if not skip_str and self.conf is not None:  # core config does not support string substitution
                 reference = TomlReplaceLoader(self.conf, self.loader)
-                value = replace(self.conf, reference, value, self.args)
+                value = (replace if self._program_depth is None else replace_program)(
+                    self.conf, reference, value, self.args
+                )
             return value
         if isinstance(value, list):
             return self._replace_list(value, depth, skip_str=skip_str)
@@ -71,9 +78,14 @@ class Unroll:
 
     def _replace_list(self, value: list[TomlTypes], depth: int, *, skip_str: bool) -> TomlTypes:
         # need to inspect every entry of the list to check for reference.
-        res_list: list[TomlTypes] = []
+        res_list: Final[list[TomlTypes]] = []
+        program_depth: Final[int | None] = self._program_depth
         for val in value:  # apply replacement for every entry
-            got = self(val, depth, skip_str=skip_str)
+            self._program_depth = self._entry_program_depth(program_depth, val, res_list)
+            try:
+                got = self(val, depth, skip_str=skip_str)
+            finally:
+                self._program_depth = program_depth
             if isinstance(got, SetEnvReference):
                 extending = isinstance(val, dict) and bool(val.get("extend"))
                 if got.shape != ("array" if extending else "table"):
@@ -92,6 +104,14 @@ class Unroll:
             else:
                 res_list.extend(cast("list[Any]", got))
         return res_list
+
+    @staticmethod
+    def _entry_program_depth(depth: int | None, entry: TomlTypes, before: list[TomlTypes]) -> int | None:
+        if depth == 1 and before not in ([], ["-"], ["!"]):
+            return None
+        if depth and not (isinstance(entry, dict) and entry.get("replace") and entry.get("extend")):
+            return depth - 1
+        return depth
 
     def _replace_dict(self, value: dict[str, TomlTypes], depth: int, *, skip_str: bool) -> TomlTypes:
         replace_type = value.get("replace")
@@ -116,7 +136,7 @@ class Unroll:
         return None
 
     def _replace_posargs(self, value: dict[str, TomlTypes], depth: int, *, skip_str: bool) -> TomlTypes:
-        got_posargs = load_posargs(cast("Config", self.conf), self.args)
+        got_posargs = load_posargs(cast("Config", self.conf), self.args, program_first=self._program_depth == 1)
         if got_posargs is None:
             return [self(v, depth, skip_str=skip_str) for v in cast("list[str]", value.get("default", []))]
         if validate(value.get("substitute", False), bool):

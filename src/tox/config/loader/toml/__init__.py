@@ -4,7 +4,7 @@ import inspect
 import logging
 from pathlib import Path
 from types import GenericAlias
-from typing import TYPE_CHECKING, Any, TypeVar, cast
+from typing import TYPE_CHECKING, Any, Final, TypeVar, cast
 
 from tox.config.loader.api import ConfigLoadArgs, Loader, Override
 from tox.config.loader.replacer import MatchExpression, MatchRecursionError, replace, replace_once
@@ -75,7 +75,8 @@ class TomlLoader(Loader[TomlTypes]):
         args: ConfigLoadArgs,
     ) -> _T:
         delay_replace = inspect.isclass(of_type) and issubclass(of_type, SetEnv)
-        unroll = Unroll(conf=conf, loader=self, args=args)
+        program_depth: Final[int | None] = 2 if of_type == list[Command] else 1 if of_type == Command else None
+        unroll = Unroll(conf=conf, loader=self, args=args, program_depth=program_depth)
         exploded = unroll(raw, skip_str=True) if delay_replace else unroll(raw)
         result = self.to(exploded, of_type, factory)
         if delay_replace and conf is not None:  # the core section supports no replacement

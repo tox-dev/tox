@@ -55,24 +55,35 @@ class Config:
         self._core_set: CoreConfigSet | None = None
         self.memory_seed_loaders: defaultdict[str, list[MemoryLoader]] = defaultdict(list)
 
-    def pos_args(self, to_path: Path | None) -> tuple[str, ...] | None:
-        """:param to_path: if not None rewrite relative posargs paths from cwd to to_path
-
-        :returns: positional argument
-
-        """
+    def pos_args(self, to_path: Path | None, *, program_first: bool = False) -> tuple[str, ...] | None:
         if self._pos_args is not None and to_path is not None and Path.cwd() != to_path:
             args = []
             # we use os.path to unroll .. in path without resolve
             to_path_str = os.path.abspath(str(to_path))  # ruff:ignore[os-path-abspath]
-            for arg in self._pos_args:
+            for index, arg in enumerate(self._pos_args):
                 path_arg = Path(arg)
                 try:
                     is_existing_path = path_arg.exists()
                 except OSError:
                     logging.debug("could not check if %r is an existing path", arg)
                     is_existing_path = False
-                if is_existing_path and not path_arg.is_absolute():
+                # A wrapper can run the first positional value as a program without tox knowing that it does.
+                if (
+                    is_existing_path
+                    and not path_arg.is_absolute()
+                    and not (
+                        index == 0
+                        and path_arg.name == arg
+                        and (
+                            program_first
+                            or (
+                                path_arg.is_file()
+                                and os.access(path_arg, os.X_OK)
+                                and (os.name != "nt" or path_arg.suffix.lower() in {".bat", ".cmd", ".com", ".exe"})
+                            )
+                        )
+                    )
+                ):
                     # we use os.path to unroll .. in path without resolve
                     path_arg_str = os.path.abspath(str(path_arg))  # ruff:ignore[os-path-abspath]
                     try:

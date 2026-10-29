@@ -3,7 +3,7 @@ from __future__ import annotations
 import os
 from functools import partial
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Final
 
 import pytest
 
@@ -16,7 +16,7 @@ from tox.tox_env.python.pip.req_file import PythonDeps
 if TYPE_CHECKING:
     from tests.conftest import ToxIniCreator
     from tox.config.main import Config
-    from tox.pytest import ToxProjectCreator
+    from tox.pytest import ToxProject, ToxProjectCreator, ToxRunOutcome
 
 
 def test_empty_config_repr(empty_config: Config) -> None:
@@ -280,6 +280,176 @@ def test_args_are_paths_when_with_change_dir(tox_project: ToxProjectCreator) -> 
     result = project.run("c", "-e", "py", "-k", "commands", "--", *args)
     result.assert_success()
     assert result.out == f"[testenv:py]\ncommands = magic.py {project.path} ..{os.sep}tox.ini a.txt . ..\n"
+
+
+_POSARGS: Final[str] = '{ replace = "posargs" }'
+_POSARGS_EXTEND: Final[str] = '{ replace = "posargs", extend = true }'
+_EXECUTABLE_NAME: Final[str] = "python.exe" if os.name == "nt" else "python"
+
+
+@pytest.mark.parametrize(
+    ("name", "config"),
+    [
+        pytest.param("tox.ini", "[testenv]\ncommands={posargs}", id="ini"),
+        pytest.param("tox.ini", "[testenv]\ncommands=[]", id="ini-brackets"),
+        pytest.param("tox.ini", "[testenv]\ncommands=- {posargs}", id="ini-ignore-exit-code"),
+        pytest.param("tox.ini", "[testenv]\ncommands=-{posargs}", id="ini-ignore-exit-code-glued"),
+        pytest.param("tox.ini", "[testenv]\ncommands=! {posargs}", id="ini-invert-exit-code"),
+        pytest.param("tox.ini", "[testenv]\ncommands={env:NO_WRAPPER:} {posargs}", id="ini-after-empty"),
+        pytest.param("tox.ini", "[testenv]\ncommands={env:NO_WRAPPER:{posargs}}", id="ini-default"),
+        pytest.param("tox.ini", "[testenv]\ncommands={[a]b}\n[a]\nb={posargs}", id="ini-reference"),
+        pytest.param("tox.toml", f"env_run_base.commands = [{_POSARGS}]", id="toml"),
+        pytest.param("tox.toml", f"env_run_base.commands = [[{_POSARGS_EXTEND}]]", id="toml-extend"),
+        pytest.param("tox.toml", f'env_run_base.commands = [["-", {_POSARGS_EXTEND}]]', id="toml-ignore-exit-code"),
+        pytest.param("tox.toml", f'env_run_base.commands = [["!", {_POSARGS_EXTEND}]]', id="toml-invert-exit-code"),
+        pytest.param(
+            "tox.toml",
+            f'env_run_base.commands = [{{ replace = "ref", of = ["a", "b"] }}]\na.b = {_POSARGS}',
+            id="toml-reference",
+        ),
+        pytest.param(
+            "tox.toml",
+            f'env_run_base.commands = [{{ replace = "ref", of = ["a", "b"], extend = true }}]\na.b = [{_POSARGS}]',
+            id="toml-reference-extend",
+        ),
+        pytest.param(
+            "tox.toml",
+            f'env_run_base.commands = [{{ replace = "if", condition = "env.NO", then = ["a"], else = {_POSARGS} }}]',
+            id="toml-if",
+        ),
+    ],
+)
+def test_args_are_paths_keeps_program_name(tox_project: ToxProjectCreator, name: str, config: str) -> None:
+    project: Final[ToxProject] = tox_project({name: config, "w": {"python": "", "a.txt": ""}})
+    (project.path / "w" / "python").chmod(0o755)
+    result: Final[ToxRunOutcome] = project.run(
+        "c", "-e", "py", "-k", "commands", "--", "python", "python", "a.txt", from_cwd=project.path / "w"
+    )
+    result.assert_success()
+    assert result.out == f"[testenv:py]\ncommands = python w{os.sep}python w{os.sep}a.txt\n"
+
+
+def test_args_are_paths_keeps_install_program_name(tox_project: ToxProjectCreator) -> None:
+    project: Final[ToxProject] = tox_project({
+        "tox.toml": f"env_run_base.install_command = [{_POSARGS_EXTEND}]",
+        "w": {"python": "", "a.txt": ""},
+    })
+    result: Final[ToxRunOutcome] = project.run(
+        "c", "-e", "py", "-k", "install_command", "--", "python", "python", "a.txt", from_cwd=project.path / "w"
+    )
+    result.assert_success()
+    assert result.out == f"[testenv:py]\ninstall_command = python w{os.sep}python w{os.sep}a.txt\n"
+
+
+@pytest.mark.parametrize(
+    ("name", "config", "program"),
+    [
+        pytest.param("tox.ini", "[testenv]\ncommands=env {posargs}", "env", id="ini-wrapper"),
+        pytest.param(
+            "tox.toml",
+            f'env_run_base.commands = [["env", {_POSARGS_EXTEND}]]',
+            "env",
+            id="toml-wrapper",
+        ),
+        pytest.param("tox.ini", "[testenv]\ncommands=tool {posargs}", "tool", id="first-data-value"),
+    ],
+)
+def test_args_are_paths_keeps_executable_first_value(
+    tox_project: ToxProjectCreator, name: str, config: str, program: str
+) -> None:
+    project: Final[ToxProject] = tox_project({name: config, "w": {_EXECUTABLE_NAME: ""}})
+    (project.path / "w" / _EXECUTABLE_NAME).chmod(0o755)
+    result: Final[ToxRunOutcome] = project.run(
+        "c", "-e", "py", "-k", "commands", "--", _EXECUTABLE_NAME, from_cwd=project.path / "w"
+    )
+    result.assert_success()
+    assert result.out == f"[testenv:py]\ncommands = {program} {_EXECUTABLE_NAME}\n"
+
+
+@pytest.mark.parametrize(
+    ("name", "config", "expected"),
+    [
+        pytest.param("tox.ini", '[testenv]\ncommands="{posargs}"', "python", id="ini-quoted"),
+        pytest.param("tox.ini", "[testenv]\ncommands=.{/}{posargs}", f".{os.sep}python", id="ini-suffix"),
+        pytest.param("tox.toml", 'env_run_base.commands = [["{posargs}"]]', "python", id="toml"),
+        pytest.param("tox.toml", 'env_run_base.commands = [["-", "{posargs}"]]', "python", id="toml-ignore-exit-code"),
+        pytest.param("tox.toml", 'env_run_base.commands = [[".{/}{posargs}"]]', f".{os.sep}python", id="toml-suffix"),
+        pytest.param(
+            "tox.toml",
+            'env_run_base.commands = [[{ replace = "env", name = "NO_WRAPPER", default = "{posargs}" }]]',
+            "python",
+            id="toml-env-default",
+        ),
+        pytest.param(
+            "tox.toml",
+            'env_run_base.commands = [[{ replace = "if", condition = "env.NO", then = "a", else = "{posargs}", '
+            "extend = true }]]",
+            "python",
+            id="toml-if-extend",
+        ),
+    ],
+)
+def test_args_are_paths_keeps_program_name_within_word(
+    tox_project: ToxProjectCreator, name: str, config: str, expected: str
+) -> None:
+    project: Final[ToxProject] = tox_project({name: config, "w": {"python": ""}})
+    result: Final[ToxRunOutcome] = project.run(
+        "c", "-e", "py", "-k", "commands", "--", "python", from_cwd=project.path / "w"
+    )
+    result.assert_success()
+    assert result.out == f"[testenv:py]\ncommands = {expected}\n"
+
+
+@pytest.mark.parametrize(
+    ("name", "config"),
+    [
+        pytest.param("tox.ini", "[testenv]\ncommands={posargs}", id="ini"),
+        pytest.param("tox.toml", f"env_run_base.commands = [{_POSARGS}]", id="toml"),
+    ],
+)
+def test_args_are_paths_rewrites_program_path(tox_project: ToxProjectCreator, name: str, config: str) -> None:
+    project: Final[ToxProject] = tox_project({name: config, "w": {_EXECUTABLE_NAME: ""}})
+    (project.path / "w" / _EXECUTABLE_NAME).chmod(0o755)
+    result: Final[ToxRunOutcome] = project.run(
+        "c", "-e", "py", "-k", "commands", "--", f".{os.sep}{_EXECUTABLE_NAME}", from_cwd=project.path / "w"
+    )
+    result.assert_success()
+    assert result.out == f"[testenv:py]\ncommands = w{os.sep}{_EXECUTABLE_NAME}\n"
+
+
+@pytest.mark.parametrize(
+    ("name", "config", "key", "prefix"),
+    [
+        pytest.param("tox.ini", "[testenv]\ncommands=a {posargs}", "commands", "a ", id="ini"),
+        pytest.param("tox.ini", "[testenv]\ncommands=- a {posargs}", "commands", "a ", id="ini-ignore-exit-code"),
+        pytest.param("tox.ini", "[testenv]\ncommands=a {[a]b}\n[a]\nb={posargs}", "commands", "a ", id="ini-reference"),
+        pytest.param("tox.ini", "[testenv]\ndeps={posargs}", "deps", "", id="ini-deps"),
+        pytest.param("tox.toml", f'env_run_base.commands = [["a", {_POSARGS_EXTEND}]]', "commands", "a ", id="toml"),
+        pytest.param(
+            "tox.toml",
+            f'env_run_base.commands = [["-", "a", {_POSARGS_EXTEND}]]',
+            "commands",
+            "a ",
+            id="toml-ignore-exit-code",
+        ),
+        pytest.param("tox.toml", 'env_run_base.commands = [["a", "{posargs}"]]', "commands", "a ", id="toml-str"),
+        pytest.param(
+            "tox.toml",
+            f'env_run_base.commands = [["a", {{ replace = "ref", of = ["a", "b"], extend = true }}]]\na.b = {_POSARGS}',
+            "commands",
+            "a ",
+            id="toml-reference",
+        ),
+        pytest.param("tox.toml", f"env_run_base.deps = [{_POSARGS_EXTEND}]", "deps", "", id="toml-deps"),
+    ],
+)
+def test_args_are_paths_rewrites_name_after_program(
+    tox_project: ToxProjectCreator, name: str, config: str, key: str, prefix: str
+) -> None:
+    project: Final[ToxProject] = tox_project({name: config, "w": {"python": ""}})
+    result: Final[ToxRunOutcome] = project.run("c", "-e", "py", "-k", key, "--", "python", from_cwd=project.path / "w")
+    result.assert_success()
+    assert result.out == f"[testenv:py]\n{key} = {prefix}w{os.sep}python\n"
 
 
 @pytest.mark.timeout(60)

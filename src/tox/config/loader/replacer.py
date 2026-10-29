@@ -83,7 +83,15 @@ def replace_command_lines(
     conf: Config, reference: ReplaceReference, value: str | MatchExpression, args: ConfigLoadArgs
 ) -> str:
     """Replace all active tokens within value, where each line of value is one command."""
-    return CommandLinesReplacer(conf, reference, conf_args=args).expand(value)
+    replacer: Final[CommandLinesReplacer] = CommandLinesReplacer(conf, reference, conf_args=args)
+    replacer.program = True
+    return replacer.expand(value)
+
+
+def replace_program(conf: Config, reference: ReplaceReference, value: str, args: ConfigLoadArgs) -> str:
+    replacer: Final[Replacer] = Replacer(conf, reference, conf_args=args)
+    replacer.program = True
+    return replacer.expand(value)
 
 
 def replace_once(conf: Config, reference: ReplaceReference, value: str | MatchExpression, args: ConfigLoadArgs) -> str:
@@ -223,6 +231,7 @@ class Replacer:
         self.conf_args = conf_args
         self.depth = depth
         self.recursive = recursive
+        self.program = False
 
     def __call__(self, value: MatchArg) -> Sequence[str]:
         return [self._replace_match(me) if isinstance(me, MatchExpression) else str(me) for me in value]
@@ -247,7 +256,9 @@ class Replacer:
             needs_expansion = any(isinstance(m, MatchExpression) for m in find_replace_expr(replace_value))
             if needs_expansion and self.recursive:
                 try:
-                    return type(self)(self.conf, self.reference, conf_args, self.depth + 1).expand(replace_value)
+                    nested: Final[Replacer] = type(self)(self.conf, self.reference, conf_args, self.depth + 1)
+                    nested.program = self.program
+                    return nested.expand(replace_value)
                 except MatchRecursionError as err:
                     LOGGER.warning(str(err))
                     return replace_value
@@ -268,7 +279,7 @@ class Replacer:
         dispatch: dict[str, Callable[[], str | None]] = {
             "env": lambda: replace_env(self.conf, args, conf_args),
             "tty": lambda: replace_tty(args),
-            "posargs": lambda: replace_pos_args(self.conf, args, conf_args),
+            "posargs": lambda: replace_pos_args(self.conf, args, conf_args, program_first=self.program),
             "glob": lambda: replace_glob(self.conf, args),
             "factor": lambda: replace_factor(self.conf, args, conf_args),
         }
@@ -284,6 +295,23 @@ class CommandLinesReplacer(Replacer):
     lines into that one command.
 
     """
+
+    @override
+    def __call__(self, value: MatchArg) -> Sequence[str]:
+        outer_program: Final[bool] = self.program
+        parts: Final[list[str]] = []
+        for part in value:
+            if isinstance(part, MatchExpression):
+                self.program = outer_program and self._within_program("".join(parts))
+                parts.append(self._replace_match(part))
+            else:
+                parts.append(str(part))
+        self.program = outer_program
+        return parts
+
+    @staticmethod
+    def _within_program(text: str) -> bool:
+        return not re.search(r"\S\s", text.rpartition("\n")[2].lstrip().lstrip("-!"))
 
     @override
     def join_value(self, value: MatchArg) -> str:
@@ -303,8 +331,8 @@ def _shares_line(value: MatchArg, at: int) -> bool:
     return bool(before.rpartition("\n")[2].strip() or after.partition("\n")[0].strip())
 
 
-def replace_pos_args(conf: Config, args: list[str], conf_args: ConfigLoadArgs) -> str:
-    pos_args = load_posargs(conf, conf_args)
+def replace_pos_args(conf: Config, args: list[str], conf_args: ConfigLoadArgs, *, program_first: bool = False) -> str:
+    pos_args = load_posargs(conf, conf_args, program_first=program_first)
     # if we use the defaults, join back remaining args else quote them for the command splitting that follows.
     return ARG_DELIMITER.join(args) if pos_args is None else _quote_pos_args(pos_args)
 
@@ -316,7 +344,7 @@ def _quote_pos_args(pos_args: Sequence[str]) -> str:
     return " ".join(arg if arg and not re.search(r"[\s'\"]|\\\\", arg) else shlex.quote(arg) for arg in pos_args)
 
 
-def load_posargs(conf: Config, conf_args: ConfigLoadArgs) -> tuple[str, ...] | None:
+def load_posargs(conf: Config, conf_args: ConfigLoadArgs, *, program_first: bool = False) -> tuple[str, ...] | None:
     to_path: Path | None = None
     if conf_args.env_name is not None:  # pragma: no branch
         env_conf = conf.get_env(conf_args.env_name)
@@ -325,7 +353,7 @@ def load_posargs(conf: Config, conf_args: ConfigLoadArgs) -> tuple[str, ...] | N
                 to_path = env_conf.get("change_dir", Path)
         except KeyError:
             pass
-    return conf.pos_args(to_path)
+    return conf.pos_args(to_path, program_first=program_first)
 
 
 def _loading_change_dir(conf_args: ConfigLoadArgs) -> bool:
@@ -421,4 +449,5 @@ __all__ = [
     "replace_env",
     "replace_factor",
     "replace_once",
+    "replace_program",
 ]
