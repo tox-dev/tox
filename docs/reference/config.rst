@@ -1123,7 +1123,8 @@ Base options
     2. A value that refers to its own key, ``PATH = {env:PATH}{:}/extra``, reads the host variable.
     3. Including another section's ``set_env`` behaves as if you wrote its lines in place. In INI that is
        ``{[section]set_env}``; in TOML it is ``{ replace = "ref", of = [...] }``. The included values resolve in the
-       including environment, so ``{env_name}`` and ``{posargs}`` refer to that environment.
+       including environment, so ``{env_name}`` and ``{posargs}`` refer to that environment. Naming an environment whose
+       section has no ``set_env`` of its own includes the lines that environment inherits.
     4. When two lines set the same key, a key written directly in a ``set_env`` wins over the same key from an included
        section, and a later included section wins over an earlier one. The rule applies again inside every included
        section. In the TOML list form, the later entry wins.
