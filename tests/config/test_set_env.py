@@ -1074,6 +1074,45 @@ def test_set_env_include_resolves_values_when_read(
     assert {key: set_env.load(key) if key in set_env else None for key in expected} == expected
 
 
+@pytest.mark.parametrize(
+    "separator",
+    [
+        pytest.param("\n", id="line-feed"),
+        pytest.param("\u2028", id="unicode-line-separator"),
+        pytest.param("; ", id="semicolon"),
+    ],
+)
+def test_set_env_substituted_key_keeps_value_intact(
+    eval_set_env: EvalSetEnv, monkeypatch: MonkeyPatch, separator: str
+) -> None:
+    value = f"label{separator}INJECTED=1"
+    monkeypatch.setenv("BUILD_LABEL", value)
+    set_env = eval_set_env("[testenv]\npackage=skip\nset_env=LABEL_{env_name} = {env:BUILD_LABEL}")
+    assert set_env.load("LABEL_py") == value
+
+
+def test_set_env_substituted_key_skips_equals_in_default(eval_set_env: EvalSetEnv, monkeypatch: MonkeyPatch) -> None:
+    monkeypatch.setenv("KEY_SUFFIX", "safe")
+    set_env = eval_set_env("[testenv]\npackage=skip\nset_env=LABEL_{env:KEY_SUFFIX:bad=default} = ok")
+    assert set_env.load("LABEL_safe") == "ok"
+
+
+@pytest.mark.parametrize(
+    "suffix",
+    [
+        pytest.param("BAD=secret", id="equals"),
+        pytest.param("BAD\nSECRET", id="line-feed"),
+        pytest.param("BAD\u2028SECRET", id="unicode-line-separator"),
+    ],
+)
+def test_set_env_substituted_key_rejects_structure(
+    eval_set_env: EvalSetEnv, monkeypatch: MonkeyPatch, suffix: str
+) -> None:
+    monkeypatch.setenv("KEY_SUFFIX", suffix)
+    with pytest.raises(ValueError, match=r"^invalid set_env key 'LABEL_\{env:KEY_SUFFIX\}' after substitution$"):
+        eval_set_env("[testenv]\npackage=skip\nset_env=LABEL_{env:KEY_SUFFIX} = ok")
+
+
 _TOML_ENV_DEFAULTS: Final = pytest.mark.parametrize(
     "default",
     [
