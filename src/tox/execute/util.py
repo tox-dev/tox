@@ -33,11 +33,14 @@ def shebang(exe: str) -> list[str] | None:
         decoded = shebang_line.decode("UTF-8")
     except UnicodeDecodeError:
         return None
+    # Match literal shebang paths while keeping tox's quoted path form.
+    match: Final = re.fullmatch(r'(?:"([^"]+)"|([^ \t]+))(.*)', decoded.strip())
+    if match is None:
+        return None
     try:
-        parts = shlex.split(decoded.strip(), posix=True)
+        return [match[1] or match[2], *shlex.split(match[3], posix=True)]
     except ValueError:
         return None
-    return parts or None
 
 
 def is_batch_file(exe: str) -> bool:

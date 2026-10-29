@@ -602,7 +602,7 @@ def test_windows_batch_file_started_via_cmd_exe(
 ) -> None:
     mocker.patch.object(local_sub_process, "sys", mocker.MagicMock(platform="win32"))
     popen: Final[MagicMock] = mocker.patch.object(
-        local_sub_process, "Popen", side_effect=OSError(errno.ENOENT, "not started")
+        local_sub_process, "Popen", autospec=True, side_effect=OSError(errno.ENOENT, "not started")
     )
     monkeypatch.setenv("SYSTEMROOT", str(tmp_path))
     script: Final[Path] = tmp_path / name
