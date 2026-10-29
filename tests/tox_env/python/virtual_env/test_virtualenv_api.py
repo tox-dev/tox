@@ -58,8 +58,9 @@ def test_virtualenv_default_settings(tox_project: ToxProjectCreator, virtualenv_
     if hasattr(virtualenv_opt, "copies"):
         assert virtualenv_opt.copies is False
     assert virtualenv_opt.no_periodic_update is True
-    assert virtualenv_opt.python == ["py3"]
-    assert virtualenv_opt.try_first_with == [str(sys.executable), str(proj.path / "a")]
+    # virtualenv parses its arguments in several passes into the same namespace, and each pass appends
+    assert list(dict.fromkeys(virtualenv_opt.python)) == ["<0", "py3"]
+    assert list(dict.fromkeys(virtualenv_opt.try_first_with)) == [str(sys.executable), str(proj.path / "a")]
 
 
 def test_virtualenv_flipped_settings(
@@ -85,7 +86,37 @@ def test_virtualenv_flipped_settings(
     assert virtualenv_opt.download is True
     if hasattr(virtualenv_opt, "copies"):
         assert virtualenv_opt.copies is True
-    assert virtualenv_opt.python == ["py3"]
+    assert list(dict.fromkeys(virtualenv_opt.python)) == ["<0", "py3"]
+
+
+def test_virtualenv_base_python_entries_whole_and_in_order(
+    tox_project: ToxProjectCreator,
+    mocker: MockerFixture,
+    monkeypatch: MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("VIRTUALENV_PYTHON", "from-env")
+    get_interpreter: Final = mocker.patch("virtualenv.discovery.builtin.get_interpreter", return_value=None)
+    base_python: Final = [f"first{os.pathsep}a", "second,b", ">=3.99,<4"]
+    proj: Final = tox_project({"tox.toml": f"[env_run_base]\npackage = 'skip'\nbase_python = {base_python}"})
+
+    result: Final = proj.run("r", "-e", "py")
+
+    result.assert_failed()
+    assert [call.args for call in get_interpreter.call_args_list] == [(spec, []) for spec in [*base_python, "<0"]]
+
+
+def test_virtualenv_config_file_cannot_override_base_python(
+    tox_project: ToxProjectCreator,
+    monkeypatch: MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    config: Final = tmp_path / "virtualenv.ini"
+    config.write_text(f"[virtualenv]\npython = {sys.executable}\n")
+    monkeypatch.setenv("VIRTUALENV_CONFIG_FILE", str(config))
+    result: Final = tox_project({"tox.ini": "[testenv]\npackage=skip\nbase_python=python3.99"}).run("r", "-e", "py")
+
+    result.assert_failed()
+    assert "could not find python interpreter matching any of the specs python3.99" in result.out
 
 
 def test_virtualenv_env_ignored_if_set(
