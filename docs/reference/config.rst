@@ -3567,6 +3567,10 @@ will make the ``--opt1 ARG1`` appear in all test commands where ``[]`` or ``{pos
 ``args_are_paths`` setting), ``tox`` rewrites each positional argument if it is a relative path and exists on the
 filesystem to become a path relative to the ``changedir`` setting.
 
+When an INI value uses ``{posargs}``, tox replaces line breaks within each positional argument with spaces before
+quoting it. INI command and list values use line breaks to separate entries. The same replacement applies to TOML
+strings containing ``{posargs}``; a TOML ``replace = "posargs"`` table keeps line breaks in the argument.
+
 .. _glob substitution:
 
 Glob pattern substitution

@@ -465,14 +465,16 @@ def replace_pos_args(conf: Config, args: list[str], conf_args: ConfigLoadArgs) -
 
 
 def quote_args(args: Sequence[str], quote: str = "") -> str:
+    # INI settings split lines before parsing quotes.
+    normalized: Final[list[str]] = [" ".join(arg.splitlines()) for arg in args]
     if quote:
-        text: Final[str] = " ".join(args)
+        text: Final[str] = " ".join(normalized)
         special: Final[str] = "'" if quote == "'" else '"\\'
         return f"{quote}{shlex.quote(text)}{quote}" if any(char in text for char in special) else text
     if sys.platform != "win32":
-        return shlex.join(args)
+        return shlex.join(normalized)
     # Windows command splitting keeps a lone backslash, so paths stay unquoted where a value is not split into a command
-    return " ".join(arg if arg and not re.search(r"[\s'\"]|\\\\", arg) else shlex.quote(arg) for arg in args)
+    return " ".join(arg if arg and not re.search(r"[\s'\"]|\\\\", arg) else shlex.quote(arg) for arg in normalized)
 
 
 def load_posargs(conf: Config, conf_args: ConfigLoadArgs) -> tuple[str, ...] | None:
