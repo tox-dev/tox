@@ -14,6 +14,7 @@ from .types import EnvList
 if TYPE_CHECKING:
     from collections.abc import Callable, Generator, Iterator, Mapping, Sequence
     from types import UnionType
+    from typing import Final
 
     from tox.config.loader.api import Loader
     from tox.config.main import Config
@@ -411,6 +412,19 @@ class EnvConfigSet(ConfigSet):
             desc="environment variables to set when running commands in the tox environment",
             post_process=set_env_post_process,
         )
+
+    def set_env_lines(self, chain: list[str]) -> str:
+        # load first: a {env:...} in an environment file name reads this set_env, and the chain would reject that load
+        self.load("set_env", chain)
+        loaded: Final = cast("ConfigDynamicDefinition[SetEnv]", self._defined["set_env"])
+        configured: Final = ConfigDynamicDefinition(
+            loaded.keys,
+            loaded.desc,
+            SetEnv,
+            SetEnv("", self.name, self.env_name, self._conf.core["tox_root"]),
+            factory=loaded.factory,
+        )
+        return configured(self._conf, self.loaders, ConfigLoadArgs(chain, self.name, self.env_name)).lines()
 
     @override
     def __repr__(self) -> str:

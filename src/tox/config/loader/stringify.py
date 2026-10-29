@@ -8,7 +8,7 @@ from tox.config.set_env import SetEnv
 from tox.config.types import Command, EnvList
 from tox.tox_env.python.pip.req_file import PythonConstraints, PythonDeps
 
-from .replacer import Arguments
+from .replacer import Arguments, quote_args
 
 
 def stringify(value: Any) -> tuple[str, bool]:  # ruff:ignore[too-many-return-statements]
@@ -32,7 +32,7 @@ def stringify(value: Any) -> tuple[str, bool]:  # ruff:ignore[too-many-return-st
     if isinstance(value, EnvList):
         return "\n".join(e for e in value.envs), True
     if isinstance(value, Command):
-        return value.shell, True
+        return quote_args(value.args), True
     if isinstance(value, SetEnv):
         env_var_keys = sorted(value)
         return stringify({k: value.load(k) for k in env_var_keys})
@@ -42,7 +42,6 @@ def stringify(value: Any) -> tuple[str, bool]:  # ruff:ignore[too-many-return-st
 
 
 def stringify_reference(value: object, *, constant: bool) -> str:
-    """Mark path and tox-provided values as arguments before command parsing."""
     as_str: Final[str] = stringify(value)[0]
     if isinstance(value, str):
         return Arguments(as_str) if constant else as_str
@@ -50,7 +49,4 @@ def stringify_reference(value: object, *, constant: bool) -> str:
     return Arguments(as_str) if all(isinstance(entry, (str, Path)) for entry in entries) else as_str
 
 
-__all__ = (
-    "stringify",
-    "stringify_reference",
-)
+__all__ = ("stringify", "stringify_reference")
