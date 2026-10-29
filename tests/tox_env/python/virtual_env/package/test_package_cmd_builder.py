@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import shutil
 from typing import TYPE_CHECKING, Final
 from zipfile import ZipFile
 
@@ -8,8 +9,9 @@ import pytest
 if TYPE_CHECKING:
     from collections.abc import Callable
     from pathlib import Path
+    from unittest.mock import MagicMock
 
-    from tox.pytest import ToxProjectCreator
+    from tox.pytest import ToxProject, ToxProjectCreator, ToxRunOutcome
 
 
 @pytest.fixture(scope="session")
@@ -139,6 +141,27 @@ def test_build_wheel_external(
 
     result.assert_success()
     assert "greetings from demo_pkg_inline" in result.out
+
+
+def test_build_wheel_external_relative_glob_uses_project(
+    tox_project: ToxProjectCreator, pkg_with_extras_project_wheel: Path
+) -> None:
+    ini: Final[str] = (
+        "[testenv]\npackage=external\n[testenv:.pkg_external]\npackage_glob=dist/*.whl\ncommands=python -c pass"
+    )
+    project: Final[ToxProject] = tox_project({"tox.ini": ini})
+    dist: Final[Path] = project.path / "dist"
+    dist.mkdir()
+    wheel: Final[Path] = dist / pkg_with_extras_project_wheel.name
+    shutil.copy(pkg_with_extras_project_wheel, wheel)
+    execute_calls: Final[MagicMock] = project.patch_execute(lambda run: 0 if "install" in run.run_id else None)
+
+    result: Final[ToxRunOutcome] = project.run("r", "-e", "py", "-c", project.path.name, from_cwd=project.path.parent)
+
+    result.assert_success()
+    assert [call[0][3].cmd[-1] for call in execute_calls.call_args_list if call[0][3].run_id == "install_package"] == [
+        str(wheel)
+    ]
 
 
 def test_build_wheel_external_fail_build(tox_project: ToxProjectCreator) -> None:

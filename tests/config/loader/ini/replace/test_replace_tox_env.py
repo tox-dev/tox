@@ -517,11 +517,21 @@ def test_replace_reference_arguments_of_command(
     assert env_config["c"] == [Command(args=["python", *expected, "-x"])]
 
 
-def test_replace_reference_to_path_setting_one_argument_of_command(example: EnvConfigCreator) -> None:
-    env_config = example("p = {tox_root}/a b\nc = python {p}/c -x")
+@pytest.mark.parametrize(
+    ("source", "suffix"),
+    [
+        pytest.param("a b", "a b", id="space"),
+        pytest.param(r"a\#b", "a#b", id="hash"),
+        pytest.param(r"a \#b", "a #b", id="space-and-hash"),
+    ],
+)
+def test_replace_reference_to_path_setting_one_argument_of_command(
+    example: EnvConfigCreator, tmp_path: Path, source: str, suffix: str
+) -> None:
+    env_config: Final[ConfigSet] = example(f"p = {{tox_root}}/{source}\nc = python {{p}}/c -x")
     env_config.add_config(keys="p", of_type=Path, default=Path(), desc="p")
     env_config.add_config(keys="c", of_type=list[Command], default=[], desc="c")
-    assert env_config["c"] == [Command(args=["python", f"{env_config['p']}/c", "-x"])]
+    assert env_config["c"] == [Command(args=["python", f"{tmp_path / 'c' / suffix}/c", "-x"])]
 
 
 def test_replace_reference_to_str_setting_is_command_text(example: EnvConfigCreator) -> None:

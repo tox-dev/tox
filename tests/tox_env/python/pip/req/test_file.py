@@ -4,7 +4,7 @@ import os
 import sys
 from contextlib import contextmanager
 from io import BytesIO
-from typing import IO, TYPE_CHECKING, Any
+from typing import IO, TYPE_CHECKING, Any, Final
 
 import pytest
 
@@ -411,6 +411,29 @@ def test_req_file(tmp_path: Path, req: str, opts: dict[str, Any], requirements: 
     assert vars(req_file.options) == opts
     found = [str(i) for i in req_file.requirements]
     assert found == requirements
+
+
+@pytest.mark.parametrize(
+    ("requirement", "expected"),
+    [
+        pytest.param("./a/b", f"a{os.sep}b", id="nested-path"),
+        pytest.param("./--log=outside/sentinel", f".{os.sep}--log=outside{os.sep}sentinel", id="option-like-path"),
+        pytest.param(
+            "a/../--report=outside/sentinel",
+            f".{os.sep}--report=outside{os.sep}sentinel",
+            id="resolved-option-like-path",
+        ),
+        pytest.param(
+            "a/../-routside/sentinel",
+            f".{os.sep}-routside{os.sep}sentinel",
+            id="resolved-short-option-like-path",
+        ),
+    ],
+)
+def test_local_requirement_remains_a_path(tmp_path: Path, requirement: str, expected: str) -> None:
+    requirements_file: Final[Path] = tmp_path / "req.txt"
+    requirements_file.write_text(requirement)
+    assert RequirementsFile(requirements_file, constraint=False).as_root_args == [expected]
 
 
 def test_requirements_env_var_present(monkeypatch: MonkeyPatch, tmp_path: Path) -> None:
