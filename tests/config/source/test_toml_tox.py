@@ -92,12 +92,25 @@ def test_config_in_toml_replace_default(toml_project: Callable[[str], ToxProject
     outcome.assert_out_err("[testenv:py]\ndescription = miss\n", "")
 
 
-@pytest.mark.parametrize("text", ["{}", "{print(1)}", "{'tool': 'tox'}"])
+@pytest.mark.parametrize(
+    "text", ["{}", "{print(1)}", "{'tool': 'tox'}", "{'url': 'https://example.com'}", "{'at': '12:30'}"]
+)
 def test_config_in_toml_keep_braces_of_non_reference(toml_project: Callable[[str], ToxProject], text: str) -> None:
     project = toml_project(f'[${{prefix}}env_run_base]\ncommands = [["python", "-c", "x {text} y"]]')
     outcome = project.run("c", "-k", "commands")
     outcome.assert_success()
     outcome.assert_out_err(f"[testenv:py]\ncommands = {shell_cmd(['python', '-c', f'x {text} y'])}\n", "")
+
+
+def test_config_in_toml_keep_braces_around_posargs_naming_a_key(toml_project: Callable[[str], ToxProject]) -> None:
+    project = toml_project(
+        '[${prefix}env_run_base]\nset_env = { SECRET = "s3cr3t" }\n'
+        'commands = [["python", "-c", \'x {"text": "{posargs}"} y\']]'
+    )
+    outcome = project.run("c", "-k", "commands", "--", "set_env:x")
+    outcome.assert_success()
+    expected = shell_cmd(["python", "-c", 'x {"text": "set_env:x"} y'])
+    outcome.assert_out_err(f"[testenv:py]\ncommands = {expected}\n", "")
 
 
 def test_config_in_toml_replace_env_name_via_env(toml_project: Callable[[str], ToxProject]) -> None:
