@@ -4,9 +4,9 @@ from __future__ import annotations
 
 import locale
 import os
-from contextlib import redirect_stderr
+from contextlib import redirect_stderr, suppress
 from pathlib import Path
-from typing import TYPE_CHECKING, NamedTuple
+from typing import TYPE_CHECKING, Final, NamedTuple
 
 from tox.config.source import Source, discover_source
 from tox.report import HandledError, ToxHandler, setup_report
@@ -45,24 +45,47 @@ def get_options(*args: str) -> Options:
 
 
 def _get_base(args: Sequence[str]) -> tuple[int, ToxHandler, Source]:
-    """First just load the base options (verbosity+color) to setup the logging framework."""
-    tox_parser = ToxParser.base()
-    parsed = Parsed()
+    parsed: Final = Parsed()
+    with (
+        suppress(SystemExit),
+        Path(os.devnull).open("w", encoding=locale.getpreferredencoding(do_setlocale=False)) as file_handler,
+        redirect_stderr(file_handler),
+    ):
+        ToxParser.base().parse_known_args(args, namespace=parsed)
+    guess_verbosity: Final = parsed.verbosity
+    handler: Final = setup_report(guess_verbosity, parsed.is_colored)
+    from tox.plugin.manager import MANAGER, Plugin  # ruff:ignore[import-outside-top-level]
+
+    # Built-in and installed plugins can register option values before tox selects an inline plugin.
+    preliminary: Final = Plugin()
+    preliminary.load_plugins(None)
+    pre_parser: Final = ToxParser.core()
+    preliminary.tox_add_option(pre_parser)
+    pre_parser.fix_defaults()
+    selected: Final = Parsed()
     try:
         with (
             Path(os.devnull).open("w", encoding=locale.getpreferredencoding(do_setlocale=False)) as file_handler,
             redirect_stderr(file_handler),
         ):
-            tox_parser.parse_known_args(args, namespace=parsed)
+            unknown: Final = pre_parser.parse_known_args(
+                (arg for arg in args if arg not in {"-h", "--help", "--version"}), namespace=selected
+            )[1]
     except SystemExit:
-        ...  # ignore parse errors, such as -va raises ignored explicit argument 'a'
-    guess_verbosity = parsed.verbosity
-    handler = setup_report(guess_verbosity, parsed.is_colored)
-    # load the plugin system right after we set up report
-    from tox.plugin.manager import MANAGER  # ruff:ignore[import-outside-top-level]
+        MANAGER.load_plugins(None)
+        return guess_verbosity, handler, _empty_source()
+    first_unknown: Final = next(
+        (at for at, arg in enumerate(args) if arg in unknown and arg.startswith("-")), len(args)
+    )
+    if any(
+        at > first_unknown and (arg in {"-c", "--conf", "--root"} or arg.startswith(("-c=", "--conf=", "--root=")))
+        for at, arg in enumerate(args)
+    ):
+        MANAGER.load_plugins(None)
+        return guess_verbosity, handler, _empty_source()
 
     try:
-        source = discover_source(parsed.config_file, parsed.root_dir)
+        source = discover_source(selected.config_file, selected.root_dir)
     except HandledError:
         if {"-h", "--help"}.intersection(args):
             source = _empty_source()

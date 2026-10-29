@@ -126,12 +126,13 @@ class Plugin:
     def tox_env_teardown(self, tox_env: ToxEnv) -> None:
         self.manager.hook.tox_env_teardown(tox_env=tox_env)
 
-    def load_plugins(self, path: Path) -> None:
+    def load_plugins(self, path: Path | None) -> None:
         for plugin in self.manager.get_plugins():  # make sure we start with a clean state, repeated in memory run
             self.manager.unregister(plugin)
-        inline = _load_inline(path)
+        inline = _load_inline(path) if path is not None else None
         self._register_plugins(inline)
-        REGISTER._register_tox_env_types(self)  # ruff:ignore[private-member-access]
+        if path is not None:
+            REGISTER._register_tox_env_types(self)  # ruff:ignore[private-member-access]
 
 
 def _load_inline(path: Path) -> ModuleType | None:  # used to be able to unregister plugin tests
