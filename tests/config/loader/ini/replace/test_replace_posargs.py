@@ -5,13 +5,14 @@ from typing import TYPE_CHECKING
 
 import pytest
 
+from tox.config.loader.replacer import MAX_REPLACE_DEPTH
 from tox.config.types import Command
 
 if TYPE_CHECKING:
     from pytest_mock import MockerFixture
 
     from tests.config.loader.conftest import ReplaceOne
-    from tox.pytest import ToxProjectCreator
+    from tox.pytest import LogCaptureFixture, ToxProjectCreator
 
 
 @pytest.mark.parametrize("syntax", ["{posargs}", "[]"])
@@ -70,6 +71,14 @@ def test_replace_pos_args_escaped(replace_one: ReplaceOne, value: str) -> None:
     result = replace_one(value, None)
     outcome = value.replace("\\", "")
     assert result == outcome
+
+
+def test_replace_pos_args_circular_fan_out(replace_one: ReplaceOne, caplog: LogCaptureFixture) -> None:
+    result = replace_one("{posargs}", ["{posargs}{posargs}"])
+    assert "{posargs}{posargs}" in result
+    assert [m for m in caplog.messages if m.startswith("Could not expand")] == [
+        f"Could not expand '{{posargs}}{{posargs}}' after recursing {MAX_REPLACE_DEPTH + 1} frames"
+    ]
 
 
 @pytest.mark.parametrize(

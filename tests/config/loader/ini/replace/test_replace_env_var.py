@@ -5,6 +5,8 @@ from typing import TYPE_CHECKING
 
 import pytest
 
+from tox.config.loader.replacer import MAX_REPLACE_DEPTH
+
 if TYPE_CHECKING:
     from collections.abc import Generator
 
@@ -97,6 +99,17 @@ def test_replace_env_var_circular(replace_one: ReplaceOne, monkeypatch: MonkeyPa
     monkeypatch.setenv("MAGIC", "{env:MAGIC}")
     result = replace_one("{env:MAGIC}")
     assert result == "{env:MAGIC}"
+
+
+def test_replace_env_var_circular_fan_out(
+    replace_one: ReplaceOne, monkeypatch: MonkeyPatch, caplog: LogCaptureFixture
+) -> None:
+    monkeypatch.setenv("MAGIC", "{env:MAGIC}{env:MAGIC}")
+    result = replace_one("{env:MAGIC}")
+    assert "{env:MAGIC}{env:MAGIC}" in result
+    assert [m for m in caplog.messages if m.startswith("Could not expand")] == [
+        f"Could not expand {{env:MAGIC}}{{env:MAGIC}} after recursing {MAX_REPLACE_DEPTH + 1} frames"
+    ]
 
 
 @pytest.fixture

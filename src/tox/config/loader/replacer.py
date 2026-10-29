@@ -223,6 +223,8 @@ class Replacer:
         self.conf_args = conf_args
         self.depth = depth
         self.recursive = recursive
+        self.root: Replacer = self
+        self.depth_exhausted = False
 
     def __call__(self, value: MatchArg) -> Sequence[str]:
         return [self._replace_match(me) if isinstance(me, MatchExpression) else str(me) for me in value]
@@ -231,6 +233,8 @@ class Replacer:
         return "".join(self(value))
 
     def expand(self, value: str | MatchExpression) -> str:
+        if self.depth > MAX_REPLACE_DEPTH:
+            self.root.depth_exhausted = True
         MatchRecursionError.check(self.depth, value)
         return self.join_value(find_replace_expr(value))
 
@@ -245,9 +249,11 @@ class Replacer:
         replace_value = self._resolve_replace(of_type, args, flattened_args, conf_args)
         if replace_value is not None:
             needs_expansion = any(isinstance(m, MatchExpression) for m in find_replace_expr(replace_value))
-            if needs_expansion and self.recursive:
+            if needs_expansion and self.recursive and not self.root.depth_exhausted:
                 try:
-                    return type(self)(self.conf, self.reference, conf_args, self.depth + 1).expand(replace_value)
+                    child = type(self)(self.conf, self.reference, conf_args, self.depth + 1)
+                    child.root = self.root
+                    return child.expand(replace_value)
                 except MatchRecursionError as err:
                     LOGGER.warning(str(err))
                     return replace_value
