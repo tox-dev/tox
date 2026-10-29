@@ -311,7 +311,12 @@ class CoreConfigSet(ConfigSet):
         return self.get("work_dir", Path) / ".tmp"
 
     def _work_dir_post_process(self, folder: Path) -> Path:
-        return self._conf.work_dir if self._conf.options.work_dir else folder
+        return self._conf.work_dir if self._conf.options.work_dir else self._relative_to_tox_root(folder)
+
+    def _relative_to_tox_root(self, folder: Path) -> Path:
+        if not folder.is_absolute():
+            folder = self.get("tox_root", Path) / folder
+        return folder
 
     @override
     def register_config(self) -> None:
@@ -320,6 +325,7 @@ class CoreConfigSet(ConfigSet):
             keys=["tox_root", "toxinidir"],
             of_type=Path,
             default=self._root,
+            post_process=self._root.joinpath,  # a relative root is relative to the configuration file, not to cwd
             desc="the root directory (where the configuration file is found)",
         )
         self.add_constant("tox_root_name", "name of the root directory", self._root.name)
@@ -336,6 +342,7 @@ class CoreConfigSet(ConfigSet):
             keys=["temp_dir"],
             of_type=Path,
             default=self._default_temp_dir,
+            post_process=self._relative_to_tox_root,
             desc="a folder for temporary files (is not cleaned at start)",
         )
         self.add_config(

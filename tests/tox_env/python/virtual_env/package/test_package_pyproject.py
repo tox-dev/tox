@@ -4,7 +4,7 @@ import io
 import json
 import tarfile
 from textwrap import dedent
-from typing import TYPE_CHECKING, Any, cast
+from typing import TYPE_CHECKING, Any, Final, cast
 
 import pytest
 
@@ -17,7 +17,7 @@ if TYPE_CHECKING:
 
     from pytest_mock import MockerFixture
 
-    from tox.pytest import ToxProjectCreator
+    from tox.pytest import ToxProject, ToxProjectCreator, ToxRunOutcome
 
 
 @pytest.mark.parametrize(
@@ -94,6 +94,31 @@ def test_package_root_via_testenv(tox_project: ToxProjectCreator, demo_pkg_inlin
     proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
     result = proj.run("r", "--notest")
     result.assert_success()
+
+
+@pytest.mark.parametrize(
+    ("key", "path"),
+    [
+        pytest.param("package_root", "b", id="package-root"),
+        pytest.param("meta_dir", "m", id="metadata"),
+        pytest.param("pkg_dir", "d", id="distribution"),
+    ],
+)
+def test_package_dirs_are_relative_to_conf(tox_project: ToxProjectCreator, key: str, path: str) -> None:
+    ini: Final[str] = (
+        "[tox]\npackage_root=a\n[testenv]\npackage=wheel\n[testenv:.pkg]\npackage_root=b\nmeta_dir=m\npkg_dir=d"
+    )
+    proj: Final[ToxProject] = tox_project({"tox.ini": ini})
+    result: Final[ToxRunOutcome] = proj.run("c", "-e", "py,.pkg", "-c", proj.path.name, from_cwd=proj.path.parent)
+    result.assert_success()
+    assert result.env_conf(".pkg")[key] == proj.path / path
+
+
+def test_core_package_root_is_relative_to_conf(tox_project: ToxProjectCreator) -> None:
+    project: Final[ToxProject] = tox_project({"tox.ini": "[tox]\npackage_root=a\n[testenv]\npackage=wheel"})
+    result: Final[ToxRunOutcome] = project.run("c", "-e", "py", "-c", project.path.name, from_cwd=project.path.parent)
+    result.assert_success()
+    assert result.state.conf.core["package_root"] == project.path / "a"
 
 
 @pytest.mark.parametrize(

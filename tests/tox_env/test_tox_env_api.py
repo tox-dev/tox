@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import os
 from textwrap import dedent
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Final
 from unittest.mock import patch
 
 import pytest
@@ -12,7 +12,7 @@ from tox.tox_env.api import ToxEnv
 if TYPE_CHECKING:
     from pathlib import Path
 
-    from tox.pytest import ToxProjectCreator
+    from tox.pytest import ToxProject, ToxProjectCreator, ToxRunOutcome
 
 
 def test_recreate(tox_project: ToxProjectCreator) -> None:
@@ -239,6 +239,47 @@ def test_change_dir_is_relative_to_conf(tox_project: ToxProjectCreator) -> None:
     result.assert_success()
     lines = result.out.splitlines()
     assert lines[1] == f"change_dir = {prj.path / 'a'}"
+
+
+@pytest.mark.parametrize(
+    ("key", "path"),
+    [
+        pytest.param("env_dir", "e", id="environment"),
+        pytest.param("env_tmp_dir", "t", id="temporary"),
+        pytest.param("env_log_dir", "l", id="log"),
+    ],
+)
+def test_env_dirs_are_relative_to_conf(tox_project: ToxProjectCreator, key: str, path: str) -> None:
+    ini: Final[str] = "[testenv]\npackage=skip\nenv_dir=e\nenv_tmp_dir=t\nenv_log_dir=l\ncommands=python --version"
+    project: Final[ToxProject] = tox_project({"tox.ini": ini})
+    result: Final[ToxRunOutcome] = project.run(
+        "c", "-e", "py", "-k", key, "-c", project.path.name, from_cwd=project.path.parent
+    )
+    result.assert_success()
+    assert result.env_conf("py")[key] == project.path / path
+
+
+def test_relative_env_dirs_leave_start_dir_untouched(tox_project: ToxProjectCreator) -> None:
+    ini: Final[str] = "[testenv]\npackage=skip\nenv_dir=e\nenv_tmp_dir=t\nenv_log_dir=l\ncommands=python --version"
+    project: Final[ToxProject] = tox_project({"tox.ini": ini})
+    kept: Final[list[Path]] = [project.path.parent / name / "keep" for name in ("e", "t", "l")]
+    for file in kept:
+        file.parent.mkdir()
+        file.write_text("")
+
+    result: Final[ToxRunOutcome] = project.run(
+        "r", "-r", "-e", "py", "-c", project.path.name, from_cwd=project.path.parent
+    )
+
+    result.assert_success()
+    assert all(file.exists() for file in kept)
+
+
+def test_env_dir_absolute_is_kept(tox_project: ToxProjectCreator, tmp_path: Path) -> None:
+    prj: Final[ToxProject] = tox_project({"tox.ini": f"[testenv]\npackage=skip\nenv_dir={tmp_path / 'e'}"})
+    result: Final[ToxRunOutcome] = prj.run("c", "-e", "py", "-k", "env_dir")
+    result.assert_success()
+    assert result.env_conf("py")["env_dir"] == tmp_path / "e"
 
 
 def test_setenv_path_not_overwritten(tox_project: ToxProjectCreator) -> None:

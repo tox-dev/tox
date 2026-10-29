@@ -122,18 +122,21 @@ class ToxEnv(ABC):  # ruff:ignore[too-many-public-methods]
             keys=["env_dir", "envdir"],
             of_type=Path,
             default=lambda conf, name: conf.core.get("work_dir", Path) / self.name,  # ruff:ignore[unused-lambda-argument]
+            post_process=self._relative_to_tox_root,
             desc="directory assigned to the tox environment",
         )
         self.conf.add_config(
             keys=["env_tmp_dir", "envtmpdir"],
             of_type=Path,
             default=lambda conf, name: conf.core.get("work_dir", Path) / self.name / "tmp",  # ruff:ignore[unused-lambda-argument]
+            post_process=self._relative_to_tox_root,
             desc="a folder that is always reset at the start of the run",
         )
         self.conf.add_config(
             keys=["env_log_dir", "envlogdir"],
             of_type=Path,
             default=lambda conf, name: conf.core.get("work_dir", Path) / self.name / "log",  # ruff:ignore[unused-lambda-argument]
+            post_process=self._relative_to_tox_root,
             desc="a folder for logging where tox will put logs of tool invocation",
         )
         self.executor.register_conf(self)
@@ -192,6 +195,11 @@ class ToxEnv(ABC):  # ruff:ignore[too-many-public-methods]
             desc="external command glob to allow calling",
         )
         assert self.installer is not None  # ruff:ignore[assert] # trigger installer creation to allow config registration
+
+    def _relative_to_tox_root(self, value: Path) -> Path:
+        if not value.is_absolute():
+            value = self.core.get("tox_root", Path) / value
+        return value
 
     def _recreate_default(self, conf: Config, value: str | None) -> bool:  # ruff:ignore[unused-method-argument]
         return self.options.recreate
