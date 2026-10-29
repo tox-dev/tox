@@ -241,6 +241,22 @@ def test_pip_user_disabled(tox_project: ToxProjectCreator) -> None:
     assert "PIP_USER=0" in result.out
 
 
+def test_pip_seeder_debug_redacts_secret_env_vars(tox_project: ToxProjectCreator, monkeypatch: MonkeyPatch) -> None:
+    value: Final = "s3cr3t-value"
+    monkeypatch.setenv("VIRTUALENV_SEEDER", "pip")
+    monkeypatch.setenv("DEPLOY_TOKEN", value)
+    monkeypatch.setenv("VISIBLE", "public-value")
+    result: Final = tox_project(
+        {"tox.toml": '[env_run_base]\npackage = "skip"\npass_env = ["DEPLOY_TOKEN", "VISIBLE"]'},
+    ).run("r", "-e", "py", "-vv")
+
+    result.assert_success()
+    seeder_line: Final = next(line for line in result.out.splitlines() if "pip seed by running:" in line)
+    assert "'DEPLOY_TOKEN': '************'" in seeder_line
+    assert "'VISIBLE': 'public-value'" in seeder_line
+    assert value not in result.out
+
+
 @pytest.mark.parametrize(
     ("var", "substitution", "expected_fragment"),
     [
