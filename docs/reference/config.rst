@@ -2608,7 +2608,8 @@ Naming
 ======
 
 Each selected environment name must be one path component. tox rejects ``.`` and ``..``, absolute paths, and names
-containing the platform's path separators before creating an environment. An empty name in ``env_list`` is also rejected.
+containing the platform's path separators before creating an environment. An empty name in ``env_list`` is also
+rejected.
 
 tox accepts letters, digits, underscores and dots in a factor, so ``3.14`` and ``django_5`` are both valid. ``-``
 separates factors and ``,`` separates environment names, so a factor contains neither:
