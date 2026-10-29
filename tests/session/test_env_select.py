@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import sys
 from itertools import count
 from textwrap import dedent
@@ -892,3 +893,53 @@ def test_pkg_env_in_env_list_fails(tox_project: ToxProjectCreator, files: dict[s
     outcome.assert_failed()
     msg = "mypkg is listed in env_list but is used as a package environment by py; remove it from env_list or rename"
     assert msg in outcome.out, outcome.out
+
+
+@pytest.mark.parametrize(
+    ("files", "name"),
+    [
+        pytest.param({"tox.toml": 'env_list = ["{env:TOX_ENVS}"]'}, "/outside", id="absolute"),
+        pytest.param({"tox.toml": 'env_list = ["{env:TOX_ENVS}"]'}, f"..{os.sep}outside", id="relative"),
+        pytest.param({"tox.toml": 'env_list = ["{env:TOX_ENVS}"]'}, "", id="empty"),
+        pytest.param({"tox.ini": "[tox]\nenv_list = {env:TOX_ENVS}"}, "..", id="parent"),
+    ],
+)
+def test_env_name_rejects_path_component(
+    tox_project: ToxProjectCreator, monkeypatch: MonkeyPatch, files: dict[str, str], name: str
+) -> None:
+    monkeypatch.setenv("TOX_ENVS", name)
+    project = tox_project(files)
+
+    outcome = project.run("l")
+
+    outcome.assert_failed()
+    assert f"environment name {name!r} is not a valid single path component" in outcome.out
+
+
+def test_env_name_rejects_path_in_label(tox_project: ToxProjectCreator, monkeypatch: MonkeyPatch) -> None:
+    monkeypatch.setenv("TOX_ENVS", "..")
+    project = tox_project({"tox.toml": 'labels = { ci = ["{env:TOX_ENVS}"] }'})
+
+    outcome = project.run("l", "-m", "ci")
+
+    outcome.assert_failed()
+    assert "environment name '..' is not a valid single path component" in outcome.out
+
+
+def test_env_name_rejects_path_in_package_env(tox_project: ToxProjectCreator, monkeypatch: MonkeyPatch) -> None:
+    monkeypatch.setenv("TOX_ENVS", "..")
+    project = tox_project({"tox.ini": "[testenv]\npackage = wheel\npackage_env = {env:TOX_ENVS}"})
+
+    outcome = project.run("l")
+
+    outcome.assert_failed()
+    assert "environment name '..' is not a valid single path component" in outcome.out
+
+
+def test_env_name_rejects_path_in_cli_env(tox_project: ToxProjectCreator) -> None:
+    project = tox_project({"tox.toml": 'env_list = ["py"]'})
+
+    outcome = project.run("r", "-e", ".pkg_external/../outside")
+
+    outcome.assert_failed()
+    assert "environment name '.pkg_external/../outside' is not a valid single path component" in outcome.out

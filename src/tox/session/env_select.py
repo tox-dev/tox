@@ -8,6 +8,7 @@ from dataclasses import dataclass
 from difflib import get_close_matches
 from importlib.util import find_spec
 from itertools import chain
+from pathlib import PurePath
 from typing import TYPE_CHECKING, Any, cast
 
 from tox.config.cli.parser import Parsed
@@ -362,10 +363,18 @@ class EnvSelector:
                 msg += f" - did you mean {suggestion}?"
         raise HandledError(msg)
 
+    @staticmethod
+    def _ensure_env_name_is_path_safe(name: str) -> None:
+        # An unsafe name can make setup clean outside work_dir.
+        if not name or name in {".", ".."} or PurePath(name).name != name:
+            msg = f"environment name {name!r} is not a valid single path component"
+            raise HandledError(msg)
+
     def _env_name_to_active(self) -> dict[str, bool]:
         env_name_to_active_map = {}
         for a_collection, is_active in self._collect_names():
             for name in a_collection:
+                self._ensure_env_name_is_path_safe(name)
                 if name not in env_name_to_active_map:
                     env_name_to_active_map[name] = is_active
         # for factor/label selection update the active flag
@@ -516,6 +525,7 @@ class EnvSelector:
     def _build_pkg_env(self, name_type: tuple[str, str], run_env_name: str, active: dict[str, bool]) -> PackageToxEnv:
         name, core_type = name_type
         with self._log_handler.with_context(name):
+            self._ensure_env_name_is_path_safe(name)
             if run_env_name == name:
                 msg = f"{run_env_name} cannot self-package"
                 raise HandledError(msg)
