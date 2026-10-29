@@ -385,6 +385,38 @@ def test_set_env_environment_file_unreadable(
     assert f"py: failed with {project.path / 'magic.env'} {reason}" in result.out
 
 
+@pytest.mark.parametrize(
+    ("of_type", "config"),
+    [
+        pytest.param("ini", "[testenv]\npackage=skip\nset_env=file|.env\ncommands=python -c pass", id="ini"),
+        pytest.param(
+            "toml",
+            '[env_run_base]\npackage="skip"\nset_env={file=".env"}\ncommands=[["python", "-c", "pass"]]',
+            id="toml",
+        ),
+    ],
+)
+@pytest.mark.parametrize(
+    "line",
+    [
+        pytest.param("LOG\x00_LEVEL=info", id="key"),
+        pytest.param("LOG_LEVEL=\x00info", id="value-start"),
+        pytest.param("LOG_LEVEL=in\x00fo", id="value-middle"),
+        pytest.param("LOG_LEVEL=info\x00", id="value-end"),
+    ],
+)
+def test_set_env_environment_file_nul(
+    tox_project: ToxProjectCreator, of_type: ConfigFileFormat, config: str, line: str
+) -> None:
+    project = tox_project({f"tox.{of_type}": config, ".env": f"VALID=before\n{line}\nOTHER=after\n"})
+    result = project.run("r", "-e", "py")
+
+    result.assert_failed(code=1)
+    assert f"py: failed with invalid line {line!r} in set_env" in result.out
+    assert "Traceback" not in result.out + result.err
+    assert "commands[0]>" not in result.out
+
+
 def test_set_env_file_ignores_export_keyword(eval_set_env: EvalSetEnv) -> None:
     set_env = eval_set_env(
         textwrap.dedent("""\

@@ -349,7 +349,7 @@ class SetEnv:
     def _extract_key_value(line: str) -> tuple[str, str]:
         """Split an environment file line; markers do not apply here, so ``;`` is a plain value character."""
         key, sep, value = line.partition("=")
-        if not sep:
+        if not sep or "\x00" in line:
             msg = f"invalid line {line!r} in set_env"
             raise Fail(msg)
         key = re.sub(r"^export[ \t]+", "", key.strip())
