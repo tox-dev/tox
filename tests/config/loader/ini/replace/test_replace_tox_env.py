@@ -140,6 +140,14 @@ def test_replace_within_quoted_command_argument_stays_within(
     assert load_commands(command) == [["tool", expected.replace("TITLE", value), "end"]]
 
 
+def test_replace_nested_env_value_within_quoted_command_argument_stays_within(
+    load_commands: Callable[[str], list[list[str]]], monkeypatch: MonkeyPatch
+) -> None:
+    monkeypatch.setenv("TITLE", "{env:TITLE_PART}")
+    monkeypatch.setenv("TITLE_PART", 'fix" --option "typo')
+    assert load_commands('tool "--title={env:TITLE}" end') == [["tool", '--title=fix" --option "typo', "end"]]
+
+
 def test_replace_within_quoted_command_argument_joins_lines(
     load_commands: Callable[[str], list[list[str]]], monkeypatch: MonkeyPatch
 ) -> None:

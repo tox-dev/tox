@@ -629,6 +629,9 @@ def test_env_base_factor_group_default(tox_project: ToxProjectCreator, env: str,
             "",
             id="empty-override-beats-inline-default",
         ),
+        pytest.param(
+            "TOX_FACTOR_django_version", "{factor:django_version}", "{env_name}", "{env_name}", id="not-substituted"
+        ),
     ],
 )
 def test_env_base_factor_env_override(

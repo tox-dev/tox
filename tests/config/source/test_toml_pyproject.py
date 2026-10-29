@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import shlex
 import sys
 import sysconfig
 from pathlib import Path
@@ -121,6 +122,36 @@ def test_config_in_toml_replace_posargs(tox_project: ToxProjectCreator, posargs:
     outcome = project.run("c", "-e", "A", "-k", "commands", *posargs)
     outcome.assert_success()
     outcome.assert_out_err(f"[testenv:A]\ncommands = {expected}\n", "")
+
+
+@pytest.mark.parametrize(
+    "reference",
+    [
+        pytest.param("{posargs}", id="direct"),
+        pytest.param("{[tool.tox.shared]args}", id="raw-reference"),
+        pytest.param("{[tool.tox.env.B]description}", id="env-reference"),
+        pytest.param("{env:ARGS}", id="set-env"),
+        pytest.param("{env:MISSING:{posargs}}", id="env-default"),
+    ],
+)
+def test_config_in_toml_replace_posargs_str_literal(
+    tox_project: ToxProjectCreator, monkeypatch: pytest.MonkeyPatch, reference: str
+) -> None:
+    monkeypatch.delenv("MISSING", raising=False)
+    project: Final = tox_project({
+        "pyproject.toml": f"""
+        [tool.tox.shared]
+        args = "{{posargs}}"
+        [tool.tox.env.A]
+        set_env.ARGS = "{{posargs}}"
+        commands = [["python", "{reference}"]]
+        [tool.tox.env.B]
+        description = "{{posargs}}"
+        """
+    })
+    outcome: Final = project.run("c", "-e", "A", "-k", "commands", "--", "{env_name}")
+    outcome.assert_success()
+    assert shlex.split(outcome.env_conf("A")["commands"][0].args[1]) == ["{env_name}"]
 
 
 @pytest.mark.parametrize(

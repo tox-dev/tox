@@ -10,7 +10,7 @@ if TYPE_CHECKING:
 
     from tox.config.cli.parser import ToxParser
     from tox.config.sets import ConfigSet
-    from tox.pytest import ToxProjectCreator
+    from tox.pytest import ToxProject, ToxProjectCreator
     from tox.session.state import State
 
 
@@ -29,6 +29,61 @@ def test_inline_tox_py(tox_project: ToxProjectCreator) -> None:
     result = project.run("-h")
     result.assert_success()
     assert "--magic" in result.out
+
+
+@pytest.mark.parametrize(
+    "args",
+    [
+        pytest.param(("run", "-c", "{operator}", "-e", "-c=."), id="environment-value"),
+        pytest.param(("run", "-e", "--", "-c", "{operator}"), id="positionals"),
+        pytest.param(("--colored", "always", "-c", "{operator}", "list"), id="invalid-core-option"),
+        pytest.param(("--inline-option", "-c=.", "list"), id="unknown-option-value"),
+    ],
+)
+def test_inline_rejects_unselected_plugin(inline_project: ToxProject, tmp_path: Path, args: tuple[str, ...]) -> None:
+    operator: Final = tmp_path / "operator" / "tox.toml"
+    operator.parent.mkdir()
+    operator.write_text("[env.test]\npackage = 'skip'\n")
+    result: Final = inline_project.run(*(arg.format(operator=operator) for arg in args))
+
+    result.assert_failed()
+    assert not (inline_project.path / "imported").exists()
+
+
+def test_inline_selected_plugin_loads(inline_project: ToxProject) -> None:
+    inline_project.run("-c", str(inline_project.path / "tox.toml"), "--inline-option", "list").assert_success()
+
+    assert (inline_project.path / "imported").read_text() == "yes"
+
+
+def test_inline_compact_flags_keep_selected_config(inline_project: ToxProject, tmp_path: Path) -> None:
+    operator: Final = tmp_path / "operator" / "tox.toml"
+    operator.parent.mkdir()
+    operator.write_text("[env.operator]\npackage = 'skip'\n")
+    result: Final = inline_project.run("-vr", "-c", str(operator), "list")
+
+    result.assert_success()
+    assert "operator" in result.out
+    assert not (inline_project.path / "imported").exists()
+
+
+@pytest.fixture
+def inline_project(tox_project: ToxProjectCreator) -> ToxProject:
+    return tox_project({
+        "tox.toml": "[env.contributor]\npackage = 'skip'\n",
+        "toxfile.py": """
+            from pathlib import Path
+
+            from tox.config.cli.parser import ToxParser
+            from tox.plugin import impl
+
+            Path(__file__).with_name("imported").write_text("yes")
+
+            @impl
+            def tox_add_option(parser: ToxParser) -> None:
+                parser.add_argument("--inline-option", action="store_true")
+        """,
+    })
 
 
 @pytest.mark.parametrize(
