@@ -182,7 +182,14 @@ class LocalSubProcessExecuteInstance(ExecuteInstance):
     def cmd(self) -> Sequence[str]:
         if self._cmd is None:
             base = self.request.cmd[0]
-            executable = shutil.which(base, path=self.request.env["PATH"])
+            lookup, path = base, self.request.env["PATH"]
+            if sys.platform != "win32":
+                # The allowlist and shebang checks must inspect the file the child runs.
+                cwd = self.request.cwd.absolute()
+                if os.sep in base:
+                    lookup = str(cwd / base)
+                path = os.pathsep.join(str(cwd / entry) for entry in path.split(os.pathsep))
+            executable = shutil.which(lookup, path=path)
             if executable is None:
                 cmd = self.request.cmd  # if failed to find leave as it is
             else:
