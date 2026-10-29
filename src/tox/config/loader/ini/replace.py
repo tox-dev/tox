@@ -6,11 +6,12 @@ import re
 from configparser import SectionProxy
 from functools import cache
 from re import Pattern
-from typing import TYPE_CHECKING, Final
+from typing import TYPE_CHECKING
 
 from tox.config.loader.api import apply_overrides_to_raw
 from tox.config.loader.replacer import RawText, ReplaceReference
 from tox.config.loader.stringify import stringify
+from tox.config.sets import EnvConfigSet
 from tox.util.typing_compat import override
 
 if TYPE_CHECKING:
@@ -52,6 +53,8 @@ class ReplaceReferenceIni(ReplaceReference):
             try:
                 if isinstance(src, SectionProxy):
                     return RawText(self._resolve_section_proxy(src, key, conf_args))
+                if isinstance(src, EnvConfigSet) and key in {"set_env", "setenv"}:
+                    return src.set_env_lines(conf_args.chain)
                 value = src.load(key, conf_args.chain)
             except KeyError:  # if fails, keep trying maybe another source can satisfy
                 pass
@@ -75,13 +78,7 @@ class ReplaceReferenceIni(ReplaceReference):
             return processed
         args = args.copy()
         args.chain.append(f"{src.name}.{key}")
-        escaped_semicolon: Final[str] = r"\;"
-        values = self.loader.set_env_reference(processed, overrides, self.conf, args).config.raw(args)
-        return "\n".join(
-            f"{name}={str(value['value']).replace(';', escaped_semicolon)}"  # INI values are text
-            + (f"; {marker}" if (marker := value.get("marker")) else "")
-            for name, value in values.items()
-        )
+        return self.loader.set_env_reference(processed, overrides, self.conf, args).config.lines()
 
     def _config_value_sources(
         self, env: str | None, section: str | None, current_env: str | None
