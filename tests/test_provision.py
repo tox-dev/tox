@@ -219,6 +219,7 @@ def test_provision_before_loading_env_list(
             requires = ["tox>=999"]
             env_list = [1]
         """,
+        "tox.py": "raise SystemExit('loaded from the start directory')",
     })
 
     outcome = project.run(subcommand)
