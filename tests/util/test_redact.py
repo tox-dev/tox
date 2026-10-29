@@ -45,6 +45,36 @@ def test_redact_argv_does_not_mask_space_separated_value() -> None:
     assert result == ["app", "--token", "hunter2"]
 
 
+@pytest.mark.parametrize(
+    ("token", "expected"),
+    [
+        pytest.param("--ref=it's --token=abc", "--ref=it's --token=***", id="after-flag"),
+        pytest.param("it's --token=abc", "it's --token=***", id="after-positional"),
+        pytest.param("-x\n--token=abc", "-x\n--token=***", id="after-line-break"),
+        pytest.param("tool --token=abc | tee out", "tool --token=*************", id="script"),
+        pytest.param("tool '--token=abc'", "tool '--token=****", id="quoted-script"),
+        pytest.param("--tool-args=--token=abc", "--tool-args=--token=***", id="nested-flag"),
+        pytest.param("--ref=main --password=a b", "--ref=main --password=***", id="mask-to-end"),
+    ],
+)
+def test_redact_argv_masks_secret_flag_inside_token(token: str, expected: str) -> None:
+    assert redact_argv([token]) == [expected]
+
+
+@pytest.mark.parametrize(
+    "token",
+    [
+        pytest.param("tests/test_api.py::test[a=b]", id="test-id"),
+        pytest.param("key=1", id="assignment"),
+        pytest.param("--ref=token --cov=tox", id="innocuous-flags"),
+        pytest.param("--url=https://u:token=abc@host", id="keyword-inside-value"),
+        pytest.param("--deselect=tests/test_a.py::test[--token=1]", id="flag-inside-word"),
+    ],
+)
+def test_redact_argv_leaves_token_without_secret_flag_alone(token: str) -> None:
+    assert redact_argv([token]) == [token]
+
+
 def test_redact_argv_returns_new_list() -> None:
     original = ["pytest", "--token=abc"]
     result = redact_argv(original)

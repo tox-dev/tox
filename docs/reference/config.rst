@@ -1061,6 +1061,7 @@ Base options
 
         Environment files are processed using the following rules:
 
+        - lines end at LF, CRLF or CR; an embedded Unicode separator does not start another entry,
         - blank lines are ignored,
         - lines starting with the ``#`` character are ignored,
         - each line is in KEY=VALUE format; both the key and the value are stripped,
@@ -1122,7 +1123,8 @@ Base options
     2. A value that refers to its own key, ``PATH = {env:PATH}{:}/extra``, reads the host variable.
     3. Including another section's ``set_env`` behaves as if you wrote its lines in place. In INI that is
        ``{[section]set_env}``; in TOML it is ``{ replace = "ref", of = [...] }``. The included values resolve in the
-       including environment, so ``{env_name}`` and ``{posargs}`` refer to that environment.
+       including environment, so ``{env_name}`` and ``{posargs}`` refer to that environment. Naming an environment whose
+       section has no ``set_env`` of its own includes the lines that environment inherits.
     4. When two lines set the same key, a key written directly in a ``set_env`` wins over the same key from an included
        section, and a later included section wins over an earlier one. The rule applies again inside every included
        section. In the TOML list form, the later entry wins.
@@ -2171,6 +2173,9 @@ Python virtual environment
     virtualenv version into an isolated environment and drives it via subprocess, instead of using the imported
     virtualenv library. This enables environments targeting Python versions that are incompatible with the virtualenv
     installed alongside tox.
+
+    Explicit values must name ``virtualenv`` with optional version specifiers. pip options, direct references, extras,
+    environment markers, and arbitrary equality (``===``) are rejected before the bootstrap environment is created.
 
     Left empty (the default), tox derives the value automatically: it inspects the environment's :ref:`base_python` and,
     only when the installed virtualenv can no longer *create* that interpreter, pins the newest virtualenv that still

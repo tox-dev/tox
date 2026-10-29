@@ -73,7 +73,7 @@ def _get_base(args: Sequence[str]) -> tuple[int, ToxHandler, Source]:
             )[1]
     except SystemExit:
         MANAGER.load_plugins(None)
-        return guess_verbosity, handler, _empty_source()
+        return guess_verbosity, handler, _empty_source(None)
     first_unknown: Final = next(
         (at for at, arg in enumerate(args) if arg in unknown and arg.startswith("-")), len(args)
     )
@@ -82,13 +82,13 @@ def _get_base(args: Sequence[str]) -> tuple[int, ToxHandler, Source]:
         for at, arg in enumerate(args)
     ):
         MANAGER.load_plugins(None)
-        return guess_verbosity, handler, _empty_source()
+        return guess_verbosity, handler, _empty_source(None)
 
     try:
         source = discover_source(selected.config_file, selected.root_dir)
     except HandledError:
         if {"-h", "--help"}.intersection(args):
-            source = _empty_source()
+            source = _empty_source(parsed.config_file)
         else:
             raise
 
@@ -97,10 +97,13 @@ def _get_base(args: Sequence[str]) -> tuple[int, ToxHandler, Source]:
     return guess_verbosity, handler, source
 
 
-def _empty_source() -> Source:
+def _empty_source(config_file: Path | None) -> Source:
     from tox.config.source.tox_ini import ToxIni  # ruff:ignore[import-outside-top-level]
 
-    return ToxIni(Path.cwd() / "tox.ini", content="")
+    # The placeholder path also selects the directory searched for toxfile.py.
+    if config_file is None:
+        return ToxIni(Path.cwd() / "tox.ini", content="")
+    return ToxIni((config_file if config_file.is_dir() else config_file.parent) / "tox.ini", content="")
 
 
 def _get_all(args: Sequence[str]) -> tuple[Parsed, dict[str, Callable[[State], int]]]:

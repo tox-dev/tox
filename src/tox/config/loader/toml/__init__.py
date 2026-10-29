@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING, Any, TypeVar, cast
 from tox.config.loader.api import ConfigLoadArgs, Loader, Override
 from tox.config.loader.replacer import MatchExpression, MatchRecursionError, replace, replace_once
 from tox.config.set_env import SetEnv
-from tox.config.types import Command, EnvList
+from tox.config.types import CircularChainError, Command, EnvList
 from tox.report import HandledError
 from tox.util.typing_compat import override
 
@@ -84,7 +84,7 @@ class TomlLoader(Loader[TomlTypes]):
             def _toml_replacer(value: str | MatchExpression, args_: ConfigLoadArgs, *, recursive: bool = True) -> str:
                 try:
                     return (replace if recursive else replace_once)(conf, TomlReplaceLoader(conf, loader), value, args_)
-                except MatchRecursionError as exception:
+                except (CircularChainError, MatchRecursionError) as exception:
                     msg = f"failed to load {args.env_name}.{key}: {exception}"
                     raise HandledError(msg) from exception
 
