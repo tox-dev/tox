@@ -569,7 +569,12 @@ the top level of ``tox.toml``. Placing these options in an environment section (
     :keys: tox_root, toxinidir
     :version_added: 1.6.1
 
-    The root directory for the tox project (where the configuration file is found).
+    The root directory for the tox project. By default, this is the directory containing the configuration file; tox
+    resolves a relative override against that directory.
+
+    For relative values of :ref:`work_dir`, :ref:`temp_dir`, :ref:`package_root`, :ref:`env_dir`, :ref:`env_tmp_dir`,
+    :ref:`env_log_dir`, :ref:`meta_dir`, :ref:`pkg_dir` and :ref:`package_glob`, tox uses :ref:`tox_root` as the base,
+    including when tox starts elsewhere with ``-c``. Absolute values keep their configured location.
 
 .. conf::
     :keys: config_file_path
@@ -605,9 +610,9 @@ the top level of ``tox.toml``. Placing these options in an environment section (
 
         work_dir = "{home}/.local/state/tox/{tox_root_name}"
 
-    The ``--workdir`` CLI flag and the user-level configuration file take the value as a literal path, without
-    substitution. See :ref:`howto_out_of_tree_envs` for a walk-through and :ref:`work-dir-placement` for the
-    trade-offs.
+    tox resolves a relative configured value against :ref:`tox_root`. The ``--workdir`` CLI flag and the user-level
+    configuration file take the value as a literal path, without substitution. See :ref:`howto_out_of_tree_envs` for a
+    walk-through and :ref:`work-dir-placement` for the trade-offs.
 
 .. conf::
     :keys: temp_dir
@@ -773,7 +778,7 @@ Base options
     :default: {work_dir}/{env_name}
     :version_added: 1.5
 
-    Directory assigned to the tox environment. If not absolute it would be treated as relative to :ref:`tox_root`.
+    Directory assigned to the tox environment. tox resolves a relative value against :ref:`tox_root`.
 
 .. conf::
     :keys: env_tmp_dir, envtmpdir
@@ -2129,8 +2134,9 @@ tox supports operating with externally built packages. External packages might b
     :default: {envtmpdir}{/}dist{/}*
     :version_added: 4.0
 
-    A glob that should match the wheel/sdist file to install. If no file or multiple files is matched the packaging
-    operation is considered failed and will raise an error.
+    This pattern selects the wheel or sdist to install. tox resolves a relative pattern against :ref:`tox_root`,
+    including when it starts elsewhere with ``-c``. If the pattern matches zero or multiple files, tox stops packaging
+    with an error.
 
 Python virtual environment
 ==========================
