@@ -13,6 +13,7 @@ from tox.config.loader.replacer import (
     MatchError,
     MatchExpression,
     MatchRecursionError,
+    RawText,
     ReplaceReference,
     find_replace_expr,
     load_posargs,
@@ -344,7 +345,7 @@ class TomlReplaceLoader(ReplaceReference):
                     except KeyError as exc:  # if fails, keep trying maybe another source can satisfy
                         exception = exc
                     else:
-                        return stringify(value)[0]
+                        return (RawText if isinstance(src, RawLoader) else str)(stringify(value)[0])
             except Exception as exc:  # ruff:ignore[blind-except]
                 exception = exc
             if exception is not None:
