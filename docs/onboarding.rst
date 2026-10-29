@@ -255,21 +255,22 @@ Entry points & CLI
 
 The CLI parsing and command dispatch system handles argument processing, plugin loading, and routing to subcommands.
 
-Two-phase CLI parsing
----------------------
+CLI parsing and inline plugin selection
+---------------------------------------
 
-Phase 1 — *bootstrap* (before plugins load):
+Before loading an inline plugin:
 
-- It parses only ``-c`` / ``--conf`` (config path) and ``-v`` / ``-q`` (verbosity).
-- It sets up logging (see :ref:`sys-reporting`).
-- It discovers configuration source (see :ref:`sys-configuration`).
-- It loads plugins (see :ref:`sys-plugins`).
+- tox reads core options to set up logging (see :ref:`sys-reporting`).
+- Built-in and installed plugins register CLI options without loading ``toxfile.py``.
+- tox parses those options, discovers the configuration source (see :ref:`sys-configuration`), then loads its inline
+  plugin (see :ref:`sys-plugins`). An invalid known option or an unknown option before ``-c``, ``--conf``, or ``--root``
+  stops the run before inline import. The config selector could be a value of that unknown option.
 
-Phase 2 — *full parse* (after plugins):
+After loading the selected inline plugin:
 
-- Plugins register their arguments via the ``tox_add_option`` hook (see :ref:`sys-plugins`).
-- It performs a full ``argparse`` parse over all arguments.
-- Subcommand handlers are stored in ``Parsed.cmd_handlers``.
+- All plugins register their arguments via the ``tox_add_option`` hook.
+- tox performs a full ``argparse`` parse over all arguments.
+- tox stores subcommand handlers in ``Parsed.cmd_handlers``.
 
 Key classes
 -----------
@@ -629,7 +630,7 @@ Hooks
     - - ``tox_extend_env_list``
       - Declare additional env names dynamically
     - - ``tox_add_option``
-      - Add CLI arguments (after logging + config discovery)
+      - Add CLI arguments; installed plugins run before source discovery and again during the full parse
     - - ``tox_add_core_config``
       - Core configuration is being built
     - - ``tox_add_env_config``
@@ -649,35 +650,28 @@ Plugin loading sequence
 .. mermaid::
 
     flowchart TD
-        A["setup_report()<br/>configure logging first"]
-        B["import plugin.manager<br/>triggers MANAGER = ToxPluginManager()"]
-        C["MANAGER._setup()"]
-        D["1. Load inline plugin<br/>toxfile.py / ☣.py"]
-        E["2. Load external plugins<br/>entry points"]
-        F["Respect TOX_DISABLED_EXTERNAL_PLUGINS<br/>env var"]
-        G["3. Load internal plugins<br/>16 hardcoded modules"]
-        H["4. check_pending()<br/>validate all hooks implemented"]
+        A["Set up logging from core options"]
+        B["Register built-in and installed plugins<br/>without an inline plugin"]
+        C["Parse known option values"]
+        D{"Invalid option or unknown option<br/>before a config selector?"}
+        E["Reject command without inline import"]
+        F["Discover configuration source"]
+        G["Load the selected inline plugin"]
+        H["Parse the full command"]
 
-        A --> B --> C
-        C --> D
-        C --> E
-        E --> F
-        C --> G
-        C --> H
+        A --> B --> C --> D
+        D -- yes --> E
+        D -- no --> F --> G --> H
 
-        style A fill:#5CB85C,stroke:#3D8B40,color:#fff
-        style B fill:#4A90E2,stroke:#2E5C8A,color:#fff
-        style C fill:#9B59B6,stroke:#6D3F8C,color:#fff
-        style D fill:#F0AD4E,stroke:#C88A3C,color:#fff
-        style E fill:#E67E22,stroke:#B85E18,color:#fff
-        style F fill:#D35400,stroke:#A04000,color:#fff
-        style G fill:#3498DB,stroke:#2574A9,color:#fff
-        style H fill:#E74C3C,stroke:#B23A2F,color:#fff
+        classDef setup fill:#d8f3dc,stroke:#2d6a4f,color:#1b4332;
+        classDef reject fill:#ffd6d6,stroke:#c1121f,color:#5c0000;
+        class A,B,C,F,G,H setup;
+        class D,E reject;
 
 Inline plugins
 --------------
 
-Tox searches the **parent directory** of the config file for ``toxfile.py`` or ``☣.py``. The first match wins. Example:
+tox searches the **parent directory** of the config file for ``toxfile.py`` or ``☣.py``. The first match wins. Example:
 
 .. code-block:: python
 

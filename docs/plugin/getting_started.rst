@@ -22,7 +22,7 @@ Create a ``toxfile.py`` that adds a ``--magic`` flag to the tox CLI:
         parser.add_argument("--magic", action="store_true", help="enable magic mode")
 
 Place this file next to your ``tox.toml`` or ``tox.ini``. When tox starts, it discovers and loads ``toxfile.py``
-automatically.
+automatically. When you specify ``-c``/``--conf`` or ``--root``, put it before options defined by ``toxfile.py``.
 
 ************************
  Appending version info
