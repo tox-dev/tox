@@ -9,7 +9,7 @@ from pathlib import Path
 from shutil import which
 from subprocess import check_call
 from textwrap import dedent
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Final
 from unittest import mock
 from zipfile import ZipFile
 
@@ -24,7 +24,7 @@ if TYPE_CHECKING:
     from devpi_process import Index, IndexServer
 
     from tox.execute.request import ExecuteRequest
-    from tox.pytest import MonkeyPatch, TempPathFactory, ToxProjectCreator
+    from tox.pytest import MonkeyPatch, TempPathFactory, ToxProjectCreator, ToxRunOutcome
 
 from importlib.metadata import Distribution
 
@@ -150,6 +150,18 @@ def test_provision_requires_nok(tox_project: ToxProjectCreator) -> None:
         r".*",
         regex=True,
     )
+
+
+def test_provision_requires_substitution_cannot_add_requirement(
+    tox_project: ToxProjectCreator, monkeypatch: MonkeyPatch
+) -> None:
+    monkeypatch.setenv("PIN", "1,pkg-not-required")
+    outcome: Final[ToxRunOutcome] = tox_project({"tox.ini": "[tox]\nrequires = pkg-does-not-exist=={env:PIN}\n"}).run(
+        "c", "-e", "py"
+    )
+    outcome.assert_failed()
+    assert "replace failed in tox.requires with ValueError('a substitution within an entry cannot" in outcome.out
+    assert "provisioned" not in outcome.out
 
 
 def test_provision_requires_skips_false_markers(tox_project: ToxProjectCreator) -> None:

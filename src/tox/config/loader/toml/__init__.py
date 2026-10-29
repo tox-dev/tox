@@ -7,7 +7,7 @@ from types import GenericAlias
 from typing import TYPE_CHECKING, Any, TypeVar, cast
 
 from tox.config.loader.api import ConfigLoadArgs, Loader, Override
-from tox.config.loader.replacer import MatchExpression, MatchRecursionError, replace, replace_once
+from tox.config.loader.replacer import MatchExpression, MatchRecursionError, replace, replace_for, replace_once
 from tox.config.set_env import SetEnv
 from tox.config.types import CircularChainError, Command, EnvList
 from tox.report import HandledError
@@ -92,8 +92,8 @@ class TomlLoader(Loader[TomlTypes]):
         return result
 
     @override
-    def substitute(self, value: str, conf: Config, args: ConfigLoadArgs) -> str:
-        return replace(conf, TomlReplaceLoader(conf, self), value, args)
+    def substitute(self, value: str, conf: Config, args: ConfigLoadArgs, *, of_type: type[object] | UnionType) -> str:
+        return replace_for(of_type)(conf, TomlReplaceLoader(conf, self), value, args)
 
     @override
     def found_keys(self) -> set[str]:
