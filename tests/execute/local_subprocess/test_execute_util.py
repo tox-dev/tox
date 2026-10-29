@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Final
 
 import pytest
 
@@ -34,19 +34,25 @@ def test_shebang_quoted_interpreter_path(tmp_path: Path) -> None:
     ],
 )
 def test_shebang_interpreter_is_literal(tmp_path: Path, interpreter: str) -> None:
-    script_path = tmp_path / "a"
+    script_path: Final[Path] = tmp_path / "a"
     script_path.write_text(f"#!{interpreter} -c\n", encoding="utf-8")
     assert shebang(str(script_path)) == [interpreter, "-c"]
 
 
-def test_shebang_arguments_are_literal(tmp_path: Path) -> None:
-    script_path = tmp_path / "a"
+def test_shebang_arguments_keep_shell_splitting(tmp_path: Path) -> None:
+    script_path: Final[Path] = tmp_path / "a"
     script_path.write_text("#!/usr/bin/env -S 'A=b' \\c\n", encoding="utf-8")
-    assert shebang(str(script_path)) == ["/usr/bin/env", "-S", "'A=b'", "\\c"]
+    assert shebang(str(script_path)) == ["/usr/bin/env", "-S", "A=b", "c"]
+
+
+def test_shebang_unclosed_argument_quote(tmp_path: Path) -> None:
+    script_path: Final[Path] = tmp_path / "a"
+    script_path.write_text("#!/usr/bin/env -S 'unclosed\n", encoding="utf-8")
+    assert shebang(str(script_path)) is None
 
 
 def test_shebang_empty(tmp_path: Path) -> None:
-    script_path = tmp_path / "a"
+    script_path: Final[Path] = tmp_path / "a"
     script_path.write_text("#! \n", encoding="utf-8")
     assert shebang(str(script_path)) is None
 

@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import re
+import shlex
 from pathlib import Path
+from typing import Final
 
 
 def shebang(exe: str) -> list[str] | None:
@@ -27,10 +29,13 @@ def shebang(exe: str) -> list[str] | None:
     except UnicodeDecodeError:
         return None
     # Match literal shebang paths while keeping tox's quoted path form.
-    match = re.fullmatch(r'(?:"([^"]+)"|([^ \t]+))(.*)', decoded.strip())
+    match: Final = re.fullmatch(r'(?:"([^"]+)"|([^ \t]+))(.*)', decoded.strip())
     if match is None:
         return None
-    return [match[1] or match[2], *match[3].split()]
+    try:
+        return [match[1] or match[2], *shlex.split(match[3], posix=True)]
+    except ValueError:
+        return None
 
 
 __all__ = [
