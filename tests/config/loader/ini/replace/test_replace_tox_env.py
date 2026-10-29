@@ -7,14 +7,17 @@ from textwrap import dedent
 from typing import TYPE_CHECKING, Final
 
 import pytest
+from packaging.requirements import Requirement
 
 from tox.config.loader.api import Override
 from tox.config.loader.replacer import MAX_REPLACE_DEPTH
 from tox.config.sets import ConfigSet
-from tox.config.types import Command
+from tox.config.types import Command, EnvList
 from tox.report import HandledError
 
 if TYPE_CHECKING:
+    from types import UnionType
+
     from tests.config.loader.conftest import ReplaceOne
     from tests.conftest import ToxIniCreator
     from tox.pytest import LogCaptureFixture, MonkeyPatch
@@ -207,6 +210,176 @@ def test_replace_within_quoted_argument_of_single_command(
     )
     env_config.add_config(keys="command", of_type=Command, default=Command(["tool"]), desc="command")
     assert env_config["command"].args == ["tool", '--title=fix" --option "typo', "{packages}"]
+
+
+def test_override_quoted_command_lines_stay_intact(quoted_command_override: ConfigSet) -> None:
+    quoted_command_override.add_config(keys="commands", of_type=list[Command], default=[], desc="commands")
+    assert quoted_command_override["commands"] == [Command(args=["tool", '--title=fix" --option "typo'])]
+
+
+@pytest.fixture
+def quoted_command_override(tox_ini_conf: ToxIniCreator, monkeypatch: MonkeyPatch) -> ConfigSet:
+    monkeypatch.setenv("TITLE", 'fix" --option "typo')
+    return tox_ini_conf(
+        "[testenv:a]\ncommands = tool old\ncommand = tool old",
+        override=[
+            Override('testenv:a.commands=tool "--title={env:TITLE}"'),
+            Override('testenv:a.command=tool "--title={env:TITLE}"'),
+        ],
+    ).get_env("a")
+
+
+def test_override_quoted_single_command_stays_intact(quoted_command_override: ConfigSet) -> None:
+    quoted_command_override.add_config(keys="command", of_type=Command, default=Command(args=["tool"]), desc="command")
+    assert quoted_command_override["command"] == Command(args=["tool", '--title=fix" --option "typo'])
+
+
+@pytest.fixture
+def load_list(tox_ini_conf: ToxIniCreator, monkeypatch: pytest.MonkeyPatch) -> Callable[[str, str], list[str]]:
+    def func(entries: str, value: str) -> list[str]:
+        monkeypatch.setenv("VALUE", value)
+        env_config: Final[ConfigSet] = tox_ini_conf(
+            f"[x]\nvalue = {{env:VALUE}}\nentry = c{{env:VALUE}}\n[testenv:a]\nentries = {entries}\n"
+        ).get_env("a")
+        env_config.add_config(keys="entries", of_type=list[str], default=[], desc="entries")
+        return env_config["entries"]
+
+    return func
+
+
+@pytest.mark.parametrize(
+    ("entries", "value", "expected"),
+    [
+        pytest.param("{env:VALUE}", "a,b", ["a", "b"], id="only"),
+        pytest.param("x, {env:VALUE} ,y", "a,b", ["x", "a", "b", "y"], id="between-commas"),
+        pytest.param("x\n  {env:VALUE}\n  y", "a\nb", ["x", "a", "b", "y"], id="between-lines"),
+        pytest.param("x, {[x]value}", "a,b", ["x", "a", "b"], id="reference"),
+        pytest.param("x, {env:MISSING:{env:VALUE}}", "a,b", ["x", "a", "b"], id="nested"),
+    ],
+)
+def test_replace_alone_in_list_entry_expands_to_entries(
+    load_list: Callable[[str, str], list[str]], entries: str, value: str, expected: list[str]
+) -> None:
+    assert load_list(entries, value) == expected
+
+
+@pytest.mark.parametrize(
+    ("entries", "expected"),
+    [
+        pytest.param("x, a{env:VALUE}", ["x", "a>=1"], id="text-before"),
+        pytest.param("{env:VALUE}a, x", [">=1a", "x"], id="text-after"),
+        pytest.param("x, {[x]entry}", ["x", "c>=1"], id="referenced"),
+    ],
+)
+def test_replace_within_list_entry_is_part_of_entry(
+    load_list: Callable[[str, str], list[str]], entries: str, expected: list[str]
+) -> None:
+    assert load_list(entries, ">=1") == expected
+
+
+@pytest.mark.parametrize(
+    ("entries", "expected"),
+    [
+        pytest.param("\n  a{env:VALUE}\n  x", ["a>=1,<2", "x"], id="text-before"),
+        pytest.param("\n  {[x]entry}\n  x", ["c>=1,<2", "x"], id="referenced"),
+        pytest.param("\n  {env:MISSING:a{env:VALUE}}\n  x", ["a>=1,<2", "x"], id="nested"),
+    ],
+)
+def test_replace_within_list_line_keeps_comma(
+    load_list: Callable[[str, str], list[str]], entries: str, expected: list[str]
+) -> None:
+    assert load_list(entries, ">=1,<2") == expected
+
+
+@pytest.mark.parametrize(
+    ("entries", "value"),
+    [
+        pytest.param("a{env:VALUE}", "1,evil", id="only"),
+        pytest.param("x, a{env:VALUE}", "1,evil", id="text-before"),
+        pytest.param("{env:VALUE}a, x", "evil,1", id="text-after"),
+        pytest.param("{env:MISSING:a}{env:VALUE}", "1,evil", id="beside-substitution"),
+        pytest.param("{env:MISSING:a} {env:VALUE}", "1,evil", id="blank-after-substitution"),
+        pytest.param("x, a{[x]value}", "1,evil", id="reference"),
+        pytest.param("x, {[x]entry}", "1,evil", id="referenced"),
+        pytest.param("x, {env:MISSING:a{env:VALUE}}", "1,evil", id="nested"),
+        pytest.param("x, a{env:VALUE}", "1\nevil", id="line-break"),
+        pytest.param("\n  a{env:VALUE}\n  x", "1\nevil", id="line-break-within-line"),
+        pytest.param("\n  {[x]entry}\n  x", "1\nevil", id="line-break-referenced"),
+    ],
+)
+def test_replace_within_list_entry_cannot_add_entries(
+    load_list: Callable[[str, str], list[str]], entries: str, value: str
+) -> None:
+    with pytest.raises(HandledError, match=r"replace failed in a\.entries .* cannot add an entry separator"):
+        load_list(entries, value)
+
+
+@pytest.mark.parametrize("of_type", [set[str], list[Requirement], list[str] | str, list[str] | None])
+def test_replace_within_entry_cannot_add_entries_for_type(
+    example: EnvConfigCreator, monkeypatch: pytest.MonkeyPatch, of_type: type[object] | UnionType
+) -> None:
+    monkeypatch.setenv("VALUE", "1,evil")
+    env_config: Final[ConfigSet] = example("entries = a=={env:VALUE}")
+    env_config.add_config(keys="entries", of_type=of_type, default=None, desc="entries")
+    with pytest.raises(HandledError, match=r"replace failed in a\.entries .* cannot add an entry separator"):
+        env_config["entries"]
+
+
+def test_replace_within_dict_entry_cannot_add_setting(
+    example: EnvConfigCreator, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("VALUE", "7\ninjected-setting=chosen")
+    env_config: Final[ConfigSet] = example("settings = build-tag={env:VALUE}")
+    env_config.add_config(keys="settings", of_type=dict[str, str], default={}, desc="settings")
+    with pytest.raises(HandledError, match=r"replace failed in a\.settings .* cannot add an entry separator"):
+        env_config["settings"]
+
+
+def test_replace_within_dict_entry_accepts_value(example: EnvConfigCreator, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("VALUE", "7")
+    env_config: Final[ConfigSet] = example("settings = build-tag={env:VALUE}")
+    env_config.add_config(keys="settings", of_type=dict[str, str], default={}, desc="settings")
+    assert env_config["settings"] == {"build-tag": "7"}
+
+
+def test_replace_alone_in_dict_entry_can_expand(example: EnvConfigCreator, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("VALUE", "build-tag=7\nother=one")
+    env_config: Final[ConfigSet] = example("settings = {env:VALUE}")
+    env_config.add_config(keys="settings", of_type=dict[str, str], default={}, desc="settings")
+    assert env_config["settings"] == {"build-tag": "7", "other": "one"}
+
+
+@pytest.mark.parametrize(
+    "value",
+    [
+        pytest.param("sqlite,release", id="comma"),
+        pytest.param("sqlite\nrelease", id="line-break"),
+        pytest.param("sqlite{,release}", id="factor-group"),
+    ],
+)
+def test_replace_within_env_list_entry_cannot_add_environment(
+    tox_ini_conf: ToxIniCreator, monkeypatch: pytest.MonkeyPatch, value: str
+) -> None:
+    monkeypatch.setenv("BACKEND", value)
+    with pytest.raises(HandledError, match=r"replace failed in tox\.env_list .* cannot add an entry separator"):
+        tox_ini_conf("[tox]\nenv_list = lint, unit-{env:BACKEND}").core["env_list"]
+
+
+def test_replace_alone_in_env_list_entry_can_expand(
+    tox_ini_conf: ToxIniCreator, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("BACKEND", "lint,release")
+    assert tox_ini_conf("[tox]\nenv_list = {env:BACKEND}").core["env_list"] == EnvList(["lint", "release"])
+
+
+def test_replace_within_env_list_entry_accepts_value(
+    tox_ini_conf: ToxIniCreator, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("BACKEND", "sqlite")
+    assert tox_ini_conf("[tox]\nenv_list = lint, unit-{env:BACKEND}").core["env_list"] == EnvList([
+        "lint",
+        "unit-sqlite",
+    ])
 
 
 @pytest.mark.parametrize("depth", [5, 99, 100, 101, 150, 256])
