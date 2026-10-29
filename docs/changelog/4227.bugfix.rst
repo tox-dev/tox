@@ -1,0 +1,1 @@
+An empty `env_tmp_dir` value no longer resolves to the working directory and clears it - by :user:`haigou-web`.

@@ -354,6 +354,13 @@ class ToxEnv(ABC):  # ruff:ignore[too-many-public-methods]
         """Ensure exists and empty."""
         env_tmp_dir = self.env_tmp_dir
         if env_tmp_dir.exists() and next(env_tmp_dir.iterdir(), None) is not None:
+            resolved, cwd = env_tmp_dir.resolve(), Path.cwd().resolve()
+            if resolved == cwd:
+                msg = (
+                    f"env_tmp_dir {env_tmp_dir} resolves to the current working directory {cwd}, "
+                    "refusing to clear it - point env_tmp_dir at a dedicated directory"
+                )
+                raise Fail(msg)
             LOGGER.debug("clear env temp folder %s", env_tmp_dir)
             ensure_empty_dir(env_tmp_dir)
         env_tmp_dir.mkdir(parents=True, exist_ok=True)
