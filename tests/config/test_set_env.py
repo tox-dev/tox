@@ -1289,7 +1289,9 @@ _INCLUDE_ENV: Final = [
 ]
 
 
-@pytest.mark.parametrize("envs", ["py", "other,py"])
+@pytest.mark.parametrize(
+    "envs", [pytest.param("py", id="selected-only"), pytest.param("other,py", id="source-and-target")]
+)
 @pytest.mark.parametrize(("of_type", "config"), _INCLUDE_ENV)
 def test_set_env_include_env_keeps_values_as_data(
     tox_project: ToxProjectCreator, monkeypatch: MonkeyPatch, of_type: ConfigFileFormat, config: str, envs: str
