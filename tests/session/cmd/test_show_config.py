@@ -318,6 +318,66 @@ def test_show_config_ini_comment_path(tox_project: ToxProjectCreator, tmp_path: 
     assert b_line == f"B={prj_path}"
 
 
+@pytest.mark.parametrize(
+    ("key", "reference", "suffix"),
+    [
+        pytest.param("change_dir", "{tox_root}/docs", "docs", id="command-directory"),
+        pytest.param("env_dir", "{work_dir}/dev", ".tox/dev", id="environment-directory"),
+    ],
+)
+def test_show_config_ini_reference_path_with_hash(
+    tox_project: ToxProjectCreator, tmp_path: Path, key: str, reference: str, suffix: str
+) -> None:
+    root: Final[Path] = tmp_path / "a#magic"
+    root.mkdir()
+    outcome: Final[ToxRunOutcome] = tox_project(
+        {"tox.ini": f"[tox]\nno_package = true\n[testenv]\n{key} = {reference}\n"}, prj_path=root
+    ).run("c", "-e", "py")
+    outcome.assert_success()
+    assert outcome.env_conf("py")[key] == root / suffix
+
+
+def test_show_config_ini_reference_env_file_with_hash(tox_project: ToxProjectCreator, tmp_path: Path) -> None:
+    root: Final[Path] = tmp_path / "a#magic"
+    root.mkdir()
+    outcome: Final[ToxRunOutcome] = tox_project(
+        {
+            "tox.ini": "[tox]\nno_package = true\n[testenv]\nset_env = file|{tox_root}/a.env\n",
+            "a.env": "A=1",
+        },
+        prj_path=root,
+    ).run("c", "-e", "py")
+    outcome.assert_success()
+    assert outcome.env_conf("py")["set_env"].load("A") == "1"
+
+
+@pytest.mark.parametrize(
+    "root_name",
+    [
+        pytest.param("a#magic", id="hash"),
+        pytest.param(
+            "a #magic",
+            marks=pytest.mark.skipif(sys.platform == "win32", reason="requirement paths with spaces fail on Windows"),
+            id="space-before-hash",
+        ),
+    ],
+)
+def test_show_config_ini_reference_req_file_with_hash(
+    tox_project: ToxProjectCreator, tmp_path: Path, root_name: str
+) -> None:
+    root: Final[Path] = tmp_path / root_name
+    root.mkdir()
+    outcome: Final[ToxRunOutcome] = tox_project(
+        {
+            "tox.ini": "[tox]\nno_package = true\n[testenv]\ndeps = -r{tox_root}/req.txt\n",
+            "req.txt": "demo==1",
+        },
+        prj_path=root,
+    ).run("c", "-e", "py")
+    outcome.assert_success()
+    assert outcome.env_conf("py")["deps"].as_root_args == ["-r", f"{root}/req.txt"]
+
+
 def test_show_config_cli_flag(tox_project: ToxProjectCreator) -> None:
     project = tox_project({"tox.ini": "", "pyproject.toml": ""})
     result = project.run("c", "-e", "py,.pkg", "-k", "package", "recreate", "--develop", "-r", "--no-recreate-pkg")
