@@ -28,9 +28,9 @@ _SECRET_ENV_VAR_REGEX: Final[re.Pattern[str]] = re.compile(
     r"""
     .*                  # any prefix
     ( {keywords} )      # one of the secret keywords
-    .*                  # any suffix
+    .*                  # any suffix, newlines included - a line break must not hide the keyword
     """.format(keywords="|".join(_SECRET_KEYWORDS)),
-    re.VERBOSE | re.IGNORECASE,
+    re.VERBOSE | re.IGNORECASE | re.DOTALL,
 )
 
 

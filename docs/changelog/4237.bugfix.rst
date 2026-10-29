@@ -1,0 +1,1 @@
+Mask secret-looking flag values even when the flag name carries a newline before the keyword - by :user:\haigou-web\.

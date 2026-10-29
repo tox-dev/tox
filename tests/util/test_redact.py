@@ -54,3 +54,16 @@ def test_redact_argv_returns_new_list() -> None:
 
 def test_redact_argv_empty() -> None:
     assert redact_argv([]) == []
+
+
+@pytest.mark.parametrize(
+    ("argv", "expected"),
+    [
+        pytest.param(["app", "--prod\n-token=hunter2"], ["app", "--prod\n-token=*******"], id="newline-before-keyword"),
+        pytest.param(["app", "--a\nb\nsecret=x"], ["app", "--a\nb\nsecret=*"], id="two-newlines"),
+        pytest.param(["app", "--\napi-key=v"], ["app", "--\napi-key=*"], id="leading-newline"),
+    ],
+)
+def test_redact_argv_masks_when_a_newline_precedes_the_keyword(argv: list[str], expected: list[str]) -> None:
+    # a newline must not hide the keyword that marks the flag as secret, see https://github.com/tox-dev/tox/issues/4237
+    assert redact_argv(argv) == expected
