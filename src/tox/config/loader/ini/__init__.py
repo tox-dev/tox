@@ -87,7 +87,7 @@ class IniLoader(StrConvert, Loader[str]):
         if conf is None:  # no replacement supported in the core section
             return self.to(raw, of_type, factory)
         delay_replace = inspect.isclass(of_type) and issubclass(of_type, SetEnv)
-        replace_all = replace_command_lines if of_type == list[Command] else replace_references
+        replace_all = replace_command_lines if of_type in {Command, list[Command]} else replace_references
 
         def replacer(raw_: str | MatchExpression, args_: ConfigLoadArgs, *, recursive: bool = True) -> str:
             try:

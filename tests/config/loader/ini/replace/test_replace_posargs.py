@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import sys
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Final
 
 import pytest
 
@@ -11,7 +11,7 @@ if TYPE_CHECKING:
     from pytest_mock import MockerFixture
 
     from tests.config.loader.conftest import ReplaceOne
-    from tox.pytest import ToxProjectCreator
+    from tox.pytest import ToxProjectCreator, ToxRunOutcome
 
 
 @pytest.mark.parametrize("syntax", ["{posargs}", "[]"])
@@ -113,3 +113,31 @@ def test_replace_pos_args_reach_command_intact(
     outcome = project.run("c", "-k", "commands", "--", arg)
     outcome.assert_success()
     assert outcome.env_conf("py")["commands"] == [Command(args=["python", arg])]
+
+
+def test_replace_pos_args_quoted_command_default_keeps_author_quotes(tox_project: ToxProjectCreator) -> None:
+    outcome: Final[ToxRunOutcome] = tox_project({
+        "tox.ini": '[testenv]\ncommands = python -c "print({posargs:\\"hello\\"})"'
+    }).run("c", "-k", "commands")
+    outcome.assert_success()
+    assert outcome.env_conf("py")["commands"] == [Command(args=["python", "-c", 'print("hello")'])]
+
+
+@pytest.mark.parametrize("platform", [pytest.param("linux", id="linux"), pytest.param("win32", id="windows")])
+@pytest.mark.parametrize(
+    "command",
+    [
+        pytest.param("--filter='{posargs}'", id="single"),
+        pytest.param('--filter="{posargs}"', id="double"),
+    ],
+)
+def test_replace_pos_args_within_quoted_command_argument_stays_intact(
+    tox_project: ToxProjectCreator, mocker: MockerFixture, platform: str, command: str
+) -> None:
+    for module in ("tox.config.loader.replacer", "tox.config.loader.str_convert"):
+        mocker.patch(f"{module}.sys", mocker.create_autospec(sys, platform=platform))
+    outcome: Final[ToxRunOutcome] = tox_project({"tox.ini": f"[testenv]\ncommands = tool {command}"}).run(
+        "c", "-k", "commands", "--", "smoke --added-option"
+    )
+    outcome.assert_success()
+    assert outcome.env_conf("py")["commands"] == [Command(args=["tool", "--filter=smoke --added-option"])]
