@@ -67,7 +67,6 @@ class StrConvert(Convert[str]):
         Value will typically be stripped of whitespace when coming from an ini file.
 
         """
-        value = value.replace(r"\#", "#")
         is_win = sys.platform == "win32"
         if is_win:  # pragma: win32 cover
             s = shlex.shlex(posix=True)

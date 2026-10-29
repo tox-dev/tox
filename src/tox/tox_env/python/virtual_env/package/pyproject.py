@@ -156,12 +156,14 @@ class Pep517VenvPackager(PythonPackageToxEnv, ABC):
             keys=["meta_dir"],
             of_type=Path,
             default=lambda conf, name: self.env_dir / ".meta",  # ruff:ignore[unused-lambda-argument]
+            post_process=self._relative_to_tox_root,
             desc="directory where to put the project metadata files",
         )
         self.conf.add_config(
             keys=["pkg_dir"],
             of_type=Path,
             default=lambda conf, name: self.env_dir / "dist",  # ruff:ignore[unused-lambda-argument]
+            post_process=self._relative_to_tox_root,
             desc="directory where to put project packages",
         )
         for key in ("sdist", "wheel", "editable"):

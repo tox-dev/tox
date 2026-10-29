@@ -21,6 +21,7 @@ from tox.plugin import impl
 from tox.report import HandledError
 from tox.tox_env.errors import Skip
 from tox.tox_env.python.pip.req_file import PythonDeps
+from tox.util.redact import redact_argv
 
 if TYPE_CHECKING:
     from argparse import ArgumentParser
@@ -106,7 +107,7 @@ def provision(state: State) -> int | bool:
     if not missing:
         if remainder := state.conf.options.remainder:
             msg = (
-                f"unrecognized arguments: {' '.join(remainder)}\n"
+                f"unrecognized arguments: {' '.join(redact_argv(remainder))}\n"
                 "hint: if you tried to pass arguments to a command use -- to separate them from tox ones"
             )
             raise HandledError(msg)

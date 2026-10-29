@@ -2,17 +2,24 @@ from __future__ import annotations
 
 import inspect
 import re
-from typing import TYPE_CHECKING, TypeVar, cast
+from typing import TYPE_CHECKING, Final, TypeVar, cast
 
 from tox.config.loader.api import ConfigLoadArgs, Loader, Override
 from tox.config.loader.ini.factor import filter_for_env
 from tox.config.loader.ini.replace import ReplaceReferenceIni
-from tox.config.loader.replacer import MatchExpression, replace_command_lines, replace_for, replace_once
+from tox.config.loader.replacer import (
+    MatchExpression,
+    replace_command_lines,
+    replace_for,
+    replace_once,
+    replace_requirement_lines,
+)
 from tox.config.loader.str_convert import StrConvert
 from tox.config.set_env import SetEnv
 from tox.config.types import Command
 from tox.report import HandledError
 from tox.tox_env.errors import Skip
+from tox.tox_env.python.pip.req_file import PythonConstraints, PythonDeps
 from tox.util.typing_compat import override
 
 if TYPE_CHECKING:
@@ -86,7 +93,13 @@ class IniLoader(StrConvert, Loader[str]):
         if conf is None:  # no replacement supported in the core section
             return self.to(raw, of_type, factory)
         delay_replace = inspect.isclass(of_type) and issubclass(of_type, SetEnv)
-        replace_all = replace_command_lines if of_type == list[Command] else replace_for(of_type)
+        replace_all: Final = (
+            replace_requirement_lines
+            if of_type in {PythonDeps, PythonConstraints}
+            else replace_command_lines
+            if of_type == list[Command]
+            else replace_for(of_type)
+        )
 
         def replacer(raw_: str | MatchExpression, args_: ConfigLoadArgs, *, recursive: bool = True) -> str:
             try:
@@ -105,8 +118,10 @@ class IniLoader(StrConvert, Loader[str]):
         return converted
 
     @override
-    def substitute(self, value: str, conf: Config, args: ConfigLoadArgs, *, of_type: type[object] | UnionType) -> str:
-        return replace_for(of_type)(conf, ReplaceReferenceIni(conf, self), value, args)
+    def substitute(self, value: str, conf: Config, args: ConfigLoadArgs, *, of_type: type[V] | UnionType) -> str:
+        return (replace_requirement_lines if of_type in {PythonDeps, PythonConstraints} else replace_for(of_type))(
+            conf, ReplaceReferenceIni(conf, self), value, args
+        )
 
     @override
     def found_keys(self) -> set[str]:

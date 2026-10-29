@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from tox.util.redact import redact_argv
+
 if TYPE_CHECKING:
     from tox.execute import Outcome
     from tox.util.json_types import JsonValue
@@ -47,7 +49,7 @@ class EnvJournal:
         setup: list[JsonValue] = []
         for run_id, outcome in self._executes:
             one: dict[str, JsonValue] = {
-                "command": outcome.cmd,
+                "command": redact_argv(outcome.cmd),
                 "output": outcome.out,
                 "err": outcome.err,
                 "retcode": outcome.exit_code,

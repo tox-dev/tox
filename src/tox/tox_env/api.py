@@ -11,7 +11,7 @@ import sys
 from abc import ABC, abstractmethod
 from contextlib import contextmanager
 from pathlib import Path
-from typing import TYPE_CHECKING, NamedTuple, cast
+from typing import TYPE_CHECKING, Final, NamedTuple, cast
 
 from tox.config.set_env import SetEnv
 from tox.execute.request import ExecuteRequest
@@ -122,18 +122,21 @@ class ToxEnv(ABC):  # ruff:ignore[too-many-public-methods]
             keys=["env_dir", "envdir"],
             of_type=Path,
             default=lambda conf, name: conf.core.get("work_dir", Path) / self.name,  # ruff:ignore[unused-lambda-argument]
+            post_process=self._relative_to_tox_root,
             desc="directory assigned to the tox environment",
         )
         self.conf.add_config(
             keys=["env_tmp_dir", "envtmpdir"],
             of_type=Path,
             default=lambda conf, name: conf.core.get("work_dir", Path) / self.name / "tmp",  # ruff:ignore[unused-lambda-argument]
+            post_process=self._relative_to_tox_root,
             desc="a folder that is always reset at the start of the run",
         )
         self.conf.add_config(
             keys=["env_log_dir", "envlogdir"],
             of_type=Path,
             default=lambda conf, name: conf.core.get("work_dir", Path) / self.name / "log",  # ruff:ignore[unused-lambda-argument]
+            post_process=self._relative_to_tox_root,
             desc="a folder for logging where tox will put logs of tool invocation",
         )
         self.executor.register_conf(self)
@@ -192,6 +195,11 @@ class ToxEnv(ABC):  # ruff:ignore[too-many-public-methods]
             desc="external command glob to allow calling",
         )
         assert self.installer is not None  # ruff:ignore[assert] # trigger installer creation to allow config registration
+
+    def _relative_to_tox_root(self, value: Path) -> Path:
+        if not value.is_absolute():
+            value = self.core.get("tox_root", Path) / value
+        return value
 
     def _recreate_default(self, conf: Config, value: str | None) -> bool:  # ruff:ignore[unused-method-argument]
         return self.options.recreate
@@ -330,6 +338,9 @@ class ToxEnv(ABC):  # ruff:ignore[too-many-public-methods]
         2. contains a runner with the same type.
 
         """
+        if self.env_dir.is_symlink():
+            symlink_msg: Final = f"{self.env_dir} is a symlink where this environment should live; delete it"
+            raise Fail(symlink_msg)
         if self.env_dir.is_file() and not release_venv_redirect(
             self.env_dir, lambda target: target.is_relative_to(self.core.get("work_dir", Path))
         ):
@@ -352,8 +363,8 @@ class ToxEnv(ABC):  # ruff:ignore[too-many-public-methods]
 
     def _handle_env_tmp_dir(self) -> None:
         """Ensure exists and empty."""
-        env_tmp_dir = self.env_tmp_dir
-        if env_tmp_dir.exists() and next(env_tmp_dir.iterdir(), None) is not None:
+        env_tmp_dir: Final = self.env_tmp_dir
+        if env_tmp_dir.is_symlink() or (env_tmp_dir.exists() and next(env_tmp_dir.iterdir(), None) is not None):
             LOGGER.debug("clear env temp folder %s", env_tmp_dir)
             ensure_empty_dir(env_tmp_dir)
         env_tmp_dir.mkdir(parents=True, exist_ok=True)
@@ -366,8 +377,8 @@ class ToxEnv(ABC):  # ruff:ignore[too-many-public-methods]
     def _clean(self, transitive: bool = False) -> None:  # ruff:ignore[unused-method-argument, boolean-type-hint-positional-argument, boolean-default-value-positional-argument]
         if self._run_state["clean"]:  # pragma: no branch
             return  # pragma: no cover
-        env_dir = self.env_dir
-        if env_dir.exists():
+        env_dir: Final = self.env_dir
+        if env_dir.exists() or env_dir.is_symlink():
             LOGGER.warning("remove tox env folder %s", env_dir)
             # retract the redirect so nothing points at the environment while it rebuilds
             if self.core.get_optional("venv_redirect", bool) is not False:

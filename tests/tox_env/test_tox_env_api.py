@@ -1,8 +1,9 @@
 from __future__ import annotations
 
 import os
+from shutil import rmtree
 from textwrap import dedent
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Final
 from unittest.mock import patch
 
 import pytest
@@ -12,7 +13,7 @@ from tox.tox_env.api import ToxEnv
 if TYPE_CHECKING:
     from pathlib import Path
 
-    from tox.pytest import ToxProjectCreator
+    from tox.pytest import ToxProject, ToxProjectCreator, ToxRunOutcome
 
 
 def test_recreate(tox_project: ToxProjectCreator) -> None:
@@ -23,6 +24,67 @@ def test_recreate(tox_project: ToxProjectCreator) -> None:
     result_second = prj.run("r")
     result_second.assert_success()
     assert "remove tox env folder" in result_second.out
+
+
+@pytest.mark.skipif(os.name == "nt", reason="creating symlinks needs privileges on Windows")
+def test_env_symlink_fails_without_recreate(tox_project: ToxProjectCreator, tmp_path: Path) -> None:
+    project: Final = tox_project({"tox.ini": "[testenv]\npackage=skip"})
+    outside: Final = tmp_path / "outside"
+    outside.mkdir()
+    (outside / "keep").write_text("keep")
+    env_dir: Final = project.path / ".tox" / "py"
+    env_dir.parent.mkdir()
+    env_dir.symlink_to(outside, target_is_directory=True)
+
+    result: Final = project.run("r")
+
+    result.assert_failed()
+    assert "is a symlink where this environment should live" in result.out
+    assert (outside / "keep").read_text() == "keep"
+
+
+@pytest.mark.skipif(os.name == "nt", reason="creating symlinks needs privileges on Windows")
+@pytest.mark.parametrize("target_files", [pytest.param(("keep",), id="existing"), pytest.param((), id="dangling")])
+def test_env_symlink_recreated_without_touching_target(
+    tox_project: ToxProjectCreator, tmp_path: Path, target_files: tuple[str, ...]
+) -> None:
+    project: Final = tox_project({"tox.ini": "[testenv]\npackage=skip"})
+    outside: Final = tmp_path / "outside"
+    for filename in target_files:
+        outside.mkdir()
+        (outside / filename).write_text("keep")
+    env_dir: Final = project.path / ".tox" / "py"
+    env_dir.parent.mkdir()
+    env_dir.symlink_to(outside, target_is_directory=True)
+
+    project.run("r", "-r").assert_success()
+
+    assert env_dir.is_dir()
+    assert not env_dir.is_symlink()
+    assert [(entry.name, entry.read_text()) for entry in outside.glob("*")] == [
+        (filename, "keep") for filename in target_files
+    ]
+
+
+@pytest.mark.skipif(os.name == "nt", reason="creating symlinks needs privileges on Windows")
+@pytest.mark.parametrize("name", [pytest.param("log", id="log"), pytest.param("tmp", id="tmp")])
+def test_env_child_symlink_replaced_without_touching_target(
+    tox_project: ToxProjectCreator, tmp_path: Path, name: str
+) -> None:
+    project: Final = tox_project({"tox.ini": "[testenv]\npackage=skip\ncommands=python -c 'print(1)'"})
+    project.run("r").assert_success()
+    outside: Final = tmp_path / "outside"
+    outside.mkdir()
+    (outside / "keep").write_text("keep")
+    child: Final = project.path / ".tox" / "py" / name
+    rmtree(child)
+    child.symlink_to(outside, target_is_directory=True)
+
+    project.run("r").assert_success()
+
+    assert child.is_dir()
+    assert not child.is_symlink()
+    assert (outside / "keep").read_text() == "keep"
 
 
 def test_allow_list_external_fail(tox_project: ToxProjectCreator, fake_exe_on_path: Path) -> None:
@@ -256,6 +318,47 @@ def test_change_dir_is_relative_to_conf(tox_project: ToxProjectCreator) -> None:
     result.assert_success()
     lines = result.out.splitlines()
     assert lines[1] == f"change_dir = {prj.path / 'a'}"
+
+
+@pytest.mark.parametrize(
+    ("key", "path"),
+    [
+        pytest.param("env_dir", "e", id="environment"),
+        pytest.param("env_tmp_dir", "t", id="temporary"),
+        pytest.param("env_log_dir", "l", id="log"),
+    ],
+)
+def test_env_dirs_are_relative_to_conf(tox_project: ToxProjectCreator, key: str, path: str) -> None:
+    ini: Final[str] = "[testenv]\npackage=skip\nenv_dir=e\nenv_tmp_dir=t\nenv_log_dir=l\ncommands=python --version"
+    project: Final[ToxProject] = tox_project({"tox.ini": ini})
+    result: Final[ToxRunOutcome] = project.run(
+        "c", "-e", "py", "-k", key, "-c", project.path.name, from_cwd=project.path.parent
+    )
+    result.assert_success()
+    assert result.env_conf("py")[key] == project.path / path
+
+
+def test_relative_env_dirs_leave_start_dir_untouched(tox_project: ToxProjectCreator) -> None:
+    ini: Final[str] = "[testenv]\npackage=skip\nenv_dir=e\nenv_tmp_dir=t\nenv_log_dir=l\ncommands=python --version"
+    project: Final[ToxProject] = tox_project({"tox.ini": ini})
+    kept: Final[list[Path]] = [project.path.parent / name / "keep" for name in ("e", "t", "l")]
+    for file in kept:
+        file.parent.mkdir()
+        file.write_text("")
+
+    result: Final[ToxRunOutcome] = project.run(
+        "r", "-r", "-e", "py", "-c", project.path.name, from_cwd=project.path.parent
+    )
+
+    result.assert_success()
+    assert all(file.exists() for file in kept)
+
+
+def test_env_dir_absolute_is_kept(tox_project: ToxProjectCreator, tmp_path: Path) -> None:
+    prj: Final[ToxProject] = tox_project({"tox.ini": f"[testenv]\npackage=skip\nenv_dir={tmp_path / 'e'}"})
+    result: Final[ToxRunOutcome] = prj.run("c", "-e", "py", "-k", "env_dir")
+    result.assert_success()
+    assert result.env_conf("py")["env_dir"] == tmp_path / "e"
 
 
 def test_setenv_path_not_overwritten(tox_project: ToxProjectCreator) -> None:

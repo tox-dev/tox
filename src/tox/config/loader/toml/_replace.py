@@ -13,12 +13,14 @@ from tox.config.loader.replacer import (
     MatchError,
     MatchExpression,
     MatchRecursionError,
+    RawText,
     ReplaceReference,
     find_replace_expr,
     load_posargs,
     replace,
     replace_env,
     replace_program,
+    replace_requirement_lines,
 )
 from tox.config.loader.stringify import stringify
 from tox.config.set_env import SetEnvReference
@@ -48,13 +50,20 @@ class _Directive(Protocol):
 
 class Unroll:
     def __init__(
-        self, conf: Config | None, loader: TomlLoader, args: ConfigLoadArgs, *, program_depth: int | None = None
+        self,
+        conf: Config | None,
+        loader: TomlLoader,
+        args: ConfigLoadArgs,
+        *,
+        program_depth: int | None,
+        requirement_entries: bool,
     ) -> None:
         self.conf = conf
         self.loader = loader
         self.args = args
         # Spreads can move the first program word through nested lists.
         self._program_depth = program_depth
+        self.requirement_entries = requirement_entries
         self._refs: list[str] = []
         self.factors = active_factors(args.env_name)
 
@@ -67,9 +76,14 @@ class Unroll:
         if isinstance(value, str):
             if not skip_str and self.conf is not None:  # core config does not support string substitution
                 reference = TomlReplaceLoader(self.conf, self.loader)
-                value = (replace if self._program_depth is None else replace_program)(
-                    self.conf, reference, value, self.args
+                replacer: Final = (
+                    replace_requirement_lines
+                    if self.requirement_entries
+                    else replace_program
+                    if self._program_depth is not None
+                    else replace
                 )
+                value = replacer(self.conf, reference, value, self.args)
             return value
         if isinstance(value, list):
             return self._replace_list(value, depth, skip_str=skip_str)
@@ -161,7 +175,13 @@ class Unroll:
         }
         if skip_str:  # set_env resolves it when read, seeing the keys next to it
             return MatchExpression([["glob"], *(_parse_arg(resolved.get(key, "")) for key in ("pattern", "default"))])
-        return _replace_glob_toml(self.conf, {**value, **resolved})
+        result: Final = _replace_glob_toml(self.conf, {**value, **resolved})
+        if self.requirement_entries:
+            for entry in result if isinstance(result, list) else [result]:
+                if isinstance(entry, str) and (entry != "".join(entry.splitlines()) or entry.endswith("\\")):
+                    msg = "a globbed requirement path cannot contain a line break or end in a backslash"
+                    raise ValueError(msg)
+        return result
 
     def _replace_if(self, value: dict[str, TomlTypes], depth: int, *, skip_str: bool) -> TomlTypes:
         return _replace_if_toml(value, self, depth, self.factors, skip_str=skip_str)
@@ -347,7 +367,7 @@ class TomlReplaceLoader(ReplaceReference):
                     except KeyError as exc:  # if fails, keep trying maybe another source can satisfy
                         exception = exc
                     else:
-                        return stringify(value)[0]
+                        return (RawText if isinstance(src, RawLoader) else str)(stringify(value)[0])
             except Exception as exc:  # ruff:ignore[blind-except]
                 exception = exc
             if exception is not None:

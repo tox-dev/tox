@@ -7,10 +7,18 @@ from types import GenericAlias
 from typing import TYPE_CHECKING, Any, Final, TypeVar, cast
 
 from tox.config.loader.api import ConfigLoadArgs, Loader, Override
-from tox.config.loader.replacer import MatchExpression, MatchRecursionError, replace, replace_for, replace_once
+from tox.config.loader.replacer import (
+    MatchExpression,
+    MatchRecursionError,
+    replace,
+    replace_for,
+    replace_once,
+    replace_requirement_lines,
+)
 from tox.config.set_env import SetEnv
 from tox.config.types import CircularChainError, Command, EnvList
 from tox.report import HandledError
+from tox.tox_env.python.pip.req_file import PythonConstraints, PythonDeps
 from tox.util.typing_compat import override
 
 from ._api import TomlTypes
@@ -76,7 +84,13 @@ class TomlLoader(Loader[TomlTypes]):
     ) -> _T:
         delay_replace = inspect.isclass(of_type) and issubclass(of_type, SetEnv)
         program_depth: Final[int | None] = 2 if of_type == list[Command] else 1 if of_type == Command else None
-        unroll = Unroll(conf=conf, loader=self, args=args, program_depth=program_depth)
+        unroll = Unroll(
+            conf=conf,
+            loader=self,
+            args=args,
+            program_depth=program_depth,
+            requirement_entries=of_type in {PythonDeps, PythonConstraints},
+        )
         exploded = unroll(raw, skip_str=True) if delay_replace else unroll(raw)
         result = self.to(exploded, of_type, factory)
         if delay_replace and conf is not None:  # the core section supports no replacement
@@ -93,8 +107,10 @@ class TomlLoader(Loader[TomlTypes]):
         return result
 
     @override
-    def substitute(self, value: str, conf: Config, args: ConfigLoadArgs, *, of_type: type[object] | UnionType) -> str:
-        return replace_for(of_type)(conf, TomlReplaceLoader(conf, self), value, args)
+    def substitute(self, value: str, conf: Config, args: ConfigLoadArgs, *, of_type: type[_V] | UnionType) -> str:
+        return (replace_requirement_lines if of_type in {PythonDeps, PythonConstraints} else replace_for(of_type))(
+            conf, TomlReplaceLoader(conf, self), value, args
+        )
 
     @override
     def found_keys(self) -> set[str]:

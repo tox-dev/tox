@@ -10,7 +10,7 @@ from pathlib import Path
 from subprocess import PIPE, Popen
 from textwrap import dedent
 from time import sleep
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Final
 
 import pytest
 from re_assert import Matches
@@ -936,3 +936,21 @@ def test_result_json_creates_missing_parent_dir(tox_project: ToxProjectCreator) 
     log = project.path / "reports" / "nested" / "out.json"
     project.run("r", "-e", "py", "--result-json", str(log)).assert_success()
     assert "testenvs" in json.loads(log.read_text())
+
+
+def test_result_json_masks_secret_flag_value(tox_project: ToxProjectCreator) -> None:
+    project: Final = tox_project({
+        "tox.toml": """\
+[env_run_base]
+package = "skip"
+commands = [["python", "-c", "pass", "--token=hunter2", "--cov=tox"]]
+"""
+    })
+    result: Final = project.path / "out.json"
+
+    project.run("r", "-e", "py", "--result-json", str(result)).assert_success()
+
+    content: Final = result.read_text()
+    assert "hunter2" not in content
+    command: Final = json.loads(content)["testenvs"]["py"]["test"][0]["command"]
+    assert command[1:] == ["-c", "pass", "--token=*******", "--cov=tox"]
