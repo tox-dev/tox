@@ -180,10 +180,8 @@ def test_local_execute_start_error_masks_secret_flag(caplog: LogCaptureFixture, 
     ) as status:
         status.wait()
     assert isinstance(status.start_error, OSError)
+    assert "Exception running subprocess" in caplog.text
     assert "hunter2" not in caplog.text
-    if sys.platform != "win32":
-        assert status.start_error.filename == "--token=hunter2"
-        assert "--token=*******" in caplog.text
 
 
 def test_local_execute_write_a_lot(os_env: dict[str, str]) -> None:

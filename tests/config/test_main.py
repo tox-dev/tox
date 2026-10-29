@@ -1,11 +1,10 @@
 from __future__ import annotations
 
 import errno
-import logging
 import os
 from functools import partial
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Final
 
 import pytest
 
@@ -20,7 +19,7 @@ if TYPE_CHECKING:
 
     from tests.conftest import ToxIniCreator
     from tox.config.main import Config
-    from tox.pytest import LogCaptureFixture, ToxProjectCreator
+    from tox.pytest import ToxProjectCreator
 
 
 def test_empty_config_repr(empty_config: Config) -> None:
@@ -41,12 +40,17 @@ def test_empty_conf_get(empty_config: Config) -> None:
     assert loaders == ["testenv"]
 
 
-def test_pos_args_path_error_masks_secret_flag(
-    tox_ini_conf: ToxIniCreator, mocker: MockerFixture, caplog: LogCaptureFixture
-) -> None:
-    config = tox_ini_conf("[testenv]\n")
-    config._pos_args = ("--token=hunter2",)  # ruff:ignore[private-member-access]  # Fixture has no posargs input.
-    original_exists = Path.exists
+def test_pos_args_path_error_masks_secret_flag(tox_project: ToxProjectCreator, mocker: MockerFixture) -> None:
+    project = tox_project({
+        "tox.toml": """\
+[env_run_base]
+package = "skip"
+change_dir = "tests"
+commands = [["python", "-c", "pass", { replace = "posargs", extend = true }]]
+"""
+    })
+    (project.path / "tests").mkdir()
+    original_exists: Final = Path.exists
 
     def exists(path: Path) -> bool:
         if str(path) == "--token=hunter2":
@@ -54,10 +58,10 @@ def test_pos_args_path_error_masks_secret_flag(
         return original_exists(path)
 
     mocker.patch.object(Path, "exists", autospec=True, side_effect=exists)
-    caplog.set_level(logging.DEBUG)
-    assert config.pos_args(Path.cwd() / "other") == ("--token=hunter2",)
-    assert "--token=*******" in caplog.text
-    assert "hunter2" not in caplog.text
+    result = project.run("r", "-vv", "-e", "py", "--", "--token=hunter2")
+    result.assert_success()
+    assert "could not check if '--token=*******' is an existing path" in result.out
+    assert "hunter2" not in result.out
 
 
 def test_config_contains_env(tox_ini_conf: ToxIniCreator) -> None:
