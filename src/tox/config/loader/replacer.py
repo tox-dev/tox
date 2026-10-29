@@ -56,7 +56,8 @@ class ReplaceReference(ABC):
         :param value: the raw value
         :param conf_args: the configuration loads argument object
 
-        :returns: the replaced value, None if it can't do it.
+        :returns: the replaced value (as :class:`Arguments` to keep its lines whole within a command), None if it can't
+            do it.
 
         """
         raise NotImplementedError
@@ -223,9 +224,40 @@ class Replacer:
         self.conf_args = conf_args
         self.depth = depth
         self.recursive = recursive
+        self.quote = ""
 
     def __call__(self, value: MatchArg) -> Sequence[str]:
-        return [self._replace_match(me) if isinstance(me, MatchExpression) else str(me) for me in value]
+        result: Final[list[str]] = []
+        quote = self.quote
+        for part in value:
+            if isinstance(part, MatchExpression):
+                replacer = self if quote == self.quote else self._within(quote)
+                result.append(replacer._replace_match(part))  # ruff:ignore[private-member-access]  # same-class instance
+            else:
+                result.append(str(part))
+                quote = self._open_quote(str(part), quote)
+        return result
+
+    def _within(self, quote: str) -> Replacer:
+        nested: Final[Replacer] = type(self)(
+            self.conf, self.reference, self.conf_args, self.depth, recursive=self.recursive
+        )
+        nested.quote = quote
+        return nested
+
+    @staticmethod
+    def _open_quote(text: str, quote: str) -> str:
+        escaped = False
+        for char in text:
+            if escaped:
+                escaped = False
+            elif char == "\\" and quote != "'":
+                escaped = True
+            elif quote:
+                quote = "" if char == quote else quote
+            elif char in "'\"":
+                quote = char
+        return quote
 
     def join(self, value: MatchArg) -> str:
         return "".join(self(value))
@@ -247,7 +279,9 @@ class Replacer:
             needs_expansion = any(isinstance(m, MatchExpression) for m in find_replace_expr(replace_value))
             if needs_expansion and self.recursive:
                 try:
-                    return type(self)(self.conf, self.reference, conf_args, self.depth + 1).expand(replace_value)
+                    within: Final[Replacer] = type(self)(self.conf, self.reference, conf_args, self.depth + 1)
+                    within.quote = self.quote
+                    return within.expand(replace_value)
                 except MatchRecursionError as err:
                     LOGGER.warning(str(err))
                     return replace_value
@@ -278,10 +312,11 @@ class Replacer:
 
 
 class CommandLinesReplacer(Replacer):
-    """Expand a value holding one command per line.
+    """Expand a value holding one command per line, where each line is split into arguments afterwards.
 
     A token alone on its line may expand into several commands, while a token sharing its line with other text joins its
-    lines into that one command.
+    lines into that one command. A value that is one argument by nature, such as a path, stays (a part of) one argument
+    whatever blanks, quotes or backslashes it holds.
 
     """
 
@@ -291,6 +326,24 @@ class CommandLinesReplacer(Replacer):
             " ".join(replaced.splitlines()) if _shares_line(value, at) else replaced
             for at, replaced in enumerate(self(value))
         )
+
+    @override
+    def _replace_match(self, value: MatchExpression) -> str:
+        if value.expr[0] == ["glob"] and len(value.expr) > 1:  # the pattern is matched to files, no command splits it
+            pattern: Final[str] = Replacer(self.conf, self.reference, self.conf_args, self.depth).join(value.expr[1])
+            value = MatchExpression([value.expr[0], [pattern], *value.expr[2:]])
+        return super()._replace_match(value)
+
+    @override
+    def _resolve_replace(
+        self, of_type: str, args: list[str], flattened_args: list[str], conf_args: ConfigLoadArgs
+    ) -> str | None:
+        if of_type == "glob":
+            return replace_glob(self.conf, args, quote=self.quote)
+        replaced: Final[str | None] = super()._resolve_replace(of_type, args, flattened_args, conf_args)
+        if isinstance(replaced, Arguments):
+            return "\n".join(_quote_args([line], self.quote) if line else line for line in replaced.split("\n"))
+        return replaced
 
 
 def _shares_line(value: MatchArg, at: int) -> bool:
@@ -303,17 +356,31 @@ def _shares_line(value: MatchArg, at: int) -> bool:
     return bool(before.rpartition("\n")[2].strip() or after.partition("\n")[0].strip())
 
 
+class Arguments(str):  # ruff:ignore[subclass-builtin]  # str marker must survive substitution parsing
+    """A replacement whose lines need command-argument quoting."""
+
+    __slots__ = ()
+
+
+class CommandText(str):  # ruff:ignore[subclass-builtin]  # retain Loader.substitute's str signature
+    __slots__ = ()
+
+
+def _quote_args(args: Sequence[str], quote: str = "") -> str:
+    if quote:
+        text: Final[str] = " ".join(args)
+        special: Final[str] = "'" if quote == "'" else '"\\'
+        return f"{quote}{shlex.quote(text)}{quote}" if any(char in text for char in special) else text
+    if sys.platform != "win32":
+        return shlex.join(args)
+    # Windows command splitting keeps a lone backslash, so paths stay unquoted where a value is not split into a command
+    return " ".join(arg if arg and not re.search(r"[\s'\"]|\\\\", arg) else shlex.quote(arg) for arg in args)
+
+
 def replace_pos_args(conf: Config, args: list[str], conf_args: ConfigLoadArgs) -> str:
     pos_args = load_posargs(conf, conf_args)
     # if we use the defaults, join back remaining args else quote them for the command splitting that follows.
-    return ARG_DELIMITER.join(args) if pos_args is None else _quote_pos_args(pos_args)
-
-
-def _quote_pos_args(pos_args: Sequence[str]) -> str:
-    if sys.platform != "win32":
-        return shlex.join(pos_args)
-    # Windows command splitting keeps a lone backslash, so paths stay unquoted where a value is not split into a command
-    return " ".join(arg if arg and not re.search(r"[\s'\"]|\\\\", arg) else shlex.quote(arg) for arg in pos_args)
+    return ARG_DELIMITER.join(args) if pos_args is None else _quote_args(pos_args)
 
 
 def load_posargs(conf: Config, conf_args: ConfigLoadArgs) -> tuple[str, ...] | None:
@@ -369,7 +436,7 @@ def replace_tty(args: list[str]) -> str:
     return (args[0] if len(args) > 0 else "") if sys.stdout.isatty() else args[1] if len(args) > 1 else ""
 
 
-def replace_glob(conf: Config | None, args: list[str]) -> str:
+def replace_glob(conf: Config | None, args: list[str], *, quote: str | None = None) -> str:
     if not args or not args[0]:
         msg = "No pattern was supplied in glob substitution"
         raise MatchError(msg)
@@ -389,7 +456,7 @@ def replace_glob(conf: Config | None, args: list[str]) -> str:
     if conf is not None and not Path(pattern).is_absolute():
         pattern = str(conf.core["tox_root"] / pattern)
     if matches := sorted(glob.glob(pattern, recursive=True)):  # ruff:ignore[glob]
-        return " ".join(matches)
+        return " ".join(matches) if quote is None else _quote_args(matches, quote)
     return ARG_DELIMITER.join(default_args) if default_args else ""
 
 
@@ -412,6 +479,8 @@ def replace_factor(conf: Config, args: list[str], conf_args: ConfigLoadArgs) -> 
 
 
 __all__ = [
+    "Arguments",
+    "CommandText",
     "MatchExpression",
     "MatchRecursionError",
     "find_replace_expr",

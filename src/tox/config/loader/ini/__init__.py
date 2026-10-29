@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, TypeVar, cast
 from tox.config.loader.api import ConfigLoadArgs, Loader, Override
 from tox.config.loader.ini.factor import filter_for_env
 from tox.config.loader.ini.replace import ReplaceReferenceIni
-from tox.config.loader.replacer import MatchExpression, replace_command_lines, replace_once
+from tox.config.loader.replacer import CommandText, MatchExpression, replace_command_lines, replace_once
 from tox.config.loader.replacer import replace as replace_references
 from tox.config.loader.str_convert import StrConvert
 from tox.config.set_env import SetEnv
@@ -87,7 +87,7 @@ class IniLoader(StrConvert, Loader[str]):
         if conf is None:  # no replacement supported in the core section
             return self.to(raw, of_type, factory)
         delay_replace = inspect.isclass(of_type) and issubclass(of_type, SetEnv)
-        replace_all = replace_command_lines if of_type == list[Command] else replace_references
+        replace_all = replace_command_lines if of_type in {Command, list[Command]} else replace_references
 
         def replacer(raw_: str | MatchExpression, args_: ConfigLoadArgs, *, recursive: bool = True) -> str:
             try:
@@ -107,7 +107,8 @@ class IniLoader(StrConvert, Loader[str]):
 
     @override
     def substitute(self, value: str, conf: Config, args: ConfigLoadArgs) -> str:
-        return replace_references(conf, ReplaceReferenceIni(conf, self), value, args)
+        replace_all = replace_command_lines if isinstance(value, CommandText) else replace_references
+        return replace_all(conf, ReplaceReferenceIni(conf, self), value, args)
 
     @override
     def found_keys(self) -> set[str]:

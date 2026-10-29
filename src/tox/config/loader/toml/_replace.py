@@ -19,7 +19,7 @@ from tox.config.loader.replacer import (
     replace,
     replace_env,
 )
-from tox.config.loader.stringify import stringify
+from tox.config.loader.stringify import stringify, stringify_reference
 from tox.config.set_env import SetEnvReference
 from tox.config.types import Command, EnvList
 from tox.tox_env.python.pip.req_file import PythonConstraints, PythonDeps
@@ -322,7 +322,11 @@ class TomlReplaceLoader(ReplaceReference):
                     except KeyError as exc:  # if fails, keep trying maybe another source can satisfy
                         exception = exc
                     else:
-                        return stringify(value)[0]
+                        return (
+                            stringify(value)[0]
+                            if isinstance(src, RawLoader)
+                            else stringify_reference(value, constant=src.is_constant(settings["key"]))
+                        )
             except Exception as exc:  # ruff:ignore[blind-except]
                 exception = exc
             if exception is not None:

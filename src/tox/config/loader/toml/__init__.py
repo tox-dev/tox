@@ -7,7 +7,14 @@ from types import GenericAlias
 from typing import TYPE_CHECKING, Any, TypeVar, cast
 
 from tox.config.loader.api import ConfigLoadArgs, Loader, Override
-from tox.config.loader.replacer import MatchExpression, MatchRecursionError, replace, replace_once
+from tox.config.loader.replacer import (
+    CommandText,
+    MatchExpression,
+    MatchRecursionError,
+    replace,
+    replace_command_lines,
+    replace_once,
+)
 from tox.config.set_env import SetEnv
 from tox.config.types import Command, EnvList
 from tox.report import HandledError
@@ -93,7 +100,8 @@ class TomlLoader(Loader[TomlTypes]):
 
     @override
     def substitute(self, value: str, conf: Config, args: ConfigLoadArgs) -> str:
-        return replace(conf, TomlReplaceLoader(conf, self), value, args)
+        replace_all = replace_command_lines if isinstance(value, CommandText) else replace
+        return replace_all(conf, TomlReplaceLoader(conf, self), value, args)
 
     @override
     def found_keys(self) -> set[str]:

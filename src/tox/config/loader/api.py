@@ -7,7 +7,7 @@ from collections.abc import Iterable, Mapping
 from contextlib import contextmanager
 from typing import TYPE_CHECKING, Any, TypeVar, cast
 
-from tox.config.loader.replacer import MatchError
+from tox.config.types import Command
 from tox.plugin import impl
 from tox.report import HandledError
 from tox.tox_env.errors import Skip
@@ -15,6 +15,7 @@ from tox.tox_env.python.pip.req_file import PythonDeps
 from tox.util.typing_compat import override
 
 from .convert import Convert, Factory
+from .replacer import CommandText, MatchError
 from .str_convert import StrConvert
 
 if TYPE_CHECKING:
@@ -229,9 +230,12 @@ class Loader(Convert[T]):
             return self.build(
                 entry.key, cast("type[V] | UnionType", of_type), factory, conf, cast("T", entry.value), args
             )
-        return _STR_CONVERT.to(
-            entry.value if conf is None else self.substitute(entry.value, conf, args), of_type, factory
+        if conf is None:
+            return _STR_CONVERT.to(entry.value, of_type, factory)
+        value: Final[str] = self.substitute(
+            CommandText(entry.value) if of_type in {Command, list[Command]} else entry.value, conf, args
         )
+        return _STR_CONVERT.to(value, of_type, factory)
 
     def build(  # ruff:ignore[too-many-arguments]
         self,

@@ -1498,9 +1498,9 @@ Run
             [testenv]
             commands = xcopy "\\server\share\file name.txt" .
 
-        tox pastes substitution values into the command text before splitting it, so a value with spaces splits into
-        several arguments unless the argument holding it is quoted. Keep such values unquoted in ``[vars]`` and quote
-        the complete argument where it is used:
+        tox pastes string settings and environment values into the command text before splitting it. A value with spaces
+        then splits into several arguments unless the argument holding it is quoted. Keep such values unquoted in
+        ``[vars]`` and quote the complete argument where it is used:
 
         .. code-block:: ini
 
@@ -3432,6 +3432,13 @@ platforms, the backslash escapes the following character. On Windows, it escapes
 backslashes before whitespace remain path separators. UNC prefixes retain their leading pair. Single-quoted text is
 literal on both platforms.
 
+INI splits a command into arguments after substitution. A path reference such as ``{tox_root}`` or ``{env_tmp_dir}``
+stays within one argument even if it contains spaces, quotes or backslashes. The same applies to tox-provided scalar
+values such as ``{host_python}`` and ``{tox_root_name}``, and to each unquoted entry of a referenced list such as
+``{base_python}``. A reference inside a larger word stays in that word, so ``python {tox_root}{/}scripts{/}report.py``
+needs no extra quotes. A string setting, a key from another section, or an environment variable remains command text;
+quote the complete argument for those values, as in ``"{env:HOME}"``.
+
 Special substitutions that accept additional colon-delimited ``:`` parameters cannot have a space after the ``:`` at the
 beginning of line (e.g. ``{posargs: magic}`` would be parsed as factorial ``{posargs``, having value magic).
 
@@ -3548,8 +3555,9 @@ You can expand glob/wildcard patterns to matching file paths:
 
     {glob:PATTERN}
 
-Matches are sorted and returned as a space-separated string. If no files match, the result is an empty string. You can
-provide a default value for when no files match:
+Matches are sorted and returned as a space-separated string. An unquoted glob substitution in an INI command passes each
+match as one argument, including file names with blanks or quotes. Quoting the whole substitution joins the matches into
+one argument. If no files match, the result is an empty string. You can provide a default value for when no files match:
 
 ::
 

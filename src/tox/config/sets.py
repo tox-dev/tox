@@ -207,6 +207,9 @@ class ConfigSet(ABC):
         config_definition = self._defined[item]
         return config_definition.__call__(self._conf, self.loaders, ConfigLoadArgs(chain, self.name, self.env_name))  # ruff:ignore[unnecessary-dunder-call]
 
+    def is_constant(self, item: str) -> bool:
+        return isinstance(self._defined[item], ConfigConstantDefinition)
+
     def get(self, item: str, of_type: type[V]) -> V:
         """Get the config value for a given key, verified to be of the declared type.
 

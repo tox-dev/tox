@@ -2,11 +2,13 @@ from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
 from pathlib import Path
-from typing import Any
+from typing import Any, Final
 
 from tox.config.set_env import SetEnv
 from tox.config.types import Command, EnvList
 from tox.tox_env.python.pip.req_file import PythonConstraints, PythonDeps
+
+from .replacer import Arguments
 
 
 def stringify(value: Any) -> tuple[str, bool]:  # ruff:ignore[too-many-return-statements]
@@ -39,4 +41,16 @@ def stringify(value: Any) -> tuple[str, bool]:  # ruff:ignore[too-many-return-st
     return str(value), False
 
 
-__all__ = ("stringify",)
+def stringify_reference(value: object, *, constant: bool) -> str:
+    """Mark path and tox-provided values as arguments before command parsing."""
+    as_str: Final[str] = stringify(value)[0]
+    if isinstance(value, str):
+        return Arguments(as_str) if constant else as_str
+    entries: Final[Sequence[object] | set[object]] = value if isinstance(value, (Sequence, set)) else [value]
+    return Arguments(as_str) if all(isinstance(entry, (str, Path)) for entry in entries) else as_str
+
+
+__all__ = (
+    "stringify",
+    "stringify_reference",
+)

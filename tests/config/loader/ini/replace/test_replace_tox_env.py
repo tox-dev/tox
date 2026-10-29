@@ -1,9 +1,10 @@
 from __future__ import annotations
 
+import os
 from collections.abc import Callable
 from pathlib import Path
 from textwrap import dedent
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Final
 
 import pytest
 
@@ -16,7 +17,7 @@ from tox.report import HandledError
 if TYPE_CHECKING:
     from tests.config.loader.conftest import ReplaceOne
     from tests.conftest import ToxIniCreator
-    from tox.pytest import LogCaptureFixture
+    from tox.pytest import LogCaptureFixture, ToxProject, ToxProjectCreator, ToxRunOutcome
 
 EnvConfigCreator = Callable[[str], ConfigSet]
 
@@ -285,3 +286,144 @@ def test_override_propagates_through_section_ref(tox_ini_conf: ToxIniCreator, ov
     env_config = config.get_env("test")
     env_config.add_config(keys="extras", of_type=str, default="", desc="extras")
     assert env_config["extras"] == expected
+
+
+@pytest.mark.parametrize(
+    "value",
+    [
+        pytest.param("plain", id="plain"),
+        pytest.param("my proj", id="space"),
+        pytest.param("my  proj", id="spaces"),
+        pytest.param("o'brien", id="single-quote"),
+        pytest.param('q"uote', id="double-quote"),
+        pytest.param("back\\slash", id="backslash"),
+        pytest.param("C:\\my dir\\", id="trailing-backslash"),
+        pytest.param(r"\\server\my share", id="unc-path"),
+        pytest.param("a#b", id="comment"),
+        pytest.param("{env_name}", id="substitution"),
+    ],
+)
+@pytest.mark.parametrize(
+    ("config", "expected"),
+    [
+        pytest.param("c = python {p} -x", "{}", id="bare"),
+        pytest.param("c = python {p}/a -x", "{}/a", id="suffix"),
+        pytest.param("c = python --opt={p} -x", "--opt={}", id="option"),
+        pytest.param("c = python {p}{:}{p} -x", f"{{}}{os.pathsep}{{}}", id="twice"),
+        pytest.param('c = python "{p}" -x', "{}", id="double"),
+        pytest.param("c = python '{p}/a' -x", "{}/a", id="single"),
+        pytest.param('c = python "it\'s {p} !" -x', "it's {} !", id="text"),
+        pytest.param("c = python {env:MISSING:{p}/a} -x", "{}/a", id="env-default"),
+        pytest.param("c = python {missing:{p}/a} -x", "{}/a", id="key-default"),
+        pytest.param("c = python {[base]args} -x\n[base]\nargs = {p}/a", "{}/a", id="reference"),
+        pytest.param("c = python '{[base]args}' -x\n[base]\nargs = {p}/a", "{}/a", id="reference-quoted"),
+    ],
+)
+@pytest.mark.parametrize(
+    ("of_type", "wrap"),
+    [
+        pytest.param(Command, lambda command: command, id="command"),
+        pytest.param(list[Command], lambda command: [command], id="commands"),
+    ],
+)
+def test_replace_reference_one_argument_of_command(
+    example: EnvConfigCreator,
+    monkeypatch: pytest.MonkeyPatch,
+    value: str,
+    config: str,
+    expected: str,
+    of_type: type[Command | list[Command]],
+    wrap: Callable[[Command], Command | list[Command]],
+) -> None:
+    monkeypatch.delenv("MISSING", raising=False)
+    env_config: Final[ConfigSet] = example(config)
+    env_config.add_constant(keys="p", desc="p", value=value)
+    env_config.add_config(keys="c", of_type=of_type, default=None, desc="c")
+    assert env_config["c"] == wrap(Command(args=["python", expected.replace("{}", value), "-x"]))
+
+
+@pytest.mark.parametrize(
+    ("value", "config", "expected"),
+    [
+        pytest.param(Path("a b"), "{p}", ["a b"], id="path"),
+        pytest.param(["a b", Path("c d")], "{p}", ["a b", "c d"], id="list"),
+        pytest.param(["a b", Path("c d")], "'{p}'", ["a b c d"], id="list-quoted"),
+        pytest.param({"a b"}, "{p}", ["a b"], id="set"),
+        pytest.param([], "{p}", [], id="list-empty"),
+        pytest.param("", "{p}", [], id="str-empty"),
+        pytest.param([Command(["a b", "c"])], "{p}", ["a b", "c"], id="commands"),
+    ],
+)
+def test_replace_reference_arguments_of_command(
+    example: EnvConfigCreator,
+    value: str | Path | list[str | Path | Command] | set[str],
+    config: str,
+    expected: list[str],
+) -> None:
+    env_config: Final[ConfigSet] = example(f"c = python {config} -x")
+    env_config.add_constant(keys="p", desc="p", value=value)
+    env_config.add_config(keys="c", of_type=list[Command], default=[], desc="c")
+    assert env_config["c"] == [Command(args=["python", *expected, "-x"])]
+
+
+def test_replace_reference_to_path_setting_one_argument_of_command(example: EnvConfigCreator) -> None:
+    env_config = example("p = {tox_root}/a b\nc = python {p}/c -x")
+    env_config.add_config(keys="p", of_type=Path, default=Path(), desc="p")
+    env_config.add_config(keys="c", of_type=list[Command], default=[], desc="c")
+    assert env_config["c"] == [Command(args=["python", f"{env_config['p']}/c", "-x"])]
+
+
+def test_replace_reference_to_str_setting_is_command_text(example: EnvConfigCreator) -> None:
+    env_config = example("p = -a 'b c'\nc = python {p} -x")
+    env_config.add_config(keys="p", of_type=str, default="", desc="p")
+    env_config.add_config(keys="c", of_type=list[Command], default=[], desc="c")
+    assert env_config["c"] == [Command(args=["python", "-a", "b c", "-x"])]
+
+
+@pytest.mark.parametrize(
+    ("of_type", "expected"),
+    [
+        pytest.param(str, "k=a 'b/c", id="str"),
+        pytest.param(Path, Path("k=a 'b/c"), id="path"),
+        pytest.param(list[str], ["k=a 'b/c"], id="list"),
+        pytest.param(dict[str, str], {"k": "a 'b/c"}, id="dict"),
+    ],
+)
+def test_replace_reference_as_is_outside_command(
+    example: EnvConfigCreator,
+    of_type: type[str | Path | list[str] | dict[str, str]],
+    expected: str | Path | list[str] | dict[str, str],
+) -> None:
+    env_config: Final[ConfigSet] = example("o = k={p}/c")
+    env_config.add_constant(keys="p", desc="p", value=Path("a 'b"))
+    env_config.add_config(keys="o", of_type=of_type, default=None, desc="o")
+    assert env_config["o"] == expected
+
+
+@pytest.mark.parametrize(
+    ("config", "section", "content"),
+    [
+        pytest.param("tox.ini", "testenv:py", "", id="ini"),
+        pytest.param("tox.toml", "env.py", "[env_run_base]", id="toml"),
+    ],
+)
+@pytest.mark.parametrize(
+    ("key", "wrap"),
+    [
+        pytest.param("commands", lambda command: [command], id="commands"),
+        pytest.param("list_dependencies_command", lambda command: command, id="single-command"),
+    ],
+)
+def test_replace_reference_one_argument_of_command_override(
+    tox_project: ToxProjectCreator,
+    config: str,
+    section: str,
+    content: str,
+    key: str,
+    wrap: Callable[[Command], Command | list[Command]],
+) -> None:
+    project: Final[ToxProject] = tox_project({config: content})
+    override: Final[str] = f"{section}.{key}=python {{work_dir}}{{/}}a -x"
+    outcome: Final[ToxRunOutcome] = project.run("c", "-e", "py", "-k", key, "--workdir", "w d", "-x", override)
+    outcome.assert_success()
+    assert outcome.env_conf("py")[key] == wrap(Command(args=["python", str(project.path / "w d" / "a"), "-x"]))

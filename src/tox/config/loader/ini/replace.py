@@ -9,8 +9,8 @@ from re import Pattern
 from typing import TYPE_CHECKING, Final
 
 from tox.config.loader.api import apply_overrides_to_raw
-from tox.config.loader.replacer import ReplaceReference
-from tox.config.loader.stringify import stringify
+from tox.config.loader.replacer import Arguments, ReplaceReference
+from tox.config.loader.stringify import stringify_reference
 from tox.util.typing_compat import override
 
 if TYPE_CHECKING:
@@ -56,8 +56,9 @@ class ReplaceReferenceIni(ReplaceReference):
             except KeyError:  # if fails, keep trying maybe another source can satisfy
                 pass
             else:
-                as_str, _ = stringify(value)
-                return as_str.replace("#", r"\#")  # escape comment characters as these will be stripped
+                as_str = stringify_reference(value, constant=src.is_constant(key))
+                escaped = as_str.replace("#", r"\#")  # escape comment characters as these will be stripped
+                return Arguments(escaped) if isinstance(as_str, Arguments) else escaped
         raise KeyError(key)
 
     def _resolve_section_proxy(self, src: SectionProxy, key: str, args: ConfigLoadArgs) -> str:
