@@ -22,6 +22,7 @@ from tox.config.loader.replacer import (
 )
 from tox.config.loader.stringify import stringify
 from tox.config.set_env import SetEnvReference
+from tox.config.sets import EnvConfigSet
 from tox.config.types import Command, EnvList
 from tox.tox_env.python.pip.req_file import PythonConstraints, PythonDeps
 from tox.util.typing_compat import override
@@ -338,7 +339,11 @@ class TomlReplaceLoader(ReplaceReference):
             try:
                 for src in self._config_value_sources(settings["section"], conf_args.env_name):
                     try:
-                        value = src.load(settings["key"], conf_args.chain)
+                        value = (
+                            src.set_env_lines(conf_args.chain)
+                            if isinstance(src, EnvConfigSet) and settings["key"] in {"set_env", "setenv"}
+                            else src.load(settings["key"], conf_args.chain)
+                        )
                     except KeyError as exc:  # if fails, keep trying maybe another source can satisfy
                         exception = exc
                     else:

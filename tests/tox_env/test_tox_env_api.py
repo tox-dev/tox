@@ -102,6 +102,23 @@ def test_env_log_redacts_secret_argv(tox_project: ToxProjectCreator) -> None:
     assert "hunter2" not in result.out  # also masked in the LOGGER warning shown to the user
 
 
+def test_env_log_redacts_secret_argv_after_open_quote(
+    tox_project: ToxProjectCreator, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("GIT_REF", "it's")
+    monkeypatch.setenv("DEPLOY_TOKEN", "hunter2")
+    prj = tox_project({
+        "tox.ini": ("[testenv]\npackage=skip\ncommands=python -c 'pass' --ref={env:GIT_REF} --token={env:DEPLOY_TOKEN}")
+    })
+    result = prj.run("r")
+    result.assert_success()
+    content = (prj.path / ".tox" / "py" / "log" / "1-commands[0].log").read_text()
+    assert "hunter2" not in content
+    assert "--token=*******" in content
+    assert "hunter2" not in result.out
+    assert "--token=*******" in result.out
+
+
 def test_tox_env_pass_env_literal_exist() -> None:
     with patch("os.environ", {"A": "1"}):
         env = ToxEnv._load_pass_env(["A"])  # ruff:ignore[private-member-access]
