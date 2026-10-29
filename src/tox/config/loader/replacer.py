@@ -305,15 +305,15 @@ def _shares_line(value: MatchArg, at: int) -> bool:
 
 def replace_pos_args(conf: Config, args: list[str], conf_args: ConfigLoadArgs) -> str:
     pos_args = load_posargs(conf, conf_args)
-    # if we use the defaults, join back remaining args else quote them for the command splitting that follows.
-    return ARG_DELIMITER.join(args) if pos_args is None else _quote_pos_args(pos_args)
+    return ARG_DELIMITER.join(args) if pos_args is None else quote_args(pos_args)
 
 
-def _quote_pos_args(pos_args: Sequence[str]) -> str:
+def quote_args(args: Sequence[str]) -> str:
+    """:returns: the arguments as text that the command splitting turns back into these arguments"""
     if sys.platform != "win32":
-        return shlex.join(pos_args)
+        return shlex.join(args)
     # Windows command splitting keeps a lone backslash, so paths stay unquoted where a value is not split into a command
-    return " ".join(arg if arg and not re.search(r"[\s'\"]|\\\\", arg) else shlex.quote(arg) for arg in pos_args)
+    return " ".join(arg if arg and not re.search(r"[\s'\"]|\\\\", arg) else shlex.quote(arg) for arg in args)
 
 
 def load_posargs(conf: Config, conf_args: ConfigLoadArgs) -> tuple[str, ...] | None:
@@ -416,6 +416,7 @@ __all__ = [
     "MatchRecursionError",
     "find_replace_expr",
     "load_posargs",
+    "quote_args",
     "replace",
     "replace_command_lines",
     "replace_env",

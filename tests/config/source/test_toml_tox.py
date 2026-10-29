@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from tox.execute.request import shell_cmd
+from tox.config.types import Command
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -97,7 +97,7 @@ def test_config_in_toml_keep_braces_of_non_reference(toml_project: Callable[[str
     project = toml_project(f'[${{prefix}}env_run_base]\ncommands = [["python", "-c", "x {text} y"]]')
     outcome = project.run("c", "-k", "commands")
     outcome.assert_success()
-    outcome.assert_out_err(f"[testenv:py]\ncommands = {shell_cmd(['python', '-c', f'x {text} y'])}\n", "")
+    outcome.assert_out_err(f"[testenv:py]\ncommands = {Command(['python', '-c', f'x {text} y']).shell}\n", "")
 
 
 def test_config_in_toml_replace_env_name_via_env(toml_project: Callable[[str], ToxProject]) -> None:

@@ -4,7 +4,6 @@ from collections import OrderedDict
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
-from tox.execute.request import shell_cmd
 from tox.util.typing_compat import override
 
 if TYPE_CHECKING:
@@ -62,8 +61,10 @@ class Command:  # ruff:ignore[eq-without-hash]
 
     @property
     def shell(self) -> str:
-        """:returns: a shell representation of the command (platform dependent)"""
-        return shell_cmd(self.args)
+        """:returns: the command as text that tox splits back into the same arguments (platform dependent)"""
+        from tox.config.loader.replacer import quote_args  # ruff:ignore[import-outside-top-level]
+
+        return quote_args(self.args)
 
 
 class EnvList:  # ruff:ignore[eq-without-hash]
