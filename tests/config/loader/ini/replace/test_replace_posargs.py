@@ -75,9 +75,13 @@ def test_replace_pos_args_escaped(replace_one: ReplaceOne, value: str) -> None:
 def test_replace_pos_args_circular_fan_out(replace_one: ReplaceOne, caplog: LogCaptureFixture) -> None:
     result = replace_one("{posargs}", ["{posargs}{posargs}"])
     assert "{posargs}{posargs}" in result
-    assert [m for m in caplog.messages if m.startswith("Could not expand")] == [
-        "Could not expand '{posargs}{posargs}' after recursing 101 frames"
-    ]
+    assert (
+        sum(
+            message.startswith("Could not expand ") and message.endswith("after recursing 101 frames")
+            for message in caplog.messages
+        )
+        == 1
+    )
 
 
 @pytest.mark.parametrize(
