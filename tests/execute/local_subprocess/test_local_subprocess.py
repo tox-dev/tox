@@ -181,6 +181,7 @@ def test_local_execute_start_error_masks_secret_flag(caplog: LogCaptureFixture, 
         status.wait()
     assert isinstance(status.start_error, OSError)
     assert "Exception running subprocess" in caplog.text
+    assert "--token=*******" in caplog.text
     assert "hunter2" not in caplog.text
 
 
