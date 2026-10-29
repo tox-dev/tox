@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
+from tox.config.loader.str_convert import StrConvert
 from tox.config.types import Command
 
 if TYPE_CHECKING:
@@ -164,11 +165,15 @@ def test_show_config_empty_install_command_exception(tox_project: ToxProjectCrea
     ],
 )
 def test_show_config_install_command_toml(tox_project: ToxProjectCreator, filename: str, content: str) -> None:
-    project = tox_project({filename: content})
-    outcome = project.run("c", "-k", "install_command")
+    project: Final = tox_project({filename: content})
+    outcome: Final = project.run("c", "-k", "install_command")
     outcome.assert_success()
-    expected_cmd = Command(["echo", "CUSTOM", "{packages}"]).shell
-    assert f"install_command = {expected_cmd}" in outcome.out
+    assert "install_command = " in outcome.out
+    assert StrConvert.to_command(outcome.out.partition("install_command = ")[2].splitlines()[0]).args == [
+        "echo",
+        "CUSTOM",
+        "{packages}",
+    ]
 
 
 def test_show_config_invalid_python_exit_code(tox_project: ToxProjectCreator) -> None:

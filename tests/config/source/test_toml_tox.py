@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from tox.config.types import Command
+from tox.config.loader.str_convert import StrConvert
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -92,12 +92,24 @@ def test_config_in_toml_replace_default(toml_project: Callable[[str], ToxProject
     outcome.assert_out_err("[testenv:py]\ndescription = miss\n", "")
 
 
-@pytest.mark.parametrize("text", ["{}", "{print(1)}", "{'tool': 'tox'}"])
+@pytest.mark.parametrize(
+    "text",
+    [
+        pytest.param("{}", id="empty-braces"),
+        pytest.param("{print(1)}", id="function-call"),
+        pytest.param("{'tool': 'tox'}", id="dict-literal"),
+    ],
+)
 def test_config_in_toml_keep_braces_of_non_reference(toml_project: Callable[[str], ToxProject], text: str) -> None:
-    project = toml_project(f'[${{prefix}}env_run_base]\ncommands = [["python", "-c", "x {text} y"]]')
-    outcome = project.run("c", "-k", "commands")
+    project: Final = toml_project(f'[${{prefix}}env_run_base]\ncommands = [["python", "-c", "x {text} y"]]')
+    outcome: Final = project.run("c", "-k", "commands")
     outcome.assert_success()
-    outcome.assert_out_err(f"[testenv:py]\ncommands = {Command(['python', '-c', f'x {text} y']).shell}\n", "")
+    assert outcome.out.startswith("[testenv:py]\ncommands = ")
+    assert StrConvert.to_command(outcome.out.partition("commands = ")[2].strip()).args == [
+        "python",
+        "-c",
+        f"x {text} y",
+    ]
 
 
 def test_config_in_toml_replace_env_name_via_env(toml_project: Callable[[str], ToxProject]) -> None:

@@ -309,7 +309,6 @@ def replace_pos_args(conf: Config, args: list[str], conf_args: ConfigLoadArgs) -
 
 
 def quote_args(args: Sequence[str]) -> str:
-    """:returns: the arguments as text that the command splitting turns back into these arguments"""
     if sys.platform != "win32":
         return shlex.join(args)
     # Windows command splitting keeps a lone backslash, so paths stay unquoted where a value is not split into a command
