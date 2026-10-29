@@ -457,7 +457,8 @@ Command resolution
 
 Before execution, tox performs the following steps:
 
-- It resolves the executable via :func:`shutil.which` using the env's ``PATH``.
+- It resolves the executable via :func:`shutil.which` using the env's ``PATH``; on Unix a relative command (or
+  ``PATH`` entry) is looked up from the working directory the command runs in, the same place the child resolves it.
 - It checks against ``allowlist_externals`` glob patterns.
 - On Unix, it checks for ``TOX_LIMITED_SHEBANG`` and prepends the shebang interpreter.
 

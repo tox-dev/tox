@@ -590,10 +590,39 @@ def _create_shebang_test(tmp_path: Path, env: dict[str, str]) -> tuple[str, Path
     script.write_text(f"#!{exe} -s")
     script.chmod(script.stat().st_mode | stat.S_IEXEC)  # mark it executable
     env["PATH"] = str(script.parent)
-    request = create_autospec(ExecuteRequest, cmd=["s", "--magic"], env=env, allow=None)
+    request = create_autospec(ExecuteRequest, cmd=["s", "--magic"], cwd=tmp_path, env=env, allow=None)
     writer = create_autospec(SyncWrite)
     instance = LocalSubProcessExecuteInstance(request, create_autospec(ExecuteOptions), writer, writer)
     return exe, script, instance
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="only POSIX resolves relative commands from the child's cwd")
+@pytest.mark.parametrize(
+    ("cmd", "path"),
+    [
+        pytest.param("scripts/s", os.defpath, id="relative-command"),
+        pytest.param("s", "scripts", id="relative-path-entry"),
+    ],
+)
+def test_shebang_resolved_from_request_cwd(tmp_path: Path, monkeypatch: MonkeyPatch, cmd: str, path: str) -> None:
+    for folder, interpreter in (("project", "/bin/sh"), ("invoked_from", "/bin/other")):
+        script = tmp_path / folder / "scripts" / "s"
+        script.parent.mkdir(parents=True)
+        script.write_text(f"#!{interpreter}")
+        script.chmod(script.stat().st_mode | stat.S_IEXEC)
+    monkeypatch.chdir(tmp_path / "invoked_from")
+    request = ExecuteRequest(
+        cmd=[cmd, "--magic"],
+        cwd=tmp_path / "project",
+        env={"PATH": path, "TOX_LIMITED_SHEBANG": "1"},
+        stdin=StdinSource.OFF,
+        run_id="run-id",
+        allow=[cmd],
+    )
+    writer = create_autospec(SyncWrite)
+    instance = LocalSubProcessExecuteInstance(request, create_autospec(ExecuteOptions), writer, writer)
+
+    assert instance.cmd == ["/bin/sh", str(tmp_path / "project" / "scripts" / "s"), "--magic"]
 
 
 @pytest.mark.parametrize("key", ["COLUMNS", "ROWS"])
