@@ -1,8 +1,9 @@
 from __future__ import annotations
 
 import re
+import sys
 from argparse import Namespace
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING, Final, cast
 
 from packaging.requirements import Requirement
 
@@ -22,7 +23,7 @@ if TYPE_CHECKING:
     from argparse import ArgumentParser
     from collections.abc import Iterator
     from pathlib import Path
-    from typing import ClassVar, Final, Self
+    from typing import ClassVar, Self
 
 
 class _PythonRequirementsFile(RequirementsFile):
@@ -71,8 +72,13 @@ class _PythonRequirementsFile(RequirementsFile):
                 at = len(lines) if at is None else at
                 self._merge_option_line(merged, opts, str(self._path))
         if at is not None:
-            lines[at:at] = [" ".join(group) for group in self._option_groups(merged)]
+            lines[at:at] = [" ".join(self._escape(arg) for arg in group) for group in self._option_groups(merged)]
         return lines
+
+    @staticmethod
+    def _escape(arg: str) -> str:
+        # The rendered option must keep its argument boundary when parsed again.
+        return arg if sys.platform == "win32" else re.sub(r"""[\s\\'"]""", r"\\\g<0>", arg) or "''"
 
     def _global_options(self, line: str) -> Namespace | None:
         for _, content in self._ignore_comments(enumerate([line])):
