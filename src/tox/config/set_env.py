@@ -224,7 +224,6 @@ class SetEnv:
         if args.chain[-1:] != [f"env:{item}"]:  # an {env:...} lookup already recorded the key it resolves
             args.chain.append(f"env:{item}")
         result = self._replacer(raw, args)  # apply any replace options
-        result = result.replace(r"\#", "#")  # unroll escaped comment with replacement
         self._materialized[item] = result
         self._raw.pop(item, None)  # if the replace requires the env we may be called again, so allow pop to fail
         return result
