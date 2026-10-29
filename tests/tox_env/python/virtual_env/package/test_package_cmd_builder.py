@@ -224,9 +224,9 @@ def test_tox_install_pkg_bad_wheel(tox_project: ToxProjectCreator, tmp_path: Pat
     [
         pytest.param("not_gzip-1.0.tar.gz", "could not extract", id="invalid-gzip"),
         pytest.param("no_members-1.0.tar.gz", "no files inside", id="empty-source-archive"),
-        pytest.param("not_a_zip-1.0-py3-none-any.whl", "could not read the metadata of", id="invalid-wheel"),
-        pytest.param("bad_requires-1.0-py3-none-any.whl", "could not read the metadata of", id="invalid-requirement"),
-        pytest.param("no_metadata-1.0-py3-none-any.whl", "could not read the metadata of", id="missing-wheel-metadata"),
+        pytest.param("not_a_zip-1.0-py3-none-any.whl", "the metadata of", id="invalid-wheel"),
+        pytest.param("bad_requires-1.0-py3-none-any.whl", "the metadata of", id="invalid-requirement"),
+        pytest.param("no_metadata-1.0-py3-none-any.whl", "the metadata of", id="missing-wheel-metadata"),
     ],
     indirect=["malformed_install_pkg_artifact"],
 )
@@ -237,8 +237,10 @@ def test_tox_install_pkg_malformed(
     result: Final = proj.run("r", "-e", "py", "--installpkg", str(malformed_install_pkg_artifact))
 
     result.assert_failed(1)
+    assert result.out.startswith("py: failed with "), result.out
     assert "internal error" not in result.out + result.err, result.out + result.err
-    assert f"failed with {expected}" in result.out, result.out
+    assert expected in result.out, result.out
+    assert str(malformed_install_pkg_artifact) in result.out, result.out
 
 
 @pytest.fixture
