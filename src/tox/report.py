@@ -243,10 +243,11 @@ class ToxHandler(_STREAM_HANDLER_BASE):
 def _make_encoding_error_safe(stream: IO[str]) -> None:
     """Degrade characters the stream encoding cannot represent into escapes rather than raising.
 
-    A redirected standard stream on Windows inherits the ANSI/OEM code page (e.g. ``cp1252``) as its encoding, while
-    tox emits unicode regardless - box drawing output, non-ASCII paths, ... Such a write used to raise
-    :exc:`UnicodeEncodeError` from within the logging machinery, aborting the whole run. The encoding is left
-    untouched, only the error handler changes, so representable text keeps using the console code page.
+    A redirected standard stream on Windows inherits the ANSI/OEM code page (e.g. ``cp1252``) as its encoding, while tox
+    emits unicode regardless - box drawing output, non-ASCII paths, ... Such a write used to raise
+    :exc:`UnicodeEncodeError` from within the logging machinery, aborting the whole run. The encoding is left untouched,
+    only the error handler changes, so representable text keeps using the console code page.
+
     """
     if isinstance(stream, TextIOWrapper):
         stream.reconfigure(errors="backslashreplace")
