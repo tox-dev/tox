@@ -18,7 +18,6 @@ _UNESCAPED_SPACE_RE = re.compile(
     """,
     re.VERBOSE,
 )
-_SPLIT_SPECIAL_RE: Final = re.compile(r"""[\s\\'"]""")
 
 if TYPE_CHECKING:
     from argparse import ArgumentParser
@@ -79,7 +78,7 @@ class _PythonRequirementsFile(RequirementsFile):
     @staticmethod
     def _escape(arg: str) -> str:
         # The rendered option must keep its argument boundary when parsed again.
-        return arg if sys.platform == "win32" else _SPLIT_SPECIAL_RE.sub(r"\\\g<0>", arg) or "''"
+        return arg if sys.platform == "win32" else re.sub(r"""[\s\\'"]""", r"\\\g<0>", arg) or "''"
 
     def _global_options(self, line: str) -> Namespace | None:
         for _, content in self._ignore_comments(enumerate([line])):
