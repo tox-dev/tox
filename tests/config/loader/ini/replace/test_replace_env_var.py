@@ -5,8 +5,6 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from tox.config.loader.replacer import MAX_REPLACE_DEPTH
-
 if TYPE_CHECKING:
     from collections.abc import Generator
 
@@ -108,7 +106,7 @@ def test_replace_env_var_circular_fan_out(
     result = replace_one("{env:MAGIC}")
     assert "{env:MAGIC}{env:MAGIC}" in result
     assert [m for m in caplog.messages if m.startswith("Could not expand")] == [
-        f"Could not expand {{env:MAGIC}}{{env:MAGIC}} after recursing {MAX_REPLACE_DEPTH + 1} frames"
+        "Could not expand {env:MAGIC}{env:MAGIC} after recursing 101 frames"
     ]
 
 

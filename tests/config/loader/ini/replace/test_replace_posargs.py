@@ -5,7 +5,6 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from tox.config.loader.replacer import MAX_REPLACE_DEPTH
 from tox.config.types import Command
 
 if TYPE_CHECKING:
@@ -77,7 +76,7 @@ def test_replace_pos_args_circular_fan_out(replace_one: ReplaceOne, caplog: LogC
     result = replace_one("{posargs}", ["{posargs}{posargs}"])
     assert "{posargs}{posargs}" in result
     assert [m for m in caplog.messages if m.startswith("Could not expand")] == [
-        f"Could not expand '{{posargs}}{{posargs}}' after recursing {MAX_REPLACE_DEPTH + 1} frames"
+        "Could not expand '{posargs}{posargs}' after recursing 101 frames"
     ]
 
 
