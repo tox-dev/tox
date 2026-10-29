@@ -8,7 +8,7 @@ import logging
 import sys
 from importlib.metadata import PackageNotFoundError, distribution
 from pathlib import Path
-from typing import TYPE_CHECKING, Final, cast
+from typing import TYPE_CHECKING, cast
 
 from filelock import FileLock
 from packaging.requirements import Requirement
@@ -168,8 +168,7 @@ def run_provision(name: str, state: State) -> int:
 def _setup_and_execute(tox_env: PythonRun, env_python: Path, state: State) -> int:
     tox_env.setup()
     # -m adds the start directory to sys.path, where another user may have planted a module.
-    safe_path_flag: Final[str] = "-P" if tox_env.base_python.version_info >= (3, 11) else "-I"
-    args: list[str] = [str(env_python), safe_path_flag, "-m", "tox"]
+    args: list[str] = [str(env_python), "-P" if tox_env.base_python.version_info >= (3, 11) else "-I", "-m", "tox"]
     if state.conf.options.is_colored and "--colored" not in state.args:
         args.extend(["--colored", "yes"])
     args.extend(state.args)
