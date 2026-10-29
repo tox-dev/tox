@@ -73,6 +73,17 @@ def test_pip_toml_empty_command_error(tox_project: ToxProjectCreator, key: str, 
         use(pip)
 
 
+def test_pip_installed_captures_freeze_output(tox_project: ToxProjectCreator) -> None:
+    proj = tox_project({"tox.ini": ""})
+    pip = proj.run("l").state.envs["py"].installer
+    execute_calls = proj.patch_execute(lambda r: 0 if r.run_id == "freeze" else None)
+
+    pip.installed()
+
+    (request,) = (call[0][3] for call in execute_calls.call_args_list if call[0][3].run_id == "freeze")
+    assert request.capture_output is True
+
+
 def test_pip_install_flags_only_error(tox_project: ToxProjectCreator) -> None:
     proj = tox_project({"tox.ini": "[testenv:py]\ndeps=-i a"})
     result = proj.run("r")
