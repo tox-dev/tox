@@ -324,3 +324,25 @@ def test_relative_config_paths_resolve(tox_project: ToxProjectCreator) -> None:
     result.assert_success()
     expected = f"[testenv:py]\nchange_dir = {project.path}\nenv_dir = {project.path / '.tox' / 'py'}\n"
     assert result.out == expected
+
+
+def test_empty_posarg_remains_empty(tox_project: ToxProjectCreator) -> None:
+    project = tox_project({
+        "tox.toml": """
+[env.py]
+package = "skip"
+change_dir = "tests"
+commands = [
+  [
+    "python",
+    "-c",
+    "import sys; print(sys.argv[1:])",
+    { replace = "posargs", extend = true },
+  ],
+]
+""",
+    })
+    (project.path / "tests").mkdir()
+    result = project.run("r", "-e", "py", "--", "")
+    result.assert_success()
+    assert "['']" in result.out

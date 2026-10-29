@@ -66,6 +66,9 @@ class Config:
             # we use os.path to unroll .. in path without resolve
             to_path_str = os.path.abspath(str(to_path))  # ruff:ignore[os-path-abspath]
             for arg in self._pos_args:
+                if not arg:
+                    args.append(arg)
+                    continue
                 path_arg = Path(arg)
                 try:
                     is_existing_path = path_arg.exists()
