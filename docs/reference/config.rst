@@ -1513,6 +1513,9 @@ Run
             [testenv]
             commands = xcopy "\\server\share\file name.txt" .
 
+        On Windows, ``.bat`` and ``.cmd`` commands run through ``cmd.exe``, so tox quotes their arguments for that
+        parser. A batch file reading raw ``%1`` can see surrounding quotes for arguments that need them.
+
         tox pastes substitution values into the command text before splitting it, so a value with spaces splits into
         several arguments unless the argument holding it is quoted. Keep such values unquoted in ``[vars]`` and quote
         the complete argument where it is used:
