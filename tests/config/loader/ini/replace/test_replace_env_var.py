@@ -112,6 +112,19 @@ def test_replace_env_var_circular_fan_out(
     ]
 
 
+@pytest.mark.timeout(5)
+def test_replace_env_var_circular_fan_out_many(
+    replace_one: ReplaceOne, monkeypatch: MonkeyPatch, caplog: LogCaptureFixture
+) -> None:
+    monkeypatch.setenv("MAGIC", "{env:MAGIC}" * 500)
+
+    result = replace_one("{env:MAGIC}")
+
+    assert "{env:MAGIC}" in result
+    assert len(result) < 1_000_000
+    assert len([m for m in caplog.messages if m.startswith("Could not expand")]) == 1
+
+
 @pytest.fixture
 def reset_env_var_after_delay(monkeypatch: MonkeyPatch) -> Generator[threading.Thread, None, None]:
     timeout = 2

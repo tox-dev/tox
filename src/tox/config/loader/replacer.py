@@ -227,7 +227,21 @@ class Replacer:
         self.depth_exhausted = False
 
     def __call__(self, value: MatchArg) -> Sequence[str]:
-        return [self._replace_match(me) if isinstance(me, MatchExpression) else str(me) for me in value]
+        result = []
+        for part in value:
+            if isinstance(part, MatchExpression):
+                result.append(self._literal_match(part) if self.root.depth_exhausted else self._replace_match(part))
+            else:
+                result.append(part)
+        return result
+
+    @classmethod
+    def _literal_match(cls, value: MatchExpression) -> str:
+        args = (
+            "".join(cls._literal_match(part) if isinstance(part, MatchExpression) else part for part in arg)
+            for arg in value.expr
+        )
+        return f"{{{ARG_DELIMITER.join(args)}}}"
 
     def join(self, value: MatchArg) -> str:
         return "".join(self(value))
