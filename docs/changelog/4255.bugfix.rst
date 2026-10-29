@@ -1,0 +1,4 @@
+Redirecting tox's output to a file or a pipe on Windows no longer aborts the run with ``UnicodeEncodeError`` when the
+message contains characters the console code page cannot represent, for example tox's own box drawing output or a path
+containing non-ASCII characters. Such characters are now written as escapes instead of raising from within the logging
+machinery, while the encoding of the stream is left untouched.

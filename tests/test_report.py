@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+import io
 import logging
 import os
+import sys
 from typing import TYPE_CHECKING
 
 import pytest
@@ -70,3 +72,25 @@ def test_setup_report(mocker: MockerFixture, capsys: CaptureFixture, verbosity: 
         expected_warning_text = "warningfoo> bar"
     if verbosity >= 4:  # where warnings are logged
         assert expected_warning_text in lines[3]
+
+
+def test_setup_report_degrades_unencodable_output(monkeypatch: pytest.MonkeyPatch, mocker: MockerFixture) -> None:
+    # a redirected Windows stream uses the ANSI/OEM code page (cp1252 here), which cannot represent tox's own unicode
+    # output - the write used to raise UnicodeEncodeError from within the logging machinery
+    mocker.patch("tox.report.init")
+    raw = io.BytesIO()
+    redirected = io.TextIOWrapper(raw, encoding="cp1252", errors="strict")
+    monkeypatch.setattr(sys, "stdout", redirected)
+    monkeypatch.setattr(sys, "stderr", redirected)
+
+    setup_report(verbosity=3, is_colored=False)
+    try:
+        logging.critical("box %s and path %s", "\u2500", "\u80e1")
+        redirected.flush()
+    finally:
+        deinit()
+
+    out = raw.getvalue().decode("cp1252")
+    assert out
+    assert "\\u2500" in out
+    assert "\\u80e1" in out
