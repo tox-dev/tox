@@ -184,3 +184,35 @@ def test_bad_env_var(
     assert caplog.messages[0] == first
     assert caplog.messages[1] == second
     assert len(caplog.messages) == 2, caplog.text
+
+
+@pytest.mark.parametrize(
+    "raw",
+    [
+        pytest.param("badoverride;testenv.commands=python deploy.py --password=hunter2", id="space-separated"),
+        pytest.param("badoverride;--password=hunter2", id="semicolon-separated"),
+    ],
+)
+def test_bad_env_var_redacts_secret(raw: str, monkeypatch: MonkeyPatch, capsys: CaptureFixture) -> None:
+    monkeypatch.setenv("TOX_OVERRIDE", raw)
+    get_options()
+    out, err = capsys.readouterr()
+    assert "hunter2" not in out + err
+    assert "--password=*******" in out
+    assert "badoverride;" in out
+
+
+def test_bad_env_var_redacts_secret_in_reason(monkeypatch: MonkeyPatch, capsys: CaptureFixture) -> None:
+    monkeypatch.setenv("TOX_PARALLEL", "--password=hunter2")
+    get_options()
+    out, err = capsys.readouterr()
+    assert "hunter2" not in out + err
+
+
+def test_bad_env_var_redacts_secret_holding_whitespace(monkeypatch: MonkeyPatch, capsys: CaptureFixture) -> None:
+    # a secret can hold a space, and masking only up to the first one would leave the rest of it in the message
+    monkeypatch.setenv("TOX_PARALLEL", "--password=hun ter2")
+    get_options()
+    out, err = capsys.readouterr()
+    assert "ter2" not in out + err
+    assert "--password=********" in out

@@ -64,6 +64,23 @@ def test_override_repr() -> None:
     assert repr(Override("b.a=c")) == "Override('b.a=c')"
 
 
+def test_override_redacts_inline_secret() -> None:
+    override = Override("testenv.commands=python deploy.py --password=hunter2")
+    assert str(override) == "testenv.commands=python deploy.py --password=*******"
+    assert repr(override) == "Override('testenv.commands=python deploy.py --password=*******')"
+
+
+def test_override_redacts_secret_in_key() -> None:
+    # an override with no namespace puts the flag left of the first ``=``, so the secret sits in the key half
+    override = Override("--password=hunter2")
+    assert str(override) == "--password=*******"
+    assert repr(override) == "Override('--password=*******')"
+
+
+def test_override_str_keeps_spacing_when_nothing_is_redacted() -> None:
+    assert str(Override("b.a=  x  ")) == "b.a=  x  "
+
+
 @pytest.mark.parametrize(
     ("raw", "namespace", "key", "value", "append", "expected_str"),
     [

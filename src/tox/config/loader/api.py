@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import inspect
+import re
 from abc import abstractmethod
 from argparse import ArgumentTypeError
 from collections.abc import Iterable, Mapping
@@ -12,6 +13,7 @@ from tox.plugin import impl
 from tox.report import HandledError
 from tox.tox_env.errors import Skip
 from tox.tox_env.python.pip.req_file import PythonDeps
+from tox.util.redact import redact_argv
 from tox.util.typing_compat import override
 
 from .convert import Convert, Factory
@@ -55,7 +57,13 @@ class Override:  # ruff:ignore[eq-without-hash]
     @override
     def __str__(self) -> str:
         escaped_ns = ".".join(part.replace(".", "\\.") for part in self._namespace_parts)
-        return f"{escaped_ns}{'.' if escaped_ns else ''}{self.key}{'+' if self.append else ''}={self.value}"
+        raw = f"{escaped_ns}{'.' if escaped_ns else ''}{self.key}{'+' if self.append else ''}={self.value}"
+        # the help formatter prints this string, and a secret can sit on either side of the ``=`` and hold whitespace.
+        # Mask the whole rendered override first, then within its separated tokens, and keep the text byte-identical
+        # when nothing matches.
+        redacted = "".join(redact_argv([raw]))
+        redacted = "".join(redact_argv(re.split(r"(\s+|;)", redacted)))
+        return redacted if redacted != raw else raw
 
     @override
     def __eq__(self, other: object) -> bool:
