@@ -135,7 +135,10 @@ class _PythonRequirementsFile(RequirementsFile):
             if not self.requirements and opts_dict:
                 msg = "no dependencies"
                 raise ValueError(msg)
-            self._unroll = _render_options(opts_dict), [str(req) for req in self.requirements]
+            self._unroll = (
+                [self.redact(opt) for opt in _render_options(opts_dict)],
+                [self.redact(str(req)) for req in self.requirements],
+            )
         return self._unroll
 
     @classmethod
