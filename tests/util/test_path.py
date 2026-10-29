@@ -199,6 +199,20 @@ def test_ensure_empty_dir_keeps_except_filename(tmp_path: Path, mocker: MockerFi
     assert (list(dest.iterdir()), keep.read_text()) == ([keep], "keep")
 
 
+@pytest.mark.skipif(os.name == "nt", reason="POSIX open flags are unavailable on Windows")
+@pytest.mark.parametrize(
+    "flag", [pytest.param("O_DIRECTORY", id="directory"), pytest.param("O_NOFOLLOW", id="nofollow")]
+)
+def test_ensure_empty_dir_uses_path_without_open_flag(tmp_path: Path, mocker: MockerFixture, flag: str) -> None:
+    mocker.patch.object(os, flag, None)
+    (dest := tmp_path / "dest").mkdir()
+    (dest / "remove.txt").write_text("remove")
+
+    ensure_empty_dir(dest)
+
+    assert list(dest.iterdir()) == []
+
+
 @pytest.mark.skipif(sys.platform == "win32", reason="creating symlinks needs privileges on Windows")
 def test_ensure_empty_dir_unlinks_file_symlink(tmp_path: Path) -> None:
     (target := tmp_path / "target.txt").write_text("keep")

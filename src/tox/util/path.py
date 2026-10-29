@@ -34,8 +34,10 @@ def ensure_empty_dir(path: Path, except_filename: str | None = None) -> None:
         path.unlink()
     if path.exists():
         if path.is_dir():
-            if rmtree.avoids_symlink_attacks:
-                _empty_dir_fd(path, except_filename)
+            directory_flag: Final[int | None] = getattr(os, "O_DIRECTORY", None)
+            nofollow_flag: Final[int | None] = getattr(os, "O_NOFOLLOW", None)
+            if rmtree.avoids_symlink_attacks and directory_flag is not None and nofollow_flag is not None:
+                _empty_dir_fd(path, except_filename, directory_flag | nofollow_flag)
             else:
                 _empty_dir_path(path, except_filename)
         else:
@@ -45,8 +47,8 @@ def ensure_empty_dir(path: Path, except_filename: str | None = None) -> None:
         path.mkdir(parents=True)
 
 
-def _empty_dir_fd(path: Path, except_filename: str | None) -> None:
-    dir_fd: Final = os.open(path, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
+def _empty_dir_fd(path: Path, except_filename: str | None, flags: int) -> None:
+    dir_fd: Final = os.open(path, os.O_RDONLY | flags)
     try:
         with os.scandir(dir_fd) as scan:
             entries: Final = list(scan)
