@@ -241,6 +241,18 @@ def test_pip_user_disabled(tox_project: ToxProjectCreator) -> None:
     assert "PIP_USER=0" in result.out
 
 
+def test_pip_seeder_does_not_log_env_vars(tox_project: ToxProjectCreator, monkeypatch: MonkeyPatch) -> None:
+    monkeypatch.setenv("VIRTUALENV_SEEDER", "pip")
+    monkeypatch.setenv("DEPLOY_TOKEN", "s3cr3t-value")
+    proj = tox_project({"tox.ini": "[testenv]\npackage=skip\npass_env=DEPLOY_TOKEN"})
+
+    result = proj.run("r", "-e", "py", "-vv")
+
+    result.assert_success()
+    assert "add seed packages via PipInvoke" in result.out
+    assert "s3cr3t-value" not in result.out
+
+
 @pytest.mark.parametrize(
     ("var", "substitution", "expected_fragment"),
     [

@@ -22,7 +22,7 @@ def _emit_test_log_messages() -> None:
     logging.info("info")
     logging.debug("debug")
     logging.log(logging.NOTSET, "not-set")  # this should not be logged
-    for name in ("distlib.util", "filelock"):
+    for name in ("distlib.util", "filelock", "virtualenv.seed.embed.pip_invoke"):
         logger = logging.getLogger(name)
         logger.warning("%s-warn", name)
         logger.info("%s-info", name)
@@ -53,6 +53,7 @@ def test_setup_report(mocker: MockerFixture, capsys: CaptureFixture, verbosity: 
     assert out
     assert "filelock" not in out
     assert "distlib.util" not in out
+    assert "virtualenv.seed.embed.pip_invoke" not in out
     lines = out.splitlines()
     assert len(lines) == msg_count, out
 

@@ -240,7 +240,8 @@ def setup_report(verbosity: int, is_colored: bool) -> ToxHandler:  # ruff:ignore
     _clean_handlers(LOGGER)
     level = _get_level(verbosity)
     LOGGER.setLevel(level)
-    for name in ("distlib.util", "filelock"):
+    # virtualenv's pip seeder logs the full environment at debug level.
+    for name in ("distlib.util", "filelock", "virtualenv.seed.embed.pip_invoke"):
         logger = logging.getLogger(name)
         logger.disabled = True
     out_err: OutErr = cast("OutErr", (sys.stdout, sys.stderr))
