@@ -610,6 +610,68 @@ def _create_shebang_test(tmp_path: Path, env: dict[str, str]) -> tuple[str, Path
     return exe, script, instance
 
 
+@pytest.mark.parametrize("name", [pytest.param("build.cmd", id="cmd"), pytest.param("build.BAT", id="bat-uppercase")])
+def test_windows_batch_file_started_via_cmd_exe(
+    tmp_path: Path, mocker: MockerFixture, monkeypatch: MonkeyPatch, name: str
+) -> None:
+    mocker.patch.object(local_sub_process, "sys", mocker.MagicMock(platform="win32"))
+    popen: Final[MagicMock] = mocker.patch.object(
+        local_sub_process, "Popen", autospec=True, side_effect=OSError(errno.ENOENT, "not started")
+    )
+    monkeypatch.setenv("SYSTEMROOT", str(tmp_path))
+    script: Final[Path] = tmp_path / name
+    script.touch()
+    script.chmod(script.stat().st_mode | stat.S_IEXEC)
+    request: Final[ExecuteRequest] = ExecuteRequest(
+        cmd=[str(script), "v1.0&next"], cwd=tmp_path, env={"PATH": ""}, stdin=StdinSource.OFF, run_id=""
+    )
+    writer: Final[SyncWrite] = SyncWrite("out", None)
+
+    with LocalSubProcessExecuteInstance(request, ExecuteOptions(_create_mock_env()), writer, writer) as status:
+        assert status.exit_code == errno.ENOENT
+
+    assert (popen.call_args.args, popen.call_args.kwargs["executable"]) == (
+        (f'cmd.exe /e:ON /v:OFF /d /c ""{script}" "v1.0&next""',),
+        str(tmp_path / "System32" / "cmd.exe"),
+    )
+
+
+@pytest.mark.skipif(sys.platform != "win32", reason="batch files are Windows-only")
+@pytest.mark.parametrize(
+    "name",
+    [
+        pytest.param("show args.cmd", id="space"),
+        pytest.param("show & args.cmd", id="operator"),
+        pytest.param("show %PATH% args.cmd", id="variable"),
+    ],
+)
+def test_windows_batch_file_args_are_literal(tmp_path: Path, os_env: dict[str, str], name: str) -> None:
+    script: Final[Path] = tmp_path / name
+    script.write_text(f'@"{sys.executable}" -c "import json, sys; print(json.dumps(sys.argv[1:]))" %*\n')
+    args: Final[list[str]] = [
+        "v1.0",
+        "v1.0&next",
+        'a b" & next & "',
+        '\\"|next',
+        "%PATH%",
+        "!PATH!",
+        "^",
+        "a=b",
+        "a\\",
+        "",
+    ]
+    request: Final[ExecuteRequest] = ExecuteRequest(
+        cmd=[str(script), *args], cwd=tmp_path, env=os_env, stdin=StdinSource.OFF, run_id=""
+    )
+    executor: Final[LocalSubProcessExecutor] = LocalSubProcessExecutor(colored=False)
+
+    with executor.call(request, show=False, out_err=FakeOutErr().out_err, env=_create_mock_env()) as status:
+        status.wait()
+
+    assert status.outcome is not None
+    assert json.loads(status.outcome.out) == args
+
+
 @pytest.mark.skipif(sys.platform == "win32", reason="only POSIX resolves relative commands from the child's cwd")
 @pytest.mark.parametrize(
     ("cmd", "path"),

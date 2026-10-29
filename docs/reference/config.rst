@@ -1513,6 +1513,9 @@ Run
             [testenv]
             commands = xcopy "\\server\share\file name.txt" .
 
+        On Windows, ``.bat`` and ``.cmd`` commands run through ``cmd.exe``, so tox quotes their arguments for that
+        parser. A batch file reading raw ``%1`` can see surrounding quotes for arguments that need them.
+
         tox pastes string settings and environment values into the command text before splitting it. A value with spaces
         then splits into several arguments unless the argument holding it is quoted. Keep such values unquoted in
         ``[vars]`` and quote the complete argument where it is used:
@@ -2632,6 +2635,10 @@ exist, and each setting picks a value per factor.
 
 Naming
 ======
+
+Each selected environment name must be one path component. tox rejects ``.`` and ``..``, absolute paths, and names
+containing the platform's path separators before creating an environment. An empty name in ``env_list`` is also
+rejected.
 
 tox accepts letters, digits, underscores and dots in a factor, so ``3.14`` and ``django_5`` are both valid. ``-``
 separates factors and ``,`` separates environment names, so a factor contains neither:
