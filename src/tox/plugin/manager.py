@@ -129,7 +129,7 @@ class Plugin:
     def load_plugins(self, path: Path | None) -> None:
         for plugin in self.manager.get_plugins():  # make sure we start with a clean state, repeated in memory run
             self.manager.unregister(plugin)
-        inline = _load_inline(path) if path is not None else None
+        inline = None if path is None else _load_inline(path)
         self._register_plugins(inline)
         if path is not None:
             REGISTER._register_tox_env_types(self)  # ruff:ignore[private-member-access]
