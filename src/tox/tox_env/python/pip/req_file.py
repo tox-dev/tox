@@ -261,18 +261,6 @@ class PythonConstraints(_PythonRequirementsFile):
         return [f"-c {line}" if any(cls._ignore_comments(enumerate([line]))) else line for line in lines]
 
     @override
-    def _parse_line(self, line: str) -> tuple[str, Namespace]:
-        args, options = super()._parse_line(line)
-        if (
-            args
-            or len(options.constraints) != 1
-            or any(value for name, value in vars(options).items() if name != "constraints")
-        ):
-            msg = "Cannot provide options in constraints list, only paths or URL can be provided."
-            raise ValueError(msg)
-        return args, options
-
-    @override
     def lines(self) -> list[str]:
         # _adjust_lines prefixes each entry with -c for the parser, while the setting holds the bare file or URL
         return [line.removeprefix("-c ") for line in super().lines()]

@@ -55,17 +55,9 @@ def test_constraints_with_editable_requirement(tmp_path: Path) -> None:
         _ = python_constraints.requirements
 
 
-@pytest.mark.parametrize(
-    "entry",
-    [
-        pytest.param("constraints.txt --index-url=https://other/simple #.txt", id="index"),
-        pytest.param(r"constraints.txt\\ --index-url=https://other/simple", id="escaped-space"),
-    ],
-)
-def test_constraints_reject_extra_options(tmp_path: Path, entry: str) -> None:
+def test_constraints_keep_static_same_line_option(tmp_path: Path) -> None:
     (tmp_path / "constraints.txt").write_text("")
-    with pytest.raises(ValueError, match="Cannot provide options in constraints list"):
-        _ = PythonConstraints(entry, tmp_path).as_root_args
+    assert PythonConstraints("constraints.txt --pre", tmp_path).as_root_args == ["-c", "constraints.txt", "--pre"]
 
 
 @pytest.mark.parametrize(
@@ -97,6 +89,12 @@ def test_deps_pip_env_variable_cannot_change_line_boundary(tmp_path: Path, monke
     monkeypatch.setenv("INDEX_PART", "cpu\n--index-url=https://other/simple")
     with pytest.raises(ValueError, match="a requirement substitution cannot change pip options"):
         _ = PythonDeps("--extra-index-url https://host/${INDEX_PART}", tmp_path).as_root_args
+
+
+def test_constraints_pip_env_variable_cannot_add_option(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("CONSTRAINT_NAME", "stable.txt --index-url=https://other/simple")
+    with pytest.raises(ValueError, match="a requirement substitution cannot change pip options"):
+        _ = PythonConstraints("constraints/${CONSTRAINT_NAME}", tmp_path).as_root_args
 
 
 def test_deps_with_requirements_with_hash(tmp_path: Path) -> None:

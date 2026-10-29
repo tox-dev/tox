@@ -1,2 +1,2 @@
 Reject pip options added through partial ``deps`` or ``constraints`` substitutions, including ``${VAR}`` expansion.
-Trusted options on the same ``deps`` line remain supported.
+Options written on the same line in either setting remain supported.

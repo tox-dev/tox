@@ -232,6 +232,29 @@ def test_pip_install_deps_substitution_cannot_add_option(
     assert execute_calls.call_count == 0
 
 
+@pytest.mark.parametrize(
+    "files",
+    [
+        pytest.param(
+            {"tox.toml": '[env_run_base]\npackage="skip"\nconstraints=["constraints/{env:PART}.txt"]'},
+            id="toml",
+        ),
+        pytest.param(
+            {"tox.ini": "[testenv]\npackage=skip\nconstraints=constraints/{env:PART}.txt"},
+            id="ini",
+        ),
+    ],
+)
+def test_pip_install_constraints_substitution_cannot_add_option(
+    tox_project: ToxProjectCreator, monkeypatch: pytest.MonkeyPatch, files: dict[str, str]
+) -> None:
+    monkeypatch.setenv("PART", "stable.txt --index-url=https://other/simple #")
+    result: Final = tox_project(files).run("c", "-e", "py", "-k", "constraints")
+
+    result.assert_failed()
+    assert "a requirement substitution cannot change pip options" in result.out
+
+
 def test_pip_install_deps_substitution_keeps_static_options(
     tox_project: ToxProjectCreator, monkeypatch: pytest.MonkeyPatch
 ) -> None:
