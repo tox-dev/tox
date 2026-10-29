@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import re
+import sys
 from argparse import Namespace
 from textwrap import dedent
 from typing import TYPE_CHECKING
@@ -8,11 +9,14 @@ from typing import TYPE_CHECKING
 import pytest
 
 from tox.config.loader.native import to_native
+from tox.config.loader.str_convert import StrConvert
 from tox.config.loader.stringify import stringify
 from tox.tox_env.python.pip.req_file import PythonConstraints, PythonDeps
 
 if TYPE_CHECKING:
     from pathlib import Path
+
+    from tox.pytest import ToxProjectCreator
 
 
 @pytest.mark.parametrize("legacy_flag", ["-r", "-c"])
@@ -229,6 +233,42 @@ def test_deps_show_global_options_as_pip_gets_them(
         shown,
         pip_args,
     )
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason=r"on windows the escaped \ is overloaded by path separator")
+@pytest.mark.parametrize(
+    ("raw", "shown", "pip_args"),
+    [
+        pytest.param("--find-links a --pre", r"-f a\ --pre", ["-f", "a --pre"], id="find-links"),
+        pytest.param("-f a\t--pre", "-f a\\\t--pre", ["-f", "a\t--pre"], id="tab"),
+        pytest.param(r"-f 'a\ --pre'", r"-f a\\\ --pre", ["-f", r"a\ --pre"], id="after-backslash"),
+        pytest.param("-i 'a --pre'", r"-i a\ --pre", ["-i", "a --pre"], id="quoted-index"),
+        pytest.param(
+            "--extra-index-url 'a --pre'", r"--extra-index-url a\ --pre", ["--extra-index-url", "a --pre"], id="extra"
+        ),
+        pytest.param('--trusted-host "a --pre"', r"--trusted-host a\ --pre", ["--trusted-host", "a --pre"], id="host"),
+        pytest.param("""-i "a'b" """, r"-i a\'b", ["-i", "a'b"], id="quote"),
+        pytest.param("--extra-index-url ''", "--extra-index-url ''", ["--extra-index-url", ""], id="empty"),
+    ],
+)
+def test_deps_show_option_operand_as_one_operand(tmp_path: Path, raw: str, shown: str, pip_args: list[str]) -> None:
+    python_deps = PythonDeps(f"{raw}\npkg", tmp_path)
+    assert (python_deps.lines(), python_deps.as_root_args) == ([shown, "pkg"], ["pkg", *pip_args])
+    assert PythonDeps(stringify(python_deps)[0], tmp_path).as_root_args == ["pkg", *pip_args]
+    assert StrConvert.to_command(" ".join(["pip", *python_deps.lines()])).args == ["pip", *pip_args, "pkg"]
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason=r"on windows the escaped \ is overloaded by path separator")
+@pytest.mark.parametrize("reference", ["{deps}", "{[testenv:inherits]deps}"])
+def test_deps_reference_in_command_keeps_substituted_operand(
+    tox_project: ToxProjectCreator, monkeypatch: pytest.MonkeyPatch, reference: str
+) -> None:
+    monkeypatch.setenv("WHEELS", "wheels --index-url=https://x/simple")
+    ini = f"[testenv:inherits]\n[testenv]\ndeps =\n  -f {{env:WHEELS}}\n  pkg\ncommands = pip download {reference}"
+    result = tox_project({"tox.ini": ini}).run("c", "-e", "py", "-k", "commands")
+    result.assert_success()
+    (command,) = result.env_conf("py")["commands"]
+    assert command.args == ["pip", "download", "-f", "wheels --index-url=https://x/simple", "pkg"]
 
 
 @pytest.mark.parametrize(
