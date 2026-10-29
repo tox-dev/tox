@@ -56,8 +56,7 @@ class ReplaceReferenceIni(ReplaceReference):
             except KeyError:  # if fails, keep trying maybe another source can satisfy
                 pass
             else:
-                as_str, _ = stringify(value)
-                return as_str.replace("#", r"\#")  # escape comment characters as these will be stripped
+                return stringify(value)[0]
         raise KeyError(key)
 
     def _resolve_section_proxy(self, src: SectionProxy, key: str, args: ConfigLoadArgs) -> str:

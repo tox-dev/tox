@@ -49,9 +49,10 @@ _BOMS: tuple[tuple[bytes, str], ...] = (
     (codecs.BOM_UTF16_BE, "utf-16-be"),
     (codecs.BOM_UTF16_LE, "utf-16-le"),
 )
-_COMMENT_RE = re.compile(
+_COMMENT_RE: Final[re.Pattern[str]] = re.compile(
     r"""
-    ( ^ | \s+ )    # start of string or whitespace
+    # A requirement-file path can contain an escaped space before #.
+    ( ^ | (?<! \\ ) \s+ )
     \# .* $        # hash followed by anything to end
     """,
     re.VERBOSE,
