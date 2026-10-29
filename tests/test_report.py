@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import logging
 import os
+import sys
+from io import BytesIO, TextIOWrapper
 from typing import TYPE_CHECKING
 
 import pytest
@@ -70,3 +72,19 @@ def test_setup_report(mocker: MockerFixture, capsys: CaptureFixture, verbosity: 
         expected_warning_text = "warningfoo> bar"
     if verbosity >= 4:  # where warnings are logged
         assert expected_warning_text in lines[3]
+
+
+def test_setup_report_legacy_stdio_encoding(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Redirected locale encodings must not raise when tox prints non-ASCII."""
+    buffer = BytesIO()
+    stream = TextIOWrapper(buffer, encoding="latin-1", errors="strict", write_through=True)
+    monkeypatch.setattr(sys, "stdout", stream)
+    monkeypatch.setattr(sys, "stderr", stream)
+
+    setup_report(verbosity=2, is_colored=False)
+    logging.warning("日本 ✓")
+    print("日本 ✓")  # ruff:ignore[print]
+    stream.flush()
+
+    text = buffer.getvalue().decode("utf-8")
+    assert "日本 ✓" in text

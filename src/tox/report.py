@@ -236,6 +236,29 @@ class ToxHandler(_STREAM_HANDLER_BASE):
         self._setup_level(self._is_colored, level)
 
 
+def _harden_stdio() -> None:
+    """Avoid UnicodeEncodeError when tox writes non-ASCII to a locale-encoded stream.
+
+    Redirected stdout on Windows often uses a legacy encoding such as cp1252.
+    Environment commands already get ``PYTHONIOENCODING=utf-8``; the host process
+    should still print the same text instead of crashing.
+    """
+    for stream in (sys.stdout, sys.stderr):
+        if not isinstance(stream, TextIOWrapper):
+            continue
+        kwargs: dict[str, str] = {"errors": "backslashreplace"}
+        try:
+            if not stream.isatty():
+                kwargs["encoding"] = "utf-8"
+        except OSError:
+            pass
+        try:
+            stream.flush()
+            stream.reconfigure(**kwargs)
+        except (OSError, ValueError):
+            continue
+
+
 def setup_report(verbosity: int, is_colored: bool) -> ToxHandler:  # ruff:ignore[boolean-type-hint-positional-argument]
     _clean_handlers(LOGGER)
     level = _get_level(verbosity)
@@ -243,6 +266,7 @@ def setup_report(verbosity: int, is_colored: bool) -> ToxHandler:  # ruff:ignore
     for name in ("distlib.util", "filelock"):
         logger = logging.getLogger(name)
         logger.disabled = True
+    _harden_stdio()
     out_err: OutErr = cast("OutErr", (sys.stdout, sys.stderr))
     handler = ToxHandler(level, is_colored, out_err)
     LOGGER.addHandler(handler)
