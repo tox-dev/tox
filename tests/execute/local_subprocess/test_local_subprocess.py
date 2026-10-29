@@ -611,7 +611,7 @@ def test_shebang_resolved_from_request_cwd(tmp_path: Path, monkeypatch: MonkeyPa
         script.write_text(f"#!{interpreter}")
         script.chmod(script.stat().st_mode | stat.S_IEXEC)
     monkeypatch.chdir(tmp_path / "invoked_from")
-    request = ExecuteRequest(
+    request: Final = ExecuteRequest(
         cmd=[cmd, "--magic"],
         cwd=tmp_path / "project",
         env={"PATH": path, "TOX_LIMITED_SHEBANG": "1"},
@@ -619,8 +619,8 @@ def test_shebang_resolved_from_request_cwd(tmp_path: Path, monkeypatch: MonkeyPa
         run_id="run-id",
         allow=[cmd],
     )
-    writer = create_autospec(SyncWrite)
-    instance = LocalSubProcessExecuteInstance(request, create_autospec(ExecuteOptions), writer, writer)
+    writer: Final = create_autospec(SyncWrite)
+    instance: Final = LocalSubProcessExecuteInstance(request, create_autospec(ExecuteOptions), writer, writer)
 
     assert instance.cmd == ["/bin/sh", str(tmp_path / "project" / "scripts" / "s"), "--magic"]
 
