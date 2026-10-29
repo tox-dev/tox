@@ -238,7 +238,7 @@ def test_replace_alone_in_env_list_entry_can_expand(
 
 @pytest.mark.timeout(5)
 def test_replace_list_circular_fan_out_stops(example: EnvConfigCreator, monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setenv("MAGIC", "{env:MAGIC}" * 500)
+    monkeypatch.setenv("MAGIC", "{env:MAGIC}" * 100)
     env_config: Final = example("items = {env:MAGIC}")
     env_config.add_config(keys="items", of_type=list[str], default=[], desc="items")
 

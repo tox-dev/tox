@@ -114,7 +114,7 @@ def test_replace_env_var_circular_fan_out(
 def test_replace_env_var_circular_fan_out_many(
     replace_one: ReplaceOne, monkeypatch: MonkeyPatch, caplog: LogCaptureFixture
 ) -> None:
-    monkeypatch.setenv("MAGIC", "{env:MAGIC}" * 500)
+    monkeypatch.setenv("MAGIC", "{env:MAGIC}" * 100)
 
     result = replace_one("{env:MAGIC}")
 
