@@ -38,3 +38,13 @@ def test_info_non_dict_section_self_heals(tmp_path: Path) -> None:
         assert (eq, old) == (False, None)
 
     assert json.loads((tmp_path / ".tox-info.json").read_text()) == {"PythonRun": {"deps": ["six"]}}
+
+
+def test_info_non_dict_mapping_section_self_heals(tmp_path: Path) -> None:
+    (tmp_path / ".tox-info.json").write_text('{"Python": []}')
+
+    conf = {"base_python": ["3.14"]}
+    with Info(tmp_path).compare(conf, "Python") as (eq, old):
+        assert (eq, old) == (False, None)
+
+    assert json.loads((tmp_path / ".tox-info.json").read_text()) == {"Python": conf}
