@@ -233,6 +233,7 @@ def test_pip_install_deps_override_cannot_add_line(
         pytest.param("a\\", id="line-continuation"),
     ],
 )
+@pytest.mark.skipif(os.name == "nt", reason="Windows file names cannot contain line breaks or trailing backslashes")
 def test_pip_install_globbed_requirement_cannot_add_line(tox_project: ToxProjectCreator, name: str) -> None:
     project: Final = tox_project({
         "tox.toml": '[env_run_base]\npackage="skip"\ndeps=[{replace="glob",pattern="wheelhouse/*",extend=true}]',
@@ -243,6 +244,18 @@ def test_pip_install_globbed_requirement_cannot_add_line(tox_project: ToxProject
     result: Final = project.run("c", "-e", "py", "-k", "deps")
     result.assert_failed()
     assert "a globbed requirement path cannot contain a line break or end in a backslash" in result.out
+
+
+def test_pip_install_substitution_keeps_internal_backslash(
+    tox_project: ToxProjectCreator, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("DEP_PATH", ".\\")
+    result: Final = tox_project({"tox.ini": "[testenv]\npackage=skip\ndeps=-r {env:DEP_PATH}a.txt"}).run(
+        "c", "-e", "py", "-k", "deps"
+    )
+
+    result.assert_success()
+    assert "-r .\\a.txt" in result.out
 
 
 @pytest.mark.parametrize(

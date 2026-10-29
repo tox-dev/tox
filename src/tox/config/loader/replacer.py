@@ -36,6 +36,7 @@ BACKSLASH_ESCAPE_CHARS: Final[tuple[str, ...]] = (ARG_DELIMITER, REPLACE_START, 
 MAX_REPLACE_DEPTH: Final[int] = 100
 # lets a run resolve a labeled factor to a value the configuration does not list, without renaming environments
 _FACTOR_ENV_PREFIX: Final[str] = "TOX_FACTOR_"
+_REQUIREMENT_LINE_BREAKS: Final[str] = r"[\n\r\v\f\x1c-\x1e\x85\u2028\u2029]"
 
 
 class MatchRecursionError(ValueError):
@@ -347,7 +348,10 @@ class RequirementLinesReplacer(Replacer):
             if not isinstance(part, MatchExpression):
                 continue
             text = replaced[at]
-            if any(line.endswith("\\") for line in text.splitlines()):
+            following = "".join(replaced[at + 1 :])
+            if re.search(rf"\\(?={_REQUIREMENT_LINE_BREAKS})", text) or (
+                text.endswith("\\") and (not following or re.match(_REQUIREMENT_LINE_BREAKS, following))
+            ):
                 msg = "a requirement substitution cannot end a line with a backslash"
                 raise ValueError(msg)
             if self._shares_line(value, at) and text != "".join(text.splitlines()):
@@ -357,16 +361,15 @@ class RequirementLinesReplacer(Replacer):
 
     @staticmethod
     def _shares_line(value: MatchArg, at: int) -> bool:
-        line_breaks: Final = r"[\n\r\v\f\x1c-\x1e\x85\u2028\u2029]"
         for part in reversed(value[:at]):
-            if isinstance(part, MatchExpression) or re.split(line_breaks, part)[-1].strip():
+            if isinstance(part, MatchExpression) or re.split(_REQUIREMENT_LINE_BREAKS, part)[-1].strip():
                 return True
-            if re.search(line_breaks, part):
+            if re.search(_REQUIREMENT_LINE_BREAKS, part):
                 break
         for part in value[at + 1 :]:
-            if isinstance(part, MatchExpression) or re.split(line_breaks, part)[0].strip():
+            if isinstance(part, MatchExpression) or re.split(_REQUIREMENT_LINE_BREAKS, part)[0].strip():
                 return True
-            if re.search(line_breaks, part):
+            if re.search(_REQUIREMENT_LINE_BREAKS, part):
                 break
         return False
 
