@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import tarfile
 from typing import TYPE_CHECKING, Final
 from zipfile import ZipFile
 
@@ -193,6 +194,45 @@ def test_tox_install_pkg_bad_wheel(tox_project: ToxProjectCreator, tmp_path: Pat
 
     result.assert_failed()
     assert "failed with no .dist-info inside " in result.out, result.out
+
+
+@pytest.mark.parametrize(
+    ("filename", "expected"),
+    [
+        ("not_gzip-1.0.tar.gz", "could not extract"),
+        ("no_members-1.0.tar.gz", "no files inside"),
+        ("not_a_zip-1.0-py3-none-any.whl", "the metadata of"),
+        ("bad_requires-1.0-py3-none-any.whl", "the metadata of"),
+        ("no_metadata-1.0-py3-none-any.whl", "the metadata of"),
+    ],
+)
+def test_tox_install_pkg_malformed(
+    tox_project: ToxProjectCreator, tmp_path: Path, filename: str, expected: str
+) -> None:
+    artifact = tmp_path / filename
+    if filename == "not_gzip-1.0.tar.gz":
+        artifact.write_bytes(b"not a gzip stream\n")
+    elif filename == "no_members-1.0.tar.gz":
+        with tarfile.open(str(artifact), "w:gz"):
+            pass
+    elif filename == "not_a_zip-1.0-py3-none-any.whl":
+        artifact.write_bytes(b"not a zip archive\n")
+    elif filename == "bad_requires-1.0-py3-none-any.whl":
+        with ZipFile(str(artifact), "w") as wheel:
+            wheel.writestr(
+                "bad_requires-1.0.dist-info/METADATA",
+                "Metadata-Version: 2.1\nName: bad_requires\nVersion: 1.0\nRequires-Dist: requests => 2.0\n",
+            )
+    else:  # no_metadata-1.0-py3-none-any.whl
+        with ZipFile(str(artifact), "w") as wheel:
+            wheel.writestr("no_metadata-1.0.dist-info/WHEEL", "Wheel-Version: 1.0\n")
+    proj = tox_project({"tox.ini": "[testenv]"})
+    result = proj.run("r", "-e", "py", "--installpkg", str(artifact))
+
+    result.assert_failed(1)
+    assert "internal error" not in result.out + result.err, result.out + result.err
+    assert "failed with" in result.out, result.out
+    assert expected in result.out, result.out
 
 
 def test_tox_install_pkg_with_skip_install(

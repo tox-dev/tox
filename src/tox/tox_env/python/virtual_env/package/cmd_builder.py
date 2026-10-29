@@ -7,9 +7,9 @@ from functools import partial
 from io import TextIOWrapper
 from pathlib import Path
 from typing import TYPE_CHECKING, cast
-from zipfile import ZipFile
+from zipfile import BadZipFile, ZipFile
 
-from packaging.requirements import Requirement
+from packaging.requirements import InvalidRequirement, Requirement
 
 from tox.execute import Outcome
 from tox.plugin import impl
@@ -103,28 +103,47 @@ class VenvCmdBuilder(PythonPackageToxEnv, ABC):
     def extract_install_info(self, for_env: EnvConfigSet, path: Path) -> list[Package]:
         extras = for_env.get("extras", set[str])
         if path.suffix == ".whl":
-            wheel_dist = WheelDistribution(path)
-            requires: list[str] = wheel_dist.requires or []
-            available = set(wheel_dist.metadata.get_all("Provides-Extra") or [])
-            deps = dependencies_with_extras(
-                [Requirement(i) for i in requires], extras, wheel_dist.metadata["Name"], available_extras=available
-            )
-            package: Package = WheelPackage(path, deps)
+            try:
+                package: Package = self._wheel_package(path, extras)
+            except (BadZipFile, InvalidRequirement, OSError) as exc:
+                msg = f"could not read the metadata of {path}: {exc}"
+                raise Fail(msg) from exc
         else:  # must be source distribution
             work_dir = self.env_tmp_dir / "sdist-extract"
             if not work_dir.exists():  # pragma: no branch
                 work_dir.mkdir()
-            with tarfile.open(str(path), "r:gz") as tar:
-                safe_extractall(tar, work_dir)
+            try:
+                with tarfile.open(str(path), "r:gz") as tar:
+                    safe_extractall(tar, work_dir)
+            except (EOFError, OSError, tarfile.TarError) as exc:
+                msg = f"could not extract {path}: {exc}"
+                raise Fail(msg) from exc
             # the register run env is guaranteed to be called before this
             assert self._sdist_meta_tox_env is not None  # ruff:ignore[assert]
             with self._sdist_meta_tox_env.display_context(self._has_display_suspended):
-                self._sdist_meta_tox_env.root = next(work_dir.iterdir())  # contains a single egg info folder
+                try:
+                    self._sdist_meta_tox_env.root = next(work_dir.iterdir())  # contains a single egg info folder
+                except StopIteration as exc:
+                    msg = f"no files inside {path}"
+                    raise Fail(msg) from exc
                 deps = self._sdist_meta_tox_env.get_package_dependencies(for_env)
                 name = self._sdist_meta_tox_env.get_package_name(for_env)
                 available = self._sdist_meta_tox_env.get_package_extras(for_env)
             package = SdistPackage(path, dependencies_with_extras(deps, extras, name, available_extras=available))
         return [package]
+
+    @staticmethod
+    def _wheel_package(path: Path, extras: set[str]) -> WheelPackage:
+        wheel_dist = WheelDistribution(path)
+        metadata = wheel_dist.metadata
+        name = metadata.get("Name")
+        if name is None:
+            msg = f"no Name in the metadata of {path}"
+            raise Fail(msg)
+        requires: list[str] = wheel_dist.requires or []
+        available = set(metadata.get_all("Provides-Extra") or [])
+        deps = dependencies_with_extras([Requirement(i) for i in requires], extras, name, available_extras=available)
+        return WheelPackage(path, deps)
 
     @override
     def register_run_env(self, run_env: RunToxEnv) -> Generator[tuple[str, str], PackageToxEnv, None]:
