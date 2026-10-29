@@ -7,8 +7,13 @@ from typing import TYPE_CHECKING, Final, TypeVar, cast
 from tox.config.loader.api import ConfigLoadArgs, Loader, Override
 from tox.config.loader.ini.factor import filter_for_env
 from tox.config.loader.ini.replace import ReplaceReferenceIni
-from tox.config.loader.replacer import MatchExpression, replace_command_lines, replace_once, replace_requirement_lines
-from tox.config.loader.replacer import replace as replace_references
+from tox.config.loader.replacer import (
+    MatchExpression,
+    replace_command_lines,
+    replace_for,
+    replace_once,
+    replace_requirement_lines,
+)
 from tox.config.loader.str_convert import StrConvert
 from tox.config.set_env import SetEnv
 from tox.config.types import Command
@@ -93,7 +98,7 @@ class IniLoader(StrConvert, Loader[str]):
             if of_type in {PythonDeps, PythonConstraints}
             else replace_command_lines
             if of_type == list[Command]
-            else replace_references
+            else replace_for(of_type)
         )
 
         def replacer(raw_: str | MatchExpression, args_: ConfigLoadArgs, *, recursive: bool = True) -> str:
@@ -114,7 +119,7 @@ class IniLoader(StrConvert, Loader[str]):
 
     @override
     def substitute(self, value: str, conf: Config, args: ConfigLoadArgs, *, of_type: type[V] | UnionType) -> str:
-        return (replace_requirement_lines if of_type in {PythonDeps, PythonConstraints} else replace_references)(
+        return (replace_requirement_lines if of_type in {PythonDeps, PythonConstraints} else replace_for(of_type))(
             conf, ReplaceReferenceIni(conf, self), value, args
         )
 

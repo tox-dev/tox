@@ -339,7 +339,7 @@ class SetEnv:
         except (OSError, UnicodeDecodeError) as exception:
             msg = f"{env_file} cannot be read for set_env: {exception}"
             raise Fail(msg) from exception
-        for env_line in content.splitlines():
+        for env_line in content.split("\n"):
             env_line = env_line.strip()  # ruff:ignore[redefined-loop-name]
             if not env_line or env_line.startswith("#"):
                 continue
@@ -384,6 +384,16 @@ class SetEnv:
             if marker := self._markers.get(key):
                 result[key]["marker"] = str(marker)
         return result
+
+    def lines(self) -> str:
+        escaped_semicolon: Final[str] = r"\;"
+        lines: Final[list[str]] = []
+        for name, value in self.raw(self._args.copy()).items():
+            line = f"{name}={str(value['value']).replace(';', escaped_semicolon)}"
+            if marker := value.get("marker"):
+                line = f"{line}; {marker}"
+            lines.append(line)
+        return "\n".join(lines)
 
     def export(self, values: Mapping[str, Callable[[], str]]) -> None:
         """Set tox's own variables over the configured ones, resolved on first read.

@@ -283,7 +283,7 @@ class Loader(Convert[T]):
         :param value: the raw string
         :param conf: the global config
         :param args: env args
-        :param of_type: the type of the setting that receives the substituted text
+        :param of_type: the setting type used to select its substitution rules
 
         :returns: the string with every substitution this loader understands resolved
 

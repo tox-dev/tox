@@ -548,6 +548,9 @@ the top level of ``tox.toml``. Placing these options in an environment section (
 
     A list of environments to run by default (when the user does not specify anything during the invocation).
 
+    In INI configuration, a substitution within an environment name cannot add a comma, line break or brace group.
+    Put a substitution on its own entry when it is meant to supply several environments.
+
     .. versionchanged:: 3.4.0
 
        Which tox environments are run during the tox invocation can be further filtered via the operating system
@@ -1063,6 +1066,7 @@ Base options
 
         Environment files are processed using the following rules:
 
+        - lines end at LF, CRLF or CR; an embedded Unicode separator does not start another entry,
         - blank lines are ignored,
         - lines starting with the ``#`` character are ignored,
         - each line is in KEY=VALUE format; both the key and the value are stripped,
@@ -1124,7 +1128,8 @@ Base options
     2. A value that refers to its own key, ``PATH = {env:PATH}{:}/extra``, reads the host variable.
     3. Including another section's ``set_env`` behaves as if you wrote its lines in place. In INI that is
        ``{[section]set_env}``; in TOML it is ``{ replace = "ref", of = [...] }``. The included values resolve in the
-       including environment, so ``{env_name}`` and ``{posargs}`` refer to that environment.
+       including environment, so ``{env_name}`` and ``{posargs}`` refer to that environment. Naming an environment whose
+       section has no ``set_env`` of its own includes the lines that environment inherits.
     4. When two lines set the same key, a key written directly in a ``set_env`` wins over the same key from an included
        section, and a later included section wins over an earlier one. The rule applies again inside every included
        section. In the TOML list form, the later entry wins.
@@ -2180,6 +2185,9 @@ Python virtual environment
     virtualenv library. This enables environments targeting Python versions that are incompatible with the virtualenv
     installed alongside tox.
 
+    Explicit values must name ``virtualenv`` with optional version specifiers. pip options, direct references, extras,
+    environment markers, and arbitrary equality (``===``) are rejected before the bootstrap environment is created.
+
     Left empty (the default), tox derives the value automatically: it inspects the environment's :ref:`base_python` and,
     only when the installed virtualenv can no longer *create* that interpreter, pins the newest virtualenv that still
     can. The pin is applied for that environment alone, so environments targeting supported Pythons keep using the
@@ -2236,6 +2244,9 @@ Python virtual environment packaging
     :default: {env_dir}/dist
 
     Directory where to put project packages.
+
+For INI ``config_settings_*`` entries, tox reads one ``key=value`` pair per line. A substitution inside one pair cannot
+add another line; a substitution occupying a whole line can supply several pairs.
 
 .. conf::
     :keys: config_settings_get_requires_for_build_sdist
@@ -3088,6 +3099,13 @@ arguments:
         {[testenv:lint]commands}
 
 Here ``ci`` runs ``pip install ruff mypy``, then ``ruff check .`` and ``mypy src``.
+
+Every other list or set setting, such as :ref:`requires`, :ref:`base_python`, :ref:`pass_env`,
+:ref:`allowlist_externals` or :ref:`extras`, holds one entry per line or, when it has a single line, entries separated
+by commas. A substitution that is an entry by itself, as in ``make, {env:MORE_TOOLS}``, expands to as many entries as
+its value holds. One that shares its entry with other text, as in ``tox-uv=={env:TOX_UV_VERSION}``, supplies a part of
+that one entry, so tox fails when its value contains a line break or, when commas separate the entries, a comma. Text
+overrides supplied with ``-x`` or ``TOX_OVERRIDE`` follow the same rule.
 
 .. _conditional-settings:
 
