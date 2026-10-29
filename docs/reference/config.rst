@@ -2172,6 +2172,9 @@ Python virtual environment
     virtualenv library. This enables environments targeting Python versions that are incompatible with the virtualenv
     installed alongside tox.
 
+    Explicit values must name ``virtualenv`` with optional version specifiers. pip options, direct references, extras,
+    environment markers, and arbitrary equality (``===``) are rejected before the bootstrap environment is created.
+
     Left empty (the default), tox derives the value automatically: it inspects the environment's :ref:`base_python` and,
     only when the installed virtualenv can no longer *create* that interpreter, pins the newest virtualenv that still
     can. The pin is applied for that environment alone, so environments targeting supported Pythons keep using the
