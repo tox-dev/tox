@@ -181,11 +181,11 @@ class Pip(PythonInstallerListDependencies):
             raise Fail(msg) from None
         new_constraints.extend(new_reqs)
 
-        constraint_options = {
+        constraint_options: Final = {
             "constrain_package_deps": self.constrain_package_deps,
             "use_frozen_constraints": self.use_frozen_constraints,
         }
-        new = {
+        new: Final = {
             "redaction_format": _REDACTION_FORMAT,
             "options": new_options,
             "requirements": new_requirements,
@@ -197,7 +197,9 @@ class Pip(PythonInstallerListDependencies):
         with self._env.cache.compare(new, section, of_type) as (eq, old):
             if not eq:  # pragma: no branch
                 if old is not None:
-                    self._check_redaction_format(old.get("redaction_format"))
+                    if old.get("redaction_format") != _REDACTION_FORMAT:
+                        msg = "install cache format changed"
+                        raise Recreate(msg)
                     self._recreate_if_diff("install flag(s)", new_options, old["options"], lambda i: i)
                     self._recreate_if_diff(
                         "constraint(s)", new_constraints, old["constraints"], operator.itemgetter(slice(3, None))
@@ -214,25 +216,18 @@ class Pip(PythonInstallerListDependencies):
                 if args:  # pragma: no branch
                     args.extend(self.constraints.as_root_args)
                     self._execute_installer(args, of_type)
-                    if self.constrain_package_deps and not self.use_frozen_constraints and not self._has_constraints:
-                        combined_constraints = [
-                            line for req in arguments.requirements if (line := self._as_constraint(req)) is not None
-                        ]
-                        combined_constraints.extend(
-                            str(req).removeprefix("-c ")
-                            for req in arguments.requirements
-                            if req.options.get("is_constraint")
-                        )
-                        combined_constraints.extend(
-                            str(req).removeprefix("-c ") for req in self.constraints.requirements
-                        )
-                        self.constraints_file().write_text("\n".join(combined_constraints))
+                    self._write_combined_constraints(arguments)
 
-    @staticmethod
-    def _check_redaction_format(format_version: object) -> None:
-        if format_version != _REDACTION_FORMAT:
-            msg = "install cache format changed"
-            raise Recreate(msg)
+    def _write_combined_constraints(self, arguments: PythonDeps) -> None:
+        if self.constrain_package_deps and not self.use_frozen_constraints and not self._has_constraints:
+            combined_constraints: Final = [
+                line for req in arguments.requirements if (line := self._as_constraint(req)) is not None
+            ]
+            combined_constraints.extend(
+                str(req).removeprefix("-c ") for req in arguments.requirements if req.options.get("is_constraint")
+            )
+            combined_constraints.extend(str(req).removeprefix("-c ") for req in self.constraints.requirements)
+            self.constraints_file().write_text("\n".join(combined_constraints))
 
     @staticmethod
     def _recreate_if_diff(of_type: str, new_opts: list[str], old_opts: list[str], fmt: Callable[[str], str]) -> None:

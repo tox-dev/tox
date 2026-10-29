@@ -204,7 +204,7 @@ class RequirementsFile:
         self._requirements: list[ParsedRequirement] | None = None
         self._as_root_args: list[str] | None = None
         self._parser_private: ArgumentParser | None = None
-        self._secrets: dict[str, str] = {}
+        self._secrets: Final[dict[str, str]] = {}
 
     @property
     def _req_parser(self) -> RequirementsFile:
@@ -522,7 +522,7 @@ class RequirementsFile:
             yield line_number, expanded_line
 
     def redact(self, text: str) -> str:
-        secrets = self._secrets | self._req_parser._secrets  # ruff:ignore[private-member-access]  # nested -r/-c substitutions
+        secrets: Final = self._secrets | self._req_parser._secrets  # ruff:ignore[private-member-access]  # nested files
         for value in sorted(secrets, key=len, reverse=True):  # longest first, as a value may contain another one
             text = text.replace(value, secrets[value])
         return text
