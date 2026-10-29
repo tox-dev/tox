@@ -3533,9 +3533,9 @@ Use a double ``--`` if you also want to pass options to an underlying test comma
 
     tox run -e 3.14 -- --opt1 ARG1
 
-will make the ``--opt1 ARG1`` appear in all test commands where ``[]`` or ``{posargs}`` was specified. By default (see
-``args_are_paths`` setting), ``tox`` rewrites each positional argument if it is a relative path and exists on the
-filesystem to become a path relative to the ``changedir`` setting.
+will make the ``--opt1 ARG1`` appear in all test commands where ``[]`` or ``{posargs}`` was specified. By default, tox
+rewrites an existing relative path to keep it pointing at the same entry after :ref:`change_dir`. Bare command names and
+bare executable first positional values are exceptions described under :ref:`args_are_paths`.
 
 .. _glob substitution:
 
