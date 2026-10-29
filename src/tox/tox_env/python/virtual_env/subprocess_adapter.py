@@ -116,9 +116,20 @@ class SubprocessSession:
         if self._bootstrap_python is None:
             msg = "no interpreter discovered"
             raise RuntimeError(msg)
-        cmd = [str(self._bootstrap_python), "-m", "virtualenv", str(self._env_dir)]
         try:
-            result = subprocess.run(cmd, env=self._env_vars, capture_output=True, text=True, check=False)
+            result = subprocess.run(
+                [
+                    str(self._bootstrap_python),
+                    "-m",
+                    "virtualenv",
+                    f"--python={self.creator.interpreter.system_executable}",
+                    str(self._env_dir),
+                ],
+                env=self._env_vars,
+                capture_output=True,
+                text=True,
+                check=False,
+            )
         except FileNotFoundError as exc:
             msg = f"virtualenv subprocess failed: {exc}"
             raise RuntimeError(msg) from exc

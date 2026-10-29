@@ -19,6 +19,8 @@ from tox.tox_env.python.virtual_env.subprocess_adapter import (
 )
 
 if TYPE_CHECKING:
+    from typing import Final
+
     from pytest_mock import MockerFixture
 
     from tox.pytest import ToxProjectCreator
@@ -160,6 +162,35 @@ def test_subprocess_session_run_nonzero_exit(tmp_path: Path, mocker: MockerFixtu
     )
     with pytest.raises(RuntimeError, match="virtualenv subprocess failed \\(exit 1\\)"):
         session.run()
+
+
+def test_subprocess_session_run_passes_interpreter(tmp_path: Path, mocker: MockerFixture) -> None:
+    info: Final = SubprocessPythonInfo(
+        implementation="cpython",
+        version_info=_VersionInfo(major=3, minor=11, micro=0, releaselevel="final", serial=0),
+        version="3.11.0",
+        architecture=64,
+        platform=sys.platform,
+        system_executable="/opt/a:b,c/python",
+        free_threaded=False,
+    )
+    run_mock: Final = mocker.patch(
+        "tox.tox_env.python.virtual_env.subprocess_adapter.subprocess.run",
+        return_value=mocker.MagicMock(returncode=0),
+    )
+    SubprocessSession(
+        env_dir=tmp_path / "env",
+        bootstrap_python=Path(sys.executable),
+        env_vars={},
+        interpreter=info,
+    ).run()
+    assert run_mock.call_args.args[0] == [
+        sys.executable,
+        "-m",
+        "virtualenv",
+        "--python=/opt/a:b,c/python",
+        str(tmp_path / "env"),
+    ]
 
 
 def test_subprocess_session_no_interpreter(tmp_path: Path) -> None:
