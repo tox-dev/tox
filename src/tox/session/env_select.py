@@ -9,7 +9,7 @@ from difflib import get_close_matches
 from importlib.util import find_spec
 from itertools import chain
 from pathlib import PurePath
-from typing import TYPE_CHECKING, Any, cast
+from typing import TYPE_CHECKING, Any, Final, cast
 
 from tox.config.cli.parser import Parsed
 from tox.config.loader.ini.factor import extend_factors
@@ -178,14 +178,15 @@ def _env_completer(
     prefix: str,  # ruff:ignore[unused-function-argument]
     action: Action,  # ruff:ignore[unused-function-argument]
     parser: ArgumentParser,  # ruff:ignore[unused-function-argument]
-    parsed_args: Namespace,  # ruff:ignore[unused-function-argument]
+    parsed_args: Namespace,
 ) -> list[str]:
     from tox.plugin.manager import MANAGER  # ruff:ignore[import-outside-top-level]  # circular import
 
     try:
-        source = discover_source(None, None)
+        root_dir: Final = getattr(parsed_args, "root_dir", None)
+        source = discover_source(getattr(parsed_args, "config_file", None), root_dir)
         conf = Config.make(
-            Parsed(override=[], root_dir=None, work_dir=None),
+            Parsed(override=[], root_dir=root_dir, work_dir=None),
             None,
             source,
             chain.from_iterable(MANAGER.tox_extend_envs()),
@@ -382,7 +383,7 @@ class EnvSelector:
 
     @staticmethod
     def _ensure_env_name_is_path_safe(name: str) -> None:
-        # An unsafe name can make setup clean outside work_dir.
+        # A traversal name can make recreation remove paths outside work_dir.
         if not name or name in {".", ".."} or PurePath(name).name != name:
             msg = f"environment name {name!r} is not a valid single path component"
             raise HandledError(msg)

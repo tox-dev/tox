@@ -908,38 +908,31 @@ def test_env_name_rejects_path_component(
     tox_project: ToxProjectCreator, monkeypatch: MonkeyPatch, files: dict[str, str], name: str
 ) -> None:
     monkeypatch.setenv("TOX_ENVS", name)
-    project = tox_project(files)
-
-    outcome = project.run("l")
+    outcome: Final = tox_project(files).run("l")
 
     outcome.assert_failed()
     assert f"environment name {name!r} is not a valid single path component" in outcome.out
 
 
-def test_env_name_rejects_path_in_label(tox_project: ToxProjectCreator, monkeypatch: MonkeyPatch) -> None:
+@pytest.mark.parametrize(
+    ("files", "args"),
+    [
+        pytest.param({"tox.toml": 'labels = { ci = ["{env:TOX_ENVS}"] }'}, ("l", "-m", "ci"), id="label"),
+        pytest.param({"tox.ini": "[testenv]\npackage = wheel\npackage_env = {env:TOX_ENVS}"}, ("l",), id="package"),
+    ],
+)
+def test_env_name_rejects_path_in_derived_config(
+    tox_project: ToxProjectCreator, monkeypatch: MonkeyPatch, files: dict[str, str], args: tuple[str, ...]
+) -> None:
     monkeypatch.setenv("TOX_ENVS", "..")
-    project = tox_project({"tox.toml": 'labels = { ci = ["{env:TOX_ENVS}"] }'})
-
-    outcome = project.run("l", "-m", "ci")
-
-    outcome.assert_failed()
-    assert "environment name '..' is not a valid single path component" in outcome.out
-
-
-def test_env_name_rejects_path_in_package_env(tox_project: ToxProjectCreator, monkeypatch: MonkeyPatch) -> None:
-    monkeypatch.setenv("TOX_ENVS", "..")
-    project = tox_project({"tox.ini": "[testenv]\npackage = wheel\npackage_env = {env:TOX_ENVS}"})
-
-    outcome = project.run("l")
+    outcome: Final = tox_project(files).run(*args)
 
     outcome.assert_failed()
     assert "environment name '..' is not a valid single path component" in outcome.out
 
 
 def test_env_name_rejects_path_in_cli_env(tox_project: ToxProjectCreator) -> None:
-    project = tox_project({"tox.toml": 'env_list = ["py"]'})
-
-    outcome = project.run("r", "-e", ".pkg_external/../outside")
+    outcome: Final = tox_project({"tox.toml": 'env_list = ["py"]'}).run("r", "-e", ".pkg_external/../outside")
 
     outcome.assert_failed()
     assert "environment name '.pkg_external/../outside' is not a valid single path component" in outcome.out
