@@ -546,6 +546,9 @@ the top level of ``tox.toml``. Placing these options in an environment section (
 
     A list of environments to run by default (when the user does not specify anything during the invocation).
 
+    In INI configuration, a substitution within an environment name cannot add a comma, line break or brace group.
+    Put a substitution on its own entry when it is meant to supply several environments.
+
     .. versionchanged:: 3.4.0
 
        Which tox environments are run during the tox invocation can be further filtered via the operating system
@@ -2229,6 +2232,9 @@ Python virtual environment packaging
 
     Directory where to put project packages.
 
+For INI ``config_settings_*`` entries, tox reads one ``key=value`` pair per line. A substitution inside one pair cannot
+add another line; a substitution occupying a whole line can supply several pairs.
+
 .. conf::
     :keys: config_settings_get_requires_for_build_sdist
     :version_added: 4.11
@@ -3080,6 +3086,13 @@ arguments:
         {[testenv:lint]commands}
 
 Here ``ci`` runs ``pip install ruff mypy``, then ``ruff check .`` and ``mypy src``.
+
+Every other list or set setting, such as :ref:`requires`, :ref:`base_python`, :ref:`pass_env`,
+:ref:`allowlist_externals` or :ref:`extras`, holds one entry per line or, when it has a single line, entries separated
+by commas. A substitution that is an entry by itself, as in ``make, {env:MORE_TOOLS}``, expands to as many entries as
+its value holds. One that shares its entry with other text, as in ``tox-uv=={env:TOX_UV_VERSION}``, supplies a part of
+that one entry, so tox fails when its value contains a line break or, when commas separate the entries, a comma. Text
+overrides supplied with ``-x`` or ``TOX_OVERRIDE`` follow the same rule.
 
 .. _conditional-settings:
 
