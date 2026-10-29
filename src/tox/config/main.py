@@ -7,6 +7,7 @@ from itertools import chain, tee
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, TypeVar, cast
 
+from tox.util.redact import redact_argv
 from tox.util.typing_compat import override
 
 from .sets import ConfigSet, CoreConfigSet, EnvConfigSet
@@ -70,7 +71,7 @@ class Config:
                 try:
                     is_existing_path = path_arg.exists()
                 except OSError:
-                    logging.debug("could not check if %r is an existing path", arg)
+                    logging.debug("could not check if %r is an existing path", redact_argv([arg])[0])
                     is_existing_path = False
                 if is_existing_path and not path_arg.is_absolute():
                     # we use os.path to unroll .. in path without resolve

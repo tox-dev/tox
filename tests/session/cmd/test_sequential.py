@@ -936,3 +936,20 @@ def test_result_json_creates_missing_parent_dir(tox_project: ToxProjectCreator) 
     log = project.path / "reports" / "nested" / "out.json"
     project.run("r", "-e", "py", "--result-json", str(log)).assert_success()
     assert "testenvs" in json.loads(log.read_text())
+
+
+def test_result_json_masks_secret_flag_value(tox_project: ToxProjectCreator) -> None:
+    project = tox_project({
+        "tox.toml": """\
+[env_run_base]
+package = "skip"
+commands = [["python", "-c", "pass", "--token=hunter2", "--cov=tox"]]
+"""
+    })
+    result = project.path / "out.json"
+
+    project.run("r", "-e", "py", "--result-json", str(result)).assert_success()
+
+    assert "hunter2" not in result.read_text()
+    command = json.loads(result.read_text())["testenvs"]["py"]["test"][0]["command"]
+    assert command[1:] == ["-c", "pass", "--token=*******", "--cov=tox"]

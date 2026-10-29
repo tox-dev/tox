@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import errno
+import logging
 import os
 from functools import partial
 from pathlib import Path
@@ -14,9 +16,11 @@ from tox.report import HandledError
 from tox.tox_env.python.pip.req_file import PythonDeps
 
 if TYPE_CHECKING:
+    from pytest_mock import MockerFixture
+
     from tests.conftest import ToxIniCreator
     from tox.config.main import Config
-    from tox.pytest import ToxProjectCreator
+    from tox.pytest import LogCaptureFixture, ToxProjectCreator
 
 
 def test_empty_config_repr(empty_config: Config) -> None:
@@ -35,6 +39,25 @@ def test_empty_conf_get(empty_config: Config) -> None:
     assert isinstance(result, ConfigSet)
     loaders = result["base"]
     assert loaders == ["testenv"]
+
+
+def test_pos_args_path_error_masks_secret_flag(
+    tox_ini_conf: ToxIniCreator, mocker: MockerFixture, caplog: LogCaptureFixture
+) -> None:
+    config = tox_ini_conf("[testenv]\n")
+    config._pos_args = ("--token=hunter2",)  # ruff:ignore[private-member-access]  # Fixture has no posargs input.
+    original_exists = Path.exists
+
+    def exists(path: Path) -> bool:
+        if str(path) == "--token=hunter2":
+            raise OSError(errno.ENAMETOOLONG, "File name too long")
+        return original_exists(path)
+
+    mocker.patch.object(Path, "exists", autospec=True, side_effect=exists)
+    caplog.set_level(logging.DEBUG)
+    assert config.pos_args(Path.cwd() / "other") == ("--token=hunter2",)
+    assert "--token=*******" in caplog.text
+    assert "hunter2" not in caplog.text
 
 
 def test_config_contains_env(tox_ini_conf: ToxIniCreator) -> None:

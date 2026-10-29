@@ -468,6 +468,16 @@ def test_bad_line(tmp_path: Path, raw: str, capfd: CaptureFixture, error: str) -
     assert not err
 
 
+def test_bad_line_masks_secret_flag(tmp_path: Path) -> None:
+    requirements_file = tmp_path / "req.txt"
+    requirements_file.write_text("--api-token=hunter2")
+    req_file = RequirementsFile(requirements_file, constraint=False)
+    with pytest.raises(ValueError, match="unrecognized arguments") as error:
+        _ = req_file.options
+    assert "--api-token=*******" in str(error.value)
+    assert "hunter2" not in str(error.value)
+
+
 def test_requirements_file_missing(tmp_path: Path) -> None:
     requirements_file = tmp_path / "req.txt"
     requirements_file.write_text("-r one.txt")

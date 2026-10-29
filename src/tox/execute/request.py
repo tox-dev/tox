@@ -80,7 +80,8 @@ class ExecuteRequest:
 
     @override
     def __repr__(self) -> str:
-        return f"{self.__class__.__name__}(cmd={self.cmd!r}, cwd={self.cwd!r}, env=..., stdin={self.stdin!r})"
+        cmd = redact_argv(self.cmd)
+        return f"{self.__class__.__name__}(cmd={cmd!r}, cwd={self.cwd!r}, env=..., stdin={self.stdin!r})"
 
 
 def shell_cmd(cmd: Sequence[str]) -> str:

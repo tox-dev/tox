@@ -408,6 +408,14 @@ def test_provision_unrecognized_args_no_provision(tox_project: ToxProjectCreator
     assert "unrecognized arguments: --some-unknown-flag" in result.out
 
 
+def test_provision_unrecognized_args_mask_secret(tox_project: ToxProjectCreator) -> None:
+    project = tox_project({"tox.toml": '[env_run_base]\npackage = "skip"\n'})
+    result = project.run("r", "--api-token=hunter2")
+    result.assert_failed()
+    assert "--api-token=*******" in result.out
+    assert "hunter2" not in result.out
+
+
 @pytest.mark.integration
 @pytest.mark.usefixtures("_pypi_index_self")
 def test_provision_plugin_cli_options(tox_project: ToxProjectCreator, tmp_path: Path) -> None:

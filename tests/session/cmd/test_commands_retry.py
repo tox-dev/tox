@@ -41,6 +41,22 @@ commands = [["python", "-c", "raise SystemExit(1)"]]
     assert "command failed (attempt 2 of 3), retrying" in result.out
 
 
+def test_retry_warning_masks_secret_flag_value(tox_project: ToxProjectCreator) -> None:
+    project = tox_project({
+        "tox.toml": """\
+[env_run_base]
+package = "skip"
+commands_retry = 1
+commands = [["python", "-c", "raise SystemExit(1)", "--token=hunter2"]]
+"""
+    })
+    result = project.run("r", "-e", "py")
+    result.assert_failed(code=1)
+    assert "command failed (attempt 1 of 2), retrying" in result.out
+    assert "hunter2" not in result.out
+    assert "--token=*******" in result.out
+
+
 def test_retry_default_no_retry(tox_project: ToxProjectCreator) -> None:
     proj = tox_project({
         "tox.toml": """\

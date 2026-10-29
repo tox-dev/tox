@@ -172,6 +172,20 @@ def test_local_execute_basic_pass_show_on_standard_newline_flush(caplog: LogCapt
     assert not caplog.records
 
 
+def test_local_execute_start_error_masks_secret_flag(caplog: LogCaptureFixture, os_env: dict[str, str]) -> None:
+    request = ExecuteRequest(cmd=["--token=hunter2"], cwd=Path.cwd(), env=os_env, stdin=StdinSource.OFF, run_id="")
+    out_err = FakeOutErr()
+    with LocalSubProcessExecutor(colored=False).call(
+        request, show=True, out_err=out_err.out_err, env=_create_mock_env()
+    ) as status:
+        status.wait()
+    assert isinstance(status.start_error, OSError)
+    assert "hunter2" not in caplog.text
+    if sys.platform != "win32":
+        assert status.start_error.filename == "--token=hunter2"
+        assert "--token=*******" in caplog.text
+
+
 def test_local_execute_write_a_lot(os_env: dict[str, str]) -> None:
     count = 10_000
     executor = LocalSubProcessExecutor(colored=False)

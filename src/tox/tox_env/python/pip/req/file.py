@@ -17,6 +17,7 @@ from urllib.request import urlopen
 
 from packaging.requirements import InvalidRequirement, Requirement
 
+from tox.util.redact import redact_argv
 from tox.util.typing_compat import override
 
 from .args import build_parser
@@ -347,7 +348,10 @@ class RequirementsFile:
     def _parse_line(self, line: str) -> tuple[str, Namespace]:
         args_str, options_str = self._break_args_options(line)
         args = shlex.split(options_str, posix=sys.platform != "win32")
-        opts = self._parser.parse_args(args)
+        opts, unknown = self._parser.parse_known_args(args)
+        if unknown:
+            msg = f"unrecognized arguments: {' '.join(redact_argv(unknown))}"
+            raise ValueError(msg)
         return args_str, opts
 
     @staticmethod

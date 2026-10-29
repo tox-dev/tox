@@ -212,3 +212,12 @@ def test_parser_hint(capsys: CaptureFixture) -> None:
         parser.parse_args("foo")
     _out, err = capsys.readouterr()
     assert err.endswith("hint: if you tried to pass arguments to a command use -- to separate them from tox ones\n")
+
+
+def test_parser_unknown_secret_flag_masked(capsys: CaptureFixture) -> None:
+    parser = ToxParser.base()
+    with pytest.raises(SystemExit):
+        parser.parse_args(["--api-token=hunter2"])
+    _out, err = capsys.readouterr()
+    assert "--api-token=*******" in err
+    assert "hunter2" not in err
