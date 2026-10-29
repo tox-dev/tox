@@ -415,6 +415,40 @@ def test_set_env_file_ignores_export_keyword(eval_set_env: EvalSetEnv) -> None:
     }
 
 
+@pytest.mark.parametrize(
+    "separator",
+    [
+        pytest.param("\x0b", id="vertical-tab"),
+        pytest.param("\x0c", id="form-feed"),
+        pytest.param("\x1c", id="file-separator"),
+        pytest.param("\x1d", id="group-separator"),
+        pytest.param("\x1e", id="record-separator"),
+        pytest.param("\x85", id="next-line"),
+        pytest.param("\u2028", id="line-separator"),
+        pytest.param("\u2029", id="paragraph-separator"),
+    ],
+)
+def test_set_env_environment_file_keeps_value_separator(eval_set_env: EvalSetEnv, separator: str) -> None:
+    set_env = eval_set_env(
+        "[testenv]\npackage=skip\nset_env=file|.env",
+        extra_files={".env": f"TITLE=fix{separator}PIP_INDEX_URL=http://other\nBUILD=7\n"},
+    )
+    assert set_env.load("TITLE") == f"fix{separator}PIP_INDEX_URL=http://other"
+    assert "PIP_INDEX_URL" not in set_env
+    assert set_env.load("BUILD") == "7"
+
+
+@pytest.mark.parametrize(
+    "line_end", [pytest.param("\n", id="lf"), pytest.param("\r\n", id="crlf"), pytest.param("\r", id="cr")]
+)
+def test_set_env_environment_file_line_endings(tox_project: ToxProjectCreator, line_end: str) -> None:
+    project = tox_project({"tox.toml": '[env_run_base]\npackage = "skip"\nset_env = { file = "magic.env" }'})
+    (project.path / "magic.env").write_bytes(f"A=1{line_end}B=2{line_end}".encode())
+    set_env = project.run("c", "-e", "py", "-k", "set_env").env_conf("py")["set_env"]
+    assert set_env.load("A") == "1"
+    assert set_env.load("B") == "2"
+
+
 def test_set_env_environment_file_utf8_bom(tox_project: ToxProjectCreator) -> None:
     project = tox_project({"tox.toml": '[env_run_base]\npackage = "skip"\nset_env = { file = "magic.env" }'})
     (project.path / "magic.env").write_bytes(b"\xef\xbb\xbfMAGIC=1\n")
