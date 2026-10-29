@@ -1,3 +1,2 @@
-``tox list``, ``tox config``, and command logging no longer crash with
-``UnicodeEncodeError`` when stdout is redirected on Windows and the locale
-encoding cannot represent environment descriptions or command lines.
+``tox list``, ``tox config``, and command logging no longer crash with ``UnicodeEncodeError`` when stdout is redirected
+on Windows and the locale encoding cannot represent environment descriptions or command lines.

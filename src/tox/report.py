@@ -239,9 +239,9 @@ class ToxHandler(_STREAM_HANDLER_BASE):
 def _harden_stdio() -> None:
     """Avoid UnicodeEncodeError when tox writes non-ASCII to a locale-encoded stream.
 
-    Redirected stdout on Windows often uses a legacy encoding such as cp1252.
-    Environment commands already get ``PYTHONIOENCODING=utf-8``; the host process
-    should still print the same text instead of crashing.
+    Redirected stdout on Windows often uses a legacy encoding such as cp1252. Environment commands already get
+    ``PYTHONIOENCODING=utf-8``; the host process should still print the same text instead of crashing.
+
     """
     for stream in (sys.stdout, sys.stderr):
         if not isinstance(stream, TextIOWrapper):
