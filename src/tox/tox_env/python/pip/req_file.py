@@ -31,6 +31,13 @@ class _PythonRequirementsFile(RequirementsFile):
 
     def __init__(self, raw: str | list[str] | list[Requirement], root: Path) -> None:
         super().__init__(root / "tox.ini", constraint=self._CONSTRAINT)
+        if isinstance(raw, list):
+            for item in raw:
+                if isinstance(item, Requirement):
+                    entry = str(item)
+                    if entry != "".join(entry.splitlines()) or any(line.endswith("\\") for line in entry.splitlines()):
+                        msg = "a requirement entry cannot contain a line break or end in a backslash"
+                        raise ValueError(msg)
         got = raw if isinstance(raw, str) else "\n".join(str(i) for i in raw)
         self._raw = self._normalize_raw(got)
         self._unroll: tuple[list[str], list[str]] | None = None

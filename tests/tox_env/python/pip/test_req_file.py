@@ -6,6 +6,7 @@ from textwrap import dedent
 from typing import TYPE_CHECKING
 
 import pytest
+from packaging.requirements import Requirement
 
 from tox.config.loader.native import to_native
 from tox.config.loader.stringify import stringify
@@ -107,6 +108,18 @@ def test_deps_factory_invalid_list(tmp_path: Path) -> None:
     with pytest.raises(TypeError, match="deps expected str, list\\[str\\], or list\\[Requirement\\]") as exc_info:
         PythonDeps.factory(tmp_path, ["ok", 42, "also-ok"])
     assert "got list with invalid items: [1] int" in str(exc_info.value)
+
+
+@pytest.mark.parametrize(
+    "suffix",
+    [
+        pytest.param("\n--find-links=/tmp/other", id="line-break"),
+        pytest.param("\\", id="line-continuation"),
+    ],
+)
+def test_provision_requirement_entry_cannot_change_lines(tmp_path: Path, suffix: str) -> None:
+    with pytest.raises(ValueError, match="a requirement entry cannot contain a line break or end in a backslash"):
+        PythonDeps.factory(tmp_path, [Requirement(f"plug @ file:///tmp/plug.whl#{suffix}")])
 
 
 def test_deps_factory_invalid_type(tmp_path: Path) -> None:

@@ -86,6 +86,12 @@ def replace_command_lines(
     return CommandLinesReplacer(conf, reference, conf_args=args).expand(value)
 
 
+def replace_requirement_lines(
+    conf: Config, reference: ReplaceReference, value: str | MatchExpression, args: ConfigLoadArgs
+) -> str:
+    return RequirementLinesReplacer(conf, reference, conf_args=args).expand(value)
+
+
 def replace_once(conf: Config, reference: ReplaceReference, value: str | MatchExpression, args: ConfigLoadArgs) -> str:
     """Replace the active tokens within value, but not the tokens within the text they are replaced with."""
     return Replacer(conf, reference, conf_args=args, recursive=False).join(find_replace_expr(value))
@@ -240,7 +246,7 @@ class Replacer:
     def _replace_match(self, value: MatchExpression) -> str:
         # use a copy of conf_args so any changes from this replacement don't, affect adjacent substitutions (#2869)
         conf_args = self.conf_args.copy()
-        flattened_args = [self.join(arg) for arg in value.expr]
+        flattened_args = [self._flatten_arg(arg) for arg in value.expr]
         of_type, *args = flattened_args
         replace_value = self._resolve_replace(of_type, args, flattened_args, conf_args)
         if replace_value is not None:
@@ -257,6 +263,9 @@ class Replacer:
         #     NOTE: can't raise because the content may be a factorial expression where we don't
         #           want to enforce escaping curly braces, for example`env_list = {py39,py38}-{,dep}` should work
         return f"{REPLACE_START}{ARG_DELIMITER.join(flattened_args)}{REPLACE_END}"
+
+    def _flatten_arg(self, value: MatchArg) -> str:
+        return self.join(value)
 
     def _resolve_replace(
         self, of_type: str, args: list[str], flattened_args: list[str], conf_args: ConfigLoadArgs
@@ -291,6 +300,42 @@ class CommandLinesReplacer(Replacer):
             " ".join(replaced.splitlines()) if _shares_line(value, at) else replaced
             for at, replaced in enumerate(self(value))
         )
+
+
+class RequirementLinesReplacer(Replacer):
+    @override
+    def _flatten_arg(self, value: MatchArg) -> str:
+        return self.join_value(value)
+
+    @override
+    def join_value(self, value: MatchArg) -> str:
+        replaced: Final = self(value)
+        for at, part in enumerate(value):
+            if not isinstance(part, MatchExpression):
+                continue
+            text = replaced[at]
+            if any(line.endswith("\\") for line in text.splitlines()):
+                msg = "a requirement substitution cannot end a line with a backslash"
+                raise ValueError(msg)
+            if self._shares_line(value, at) and text != "".join(text.splitlines()):
+                msg = "a substitution within a requirement cannot add a line break"
+                raise ValueError(msg)
+        return "".join(replaced)
+
+    @staticmethod
+    def _shares_line(value: MatchArg, at: int) -> bool:
+        line_breaks: Final = r"[\n\r\v\f\x1c-\x1e\x85\u2028\u2029]"
+        for part in reversed(value[:at]):
+            if isinstance(part, MatchExpression) or re.split(line_breaks, part)[-1].strip():
+                return True
+            if re.search(line_breaks, part):
+                break
+        for part in value[at + 1 :]:
+            if isinstance(part, MatchExpression) or re.split(line_breaks, part)[0].strip():
+                return True
+            if re.search(line_breaks, part):
+                break
+        return False
 
 
 def _shares_line(value: MatchArg, at: int) -> bool:
@@ -421,4 +466,5 @@ __all__ = [
     "replace_env",
     "replace_factor",
     "replace_once",
+    "replace_requirement_lines",
 ]

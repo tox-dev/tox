@@ -491,6 +491,8 @@ the top level of ``tox.toml``. Placing these options in an environment section (
     :ref:`provision_tox_env` for more details. tox always appends itself to this list, as ``tox>=<min_version>`` when
     :ref:`min_version` is set.
 
+    A requirement containing a line break or ending in a backslash is refused before provisioning installs it.
+
      .. tab:: TOML
 
         .. code-block:: toml
@@ -1966,6 +1968,11 @@ Python run
     - a `constraint file <https://pip.pypa.io/en/stable/user_guide/#constraints-files>`_ when the value starts with
       ``-c`` (followed by a file path or URL).
 
+    A substitution inside a dependency or option entry cannot add a requirements-file line. tox refuses a line break in
+    that value, or a backslash at the end of a substituted line, before starting pip. A substitution alone in its entry,
+    such as ``{[testenv]deps}``, can still supply multiple requirements. A globbed requirement path containing a line
+    break or ending in a backslash is refused.
+
     If you are only defining :pep:`508` requirements (aka no pip requirement files), you should use
     :ref:`dependency_groups` instead.
 
@@ -2004,7 +2011,8 @@ Python run
     `Constraints files <https://pip.pypa.io/en/stable/user_guide/#constraints-files>`_ to use during package and
     dependency installation. Provided constraints files will be used when installing package dependencies and any
     additional dependencies specified in :ref:`deps`, but will not be used when installing the package itself.
-    Each value must be a file path or URL.
+    Each value must be a file path or URL. A substitution within one value cannot add a line break or end a line with a
+    backslash, as in :ref:`deps`.
 
 .. conf::
     :keys: use_develop, usedevelop

@@ -5,7 +5,7 @@ import glob
 import os
 import re
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Protocol, cast
+from typing import TYPE_CHECKING, Any, Final, Protocol, cast
 
 from tox.config.loader.api import apply_overrides_to_raw
 from tox.config.loader.ini.factor import active_factors
@@ -18,6 +18,7 @@ from tox.config.loader.replacer import (
     load_posargs,
     replace,
     replace_env,
+    replace_requirement_lines,
 )
 from tox.config.loader.stringify import stringify
 from tox.config.set_env import SetEnvReference
@@ -45,10 +46,18 @@ class _Directive(Protocol):
 
 
 class Unroll:
-    def __init__(self, conf: Config | None, loader: TomlLoader, args: ConfigLoadArgs) -> None:
+    def __init__(
+        self,
+        conf: Config | None,
+        loader: TomlLoader,
+        args: ConfigLoadArgs,
+        *,
+        requirement_entries: bool,
+    ) -> None:
         self.conf = conf
         self.loader = loader
         self.args = args
+        self.requirement_entries = requirement_entries
         self._refs: list[str] = []
         self.factors = active_factors(args.env_name)
 
@@ -61,7 +70,9 @@ class Unroll:
         if isinstance(value, str):
             if not skip_str and self.conf is not None:  # core config does not support string substitution
                 reference = TomlReplaceLoader(self.conf, self.loader)
-                value = replace(self.conf, reference, value, self.args)
+                value = (replace_requirement_lines if self.requirement_entries else replace)(
+                    self.conf, reference, value, self.args
+                )
             return value
         if isinstance(value, list):
             return self._replace_list(value, depth, skip_str=skip_str)
@@ -140,7 +151,13 @@ class Unroll:
         }
         if skip_str:  # set_env resolves it when read, seeing the keys next to it
             return MatchExpression([["glob"], *(_parse_arg(resolved.get(key, "")) for key in ("pattern", "default"))])
-        return _replace_glob_toml(self.conf, {**value, **resolved})
+        result: Final = _replace_glob_toml(self.conf, {**value, **resolved})
+        if self.requirement_entries:
+            for entry in result if isinstance(result, list) else [result]:
+                if isinstance(entry, str) and (entry != "".join(entry.splitlines()) or entry.endswith("\\")):
+                    msg = "a globbed requirement path cannot contain a line break or end in a backslash"
+                    raise ValueError(msg)
+        return result
 
     def _replace_if(self, value: dict[str, TomlTypes], depth: int, *, skip_str: bool) -> TomlTypes:
         return _replace_if_toml(value, self, depth, self.factors, skip_str=skip_str)
