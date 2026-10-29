@@ -144,6 +144,30 @@ def test_deps_unroll_binary_options_deterministic(tmp_path: Path) -> None:
     assert options == ["no_binary=packaging,six"]
 
 
+def test_unroll_redacts_secret_env_vars(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """The install cache stores what unroll returns and tox logs how it changed, so secrets must not be part of it."""
+    monkeypatch.setenv("PYPI_TOKEN", "magic")
+    monkeypatch.setenv("LONG_PYPI_TOKEN", "magical")
+    monkeypatch.setenv("PYPI_HOST", "host")
+    nested = dedent("""\
+        --index-url https://ci:${PYPI_TOKEN}@${PYPI_HOST}/simple
+        --find-links https://${PYPI_HOST}/${LONG_PYPI_TOKEN}/
+        https://ci:${PYPI_TOKEN}@${PYPI_HOST}/a.whl
+    """)
+    (tmp_path / "nested.txt").write_text(nested)
+    python_deps = PythonDeps(raw="-r nested.txt\nhttps://${LONG_PYPI_TOKEN}@${PYPI_HOST}/b.whl", root=tmp_path)
+
+    assert python_deps.unroll() == (
+        ["index_url=['https://ci:*****@host/simple']", "find_links=['https://host/*******/']"],
+        ["https://ci:*****@host/a.whl", "https://*******@host/b.whl"],
+    )
+    assert python_deps.as_root_args == ["https://magical@host/b.whl", "-r", "nested.txt"]
+    assert [str(req) for req in python_deps.requirements] == [
+        "https://ci:magic@host/a.whl",
+        "https://magical@host/b.whl",
+    ]
+
+
 def test_deps_binary_options_accumulate_across_lines_and_files(tmp_path: Path) -> None:
     """Like pip, --no-binary on separate lines (and in a nested requirements file) all apply."""
     (tmp_path / "nested.txt").write_text("--no-binary nested\n")

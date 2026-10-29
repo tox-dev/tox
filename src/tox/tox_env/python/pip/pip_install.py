@@ -8,7 +8,8 @@ from collections import defaultdict
 from collections.abc import Callable, Sequence
 from functools import partial
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Final
+from urllib.error import URLError
 from urllib.parse import parse_qs, urlsplit
 
 from packaging.requirements import Requirement
@@ -28,6 +29,8 @@ if TYPE_CHECKING:
     from tox.config.main import Config
     from tox.tox_env.package import Package
     from tox.tox_env.python.pip.req.file import ParsedRequirement
+
+_REDACTION_FORMAT: Final[int] = 1
 
 
 class PythonInstallerListDependencies(Installer[Python], ABC):
@@ -165,17 +168,17 @@ class Pip(PythonInstallerListDependencies):
 
         try:
             new_options, new_reqs = arguments.unroll()
-        except ValueError as exception:
-            msg = f"{exception} for tox env py within deps"
-            raise Fail(msg) from exception
+        except (ValueError, URLError) as exception:
+            msg = f"{arguments.redact(str(exception))} for tox env py within deps"
+            raise Fail(msg) from None
         for req in new_reqs:
             (new_constraints if req.startswith("-c ") else new_requirements).append(req)
 
         try:
             _, new_reqs = self.constraints.unroll()
-        except ValueError as exception:
-            msg = f"{exception} for tox env py within constraints"
-            raise Fail(msg) from exception
+        except (ValueError, URLError) as exception:
+            msg = f"{self.constraints.redact(str(exception))} for tox env py within constraints"
+            raise Fail(msg) from None
         new_constraints.extend(new_reqs)
 
         constraint_options = {
@@ -183,6 +186,7 @@ class Pip(PythonInstallerListDependencies):
             "use_frozen_constraints": self.use_frozen_constraints,
         }
         new = {
+            "redaction_format": _REDACTION_FORMAT,
             "options": new_options,
             "requirements": new_requirements,
             "constraints": new_constraints,
@@ -193,6 +197,7 @@ class Pip(PythonInstallerListDependencies):
         with self._env.cache.compare(new, section, of_type) as (eq, old):
             if not eq:  # pragma: no branch
                 if old is not None:
+                    self._check_redaction_format(old.get("redaction_format"))
                     self._recreate_if_diff("install flag(s)", new_options, old["options"], lambda i: i)
                     self._recreate_if_diff(
                         "constraint(s)", new_constraints, old["constraints"], operator.itemgetter(slice(3, None))
@@ -213,8 +218,21 @@ class Pip(PythonInstallerListDependencies):
                         combined_constraints = [
                             line for req in arguments.requirements if (line := self._as_constraint(req)) is not None
                         ]
-                        combined_constraints.extend(c.removeprefix("-c ") for c in new_constraints)
+                        combined_constraints.extend(
+                            str(req).removeprefix("-c ")
+                            for req in arguments.requirements
+                            if req.options.get("is_constraint")
+                        )
+                        combined_constraints.extend(
+                            str(req).removeprefix("-c ") for req in self.constraints.requirements
+                        )
                         self.constraints_file().write_text("\n".join(combined_constraints))
+
+    @staticmethod
+    def _check_redaction_format(format_version: object) -> None:
+        if format_version != _REDACTION_FORMAT:
+            msg = "install cache format changed"
+            raise Recreate(msg)
 
     @staticmethod
     def _recreate_if_diff(of_type: str, new_opts: list[str], old_opts: list[str], fmt: Callable[[str], str]) -> None:
