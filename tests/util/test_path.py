@@ -5,6 +5,7 @@ import os
 import stat
 import sys
 from pathlib import Path
+from shutil import rmtree
 from typing import TYPE_CHECKING, Final
 
 import pytest
@@ -73,6 +74,70 @@ def test_ensure_empty_dir_unlinks_dir_symlink(tmp_path: Path) -> None:
     assert (list(dest.iterdir()), payload.read_text()) == ([], "keep")
 
 
+@pytest.mark.skipif(sys.platform == "win32", reason="creating symlinks needs privileges on Windows")
+def test_ensure_empty_dir_replaces_dir_symlink(tmp_path: Path) -> None:
+    outside: Final = tmp_path / "outside"
+    outside.mkdir()
+    (outside / "victim").write_text("keep")
+    dest: Final = tmp_path / "dest"
+    dest.symlink_to(outside, target_is_directory=True)
+
+    ensure_empty_dir(dest)
+
+    assert dest.is_dir()
+    assert not dest.is_symlink()
+    assert (outside / "victim").read_text() == "keep"
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="dir_fd is unavailable on Windows")
+def test_ensure_empty_dir_keeps_swapped_target(tmp_path: Path, mocker: MockerFixture) -> None:
+    dest: Final = tmp_path / "dest"
+    dest.mkdir()
+    (dest / "trigger").write_text("")
+    (dest / "victim").write_text("")
+    outside: Final = tmp_path / "outside"
+    outside.mkdir()
+    (outside / "victim").write_text("keep")
+    original_unlink: Final = os.unlink
+
+    def unlink(path: StrPath, *, dir_fd: int | None = None) -> None:
+        if Path(path).name == "trigger" and not dest.is_symlink():
+            dest.rename(tmp_path / "moved")
+            dest.symlink_to(outside, target_is_directory=True)
+        original_unlink(path, dir_fd=dir_fd)
+
+    mocker.patch("os.unlink", autospec=True, side_effect=unlink)
+
+    ensure_empty_dir(dest)
+
+    assert (outside / "victim").read_text() == "keep"
+    assert not (tmp_path / "moved" / "victim").exists()
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="dir_fd is unavailable on Windows")
+def test_ensure_empty_dir_does_not_retry_through_swapped_link(tmp_path: Path, mocker: MockerFixture) -> None:
+    sub: Final = tmp_path / "dest" / "sub"
+    sub.mkdir(parents=True)
+    (sub / "victim").write_text("")
+    outside: Final = tmp_path / "outside"
+    outside.mkdir()
+    (outside / "victim").write_text("keep")
+    original_unlink: Final = os.unlink
+
+    def unlink(path: StrPath, *, dir_fd: int | None = None) -> None:
+        if Path(path).name == "victim" and not sub.is_symlink():
+            sub.rename(tmp_path / "moved")
+            sub.symlink_to(outside, target_is_directory=True)
+            raise IsADirectoryError(errno.EISDIR, "Is a directory", path)
+        original_unlink(path, dir_fd=dir_fd)
+
+    mocker.patch("os.unlink", autospec=True, side_effect=unlink)
+
+    ensure_empty_dir(tmp_path / "dest")
+
+    assert (outside / "victim").read_text() == "keep"
+
+
 @pytest.mark.usefixtures("windows_unlink")
 @pytest.mark.parametrize(
     "relative",
@@ -116,7 +181,15 @@ def test_ensure_empty_dir_keeps_locked_symlink_target_mode(tmp_path: Path, windo
     assert stat.S_IMODE(target.stat().st_mode) == stat.S_IREAD
 
 
-def test_ensure_empty_dir_keeps_except_filename(tmp_path: Path) -> None:
+@pytest.mark.parametrize(
+    "path_fallback",
+    [
+        pytest.param(False, marks=pytest.mark.skipif(os.name == "nt", reason="dir_fd is unavailable"), id="descriptor"),
+        pytest.param(True, id="path"),
+    ],
+)
+def test_ensure_empty_dir_keeps_except_filename(tmp_path: Path, mocker: MockerFixture, path_fallback: bool) -> None:
+    mocker.patch.object(rmtree, "avoids_symlink_attacks", not path_fallback)
     (dest := tmp_path / "dest").mkdir()
     (keep := dest / "file.lock").write_text("keep")
     (dest / "other.txt").write_text("remove")
@@ -172,6 +245,7 @@ def test_ensure_gitignore_idempotent(tmp_path: Path) -> None:
 @pytest.fixture
 def windows_unlink(mocker: MockerFixture) -> set[str]:
     """Names added to the returned set fail to unlink, like a file another process holds open."""
+    mocker.patch.object(rmtree, "avoids_symlink_attacks", False)
     locked: Final[set[str]] = set()
     real_unlink: Final = os.unlink
 

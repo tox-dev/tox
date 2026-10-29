@@ -6,7 +6,7 @@ import sys
 from contextlib import suppress
 from pathlib import Path
 from shutil import rmtree
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Final
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -30,23 +30,48 @@ def ensure_cachedir_tag(work_dir: Path) -> None:
 
 
 def ensure_empty_dir(path: Path, except_filename: str | None = None) -> None:
+    if path.is_symlink():
+        path.unlink()
     if path.exists():
         if path.is_dir():
-            for sub_path in path.iterdir():
-                if sub_path.name == except_filename:
-                    continue
-                if sub_path.is_dir() and not sub_path.is_symlink():  # unlink a link, keep what it points to
-                    if sys.version_info >= (3, 12):  # pragma: >=3.12 cover
-                        rmtree(sub_path, onexc=_retry_unlink)
-                    else:  # pragma: <3.12 cover
-                        rmtree(sub_path, onerror=_retry_unlink)
-                else:
-                    _unlink(sub_path)
+            if rmtree.avoids_symlink_attacks:
+                _empty_dir_fd(path, except_filename)
+            else:
+                _empty_dir_path(path, except_filename)
         else:
             path.unlink()
             path.mkdir()
     else:
         path.mkdir(parents=True)
+
+
+def _empty_dir_fd(path: Path, except_filename: str | None) -> None:
+    dir_fd: Final = os.open(path, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
+    try:
+        with os.scandir(dir_fd) as scan:
+            entries: Final = list(scan)
+        for entry in entries:
+            if entry.name == except_filename:
+                continue
+            if entry.is_dir(follow_symlinks=False):
+                rmtree(entry.name, ignore_errors=True, dir_fd=dir_fd)
+            else:
+                os.unlink(entry.name, dir_fd=dir_fd)
+    finally:
+        os.close(dir_fd)
+
+
+def _empty_dir_path(path: Path, except_filename: str | None) -> None:
+    for sub_path in path.iterdir():
+        if sub_path.name == except_filename:
+            continue
+        if sub_path.is_dir() and not sub_path.is_symlink():
+            if sys.version_info >= (3, 12):  # pragma: >=3.12 cover
+                rmtree(sub_path, onexc=_retry_unlink)
+            else:  # pragma: <3.12 cover
+                rmtree(sub_path, onerror=_retry_unlink)
+        else:
+            _unlink(sub_path)
 
 
 def _retry_unlink(func: Callable[..., object], path: str, _exc: BaseException | ExcInfo) -> None:

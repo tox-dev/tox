@@ -11,7 +11,7 @@ import sys
 from abc import ABC, abstractmethod
 from contextlib import contextmanager
 from pathlib import Path
-from typing import TYPE_CHECKING, NamedTuple, cast
+from typing import TYPE_CHECKING, Final, NamedTuple, cast
 
 from tox.config.set_env import SetEnv
 from tox.execute.request import ExecuteRequest
@@ -330,6 +330,9 @@ class ToxEnv(ABC):  # ruff:ignore[too-many-public-methods]
         2. contains a runner with the same type.
 
         """
+        if self.env_dir.is_symlink():
+            symlink_msg: Final = f"{self.env_dir} is a symlink where this environment should live; delete it"
+            raise Fail(symlink_msg)
         if self.env_dir.is_file() and not release_venv_redirect(
             self.env_dir, lambda target: target.is_relative_to(self.core.get("work_dir", Path))
         ):
@@ -352,8 +355,8 @@ class ToxEnv(ABC):  # ruff:ignore[too-many-public-methods]
 
     def _handle_env_tmp_dir(self) -> None:
         """Ensure exists and empty."""
-        env_tmp_dir = self.env_tmp_dir
-        if env_tmp_dir.exists() and next(env_tmp_dir.iterdir(), None) is not None:
+        env_tmp_dir: Final = self.env_tmp_dir
+        if env_tmp_dir.is_symlink() or (env_tmp_dir.exists() and next(env_tmp_dir.iterdir(), None) is not None):
             LOGGER.debug("clear env temp folder %s", env_tmp_dir)
             ensure_empty_dir(env_tmp_dir)
         env_tmp_dir.mkdir(parents=True, exist_ok=True)
@@ -366,8 +369,8 @@ class ToxEnv(ABC):  # ruff:ignore[too-many-public-methods]
     def _clean(self, transitive: bool = False) -> None:  # ruff:ignore[unused-method-argument, boolean-type-hint-positional-argument, boolean-default-value-positional-argument]
         if self._run_state["clean"]:  # pragma: no branch
             return  # pragma: no cover
-        env_dir = self.env_dir
-        if env_dir.exists():
+        env_dir: Final = self.env_dir
+        if env_dir.exists() or env_dir.is_symlink():
             LOGGER.warning("remove tox env folder %s", env_dir)
             # retract the redirect so nothing points at the environment while it rebuilds
             if self.core.get_optional("venv_redirect", bool) is not False:
