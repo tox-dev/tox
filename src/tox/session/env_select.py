@@ -363,13 +363,6 @@ class EnvSelector:
                 msg += f" - did you mean {suggestion}?"
         raise HandledError(msg)
 
-    @staticmethod
-    def _ensure_env_name_is_path_safe(name: str) -> None:
-        # An unsafe name can make setup clean outside work_dir.
-        if not name or name in {".", ".."} or PurePath(name).name != name:
-            msg = f"environment name {name!r} is not a valid single path component"
-            raise HandledError(msg)
-
     def _env_name_to_active(self) -> dict[str, bool]:
         env_name_to_active_map = {}
         for a_collection, is_active in self._collect_names():
@@ -386,6 +379,13 @@ class EnvSelector:
         ):
             env_name_to_active_map["py"] = True
         return env_name_to_active_map
+
+    @staticmethod
+    def _ensure_env_name_is_path_safe(name: str) -> None:
+        # An unsafe name can make setup clean outside work_dir.
+        if not name or name in {".", ".."} or PurePath(name).name != name:
+            msg = f"environment name {name!r} is not a valid single path component"
+            raise HandledError(msg)
 
     @property
     def _defined_envs(self) -> dict[str, _ToxEnvInfo]:
