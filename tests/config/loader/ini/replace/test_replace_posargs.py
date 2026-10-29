@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import sys
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Final
 
 import pytest
 
@@ -113,3 +113,59 @@ def test_replace_pos_args_reach_command_intact(
     outcome = project.run("c", "-k", "commands", "--", arg)
     outcome.assert_success()
     assert outcome.env_conf("py")["commands"] == [Command(args=["python", arg])]
+
+
+@pytest.mark.parametrize("platform", [pytest.param("win32", id="windows"), pytest.param("linux", id="linux")])
+@pytest.mark.parametrize(
+    "commands",
+    [
+        pytest.param("{posargs}", id="alone"),
+        pytest.param("[]", id="alone-brackets"),
+        pytest.param("{posargs:pytest}", id="alone-default"),
+        pytest.param("{env:_MISSING:{posargs}}", id="alone-nested"),
+        pytest.param("python {env:_MISSING:-c} {posargs}", id="after-token"),
+        pytest.param("python -c {posargs}", id="in-line"),
+    ],
+)
+@pytest.mark.parametrize("override", [pytest.param(True, id="override"), pytest.param(False, id="config")])
+def test_replace_pos_args_line_break_stays_one_command(
+    tox_project: ToxProjectCreator, mocker: MockerFixture, platform: str, commands: str, override: bool
+) -> None:
+    for module in ("tox.config.loader.replacer", "tox.config.loader.str_convert"):
+        mocker.patch(f"{module}.sys", mocker.create_autospec(sys, platform=platform))
+    project: Final = tox_project({"tox.ini": f"[testenv]\ncommands = {'python' if override else commands}"})
+    prefix: Final = [] if commands.startswith("python") else ["python", "-c"]
+    overrides: Final = ["-x", f"testenv.commands={commands}"] if override else []
+    outcome: Final = project.run("c", "-k", "commands", *overrides, "--", *prefix, "a\npython -c b\n", "\n", "c\r\nd")
+    outcome.assert_success()
+    assert outcome.env_conf("py")["commands"] == [Command(args=["python", "-c", "a python -c b", "", "c d"])]
+
+
+def test_replace_pos_args_line_break_stays_one_list_entry(tox_project: ToxProjectCreator) -> None:
+    project: Final = tox_project({"tox.ini": "[testenv]\nallowlist_externals = {posargs}"})
+    outcome: Final = project.run("c", "-k", "allowlist_externals", "--", "a\nb")
+    outcome.assert_success()
+    assert outcome.env_conf("py")["allowlist_externals"] == ["'a b'"]
+
+
+@pytest.mark.parametrize(
+    "arg",
+    [
+        pytest.param("main\npython -c injected\n", id="plain"),
+        pytest.param("it's\npython -c injected\n", id="apostrophe"),
+    ],
+)
+def test_referenced_default_command_line_break_stays_one_command(tox_project: ToxProjectCreator, arg: str) -> None:
+    project: Final = tox_project({
+        "tox.ini": (
+            "[testenv:notes]\nrunner = virtualenv-pep-723\nscript = check.py\n"
+            "[testenv:release]\ncommands = python -c pass\n    {[testenv:notes]commands}\n"
+        ),
+        "check.py": "print('ok')\n",
+    })
+    outcome: Final = project.run("c", "-e", "release", "-k", "commands", "--", arg)
+    outcome.assert_success()
+    assert outcome.env_conf("release")["commands"] == [
+        Command(args=["python", "-c", "pass"]),
+        Command(args=["python", str(project.path / "check.py"), " ".join(arg.splitlines())]),
+    ]
