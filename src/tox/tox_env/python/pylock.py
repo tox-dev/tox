@@ -25,8 +25,7 @@ class Pylock:
 
     def install_lines(self) -> list[str]:
         """Return pip requirement lines for the packages this environment locks."""
-        with self.path.open("rb") as fh:
-            data = tomllib.load(fh)
+        data = tomllib.loads(self.path.read_text(encoding="utf-8-sig"))
         try:
             parsed = PackagingPylock.from_dict(data)
         except PylockValidationError as exc:

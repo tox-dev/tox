@@ -601,3 +601,12 @@ def test_pylock_reinstall_on_resolution_env_change(tox_project: ToxProjectCreato
 
     result_second.assert_success()
     assert len(execute_calls.call_args_list) == 1
+
+
+def test_pylock_install_lines_utf8_bom(tmp_path: Path) -> None:
+    pylock = tmp_path / "pylock.toml"
+    pylock.write_bytes(b"\xef\xbb\xbf" + PYLOCK_TOML.encode("utf-8"))
+
+    lines = Pylock(path=pylock).install_lines()
+
+    assert lines == ["alpha==1.0.0 --hash=sha256:abc123", "beta==2.0.0 --hash=sha256:def456"]

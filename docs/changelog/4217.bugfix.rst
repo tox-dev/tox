@@ -1,0 +1,3 @@
+A ``pylock.toml`` or a tox user configuration file (``TOX_USER_CONFIG_FILE``) saved with a UTF-8 byte order mark, as
+some Windows editors do, is now read instead of failing with a TOML decode error or being ignored with ``failed to read
+config file``.
