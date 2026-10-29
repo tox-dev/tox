@@ -409,6 +409,20 @@ class EnvConfigSet(ConfigSet):
             post_process=set_env_post_process,
         )
 
+    def set_env_lines(self, chain: list[str] | None = None) -> str:
+        """Return configured ``set_env`` lines before substituting their values."""
+        # load first: a {env:...} in an environment file name reads this set_env, and the chain would reject that load
+        self.load("set_env", chain)
+        loaded = cast("ConfigDynamicDefinition[SetEnv]", self._defined["set_env"])
+        configured = ConfigDynamicDefinition(
+            loaded.keys,
+            loaded.desc,
+            SetEnv,
+            SetEnv("", self.name, self.env_name, self._conf.core["tox_root"]),
+            factory=loaded.factory,
+        )
+        return configured(self._conf, self.loaders, ConfigLoadArgs(chain, self.name, self.env_name)).lines()
+
     @override
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}(name={self._env_name!r}, loaders={self.loaders!r})"
