@@ -386,13 +386,14 @@ class SetEnv:
         return result
 
     def lines(self) -> str:
-        """Render unsubstituted entries for an included ``set_env``."""
         escaped_semicolon: Final[str] = r"\;"
-        return "\n".join(
-            f"{name}={str(value['value']).replace(';', escaped_semicolon)}"
-            + (f"; {marker}" if (marker := value.get("marker")) else "")
-            for name, value in self.raw(self._args.copy()).items()
-        )
+        lines: Final[list[str]] = []
+        for name, value in self.raw(self._args.copy()).items():
+            line = f"{name}={str(value['value']).replace(';', escaped_semicolon)}"
+            if marker := value.get("marker"):
+                line = f"{line}; {marker}"
+            lines.append(line)
+        return "\n".join(lines)
 
     def export(self, values: Mapping[str, Callable[[], str]]) -> None:
         """Set tox's own variables over the configured ones, resolved on first read.
