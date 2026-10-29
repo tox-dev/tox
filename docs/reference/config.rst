@@ -1135,6 +1135,9 @@ Base options
     6. A section that includes itself, directly or through other sections, a TOML ``ref`` that refers to itself, and
        values that refer to each other (``A = {env:B}``, ``B = {env:A}``) fail the environment with an error that names
        the chain.
+    7. A substitution in an INI key, such as ``LABEL_{env_name} = {env:LABEL}``, resolves while tox reads the structure.
+       Its value resolves when read, as it does with a literal key. A key that expands to ``=`` or a line separator
+       fails with an error.
 
     .. tab:: TOML
 
