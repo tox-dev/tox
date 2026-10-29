@@ -1,3 +1,3 @@
-A malformed artifact selected via ``--installpkg`` - for example a wheel that is not a zip archive or carries
-missing or unparsable metadata, or a source archive that is not a readable ``.tar.gz`` or contains no members -
-now fails with a clear error instead of an internal error traceback.
+A malformed artifact selected via ``--installpkg`` - for example a wheel that is not a zip archive or carries missing or
+unparsable metadata, or a source archive that is not a readable ``.tar.gz`` or contains no members - now fails with a
+clear error instead of an internal error traceback.
