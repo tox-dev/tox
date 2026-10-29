@@ -230,7 +230,7 @@ class Loader(Convert[T]):
                 entry.key, cast("type[V] | UnionType", of_type), factory, conf, cast("T", entry.value), args
             )
         return _STR_CONVERT.to(
-            entry.value if conf is None else self.substitute(entry.value, conf, args), of_type, factory
+            entry.value if conf is None else self.substitute(entry.value, conf, args, of_type=of_type), of_type, factory
         )
 
     def build(  # ruff:ignore[too-many-arguments]
@@ -277,12 +277,13 @@ class Loader(Convert[T]):
                 result = appended
         return SetEnvReference(result, args, shape)
 
-    def substitute(self, value: str, conf: Config, args: ConfigLoadArgs) -> str:
+    def substitute(self, value: str, conf: Config, args: ConfigLoadArgs, *, of_type: type[object] | UnionType) -> str:
         """Apply this loader's replacements to a raw string.
 
         :param value: the raw string
         :param conf: the global config
         :param args: env args
+        :param of_type: the type the string is converted to afterwards, telling if its lines are commands or entries
 
         :returns: the string with every substitution this loader understands resolved
 

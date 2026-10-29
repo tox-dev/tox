@@ -8,6 +8,8 @@ from tox.config.set_env import SetEnv
 from tox.config.types import Command, EnvList
 from tox.tox_env.python.pip.req_file import PythonConstraints, PythonDeps
 
+from .replacer import quote_args
+
 
 def stringify(value: Any) -> tuple[str, bool]:  # ruff:ignore[too-many-return-statements]
     """Transform a value into a string representation.
@@ -30,7 +32,7 @@ def stringify(value: Any) -> tuple[str, bool]:  # ruff:ignore[too-many-return-st
     if isinstance(value, EnvList):
         return "\n".join(e for e in value.envs), True
     if isinstance(value, Command):
-        return value.shell, True
+        return quote_args(value.args), True
     if isinstance(value, SetEnv):
         env_var_keys = sorted(value)
         return stringify({k: value.load(k) for k in env_var_keys})

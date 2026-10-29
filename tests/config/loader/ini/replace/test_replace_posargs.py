@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import sys
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Final
 
 import pytest
 
@@ -102,7 +102,7 @@ def test_half_escaped_braces(replace_one: ReplaceOne) -> None:
     assert outcome == "{posargs} foo"
 
 
-@pytest.mark.parametrize("platform", ["win32", "linux"])
+@pytest.mark.parametrize("platform", [pytest.param("win32", id="windows"), pytest.param("linux", id="linux")])
 @pytest.mark.parametrize(
     "arg",
     [
@@ -125,3 +125,35 @@ def test_replace_pos_args_reach_command_intact(
     outcome = project.run("c", "-k", "commands", "--", arg)
     outcome.assert_success()
     assert outcome.env_conf("py")["commands"] == [Command(args=["python", arg])]
+
+
+@pytest.mark.parametrize("platform", [pytest.param("win32", id="windows"), pytest.param("linux", id="linux")])
+@pytest.mark.parametrize(
+    "config",
+    [
+        pytest.param("[testenv:a]\n[testenv:py]\ncommands = {[testenv:a]commands}", id="env-reference"),
+        pytest.param("[testenv:py]\ncommands_pre = python {posargs} -x\ncommands = {commands_pre}", id="key-reference"),
+    ],
+)
+@pytest.mark.parametrize(
+    "arg",
+    [
+        pytest.param("'x'", id="single-quoted"),
+        pytest.param('"x"', id="double-quoted"),
+        pytest.param("it's", id="apostrophe"),
+        pytest.param("a b", id="space"),
+        pytest.param("", id="empty"),
+        pytest.param(r"C:\Program Files\x", id="windows-path"),
+        pytest.param(r"\\server\share", id="unc-path"),
+        pytest.param(r"a\\b", id="backslash-pair"),
+    ],
+)
+def test_replace_pos_args_reach_referenced_command_intact(
+    tox_project: ToxProjectCreator, mocker: MockerFixture, platform: str, config: str, arg: str
+) -> None:
+    for module in ("tox.config.loader.replacer", "tox.config.loader.str_convert"):
+        mocker.patch(f"{module}.sys", mocker.create_autospec(sys, platform=platform))
+    project: Final = tox_project({"tox.ini": f"[testenv]\ncommands = python {{posargs}} -x\n{config}"})
+    outcome: Final = project.run("c", "-e", "py", "-k", "commands", "--", arg)
+    outcome.assert_success()
+    assert outcome.env_conf("py")["commands"] == [Command(args=["python", arg, "-x"])]
