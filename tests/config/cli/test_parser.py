@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import sys
 from argparse import Action
-from typing import TYPE_CHECKING, Literal, get_args
+from typing import TYPE_CHECKING, Final, Literal, get_args
 
 import pytest
 
@@ -10,7 +10,6 @@ from tox.config.cli.parser import Parsed, ToxParser
 
 if TYPE_CHECKING:
     from pathlib import Path
-    from typing import Final
 
     from pytest_mock import MockerFixture
 
@@ -215,9 +214,9 @@ def test_parser_hint(capsys: CaptureFixture) -> None:
 
 
 def test_parser_unknown_secret_flag_masked(capsys: CaptureFixture) -> None:
-    parser = ToxParser.base()
+    parser: Final = ToxParser.base()
     with pytest.raises(SystemExit):
         parser.parse_args(["--api-token=hunter2"])
-    _out, err = capsys.readouterr()
+    err: Final = capsys.readouterr().err
     assert "--api-token=*******" in err
     assert "hunter2" not in err

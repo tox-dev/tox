@@ -6,9 +6,10 @@ import sys
 import time
 from contextlib import contextmanager
 from pathlib import Path
+from shutil import which
 from subprocess import check_call
 from textwrap import dedent
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Final
 from unittest import mock
 from zipfile import ZipFile
 
@@ -23,7 +24,7 @@ if TYPE_CHECKING:
     from devpi_process import Index, IndexServer
 
     from tox.execute.request import ExecuteRequest
-    from tox.pytest import MonkeyPatch, TempPathFactory, ToxProjectCreator
+    from tox.pytest import MonkeyPatch, TempPathFactory, ToxProjectCreator, ToxRunOutcome
 
 from importlib.metadata import Distribution
 
@@ -151,6 +152,18 @@ def test_provision_requires_nok(tox_project: ToxProjectCreator) -> None:
     )
 
 
+def test_provision_requires_substitution_cannot_add_requirement(
+    tox_project: ToxProjectCreator, monkeypatch: MonkeyPatch
+) -> None:
+    monkeypatch.setenv("PIN", "1,pkg-not-required")
+    outcome: Final[ToxRunOutcome] = tox_project({"tox.ini": "[tox]\nrequires = pkg-does-not-exist=={env:PIN}\n"}).run(
+        "c", "-e", "py"
+    )
+    outcome.assert_failed()
+    assert "replace failed in tox.requires with ValueError('a substitution within an entry cannot" in outcome.out
+    assert "provisioned" not in outcome.out
+
+
 def test_provision_requires_skips_false_markers(tox_project: ToxProjectCreator) -> None:
     project = tox_project({
         "tox.toml": """
@@ -181,13 +194,27 @@ def test_provision_requires_checks_true_markers(tox_project: ToxProjectCreator) 
 
 @pytest.mark.integration
 @pytest.mark.timeout(120)
-@pytest.mark.parametrize("subcommand", ["l", "c"])
+@pytest.mark.parametrize("subcommand", [pytest.param("l", id="list"), pytest.param("c", id="show-config")])
+@pytest.mark.parametrize(
+    ("provision_config", "safe_path_flag"),
+    [
+        pytest.param("", "-P", id="supported-python"),
+        pytest.param(
+            '[env.".tox"]\nbase_python = "python3.10"',
+            "-I",
+            marks=pytest.mark.skipif(which("python3.10") is None, reason="python3.10 is unavailable"),
+            id="older-python",
+        ),
+    ],
+)
 def test_provision_before_loading_env_list(
     tox_project: ToxProjectCreator,
     tmp_path: Path,
     monkeypatch: MonkeyPatch,
     pkg_builder: Callable[[Path, Path, Sequence[DistributionType], bool], Path],
     subcommand: str,
+    provision_config: str,
+    safe_path_flag: str,
 ) -> None:
     future_tox = tmp_path / "future-tox"
     (future_tox / "tox").mkdir(parents=True)
@@ -215,16 +242,19 @@ def test_provision_before_loading_env_list(
     monkeypatch.setenv("PIP_NO_INDEX", "1")
 
     project = tox_project({
-        "tox.toml": """
+        "tox.toml": f"""
             requires = ["tox>=999"]
             env_list = [1]
+            {provision_config}
         """,
+        "tox.py": "raise SystemExit('loaded from the start directory')",
     })
 
     outcome = project.run(subcommand)
 
     outcome.assert_success()
     assert "will run in automatically provisioned tox" in outcome.out
+    assert f" {safe_path_flag} -m tox" in outcome.out
     assert f"future tox ran {subcommand}" in outcome.out
 
 
@@ -409,8 +439,8 @@ def test_provision_unrecognized_args_no_provision(tox_project: ToxProjectCreator
 
 
 def test_provision_unrecognized_args_mask_secret(tox_project: ToxProjectCreator) -> None:
-    project = tox_project({"tox.toml": '[env_run_base]\npackage = "skip"\n'})
-    result = project.run("r", "--api-token=hunter2")
+    project: Final = tox_project({"tox.toml": '[env_run_base]\npackage = "skip"\n'})
+    result: Final = project.run("r", "--api-token=hunter2")
     result.assert_failed()
     assert "--api-token=*******" in result.out
     assert "hunter2" not in result.out

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import errno
 import os
+import sys
 from functools import partial
 from pathlib import Path
 from typing import TYPE_CHECKING, Final
@@ -41,7 +42,7 @@ def test_empty_conf_get(empty_config: Config) -> None:
 
 
 def test_pos_args_path_error_masks_secret_flag(tox_project: ToxProjectCreator, mocker: MockerFixture) -> None:
-    project = tox_project({
+    project: Final = tox_project({
         "tox.toml": """\
 [env_run_base]
 package = "skip"
@@ -58,7 +59,7 @@ commands = [["python", "-c", "pass", { replace = "posargs", extend = true }]]
         return original_exists(path)
 
     mocker.patch.object(Path, "exists", autospec=True, side_effect=exists)
-    result = project.run("r", "-vv", "-e", "py", "--", "--token=hunter2")
+    result: Final = project.run("r", "-vv", "-e", "py", "--", "--token=hunter2")
     result.assert_success()
     assert "could not check if '--token=*******' is an existing path" in result.out
     assert "hunter2" not in result.out
@@ -307,6 +308,46 @@ def test_args_are_paths_when_with_change_dir(tox_project: ToxProjectCreator) -> 
     result = project.run("c", "-e", "py", "-k", "commands", "--", *args)
     result.assert_success()
     assert result.out == f"[testenv:py]\ncommands = magic.py {project.path} ..{os.sep}tox.ini a.txt . ..\n"
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="symlinks need privileges on Windows, and .. is unrolled lexically")
+@pytest.mark.parametrize(
+    "change_dir",
+    [
+        pytest.param("{env_tmp_dir}", id="environment-temp-directory"),
+        pytest.param("{tox_root}{/}.tox{/}py{/}tmp", id="explicit-temp-directory"),
+    ],
+)
+def test_args_are_paths_when_change_dir_behind_link(
+    tox_project: ToxProjectCreator, tmp_path: Path, change_dir: str
+) -> None:
+    project: Final = tox_project({
+        "tox.ini": f"[testenv]\npackage=skip\ncommands={{posargs}}\nchange_dir={change_dir}",
+        "a.py": "",
+    })
+    (tmp_path / "work").mkdir()
+    (project.path / ".tox").symlink_to(tmp_path / "work", target_is_directory=True)
+    result: Final = project.run("c", "-e", "py", "-k", "commands", "--", "a.py")
+    result.assert_success()
+    assert result.out == f"[testenv:py]\ncommands = ../../../{project.path.name}/a.py\n"
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="creating symlinks requires privileges on Windows")
+def test_args_are_paths_keeps_lexical_change_dir_on_windows(
+    tox_project: ToxProjectCreator, tmp_path: Path, mocker: MockerFixture
+) -> None:
+    project: Final = tox_project({
+        "tox.ini": "[testenv]\npackage=skip\ncommands={posargs}\nchange_dir={env_tmp_dir}",
+        "a.py": "",
+    })
+    (tmp_path / "work").mkdir()
+    (project.path / ".tox").symlink_to(tmp_path / "work", target_is_directory=True)
+    mocker.patch("tox.config.main.sys", mocker.create_autospec(sys, platform="win32"))
+
+    result: Final = project.run("c", "-e", "py", "-k", "commands", "--", "a.py")
+
+    result.assert_success()
+    assert result.out == "[testenv:py]\ncommands = ../../../a.py\n"
 
 
 @pytest.mark.timeout(60)

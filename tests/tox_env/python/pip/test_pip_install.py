@@ -1,8 +1,9 @@
 from __future__ import annotations
 
+import json
 import os
 from textwrap import dedent
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Final
 from unittest.mock import Mock
 
 import pytest
@@ -325,6 +326,124 @@ def test_pip_install_requirements_file_deps(tox_project: ToxProjectCreator) -> N
     assert "py: recreate env because requirements removed: a" in result_third.out, result_third.out
     assert execute_calls.call_count == 1
     assert execute_calls.call_args[0][3].cmd == ["python", "-I", "-m", "pip", "install", "b", "-r", "r.txt"]
+
+
+@pytest.fixture
+def secret_requirements_project(tox_project: ToxProjectCreator, monkeypatch: pytest.MonkeyPatch) -> ToxProject:
+    monkeypatch.setenv("PYPI_TOKEN", "magic-one")
+    return tox_project({
+        "tox.ini": "[testenv]\ndeps=-r r.txt\nconstraints=c.txt\nskip_install=true",
+        "r.txt": "-i https://ci:${PYPI_TOKEN}@host/simple\nhttps://ci:${PYPI_TOKEN}@host/a.whl",
+        "c.txt": "https://ci:${PYPI_TOKEN}@host/b.whl",
+    })
+
+
+def test_pip_install_requirements_file_secret_cache(secret_requirements_project: ToxProject) -> None:
+    secret_requirements_project.patch_execute(lambda request: 0 if "install" in request.run_id else None)
+
+    result: Final = secret_requirements_project.run("r")
+
+    result.assert_success()
+    cache: Final = (secret_requirements_project.path / ".tox" / "py" / ".tox-info.json").read_text()
+    assert "magic-one" not in cache
+    assert "https://ci:*********@host/" in cache
+
+
+def test_pip_install_requirements_file_token_rotation(
+    secret_requirements_project: ToxProject, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    execute_calls: Final = secret_requirements_project.patch_execute(
+        lambda request: 0 if "install" in request.run_id else None
+    )
+    secret_requirements_project.run("r").assert_success()
+
+    execute_calls.reset_mock()
+    monkeypatch.setenv("PYPI_TOKEN", "magic-two")
+    secret_requirements_project.run("r").assert_success()
+
+    assert execute_calls.call_count == 0
+
+
+def test_pip_install_legacy_secret_cache_migration(
+    secret_requirements_project: ToxProject, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    secret_requirements_project.patch_execute(lambda request: 0 if "install" in request.run_id else None)
+    secret_requirements_project.run("r").assert_success()
+    cache: Final = secret_requirements_project.path / ".tox" / "py" / ".tox-info.json"
+    old_cache: Final = json.loads(cache.read_text())
+    old_cache["PythonRun"]["deps"].pop("redaction_format")
+    cache.write_text(json.dumps(old_cache).replace("*********", "legacy-secret"))
+    monkeypatch.setenv("PYPI_TOKEN", "magic-two")
+
+    result: Final = secret_requirements_project.run("r")
+
+    result.assert_success()
+    assert "recreate env because install cache format changed" in result.out
+    assert "legacy-secret" not in result.out
+    assert "legacy-secret" not in cache.read_text()
+
+
+@pytest.mark.parametrize("name", [pytest.param("r.txt", id="requirements"), pytest.param("c.txt", id="constraints")])
+def test_pip_install_secret_recreate_warning(secret_requirements_project: ToxProject, name: str) -> None:
+    secret_requirements_project.patch_execute(lambda request: 0 if "install" in request.run_id else None)
+    secret_requirements_project.run("r").assert_success()
+    path: Final = secret_requirements_project.path / name
+    path.write_text(path.read_text().replace("@host", "@other"))
+
+    result: Final = secret_requirements_project.run("r")
+
+    result.assert_success()
+    assert "recreate env because " in result.out
+    assert "https://ci:*********@host/" in result.out
+    assert "magic-one" not in result.out
+
+
+def test_constrain_package_deps_keeps_secret_env_var(
+    tox_project: ToxProjectCreator, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    project: Final = tox_project({
+        "tox.ini": "[testenv]\ndeps=-r r.txt\nskip_install=true\nconstrain_package_deps=true",
+        "r.txt": "https://ci:${PYPI_TOKEN}@host/a.whl\n-c c.txt",
+        "c.txt": "b<2",
+    })
+    project.patch_execute(lambda request: 0 if "install" in request.run_id else None)
+    monkeypatch.setenv("PYPI_TOKEN", "magic")
+
+    result: Final = project.run("r")
+
+    result.assert_success()
+    assert (project.path / ".tox" / "py" / "constraints.txt").read_text() == "https://ci:magic@host/a.whl\nb<2"
+
+
+@pytest.mark.parametrize(
+    ("field", "value", "nested", "expected"),
+    [
+        pytest.param("deps", "-r requirements.txt", "-r missing-${PYPI_TOKEN}.txt", "missing-*****.txt", id="deps"),
+        pytest.param(
+            "constraints", "requirements.txt", "-c missing-${PYPI_TOKEN}.txt", "missing-*****.txt", id="constraints"
+        ),
+        pytest.param("deps", "-r requirements.txt", "-r file://${PYPI_TOKEN}/base.txt", "file://*****", id="file-url"),
+    ],
+)
+def test_pip_install_missing_nested_file_redacts_secret(
+    tox_project: ToxProjectCreator,
+    monkeypatch: pytest.MonkeyPatch,
+    field: str,
+    value: str,
+    nested: str,
+    expected: str,
+) -> None:
+    monkeypatch.setenv("PYPI_TOKEN", "magic")
+    project: Final = tox_project({
+        "tox.ini": f"[testenv]\npackage=skip\n{field}={value}",
+        "requirements.txt": nested,
+    })
+
+    result: Final = project.run("r")
+
+    result.assert_failed()
+    assert expected in result.out
+    assert "magic" not in result.out
 
 
 @pytest.fixture(params=[True, False])

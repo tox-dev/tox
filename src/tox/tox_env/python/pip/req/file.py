@@ -17,7 +17,7 @@ from urllib.request import urlopen
 
 from packaging.requirements import InvalidRequirement, Requirement
 
-from tox.util.redact import redact_argv
+from tox.util.redact import redact_argv, redact_value
 from tox.util.typing_compat import override
 
 from .args import build_parser
@@ -204,6 +204,7 @@ class RequirementsFile:
         self._requirements: list[ParsedRequirement] | None = None
         self._as_root_args: list[str] | None = None
         self._parser_private: ArgumentParser | None = None
+        self._secrets: Final[dict[str, str]] = {}
 
     @property
     def _req_parser(self) -> RequirementsFile:
@@ -498,8 +499,7 @@ class RequirementsFile:
             if processed_line:
                 yield line_number, processed_line
 
-    @staticmethod
-    def _expand_env_variables(lines_enum: ReqFileLines) -> ReqFileLines:
+    def _expand_env_variables(self, lines_enum: ReqFileLines) -> ReqFileLines:
         """Replace all environment variables that can be retrieved via `os.getenv`.
 
         The only allowed format for environment variables defined in the requirement file is `${MY_VARIABLE_1}` to
@@ -520,7 +520,15 @@ class RequirementsFile:
                 if not value:
                     continue
                 expanded_line = expanded_line.replace(env_var, value)
+                if (redacted := redact_value(var_name, value)) != value:
+                    self._secrets[value] = redacted
             yield line_number, expanded_line
+
+    def redact(self, text: str) -> str:
+        secrets: Final = self._secrets | self._req_parser._secrets  # ruff:ignore[private-member-access]  # nested files
+        for value in sorted(secrets, key=len, reverse=True):  # longest first, as a value may contain another one
+            text = text.replace(value, secrets[value])
+        return text
 
     @property
     def as_root_args(self) -> list[str]:

@@ -4,7 +4,7 @@ import os
 import sys
 from contextlib import contextmanager
 from io import BytesIO
-from typing import IO, TYPE_CHECKING, Any
+from typing import IO, TYPE_CHECKING, Any, Final
 
 import pytest
 
@@ -469,9 +469,9 @@ def test_bad_line(tmp_path: Path, raw: str, capfd: CaptureFixture, error: str) -
 
 
 def test_bad_line_masks_secret_flag(tmp_path: Path) -> None:
-    requirements_file = tmp_path / "req.txt"
+    requirements_file: Final = tmp_path / "req.txt"
     requirements_file.write_text("--api-token=hunter2")
-    req_file = RequirementsFile(requirements_file, constraint=False)
+    req_file: Final = RequirementsFile(requirements_file, constraint=False)
     with pytest.raises(ValueError, match="unrecognized arguments") as error:
         _ = req_file.options
     assert "--api-token=*******" in str(error.value)
