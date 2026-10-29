@@ -652,8 +652,7 @@ def test_windows_batch_file_args_are_literal(tmp_path: Path, os_env: dict[str, s
     executor: Final[LocalSubProcessExecutor] = LocalSubProcessExecutor(colored=False)
 
     with executor.call(request, show=False, out_err=FakeOutErr().out_err, env=_create_mock_env()) as status:
-        while status.exit_code is None:  # pragma: no branch
-            status.wait()
+        status.wait()
 
     assert status.outcome is not None
     assert json.loads(status.outcome.out) == args
