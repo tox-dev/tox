@@ -11,8 +11,9 @@ The diagram below shows when each plugin hook fires during a tox run:
 .. mermaid::
 
     flowchart TD
-        start(( )) --> register[tox_register_tox_env]
-        register --> add_option[tox_add_option]
+        start(( )) --> first_options[installed plugins: tox_add_option]
+        first_options --> register[tox_register_tox_env]
+        register --> add_option[all plugins: tox_add_option]
         add_option --> extend[tox_extend_envs]
         extend --> core_config[tox_add_core_config]
         core_config --> env_config[tox_add_env_config]
@@ -35,7 +36,7 @@ The diagram below shows when each plugin hook fires during a tox run:
         classDef cmdStyle fill:#ede9fe,stroke:#8b5cf6,stroke-width:2px,color:#3b0764
         classDef installStyle fill:#ffedd5,stroke:#f97316,stroke-width:2px,color:#7c2d12
 
-        class register,add_option,extend,core_config,env_config setupStyle
+        class first_options,register,add_option,extend,core_config,env_config setupStyle
         class before,after,teardown envStyle
         class cmds cmdStyle
         class on_install installStyle

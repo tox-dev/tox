@@ -86,13 +86,13 @@ OPTIONS
     dump tox threads after n seconds and exit the app - useful to debug when tox hangs, 0 means disabled
 
 **-c**, **--conf** *file*
-    configuration file/folder for tox (if not specified will discover one)
+    configuration file/folder for tox (discovered if omitted); specify before inline plugin options
 
 **--workdir** *dir*
     tox working directory (if not specified will be the folder of the config file)
 
 **--root** *dir*
-    project root directory (if not specified will be the folder of the config file)
+    project root directory (defaults to the config file's folder); specify before inline plugin options
 
 **--runner**
     the tox run engine to use when not explicitly stated in tox env configuration
