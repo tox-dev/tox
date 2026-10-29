@@ -140,6 +140,150 @@ def test_pip_install_no_binary_on_separate_lines(tox_project: ToxProjectCreator)
     ]
 
 
+@pytest.mark.parametrize(
+    "files",
+    [
+        pytest.param(
+            {"tox.toml": '[env_run_base]\npackage="skip"\ndeps=["a=={env:VERSION}", "-c c.txt"]'}, id="toml-list"
+        ),
+        pytest.param({"tox.toml": '[env_run_base]\npackage="skip"\ndeps="a=={env:VERSION}\\n-c c.txt"'}, id="toml-str"),
+        pytest.param(
+            {
+                "tox.toml": '[env_run_base]\npackage="skip"\ndeps=["a=={env:VERSION}"]\n'
+                '[env.py]\ndeps=["{[env_run_base]deps}", "-c c.txt"]'
+            },
+            id="toml-reference",
+        ),
+        pytest.param(
+            {"tox.toml": '[env_run_base]\npackage="skip"\ndeps=["{env:MISSING:a=={env:VERSION}}"]'},
+            id="nested-default",
+        ),
+        pytest.param({"tox.ini": "[testenv]\npackage=skip\ndeps=\n a=={env:VERSION}\n -c c.txt"}, id="ini"),
+    ],
+)
+@pytest.mark.parametrize(
+    ("version", "message"),
+    [
+        pytest.param("1\n--pre", "cannot add a line break", id="line-feed"),
+        pytest.param("1\u2028--pre", "cannot add a line break", id="line-separator"),
+        pytest.param("1 \\", "cannot end a line with a backslash", id="line-continuation"),
+    ],
+)
+def test_pip_install_deps_substitution_cannot_add_line(
+    tox_project: ToxProjectCreator, monkeypatch: pytest.MonkeyPatch, files: dict[str, str], version: str, message: str
+) -> None:
+    monkeypatch.setenv("VERSION", version)
+    monkeypatch.delenv("MISSING", raising=False)
+    project: Final = tox_project({**files, "c.txt": ""})
+    execute_calls: Final = project.patch_execute(lambda request: 0 if "install" in request.run_id else None)
+
+    result: Final = project.run("r", "-e", "py")
+
+    result.assert_failed()
+    assert message in result.out
+    assert execute_calls.call_count == 0
+
+
+@pytest.mark.parametrize(
+    "files",
+    [
+        pytest.param({"tox.toml": '[env_run_base]\npackage="skip"\ndeps="a"\nconstraints=["{env:C}.txt"]'}, id="toml"),
+        pytest.param({"tox.ini": "[testenv]\npackage=skip\ndeps=a\nconstraints={env:C}.txt"}, id="ini"),
+    ],
+)
+def test_pip_install_constraints_substitution_cannot_add_line(
+    tox_project: ToxProjectCreator, monkeypatch: pytest.MonkeyPatch, files: dict[str, str]
+) -> None:
+    monkeypatch.setenv("C", "c.txt\nd")
+    project: Final = tox_project({**files, "c.txt": "", "d.txt": ""})
+    execute_calls: Final = project.patch_execute(lambda request: 0 if "install" in request.run_id else None)
+
+    result: Final = project.run("r", "-e", "py")
+
+    result.assert_failed()
+    assert "a substitution within a requirement cannot add a line break" in result.out
+    assert execute_calls.call_count == 0
+
+
+@pytest.mark.parametrize(
+    ("filename", "content", "namespace"),
+    [
+        pytest.param("tox.toml", '[env_run_base]\npackage="skip"\ndeps=["a"]', "env_run_base", id="toml"),
+        pytest.param("tox.ini", "[testenv]\npackage=skip\ndeps=a", "testenv", id="ini"),
+    ],
+)
+def test_pip_install_deps_override_cannot_add_line(
+    tox_project: ToxProjectCreator,
+    monkeypatch: pytest.MonkeyPatch,
+    filename: str,
+    content: str,
+    namespace: str,
+) -> None:
+    monkeypatch.setenv("VERSION", "1\n--pre")
+    result: Final = tox_project({filename: content}).run(
+        "c", "-e", "py", "-k", "deps", "-x", f"{namespace}.deps+=a=={{env:VERSION}}"
+    )
+    result.assert_failed()
+    assert "a substitution within a requirement cannot add a line break" in result.out
+
+
+@pytest.mark.parametrize(
+    "name",
+    [
+        pytest.param("a\n--pre", id="line-break"),
+        pytest.param("a\\", id="line-continuation"),
+    ],
+)
+@pytest.mark.skipif(os.name == "nt", reason="Windows file names cannot contain line breaks or trailing backslashes")
+def test_pip_install_globbed_requirement_cannot_add_line(tox_project: ToxProjectCreator, name: str) -> None:
+    project: Final = tox_project({
+        "tox.toml": '[env_run_base]\npackage="skip"\ndeps=[{replace="glob",pattern="wheelhouse/*",extend=true}]',
+    })
+    wheelhouse: Final = project.path / "wheelhouse"
+    wheelhouse.mkdir()
+    (wheelhouse / name).write_text("")
+    result: Final = project.run("c", "-e", "py", "-k", "deps")
+    result.assert_failed()
+    assert "a globbed requirement path cannot contain a line break or end in a backslash" in result.out
+
+
+def test_pip_install_substitution_keeps_internal_backslash(
+    tox_project: ToxProjectCreator, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("DEP_PATH", ".\\")
+    result: Final = tox_project({"tox.ini": "[testenv]\npackage=skip\ndeps=-r {env:DEP_PATH}a.txt"}).run(
+        "c", "-e", "py", "-k", "deps"
+    )
+
+    result.assert_success()
+    assert "-r .\\a.txt" in result.out
+
+
+@pytest.mark.parametrize(
+    ("files", "expected"),
+    [
+        pytest.param({"tox.toml": '[env_run_base]\npackage="skip"\ndeps=["{env:EXTRA_DEPS}"]'}, ["a", "b"], id="toml"),
+        pytest.param(
+            {"tox.toml": '[env_run_base]\npackage="skip"\ndeps="{env:EXTRA_DEPS}\\u2028c"'},
+            ["a", "b", "c"],
+            id="toml-unicode-separator",
+        ),
+        pytest.param(
+            {"tox.ini": "[testenv]\npackage=skip\ndeps=\n a\u2028{env:EXTRA_DEPS}"},
+            ["a", "b"],
+            id="ini-unicode-separator",
+        ),
+    ],
+)
+def test_pip_install_whole_substitution_can_supply_requirements(
+    tox_project: ToxProjectCreator, monkeypatch: pytest.MonkeyPatch, files: dict[str, str], expected: list[str]
+) -> None:
+    monkeypatch.setenv("EXTRA_DEPS", "a\nb")
+    result: Final = tox_project(files).run("c", "-e", "py", "-k", "deps")
+    result.assert_success()
+    assert result.env_conf("py")["deps"].as_root_args == expected
+
+
 def test_pip_install_path(tox_project: ToxProjectCreator) -> None:
     proj = tox_project({"tox.ini": "[testenv:py]\ndeps=.{/}a\nskip_install=true"})
     execute_calls = proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)

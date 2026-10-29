@@ -102,6 +102,11 @@ def test_replace_glob_match_as_is_outside_command(replace_one: ReplaceOne, tmp_p
     assert replace_one("{glob:*.txt}") == " ".join(str(match) for match in matches)
 
 
+def test_replace_glob_match_not_substituted(replace_one: ReplaceOne, tmp_path: Path) -> None:
+    (tmp_path / "{tox_root}.txt").touch()
+    assert replace_one("{glob:*.txt}") == str(tmp_path / "{tox_root}.txt")
+
+
 @pytest.mark.skipif(sys.platform == "win32", reason="Windows reads z:/fallback as a drive path")
 @pytest.mark.parametrize(
     ("existing", "expected"),

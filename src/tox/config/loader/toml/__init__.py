@@ -4,7 +4,7 @@ import inspect
 import logging
 from pathlib import Path
 from types import GenericAlias
-from typing import TYPE_CHECKING, Any, TypeVar, cast
+from typing import TYPE_CHECKING, Any, Final, TypeVar, cast
 
 from tox.config.loader.api import ConfigLoadArgs, Loader, Override
 from tox.config.loader.replacer import (
@@ -14,10 +14,12 @@ from tox.config.loader.replacer import (
     replace_command_lines,
     replace_for,
     replace_once,
+    replace_requirement_lines,
 )
 from tox.config.set_env import SetEnv
 from tox.config.types import CircularChainError, Command, EnvList
 from tox.report import HandledError
+from tox.tox_env.python.pip.req_file import PythonConstraints, PythonDeps
 from tox.util.typing_compat import override
 
 from ._api import TomlTypes
@@ -82,7 +84,9 @@ class TomlLoader(Loader[TomlTypes]):
         args: ConfigLoadArgs,
     ) -> _T:
         delay_replace = inspect.isclass(of_type) and issubclass(of_type, SetEnv)
-        unroll = Unroll(conf=conf, loader=self, args=args)
+        unroll = Unroll(
+            conf=conf, loader=self, args=args, requirement_entries=of_type in {PythonDeps, PythonConstraints}
+        )
         exploded = unroll(raw, skip_str=True) if delay_replace else unroll(raw)
         result = self.to(exploded, of_type, factory)
         if delay_replace and conf is not None:  # the core section supports no replacement
@@ -99,8 +103,14 @@ class TomlLoader(Loader[TomlTypes]):
         return result
 
     @override
-    def substitute(self, value: str, conf: Config, args: ConfigLoadArgs, *, of_type: type[object] | UnionType) -> str:
-        replace_all = replace_command_lines if of_type in {Command, list[Command]} else replace_for(of_type)
+    def substitute(self, value: str, conf: Config, args: ConfigLoadArgs, *, of_type: type[_V] | UnionType) -> str:
+        replace_all: Final = (
+            replace_requirement_lines
+            if of_type in {PythonDeps, PythonConstraints}
+            else replace_command_lines
+            if of_type in {Command, list[Command]}
+            else replace_for(of_type)
+        )
         return replace_all(conf, TomlReplaceLoader(conf, self), value, args)
 
     @override

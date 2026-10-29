@@ -9,7 +9,7 @@ from re import Pattern
 from typing import TYPE_CHECKING
 
 from tox.config.loader.api import apply_overrides_to_raw
-from tox.config.loader.replacer import ReplaceReference
+from tox.config.loader.replacer import RawText, ReplaceReference
 from tox.config.loader.stringify import stringify_reference
 from tox.config.sets import EnvConfigSet
 from tox.util.typing_compat import override
@@ -52,7 +52,7 @@ class ReplaceReferenceIni(ReplaceReference):
         for src in self._config_value_sources(settings["env"], settings["section"], conf_args.env_name):
             try:
                 if isinstance(src, SectionProxy):
-                    return self._resolve_section_proxy(src, key, conf_args)
+                    return RawText(self._resolve_section_proxy(src, key, conf_args))
                 if isinstance(src, EnvConfigSet) and key in {"set_env", "setenv"}:
                     return src.set_env_lines(conf_args.chain)
                 value = src.load(key, conf_args.chain)

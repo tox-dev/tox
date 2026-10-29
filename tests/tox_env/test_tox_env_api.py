@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+from shutil import rmtree
 from textwrap import dedent
 from typing import TYPE_CHECKING, Final
 from unittest.mock import patch
@@ -23,6 +24,67 @@ def test_recreate(tox_project: ToxProjectCreator) -> None:
     result_second = prj.run("r")
     result_second.assert_success()
     assert "remove tox env folder" in result_second.out
+
+
+@pytest.mark.skipif(os.name == "nt", reason="creating symlinks needs privileges on Windows")
+def test_env_symlink_fails_without_recreate(tox_project: ToxProjectCreator, tmp_path: Path) -> None:
+    project: Final = tox_project({"tox.ini": "[testenv]\npackage=skip"})
+    outside: Final = tmp_path / "outside"
+    outside.mkdir()
+    (outside / "keep").write_text("keep")
+    env_dir: Final = project.path / ".tox" / "py"
+    env_dir.parent.mkdir()
+    env_dir.symlink_to(outside, target_is_directory=True)
+
+    result: Final = project.run("r")
+
+    result.assert_failed()
+    assert "is a symlink where this environment should live" in result.out
+    assert (outside / "keep").read_text() == "keep"
+
+
+@pytest.mark.skipif(os.name == "nt", reason="creating symlinks needs privileges on Windows")
+@pytest.mark.parametrize("target_files", [pytest.param(("keep",), id="existing"), pytest.param((), id="dangling")])
+def test_env_symlink_recreated_without_touching_target(
+    tox_project: ToxProjectCreator, tmp_path: Path, target_files: tuple[str, ...]
+) -> None:
+    project: Final = tox_project({"tox.ini": "[testenv]\npackage=skip"})
+    outside: Final = tmp_path / "outside"
+    for filename in target_files:
+        outside.mkdir()
+        (outside / filename).write_text("keep")
+    env_dir: Final = project.path / ".tox" / "py"
+    env_dir.parent.mkdir()
+    env_dir.symlink_to(outside, target_is_directory=True)
+
+    project.run("r", "-r").assert_success()
+
+    assert env_dir.is_dir()
+    assert not env_dir.is_symlink()
+    assert [(entry.name, entry.read_text()) for entry in outside.glob("*")] == [
+        (filename, "keep") for filename in target_files
+    ]
+
+
+@pytest.mark.skipif(os.name == "nt", reason="creating symlinks needs privileges on Windows")
+@pytest.mark.parametrize("name", [pytest.param("log", id="log"), pytest.param("tmp", id="tmp")])
+def test_env_child_symlink_replaced_without_touching_target(
+    tox_project: ToxProjectCreator, tmp_path: Path, name: str
+) -> None:
+    project: Final = tox_project({"tox.ini": "[testenv]\npackage=skip\ncommands=python -c 'print(1)'"})
+    project.run("r").assert_success()
+    outside: Final = tmp_path / "outside"
+    outside.mkdir()
+    (outside / "keep").write_text("keep")
+    child: Final = project.path / ".tox" / "py" / name
+    rmtree(child)
+    child.symlink_to(outside, target_is_directory=True)
+
+    project.run("r").assert_success()
+
+    assert child.is_dir()
+    assert not child.is_symlink()
+    assert (outside / "keep").read_text() == "keep"
 
 
 def test_allow_list_external_fail(tox_project: ToxProjectCreator, fake_exe_on_path: Path) -> None:
