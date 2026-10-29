@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import sys
 from functools import partial
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -14,6 +15,8 @@ from tox.report import HandledError
 from tox.tox_env.python.pip.req_file import PythonDeps
 
 if TYPE_CHECKING:
+    from pytest_mock import MockerFixture
+
     from tests.conftest import ToxIniCreator
     from tox.config.main import Config
     from tox.pytest import ToxProjectCreator
@@ -280,6 +283,38 @@ def test_args_are_paths_when_with_change_dir(tox_project: ToxProjectCreator) -> 
     result = project.run("c", "-e", "py", "-k", "commands", "--", *args)
     result.assert_success()
     assert result.out == f"[testenv:py]\ncommands = magic.py {project.path} ..{os.sep}tox.ini a.txt . ..\n"
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="symlinks need privileges on Windows, and .. is unrolled lexically")
+@pytest.mark.parametrize("change_dir", ["{env_tmp_dir}", "{tox_root}{/}.tox{/}py{/}tmp"])
+def test_args_are_paths_when_change_dir_behind_link(
+    tox_project: ToxProjectCreator, tmp_path: Path, change_dir: str
+) -> None:
+    ini = f"[testenv]\npackage=skip\ncommands={{posargs}}\nchange_dir={change_dir}"
+    project = tox_project({"tox.ini": ini, "a.py": ""})
+    (tmp_path / "work").mkdir()
+    (project.path / ".tox").symlink_to(tmp_path / "work", target_is_directory=True)
+    result = project.run("c", "-e", "py", "-k", "commands", "--", "a.py")
+    result.assert_success()
+    assert result.out == f"[testenv:py]\ncommands = ../../../{project.path.name}/a.py\n"
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="creating symlinks requires privileges on Windows")
+def test_args_are_paths_keeps_lexical_change_dir_on_windows(
+    tox_project: ToxProjectCreator, tmp_path: Path, mocker: MockerFixture
+) -> None:
+    project = tox_project({
+        "tox.ini": "[testenv]\npackage=skip\ncommands={posargs}\nchange_dir={env_tmp_dir}",
+        "a.py": "",
+    })
+    (tmp_path / "work").mkdir()
+    (project.path / ".tox").symlink_to(tmp_path / "work", target_is_directory=True)
+    mocker.patch("tox.config.main.sys", mocker.create_autospec(sys, platform="win32"))
+
+    result = project.run("c", "-e", "py", "-k", "commands", "--", "a.py")
+
+    result.assert_success()
+    assert result.out == "[testenv:py]\ncommands = ../../../a.py\n"
 
 
 @pytest.mark.timeout(60)
