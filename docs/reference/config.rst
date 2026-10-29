@@ -491,6 +491,8 @@ the top level of ``tox.toml``. Placing these options in an environment section (
     :ref:`provision_tox_env` for more details. tox always appends itself to this list, as ``tox>=<min_version>`` when
     :ref:`min_version` is set.
 
+    A requirement containing a line break or ending in a backslash is refused before provisioning installs it.
+
      .. tab:: TOML
 
         .. code-block:: toml
@@ -569,7 +571,12 @@ the top level of ``tox.toml``. Placing these options in an environment section (
     :keys: tox_root, toxinidir
     :version_added: 1.6.1
 
-    The root directory for the tox project (where the configuration file is found).
+    The root directory for the tox project. By default, this is the directory containing the configuration file; tox
+    resolves a relative override against that directory.
+
+    For relative values of :ref:`work_dir`, :ref:`temp_dir`, :ref:`package_root`, :ref:`env_dir`, :ref:`env_tmp_dir`,
+    :ref:`env_log_dir`, :ref:`meta_dir`, :ref:`pkg_dir` and :ref:`package_glob`, tox uses :ref:`tox_root` as the base,
+    including when tox starts elsewhere with ``-c``. Absolute values keep their configured location.
 
 .. conf::
     :keys: config_file_path
@@ -605,9 +612,9 @@ the top level of ``tox.toml``. Placing these options in an environment section (
 
         work_dir = "{home}/.local/state/tox/{tox_root_name}"
 
-    The ``--workdir`` CLI flag and the user-level configuration file take the value as a literal path, without
-    substitution. See :ref:`howto_out_of_tree_envs` for a walk-through and :ref:`work-dir-placement` for the
-    trade-offs.
+    tox resolves a relative configured value against :ref:`tox_root`. The ``--workdir`` CLI flag and the user-level
+    configuration file take the value as a literal path, without substitution. See :ref:`howto_out_of_tree_envs` for a
+    walk-through and :ref:`work-dir-placement` for the trade-offs.
 
 .. conf::
     :keys: temp_dir
@@ -773,7 +780,7 @@ Base options
     :default: {work_dir}/{env_name}
     :version_added: 1.5
 
-    Directory assigned to the tox environment. If not absolute it would be treated as relative to :ref:`tox_root`.
+    Directory assigned to the tox environment. tox resolves a relative value against :ref:`tox_root`.
 
 .. conf::
     :keys: env_tmp_dir, envtmpdir
@@ -1506,6 +1513,9 @@ Run
             [testenv]
             commands = xcopy "\\server\share\file name.txt" .
 
+        On Windows, ``.bat`` and ``.cmd`` commands run through ``cmd.exe``, so tox quotes their arguments for that
+        parser. A batch file reading raw ``%1`` can see surrounding quotes for arguments that need them.
+
         tox pastes substitution values into the command text before splitting it, so a value with spaces splits into
         several arguments unless the argument holding it is quoted. Keep such values unquoted in ``[vars]`` and quote
         the complete argument where it is used:
@@ -1532,11 +1542,9 @@ Run
 
     .. note::
 
-      Inline scripts can be used, however note these are discovered from the project root directory, and is not
-      influenced by :ref:`change_dir` (this only affects the runtime current working directory). To make this behavior
-      explicit we recommend that you make inline scripts absolute paths by prepending ``{tox_root}``, instead of
-      ``path/to/my_script`` prefer ``{tox_root}{/}path{/}to{/}my_script``. If your inline script is platform dependent
-      refer to :ref:`platform-specification` on how to select different script per platform.
+      On POSIX, tox resolves a relative inline script from :ref:`change_dir` (``{tox_root}`` by default). Use an absolute
+      path to select the same script across platforms: write ``{tox_root}{/}path{/}to{/}my_script`` instead of
+      ``path/to/my_script``. For platform-specific scripts, see :ref:`platform-specification`.
 
 .. conf::
     :keys: commands_post
@@ -1974,6 +1982,11 @@ Python run
     - a `constraint file <https://pip.pypa.io/en/stable/user_guide/#constraints-files>`_ when the value starts with
       ``-c`` (followed by a file path or URL).
 
+    A substitution inside a dependency or option entry cannot add a requirements-file line. tox refuses a line break in
+    that value, or a backslash at the end of a substituted line, before starting pip. A substitution alone in its entry,
+    such as ``{[testenv]deps}``, can still supply multiple requirements. A globbed requirement path containing a line
+    break or ending in a backslash is refused.
+
     If you are only defining :pep:`508` requirements (aka no pip requirement files), you should use
     :ref:`dependency_groups` instead.
 
@@ -2012,7 +2025,8 @@ Python run
     `Constraints files <https://pip.pypa.io/en/stable/user_guide/#constraints-files>`_ to use during package and
     dependency installation. Provided constraints files will be used when installing package dependencies and any
     additional dependencies specified in :ref:`deps`, but will not be used when installing the package itself.
-    Each value must be a file path or URL.
+    Each value must be a file path or URL. A substitution within one value cannot add a line break or end a line with a
+    backslash, as in :ref:`deps`.
 
 .. conf::
     :keys: use_develop, usedevelop
@@ -2131,8 +2145,9 @@ tox supports operating with externally built packages. External packages might b
     :default: {envtmpdir}{/}dist{/}*
     :version_added: 4.0
 
-    A glob that should match the wheel/sdist file to install. If no file or multiple files is matched the packaging
-    operation is considered failed and will raise an error.
+    This pattern selects the wheel or sdist to install. tox resolves a relative pattern against :ref:`tox_root`,
+    including when it starts elsewhere with ``-c``. If the pattern matches zero or multiple files, tox stops packaging
+    with an error.
 
 Python virtual environment
 ==========================
@@ -2620,6 +2635,10 @@ exist, and each setting picks a value per factor.
 
 Naming
 ======
+
+Each selected environment name must be one path component. tox rejects ``.`` and ``..``, absolute paths, and names
+containing the platform's path separators before creating an environment. An empty name in ``env_list`` is also
+rejected.
 
 tox accepts letters, digits, underscores and dots in a factor, so ``3.14`` and ``django_5`` are both valid. ``-``
 separates factors and ``,`` separates environment names, so a factor contains neither:
@@ -3424,10 +3443,13 @@ create your virtual env for the developers. This also supports ranges in the sam
 **Value substitution** operates through the ``{...}`` string-substitution pattern. The string inside the curly braces
 may reference a global or per-environment config key as described above.
 
-tox substitutes a key's value when it loads the key, then substitutes references in the result. If nested expansion
-exceeds the depth limit, tox logs one warning for that value and leaves the remaining references as text. :ref:`set_env`
-is the exception: tox substitutes each of its values only when it reads that value, see :ref:`set_env resolution rules
-<set-env-resolution>`.
+tox substitutes a key's value when it loads the key, then substitutes expressions in referenced configuration text or
+host environment variables. If nested expansion exceeds the depth limit, tox logs one warning for that value and leaves
+the remaining references as text. :ref:`set_env` is the exception: tox substitutes each of its values only when it reads
+that value, see :ref:`set_env resolution rules <set-env-resolution>`.
+
+Positional arguments, file names matched by ``{glob:PATTERN}`` and ``TOX_FACTOR_<label>`` overrides are data rather than
+configuration, so tox inserts them as they are: a ``{...}`` or ``[]`` within them is not a substitution.
 
 In substitutions, the backslash character ``\`` will act as an escape when preceding ``{``, ``}``, ``:``, ``[``, or
 ``]``, otherwise the backslash will be reproduced literally:
@@ -3545,7 +3567,9 @@ then the value will be replaced with positional arguments as provided to the tox
 
 In this instance, the positional argument portion will be replaced with ``arg1 arg2``. If no positional arguments were
 specified, the value of DEFAULTS will be used instead. If DEFAULTS contains other substitution strings, such as
-``{env:*}``, they will be interpreted.,
+``{env:*}``, they will be interpreted. The positional arguments themselves are passed through literally, so the command
+receives ``{env:HOME}`` for ``tox run -- '{env:HOME}'``. Only the TOML ``posargs`` replacement can opt in to
+substituting them, with ``substitute = true``.
 
 Use a double ``--`` if you also want to pass options to an underlying test command, for example:
 
@@ -3556,6 +3580,10 @@ Use a double ``--`` if you also want to pass options to an underlying test comma
 will make the ``--opt1 ARG1`` appear in all test commands where ``[]`` or ``{posargs}`` was specified. By default (see
 ``args_are_paths`` setting), ``tox`` rewrites each positional argument if it is a relative path and exists on the
 filesystem to become a path relative to the ``changedir`` setting.
+
+When an INI value uses ``{posargs}``, tox replaces line breaks within each positional argument with spaces before
+quoting it. INI command and list values use line breaks to separate entries. The same replacement applies to TOML
+strings containing ``{posargs}``; a TOML ``replace = "posargs"`` table keeps line breaks in the argument.
 
 .. _glob substitution:
 

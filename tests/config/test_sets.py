@@ -4,7 +4,7 @@ import re
 from collections import OrderedDict
 from collections.abc import Callable
 from pathlib import Path
-from typing import TYPE_CHECKING, TypeVar
+from typing import TYPE_CHECKING, Final, TypeVar
 
 import pytest
 
@@ -20,7 +20,7 @@ if TYPE_CHECKING:
     from pytest_mock import MockerFixture
 
     from tests.conftest import ToxIniCreator
-    from tox.pytest import ToxProjectCreator
+    from tox.pytest import ToxProject, ToxProjectCreator, ToxRunOutcome
 
 ConfBuilder = Callable[[str], ConfigSet]
 
@@ -183,10 +183,25 @@ def test_set_env_raises_on_non_str(mocker: MockerFixture) -> None:
 
 @pytest.mark.parametrize("work_dir", ["a", ""])
 def test_config_work_dir(tox_project: ToxProjectCreator, work_dir: str) -> None:
-    project = tox_project({"tox.ini": "[tox]\ntoxworkdir=b"})
-    result = project.run("c", *(["--workdir", str(project.path / work_dir)] if work_dir else []))
-    expected = project.path / work_dir if work_dir else Path("b")
+    project: Final[ToxProject] = tox_project({"tox.ini": "[tox]\ntoxworkdir=b"})
+    result: Final[ToxRunOutcome] = project.run("c", *(["--workdir", str(project.path / work_dir)] if work_dir else []))
+    expected: Final[Path] = project.path / (work_dir or "b")
     assert expected == result.state.conf.core["work_dir"]
+
+
+@pytest.mark.parametrize(
+    ("key", "path"),
+    [
+        pytest.param("tox_root", "r", id="root"),
+        pytest.param("work_dir", "r/w", id="work"),
+        pytest.param("temp_dir", "r/t", id="temp"),
+    ],
+)
+def test_config_core_dirs_are_relative_to_conf(tox_project: ToxProjectCreator, key: str, path: str) -> None:
+    project: Final[ToxProject] = tox_project({"tox.ini": "[tox]\ntox_root=r\nwork_dir=w\ntemp_dir=t"})
+    result: Final[ToxRunOutcome] = project.run("c", "--core", "-c", project.path.name, from_cwd=project.path.parent)
+    result.assert_success()
+    assert result.state.conf.core[key] == project.path / path
 
 
 def test_config_work_dir_substitutions(tox_project: ToxProjectCreator, monkeypatch: pytest.MonkeyPatch) -> None:

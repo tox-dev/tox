@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import sys
 from typing import TYPE_CHECKING, Final
 
@@ -11,7 +12,7 @@ if TYPE_CHECKING:
     from pytest_mock import MockerFixture
 
     from tests.config.loader.conftest import ReplaceOne
-    from tox.pytest import LogCaptureFixture, ToxProjectCreator
+    from tox.pytest import ToxProjectCreator
 
 
 @pytest.mark.parametrize("syntax", ["{posargs}", "[]"])
@@ -72,18 +73,6 @@ def test_replace_pos_args_escaped(replace_one: ReplaceOne, value: str) -> None:
     assert result == outcome
 
 
-def test_replace_pos_args_circular_fan_out(replace_one: ReplaceOne, caplog: LogCaptureFixture) -> None:
-    result = replace_one("{posargs}", ["{posargs}{posargs}"])
-    assert "{posargs}{posargs}" in result
-    assert (
-        sum(
-            message.startswith("Could not expand ") and message.endswith("after recursing 101 frames")
-            for message in caplog.messages
-        )
-        == 1
-    )
-
-
 @pytest.mark.parametrize(
     ("value", "result"),
     [
@@ -114,6 +103,10 @@ def test_half_escaped_braces(replace_one: ReplaceOne) -> None:
         pytest.param(r"C:\Program Files\x", id="windows-path"),
         pytest.param(r"\\server\share", id="unc-path"),
         pytest.param(r"a\\b", id="backslash-pair"),
+        pytest.param("{env_name}", id="substitution"),
+        pytest.param("{posargs} -x", id="posargs"),
+        pytest.param("a[]b", id="brackets"),
+        pytest.param(r"\{a\}", id="escaped-braces"),
     ],
 )
 def test_replace_pos_args_reach_command_intact(
@@ -125,6 +118,95 @@ def test_replace_pos_args_reach_command_intact(
     outcome = project.run("c", "-k", "commands", "--", arg)
     outcome.assert_success()
     assert outcome.env_conf("py")["commands"] == [Command(args=["python", arg])]
+
+
+@pytest.mark.parametrize(
+    "config",
+    [
+        pytest.param("commands = python {[base]args}\n[base]\nargs = {posargs}", id="section-reference"),
+        pytest.param("commands = {[base]commands}\n[base]\ncommands = python {posargs}", id="section-reference-line"),
+        pytest.param("description = {posargs}\ncommands = python {description}", id="key-reference"),
+        pytest.param("commands = python {missing:{posargs}}", id="key-reference-default"),
+        pytest.param("set_env = ARGS={posargs}\ncommands = python {env:ARGS}", id="set-env"),
+        pytest.param("commands = python {env:MISSING:{posargs}}", id="env-default"),
+        pytest.param("commands = python {tty:{posargs}:{posargs}}", id="tty"),
+        pytest.param("commands = python {glob:missing/*:{posargs}}", id="glob-default"),
+    ],
+)
+@pytest.mark.parametrize("arg", ["{env_name}", "{posargs} -x"])
+def test_replace_pos_args_reach_command_intact_when_nested(
+    tox_project: ToxProjectCreator, monkeypatch: pytest.MonkeyPatch, config: str, arg: str
+) -> None:
+    monkeypatch.delenv("MISSING", raising=False)
+    project: Final = tox_project({"tox.ini": f"[testenv]\n{config}"})
+    outcome: Final = project.run("c", "-k", "commands", "--", arg)
+    outcome.assert_success()
+    assert outcome.env_conf("py")["commands"] == [Command(args=["python", arg])]
+
+
+def test_replace_pos_args_default_substituted(tox_project: ToxProjectCreator) -> None:
+    project: Final = tox_project({
+        "tox.ini": "[testenv]\ncommands = python {posargs:{[base]args}}\n[base]\nargs = a{/}{env_name}"
+    })
+    outcome: Final = project.run("c", "-k", "commands")
+    outcome.assert_success()
+    assert outcome.env_conf("py")["commands"] == [Command(args=["python", f"a{os.sep}py"])]
+
+
+@pytest.mark.parametrize("platform", [pytest.param("win32", id="windows"), pytest.param("linux", id="linux")])
+@pytest.mark.parametrize(
+    "commands",
+    [
+        pytest.param("{posargs}", id="alone"),
+        pytest.param("[]", id="alone-brackets"),
+        pytest.param("{posargs:pytest}", id="alone-default"),
+        pytest.param("{env:_MISSING:{posargs}}", id="alone-nested"),
+        pytest.param("python {env:_MISSING:-c} {posargs}", id="after-token"),
+        pytest.param("python -c {posargs}", id="in-line"),
+    ],
+)
+@pytest.mark.parametrize("override", [pytest.param(True, id="override"), pytest.param(False, id="config")])
+def test_replace_pos_args_line_break_stays_one_command(
+    tox_project: ToxProjectCreator, mocker: MockerFixture, platform: str, commands: str, override: bool
+) -> None:
+    for module in ("tox.config.loader.replacer", "tox.config.loader.str_convert"):
+        mocker.patch(f"{module}.sys", mocker.create_autospec(sys, platform=platform))
+    project: Final = tox_project({"tox.ini": f"[testenv]\ncommands = {'python' if override else commands}"})
+    prefix: Final = [] if commands.startswith("python") else ["python", "-c"]
+    overrides: Final = ["-x", f"testenv.commands={commands}"] if override else []
+    outcome: Final = project.run("c", "-k", "commands", *overrides, "--", *prefix, "a\npython -c b\n", "\n", "c\r\nd")
+    outcome.assert_success()
+    assert outcome.env_conf("py")["commands"] == [Command(args=["python", "-c", "a python -c b", "", "c d"])]
+
+
+def test_replace_pos_args_line_break_stays_one_list_entry(tox_project: ToxProjectCreator) -> None:
+    project: Final = tox_project({"tox.ini": "[testenv]\nallowlist_externals = {posargs}"})
+    outcome: Final = project.run("c", "-k", "allowlist_externals", "--", "a\nb")
+    outcome.assert_success()
+    assert outcome.env_conf("py")["allowlist_externals"] == ["'a b'"]
+
+
+@pytest.mark.parametrize(
+    "arg",
+    [
+        pytest.param("main\npython -c injected\n", id="plain"),
+        pytest.param("it's\npython -c injected\n", id="apostrophe"),
+    ],
+)
+def test_referenced_default_command_line_break_stays_one_command(tox_project: ToxProjectCreator, arg: str) -> None:
+    project: Final = tox_project({
+        "tox.ini": (
+            "[testenv:notes]\nrunner = virtualenv-pep-723\nscript = check.py\n"
+            "[testenv:release]\ncommands = python -c pass\n    {[testenv:notes]commands}\n"
+        ),
+        "check.py": "print('ok')\n",
+    })
+    outcome: Final = project.run("c", "-e", "release", "-k", "commands", "--", arg)
+    outcome.assert_success()
+    assert outcome.env_conf("release")["commands"] == [
+        Command(args=["python", "-c", "pass"]),
+        Command(args=["python", str(project.path / "check.py"), " ".join(arg.splitlines())]),
+    ]
 
 
 @pytest.mark.parametrize("platform", [pytest.param("win32", id="windows"), pytest.param("linux", id="linux")])

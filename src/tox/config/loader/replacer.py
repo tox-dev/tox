@@ -36,6 +36,7 @@ BACKSLASH_ESCAPE_CHARS: Final[tuple[str, ...]] = (ARG_DELIMITER, REPLACE_START, 
 MAX_REPLACE_DEPTH: Final[int] = 100
 # lets a run resolve a labeled factor to a value the configuration does not list, without renaming environments
 _FACTOR_ENV_PREFIX: Final[str] = "TOX_FACTOR_"
+_REQUIREMENT_LINE_BREAKS: Final[str] = r"[\n\r\v\f\x1c-\x1e\x85\u2028\u2029]"
 
 
 class MatchRecursionError(ValueError):
@@ -52,6 +53,10 @@ class MatchError(Exception):
     """Couldn't find end terminator in MatchExpression."""
 
 
+class RawText(str):  # ruff:ignore[subclass-builtin] # keep the origin through the str replacement interface
+    __slots__ = ()
+
+
 class ReplaceReference(ABC):
     @abstractmethod
     def __call__(self, value: str, conf_args: ConfigLoadArgs) -> str | None:
@@ -60,7 +65,7 @@ class ReplaceReference(ABC):
         :param value: the raw value
         :param conf_args: the configuration loads argument object
 
-        :returns: the replaced value, None if it can't do it.
+        :returns: the replaced value (as :class:`RawText` to have its own tokens replaced), None if it can't do it.
 
         """
         raise NotImplementedError
@@ -88,6 +93,12 @@ def replace_command_lines(
 ) -> str:
     """Replace all active tokens within value, where each line of value is one command."""
     return CommandLinesReplacer(conf, reference, conf_args=args).expand(value)
+
+
+def replace_requirement_lines(
+    conf: Config, reference: ReplaceReference, value: str | MatchExpression, args: ConfigLoadArgs
+) -> str:
+    return RequirementLinesReplacer(conf, reference, conf_args=args).expand(value)
 
 
 def replace_entries(
@@ -288,12 +299,17 @@ class Replacer:
     def _replace_match(self, value: MatchExpression) -> tuple[str, bool]:
         # use a copy of conf_args so any changes from this replacement don't, affect adjacent substitutions (#2869)
         conf_args = self.conf_args.copy()
-        flattened_args = [self.join(arg) for arg in value.expr]
+        flattened_args = [self._flatten_arg(arg) for arg in value.expr]
         of_type, *args = flattened_args
         replace_value = self._resolve_replace(of_type, args, flattened_args, conf_args)
         if replace_value is not None:
-            needs_expansion = any(isinstance(m, MatchExpression) for m in find_replace_expr(replace_value))
-            if needs_expansion and self.recursive and not self.root.depth_exhausted:
+            # Only raw configuration text gets another pass; positional arguments and file names are data.
+            if (
+                self.recursive
+                and not self.root.depth_exhausted
+                and isinstance(replace_value, RawText)
+                and any(isinstance(match, MatchExpression) for match in find_replace_expr(replace_value))
+            ):
                 try:
                     return self._nested(conf_args).expand(replace_value), True
                 except MatchRecursionError as err:
@@ -310,6 +326,9 @@ class Replacer:
         nested: Final[Self] = type(self)(self.conf, self.reference, conf_args, self.depth + 1)
         nested.root = self.root
         return nested
+
+    def _flatten_arg(self, value: MatchArg) -> str:
+        return self.join(value)
 
     def _resolve_replace(
         self, of_type: str, args: list[str], flattened_args: list[str], conf_args: ConfigLoadArgs
@@ -344,6 +363,44 @@ class CommandLinesReplacer(Replacer):
             " ".join(replaced.splitlines()) if _shares_line(value, at) else replaced
             for at, replaced in enumerate(self(value))
         )
+
+
+class RequirementLinesReplacer(Replacer):
+    @override
+    def _flatten_arg(self, value: MatchArg) -> str:
+        return self.join_value(value)
+
+    @override
+    def join_value(self, value: MatchArg) -> str:
+        replaced: Final = self(value)
+        for at, part in enumerate(value):
+            if not isinstance(part, MatchExpression):
+                continue
+            text = replaced[at]
+            following = "".join(replaced[at + 1 :])
+            if re.search(rf"\\(?={_REQUIREMENT_LINE_BREAKS})", text) or (
+                text.endswith("\\") and (not following or re.match(_REQUIREMENT_LINE_BREAKS, following))
+            ):
+                msg = "a requirement substitution cannot end a line with a backslash"
+                raise ValueError(msg)
+            if self._shares_line(value, at) and text != "".join(text.splitlines()):
+                msg = "a substitution within a requirement cannot add a line break"
+                raise ValueError(msg)
+        return "".join(replaced)
+
+    @staticmethod
+    def _shares_line(value: MatchArg, at: int) -> bool:
+        for part in reversed(value[:at]):
+            if isinstance(part, MatchExpression) or re.split(_REQUIREMENT_LINE_BREAKS, part)[-1].strip():
+                return True
+            if re.search(_REQUIREMENT_LINE_BREAKS, part):
+                break
+        for part in value[at + 1 :]:
+            if isinstance(part, MatchExpression) or re.split(_REQUIREMENT_LINE_BREAKS, part)[0].strip():
+                return True
+            if re.search(_REQUIREMENT_LINE_BREAKS, part):
+                break
+        return False
 
 
 class EntriesReplacer(Replacer):
@@ -416,10 +473,12 @@ def replace_pos_args(conf: Config, args: list[str], conf_args: ConfigLoadArgs) -
 
 
 def quote_args(args: Sequence[str]) -> str:
+    # INI settings split lines before parsing quotes.
+    normalized: Final = [" ".join(arg.splitlines()) for arg in args]
     if sys.platform != "win32":
-        return shlex.join(args)
+        return shlex.join(normalized)
     # Windows command splitting keeps a lone backslash, so paths stay unquoted where a value is not split into a command
-    return " ".join(arg if arg and not re.search(r"[\s'\"]|\\\\", arg) else shlex.quote(arg) for arg in args)
+    return " ".join(arg if arg and not re.search(r"[\s'\"]|\\\\", arg) else shlex.quote(arg) for arg in normalized)
 
 
 def load_posargs(conf: Config, conf_args: ConfigLoadArgs) -> tuple[str, ...] | None:
@@ -466,7 +525,7 @@ def replace_env(conf: Config | None, args: list[str], conf_args: ConfigLoadArgs)
             raise MatchRecursionError(msg)
 
     if key in os.environ:
-        return os.environ[key]
+        return RawText(os.environ[key])  # a host variable has always been allowed to hold tokens of its own
 
     return "" if len(args) == 1 else ARG_DELIMITER.join(args[1:])
 
@@ -520,6 +579,7 @@ def replace_factor(conf: Config, args: list[str], conf_args: ConfigLoadArgs) -> 
 __all__ = [
     "MatchExpression",
     "MatchRecursionError",
+    "RawText",
     "find_replace_expr",
     "load_posargs",
     "quote_args",
@@ -530,4 +590,5 @@ __all__ = [
     "replace_factor",
     "replace_for",
     "replace_once",
+    "replace_requirement_lines",
 ]

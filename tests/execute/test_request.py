@@ -3,6 +3,7 @@ from __future__ import annotations
 import os
 import sys
 from pathlib import Path
+from typing import Final
 
 import pytest
 
@@ -58,3 +59,16 @@ def test_shell_cmd_redacted_leaves_innocuous_args_alone() -> None:
         run_id="",
     )
     assert request.shell_cmd_redacted == request.shell_cmd
+
+
+def test_repr_masks_secret_flag_value() -> None:
+    request: Final = ExecuteRequest(
+        cmd=["pytest", "--token=hunter2"],
+        cwd=Path.cwd(),
+        env={},
+        stdin=StdinSource.OFF,
+        run_id="",
+    )
+    representation: Final = repr(request)
+    assert "hunter2" not in representation
+    assert "--token=*******" in representation

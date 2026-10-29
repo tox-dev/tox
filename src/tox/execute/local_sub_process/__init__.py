@@ -8,13 +8,15 @@ import os
 import shutil
 import sys
 from contextlib import suppress
+from pathlib import Path
 from subprocess import DEVNULL, PIPE, TimeoutExpired
 from typing import TYPE_CHECKING, Any, Final
 
 from tox.execute.api import Execute, ExecuteInstance, ExecuteOptions, ExecuteStatus, FinishedExecuteStatus
 from tox.execute.request import ExecuteRequest, StdinSource
-from tox.execute.util import shebang
+from tox.execute.util import batch_file_command_line, is_batch_file, shebang
 from tox.tox_env.errors import Fail
+from tox.util.redact import redact_argv
 from tox.util.typing_compat import override
 
 if TYPE_CHECKING:
@@ -182,7 +184,14 @@ class LocalSubProcessExecuteInstance(ExecuteInstance):
     def cmd(self) -> Sequence[str]:
         if self._cmd is None:
             base = self.request.cmd[0]
-            executable = shutil.which(base, path=self.request.env["PATH"])
+            lookup, path = base, self.request.env["PATH"]
+            if sys.platform != "win32":
+                # The allowlist and shebang checks must inspect the file the child runs.
+                cwd = self.request.cwd.absolute()
+                if os.sep in base:
+                    lookup = str(cwd / base)
+                path = os.pathsep.join(str(cwd / entry) for entry in path.split(os.pathsep))
+            executable = shutil.which(lookup, path=path)
             if executable is None:
                 cmd = self.request.cmd  # if failed to find leave as it is
             else:
@@ -218,9 +227,16 @@ class LocalSubProcessExecuteInstance(ExecuteInstance):
         self._file_no_generators = [stdout, stderr]
         # API processes need captured replies; interactive programs need the console's terminal APIs.
         inherit_console: Final[bool] = self.options.no_capture and self.request.stdin is not StdinSource.API
+        resolved_cmd: Final[Sequence[str]] = self.cmd
+        cmd: Sequence[str] | str = resolved_cmd
+        executable: str | None = None
+        if sys.platform == "win32" and is_batch_file(resolved_cmd[0]):
+            cmd = batch_file_command_line(resolved_cmd[0], resolved_cmd[1:])
+            executable = str(Path(os.environ.get("SYSTEMROOT", r"C:\Windows")) / "System32" / "cmd.exe")
         try:
             self.process = process = Popen(
-                self.cmd,
+                cmd,
+                executable=executable,
                 stdout=None if inherit_console else next(stdout),
                 stderr=None if inherit_console else next(stderr),
                 stdin={StdinSource.USER: None, StdinSource.OFF: DEVNULL, StdinSource.API: PIPE}[self.request.stdin],
@@ -230,7 +246,10 @@ class LocalSubProcessExecuteInstance(ExecuteInstance):
         except OSError as exception:
             # We log a nice error message to avout returning opaque error codes,
             # like exit code 2 (filenotfound).
-            logging.error("Exception running subprocess %s", exception)  # ruff:ignore[error-instead-of-exception]
+            error = str(exception)
+            if isinstance(exception.filename, str):
+                error = error.replace(repr(exception.filename), repr(redact_argv([exception.filename])[0]))
+            logging.error("Exception running subprocess %s", error)  # ruff:ignore[error-instead-of-exception]
             return LocalSubprocessExecuteFailedStatus(self.options, self._out, self._err, exception)
 
         status = LocalSubprocessExecuteStatus(self.options, self._out, self._err, process)

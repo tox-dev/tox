@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import threading
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Final
 
 import pytest
 
@@ -103,7 +103,7 @@ def test_replace_env_var_circular_fan_out(
     replace_one: ReplaceOne, monkeypatch: MonkeyPatch, caplog: LogCaptureFixture
 ) -> None:
     monkeypatch.setenv("MAGIC", "{env:MAGIC}{env:MAGIC}")
-    result = replace_one("{env:MAGIC}")
+    result: Final = replace_one("{env:MAGIC}")
     assert "{env:MAGIC}{env:MAGIC}" in result
     assert [m for m in caplog.messages if m.startswith("Could not expand")] == [
         "Could not expand {env:MAGIC}{env:MAGIC} after recursing 101 frames"
@@ -116,7 +116,7 @@ def test_replace_env_var_circular_fan_out_many(
 ) -> None:
     monkeypatch.setenv("MAGIC", "{env:MAGIC}" * 100)
 
-    result = replace_one("{env:MAGIC}")
+    result: Final = replace_one("{env:MAGIC}")
 
     assert "{env:MAGIC}" in result
     assert len(result) < 1_000_000
