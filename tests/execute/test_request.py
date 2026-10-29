@@ -69,5 +69,6 @@ def test_repr_masks_secret_flag_value() -> None:
         stdin=StdinSource.OFF,
         run_id="",
     )
-    assert "hunter2" not in repr(request)
-    assert "--token=*******" in repr(request)
+    representation: Final = repr(request)
+    assert "hunter2" not in representation
+    assert "--token=*******" in representation

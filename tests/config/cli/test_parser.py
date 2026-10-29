@@ -214,9 +214,8 @@ def test_parser_hint(capsys: CaptureFixture) -> None:
 
 
 def test_parser_unknown_secret_flag_masked(capsys: CaptureFixture) -> None:
-    parser: Final = ToxParser.base()
     with pytest.raises(SystemExit):
-        parser.parse_args(["--api-token=hunter2"])
+        ToxParser.base().parse_args(["--api-token=hunter2"])
     err: Final = capsys.readouterr().err
     assert "--api-token=*******" in err
     assert "hunter2" not in err

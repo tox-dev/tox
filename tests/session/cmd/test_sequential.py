@@ -950,6 +950,7 @@ commands = [["python", "-c", "pass", "--token=hunter2", "--cov=tox"]]
 
     project.run("r", "-e", "py", "--result-json", str(result)).assert_success()
 
-    assert "hunter2" not in result.read_text()
-    command: Final = json.loads(result.read_text())["testenvs"]["py"]["test"][0]["command"]
+    content: Final = result.read_text()
+    assert "hunter2" not in content
+    command: Final = json.loads(content)["testenvs"]["py"]["test"][0]["command"]
     assert command[1:] == ["-c", "pass", "--token=*******", "--cov=tox"]

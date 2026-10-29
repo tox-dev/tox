@@ -176,9 +176,8 @@ def test_local_execute_start_error_masks_secret_flag(caplog: LogCaptureFixture, 
     request: Final = ExecuteRequest(
         cmd=["--token=hunter2"], cwd=Path.cwd(), env=os_env, stdin=StdinSource.OFF, run_id=""
     )
-    out_err: Final = FakeOutErr()
     with LocalSubProcessExecutor(colored=False).call(
-        request, show=True, out_err=out_err.out_err, env=_create_mock_env()
+        request, show=True, out_err=FakeOutErr().out_err, env=_create_mock_env()
     ) as status:
         status.wait()
     assert isinstance(status.start_error, OSError)
