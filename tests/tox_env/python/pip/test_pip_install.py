@@ -206,6 +206,59 @@ def test_pip_install_constraints_substitution_cannot_add_line(
 
 
 @pytest.mark.parametrize(
+    "files",
+    [
+        pytest.param(
+            {"tox.toml": '[env_run_base]\npackage="skip"\ndeps=["--extra-index-url https://host/{env:PART}", "pkg"]'},
+            id="toml",
+        ),
+        pytest.param(
+            {"tox.ini": "[testenv]\npackage=skip\ndeps=\n --extra-index-url https://host/{env:PART}\n pkg"},
+            id="ini",
+        ),
+    ],
+)
+def test_pip_install_deps_substitution_cannot_add_option(
+    tox_project: ToxProjectCreator, monkeypatch: pytest.MonkeyPatch, files: dict[str, str]
+) -> None:
+    monkeypatch.setenv("PART", "value --index-url=https://other/simple")
+    project: Final = tox_project(files)
+    execute_calls: Final = project.patch_execute(lambda request: 0 if "install" in request.run_id else None)
+
+    result: Final = project.run("r", "-e", "py")
+
+    result.assert_failed()
+    assert "a requirement substitution cannot change pip options" in result.out
+    assert execute_calls.call_count == 0
+
+
+def test_pip_install_deps_substitution_keeps_static_options(
+    tox_project: ToxProjectCreator, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("PART", "cpu")
+    result: Final = tox_project({
+        "tox.toml": '[env_run_base]\npackage="skip"\ndeps=["--index-url https://host/{env:PART} '
+        '--extra-index-url https://mirror/simple", "pkg"]',
+    }).run("c", "-e", "py", "-k", "deps")
+
+    result.assert_success()
+    assert "  -i https://host/cpu\n  --extra-index-url https://mirror/simple\n" in result.out
+
+
+def test_pip_install_deps_substitution_cannot_replace_static_option(
+    tox_project: ToxProjectCreator, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("PART", "cpu --index-url https://other/simple #")
+    result: Final = tox_project({
+        "tox.toml": '[env_run_base]\npackage="skip"\ndeps=["--index-url https://host/{env:PART} '
+        '--index-url https://trusted/simple", "pkg"]',
+    }).run("c", "-e", "py", "-k", "deps")
+
+    result.assert_failed()
+    assert "a requirement substitution cannot change pip options" in result.out
+
+
+@pytest.mark.parametrize(
     ("filename", "content", "namespace"),
     [
         pytest.param("tox.toml", '[env_run_base]\npackage="skip"\ndeps=["a"]', "env_run_base", id="toml"),

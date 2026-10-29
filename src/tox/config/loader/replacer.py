@@ -15,6 +15,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, Final, Union, get_args, get_origin
 
 from tox.config.types import CircularChainError, Command, EnvList
+from tox.tox_env.python.pip.req_file import PythonDeps
 from tox.util.typing_compat import override
 
 if TYPE_CHECKING:
@@ -352,6 +353,7 @@ class RequirementLinesReplacer(Replacer):
     @override
     def join_value(self, value: MatchArg) -> str:
         replaced: Final = self(value)
+        baseline: Final = list(replaced)
         for at, part in enumerate(value):
             if not isinstance(part, MatchExpression):
                 continue
@@ -362,10 +364,15 @@ class RequirementLinesReplacer(Replacer):
             ):
                 msg = "a requirement substitution cannot end a line with a backslash"
                 raise ValueError(msg)
-            if self._shares_line(value, at) and text != "".join(text.splitlines()):
+            if (shares_line := self._shares_line(value, at)) and text != "".join(text.splitlines()):
                 msg = "a substitution within a requirement cannot add a line break"
                 raise ValueError(msg)
-        return "".join(replaced)
+            if shares_line:
+                baseline[at] = f"\x00{at}\x00"
+        result: Final = "".join(replaced)
+        if baseline != replaced:
+            PythonDeps.validate_requirement_options("".join(baseline), result)
+        return result
 
     @staticmethod
     def _shares_line(value: MatchArg, at: int) -> bool:
