@@ -277,13 +277,13 @@ class Loader(Convert[T]):
                 result = appended
         return SetEnvReference(result, args, shape)
 
-    def substitute(self, value: str, conf: Config, args: ConfigLoadArgs, *, of_type: type[object] | UnionType) -> str:
+    def substitute(self, value: str, conf: Config, args: ConfigLoadArgs, *, of_type: type[V] | UnionType) -> str:
         """Apply this loader's replacements to a raw string.
 
         :param value: the raw string
         :param conf: the global config
         :param args: env args
-        :param of_type: the type the string is converted to afterwards, telling if its lines are commands or entries
+        :param of_type: the setting type used to select its substitution rules
 
         :returns: the string with every substitution this loader understands resolved
 
