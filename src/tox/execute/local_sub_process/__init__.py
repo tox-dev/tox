@@ -15,6 +15,7 @@ from tox.execute.api import Execute, ExecuteInstance, ExecuteOptions, ExecuteSta
 from tox.execute.request import ExecuteRequest, StdinSource
 from tox.execute.util import shebang
 from tox.tox_env.errors import Fail
+from tox.util.redact import redact_argv
 from tox.util.typing_compat import override
 
 if TYPE_CHECKING:
@@ -237,7 +238,10 @@ class LocalSubProcessExecuteInstance(ExecuteInstance):
         except OSError as exception:
             # We log a nice error message to avout returning opaque error codes,
             # like exit code 2 (filenotfound).
-            logging.error("Exception running subprocess %s", exception)  # ruff:ignore[error-instead-of-exception]
+            error = str(exception)
+            if isinstance(exception.filename, str):
+                error = error.replace(repr(exception.filename), repr(redact_argv([exception.filename])[0]))
+            logging.error("Exception running subprocess %s", error)  # ruff:ignore[error-instead-of-exception]
             return LocalSubprocessExecuteFailedStatus(self.options, self._out, self._err, exception)
 
         status = LocalSubprocessExecuteStatus(self.options, self._out, self._err, process)
