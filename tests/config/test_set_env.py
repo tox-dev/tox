@@ -415,6 +415,40 @@ def test_set_env_file_ignores_export_keyword(eval_set_env: EvalSetEnv) -> None:
     }
 
 
+@pytest.mark.parametrize(
+    "separator",
+    [
+        pytest.param("\x0b", id="vertical-tab"),
+        pytest.param("\x0c", id="form-feed"),
+        pytest.param("\x1c", id="file-separator"),
+        pytest.param("\x1d", id="group-separator"),
+        pytest.param("\x1e", id="record-separator"),
+        pytest.param("\x85", id="next-line"),
+        pytest.param("\u2028", id="line-separator"),
+        pytest.param("\u2029", id="paragraph-separator"),
+    ],
+)
+def test_set_env_environment_file_keeps_value_separator(eval_set_env: EvalSetEnv, separator: str) -> None:
+    set_env = eval_set_env(
+        "[testenv]\npackage=skip\nset_env=file|.env",
+        extra_files={".env": f"TITLE=fix{separator}PIP_INDEX_URL=http://other\nBUILD=7\n"},
+    )
+    assert set_env.load("TITLE") == f"fix{separator}PIP_INDEX_URL=http://other"
+    assert "PIP_INDEX_URL" not in set_env
+    assert set_env.load("BUILD") == "7"
+
+
+@pytest.mark.parametrize(
+    "line_end", [pytest.param("\n", id="lf"), pytest.param("\r\n", id="crlf"), pytest.param("\r", id="cr")]
+)
+def test_set_env_environment_file_line_endings(tox_project: ToxProjectCreator, line_end: str) -> None:
+    project = tox_project({"tox.toml": '[env_run_base]\npackage = "skip"\nset_env = { file = "magic.env" }'})
+    (project.path / "magic.env").write_bytes(f"A=1{line_end}B=2{line_end}".encode())
+    set_env = project.run("c", "-e", "py", "-k", "set_env").env_conf("py")["set_env"]
+    assert set_env.load("A") == "1"
+    assert set_env.load("B") == "2"
+
+
 def test_set_env_environment_file_utf8_bom(tox_project: ToxProjectCreator) -> None:
     project = tox_project({"tox.toml": '[env_run_base]\npackage = "skip"\nset_env = { file = "magic.env" }'})
     (project.path / "magic.env").write_bytes(b"\xef\xbb\xbfMAGIC=1\n")
@@ -1185,6 +1219,28 @@ def test_set_env_parsed_expression_without_loader_fails() -> None:
             "py: failed to load py.set_env: circular reference env_run_base.set_env -> env_run_base.set_env",
             id="toml-self-ref",
         ),
+        pytest.param(
+            "ini",
+            """
+            [testenv]
+            package = skip
+            set_env = {[testenv:other]set_env}
+            [testenv:other]
+            """,
+            "py: replace failed in py.set_env with CircularChainError('circular chain detected testenv.set_env')",
+            id="ini-inherited-include-cycle",
+        ),
+        pytest.param(
+            "toml",
+            """
+            [env_run_base]
+            package = "skip"
+            set_env = "{[env.other]set_env}"
+            [env.other]
+            """,
+            "py: failed to load py.set_env: circular chain detected env_run_base.set_env",
+            id="toml-inherited-include-cycle",
+        ),
     ],
 )
 def test_set_env_cycle_fails_env(
@@ -1194,6 +1250,123 @@ def test_set_env_cycle_fails_env(
 
     result.assert_failed(code=1)
     assert f"{message}\n" in result.out
+
+
+_INCLUDE_ENV: Final = [
+    pytest.param(
+        "ini",
+        """
+        [testenv]
+        package = skip
+        set_env =
+            MESSAGE = {env:HOST_MESSAGE}
+            NAME = {env_name}
+            ESCAPED = a\\;b
+            NEVER = 1; sys_platform == 'nonexistent'
+            other: FACTOR = other
+        [testenv:other]
+        [testenv:py]
+        set_env = {[testenv:other]set_env}
+        """,
+        id="ini-inherited",
+    ),
+    pytest.param(
+        "ini",
+        """
+        [testenv]
+        package = skip
+        [testenv:other]
+        setenv =
+            MESSAGE = {env:HOST_MESSAGE}
+            NAME = {env_name}
+            ESCAPED = a\\;b
+            NEVER = 1; sys_platform == 'nonexistent'
+            other: FACTOR = other
+        [testenv:py]
+        set_env = {[testenv:other]set_env}
+        """,
+        id="ini-alias",
+    ),
+    pytest.param(
+        "ini",
+        """
+        [testenv]
+        package = skip
+        [testenv:{other,more}]
+        set_env =
+            MESSAGE = {env:HOST_MESSAGE}
+            NAME = {env_name}
+            ESCAPED = a\\;b
+            NEVER = 1; sys_platform == 'nonexistent'
+            other: FACTOR = other
+        [testenv:py]
+        set_env = {[testenv:other]set_env}
+        """,
+        id="ini-generative",
+    ),
+    pytest.param(
+        "toml",
+        """
+        [env_run_base]
+        package = "skip"
+        [env.other.set_env]
+        MESSAGE = "{env:HOST_MESSAGE}"
+        NAME = "{env_name}"
+        ESCAPED = "a;b"
+        NEVER = { value = "1", marker = "sys_platform == 'nonexistent'" }
+        FACTOR = { replace = "if", condition = "factor.other", then = "other", else = "" }
+        [env.py]
+        set_env = "{[env.other]set_env}"
+        """,
+        id="toml-string",
+    ),
+]
+
+
+@pytest.mark.parametrize(
+    "envs", [pytest.param("py", id="selected-only"), pytest.param("other,py", id="source-and-target")]
+)
+@pytest.mark.parametrize(("of_type", "config"), _INCLUDE_ENV)
+def test_set_env_include_env_keeps_values_as_data(
+    tox_project: ToxProjectCreator, monkeypatch: MonkeyPatch, of_type: ConfigFileFormat, config: str, envs: str
+) -> None:
+    message: Final = "subject; 'x' # y\nINJECTED = 1\nfile|missing\u2028OTHER = 2"
+    monkeypatch.setenv("HOST_MESSAGE", message)
+
+    result: Final = tox_project({f"tox.{of_type}": textwrap.dedent(config)}).run("c", "-k", "set_env", "-e", envs)
+
+    result.assert_success()
+    set_env: Final = result.env_conf("py").get("set_env", SetEnv)
+    assert {key: set_env.load(key) for key in set_env} == {
+        "MESSAGE": message,
+        "NAME": "py",
+        "ESCAPED": "a;b",
+        "FACTOR": "other",
+        "PYTHONHASHSEED": ANY,
+        "PIP_DISABLE_PIP_VERSION_CHECK": "1",
+        "PYTHONIOENCODING": "utf-8",
+        **_EXPORTED,
+    }
+
+
+def test_set_env_include_env_file_named_by_sibling_key(eval_set_env: EvalSetEnv) -> None:
+    config: Final = """
+    [testenv]
+    package = skip
+    set_env =
+        DIR = conf
+        file|{env:DIR}/{env_name}.env
+    [testenv:other]
+    [testenv:py]
+    set_env = {[testenv:other]set_env}
+    """
+    set_env: Final = eval_set_env(textwrap.dedent(config), extra_files={"conf": {"other.env": "FROM_FILE=a;b # c"}})
+    assert set_env.load("FROM_FILE") == "a;b # c"
+
+
+def test_set_env_include_env_without_set_env(eval_set_env: EvalSetEnv) -> None:
+    config: Final = "[testenv]\npackage=skip\n[testenv:other]\n[testenv:py]\nset_env=\n {[testenv:other]set_env}\n A=1"
+    assert eval_set_env(config).load("A") == "1"
 
 
 def test_set_env_unresolved_include_line(eval_set_env: EvalSetEnv) -> None:
