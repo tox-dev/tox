@@ -1061,6 +1061,7 @@ Base options
 
         Environment files are processed using the following rules:
 
+        - lines end at LF, CRLF or CR; a Unicode separator within a value does not start another entry,
         - blank lines are ignored,
         - lines starting with the ``#`` character are ignored,
         - each line is in KEY=VALUE format; both the key and the value are stripped,

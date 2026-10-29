@@ -339,7 +339,7 @@ class SetEnv:
         except (OSError, UnicodeDecodeError) as exception:
             msg = f"{env_file} cannot be read for set_env: {exception}"
             raise Fail(msg) from exception
-        for env_line in content.splitlines():
+        for env_line in content.split("\n"):
             env_line = env_line.strip()  # ruff:ignore[redefined-loop-name]
             if not env_line or env_line.startswith("#"):
                 continue
