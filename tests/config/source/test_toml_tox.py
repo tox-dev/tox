@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from tox.execute.request import shell_cmd
+from tox.config.loader.str_convert import StrConvert
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -93,24 +93,40 @@ def test_config_in_toml_replace_default(toml_project: Callable[[str], ToxProject
 
 
 @pytest.mark.parametrize(
-    "text", ["{}", "{print(1)}", "{'tool': 'tox'}", "{'url': 'https://example.com'}", "{'at': '12:30'}"]
+    "text",
+    [
+        pytest.param("{}", id="empty-braces"),
+        pytest.param("{print(1)}", id="function-call"),
+        pytest.param("{'tool': 'tox'}", id="dict-literal"),
+        pytest.param("{'url': 'https://example.com'}", id="url"),
+        pytest.param("{'at': '12:30'}", id="time"),
+    ],
 )
 def test_config_in_toml_keep_braces_of_non_reference(toml_project: Callable[[str], ToxProject], text: str) -> None:
-    project = toml_project(f'[${{prefix}}env_run_base]\ncommands = [["python", "-c", "x {text} y"]]')
-    outcome = project.run("c", "-k", "commands")
+    project: Final = toml_project(f'[${{prefix}}env_run_base]\ncommands = [["python", "-c", "x {text} y"]]')
+    outcome: Final = project.run("c", "-k", "commands")
     outcome.assert_success()
-    outcome.assert_out_err(f"[testenv:py]\ncommands = {shell_cmd(['python', '-c', f'x {text} y'])}\n", "")
+    assert outcome.out.startswith("[testenv:py]\ncommands = ")
+    assert StrConvert.to_command(outcome.out.partition("commands = ")[2].strip()).args == [
+        "python",
+        "-c",
+        f"x {text} y",
+    ]
 
 
 def test_config_in_toml_keep_braces_around_posargs_naming_a_key(toml_project: Callable[[str], ToxProject]) -> None:
-    project = toml_project(
+    project: Final = toml_project(
         '[${prefix}env_run_base]\nset_env = { SECRET = "s3cr3t" }\n'
         'commands = [["python", "-c", \'x {"text": "{posargs}"} y\']]'
     )
-    outcome = project.run("c", "-k", "commands", "--", "set_env:x")
+    outcome: Final = project.run("c", "-k", "commands", "--", "set_env:x")
     outcome.assert_success()
-    expected = shell_cmd(["python", "-c", 'x {"text": "set_env:x"} y'])
-    outcome.assert_out_err(f"[testenv:py]\ncommands = {expected}\n", "")
+    assert outcome.out.startswith("[testenv:py]\ncommands = ")
+    assert StrConvert.to_command(outcome.out.partition("commands = ")[2].strip()).args == [
+        "python",
+        "-c",
+        'x {"text": "set_env:x"} y',
+    ]
 
 
 def test_config_in_toml_replace_env_name_via_env(toml_project: Callable[[str], ToxProject]) -> None:

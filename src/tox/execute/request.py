@@ -5,7 +5,7 @@ from __future__ import annotations
 import sys
 from enum import Enum
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Final
 
 from tox.util.redact import redact_argv
 from tox.util.typing_compat import override
@@ -80,7 +80,8 @@ class ExecuteRequest:
 
     @override
     def __repr__(self) -> str:
-        return f"{self.__class__.__name__}(cmd={self.cmd!r}, cwd={self.cwd!r}, env=..., stdin={self.stdin!r})"
+        cmd: Final = redact_argv(self.cmd)
+        return f"{self.__class__.__name__}(cmd={cmd!r}, cwd={self.cwd!r}, env=..., stdin={self.stdin!r})"
 
 
 def shell_cmd(cmd: Sequence[str]) -> str:

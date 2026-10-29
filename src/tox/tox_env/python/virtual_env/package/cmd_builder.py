@@ -61,6 +61,7 @@ class VenvCmdBuilder(PythonPackageToxEnv, ABC):
             keys=["package_glob"],
             of_type=str,
             default=str(self.conf["env_tmp_dir"] / "dist" / "*"),
+            post_process=lambda value: str(self._relative_to_tox_root(Path(value))),
             desc="glob used to find the built package to install",
         )
 

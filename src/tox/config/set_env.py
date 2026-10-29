@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import re
+from contextlib import suppress
 from dataclasses import dataclass
 from itertools import chain
 from pathlib import Path
@@ -9,9 +10,10 @@ from typing import TYPE_CHECKING, NotRequired, Protocol, TypedDict, final
 from packaging.markers import Marker
 
 from tox.config.loader.api import ConfigLoadArgs
-from tox.config.loader.replacer import MatchExpression
 from tox.report import HandledError
 from tox.tox_env.errors import Fail
+
+from .loader.replacer import MatchError, MatchExpression
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterable, Iterator, Mapping
@@ -224,7 +226,6 @@ class SetEnv:
         if args.chain[-1:] != [f"env:{item}"]:  # an {env:...} lookup already recorded the key it resolves
             args.chain.append(f"env:{item}")
         result = self._replacer(raw, args)  # apply any replace options
-        result = result.replace(r"\#", "#")  # unroll escaped comment with replacement
         self._materialized[item] = result
         self._raw.pop(item, None)  # if the replace requires the env we may be called again, so allow pop to fail
         return result
@@ -339,7 +340,7 @@ class SetEnv:
         except (OSError, UnicodeDecodeError) as exception:
             msg = f"{env_file} cannot be read for set_env: {exception}"
             raise Fail(msg) from exception
-        for env_line in content.splitlines():
+        for env_line in content.split("\n"):
             env_line = env_line.strip()  # ruff:ignore[redefined-loop-name]
             if not env_line or env_line.startswith("#"):
                 continue
@@ -361,6 +362,15 @@ class SetEnv:
         if line in parents:
             msg = f"circular set_env reference {' -> '.join((*parents, line))}"
             raise HandledError(msg)
+        key, separator, rest = self._partition_key(line)
+        if separator:
+            key = key.strip()
+            expanded_key = self._replacer(key, args)
+            if "=" in expanded_key or any(char in expanded_key for char in "\r\n\v\f\x1c\x1d\x1e\x85\u2028\u2029"):
+                msg = f"invalid set_env key {key!r} after substitution"
+                raise ValueError(msg)
+            value, marker = self._split_value_marker(rest.strip())
+            return {expanded_key.strip(): (value, Marker(marker) if marker else None)}
         # paste the text as written and parse it like lines written in place, so its values resolve only when read
         if (text := self._replacer(line, args, recursive=False)) == line:  # nothing left to substitute, keep it as text
             key, value, marker = self._extract_key_value_marker(line)
@@ -374,6 +384,13 @@ class SetEnv:
         entries.update((key, (value, block._markers.get(key))) for key, value in block._raw.items())
         return entries
 
+    @staticmethod
+    def _partition_key(line: str) -> tuple[str, str, str]:
+        with suppress(MatchError):
+            _, end = MatchExpression.parse_and_split_to_terminator(line, terminator="=")
+            return line[: end - 1], "=", line[end:]
+        return line, "", ""
+
     def raw(self, args: ConfigLoadArgs, *, resolve: bool = True) -> dict[str, SetEnvEntry]:
         """Preserve lazy values and markers when another section includes this configuration."""
         if resolve:
@@ -384,6 +401,16 @@ class SetEnv:
             if marker := self._markers.get(key):
                 result[key]["marker"] = str(marker)
         return result
+
+    def lines(self) -> str:
+        escaped_semicolon: Final[str] = r"\;"
+        lines: Final[list[str]] = []
+        for name, value in self.raw(self._args.copy()).items():
+            line = f"{name}={str(value['value']).replace(';', escaped_semicolon)}"
+            if marker := value.get("marker"):
+                line = f"{line}; {marker}"
+            lines.append(line)
+        return "\n".join(lines)
 
     def export(self, values: Mapping[str, Callable[[], str]]) -> None:
         """Set tox's own variables over the configured ones, resolved on first read.

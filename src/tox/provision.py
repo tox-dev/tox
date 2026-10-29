@@ -21,6 +21,7 @@ from tox.plugin import impl
 from tox.report import HandledError
 from tox.tox_env.errors import Skip
 from tox.tox_env.python.pip.req_file import PythonDeps
+from tox.util.redact import redact_argv
 
 if TYPE_CHECKING:
     from argparse import ArgumentParser
@@ -106,7 +107,7 @@ def provision(state: State) -> int | bool:
     if not missing:
         if remainder := state.conf.options.remainder:
             msg = (
-                f"unrecognized arguments: {' '.join(remainder)}\n"
+                f"unrecognized arguments: {' '.join(redact_argv(remainder))}\n"
                 "hint: if you tried to pass arguments to a command use -- to separate them from tox ones"
             )
             raise HandledError(msg)
@@ -167,7 +168,8 @@ def run_provision(name: str, state: State) -> int:
 
 def _setup_and_execute(tox_env: PythonRun, env_python: Path, state: State) -> int:
     tox_env.setup()
-    args: list[str] = [str(env_python), "-m", "tox"]
+    # -m adds the start directory to sys.path, where another user may have planted a module.
+    args: list[str] = [str(env_python), "-P" if tox_env.base_python.version_info >= (3, 11) else "-I", "-m", "tox"]
     if state.conf.options.is_colored and "--colored" not in state.args:
         args.extend(["--colored", "yes"])
     args.extend(state.args)

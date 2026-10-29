@@ -17,6 +17,7 @@ from colorama import Fore
 
 from tox.plugin import NAME
 from tox.util.ci import is_ci
+from tox.util.redact import redact_argv
 from tox.util.typing_compat import override
 
 from .env_var import get_env_var
@@ -113,7 +114,7 @@ class ArgumentParserWithEnvAndConfig(ArgumentParser):
         res, argv = self.parse_known_args(list(args) if args is not None else None, namespace)
         if argv:
             self.error(
-                f"unrecognized arguments: {' '.join(argv)}\n"
+                f"unrecognized arguments: {' '.join(redact_argv(argv))}\n"
                 "hint: if you tried to pass arguments to a command use -- to separate them from tox ones",
             )
         if getattr(res, "no_capture", False) and getattr(res, "result_json", None):

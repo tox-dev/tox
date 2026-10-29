@@ -9,15 +9,20 @@ import subprocess
 import sys
 import venv
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Final
 
 from filelock import FileLock
+from packaging.requirements import InvalidRequirement, Requirement
+from packaging.utils import canonicalize_name
+
+from tox.tox_env.errors import Fail
 
 if TYPE_CHECKING:
     from pathlib import Path
 
+    from packaging.specifiers import SpecifierSet
 
-_PROBE_SCRIPT = """\
+_PROBE_SCRIPT: Final[str] = """\
 import json, struct, sys, sysconfig
 print(json.dumps({
     "implementation": sys.implementation.name,
@@ -116,9 +121,20 @@ class SubprocessSession:
         if self._bootstrap_python is None:
             msg = "no interpreter discovered"
             raise RuntimeError(msg)
-        cmd = [str(self._bootstrap_python), "-m", "virtualenv", str(self._env_dir)]
         try:
-            result = subprocess.run(cmd, env=self._env_vars, capture_output=True, text=True, check=False)
+            result = subprocess.run(
+                [
+                    str(self._bootstrap_python),
+                    "-m",
+                    "virtualenv",
+                    f"--python={self.creator.interpreter.system_executable}",
+                    str(self._env_dir),
+                ],
+                env=self._env_vars,
+                capture_output=True,
+                text=True,
+                check=False,
+            )
         except FileNotFoundError as exc:
             msg = f"virtualenv subprocess failed: {exc}"
             raise RuntimeError(msg) from exc
@@ -187,19 +203,17 @@ def _has_correct_virtualenv(python: Path, virtualenv_spec: str) -> bool:
             timeout=30,
             check=False,
         )
-        if result.returncode != 0:
-            return False
-        from packaging.specifiers import SpecifierSet  # ruff:ignore[import-outside-top-level]
-
-        installed = result.stdout.strip()
-        spec = virtualenv_spec.removeprefix("virtualenv")
-        return installed in SpecifierSet(spec) if spec else True
     except (subprocess.SubprocessError, FileNotFoundError, OSError):
         return False
+    if result.returncode != 0:
+        return False
+    specifier = _version_specifier(virtualenv_spec)
+    return result.stdout.strip() in specifier if specifier else True
 
 
 def ensure_bootstrap(work_dir: Path, virtualenv_spec: str) -> Path:
     """Create or reuse a cached bootstrap venv with the specified virtualenv version."""
+    _version_specifier(virtualenv_spec)
     base = _bootstrap_path(work_dir, virtualenv_spec)
     python = _bootstrap_python(base)
     if _has_correct_virtualenv(python, virtualenv_spec):
@@ -222,3 +236,29 @@ def ensure_bootstrap(work_dir: Path, virtualenv_spec: str) -> Path:
             msg = f"failed to install {virtualenv_spec} into bootstrap env: {result.stderr}"
             raise RuntimeError(msg)
         return python
+
+
+def _version_specifier(virtualenv_spec: str) -> SpecifierSet:
+    msg = "virtualenv_spec must name virtualenv with optional version specifiers"
+    try:
+        requirement = Requirement(virtualenv_spec)
+    except InvalidRequirement:
+        raise Fail(msg) from None
+    if (
+        canonicalize_name(requirement.name) != "virtualenv"
+        or requirement.url is not None
+        or requirement.extras
+        or requirement.marker is not None
+        or any(specifier.operator == "===" for specifier in requirement.specifier)
+    ):
+        raise Fail(msg)
+    return requirement.specifier
+
+
+__all__ = (
+    "SubprocessCreator",
+    "SubprocessPythonInfo",
+    "SubprocessSession",
+    "ensure_bootstrap",
+    "probe_python",
+)

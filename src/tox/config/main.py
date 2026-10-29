@@ -2,11 +2,13 @@ from __future__ import annotations
 
 import logging
 import os
+import sys
 from collections import OrderedDict, defaultdict
 from itertools import chain, tee
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, TypeVar, cast
 
+from tox.util.redact import redact_argv
 from tox.util.typing_compat import override
 
 from .sets import ConfigSet, CoreConfigSet, EnvConfigSet
@@ -63,14 +65,17 @@ class Config:
         """
         if self._pos_args is not None and to_path is not None and Path.cwd() != to_path:
             args = []
-            # we use os.path to unroll .. in path without resolve
-            to_path_str = os.path.abspath(str(to_path))  # ruff:ignore[os-path-abspath]
+            # Windows resolves parent segments before following directory links.
+            if sys.platform == "win32":
+                to_path_str = os.path.abspath(str(to_path))  # ruff:ignore[os-path-abspath]
+            else:
+                to_path_str = os.path.realpath(to_path)
             for arg in self._pos_args:
                 path_arg = Path(arg)
                 try:
                     is_existing_path = path_arg.exists()
                 except OSError:
-                    logging.debug("could not check if %r is an existing path", arg)
+                    logging.debug("could not check if %r is an existing path", redact_argv([arg])[0])
                     is_existing_path = False
                 if is_existing_path and not path_arg.is_absolute():
                     # we use os.path to unroll .. in path without resolve
