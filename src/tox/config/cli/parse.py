@@ -28,6 +28,8 @@ class Options(NamedTuple):
 
 
 def get_options(*args: str) -> Options:
+    if "_ARGCOMPLETE" in os.environ:
+        args = _completion_args(args)
     pos_args: tuple[str, ...] | None = None
     try:  # remove positional arguments passed to parser if specified, they are pulled directly from sys.argv
         pos_arg_at = args.index("--")
@@ -44,10 +46,30 @@ def get_options(*args: str) -> Options:
     return Options(parsed, pos_args, source, cmd_handlers, log_handler)
 
 
+def _completion_args(args: tuple[str, ...]) -> tuple[str, ...]:
+    """A shell completion request starts tox without arguments, the typed line comes via environment variables."""
+    try:
+        from argcomplete import lexers  # ruff:ignore[import-outside-top-level]
+    except ImportError:
+        return args
+    if "COMP_LINE" not in os.environ or "COMP_POINT" not in os.environ:
+        raise SystemExit(0)
+    _, current, _, words, _ = lexers.split_line(os.environ["COMP_LINE"], int(os.environ["COMP_POINT"]))
+    typed = words[int(os.environ["_ARGCOMPLETE"]) :]
+    if current.startswith("--"):
+        if "=" in current:
+            typed.append(current.split("=", 1)[0])
+    elif current.startswith("-"):
+        typed.append(current[:2])
+    return tuple(typed)
+
+
 def _get_base(args: Sequence[str]) -> tuple[int, ToxHandler, Source]:
     """First just load the base options (verbosity+color) to setup the logging framework."""
     tox_parser = ToxParser.base()
     parsed = Parsed()
+    completing = "_ARGCOMPLETE" in os.environ
+    project_known = True
     try:
         with (
             Path(os.devnull).open("w", encoding=locale.getpreferredencoding(do_setlocale=False)) as file_handler,
@@ -55,21 +77,24 @@ def _get_base(args: Sequence[str]) -> tuple[int, ToxHandler, Source]:
         ):
             tox_parser.parse_known_args(args, namespace=parsed)
     except SystemExit:
-        ...  # ignore parse errors, such as -va raises ignored explicit argument 'a'
+        project_known = not completing
     guess_verbosity = parsed.verbosity
     handler = setup_report(guess_verbosity, parsed.is_colored)
     # load the plugin system right after we set up report
     from tox.plugin.manager import MANAGER  # ruff:ignore[import-outside-top-level]
 
     try:
-        source = discover_source(parsed.config_file, parsed.root_dir)
+        source = discover_source(parsed.config_file, parsed.root_dir) if project_known else _empty_source()
     except HandledError:
-        if {"-h", "--help"}.intersection(args):
+        if completing:
+            project_known = False
+            source = _empty_source()
+        elif {"-h", "--help"}.intersection(args):
             source = _empty_source()
         else:
             raise
 
-    MANAGER.load_plugins(source.path)
+    MANAGER.load_plugins(source.path if project_known else None)
 
     return guess_verbosity, handler, source
 
