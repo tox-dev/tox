@@ -145,6 +145,29 @@ def test_local_execute_capture(
     assert (status.out, status.err, *capfd.readouterr()) == expected
 
 
+def test_local_execute_capture_output_overrides_no_capture(
+    tox_project: ToxProjectCreator,
+    os_env: dict[str, str],
+    capfd: CaptureFixture,
+) -> None:
+    tox_env: Final[ToxEnv] = tox_project({"tox.ini": ""}).run("l").state.envs["py"]
+    tox_env.options.no_capture = True
+    code: Final[str] = "import sys; print('out', end=''); print('err', end='', file=sys.stderr)"
+    request: Final[ExecuteRequest] = ExecuteRequest(
+        cmd=[sys.executable, "-c", code],
+        cwd=Path(),
+        env=os_env,
+        stdin=StdinSource.OFF,
+        run_id="",
+        capture_output=True,
+    )
+    with LocalSubProcessExecutor(colored=False).build_instance(
+        request, ExecuteOptions(tox_env), SyncWrite("out", None), SyncWrite("err", None)
+    ) as status:
+        status.wait()
+    assert (status.out, status.err, *capfd.readouterr()) == (b"out", b"err", "", "")
+
+
 def test_local_execute_basic_pass_show_on_standard_newline_flush(caplog: LogCaptureFixture) -> None:
     caplog.set_level(logging.NOTSET)
     executor = LocalSubProcessExecutor(colored=False)

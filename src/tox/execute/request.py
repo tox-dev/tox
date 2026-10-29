@@ -36,6 +36,7 @@ class ExecuteRequest:
         stdin: StdinSource,
         run_id: str,
         allow: list[str] | None = None,
+        capture_output: bool = False,  # ruff:ignore[boolean-type-hint-positional-argument]
     ) -> None:
         """Create a new execution request.
 
@@ -44,6 +45,7 @@ class ExecuteRequest:
         :param env: the environment variables
         :param stdin: the type of standard input allowed
         :param run_id: an id to identify this run
+        :param capture_output: tox reads the command's output, so it must be captured even with ``--no-capture``
 
         """
         if len(cmd) == 0:
@@ -54,6 +56,7 @@ class ExecuteRequest:
         self.env = env  #: the environment variables to use
         self.stdin = stdin  #: the type of standard input interaction allowed
         self.run_id = run_id  #: an id to identify this run
+        self.capture_output = capture_output  #: whether the output must be captured even under ``--no-capture``
         if allow is not None and "*" in allow:
             allow = None  # if we allow everything we can just disable the check
         self.allow = allow

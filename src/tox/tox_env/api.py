@@ -463,8 +463,9 @@ class ToxEnv(ABC):  # ruff:ignore[too-many-public-methods]
         cwd: Path | None = None,
         run_id: str = "",
         executor: Execute | None = None,
+        capture_output: bool = False,  # ruff:ignore[boolean-type-hint-positional-argument]
     ) -> Outcome:
-        with self.execute_async(cmd, stdin, show, cwd, run_id, executor) as status:
+        with self.execute_async(cmd, stdin, show, cwd, run_id, executor, capture_output) as status:
             while status.wait() is None:
                 pass  # pragma: no cover
         if status.outcome is None:  # pragma: no cover # this should not happen
@@ -501,6 +502,7 @@ class ToxEnv(ABC):  # ruff:ignore[too-many-public-methods]
         cwd: Path | None = None,
         run_id: str = "",
         executor: Execute | None = None,
+        capture_output: bool = False,  # ruff:ignore[boolean-type-hint-positional-argument]
     ) -> Generator[ExecuteStatus, None, None]:
         if self._fully_interrupted or (self._interrupted and not self._allow_interrupted_execution):
             raise SystemExit(-2)  # pragma: no cover
@@ -508,7 +510,15 @@ class ToxEnv(ABC):  # ruff:ignore[too-many-public-methods]
             cwd = cast("Path", self.core["tox_root"])
         if show is None:
             show = self.options.verbosity > 3  # ruff:ignore[magic-value-comparison]
-        request = ExecuteRequest(cmd, cwd, self.environment_variables, stdin, run_id, allow=self._allow_externals)
+        request = ExecuteRequest(
+            cmd,
+            cwd,
+            self.environment_variables,
+            stdin,
+            run_id,
+            allow=self._allow_externals,
+            capture_output=capture_output,
+        )
         if request.cwd == _CWD:
             repr_cwd = ""
         else:
