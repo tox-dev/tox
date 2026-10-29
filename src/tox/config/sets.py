@@ -14,6 +14,7 @@ from .types import EnvList
 if TYPE_CHECKING:
     from collections.abc import Callable, Generator, Iterator, Mapping, Sequence
     from types import UnionType
+    from typing import Final
 
     from tox.config.loader.api import Loader
     from tox.config.main import Config
@@ -311,7 +312,12 @@ class CoreConfigSet(ConfigSet):
         return self.get("work_dir", Path) / ".tmp"
 
     def _work_dir_post_process(self, folder: Path) -> Path:
-        return self._conf.work_dir if self._conf.options.work_dir else folder
+        return self._conf.work_dir if self._conf.options.work_dir else self._relative_to_tox_root(folder)
+
+    def _relative_to_tox_root(self, folder: Path) -> Path:
+        if not folder.is_absolute():
+            folder = self.get("tox_root", Path) / folder
+        return folder
 
     @override
     def register_config(self) -> None:
@@ -320,6 +326,7 @@ class CoreConfigSet(ConfigSet):
             keys=["tox_root", "toxinidir"],
             of_type=Path,
             default=self._root,
+            post_process=self._root.joinpath,  # a relative root is relative to the configuration file, not to cwd
             desc="the root directory (where the configuration file is found)",
         )
         self.add_constant("tox_root_name", "name of the root directory", self._root.name)
@@ -336,6 +343,7 @@ class CoreConfigSet(ConfigSet):
             keys=["temp_dir"],
             of_type=Path,
             default=self._default_temp_dir,
+            post_process=self._relative_to_tox_root,
             desc="a folder for temporary files (is not cleaned at start)",
         )
         self.add_config(
@@ -408,6 +416,19 @@ class EnvConfigSet(ConfigSet):
             desc="environment variables to set when running commands in the tox environment",
             post_process=set_env_post_process,
         )
+
+    def set_env_lines(self, chain: list[str]) -> str:
+        # load first: a {env:...} in an environment file name reads this set_env, and the chain would reject that load
+        self.load("set_env", chain)
+        loaded: Final = cast("ConfigDynamicDefinition[SetEnv]", self._defined["set_env"])
+        configured: Final = ConfigDynamicDefinition(
+            loaded.keys,
+            loaded.desc,
+            SetEnv,
+            SetEnv("", self.name, self.env_name, self._conf.core["tox_root"]),
+            factory=loaded.factory,
+        )
+        return configured(self._conf, self.loaders, ConfigLoadArgs(chain, self.name, self.env_name)).lines()
 
     @override
     def __repr__(self) -> str:

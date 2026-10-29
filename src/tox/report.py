@@ -15,7 +15,9 @@ from typing import TYPE_CHECKING, ClassVar, cast
 from weakref import WeakKeyDictionary
 
 from colorama import Fore, Style, init
+from virtualenv.util.subprocess import LogCmd
 
+from tox.util.redact import redact_value
 from tox.util.typing_compat import override
 
 if TYPE_CHECKING:
@@ -210,6 +212,13 @@ class ToxHandler(_STREAM_HANDLER_BASE):
 
     @override
     def format(self, record: logging.LogRecord) -> str:
+        if record.name == "virtualenv.seed.embed.pip_invoke" and isinstance(record.args, tuple):
+            record.args = tuple(
+                LogCmd(arg.cmd, {name: redact_value(name, value) for name, value in arg.env.items()})
+                if isinstance(arg, LogCmd) and arg.env is not None
+                else arg
+                for arg in record.args
+            )
         # shorten the pathname to start from within the site-packages folder
         record.env_name = "root" if self._local.name is None else self._local.name
         basename = str(Path(record.pathname).parent)

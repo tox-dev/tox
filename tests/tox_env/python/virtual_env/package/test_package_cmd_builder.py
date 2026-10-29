@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import shutil
 import tarfile
 from typing import TYPE_CHECKING, Final
 from zipfile import ZipFile
@@ -9,8 +10,9 @@ import pytest
 if TYPE_CHECKING:
     from collections.abc import Callable
     from pathlib import Path
+    from unittest.mock import MagicMock
 
-    from tox.pytest import ToxProjectCreator
+    from tox.pytest import ToxProject, ToxProjectCreator, ToxRunOutcome
 
 
 @pytest.fixture(scope="session")
@@ -142,6 +144,27 @@ def test_build_wheel_external(
     assert "greetings from demo_pkg_inline" in result.out
 
 
+def test_build_wheel_external_relative_glob_uses_project(
+    tox_project: ToxProjectCreator, pkg_with_extras_project_wheel: Path
+) -> None:
+    ini: Final[str] = (
+        "[testenv]\npackage=external\n[testenv:.pkg_external]\npackage_glob=dist/*.whl\ncommands=python -c pass"
+    )
+    project: Final[ToxProject] = tox_project({"tox.ini": ini})
+    dist: Final[Path] = project.path / "dist"
+    dist.mkdir()
+    wheel: Final[Path] = dist / pkg_with_extras_project_wheel.name
+    shutil.copy(pkg_with_extras_project_wheel, wheel)
+    execute_calls: Final[MagicMock] = project.patch_execute(lambda run: 0 if "install" in run.run_id else None)
+
+    result: Final[ToxRunOutcome] = project.run("r", "-e", "py", "-c", project.path.name, from_cwd=project.path.parent)
+
+    result.assert_success()
+    assert [call[0][3].cmd[-1] for call in execute_calls.call_args_list if call[0][3].run_id == "install_package"] == [
+        str(wheel)
+    ]
+
+
 def test_build_wheel_external_fail_build(tox_project: ToxProjectCreator) -> None:
     ini = """
     [testenv]
@@ -197,19 +220,31 @@ def test_tox_install_pkg_bad_wheel(tox_project: ToxProjectCreator, tmp_path: Pat
 
 
 @pytest.mark.parametrize(
-    ("filename", "expected"),
+    ("malformed_install_pkg_artifact", "expected"),
     [
-        ("not_gzip-1.0.tar.gz", "could not extract"),
-        ("no_members-1.0.tar.gz", "no files inside"),
-        ("not_a_zip-1.0-py3-none-any.whl", "the metadata of"),
-        ("bad_requires-1.0-py3-none-any.whl", "the metadata of"),
-        ("no_metadata-1.0-py3-none-any.whl", "the metadata of"),
+        pytest.param("not_gzip-1.0.tar.gz", "could not extract", id="invalid-gzip"),
+        pytest.param("no_members-1.0.tar.gz", "no files inside", id="empty-source-archive"),
+        pytest.param("not_a_zip-1.0-py3-none-any.whl", "could not read the metadata of", id="invalid-wheel"),
+        pytest.param("bad_requires-1.0-py3-none-any.whl", "could not read the metadata of", id="invalid-requirement"),
+        pytest.param("no_metadata-1.0-py3-none-any.whl", "could not read the metadata of", id="missing-wheel-metadata"),
     ],
+    indirect=["malformed_install_pkg_artifact"],
 )
 def test_tox_install_pkg_malformed(
-    tox_project: ToxProjectCreator, tmp_path: Path, filename: str, expected: str
+    tox_project: ToxProjectCreator, malformed_install_pkg_artifact: Path, expected: str
 ) -> None:
-    artifact = tmp_path / filename
+    proj: Final = tox_project({"tox.ini": "[testenv]"})
+    result: Final = proj.run("r", "-e", "py", "--installpkg", str(malformed_install_pkg_artifact))
+
+    result.assert_failed(1)
+    assert "internal error" not in result.out + result.err, result.out + result.err
+    assert f"failed with {expected}" in result.out, result.out
+
+
+@pytest.fixture
+def malformed_install_pkg_artifact(tmp_path: Path, request: pytest.FixtureRequest) -> Path:
+    filename: Final[str] = request.param
+    artifact: Final[Path] = tmp_path / filename
     if filename == "not_gzip-1.0.tar.gz":
         artifact.write_bytes(b"not a gzip stream\n")
     elif filename == "no_members-1.0.tar.gz":
@@ -223,16 +258,10 @@ def test_tox_install_pkg_malformed(
                 "bad_requires-1.0.dist-info/METADATA",
                 "Metadata-Version: 2.1\nName: bad_requires\nVersion: 1.0\nRequires-Dist: requests => 2.0\n",
             )
-    else:  # no_metadata-1.0-py3-none-any.whl
+    else:
         with ZipFile(str(artifact), "w") as wheel:
             wheel.writestr("no_metadata-1.0.dist-info/WHEEL", "Wheel-Version: 1.0\n")
-    proj = tox_project({"tox.ini": "[testenv]"})
-    result = proj.run("r", "-e", "py", "--installpkg", str(artifact))
-
-    result.assert_failed(1)
-    assert "internal error" not in result.out + result.err, result.out + result.err
-    assert "failed with" in result.out, result.out
-    assert expected in result.out, result.out
+    return artifact
 
 
 def test_tox_install_pkg_with_skip_install(
