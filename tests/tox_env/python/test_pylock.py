@@ -426,6 +426,23 @@ def test_pylock_requirements_invalid(tmp_path: Path) -> None:
         pylock.install_lines()
 
 
+def test_pylock_requirements_malformed_toml(tmp_path: Path) -> None:
+    lock_file = tmp_path / "pylock.toml"
+    lock_file.write_text('lock-version = "1.0"\n\n[[packages]\nname = "alpha"\n')
+    pylock = Pylock(path=lock_file)
+
+    with pytest.raises(Fail, match="invalid pylock file"):
+        pylock.install_lines()
+
+
+def test_pylock_requirements_with_utf8_bom(tmp_path: Path) -> None:
+    lock_file = tmp_path / "pylock.toml"
+    lock_file.write_bytes(b"\xef\xbb\xbf" + PYLOCK_TOML.encode())
+    pylock = Pylock(path=lock_file)
+
+    assert pylock.install_lines() == ["alpha==1.0.0 --hash=sha256:abc123", "beta==2.0.0 --hash=sha256:def456"]
+
+
 @pytest.mark.slow
 @pytest.mark.integration
 def test_pylock_install_integration(
