@@ -6,7 +6,7 @@ from abc import ABC
 from functools import partial
 from io import TextIOWrapper
 from pathlib import Path
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING, Final, cast
 from zipfile import BadZipFile, ZipFile
 
 from packaging.requirements import InvalidRequirement, Requirement
@@ -107,7 +107,7 @@ class VenvCmdBuilder(PythonPackageToxEnv, ABC):
             try:
                 package: Package = self._wheel_package(path, extras)
             except (BadZipFile, InvalidRequirement, OSError) as exc:
-                msg = f"could not read the metadata of {path}: {exc}"
+                msg: Final[str] = f"could not read the metadata of {path}: {exc}"
                 raise Fail(msg) from exc
         else:  # must be source distribution
             work_dir = self.env_tmp_dir / "sdist-extract"
@@ -117,7 +117,7 @@ class VenvCmdBuilder(PythonPackageToxEnv, ABC):
                 with tarfile.open(str(path), "r:gz") as tar:
                     safe_extractall(tar, work_dir)
             except (EOFError, OSError, tarfile.TarError) as exc:
-                msg = f"could not extract {path}: {exc}"
+                msg: Final[str] = f"could not extract {path}: {exc}"
                 raise Fail(msg) from exc
             # the register run env is guaranteed to be called before this
             assert self._sdist_meta_tox_env is not None  # ruff:ignore[assert]
@@ -125,7 +125,7 @@ class VenvCmdBuilder(PythonPackageToxEnv, ABC):
                 try:
                     self._sdist_meta_tox_env.root = next(work_dir.iterdir())  # contains a single egg info folder
                 except StopIteration as exc:
-                    msg = f"no files inside {path}"
+                    msg: Final[str] = f"no files inside {path}"
                     raise Fail(msg) from exc
                 deps = self._sdist_meta_tox_env.get_package_dependencies(for_env)
                 name = self._sdist_meta_tox_env.get_package_name(for_env)
@@ -135,15 +135,17 @@ class VenvCmdBuilder(PythonPackageToxEnv, ABC):
 
     @staticmethod
     def _wheel_package(path: Path, extras: set[str]) -> WheelPackage:
-        wheel_dist = WheelDistribution(path)
-        metadata = wheel_dist.metadata
-        name = metadata.get("Name")
+        wheel_dist: Final = WheelDistribution(path)
+        metadata: Final = wheel_dist.metadata
+        name: Final = metadata.get("Name")
         if name is None:
-            msg = f"no Name in the metadata of {path}"
+            msg: Final[str] = f"no Name in the metadata of {path}"
             raise Fail(msg)
-        requires: list[str] = wheel_dist.requires or []
-        available = set(metadata.get_all("Provides-Extra") or [])
-        deps = dependencies_with_extras([Requirement(i) for i in requires], extras, name, available_extras=available)
+        requires: Final[list[str]] = wheel_dist.requires or []
+        available: Final = set(metadata.get_all("Provides-Extra") or [])
+        deps: Final = dependencies_with_extras(
+            [Requirement(i) for i in requires], extras, name, available_extras=available
+        )
         return WheelPackage(path, deps)
 
     @override

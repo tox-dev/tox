@@ -1,2 +1,2 @@
-Invalid wheel metadata and unreadable or empty source archives supplied through ``--installpkg`` now produce errors
-that name the artifact instead of internal error tracebacks.
+Unreadable wheels, invalid wheel metadata, and unreadable or empty source archives supplied through ``--installpkg`` now
+produce errors that name the artifact instead of internal error tracebacks.
