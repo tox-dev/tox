@@ -6,7 +6,7 @@ import locale
 import os
 from contextlib import redirect_stderr
 from pathlib import Path
-from typing import TYPE_CHECKING, NamedTuple
+from typing import TYPE_CHECKING, Final, NamedTuple
 
 from tox.config.source import Source, discover_source
 from tox.report import HandledError, ToxHandler, setup_report
@@ -47,7 +47,6 @@ def get_options(*args: str) -> Options:
 
 
 def _completion_args(args: tuple[str, ...]) -> tuple[str, ...]:
-    """A shell completion request starts tox without arguments, the typed line comes via environment variables."""
     try:
         from argcomplete import lexers  # ruff:ignore[import-outside-top-level]
     except ImportError:
@@ -55,7 +54,7 @@ def _completion_args(args: tuple[str, ...]) -> tuple[str, ...]:
     if "COMP_LINE" not in os.environ or "COMP_POINT" not in os.environ:
         raise SystemExit(0)
     _, current, _, words, _ = lexers.split_line(os.environ["COMP_LINE"], int(os.environ["COMP_POINT"]))
-    typed = words[int(os.environ["_ARGCOMPLETE"]) :]
+    typed: Final[list[str]] = words[int(os.environ["_ARGCOMPLETE"]) :]
     if current.startswith("--"):
         if "=" in current:
             typed.append(current.split("=", 1)[0])
@@ -68,7 +67,7 @@ def _get_base(args: Sequence[str]) -> tuple[int, ToxHandler, Source]:
     """First just load the base options (verbosity+color) to setup the logging framework."""
     tox_parser = ToxParser.base()
     parsed = Parsed()
-    completing = "_ARGCOMPLETE" in os.environ
+    completing: Final[bool] = "_ARGCOMPLETE" in os.environ
     project_known = True
     try:
         with (

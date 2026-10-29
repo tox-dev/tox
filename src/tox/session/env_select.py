@@ -8,7 +8,7 @@ from dataclasses import dataclass
 from difflib import get_close_matches
 from importlib.util import find_spec
 from itertools import chain
-from typing import TYPE_CHECKING, Any, cast
+from typing import TYPE_CHECKING, Any, Final, cast
 
 from tox.config.cli.parser import Parsed
 from tox.config.loader.ini.factor import extend_factors
@@ -182,7 +182,7 @@ def _env_completer(
     from tox.plugin.manager import MANAGER  # ruff:ignore[import-outside-top-level]  # circular import
 
     try:
-        root_dir = getattr(parsed_args, "root_dir", None)
+        root_dir: Final = getattr(parsed_args, "root_dir", None)
         source = discover_source(getattr(parsed_args, "config_file", None), root_dir)
         conf = Config.make(
             Parsed(override=[], root_dir=root_dir, work_dir=None),

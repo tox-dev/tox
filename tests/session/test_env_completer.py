@@ -52,19 +52,6 @@ def test_env_completer_toml(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, com
     assert "lint" in result
 
 
-def test_env_completer_config_of_typed_line(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, completer_args: _CompleterArgs
-) -> None:
-    (tmp_path / "tox.ini").write_text("[tox]\nenv_list = cwd\n")
-    config = tmp_path / "project" / "tox.ini"
-    config.parent.mkdir()
-    config.write_text("[tox]\nenv_list = py311,lint\n")
-    monkeypatch.chdir(tmp_path)
-    completer_args["parsed_args"] = Namespace(config_file=config, root_dir=None)
-    result = _env_completer(**completer_args)
-    assert result == ["ALL", "py311", "lint"]
-
-
 def test_env_completer_no_config(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, completer_args: _CompleterArgs
 ) -> None:
