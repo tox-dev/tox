@@ -55,6 +55,48 @@ def test_constraints_with_editable_requirement(tmp_path: Path) -> None:
         _ = python_constraints.requirements
 
 
+def test_constraints_keep_static_same_line_option(tmp_path: Path) -> None:
+    (tmp_path / "constraints.txt").write_text("")
+    assert PythonConstraints("constraints.txt --pre", tmp_path).as_root_args == ["-c", "constraints.txt", "--pre"]
+
+
+@pytest.mark.parametrize(
+    "line",
+    [
+        pytest.param("--extra-index-url https://host/${INDEX_PART}", id="extra-index"),
+        pytest.param("--index-url=https://host/${INDEX_PART}", id="index-equals"),
+        pytest.param("--trusted-host ${INDEX_PART}", id="trusted-host"),
+    ],
+)
+def test_deps_pip_env_variable_cannot_add_option(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, line: str) -> None:
+    monkeypatch.setenv("INDEX_PART", "value --index-url=https://other/simple")
+    with pytest.raises(ValueError, match="a requirement substitution cannot change pip options"):
+        _ = PythonDeps(line, tmp_path).as_root_args
+
+
+def test_deps_pip_env_variable_keeps_full_line_option(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("PIP_OPTIONS", "--index-url https://host/simple --extra-index-url https://mirror/simple")
+    assert PythonDeps("${PIP_OPTIONS}\npkg", tmp_path).as_root_args == [
+        "pkg",
+        "-i",
+        "https://host/simple",
+        "--extra-index-url",
+        "https://mirror/simple",
+    ]
+
+
+def test_deps_pip_env_variable_cannot_change_line_boundary(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("INDEX_PART", "cpu\n--index-url=https://other/simple")
+    with pytest.raises(ValueError, match="a requirement substitution cannot change pip options"):
+        _ = PythonDeps("--extra-index-url https://host/${INDEX_PART}", tmp_path).as_root_args
+
+
+def test_constraints_pip_env_variable_cannot_add_option(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("CONSTRAINT_NAME", "stable.txt --index-url=https://other/simple")
+    with pytest.raises(ValueError, match="a requirement substitution cannot change pip options"):
+        _ = PythonConstraints("constraints/${CONSTRAINT_NAME}", tmp_path).as_root_args
+
+
 def test_deps_with_requirements_with_hash(tmp_path: Path) -> None:
     """deps can point to a requirements file that has --hash."""
     exp_hash = "sha256:97a702083b0d906517b79672d8501eee470d60ae55df0fa9d4cfba56c7f65a82"

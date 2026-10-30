@@ -349,6 +349,9 @@ class SetEnv:
     @staticmethod
     def _extract_key_value(line: str, env_file: Path, line_number: int) -> tuple[str, str]:
         key, sep, value = line.partition("=")
+        if "\x00" in line:
+            msg = f"invalid line in set_env at {env_file}:{line_number}: NUL character"
+            raise Fail(msg)
         if not sep:  # do not echo the line, it may hold part of a secret value
             msg = f"invalid line {line_number} in {env_file} for set_env, expected KEY=VALUE"
             raise Fail(msg)

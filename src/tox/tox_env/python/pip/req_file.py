@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import re
+import shlex
 import sys
 from argparse import Namespace
 from typing import TYPE_CHECKING, Final, cast
@@ -63,6 +64,51 @@ class _PythonRequirementsFile(RequirementsFile):
             else:
                 found_line = line
             yield at, found_line
+
+    @override
+    def _expand_env_variables(self, lines_enum: ReqFileLines) -> ReqFileLines:
+        for line_number, line in lines_enum:
+            yield line_number, self._expand_env_line(line_number, line)
+
+    def _expand_env_line(self, line_number: int, line: str) -> str:
+        expanded: Final[str] = next(super()._expand_env_variables(iter(((line_number, line),))))[1]
+        env_var_pattern: Final[re.Pattern[str]] = re.compile(r"\$\{[A-Z0-9_]+\}")
+        if not env_var_pattern.fullmatch(line):
+            marked: Final[str] = env_var_pattern.sub(lambda match: f"\x00{match.start()}\x00", line)
+            self.validate_requirement_options(marked, expanded, preprocessed=True)
+        return expanded
+
+    @classmethod
+    def validate_requirement_options(cls, source: str, expanded: str, *, preprocessed: bool = False) -> None:
+        error_message: Final[str] = "a requirement substitution cannot change pip options"
+        source_lines: Final[list[list[str]]] = cls._requirement_tokens(source, preprocessed=preprocessed)
+        expanded_lines: Final[list[list[str]]] = cls._requirement_tokens(expanded, preprocessed=preprocessed)
+        if len(source_lines) != len(expanded_lines):
+            raise ValueError(error_message)
+        for source_tokens, expanded_tokens in zip(source_lines, expanded_lines, strict=True):
+            if len(source_tokens) != len(expanded_tokens) or any(
+                not cls._same_requirement_token(before, after)
+                for before, after in zip(source_tokens, expanded_tokens, strict=True)
+            ):
+                raise ValueError(error_message)
+
+    @classmethod
+    def _requirement_tokens(cls, raw: str, *, preprocessed: bool) -> list[list[str]]:
+        lines: ReqFileLines = enumerate(raw.splitlines(), start=1)
+        if not preprocessed:
+            lines = cls._ignore_comments(cls._join_lines(enumerate(cls._normalize_raw(raw).splitlines(), start=1)))
+        result: Final[list[list[str]]] = []
+        for _, line in lines:
+            args, options = cls._break_args_options(line)
+            result.append([args, *shlex.split(options, posix=sys.platform != "win32")])
+        return result
+
+    @staticmethod
+    def _same_requirement_token(source: str, expanded: str) -> bool:
+        parts: Final[list[str]] = re.split(r"\x00\d+\x00", source)
+        if len(parts) == 1:
+            return source == expanded
+        return re.fullmatch(".*?".join(re.escape(part) for part in parts), expanded, flags=re.DOTALL) is not None
 
     def lines(self) -> list[str]:
         # as_root_args raises what tox run would raise, and when pip gets no arguments there is nothing to show
@@ -274,8 +320,8 @@ def _render_options(options: dict[str, object]) -> list[str]:
     ]
 
 
-__all__ = (
+__all__ = [
     "ONE_ARG",
     "PythonConstraints",
     "PythonDeps",
-)
+]

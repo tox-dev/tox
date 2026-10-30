@@ -19,7 +19,7 @@ if TYPE_CHECKING:
     from pytest_mock import MockerFixture
 
     from tox.config.set_env import SetEnvRaw
-    from tox.pytest import MonkeyPatch, ToxProjectCreator
+    from tox.pytest import MonkeyPatch, ToxProject, ToxProjectCreator, ToxRunOutcome
 
 from typing import Protocol
 
@@ -383,6 +383,40 @@ def test_set_env_environment_file_unreadable(
     result = project.run("r")
     result.assert_failed(code=1)
     assert f"py: failed with {project.path / 'magic.env'} {reason}" in result.out
+
+
+@pytest.mark.parametrize(
+    ("of_type", "config"),
+    [
+        pytest.param("ini", "[testenv]\npackage=skip\nset_env=file|.env\ncommands=python -c pass", id="ini"),
+        pytest.param(
+            "toml",
+            '[env_run_base]\npackage="skip"\nset_env={file=".env"}\ncommands=[["python", "-c", "pass"]]',
+            id="toml",
+        ),
+    ],
+)
+@pytest.mark.parametrize(
+    "line",
+    [
+        pytest.param("LOG\x00_LEVEL=SENTINEL", id="key"),
+        pytest.param("LOG_LEVEL=\x00SENTINEL", id="value-start"),
+        pytest.param("LOG_LEVEL=SEC\x00RET_SENTINEL", id="value-middle"),
+        pytest.param("LOG_LEVEL=SENTINEL\x00", id="value-end"),
+    ],
+)
+def test_set_env_environment_file_nul(
+    tox_project: ToxProjectCreator, of_type: ConfigFileFormat, config: str, line: str
+) -> None:
+    project: Final[ToxProject] = tox_project({f"tox.{of_type}": config, ".env": f"VALID=before\n{line}\nOTHER=after\n"})
+    result: Final[ToxRunOutcome] = project.run("r", "-e", "py")
+
+    result.assert_failed(code=1)
+    output: Final[str] = f"{result.out}{result.err}"
+    assert f"py: failed with invalid line in set_env at {project.path / '.env'}:2: NUL character" in result.out
+    assert "SENTINEL" not in output
+    assert "Traceback" not in output
+    assert "commands[0]>" not in result.out
 
 
 def test_set_env_file_ignores_export_keyword(eval_set_env: EvalSetEnv) -> None:

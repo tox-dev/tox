@@ -621,9 +621,12 @@ the top level of ``tox.toml``. Placing these options in an environment section (
     :default: {work_dir}/.tmp
     :version_added: 3.5
 
-    Directory where to put tox temporary files. For example: we create a hard link (if possible, otherwise new copy) in
-    this directory for the project package. This ensures tox works correctly when having parallel runs (as each session
-    will have its own copy of the project package - e.g. the source distribution).
+    Directory for tox temporary files. Each package build creates a separate copy here so parallel runs do not share the
+    same staged package.
+
+    If this directory is a symlink inside :ref:`work_dir`, tox replaces the link with a directory. A configured path
+    outside :ref:`work_dir` may remain a symlink. On POSIX, package staging rejects a path that another account can
+    rename based on its ownership and permissions at validation time.
 
 .. conf::
     :keys: venv_redirect
@@ -1075,6 +1078,7 @@ Base options
         - blank lines are ignored,
         - lines starting with the ``#`` character are ignored,
         - each line is in KEY=VALUE format; both the key and the value are stripped,
+        - NUL characters in keys and values are rejected,
         - a leading ``export`` followed by a space or tab is ignored, so ``export KEY=value`` sets ``KEY``,
         - there is no special handling of quotation marks, they are part of the key or value,
         - PEP-508 markers are not supported in environment files, so a ``;`` is a plain value character.
@@ -1518,9 +1522,9 @@ Run
         On Windows, ``.bat`` and ``.cmd`` commands run through ``cmd.exe``, so tox quotes their arguments for that
         parser. A batch file reading raw ``%1`` can see surrounding quotes for arguments that need them.
 
-        tox pastes substitution values into the command text before splitting it, so a value with spaces splits into
-        several arguments unless the argument holding it is quoted. Keep such values unquoted in ``[vars]`` and quote
-        the complete argument where it is used:
+        tox pastes string settings and environment values into the command text before splitting it. Unquoted values
+        containing spaces split into arguments. A substitution within a quoted argument stays in that argument, even
+        if the value contains quotes or backslashes:
 
         .. code-block:: ini
 
@@ -1531,10 +1535,8 @@ Run
             [testenv]
             commands = python -c 'import sys; print(sys.argv[1])' "--source={[vars]common_source}"
 
-        Quotes stored in a ``[vars]`` value are pasted in too and pair up with the quotes around them. With
-        ``source = "{tox_root}/source tree"``, ``"--source={[vars]source}/sub dir"`` splits at the spaces in
-        the stored path and keeps ``sub dir`` whole, and ``common_source = "{[vars]source}/common"`` splits at every
-        space in the path when used unquoted.
+        Quotes stored in a ``[vars]`` value remain part of that value when substituted into a quoted argument.
+        Unquoted substitutions still follow ``shlex`` quoting rules.
 
         Inside an unquoted or double-quoted path, double backslashes escape one backslash. Single-quoted text is
         literal; TOML argument arrays bypass command-line splitting. Escape a quote or wrap it in the other quote type to
@@ -1578,10 +1580,13 @@ Run
     :default: True
     :version_added: 0.5
 
-    Treat positional arguments passed to tox as file system paths and - if they exist on the filesystem and are in
-    relative format - rewrite them according to the current and :ref:`change_dir` working directory. This handles
-    automatically transforming relative paths specified on the CLI to relative paths respective of the commands executing
+    When true, tox rewrites a relative positional argument that names an existing file or directory to keep it pointing
+    at the same entry after the command changes to :ref:`change_dir`. For ``tox exec`` or a command whose program comes
+    from ``{posargs}``, tox leaves a bare first value such as ``python`` for ``PATH`` lookup. It also leaves a bare
+    executable first positional value unchanged because wrappers such as ``env {posargs}`` may run it as a program. This
+    also applies when the command uses that value as data. Pass ``./python`` when you mean a file in the start
     directory.
+    If a wrapper runs a later positional value as a program, set ``args_are_paths = false``.
 
 .. conf::
     :keys: ignore_errors
@@ -1985,9 +1990,11 @@ Python run
       ``-c`` (followed by a file path or URL).
 
     A substitution inside a dependency or option entry cannot add a requirements-file line. tox refuses a line break in
-    that value, or a backslash at the end of a substituted line, before starting pip. A substitution alone in its entry,
-    such as ``{[testenv]deps}``, can still supply multiple requirements. A globbed requirement path containing a line
-    break or ending in a backslash is refused.
+    that value, or a backslash at the end of a substituted line, before starting pip. A partial substitution also cannot
+    add, remove, or split parsed pip option tokens. This includes ``${VAR}`` expansion. tox still accepts options
+    written on the same line in the configuration. A substitution alone in its entry, such as ``{[testenv]deps}``, can
+    still supply multiple requirements. tox also refuses a globbed requirement path containing a line break or ending
+    in a backslash.
 
     If you are only defining :pep:`508` requirements (aka no pip requirement files), you should use
     :ref:`dependency_groups` instead.
@@ -2027,8 +2034,8 @@ Python run
     `Constraints files <https://pip.pypa.io/en/stable/user_guide/#constraints-files>`_ to use during package and
     dependency installation. Provided constraints files will be used when installing package dependencies and any
     additional dependencies specified in :ref:`deps`, but will not be used when installing the package itself.
-    Each value must be a file path or URL. A substitution within one value cannot add a line break or end a line with a
-    backslash, as in :ref:`deps`.
+    Each value must be a file path or URL. A substitution within one value cannot add a line break, end a line with a
+    backslash, or add a parsed pip option. tox still accepts options written on the same line in the configuration.
 
 .. conf::
     :keys: use_develop, usedevelop
@@ -2092,6 +2099,9 @@ Python run
 
     A list of "extras" from the package to be installed. For example, ``extras = testing`` is equivalent to ``[testing]``
     in a ``pip install`` command.
+
+    With :ref:`package` set to ``deps-only``, a self-reference in an extra can select another extra of the same package.
+    A marker on that reference also applies to the dependencies selected through it.
 
 .. _external-package-builder:
 
@@ -3443,7 +3453,8 @@ create your virtual env for the developers. This also supports ranges in the sam
 ***************
 
 **Value substitution** operates through the ``{...}`` string-substitution pattern. The string inside the curly braces
-may reference a global or per-environment config key as described above.
+may reference a global or per-environment config key as described above. A brace group is a reference only when its
+content starts with a key or ``[section]key``. For example, ``{"url": "https://example.com"}`` remains text.
 
 tox substitutes a key's value when it loads the key, then substitutes expressions in referenced configuration text or
 host environment variables. If nested expansion exceeds the depth limit, tox logs one warning for that value and leaves
@@ -3477,6 +3488,14 @@ Note that any backslashes remaining after substitution may be processed by ``shl
 platforms, the backslash escapes the following character. On Windows, it escapes quotes and other backslashes;
 backslashes before whitespace remain path separators. UNC prefixes retain their leading pair. Single-quoted text is
 literal on both platforms.
+
+INI splits a command into arguments after substitution. A path reference such as ``{tox_root}`` or ``{env_tmp_dir}``
+stays within one argument even if it contains spaces, quotes or backslashes. The same applies to tox-provided scalar
+values such as ``{host_python}`` and ``{tox_root_name}``, and to each unquoted entry of a referenced list such as
+``{base_python}``. A reference inside a larger word stays in that word, so ``python {tox_root}{/}scripts{/}report.py``
+needs no extra quotes. A string setting, a key from another section, or an environment variable remains command text
+when unquoted, so ``shlex`` may split it. Within a quoted argument, a substitution stays in that argument even if its
+value contains quotes or backslashes; for example, ``"--title={env:TITLE}"`` remains one argument.
 
 Special substitutions that accept additional colon-delimited ``:`` parameters cannot have a space after the ``:`` at the
 beginning of line (e.g. ``{posargs: magic}`` would be parsed as factorial ``{posargs``, having value magic).
@@ -3579,9 +3598,9 @@ Use a double ``--`` if you also want to pass options to an underlying test comma
 
     tox run -e 3.14 -- --opt1 ARG1
 
-will make the ``--opt1 ARG1`` appear in all test commands where ``[]`` or ``{posargs}`` was specified. By default (see
-``args_are_paths`` setting), ``tox`` rewrites each positional argument if it is a relative path and exists on the
-filesystem to become a path relative to the ``changedir`` setting.
+will make the ``--opt1 ARG1`` appear in all test commands where ``[]`` or ``{posargs}`` was specified. By default, tox
+rewrites an existing relative path to keep it pointing at the same entry after :ref:`change_dir`. Bare command names and
+bare executable first positional values are exceptions described under :ref:`args_are_paths`.
 
 When an INI value uses ``{posargs}``, tox replaces line breaks within each positional argument with spaces before
 quoting it. INI command and list values use line breaks to separate entries. The same replacement applies to TOML
@@ -3600,8 +3619,9 @@ You can expand glob/wildcard patterns to matching file paths:
 
     {glob:PATTERN}
 
-Matches are sorted and returned as a space-separated string. If no files match, the result is an empty string. You can
-provide a default value for when no files match:
+Matches are sorted and returned as a space-separated string. An unquoted glob substitution in an INI command passes each
+match as one argument, including file names with blanks or quotes. Quoting the whole substitution joins the matches into
+one argument. If no files match, the result is an empty string. You can provide a default value for when no files match:
 
 ::
 
