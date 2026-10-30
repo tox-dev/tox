@@ -281,6 +281,20 @@ def test_pip_install_deps_substitution_cannot_replace_static_option(
     assert "a requirement substitution cannot change pip options" in result.out
 
 
+@pytest.mark.timeout(5)
+def test_pip_install_deps_recursive_fan_out_stops(
+    tox_project: ToxProjectCreator, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("PART", "{env:PART}" * 100)
+    result: Final[ToxRunOutcome] = tox_project({
+        "tox.ini": "[testenv]\npackage=skip\ndeps={env:PART}",
+    }).run("c", "-e", "py", "-k", "deps")
+
+    result.assert_success()
+    assert result.out.count("Could not expand") == 1
+    assert 100 < result.out.count("{env:PART}") < 100_000
+
+
 @pytest.mark.parametrize(
     ("filename", "content", "namespace"),
     [

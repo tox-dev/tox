@@ -413,7 +413,11 @@ class RequirementLinesReplacer(Replacer):
 
     @override
     def _nested(self, conf_args: ConfigLoadArgs) -> Self:
-        return type(self)(self.conf, self.reference, conf_args, self.depth + 1, validate_options=self._validate_options)
+        nested: Final[Self] = type(self)(
+            self.conf, self.reference, conf_args, self.depth + 1, validate_options=self._validate_options
+        )
+        nested.root = self.root
+        return nested
 
     @staticmethod
     def _shares_line(value: MatchArg, at: int) -> bool:
