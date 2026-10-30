@@ -6,6 +6,7 @@ from textwrap import dedent
 from typing import TYPE_CHECKING
 
 import pytest
+from packaging.requirements import Requirement
 
 if TYPE_CHECKING:
     from unittest.mock import MagicMock
@@ -141,26 +142,50 @@ def test_invalid_script_metadata(tox_project: ToxProjectCreator, script: str) ->
         pytest.param(42, id="non-string"),
     ],
 )
-def test_invalid_dependency_fails_before_install(tox_project: ToxProjectCreator, dependency: object) -> None:
+def test_invalid_dependency_fails_before_install(tox_project: ToxProjectCreator, dependency: str | int) -> None:
     script = f"# /// script\n# dependencies = {json.dumps(['demo-pkg', dependency])}\n# ///\nprint('ok')\n"
     result, execute_calls = _run(tox_project, {"tox.ini": _tox_ini(), "check.py": script})
     result.assert_failed(1)
     assert "invalid dependenc" in result.out, result.out
     assert "internal error" not in result.out
-    assert not [i for i in execute_calls.call_args_list if "install" in i[0][3].run_id]
+    assert not any("install" in call[0][3].run_id for call in execute_calls.call_args_list)
 
 
-def test_pep508_dependency_forms(tox_project: ToxProjectCreator) -> None:
-    dependencies = [
-        "demo-pkg>=1.0",
-        "demo-pkg @ https://example.com/demo_pkg-1.0-py3-none-any.whl",
-        "tomli; python_version < '3.11'",
-    ]
+@pytest.mark.parametrize(
+    "dependencies",
+    [
+        pytest.param(42, id="integer"),
+        pytest.param("", id="empty-string"),
+    ],
+)
+def test_invalid_dependencies_type_fails_before_install(
+    tox_project: ToxProjectCreator, dependencies: str | int
+) -> None:
     script = f"# /// script\n# dependencies = {json.dumps(dependencies)}\n# ///\nprint('ok')\n"
     result, execute_calls = _run(tox_project, {"tox.ini": _tox_ini(), "check.py": script})
+    result.assert_failed(1)
+    assert "invalid dependencies" in result.out
+    assert not any("install" in call[0][3].run_id for call in execute_calls.call_args_list)
+
+
+@pytest.mark.parametrize(
+    "dependency",
+    [
+        pytest.param("demo-pkg>=1.0", id="version"),
+        pytest.param("demo-pkg @ https://example.com/demo_pkg-1.0-py3-none-any.whl", id="direct-url"),
+        pytest.param("tomli; python_version >= '3.11'", id="marker"),
+    ],
+)
+def test_pep508_dependency_forms(tox_project: ToxProjectCreator, dependency: str) -> None:
+    script = f"# /// script\n# dependencies = {json.dumps([dependency])}\n# ///\nprint('ok')\n"
+    result, execute_calls = _run(tox_project, {"tox.ini": _tox_ini(), "check.py": script})
     result.assert_success()
-    install_cmds = [i[0][3].cmd for i in execute_calls.call_args_list if "install" in i[0][3].run_id]
-    assert any("tomli" in arg for cmd in install_cmds for arg in cmd)
+    assert str(Requirement(dependency)) in [
+        argument
+        for call in execute_calls.call_args_list
+        if "install" in call[0][3].run_id
+        for argument in call[0][3].cmd
+    ]
 
 
 def test_missing_script_file(tox_project: ToxProjectCreator) -> None:

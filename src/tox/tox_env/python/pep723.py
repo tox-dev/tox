@@ -27,7 +27,7 @@ if TYPE_CHECKING:
     from tox.config.of_type import ConfigDynamicDefinition
     from tox.tox_env.api import ToxEnvCreateArgs
 
-_SCRIPT_METADATA_RE: Final = re.compile(
+_SCRIPT_METADATA_RE: Final[re.Pattern[str]] = re.compile(
     r"""
     (?m)
     ^[#][ ]///[ ](?P<type>[a-zA-Z0-9-]+)$  # opening: # /// <type>
@@ -103,21 +103,19 @@ class Pep723Mixin(Python, RunToxEnv):
         if getattr(self.options, "skip_env_install", False):
             logging.warning("skip installing dependencies")
             return
-        if metadata.dependencies:
-            root = self.core.get("tox_root", Path)
-            script = self.conf["script"]
-            dependencies = metadata.dependencies
-            if not isinstance(dependencies, list):
-                msg = f"invalid dependencies {dependencies!r} in {script}: expected a list"
-                raise Fail(msg)
-            for dependency in dependencies:
-                try:
-                    Requirement(dependency)
-                except (InvalidRequirement, TypeError) as exc:
-                    msg = f"invalid dependency {dependency!r} in {script}: {exc}"
-                    raise Fail(msg) from exc
-            requirements = PythonDeps(dependencies, root)
-            self._install(requirements, type(self).__name__, "deps")
+        dependencies = metadata.dependencies
+        script = self.conf["script"]
+        if not isinstance(dependencies, list):
+            msg = f"invalid dependencies {dependencies!r} in {script}: expected a list"
+            raise Fail(msg)
+        for dependency in dependencies:
+            try:
+                Requirement(dependency)
+            except (InvalidRequirement, TypeError) as exc:
+                msg = f"invalid dependency {dependency!r} in {script}: {exc}"
+                raise Fail(msg) from exc
+        if dependencies:
+            self._install(PythonDeps(dependencies, self.core.get("tox_root", Path)), type(self).__name__, "deps")
 
     def _get_script_metadata(self) -> ScriptMetadata:
         if self._script_metadata is None:

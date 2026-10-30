@@ -1,3 +1,2 @@
-Inline script ``dependencies`` for the ``virtualenv-pep-723`` runner are now validated as requirements before
-installation. A malformed entry such as a pip option (for example ``-i`` or ``--index-url``) fails the run instead of
-reaching pip as an argument.
+tox now validates inline script ``dependencies`` as requirements before installing them. An invalid entry such as a pip
+option fails the run before pip starts.
