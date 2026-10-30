@@ -57,7 +57,7 @@ class ExecuteRequest:
         self.env = env  #: the environment variables to use
         self.stdin = stdin  #: the type of standard input interaction allowed
         self.run_id = run_id  #: an id to identify this run
-        self.capture = capture  #: output is required by the caller, even in no-capture mode
+        self.capture = capture
         if allow is not None and "*" in allow:
             allow = None  # if we allow everything we can just disable the check
         self.allow = allow
