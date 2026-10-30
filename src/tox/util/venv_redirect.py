@@ -77,7 +77,7 @@ def _open(file: Path, dir_fd: int | None) -> IO[str]:
 
     def opener(path: str, flags: int) -> int:
         # Refuse a link swapped in after the metadata check.
-        return os.open(path, flags | os.O_NOFOLLOW, 0o666, dir_fd=dir_fd)
+        return os.open(path, flags | os.O_NOFOLLOW, dir_fd=dir_fd)
 
     return open(file.name, encoding="utf-8", opener=opener)
 
@@ -87,7 +87,7 @@ def _write_redirect(file: Path, dir_fd: int | None, text: str) -> None:
         file.write_text(text, encoding="utf-8")
         return
     name: Final[str] = f".{_FILE_NAME}.{secrets.token_hex(16)}"
-    descriptor: Final[int] = os.open(name, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o666, dir_fd=dir_fd)
+    descriptor: Final[int] = os.open(name, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o644, dir_fd=dir_fd)
     try:
         with os.fdopen(descriptor, "w", encoding="utf-8") as handler:
             handler.write(text)
