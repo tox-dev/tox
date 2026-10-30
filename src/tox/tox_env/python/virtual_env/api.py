@@ -199,8 +199,7 @@ class VirtualEnv(Python, ABC):
         env["VIRTUALENV_COPIES"] = str(self.conf["always_copy"])
         env["VIRTUALENV_DOWNLOAD"] = str(self.conf["download"])
         env["VIRTUALENV_NO_VENV_REDIRECT"] = "True"  # tox manages the PEP 832 .venv redirect itself
-        # virtualenv.ini can supply a python default ahead of --python; this impossible version replaces that default,
-        # then virtualenv rotates it behind the CLI specs because VIRTUALENV_PYTHON is set
+        # Override virtualenv.ini's Python default; 21.15.1 tries <0 last, and 21.15.2 drops it for CLI specs.
         env["VIRTUALENV_PYTHON"] = "<0"
         if hasattr(self.options, "discover"):
             env["VIRTUALENV_TRY_FIRST_WITH"] = os.pathsep.join(self.options.discover)

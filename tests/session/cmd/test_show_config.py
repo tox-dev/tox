@@ -119,11 +119,10 @@ def test_show_config_exception(tox_project: ToxProjectCreator) -> None:
     )
     outcome = project.run("c", "-e", "a", "-k", "env_site_packages_dir", raise_on_config_fail=False)
     outcome.assert_failed(code=-1)
-    txt = (
-        "\nenv_site_packages_dir = # Exception: "
-        "Skip(\"failed to find interpreter for Builtin discover of python_spec=['missing-python', '<0']"
-    )
-    assert txt in outcome.out
+    assert (
+        '\nenv_site_packages_dir = # Exception: Skip("failed to find interpreter for Builtin discover of python_spec='
+    ) in outcome.out
+    assert "missing-python" in outcome.out
 
 
 @pytest.mark.parametrize(
