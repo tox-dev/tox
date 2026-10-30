@@ -87,20 +87,23 @@ class Config:
                     args.append(arg)
                     continue
                 if is_existing_path and not path_arg.is_absolute():
-                    # we use os.path to unroll .. in path without resolve
-                    path_arg_str = os.path.abspath(str(path_arg))  # ruff:ignore[os-path-abspath]
-                    try:
-                        relative = os.path.relpath(path_arg_str, to_path_str)
-                    except ValueError:  # on Windows, relpath fails across drives (e.g. subst mounts)
-                        args.append(path_arg_str)
-                    else:
-                        if relative.startswith("-") and not arg.startswith("-"):
-                            relative = f"{os.curdir}{os.sep}{relative}"
-                        args.append(relative)
+                    args.append(self._rewrite_relative_path(arg, to_path_str))
                 else:
                     args.append(arg)
             return tuple(args)
         return self._pos_args
+
+    @staticmethod
+    def _rewrite_relative_path(arg: str, to_path_str: str) -> str:
+        # we use os.path to unroll .. in path without resolve
+        path_arg_str: Final[str] = os.path.abspath(arg)  # ruff:ignore[os-path-abspath]
+        try:
+            relative: Final[str] = os.path.relpath(path_arg_str, to_path_str)
+        except ValueError:  # on Windows, relpath fails across drives (e.g. subst mounts)
+            return path_arg_str
+        if relative.startswith("-") and not arg.startswith("-"):
+            return f"{os.curdir}{os.sep}{relative}"
+        return relative
 
     @property
     def work_dir(self) -> Path:
