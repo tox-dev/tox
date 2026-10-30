@@ -4,7 +4,7 @@ import os
 import re
 import sys
 from argparse import ArgumentError, ArgumentParser, Namespace
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Final
 from urllib.parse import quote
 
 import pytest
@@ -66,19 +66,14 @@ def test_install_pkg_file_uri_percent_encoded(tmp_path: Path) -> None:
 
 
 def test_install_pkg_file_uri_decoded_once(tmp_path: Path) -> None:
-    argument_parser = ArgumentParser()
-    # A literal "%2F" in a directory name is "%252F" in the URI: decoding it twice would select a different path
-    directory = tmp_path / "feature%2Flogin"
+    directory: Final[Path] = tmp_path / "feature%2Flogin"
     directory.mkdir()
-    path = directory / "pkg-1.0.whl"
+    path: Final[Path] = directory / "pkg-1.0.whl"
     path.write_text("")
-    if sys.platform == "win32":
-        uri = "file:///" + quote(str(path).replace("\\", "/"), safe=":/")
-    else:
-        uri = "file://" + quote(str(path), safe="/")
+    uri: Final[str] = path.as_uri()
     assert "%252F" in uri
-    namespace = Namespace()
-    InstallPackageAction(option_strings=["--install-pkg"], dest="into")(argument_parser, namespace, uri)
+    namespace: Final[Namespace] = Namespace()
+    InstallPackageAction(option_strings=["--install-pkg"], dest="into")(ArgumentParser(), namespace, uri)
     assert namespace.into == path
 
 

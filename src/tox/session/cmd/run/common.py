@@ -579,3 +579,12 @@ def run_order(state: State, to_run: list[str]) -> tuple[list[str], dict[str, set
         msg = f"circular dependency detected between environments: {exception}"
         raise HandledError(msg) from exception
     return order, todo
+
+
+__all__ = [
+    "InstallPackageAction",
+    "SkipMissingInterpreterAction",
+    "env_run_create_flags",
+    "execute",
+    "run_order",
+]
