@@ -110,9 +110,9 @@ def replace_requirement_lines(
     value: str | MatchExpression,
     args: ConfigLoadArgs,
     *,
-    validate_options: _RequirementOptionsValidator,
+    callbacks: RequirementLineCallbacks,
 ) -> str:
-    return RequirementLinesReplacer(conf, reference, conf_args=args, validate_options=validate_options).expand(value)
+    return RequirementLinesReplacer(conf, reference, conf_args=args, callbacks=callbacks).expand(value)
 
 
 def replace_entries(
@@ -549,10 +549,18 @@ class RequirementLinesReplacer(Replacer):
         conf_args: ConfigLoadArgs,
         depth: int = 0,
         *,
-        validate_options: _RequirementOptionsValidator,
+        callbacks: RequirementLineCallbacks,
     ) -> None:
         super().__init__(conf, reference, conf_args, depth)
-        self._validate_options = validate_options
+        self._callbacks = callbacks
+
+    @override
+    def _resolve_replace(
+        self, of_type: str, args: list[str], flattened_args: list[str], conf_args: ConfigLoadArgs
+    ) -> str | ConfigDefault | None:
+        value: Final[str | ConfigDefault | None] = super()._resolve_replace(of_type, args, flattened_args, conf_args)
+        # pip's ${NAME} syntax belongs to the configuration, a host variable's value reaches pip as written
+        return HostText(self._callbacks.protect_host_value(value)) if isinstance(value, HostText) else value
 
     @override
     def _flatten_arg(self, value: MatchArg) -> str:
@@ -579,13 +587,13 @@ class RequirementLinesReplacer(Replacer):
                 baseline[at] = f"\x00{at}\x00"
         result: Final[str] = "".join(replaced)
         if baseline != replaced:
-            self._validate_options("".join(baseline), result)
+            self._callbacks.validate_options("".join(baseline), result)
         return result
 
     @override
     def _nested(self, conf_args: ConfigLoadArgs) -> Self:
         nested: Final[Self] = type(self)(
-            self.conf, self.reference, conf_args, self.depth + 1, validate_options=self._validate_options
+            self.conf, self.reference, conf_args, self.depth + 1, callbacks=self._callbacks
         )
         nested.root = self.root
         return nested
@@ -605,8 +613,22 @@ class RequirementLinesReplacer(Replacer):
         return False
 
 
+class HostText(RawText):
+    __slots__ = ()
+
+
 class _RequirementOptionsValidator(Protocol):
-    def __call__(self, source: str, expanded: str) -> None: ...
+    def __call__(self, source: str, expanded: str, /) -> None: ...
+
+
+class _HostValueProtector(Protocol):
+    def __call__(self, value: str, /) -> str: ...
+
+
+@dataclasses.dataclass(frozen=True, slots=True, kw_only=True)
+class RequirementLineCallbacks:
+    validate_options: _RequirementOptionsValidator
+    protect_host_value: _HostValueProtector
 
 
 class EntriesReplacer(Replacer):
@@ -696,7 +718,9 @@ def _loading_change_dir(conf_args: ConfigLoadArgs) -> bool:
 
 
 def replace_env(conf: Config | None, args: list[str], conf_args: ConfigLoadArgs) -> str:
-    return str(_replace_env(conf, args, conf_args))
+    value: Final[str | ConfigDefault] = _replace_env(conf, args, conf_args)
+    # Keep host-value provenance for inline requirement parsing.
+    return value if isinstance(value, str) else str(value)
 
 
 def _replace_env(conf: Config | None, args: list[str], conf_args: ConfigLoadArgs) -> str | ConfigDefault:
@@ -727,7 +751,7 @@ def _replace_env(conf: Config | None, args: list[str], conf_args: ConfigLoadArgs
             raise MatchRecursionError(msg)
 
     if key in os.environ:
-        return RawText(os.environ[key])  # a host variable has always been allowed to hold tokens of its own
+        return HostText(os.environ[key])  # a host variable has always been allowed to hold tokens of its own
 
     return ConfigDefault(text="" if len(args) == 1 else ARG_DELIMITER.join(args[1:]), start=2)
 
@@ -787,10 +811,12 @@ def replace_factor(conf: Config, args: list[str], conf_args: ConfigLoadArgs) -> 
 __all__ = [
     "Arguments",
     "ConfigDefault",
+    "HostText",
     "MatchExpression",
     "MatchRecursionError",
     "RawText",
     "ReplaceReference",
+    "RequirementLineCallbacks",
     "find_replace_expr",
     "load_posargs",
     "quote_args",

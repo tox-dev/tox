@@ -550,7 +550,7 @@ class RequirementsFile:
                 expanded_line = expanded_line.replace(env_var, value)
                 if (redacted := redact_value(var_name, value)) != value:
                     self._secrets[value] = redacted
-            yield line_number, expanded_line
+            yield line_number, unprotect_env_variables(expanded_line)
 
     def redact(self, text: str) -> str:
         secrets: Final = self._secrets | self._req_parser._secrets  # ruff:ignore[private-member-access]  # nested files
@@ -602,8 +602,22 @@ class RequirementsFile:
                 yield f"--{name.replace('_', '-')}", ",".join(sorted(getattr(opt, name)))
 
 
-__all__ = (
+def protect_env_variables(text: str) -> str:
+    return text.replace("${", f"${_ENV_LITERAL_MARK}{{")
+
+
+def unprotect_env_variables(text: str) -> str:
+    return text.replace(f"${_ENV_LITERAL_MARK}{{", "${")
+
+
+# Defer pip-style expansion of host values until the inline parser finishes.
+_ENV_LITERAL_MARK: Final[str] = "\x00"
+
+
+__all__ = [
     "ParsedRequirement",
     "ReqFileLines",
     "RequirementsFile",
-)
+    "protect_env_variables",
+    "unprotect_env_variables",
+]

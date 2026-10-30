@@ -3536,6 +3536,11 @@ Inside a tox environment, tox looks up ``KEY`` in this order:
 
 So ``commands = echo {env:FOO}`` prints the ``set_env`` value of ``FOO`` when the environment sets one.
 
+In an inline :ref:`deps` or :ref:`constraints` entry, a direct ``{env:NAME}`` substitution from the host environment
+keeps ``${OTHER}`` text unchanged when tox builds pip arguments. A TOML ``replace = "env"`` table and a TOML reference
+to the loaded entry retain that behavior. A ``${NAME}`` reference written in the configuration or a substitution default
+still expands.
+
 Environment variable substitutions with default values
 ======================================================
 

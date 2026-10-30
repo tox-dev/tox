@@ -10,11 +10,13 @@ from typing import TYPE_CHECKING, Any, Final, Protocol, cast
 from tox.config.loader.api import apply_overrides_to_raw
 from tox.config.loader.ini.factor import active_factors
 from tox.config.loader.replacer import (
+    HostText,
     MatchError,
     MatchExpression,
     MatchRecursionError,
     RawText,
     ReplaceReference,
+    RequirementLineCallbacks,
     find_replace_expr,
     load_posargs,
     replace,
@@ -26,6 +28,7 @@ from tox.config.loader.stringify import stringify, stringify_reference
 from tox.config.set_env import SetEnvReference
 from tox.config.sets import EnvConfigSet
 from tox.config.types import Command, EnvList
+from tox.tox_env.python.pip.req.file import protect_env_variables
 from tox.tox_env.python.pip.req_file import PythonConstraints, PythonDeps
 from tox.util.typing_compat import override
 
@@ -82,7 +85,10 @@ class Unroll:
                         reference,
                         value,
                         self.args,
-                        validate_options=PythonDeps.validate_requirement_options,
+                        callbacks=RequirementLineCallbacks(
+                            validate_options=PythonDeps.validate_requirement_options,
+                            protect_host_value=protect_env_variables,
+                        ),
                     )
                 elif self._program_depth is not None:
                     value = replace_program(self.conf, reference, value, self.args)
@@ -170,7 +176,10 @@ class Unroll:
             return MatchExpression([["env"], [name], _parse_arg(default)])
         # use a copy of the chain so this substitution's env references do not leak into
         # adjacent entries of the same value tree and spuriously trip the circular check (#2869)
-        return replace_env(self.conf, [name, validate(default, str)], self.args.copy())
+        result: Final[str] = replace_env(self.conf, [name, validate(default, str)], self.args.copy())
+        if self.requirement_entries and isinstance(result, HostText):
+            return protect_env_variables(result)
+        return result
 
     def _replace_glob(self, value: dict[str, TomlTypes], depth: int, *, skip_str: bool) -> TomlTypes:
         # substitute the pattern and the fallback like the INI ``{glob:PATTERN:DEFAULT}`` form does
@@ -221,7 +230,7 @@ class Unroll:
     @staticmethod
     def _to_raw(value: object) -> TomlTypes:
         if isinstance(value, (PythonDeps, PythonConstraints)):
-            value = value.lines()
+            value = value.lines(preserve_host_values=True)
         elif isinstance(value, Command):
             value = value.raw_args
         elif isinstance(value, list) and all(isinstance(entry, Command) for entry in value):

@@ -10,6 +10,7 @@ from tox.config.loader.api import ConfigLoadArgs, Loader, Override
 from tox.config.loader.replacer import (
     MatchExpression,
     MatchRecursionError,
+    RequirementLineCallbacks,
     replace,
     replace_command_lines,
     replace_for,
@@ -19,6 +20,7 @@ from tox.config.loader.replacer import (
 from tox.config.set_env import SetEnv
 from tox.config.types import CircularChainError, Command, EnvList
 from tox.report import HandledError
+from tox.tox_env.python.pip.req.file import protect_env_variables
 from tox.tox_env.python.pip.req_file import PythonConstraints, PythonDeps
 from tox.util.typing_compat import override
 
@@ -111,7 +113,14 @@ class TomlLoader(Loader[TomlTypes]):
         reference: Final[TomlReplaceLoader] = TomlReplaceLoader(conf, self)
         if of_type in {PythonDeps, PythonConstraints}:
             return replace_requirement_lines(
-                conf, reference, value, args, validate_options=PythonDeps.validate_requirement_options
+                conf,
+                reference,
+                value,
+                args,
+                callbacks=RequirementLineCallbacks(
+                    validate_options=PythonDeps.validate_requirement_options,
+                    protect_host_value=protect_env_variables,
+                ),
             )
         if of_type in {Command, list[Command]}:
             return replace_command_lines(conf, reference, value, args)
