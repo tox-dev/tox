@@ -136,14 +136,13 @@ class VenvCmdBuilder(PythonPackageToxEnv, ABC):
     def _wheel_package(path: Path, extras: set[str]) -> WheelPackage:
         wheel_dist: Final[WheelDistribution] = WheelDistribution(path)
         metadata: Final[PackageMetadata] = wheel_dist.metadata
-        name: Final[str | None] = metadata.get("Name")
-        if name is None:
+        if "Name" not in metadata:
             missing_name_error: Final[str] = f"no Name in the metadata of {path}"
             raise Fail(missing_name_error)
         deps: Final[list[Requirement]] = dependencies_with_extras(
             [Requirement(requirement) for requirement in wheel_dist.requires or []],
             extras,
-            name,
+            metadata["Name"],
             available_extras=set(metadata.get_all("Provides-Extra") or []),
         )
         return WheelPackage(path, deps)
