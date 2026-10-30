@@ -370,7 +370,10 @@ class ToxEnv(ABC):  # ruff:ignore[too-many-public-methods]
         env_tmp_dir.mkdir(parents=True, exist_ok=True)
 
     def _handle_core_tmp_dir(self) -> None:
-        self.core["temp_dir"].mkdir(parents=True, exist_ok=True)
+        temp_dir: Final[Path] = self.core.get("temp_dir", Path)
+        if self.core.get("work_dir", Path) in temp_dir.parents and temp_dir.is_symlink():
+            temp_dir.unlink()
+        temp_dir.mkdir(parents=True, exist_ok=True)
         ensure_cachedir_tag(self.core["work_dir"])
         ensure_gitignore(self.core.get("work_dir", Path))
 
@@ -614,4 +617,10 @@ class ToxEnv(ABC):  # ruff:ignore[too-many-public-methods]
         return self._suspended_out_err is not None
 
 
-_CWD = Path.cwd()
+_CWD: Final[Path] = Path.cwd()
+
+__all__ = [
+    "ToxEnv",
+    "ToxEnvCreateArgs",
+    "redact_value",
+]
