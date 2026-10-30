@@ -1,6 +1,9 @@
 from __future__ import annotations
 
+import io
+import re
 import sys
+import tarfile
 from itertools import zip_longest
 from typing import TYPE_CHECKING, Final
 
@@ -9,7 +12,7 @@ from packaging.requirements import Requirement
 from pyproject_api import SubprocessFrontend
 
 from tox.tox_env.errors import Fail
-from tox.tox_env.python.virtual_env.package.util import dependencies_with_extras
+from tox.tox_env.python.virtual_env.package.util import dependencies_with_extras, safe_extractall
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -196,3 +199,107 @@ def test_extras_normalization_with_recursive() -> None:
     ]
     result = dependencies_with_extras(requires, {"my_extra"}, "name")
     assert sorted(str(r) for r in result) == ["dep1", "dep2"]
+
+
+@pytest.mark.usefixtures("extract_mode")
+def test_safe_extractall_regular(tmp_path: Path) -> None:
+    archive: Final[Path] = _make_tar(tmp_path / "ok.tar.gz", [("dir", "pkg-1.0", ""), ("file", "pkg-1.0/a.txt", "hi")])
+    dest: Final[Path] = tmp_path / "dest"
+    dest.mkdir()
+    with tarfile.open(archive) as tar:
+        safe_extractall(tar, dest)
+    assert (dest / "pkg-1.0" / "a.txt").read_text() == "hi"
+
+
+@pytest.fixture(
+    params=[
+        pytest.param(
+            "data_filter",
+            id="data-filter",
+            marks=pytest.mark.skipif(not hasattr(tarfile, "data_filter"), reason="tarfile data filter unavailable"),
+        ),
+        pytest.param("fallback", id="fallback"),
+    ],
+)
+def extract_mode(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) -> None:
+    if request.param == "fallback":
+        # Exercise the fallback even when tarfile provides its own filter.
+        if hasattr(tarfile.TarFile, "extraction_filter"):
+            monkeypatch.setattr(tarfile.TarFile, "extraction_filter", staticmethod(tarfile.fully_trusted_filter))
+        monkeypatch.delattr(tarfile, "data_filter", raising=False)
+
+
+def _make_tar(path: Path, members: list[tuple[str, str, str]]) -> Path:
+    with tarfile.open(path, "w:gz") as tar:
+        for kind, name, value in members:
+            info: tarfile.TarInfo = tarfile.TarInfo(name)
+            if kind == "dir":
+                info.type = tarfile.DIRTYPE
+                info.mode = 0o755
+                tar.addfile(info)
+            elif kind in {"sym", "hard"}:
+                info.type = tarfile.SYMTYPE if kind == "sym" else tarfile.LNKTYPE
+                info.linkname = value
+                tar.addfile(info)
+            else:
+                data: bytes = value.encode()
+                info.mode = 0o644
+                info.size = len(data)
+                tar.addfile(info, io.BytesIO(data))
+    return path
+
+
+@pytest.mark.parametrize(
+    ("members", "bad"),
+    [
+        pytest.param([("file", "../escape.txt", "evil")], "../escape.txt", id="traversal"),
+        pytest.param(
+            [("dir", "evil-1.0", ""), ("sym", "evil-1.0/escape", "{outside}"), ("file", "evil-1.0/escape/v.txt", "x")],
+            "evil-1.0/escape",
+            id="absolute-symlink",
+        ),
+        pytest.param(
+            [
+                ("dir", "evil-1.0", ""),
+                ("sym", "evil-1.0/escape", "../../outside"),
+                ("file", "evil-1.0/escape/v.txt", "x"),
+            ],
+            "evil-1.0/escape",
+            id="relative-symlink",
+        ),
+        pytest.param([("hard", "evil-1.0/v.txt", "../outside/victim.txt")], "evil-1.0/v.txt", id="hardlink"),
+    ],
+)
+@pytest.mark.usefixtures("extract_mode")
+def test_safe_extractall_rejects_link_escape(
+    tmp_path: Path,
+    members: list[tuple[str, str, str]],
+    bad: str,
+) -> None:
+    outside: Final[Path] = tmp_path / "outside"
+    outside.mkdir()
+    victim: Final[Path] = outside / "victim.txt"
+    victim.write_text("original")
+    archive: Final[Path] = _make_tar(
+        tmp_path / "evil.tar.gz", [(kind, name, value.format(outside=outside)) for kind, name, value in members]
+    )
+    dest: Final[Path] = tmp_path / "dest"
+    dest.mkdir()
+    with tarfile.open(archive) as tar, pytest.raises(Fail, match=re.escape(f"cannot extract tar member {bad!r} into")):
+        safe_extractall(tar, dest)
+    assert (victim.read_text(), (outside / "v.txt").exists()) == ("original", False)
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="needs symlink support")
+@pytest.mark.parametrize("extract_mode", [pytest.param("fallback", id="fallback")], indirect=True)
+@pytest.mark.usefixtures("extract_mode")
+def test_safe_extractall_fallback_rejects_chained_symlink_escape(tmp_path: Path) -> None:
+    # a/b/y -> ../.. stays inside, but a/b/x -> y/../.. only escapes once y is resolved on disk
+    archive: Final[Path] = _make_tar(
+        tmp_path / "evil.tar.gz",
+        [("dir", "a", ""), ("dir", "a/b", ""), ("sym", "a/b/y", "../.."), ("sym", "a/b/x", "y/../..")],
+    )
+    dest: Final[Path] = tmp_path / "dest"
+    dest.mkdir()
+    with tarfile.open(archive) as tar, pytest.raises(Fail, match="cannot extract tar member 'a/b/x' into"):
+        safe_extractall(tar, dest)
