@@ -604,6 +604,15 @@ def test_provision_masks_requires_url_userinfo(
     assert "user:pass" not in result.out
 
 
+def test_provision_masks_url_before_inline_flag(tox_project: ToxProjectCreator) -> None:
+    result: Final[ToxRunOutcome] = tox_project({
+        "tox.ini": "[tox]\nrequires = demo-pkg @ https://user:pass@example.invalid/demo.whl?x=--token=abc\n",
+    }).run("l", "--no-provision")
+    result.assert_failed(-2)
+    assert "https://*********@example.invalid/demo.whl?x=--token=***" in result.out
+    assert "user:pass" not in result.out
+
+
 def test_no_provision_before_command_keeps_command(tox_project: ToxProjectCreator) -> None:
     project = tox_project({"tox.toml": 'env_list = ["py"]\n'})
     result = project.run("--no-provision", "l")

@@ -54,13 +54,14 @@ def redact_value(name: str, value: str) -> str:
 def redact_argv(argv: Sequence[str]) -> list[str]:
     result: list[str] = []
     for token in argv:
-        for match in _INLINE_FLAG_REGEX.finditer(token):
+        redacted_token: str = _redact_url_userinfo(token)
+        for match in _INLINE_FLAG_REGEX.finditer(redacted_token):
             if _SECRET_ENV_VAR_REGEX.match(match.group()):
                 # A fused token has no reliable flag-value boundary.
-                result.append(f"{token[: match.end()]}{'*' * (len(token) - match.end())}")
+                result.append(f"{redacted_token[: match.end()]}{'*' * (len(redacted_token) - match.end())}")
                 break
         else:
-            result.append(_redact_url_userinfo(token))
+            result.append(redacted_token)
     return result
 
 
