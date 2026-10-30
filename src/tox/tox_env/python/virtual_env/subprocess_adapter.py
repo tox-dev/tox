@@ -216,6 +216,9 @@ def ensure_bootstrap(work_dir: Path, virtualenv_spec: str) -> Path:
     """Create or reuse a cached bootstrap venv with the specified virtualenv version."""
     _version_specifier(virtualenv_spec)
     base = _bootstrap_path(work_dir, virtualenv_spec)
+    if not base.parent.resolve().is_relative_to(work_dir.resolve()):
+        cache_parent_error: Final[str] = "bootstrap cache directory must stay within work directory"
+        raise Fail(cache_parent_error)
     python = _bootstrap_python(base)
     if _has_correct_virtualenv(python, virtualenv_spec):
         return python

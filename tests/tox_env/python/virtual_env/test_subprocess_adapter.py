@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import os
+import subprocess
 import sys
 import textwrap
 from pathlib import Path
@@ -346,6 +348,38 @@ def _symlink_or_skip(link: Path, target: Path) -> None:
         link.symlink_to(target, target_is_directory=True)
     except OSError as error:  # pragma: no cover - Windows may require a symlink privilege.
         pytest.skip(f"cannot create symlink: {error}")
+
+
+def _junction_to(link: Path, target: Path) -> None:  # pragma: no cover - Windows-only setup.
+    subprocess.run(
+        [os.environ["COMSPEC"], "/c", "mklink", "/J", str(link), str(target)], capture_output=True, check=True
+    )
+
+
+@pytest.mark.parametrize(
+    "make_link",
+    [
+        pytest.param(_symlink_or_skip, id="symlink"),
+        pytest.param(_junction_to, id="junction", marks=pytest.mark.skipif(os.name != "nt", reason="Windows only")),
+    ],
+)
+def test_ensure_bootstrap_rejects_cache_parent_outside_work_dir(
+    tmp_path: Path, victim: Path, mocker: MockerFixture, make_link: _StaleEntryMaker
+) -> None:
+    work_dir: Final[Path] = tmp_path / "work"
+    work_dir.mkdir()
+    make_link(work_dir / ".virtualenv-bootstrap", victim)
+    mocker.patch("tox.tox_env.python.virtual_env.subprocess_adapter.venv.create", autospec=True)
+    mocker.patch(
+        "tox.tox_env.python.virtual_env.subprocess_adapter.subprocess.run",
+        autospec=True,
+        return_value=subprocess.CompletedProcess([], 0),
+    )
+
+    with pytest.raises(Fail, match="bootstrap cache directory must stay within work directory"):
+        ensure_bootstrap(work_dir, "virtualenv<20.22.0")
+
+    assert list(victim.iterdir()) == [victim / "keep"]
 
 
 def test_ensure_bootstrap_link_swapped_after_removal_fails(tmp_path: Path, victim: Path, mocker: MockerFixture) -> None:

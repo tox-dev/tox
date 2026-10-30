@@ -2243,6 +2243,8 @@ Python virtual environment
 
     The bootstrap environment is cached under ``.tox/.virtualenv-bootstrap/`` (keyed by a hash of the spec string) and
     reused across runs. Concurrent access is protected by a file lock.
+    The cache parent must resolve inside :ref:`work_dir`. tox rejects a symlink or Windows junction that points outside
+    it before opening the cache lock.
 
     .. tab:: TOML
 
