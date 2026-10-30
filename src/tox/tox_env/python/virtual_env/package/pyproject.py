@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import logging
 import os
+import stat
+import sys
 import tarfile
 from abc import ABC
 from collections import defaultdict
@@ -198,8 +200,23 @@ class Pep517VenvPackager(PythonPackageToxEnv, ABC):
     @property
     def meta_folder(self) -> Path:
         meta_folder = self.conf.get("meta_dir", Path)
+        # the build frontend empties this folder before each metadata build, which would wipe a link's target
+        if meta_folder.is_symlink() or (
+            sys.platform == "win32" and meta_folder.exists() and self._is_windows_junction(meta_folder)
+        ):
+            msg = f"{meta_folder} is a link where the package metadata should live; delete it"
+            raise Fail(msg)
         meta_folder.mkdir(exist_ok=True)
         return meta_folder
+
+    @staticmethod
+    def _is_windows_junction(path: Path) -> bool:
+        # Linux type stubs omit the Windows-only stat fields.
+        return (
+            isinstance(reparse_tag := getattr(path.lstat(), "st_reparse_tag", None), int)
+            and isinstance(junction_tag := getattr(stat, "IO_REPARSE_TAG_MOUNT_POINT", None), int)
+            and reparse_tag == junction_tag
+        )
 
     @property
     def meta_folder_if_populated(self) -> Path | None:
