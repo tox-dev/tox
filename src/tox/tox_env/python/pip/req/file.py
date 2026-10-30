@@ -327,8 +327,7 @@ class RequirementsFile:
 
     @staticmethod
     def _read_decode(file_handler: BufferedIOBase, source: str, deadline: float | None = None) -> str:
-        raw: Final[bytes] = RequirementsFile._read_bounded(file_handler, source, deadline)
-        if not raw:
+        if not (raw := RequirementsFile._read_bounded(file_handler, source, deadline)):
             return ""
         for bom, encoding in _BOMS:
             if raw.startswith(bom):
