@@ -65,6 +65,31 @@ def test_override_repr() -> None:
 
 
 @pytest.mark.parametrize(
+    ("secret", "mask"),
+    [
+        pytest.param("hunter2", "*******", id="plain"),
+        pytest.param("hun ter2", "********", id="space"),
+        pytest.param("hun\nter2", "********", id="newline"),
+        pytest.param("hun;ter2", "********", id="semicolon"),
+    ],
+)
+def test_override_redacts_inline_secret(secret: str, mask: str) -> None:
+    override: Final[Override] = Override(f"testenv.commands=python deploy.py --password={secret}")
+    assert str(override) == f"testenv.commands=python deploy.py --password={mask}"
+    assert repr(override) == f"Override('testenv.commands=python deploy.py --password={mask}')"
+
+
+def test_override_redacts_secret_in_key() -> None:
+    override: Final[Override] = Override("--password=hunter2")
+    assert str(override) == "--password=*******"
+    assert repr(override) == "Override('--password=*******')"
+
+
+def test_override_str_keeps_spacing_when_nothing_is_redacted() -> None:
+    assert str(Override("b.a=  x  ")) == "b.a=  x  "
+
+
+@pytest.mark.parametrize(
     ("raw", "namespace", "key", "value", "append", "expected_str"),
     [
         pytest.param("env.3\\.14.deps=foo", "env.3.14", "deps", "foo", False, "env.3\\.14.deps=foo", id="escaped_dot"),

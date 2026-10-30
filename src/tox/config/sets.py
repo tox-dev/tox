@@ -333,6 +333,13 @@ class CoreConfigSet(ConfigSet):
             desc="the root directory (where the configuration file is found)",
         )
         self.add_constant("tox_root_name", "name of the root directory", self._root.name)
+        self.add_config(
+            keys=["package_root", "setupdir"],
+            of_type=Path,
+            default=self._default_package_root,
+            post_process=self._relative_to_tox_root,
+            desc="indicates where the packaging root file exists (historically setup.py file or pyproject.toml now)",
+        )
         self.add_constant("home", "the user's home directory", Path.home)
 
         self.add_config(
@@ -363,6 +370,9 @@ class CoreConfigSet(ConfigSet):
             desc="(provisional) the tox environment the .venv redirect file points at, picked automatically when unset",
         )
         self.add_constant("host_python", "the host python executable path", sys.executable)
+
+    def _default_package_root(self, _conf: Config, _env_name: str | None) -> Path:
+        return self.get("tox_root", Path)
 
     @override
     def _on_duplicate_conf(self, key: str, definition: ConfigDefinition[V]) -> None:

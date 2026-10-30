@@ -9,7 +9,8 @@ if TYPE_CHECKING:
     from collections.abc import Sequence
 
 # Based on the gitleaks ``generic-api-key`` rule. We err on the side of false positives because over-redaction is
-# reversible by the user but a leaked secret is not. See https://github.com/gitleaks/gitleaks/blob/master/config/gitleaks.toml#L587
+# reversible by the user but a leaked secret is not.
+# See https://github.com/gitleaks/gitleaks/blob/master/config/gitleaks.toml#L587
 _SECRET_KEYWORDS: Final[tuple[str, ...]] = (
     "access",
     "api",
@@ -32,8 +33,8 @@ _SECRET_ENV_VAR_REGEX: Final[re.Pattern[str]] = re.compile(
     """.format(keywords="|".join(_SECRET_KEYWORDS)),
     re.VERBOSE | re.IGNORECASE,
 )
-# Compile once for command display; an incomplete INI quote can fuse later flags into one argv element.
-_INLINE_FLAG_REGEX: Final[re.Pattern[str]] = re.compile(r"""(?<![^\s'"=])-[^\s'"=]*=""")
+# Compile once for command logging; broken INI quotes and semicolon-separated overrides can fuse flags into one token.
+_INLINE_FLAG_REGEX: Final[re.Pattern[str]] = re.compile(r"""(?<![^\s'"=;])-[^\s'"=]*=""")
 
 
 def redact_value(name: str, value: str) -> str:
@@ -63,7 +64,7 @@ def redact_argv(argv: Sequence[str]) -> list[str]:
     return result
 
 
-__all__ = (
+__all__ = [
     "redact_argv",
     "redact_value",
-)
+]

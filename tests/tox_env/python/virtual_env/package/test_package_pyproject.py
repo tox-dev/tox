@@ -693,7 +693,7 @@ def test_sdist_wheel_rejects_path_traversal(
     mocker.patch.object(Pep517VirtualEnvFrontend, "build_sdist", _build_malicious_sdist)
     result = proj.run("r", "--notest")
     result.assert_failed()
-    assert "tar member '../escape.txt' would extract outside of" in result.out
+    assert "cannot extract tar member '../escape.txt' into" in result.out
 
 
 def test_config_inspection_does_not_read_pyproject(tox_project: ToxProjectCreator) -> None:

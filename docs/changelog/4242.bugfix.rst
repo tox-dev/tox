@@ -1,0 +1,1 @@
+Preserve empty positional arguments when rewriting relative paths for ``change_dir``.
