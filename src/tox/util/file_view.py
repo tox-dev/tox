@@ -4,6 +4,7 @@ import logging
 import os
 import shutil
 import stat
+import sys
 from os.path import commonpath
 from typing import TYPE_CHECKING, Final
 
@@ -15,8 +16,8 @@ def create_session_view(package: Path, temp_path: Path, trust_root: Path | None 
     if temp_path.is_symlink():
         temp_path.unlink()
     temp_path.mkdir(parents=True, exist_ok=True)
-    if os.name == "posix":
-        _ensure_private_staging_path(temp_path, trust_root)
+    if sys.platform != "win32":
+        _ensure_private_staging_path(temp_path, trust_root, os.geteuid())
     file_id: Final[int] = max((int(entry.name) for entry in temp_path.iterdir() if entry.name.isnumeric()), default=0)
     session_dir: Final[Path] = temp_path / str(file_id + 1)
     session_dir.mkdir()
@@ -34,8 +35,7 @@ def create_session_view(package: Path, temp_path: Path, trust_root: Path | None 
     return session_package
 
 
-def _ensure_private_staging_path(temp_path: Path, trust_root: Path | None) -> None:
-    user_id: Final[int] = os.geteuid()
+def _ensure_private_staging_path(temp_path: Path, trust_root: Path | None, user_id: int) -> None:
     trusted_roots: Final[set[Path]] = {trust_root, trust_root.resolve()} if trust_root is not None else set()
     for candidate in {temp_path, temp_path.resolve()}:
         for parent in (candidate, *candidate.parents):
