@@ -613,4 +613,8 @@ class ToxEnv(ABC):  # ruff:ignore[too-many-public-methods]
 
 _CWD: Final[Path] = Path.cwd()
 
-__all__ = ["ToxEnv", "ToxEnvCreateArgs", "redact_value"]
+__all__ = [
+    "ToxEnv",
+    "ToxEnvCreateArgs",
+    "redact_value",
+]
