@@ -357,3 +357,5 @@ matrix.python = ">=3.15,<3.16"
 matrix.platforms = [ "linux_x86_64" ]
 # temporary, delete after 2026-11-02
 packages.release-creator.uploaded-prior-to = 2026-10-26T18:24:46Z
+# python-discovery 1.9.0 is newer than the seven-day default cutoff.
+packages.python-discovery.uploaded-prior-to = 2026-10-30T23:24:25Z
