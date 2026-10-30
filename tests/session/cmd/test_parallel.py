@@ -80,7 +80,8 @@ def test_parallel_general(tox_project: ToxProjectCreator, monkeypatch: MonkeyPat
     depends = !c: c
     parallel_show_output = c: true
     [testenv:d]
-    base_python = missing_skip
+    # Avoid Windows registry probes while checking missing-interpreter skips.
+    base_python = {tox_root}{/}missing_skip
     [testenv:e]
     commands=python -c 'import sys; print("run {env_name}"); sys.exit(1)'
     """

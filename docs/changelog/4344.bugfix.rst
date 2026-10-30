@@ -1,0 +1,1 @@
+Windows parallel tests use an absolute missing-interpreter path to avoid probing Python registrations in CI.
