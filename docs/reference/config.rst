@@ -1079,6 +1079,8 @@ Base options
         - there is no special handling of quotation marks, they are part of the key or value,
         - PEP-508 markers are not supported in environment files, so a ``;`` is a plain value character.
 
+        A line without ``=`` fails with the file path and line number. tox omits the line's text from the error.
+
     **Conditional environment variables**
 
     .. versionadded:: 4.33

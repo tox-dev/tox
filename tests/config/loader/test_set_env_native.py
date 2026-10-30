@@ -6,7 +6,7 @@ import pytest
 import tomli_w
 
 if TYPE_CHECKING:
-    from tox.pytest import ToxProjectCreator
+    from tox.pytest import ToxProject, ToxProjectCreator, ToxRunOutcome
 
 
 @pytest.mark.parametrize(
@@ -172,8 +172,8 @@ def test_set_env_override_file_selector_from_previous_override(
     ],
 )
 def test_set_env_native_rejects_invalid_env_file(tox_project: ToxProjectCreator, filename: str, config: str) -> None:
-    result = tox_project({filename: config, "broken.env": "# comment\nA=1\nMISSING_SEPARATOR"}).run("r", "-e", "py")
+    project: Final[ToxProject] = tox_project({filename: config, "broken.env": "# comment\nA=1\nMISSING_SEPARATOR"})
+    result: Final[ToxRunOutcome] = project.run("r", "-e", "py")
     result.assert_failed(code=1)
-    assert "invalid line 3 in " in result.out
-    assert "broken.env for set_env, expected KEY=VALUE" in result.out
-    assert "MISSING_SEPARATOR" not in result.out
+    assert f"invalid line 3 in {project.path / 'broken.env'} for set_env, expected KEY=VALUE" in result.out
+    assert "MISSING_SEPARATOR" not in result.out + result.err
