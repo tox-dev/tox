@@ -287,7 +287,7 @@ def test_pip_install_deps_recursive_fan_out_stops(
 ) -> None:
     monkeypatch.setenv("PART", "{env:PART}" * 100)
     result: Final[ToxRunOutcome] = tox_project({
-        "tox.ini": "[testenv]\npackage=skip\ndeps={env:PART}",
+        "tox.ini": "[testenv]\npackage=skip\ndeps=--index-url https://example.invalid/{env:PART}",
     }).run("c", "-e", "py", "-k", "deps")
 
     result.assert_success()
