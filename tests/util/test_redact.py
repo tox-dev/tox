@@ -11,6 +11,7 @@ from tox.util.redact import redact_argv, redact_value
         pytest.param("API_TOKEN", "******", id="api-token"),
         pytest.param("PASSWORD", "******", id="password-keyword"),
         pytest.param("MY_SECRET_THING", "******", id="embedded-secret"),
+        pytest.param("MY\nSECRET_THING", "******", id="newline-before-secret"),
         pytest.param("FOO", "secret", id="non-matching"),
         pytest.param("PATH", "secret", id="path"),
     ],
@@ -65,5 +66,4 @@ def test_redact_argv_empty() -> None:
     ],
 )
 def test_redact_argv_masks_when_a_newline_precedes_the_keyword(argv: list[str], expected: list[str]) -> None:
-    # a newline must not hide the keyword that marks the flag as secret, see https://github.com/tox-dev/tox/issues/4237
     assert redact_argv(argv) == expected

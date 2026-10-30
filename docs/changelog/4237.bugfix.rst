@@ -1,1 +1,1 @@
-Mask secret-looking flag values even when the flag name carries a newline before the keyword - by :user:\haigou-web\.
+Mask values when a flag or environment variable name contains a secret keyword after a newline, by :user:`haigou-web`.
