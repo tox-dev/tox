@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import hashlib
 import json
 import locale
 import logging
@@ -10,7 +9,7 @@ import sys
 from importlib.metadata import PackageNotFoundError, distribution
 from pathlib import Path
 from typing import TYPE_CHECKING, Final, cast
-from urllib.parse import parse_qsl, urlsplit
+from urllib.parse import urlsplit
 
 from filelock import FileLock
 from packaging.requirements import Requirement
@@ -33,6 +32,17 @@ if TYPE_CHECKING:
     from tox.session.state import State
     from tox.tox_env.python.runner import PythonRun
     from tox.util.json_types import JsonValue
+
+
+# pip records only these URL fragment hashes in direct_url.json.
+_PIP_HASH_ALGORITHMS: Final[frozenset[str]] = frozenset({
+    "md5",
+    "sha1",
+    "sha224",
+    "sha256",
+    "sha384",
+    "sha512",
+})
 
 
 @impl
@@ -180,34 +190,43 @@ def _installed_from_url(dist: Distribution, url: str) -> bool:
         if "@" not in parts.netloc or installed != parts._replace(netloc=parts.netloc.rsplit("@", 1)[1]).geturl():
             return False
         if not isinstance(info.get("archive_info"), dict) or not any(
-            algorithm in hashlib.algorithms_available for algorithm, _ in parse_qsl(fragment, keep_blank_values=True)
+            algorithm in _PIP_HASH_ALGORITHMS for algorithm, _ in _fragment_fields(fragment)
         ):
             msg = "cannot verify the installed origin of a credentialed direct URL without an archive hash"
             raise HandledError(msg)
     return _origin_fragment_matches(info, fragment)
 
 
+def _fragment_fields(fragment: str) -> list[tuple[str, str]]:
+    # pip retains percent escapes and plus signs in the recorded subdirectory.
+    fields: Final[list[tuple[str, str]]] = []
+    for part in fragment.split("&"):
+        key, separator, value = part.partition("=")
+        if separator:
+            fields.append((key, value))
+    return fields
+
+
 def _origin_fragment_matches(info: dict[str, JsonValue], fragment: str) -> bool:
-    fields: Final[list[tuple[str, str]]] = parse_qsl(fragment, keep_blank_values=True)
-    subdirectories: Final[list[str]] = [value for key, value in fields if key == "subdirectory"]
-    stored_subdirectory: Final[JsonValue] = info.get("subdirectory")
-    if subdirectories != ([stored_subdirectory] if isinstance(stored_subdirectory, str) else []):
+    fields: Final[list[tuple[str, str]]] = _fragment_fields(fragment)
+    if (next((value for key, value in fields if key == "subdirectory"), None) or None) != info.get("subdirectory"):
         return False
+    hash_fragment: Final[tuple[str, str] | None] = next(
+        ((key, value) for key, value in fields if key in _PIP_HASH_ALGORITHMS), None
+    )
+    if hash_fragment is None:
+        return True
     archive_info: Final[JsonValue] = info.get("archive_info")
-    for algorithm, expected in fields:
-        if algorithm == "subdirectory":
-            continue
-        if not isinstance(archive_info, dict):
-            return False
-        hashes: JsonValue = archive_info.get("hashes")
-        actual = hashes.get(algorithm) if isinstance(hashes, dict) else None
-        if actual is None and isinstance(legacy_hash := archive_info.get("hash"), str):
-            legacy_algorithm, _, legacy_value = legacy_hash.partition("=")
-            if legacy_algorithm == algorithm:
-                actual = legacy_value
-        if not isinstance(actual, str) or actual.lower() != expected.lower():
-            return False
-    return True
+    if not isinstance(archive_info, dict):
+        return False
+    algorithm, expected = hash_fragment
+    hashes: Final[JsonValue] = archive_info.get("hashes")
+    actual = hashes.get(algorithm) if isinstance(hashes, dict) else None
+    if actual is None and isinstance(legacy_hash := archive_info.get("hash"), str):
+        legacy_algorithm, _, legacy_value = legacy_hash.partition("=")
+        if legacy_algorithm == algorithm:
+            actual = legacy_value
+    return isinstance(actual, str) and actual.lower() == expected.lower()
 
 
 def run_provision(name: str, state: State) -> int:
