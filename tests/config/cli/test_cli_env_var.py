@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Final
 from unittest.mock import ANY
 
 import pytest
@@ -224,14 +224,45 @@ def test_bad_env_var_redacts_secret_in_reason(
     assert f"--password={mask}" in out
 
 
-def test_install_pkg_env_var_relative_path_is_absolute(tmp_path: Path, monkeypatch: MonkeyPatch) -> None:
-    wheel = tmp_path / "dist" / "demo-1.0-py3-none-any.whl"
+@pytest.mark.parametrize(
+    ("environment", "user_config"),
+    [
+        pytest.param(
+            {"TOX_INSTALL_PKG": "../dist/demo-1.0-py3-none-any.whl"},
+            "[tox]\n",
+            id="environment",
+        ),
+        pytest.param(
+            {},
+            "[tox]\ninstall_pkg = ../dist/demo-1.0-py3-none-any.whl\n",
+            id="user-config",
+        ),
+    ],
+)
+def test_install_pkg_relative_default_is_anchored(
+    tmp_path: Path,
+    monkeypatch: MonkeyPatch,
+    environment: dict[str, str],
+    user_config: str,
+) -> None:
+    wheel: Final[Path] = tmp_path / "dist" / "demo-1.0-py3-none-any.whl"
     wheel.parent.mkdir()
     wheel.write_text("")
     (tmp_path / "tests").mkdir()
     monkeypatch.chdir(tmp_path / "tests")
-    monkeypatch.setenv("TOX_INSTALL_PKG", "../dist/demo-1.0-py3-none-any.whl")
-    parsed, _, __, ___, ____ = get_options("r")
-    assert parsed.install_pkg.is_absolute()
+    config_file: Final[Path] = tmp_path / "user.ini"
+    config_file.write_text(user_config)
+    monkeypatch.setenv("TOX_USER_CONFIG_FILE", str(config_file))
+    for name, value in environment.items():
+        monkeypatch.setenv(name, value)
+    install_pkg: Final[Path | None] = get_options("r").parsed.install_pkg
     monkeypatch.chdir(tmp_path)
-    assert parsed.install_pkg.resolve() == wheel.resolve()
+    assert install_pkg is not None
+    assert install_pkg.resolve() == wheel
+
+
+def test_install_pkg_env_var_file_uri(tmp_path: Path, monkeypatch: MonkeyPatch) -> None:
+    wheel: Final[Path] = tmp_path / "demo-1.0-py3-none-any.whl"
+    wheel.write_text("")
+    monkeypatch.setenv("TOX_INSTALL_PKG", wheel.as_uri())
+    assert get_options("r").parsed.install_pkg == wheel

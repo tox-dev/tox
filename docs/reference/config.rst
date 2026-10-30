@@ -2437,6 +2437,9 @@ Set a CLI option's default with ``TOX_<option>``. For example, ``TOX_WORK_DIR`` 
 explicit ``--workdir`` flag takes precedence. ``TOX_OVERRIDE`` sets the ``--override`` option. For options accepting
 more than one argument, use ``;`` to separate the values.
 
+Relative ``TOX_INSTALL_PKG`` and user configuration ``install_pkg`` defaults are resolved from the invocation directory,
+like an explicit ``--installpkg`` path.
+
 All configuration inside the configuration file may be overwritten via the ``TOX_OVERRIDE``, note in this case the
 configuration file and its access (section/table + key) are needed. Here we demonstrate with a ``tox.ini`` file:
 
