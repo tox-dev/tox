@@ -18,7 +18,6 @@ if TYPE_CHECKING:
     from unittest.mock import MagicMock
 
     from pytest_mock import MockerFixture
-
     from typing_extensions import TypeIs
 
     from tox.pytest import CaptureFixture, SubRequest, ToxProject, ToxProjectCreator, ToxRunOutcome
@@ -448,7 +447,7 @@ def test_pip_install_configured_requirement_variable_expands(
     monkeypatch.setenv("DEPLOY_TOKEN", "magic")
     monkeypatch.setenv("DEMO", "b")
     result: Final[ToxRunOutcome] = tox_project({
-        "tox.ini": "[testenv]\npackage=skip\ndeps=a==${DEPLOY_TOKEN}\n {env:DEMO}"
+        "tox.ini": "[testenv]\npackage=skip\npass_env=DEPLOY_TOKEN\ndeps=a==${DEPLOY_TOKEN}\n {env:DEMO}"
     }).run("c", "-e", "py", "-k", "deps")
     result.assert_success()
     assert sorted(result.env_conf("py")["deps"].as_root_args) == ["a==magic", "b"]
@@ -457,10 +456,13 @@ def test_pip_install_configured_requirement_variable_expands(
 @pytest.mark.parametrize(
     "files",
     [
-        pytest.param({"tox.ini": "[testenv]\npackage=skip\ndeps={env:DEMO:a==${DEPLOY_TOKEN}}"}, id="ini"),
+        pytest.param(
+            {"tox.ini": "[testenv]\npackage=skip\npass_env=DEPLOY_TOKEN\ndeps={env:DEMO:a==${DEPLOY_TOKEN}}"},
+            id="ini",
+        ),
         pytest.param(
             {
-                "tox.toml": '[env_run_base]\npackage="skip"\n'
+                "tox.toml": '[env_run_base]\npackage="skip"\npass_env=["DEPLOY_TOKEN"]\n'
                 'deps=[{replace="env",name="DEMO",default="a==${DEPLOY_TOKEN}"}]'
             },
             id="toml",
