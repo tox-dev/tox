@@ -17,6 +17,8 @@ import pytest
 from filelock import FileLock
 from packaging.requirements import Requirement
 
+from tox.provision import _get_missing  # ruff:ignore[import-private-name]
+
 if TYPE_CHECKING:
     from collections.abc import Callable, Generator, Sequence
 
@@ -191,6 +193,66 @@ def test_provision_requires_checks_true_markers(tox_project: ToxProjectCreator) 
     outcome = project.run("c", "-e", "py")
     outcome.assert_failed()
     assert "pkg-does-not-exist" in outcome.out
+
+
+def test_provision_requires_direct_url_not_satisfied_by_installed_name(tox_project: ToxProjectCreator) -> None:
+    url = "file:///srv/wheels/tox-99.0-py3-none-any.whl"
+    project = tox_project({"tox.ini": f"[tox]\nrequires = tox @ {url}\nno_package = true\n"})
+    outcome = project.run("c", "-e", "py", "--no-provision")
+    outcome.assert_failed()
+    assert f"is missing [requires (has)]: {Requirement(f'tox @ {url}')} (" in outcome.out
+
+
+def _dist_with_direct_url(direct_url: str | None) -> mock.MagicMock:
+    dist = mock.MagicMock(version="1.0")
+    dist.read_text.side_effect = lambda name: direct_url if name == "direct_url.json" else None
+    return dist
+
+
+@pytest.mark.parametrize(
+    ("requirement", "direct_url", "is_missing"),
+    [
+        pytest.param("pkg @ file:///w/pkg-1.0.whl", None, True, id="no-direct-url"),
+        pytest.param("pkg @ file:///w/pkg-1.0.whl", "not json", True, id="invalid-json"),
+        pytest.param("pkg @ file:///w/pkg-1.0.whl", "[]", True, id="not-object"),
+        pytest.param("pkg @ file:///w/pkg-1.0.whl", '{"url": 1}', True, id="url-not-str"),
+        pytest.param(
+            "pkg @ file:///w/pkg-1.0.whl", '{"url": "file:///other/pkg-1.0.whl", "archive_info": {}}', True, id="other"
+        ),
+        pytest.param(
+            "pkg @ file:///w/pkg-1.0.whl", '{"url": "file:///w/pkg-1.0.whl", "archive_info": {}}', False, id="same"
+        ),
+        pytest.param(
+            "pkg @ https://h/pkg-1.0.whl#sha256=abc",
+            '{"url": "https://h/pkg-1.0.whl", "archive_info": {"hashes": {"sha256": "abc"}}}',
+            False,
+            id="hash-fragment",
+        ),
+        pytest.param(
+            "pkg @ git+https://h/r.git@v1",
+            '{"url": "https://h/r.git", "vcs_info": {"vcs": "git", "requested_revision": "v1", "commit_id": "c"}}',
+            False,
+            id="vcs-same-revision",
+        ),
+        pytest.param(
+            "pkg @ git+https://h/r.git@v2",
+            '{"url": "https://h/r.git", "vcs_info": {"vcs": "git", "requested_revision": "v1", "commit_id": "c"}}',
+            True,
+            id="vcs-other-revision",
+        ),
+        pytest.param(
+            "pkg @ git+https://h/r.git",
+            '{"url": "https://h/r.git", "vcs_info": {"vcs": "git", "commit_id": "c"}}',
+            False,
+            id="vcs-no-revision",
+        ),
+    ],
+)
+def test_get_missing_direct_url(requirement: str, direct_url: str | None, is_missing: bool) -> None:
+    req = Requirement(requirement)
+    with mock.patch("tox.provision.distribution", return_value=_dist_with_direct_url(direct_url)):
+        missing = _get_missing([req])
+    assert missing == ([(req, "1.0")] if is_missing else [])
 
 
 @pytest.mark.integration

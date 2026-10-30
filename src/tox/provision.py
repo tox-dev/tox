@@ -25,6 +25,7 @@ from tox.util.redact import redact_argv
 
 if TYPE_CHECKING:
     from argparse import ArgumentParser
+    from importlib.metadata import Distribution
 
     from tox.session.state import State
     from tox.tox_env.python.runner import PythonRun
@@ -145,9 +146,31 @@ def _get_missing(requires: list[Requirement]) -> list[tuple[Requirement, str | N
         except PackageNotFoundError:
             missing.append((package, None))
         else:
-            if not package.specifier.contains(dist.version, prereleases=True):
+            if package.url is not None:
+                if not _installed_from_url(dist, package.url):
+                    missing.append((package, dist.version))
+            elif not package.specifier.contains(dist.version, prereleases=True):
                 missing.append((package, dist.version))
     return missing
+
+
+def _installed_from_url(dist: Distribution, url: str) -> bool:
+    """Check if a distribution was installed from the given direct URL using its PEP 610 ``direct_url.json``."""
+    try:
+        info = json.loads(dist.read_text("direct_url.json") or "null")
+    except ValueError:
+        return False
+    if not isinstance(info, dict) or not isinstance(installed := info.get("url"), str):
+        return False
+    if isinstance(vcs_info := info.get("vcs_info"), dict) and isinstance(vcs := vcs_info.get("vcs"), str):
+        installed = f"{vcs}+{installed}"
+        if isinstance(revision := vcs_info.get("requested_revision"), str):
+            installed = f"{installed}@{revision}"
+    return _strip_fragment(installed) == _strip_fragment(url)
+
+
+def _strip_fragment(url: str) -> str:
+    return url.split("#", 1)[0].rstrip("/")
 
 
 def run_provision(name: str, state: State) -> int:
