@@ -62,14 +62,46 @@ class Pylock:
             uri = self._to_uri(pkg.directory.path, pkg.directory.subdirectory)
             return (f"-e {uri}" if pkg.directory.editable else f"{pkg.name} @ {uri}"), []
         if pkg.vcs is not None:
-            return f"{pkg.name} @ {self._to_vcs_url(pkg.vcs)}", []
+            vcs = pkg.vcs
+            self._check_tokens(
+                pkg,
+                {
+                    "vcs type": vcs.type,
+                    "vcs url": vcs.url,
+                    "vcs commit-id": vcs.commit_id,
+                    "vcs requested-revision": vcs.requested_revision,
+                    "vcs subdirectory": vcs.subdirectory,
+                },
+            )
+            return f"{pkg.name} @ {self._to_vcs_url(vcs)}", []
         if pkg.archive is not None:
-            return f"{pkg.name} @ {self._to_archive_url(pkg.archive)}", _hash_options(pkg.archive.hashes)
+            archive = pkg.archive
+            self._check_tokens(pkg, {"archive url": archive.url, "archive subdirectory": archive.subdirectory})
+            return f"{pkg.name} @ {self._to_archive_url(archive)}", self._hash_options(pkg, archive.hashes)
         line = str(pkg.name) if pkg.version is None else f"{pkg.name}=={pkg.version}"
         hashes = [
-            h for dist in (pkg.sdist, *(pkg.wheels or [])) if dist is not None for h in _hash_options(dist.hashes)
+            h
+            for dist in (pkg.sdist, *(pkg.wheels or []))
+            if dist is not None
+            for h in self._hash_options(pkg, dist.hashes)
         ]
         return line, hashes
+
+    def _hash_options(self, pkg: Package, hashes: Mapping[str, str] | None) -> list[str]:
+        for algorithm, value in (hashes or {}).items():
+            self._check_tokens(pkg, {"hash algorithm": algorithm, f"{algorithm} hash": value})
+        return [f"{algorithm}:{value}" for algorithm, value in (hashes or {}).items()]
+
+    def _check_tokens(self, pkg: Package, fields: Mapping[str, str | None]) -> None:
+        # these values are written verbatim into a pip requirements file, where whitespace or a line break would let a
+        # malformed field inject extra options or requirement lines, so each must stay a single token
+        for name, value in fields.items():
+            if value is not None and (not value or any(c.isspace() or not c.isprintable() for c in value)):
+                msg = (
+                    f"invalid pylock file {self.path}: package {pkg.name!r} {name} {value!r} must be non-empty and"
+                    " contain no whitespace or control characters"
+                )
+                raise Fail(msg)
 
     def _to_uri(self, path: str | Path, subdirectory: str | None = None) -> str:
         # PEP 751 stores paths relative to the lock file; the subdirectory is the project root within it
@@ -87,10 +119,6 @@ class Pylock:
     def _to_archive_url(self, archive: PackageArchive) -> str:
         url = archive.url if archive.url is not None else self._to_uri(archive.path or ".")
         return url if archive.subdirectory is None else f"{url}#subdirectory={archive.subdirectory}"
-
-
-def _hash_options(hashes: Mapping[str, str] | None) -> list[str]:
-    return [f"{algorithm}:{value}" for algorithm, value in (hashes or {}).items()]
 
 
 __all__ = [

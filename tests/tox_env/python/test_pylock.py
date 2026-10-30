@@ -677,3 +677,52 @@ def test_pylock_install_lines_utf8_bom(tmp_path: Path) -> None:
     lines = Pylock(path=pylock).install_lines()
 
     assert lines == ["alpha==1.0.0 --hash=sha256:abc123", "beta==2.0.0 --hash=sha256:def456"]
+
+
+@pytest.mark.parametrize(
+    ("body", "field"),
+    [
+        pytest.param(
+            '[[packages.wheels]]\nurl = "https://x/alpha-1.0.0-py3-none-any.whl"\n'
+            'hashes = { sha256 = "abc\\n--index-url file:///evil/simple" }\n',
+            "sha256 hash",
+            id="hash-newline",
+        ),
+        pytest.param(
+            '[[packages.wheels]]\nurl = "https://x/alpha-1.0.0-py3-none-any.whl"\n'
+            'hashes = { sha256 = "abc --hash=sha256:def" }\n',
+            "sha256 hash",
+            id="hash-space",
+        ),
+        pytest.param(
+            '[[packages.wheels]]\nurl = "https://x/alpha-1.0.0-py3-none-any.whl"\nhashes = { "sha 256" = "abc" }\n',
+            "hash algorithm",
+            id="hash-algorithm-space",
+        ),
+        pytest.param(
+            '[packages.archive]\nurl = "https://x/a.tar.gz\\r\\n-e file:///evil"\nhashes = { sha256 = "abc" }\n',
+            "archive url",
+            id="archive-url-newline",
+        ),
+        pytest.param(
+            '[packages.archive]\nurl = "https://x/a.tar.gz"\nsubdirectory = "sub\\u2028--pre"\n'
+            'hashes = { sha256 = "abc" }\n',
+            "archive subdirectory",
+            id="archive-subdirectory-line-separator",
+        ),
+        pytest.param(
+            '[packages.vcs]\ntype = "git"\nurl = "https://x/a.git"\ncommit-id = "abc\\n--index-url file:///evil"\n',
+            "vcs commit-id",
+            id="vcs-commit-newline",
+        ),
+    ],
+)
+def test_pylock_rejects_field_injecting_requirements_syntax(tmp_path: Path, body: str, field: str) -> None:
+    lock_file = tmp_path / "pylock.toml"
+    lock_file.write_text(
+        f'lock-version = "1.0"\ncreated-by = "test-tool"\n\n[[packages]]\nname = "alpha"\nversion = "1.0.0"\n\n{body}',
+        encoding="utf-8",
+    )
+
+    with pytest.raises(Fail, match=rf"invalid pylock file .*'alpha' {field} .* no whitespace or control characters"):
+        Pylock(path=lock_file).install_lines()
