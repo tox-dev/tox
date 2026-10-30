@@ -2252,10 +2252,12 @@ Python virtual environment
     the installed virtualenv -- if any candidate would resolve to a creatable interpreter, no pin is applied. Set the
     value explicitly to override this choice.
 
-    The bootstrap environment is cached under ``.tox/.virtualenv-bootstrap/`` (keyed by a hash of the spec string) and
-    reused across runs. Concurrent access is protected by a file lock.
-    The cache parent must resolve inside :ref:`work_dir`. tox rejects a symlink or Windows junction that points outside
-    it before opening the cache lock.
+    The bootstrap environment is cached in ``.virtualenv-bootstrap/`` under :ref:`work_dir` (keyed by a hash of the spec
+    string) and reused across runs. Concurrent access is protected by a file lock. The cache parent must resolve inside
+    :ref:`work_dir`; tox rejects a symlink or Windows junction pointing outside it before opening the lock.
+    On Windows, tox builds the environment under the work directory before moving it into the cache. A junction at the
+    cache entry cannot redirect creation writes. The work directory must allow creating temporary subdirectories. A
+    linked project work directory remains supported.
 
     .. tab:: TOML
 

@@ -10,6 +10,8 @@ import subprocess
 import sys
 import venv
 from dataclasses import dataclass, field
+from pathlib import Path
+from tempfile import TemporaryDirectory
 from typing import TYPE_CHECKING, Final
 
 from filelock import FileLock
@@ -19,8 +21,6 @@ from packaging.utils import canonicalize_name
 from tox.tox_env.errors import Fail
 
 if TYPE_CHECKING:
-    from pathlib import Path
-
     from packaging.specifiers import SpecifierSet
 
 _PROBE_SCRIPT: Final[str] = """\
@@ -213,32 +213,43 @@ def _has_correct_virtualenv(python: Path, virtualenv_spec: str) -> bool:
 
 
 def ensure_bootstrap(work_dir: Path, virtualenv_spec: str) -> Path:
-    """Create or reuse a cached bootstrap venv with the specified virtualenv version."""
     _version_specifier(virtualenv_spec)
-    base = _bootstrap_path(work_dir, virtualenv_spec)
+    base: Final[Path] = _bootstrap_path(work_dir, virtualenv_spec)
     if not base.parent.resolve().is_relative_to(work_dir.resolve()):
         cache_parent_error: Final[str] = "bootstrap cache directory must stay within work directory"
         raise Fail(cache_parent_error)
-    python = _bootstrap_python(base)
+    python: Final[Path] = _bootstrap_python(base)
     if _has_correct_virtualenv(python, virtualenv_spec):
         return python
 
-    lock_path = base.parent / f"{base.name}.lock"
+    lock_path: Final[Path] = base.parent / f"{base.name}.lock"
     lock_path.parent.mkdir(parents=True, exist_ok=True)
     with FileLock(lock_path):
         if _has_correct_virtualenv(python, virtualenv_spec):
             return python
         logging.info("bootstrapping %s into %s", virtualenv_spec, base)
-        _remove_stale_bootstrap(base)
-        # A planted link must fail creation; clear=True would erase its target.
-        base.mkdir()
-        venv.create(str(base), with_pip=True)
-        pip = _bootstrap_pip(base)
-        result = subprocess.run([str(pip), "install", virtualenv_spec], capture_output=True, text=True, check=False)
-        if result.returncode != 0:
-            msg = f"failed to install {virtualenv_spec} into bootstrap env: {result.stderr}"
-            raise RuntimeError(msg)
+        if sys.platform == "win32":
+            with TemporaryDirectory(dir=work_dir) as stage_parent:
+                stage: Final[Path] = Path(stage_parent) / base.name
+                _build_bootstrap(stage, virtualenv_spec)
+                _remove_stale_bootstrap(base)
+                stage.rename(base)
+        else:
+            _remove_stale_bootstrap(base)
+            _build_bootstrap(base, virtualenv_spec)
         return python
+
+
+def _build_bootstrap(base: Path, virtualenv_spec: str) -> None:
+    # A planted link must fail creation; clear=True would erase its target.
+    base.mkdir()
+    venv.create(str(base), with_pip=True)
+    result: Final[subprocess.CompletedProcess[str]] = subprocess.run(
+        [str(_bootstrap_pip(base)), "install", virtualenv_spec], capture_output=True, text=True, check=False
+    )
+    if result.returncode != 0:
+        msg: Final[str] = f"failed to install {virtualenv_spec} into bootstrap env: {result.stderr}"
+        raise RuntimeError(msg)
 
 
 def _remove_stale_bootstrap(base: Path) -> None:
