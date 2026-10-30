@@ -16,7 +16,7 @@ if TYPE_CHECKING:
     from pathlib import Path
     from unittest.mock import MagicMock
 
-    from tox.pytest import ToxProjectCreator
+    from tox.pytest import ToxProject, ToxProjectCreator
 
 PYLOCK_TOML = dedent("""\
     lock-version = "1.0"
@@ -692,7 +692,7 @@ def pylock_run_base() -> str:
 def test_pylock_locked_sources_install_as_locked(
     tox_project: ToxProjectCreator, pylock_run_base: str, lock: str, expected: str
 ) -> None:
-    project = tox_project({"tox.toml": pylock_run_base, "pylock.toml": lock})
+    project: Final[ToxProject] = tox_project({"tox.toml": pylock_run_base, "pylock.toml": lock})
     project.patch_execute()
 
     result = project.run("r", "-e", "py")
