@@ -1,2 +1,2 @@
-A ``pylock.toml`` that is not valid TOML -- for example one with a syntax error, or bytes that are not UTF-8 -- now
-fails with an ``invalid pylock file`` error naming the problem instead of an internal error traceback.
+An invalid ``pylock.toml``, including malformed TOML or non-UTF-8 bytes, now reports ``invalid pylock file`` with the
+filename and the parser or decoder error instead of an internal traceback.
