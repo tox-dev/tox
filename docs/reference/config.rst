@@ -792,6 +792,8 @@ Base options
 
     A folder that is always reset at the start of the run.
 
+    An empty path, including one produced by an unset ``{env:...}`` substitution, is a configuration error.
+
 .. conf::
     :keys: env_log_dir, envlogdir
     :default: {work_dir}/{env_name}/log
