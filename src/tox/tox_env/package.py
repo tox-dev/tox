@@ -3,10 +3,11 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from contextlib import nullcontext
 from pathlib import Path
 from threading import RLock
 from types import MethodType
-from typing import TYPE_CHECKING, Any, ParamSpec, TypeVar, cast
+from typing import TYPE_CHECKING, Any, Final, ParamSpec, TypeVar
 
 from filelock import BaseFileLock, FileLock
 
@@ -40,22 +41,6 @@ class PathPackage(Package):
         return str(self.path)
 
 
-def _lock_method(thread_lock: RLock, file_lock: BaseFileLock | None, meth: Callable[_P, _R]) -> Callable[_P, _R]:
-    def _func(*args: _P.args, **kwargs: _P.kwargs) -> _R:
-        with thread_lock:
-            file_locks = False
-            if file_lock is not None and file_lock.is_locked is False:  # file_lock is to lock from other tox processes
-                file_lock.acquire()
-                file_locks = True
-            try:
-                return meth(*args, **kwargs)
-            finally:
-                if file_locks:
-                    cast("BaseFileLock", file_lock).release()
-
-    return _func
-
-
 class PackageToxEnv(ToxEnv, ABC):
     def __init__(self, create_args: ToxEnvCreateArgs) -> None:
         self._thread_lock = RLock()
@@ -68,15 +53,32 @@ class PackageToxEnv(ToxEnv, ABC):
         # the packaging class might be used by multiple environments in parallel, hold a lock for operations on it
         obj = object.__getattribute__(self, name)
         if isinstance(obj, MethodType):
-            obj = _lock_method(self._thread_lock, self._file_lock, obj)
+            obj = PackageToxEnv._lock_method(self._thread_lock, self._file_lock, obj)
         return obj
+
+    @staticmethod
+    def _lock_method(thread_lock: RLock, file_lock: BaseFileLock | None, meth: Callable[_P, _R]) -> Callable[_P, _R]:
+        def _func(*args: _P.args, **kwargs: _P.kwargs) -> _R:
+            # A pre-existing package environment link must not redirect the lock file.
+            with (
+                thread_lock,
+                file_lock
+                if file_lock is not None
+                and file_lock.is_locked is False
+                and not Path(file_lock.lock_file).parent.is_symlink()
+                else nullcontext(),
+            ):
+                return meth(*args, **kwargs)
+
+        return _func
 
     @override
     def register_config(self) -> None:
         super().register_config()
-        file_lock_path = self.conf.get("env_dir", Path) / "file.lock"
-        self._file_lock = FileLock(file_lock_path)
-        file_lock_path.parent.mkdir(parents=True, exist_ok=True)
+        env_dir: Final[Path] = self.conf.get("env_dir", Path)
+        self._file_lock = FileLock(env_dir / "file.lock")
+        if not env_dir.is_symlink():
+            env_dir.mkdir(parents=True, exist_ok=True)
         self.conf.add_config(
             keys=["package_root", "setupdir"],
             of_type=Path,
@@ -110,3 +112,10 @@ class PackageToxEnv(ToxEnv, ABC):
     @abstractmethod
     def child_pkg_envs(self, run_conf: EnvConfigSet) -> Iterator[PackageToxEnv]:
         raise NotImplementedError
+
+
+__all__ = [
+    "Package",
+    "PackageToxEnv",
+    "PathPackage",
+]

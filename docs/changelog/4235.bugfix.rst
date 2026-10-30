@@ -1,0 +1,2 @@
+A package environment path that is already a symlink no longer causes ``tox list`` to create ``file.lock`` under the
+link target.

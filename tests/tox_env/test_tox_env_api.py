@@ -44,6 +44,30 @@ def test_env_symlink_fails_without_recreate(tox_project: ToxProjectCreator, tmp_
 
 
 @pytest.mark.skipif(os.name == "nt", reason="creating symlinks needs privileges on Windows")
+@pytest.mark.parametrize(
+    ("command", "expected_success"),
+    [pytest.param(("l",), True, id="list"), pytest.param(("r", "--notest"), False, id="run")],
+)
+def test_package_env_symlink_leaves_target_untouched(
+    tox_project: ToxProjectCreator, tmp_path: Path, command: tuple[str, ...], expected_success: bool
+) -> None:
+    project: Final[ToxProject] = tox_project({
+        "tox.ini": "[tox]\nenv_list = py\n[testenv]\ncommands = python -c 'print(1)'",
+        "pyproject.toml": '[build-system]\nrequires = ["setuptools"]\nbuild-backend = "setuptools.build_meta"',
+    })
+    outside: Final[Path] = tmp_path / "outside"
+    outside.mkdir()
+    pkg_dir: Final[Path] = project.path / ".tox" / ".pkg"
+    pkg_dir.parent.mkdir()
+    pkg_dir.symlink_to(outside, target_is_directory=True)
+    outcome: Final[ToxRunOutcome] = project.run(*command)
+
+    assert outcome.success is expected_success, outcome
+    assert pkg_dir.is_symlink()
+    assert list(outside.iterdir()) == []
+
+
+@pytest.mark.skipif(os.name == "nt", reason="creating symlinks needs privileges on Windows")
 @pytest.mark.parametrize("target_files", [pytest.param(("keep",), id="existing"), pytest.param((), id="dangling")])
 def test_env_symlink_recreated_without_touching_target(
     tox_project: ToxProjectCreator, tmp_path: Path, target_files: tuple[str, ...]
