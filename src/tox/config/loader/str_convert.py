@@ -163,4 +163,6 @@ class StrConvert(Convert[str]):
         raise TypeError(msg)
 
 
-__all__ = ("StrConvert",)
+__all__ = [
+    "StrConvert",
+]
