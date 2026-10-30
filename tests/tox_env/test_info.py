@@ -44,7 +44,7 @@ def test_info_non_dict_section_self_heals(tmp_path: Path) -> None:
 def test_info_non_dict_mapping_section_self_heals(tmp_path: Path) -> None:
     (tmp_path / ".tox-info.json").write_text('{"Python": []}')
 
-    conf: Final = {"base_python": ["3.14"]}
+    conf: Final[dict[str, list[str]]] = {"base_python": ["3.14"]}
     with Info(tmp_path).compare(conf, "Python") as (eq, old):
         assert (eq, old) == (False, None)
 
