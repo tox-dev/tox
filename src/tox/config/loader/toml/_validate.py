@@ -80,8 +80,8 @@ def validate(val: TomlTypes, of_type: type[T]) -> T:  # ruff:ignore[complex-stru
     return cast("T", val)
 
 
-def _describe(val: object) -> str:
-    # validation runs after substitution, so text may hold expanded secrets: only echo inert scalars
+def _describe(val: TomlTypes) -> str:
+    # Substitution can put secret text in values.
     if val is None or isinstance(val, (bool, int, float)):
         return repr(val)
     return f"value of type {type(val).__name__!r}"
