@@ -2248,8 +2248,8 @@ Python virtual environment
     reused across runs. Concurrent access is protected by a file lock.
     The cache parent must resolve inside :ref:`work_dir`. tox rejects a symlink or Windows junction that points outside
     it before opening the cache lock. On Windows, tox builds the environment under the work directory before moving it
-    into the cache. A junction at the cache entry cannot redirect creation writes. A linked project work directory
-    remains supported.
+    into the cache. A junction at the cache entry cannot redirect creation writes. The work directory must allow
+    creating temporary subdirectories. A linked project work directory remains supported.
 
     .. tab:: TOML
 

@@ -292,7 +292,26 @@ def test_ensure_bootstrap_creates_and_caches(tmp_path: Path, mocker: MockerFixtu
 
 
 @pytest.mark.skipif(sys.platform != "win32", reason="Windows bootstrap relocation")
-def test_ensure_bootstrap_relocated_python(tmp_path: Path, mocker: MockerFixture) -> None:
+@pytest.mark.usefixtures("bootstrap_without_pip")
+def test_ensure_bootstrap_relocated_python(tmp_path: Path) -> None:
+    python: Final[Path] = ensure_bootstrap(tmp_path, "virtualenv<20.22.0")
+    _assert_bootstrap_prefix(python, python.parent.parent)
+
+
+def _assert_bootstrap_prefix(python: Path, expected: Path) -> None:
+    subprocess.check_call(
+        [
+            str(python),
+            "-c",
+            "import os, sys; assert os.path.samefile(sys.prefix, sys.argv[1])",
+            str(expected),
+        ],
+        stdout=subprocess.DEVNULL,
+    )
+
+
+@pytest.fixture
+def bootstrap_without_pip(mocker: MockerFixture) -> None:
     def create_without_pip(path: str, *, with_pip: bool) -> None:
         assert with_pip
         create_venv(path, with_pip=False)
@@ -305,18 +324,7 @@ def test_ensure_bootstrap_relocated_python(tmp_path: Path, mocker: MockerFixture
     mocker.patch(
         "tox.tox_env.python.virtual_env.subprocess_adapter.subprocess.run",
         autospec=True,
-        return_value=mocker.MagicMock(returncode=0),
-    )
-
-    python: Final[Path] = ensure_bootstrap(tmp_path, "virtualenv<20.22.0")
-    subprocess.check_call(
-        [
-            str(python),
-            "-c",
-            "import os, sys; assert os.path.samefile(sys.prefix, sys.argv[1])",
-            str(python.parent.parent),
-        ],
-        stdout=subprocess.DEVNULL,
+        return_value=subprocess.CompletedProcess([], 0),
     )
 
 
@@ -386,7 +394,7 @@ def test_ensure_bootstrap_junction_swap_keeps_target(
     mocker.patch(
         "tox.tox_env.python.virtual_env.subprocess_adapter.subprocess.run",
         autospec=True,
-        return_value=mocker.MagicMock(returncode=0),
+        return_value=subprocess.CompletedProcess([], 0),
     )
     with pytest.raises(OSError, match="Cannot call rmtree on a symbolic link"):
         ensure_bootstrap(tmp_path, "virtualenv<20.22.0")
@@ -395,23 +403,18 @@ def test_ensure_bootstrap_junction_swap_keeps_target(
 
 
 @pytest.mark.skipif(sys.platform != "win32", reason="junctions exist only on Windows")
-def test_ensure_bootstrap_allows_linked_work_dir(tmp_path: Path, mocker: MockerFixture) -> None:
+@pytest.mark.usefixtures("bootstrap_without_pip")
+def test_ensure_bootstrap_allows_linked_work_dir(tmp_path: Path) -> None:
     actual: Final[Path] = tmp_path / "actual"
     actual.mkdir()
     work_dir: Final[Path] = tmp_path / "linked"
-    subprocess.run(
-        [os.environ["COMSPEC"], "/c", "mklink", "/J", str(work_dir), str(actual)], check=True, capture_output=True
+    subprocess.check_call(
+        [os.environ["COMSPEC"], "/c", "mklink", "/J", str(work_dir), str(actual)],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.PIPE,
     )
-    mocker.patch("tox.tox_env.python.virtual_env.subprocess_adapter.venv.create", autospec=True)
-    mocker.patch(
-        "tox.tox_env.python.virtual_env.subprocess_adapter.subprocess.run",
-        autospec=True,
-        return_value=mocker.MagicMock(returncode=0),
-    )
-
     python: Final[Path] = ensure_bootstrap(work_dir, "virtualenv<20.22.0")
-
-    assert (actual / ".virtualenv-bootstrap" / python.parent.parent.name).is_dir()
+    _assert_bootstrap_prefix(python, actual / ".virtualenv-bootstrap" / python.parent.parent.name)
 
 
 @pytest.fixture
@@ -496,7 +499,7 @@ def test_ensure_bootstrap_link_swapped_before_publication_fails(
     mocker.patch(
         "tox.tox_env.python.virtual_env.subprocess_adapter.subprocess.run",
         autospec=True,
-        return_value=mocker.MagicMock(returncode=0),
+        return_value=subprocess.CompletedProcess([], 0),
     )
 
     def swap_before_rename(source: Path, target: Path) -> Path:
@@ -521,7 +524,7 @@ def bootstrap_base(tmp_path: Path, mocker: MockerFixture) -> Path:
     mocker.patch(
         "tox.tox_env.python.virtual_env.subprocess_adapter.subprocess.run",
         autospec=True,
-        return_value=mocker.MagicMock(returncode=0),
+        return_value=subprocess.CompletedProcess([], 0),
     )
     base: Final[Path] = ensure_bootstrap(tmp_path, "virtualenv<20.22.0").parent.parent
     rmtree(base)

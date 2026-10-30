@@ -766,13 +766,13 @@ resolve to a creatable interpreter and no bootstrap is needed.
 The :ref:`virtualenv_spec` setting (whether derived or set explicitly) resolves this by decoupling the virtualenv used
 for environment creation from the one tox imports. When non-empty, tox:
 
-1. Creates a bootstrap venv (using the stdlib ``venv`` module) in ``.tox/.virtualenv-bootstrap/``.
+1. Creates a bootstrap venv using the stdlib ``venv`` module.
 2. Installs the specified virtualenv version into that bootstrap venv via pip.
 3. Runs the bootstrapped virtualenv as a subprocess instead of calling ``session_via_cli()`` from the imported library.
 
-The bootstrap is content-addressed by a hash of the spec string, so different specs get separate cached environments. A
-file lock protects against concurrent bootstrap creation (relevant in parallel mode). Once bootstrapped, subsequent runs
-skip directly to step 3.
+The bootstrap is cached under ``.tox/.virtualenv-bootstrap/`` and keyed by a hash of the spec string, so different specs
+get separate environments. A file lock protects against concurrent bootstrap creation (relevant in parallel mode). Once
+bootstrapped, subsequent runs skip directly to step 3.
 
 Before reusing or creating a bootstrap, tox checks that the cache parent resolves within :ref:`work_dir`. A symlink or
 Windows junction pointing outside it stops the bootstrap.

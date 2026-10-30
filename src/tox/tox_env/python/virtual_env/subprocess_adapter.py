@@ -8,10 +8,10 @@ import logging
 import shutil
 import subprocess
 import sys
-import tempfile
 import venv
 from dataclasses import dataclass, field
 from pathlib import Path
+from tempfile import TemporaryDirectory
 from typing import TYPE_CHECKING, Final
 
 from filelock import FileLock
@@ -214,22 +214,22 @@ def _has_correct_virtualenv(python: Path, virtualenv_spec: str) -> bool:
 
 def ensure_bootstrap(work_dir: Path, virtualenv_spec: str) -> Path:
     _version_specifier(virtualenv_spec)
-    base = _bootstrap_path(work_dir, virtualenv_spec)
+    base: Final[Path] = _bootstrap_path(work_dir, virtualenv_spec)
     if not base.parent.resolve().is_relative_to(work_dir.resolve()):
         cache_parent_error: Final[str] = "bootstrap cache directory must stay within work directory"
         raise Fail(cache_parent_error)
-    python = _bootstrap_python(base)
+    python: Final[Path] = _bootstrap_python(base)
     if _has_correct_virtualenv(python, virtualenv_spec):
         return python
 
-    lock_path = base.parent / f"{base.name}.lock"
+    lock_path: Final[Path] = base.parent / f"{base.name}.lock"
     lock_path.parent.mkdir(parents=True, exist_ok=True)
     with FileLock(lock_path):
         if _has_correct_virtualenv(python, virtualenv_spec):
             return python
         logging.info("bootstrapping %s into %s", virtualenv_spec, base)
         if sys.platform == "win32":
-            with tempfile.TemporaryDirectory(dir=work_dir) as stage_parent:
+            with TemporaryDirectory(dir=work_dir) as stage_parent:
                 stage: Final[Path] = Path(stage_parent) / base.name
                 _build_bootstrap(stage, virtualenv_spec)
                 _remove_stale_bootstrap(base)
