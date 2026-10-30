@@ -9,7 +9,7 @@ from textwrap import dedent
 from typing import TYPE_CHECKING, Final
 
 import pytest
-from packaging.markers import Environment, default_environment
+from packaging.markers import default_environment
 
 from tox.tox_env.errors import Fail
 from tox.tox_env.python.pylock import Pylock
@@ -20,6 +20,7 @@ if TYPE_CHECKING:
     from pathlib import Path
     from unittest.mock import MagicMock
 
+    from packaging.markers import Environment
     from pytest_mock import MockerFixture
 
     from tox.pytest import ToxProject, ToxProjectCreator, ToxRunOutcome
