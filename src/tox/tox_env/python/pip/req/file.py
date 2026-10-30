@@ -586,10 +586,10 @@ def unprotect_env_variables(text: str) -> str:
 _ENV_LITERAL_MARK: Final[str] = "\x00"
 
 
-__all__ = (
+__all__ = [
     "ParsedRequirement",
     "ReqFileLines",
     "RequirementsFile",
     "protect_env_variables",
     "unprotect_env_variables",
-)
+]
