@@ -770,9 +770,9 @@ for environment creation from the one tox imports. When non-empty, tox:
 2. Installs the specified virtualenv version into that bootstrap venv via pip.
 3. Runs the bootstrapped virtualenv as a subprocess instead of calling ``session_via_cli()`` from the imported library.
 
-The bootstrap is cached under ``.tox/.virtualenv-bootstrap/`` and keyed by a hash of the spec string, so different specs
-get separate environments. A file lock protects against concurrent bootstrap creation (relevant in parallel mode). Once
-bootstrapped, subsequent runs skip directly to step 3.
+The bootstrap is cached in ``.virtualenv-bootstrap/`` under :ref:`work_dir` and keyed by a hash of the spec string, so
+different specs get separate environments. A file lock protects against concurrent bootstrap creation (relevant in
+parallel mode). Once bootstrapped, subsequent runs skip directly to step 3.
 
 Before reusing or creating a bootstrap, tox checks that the cache parent resolves within :ref:`work_dir`. A symlink or
 Windows junction pointing outside it stops the bootstrap.
