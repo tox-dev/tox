@@ -752,10 +752,58 @@ def use_frozen_constraints(request: SubRequest) -> bool:
     return bool(request.param)
 
 
-@pytest.mark.parametrize("mode", ["run", "no-capture", "exec"])
-@pytest.mark.parametrize("compatible", [True, False])
-def test_frozen_constraints_preserve_pins(tox_project: ToxProjectCreator, mode: str, compatible: bool) -> None:
-    project = tox_project({
+@pytest.mark.parametrize(
+    ("setup", "run_flags"),
+    [
+        pytest.param(("run", "-e", "py"), (), id="run"),
+        pytest.param(("run", "-e", "py", "--no-capture"), ("--no-capture",), id="no-capture"),
+        pytest.param(("exec", "-e", "py", "--", "python", "--version"), (), id="exec"),
+    ],
+)
+def test_frozen_constraints_preserve_pins(
+    frozen_constraints_project: ToxProject, setup: tuple[str, ...], run_flags: tuple[str, ...]
+) -> None:
+    project: Final[ToxProject] = frozen_constraints_project
+    project.run(*setup).assert_success()
+    project.run(
+        "run", "-e", "py", "--installpkg", str(project.path / "wheels" / "app-1.0-py3-none-any.whl"), *run_flags
+    ).assert_success()
+    assert "lib==1.0" in (project.path / ".tox" / "py" / "constraints.txt").read_text().splitlines()
+    project.run(
+        "exec",
+        "-e",
+        "py",
+        "--",
+        "python",
+        "-c",
+        "from importlib.metadata import version; assert (version('lib'), version('helper')) == ('1.0', '1.0')",
+    ).assert_success()
+
+
+@pytest.mark.parametrize(
+    ("setup", "run_flags"),
+    [
+        pytest.param(("run", "-e", "py"), (), id="run"),
+        pytest.param(("run", "-e", "py", "--no-capture"), ("--no-capture",), id="no-capture"),
+        pytest.param(("exec", "-e", "py", "--", "python", "--version"), (), id="exec"),
+    ],
+)
+def test_frozen_constraints_reject_conflicting_dependencies(
+    frozen_constraints_project: ToxProject, setup: tuple[str, ...], run_flags: tuple[str, ...]
+) -> None:
+    project: Final[ToxProject] = frozen_constraints_project
+    project.run(*setup).assert_success()
+    result: Final[ToxRunOutcome] = project.run(
+        "run", "-e", "py", "--installpkg", str(project.path / "wheels" / "app-2.0-py3-none-any.whl"), *run_flags
+    )
+    result.assert_failed()
+    assert "ResolutionImpossible" in result.out + result.err
+    assert "lib==1.0" in (project.path / ".tox" / "py" / "constraints.txt").read_text().splitlines()
+
+
+@pytest.fixture
+def frozen_constraints_project(tox_project: ToxProjectCreator) -> ToxProject:
+    project: Final[ToxProject] = tox_project({
         "tox.ini": """
         [testenv]
         deps = lib==1.0
@@ -764,44 +812,32 @@ def test_frozen_constraints_preserve_pins(tox_project: ToxProjectCreator, mode: 
         set_env =
             PIP_NO_INDEX = 1
             PIP_FIND_LINKS = {tox_root}/wheels
-        commands = python -c "from importlib.metadata import version; assert version('helper') == '1.0'"
+        commands = python --version
         """,
     })
-    wheels = project.path / "wheels"
+    wheels: Final[Path] = project.path / "wheels"
     wheels.mkdir()
-    packages = [("lib", "1.0", ""), ("lib", "2.0", ""), ("helper", "2.0", "lib>=2"), ("app", "1.0", "helper")]
-    if compatible:
-        packages.append(("helper", "1.0", ""))
-    for name, version, requires in packages:
-        info = f"{name}-{version}.dist-info"
-        metadata = f"Metadata-Version: 2.1\nName: {name}\nVersion: {version}\n"
-        if requires:
-            metadata += f"Requires-Dist: {requires}\n"
+    for name, version, requires in [
+        ("lib", "1.0", ()),
+        ("lib", "2.0", ()),
+        ("helper", "1.0", ()),
+        ("helper", "2.0", ("lib>=2",)),
+        ("app", "1.0", ("helper",)),
+        ("app", "2.0", ("helper>=2",)),
+    ]:
+        info: str = f"{name}-{version}.dist-info"
+        metadata: str = "\n".join((
+            "Metadata-Version: 2.1",
+            f"Name: {name}",
+            f"Version: {version}",
+            *(f"Requires-Dist: {requirement}" for requirement in requires),
+            "",
+        ))
         with ZipFile(wheels / f"{name}-{version}-py3-none-any.whl", "w") as wheel:
             wheel.writestr(f"{info}/METADATA", metadata)
             wheel.writestr(f"{info}/WHEEL", "Wheel-Version: 1.0\nRoot-Is-Purelib: true\nTag: py3-none-any\n")
             wheel.writestr(f"{info}/RECORD", "")
-
-    if mode == "exec":
-        project.run("exec", "-e", "py", "--", "python", "--version").assert_success()
-    flags = ["--no-capture"] if mode == "no-capture" else []
-    result = project.run("run", "-e", "py", "--installpkg", str(wheels / "app-1.0-py3-none-any.whl"), *flags)
-    if compatible:
-        result.assert_success()
-    else:
-        result.assert_failed()
-        assert "ResolutionImpossible" in result.out + result.err
-    constraints = project.path / ".tox" / "py" / "constraints.txt"
-    assert "lib==1.0" in constraints.read_text().splitlines()
-    project.run(
-        "exec",
-        "-e",
-        "py",
-        "--",
-        "python",
-        "-c",
-        "from importlib.metadata import version; assert version('lib') == '1.0'",
-    ).assert_success()
+    return project
 
 
 @pytest.fixture(

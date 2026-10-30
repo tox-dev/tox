@@ -46,7 +46,10 @@ class ExecuteRequest:
         :param env: the environment variables
         :param stdin: the type of standard input allowed
         :param run_id: an id to identify this run
+        :param allow: executable allowlist, or ``None`` to allow any command
         :param capture: capture output even when no-capture mode is enabled
+
+        :raises ValueError: if the command is empty
 
         """
         if len(cmd) == 0:

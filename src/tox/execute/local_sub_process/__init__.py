@@ -225,7 +225,7 @@ class LocalSubProcessExecuteInstance(ExecuteInstance):
 
         stdout, stderr = self.get_stream_file_no("stdout"), self.get_stream_file_no("stderr")
         self._file_no_generators = [stdout, stderr]
-        # Internal data and API replies need capture; interactive programs need the console's terminal APIs.
+        # API replies and internal commands must return their output to tox.
         inherit_console: Final[bool] = (
             self.options.no_capture and not self.request.capture and self.request.stdin is not StdinSource.API
         )
