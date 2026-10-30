@@ -1577,10 +1577,13 @@ Run
     :default: True
     :version_added: 0.5
 
-    Treat positional arguments passed to tox as file system paths and - if they exist on the filesystem and are in
-    relative format - rewrite them according to the current and :ref:`change_dir` working directory. This handles
-    automatically transforming relative paths specified on the CLI to relative paths respective of the commands executing
+    When true, tox rewrites a relative positional argument that names an existing file or directory to keep it pointing
+    at the same entry after the command changes to :ref:`change_dir`. For ``tox exec`` or a command whose program comes
+    from ``{posargs}``, tox leaves a bare first value such as ``python`` for ``PATH`` lookup. It also leaves a bare
+    executable first positional value unchanged because wrappers such as ``env {posargs}`` may run it as a program. This
+    also applies when the command uses that value as data. Pass ``./python`` when you mean a file in the start
     directory.
+    If a wrapper runs a later positional value as a program, set ``args_are_paths = false``.
 
 .. conf::
     :keys: ignore_errors
@@ -3586,9 +3589,9 @@ Use a double ``--`` if you also want to pass options to an underlying test comma
 
     tox run -e 3.14 -- --opt1 ARG1
 
-will make the ``--opt1 ARG1`` appear in all test commands where ``[]`` or ``{posargs}`` was specified. By default (see
-``args_are_paths`` setting), ``tox`` rewrites each positional argument if it is a relative path and exists on the
-filesystem to become a path relative to the ``changedir`` setting.
+will make the ``--opt1 ARG1`` appear in all test commands where ``[]`` or ``{posargs}`` was specified. By default, tox
+rewrites an existing relative path to keep it pointing at the same entry after :ref:`change_dir`. Bare command names and
+bare executable first positional values are exceptions described under :ref:`args_are_paths`.
 
 When an INI value uses ``{posargs}``, tox replaces line breaks within each positional argument with spaces before
 quoting it. INI command and list values use line breaks to separate entries. The same replacement applies to TOML
