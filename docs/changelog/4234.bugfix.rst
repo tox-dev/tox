@@ -1,0 +1,3 @@
+Read static package dependencies and the ``editable-legacy`` install path from the packaging environment's
+:ref:`package_root` instead of the core one, so a ``package_root`` set in ``[testenv:.pkg]`` no longer pairs the built
+package with the dependencies declared next to ``tox.ini``.

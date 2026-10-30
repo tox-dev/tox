@@ -278,7 +278,7 @@ class Pep517VenvPackager(PythonPackageToxEnv, ABC):
             config_settings = self.conf.get_optional("config_settings_get_requires_for_build_sdist", dict[str, Any])
             sdist_requires = self._frontend.get_requires_for_build_sdist(config_settings=config_settings).requires
             deps = [*self.requires(), *sdist_requires, *deps]
-            package: Package = EditableLegacyPackage(self.core["tox_root"], deps)  # the folder itself is the package
+            package: Package = EditableLegacyPackage(self.root, deps)  # the folder itself is the package
         elif of_type == "sdist":
             self.setup()
             with self._pkg_lock:
@@ -393,7 +393,7 @@ class Pep517VenvPackager(PythonPackageToxEnv, ABC):
         return deps
 
     def _load_deps_from_static(self, for_env: EnvConfigSet) -> list[Requirement] | None:
-        return resolve_extras_static(self.core.get("package_root", Path), for_env.get("extras", set[str]))
+        return resolve_extras_static(self.root, for_env.get("extras", set[str]))
 
     def _load_deps_from_built_metadata(self, for_env: EnvConfigSet) -> list[Requirement]:
         # dependencies might depend on the python environment we're running in => if we build a wheel use that env

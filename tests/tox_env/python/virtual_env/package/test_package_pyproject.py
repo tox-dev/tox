@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING, Any, Final, cast
 import pytest
 
 from tox.execute.local_sub_process import LocalSubprocessExecuteStatus
+from tox.tox_env.python.package import EditableLegacyPackage
 from tox.tox_env.python.virtual_env.package import pyproject as pyproject_pkg
 from tox.tox_env.python.virtual_env.package.pyproject import Pep517VirtualEnvFrontend
 
@@ -119,6 +120,42 @@ def test_core_package_root_is_relative_to_conf(tox_project: ToxProjectCreator) -
     result: Final[ToxRunOutcome] = project.run("c", "-e", "py", "-c", project.path.name, from_cwd=project.path.parent)
     result.assert_success()
     assert result.state.conf.core["package_root"] == project.path / "a"
+
+
+_SERVICE_PYPROJECT = '[project]\nname = "service"\nversion = "1.0"\ndependencies = ["service-dep"]\n'
+_WORKSPACE_PYPROJECT = '[project]\nname = "workspace"\nversion = "9.9"\ndependencies = ["workspace-dep"]\n'
+
+
+def _pkg_env_with_own_root(
+    tox_project: ToxProjectCreator, pkg_type: str
+) -> tuple[ToxProject, pyproject_pkg.Pep517VenvPackager, Any]:
+    ini = f"[testenv]\npackage={pkg_type}\n[testenv:.pkg]\npackage_root={{tox_root}}/service"
+    files = {"tox.ini": ini, "pyproject.toml": _WORKSPACE_PYPROJECT, "service": {"pyproject.toml": _SERVICE_PYPROJECT}}
+    proj = tox_project(files)
+    result = proj.run("c", "-e", "py,.pkg")
+    result.assert_success()
+    pkg = cast("pyproject_pkg.Pep517VenvPackager", result.state.envs[".pkg"])
+    return proj, pkg, result.state.envs["py"].conf
+
+
+def test_static_package_deps_use_pkg_env_package_root(tox_project: ToxProjectCreator) -> None:
+    proj, pkg, py_conf = _pkg_env_with_own_root(tox_project, "wheel")
+    assert pkg.root == proj.path / "service"
+    assert [str(r) for r in pkg.load_deps_for_env(py_conf)] == ["service-dep"]
+
+
+def test_editable_legacy_installs_pkg_env_package_root(tox_project: ToxProjectCreator, mocker: MockerFixture) -> None:
+    proj, pkg, py_conf = _pkg_env_with_own_root(tox_project, "editable-legacy")
+    mocker.patch.object(pkg, "setup")
+    mocker.patch.object(pkg, "requires", return_value=[])
+    pkg._frontend_ = mocker.MagicMock()
+    pkg._frontend_.get_requires_for_build_sdist.return_value.requires = ()
+
+    (package,) = pkg.perform_packaging(py_conf)
+
+    assert isinstance(package, EditableLegacyPackage)
+    assert package.path == proj.path / "service"
+    assert [str(r) for r in package.deps] == ["service-dep"]
 
 
 @pytest.mark.parametrize(
