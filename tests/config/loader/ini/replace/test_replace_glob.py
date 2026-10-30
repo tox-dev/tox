@@ -1,14 +1,17 @@
 from __future__ import annotations
 
 import sys
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Final, Protocol
 
 import pytest
+
+from tox.config.types import Command
 
 if TYPE_CHECKING:
     from pathlib import Path
 
     from tests.config.loader.conftest import ReplaceOne
+    from tox.pytest import ToxProject, ToxProjectCreator, ToxRunOutcome
 
 
 def test_replace_glob_matches(replace_one: ReplaceOne, tmp_path: Path) -> None:
@@ -63,6 +66,43 @@ def test_replace_glob_nested_substitution(replace_one: ReplaceOne, tmp_path: Pat
     (tmp_path / "marker.txt").touch()
     result = replace_one("{glob:{tox_root}/*.txt}")
     assert str(tmp_path / "marker.txt") in result
+
+
+@pytest.mark.parametrize(
+    ("token", "expected_args"),
+    [
+        pytest.param("{glob:*.txt}", list, id="relative"),
+        pytest.param("{glob:{tox_root}{/}*.txt}", list, id="nested"),
+        pytest.param("{glob:missing:{glob:*.txt}}", list, id="default"),
+        pytest.param('"{glob:*.txt}"', lambda matches: [" ".join(matches)], id="double"),
+        pytest.param("'{glob:*.txt}'", lambda matches: [" ".join(matches)], id="single"),
+    ],
+)
+def test_replace_glob_match_one_argument_of_command(
+    tox_project: ToxProjectCreator,
+    tmp_path: Path,
+    token: str,
+    expected_args: _ExpectedArgs,
+) -> None:
+    project: Final[ToxProject] = tox_project(
+        {"tox.ini": f"[testenv]\ncommands = python {token} -x", "a b.txt": "", "it's.txt": ""},
+        prj_path=tmp_path / "my proj",
+    )
+    outcome: Final[ToxRunOutcome] = project.run("c", "-k", "commands")
+    outcome.assert_success()
+    matches: Final[list[str]] = [str(project.path / "a b.txt"), str(project.path / "it's.txt")]
+    assert outcome.env_conf("py")["commands"] == [Command(args=["python", *expected_args(matches), "-x"])]
+
+
+class _ExpectedArgs(Protocol):
+    def __call__(self, matches: list[str]) -> list[str]: ...
+
+
+def test_replace_glob_match_as_is_outside_command(replace_one: ReplaceOne, tmp_path: Path) -> None:
+    matches: Final[list[Path]] = [tmp_path / "a b.txt", tmp_path / "it's.txt"]
+    for match in matches:
+        match.touch()
+    assert replace_one("{glob:*.txt}") == " ".join(str(match) for match in matches)
 
 
 def test_replace_glob_match_not_substituted(replace_one: ReplaceOne, tmp_path: Path) -> None:
