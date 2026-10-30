@@ -11,6 +11,8 @@ from tox.util.redact import redact_argv, redact_value
         pytest.param("API_TOKEN", "******", id="api-token"),
         pytest.param("PASSWORD", "******", id="password-keyword"),
         pytest.param("MY_SECRET_THING", "******", id="embedded-secret"),
+        pytest.param("MY\nSECRET_THING", "******", id="newline-before-secret"),
+        pytest.param("MY\r\nSECRET_THING", "******", id="crlf-before-secret"),
         pytest.param("FOO", "secret", id="non-matching"),
         pytest.param("PATH", "secret", id="path"),
     ],
@@ -39,9 +41,8 @@ def test_redact_argv_leaves_innocuous_flags_alone() -> None:
 
 
 def test_redact_argv_does_not_mask_space_separated_value() -> None:
-    # A space-separated value has no parser-independent boundary.
-    result = redact_argv(["app", "--token", "hunter2"])
-    assert result == ["app", "--token", "hunter2"]
+    # A command parser is needed to tell whether the next argument is this flag's value.
+    assert redact_argv(["app", "--token", "hunter2"]) == ["app", "--token", "hunter2"]
 
 
 @pytest.mark.parametrize(
@@ -86,3 +87,17 @@ def test_redact_argv_returns_new_list() -> None:
 
 def test_redact_argv_empty() -> None:
     assert redact_argv([]) == []
+
+
+@pytest.mark.parametrize(
+    ("argv", "expected"),
+    [
+        pytest.param(["app", "--prod\n-token=hunter2"], ["app", "--prod\n-token=*******"], id="newline-before-keyword"),
+        pytest.param(["app", "--a\nb\nsecret=x"], ["app", "--a\nb\nsecret=*"], id="two-newlines"),
+        pytest.param(["app", "--\napi-key=v"], ["app", "--\napi-key=*"], id="leading-newline"),
+        pytest.param(["app", "--a\r\nb\r\nsecret=x"], ["app", "--a\r\nb\r\nsecret=*"], id="crlf"),
+        pytest.param(["app", "bad;--a\nsecret=x"], ["app", "bad;--a\nsecret=*"], id="semicolon-and-newline"),
+    ],
+)
+def test_redact_argv_masks_when_a_newline_precedes_the_keyword(argv: list[str], expected: list[str]) -> None:
+    assert redact_argv(argv) == expected

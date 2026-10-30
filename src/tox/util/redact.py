@@ -31,10 +31,10 @@ _SECRET_ENV_VAR_REGEX: Final[re.Pattern[str]] = re.compile(
     ( {keywords} )      # one of the secret keywords
     .*                  # any suffix
     """.format(keywords="|".join(_SECRET_KEYWORDS)),
-    re.VERBOSE | re.IGNORECASE,
+    re.VERBOSE | re.IGNORECASE | re.DOTALL,  # a newline before a keyword must not expose its value
 )
-# Compile once for command logging; broken INI quotes and semicolon-separated overrides can fuse flags into one token.
-_INLINE_FLAG_REGEX: Final[re.Pattern[str]] = re.compile(r"""(?<![^\s'"=;])-[^\s'"=]*=""")
+# Compile once for command logging; broken quotes, semicolons, and line breaks can fuse flags into one token.
+_INLINE_FLAG_REGEX: Final[re.Pattern[str]] = re.compile(r"""(?<![^\s'"=;])-(?:[^\s'"=]|[\r\n])*=""")
 
 
 def redact_value(name: str, value: str) -> str:
