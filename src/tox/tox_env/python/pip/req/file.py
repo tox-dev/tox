@@ -13,7 +13,7 @@ from argparse import ArgumentParser, Namespace
 from collections.abc import Iterator
 from pathlib import Path
 from time import monotonic
-from typing import IO, Any, Final, cast
+from typing import TYPE_CHECKING, Any, Final, cast
 from urllib.request import urlopen
 
 from packaging.requirements import InvalidRequirement, Requirement
@@ -23,6 +23,9 @@ from tox.util.typing_compat import override
 
 from .args import build_parser
 from .util import VCS, get_url_scheme, handle_binary_option, is_url, url_to_path
+
+if TYPE_CHECKING:
+    from io import BufferedIOBase
 
 # Matches environment variable-style values in '${MY_VARIABLE_1}' with the variable name consisting of only uppercase
 # letters, digits or the '_' (underscore). This follows the POSIX standard defined in IEEE Std 1003.1, 2013 Edition.
@@ -86,17 +89,7 @@ _VERSION_SPECIFIER = re.compile(
 ReqFileLines = Iterator[tuple[int, str]]
 
 DEFAULT_INDEX_URL = "https://pypi.org/simple"
-_HTTP_TIMEOUT: Final[int] = 30  # seconds; bound on remote requirement file fetches to avoid hangs
-_HTTP_TOTAL_TIMEOUT: Final[int] = 120  # seconds; bound on the whole remote fetch so a slow-drip server cannot stall us
-_MAX_REQ_FILE_BYTES: Final[int] = 10 * 1024 * 1024  # 10 MiB; real requirement files are orders of magnitude smaller
-_READ_CHUNK_BYTES: Final[int] = 64 * 1024
-
-
-def _strip_url_credentials(url: str) -> str:
-    parts = urllib.parse.urlsplit(url)
-    if parts.username is None and parts.password is None:
-        return url
-    return urllib.parse.urlunsplit(parts._replace(netloc=parts.netloc.rpartition("@")[2]))
+_HTTP_BODY_TIMEOUT: Final[int] = 120
 
 
 class ParsedRequirement:
@@ -321,36 +314,20 @@ class RequirementsFile:
         """
         scheme = get_url_scheme(url)
         if scheme in {"http", "https"}:
-            with urlopen(url, timeout=_HTTP_TIMEOUT) as response:  # ruff:ignore[suspicious-url-open-usage]
-                return self._read_decode(response, _strip_url_credentials(url), monotonic() + _HTTP_TOTAL_TIMEOUT)
+            with urlopen(url, timeout=30) as response:  # ruff:ignore[suspicious-url-open-usage]
+                return self._read_decode(response, self._strip_url_credentials(url), monotonic() + _HTTP_BODY_TIMEOUT)
         elif scheme == "file":
             url = url_to_path(url)
         try:
             with Path(url).open("rb") as file_handler:
-                text = self._read_decode(file_handler, url)
+                return self._read_decode(file_handler, url)
         except OSError as exc:
             msg = f"Could not open requirements file {url}: {exc}"
             raise ValueError(msg) from exc
-        return text
 
     @staticmethod
-    def _read_bounded(file_handler: IO[bytes], source: str, deadline: float | None) -> bytes:
-        chunks: list[bytes] = []
-        size = 0
-        while chunk := file_handler.read(_READ_CHUNK_BYTES):
-            size += len(chunk)
-            if size > _MAX_REQ_FILE_BYTES:
-                msg = f"requirements file {source} exceeds the {_MAX_REQ_FILE_BYTES} byte limit"
-                raise ValueError(msg)
-            if deadline is not None and monotonic() > deadline:
-                msg = f"requirements file {source} took longer than {_HTTP_TOTAL_TIMEOUT} seconds to download"
-                raise ValueError(msg)
-            chunks.append(chunk)
-        return b"".join(chunks)
-
-    @staticmethod
-    def _read_decode(file_handler: IO[bytes], source: str = "<stream>", deadline: float | None = None) -> str:
-        raw = RequirementsFile._read_bounded(file_handler, source, deadline)
+    def _read_decode(file_handler: BufferedIOBase, source: str, deadline: float | None = None) -> str:
+        raw: Final[bytes] = RequirementsFile._read_bounded(file_handler, source, deadline)
         if not raw:
             return ""
         for bom, encoding in _BOMS:
@@ -360,6 +337,32 @@ class RequirementsFile:
             return raw.decode("utf-8")
         except UnicodeDecodeError:
             return raw.decode(locale.getpreferredencoding(do_setlocale=False) or sys.getdefaultencoding())
+
+    @staticmethod
+    def _read_bounded(file_handler: BufferedIOBase, source: str, deadline: float | None) -> bytes:
+        chunks: Final[list[bytes]] = []
+        size: int = 0
+        max_bytes: Final[int] = 10 * 1024 * 1024
+        while True:
+            chunk = file_handler.read1(64 * 1024)
+            if deadline is not None and monotonic() > deadline:
+                msg = f"requirements file {source} took longer than {_HTTP_BODY_TIMEOUT} seconds to download"
+                raise ValueError(msg)
+            if not chunk:
+                break
+            size += len(chunk)
+            if size > max_bytes:
+                msg = f"requirements file {source} exceeds the {max_bytes} byte limit"
+                raise ValueError(msg)
+            chunks.append(chunk)
+        return b"".join(chunks)
+
+    @staticmethod
+    def _strip_url_credentials(url: str) -> str:
+        parts: Final[urllib.parse.SplitResult] = urllib.parse.urlsplit(url)
+        if parts.username is None and parts.password is None:
+            return url
+        return urllib.parse.urlunsplit(parts._replace(netloc=parts.netloc.rpartition("@")[2]))
 
     def _pre_process(self, content: str) -> ReqFileLines:
         """Split, filter, and join lines, and return a line iterator.
