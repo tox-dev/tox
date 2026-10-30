@@ -242,9 +242,7 @@ def test_replace_list_circular_fan_out_stops(example: EnvConfigCreator, monkeypa
     env_config: Final = example("items = {env:MAGIC}")
     env_config.add_config(keys="items", of_type=list[str], default=[], desc="items")
 
-    result: Final = env_config["items"]
-
-    assert len("{env:MAGIC}") < len(result[0]) < 1_000_000
+    assert len("{env:MAGIC}") < len(env_config["items"][0]) < 1_000_000
 
 
 def test_replace_within_env_list_entry_accepts_value(

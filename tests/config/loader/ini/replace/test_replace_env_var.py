@@ -103,8 +103,7 @@ def test_replace_env_var_circular_fan_out(
     replace_one: ReplaceOne, monkeypatch: MonkeyPatch, caplog: LogCaptureFixture
 ) -> None:
     monkeypatch.setenv("MAGIC", "{env:MAGIC}{env:MAGIC}")
-    result: Final = replace_one("{env:MAGIC}")
-    assert "{env:MAGIC}{env:MAGIC}" in result
+    assert "{env:MAGIC}{env:MAGIC}" in replace_one("{env:MAGIC}")
     assert [m for m in caplog.messages if m.startswith("Could not expand")] == [
         "Could not expand {env:MAGIC}{env:MAGIC} after recursing 101 frames"
     ]
