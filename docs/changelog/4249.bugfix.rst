@@ -1,3 +1,2 @@
-Extracting an sdist no longer follows a symlink or hard link member to write outside the extraction directory; tox now
-uses the ``data`` extraction filter whenever ``tarfile`` provides it and otherwise checks each link target before
-extracting it.
+tox now rejects sdist members whose paths or link targets escape the extraction directory. On Python versions without
+the ``tarfile`` data filter, tox checks each member as it extracts the archive.
