@@ -226,6 +226,7 @@ def test_tox_install_pkg_bad_wheel(tox_project: ToxProjectCreator, tmp_path: Pat
         pytest.param("no_members-1.0.tar.gz", "no files inside", id="empty-source-archive"),
         pytest.param("not_a_zip-1.0-py3-none-any.whl", "the metadata of", id="invalid-wheel"),
         pytest.param("bad_requires-1.0-py3-none-any.whl", "the metadata of", id="invalid-requirement"),
+        pytest.param("missing_name-1.0-py3-none-any.whl", "no Name in the metadata of", id="missing-name"),
         pytest.param("no_metadata-1.0-py3-none-any.whl", "the metadata of", id="missing-wheel-metadata"),
     ],
     indirect=["malformed_install_pkg_artifact"],
@@ -233,14 +234,15 @@ def test_tox_install_pkg_bad_wheel(tox_project: ToxProjectCreator, tmp_path: Pat
 def test_tox_install_pkg_malformed(
     tox_project: ToxProjectCreator, malformed_install_pkg_artifact: Path, expected: str
 ) -> None:
-    proj: Final = tox_project({"tox.ini": "[testenv]"})
-    result: Final = proj.run("r", "-e", "py", "--installpkg", str(malformed_install_pkg_artifact))
+    result: Final[ToxRunOutcome] = tox_project({"tox.ini": "[testenv]"}).run(
+        "r", "-e", "py", "--installpkg", str(malformed_install_pkg_artifact)
+    )
 
     result.assert_failed(1)
-    assert result.out.startswith("py: failed with "), result.out
-    assert "internal error" not in result.out + result.err, result.out + result.err
-    assert expected in result.out, result.out
-    assert str(malformed_install_pkg_artifact) in result.out, result.out
+    assert result.out.startswith("py: failed with ")
+    assert "internal error" not in result.out + result.err
+    assert expected in result.out
+    assert str(malformed_install_pkg_artifact) in result.out
 
 
 @pytest.fixture
@@ -260,6 +262,9 @@ def malformed_install_pkg_artifact(tmp_path: Path, request: pytest.FixtureReques
                 "bad_requires-1.0.dist-info/METADATA",
                 "Metadata-Version: 2.1\nName: bad_requires\nVersion: 1.0\nRequires-Dist: requests => 2.0\n",
             )
+    elif filename == "missing_name-1.0-py3-none-any.whl":
+        with ZipFile(str(artifact), "w") as wheel:
+            wheel.writestr("missing_name-1.0.dist-info/METADATA", "Metadata-Version: 2.1\nVersion: 1.0\n")
     else:
         with ZipFile(str(artifact), "w") as wheel:
             wheel.writestr("no_metadata-1.0.dist-info/WHEEL", "Wheel-Version: 1.0\n")
