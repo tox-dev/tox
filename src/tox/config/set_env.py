@@ -13,7 +13,7 @@ from tox.config.loader.api import ConfigLoadArgs
 from tox.report import HandledError
 from tox.tox_env.errors import Fail
 
-from .loader.replacer import MatchError, MatchExpression
+from .loader.replacer import HostText, MatchError, MatchExpression
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterable, Iterator, Mapping
@@ -187,6 +187,8 @@ class SetEnv:
         if not sep:
             msg = f"invalid line {line!r} in set_env"
             raise ValueError(msg)
+        if isinstance(line, HostText):
+            rest = line.fragment(len(key) + 1)
         value, marker = SetEnv._split_value_marker(rest.strip())
         return key.strip(), value, marker
 
@@ -208,11 +210,26 @@ class SetEnv:
                     elif char == quote_char:
                         in_quotes = False
                 elif char == ";" and not in_quotes and (index == 0 or value[index - 1] != "\\"):
-                    return value[:index].strip().replace("\\;", ";"), value[index + 1 :].strip()
+                    text: str = value.fragment(0, index) if isinstance(value, HostText) else value[:index]
+                    return SetEnv._unescape_semicolons(text.strip()), value[index + 1 :].strip()
                 index += 1
             if not in_quotes:
                 break  # quotes balanced or absent: the first pass is authoritative
-        return value.replace("\\;", ";"), ""
+        return SetEnv._unescape_semicolons(value), ""
+
+    @staticmethod
+    def _unescape_semicolons(value: str) -> str:
+        if "\\;" not in value:
+            return value
+        if not isinstance(value, HostText):
+            return value.replace("\\;", ";")
+        parts: Final[list[str]] = []
+        offset = 0
+        for match in re.finditer(r"\\;", value):
+            parts.extend((value.fragment(offset, match.start()), value.fragment(match.start() + 1, match.end())))
+            offset = match.end()
+        parts.append(value.fragment(offset))
+        return HostText.from_parts(parts)
 
     def load(self, item: str, args: ConfigLoadArgs | None = None) -> str:
         self._resolve_replacements()

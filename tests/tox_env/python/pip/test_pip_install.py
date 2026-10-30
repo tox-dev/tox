@@ -425,6 +425,347 @@ def test_pip_install_host_variable_keeps_requirement_variable_literal(
     assert "magic" not in result.out
 
 
+_SET_ENV_HOST_DEPS_TOML: Final[str] = (
+    '[env_run_base]\npackage="skip"\nset_env={MIRROR="{env:DEMO}"}\ndeps=["{env:MIRROR}"]'
+)
+_SET_ENV_HOST_DEPS_INI: Final[str] = "[testenv]\npackage=skip\nset_env=MIRROR={env:DEMO}\ndeps={env:MIRROR}"
+
+
+@pytest.mark.parametrize(
+    ("files", "host_value", "key", "expected"),
+    [
+        pytest.param(
+            {"tox.toml": _SET_ENV_HOST_DEPS_TOML},
+            "a==${DEPLOY_TOKEN}",
+            "deps",
+            ["a==${DEPLOY_TOKEN}"],
+            id="toml-string",
+        ),
+        pytest.param(
+            {"tox.toml": '[env_run_base]\npackage="skip"\nset_env={MIRROR="{env:DEMO}"}\nconstraints=["{env:MIRROR}"]'},
+            "https://example.invalid/${HOST}",
+            "constraints",
+            ["-c", "https://example.invalid/${HOST}"],
+            id="toml-constraint",
+        ),
+        pytest.param(
+            {"tox.ini": _SET_ENV_HOST_DEPS_INI},
+            "a==${DEPLOY_TOKEN}",
+            "deps",
+            ["a==${DEPLOY_TOKEN}"],
+            id="ini",
+        ),
+        pytest.param(
+            {"tox.ini": "[testenv]\npackage=skip\nset_env={env:DEMO}\ndeps={env:MIRROR}"},
+            "MIRROR=a==${DEPLOY_TOKEN}",
+            "deps",
+            ["a==${DEPLOY_TOKEN}"],
+            id="ini-host-assignment",
+        ),
+        pytest.param(
+            {"tox.toml": '[env_run_base]\npackage="skip"\nset_env="{env:DEMO}"\ndeps=["{env:MIRROR}"]'},
+            "MIRROR=a==${DEPLOY_TOKEN}",
+            "deps",
+            ["a==${DEPLOY_TOKEN}"],
+            id="toml-host-assignment",
+        ),
+        pytest.param(
+            {"tox.ini": "[testenv]\npackage=skip\nset_env={env:DEMO}\ndeps={env:MIRROR}"},
+            "BASE=a==${DEPLOY_TOKEN}\nMIRROR={env:BASE}",
+            "deps",
+            ["a==${DEPLOY_TOKEN}"],
+            id="ini-host-assignment-lines",
+        ),
+        pytest.param(
+            {"tox.ini": "[testenv]\npackage=skip\nset_env={env:DEMO}\ndeps={env:MIRROR}"},
+            "MIRROR=--index-url https://example.invalid/${HOST}\\;tag",
+            "deps",
+            ["-i", "https://example.invalid/${HOST};tag"],
+            id="ini-host-assignment-escaped-semicolon",
+        ),
+        pytest.param(
+            {"tox.ini": "[testenv]\npackage=skip\nset_env={env:DEMO}\ndeps={env:MIRROR}"},
+            " MIRROR = a==${DEPLOY_TOKEN} ; python_version >= '3'",
+            "deps",
+            ["a==${DEPLOY_TOKEN}"],
+            id="ini-host-assignment-marker",
+        ),
+        pytest.param(
+            {"tox.toml": _SET_ENV_HOST_DEPS_TOML},
+            "a=={env:VERSION}${DEPLOY_TOKEN}",
+            "deps",
+            ["a==1${DEPLOY_TOKEN}"],
+            id="host-tox-substitution",
+        ),
+        pytest.param(
+            {"tox.toml": _SET_ENV_HOST_DEPS_TOML},
+            "a=={env:MISSING:${DEPLOY_TOKEN}}",
+            "deps",
+            ["a==${DEPLOY_TOKEN}"],
+            id="host-default",
+        ),
+        pytest.param(
+            {"tox.toml": _SET_ENV_HOST_DEPS_TOML},
+            "--index-url {env:MISSING:https://example.invalid/${HOST}}",
+            "deps",
+            ["-i", "https://example.invalid/${HOST}"],
+            id="host-default-with-colon",
+        ),
+        pytest.param(
+            {"tox.toml": _SET_ENV_HOST_DEPS_TOML},
+            "{glob:missing-path:a==${DEPLOY_TOKEN}}",
+            "deps",
+            ["a==${DEPLOY_TOKEN}"],
+            id="host-glob-default",
+        ),
+        pytest.param(
+            {"tox.toml": _SET_ENV_HOST_DEPS_TOML},
+            "{factor:missing:a==${DEPLOY_TOKEN}}",
+            "deps",
+            ["a==${DEPLOY_TOKEN}"],
+            id="host-factor-default",
+        ),
+        pytest.param(
+            {"tox.toml": _SET_ENV_HOST_DEPS_TOML},
+            "{posargs:a==${DEPLOY_TOKEN}}",
+            "deps",
+            ["a==${DEPLOY_TOKEN}"],
+            id="host-posargs-default",
+        ),
+        pytest.param(
+            {"tox.toml": _SET_ENV_HOST_DEPS_TOML},
+            "{tty:a==${DEPLOY_TOKEN}:a==${DEPLOY_TOKEN}}",
+            "deps",
+            ["a==${DEPLOY_TOKEN}"],
+            id="host-tty-default",
+        ),
+        pytest.param(
+            {"tox.toml": _SET_ENV_HOST_DEPS_TOML},
+            "{missing:a==${DEPLOY_TOKEN}}",
+            "deps",
+            ["a==${DEPLOY_TOKEN}"],
+            id="host-toml-ref-default",
+        ),
+        pytest.param(
+            {"tox.ini": _SET_ENV_HOST_DEPS_INI},
+            "{missing:a==${DEPLOY_TOKEN}}",
+            "deps",
+            ["a==${DEPLOY_TOKEN}"],
+            id="host-ini-ref-default",
+        ),
+        pytest.param(
+            {"tox.toml": _SET_ENV_HOST_DEPS_TOML},
+            "--index-url {missing:https://example.invalid/${HOST}}",
+            "deps",
+            ["-i", "https://example.invalid/${HOST}"],
+            id="host-toml-ref-default-with-colon",
+        ),
+        pytest.param(
+            {"tox.ini": _SET_ENV_HOST_DEPS_INI},
+            "--index-url {missing:https://example.invalid/${HOST}}",
+            "deps",
+            ["-i", "https://example.invalid/${HOST}"],
+            id="host-ini-ref-default-with-colon",
+        ),
+        pytest.param(
+            {
+                "tox.toml": '[env_run_base]\npackage="skip"\nsource="{env:PAYLOAD}"\n'
+                'set_env={MIRROR="{env:DEMO}"}\ndeps=["{env:MIRROR}"]'
+            },
+            "{[env_run_base]source}",
+            "deps",
+            ["a==${DEPLOY_TOKEN}"],
+            id="host-toml-reference-value",
+        ),
+        pytest.param(
+            {
+                "tox.ini": "[vars]\nsource={env:PAYLOAD}\n[testenv]\npackage=skip\n"
+                "set_env=MIRROR={env:DEMO}\ndeps={env:MIRROR}"
+            },
+            "{[vars]source}",
+            "deps",
+            ["a==${DEPLOY_TOKEN}"],
+            id="host-ini-reference-value",
+        ),
+        pytest.param(
+            {
+                "tox.toml": '[env_run_base]\npackage="skip"\n'
+                'source="a==${AUTHORED}"\nset_env={MIRROR="{env:DEMO}"}\ndeps=["{env:MIRROR}"]'
+            },
+            "{[env_run_base]source}",
+            "deps",
+            ["a==shown"],
+            id="host-to-authored-toml-ref",
+        ),
+        pytest.param(
+            {
+                "tox.ini": "[vars]\nsource=a==${AUTHORED}\n[testenv]\n"
+                "package=skip\nset_env=MIRROR={env:DEMO}\ndeps={env:MIRROR}"
+            },
+            "{[vars]source}",
+            "deps",
+            ["a==shown"],
+            id="host-to-authored-ini-ref",
+        ),
+        pytest.param(
+            {
+                "tox.toml": '[env_run_base]\npackage="skip"\nset_env={MIRROR="{env:DEMO}"}\n'
+                'deps=[{replace="glob",pattern="missing-path",default="{env:MIRROR}"}]'
+            },
+            "a==${DEPLOY_TOKEN}",
+            "deps",
+            ["a==${DEPLOY_TOKEN}"],
+            id="toml-glob-directive",
+        ),
+        pytest.param(
+            {
+                "tox.toml": '[env_run_base]\npackage="skip"\nset_env={MIRROR="{env:DEMO}"}\n'
+                'deps=[{replace="posargs",default=["{env:MIRROR}"],extend=true}]'
+            },
+            "a==${DEPLOY_TOKEN}",
+            "deps",
+            ["a==${DEPLOY_TOKEN}"],
+            id="toml-posargs-directive",
+        ),
+        pytest.param(
+            {
+                "tox.toml": '[env_run_base]\npackage="skip"\nset_env={MIRROR="{env:DEMO}"}\n'
+                'deps=[{replace="if",condition="env.DEMO",then="{env:MIRROR}",else=""}]'
+            },
+            "a==${DEPLOY_TOKEN}",
+            "deps",
+            ["a==${DEPLOY_TOKEN}"],
+            id="toml-if-directive",
+        ),
+        pytest.param(
+            {
+                "tox.toml": '[env_run_base]\npackage="skip"\nset_env={MIRROR="{env:DEMO}"}\n'
+                'deps=[{replace="if",condition="env.MISSING",then="",else="{env:MIRROR}"}]'
+            },
+            "a==${DEPLOY_TOKEN}",
+            "deps",
+            ["a==${DEPLOY_TOKEN}"],
+            id="toml-if-else-directive",
+        ),
+        pytest.param(
+            {
+                "tox.toml": '[env_run_base]\npackage="skip"\nsource="{env:MIRROR}"\n'
+                'set_env={MIRROR="{env:DEMO}"}\ndeps=[{replace="ref",of=["env_run_base","source"]}]'
+            },
+            "a==${DEPLOY_TOKEN}",
+            "deps",
+            ["a==${DEPLOY_TOKEN}"],
+            id="toml-ref-directive",
+        ),
+        pytest.param(
+            {
+                "tox.toml": '[env_run_base]\npackage="skip"\n'
+                'set_env={VERSION="1${AUTHORED}",MIRROR="{env:DEMO}"}\ndeps=["{env:MIRROR}"]'
+            },
+            "a=={env:VERSION}${DEPLOY_TOKEN}",
+            "deps",
+            ["a==1shown${DEPLOY_TOKEN}"],
+            id="host-to-authored-substitution",
+        ),
+        pytest.param(
+            {
+                "tox.toml": '[env_run_base]\npackage="skip"\n'
+                'set_env={BASE="{env:DEMO}",MIRROR="{env:BASE}"}\ndeps=["{env:MIRROR}"]'
+            },
+            "a==${DEPLOY_TOKEN}",
+            "deps",
+            ["a==${DEPLOY_TOKEN}"],
+            id="nested-set-env",
+        ),
+        pytest.param(
+            {
+                "tox.toml": '[env_run_base]\npackage="skip"\n'
+                'set_env={MIRROR="--index-url {env:DEMO}?from=${AUTHORED}"}\ndeps=["{env:MIRROR}"]'
+            },
+            "https://example.invalid/${HOST}",
+            "deps",
+            ["-i", "https://example.invalid/${HOST}?from=shown"],
+            id="mixed-host-and-config",
+        ),
+        pytest.param(
+            {
+                "tox.toml": '[env_run_base]\npackage="skip"\n'
+                'set_env={BASE="--index-url {env:DEMO}?from=${AUTHORED}",MIRROR="{env:BASE}"}\n'
+                'deps=["{env:MIRROR}"]'
+            },
+            "https://example.invalid/${HOST}",
+            "deps",
+            ["-i", "https://example.invalid/${HOST}?from=shown"],
+            id="nested-mixed-host-and-config",
+        ),
+        pytest.param(
+            {
+                "tox.toml": '[env_run_base]\npackage="skip"\n'
+                'set_env={MIRROR={replace="env",name="DEMO"}}\ndeps=[{replace="env",name="MIRROR"}]'
+            },
+            "a==${DEPLOY_TOKEN}",
+            "deps",
+            ["a==${DEPLOY_TOKEN}"],
+            id="toml-directive",
+        ),
+    ],
+)
+def test_pip_install_set_env_host_variable_keeps_requirement_variable_literal(
+    tox_project: ToxProjectCreator,
+    monkeypatch: pytest.MonkeyPatch,
+    files: dict[str, str],
+    host_value: str,
+    key: str,
+    expected: list[str],
+) -> None:
+    monkeypatch.setenv("DEPLOY_TOKEN", "magic")
+    monkeypatch.setenv("HOST", "hidden")
+    monkeypatch.setenv("AUTHORED", "shown")
+    monkeypatch.setenv("VERSION", "1")
+    monkeypatch.setenv("PAYLOAD", "a==${DEPLOY_TOKEN}")
+    monkeypatch.delenv("MISSING", raising=False)
+    monkeypatch.setenv("DEMO", host_value)
+    result: Final[ToxRunOutcome] = tox_project(files).run("c", "-e", "py", "-k", key)
+    result.assert_success()
+    assert result.env_conf("py")[key].as_root_args == expected
+
+
+@pytest.mark.parametrize(
+    ("host_value", "override", "expected"),
+    [
+        pytest.param("{factor:django_version}", "a==${DEPLOY_TOKEN}", ["a==${DEPLOY_TOKEN}"], id="whole"),
+        pytest.param(
+            "--index-url https://example.invalid/{factor:django_version}",
+            "user{env_name}${DEPLOY_TOKEN}",
+            ["-i", "https://example.invalid/user{env_name}${DEPLOY_TOKEN}"],
+            id="mixed",
+        ),
+        pytest.param(
+            "--index-url https://example.invalid/${factor:django_version}",
+            "{env_name}",
+            ["-i", "https://example.invalid/${env_name}"],
+            id="variable-boundary",
+        ),
+    ],
+)
+def test_pip_install_factor_override_keeps_host_variable_literal(
+    tox_project: ToxProjectCreator,
+    monkeypatch: pytest.MonkeyPatch,
+    host_value: str,
+    override: str,
+    expected: list[str],
+) -> None:
+    monkeypatch.setenv("DEMO", host_value)
+    monkeypatch.setenv("TOX_FACTOR_django_version", override)
+    monkeypatch.setenv("DEPLOY_TOKEN", "magic")
+    result: Final[ToxRunOutcome] = tox_project({
+        "tox.toml": '[env_base.task]\nfactors=[{django_version=["django42","django50"]}]\n'
+        'package="skip"\nset_env={MIRROR="{env:DEMO}"}\ndeps=["{env:MIRROR}"]'
+    }).run("c", "-e", "task-django42", "-k", "deps")
+    result.assert_success()
+    assert result.env_conf("task-django42")["deps"].as_root_args == expected
+
+
 def test_pip_install_whole_host_entry_reaches_pip_literally(
     tox_project: ToxProjectCreator, monkeypatch: pytest.MonkeyPatch
 ) -> None:

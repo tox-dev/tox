@@ -13,7 +13,7 @@ from abc import ABC, abstractmethod
 from collections.abc import Callable, Iterable, Iterator, Sequence
 from functools import partial
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Final, Protocol, Union, get_args, get_origin
+from typing import TYPE_CHECKING, Any, Final, Protocol, TypeVar, Union, get_args, get_origin
 
 from tox.config.types import CircularChainError, Command, EnvList
 from tox.util.typing_compat import override
@@ -73,6 +73,7 @@ class ReplaceReference(ABC):
 
 
 MatchArg = Sequence[Union[str, "MatchExpression"]]
+_OtherFragment = TypeVar("_OtherFragment")
 
 
 def find_replace_expr(value: str | MatchExpression) -> MatchArg:
@@ -149,9 +150,13 @@ def replace_once(conf: Config, reference: ReplaceReference, value: str | MatchEx
 class MatchExpression:  # ruff:ignore[eq-without-hash]
     """An expression that is handled specially by the Replacer."""
 
-    def __init__(self, expr: Sequence[MatchArg], term_pos: int | None = None) -> None:
+    def __init__(
+        self, expr: Sequence[MatchArg], term_pos: int | None = None, *, host: bool = False, literal: bool = False
+    ) -> None:
         self.expr = expr
         self.term_pos = term_pos
+        self.host = host
+        self.literal = literal
 
     @override
     def __repr__(self) -> str:
@@ -174,7 +179,7 @@ class MatchExpression:  # ruff:ignore[eq-without-hash]
         try:
             # recursively handle inner expression
             rec_expr, term_pos = cls.parse_and_split_to_terminator(
-                value[1:],
+                cls._fragment(value, 1),
                 terminator=REPLACE_END,
                 split=ARG_DELIMITER,
             )
@@ -182,7 +187,12 @@ class MatchExpression:  # ruff:ignore[eq-without-hash]
             # didn't find the expected terminator character, so treat `{` as if escaped.
             pass
         else:
-            return MatchExpression(expr=rec_expr, term_pos=term_pos)
+            return MatchExpression(
+                expr=rec_expr,
+                term_pos=term_pos,
+                host=isinstance(value, HostText) and value.covers(term_pos + 1),
+                literal=isinstance(value, HostText) and value.covers_literal(term_pos + 1),
+            )
         return None
 
     @classmethod
@@ -208,32 +218,40 @@ class MatchExpression:  # ruff:ignore[eq-without-hash]
         while pos < len(value):
             if len(value) > pos + 1 and value[pos] == "\\":
                 if value[pos + 1] in BACKSLASH_ESCAPE_CHARS:
-                    last_arg.append(value[pos + 1])
+                    last_arg.append(cls._fragment(value, pos + 1, pos + 2))
                     pos += 2
                     continue
                 if value[pos + 1] == "\\":
                     # Keep both backslashes for the later shlex pass.
-                    last_arg.append(value[pos : pos + 2])
+                    last_arg.append(cls._fragment(value, pos, pos + 2))
                     pos += 2
                     continue
-            fragment = value[pos:]
-            if terminator and fragment.startswith(terminator):
+            if terminator and value.startswith(terminator, pos):
                 pos += len(terminator)
                 break
-            if split and fragment.startswith(split):
+            if split and value.startswith(split, pos):
                 # found a new argument
                 args.append(last_arg)
                 last_arg = []
                 pos += len(split)
                 continue
-            expr = cls._next_replace_expression(fragment)
-            if expr is not None:
+            if (value[pos] == REPLACE_START or value.startswith("[]", pos)) and (
+                expr := cls._next_replace_expression(cls._fragment(value, pos))
+            ) is not None:
                 pos += (expr.term_pos or 0) + 1
                 last_arg.append(expr)
                 continue
-            # default case: consume the next character
-            last_arg.append(value[pos])
-            pos += 1
+            # Group plain text to avoid rebuilding origin spans per character.
+            next_pos: int = min(
+                (
+                    at
+                    for char in ("\\", REPLACE_START, "[", terminator, split)
+                    if char and (at := value.find(char, pos + 1)) >= 0
+                ),
+                default=len(value),
+            )
+            last_arg.append(cls._fragment(value, pos, next_pos))
+            pos = next_pos
         else:  # fell out of the loop
             if terminator:
                 msg = f"{terminator!r} remains unmatched in {value!r}"
@@ -241,21 +259,24 @@ class MatchExpression:  # ruff:ignore[eq-without-hash]
         args.append(last_arg)
         return [_flatten_string_fragments(a) for a in args], pos
 
+    @staticmethod
+    def _fragment(value: str, start: int, end: int | None = None) -> str:
+        return value.fragment(start, end) if isinstance(value, HostText) else value[start:end]
 
-def _flatten_string_fragments(seq_of_str_or_other: Sequence[str | Any]) -> Sequence[str | Any]:
-    """Join runs of contiguous str values in a sequence; nny non-str items in the sequence are left as-is."""
-    result = []
-    last_str = []
-    for obj in seq_of_str_or_other:
+
+def _flatten_string_fragments(fragments: Sequence[str | _OtherFragment]) -> list[str | _OtherFragment]:
+    result: list[str | _OtherFragment] = []
+    last_str: list[str] = []
+    for obj in fragments:
         if isinstance(obj, str):
             last_str.append(obj)
         else:
             if last_str:
-                result.append("".join(last_str))
+                result.append(HostText.from_parts(last_str))
                 last_str = []
             result.append(obj)
     if last_str:
-        result.append("".join(last_str))
+        result.append(HostText.from_parts(last_str))
     return result
 
 
@@ -284,7 +305,11 @@ class Replacer:
         result: Final[list[str]] = []
         for part in value:
             if isinstance(part, MatchExpression):
-                result.append(self._literal_match(part) if self.root.depth_exhausted else self._replace_match(part)[0])
+                if part.literal or self.root.depth_exhausted:
+                    literal = self._literal_match(part)
+                    result.append(HostText(literal, literal=part.literal) if part.host else literal)
+                else:
+                    result.append(self._replace_match(part)[0])
             else:
                 result.append(part)
         return result
@@ -298,7 +323,7 @@ class Replacer:
         return f"{{{ARG_DELIMITER.join(args)}}}"
 
     def join(self, value: MatchArg) -> str:
-        return "".join(self(value))
+        return HostText.from_parts(self(value))
 
     def expand(self, value: str | MatchExpression) -> str:
         if self.depth > MAX_REPLACE_DEPTH:
@@ -313,9 +338,10 @@ class Replacer:
         flattened_args: Final[list[str]] = [self._flatten_arg(arg) for arg in value.expr]
         replace_value: Final[str | ConfigDefault | None] = self._replace_args(flattened_args)
         if replace_value is not None:
-            return str(replace_value), True
+            return replace_value if isinstance(replace_value, str) else replace_value.text, True
         # Preserve unmatched braces for factor expressions such as {py39,py38}-{,dep}.
-        return f"{REPLACE_START}{ARG_DELIMITER.join(flattened_args)}{REPLACE_END}", False
+        literal: Final[str] = f"{REPLACE_START}{ARG_DELIMITER.join(flattened_args)}{REPLACE_END}"
+        return HostText(literal) if value.host else literal, False
 
     def _replace_args(self, flattened_args: list[str]) -> str | None:
         # Isolate chain updates from adjacent substitutions (#2869).
@@ -327,13 +353,15 @@ class Replacer:
             self.recursive
             and not self.root.depth_exhausted
             and isinstance(replace_value, RawText)
-            and any(isinstance(match, MatchExpression) for match in find_replace_expr(str(replace_value)))
+            and any(
+                isinstance(match, MatchExpression) and not match.literal for match in find_replace_expr(replace_value)
+            )
         ):
             try:
-                return self._nested(conf_args).expand(str(replace_value))
+                return self._nested(conf_args).expand(replace_value)
             except MatchRecursionError as error:
                 LOGGER.warning(str(error))
-        return str(replace_value) if isinstance(replace_value, ConfigDefault) else replace_value
+        return replace_value.text if isinstance(replace_value, ConfigDefault) else replace_value
 
     def _nested(self, conf_args: ConfigLoadArgs) -> Self:
         nested: Final[Self] = type(self)(self.conf, self.reference, conf_args, self.depth + 1)
@@ -364,7 +392,7 @@ class Replacer:
         }
         if handler := dispatch.get(of_type):
             return handler()
-        return self.reference(ARG_DELIMITER.join(flattened_args), conf_args)
+        return self.reference(HostText.from_parts(flattened_args, separator=ARG_DELIMITER), conf_args)
 
 
 @dataclasses.dataclass(frozen=True, slots=True, kw_only=True)
@@ -426,7 +454,7 @@ class CommandLinesReplacer(Replacer):
     def _split_part(self, part: str | MatchExpression) -> list[str | _Replaced]:
         if not isinstance(part, MatchExpression):
             return [part]
-        if self.root.depth_exhausted:
+        if part.literal or self.root.depth_exhausted:
             return [self._literal_match(part)]
         args: Final[list[list[str | _Replaced]]] = [list(self._split_replaced(arg)) for arg in part.expr]
         flattened_args: Final[list[str]] = ["".join(map(str, arg)) for arg in args]
@@ -463,7 +491,7 @@ class CommandLinesReplacer(Replacer):
         if not (
             self.recursive
             and isinstance(replaced, RawText)
-            and any(isinstance(match, MatchExpression) for match in find_replace_expr(replaced))
+            and any(isinstance(match, MatchExpression) and not match.literal for match in find_replace_expr(replaced))
         ):
             return None
         nested: Final[CommandLinesReplacer] = self._nested(conf_args)
@@ -560,7 +588,7 @@ class RequirementLinesReplacer(Replacer):
     ) -> str | ConfigDefault | None:
         value: Final[str | ConfigDefault | None] = super()._resolve_replace(of_type, args, flattened_args, conf_args)
         # pip's ${NAME} syntax belongs to the configuration, a host variable's value reaches pip as written
-        return HostText(self._callbacks.protect_host_value(value)) if isinstance(value, HostText) else value
+        return value.protect(self._callbacks.protect_host_value) if isinstance(value, HostText) else value
 
     @override
     def _flatten_arg(self, value: MatchArg) -> str:
@@ -614,7 +642,92 @@ class RequirementLinesReplacer(Replacer):
 
 
 class HostText(RawText):
-    __slots__ = ()
+    __slots__ = ("literal_spans", "spans")
+    spans: tuple[tuple[int, int], ...]
+    literal_spans: tuple[tuple[int, int], ...]
+
+    def __new__(
+        cls,
+        value: str,
+        *,
+        spans: tuple[tuple[int, int], ...] | None = None,
+        literal_spans: tuple[tuple[int, int], ...] = (),
+        literal: bool = False,
+    ) -> Self:
+        result: Final[Self] = super().__new__(cls, value)
+        result.spans = ((0, len(value)),) if spans is None else spans
+        result.literal_spans = ((0, len(value)),) if literal else literal_spans
+        return result
+
+    @classmethod
+    def from_parts(cls, parts: Sequence[str], *, separator: str = "") -> str:
+        spans: list[tuple[int, int]] = []
+        literal_spans: list[tuple[int, int]] = []
+        offset = 0
+        for index, part in enumerate(parts):
+            if isinstance(part, HostText):
+                for part_spans, joined_spans in ((part.spans, spans), (part.literal_spans, literal_spans)):
+                    for start, end in part_spans:
+                        absolute_start, absolute_end = offset + start, offset + end
+                        if joined_spans and joined_spans[-1][1] == absolute_start:
+                            joined_spans[-1] = joined_spans[-1][0], absolute_end
+                        else:
+                            joined_spans.append((absolute_start, absolute_end))
+            offset += len(part) + (len(separator) if index + 1 < len(parts) else 0)
+        joined: Final[str] = separator.join(parts)
+        return cls(joined, spans=tuple(spans), literal_spans=tuple(literal_spans)) if spans else joined
+
+    @override
+    def splitlines(self, keepends: bool = False) -> list[str]:
+        lines: Final[list[str]] = []
+        offset = 0
+        for line in super().splitlines(keepends=True):
+            line_length: int = len(line) if keepends else len(line.rstrip("\r\n\v\f\x1c\x1d\x1e\x85\u2028\u2029"))
+            lines.append(self.fragment(offset, offset + line_length))
+            offset += len(line)
+        return lines
+
+    @override
+    def strip(self, chars: str | None = None) -> str:
+        return self.fragment(len(self) - len(super().lstrip(chars)), len(super().rstrip(chars)))
+
+    def fragment(self, start: int, end: int | None = None) -> str:
+        stop: Final[int] = len(self) if end is None else end
+        spans: Final[tuple[tuple[int, int], ...]] = self._fragment_spans(self.spans, start, stop)
+        value: Final[str] = super().__getitem__(slice(start, stop))
+        return (
+            HostText(value, spans=spans, literal_spans=self._fragment_spans(self.literal_spans, start, stop))
+            if spans
+            else value
+        )
+
+    @staticmethod
+    def _fragment_spans(spans: tuple[tuple[int, int], ...], start: int, stop: int) -> tuple[tuple[int, int], ...]:
+        return tuple(
+            (max(span_start, start) - start, min(span_end, stop) - start)
+            for span_start, span_end in spans
+            if span_start < stop and span_end > start
+        )
+
+    def covers(self, end: int) -> bool:
+        return self.spans[0][0] == 0 and self.spans[0][1] >= end
+
+    def covers_literal(self, end: int) -> bool:
+        return bool(self.literal_spans) and self.literal_spans[0][0] == 0 and self.literal_spans[0][1] >= end
+
+    def protect(self, protector: _HostValueProtector) -> str:
+        parts: Final[list[str]] = []
+        offset = 0
+        for start, end in self.spans:
+            literal_spans = tuple(
+                (len(protector(self[start:literal_start])), len(protector(self[start:literal_end])))
+                for literal_start, literal_end in self.literal_spans
+                if start <= literal_start and literal_end <= end
+            )
+            parts.extend((self[offset:start], HostText(protector(self[start:end]), literal_spans=literal_spans)))
+            offset = end
+        parts.append(self[offset:])
+        return HostText.from_parts(parts)
 
 
 class _RequirementOptionsValidator(Protocol):
@@ -689,7 +802,11 @@ def replace_pos_args(
     conf: Config, args: list[str], conf_args: ConfigLoadArgs, *, program_first: bool
 ) -> str | ConfigDefault:
     pos_args = load_posargs(conf, conf_args, program_first=program_first)
-    return ConfigDefault(text=ARG_DELIMITER.join(args), start=1) if pos_args is None else quote_args(pos_args)
+    return (
+        ConfigDefault(text=HostText.from_parts(args, separator=ARG_DELIMITER), start=1)
+        if pos_args is None
+        else quote_args(pos_args)
+    )
 
 
 def quote_args(args: Sequence[str]) -> str:
@@ -753,7 +870,7 @@ def _replace_env(conf: Config | None, args: list[str], conf_args: ConfigLoadArgs
     if key in os.environ:
         return HostText(os.environ[key])  # a host variable has always been allowed to hold tokens of its own
 
-    return ConfigDefault(text="" if len(args) == 1 else ARG_DELIMITER.join(args[1:]), start=2)
+    return ConfigDefault(text=HostText.from_parts(args[1:], separator=ARG_DELIMITER), start=2)
 
 
 def replace_tty(args: list[str]) -> ConfigDefault:
@@ -787,7 +904,9 @@ def replace_glob(conf: Config | None, args: list[str]) -> str | ConfigDefault:
         pattern = str(conf.core["tox_root"] / pattern)
     if matches := sorted(glob.glob(pattern, recursive=True)):  # ruff:ignore[glob]
         return _GlobMatches(matches)
-    return ConfigDefault(text=ARG_DELIMITER.join(default_args), start=3 if is_win_drive else 2)
+    return ConfigDefault(
+        text=HostText.from_parts(default_args, separator=ARG_DELIMITER), start=3 if is_win_drive else 2
+    )
 
 
 def replace_factor(conf: Config, args: list[str], conf_args: ConfigLoadArgs) -> str:
@@ -795,12 +914,12 @@ def replace_factor(conf: Config, args: list[str], conf_args: ConfigLoadArgs) -> 
         msg = "No label was supplied in {factor} substitution"
         raise MatchError(msg)
     label = args[0]
-    default = ARG_DELIMITER.join(args[1:]) if len(args) > 1 else None
+    default = HostText.from_parts(args[1:], separator=ARG_DELIMITER) if len(args) > 1 else None
     group = conf.factor_labels(conf_args.env_name).get(label)
     if group is None or conf_args.env_name is None:
         return default or ""
     if (override := os.environ.get(f"{_FACTOR_ENV_PREFIX}{label}")) is not None:
-        return override
+        return HostText(override, literal=True)
     env_factors = set(conf_args.env_name.split("-"))
     for value in group.values:
         if value in env_factors:
@@ -809,9 +928,12 @@ def replace_factor(conf: Config, args: list[str], conf_args: ConfigLoadArgs) -> 
 
 
 __all__ = [
+    "MAX_REPLACE_DEPTH",
     "Arguments",
     "ConfigDefault",
     "HostText",
+    "MatchArg",
+    "MatchError",
     "MatchExpression",
     "MatchRecursionError",
     "RawText",
