@@ -35,8 +35,6 @@ _ENV_VAR_RE = re.compile(
     """,
     re.VERBOSE,
 )
-# Placed between ``$`` and ``{`` in inline text supplied by the host, so it reaches pip as written instead of expanding.
-_LITERAL_MARK: Final[str] = "\x00"
 _SCHEME_RE = re.compile(
     r"""
     ^                       # start of string
@@ -577,25 +575,15 @@ class RequirementsFile:
 
 
 def protect_env_variables(text: str) -> str:
-    """Keep the ``${NAME}`` references of ``text`` from being expanded when parsed as an inline requirement.
-
-    :param text: the text to protect
-
-    :returns: the protected text, :func:`unprotect_env_variables` restores it
-
-    """
-    return text.replace("${", f"${_LITERAL_MARK}{{")
+    return text.replace("${", f"${_ENV_LITERAL_MARK}{{")
 
 
 def unprotect_env_variables(text: str) -> str:
-    """Restore text protected by :func:`protect_env_variables`.
+    return text.replace(f"${_ENV_LITERAL_MARK}{{", "${")
 
-    :param text: the protected text
 
-    :returns: the text as originally written
-
-    """
-    return text.replace(f"${_LITERAL_MARK}{{", "${")
+# Defer pip-style expansion of host values until the inline parser finishes.
+_ENV_LITERAL_MARK: Final[str] = "\x00"
 
 
 __all__ = (

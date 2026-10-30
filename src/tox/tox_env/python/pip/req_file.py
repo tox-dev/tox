@@ -112,7 +112,7 @@ class _PythonRequirementsFile(RequirementsFile):
             return source == expanded
         return re.fullmatch(".*?".join(re.escape(part) for part in parts), expanded, flags=re.DOTALL) is not None
 
-    def lines(self) -> list[str]:
+    def lines(self, *, preserve_host_values: bool = False) -> list[str]:
         # as_root_args raises what tox run would raise, and when pip gets no arguments there is nothing to show
         if not self.as_root_args:
             return []
@@ -120,7 +120,7 @@ class _PythonRequirementsFile(RequirementsFile):
         # renderer, at the first option line, while requirements, comments and -r/-c/-e lines stay as written.
         lines: list[str] = []
         merged, at = Namespace(), None
-        for line in unprotect_env_variables(self._raw).splitlines():
+        for line in (self._raw if preserve_host_values else unprotect_env_variables(self._raw)).splitlines():
             if (opts := self._global_options(line)) is None:
                 lines.append(line)
             else:
@@ -263,9 +263,9 @@ class PythonConstraints(_PythonRequirementsFile):
         return [f"-c {line}" if any(cls._ignore_comments(enumerate([line]))) else line for line in lines]
 
     @override
-    def lines(self) -> list[str]:
+    def lines(self, *, preserve_host_values: bool = False) -> list[str]:
         # _adjust_lines prefixes each entry with -c for the parser, while the setting holds the bare file or URL
-        return [line.removeprefix("-c ") for line in super().lines()]
+        return [line.removeprefix("-c ") for line in super().lines(preserve_host_values=preserve_host_values)]
 
     @override
     def _validate_requirement(self, req: ParsedRequirement) -> None:

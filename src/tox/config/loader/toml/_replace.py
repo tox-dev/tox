@@ -16,6 +16,7 @@ from tox.config.loader.replacer import (
     MatchRecursionError,
     RawText,
     ReplaceReference,
+    RequirementLineCallbacks,
     find_replace_expr,
     load_posargs,
     replace,
@@ -84,7 +85,10 @@ class Unroll:
                         reference,
                         value,
                         self.args,
-                        validate_options=PythonDeps.validate_requirement_options,
+                        callbacks=RequirementLineCallbacks(
+                            validate_options=PythonDeps.validate_requirement_options,
+                            protect_host_value=protect_env_variables,
+                        ),
                     )
                 elif self._program_depth is not None:
                     value = replace_program(self.conf, reference, value, self.args)
@@ -172,8 +176,8 @@ class Unroll:
             return MatchExpression([["env"], [name], _parse_arg(default)])
         # use a copy of the chain so this substitution's env references do not leak into
         # adjacent entries of the same value tree and spuriously trip the circular check (#2869)
-        result: Final = replace_env(self.conf, [name, validate(default, str)], self.args.copy())
-        if self.requirement_entries and isinstance(result, HostText):  # a host value reaches pip as written
+        result: Final[str] = replace_env(self.conf, [name, validate(default, str)], self.args.copy())
+        if self.requirement_entries and isinstance(result, HostText):
             return protect_env_variables(result)
         return result
 
@@ -226,7 +230,7 @@ class Unroll:
     @staticmethod
     def _to_raw(value: object) -> TomlTypes:
         if isinstance(value, (PythonDeps, PythonConstraints)):
-            value = value.lines()
+            value = value.lines(preserve_host_values=True)
         elif isinstance(value, Command):
             value = value.raw_args
         elif isinstance(value, list) and all(isinstance(entry, Command) for entry in value):

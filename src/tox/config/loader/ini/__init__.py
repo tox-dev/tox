@@ -9,6 +9,7 @@ from tox.config.loader.ini.factor import filter_for_env
 from tox.config.loader.ini.replace import ReplaceReferenceIni
 from tox.config.loader.replacer import (
     MatchExpression,
+    RequirementLineCallbacks,
     replace_command_lines,
     replace_for,
     replace_once,
@@ -19,6 +20,7 @@ from tox.config.set_env import SetEnv
 from tox.config.types import Command
 from tox.report import HandledError
 from tox.tox_env.errors import Skip
+from tox.tox_env.python.pip.req.file import protect_env_variables
 from tox.tox_env.python.pip.req_file import PythonConstraints, PythonDeps
 from tox.util.typing_compat import override
 
@@ -105,7 +107,10 @@ class IniLoader(StrConvert, Loader[str]):
                         reference,
                         raw_,
                         args_,
-                        validate_options=PythonDeps.validate_requirement_options,
+                        callbacks=RequirementLineCallbacks(
+                            validate_options=PythonDeps.validate_requirement_options,
+                            protect_host_value=protect_env_variables,
+                        ),
                     )
                 if of_type in {Command, list[Command]}:
                     return replace_command_lines(conf, reference, raw_, args_)
@@ -127,7 +132,14 @@ class IniLoader(StrConvert, Loader[str]):
         reference: Final[ReplaceReferenceIni] = ReplaceReferenceIni(conf, self)
         if of_type in {PythonDeps, PythonConstraints}:
             return replace_requirement_lines(
-                conf, reference, value, args, validate_options=PythonDeps.validate_requirement_options
+                conf,
+                reference,
+                value,
+                args,
+                callbacks=RequirementLineCallbacks(
+                    validate_options=PythonDeps.validate_requirement_options,
+                    protect_host_value=protect_env_variables,
+                ),
             )
         if of_type in {Command, list[Command]}:
             return replace_command_lines(conf, reference, value, args)

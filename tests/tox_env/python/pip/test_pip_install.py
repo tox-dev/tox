@@ -394,7 +394,7 @@ def test_pip_install_host_variable_keeps_requirement_variable_literal(
 ) -> None:
     monkeypatch.setenv("DEPLOY_TOKEN", "magic")
     monkeypatch.setenv("DEMO", "a==${DEPLOY_TOKEN}")
-    result: Final = tox_project(files).run("c", "-e", "py", "-k", key)
+    result: Final[ToxRunOutcome] = tox_project(files).run("c", "-e", "py", "-k", key)
     result.assert_success()
     assert "a==${DEPLOY_TOKEN}" in result.env_conf("py")[key].as_root_args
     assert f"{key} = a==${{DEPLOY_TOKEN}}" in result.out
@@ -406,12 +406,12 @@ def test_pip_install_whole_host_entry_reaches_pip_literally(
 ) -> None:
     monkeypatch.setenv("DEPLOY_TOKEN", "magic")
     monkeypatch.setenv("DEMO", "a==${DEPLOY_TOKEN}")
-    project: Final = tox_project({
+    project: Final[ToxProject] = tox_project({
         "tox.toml": '[env_run_base]\npackage="skip"\npass_env=["DEPLOY_TOKEN"]\n'
         'deps=[{replace="env",name="DEMO",default="a==1"}]'
     })
-    execute_calls: Final = project.patch_execute(lambda request: 0 if "install" in request.run_id else None)
-    result: Final = project.run("r", "-e", "py")
+    execute_calls: Final[MagicMock] = project.patch_execute(lambda request: 0 if "install" in request.run_id else None)
+    result: Final[ToxRunOutcome] = project.run("r", "-e", "py")
     result.assert_success()
     assert execute_calls.call_args[0][3].cmd == ["python", "-I", "-m", "pip", "install", "a==${DEPLOY_TOKEN}"]
     assert "magic" not in result.out
@@ -422,10 +422,83 @@ def test_pip_install_configured_requirement_variable_expands(
 ) -> None:
     monkeypatch.setenv("DEPLOY_TOKEN", "magic")
     monkeypatch.setenv("DEMO", "b")
-    project: Final = tox_project({"tox.ini": "[testenv]\npackage=skip\ndeps=a==${DEPLOY_TOKEN}\n {env:DEMO}"})
-    result: Final = project.run("c", "-e", "py", "-k", "deps")
+    result: Final[ToxRunOutcome] = tox_project({
+        "tox.ini": "[testenv]\npackage=skip\ndeps=a==${DEPLOY_TOKEN}\n {env:DEMO}"
+    }).run("c", "-e", "py", "-k", "deps")
     result.assert_success()
     assert sorted(result.env_conf("py")["deps"].as_root_args) == ["a==magic", "b"]
+
+
+@pytest.mark.parametrize(
+    "files",
+    [
+        pytest.param({"tox.ini": "[testenv]\npackage=skip\ndeps={env:DEMO:a==${DEPLOY_TOKEN}}"}, id="ini"),
+        pytest.param(
+            {
+                "tox.toml": '[env_run_base]\npackage="skip"\n'
+                'deps=[{replace="env",name="DEMO",default="a==${DEPLOY_TOKEN}"}]'
+            },
+            id="toml",
+        ),
+    ],
+)
+def test_pip_install_default_requirement_variable_expands(
+    tox_project: ToxProjectCreator, monkeypatch: pytest.MonkeyPatch, files: dict[str, str]
+) -> None:
+    monkeypatch.delenv("DEMO", raising=False)
+    monkeypatch.setenv("DEPLOY_TOKEN", "magic")
+    result: Final[ToxRunOutcome] = tox_project(files).run("c", "-e", "py", "-k", "deps")
+    result.assert_success()
+    assert result.env_conf("py")["deps"].as_root_args == ["a==magic"]
+
+
+def test_pip_install_host_option_value_keeps_requirement_variable_literal(
+    tox_project: ToxProjectCreator, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("DEPLOY_TOKEN", "magic")
+    monkeypatch.setenv("DEMO", "--index-url https://example.invalid/${DEPLOY_TOKEN}")
+    result: Final[ToxRunOutcome] = tox_project({"tox.ini": "[testenv]\npackage=skip\ndeps={env:DEMO}"}).run(
+        "c", "-e", "py", "-k", "deps"
+    )
+    result.assert_success()
+    assert result.env_conf("py")["deps"].as_root_args == ["-i", "https://example.invalid/${DEPLOY_TOKEN}"]
+
+
+@pytest.mark.parametrize(
+    ("key", "host_value", "expected"),
+    [
+        pytest.param("deps", "a==${DEPLOY_TOKEN}", ["a==${DEPLOY_TOKEN}"], id="deps"),
+        pytest.param(
+            "deps",
+            "--index-url https://example.invalid/${DEPLOY_TOKEN}",
+            ["-i", "https://example.invalid/${DEPLOY_TOKEN}"],
+            id="pip-option",
+        ),
+        pytest.param(
+            "constraints",
+            "https://example.invalid/${DEPLOY_TOKEN}",
+            ["-c", "https://example.invalid/${DEPLOY_TOKEN}"],
+            id="constraints",
+        ),
+    ],
+)
+def test_pip_install_referenced_host_variable_keeps_requirement_variable_literal(
+    tox_project: ToxProjectCreator,
+    monkeypatch: pytest.MonkeyPatch,
+    key: str,
+    host_value: str,
+    expected: list[str],
+) -> None:
+    monkeypatch.setenv("DEPLOY_TOKEN", "magic")
+    monkeypatch.setenv("DEMO", host_value)
+    result: Final[ToxRunOutcome] = tox_project({
+        "tox.toml": f'[env.src]\npackage="skip"\n{key}=[{{replace="env",name="DEMO",default="a==1"}}]\n'
+        f'[env.dest]\npackage="skip"\n{key}=[{{replace="ref",env="src",key="{key}",extend=true}}]'
+    }).run("c", "-e", "dest", "-k", key)
+    result.assert_success()
+    assert result.env_conf("dest")[key].as_root_args == expected
+    assert expected[-1] in result.out
+    assert "\x00" not in result.out
 
 
 def test_pip_install_path(tox_project: ToxProjectCreator) -> None:
