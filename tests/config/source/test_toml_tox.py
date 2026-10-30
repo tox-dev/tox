@@ -13,7 +13,7 @@ if TYPE_CHECKING:
     from collections.abc import Callable
     from typing import Final
 
-    from tox.pytest import ToxProject, ToxProjectCreator
+    from tox.pytest import ToxProject, ToxProjectCreator, ToxRunOutcome
 
 
 def test_config_in_toml_core(tox_project: ToxProjectCreator) -> None:
@@ -115,11 +115,10 @@ def test_config_in_toml_keep_braces_of_non_reference(toml_project: Callable[[str
 
 
 def test_config_in_toml_keep_braces_around_posargs_naming_a_key(toml_project: Callable[[str], ToxProject]) -> None:
-    project: Final = toml_project(
+    outcome: Final[ToxRunOutcome] = toml_project(
         '[${prefix}env_run_base]\nset_env = { SECRET = "s3cr3t" }\n'
         'commands = [["python", "-c", \'x {"text": "{posargs}"} y\']]'
-    )
-    outcome: Final = project.run("c", "-k", "commands", "--", "set_env:x")
+    ).run("c", "-k", "commands", "--", "set_env:x")
     outcome.assert_success()
     assert outcome.out.startswith("[testenv:py]\ncommands = ")
     assert StrConvert.to_command(outcome.out.partition("commands = ")[2].strip()).args == [
