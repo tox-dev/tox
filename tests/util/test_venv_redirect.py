@@ -33,7 +33,7 @@ def test_record_windows_empty_root(tmp_path: Path) -> None:
     root.mkdir()
     env: Final[Path] = tmp_path / "work" / "dev"
 
-    record_venv_redirect(root, env, lambda _: True)
+    record_venv_redirect(root, env, lambda _target: True)
 
     assert ((root / ".venv").read_text(encoding="utf-8"), sorted(path.name for path in root.iterdir())) == (
         f"{env}\n",
@@ -271,7 +271,7 @@ def windows_kernel32(mocker: MockerFixture) -> ctypes.CDLL:
         "ntdll": ctypes.WinDLL("ntdll"),
     }
 
-    def load_library(name: str, **_: bool) -> ctypes.CDLL:
+    def load_library(name: str, **_options: bool) -> ctypes.CDLL:
         return libraries[name]
 
     mocker.patch("tox.util.venv_redirect.ctypes.WinDLL", side_effect=load_library)
@@ -474,12 +474,12 @@ def test_release_without_directory(root: Path) -> None:
 def test_record_rejects_in_place_junction(junction_directory: Path, mocker: MockerFixture) -> None:
     target: Final[Path] = junction_directory.with_name("other")
 
-    def set_junction(_: int) -> str:
+    def set_junction(_requested_bytes: int) -> str:
         assert (_set_windows_junction(junction_directory, target), junction_directory.resolve()) == (True, target)
         return "0" * 32
 
     mocker.patch("tox.util.venv_redirect.secrets.token_hex", side_effect=set_junction)
-    record_venv_redirect(junction_directory, junction_directory / ".tox" / "dev", lambda _: True)
+    record_venv_redirect(junction_directory, junction_directory / ".tox" / "dev", lambda _target: True)
 
     assert (target / ".venv").read_text(encoding="utf-8") == "keep\n"
 
@@ -545,6 +545,9 @@ def _set_windows_junction(directory: Path, target: Path) -> bool:
 @pytest.mark.skipif(sys.platform != "win32", reason="Windows reparse points")
 def test_record_blocks_junction_during_write(junction_directory: Path, mocker: MockerFixture) -> None:
     target: Final[Path] = junction_directory.with_name("other")
+    control: Final[Path] = junction_directory.with_name("control")
+    control.mkdir()
+    assert (_set_windows_junction(control, target), control.resolve()) == (True, target)
     replace: Final[Callable[[Path, Path], Path]] = Path.replace
 
     def try_junction(source: Path, destination: Path) -> Path:
@@ -552,7 +555,7 @@ def test_record_blocks_junction_during_write(junction_directory: Path, mocker: M
         return replace(source, destination)
 
     mocker.patch("tox.util.venv_redirect.Path.replace", autospec=True, side_effect=try_junction)
-    record_venv_redirect(junction_directory, junction_directory / ".tox" / "dev", lambda _: True)
+    record_venv_redirect(junction_directory, junction_directory / ".tox" / "dev", lambda _target: True)
 
     assert (
         (junction_directory / ".venv").read_text(encoding="utf-8"),
@@ -570,7 +573,7 @@ def test_release_keeps_target_of_in_place_junction(junction_directory: Path) -> 
     moved: Final[Path] = junction_directory.with_name("moved")
     target: Final[Path] = junction_directory.with_name("other")
 
-    def swap(_: Path) -> bool:
+    def swap(_path: Path) -> bool:
         redirect.rename(moved)
         assert (_set_windows_junction(junction_directory, target), junction_directory.resolve()) == (True, target)
         return True
