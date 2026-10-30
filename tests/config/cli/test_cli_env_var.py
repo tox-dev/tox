@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Final
 from unittest.mock import ANY
 
 import pytest
@@ -13,6 +13,7 @@ from tox.util.ci import is_ci
 
 if TYPE_CHECKING:
     from collections.abc import Callable
+    from pathlib import Path
 
     from tox.pytest import CaptureFixture, LogCaptureFixture, MonkeyPatch
     from tox.session.state import State
@@ -221,3 +222,47 @@ def test_bad_env_var_redacts_secret_in_reason(
     assert "hun" not in out + err
     assert "ter2" not in out + err
     assert f"--password={mask}" in out
+
+
+@pytest.mark.parametrize(
+    ("environment", "user_config"),
+    [
+        pytest.param(
+            {"TOX_INSTALL_PKG": "../dist/demo-1.0-py3-none-any.whl"},
+            "[tox]\n",
+            id="environment",
+        ),
+        pytest.param(
+            {},
+            "[tox]\ninstall_pkg = ../dist/demo-1.0-py3-none-any.whl\n",
+            id="user-config",
+        ),
+    ],
+)
+def test_install_pkg_relative_default_is_anchored(
+    tmp_path: Path,
+    monkeypatch: MonkeyPatch,
+    environment: dict[str, str],
+    user_config: str,
+) -> None:
+    wheel: Final[Path] = tmp_path / "dist" / "demo-1.0-py3-none-any.whl"
+    wheel.parent.mkdir()
+    wheel.write_text("")
+    (tmp_path / "tests").mkdir()
+    monkeypatch.chdir(tmp_path / "tests")
+    config_file: Final[Path] = tmp_path / "user.ini"
+    config_file.write_text(user_config)
+    monkeypatch.setenv("TOX_USER_CONFIG_FILE", str(config_file))
+    for name, value in environment.items():
+        monkeypatch.setenv(name, value)
+    install_pkg: Final[Path | None] = get_options("r").parsed.install_pkg
+    monkeypatch.chdir(tmp_path)
+    assert install_pkg is not None
+    assert install_pkg.resolve() == wheel
+
+
+def test_install_pkg_env_var_file_uri(tmp_path: Path, monkeypatch: MonkeyPatch) -> None:
+    wheel: Final[Path] = tmp_path / "demo-1.0-py3-none-any.whl"
+    wheel.write_text("")
+    monkeypatch.setenv("TOX_INSTALL_PKG", wheel.as_uri())
+    assert get_options("r").parsed.install_pkg == wheel

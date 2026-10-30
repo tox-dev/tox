@@ -82,6 +82,9 @@ class InstallPackageAction(Action):
             path = Path(raw)
         return path.absolute()
 
+    def normalize_default(self, value: Path) -> Path:
+        return self._resolve_path(value.as_posix())
+
 
 def env_run_create_flags(
     parser: ArgumentParser, mode: Literal["run", "run-parallel", "legacy", "devenv", "config", "depends", "exec"]

@@ -64,6 +64,8 @@ class ArgumentParserWithEnvAndConfig(ArgumentParser):
                 outcome = self.file_config.get(key, of_type=of_type)
             if outcome is not None:
                 action.default, default_value = outcome
+                if action.default is not None and callable(normalize := getattr(action, "normalize_default", None)):
+                    action.default = normalize(action.default)
                 _ACTION_DEFAULT_SOURCE[action] = default_value
         if isinstance(action, argparse._SubParsersAction):  # ruff:ignore[private-member-access]
             for values in action.choices.values():
@@ -634,11 +636,11 @@ def add_exit_and_dump_after(parser: ArgumentParser) -> None:
     )
 
 
-__all__ = (
+__all__ = [
     "CORE",
     "DEFAULT_VERBOSITY",
     "ENV",
     "HelpFormatter",
     "Parsed",
     "ToxParser",
-)
+]
