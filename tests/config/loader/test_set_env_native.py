@@ -172,6 +172,8 @@ def test_set_env_override_file_selector_from_previous_override(
     ],
 )
 def test_set_env_native_rejects_invalid_env_file(tox_project: ToxProjectCreator, filename: str, config: str) -> None:
-    result = tox_project({filename: config, "broken.env": "MISSING_SEPARATOR"}).run("r", "-e", "py")
+    result = tox_project({filename: config, "broken.env": "# comment\nA=1\nMISSING_SEPARATOR"}).run("r", "-e", "py")
     result.assert_failed(code=1)
-    assert "invalid line 'MISSING_SEPARATOR' in set_env" in result.out
+    assert "invalid line 3 in " in result.out
+    assert "broken.env for set_env, expected KEY=VALUE" in result.out
+    assert "MISSING_SEPARATOR" not in result.out
