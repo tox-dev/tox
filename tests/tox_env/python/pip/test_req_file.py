@@ -150,6 +150,17 @@ def test_req_iadd_after_read(tmp_path: Path, first: str, shown: list[str], pip_a
     assert (deps.lines(), deps.as_root_args) == (shown, pip_args)
 
 
+def test_deps_add_keeps_environment_provider(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("VAR", "host")
+    (tmp_path / "req.txt").write_text("https://${VAR}/pkg.whl")
+    deps: Final[PythonDeps] = PythonDeps("-r req.txt", tmp_path, environment_provider=lambda: {"VAR": "inside"})
+
+    assert sorted(str(req) for req in (deps + PythonDeps("other", tmp_path)).requirements) == [
+        "https://inside/pkg.whl",
+        "other",
+    ]
+
+
 def test_deps_factory_invalid_list(tmp_path: Path) -> None:
     with pytest.raises(TypeError, match="deps expected str, list\\[str\\], or list\\[Requirement\\]") as exc_info:
         PythonDeps.factory(tmp_path, ["ok", 42, "also-ok"])

@@ -10,10 +10,10 @@ import shlex
 import sys
 import urllib.parse
 from argparse import ArgumentParser, Namespace
-from collections.abc import Iterator
+from collections.abc import Iterator, Mapping
 from pathlib import Path
 from time import monotonic
-from typing import TYPE_CHECKING, Any, Final, cast
+from typing import TYPE_CHECKING, Any, Final, Protocol, cast
 from urllib.request import urlopen
 
 from packaging.requirements import InvalidRequirement, Requirement
@@ -27,8 +27,7 @@ from .util import VCS, get_url_scheme, handle_binary_option, is_url, url_to_path
 if TYPE_CHECKING:
     from io import BufferedIOBase
 
-# Matches environment variable-style values in '${MY_VARIABLE_1}' with the variable name consisting of only uppercase
-# letters, digits or the '_' (underscore). This follows the POSIX standard defined in IEEE Std 1003.1, 2013 Edition.
+# Restrict ``${NAME}`` to uppercase letters, digits, and ``_`` to avoid partial expansion and platform differences.
 _ENV_VAR_RE = re.compile(
     r"""
     (?P<var>
@@ -201,8 +200,14 @@ class ParsedLine:
 
 
 class RequirementsFile:
-    def __init__(self, path: Path, constraint: bool) -> None:  # ruff:ignore[boolean-type-hint-positional-argument]
+    def __init__(
+        self,
+        path: Path,
+        constraint: bool,  # ruff:ignore[boolean-type-hint-positional-argument]
+        environment_provider: EnvironmentProvider | None = None,
+    ) -> None:
         self._path = path
+        self._environment_provider: Final[EnvironmentProvider | None] = environment_provider
         self._is_constraint: bool = constraint
         self._opt = Namespace()
         self._requirements: list[ParsedRequirement] | None = None
@@ -528,23 +533,13 @@ class RequirementsFile:
                 yield line_number, processed_line
 
     def _expand_env_variables(self, lines_enum: ReqFileLines) -> ReqFileLines:
-        """Replace all environment variables that can be retrieved via `os.getenv`.
-
-        The only allowed format for environment variables defined in the requirement file is `${MY_VARIABLE_1}` to
-        ensure two things:
-
-        1. Strings that contain a `$` aren't accidentally (partially) expanded.
-        2. Ensure consistency across platforms for requirement files.
-
-        These points are the result of a discussion on the `github pull request #3514
-        <https://github.com/pypa/pip/pull/3514>`_. Valid characters in variable names follow the `POSIX standard
-        <http://pubs.opengroup.org/onlinepubs/9699919799/>`_ and are limited to uppercase letter, digits and the `_`.
-
-        """
+        environment: Mapping[str, str] | None = None
         for line_number, line in lines_enum:
             expanded_line = line
             for env_var, var_name in _ENV_VAR_RE.findall(expanded_line):
-                value = os.getenv(var_name)
+                if environment is None:
+                    environment = os.environ if self._environment_provider is None else self._environment_provider()
+                value = environment.get(var_name)
                 if not value:
                     continue
                 expanded_line = expanded_line.replace(env_var, value)
@@ -602,6 +597,10 @@ class RequirementsFile:
                 yield f"--{name.replace('_', '-')}", ",".join(sorted(getattr(opt, name)))
 
 
+class EnvironmentProvider(Protocol):
+    def __call__(self) -> Mapping[str, str]: ...
+
+
 def protect_env_variables(text: str) -> str:
     return text.replace("${", f"${_ENV_LITERAL_MARK}{{")
 
@@ -615,6 +614,7 @@ _ENV_LITERAL_MARK: Final[str] = "\x00"
 
 
 __all__ = [
+    "EnvironmentProvider",
     "ParsedRequirement",
     "ReqFileLines",
     "RequirementsFile",

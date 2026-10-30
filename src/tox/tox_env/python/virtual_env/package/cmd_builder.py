@@ -52,7 +52,7 @@ class VenvCmdBuilder(PythonPackageToxEnv, ABC):
         self.conf.add_config(
             keys="deps",
             of_type=PythonDeps,
-            factory=partial(PythonDeps.factory, root),
+            factory=partial(PythonDeps.factory, root, environment_provider=lambda: self.environment_variables),
             default=PythonDeps("", root),
             desc="Name of the python dependencies as specified by PEP-440",
         )
