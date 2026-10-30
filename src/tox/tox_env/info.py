@@ -81,14 +81,16 @@ class Info:
     def _write(self) -> None:
         self._path.parent.mkdir(parents=True, exist_ok=True)
         # Replace the state path itself so a link cannot redirect the write.
-        fd, tmp_name = tempfile.mkstemp(dir=self._path.parent, prefix=f"{self._path.name}.", suffix=".tmp")
-        tmp_path: Final[Path] = Path(tmp_name)
+        file_descriptor, temporary_name = tempfile.mkstemp(
+            dir=self._path.parent, prefix=f"{self._path.name}.", suffix=".tmp"
+        )
+        temporary_path: Final[Path] = Path(temporary_name)
         try:
-            with os.fdopen(fd, "w", encoding="utf-8") as handler:
+            with os.fdopen(file_descriptor, "w", encoding="utf-8") as handler:
                 handler.write(json.dumps(self._content, indent=2))
-            tmp_path.replace(self._path)
+            temporary_path.replace(self._path)
         finally:
-            tmp_path.unlink(missing_ok=True)
+            temporary_path.unlink(missing_ok=True)
 
 
 __all__ = [

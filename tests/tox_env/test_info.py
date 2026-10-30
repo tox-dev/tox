@@ -63,8 +63,8 @@ def test_info_write_replaces_symlink(tmp_path: Path, target_content: str) -> Non
     state: Final[Path] = env_dir / ".tox-info.json"
     state.symlink_to(victim)
 
-    with Info(env_dir).compare({"name": "a"}, "ToxEnv") as (eq, old):
-        assert (eq, old) == (False, None)
+    with Info(env_dir).compare({"name": "a"}, "ToxEnv") as (matches, previous):
+        assert (matches, previous) == (False, None)
 
     assert victim.read_text() == target_content
     assert not state.is_symlink()
