@@ -22,6 +22,7 @@ if TYPE_CHECKING:
     from typing_extensions import TypeIs
 
     from tox.pytest import CaptureFixture, SubRequest, ToxProject, ToxProjectCreator, ToxRunOutcome
+    from tox.util.json_types import JsonValue
 
 _PYLOCK_ENV_CONFIG: Final[str] = dedent("""\
     [env_run_base]
@@ -870,7 +871,7 @@ def test_pip_install_requirements_file_expands_env_of_tox_env(
     project.patch_execute(lambda request: 0 if "install" in request.run_id else None)
 
     project.run("r").assert_success()
-    cache: Final[_ToxCache] = json.loads((project.path / ".tox" / "py" / ".tox-info.json").read_text())
+    cache: Final[JsonValue] = json.loads((project.path / ".tox" / "py" / ".tox-info.json").read_text())
     assert _is_install_cache(cache)
     install: Final[_DependencyCache] = cache["PythonRun"]["deps"]
     assert (install["requirements"], install["constraints"]) == (
@@ -936,7 +937,7 @@ def test_pip_install_referenced_deps_use_target_env(
     project.patch_execute(lambda request: 0 if "install" in request.run_id else None)
 
     project.run("r", "-e", "b").assert_success()
-    cache: Final[_ToxCache] = json.loads((project.path / ".tox" / "b" / ".tox-info.json").read_text())
+    cache: Final[JsonValue] = json.loads((project.path / ".tox" / "b" / ".tox-info.json").read_text())
     assert _is_install_cache(cache)
     assert cache["PythonRun"]["deps"]["requirements"] == [f"https://{expected}/a.whl"]
 
