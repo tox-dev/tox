@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import json
 import logging
+import shutil
 import subprocess
 import sys
 import venv
@@ -225,17 +226,23 @@ def ensure_bootstrap(work_dir: Path, virtualenv_spec: str) -> Path:
         if _has_correct_virtualenv(python, virtualenv_spec):
             return python
         logging.info("bootstrapping %s into %s", virtualenv_spec, base)
-        if base.exists():
-            import shutil  # ruff:ignore[import-outside-top-level]
-
-            shutil.rmtree(base)
-        venv.create(str(base), with_pip=True, clear=True)
+        _remove_stale_bootstrap(base)
+        # A planted link must fail creation; clear=True would erase its target.
+        base.mkdir()
+        venv.create(str(base), with_pip=True)
         pip = _bootstrap_pip(base)
         result = subprocess.run([str(pip), "install", virtualenv_spec], capture_output=True, text=True, check=False)
         if result.returncode != 0:
             msg = f"failed to install {virtualenv_spec} into bootstrap env: {result.stderr}"
             raise RuntimeError(msg)
         return python
+
+
+def _remove_stale_bootstrap(base: Path) -> None:
+    if base.is_symlink() or (base.exists() and not base.is_dir()):
+        base.unlink()
+    elif base.exists():
+        shutil.rmtree(base)
 
 
 def _version_specifier(virtualenv_spec: str) -> SpecifierSet:
@@ -255,10 +262,10 @@ def _version_specifier(virtualenv_spec: str) -> SpecifierSet:
     return requirement.specifier
 
 
-__all__ = (
+__all__ = [
     "SubprocessCreator",
     "SubprocessPythonInfo",
     "SubprocessSession",
     "ensure_bootstrap",
     "probe_python",
-)
+]
