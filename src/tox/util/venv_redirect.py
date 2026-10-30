@@ -87,7 +87,7 @@ def _write_redirect(file: Path, dir_fd: int | None, text: str) -> None:
         file.write_text(text, encoding="utf-8")
         return
     name: Final[str] = f".{_FILE_NAME}.{secrets.token_hex(16)}"
-    descriptor: Final[int] = os.open(name, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o644, dir_fd=dir_fd)
+    descriptor: Final[int] = os.open(name, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600, dir_fd=dir_fd)
     try:
         with os.fdopen(descriptor, "w", encoding="utf-8") as handler:
             handler.write(text)

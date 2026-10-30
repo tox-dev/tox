@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import stat
 import sys
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Final
@@ -20,6 +21,13 @@ def test_record_creates_redirect(root: Path) -> None:
     record_venv_redirect(root, root / ".tox" / "dev", _is_ours(root))
 
     assert (root / ".venv").read_text(encoding="utf-8") == ".tox/dev\n"
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="POSIX file modes")
+def test_record_creates_private_redirect(root: Path) -> None:
+    record_venv_redirect(root, root / ".tox" / "dev", _is_ours(root))
+
+    assert stat.S_IMODE((root / ".venv").stat().st_mode) & 0o077 == 0
 
 
 @pytest.fixture
