@@ -5,27 +5,25 @@ import re
 import subprocess
 import sys
 import tomllib
+from pathlib import Path
 from textwrap import dedent
 from typing import TYPE_CHECKING, Final
 
 import pytest
 from packaging.markers import default_environment
+from python_discovery import PythonInfo
 
 from tox.tox_env.errors import Fail
 from tox.tox_env.python.pylock import Pylock
-from tox.tox_env.python.runner import PythonRun
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
-    from pathlib import Path
     from unittest.mock import MagicMock
 
     from packaging.markers import Environment
     from pytest_mock import MockerFixture
 
     from tox.pytest import ToxProject, ToxProjectCreator, ToxRunOutcome
-    from tox.tox_env.package import PackageToxEnv
-    from tox.tox_env.runner import RunToxEnv
 
 PYLOCK_TOML = dedent("""\
     lock-version = "1.0"
@@ -796,7 +794,7 @@ def test_pylock_rejects_field_injecting_requirements_syntax(
         Pylock(path=lock_file).install_lines()
 
 
-def test_pylock_marker_probe_matches_target_interpreter(tox_project: ToxProjectCreator, pylock_run_base: str) -> None:
+def test_pylock_uses_complete_target_marker_environment(tox_project: ToxProjectCreator, pylock_run_base: str) -> None:
     environment: Final[Environment] = default_environment()
     packages: Final[str] = "\n\n".join(
         f'[[packages]]\nname = "marker-{index}"\nversion = "1.0"\n'
@@ -818,57 +816,73 @@ def test_pylock_marker_probe_matches_target_interpreter(tox_project: ToxProjectC
     )
 
 
+def _pylock_txt(project: ToxProject) -> str:
+    return (project.path / ".tox" / "py" / "pylock.txt").read_text()
+
+
+def test_pylock_uses_discovery_without_marker_probe(pylock_install_project: ToxProject, mocker: MockerFixture) -> None:
+    mocker.patch("tox.tox_env.python.runner.subprocess.run", autospec=True, side_effect=OSError("extra probe"))
+
+    pylock_install_project.run("r", "-e", "py").assert_success()
+    assert _pylock_txt(pylock_install_project) == "alpha==1.0.0 --hash=sha256:abc123\nbeta==2.0.0 --hash=sha256:def456"
+
+
 @pytest.fixture
-def pylock_probe_project(tox_project: ToxProjectCreator, pylock_run_base: str) -> ToxProject:
+def pylock_install_project(tox_project: ToxProjectCreator, pylock_run_base: str) -> ToxProject:
     project: Final[ToxProject] = tox_project({"tox.toml": pylock_run_base, "pylock.toml": PYLOCK_TOML})
     project.patch_execute()
     return project
 
 
-def test_pylock_marker_probe_failure(pylock_probe_project: ToxProject, mocker: MockerFixture) -> None:
-    mocker.patch("tox.tox_env.python.runner.subprocess.run", autospec=True, side_effect=OSError("probe unavailable"))
-
-    result: Final[ToxRunOutcome] = pylock_probe_project.run("r", "-e", "py")
-
-    result.assert_failed()
-    assert "failed to determine the marker environment" in result.out
-
-
 @pytest.mark.parametrize(
-    "stdout",
+    "values",
     [
-        pytest.param("{}", id="missing-keys"),
-        pytest.param("[]", id="non-object"),
-        pytest.param(json.dumps({**default_environment(), "os_name": 1}), id="non-string-value"),
+        pytest.param({}, id="missing-keys"),
+        pytest.param([], id="non-object"),
+        pytest.param({**default_environment(), "os_name": 1}, id="non-string-value"),
     ],
 )
-def test_pylock_marker_probe_invalid(pylock_probe_project: ToxProject, mocker: MockerFixture, stdout: str) -> None:
-    mocker.patch(
-        "tox.tox_env.python.runner.subprocess.run",
-        autospec=True,
-        return_value=subprocess.CompletedProcess(args=[], returncode=0, stdout=stdout),
+def test_pylock_rejects_invalid_discovery_markers(
+    pylock_install_project: ToxProject, mocker: MockerFixture, values: dict[str, str | int] | list[str]
+) -> None:
+    mocker.patch.object(
+        PythonInfo, "marker_environment", create=True, new_callable=mocker.PropertyMock, return_value=values
     )
 
-    result: Final[ToxRunOutcome] = pylock_probe_project.run("r", "-e", "py")
+    result: Final[ToxRunOutcome] = pylock_install_project.run("r", "-e", "py")
 
     result.assert_failed()
     assert "incomplete or invalid data" in result.out
 
 
-def test_pylock_markers_use_target_interpreter(
-    tox_project: ToxProjectCreator, pylock_run_base: str, mocker: MockerFixture
-) -> None:
-    target_env: Final[dict[str, str]] = {
-        **default_environment(),
-        "implementation_version": "0.0.1",
-        "platform_release": "target-release",
-    }
-    probe: Final[MagicMock] = mocker.patch(
-        "tox.tox_env.python.runner.subprocess.run",
-        autospec=True,
-        return_value=subprocess.CompletedProcess(args=[], returncode=0, stdout=json.dumps(target_env)),
+def test_pylock_markers_use_target_interpreter(pylock_target_project: ToxProject, mocker: MockerFixture) -> None:
+    mocker.patch.object(
+        PythonInfo,
+        "marker_environment",
+        create=True,
+        new_callable=mocker.PropertyMock,
+        return_value={
+            **default_environment(),
+            "implementation_version": "0.0.1",
+            "platform_release": "target-release",
+        },
     )
-    lock: Final[str] = dedent("""\
+    result: Final[ToxRunOutcome] = pylock_target_project.run("r", "-e", "py")
+
+    result.assert_success()
+    assert _pylock_txt(pylock_target_project) == "target==1.0 --hash=sha256:abc"
+
+
+@pytest.fixture
+def pylock_target_project(tox_project: ToxProjectCreator, pylock_run_base: str, target_marker_lock: str) -> ToxProject:
+    project: Final[ToxProject] = tox_project({"tox.toml": pylock_run_base, "pylock.toml": target_marker_lock})
+    project.patch_execute()
+    return project
+
+
+@pytest.fixture
+def target_marker_lock() -> str:
+    return dedent("""\
         lock-version = "1.0"
         created-by = "test-tool"
 
@@ -894,13 +908,105 @@ def test_pylock_markers_use_target_interpreter(
         [packages.wheels.hashes]
         sha256 = "def"
     """)
-    project: Final[ToxProject] = tox_project({"tox.toml": pylock_run_base, "pylock.toml": lock})
+
+
+@pytest.mark.usefixtures("without_discovery_markers")
+def test_pylock_probe_fallback_uses_target_interpreter(
+    pylock_target_project: ToxProject,
+    mocker: MockerFixture,
+) -> None:
+    mocker.patch(
+        "tox.tox_env.python.runner.subprocess.run",
+        autospec=True,
+        return_value=subprocess.CompletedProcess(
+            args=[],
+            returncode=0,
+            stdout=json.dumps({
+                **default_environment(),
+                "implementation_version": "0.0.1",
+                "platform_release": "target-release",
+            }),
+        ),
+    )
+    pylock_target_project.run("r", "-e", "py").assert_success()
+
+    assert _pylock_txt(pylock_target_project) == "target==1.0 --hash=sha256:abc"
+
+
+@pytest.fixture
+def without_discovery_markers(mocker: MockerFixture) -> None:
+    mocker.patch.object(
+        PythonInfo, "marker_environment", create=True, new_callable=mocker.PropertyMock, return_value=None
+    )
+
+
+@pytest.mark.usefixtures("without_discovery_markers")
+def test_pylock_probe_fallback_failure(pylock_install_project: ToxProject, mocker: MockerFixture) -> None:
+    mocker.patch("tox.tox_env.python.runner.subprocess.run", autospec=True, side_effect=OSError("probe unavailable"))
+
+    result: Final[ToxRunOutcome] = pylock_install_project.run("r", "-e", "py")
+
+    result.assert_failed()
+    assert "failed to determine the marker environment" in result.out
+
+
+@pytest.mark.parametrize(
+    "stdout",
+    [
+        pytest.param("{}", id="missing-keys"),
+        pytest.param("[]", id="non-object"),
+        pytest.param(json.dumps({**default_environment(), "os_name": 1}), id="non-string-value"),
+    ],
+)
+@pytest.mark.usefixtures("without_discovery_markers")
+def test_pylock_probe_fallback_invalid(pylock_install_project: ToxProject, mocker: MockerFixture, stdout: str) -> None:
+    mocker.patch(
+        "tox.tox_env.python.runner.subprocess.run",
+        autospec=True,
+        return_value=subprocess.CompletedProcess(args=[], returncode=0, stdout=stdout),
+    )
+
+    result: Final[ToxRunOutcome] = pylock_install_project.run("r", "-e", "py")
+
+    result.assert_failed()
+    assert "incomplete or invalid data" in result.out
+
+
+def test_pylock_pinned_virtualenv_uses_discovered_markers(
+    tox_project: ToxProjectCreator, pylock_run_base: str, mocker: MockerFixture
+) -> None:
+    mocker.patch.object(
+        PythonInfo,
+        "marker_environment",
+        create=True,
+        new_callable=mocker.PropertyMock,
+        return_value={**default_environment(), "platform_release": "target-release"},
+    )
+    mocker.patch(
+        "tox.tox_env.python.virtual_env.subprocess_adapter.ensure_bootstrap",
+        autospec=True,
+        return_value=Path(sys.executable),
+    )
+    project: Final[ToxProject] = tox_project({
+        "tox.toml": f'{pylock_run_base}virtualenv_spec = "virtualenv"\n',
+        "pylock.toml": dedent("""\
+            lock-version = "1.0"
+            created-by = "test-tool"
+
+            [[packages]]
+            name = "target"
+            version = "1.0"
+            marker = "platform_release == 'target-release'"
+
+            [[packages.wheels]]
+            url = "https://files.example.com/target-1.0-py3-none-any.whl"
+
+            [packages.wheels.hashes]
+            sha256 = "abc"
+        """),
+    })
     project.patch_execute()
 
-    result: Final[ToxRunOutcome] = project.run("r", "-e", "py")
+    project.run("r", "-e", "py").assert_success()
 
-    result.assert_success()
     assert _pylock_txt(project) == "target==1.0 --hash=sha256:abc"
-    target: Final[RunToxEnv | PackageToxEnv] = result.state.envs["py"]
-    assert isinstance(target, PythonRun)
-    assert probe.call_args.args[0][:3] == [str(target.env_python()), "-I", "-c"]

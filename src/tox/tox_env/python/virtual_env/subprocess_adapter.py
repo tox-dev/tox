@@ -22,6 +22,7 @@ from tox.tox_env.errors import Fail
 
 if TYPE_CHECKING:
     from packaging.specifiers import SpecifierSet
+    from python_discovery import MarkerEnvironment
 
 _PROBE_SCRIPT: Final[str] = """\
 import json, struct, sys, sysconfig
@@ -50,8 +51,6 @@ class _VersionInfo:
 
 @dataclass
 class SubprocessPythonInfo:
-    """Python interpreter information gathered via subprocess probe."""
-
     implementation: str
     version_info: _VersionInfo
     version: str
@@ -61,6 +60,7 @@ class SubprocessPythonInfo:
     free_threaded: bool
     debug_build: bool = False
     sysconfig_platform: str | None = None
+    marker_environment: MarkerEnvironment | None = None
 
     @property
     def machine(self) -> str:
@@ -151,8 +151,7 @@ class SubprocessSession:
         return self._creator
 
 
-def probe_python(python_path: str) -> SubprocessPythonInfo | None:
-    """Probe a Python executable to extract interpreter metadata."""
+def probe_python(python_path: str, marker_environment: MarkerEnvironment | None = None) -> SubprocessPythonInfo | None:
     try:
         result = subprocess.run(
             [python_path, "-c", _PROBE_SCRIPT], capture_output=True, text=True, timeout=30, check=False
@@ -171,6 +170,7 @@ def probe_python(python_path: str) -> SubprocessPythonInfo | None:
         platform=raw["platform"],
         system_executable=raw["system_executable"],
         free_threaded=raw["free_threaded"],
+        marker_environment=marker_environment,
         debug_build=raw.get("debug_build", False),
         sysconfig_platform=raw.get("sysconfig_platform"),
     )

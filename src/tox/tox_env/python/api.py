@@ -20,6 +20,8 @@ from tox.tox_env.errors import Fail, Recreate, Skip
 from tox.util.typing_compat import override
 
 if TYPE_CHECKING:
+    from python_discovery import MarkerEnvironment
+
     from tox.config.cli.parser import Parsed
     from tox.config.main import Config
     from tox.config.sets import CoreConfigSet, EnvConfigSet
@@ -45,6 +47,7 @@ class PythonInfo:
     free_threaded: bool = False
     debug: bool = False
     machine: str | None = None
+    marker_environment: MarkerEnvironment | None = None
 
     @property
     def version_no_dot(self) -> str:

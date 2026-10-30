@@ -34,6 +34,7 @@ PackageType: TypeAlias = Literal[
 
 
 if TYPE_CHECKING:
+    from python_discovery import MarkerEnvironment
     from typing_extensions import TypeIs
 
     from tox.config.sets import EnvConfigSet
@@ -182,14 +183,31 @@ class PythonRun(Python, RunToxEnv, ABC):
         if not (path := self.core.get("package_root", Path) / pylock_path).exists():
             msg = f"pylock file {pylock_path!r} not found at {path}"
             raise Fail(msg)
-        marker_env: Final[dict[str, str]] = self._target_marker_environment(self.env_python())
+        marker_env: Final[dict[str, str]] = self._target_marker_environment()
         extras = self.conf.get("extras", set[str])
         groups = self.conf.get("dependency_groups", set[str])
         pylock = Pylock(path=path, extras=frozenset(extras), groups=frozenset(groups), marker_env=marker_env)
         self._install(pylock, PythonRun.__name__, "pylock")
 
+    def _target_marker_environment(self) -> dict[str, str]:
+        discovered: Final[MarkerEnvironment | None] = self.base_python.marker_environment
+        if discovered is not None:
+            if not self._is_marker_environment(discovered):
+                msg = f"failed to determine the marker environment of {self.env_python()}: incomplete or invalid data"
+                raise Fail(msg)
+            return discovered
+        return self._probe_marker_environment(self.env_python())
+
     @staticmethod
-    def _target_marker_environment(python: Path) -> dict[str, str]:
+    def _is_marker_environment(value: object) -> TypeIs[dict[str, str]]:
+        return (
+            isinstance(value, dict)
+            and value.keys() == default_environment().keys()
+            and all(isinstance(item, str) for item in value.values())
+        )
+
+    @staticmethod
+    def _probe_marker_environment(python: Path) -> dict[str, str]:
         # packaging fills omitted keys from the tox host, so request the complete target environment.
         script: Final[str] = """\
 import json
@@ -230,14 +248,6 @@ print(json.dumps({
             msg = f"failed to determine the marker environment of {python}: incomplete or invalid data"
             raise Fail(msg)
         return values
-
-    @staticmethod
-    def _is_marker_environment(value: object) -> TypeIs[dict[str, str]]:
-        return (
-            isinstance(value, dict)
-            and value.keys() == default_environment().keys()
-            and all(isinstance(item, str) for item in value.values())
-        )
 
     @override
     def _setup_with_env(self) -> None:
