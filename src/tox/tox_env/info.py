@@ -52,8 +52,9 @@ class Info:
         """
         old = self._content.get(section)
         if sub_section is not None:
-            # a non-dict section is corruption: treat it as absent so it gets replaced below
             old = old.get(sub_section) if isinstance(old, dict) else None
+        if isinstance(value, dict) and not isinstance(old, dict):
+            old = None
 
         if old == value:
             yield True, old
@@ -80,4 +81,6 @@ class Info:
         self._path.write_text(json.dumps(self._content, indent=2))
 
 
-__all__ = ("Info",)
+__all__ = [
+    "Info",
+]
