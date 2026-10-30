@@ -1971,10 +1971,13 @@ Python run
 
     Path to a :pep:`751` ``pylock.toml`` lock file to install locked dependencies from. Mutually exclusive with
     :ref:`deps`. Each package in the lock file is filtered by evaluating its environment markers against the target
-    Python interpreter and the configured :ref:`extras` and :ref:`dependency_groups`, then converted to a pinned
-    requirement (``name==version``) and installed via pip with ``--no-deps``. The path is resolved relative to the
+    Python interpreter and the configured :ref:`extras` and :ref:`dependency_groups`, then converted to a pip
+    requirement and installed with ``--no-deps``. The path is resolved relative to the
     :ref:`package_root` (or :ref:`tox_root` if no package root is configured). Change detection is automatic: adding,
     removing, or changing packages triggers environment recreation as needed. See :ref:`pylock-explanation` for details.
+
+    tox rejects whitespace or control characters in archive and VCS fields written to pip's requirements file, as well
+    as hash tokens. The check includes values pip expands from ``${VAR}`` references in those fields.
 
     For example:
 

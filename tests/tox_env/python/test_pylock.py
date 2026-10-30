@@ -538,10 +538,6 @@ def pylock_run_base() -> str:
     """)
 
 
-def _pylock_txt(project: ToxProject) -> str:
-    return (project.path / ".tox" / "py" / "pylock.txt").read_text()
-
-
 @pytest.mark.parametrize(
     ("lock", "expected"),
     [
@@ -626,6 +622,40 @@ def _pylock_txt(project: ToxProject) -> str:
                 created-by = "test-tool"
 
                 [[packages]]
+                name = "my-vcs-pkg"
+
+                [packages.vcs]
+                type = "git"
+                url = "https://example.com/repo.git"
+                commit-id = "abc123"
+                requested-revision = "branch name"
+            """),
+            "my-vcs-pkg @ git+https://example.com/repo.git@abc123",
+            id="requested revision is informational",
+        ),
+        pytest.param(
+            dedent("""\
+                lock-version = "1.0"
+                created-by = "test-tool"
+
+                [[packages]]
+                name = "my-vcs-pkg"
+
+                [packages.vcs]
+                type = "git"
+                url = "https://example.com/repo.git"
+                commit-id = "abc123"
+                subdirectory = ""
+            """),
+            "my-vcs-pkg @ git+https://example.com/repo.git@abc123#subdirectory=",
+            id="empty subdirectory stays valid",
+        ),
+        pytest.param(
+            dedent("""\
+                lock-version = "1.0"
+                created-by = "test-tool"
+
+                [[packages]]
                 name = "my-archive-pkg"
                 version = "1.0"
 
@@ -638,18 +668,37 @@ def _pylock_txt(project: ToxProject) -> str:
             "my-archive-pkg @ https://example.com/my-archive-pkg-1.0.tar.gz --hash=sha256:abc123",
             id="archive installs from the locked url with its hash",
         ),
+        pytest.param(
+            dedent("""\
+                lock-version = "1.0"
+                created-by = "test-tool"
+
+                [[packages]]
+                name = "my-archive-pkg"
+                version = "1.0"
+
+                [packages.archive]
+                url = "https://example.com/my-archive-pkg-1.0.tar.gz"
+                subdirectory = ""
+
+                [packages.archive.hashes]
+                sha256 = "abc123"
+            """),
+            "my-archive-pkg @ https://example.com/my-archive-pkg-1.0.tar.gz#subdirectory= --hash=sha256:abc123",
+            id="empty archive subdirectory stays valid",
+        ),
     ],
 )
 def test_pylock_locked_sources_install_as_locked(
     tox_project: ToxProjectCreator, pylock_run_base: str, lock: str, expected: str
 ) -> None:
-    project = tox_project({"tox.toml": pylock_run_base, "pylock.toml": lock})
+    project: Final[ToxProject] = tox_project({"tox.toml": pylock_run_base, "pylock.toml": lock})
     project.patch_execute()
 
-    result = project.run("r", "-e", "py")
-
-    result.assert_success()
-    assert _pylock_txt(project) == expected.format(project_uri=project.path.as_uri())
+    project.run("r", "-e", "py").assert_success()
+    assert (project.path / ".tox" / "py" / "pylock.txt").read_text() == expected.format(
+        project_uri=project.path.as_uri()
+    )
 
 
 def test_pylock_reinstall_on_resolution_env_change(tox_project: ToxProjectCreator, pylock_run_base: str) -> None:
@@ -677,3 +726,62 @@ def test_pylock_install_lines_utf8_bom(tmp_path: Path) -> None:
     lines = Pylock(path=pylock).install_lines()
 
     assert lines == ["alpha==1.0.0 --hash=sha256:abc123", "beta==2.0.0 --hash=sha256:def456"]
+
+
+@pytest.mark.parametrize(
+    ("source_table", "field_label"),
+    [
+        pytest.param(
+            '[[packages.wheels]]\nurl = "https://x/alpha-1.0.0-py3-none-any.whl"\n'
+            'hashes = { sha256 = "abc\\n--index-url file:///evil/simple" }\n',
+            "sha256 hash",
+            id="hash-newline",
+        ),
+        pytest.param(
+            '[[packages.wheels]]\nurl = "https://x/alpha-1.0.0-py3-none-any.whl"\n'
+            'hashes = { sha256 = "abc --hash=sha256:def" }\n',
+            "sha256 hash",
+            id="hash-space",
+        ),
+        pytest.param(
+            '[[packages.wheels]]\nurl = "https://x/alpha-1.0.0-py3-none-any.whl"\nhashes = { "sha 256" = "abc" }\n',
+            "hash algorithm",
+            id="hash-algorithm-space",
+        ),
+        pytest.param(
+            '[packages.archive]\nurl = "https://x/a.tar.gz\\r\\n-e file:///evil"\nhashes = { sha256 = "abc" }\n',
+            "archive url",
+            id="archive-url-newline",
+        ),
+        pytest.param(
+            '[packages.archive]\nurl = "https://x/a.tar.gz"\nsubdirectory = "sub\\u2028--pre"\n'
+            'hashes = { sha256 = "abc" }\n',
+            "archive subdirectory",
+            id="archive-subdirectory-line-separator",
+        ),
+        pytest.param(
+            '[packages.vcs]\ntype = "git"\nurl = "https://x/a.git"\ncommit-id = "abc\\n--index-url file:///evil"\n',
+            "vcs commit-id",
+            id="vcs-commit-newline",
+        ),
+        pytest.param(
+            '[packages.vcs]\ntype = "git"\nurl = "https://x/a.git"\ncommit-id = ""\nrequested-revision = "main"\n',
+            "vcs commit-id",
+            id="empty vcs commit",
+        ),
+    ],
+)
+def test_pylock_rejects_field_injecting_requirements_syntax(
+    tmp_path: Path, source_table: str, field_label: str
+) -> None:
+    lock_file: Final[Path] = tmp_path / "pylock.toml"
+    lock_file.write_text(
+        'lock-version = "1.0"\ncreated-by = "test-tool"\n\n[[packages]]\n'
+        f'name = "alpha"\nversion = "1.0.0"\n\n{source_table}',
+        encoding="utf-8",
+    )
+
+    with pytest.raises(
+        Fail, match=rf"invalid pylock file .*'alpha' {field_label} .* no whitespace or control characters"
+    ):
+        Pylock(path=lock_file).install_lines()

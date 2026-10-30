@@ -4,7 +4,7 @@ import json
 import os
 from textwrap import dedent
 from typing import TYPE_CHECKING, Any, Final
-from unittest.mock import MagicMock, Mock
+from unittest.mock import Mock
 from zipfile import ZipFile
 
 import pytest
@@ -15,8 +15,29 @@ from tox.report import HandledError
 if TYPE_CHECKING:
     from collections.abc import Callable
     from pathlib import Path
+    from unittest.mock import MagicMock
+
+    from pytest_mock import MockerFixture
 
     from tox.pytest import CaptureFixture, SubRequest, ToxProject, ToxProjectCreator, ToxRunOutcome
+
+_PYLOCK_ENV_CONFIG: Final[str] = dedent("""\
+    [env_run_base]
+    skip_install = true
+    pylock = "pylock.toml"
+""")
+_PYLOCK_ENV_TOML: Final[str] = dedent("""\
+    lock-version = "1.0"
+    created-by = "test-tool"
+
+    [[packages]]
+    name = "alpha"
+    version = "1.0"
+
+    [packages.archive]
+    url = "${LOCK_URL}"
+    hashes = { sha256 = "abc" }
+""")
 
 
 @pytest.mark.parametrize("arg", [object, [object]])
@@ -1299,3 +1320,74 @@ def test_change_constraint_options_recreates(tox_project: ToxProjectCreator, con
     result_second.assert_success()
     assert "recreate env because constraint options changed" in result_second.out
     assert conf_key in result_second.out
+
+
+@pytest.mark.parametrize(
+    "url",
+    [
+        pytest.param("https://example.invalid/a.tar.gz --config-settings probe=1", id="option"),
+        pytest.param("https://example.invalid/a.tar.gz\n--config-settings probe=1", id="line-break"),
+    ],
+)
+def test_pip_pylock_rejects_injected_environment_option(tox_project: ToxProjectCreator, url: str) -> None:
+    project: Final[ToxProject] = tox_project({
+        "tox.toml": f"{_PYLOCK_ENV_CONFIG}set_env = {{ LOCK_URL = {json.dumps(url)} }}\n",
+        "pylock.toml": _PYLOCK_ENV_TOML,
+    })
+    execute_calls: Final[MagicMock] = project.patch_execute()
+
+    result: Final[ToxRunOutcome] = project.run("r", "-e", "py")
+
+    result.assert_failed()
+    assert "pylock environment variable LOCK_URL contains whitespace or control characters" in result.out
+    assert "probe=1" not in result.out
+    assert not execute_calls.call_args_list
+
+
+def test_pip_pylock_preserves_safe_environment_reference(tox_project: ToxProjectCreator) -> None:
+    project: Final[ToxProject] = tox_project({
+        "tox.toml": f'{_PYLOCK_ENV_CONFIG}set_env = {{ LOCK_URL = "https://example.invalid/a.tar.gz" }}\n',
+        "pylock.toml": _PYLOCK_ENV_TOML,
+    })
+    project.patch_execute()
+
+    project.run("r", "-e", "py").assert_success()
+
+    assert (project.path / ".tox" / "py" / "pylock.txt").read_text() == "alpha @ ${LOCK_URL} --hash=sha256:abc"
+
+
+def test_pip_pylock_rejects_windows_case_variant_environment_name(
+    tox_project: ToxProjectCreator, mocker: MockerFixture
+) -> None:
+    mocker.patch("tox.tox_env.python.pip.pip_install.sys", autospec=True, platform="win32")
+    project: Final[ToxProject] = tox_project({
+        "tox.toml": (
+            f'{_PYLOCK_ENV_CONFIG}set_env = {{ lock_url = "https://example.invalid/a.tar.gz '
+            '--config-settings probe=1" }\n'
+        ),
+        "pylock.toml": _PYLOCK_ENV_TOML,
+    })
+    execute_calls: Final[MagicMock] = project.patch_execute()
+
+    result: Final[ToxRunOutcome] = project.run("r", "-e", "py")
+
+    result.assert_failed()
+    assert "pylock environment variable LOCK_URL contains whitespace or control characters" in result.out
+    assert not execute_calls.call_args_list
+
+
+def test_pip_pylock_reinstalls_when_referenced_environment_changes(tox_project: ToxProjectCreator) -> None:
+    project: Final[ToxProject] = tox_project({
+        "tox.toml": f'{_PYLOCK_ENV_CONFIG}set_env = {{ LOCK_URL = "https://example.invalid/first.tar.gz" }}\n',
+        "pylock.toml": _PYLOCK_ENV_TOML,
+    })
+    execute_calls: Final[MagicMock] = project.patch_execute()
+    project.run("r", "-e", "py").assert_success()
+    execute_calls.reset_mock()
+    (project.path / "tox.toml").write_text(
+        f'{_PYLOCK_ENV_CONFIG}set_env = {{ LOCK_URL = "https://example.invalid/second.tar.gz" }}\n'
+    )
+
+    project.run("r", "-e", "py").assert_success()
+
+    assert len(execute_calls.call_args_list) == 1

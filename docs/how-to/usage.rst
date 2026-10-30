@@ -1018,9 +1018,9 @@ environment. If your dependencies are dynamic, tox falls back to using the packa
 
 If your project maintains :PEP:`751` lock files (``pylock.toml``), you can install those locked dependencies directly
 via the :ref:`pylock` configuration. The :ref:`pylock` setting is mutually exclusive with :ref:`deps` — use one or the
-other. Each package in the lock file is installed as a pinned requirement (``name==version``) with ``--no-deps`` (since
-the lock file already contains all transitive dependencies), and tox automatically recreates the environment when the
-lock file changes.
+other. Each selected package is installed from its locked version or source with ``--no-deps`` (since the lock file
+already contains all transitive dependencies), and tox automatically recreates the environment when the lock file
+changes.
 
 .. tab:: TOML
 
