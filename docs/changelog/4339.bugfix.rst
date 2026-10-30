@@ -1,0 +1,2 @@
+On Windows, building a ``virtualenv_spec`` bootstrap environment no longer writes through a junction swapped into its
+cache entry. A linked project work directory still works.
