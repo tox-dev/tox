@@ -58,8 +58,8 @@ def test_virtualenv_default_settings(tox_project: ToxProjectCreator, virtualenv_
     if hasattr(virtualenv_opt, "copies"):
         assert virtualenv_opt.copies is False
     assert virtualenv_opt.no_periodic_update is True
-    # virtualenv parses its arguments in several passes into the same namespace, and each pass appends
-    assert list(dict.fromkeys(virtualenv_opt.python)) == ["<0", "py3"]
+    # Older virtualenv parsers retain <0 and append candidates on each parsing pass.
+    assert list(dict.fromkeys(spec for spec in virtualenv_opt.python if spec != "<0")) == ["py3"]
     assert list(dict.fromkeys(virtualenv_opt.try_first_with)) == [str(sys.executable), str(proj.path / "a")]
 
 
@@ -86,7 +86,7 @@ def test_virtualenv_flipped_settings(
     assert virtualenv_opt.download is True
     if hasattr(virtualenv_opt, "copies"):
         assert virtualenv_opt.copies is True
-    assert list(dict.fromkeys(virtualenv_opt.python)) == ["<0", "py3"]
+    assert list(dict.fromkeys(spec for spec in virtualenv_opt.python if spec != "<0")) == ["py3"]
 
 
 def test_virtualenv_base_python_entries_whole_and_in_order(
@@ -102,7 +102,9 @@ def test_virtualenv_base_python_entries_whole_and_in_order(
     result: Final = proj.run("r", "-e", "py")
 
     result.assert_failed()
-    assert [call.args for call in get_interpreter.call_args_list] == [(spec, []) for spec in [*base_python, "<0"]]
+    assert [call.args for call in get_interpreter.call_args_list if call.args[0] != "<0"] == [
+        (spec, []) for spec in base_python
+    ]
 
 
 def test_virtualenv_config_file_cannot_override_base_python(
