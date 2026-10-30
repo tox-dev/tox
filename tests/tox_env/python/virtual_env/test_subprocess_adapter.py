@@ -3,7 +3,9 @@ from __future__ import annotations
 import sys
 import textwrap
 from pathlib import Path
-from typing import TYPE_CHECKING
+from shutil import rmtree
+from typing import TYPE_CHECKING, Protocol
+from venv import create as create_venv
 
 import pytest
 
@@ -14,7 +16,6 @@ from tox.tox_env.python.virtual_env.subprocess_adapter import (
     SubprocessSession,
     _bootstrap_path,  # ruff:ignore[import-private-name]
     _has_correct_virtualenv,  # ruff:ignore[import-private-name]
-    _remove_stale_bootstrap,  # ruff:ignore[import-private-name]
     _VersionInfo,  # ruff:ignore[import-private-name]
     ensure_bootstrap,
     probe_python,
@@ -314,88 +315,91 @@ def test_ensure_bootstrap_removes_stale_base(tmp_path: Path, mocker: MockerFixtu
     assert not (base / "stale_file").exists()
 
 
+def test_ensure_bootstrap_swap_at_venv_create_keeps_target(tmp_path: Path, victim: Path, mocker: MockerFixture) -> None:
+    def swap_then_create(env_dir: str, **options: bool) -> None:
+        base: Final[Path] = Path(env_dir)
+        rmtree(base)
+        _symlink_or_skip(base, victim)
+        create_venv(env_dir, with_pip=False, clear=options.get("clear", False))
+
+    mocker.patch(
+        "tox.tox_env.python.virtual_env.subprocess_adapter.venv.create", autospec=True, side_effect=swap_then_create
+    )
+
+    with pytest.raises(ValueError, match="Unable to create directory"):
+        ensure_bootstrap(tmp_path, "virtualenv<20.22.0")
+
+    assert (victim / "keep").read_text() == "data"
+    assert not (victim / "pyvenv.cfg").exists()
+
+
+@pytest.fixture
+def victim(tmp_path: Path) -> Path:
+    path: Final[Path] = tmp_path / "victim"
+    path.mkdir()
+    (path / "keep").write_text("data")
+    return path
+
+
 def _symlink_or_skip(link: Path, target: Path) -> None:
     try:
         link.symlink_to(target, target_is_directory=True)
-    except OSError as exc:  # pragma: no cover - Windows without symlink privilege
-        pytest.skip(f"cannot create symlink: {exc}")
+    except OSError as error:  # pragma: no cover - Windows may require a symlink privilege.
+        pytest.skip(f"cannot create symlink: {error}")
 
 
-def test_ensure_bootstrap_link_swapped_after_removal_does_not_empty_target(
-    tmp_path: Path, mocker: MockerFixture
-) -> None:
-    victim = tmp_path / "victim"
-    victim.mkdir()
-    (victim / "keep").write_text("data")
-    base = _bootstrap_path(tmp_path / "work", "virtualenv<20.22.0")
-    base.mkdir(parents=True)
+def test_ensure_bootstrap_link_swapped_after_removal_fails(tmp_path: Path, victim: Path, mocker: MockerFixture) -> None:
+    mocker.patch("tox.tox_env.python.virtual_env.subprocess_adapter.venv.create", autospec=True)
     mocker.patch(
-        "tox.tox_env.python.virtual_env.subprocess_adapter._has_correct_virtualenv",
-        return_value=False,
+        "tox.tox_env.python.virtual_env.subprocess_adapter.subprocess.run",
+        autospec=True,
+        return_value=mocker.MagicMock(returncode=0),
     )
-    create = mocker.patch("tox.tox_env.python.virtual_env.subprocess_adapter.venv.create")
-    run_mock = mocker.patch("tox.tox_env.python.virtual_env.subprocess_adapter.subprocess.run")
-    remove: Final = _remove_stale_bootstrap
+    base: Final[Path] = ensure_bootstrap(tmp_path, "virtualenv<20.22.0").parent.parent
+    (base / "stale").write_text("stale")
 
     def remove_then_swap(path: Path) -> None:
-        remove(path)
+        (path / "stale").unlink()
+        path.rmdir()
         _symlink_or_skip(path, victim)
 
     mocker.patch(
-        "tox.tox_env.python.virtual_env.subprocess_adapter._remove_stale_bootstrap", side_effect=remove_then_swap
+        "tox.tox_env.python.virtual_env.subprocess_adapter.shutil.rmtree", autospec=True, side_effect=remove_then_swap
     )
 
     with pytest.raises(FileExistsError):
-        ensure_bootstrap(tmp_path / "work", "virtualenv<20.22.0")
+        ensure_bootstrap(tmp_path, "virtualenv<20.22.0")
 
     assert (victim / "keep").read_text() == "data"
-    create.assert_not_called()
-    run_mock.assert_not_called()
 
 
-def test_ensure_bootstrap_does_not_clear_venv(tmp_path: Path, mocker: MockerFixture) -> None:
-    mocker.patch(
-        "tox.tox_env.python.virtual_env.subprocess_adapter._has_correct_virtualenv",
-        return_value=False,
-    )
-    create = mocker.patch("tox.tox_env.python.virtual_env.subprocess_adapter.venv.create")
+@pytest.mark.parametrize(
+    "make_stale",
+    [
+        pytest.param(_symlink_or_skip, id="link"),
+        pytest.param(lambda base, _victim: base.write_text("stale"), id="file"),
+    ],
+)
+def test_ensure_bootstrap_replaces_non_directory_stale_entry(
+    tmp_path: Path, victim: Path, mocker: MockerFixture, make_stale: _StaleEntryMaker
+) -> None:
+    mocker.patch("tox.tox_env.python.virtual_env.subprocess_adapter.venv.create", autospec=True)
     mocker.patch(
         "tox.tox_env.python.virtual_env.subprocess_adapter.subprocess.run",
+        autospec=True,
         return_value=mocker.MagicMock(returncode=0),
     )
+    base: Final[Path] = ensure_bootstrap(tmp_path, "virtualenv<20.22.0").parent.parent
+    rmtree(base)
+    make_stale(base, victim)
 
     ensure_bootstrap(tmp_path, "virtualenv<20.22.0")
 
-    assert create.call_args.kwargs.get("clear", False) is False
+    assert (base.is_dir(), base.is_symlink(), (victim / "keep").read_text()) == (True, False, "data")
 
 
-def test_remove_stale_bootstrap_unlinks_symlink_without_following(tmp_path: Path) -> None:
-    victim = tmp_path / "victim"
-    victim.mkdir()
-    (victim / "keep").write_text("data")
-    base = tmp_path / "base"
-    _symlink_or_skip(base, victim)
-
-    _remove_stale_bootstrap(base)
-
-    assert not base.is_symlink()
-    assert not base.exists()
-    assert (victim / "keep").read_text() == "data"
-
-
-def test_remove_stale_bootstrap_file(tmp_path: Path) -> None:
-    base = tmp_path / "base"
-    base.write_text("stale")
-
-    _remove_stale_bootstrap(base)
-
-    assert not base.exists()
-
-
-def test_remove_stale_bootstrap_missing(tmp_path: Path) -> None:
-    _remove_stale_bootstrap(tmp_path / "base")
-
-    assert not (tmp_path / "base").exists()
+class _StaleEntryMaker(Protocol):
+    def __call__(self, base: Path, victim: Path) -> int | None: ...
 
 
 def test_ensure_bootstrap_install_failure(tmp_path: Path, mocker: MockerFixture) -> None:

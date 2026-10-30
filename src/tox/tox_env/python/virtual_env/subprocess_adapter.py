@@ -227,8 +227,7 @@ def ensure_bootstrap(work_dir: Path, virtualenv_spec: str) -> Path:
             return python
         logging.info("bootstrapping %s into %s", virtualenv_spec, base)
         _remove_stale_bootstrap(base)
-        # create the directory exclusively and never let venv clear it: a link planted after the removal must make this
-        # fail instead of having venv empty whatever the link points at
+        # A planted link must fail creation; clear=True would erase its target.
         base.mkdir()
         venv.create(str(base), with_pip=True)
         pip = _bootstrap_pip(base)
@@ -263,10 +262,10 @@ def _version_specifier(virtualenv_spec: str) -> SpecifierSet:
     return requirement.specifier
 
 
-__all__ = (
+__all__ = [
     "SubprocessCreator",
     "SubprocessPythonInfo",
     "SubprocessSession",
     "ensure_bootstrap",
     "probe_python",
-)
+]

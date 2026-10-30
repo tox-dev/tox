@@ -1,3 +1,3 @@
-When rebuilding a stale ``virtualenv_spec`` bootstrap environment, tox now unlinks a link in place of the cache entry
-instead of following it, and creates the new environment in a freshly made directory without letting ``venv`` clear it.
-A link swapped in during the rebuild can no longer redirect the cleanup to empty another directory.
+When rebuilding a stale bootstrap environment for ``virtualenv_spec``, tox removes a link at the cache path and creates
+the replacement without ``venv``'s ``clear`` option. A link placed there after cleanup and before directory creation
+stops the rebuild without emptying its target.
