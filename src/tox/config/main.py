@@ -95,7 +95,7 @@ class Config:
 
     @staticmethod
     def _rewrite_relative_path(arg: str, to_path_str: str) -> str:
-        # we use os.path to unroll .. in path without resolve
+        # Preserve symlink spelling when normalizing parent segments.
         path_arg_str: Final[str] = os.path.abspath(arg)  # ruff:ignore[os-path-abspath]
         try:
             relative: Final[str] = os.path.relpath(path_arg_str, to_path_str)
