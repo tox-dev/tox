@@ -10,7 +10,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from functools import partial
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, NamedTuple
+from typing import TYPE_CHECKING, Any, Final, NamedTuple
 
 from virtualenv.discovery.py_spec import PythonSpec
 
@@ -226,14 +226,42 @@ class Python(ToxEnv, ABC):
             path = tox_root / file_path
             if not path.exists():
                 continue
-            content = path.read_text(encoding="utf-8-sig")
-            for line in content.splitlines():
-                stripped = line.strip()
-                if stripped and not stripped.startswith("#"):
-                    return [stripped]
+            if not path.is_file():
+                msg = f"base_python_file: {file_path!r} is not a regular file"
+                raise Fail(msg)
+            try:
+                version = self._first_version_line(path, file_path)
+            except (OSError, UnicodeDecodeError) as exc:
+                msg = f"base_python_file: cannot read {file_path!r}: {exc}"
+                raise Fail(msg) from exc
+            if version is not None:
+                return [version]
         paths = ", ".join(repr(f) for f in file_paths)
         msg = f"base_python_file: no valid Python version found in {paths}"
         raise Fail(msg)
+
+    @staticmethod
+    def _first_version_line(path: Path, file_path: str) -> str | None:
+        with path.open(encoding="utf-8-sig") as file_handler:
+            max_length: Final[int] = 1024
+            while line := file_handler.readline(max_length + 1):
+                stripped = line.strip()
+                if len(line) > max_length and not line.endswith("\n"):
+                    msg = f"base_python_file: line in {file_path!r} exceeds {max_length} characters"
+                    if stripped and not stripped.startswith("#"):
+                        raise Fail(msg)
+                    is_comment = stripped.startswith("#")
+                    while continuation := file_handler.readline(max_length + 1):
+                        stripped_continuation = continuation.strip()
+                        if not is_comment and stripped_continuation and not stripped_continuation.startswith("#"):
+                            raise Fail(msg)
+                        is_comment = is_comment or stripped_continuation.startswith("#")
+                        if continuation.endswith("\n"):
+                            break
+                    continue
+                if stripped and not stripped.startswith("#"):
+                    return stripped
+        return None
 
     @classmethod
     def extract_base_python(cls, env_name: str) -> str | None:
@@ -483,3 +511,10 @@ def add_skip_missing_interpreters_to_env(conf: EnvConfigSet, core: CoreConfigSet
         post_process=partial(_skip_missing_interpreters_post_process, options),
         desc="override core skip_missing_interpreters for this environment",
     )
+
+
+__all__ = [
+    "Python",
+    "PythonInfo",
+    "VersionInfo",
+]

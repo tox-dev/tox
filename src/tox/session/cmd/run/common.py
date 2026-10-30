@@ -13,7 +13,7 @@ from pathlib import Path
 from signal import SIGINT, Handlers, signal
 from threading import Event, Thread
 from typing import TYPE_CHECKING, Any, Literal, cast
-from urllib.parse import unquote, urlparse
+from urllib.parse import urlparse
 from urllib.request import url2pathname
 
 from colorama import Fore
@@ -77,7 +77,7 @@ class InstallPackageAction(Action):
         """Convert a raw string (possibly a ``file:`` URI) to an absolute :class:`~pathlib.Path`."""
         if raw.startswith("file:"):
             parsed = urlparse(raw)
-            path = Path(url2pathname(unquote(parsed.path)))
+            path = Path(url2pathname(parsed.path))
         else:
             path = Path(raw)
         return path.absolute()
@@ -579,3 +579,12 @@ def run_order(state: State, to_run: list[str]) -> tuple[list[str], dict[str, set
         msg = f"circular dependency detected between environments: {exception}"
         raise HandledError(msg) from exception
     return order, todo
+
+
+__all__ = [
+    "InstallPackageAction",
+    "SkipMissingInterpreterAction",
+    "env_run_create_flags",
+    "execute",
+    "run_order",
+]

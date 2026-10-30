@@ -1,9 +1,8 @@
 from __future__ import annotations
 
-import os
-import sys
 import tarfile
 from copy import deepcopy
+from pathlib import PurePath
 from typing import TYPE_CHECKING, Final, Literal, cast
 
 from packaging.markers import Marker
@@ -132,22 +131,31 @@ def _get_extra(
 
 
 def safe_extractall(tar: tarfile.TarFile, path: Path) -> None:
-    if sys.version_info >= (3, 12):  # pragma: >=3.12 cover
+    if hasattr(tarfile, "data_filter"):
         try:
             tar.extractall(path=str(path), filter="data")
-        except tarfile.OutsideDestinationError as exc:
-            msg = f"tar member {exc.tarinfo.name!r} would extract outside of {path}"
+        except tarfile.FilterError as exc:
+            msg = f"cannot extract tar member {exc.tarinfo.name!r} into {path}: {exc}"
             raise Fail(msg) from exc
-    else:  # pragma: <3.12 cover
-        dest_resolved = path.resolve()
-        safe_members: list[tarfile.TarInfo] = []
-        for member in tar.getmembers():
-            member_path = (path / member.name).resolve()
-            if not str(member_path).startswith(f"{dest_resolved}{os.sep}") and member_path != dest_resolved:
-                msg = f"tar member {member.name!r} would extract outside of {path}"
-                raise Fail(msg)
-            safe_members.append(member)
-        tar.extractall(path=str(path), members=safe_members)  # ruff:ignore[tarfile-unsafe-members]
+    else:
+        _checked_extractall(tar, path)
+
+
+def _checked_extractall(tar: tarfile.TarFile, path: Path) -> None:
+    # extract one member at a time so each check resolves links created by earlier members
+    dest: Final[Path] = path.resolve()
+
+    for member in tar.getmembers():
+        target: Path = dest / member.name
+        inside_dest: bool = target.resolve().is_relative_to(dest)
+        if inside_dest and (member.issym() or member.islnk()):
+            link: PurePath = PurePath(member.linkname)
+            base: Path = target.parent if member.issym() else dest
+            inside_dest = not link.anchor and (base / link).resolve().is_relative_to(dest)
+        if not inside_dest:
+            msg = f"cannot extract tar member {member.name!r} into {path}: path escapes destination"
+            raise Fail(msg)
+        tar.extract(member, path=str(dest))
 
 
 __all__ = [
