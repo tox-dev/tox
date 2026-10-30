@@ -126,6 +126,21 @@ def test_show_config_exception(tox_project: ToxProjectCreator) -> None:
     assert txt in outcome.out
 
 
+def test_show_config_unicode_decode_error_does_not_expose_input(tox_project: ToxProjectCreator) -> None:
+    config_bytes = b"private-config-marker\xff"
+    project = tox_project({"tox.ini": "[tox]\nenv_list = py\nno_package = true"})
+    pyvenv_cfg = project.path / ".tox" / "py" / "pyvenv.cfg"
+    pyvenv_cfg.parent.mkdir(parents=True)
+    pyvenv_cfg.write_bytes(config_bytes)
+
+    outcome = project.run("c", "-e", "py", "-k", "env_python", raise_on_config_fail=False)
+
+    outcome.assert_failed(code=-1)
+    assert "private-config-marker" not in outcome.out
+    assert "UnicodeDecodeError" in outcome.out
+    assert "byte" in outcome.out
+
+
 def test_show_config_empty_install_command_exception(tox_project: ToxProjectCreator) -> None:
     project = tox_project({"tox.ini": "[testenv:a]\ninstall_command="})
     outcome = project.run("c", "-e", "a", "-k", "install_command", raise_on_config_fail=False)

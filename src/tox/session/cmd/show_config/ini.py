@@ -71,7 +71,12 @@ def _emit_conf(emit: Callable[[str], None], conf: ConfigSet, keys: Sequence[str]
         except Exception as exception:  # because e.g. the interpreter cannot be found
             if os.environ.get("_TOX_SHOW_CONFIG_RAISE"):  # pragma: no branch
                 raise  # pragma: no cover
-            as_str, multi_line = _colored(f"# Exception: {exception!r}", Fore.LIGHTRED_EX, enabled=is_colored), False
+            exception_repr = (
+                f"UnicodeDecodeError at byte {exception.start}"
+                if isinstance(exception, UnicodeDecodeError)
+                else repr(exception)
+            )
+            as_str, multi_line = _colored(f"# Exception: {exception_repr}", Fore.LIGHTRED_EX, enabled=is_colored), False
             has_exception = True
         if multi_line and "\n" not in as_str:
             multi_line = False
