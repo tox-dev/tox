@@ -278,7 +278,7 @@ class Pep517VenvPackager(PythonPackageToxEnv, ABC):
             config_settings = self.conf.get_optional("config_settings_get_requires_for_build_sdist", dict[str, Any])
             sdist_requires = self._frontend.get_requires_for_build_sdist(config_settings=config_settings).requires
             deps = [*self.requires(), *sdist_requires, *deps]
-            package: Package = EditableLegacyPackage(self.root, deps)  # the folder itself is the package
+            package: Package = EditableLegacyPackage(self.root, deps)
         elif of_type == "sdist":
             self.setup()
             with self._pkg_lock:

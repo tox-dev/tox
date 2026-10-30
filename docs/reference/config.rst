@@ -688,8 +688,9 @@ the top level of ``tox.toml``. Placing these options in an environment section (
     :default: {tox_root}
     :version_added: 1.0
 
-     Indicates where the packaging root file exists (historically setup.py file or pyproject.toml now).
-     tox also resolves :ref:`pylock` files and :ref:`dependency_groups` from this directory.
+     Indicates where the packaging root file exists (historically setup.py file or pyproject.toml now). Set this in the
+     packaging environment to build from a different source tree; static dependencies and ``editable-legacy`` installs
+     use that tree too. tox also resolves :ref:`pylock` files and :ref:`dependency_groups` from this directory.
 
 .. conf::
     :keys: labels
