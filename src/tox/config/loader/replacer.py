@@ -371,7 +371,9 @@ class CommandLinesReplacer(Replacer):
         return result
 
     def _within(self, quote: str) -> CommandLinesReplacer:
-        nested: Final = type(self)(self.conf, self.reference, self.conf_args, self.depth, recursive=self.recursive)
+        nested: Final[CommandLinesReplacer] = type(self)(
+            self.conf, self.reference, self.conf_args, self.depth, recursive=self.recursive
+        )
         nested.quote = quote
         return nested
 
@@ -421,7 +423,7 @@ class RequirementLinesReplacer(Replacer):
 
     @override
     def join_value(self, value: MatchArg) -> str:
-        replaced: Final = self(value)
+        replaced: Final[Sequence[str]] = self(value)
         for at, part in enumerate(value):
             if not isinstance(part, MatchExpression):
                 continue

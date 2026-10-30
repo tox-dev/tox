@@ -423,8 +423,10 @@ class EnvConfigSet(ConfigSet):
     def set_env_lines(self, chain: list[str]) -> str:
         # load first: a {env:...} in an environment file name reads this set_env, and the chain would reject that load
         self.load("set_env", chain)
-        loaded: Final = cast("ConfigDynamicDefinition[SetEnv]", self._defined["set_env"])
-        configured: Final = ConfigDynamicDefinition(
+        loaded: Final[ConfigDynamicDefinition[SetEnv]] = cast(
+            "ConfigDynamicDefinition[SetEnv]", self._defined["set_env"]
+        )
+        configured: Final[ConfigDynamicDefinition[SetEnv]] = ConfigDynamicDefinition(
             loaded.keys,
             loaded.desc,
             SetEnv,
@@ -438,8 +440,8 @@ class EnvConfigSet(ConfigSet):
         return f"{self.__class__.__name__}(name={self._env_name!r}, loaders={self.loaders!r})"
 
 
-__all__ = (
+__all__ = [
     "ConfigSet",
     "CoreConfigSet",
     "EnvConfigSet",
-)
+]

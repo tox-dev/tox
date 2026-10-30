@@ -21,7 +21,7 @@ from tox.config.loader.replacer import (
     replace_env,
     replace_requirement_lines,
 )
-from tox.config.loader.stringify import is_command_argument_value, stringify, stringify_reference
+from tox.config.loader.stringify import stringify, stringify_reference
 from tox.config.set_env import SetEnvReference
 from tox.config.sets import EnvConfigSet
 from tox.config.types import Command, EnvList
@@ -153,7 +153,7 @@ class Unroll:
         }
         if skip_str:  # set_env resolves it when read, seeing the keys next to it
             return MatchExpression([["glob"], *(_parse_arg(resolved.get(key, "")) for key in ("pattern", "default"))])
-        result: Final = _replace_glob_toml(self.conf, {**value, **resolved})
+        result: Final[list[TomlTypes] | str] = _replace_glob_toml(self.conf, {**value, **resolved})
         if self.requirement_entries:
             for entry in result if isinstance(result, list) else [result]:
                 if isinstance(entry, str) and (entry != "".join(entry.splitlines()) or entry.endswith("\\")):
@@ -353,16 +353,14 @@ class TomlReplaceLoader(ReplaceReference):
 
     @staticmethod
     def _load_reference_value(src: ConfigSet | RawLoader, key: str, conf_args: ConfigLoadArgs) -> str:
-        value: Final = (
+        if isinstance(src, RawLoader):
+            return RawText(stringify(src.load(key, conf_args.chain))[0])
+        return stringify_reference(
             src.set_env_lines(conf_args.chain)
             if isinstance(src, EnvConfigSet) and key in {"set_env", "setenv"}
-            else src.load(key, conf_args.chain)
+            else src.load(key, conf_args.chain),
+            constant=src.is_constant(key),
         )
-        if isinstance(src, RawLoader):
-            return RawText(stringify(value)[0])
-        if is_command_argument_value(value):
-            return stringify_reference(value, constant=src.is_constant(key))
-        return stringify(value)[0]
 
     def _config_value_sources(self, sec: str | None, current_env: str | None) -> Iterator[ConfigSet | RawLoader]:
         if sec is None:
