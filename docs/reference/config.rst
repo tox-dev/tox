@@ -1828,8 +1828,8 @@ Python options
           [testenv:mypy]
           base_python_file = .python-version, .python-version-default
 
-    The file format is the same as used by ``pyenv`` and GitHub Actions' ``python-version-file``: one version per file,
-    lines starting with ``#`` are comments, blank lines are ignored.
+    That line must be a Python version specifier, such as ``3.13``, ``3.13.1``, ``pypy3.10`` or ``3.14t``. Interpreter
+    paths, program names and the ``system`` keyword are rejected.
     A version line may contain at most 1024 characters. Comment and blank lines can be longer.
 
 .. conf::

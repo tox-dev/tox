@@ -235,6 +235,10 @@ class Python(ToxEnv, ABC):
                 msg = f"base_python_file: cannot read {file_path!r}: {exc}"
                 raise Fail(msg) from exc
             if version is not None:
+                if not self._is_python_version_spec(version):
+                    # A version file can be a symlink to a secret; only name the configured path.
+                    msg = f"base_python_file: {file_path!r} does not contain a Python version specifier"
+                    raise Fail(msg)
                 return [version]
         paths = ", ".join(repr(f) for f in file_paths)
         msg = f"base_python_file: no valid Python version found in {paths}"
@@ -262,6 +266,23 @@ class Python(ToxEnv, ABC):
                 if stripped and not stripped.startswith("#"):
                     return stripped
         return None
+
+    @staticmethod
+    def _is_python_version_spec(value: str) -> bool:
+        spec: Final[PythonSpec] = PythonSpec.from_string_spec(value)
+        if spec.path is not None or spec.major is None:
+            return False
+        if spec.implementation is None:
+            return True
+        return spec.implementation.lower() in {
+            "python",
+            "cpython",
+            "pypy",
+            "jython",
+            "graalpy",
+            "rustpython",
+            "ironpython",
+        }
 
     @classmethod
     def extract_base_python(cls, env_name: str) -> str | None:
@@ -514,7 +535,10 @@ def add_skip_missing_interpreters_to_env(conf: EnvConfigSet, core: CoreConfigSet
 
 
 __all__ = [
+    "NoInterpreter",
     "Python",
     "PythonInfo",
     "VersionInfo",
+    "add_skip_missing_interpreters_to_core",
+    "add_skip_missing_interpreters_to_env",
 ]
