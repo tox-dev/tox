@@ -120,9 +120,8 @@ class Unroll:
             elif not (isinstance(val, dict) and val.get("replace") and val.get("extend")):
                 res_list.append(got)
             elif val.get("marker"):
-                # a marker wraps the result in a {value, marker} table that only set_env understands; spreading it
-                # would add the table keys ("value", "marker") as entries, such as packages to install
-                msg = f"a replace with extend=true cannot have a marker: {val!r}"
+                # A marked result is a table; extending it would add its keys as list entries.
+                msg = "a replace with extend=true cannot have a marker"
                 raise MatchError(msg)
             elif isinstance(got, str):
                 # ``extend`` spreads an iterable result (list, set of extras, ...) into the

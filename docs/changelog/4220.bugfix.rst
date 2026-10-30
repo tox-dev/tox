@@ -1,3 +1,2 @@
-A TOML ``replace`` table that combines ``extend = true`` with a ``marker`` now fails with a clear error instead of
-spreading its internal ``value`` and ``marker`` keys into the list, which installed packages named ``value`` and
-``marker`` from :ref:`deps` and :ref:`requires`. Markers on ``replace`` tables only apply to ``set_env`` values.
+An extending TOML ``replace`` table with a nonempty ``marker`` now raises an error instead of adding its internal
+``value`` and ``marker`` keys to :ref:`deps` or :ref:`requires`. Markers on ``set_env`` values remain supported.
