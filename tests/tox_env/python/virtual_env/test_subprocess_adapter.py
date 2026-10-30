@@ -379,7 +379,7 @@ def test_ensure_bootstrap_junction_swap_keeps_target(
 ) -> None:
     def swap_then_create(env_dir: str, *, with_pip: bool) -> None:
         assert with_pip
-        bootstrap_base.mkdir(exist_ok=True)
+        bootstrap_base.mkdir()
         bootstrap_base.rmdir()
         subprocess.check_call(
             [os.environ["COMSPEC"], "/c", "mklink", "/J", str(bootstrap_base), str(victim)],
