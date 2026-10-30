@@ -320,8 +320,8 @@ def _render_options(options: dict[str, object]) -> list[str]:
     ]
 
 
-__all__ = (
+__all__ = [
     "ONE_ARG",
     "PythonConstraints",
     "PythonDeps",
-)
+]
