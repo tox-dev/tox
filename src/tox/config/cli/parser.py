@@ -6,6 +6,7 @@ import argparse
 import logging
 import os
 import random
+import re
 import sys
 from argparse import SUPPRESS, Action, ArgumentDefaultsHelpFormatter, ArgumentError, ArgumentParser, Namespace
 from pathlib import Path
@@ -37,6 +38,9 @@ _N = TypeVar("_N")  # unbounded to match typeshed, argparse accepts any object a
 
 _ACTION_OF_TYPE: MutableMapping[Action, type[Any] | UnionType] = WeakKeyDictionary()
 """The value type an action's option was declared with (actions come from argparse, so no attribute can be added)."""
+
+_NEGATIVE_NUMBER = re.compile(r"^-\d+$|^-\d*\.\d+$")  # a negative number is a value, not an option string
+"""No tox option string looks like a negative number, so argparse consumes one as a value."""
 
 _ACTION_DEFAULT_SOURCE: MutableMapping[Action, str] = WeakKeyDictionary()
 """Where an action's default was overridden from (environment variable or user level configuration file)."""
@@ -476,10 +480,10 @@ class ToxParser(ArgumentParserWithEnvAndConfig):
                     parser._option_string_actions.items()  # ruff:ignore[private-member-access]  # no public lookup
                 )
             }
-            skip_next = False
+            skip_next = 0
             for at, arg in enumerate(args_list):
                 if skip_next:
-                    skip_next = False
+                    skip_next -= 1
                 elif (action := actions.get(arg)) is not None and action.nargs != 0:
                     if (
                         action.nargs in {"?", "*"}
@@ -487,7 +491,19 @@ class ToxParser(ArgumentParserWithEnvAndConfig):
                         and args_list[at + 1] in self._cmd.choices
                     ):
                         continue
-                    skip_next = True
+                    if action.nargs == "+":
+                        # a "+" option keeps every value argparse would consume, so none of them is the command
+                        rest = args_list[at + 1 :]
+                        skip_next = next(
+                            (
+                                i
+                                for i, token in enumerate(rest)
+                                if token.startswith("-") and len(token) > 1 and not _NEGATIVE_NUMBER.match(token)
+                            ),
+                            len(rest),
+                        )
+                    else:
+                        skip_next = 1
                 elif arg in self._cmd.choices:
                     cmd_at = at
                     break

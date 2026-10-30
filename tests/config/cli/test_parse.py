@@ -42,3 +42,22 @@ def test_verbosity_guess_miss_match(capsys: CaptureFixture) -> None:
 def test_verbosity(arg: str) -> None:
     result = get_options(arg)
     assert result.parsed.verbosity == 3
+
+
+@pytest.mark.parametrize(
+    ("argv", "factors"),
+    [
+        pytest.param(("-f", "py", "legacy"), [["py", "legacy"]], id="command-name"),
+        pytest.param(("-f", "-1", "list"), [["-1", "list"]], id="negative-number"),
+        pytest.param(("-f", "-.5", "list"), [["-.5", "list"]], id="negative-fraction"),
+    ],
+)
+def test_multi_value_option_keeps_its_values(argv: tuple[str, ...], factors: list[list[str]]) -> None:
+    result = get_options(*argv)
+    assert result.parsed.factors == factors
+
+
+def test_multi_value_option_stops_at_the_next_option() -> None:
+    result = get_options("-f", "py", "-v", "list")
+    assert result.parsed.command == "list"
+    assert result.parsed.factors == [["py"]]
