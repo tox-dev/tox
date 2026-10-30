@@ -4,7 +4,7 @@ import json
 import os
 from textwrap import dedent
 from typing import TYPE_CHECKING, Any, Final
-from unittest.mock import Mock
+from unittest.mock import MagicMock, Mock
 
 import pytest
 from packaging.requirements import Requirement
@@ -15,7 +15,7 @@ if TYPE_CHECKING:
     from collections.abc import Callable
     from pathlib import Path
 
-    from tox.pytest import CaptureFixture, SubRequest, ToxProject, ToxProjectCreator
+    from tox.pytest import CaptureFixture, SubRequest, ToxProject, ToxProjectCreator, ToxRunOutcome
 
 
 @pytest.mark.parametrize("arg", [object, [object]])
@@ -222,10 +222,10 @@ def test_pip_install_deps_substitution_cannot_add_option(
     tox_project: ToxProjectCreator, monkeypatch: pytest.MonkeyPatch, files: dict[str, str]
 ) -> None:
     monkeypatch.setenv("PART", "value --index-url=https://other/simple")
-    project: Final = tox_project(files)
-    execute_calls: Final = project.patch_execute(lambda request: 0 if "install" in request.run_id else None)
+    project: Final[ToxProject] = tox_project(files)
+    execute_calls: Final[MagicMock] = project.patch_execute(lambda request: 0 if "install" in request.run_id else None)
 
-    result: Final = project.run("r", "-e", "py")
+    result: Final[ToxRunOutcome] = project.run("r", "-e", "py")
 
     result.assert_failed()
     assert "a requirement substitution cannot change pip options" in result.out
@@ -249,7 +249,7 @@ def test_pip_install_constraints_substitution_cannot_add_option(
     tox_project: ToxProjectCreator, monkeypatch: pytest.MonkeyPatch, files: dict[str, str]
 ) -> None:
     monkeypatch.setenv("PART", "stable.txt --index-url=https://other/simple #")
-    result: Final = tox_project(files).run("c", "-e", "py", "-k", "constraints")
+    result: Final[ToxRunOutcome] = tox_project(files).run("c", "-e", "py", "-k", "constraints")
 
     result.assert_failed()
     assert "a requirement substitution cannot change pip options" in result.out
@@ -259,7 +259,7 @@ def test_pip_install_deps_substitution_keeps_static_options(
     tox_project: ToxProjectCreator, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     monkeypatch.setenv("PART", "cpu")
-    result: Final = tox_project({
+    result: Final[ToxRunOutcome] = tox_project({
         "tox.toml": '[env_run_base]\npackage="skip"\ndeps=["--index-url https://host/{env:PART} '
         '--extra-index-url https://mirror/simple", "pkg"]',
     }).run("c", "-e", "py", "-k", "deps")
@@ -272,7 +272,7 @@ def test_pip_install_deps_substitution_cannot_replace_static_option(
     tox_project: ToxProjectCreator, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     monkeypatch.setenv("PART", "cpu --index-url https://other/simple #")
-    result: Final = tox_project({
+    result: Final[ToxRunOutcome] = tox_project({
         "tox.toml": '[env_run_base]\npackage="skip"\ndeps=["--index-url https://host/{env:PART} '
         '--index-url https://trusted/simple", "pkg"]',
     }).run("c", "-e", "py", "-k", "deps")

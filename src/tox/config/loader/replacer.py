@@ -12,10 +12,9 @@ from abc import ABC, abstractmethod
 from collections.abc import Callable, Iterable, Sequence
 from functools import partial
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Final, Union, get_args, get_origin
+from typing import TYPE_CHECKING, Any, Final, Protocol, Union, get_args, get_origin
 
 from tox.config.types import CircularChainError, Command, EnvList
-from tox.tox_env.python.pip.req_file import PythonDeps
 from tox.util.typing_compat import override
 
 if TYPE_CHECKING:
@@ -97,9 +96,14 @@ def replace_command_lines(
 
 
 def replace_requirement_lines(
-    conf: Config, reference: ReplaceReference, value: str | MatchExpression, args: ConfigLoadArgs
+    conf: Config,
+    reference: ReplaceReference,
+    value: str | MatchExpression,
+    args: ConfigLoadArgs,
+    *,
+    validate_options: _RequirementOptionsValidator,
 ) -> str:
-    return RequirementLinesReplacer(conf, reference, conf_args=args).expand(value)
+    return RequirementLinesReplacer(conf, reference, conf_args=args, validate_options=validate_options).expand(value)
 
 
 def replace_entries(
@@ -346,6 +350,18 @@ class CommandLinesReplacer(Replacer):
 
 
 class RequirementLinesReplacer(Replacer):
+    def __init__(
+        self,
+        conf: Config,
+        reference: ReplaceReference,
+        conf_args: ConfigLoadArgs,
+        depth: int = 0,
+        *,
+        validate_options: _RequirementOptionsValidator,
+    ) -> None:
+        super().__init__(conf, reference, conf_args, depth)
+        self._validate_options = validate_options
+
     @override
     def _flatten_arg(self, value: MatchArg) -> str:
         return self.join_value(value)
@@ -353,7 +369,7 @@ class RequirementLinesReplacer(Replacer):
     @override
     def join_value(self, value: MatchArg) -> str:
         replaced: Final = self(value)
-        baseline: Final = list(replaced)
+        baseline: Final[list[str]] = list(replaced)
         for at, part in enumerate(value):
             if not isinstance(part, MatchExpression):
                 continue
@@ -369,10 +385,14 @@ class RequirementLinesReplacer(Replacer):
                 raise ValueError(msg)
             if shares_line:
                 baseline[at] = f"\x00{at}\x00"
-        result: Final = "".join(replaced)
+        result: Final[str] = "".join(replaced)
         if baseline != replaced:
-            PythonDeps.validate_requirement_options("".join(baseline), result)
+            self._validate_options("".join(baseline), result)
         return result
+
+    @override
+    def _nested(self, conf_args: ConfigLoadArgs) -> Self:
+        return type(self)(self.conf, self.reference, conf_args, self.depth + 1, validate_options=self._validate_options)
 
     @staticmethod
     def _shares_line(value: MatchArg, at: int) -> bool:
@@ -387,6 +407,10 @@ class RequirementLinesReplacer(Replacer):
             if re.search(_REQUIREMENT_LINE_BREAKS, part):
                 break
         return False
+
+
+class _RequirementOptionsValidator(Protocol):
+    def __call__(self, source: str, expanded: str) -> None: ...
 
 
 class EntriesReplacer(Replacer):
