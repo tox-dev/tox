@@ -52,9 +52,7 @@ def test_pylock_install(tox_project: ToxProjectCreator) -> None:
         },
     )
     execute_calls = project.patch_execute()
-    result = project.run("r", "-e", "py")
-
-    result.assert_success()
+    project.run("r", "-e", "py").assert_success()
 
     req_file = str(project.path / ".tox" / "py" / "pylock.txt")
     found_calls = [(i[0][0].conf.name, i[0][3].run_id, i[0][3].cmd) for i in execute_calls.call_args_list]
@@ -80,9 +78,7 @@ def test_pylock_install_uses_package_root_without_package_env(tox_project: ToxPr
         },
     )
     execute_calls = project.patch_execute()
-    result = project.run("r", "-e", "py")
-
-    result.assert_success()
+    project.run("r", "-e", "py").assert_success()
 
     req_file = str(project.path / ".tox" / "py" / "pylock.txt")
     found_calls = [(i[0][0].conf.name, i[0][3].run_id, i[0][3].cmd) for i in execute_calls.call_args_list]
@@ -105,9 +101,7 @@ def test_dependency_groups_use_package_root_without_package_env(tox_project: Tox
         },
     )
     execute_calls = project.patch_execute()
-    result = project.run("r", "-e", "py")
-
-    result.assert_success()
+    project.run("r", "-e", "py").assert_success()
 
     found_calls = [(i[0][0].conf.name, i[0][3].run_id) for i in execute_calls.call_args_list]
     assert found_calls == [("py", "install_dependency-groups")]

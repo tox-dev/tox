@@ -1,2 +1,2 @@
-``pylock`` and ``dependency_groups`` now resolve against the configured ``package_root`` even when no package
-environment is created, instead of silently falling back to ``tox_root``.
+``pylock`` and ``dependency_groups`` now use ``package_root`` when a run has no package environment. They previously
+used ``tox_root`` in that case.
