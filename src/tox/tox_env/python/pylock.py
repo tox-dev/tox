@@ -76,14 +76,13 @@ class Pylock:
             archive: Final[PackageArchive] = pkg.archive
             self._check_tokens(pkg, {"archive url": archive.url, "archive subdirectory": archive.subdirectory or None})
             return f"{pkg.name} @ {self._to_archive_url(archive)}", self._hash_options(pkg, archive.hashes)
-        line: Final[str] = str(pkg.name) if pkg.version is None else f"{pkg.name}=={pkg.version}"
         hashes: Final[list[str]] = [
             h
             for dist in (pkg.sdist, *(pkg.wheels or []))
             if dist is not None
             for h in self._hash_options(pkg, dist.hashes)
         ]
-        return line, hashes
+        return (str(pkg.name) if pkg.version is None else f"{pkg.name}=={pkg.version}"), hashes
 
     def _to_uri(self, path: str | Path, subdirectory: str | None = None) -> str:
         # PEP 751 stores paths relative to the lock file; the subdirectory is the project root within it

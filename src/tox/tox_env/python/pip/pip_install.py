@@ -1,8 +1,11 @@
 from __future__ import annotations
 
+import hashlib
+import json
 import logging
 import operator
 import re
+import sys
 from abc import ABC, abstractmethod
 from collections import defaultdict
 from collections.abc import Callable, Sequence
@@ -29,6 +32,7 @@ if TYPE_CHECKING:
     from tox.config.main import Config
     from tox.tox_env.package import Package
     from tox.tox_env.python.pip.req.file import ParsedRequirement
+    from tox.util.json_types import JsonValue
 
 _REDACTION_FORMAT: Final[int] = 1
 
@@ -263,7 +267,23 @@ class Pip(PythonInstallerListDependencies):
 
     def _install_pylock(self, pylock: Pylock, section: str, of_type: str) -> None:
         new_reqs = sorted(pylock.install_lines())
-        cache_value = {"req": new_reqs, "env": self._install_env_vars()}
+        environment = self._env.environment_variables
+        if sys.platform == "win32":
+            # pip sees Windows environment variable names without case distinctions.
+            environment = {name.upper(): value for name, value in environment.items()}
+        referenced: Final[dict[str, str]] = {
+            name: value
+            for line in new_reqs
+            for name in re.findall(r"\$\{([A-Z0-9_]+)\}", line)
+            if (value := environment.get(name))
+        }
+        for name, value in referenced.items():
+            if any(char.isspace() or not char.isprintable() for char in value):
+                msg = f"pylock environment variable {name} contains whitespace or control characters"
+                raise Fail(msg)
+        cache_value: Final[dict[str, JsonValue]] = {"req": new_reqs, "env": self._install_env_vars()}
+        if referenced:
+            cache_value["referenced_env"] = hashlib.sha256(json.dumps(referenced, sort_keys=True).encode()).hexdigest()
         with self._env.cache.compare(cache_value, section, of_type) as (eq, old):
             if not eq:
                 old_req: list[str] = old["req"] if isinstance(old, dict) else (old or [])

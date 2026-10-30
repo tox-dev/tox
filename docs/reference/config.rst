@@ -1977,7 +1977,7 @@ Python run
     removing, or changing packages triggers environment recreation as needed. See :ref:`pylock-explanation` for details.
 
     tox rejects whitespace or control characters in archive and VCS fields written to pip's requirements file, as well
-    as hash tokens.
+    as hash tokens. The check includes values pip expands from ``${VAR}`` references in those fields.
 
     For example:
 

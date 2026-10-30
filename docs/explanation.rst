@@ -263,7 +263,9 @@ pip from re-resolving transitive dependencies, ensuring the exact versions from 
 
 tox rejects whitespace and control characters in source and hash fields written to the pip requirements file because
 those characters could add another requirement or pip option. A VCS ``requested-revision`` remains informational;
-``commit-id`` selects the installed source.
+``commit-id`` selects the installed source. The check also covers values of ``${VAR}`` references using the environment
+passed to pip. Safe references stay in the requirements file, and changing a referenced value reinstalls the locked
+packages.
 
 **Plugin support:** the ``Pylock`` object is passed through the ``tox_on_install`` plugin hook. Installer plugins can
 inspect it via ``isinstance(arguments, Pylock)`` and handle lock files natively (e.g. ``uv pip install --pylock``)
