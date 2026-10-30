@@ -489,7 +489,7 @@ class ToxParser(ArgumentParserWithEnvAndConfig):
         }
         remaining_values: int | None = 0
         for index, arg in enumerate(args_list):
-            if arg.startswith("-") and arg != "-":
+            if self._parse_optional(arg) is not None:  # argparse accepts negative numbers as values
                 remaining_values = 0
             if remaining_values is None or remaining_values > 0:
                 if remaining_values is not None:

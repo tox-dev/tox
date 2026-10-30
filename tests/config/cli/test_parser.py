@@ -51,6 +51,10 @@ def test_parser_command_without_core_inherit() -> None:
         pytest.param("?", ("--values", "list"), "list", None, id="optional-before-command"),
         pytest.param("?", ("--values", "one", "list"), "list", "one", id="optional-value"),
         pytest.param(2, ("--values", "one", "list", "legacy"), "legacy", ["one", "list"], id="exact-count"),
+        pytest.param(
+            "+", ("--values", "one", "-2", "list"), "legacy", ["one", "-2", "list"], id="negative-number-value"
+        ),
+        pytest.param(2, ("--values", "one", "-2", "list"), "list", ["one", "-2"], id="negative-number-exact-count"),
     ],
 )
 def test_parser_command_scan_respects_option_values(
