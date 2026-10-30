@@ -10,7 +10,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from functools import partial
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, NamedTuple
+from typing import TYPE_CHECKING, Any, Final, NamedTuple
 
 from virtualenv.discovery.py_spec import PythonSpec
 
@@ -82,9 +82,6 @@ PY_FACTORS_RE_EXPLICIT_VERSION = re.compile(
     """,
     re.VERBOSE,
 )
-
-
-_MAX_VERSION_LINE_LENGTH = 1024
 
 
 class Python(ToxEnv, ABC):
@@ -246,17 +243,23 @@ class Python(ToxEnv, ABC):
     @staticmethod
     def _first_version_line(path: Path, file_path: str) -> str | None:
         with path.open(encoding="utf-8-sig") as file_handler:
-            while line := file_handler.readline(_MAX_VERSION_LINE_LENGTH + 1):
-                truncated = len(line) > _MAX_VERSION_LINE_LENGTH and not line.endswith("\n")
+            max_length: Final[int] = 1024
+            while line := file_handler.readline(max_length + 1):
                 stripped = line.strip()
-                if stripped.startswith("#"):
-                    while truncated and (rest := file_handler.readline(_MAX_VERSION_LINE_LENGTH)):
-                        truncated = not rest.endswith("\n")
+                if len(line) > max_length and not line.endswith("\n"):
+                    msg = f"base_python_file: line in {file_path!r} exceeds {max_length} characters"
+                    if stripped and not stripped.startswith("#"):
+                        raise Fail(msg)
+                    is_comment = stripped.startswith("#")
+                    while continuation := file_handler.readline(max_length + 1):
+                        stripped_continuation = continuation.strip()
+                        if not is_comment and stripped_continuation and not stripped_continuation.startswith("#"):
+                            raise Fail(msg)
+                        is_comment = is_comment or stripped_continuation.startswith("#")
+                        if continuation.endswith("\n"):
+                            break
                     continue
-                if truncated:
-                    msg = f"base_python_file: line in {file_path!r} exceeds {_MAX_VERSION_LINE_LENGTH} characters"
-                    raise Fail(msg)
-                if stripped:
+                if stripped and not stripped.startswith("#"):
                     return stripped
         return None
 
@@ -508,3 +511,10 @@ def add_skip_missing_interpreters_to_env(conf: EnvConfigSet, core: CoreConfigSet
         post_process=partial(_skip_missing_interpreters_post_process, options),
         desc="override core skip_missing_interpreters for this environment",
     )
+
+
+__all__ = [
+    "Python",
+    "PythonInfo",
+    "VersionInfo",
+]

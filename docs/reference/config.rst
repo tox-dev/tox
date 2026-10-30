@@ -1824,6 +1824,7 @@ Python options
 
     The file format is the same as used by ``pyenv`` and GitHub Actions' ``python-version-file``: one version per file,
     lines starting with ``#`` are comments, blank lines are ignored.
+    A version line may contain at most 1024 characters. Comment and blank lines can be longer.
 
 .. conf::
     :keys: env_site_packages_dir, envsitepackagesdir
