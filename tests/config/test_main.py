@@ -16,6 +16,8 @@ from tox.report import HandledError
 from tox.tox_env.python.pip.req_file import PythonDeps
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     from pytest_mock import MockerFixture
 
     from tests.conftest import ToxIniCreator
@@ -42,7 +44,7 @@ def test_empty_conf_get(empty_config: Config) -> None:
 
 
 def test_pos_args_path_error_masks_secret_flag(tox_project: ToxProjectCreator, mocker: MockerFixture) -> None:
-    project: Final = tox_project({
+    project: Final[ToxProject] = tox_project({
         "tox.toml": """\
 [env_run_base]
 package = "skip"
@@ -51,7 +53,7 @@ commands = [["python", "-c", "pass", { replace = "posargs", extend = true }]]
 """
     })
     (project.path / "tests").mkdir()
-    original_exists: Final = Path.exists
+    original_exists: Final[Callable[[Path], bool]] = Path.exists
 
     def exists(path: Path) -> bool:
         if str(path) == "--token=hunter2":
@@ -59,7 +61,7 @@ commands = [["python", "-c", "pass", { replace = "posargs", extend = true }]]
         return original_exists(path)
 
     mocker.patch.object(Path, "exists", autospec=True, side_effect=exists)
-    result: Final = project.run("r", "-vv", "-e", "py", "--", "--token=hunter2")
+    result: Final[ToxRunOutcome] = project.run("r", "-vv", "-e", "py", "--", "--token=hunter2")
     result.assert_success()
     assert "could not check if '--token=*******' is an existing path" in result.out
     assert "hunter2" not in result.out
@@ -491,13 +493,13 @@ def test_args_are_paths_rewrites_name_after_program(
 def test_args_are_paths_when_change_dir_behind_link(
     tox_project: ToxProjectCreator, tmp_path: Path, change_dir: str
 ) -> None:
-    project: Final = tox_project({
+    project: Final[ToxProject] = tox_project({
         "tox.ini": f"[testenv]\npackage=skip\ncommands=echo {{posargs}}\nchange_dir={change_dir}",
         "a.py": "",
     })
     (tmp_path / "work").mkdir()
     (project.path / ".tox").symlink_to(tmp_path / "work", target_is_directory=True)
-    result: Final = project.run("c", "-e", "py", "-k", "commands", "--", "a.py")
+    result: Final[ToxRunOutcome] = project.run("c", "-e", "py", "-k", "commands", "--", "a.py")
     result.assert_success()
     assert result.out == f"[testenv:py]\ncommands = echo ../../../{project.path.name}/a.py\n"
 
@@ -506,7 +508,7 @@ def test_args_are_paths_when_change_dir_behind_link(
 def test_args_are_paths_keeps_lexical_change_dir_on_windows(
     tox_project: ToxProjectCreator, tmp_path: Path, mocker: MockerFixture
 ) -> None:
-    project: Final = tox_project({
+    project: Final[ToxProject] = tox_project({
         "tox.ini": "[testenv]\npackage=skip\ncommands=echo {posargs}\nchange_dir={env_tmp_dir}",
         "a.py": "",
     })
@@ -514,7 +516,7 @@ def test_args_are_paths_keeps_lexical_change_dir_on_windows(
     (project.path / ".tox").symlink_to(tmp_path / "work", target_is_directory=True)
     mocker.patch("tox.config.main.sys", mocker.create_autospec(sys, platform="win32"))
 
-    result: Final = project.run("c", "-e", "py", "-k", "commands", "--", "a.py")
+    result: Final[ToxRunOutcome] = project.run("c", "-e", "py", "-k", "commands", "--", "a.py")
 
     result.assert_success()
     assert result.out == "[testenv:py]\ncommands = echo ../../../a.py\n"

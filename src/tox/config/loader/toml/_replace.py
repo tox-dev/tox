@@ -173,7 +173,7 @@ class Unroll:
         }
         if skip_str:  # set_env resolves it when read, seeing the keys next to it
             return MatchExpression([["glob"], *(_parse_arg(resolved.get(key, "")) for key in ("pattern", "default"))])
-        result: Final = _replace_glob_toml(self.conf, {**value, **resolved})
+        result: Final[list[TomlTypes] | str] = _replace_glob_toml(self.conf, {**value, **resolved})
         if self.requirement_entries:
             for entry in result if isinstance(result, list) else [result]:
                 if isinstance(entry, str) and (entry != "".join(entry.splitlines()) or entry.endswith("\\")):

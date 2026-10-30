@@ -9,7 +9,7 @@ import re
 import shlex
 import sys
 from abc import ABC, abstractmethod
-from collections.abc import Callable, Iterable, Sequence
+from collections.abc import Callable, Iterable, Iterator, Sequence
 from functools import partial
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Final, Union, get_args, get_origin
@@ -34,7 +34,7 @@ REPLACE_START: Final[str] = "{"
 REPLACE_END: Final[str] = "}"
 BACKSLASH_ESCAPE_CHARS: Final[tuple[str, ...]] = (ARG_DELIMITER, REPLACE_START, REPLACE_END, "[", "]")
 MAX_REPLACE_DEPTH: Final[int] = 100
-# lets a run resolve a labeled factor to a value the configuration does not list, without renaming environments
+# Factor overrides can supply values absent from the configuration without renaming environments.
 _FACTOR_ENV_PREFIX: Final[str] = "TOX_FACTOR_"
 _REQUIREMENT_LINE_BREAKS: Final[str] = r"[\n\r\v\f\x1c-\x1e\x85\u2028\u2029]"
 
@@ -202,13 +202,11 @@ class MatchExpression:  # ruff:ignore[eq-without-hash]
         while pos < len(value):
             if len(value) > pos + 1 and value[pos] == "\\":
                 if value[pos + 1] in BACKSLASH_ESCAPE_CHARS:
-                    # backslash escapes the next character from a special set
                     last_arg.append(value[pos + 1])
                     pos += 2
                     continue
                 if value[pos + 1] == "\\":
-                    # backlash doesn't escape a backslash, but does prevent it from affecting the next char
-                    # a subsequent `shlex` pass will eat the double backslash during command splitting.
+                    # Keep both backslashes for the later shlex pass.
                     last_arg.append(value[pos : pos + 2])
                     pos += 2
                     continue
@@ -287,7 +285,7 @@ class Replacer:
 
     @classmethod
     def _literal_match(cls, value: MatchExpression) -> str:
-        args: Final = (
+        args: Final[Iterator[str]] = (
             "".join(cls._literal_match(part) if isinstance(part, MatchExpression) else part for part in arg)
             for arg in value.expr
         )
@@ -306,7 +304,7 @@ class Replacer:
         return self.join(value)
 
     def _replace_match(self, value: MatchExpression) -> tuple[str, bool]:
-        # use a copy of conf_args so any changes from this replacement don't, affect adjacent substitutions (#2869)
+        # Keep substitutions from sharing a mutated chain (#2869).
         conf_args = self.conf_args.copy()
         flattened_args = [self._flatten_arg(arg) for arg in value.expr]
         of_type, *args = flattened_args
@@ -325,10 +323,7 @@ class Replacer:
                     LOGGER.warning(str(err))
                     return replace_value, True
             return replace_value, True
-        # else: fall through -- when replacement is impossible, treat `{` as if escaped.
-        #     If we can't replace, keep what was there, and continue looking for additional replaces
-        #     NOTE: can't raise because the content may be a factorial expression where we don't
-        #           want to enforce escaping curly braces, for example`env_list = {py39,py38}-{,dep}` should work
+        # Factor expressions such as {py39,py38}-{,dep} also use braces.
         return f"{REPLACE_START}{ARG_DELIMITER.join(flattened_args)}{REPLACE_END}", False
 
     def _nested(self, conf_args: ConfigLoadArgs) -> Self:
@@ -399,7 +394,7 @@ class RequirementLinesReplacer(Replacer):
 
     @override
     def join_value(self, value: MatchArg) -> str:
-        replaced: Final = self(value)
+        replaced: Final[Sequence[str]] = self(value)
         for at, part in enumerate(value):
             if not isinstance(part, MatchExpression):
                 continue
@@ -501,7 +496,7 @@ def replace_pos_args(conf: Config, args: list[str], conf_args: ConfigLoadArgs, *
 
 def quote_args(args: Sequence[str]) -> str:
     # INI settings split lines before parsing quotes.
-    normalized: Final = [" ".join(arg.splitlines()) for arg in args]
+    normalized: Final[list[str]] = [" ".join(arg.splitlines()) for arg in args]
     if sys.platform != "win32":
         return shlex.join(normalized)
     # Windows command splitting keeps a lone backslash, so paths stay unquoted where a value is not split into a command
