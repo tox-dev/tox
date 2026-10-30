@@ -388,7 +388,7 @@ def resolve_virtualenv_spec(
                 f"""\
                 [env.foo]
                 package = "skip"
-                base_python = [{candidates}]
+                default_base_python = [{candidates}]
                 commands = [["python", "-c", "print(1)"]]
                 """,
             ),
@@ -417,7 +417,7 @@ def resolve_virtualenv_spec(
         pytest.param(["py3"], "21.5.1", "", id="underspecified-minor-unknown"),
         pytest.param(["/usr/bin/python3.8"], "21.5.1", "", id="bare-path-version-unknown"),
         pytest.param(["python3.8"], "21.5.1", "virtualenv<21.5.0", id="command-form-pins"),
-        pytest.param([], "21.5.1", "", id="no-candidates"),
+        pytest.param([], "21.5.1", "", id="no-default-candidates"),
     ],
 )
 def test_virtualenv_spec_auto(

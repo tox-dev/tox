@@ -73,25 +73,35 @@ def test_conflicting_base_python_factor_no_ignore(tox_project: ToxProjectCreator
 @pytest.mark.parametrize(
     ("files", "env"),
     [
-        pytest.param({"tox.ini": "[testenv:py311]\npackage=skip\nbase_python = {env:TOXPYTHON:python3.11}"}, "py311"),
-        pytest.param({"tox.ini": "[testenv:magic]\npackage=skip\nbase_python ="}, "magic"),
-        pytest.param({"tox.toml": '[env.magic]\npackage = "skip"\nbase_python = ""'}, "magic"),
-        pytest.param({"tox.toml": '[env.magic]\npackage = "skip"\nbase_python = ["", " "]'}, "magic"),
+        pytest.param(
+            {"tox.ini": "[testenv:py311]\npackage=skip\nbase_python = {env:TOXPYTHON:python3.11}"},
+            "py311",
+            id="empty-environment-variable",
+        ),
+        pytest.param({"tox.ini": "[testenv:magic]\npackage=skip\nbase_python ="}, "magic", id="empty-ini"),
+        pytest.param({"tox.toml": '[env.magic]\npackage = "skip"\nbase_python = ""'}, "magic", id="empty-toml"),
+        pytest.param(
+            {"tox.toml": '[env.magic]\npackage = "skip"\nbase_python = ["", " "]'},
+            "magic",
+            id="blank-toml-list",
+        ),
     ],
 )
 def test_empty_base_python_fails(
     tox_project: ToxProjectCreator, monkeypatch: pytest.MonkeyPatch, files: dict[str, str], env: str
 ) -> None:
     monkeypatch.setenv("TOXPYTHON", "")
-    project = tox_project(files)
-    result = project.run("c", "-e", env, "-k", "base_python", raise_on_config_fail=False)
+    result: Final[ToxRunOutcome] = tox_project(files).run(
+        "c", "-e", env, "-k", "base_python", raise_on_config_fail=False
+    )
     result.assert_failed(code=-1)
     assert f"base_python for env {env} is empty" in result.out
 
 
 def test_blank_base_python_entries_skipped(tox_project: ToxProjectCreator) -> None:
-    project = tox_project({"tox.toml": '[env.magic]\npackage = "skip"\nbase_python = ["", "python3"]'})
-    result = project.run("c", "-e", "magic", "-k", "base_python")
+    result: Final[ToxRunOutcome] = tox_project({
+        "tox.toml": '[env.magic]\npackage = "skip"\nbase_python = ["", "python3"]'
+    }).run("c", "-e", "magic", "-k", "base_python")
     result.assert_success()
     assert "base_python = python3\n" in result.out
 
@@ -585,17 +595,28 @@ commands = [["python", "-c", "print('ok')"]]
     assert f"python{py_ver}" in result.out
 
 
-def test_default_base_python_falls_back_to_sys_executable(tox_project: ToxProjectCreator) -> None:
-    toml = """\
+@pytest.mark.parametrize(
+    ("default_base_python", "expected"),
+    [
+        pytest.param("", sys.executable, id="unset"),
+        pytest.param("default_base_python = []", "base_python = \n", id="empty-list"),
+    ],
+)
+def test_base_python_when_default_unset_or_empty(
+    tox_project: ToxProjectCreator, default_base_python: str, expected: str
+) -> None:
+    result: Final[ToxRunOutcome] = tox_project({
+        "tox.toml": f"""\
 env_list = ["lint"]
 
 [env_run_base]
 package = "skip"
+{default_base_python}
 commands = [["python", "-c", "print('ok')"]]
 """
-    result = tox_project({"tox.toml": toml}).run("c", "-e", "lint", "-k", "base_python")
+    }).run("c", "-e", "lint", "-k", "base_python")
     result.assert_success()
-    assert sys.executable in result.out
+    assert expected in result.out
 
 
 @pytest.mark.parametrize(
