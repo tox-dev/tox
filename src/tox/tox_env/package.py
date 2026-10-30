@@ -44,7 +44,12 @@ def _lock_method(thread_lock: RLock, file_lock: BaseFileLock | None, meth: Calla
     def _func(*args: _P.args, **kwargs: _P.kwargs) -> _R:
         with thread_lock:
             file_locks = False
-            if file_lock is not None and file_lock.is_locked is False:  # file_lock is to lock from other tox processes
+            # file_lock is to lock from other tox processes; never create it through a link planted at the env dir
+            if (
+                file_lock is not None
+                and file_lock.is_locked is False
+                and not Path(file_lock.lock_file).parent.is_symlink()
+            ):
                 file_lock.acquire()
                 file_locks = True
             try:
@@ -76,7 +81,8 @@ class PackageToxEnv(ToxEnv, ABC):
         super().register_config()
         file_lock_path = self.conf.get("env_dir", Path) / "file.lock"
         self._file_lock = FileLock(file_lock_path)
-        file_lock_path.parent.mkdir(parents=True, exist_ok=True)
+        if not file_lock_path.parent.is_symlink():
+            file_lock_path.parent.mkdir(parents=True, exist_ok=True)
         self.conf.add_config(
             keys=["package_root", "setupdir"],
             of_type=Path,
