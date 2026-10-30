@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
+from tox.tox_env.errors import Fail
 from tox.tox_env.python.virtual_env.subprocess_adapter import (
     SubprocessCreator,
     SubprocessPythonInfo,
@@ -19,6 +20,8 @@ from tox.tox_env.python.virtual_env.subprocess_adapter import (
 )
 
 if TYPE_CHECKING:
+    from typing import Final
+
     from pytest_mock import MockerFixture
 
     from tox.pytest import ToxProjectCreator
@@ -162,6 +165,35 @@ def test_subprocess_session_run_nonzero_exit(tmp_path: Path, mocker: MockerFixtu
         session.run()
 
 
+def test_subprocess_session_run_passes_interpreter(tmp_path: Path, mocker: MockerFixture) -> None:
+    info: Final = SubprocessPythonInfo(
+        implementation="cpython",
+        version_info=_VersionInfo(major=3, minor=11, micro=0, releaselevel="final", serial=0),
+        version="3.11.0",
+        architecture=64,
+        platform=sys.platform,
+        system_executable="/opt/a:b,c/python",
+        free_threaded=False,
+    )
+    run_mock: Final = mocker.patch(
+        "tox.tox_env.python.virtual_env.subprocess_adapter.subprocess.run",
+        return_value=mocker.MagicMock(returncode=0),
+    )
+    SubprocessSession(
+        env_dir=tmp_path / "env",
+        bootstrap_python=Path(sys.executable),
+        env_vars={},
+        interpreter=info,
+    ).run()
+    assert run_mock.call_args.args[0] == [
+        sys.executable,
+        "-m",
+        "virtualenv",
+        "--python=/opt/a:b,c/python",
+        str(tmp_path / "env"),
+    ]
+
+
 def test_subprocess_session_no_interpreter(tmp_path: Path) -> None:
     session = SubprocessSession(
         env_dir=tmp_path / "env",
@@ -200,6 +232,20 @@ def test_has_correct_virtualenv_bare_spec(tmp_path: Path, mocker: MockerFixture)
     run_mock = mocker.patch("tox.tox_env.python.virtual_env.subprocess_adapter.subprocess.run")
     run_mock.return_value = mocker.MagicMock(returncode=0, stdout="20.21.1\n")
     assert _has_correct_virtualenv(python, "virtualenv") is True
+
+
+def test_ensure_bootstrap_reuses_normalized_name(tmp_path: Path, mocker: MockerFixture) -> None:
+    create = mocker.patch("tox.tox_env.python.virtual_env.subprocess_adapter.venv.create")
+    mocker.patch(
+        "tox.tox_env.python.virtual_env.subprocess_adapter.subprocess.run",
+        return_value=mocker.MagicMock(returncode=0, stdout="20.21.1\n"),
+    )
+    python = ensure_bootstrap(tmp_path, "Virtualenv <22")
+    python.parent.mkdir(parents=True)
+    python.touch()
+
+    assert ensure_bootstrap(tmp_path, "Virtualenv <22") == python
+    create.assert_called_once()
 
 
 def test_has_correct_virtualenv_subprocess_fails(tmp_path: Path, mocker: MockerFixture) -> None:
@@ -278,6 +324,49 @@ def test_ensure_bootstrap_install_failure(tmp_path: Path, mocker: MockerFixture)
 
     with pytest.raises(RuntimeError, match="failed to install"):
         ensure_bootstrap(tmp_path, "virtualenv==999.999.999")
+
+
+@pytest.mark.parametrize(
+    "virtualenv_spec",
+    [
+        pytest.param("--requirement=https://example.invalid/requirements.txt", id="pip-option"),
+        pytest.param("virtualenv @ file:///tmp/other.whl", id="direct-reference"),
+        pytest.param("virtualenv-other", id="other-project"),
+        pytest.param("virtualenv===/tmp/other.whl", id="arbitrary-equality"),
+        pytest.param("virtualenv[extra]", id="extra"),
+        pytest.param('virtualenv; python_version < "3.15"', id="marker"),
+    ],
+)
+def test_ensure_bootstrap_rejects_non_version_requirement(
+    tmp_path: Path, mocker: MockerFixture, virtualenv_spec: str
+) -> None:
+    create = mocker.patch("tox.tox_env.python.virtual_env.subprocess_adapter.venv.create")
+    install = mocker.patch("tox.tox_env.python.virtual_env.subprocess_adapter.subprocess.run")
+
+    with pytest.raises(Fail, match="virtualenv_spec must name virtualenv"):
+        ensure_bootstrap(tmp_path, virtualenv_spec)
+    create.assert_not_called()
+    install.assert_not_called()
+
+
+def test_ensure_bootstrap_invalid_spec_does_not_echo_value(tmp_path: Path) -> None:
+    with pytest.raises(Fail) as error:
+        ensure_bootstrap(tmp_path, "--password=secret")
+    assert "secret" not in str(error.value)
+
+
+def test_virtualenv_spec_rejects_pip_option(tox_project: ToxProjectCreator) -> None:
+    proj = tox_project({
+        "tox.toml": textwrap.dedent("""\
+            [env_run_base]
+            package = "skip"
+            virtualenv_spec = "--requirement=https://example.invalid/requirements.txt"
+            commands = [["python", "-c", "print('ok')"]]
+        """),
+    })
+    result = proj.run("r", "-e", "py")
+    result.assert_failed()
+    assert "virtualenv_spec must name virtualenv" in result.out
 
 
 def test_virtualenv_spec_config_shown(tox_project: ToxProjectCreator) -> None:

@@ -2,12 +2,14 @@ from __future__ import annotations
 
 import logging
 import os
+import sys
+from io import TextIOWrapper
 from typing import TYPE_CHECKING
 
 import pytest
 from colorama import Style, deinit
 
-from tox.report import setup_report
+from tox.report import NamedBytesIO, setup_report
 
 if TYPE_CHECKING:
     from pytest_mock import MockerFixture
@@ -70,3 +72,49 @@ def test_setup_report(mocker: MockerFixture, capsys: CaptureFixture, verbosity: 
         expected_warning_text = "warningfoo> bar"
     if verbosity >= 4:  # where warnings are logged
         assert expected_warning_text in lines[3]
+
+
+def test_setup_report_degrades_logged_output(
+    redirected_cp1252_output: TextIOWrapper, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(sys, "stdout", redirected_cp1252_output)
+    monkeypatch.setattr(sys, "stderr", redirected_cp1252_output)
+
+    setup_report(verbosity=3, is_colored=False)
+    logging.critical("box %s and path %s", "\u2500", "\u80e1")
+    redirected_cp1252_output.flush()
+    redirected_cp1252_output.seek(0)
+
+    assert "box \\u2500 and path \\u80e1" in redirected_cp1252_output.read()
+
+
+@pytest.fixture
+def redirected_cp1252_output() -> TextIOWrapper:
+    return TextIOWrapper(NamedBytesIO("out"), encoding="cp1252", errors="strict")
+
+
+def test_setup_report_degrades_direct_output(
+    redirected_cp1252_output: TextIOWrapper, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(sys, "stdout", redirected_cp1252_output)
+    monkeypatch.setattr(sys, "stderr", redirected_cp1252_output)
+
+    setup_report(verbosity=3, is_colored=False)
+    sys.stdout.write("box \u2500 and path \u80e1")
+    redirected_cp1252_output.flush()
+    redirected_cp1252_output.seek(0)
+
+    assert redirected_cp1252_output.read() == "box \\u2500 and path \\u80e1"
+
+
+def test_suspended_output_degrades_unencodable_text(
+    redirected_cp1252_output: TextIOWrapper, monkeypatch: pytest.MonkeyPatch, mocker: MockerFixture
+) -> None:
+    monkeypatch.setattr(sys, "stdout", redirected_cp1252_output)
+    monkeypatch.setattr(sys, "stderr", redirected_cp1252_output)
+    mocker.patch("tox.report.locale.getpreferredencoding", return_value="cp1252")
+    with setup_report(verbosity=3, is_colored=False).suspend_out_err(True) as (stdout, _):
+        stdout.write("box \u2500")
+        stdout.flush()
+        stdout.seek(0)
+        assert stdout.read() == "box \\u2500"

@@ -3,17 +3,15 @@ from __future__ import annotations
 import sys
 import textwrap
 from string import Template
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Final, Protocol
 
 import pytest
 
-from tox.execute.request import shell_cmd
+from tox.config.loader.str_convert import StrConvert
+from tox.config.types import Command
 
 if TYPE_CHECKING:
-    from collections.abc import Callable
-    from typing import Final
-
-    from tox.pytest import ToxProject, ToxProjectCreator
+    from tox.pytest import ToxProject, ToxProjectCreator, ToxRunOutcome
 
 
 def test_config_in_toml_core(tox_project: ToxProjectCreator) -> None:
@@ -76,7 +74,7 @@ def test_config_in_toml_extra(tox_project: ToxProjectCreator) -> None:
         pytest.param(("pyproject.toml", "tool.tox."), id="pyproject.toml"),
     ]
 )
-def toml_project(request: pytest.FixtureRequest, tox_project: ToxProjectCreator) -> Callable[[str], ToxProject]:
+def toml_project(request: pytest.FixtureRequest, tox_project: ToxProjectCreator) -> _TomlProjectCreator:
     filename, prefix = request.param
 
     def create(content: str) -> ToxProject:
@@ -85,22 +83,49 @@ def toml_project(request: pytest.FixtureRequest, tox_project: ToxProjectCreator)
     return create
 
 
-def test_config_in_toml_replace_default(toml_project: Callable[[str], ToxProject]) -> None:
+class _TomlProjectCreator(Protocol):
+    def __call__(self, content: str) -> ToxProject: ...
+
+
+def test_config_in_toml_replace_default(toml_project: _TomlProjectCreator) -> None:
     project = toml_project('[${prefix}env_run_base]\ndescription = "{missing:miss}"')
     outcome = project.run("c", "-k", "description")
     outcome.assert_success()
     outcome.assert_out_err("[testenv:py]\ndescription = miss\n", "")
 
 
-@pytest.mark.parametrize("text", ["{}", "{print(1)}", "{'tool': 'tox'}"])
-def test_config_in_toml_keep_braces_of_non_reference(toml_project: Callable[[str], ToxProject], text: str) -> None:
-    project = toml_project(f'[${{prefix}}env_run_base]\ncommands = [["python", "-c", "x {text} y"]]')
-    outcome = project.run("c", "-k", "commands")
+@pytest.mark.parametrize(
+    "text",
+    [
+        pytest.param("{}", id="empty-braces"),
+        pytest.param("{print(1)}", id="function-call"),
+        pytest.param("{'tool': 'tox'}", id="dict-literal"),
+        pytest.param("{'url': 'https://example.com'}", id="url"),
+        pytest.param("{'at': '12:30'}", id="time"),
+    ],
+)
+def test_config_in_toml_keep_braces_of_non_reference(toml_project: _TomlProjectCreator, text: str) -> None:
+    project: Final[ToxProject] = toml_project(f'[${{prefix}}env_run_base]\ncommands = [["python", "-c", "x {text} y"]]')
+    outcome: Final[ToxRunOutcome] = project.run("c", "-k", "commands")
     outcome.assert_success()
-    outcome.assert_out_err(f"[testenv:py]\ncommands = {shell_cmd(['python', '-c', f'x {text} y'])}\n", "")
+    assert outcome.out.startswith("[testenv:py]\ncommands = ")
+    assert StrConvert.to_command(outcome.out.partition("commands = ")[2].strip()).args == [
+        "python",
+        "-c",
+        f"x {text} y",
+    ]
 
 
-def test_config_in_toml_replace_env_name_via_env(toml_project: Callable[[str], ToxProject]) -> None:
+def test_config_in_toml_keep_braces_around_posargs_naming_a_key(toml_project: _TomlProjectCreator) -> None:
+    outcome: Final[ToxRunOutcome] = toml_project(
+        '[${prefix}env_run_base]\nset_env = { SECRET = "s3cr3t" }\n'
+        'commands = [["python", "-c", \'x {"text": "{posargs}"} y\']]'
+    ).run("c", "-k", "commands", "--", "set_env:x")
+    outcome.assert_success()
+    assert outcome.env_conf("py")["commands"] == [Command(args=["python", "-c", 'x {"text": "set_env:x"} y'])]
+
+
+def test_config_in_toml_replace_env_name_via_env(toml_project: _TomlProjectCreator) -> None:
     project = toml_project('[${prefix}env_run_base]\ndescription = "Magic in {env:MAGICAL:{env_name}}"')
     outcome = project.run("c", "-k", "description")
     outcome.assert_success()
@@ -108,7 +133,7 @@ def test_config_in_toml_replace_env_name_via_env(toml_project: Callable[[str], T
 
 
 def test_config_in_toml_replace_env_name_via_env_set(
-    toml_project: Callable[[str], ToxProject], monkeypatch: pytest.MonkeyPatch
+    toml_project: _TomlProjectCreator, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     monkeypatch.setenv("MAGICAL", "YEAH")
     project = toml_project('[${prefix}env_run_base]\ndescription = "Magic in {env:MAGICAL:{env_name}}"')
@@ -117,7 +142,7 @@ def test_config_in_toml_replace_env_name_via_env_set(
     outcome.assert_out_err("[testenv:py]\ndescription = Magic in YEAH\n", "")
 
 
-def test_config_in_toml_replace_from_env_section_absolute(toml_project: Callable[[str], ToxProject]) -> None:
+def test_config_in_toml_replace_from_env_section_absolute(toml_project: _TomlProjectCreator) -> None:
     project = toml_project(
         """
         [${prefix}env.A]
@@ -131,7 +156,7 @@ def test_config_in_toml_replace_from_env_section_absolute(toml_project: Callable
     outcome.assert_out_err("[testenv:B]\ndescription = A\n", "")
 
 
-def test_config_in_toml_replace_from_section_absolute(toml_project: Callable[[str], ToxProject]) -> None:
+def test_config_in_toml_replace_from_section_absolute(toml_project: _TomlProjectCreator) -> None:
     project = toml_project(
         """
         [${prefix}extra]

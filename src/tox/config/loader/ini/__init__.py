@@ -2,18 +2,24 @@ from __future__ import annotations
 
 import inspect
 import re
-from typing import TYPE_CHECKING, TypeVar, cast
+from typing import TYPE_CHECKING, Final, TypeVar, cast
 
 from tox.config.loader.api import ConfigLoadArgs, Loader, Override
 from tox.config.loader.ini.factor import filter_for_env
 from tox.config.loader.ini.replace import ReplaceReferenceIni
-from tox.config.loader.replacer import MatchExpression, replace_command_lines, replace_once
-from tox.config.loader.replacer import replace as replace_references
+from tox.config.loader.replacer import (
+    MatchExpression,
+    replace_command_lines,
+    replace_for,
+    replace_once,
+    replace_requirement_lines,
+)
 from tox.config.loader.str_convert import StrConvert
 from tox.config.set_env import SetEnv
 from tox.config.types import Command
 from tox.report import HandledError
 from tox.tox_env.errors import Skip
+from tox.tox_env.python.pip.req_file import PythonConstraints, PythonDeps
 from tox.util.typing_compat import override
 
 if TYPE_CHECKING:
@@ -86,12 +92,24 @@ class IniLoader(StrConvert, Loader[str]):
     ) -> V:
         if conf is None:  # no replacement supported in the core section
             return self.to(raw, of_type, factory)
-        delay_replace = inspect.isclass(of_type) and issubclass(of_type, SetEnv)
-        replace_all = replace_command_lines if of_type == list[Command] else replace_references
+        delay_replace: Final[bool] = inspect.isclass(of_type) and issubclass(of_type, SetEnv)
 
         def replacer(raw_: str | MatchExpression, args_: ConfigLoadArgs, *, recursive: bool = True) -> str:
             try:
-                return (replace_all if recursive else replace_once)(conf, ReplaceReferenceIni(conf, self), raw_, args_)
+                reference: Final[ReplaceReferenceIni] = ReplaceReferenceIni(conf, self)
+                if not recursive:
+                    return replace_once(conf, reference, raw_, args_)
+                if of_type in {PythonDeps, PythonConstraints}:
+                    return replace_requirement_lines(
+                        conf,
+                        reference,
+                        raw_,
+                        args_,
+                        validate_options=PythonDeps.validate_requirement_options,
+                    )
+                if of_type in {Command, list[Command]}:
+                    return replace_command_lines(conf, reference, raw_, args_)
+                return replace_for(of_type)(conf, reference, raw_, args_)
             except Exception as exception:
                 if isinstance(exception, (HandledError, Skip)):
                     raise
@@ -99,15 +117,21 @@ class IniLoader(StrConvert, Loader[str]):
                 msg = f"replace failed in {name}.{key} with {exception!r}"
                 raise HandledError(msg) from exception
 
-        prepared = replacer(raw, args) if not delay_replace else raw
-        converted = self.to(prepared, of_type, factory)
+        converted: Final[V] = self.to(replacer(raw, args) if not delay_replace else raw, of_type, factory)
         if delay_replace:
             cast("SetEnv", converted).use_replacer(replacer, args)  # delay_replace means of_type is SetEnv
         return converted
 
     @override
-    def substitute(self, value: str, conf: Config, args: ConfigLoadArgs) -> str:
-        return replace_references(conf, ReplaceReferenceIni(conf, self), value, args)
+    def substitute(self, value: str, conf: Config, args: ConfigLoadArgs, *, of_type: type[V] | UnionType) -> str:
+        reference: Final[ReplaceReferenceIni] = ReplaceReferenceIni(conf, self)
+        if of_type in {PythonDeps, PythonConstraints}:
+            return replace_requirement_lines(
+                conf, reference, value, args, validate_options=PythonDeps.validate_requirement_options
+            )
+        if of_type in {Command, list[Command]}:
+            return replace_command_lines(conf, reference, value, args)
+        return replace_for(of_type)(conf, reference, value, args)
 
     @override
     def found_keys(self) -> set[str]:

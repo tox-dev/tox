@@ -6,11 +6,12 @@ import re
 from configparser import SectionProxy
 from functools import cache
 from re import Pattern
-from typing import TYPE_CHECKING, Final
+from typing import TYPE_CHECKING
 
 from tox.config.loader.api import apply_overrides_to_raw
-from tox.config.loader.replacer import ReplaceReference
-from tox.config.loader.stringify import stringify
+from tox.config.loader.replacer import ConfigDefault, RawText, ReplaceReference
+from tox.config.loader.stringify import stringify_reference
+from tox.config.sets import EnvConfigSet
 from tox.util.typing_compat import override
 
 if TYPE_CHECKING:
@@ -28,8 +29,7 @@ class ReplaceReferenceIni(ReplaceReference):
         self.loader = loader
 
     @override
-    def __call__(self, value: str, conf_args: ConfigLoadArgs) -> str | None:
-        # a return value of None indicates could not replace
+    def __call__(self, value: str, conf_args: ConfigLoadArgs) -> str | ConfigDefault | None:
         pattern = _replace_ref(self.loader.section.prefix or self.loader.section.name)
         match = pattern.match(value)
         if match:
@@ -42,22 +42,20 @@ class ReplaceReferenceIni(ReplaceReference):
             try:
                 return self._load_from_sources(settings, key, conf_args)
             except KeyError:  # if the lookup failed replace - else keep
-                # we cannot raise here as that would mean users could not write factorials:
-                #   depends = {py39,py38}-{,b}
-                return settings["default"]
+                # Missing references may be factor expressions such as {py39,py38}-{,b}.
+                return ConfigDefault(text=settings["default"], start=1) if settings["default"] is not None else None
         return None
 
     def _load_from_sources(self, settings: dict[str, str | None], key: str, conf_args: ConfigLoadArgs) -> str:
         for src in self._config_value_sources(settings["env"], settings["section"], conf_args.env_name):
             try:
                 if isinstance(src, SectionProxy):
-                    return self._resolve_section_proxy(src, key, conf_args)
-                value = src.load(key, conf_args.chain)
+                    return RawText(self._resolve_section_proxy(src, key, conf_args))
+                if isinstance(src, EnvConfigSet) and key in {"set_env", "setenv"}:
+                    return src.set_env_lines(conf_args.chain)
+                return stringify_reference(src.load(key, conf_args.chain), constant=src.is_constant(key))
             except KeyError:  # if fails, keep trying maybe another source can satisfy
                 pass
-            else:
-                as_str, _ = stringify(value)
-                return as_str.replace("#", r"\#")  # escape comment characters as these will be stripped
         raise KeyError(key)
 
     def _resolve_section_proxy(self, src: SectionProxy, key: str, args: ConfigLoadArgs) -> str:
@@ -75,13 +73,7 @@ class ReplaceReferenceIni(ReplaceReference):
             return processed
         args = args.copy()
         args.chain.append(f"{src.name}.{key}")
-        escaped_semicolon: Final[str] = r"\;"
-        values = self.loader.set_env_reference(processed, overrides, self.conf, args).config.raw(args)
-        return "\n".join(
-            f"{name}={str(value['value']).replace(';', escaped_semicolon)}"  # INI values are text
-            + (f"; {marker}" if (marker := value.get("marker")) else "")
-            for name, value in values.items()
-        )
+        return self.loader.set_env_reference(processed, overrides, self.conf, args).config.lines()
 
     def _config_value_sources(
         self, env: str | None, section: str | None, current_env: str | None

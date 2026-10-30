@@ -32,6 +32,8 @@ _SECRET_ENV_VAR_REGEX: Final[re.Pattern[str]] = re.compile(
     """.format(keywords="|".join(_SECRET_KEYWORDS)),
     re.VERBOSE | re.IGNORECASE | re.DOTALL,  # a newline before a keyword must not expose its value
 )
+# Compile once for command display; an incomplete INI quote can fuse later flags into one argv element.
+_INLINE_FLAG_REGEX: Final[re.Pattern[str]] = re.compile(r"""(?<![^\s'"=])-(?:[^\s'"=]|[\r\n])*=""")
 
 
 def redact_value(name: str, value: str) -> str:
@@ -49,26 +51,15 @@ def redact_value(name: str, value: str) -> str:
 
 
 def redact_argv(argv: Sequence[str]) -> list[str]:
-    """Return a copy of ``argv`` with secret-looking ``--key=value`` token values masked.
-
-    Only the inline ``--key=value`` / ``-k=value`` form is detected. Space-separated arguments are left alone to avoid
-    masking innocuous selectors like ``pytest -k test_foo``: there is no general way to tell ``--token <value>`` apart
-    from ``--token <not-a-value>`` without per-tool knowledge of the parser.
-
-    :param argv: the command line tokens to scan.
-
-    :returns: a new list with values of secret-looking flags replaced by ``*`` of the same length.
-
-    """
     result: list[str] = []
     for token in argv:
-        if token.startswith("-") and "=" in token:
-            flag, sep, value = token.partition("=")
-            name = flag.lstrip("-")
-            if _SECRET_ENV_VAR_REGEX.match(name):
-                result.append(f"{flag}{sep}{'*' * len(value)}")
-                continue
-        result.append(token)
+        for match in _INLINE_FLAG_REGEX.finditer(token):
+            if _SECRET_ENV_VAR_REGEX.match(match.group()):
+                # A fused token has no reliable flag-value boundary.
+                result.append(f"{token[: match.end()]}{'*' * (len(token) - match.end())}")
+                break
+        else:
+            result.append(token)
     return result
 
 

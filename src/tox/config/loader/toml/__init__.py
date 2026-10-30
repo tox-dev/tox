@@ -4,13 +4,22 @@ import inspect
 import logging
 from pathlib import Path
 from types import GenericAlias
-from typing import TYPE_CHECKING, Any, TypeVar, cast
+from typing import TYPE_CHECKING, Any, Final, TypeVar, cast
 
 from tox.config.loader.api import ConfigLoadArgs, Loader, Override
-from tox.config.loader.replacer import MatchExpression, MatchRecursionError, replace, replace_once
+from tox.config.loader.replacer import (
+    MatchExpression,
+    MatchRecursionError,
+    replace,
+    replace_command_lines,
+    replace_for,
+    replace_once,
+    replace_requirement_lines,
+)
 from tox.config.set_env import SetEnv
-from tox.config.types import Command, EnvList
+from tox.config.types import CircularChainError, Command, EnvList
 from tox.report import HandledError
+from tox.tox_env.python.pip.req_file import PythonConstraints, PythonDeps
 from tox.util.typing_compat import override
 
 from ._api import TomlTypes
@@ -75,7 +84,13 @@ class TomlLoader(Loader[TomlTypes]):
         args: ConfigLoadArgs,
     ) -> _T:
         delay_replace = inspect.isclass(of_type) and issubclass(of_type, SetEnv)
-        unroll = Unroll(conf=conf, loader=self, args=args)
+        unroll = Unroll(
+            conf=conf,
+            loader=self,
+            args=args,
+            program_depth=2 if of_type == list[Command] else 1 if of_type == Command else None,
+            requirement_entries=of_type in {PythonDeps, PythonConstraints},
+        )
         exploded = unroll(raw, skip_str=True) if delay_replace else unroll(raw)
         result = self.to(exploded, of_type, factory)
         if delay_replace and conf is not None:  # the core section supports no replacement
@@ -84,7 +99,7 @@ class TomlLoader(Loader[TomlTypes]):
             def _toml_replacer(value: str | MatchExpression, args_: ConfigLoadArgs, *, recursive: bool = True) -> str:
                 try:
                     return (replace if recursive else replace_once)(conf, TomlReplaceLoader(conf, loader), value, args_)
-                except MatchRecursionError as exception:
+                except (CircularChainError, MatchRecursionError) as exception:
                     msg = f"failed to load {args.env_name}.{key}: {exception}"
                     raise HandledError(msg) from exception
 
@@ -92,8 +107,15 @@ class TomlLoader(Loader[TomlTypes]):
         return result
 
     @override
-    def substitute(self, value: str, conf: Config, args: ConfigLoadArgs) -> str:
-        return replace(conf, TomlReplaceLoader(conf, self), value, args)
+    def substitute(self, value: str, conf: Config, args: ConfigLoadArgs, *, of_type: type[_V] | UnionType) -> str:
+        reference: Final[TomlReplaceLoader] = TomlReplaceLoader(conf, self)
+        if of_type in {PythonDeps, PythonConstraints}:
+            return replace_requirement_lines(
+                conf, reference, value, args, validate_options=PythonDeps.validate_requirement_options
+            )
+        if of_type in {Command, list[Command]}:
+            return replace_command_lines(conf, reference, value, args)
+        return replace_for(of_type)(conf, reference, value, args)
 
     @override
     def found_keys(self) -> set[str]:

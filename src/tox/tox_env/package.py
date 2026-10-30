@@ -81,12 +81,14 @@ class PackageToxEnv(ToxEnv, ABC):
             keys=["package_root", "setupdir"],
             of_type=Path,
             default=self.core.get("tox_root", Path),
+            post_process=self._relative_to_tox_root,
             desc="indicates where the packaging root file exists (historically setup.py file or pyproject.toml now)",
         )
         self.conf.add_config(
             keys=["package_root", "setupdir"],
             of_type=Path,
             default=self.core.get("package_root", Path),
+            post_process=self._relative_to_tox_root,
             desc="indicates where the packaging root file exists (historically setup.py file or pyproject.toml now)",
         )
 

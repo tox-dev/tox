@@ -15,7 +15,9 @@ from typing import TYPE_CHECKING, ClassVar, cast
 from weakref import WeakKeyDictionary
 
 from colorama import Fore, Style, init
+from virtualenv.util.subprocess import LogCmd
 
+from tox.util.redact import redact_value
 from tox.util.typing_compat import override
 
 if TYPE_CHECKING:
@@ -101,7 +103,11 @@ class _LogThreadLocal(local):
 
     @staticmethod
     def _make(prefix: str, based_of: TextIOWrapper) -> TextIOWrapper:
-        return TextIOWrapper(NamedBytesIO(f"{prefix}-{based_of.name}"), encoding=locale.getpreferredencoding(False))  # ruff:ignore[boolean-positional-value-in-call]
+        return TextIOWrapper(
+            NamedBytesIO(f"{prefix}-{based_of.name}"),
+            encoding=locale.getpreferredencoding(do_setlocale=False),
+            errors="backslashreplace",
+        )
 
 
 class NamedBytesIO(BytesIO):
@@ -210,6 +216,13 @@ class ToxHandler(_STREAM_HANDLER_BASE):
 
     @override
     def format(self, record: logging.LogRecord) -> str:
+        if record.name == "virtualenv.seed.embed.pip_invoke" and isinstance(record.args, tuple):
+            record.args = tuple(
+                LogCmd(arg.cmd, {name: redact_value(name, value) for name, value in arg.env.items()})
+                if isinstance(arg, LogCmd) and arg.env is not None
+                else arg
+                for arg in record.args
+            )
         # shorten the pathname to start from within the site-packages folder
         record.env_name = "root" if self._local.name is None else self._local.name
         basename = str(Path(record.pathname).parent)
@@ -237,6 +250,10 @@ class ToxHandler(_STREAM_HANDLER_BASE):
 
 
 def setup_report(verbosity: int, is_colored: bool) -> ToxHandler:  # ruff:ignore[boolean-type-hint-positional-argument]
+    for std_stream in (sys.stdout, sys.stderr):
+        if isinstance(std_stream, TextIOWrapper):
+            # Redirected Windows streams may use code pages that cannot encode tox output.
+            std_stream.reconfigure(errors="backslashreplace")
     _clean_handlers(LOGGER)
     level = _get_level(verbosity)
     LOGGER.setLevel(level)
@@ -261,3 +278,14 @@ def _clean_handlers(log: logging.Logger) -> None:
 
 class HandledError(RuntimeError):
     """Error that has been handled so no need for stack trace."""
+
+
+__all__ = [
+    "LEVELS",
+    "LOGGER",
+    "HandledError",
+    "NamedBytesIO",
+    "OutErr",
+    "ToxHandler",
+    "setup_report",
+]
