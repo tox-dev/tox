@@ -1,0 +1,1 @@
+Report the file and line number for an invalid ``set_env`` file line, since its content may contain a secret.
