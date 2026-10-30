@@ -445,8 +445,8 @@ class EnvConfigSet(ConfigSet):
         return f"{self.__class__.__name__}(name={self._env_name!r}, loaders={self.loaders!r})"
 
 
-__all__ = (
+__all__ = [
     "ConfigSet",
     "CoreConfigSet",
     "EnvConfigSet",
-)
+]
