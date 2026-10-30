@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from typing import Final
 
 import pytest
 
@@ -43,7 +44,7 @@ def test_info_non_dict_section_self_heals(tmp_path: Path) -> None:
 def test_info_non_dict_mapping_section_self_heals(tmp_path: Path) -> None:
     (tmp_path / ".tox-info.json").write_text('{"Python": []}')
 
-    conf = {"base_python": ["3.14"]}
+    conf: Final = {"base_python": ["3.14"]}
     with Info(tmp_path).compare(conf, "Python") as (eq, old):
         assert (eq, old) == (False, None)
 

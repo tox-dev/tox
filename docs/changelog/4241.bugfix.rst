@@ -1,3 +1,1 @@
-A malformed ``.tox-info.json`` no longer stops tox with an internal error when a whole section holds something other
-than the mapping that is expected there. Such a section is now treated as absent, so the affected environment is
-recreated and the file is rewritten with valid content.
+Recreate an environment when its ``.tox-info.json`` contains a non-mapping value for a section that requires a mapping.
