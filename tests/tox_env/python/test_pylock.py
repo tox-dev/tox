@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import re
 import sys
+import tomllib
 from textwrap import dedent
 from typing import TYPE_CHECKING, Final
 
@@ -459,6 +461,36 @@ def test_pylock_requirements_invalid(tmp_path: Path) -> None:
 
     with pytest.raises(Fail, match="invalid pylock file"):
         pylock.install_lines()
+
+
+@pytest.mark.parametrize(
+    ("content", "cause"),
+    [
+        pytest.param(b'lock-version = "1.0"\n\n[[packages]\nname = "alpha"\n', tomllib.TOMLDecodeError, id="toml"),
+        pytest.param(b"\xff", UnicodeDecodeError, id="utf8"),
+    ],
+)
+def test_pylock_requirements_invalid_file(
+    tmp_path: Path, content: bytes, cause: type[tomllib.TOMLDecodeError | UnicodeDecodeError]
+) -> None:
+    lock_file: Final[Path] = tmp_path / "pylock.toml"
+    lock_file.write_bytes(content)
+
+    with pytest.raises(Fail, match=rf"invalid pylock file {re.escape(str(lock_file))}:") as caught:
+        Pylock(path=lock_file).install_lines()
+
+    assert isinstance(caught.value.__cause__, cause)
+    assert str(caught.value.__cause__) in str(caught.value)
+
+
+def test_pylock_requirements_with_utf8_bom(tmp_path: Path) -> None:
+    lock_file: Final[Path] = tmp_path / "pylock.toml"
+    lock_file.write_bytes(b"\xef\xbb\xbf" + PYLOCK_TOML.encode())
+
+    assert Pylock(path=lock_file).install_lines() == [
+        "alpha==1.0.0 --hash=sha256:abc123",
+        "beta==2.0.0 --hash=sha256:def456",
+    ]
 
 
 @pytest.mark.slow
