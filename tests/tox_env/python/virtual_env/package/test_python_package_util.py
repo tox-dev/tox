@@ -104,7 +104,7 @@ def test_recursive_extra_combines_markers_through_nested_self_references() -> No
         Requirement('name[mid]; python_version < "3.0" and extra == "all"'),
         Requirement('name[dev]; extra == "other"'),
     ]
-    assert sorted(str(requirement) for requirement in dependencies_with_extras(requires, {"all", "other"}, "name")) == [
+    assert [str(requirement) for requirement in dependencies_with_extras(requires, {"all", "other"}, "name")] == [
         'six; implementation_name == "cpython"',
         'six; python_version < "3.0" and sys_platform == "win32" and implementation_name == "cpython"',
     ]
