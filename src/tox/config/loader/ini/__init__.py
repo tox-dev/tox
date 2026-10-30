@@ -107,7 +107,7 @@ class IniLoader(StrConvert, Loader[str]):
                         args_,
                         validate_options=PythonDeps.validate_requirement_options,
                     )
-                if of_type == list[Command]:
+                if of_type in {Command, list[Command]}:
                     return replace_command_lines(conf, reference, raw_, args_)
                 return replace_for(of_type)(conf, reference, raw_, args_)
             except Exception as exception:
@@ -129,6 +129,8 @@ class IniLoader(StrConvert, Loader[str]):
             return replace_requirement_lines(
                 conf, reference, value, args, validate_options=PythonDeps.validate_requirement_options
             )
+        if of_type in {Command, list[Command]}:
+            return replace_command_lines(conf, reference, value, args)
         return replace_for(of_type)(conf, reference, value, args)
 
     @override
