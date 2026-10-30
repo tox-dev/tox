@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING
 
 from tox.config.loader.api import apply_overrides_to_raw
 from tox.config.loader.replacer import RawText, ReplaceReference
-from tox.config.loader.stringify import stringify_reference
+from tox.config.loader.stringify import is_command_argument_value, stringify, stringify_reference
 from tox.config.sets import EnvConfigSet
 from tox.util.typing_compat import override
 
@@ -59,7 +59,9 @@ class ReplaceReferenceIni(ReplaceReference):
             except KeyError:  # if fails, keep trying maybe another source can satisfy
                 pass
             else:
-                return stringify_reference(value, constant=src.is_constant(key))
+                if is_command_argument_value(value):
+                    return stringify_reference(value, constant=src.is_constant(key))
+                return stringify(value)[0]
         raise KeyError(key)
 
     def _resolve_section_proxy(self, src: SectionProxy, key: str, args: ConfigLoadArgs) -> str:

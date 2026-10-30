@@ -535,7 +535,7 @@ def test_replace_reference_to_path_setting_one_argument_of_command(
 
 
 def test_replace_reference_to_str_setting_is_command_text(example: EnvConfigCreator) -> None:
-    env_config = example("p = -a 'b c'\nc = python {p} -x")
+    env_config: Final[ConfigSet] = example("p = -a 'b c'\nc = python {p} -x")
     env_config.add_config(keys="p", of_type=str, default="", desc="p")
     env_config.add_config(keys="c", of_type=list[Command], default=[], desc="c")
     assert env_config["c"] == [Command(args=["python", "-a", "b c", "-x"])]

@@ -2,13 +2,16 @@ from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
 from pathlib import Path
-from typing import Any, Final
+from typing import TYPE_CHECKING, Any, Final
 
 from tox.config.set_env import SetEnv
 from tox.config.types import Command, EnvList
 from tox.tox_env.python.pip.req_file import PythonConstraints, PythonDeps
 
 from .replacer import Arguments, quote_args
+
+if TYPE_CHECKING:
+    from typing_extensions import TypeIs
 
 
 def stringify(value: Any) -> tuple[str, bool]:  # ruff:ignore[too-many-return-statements]
@@ -41,12 +44,15 @@ def stringify(value: Any) -> tuple[str, bool]:  # ruff:ignore[too-many-return-st
     return str(value), False
 
 
-def stringify_reference(value: object, *, constant: bool) -> str:
+def is_command_argument_value(value: object) -> TypeIs[str | Path | Sequence[str | Path] | set[str | Path]]:
+    return isinstance(value, (str, Path)) or (
+        isinstance(value, (Sequence, set)) and all(isinstance(entry, (str, Path)) for entry in value)
+    )
+
+
+def stringify_reference(value: str | Path | Sequence[str | Path] | set[str | Path], *, constant: bool) -> str:
     as_str: Final[str] = stringify(value)[0]
-    if isinstance(value, str):
-        return Arguments(as_str) if constant else as_str
-    entries: Final[Sequence[object] | set[object]] = value if isinstance(value, (Sequence, set)) else [value]
-    return Arguments(as_str) if all(isinstance(entry, (str, Path)) for entry in entries) else as_str
+    return as_str if isinstance(value, str) and not constant else Arguments(as_str)
 
 
-__all__ = ("stringify", "stringify_reference")
+__all__ = ("is_command_argument_value", "stringify", "stringify_reference")

@@ -21,7 +21,7 @@ from tox.config.loader.replacer import (
     replace_env,
     replace_requirement_lines,
 )
-from tox.config.loader.stringify import stringify, stringify_reference
+from tox.config.loader.stringify import is_command_argument_value, stringify, stringify_reference
 from tox.config.set_env import SetEnvReference
 from tox.config.sets import EnvConfigSet
 from tox.config.types import Command, EnvList
@@ -337,19 +337,9 @@ class TomlReplaceLoader(ReplaceReference):
             try:
                 for src in self._config_value_sources(settings["section"], conf_args.env_name):
                     try:
-                        value = (
-                            src.set_env_lines(conf_args.chain)
-                            if isinstance(src, EnvConfigSet) and settings["key"] in {"set_env", "setenv"}
-                            else src.load(settings["key"], conf_args.chain)
-                        )
+                        return self._load_reference_value(src, settings["key"], conf_args)
                     except KeyError as exc:  # if fails, keep trying maybe another source can satisfy
                         exception = exc
-                    else:
-                        return (
-                            RawText(stringify(value)[0])
-                            if isinstance(src, RawLoader)
-                            else stringify_reference(value, constant=src.is_constant(settings["key"]))
-                        )
             except Exception as exc:  # ruff:ignore[blind-except]
                 exception = exc
             if exception is not None:
@@ -360,6 +350,19 @@ class TomlReplaceLoader(ReplaceReference):
                     return None  # keep original text, consistent with ini loader behavior
                 raise exception
         return None  # not a reference, such as the {} of a format string
+
+    @staticmethod
+    def _load_reference_value(src: ConfigSet | RawLoader, key: str, conf_args: ConfigLoadArgs) -> str:
+        value: Final = (
+            src.set_env_lines(conf_args.chain)
+            if isinstance(src, EnvConfigSet) and key in {"set_env", "setenv"}
+            else src.load(key, conf_args.chain)
+        )
+        if isinstance(src, RawLoader):
+            return RawText(stringify(value)[0])
+        if is_command_argument_value(value):
+            return stringify_reference(value, constant=src.is_constant(key))
+        return stringify(value)[0]
 
     def _config_value_sources(self, sec: str | None, current_env: str | None) -> Iterator[ConfigSet | RawLoader]:
         if sec is None:

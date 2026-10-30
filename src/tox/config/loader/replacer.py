@@ -361,8 +361,10 @@ class CommandLinesReplacer(Replacer):
         quote = self.quote
         for part in value:
             if isinstance(part, MatchExpression):
-                replacer = self if quote == self.quote else self._within(quote)
-                result.append(replacer._replace_match(part)[0])  # ruff:ignore[private-member-access]  # same-class instance
+                if quote == self.quote:
+                    result.append(self._replace_match(part)[0])
+                else:
+                    result.append(self._within(quote).join([part]))
             else:
                 result.append(str(part))
                 quote = self._open_quote(str(part), quote)
