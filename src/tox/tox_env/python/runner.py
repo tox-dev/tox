@@ -255,10 +255,10 @@ print(json.dumps({
 
 
 def _target_marker_environment(python: Path) -> dict[str, str]:
-    """
-    Evaluate the PEP 508 marker environment inside the target interpreter.
+    """Evaluate the PEP 508 marker environment inside the target interpreter.
 
     Every key must be filled in, otherwise packaging falls back to the values of the interpreter running tox.
+
     """
     try:
         result = subprocess.run(
