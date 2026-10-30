@@ -21,6 +21,7 @@ if TYPE_CHECKING:
 
     from tests.config.loader.conftest import ReplaceOne
     from tests.conftest import ToxIniCreator
+    from tox.config.main import Config
     from tox.pytest import LogCaptureFixture, MonkeyPatch, ToxProject, ToxProjectCreator, ToxRunOutcome
 
 EnvConfigCreator = Callable[[str], ConfigSet]
@@ -425,7 +426,7 @@ def test_replace_within_section_chain_deep(caplog: LogCaptureFixture, tox_ini_co
 
 
 def test_replace_command_section_chain_stops_at_depth(caplog: LogCaptureFixture, tox_ini_conf: ToxIniCreator) -> None:
-    config: Final = tox_ini_conf(
+    config: Final[Config] = tox_ini_conf(
         "\n".join(
             [
                 "[vars]",

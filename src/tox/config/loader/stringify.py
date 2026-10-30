@@ -15,14 +15,14 @@ if TYPE_CHECKING:
     from typing_extensions import TypeIs
 
 
+def stringify_reference(value: _Stringifiable, *, constant: bool) -> str:
+    as_str: Final[str] = stringify(value)[0]
+    if _is_command_argument_value(value) and (not isinstance(value, str) or constant):
+        return Arguments(as_str)
+    return as_str
+
+
 def stringify(value: _Stringifiable) -> tuple[str, bool]:  # ruff:ignore[too-many-return-statements]
-    """Transform a value into a string representation.
-
-    :param value: the value in question
-
-    :returns: a tuple, first the value as str, second a flag if the value if a multi-line one
-
-    """
     if isinstance(value, str):
         return value, False
     if isinstance(value, (Path, float, int, bool)):
@@ -31,31 +31,23 @@ def stringify(value: _Stringifiable) -> tuple[str, bool]:  # ruff:ignore[too-man
         return "\n".join(f"{stringify(k)[0]}={stringify(v)[0]}" for k, v in value.items()), True
     if isinstance(value, Sequence):
         return "\n".join(stringify(i)[0] for i in value), True
-    if isinstance(value, set):  # sort it to make it stable
+    if isinstance(value, set):
         return "\n".join(sorted(stringify(i)[0] for i in value)), True
     if isinstance(value, EnvList):
-        return "\n".join(e for e in value.envs), True
+        return "\n".join(value.envs), True
     if isinstance(value, Command):
         return quote_args(value.args), True
     if isinstance(value, SetEnv):
-        env_var_keys = sorted(value)
-        return stringify({k: value.load(k) for k in env_var_keys})
+        return stringify({key: value.load(key) for key in sorted(value)})
     if isinstance(value, (PythonDeps, PythonConstraints)):
         return stringify(value.lines())
     return str(value), False
 
 
-def is_command_argument_value(value: object) -> TypeIs[str | Path | Sequence[str | Path] | set[str | Path]]:
+def _is_command_argument_value(value: object) -> TypeIs[str | Path | Sequence[str | Path] | set[str | Path]]:
     return isinstance(value, (str, Path)) or (
         isinstance(value, (Sequence, set)) and all(isinstance(entry, (str, Path)) for entry in value)
     )
-
-
-def stringify_reference(value: _Stringifiable, *, constant: bool) -> str:
-    as_str: Final[str] = stringify(value)[0]
-    if is_command_argument_value(value) and (not isinstance(value, str) or constant):
-        return Arguments(as_str)
-    return as_str
 
 
 class _Stringifiable(Protocol):
@@ -64,7 +56,6 @@ class _Stringifiable(Protocol):
 
 
 __all__ = [
-    "is_command_argument_value",
     "stringify",
     "stringify_reference",
 ]
