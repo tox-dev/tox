@@ -38,6 +38,8 @@ Logging
 tox logs command invocations inside ``.tox/<env_name>/log``. Environment variables with names containing sensitive words
 (``access``, ``api``, ``auth``, ``client``, ``cred``, ``key``, ``passwd``, ``password``, ``private``, ``pwd``,
 ``secret``, ``token``) are logged with their values redacted to prevent accidental secret leaking in CI/CD environments.
+tox also masks secret-looking inline ``--name=value`` flags in command displays, ``TOX_OVERRIDE`` help defaults, and
+warnings for invalid ``TOX_`` values. The space-separated ``--name value`` form is outside this masking rule.
 
 .. ------------------------------------------------------------------------------------------
 

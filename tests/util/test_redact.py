@@ -39,8 +39,7 @@ def test_redact_argv_leaves_innocuous_flags_alone() -> None:
 
 
 def test_redact_argv_does_not_mask_space_separated_value() -> None:
-    # we deliberately do NOT redact `--token hunter2` because we cannot reliably tell where a flag value ends without
-    # parser-specific knowledge; this asserts the documented limitation.
+    # A space-separated value has no parser-independent boundary.
     result = redact_argv(["app", "--token", "hunter2"])
     assert result == ["app", "--token", "hunter2"]
 
@@ -55,6 +54,9 @@ def test_redact_argv_does_not_mask_space_separated_value() -> None:
         pytest.param("tool '--token=abc'", "tool '--token=****", id="quoted-script"),
         pytest.param("--tool-args=--token=abc", "--tool-args=--token=***", id="nested-flag"),
         pytest.param("--ref=main --password=a b", "--ref=main --password=***", id="mask-to-end"),
+        pytest.param("badoverride;--password=hunter2", "badoverride;--password=*******", id="semicolon-delimiter"),
+        pytest.param("--password=hun;ter2", "--password=********", id="semicolon-value"),
+        pytest.param("--password;extra=foo", "--password;extra=***", id="semicolon-flag-name"),
     ],
 )
 def test_redact_argv_masks_secret_flag_inside_token(token: str, expected: str) -> None:

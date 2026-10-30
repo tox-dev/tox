@@ -1,0 +1,2 @@
+A ``file:`` URI passed to ``--installpkg`` is now percent-decoded once instead of twice, so a path containing a literal
+``%`` sequence, such as a directory named ``feature%2Flogin``, selects the package the user named.

@@ -297,6 +297,9 @@ The ``virtualenv-pep-723`` runner reads this metadata so that a tox environment 
 key — no ``deps`` or ``base_python`` duplication. Both ``requires-python`` and ``dependencies`` are optional per the PEP
 723 spec; omitting ``requires-python`` uses the host Python, and omitting ``dependencies`` installs nothing.
 
+Before installing, tox checks that ``dependencies`` is a list of valid :PEP:`508` requirement strings. Invalid entries
+fail before tox passes the dependencies to pip. ``--skip-env-install`` bypasses installation and this check.
+
 **How it differs from the default runner:** the ``virtualenv-pep-723`` runner skips ``PythonRun`` in the class
 hierarchy. Config keys like ``deps``, ``extras``, ``dependency_groups``, and ``pylock`` are structurally absent — they
 do not exist for this runner. Packaging is unconditionally disabled since scripts are not packages. Setting
