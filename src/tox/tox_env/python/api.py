@@ -122,7 +122,6 @@ class Python(ToxEnv, ABC):
                 msg = "cannot set both base_python and base_python_file"
                 raise Fail(msg)
             if self._base_python_explicitly_set and not result:
-                # an empty spec would make virtualenv silently fall back to the host interpreter
                 empty_spec_message: Final[str] = f"base_python for env {self.name} is empty"
                 raise Fail(empty_spec_message)
             return self._validate_base_python(self.name, result, self.core["ignore_base_python_conflict"])
