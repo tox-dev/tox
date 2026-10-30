@@ -1,0 +1,3 @@
+Extracting an sdist no longer follows a symlink or hard link member to write outside the extraction directory; tox now
+uses the ``data`` extraction filter whenever ``tarfile`` provides it and otherwise checks each link target before
+extracting it.
