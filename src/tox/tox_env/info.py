@@ -81,4 +81,6 @@ class Info:
         self._path.write_text(json.dumps(self._content, indent=2))
 
 
-__all__ = ("Info",)
+__all__ = [
+    "Info",
+]
