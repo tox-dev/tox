@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 import sys
+from dataclasses import dataclass
 from typing import TYPE_CHECKING, Final
 
 import pytest
@@ -32,7 +33,7 @@ def _is_ours(root: Path) -> Callable[[Path], bool]:
 
 
 def test_record_env_outside_root_is_absolute(root: Path, tmp_path_factory: pytest.TempPathFactory) -> None:
-    outside = tmp_path_factory.mktemp("elsewhere") / "dev"
+    outside: Final[Path] = tmp_path_factory.mktemp("elsewhere") / "dev"
 
     record_venv_redirect(root, outside, lambda _: True)
 
@@ -148,18 +149,17 @@ def test_record_keeps_redirect_if_replace_fails(
 
 
 @pytest.mark.skipif(sys.platform == "win32", reason="creating symlinks needs privileges on Windows")
-def test_record_stays_in_root_swapped_after_check(root: Path, swap_root: tuple[Callable[[], None], Path, Path]) -> None:
-    swap, moved, other = swap_root
+def test_record_stays_in_root_swapped_after_check(root: Path, swap_root: _SwapRoot) -> None:
     (root / ".venv").write_text(".tox/3.13\n", encoding="utf-8")
 
-    record_venv_redirect(root, root / ".tox" / "dev", lambda _: swap() is None)
+    record_venv_redirect(root, root / ".tox" / "dev", lambda _: swap_root.swap() is None)
 
-    assert (other / ".venv").read_text(encoding="utf-8") == "../shared\n"
-    assert (moved / ".venv").read_text(encoding="utf-8") == ".tox/dev\n"
+    assert (swap_root.other / ".venv").read_text(encoding="utf-8") == "../shared\n"
+    assert (swap_root.moved / ".venv").read_text(encoding="utf-8") == ".tox/dev\n"
 
 
 @pytest.fixture
-def swap_root(root: Path, tmp_path_factory: pytest.TempPathFactory) -> tuple[Callable[[], None], Path, Path]:
+def swap_root(root: Path, tmp_path_factory: pytest.TempPathFactory) -> _SwapRoot:
     other: Final[Path] = tmp_path_factory.mktemp("other") / "project"
     other.mkdir()
     (other / ".venv").write_text("../shared\n", encoding="utf-8")
@@ -169,16 +169,24 @@ def swap_root(root: Path, tmp_path_factory: pytest.TempPathFactory) -> tuple[Cal
         root.rename(moved)
         root.symlink_to(other)
 
-    return swap, moved, other
+    return _SwapRoot(swap=swap, moved=moved, other=other)
+
+
+@dataclass(frozen=True, slots=True, kw_only=True)
+class _SwapRoot:
+    swap: Callable[[], None]
+    moved: Path
+    other: Path
 
 
 @pytest.mark.skipif(sys.platform == "win32", reason="creating symlinks needs privileges on Windows")
-def test_record_refuses_directory_link_before_open(linked_directory: tuple[Path, Path, Path]) -> None:
-    project, original, foreign = linked_directory
+def test_record_refuses_directory_link_before_open(linked_directory: _LinkedDirectory) -> None:
+    record_venv_redirect(linked_directory.project, linked_directory.project / ".tox" / "lint", lambda _: True)
 
-    record_venv_redirect(project, project / ".tox" / "lint", lambda _: True)
-
-    assert (original.read_text(encoding="utf-8"), foreign.read_text(encoding="utf-8")) == (
+    assert (
+        linked_directory.original.read_text(encoding="utf-8"),
+        linked_directory.foreign.read_text(encoding="utf-8"),
+    ) == (
         ".tox/dev\n",
         "../shared\n",
     )
@@ -187,7 +195,7 @@ def test_record_refuses_directory_link_before_open(linked_directory: tuple[Path,
 @pytest.fixture(params=[pytest.param(False, id="root"), pytest.param(True, id="parent")])
 def linked_directory(
     root: Path, tmp_path_factory: pytest.TempPathFactory, request: pytest.FixtureRequest
-) -> tuple[Path, Path, Path]:
+) -> _LinkedDirectory:
     project: Final[Path] = root / "project"
     project.mkdir()
     outside: Final[Path] = tmp_path_factory.mktemp("other")
@@ -204,7 +212,14 @@ def linked_directory(
         project.symlink_to(outside / "project")
 
     original: Final[Path] = moved / "project" / ".venv" if request.param else moved / ".venv"
-    return project, original, foreign
+    return _LinkedDirectory(project=project, original=original, foreign=foreign)
+
+
+@dataclass(frozen=True, slots=True, kw_only=True)
+class _LinkedDirectory:
+    project: Path
+    original: Path
+    foreign: Path
 
 
 @pytest.mark.skipif(sys.platform == "win32", reason="creating symlinks needs privileges on Windows")
@@ -285,22 +300,19 @@ def test_forget_after_missing_root_is_created(root: Path) -> None:
 def test_release_redirect_only_when_ours(root: Path, target: str, released: bool) -> None:
     (root / ".venv").write_text(f"{target}\n", encoding="utf-8")
 
-    outcome = release_venv_redirect(root / ".venv", _is_ours(root))
+    outcome: Final[bool] = release_venv_redirect(root / ".venv", _is_ours(root))
 
     assert (outcome, (root / ".venv").exists()) == (released, not released)
 
 
 @pytest.mark.skipif(sys.platform == "win32", reason="creating symlinks needs privileges on Windows")
-def test_release_stays_in_directory_swapped_after_check(
-    root: Path, swap_root: tuple[Callable[[], None], Path, Path]
-) -> None:
-    swap, moved, other = swap_root
+def test_release_stays_in_directory_swapped_after_check(root: Path, swap_root: _SwapRoot) -> None:
     (root / ".venv").write_text(".tox/lint\n", encoding="utf-8")
 
-    assert release_venv_redirect(root / ".venv", lambda _: swap() is None)
+    assert release_venv_redirect(root / ".venv", lambda _: swap_root.swap() is None)
 
-    assert (other / ".venv").read_text(encoding="utf-8") == "../shared\n"
-    assert not (moved / ".venv").exists()
+    assert (swap_root.other / ".venv").read_text(encoding="utf-8") == "../shared\n"
+    assert not (swap_root.moved / ".venv").exists()
 
 
 def test_release_without_directory(root: Path) -> None:
