@@ -23,10 +23,12 @@ from tox.tox_env.python.pip.req_file import PythonConstraints, PythonDeps
 from tox.util.typing_compat import override
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
     from configparser import ConfigParser, SectionProxy
     from types import UnionType
 
     from tox.config.loader.convert import Factory
+    from tox.config.loader.replacer import ReplaceReference
     from tox.config.loader.section import Section
     from tox.config.main import Config
 
@@ -93,11 +95,11 @@ class IniLoader(StrConvert, Loader[str]):
         if conf is None:  # no replacement supported in the core section
             return self.to(raw, of_type, factory)
         delay_replace = inspect.isclass(of_type) and issubclass(of_type, SetEnv)
-        replace_all: Final = (
+        replace_all: Final[Callable[[Config, ReplaceReference, str | MatchExpression, ConfigLoadArgs], str]] = (
             replace_requirement_lines
             if of_type in {PythonDeps, PythonConstraints}
             else replace_command_lines
-            if of_type == list[Command]
+            if of_type in {Command, list[Command]}
             else replace_for(of_type)
         )
 
@@ -119,9 +121,11 @@ class IniLoader(StrConvert, Loader[str]):
 
     @override
     def substitute(self, value: str, conf: Config, args: ConfigLoadArgs, *, of_type: type[V] | UnionType) -> str:
-        return (replace_requirement_lines if of_type in {PythonDeps, PythonConstraints} else replace_for(of_type))(
-            conf, ReplaceReferenceIni(conf, self), value, args
-        )
+        if of_type in {PythonDeps, PythonConstraints}:
+            return replace_requirement_lines(conf, ReplaceReferenceIni(conf, self), value, args)
+        if of_type in {Command, list[Command]}:
+            return replace_command_lines(conf, ReplaceReferenceIni(conf, self), value, args)
+        return replace_for(of_type)(conf, ReplaceReferenceIni(conf, self), value, args)
 
     @override
     def found_keys(self) -> set[str]:

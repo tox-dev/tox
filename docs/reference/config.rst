@@ -1516,9 +1516,8 @@ Run
         On Windows, ``.bat`` and ``.cmd`` commands run through ``cmd.exe``, so tox quotes their arguments for that
         parser. A batch file reading raw ``%1`` can see surrounding quotes for arguments that need them.
 
-        tox pastes substitution values into the command text before splitting it, so a value with spaces splits into
-        several arguments unless the argument holding it is quoted. Keep such values unquoted in ``[vars]`` and quote
-        the complete argument where it is used:
+        tox splits unquoted substitution values into arguments when they contain spaces. A substitution within a
+        quoted argument stays in that argument, even if the value contains quotes or backslashes:
 
         .. code-block:: ini
 
@@ -1529,10 +1528,8 @@ Run
             [testenv]
             commands = python -c 'import sys; print(sys.argv[1])' "--source={[vars]common_source}"
 
-        Quotes stored in a ``[vars]`` value are pasted in too and pair up with the quotes around them. With
-        ``source = "{tox_root}/source tree"``, ``"--source={[vars]source}/sub dir"`` splits at the spaces in
-        the stored path and keeps ``sub dir`` whole, and ``common_source = "{[vars]source}/common"`` splits at every
-        space in the path when used unquoted.
+        Quotes stored in a ``[vars]`` value remain part of that value when substituted into a quoted argument.
+        Unquoted substitutions still follow ``shlex`` quoting rules.
 
         Inside an unquoted or double-quoted path, double backslashes escape one backslash. Single-quoted text is
         literal; TOML argument arrays bypass command-line splitting. Escape a quote or wrap it in the other quote type to
@@ -3475,6 +3472,10 @@ Note that any backslashes remaining after substitution may be processed by ``shl
 platforms, the backslash escapes the following character. On Windows, it escapes quotes and other backslashes;
 backslashes before whitespace remain path separators. UNC prefixes retain their leading pair. Single-quoted text is
 literal on both platforms.
+
+A substitution within a quoted argument of an INI command stays within that argument, including any quotes or
+backslashes in its value. For example, ``"--title={env:TITLE}"`` remains one argument. Outside quotes, ``shlex`` splits
+the replacement into arguments like the text around it.
 
 Special substitutions that accept additional colon-delimited ``:`` parameters cannot have a space after the ``:`` at the
 beginning of line (e.g. ``{posargs: magic}`` would be parsed as factorial ``{posargs``, having value magic).

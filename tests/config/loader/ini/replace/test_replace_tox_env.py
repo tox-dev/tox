@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import sys
 from collections.abc import Callable
 from pathlib import Path
 from textwrap import dedent
@@ -19,7 +20,7 @@ if TYPE_CHECKING:
 
     from tests.config.loader.conftest import ReplaceOne
     from tests.conftest import ToxIniCreator
-    from tox.pytest import LogCaptureFixture
+    from tox.pytest import LogCaptureFixture, MonkeyPatch
 
 EnvConfigCreator = Callable[[str], ConfigSet]
 
@@ -63,6 +64,7 @@ def load_commands(tox_ini_conf: ToxIniCreator) -> Callable[[str], list[list[str]
     def func(commands: str) -> list[list[str]]:
         config = tox_ini_conf(
             "[testenv:x]\ndeps =\n  requests\n  pytest>=8\ncommands =\n  pip install {[testenv:x]deps}\n  python -V\n"
+            'title = title {env:TITLE}\nquoted = tool "title {env:TITLE}"\n'
             f"[testenv:a]\ncommands = {commands}\n"
         )
         env_config = config.get_env("a")
@@ -96,6 +98,148 @@ def test_replace_section_within_command_line_joins_arguments(
     load_commands: Callable[[str], list[list[str]]], command: str, expected: list[str]
 ) -> None:
     assert load_commands(command) == [expected]
+
+
+@pytest.mark.parametrize("platform", [pytest.param("linux", id="linux"), pytest.param("win32", id="windows")])
+@pytest.mark.parametrize(
+    "value",
+    [
+        pytest.param('fix" --option "typo', id="double-quotes"),
+        pytest.param("fix' --option 'typo", id="single-quotes"),
+        pytest.param("it's", id="apostrophe"),
+        pytest.param(r"a\b", id="backslash"),
+        pytest.param(r"a\\b", id="two-backslashes"),
+        pytest.param(r"a\" --option \"b", id="escaped-double-quotes"),
+        pytest.param(r'a\\" --option "b', id="double-quotes-after-two-backslashes"),
+        pytest.param("a\\", id="trailing-backslash"),
+    ],
+)
+@pytest.mark.parametrize(
+    ("command", "expected"),
+    [
+        pytest.param('tool "--title={env:TITLE}" end', "--title=TITLE", id="double"),
+        pytest.param("tool '--title={env:TITLE}' end", "--title=TITLE", id="single"),
+        pytest.param("tool --title=\"a {env:TITLE}\"' {env:TITLE}' end", "--title=a TITLE TITLE", id="adjacent"),
+        pytest.param('tool "{env:MISSING:{env:TITLE}}" end', "TITLE", id="default"),
+        pytest.param('tool "{[testenv:x]title}" end', "title TITLE", id="reference"),
+        pytest.param("{[testenv:x]quoted} end", "title TITLE", id="quoted-by-reference"),
+        pytest.param("""tool '{"title": "{env:TITLE}"}' end""", '{"title": "TITLE"}', id="single-braces"),
+        pytest.param(r"""tool "{\"title\": \"{env:TITLE}\"}" end""", '{"title": "TITLE"}', id="double-braces"),
+    ],
+)
+def test_replace_within_quoted_command_argument_stays_within(
+    load_commands: Callable[[str], list[list[str]]],
+    monkeypatch: MonkeyPatch,
+    command: str,
+    expected: str,
+    value: str,
+    platform: str,
+) -> None:
+    monkeypatch.setattr(sys, "platform", platform)
+    monkeypatch.setenv("TITLE", value)
+    assert load_commands(command) == [["tool", expected.replace("TITLE", value), "end"]]
+
+
+def test_replace_nested_env_value_within_quoted_command_argument_stays_within(
+    load_commands: Callable[[str], list[list[str]]], monkeypatch: MonkeyPatch
+) -> None:
+    monkeypatch.setenv("TITLE", "{env:TITLE_PART}")
+    monkeypatch.setenv("TITLE_PART", 'fix" --option "typo')
+    assert load_commands('tool "--title={env:TITLE}" end') == [["tool", '--title=fix" --option "typo', "end"]]
+
+
+def test_replace_within_quoted_command_argument_joins_lines(
+    load_commands: Callable[[str], list[list[str]]], monkeypatch: MonkeyPatch
+) -> None:
+    monkeypatch.setenv("TITLE", 'a\nb" c')
+    assert load_commands('tool "{env:TITLE} {env:TITLE} {env:TITLE}"') == [["tool", 'a b" c a b" c a b" c']]
+
+
+def test_replace_command_quote_ends_with_line(
+    load_commands: Callable[[str], list[list[str]]], monkeypatch: MonkeyPatch
+) -> None:
+    monkeypatch.setenv("TITLE", 'fix" --option "typo')
+    assert load_commands('echo it\'s\n  tool "{env:TITLE}"') == [["echo", "it's"], ["tool", 'fix" --option "typo']]
+
+
+def test_replace_outside_quoted_command_argument_splits(
+    load_commands: Callable[[str], list[list[str]]], monkeypatch: MonkeyPatch
+) -> None:
+    monkeypatch.setenv("ARGS", "-a 'b c'")
+    assert load_commands('tool "a" {env:ARGS}') == [["tool", "a", "-a", "b c"]]
+
+
+def test_replace_kept_within_quoted_command_argument(load_commands: Callable[[str], list[list[str]]]) -> None:
+    assert load_commands(r'''python -c "print({\"a\": 1})"''') == [["python", "-c", 'print({"a": 1})']]
+
+
+def test_replace_quoted_command_default_keeps_author_quotes(
+    load_commands: Callable[[str], list[list[str]]], monkeypatch: MonkeyPatch
+) -> None:
+    monkeypatch.delenv("MSG", raising=False)
+    assert load_commands(r'python -c "print({env:MSG:\"hello\"})"') == [["python", "-c", 'print("hello")']]
+
+
+def test_replace_quoted_command_default_keeps_colons(
+    load_commands: Callable[[str], list[list[str]]], monkeypatch: MonkeyPatch
+) -> None:
+    monkeypatch.delenv("MISSING", raising=False)
+    assert load_commands('tool "{env:MISSING:a:b}"') == [["tool", "a:b"]]
+
+
+@pytest.mark.parametrize(
+    ("command", "expected"),
+    [
+        pytest.param(r'python -c "print({tty:unused:\"bye\"})"', 'print("bye")', id="tty"),
+        pytest.param(r'python -c "print({glob:no-such-file:\"hello\"})"', 'print("hello")', id="glob"),
+        pytest.param(r'python -c "print({factor:unknown:\"hello\"})"', 'print("hello")', id="factor"),
+        pytest.param(r'python -c "print({missing:\"hello\"})"', 'print("hello")', id="reference"),
+    ],
+)
+def test_replace_quoted_command_other_defaults_keep_author_quotes(
+    load_commands: Callable[[str], list[list[str]]], command: str, expected: str
+) -> None:
+    assert load_commands(command) == [["python", "-c", expected]]
+
+
+def test_replace_quoted_command_windows_glob_default_keeps_author_quotes(
+    load_commands: Callable[[str], list[list[str]]], monkeypatch: MonkeyPatch
+) -> None:
+    monkeypatch.setattr(sys, "platform", "win32")
+    assert load_commands(r'python -c "print({glob:C:/no-such-file:\"hello\"})"') == [["python", "-c", 'print("hello")']]
+
+
+def test_replace_within_quoted_argument_of_single_command(
+    tox_ini_conf: ToxIniCreator, monkeypatch: MonkeyPatch
+) -> None:
+    monkeypatch.setenv("TITLE", 'fix" --option "typo')
+    env_config: Final[ConfigSet] = tox_ini_conf('[testenv:a]\ncommand = tool "--title={env:TITLE}" {packages}').get_env(
+        "a"
+    )
+    env_config.add_config(keys="command", of_type=Command, default=Command(["tool"]), desc="command")
+    assert env_config["command"].args == ["tool", '--title=fix" --option "typo', "{packages}"]
+
+
+def test_override_quoted_command_lines_stay_intact(quoted_command_override: ConfigSet) -> None:
+    quoted_command_override.add_config(keys="commands", of_type=list[Command], default=[], desc="commands")
+    assert quoted_command_override["commands"] == [Command(args=["tool", '--title=fix" --option "typo'])]
+
+
+@pytest.fixture
+def quoted_command_override(tox_ini_conf: ToxIniCreator, monkeypatch: MonkeyPatch) -> ConfigSet:
+    monkeypatch.setenv("TITLE", 'fix" --option "typo')
+    return tox_ini_conf(
+        "[testenv:a]\ncommands = tool old\ncommand = tool old",
+        override=[
+            Override('testenv:a.commands=tool "--title={env:TITLE}"'),
+            Override('testenv:a.command=tool "--title={env:TITLE}"'),
+        ],
+    ).get_env("a")
+
+
+def test_override_quoted_single_command_stays_intact(quoted_command_override: ConfigSet) -> None:
+    quoted_command_override.add_config(keys="command", of_type=Command, default=Command(args=["tool"]), desc="command")
+    assert quoted_command_override["command"] == Command(args=["tool", '--title=fix" --option "typo'])
 
 
 @pytest.fixture
