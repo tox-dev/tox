@@ -2,10 +2,14 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pytest
 
 from tox.tox_env.info import Info
+
+if TYPE_CHECKING:
+    from pytest_mock import MockerFixture
 
 
 def test_info_repr() -> None:
@@ -38,3 +42,33 @@ def test_info_non_dict_section_self_heals(tmp_path: Path) -> None:
         assert (eq, old) == (False, None)
 
     assert json.loads((tmp_path / ".tox-info.json").read_text()) == {"PythonRun": {"deps": ["six"]}}
+
+
+def test_info_write_replaces_symlink_instead_of_following(tmp_path: Path) -> None:
+    victim = tmp_path / "outside" / "notes.txt"
+    victim.parent.mkdir()
+    victim.write_text("must survive")
+    env_dir = tmp_path / "env"
+    env_dir.mkdir()
+    state = env_dir / ".tox-info.json"
+    try:
+        state.symlink_to(victim)
+    except OSError:  # pragma: no cover # Windows without symlink privilege
+        pytest.skip("symlinks not supported")
+
+    with Info(env_dir).compare({"name": "a"}, "ToxEnv") as (eq, _):
+        assert not eq
+
+    assert victim.read_text() == "must survive"
+    assert not state.is_symlink()
+    assert json.loads(state.read_text()) == {"ToxEnv": {"name": "a"}}
+    assert [p.name for p in env_dir.iterdir()] == [".tox-info.json"]
+
+
+def test_info_write_failure_cleans_temp_file(tmp_path: Path, mocker: MockerFixture) -> None:
+    mocker.patch("tox.tox_env.info.Path.replace", side_effect=OSError("boom"))
+
+    with pytest.raises(OSError, match="boom"), Info(tmp_path).compare({"name": "a"}, "ToxEnv"):
+        pass
+
+    assert list(tmp_path.iterdir()) == []
