@@ -11,7 +11,7 @@ from io import BytesIO, TextIOWrapper
 from pathlib import Path
 from threading import Thread, current_thread, local
 from threading import enumerate as enumerate_threads
-from typing import IO, TYPE_CHECKING, ClassVar, cast
+from typing import TYPE_CHECKING, ClassVar, cast
 from weakref import WeakKeyDictionary
 
 from colorama import Fore, Style, init
@@ -103,7 +103,7 @@ class _LogThreadLocal(local):
     def _make(prefix: str, based_of: TextIOWrapper) -> TextIOWrapper:
         return TextIOWrapper(
             NamedBytesIO(f"{prefix}-{based_of.name}"),
-            encoding=locale.getpreferredencoding(False),  # ruff:ignore[boolean-positional-value-in-call]
+            encoding=locale.getpreferredencoding(do_setlocale=False),
             errors="backslashreplace",
         )
 
@@ -240,22 +240,11 @@ class ToxHandler(_STREAM_HANDLER_BASE):
         self._setup_level(self._is_colored, level)
 
 
-def _make_encoding_error_safe(stream: IO[str]) -> None:
-    """Degrade characters the stream encoding cannot represent into escapes rather than raising.
-
-    A redirected standard stream on Windows inherits the ANSI/OEM code page (e.g. ``cp1252``) as its encoding, while tox
-    emits unicode regardless - box drawing output, non-ASCII paths, ... Such a write used to raise
-    :exc:`UnicodeEncodeError` from within the logging machinery, aborting the whole run. The encoding is left untouched,
-    only the error handler changes, so representable text keeps using the console code page.
-
-    """
-    if isinstance(stream, TextIOWrapper):
-        stream.reconfigure(errors="backslashreplace")
-
-
 def setup_report(verbosity: int, is_colored: bool) -> ToxHandler:  # ruff:ignore[boolean-type-hint-positional-argument]
     for std_stream in (sys.stdout, sys.stderr):
-        _make_encoding_error_safe(std_stream)
+        if isinstance(std_stream, TextIOWrapper):
+            # Redirected Windows streams may use code pages that cannot encode tox output.
+            std_stream.reconfigure(errors="backslashreplace")
     _clean_handlers(LOGGER)
     level = _get_level(verbosity)
     LOGGER.setLevel(level)
