@@ -99,8 +99,8 @@ def shell_cmd(cmd: Sequence[str]) -> str:
     return " ".join(shlex_quote(str(x)) for x in cmd)
 
 
-__all__ = (
+__all__ = [
     "ExecuteRequest",
     "StdinSource",
     "shell_cmd",
-)
+]

@@ -375,10 +375,10 @@ def _pty(key: str) -> tuple[int, int] | None:
     return main, child
 
 
-__all__ = (
+__all__ = [
     "SIG_INTERRUPT",
     "LocalSubProcessExecuteInstance",
     "LocalSubProcessExecutor",
     "LocalSubprocessExecuteFailedStatus",
     "LocalSubprocessExecuteStatus",
-)
+]
