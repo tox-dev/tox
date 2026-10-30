@@ -225,6 +225,7 @@ def test_tox_install_pkg_bad_wheel(tox_project: ToxProjectCreator, tmp_path: Pat
         pytest.param("not_gzip-1.0.tar.gz", "could not extract", id="invalid-gzip"),
         pytest.param("no_members-1.0.tar.gz", "no files inside", id="empty-source-archive"),
         pytest.param("not_a_zip-1.0-py3-none-any.whl", "the metadata of", id="invalid-wheel"),
+        pytest.param("invalid_utf8-1.0-py3-none-any.whl", "the metadata of", id="invalid-metadata-encoding"),
         pytest.param("bad_requires-1.0-py3-none-any.whl", "the metadata of", id="invalid-requirement"),
         pytest.param("missing_name-1.0-py3-none-any.whl", "no Name in the metadata of", id="missing-name"),
         pytest.param("no_metadata-1.0-py3-none-any.whl", "the metadata of", id="missing-wheel-metadata"),
@@ -256,6 +257,9 @@ def malformed_install_pkg_artifact(tmp_path: Path, request: pytest.FixtureReques
             pass
     elif filename == "not_a_zip-1.0-py3-none-any.whl":
         artifact.write_bytes(b"not a zip archive\n")
+    elif filename == "invalid_utf8-1.0-py3-none-any.whl":
+        with ZipFile(str(artifact), "w") as wheel:
+            wheel.writestr("invalid_utf8-1.0.dist-info/METADATA", b"Metadata-Version: 2.1\nName: invalid_utf8\n\xff")
     elif filename == "bad_requires-1.0-py3-none-any.whl":
         with ZipFile(str(artifact), "w") as wheel:
             wheel.writestr(

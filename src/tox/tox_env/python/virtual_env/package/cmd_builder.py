@@ -106,33 +106,31 @@ class VenvCmdBuilder(PythonPackageToxEnv, ABC):
         extras = for_env.get("extras", set[str])
         if path.suffix == ".whl":
             try:
-                package: Package = self._wheel_package(path, extras)
-            except (BadZipFile, InvalidRequirement, OSError) as exc:
+                return [self._wheel_package(path, extras)]
+            except (BadZipFile, InvalidRequirement, OSError, UnicodeDecodeError) as exc:
                 wheel_error: Final[str] = f"could not read the metadata of {path}: {exc}"
                 raise Fail(wheel_error) from exc
-        else:  # must be source distribution
-            work_dir = self.env_tmp_dir / "sdist-extract"
-            if not work_dir.exists():  # pragma: no branch
-                work_dir.mkdir()
+        work_dir = self.env_tmp_dir / "sdist-extract"
+        if not work_dir.exists():  # pragma: no branch
+            work_dir.mkdir()
+        try:
+            with tarfile.open(str(path), "r:gz") as tar:
+                safe_extractall(tar, work_dir)
+        except (EOFError, OSError, tarfile.TarError) as exc:
+            archive_error: Final[str] = f"could not extract {path}: {exc}"
+            raise Fail(archive_error) from exc
+        # the register run env is guaranteed to be called before this
+        assert self._sdist_meta_tox_env is not None  # ruff:ignore[assert]
+        with self._sdist_meta_tox_env.display_context(self._has_display_suspended):
             try:
-                with tarfile.open(str(path), "r:gz") as tar:
-                    safe_extractall(tar, work_dir)
-            except (EOFError, OSError, tarfile.TarError) as exc:
-                archive_error: Final[str] = f"could not extract {path}: {exc}"
-                raise Fail(archive_error) from exc
-            # the register run env is guaranteed to be called before this
-            assert self._sdist_meta_tox_env is not None  # ruff:ignore[assert]
-            with self._sdist_meta_tox_env.display_context(self._has_display_suspended):
-                try:
-                    self._sdist_meta_tox_env.root = next(work_dir.iterdir())  # contains a single egg info folder
-                except StopIteration as exc:
-                    empty_archive_error: Final[str] = f"no files inside {path}"
-                    raise Fail(empty_archive_error) from exc
-                deps = self._sdist_meta_tox_env.get_package_dependencies(for_env)
-                name = self._sdist_meta_tox_env.get_package_name(for_env)
-                available = self._sdist_meta_tox_env.get_package_extras(for_env)
-            package = SdistPackage(path, dependencies_with_extras(deps, extras, name, available_extras=available))
-        return [package]
+                self._sdist_meta_tox_env.root = next(work_dir.iterdir())  # contains a single egg info folder
+            except StopIteration as exc:
+                empty_archive_error: Final[str] = f"no files inside {path}"
+                raise Fail(empty_archive_error) from exc
+            deps = self._sdist_meta_tox_env.get_package_dependencies(for_env)
+            name = self._sdist_meta_tox_env.get_package_name(for_env)
+            available = self._sdist_meta_tox_env.get_package_extras(for_env)
+        return [SdistPackage(path, dependencies_with_extras(deps, extras, name, available_extras=available))]
 
     @staticmethod
     def _wheel_package(path: Path, extras: set[str]) -> WheelPackage:
