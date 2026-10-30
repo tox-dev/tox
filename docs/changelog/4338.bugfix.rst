@@ -1,0 +1,2 @@
+A host variable substituted through ``set_env`` into :ref:`deps` or :ref:`constraints` now keeps ``${NAME}`` text
+literal for pip. A ``${NAME}`` written in the configuration still expands.

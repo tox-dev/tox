@@ -182,7 +182,7 @@ class Unroll:
         # adjacent entries of the same value tree and spuriously trip the circular check (#2869)
         result: Final[str] = replace_env(self.conf, [name, validate(default, str)], self.args.copy())
         if self.requirement_entries and isinstance(result, HostText):
-            return protect_env_variables(result)
+            return result.protect(protect_env_variables)
         return result
 
     def _replace_glob(self, value: dict[str, TomlTypes], depth: int, *, skip_str: bool) -> TomlTypes:
@@ -386,7 +386,7 @@ class TomlReplaceLoader(ReplaceReference):
                 if isinstance(exception, KeyError):  # if the lookup failed replace - else keep
                     default = settings["default"]
                     if default is not None:
-                        return default
+                        return value.fragment(*match.span("default")) if isinstance(value, HostText) else default
                     return None  # keep original text, consistent with ini loader behavior
                 raise exception
         return None  # not a reference, such as the {} of a format string

@@ -9,7 +9,7 @@ from re import Pattern
 from typing import TYPE_CHECKING
 
 from tox.config.loader.api import apply_overrides_to_raw
-from tox.config.loader.replacer import ConfigDefault, RawText, ReplaceReference
+from tox.config.loader.replacer import ConfigDefault, HostText, RawText, ReplaceReference
 from tox.config.loader.stringify import stringify_reference
 from tox.config.sets import EnvConfigSet
 from tox.util.typing_compat import override
@@ -43,7 +43,12 @@ class ReplaceReferenceIni(ReplaceReference):
                 return self._load_from_sources(settings, key, conf_args)
             except KeyError:  # if the lookup failed replace - else keep
                 # Missing references may be factor expressions such as {py39,py38}-{,b}.
-                return ConfigDefault(text=settings["default"], start=1) if settings["default"] is not None else None
+                if (default := settings["default"]) is None:
+                    return None
+                return ConfigDefault(
+                    text=value.fragment(*match.span("default")) if isinstance(value, HostText) else default,
+                    start=1,
+                )
         return None
 
     def _load_from_sources(self, settings: dict[str, str | None], key: str, conf_args: ConfigLoadArgs) -> str:
