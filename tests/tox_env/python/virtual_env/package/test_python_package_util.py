@@ -68,39 +68,45 @@ def test_loads_deps_recursive_extras() -> None:
     assert [str(i) for i in result] == ["no-extra", "dep1[magic]", "dep1", "dep2[a,b]"]
 
 
-def test_recursive_extra_keeps_marker_of_self_reference() -> None:
-    requires: Final = [
-        Requirement('six; extra == "dev"'),
-        Requirement('name[dev]; python_version < "3.0" and extra == "all"'),
-    ]
-    result: Final = dependencies_with_extras(requires, {"all"}, "name")
-    assert [str(requirement) for requirement in result] == ['six; python_version < "3.0"']
+@pytest.mark.parametrize(
+    ("requires", "expected"),
+    [
+        pytest.param(
+            [
+                Requirement('six; extra == "dev"'),
+                Requirement('name[dev]; python_version < "3.0" and extra == "all"'),
+            ],
+            ['six; python_version < "3.0"'],
+            id="single",
+        ),
+        pytest.param(
+            [
+                Requirement('six; extra == "dev"'),
+                Requirement('name[dev]; python_version < "3.0" and extra == "all"'),
+                Requirement('name[all]; sys_platform == "win32" and extra == "dev"'),
+            ],
+            [
+                'six; python_version < "3.0"',
+                'six; python_version < "3.0" and sys_platform == "win32"',
+            ],
+            id="cycle",
+        ),
+    ],
+)
+def test_recursive_extra_keeps_marker_of_self_reference(requires: list[Requirement], expected: list[str]) -> None:
+    assert [str(requirement) for requirement in dependencies_with_extras(requires, {"all"}, "name")] == expected
 
 
 def test_recursive_extra_combines_markers_through_nested_self_references() -> None:
-    requires: Final = [
+    requires: Final[list[Requirement]] = [
         Requirement('six; implementation_name == "cpython" and extra == "dev"'),
         Requirement('name[dev]; sys_platform == "win32" and extra == "mid"'),
         Requirement('name[mid]; python_version < "3.0" and extra == "all"'),
         Requirement('name[dev]; extra == "other"'),
     ]
-    result: Final = dependencies_with_extras(requires, {"all", "other"}, "name")
-    assert sorted(str(requirement) for requirement in result) == [
+    assert sorted(str(requirement) for requirement in dependencies_with_extras(requires, {"all", "other"}, "name")) == [
         'six; implementation_name == "cpython"',
         'six; python_version < "3.0" and sys_platform == "win32" and implementation_name == "cpython"',
-    ]
-
-
-def test_recursive_extra_cycle_with_markers_ends() -> None:
-    requires: Final = [
-        Requirement('six; extra == "dev"'),
-        Requirement('name[dev]; python_version < "3.0" and extra == "all"'),
-        Requirement('name[all]; sys_platform == "win32" and extra == "dev"'),
-    ]
-    result: Final = dependencies_with_extras(requires, {"all"}, "name")
-    assert [str(requirement) for requirement in result] == [
-        'six; python_version < "3.0"',
-        'six; python_version < "3.0" and sys_platform == "win32"',
     ]
 
 

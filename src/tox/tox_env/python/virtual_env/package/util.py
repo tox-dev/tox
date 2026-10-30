@@ -40,7 +40,7 @@ def dependencies_with_extras_from_markers(
 ) -> list[Requirement]:
     normalized_extras: Final[set[str]] = {canonicalize_name(extra) for extra in extras}
     if available_extras is not None and normalized_extras:
-        normalized_available: Final = {canonicalize_name(extra) for extra in available_extras}
+        normalized_available: Final[set[str]] = {canonicalize_name(extra) for extra in available_extras}
         if unknown := normalized_extras - normalized_available:
             available_str = ", ".join(sorted(normalized_available)) or "none"
             unknown_str = ", ".join(sorted(unknown))
@@ -48,7 +48,7 @@ def dependencies_with_extras_from_markers(
             raise Fail(msg)
     result: Final[list[Requirement]] = []
     found: Final[set[str]] = set()
-    normalized_package_name: Final = canonicalize_name(package_name)
+    normalized_package_name: Final[str] = canonicalize_name(package_name)
     # Distinct marker paths to one extra can produce distinct requirements.
     todo: set[tuple[str | None, frozenset[Marker]]] = {(extra, frozenset()) for extra in normalized_extras | {None}}
     visited: Final[set[tuple[str | None, frozenset[Marker]]]] = set()
