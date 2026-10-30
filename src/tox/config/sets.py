@@ -308,9 +308,6 @@ class CoreConfigSet(ConfigSet):
     def _default_work_dir(self, conf: Config, env_name: str | None) -> Path:  # ruff:ignore[unused-method-argument]
         return self.get("tox_root", Path) / ".tox"
 
-    def _default_package_root(self, conf: Config, env_name: str | None) -> Path:  # ruff:ignore[unused-method-argument]
-        return self.get("tox_root", Path)
-
     def _default_temp_dir(self, conf: Config, env_name: str | None) -> Path:  # ruff:ignore[unused-method-argument]
         return self.get("work_dir", Path) / ".tmp"
 
@@ -370,6 +367,9 @@ class CoreConfigSet(ConfigSet):
             desc="(provisional) the tox environment the .venv redirect file points at, picked automatically when unset",
         )
         self.add_constant("host_python", "the host python executable path", sys.executable)
+
+    def _default_package_root(self, _conf: Config, _env_name: str | None) -> Path:
+        return self.get("tox_root", Path)
 
     @override
     def _on_duplicate_conf(self, key: str, definition: ConfigDefinition[V]) -> None:

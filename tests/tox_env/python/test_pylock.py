@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import sys
 from textwrap import dedent
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Final
 
 import pytest
 
@@ -10,7 +10,9 @@ from tox.tox_env.errors import Fail
 from tox.tox_env.python.pylock import Pylock
 
 if TYPE_CHECKING:
+    from collections.abc import Sequence
     from pathlib import Path
+    from unittest.mock import MagicMock
 
     from tox.pytest import ToxProject, ToxProjectCreator
 
@@ -40,22 +42,34 @@ PYLOCK_TOML = dedent("""\
 """)
 
 
-def test_pylock_install(tox_project: ToxProjectCreator) -> None:
-    project = tox_project(
-        {
-            "tox.toml": """
-            [env_run_base]
-            skip_install = true
-            pylock = "pylock.toml"
-            """,
-            "pylock.toml": PYLOCK_TOML,
-        },
-    )
-    execute_calls = project.patch_execute()
+@pytest.mark.parametrize(
+    "files",
+    [
+        pytest.param(
+            {
+                "tox.toml": '[env_run_base]\nskip_install = true\npylock = "pylock.toml"',
+                "pylock.toml": PYLOCK_TOML,
+            },
+            id="tox-root",
+        ),
+        pytest.param(
+            {
+                "tox.toml": 'package_root = "sub"\n[env_run_base]\nskip_install = true\npylock = "pylock.toml"',
+                "sub": {"pylock.toml": PYLOCK_TOML},
+            },
+            id="package-root",
+        ),
+    ],
+)
+def test_pylock_install(tox_project: ToxProjectCreator, files: dict[str, str | dict[str, str]]) -> None:
+    project: Final[ToxProject] = tox_project(files)
+    execute_calls: Final[MagicMock] = project.patch_execute()
     project.run("r", "-e", "py").assert_success()
 
-    req_file = str(project.path / ".tox" / "py" / "pylock.txt")
-    found_calls = [(i[0][0].conf.name, i[0][3].run_id, i[0][3].cmd) for i in execute_calls.call_args_list]
+    req_file: Final[str] = str(project.path / ".tox" / "py" / "pylock.txt")
+    found_calls: Final[list[tuple[str, str, Sequence[str]]]] = [
+        (call[0][0].conf.name, call[0][3].run_id, call[0][3].cmd) for call in execute_calls.call_args_list
+    ]
     assert found_calls == [
         ("py", "install_pylock", ["python", "-I", "-m", "pip", "install", "--no-deps", "-r", req_file]),
     ]
@@ -64,31 +78,8 @@ def test_pylock_install(tox_project: ToxProjectCreator) -> None:
     ).read_text() == "alpha==1.0.0 --hash=sha256:abc123\nbeta==2.0.0 --hash=sha256:def456"
 
 
-def test_pylock_install_uses_package_root_without_package_env(tox_project: ToxProjectCreator) -> None:
-    project = tox_project(
-        {
-            "tox.toml": """
-            package_root = "sub"
-
-            [env_run_base]
-            skip_install = true
-            pylock = "pylock.toml"
-            """,
-            "sub": {"pylock.toml": PYLOCK_TOML},
-        },
-    )
-    execute_calls = project.patch_execute()
-    project.run("r", "-e", "py").assert_success()
-
-    req_file = str(project.path / ".tox" / "py" / "pylock.txt")
-    found_calls = [(i[0][0].conf.name, i[0][3].run_id, i[0][3].cmd) for i in execute_calls.call_args_list]
-    assert found_calls == [
-        ("py", "install_pylock", ["python", "-I", "-m", "pip", "install", "--no-deps", "-r", req_file]),
-    ]
-
-
 def test_dependency_groups_use_package_root_without_package_env(tox_project: ToxProjectCreator) -> None:
-    project = tox_project(
+    project: Final[ToxProject] = tox_project(
         {
             "tox.toml": """
             package_root = "sub"
@@ -100,10 +91,12 @@ def test_dependency_groups_use_package_root_without_package_env(tox_project: Tox
             "sub": {"pyproject.toml": '[dependency-groups]\ndev = ["six"]\n'},
         },
     )
-    execute_calls = project.patch_execute()
+    execute_calls: Final[MagicMock] = project.patch_execute()
     project.run("r", "-e", "py").assert_success()
 
-    found_calls = [(i[0][0].conf.name, i[0][3].run_id) for i in execute_calls.call_args_list]
+    found_calls: Final[list[tuple[str, str]]] = [
+        (call[0][0].conf.name, call[0][3].run_id) for call in execute_calls.call_args_list
+    ]
     assert found_calls == [("py", "install_dependency-groups")]
     assert "six" in execute_calls.call_args_list[0][0][3].cmd
 
