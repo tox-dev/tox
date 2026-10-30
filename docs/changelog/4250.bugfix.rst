@@ -1,2 +1,1 @@
-An invalid line in a ``set_env`` file is now reported by its file and line number instead of its content, which may hold
-part of a secret value.
+Report the file and line number for an invalid ``set_env`` file line, since its content may contain a secret.
