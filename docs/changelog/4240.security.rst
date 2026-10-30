@@ -1,2 +1,2 @@
-Reject a wheel whose ``.dist-info`` metadata file (such as ``METADATA``) declares more than 8 MiB uncompressed instead of
-inflating it into memory, and read each metadata file from the wheel only once.
+Reject a wheel whose ``.dist-info`` metadata file (such as ``METADATA``) declares more than 8 MiB uncompressed instead
+of inflating it into memory, and read each metadata file from the wheel only once.
