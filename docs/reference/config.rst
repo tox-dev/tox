@@ -621,9 +621,12 @@ the top level of ``tox.toml``. Placing these options in an environment section (
     :default: {work_dir}/.tmp
     :version_added: 3.5
 
-    Directory where to put tox temporary files. For example: we create a hard link (if possible, otherwise new copy) in
-    this directory for the project package. This ensures tox works correctly when having parallel runs (as each session
-    will have its own copy of the project package - e.g. the source distribution).
+    Directory for tox temporary files. Each package build creates a separate copy here so parallel runs do not share the
+    same staged package.
+
+    If this directory is a symlink inside :ref:`work_dir`, tox replaces the link with a directory. A configured path
+    outside :ref:`work_dir` may remain a symlink. On POSIX, package staging rejects a path that another account can
+    rename based on its ownership and permissions at validation time.
 
 .. conf::
     :keys: venv_redirect
