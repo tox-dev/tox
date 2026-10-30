@@ -72,6 +72,10 @@ class InstallPackageAction(Action):
             raise ArgumentError(self, f"{path} is not a file")
         setattr(namespace, self.dest, path)
 
+    def normalize_default(self, value: Any) -> Path:
+        """Pin defaults from environment variables or user config to an absolute path, as is done for the flag."""
+        return self._resolve_path(str(value))
+
     @staticmethod
     def _resolve_path(raw: str) -> Path:
         """Convert a raw string (possibly a ``file:`` URI) to an absolute :class:`~pathlib.Path`."""

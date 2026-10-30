@@ -13,6 +13,7 @@ from tox.util.ci import is_ci
 
 if TYPE_CHECKING:
     from collections.abc import Callable
+    from pathlib import Path
 
     from tox.pytest import CaptureFixture, LogCaptureFixture, MonkeyPatch
     from tox.session.state import State
@@ -221,3 +222,16 @@ def test_bad_env_var_redacts_secret_in_reason(
     assert "hun" not in out + err
     assert "ter2" not in out + err
     assert f"--password={mask}" in out
+
+
+def test_install_pkg_env_var_relative_path_is_absolute(tmp_path: Path, monkeypatch: MonkeyPatch) -> None:
+    wheel = tmp_path / "dist" / "demo-1.0-py3-none-any.whl"
+    wheel.parent.mkdir()
+    wheel.write_text("")
+    (tmp_path / "tests").mkdir()
+    monkeypatch.chdir(tmp_path / "tests")
+    monkeypatch.setenv("TOX_INSTALL_PKG", "../dist/demo-1.0-py3-none-any.whl")
+    parsed, _, __, ___, ____ = get_options("r")
+    assert parsed.install_pkg.is_absolute()
+    monkeypatch.chdir(tmp_path)
+    assert parsed.install_pkg.resolve() == wheel.resolve()
