@@ -34,9 +34,8 @@ def validate(val: TomlTypes, of_type: type[T]) -> T:  # ruff:ignore[complex-stru
             for va in val:
                 validate(va, entry_type)
         else:
-            msg = f"{val!r} is not list"
+            msg = f"{_describe(val)} is not list"
     elif isclass(of_type) and issubclass(of_type, Command):
-        # first we cast it to list then create commands, so for now validate it as a nested list
         validate(val, list[str])
     elif isclass(of_type) and issubclass(of_type, EnvList):
         # validation is performed by TomlLoader.to_env_list
@@ -49,8 +48,8 @@ def validate(val: TomlTypes, of_type: type[T]) -> T:  # ruff:ignore[complex-stru
             for va in val.values():
                 validate(va, value_type)
         else:
-            msg = f"{val!r} is not dictionary"
-    elif casting_to in {Union, UnionType}:  # handle Optional values
+            msg = f"{_describe(val)} is not dictionary"
+    elif casting_to in {Union, UnionType}:
         args: list[type[Any]] = list(type_args)
         for arg in args:
             try:
@@ -59,25 +58,32 @@ def validate(val: TomlTypes, of_type: type[T]) -> T:  # ruff:ignore[complex-stru
             except TypeError:
                 pass
         else:
-            msg = f"{val!r} is not union of {', '.join(a.__name__ for a in args)}"
+            msg = f"{_describe(val)} is not union of {', '.join(a.__name__ for a in args)}"
     elif casting_to in {Literal, type(Literal)}:
         choice = type_args
         if val not in choice:
-            msg = f"{val!r} is not one of literal {','.join(repr(i) for i in choice)}"
+            msg = f"{_describe(val)} is not one of literal {','.join(repr(i) for i in choice)}"
     elif not isinstance(val, of_type):
         if issubclass(of_type, (bool, str, int)):
             fail = True  # the enclosing branch established the value is not an instance already
         else:
-            try:  # check if it can be converted
+            try:
                 cast("Callable[[TomlTypes], object]", of_type)(val)
                 fail = False
             except Exception:  # ruff:ignore[blind-except]
                 fail = True
         if fail:
-            msg = f"{val!r} is not of type {of_type.__name__!r}"
+            msg = f"{_describe(val)} is not of type {of_type.__name__!r}"
     if msg:
         raise TypeError(msg)
     return cast("T", val)
+
+
+def _describe(value: TomlTypes) -> str:
+    # Substitution can put secret text in values.
+    if value is None or isinstance(value, (bool, int, float)):
+        return repr(value)
+    return f"value of type {type(value).__name__!r}"
 
 
 __all__ = [

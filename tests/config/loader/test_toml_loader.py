@@ -69,16 +69,18 @@ def test_toml_loader_ok(value: Any, of_type: type[Any] | UnionType, expected: ob
     ("value", "of_type", "msg"),
     [
         pytest.param(1, str, r"1 is not of type 'str'", id="str"),
-        pytest.param("true", bool, r"'true' is not of type 'bool'", id="bool"),
-        pytest.param({}, list[str], r"\{\} is not list", id="list"),
+        pytest.param("true", bool, r"value of type 'str' is not of type 'bool'", id="bool"),
+        pytest.param({}, list[str], r"value of type 'dict' is not list", id="list"),
         pytest.param(["a", 2], list[str], r"2 is not of type 'str'", id="list_element"),
-        pytest.param({"a"}, dict[str, str], r"\{'a'\} is not dictionary", id="dict"),
+        pytest.param({"a"}, dict[str, str], r"value of type 'set' is not dictionary", id="dict"),
         pytest.param({"a": 1, 1: "2"}, dict[str, int], r"1 is not of type 'str'", id="dict_key"),
-        pytest.param({"a": 1, "b": "2"}, dict[str, int], r"'2' is not of type 'int'", id="dict_value"),
+        pytest.param({"a": 1, "b": "2"}, dict[str, int], r"value of type 'str' is not of type 'int'", id="dict_value"),
         pytest.param(1, Path, r"1 is not of type 'str'", id="path"),
         pytest.param([["a", 1]], list[Command], r"1 is not of type 'str'", id="command"),
         pytest.param(["a", None, 1], list[str | None], r"1 is not union of str, NoneType", id="list_optional"),
-        pytest.param(["a", "c"], list[Literal["a", "b"]], r"'c' is not one of literal 'a','b'", id="list_literal"),
+        pytest.param(
+            ["a", "c"], list[Literal["a", "b"]], r"value of type 'str' is not one of literal 'a','b'", id="list_literal"
+        ),
     ],
 )
 def test_toml_loader_nok(value: Any, of_type: type[Any] | UnionType, msg: str) -> None:
