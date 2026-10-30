@@ -482,6 +482,28 @@ def test_args_are_paths_rewrites_name_after_program(
     assert result.out == f"[testenv:py]\n{key} = {prefix}w{os.sep}python\n"
 
 
+def test_args_are_paths_rewrite_does_not_become_option(tox_project: ToxProjectCreator) -> None:
+    project: Final[ToxProject] = tox_project({
+        "tox.ini": "[testenv]\npackage=skip\ncommands={posargs}\nchange_dir=w",
+        "w": {"--config=evil.cfg": "", "a.txt": ""},
+    })
+    args: Final[tuple[str, str]] = f"w{os.sep}a.txt", f"w{os.sep}--config=evil.cfg"
+    result: Final[ToxRunOutcome] = project.run("c", "-e", "py", "-k", "commands", "--", *args)
+    result.assert_success()
+    assert result.out == f"[testenv:py]\ncommands = a.txt .{os.sep}--config=evil.cfg\n"
+
+
+def test_args_are_paths_falls_back_to_absolute_path(tox_project: ToxProjectCreator, mocker: MockerFixture) -> None:
+    project: Final[ToxProject] = tox_project({
+        "tox.ini": "[testenv]\npackage=skip\ncommands=echo {posargs}\nchange_dir=w",
+        "w": {"a.txt": ""},
+    })
+    mocker.patch.object(os.path, "relpath", autospec=True, side_effect=ValueError("different drives"))
+    result: Final[ToxRunOutcome] = project.run("c", "-e", "py", "-k", "commands", "--", f"w{os.sep}a.txt")
+    result.assert_success()
+    assert result.out == f"[testenv:py]\ncommands = echo {project.path / 'w' / 'a.txt'}\n"
+
+
 @pytest.mark.skipif(sys.platform == "win32", reason="symlinks need privileges on Windows, and .. is unrolled lexically")
 @pytest.mark.parametrize(
     "change_dir",

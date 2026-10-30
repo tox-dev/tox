@@ -1,0 +1,3 @@
+With ``args_are_paths`` enabled, a positional argument naming an existing file whose rewritten path relative to
+``change_dir`` starts with ``-`` (for example ``tests/--config=evil.cfg``) is now prefixed with ``./`` so the command
+still receives a path instead of an option.
