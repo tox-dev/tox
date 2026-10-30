@@ -53,7 +53,7 @@ class Info:
         old = self._content.get(section)
         if sub_section is not None:
             old = old.get(sub_section) if isinstance(old, dict) else None
-        elif isinstance(value, dict) and not isinstance(old, dict):
+        if isinstance(value, dict) and not isinstance(old, dict):
             old = None
 
         if old == value:

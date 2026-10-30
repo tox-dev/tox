@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import Final
 
 import pytest
 
@@ -41,11 +40,35 @@ def test_info_non_dict_section_self_heals(tmp_path: Path) -> None:
     assert json.loads((tmp_path / ".tox-info.json").read_text()) == {"PythonRun": {"deps": ["six"]}}
 
 
-def test_info_non_dict_mapping_section_self_heals(tmp_path: Path) -> None:
-    (tmp_path / ".tox-info.json").write_text('{"Python": []}')
+@pytest.mark.parametrize(
+    ("content", "section", "sub_section", "expected"),
+    [
+        pytest.param(
+            '{"Python": []}',
+            "Python",
+            None,
+            {"Python": {"base_python": ["3.14"]}},
+            id="whole section",
+        ),
+        pytest.param(
+            '{"PythonRun": {"deps": []}}',
+            "PythonRun",
+            "deps",
+            {"PythonRun": {"deps": {"base_python": ["3.14"]}}},
+            id="nested section",
+        ),
+    ],
+)
+def test_info_non_dict_mapping_section_self_heals(
+    tmp_path: Path,
+    content: str,
+    section: str,
+    sub_section: str | None,
+    expected: dict[str, dict[str, list[str] | dict[str, list[str]]]],
+) -> None:
+    (tmp_path / ".tox-info.json").write_text(content)
 
-    conf: Final[dict[str, list[str]]] = {"base_python": ["3.14"]}
-    with Info(tmp_path).compare(conf, "Python") as (eq, old):
+    with Info(tmp_path).compare({"base_python": ["3.14"]}, section, sub_section) as (eq, old):
         assert (eq, old) == (False, None)
 
-    assert json.loads((tmp_path / ".tox-info.json").read_text()) == {"Python": conf}
+    assert json.loads((tmp_path / ".tox-info.json").read_text()) == expected
