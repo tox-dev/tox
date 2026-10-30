@@ -1,1 +1,1 @@
-Windows parallel tests use an absolute missing-interpreter path to avoid probing Python registrations in CI.
+``test_parallel_general`` uses an absolute missing-interpreter path to avoid Windows registry probes in CI.
