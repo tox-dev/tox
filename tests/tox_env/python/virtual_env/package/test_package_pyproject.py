@@ -180,6 +180,42 @@ def test_core_package_root_is_relative_to_conf(tox_project: ToxProjectCreator) -
     assert result.state.conf.core["package_root"] == project.path / "a"
 
 
+def test_static_package_deps_use_pkg_env_package_root(package_root_project: ToxProject) -> None:
+    package_root_project.patch_execute(lambda request: 0 if "install" in request.run_id else None)
+    result: Final[ToxRunOutcome] = package_root_project.run("r", "--notest")
+    result.assert_success()
+    assert [line for line in result.out.splitlines() if line.startswith("py: install_package_deps>")] == [
+        "py: install_package_deps> python -I -m pip install service-dep"
+    ]
+
+
+@pytest.fixture
+def package_root_project(tox_project: ToxProjectCreator, demo_pkg_inline: Path) -> ToxProject:
+    return tox_project({
+        "tox.ini": "[testenv]\npackage=wheel\nwheel_build_env=.pkg\n[testenv:.pkg]\npackage_root={tox_root}/service",
+        "pyproject.toml": '[project]\nname = "workspace"\nversion = "9.9"\ndependencies = ["workspace-dep"]\n',
+        "service": {
+            "build.py": (demo_pkg_inline / "build.py").read_text(encoding="utf-8"),
+            "pyproject.toml": (
+                '[build-system]\nrequires = []\nbuild-backend = "build"\nbackend-path = ["."]\n'
+                '[project]\nname = "service"\nversion = "1.0"\ndependencies = ["service-dep"]\n'
+            ),
+        },
+    })
+
+
+def test_editable_legacy_installs_pkg_env_package_root(package_root_project: ToxProject) -> None:
+    (package_root_project.path / "tox.ini").write_text(
+        "[testenv]\npackage=editable-legacy\n[testenv:.pkg]\npackage_root={tox_root}/service", encoding="utf-8"
+    )
+    package_root_project.patch_execute(lambda request: 0 if "install" in request.run_id else None)
+    result: Final[ToxRunOutcome] = package_root_project.run("r", "--notest")
+    result.assert_success()
+    assert [
+        line.rpartition(" -e ")[-1] for line in result.out.splitlines() if line.startswith("py: install_package>")
+    ] == [str(package_root_project.path / "service")]
+
+
 @pytest.mark.parametrize(
     ("conf", "extra", "deps"),
     [
