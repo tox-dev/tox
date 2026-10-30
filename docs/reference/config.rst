@@ -1993,6 +1993,9 @@ Python run
     - a `constraint file <https://pip.pypa.io/en/stable/user_guide/#constraints-files>`_ when the value starts with
       ``-c`` (followed by a file path or URL).
 
+    tox rejects requirement and constraint files larger than 10 MiB. For HTTP(S) files, it checks a 120-second deadline
+    between response body reads. A server that sends HTTP framing bytes slowly can delay the check.
+
     A substitution inside a dependency or option entry cannot add a requirements-file line. tox refuses a line break in
     that value, or a backslash at the end of a substituted line, before starting pip. A partial substitution also cannot
     add, remove, or split parsed pip option tokens. This includes ``${VAR}`` expansion. tox still accepts options
@@ -2040,6 +2043,7 @@ Python run
     additional dependencies specified in :ref:`deps`, but will not be used when installing the package itself.
     Each value must be a file path or URL. A substitution within one value cannot add a line break, end a line with a
     backslash, or add a parsed pip option. tox still accepts options written on the same line in the configuration.
+    The file size and remote body deadline described under :ref:`deps` also apply.
 
 .. conf::
     :keys: use_develop, usedevelop

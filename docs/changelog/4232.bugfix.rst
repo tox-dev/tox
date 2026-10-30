@@ -1,0 +1,2 @@
+Limit each requirement or constraint file to 10 MiB, so oversized and endless includes fail with a size error. For
+remote files, tox checks a 120-second deadline between response body reads. Slow HTTP framing can delay that check.

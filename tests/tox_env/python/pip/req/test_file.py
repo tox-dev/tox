@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import os
+import socket
 import sys
 from contextlib import contextmanager
+from http.client import HTTPResponse
 from io import BytesIO
 from typing import IO, TYPE_CHECKING, Any, Final
 
@@ -604,6 +606,46 @@ def test_req_over_http(tmp_path: Path, flag: str, mocker: MockerFixture) -> None
     assert found == [f"{'-c ' if is_constraint else ''}a"]
     # urlopen must be called with a timeout to avoid hanging on slow / unresponsive mirrors
     assert url_open.call_args.kwargs.get("timeout") is not None
+
+
+def test_req_file_over_size_limit(tmp_path: Path) -> None:
+    (tmp_path / "big.txt").write_bytes(b"a" * (10 * 1024 * 1024 + 1))
+    requirements_txt: Final[Path] = tmp_path / "req.txt"
+    requirements_txt.write_text("-c big.txt")
+    with pytest.raises(ValueError, match=r"big\.txt exceeds the 10485760 byte limit"):
+        _ = RequirementsFile(requirements_txt, constraint=False).requirements
+
+
+def test_req_file_at_size_limit(tmp_path: Path) -> None:
+    requirements_txt: Final[Path] = tmp_path / "req.txt"
+    requirements_txt.write_bytes(b"#" * (10 * 1024 * 1024 - len(b"\nvalid\n")) + b"\nvalid\n")
+    assert [str(requirement) for requirement in RequirementsFile(requirements_txt, constraint=False).requirements] == [
+        "valid"
+    ]
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="/dev/zero is a POSIX device")
+def test_req_file_endless_stream_is_bounded(tmp_path: Path) -> None:
+    requirements_txt: Final[Path] = tmp_path / "req.txt"
+    requirements_txt.write_text("-c /dev/zero")
+    with pytest.raises(ValueError, match="exceeds the 10485760 byte limit"):
+        _ = RequirementsFile(requirements_txt, constraint=False).requirements
+
+
+def test_req_over_http_slow_drip_hits_deadline(tmp_path: Path, mocker: MockerFixture) -> None:
+    requirements_txt: Final[Path] = tmp_path / "req.txt"
+    requirements_txt.write_text("-c https://user:hunter2@example.com/c.txt")
+    reader, writer = socket.socketpair()
+    with reader, writer:
+        reader.settimeout(0.05)
+        writer.sendall(b"HTTP/1.1 200 OK\r\n\r\n#")
+        response: Final[HTTPResponse] = HTTPResponse(reader)
+        response.begin()
+        mocker.patch("tox.tox_env.python.pip.req.file.urlopen", autospec=True, return_value=response)
+        mocker.patch("tox.tox_env.python.pip.req.file.monotonic", side_effect=[0, 121])
+        with pytest.raises(ValueError, match=r"https://example\.com/c\.txt took longer than 120 seconds") as exc:
+            _ = RequirementsFile(requirements_txt, constraint=False).requirements
+        assert "hunter2" not in str(exc.value)
 
 
 def test_req_over_http_has_req(tmp_path: Path, mocker: MockerFixture) -> None:
