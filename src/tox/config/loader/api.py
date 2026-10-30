@@ -58,9 +58,6 @@ class Override:  # ruff:ignore[eq-without-hash]
     def __str__(self) -> str:
         escaped_ns = ".".join(part.replace(".", "\\.") for part in self._namespace_parts)
         raw = f"{escaped_ns}{'.' if escaped_ns else ''}{self.key}{'+' if self.append else ''}={self.value}"
-        # the help formatter prints this string, and a secret can sit on either side of the ``=`` and hold whitespace.
-        # Mask the whole rendered override first, then within its separated tokens, and keep the text byte-identical
-        # when nothing matches.
         redacted = "".join(redact_argv([raw]))
         redacted = "".join(redact_argv(re.split(r"(\s+|;)", redacted)))
         return redacted if redacted != raw else raw

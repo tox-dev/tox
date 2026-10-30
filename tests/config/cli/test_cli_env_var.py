@@ -202,17 +202,20 @@ def test_bad_env_var_redacts_secret(raw: str, monkeypatch: MonkeyPatch, capsys: 
     assert "badoverride;" in out
 
 
-def test_bad_env_var_redacts_secret_in_reason(monkeypatch: MonkeyPatch, capsys: CaptureFixture) -> None:
-    monkeypatch.setenv("TOX_PARALLEL", "--password=hunter2")
+@pytest.mark.parametrize(
+    ("secret", "mask"),
+    [
+        pytest.param("hunter2", "*******", id="plain"),
+        pytest.param("hun ter2", "********", id="space"),
+        pytest.param("hun\nter2", "********", id="newline"),
+        pytest.param(r"hun\ter2", "********", id="backslash"),
+    ],
+)
+def test_bad_env_var_redacts_secret_in_reason(
+    secret: str, mask: str, monkeypatch: MonkeyPatch, capsys: CaptureFixture
+) -> None:
+    monkeypatch.setenv("TOX_PARALLEL", f"--password={secret}")
     get_options()
     out, err = capsys.readouterr()
-    assert "hunter2" not in out + err
-
-
-def test_bad_env_var_redacts_secret_holding_whitespace(monkeypatch: MonkeyPatch, capsys: CaptureFixture) -> None:
-    # a secret can hold a space, and masking only up to the first one would leave the rest of it in the message
-    monkeypatch.setenv("TOX_PARALLEL", "--password=hun ter2")
-    get_options()
-    out, err = capsys.readouterr()
-    assert "ter2" not in out + err
-    assert "--password=********" in out
+    assert "hun" not in out + err
+    assert f"--password={mask}" in out
