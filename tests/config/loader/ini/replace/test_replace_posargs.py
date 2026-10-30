@@ -12,7 +12,7 @@ if TYPE_CHECKING:
     from pytest_mock import MockerFixture
 
     from tests.config.loader.conftest import ReplaceOne
-    from tox.pytest import ToxProject, ToxProjectCreator, ToxRunOutcome
+    from tox.pytest import ToxProjectCreator
 
 
 @pytest.mark.parametrize("syntax", ["{posargs}", "[]"])
@@ -120,46 +120,6 @@ def test_replace_pos_args_reach_command_intact(
     assert outcome.env_conf("py")["commands"] == [Command(args=["python", arg])]
 
 
-def test_replace_pos_args_quoted_command_default_keeps_author_quotes(tox_project: ToxProjectCreator) -> None:
-    outcome: Final[ToxRunOutcome] = tox_project({
-        "tox.ini": '[testenv]\ncommands = python -c "print({posargs:\\"hello\\"})"'
-    }).run("c", "-k", "commands")
-    outcome.assert_success()
-    assert outcome.env_conf("py")["commands"] == [Command(args=["python", "-c", 'print("hello")'])]
-
-
-@pytest.mark.parametrize("platform", [pytest.param("linux", id="linux"), pytest.param("win32", id="windows")])
-@pytest.mark.parametrize(
-    "command",
-    [
-        pytest.param("--filter='{posargs}'", id="single"),
-        pytest.param('--filter="{posargs}"', id="double"),
-    ],
-)
-def test_replace_pos_args_within_quoted_command_argument_stays_intact(
-    tox_project: ToxProjectCreator, mocker: MockerFixture, platform: str, command: str
-) -> None:
-    for module in ("tox.config.loader.replacer", "tox.config.loader.str_convert"):
-        mocker.patch(f"{module}.sys", mocker.create_autospec(sys, platform=platform))
-    outcome: Final[ToxRunOutcome] = tox_project({"tox.ini": f"[testenv]\ncommands = tool {command}"}).run(
-        "c", "-k", "commands", "--", "smoke --added-option"
-    )
-    outcome.assert_success()
-    assert outcome.env_conf("py")["commands"] == [Command(args=["tool", "--filter=smoke --added-option"])]
-
-
-@pytest.mark.parametrize(
-    "arg",
-    [pytest.param("{env_name}", id="env-name"), pytest.param("{posargs} -x", id="posargs")],
-)
-def test_replace_pos_args_within_quoted_command_argument_keeps_braces(tox_project: ToxProjectCreator, arg: str) -> None:
-    outcome: Final[ToxRunOutcome] = tox_project({"tox.ini": '[testenv]\ncommands = tool "--filter={posargs}"'}).run(
-        "c", "-k", "commands", "--", arg
-    )
-    outcome.assert_success()
-    assert outcome.env_conf("py")["commands"] == [Command(args=["tool", f"--filter={arg}"])]
-
-
 @pytest.mark.parametrize(
     "config",
     [
@@ -178,17 +138,17 @@ def test_replace_pos_args_reach_command_intact_when_nested(
     tox_project: ToxProjectCreator, monkeypatch: pytest.MonkeyPatch, config: str, arg: str
 ) -> None:
     monkeypatch.delenv("MISSING", raising=False)
-    project: Final[ToxProject] = tox_project({"tox.ini": f"[testenv]\n{config}"})
-    outcome: Final[ToxRunOutcome] = project.run("c", "-k", "commands", "--", arg)
+    project: Final = tox_project({"tox.ini": f"[testenv]\n{config}"})
+    outcome: Final = project.run("c", "-k", "commands", "--", arg)
     outcome.assert_success()
     assert outcome.env_conf("py")["commands"] == [Command(args=["python", arg])]
 
 
 def test_replace_pos_args_default_substituted(tox_project: ToxProjectCreator) -> None:
-    project: Final[ToxProject] = tox_project({
+    project: Final = tox_project({
         "tox.ini": "[testenv]\ncommands = python {posargs:{[base]args}}\n[base]\nargs = a{/}{env_name}"
     })
-    outcome: Final[ToxRunOutcome] = project.run("c", "-k", "commands")
+    outcome: Final = project.run("c", "-k", "commands")
     outcome.assert_success()
     assert outcome.env_conf("py")["commands"] == [Command(args=["python", f"a{os.sep}py"])]
 
@@ -211,19 +171,17 @@ def test_replace_pos_args_line_break_stays_one_command(
 ) -> None:
     for module in ("tox.config.loader.replacer", "tox.config.loader.str_convert"):
         mocker.patch(f"{module}.sys", mocker.create_autospec(sys, platform=platform))
-    project: Final[ToxProject] = tox_project({"tox.ini": f"[testenv]\ncommands = {'python' if override else commands}"})
-    prefix: Final[list[str]] = [] if commands.startswith("python") else ["python", "-c"]
-    overrides: Final[list[str]] = ["-x", f"testenv.commands={commands}"] if override else []
-    outcome: Final[ToxRunOutcome] = project.run(
-        "c", "-k", "commands", *overrides, "--", *prefix, "a\npython -c b\n", "\n", "c\r\nd"
-    )
+    project: Final = tox_project({"tox.ini": f"[testenv]\ncommands = {'python' if override else commands}"})
+    prefix: Final = [] if commands.startswith("python") else ["python", "-c"]
+    overrides: Final = ["-x", f"testenv.commands={commands}"] if override else []
+    outcome: Final = project.run("c", "-k", "commands", *overrides, "--", *prefix, "a\npython -c b\n", "\n", "c\r\nd")
     outcome.assert_success()
     assert outcome.env_conf("py")["commands"] == [Command(args=["python", "-c", "a python -c b", "", "c d"])]
 
 
 def test_replace_pos_args_line_break_stays_one_list_entry(tox_project: ToxProjectCreator) -> None:
-    project: Final[ToxProject] = tox_project({"tox.ini": "[testenv]\nallowlist_externals = {posargs}"})
-    outcome: Final[ToxRunOutcome] = project.run("c", "-k", "allowlist_externals", "--", "a\nb")
+    project: Final = tox_project({"tox.ini": "[testenv]\nallowlist_externals = {posargs}"})
+    outcome: Final = project.run("c", "-k", "allowlist_externals", "--", "a\nb")
     outcome.assert_success()
     assert outcome.env_conf("py")["allowlist_externals"] == ["'a b'"]
 
@@ -236,14 +194,14 @@ def test_replace_pos_args_line_break_stays_one_list_entry(tox_project: ToxProjec
     ],
 )
 def test_referenced_default_command_line_break_stays_one_command(tox_project: ToxProjectCreator, arg: str) -> None:
-    project: Final[ToxProject] = tox_project({
+    project: Final = tox_project({
         "tox.ini": (
             "[testenv:notes]\nrunner = virtualenv-pep-723\nscript = check.py\n"
             "[testenv:release]\ncommands = python -c pass\n    {[testenv:notes]commands}\n"
         ),
         "check.py": "print('ok')\n",
     })
-    outcome: Final[ToxRunOutcome] = project.run("c", "-e", "release", "-k", "commands", "--", arg)
+    outcome: Final = project.run("c", "-e", "release", "-k", "commands", "--", arg)
     outcome.assert_success()
     assert outcome.env_conf("release")["commands"] == [
         Command(args=["python", "-c", "pass"]),
@@ -277,7 +235,7 @@ def test_replace_pos_args_reach_referenced_command_intact(
 ) -> None:
     for module in ("tox.config.loader.replacer", "tox.config.loader.str_convert"):
         mocker.patch(f"{module}.sys", mocker.create_autospec(sys, platform=platform))
-    project: Final[ToxProject] = tox_project({"tox.ini": f"[testenv]\ncommands = python {{posargs}} -x\n{config}"})
-    outcome: Final[ToxRunOutcome] = project.run("c", "-e", "py", "-k", "commands", "--", arg)
+    project: Final = tox_project({"tox.ini": f"[testenv]\ncommands = python {{posargs}} -x\n{config}"})
+    outcome: Final = project.run("c", "-e", "py", "-k", "commands", "--", arg)
     outcome.assert_success()
     assert outcome.env_conf("py")["commands"] == [Command(args=["python", arg, "-x"])]
