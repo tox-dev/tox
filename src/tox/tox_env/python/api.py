@@ -84,6 +84,9 @@ PY_FACTORS_RE_EXPLICIT_VERSION = re.compile(
 )
 
 
+_MAX_VERSION_LINE_LENGTH = 1024
+
+
 class Python(ToxEnv, ABC):
     def __init__(self, create_args: ToxEnvCreateArgs) -> None:
         self._base_python: PythonInfo | None = None
@@ -226,14 +229,36 @@ class Python(ToxEnv, ABC):
             path = tox_root / file_path
             if not path.exists():
                 continue
-            content = path.read_text(encoding="utf-8-sig")
-            for line in content.splitlines():
-                stripped = line.strip()
-                if stripped and not stripped.startswith("#"):
-                    return [stripped]
+            if not path.is_file():
+                msg = f"base_python_file: {file_path!r} is not a regular file"
+                raise Fail(msg)
+            try:
+                version = self._first_version_line(path, file_path)
+            except (OSError, UnicodeDecodeError) as exc:
+                msg = f"base_python_file: cannot read {file_path!r}: {exc}"
+                raise Fail(msg) from exc
+            if version is not None:
+                return [version]
         paths = ", ".join(repr(f) for f in file_paths)
         msg = f"base_python_file: no valid Python version found in {paths}"
         raise Fail(msg)
+
+    @staticmethod
+    def _first_version_line(path: Path, file_path: str) -> str | None:
+        with path.open(encoding="utf-8-sig") as file_handler:
+            while line := file_handler.readline(_MAX_VERSION_LINE_LENGTH + 1):
+                truncated = len(line) > _MAX_VERSION_LINE_LENGTH and not line.endswith("\n")
+                stripped = line.strip()
+                if stripped.startswith("#"):
+                    while truncated and (rest := file_handler.readline(_MAX_VERSION_LINE_LENGTH)):
+                        truncated = not rest.endswith("\n")
+                    continue
+                if truncated:
+                    msg = f"base_python_file: line in {file_path!r} exceeds {_MAX_VERSION_LINE_LENGTH} characters"
+                    raise Fail(msg)
+                if stripped:
+                    return stripped
+        return None
 
     @classmethod
     def extract_base_python(cls, env_name: str) -> str | None:

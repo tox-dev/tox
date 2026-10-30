@@ -1,0 +1,2 @@
+``base_python_file`` now rejects non-regular files, undecodable content and version lines longer than 1024 characters
+with a clear error, instead of loading the whole file into memory and stalling Python discovery.

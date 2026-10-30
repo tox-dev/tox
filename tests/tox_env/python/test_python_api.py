@@ -4,7 +4,7 @@ import sys
 import sysconfig
 from pathlib import Path
 from types import SimpleNamespace
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -750,16 +750,36 @@ def test_base_python_file(
     [
         pytest.param({}, "no valid Python version found", id="not-found"),
         pytest.param({".python-version": "# just a comment\n"}, "no valid Python version found", id="empty"),
+        pytest.param({".python-version": "a" * 8192}, "exceeds 1024 characters", id="long-line"),
+        pytest.param({".python-version": {"nested": "3.12"}}, "is not a regular file", id="directory"),
     ],
 )
 def test_base_python_file_error(
-    tox_project: ToxProjectCreator, extra_files: dict[str, str], error_fragment: str
+    tox_project: ToxProjectCreator, extra_files: dict[str, Any], error_fragment: str
 ) -> None:
     ini = "[testenv:mypy]\npackage=skip\nbase_python_file=.python-version\n"
     project = tox_project({"tox.ini": ini, **extra_files})
     result = project.run("c", "-e", "mypy", "-k", "base_python", raise_on_config_fail=False)
     result.assert_failed(code=-1)
     assert error_fragment in result.out
+    assert "a" * 1025 not in result.out
+
+
+def test_base_python_file_not_utf8(tox_project: ToxProjectCreator) -> None:
+    ini = "[testenv:mypy]\npackage=skip\nbase_python_file=.python-version\n"
+    project = tox_project({"tox.ini": ini})
+    (project.path / ".python-version").write_bytes(b"\xff\xfe\xfa\x80\n")
+    result = project.run("c", "-e", "mypy", "-k", "base_python", raise_on_config_fail=False)
+    result.assert_failed(code=-1)
+    assert "base_python_file: cannot read '.python-version'" in result.out
+
+
+def test_base_python_file_long_comment_skipped(tox_project: ToxProjectCreator) -> None:
+    ini = "[testenv:mypy]\npackage=skip\nbase_python_file=.python-version\n"
+    project = tox_project({"tox.ini": ini, ".python-version": f"#{'x' * 8192}\n{_PY_VER}\n"})
+    result = project.run("c", "-e", "mypy", "-k", "base_python")
+    result.assert_success()
+    assert f"base_python = {_PY_VER}\n" in result.out
 
 
 def test_base_python_file_conflict(tox_project: ToxProjectCreator) -> None:
