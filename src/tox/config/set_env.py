@@ -450,10 +450,10 @@ class SetEnv:
                 self.changed = True
 
 
-__all__ = (
+__all__ = [
     "SetEnv",
     "SetEnvEntry",
     "SetEnvRaw",
     "SetEnvReference",
     "SetEnvValue",
-)
+]
