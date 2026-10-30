@@ -1,1 +1,2 @@
-Capture the ``pip freeze`` output tox reads for the environment's constraints file when running with ``--no-capture`` (or ``tox exec``), instead of letting the command write to the console and leaving ``constraints.txt`` empty.
+Capture the ``pip freeze`` output tox reads for the environment's constraints file when running with ``--no-capture``
+(or ``tox exec``), instead of letting the command write to the console and leaving ``constraints.txt`` empty.
