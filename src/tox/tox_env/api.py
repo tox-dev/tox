@@ -466,8 +466,26 @@ class ToxEnv(ABC):  # ruff:ignore[too-many-public-methods]
         cwd: Path | None = None,
         run_id: str = "",
         executor: Execute | None = None,
+        *,
+        capture: bool = False,
     ) -> Outcome:
-        with self.execute_async(cmd, stdin, show, cwd, run_id, executor) as status:
+        """Execute a command and wait for its outcome.
+
+        :param cmd: executable and arguments
+        :param stdin: permitted standard input source
+        :param show: whether to display output, or ``None`` to follow verbosity
+        :param cwd: working directory, or ``None`` for the project root
+        :param run_id: label for command logs
+        :param executor: executor override, or ``None`` for this environment's executor
+        :param capture: capture output even in no-capture mode
+
+        :returns: completed command outcome
+
+        :raises SystemExit: if execution was interrupted
+        :raises ValueError: if the command is empty
+
+        """
+        with self.execute_async(cmd, stdin, show, cwd, run_id, executor, capture=capture) as status:
             while status.wait() is None:
                 pass  # pragma: no cover
         if status.outcome is None:  # pragma: no cover # this should not happen
@@ -504,14 +522,34 @@ class ToxEnv(ABC):  # ruff:ignore[too-many-public-methods]
         cwd: Path | None = None,
         run_id: str = "",
         executor: Execute | None = None,
+        *,
+        capture: bool = False,
     ) -> Generator[ExecuteStatus, None, None]:
+        """Run a command while exposing its execution status.
+
+        :param cmd: executable and arguments
+        :param stdin: permitted standard input source
+        :param show: whether to display output, or ``None`` to follow verbosity
+        :param cwd: working directory, or ``None`` for the project root
+        :param run_id: label for command logs
+        :param executor: executor override, or ``None`` for this environment's executor
+        :param capture: capture output even in no-capture mode
+
+        :returns: context manager yielding the command's execution status
+
+        :raises SystemExit: if execution was interrupted
+        :raises ValueError: if the command is empty
+
+        """
         if self._fully_interrupted or (self._interrupted and not self._allow_interrupted_execution):
             raise SystemExit(-2)  # pragma: no cover
         if cwd is None:
             cwd = cast("Path", self.core["tox_root"])
         if show is None:
             show = self.options.verbosity > 3  # ruff:ignore[magic-value-comparison]
-        request = ExecuteRequest(cmd, cwd, self.environment_variables, stdin, run_id, allow=self._allow_externals)
+        request = ExecuteRequest(
+            cmd, cwd, self.environment_variables, stdin, run_id, allow=self._allow_externals, capture=capture
+        )
         if request.cwd == _CWD:
             repr_cwd = ""
         else:

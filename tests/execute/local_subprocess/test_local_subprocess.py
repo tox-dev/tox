@@ -114,14 +114,17 @@ def test_local_execute_basic_pass(
 
 
 @pytest.mark.parametrize(
-    ("no_capture", "stdin", "expected"),
+    ("no_capture", "stdin", "capture", "expected"),
     [
-        pytest.param(False, StdinSource.API, (b"out", b"err", "", ""), id="capture-api"),
-        pytest.param(False, StdinSource.USER, (b"out", b"err", "", ""), id="capture-user"),
-        pytest.param(False, StdinSource.OFF, (b"out", b"err", "", ""), id="capture-off"),
-        pytest.param(True, StdinSource.API, (b"out", b"err", "", ""), id="no-capture-api"),
-        pytest.param(True, StdinSource.USER, (b"", b"", "out", "err"), id="no-capture-user"),
-        pytest.param(True, StdinSource.OFF, (b"", b"", "out", "err"), id="no-capture-off"),
+        pytest.param(False, StdinSource.API, False, (b"out", b"err", "", ""), id="capture-api"),
+        pytest.param(False, StdinSource.USER, False, (b"out", b"err", "", ""), id="capture-user"),
+        pytest.param(False, StdinSource.OFF, False, (b"out", b"err", "", ""), id="capture-off"),
+        pytest.param(True, StdinSource.API, False, (b"out", b"err", "", ""), id="no-capture-api"),
+        pytest.param(True, StdinSource.USER, False, (b"", b"", "out", "err"), id="no-capture-user"),
+        pytest.param(True, StdinSource.OFF, False, (b"", b"", "out", "err"), id="no-capture-off"),
+        pytest.param(True, StdinSource.API, True, (b"out", b"err", "", ""), id="required-capture-api"),
+        pytest.param(True, StdinSource.USER, True, (b"out", b"err", "", ""), id="required-capture-user"),
+        pytest.param(True, StdinSource.OFF, True, (b"out", b"err", "", ""), id="required-capture-off"),
     ],
 )
 def test_local_execute_capture(
@@ -130,13 +133,14 @@ def test_local_execute_capture(
     capfd: CaptureFixture,
     no_capture: bool,
     stdin: StdinSource,
+    capture: bool,
     expected: tuple[bytes, bytes, str, str],
 ) -> None:
     tox_env: Final[ToxEnv] = tox_project({"tox.ini": ""}).run("l").state.envs["py"]
     tox_env.options.no_capture = no_capture
     code: Final[str] = "import sys; print('out', end=''); print('err', end='', file=sys.stderr)"
     request: Final[ExecuteRequest] = ExecuteRequest(
-        cmd=[sys.executable, "-c", code], cwd=Path(), env=os_env, stdin=stdin, run_id=""
+        cmd=[sys.executable, "-c", code], cwd=Path(), env=os_env, stdin=stdin, run_id="", capture=capture
     )
     with LocalSubProcessExecutor(colored=False).build_instance(
         request, ExecuteOptions(tox_env), SyncWrite("out", None), SyncWrite("err", None)
