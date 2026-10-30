@@ -36,6 +36,8 @@ class ExecuteRequest:
         stdin: StdinSource,
         run_id: str,
         allow: list[str] | None = None,
+        *,
+        capture: bool = False,
     ) -> None:
         """Create a new execution request.
 
@@ -44,6 +46,7 @@ class ExecuteRequest:
         :param env: the environment variables
         :param stdin: the type of standard input allowed
         :param run_id: an id to identify this run
+        :param capture: capture output even when no-capture mode is enabled
 
         """
         if len(cmd) == 0:
@@ -54,6 +57,7 @@ class ExecuteRequest:
         self.env = env  #: the environment variables to use
         self.stdin = stdin  #: the type of standard input interaction allowed
         self.run_id = run_id  #: an id to identify this run
+        self.capture = capture  #: output is required by the caller, even in no-capture mode
         if allow is not None and "*" in allow:
             allow = None  # if we allow everything we can just disable the check
         self.allow = allow

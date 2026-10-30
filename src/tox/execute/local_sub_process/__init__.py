@@ -225,8 +225,10 @@ class LocalSubProcessExecuteInstance(ExecuteInstance):
 
         stdout, stderr = self.get_stream_file_no("stdout"), self.get_stream_file_no("stderr")
         self._file_no_generators = [stdout, stderr]
-        # API processes need captured replies; interactive programs need the console's terminal APIs.
-        inherit_console: Final[bool] = self.options.no_capture and self.request.stdin is not StdinSource.API
+        # Internal data and API replies need capture; interactive programs need the console's terminal APIs.
+        inherit_console: Final[bool] = (
+            self.options.no_capture and not self.request.capture and self.request.stdin is not StdinSource.API
+        )
         resolved_cmd: Final[Sequence[str]] = self.cmd
         cmd: Sequence[str] | str = resolved_cmd
         executable: str | None = None

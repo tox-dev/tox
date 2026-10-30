@@ -5,6 +5,7 @@ import os
 from textwrap import dedent
 from typing import TYPE_CHECKING, Any, Final
 from unittest.mock import Mock
+from zipfile import ZipFile
 
 import pytest
 from packaging.requirements import Requirement
@@ -659,6 +660,58 @@ def constrain_package_deps(request: SubRequest) -> bool:
 @pytest.fixture(params=[True, False])
 def use_frozen_constraints(request: SubRequest) -> bool:
     return bool(request.param)
+
+
+@pytest.mark.parametrize("mode", ["run", "no-capture", "exec"])
+@pytest.mark.parametrize("compatible", [True, False])
+def test_frozen_constraints_preserve_pins(tox_project: ToxProjectCreator, mode: str, compatible: bool) -> None:
+    project = tox_project({
+        "tox.ini": """
+        [testenv]
+        deps = lib==1.0
+        constrain_package_deps = true
+        use_frozen_constraints = true
+        set_env =
+            PIP_NO_INDEX = 1
+            PIP_FIND_LINKS = {tox_root}/wheels
+        commands = python -c "from importlib.metadata import version; assert version('helper') == '1.0'"
+        """,
+    })
+    wheels = project.path / "wheels"
+    wheels.mkdir()
+    packages = [("lib", "1.0", ""), ("lib", "2.0", ""), ("helper", "2.0", "lib>=2"), ("app", "1.0", "helper")]
+    if compatible:
+        packages.append(("helper", "1.0", ""))
+    for name, version, requires in packages:
+        info = f"{name}-{version}.dist-info"
+        metadata = f"Metadata-Version: 2.1\nName: {name}\nVersion: {version}\n"
+        if requires:
+            metadata += f"Requires-Dist: {requires}\n"
+        with ZipFile(wheels / f"{name}-{version}-py3-none-any.whl", "w") as wheel:
+            wheel.writestr(f"{info}/METADATA", metadata)
+            wheel.writestr(f"{info}/WHEEL", "Wheel-Version: 1.0\nRoot-Is-Purelib: true\nTag: py3-none-any\n")
+            wheel.writestr(f"{info}/RECORD", "")
+
+    if mode == "exec":
+        project.run("exec", "-e", "py", "--", "python", "--version").assert_success()
+    flags = ["--no-capture"] if mode == "no-capture" else []
+    result = project.run("run", "-e", "py", "--installpkg", str(wheels / "app-1.0-py3-none-any.whl"), *flags)
+    if compatible:
+        result.assert_success()
+    else:
+        result.assert_failed()
+        assert "ResolutionImpossible" in result.out + result.err
+    constraints = project.path / ".tox" / "py" / "constraints.txt"
+    assert "lib==1.0" in constraints.read_text().splitlines()
+    project.run(
+        "exec",
+        "-e",
+        "py",
+        "--",
+        "python",
+        "-c",
+        "from importlib.metadata import version; assert version('lib') == '1.0'",
+    ).assert_success()
 
 
 @pytest.fixture(

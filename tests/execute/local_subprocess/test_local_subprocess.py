@@ -145,6 +145,30 @@ def test_local_execute_capture(
     assert (status.out, status.err, *capfd.readouterr()) == expected
 
 
+@pytest.mark.parametrize("show", [True, False])
+@pytest.mark.parametrize("stdin", list(StdinSource))
+def test_local_execute_required_capture(
+    os_env: dict[str, str], capfd: CaptureFixture, show: bool, stdin: StdinSource
+) -> None:
+    tox_env = _create_mock_env()
+    tox_env.options.no_capture = True
+    request = ExecuteRequest(
+        cmd=[sys.executable, "-c", "import sys; print('out', end=''); print('err', end='', file=sys.stderr)"],
+        cwd=Path(),
+        env=os_env,
+        stdin=stdin,
+        run_id="",
+        capture=True,
+    )
+    out_err = FakeOutErr()
+    with LocalSubProcessExecutor(colored=False).call(request, show, out_err.out_err, tox_env) as status:
+        status.wait()
+    assert status.outcome is not None
+    assert (status.outcome.out, status.outcome.err) == ("out", "err")
+    assert out_err.read_out_err() == (("out", "err") if show else ("", ""))
+    assert capfd.readouterr() == ("", "")
+
+
 def test_local_execute_basic_pass_show_on_standard_newline_flush(caplog: LogCaptureFixture) -> None:
     caplog.set_level(logging.NOTSET)
     executor = LocalSubProcessExecutor(colored=False)
