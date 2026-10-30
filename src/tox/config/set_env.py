@@ -340,24 +340,23 @@ class SetEnv:
         except (OSError, UnicodeDecodeError) as exception:
             msg = f"{env_file} cannot be read for set_env: {exception}"
             raise Fail(msg) from exception
-        for env_line in content.split("\n"):
-            env_line = env_line.strip()  # ruff:ignore[redefined-loop-name]
-            if not env_line or env_line.startswith("#"):
+        for line_number, line in enumerate(content.split("\n"), start=1):
+            stripped = line.strip()
+            if not stripped or stripped.startswith("#"):
                 continue
-            yield self._extract_key_value(env_line)
+            yield self._extract_key_value(stripped, env_file, line_number)
 
     @staticmethod
-    def _extract_key_value(line: str) -> tuple[str, str]:
-        """Split an environment file line; markers do not apply here, so ``;`` is a plain value character."""
+    def _extract_key_value(line: str, env_file: Path, line_number: int) -> tuple[str, str]:
         key, sep, value = line.partition("=")
         if "\x00" in line:
-            nul_error: Final[str] = "invalid line in set_env"
-            raise Fail(nul_error)
-        if not sep:
-            msg = f"invalid line {line!r} in set_env"
+            msg = f"invalid line in set_env at {env_file}:{line_number}: NUL character"
             raise Fail(msg)
-        key = re.sub(r"^export[ \t]+", "", key.strip())
-        return key, value.strip()
+        if not sep:  # do not echo the line, it may hold part of a secret value
+            msg = f"invalid line {line_number} in {env_file} for set_env, expected KEY=VALUE"
+            raise Fail(msg)
+        # Unlike inline set_env, environment files keep semicolons in values.
+        return re.sub(r"^export[ \t]+", "", key.strip()), value.strip()
 
     def _expand(
         self, line: str, parents: tuple[str, ...], args: ConfigLoadArgs
