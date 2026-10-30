@@ -1035,14 +1035,12 @@ _CMD = 'commands = [["python", "--version"]]'
 @pytest.mark.parametrize(
     ("toml_body", "key", "expected_msg"),
     [
-        # --- str fields ---
         pytest.param(f"description = 1\n{_CMD}", "description", "1 is not of type 'str'", id="description-int"),
         pytest.param(f"platform = 1\n{_CMD}", "platform", "1 is not of type 'str'", id="platform-int"),
         pytest.param(f"runner = 1\n{_CMD}", "runner", "1 is not of type 'str'", id="runner-int"),
         pytest.param(f"package = 1\n{_CMD}", "package", "1 is not of type 'str'", id="package-int"),
         pytest.param(f"pylock = 1\n{_CMD}", "pylock", "1 is not of type 'str'", id="pylock-int"),
         pytest.param(f"virtualenv_spec = 1\n{_CMD}", "virtualenv_spec", "1 is not of type 'str'", id="venv-spec-int"),
-        # --- bool fields ---
         pytest.param(f"ignore_errors = 42\n{_CMD}", "ignore_errors", "42 is not of type 'bool'", id="ignore-err-int"),
         pytest.param(
             f"parallel_show_output = 42\n{_CMD}", "parallel_show_output", "42 is not of type 'bool'", id="parallel-int"
@@ -1084,38 +1082,34 @@ _CMD = 'commands = [["python", "--version"]]'
             "42 is not of type 'bool'",
             id="skip-missing-int",
         ),
-        # --- int fields ---
         pytest.param(
             f'commands_retry = "bad"\n{_CMD}',
             "commands_retry",
-            "invalid literal for int() with base 10: 'bad'",
+            "value of type 'str' is not of type 'int'",
             id="cmd-retry-str",
         ),
-        # --- float fields ---
         pytest.param(
             f'suicide_timeout = "bad"\n{_CMD}',
             "suicide_timeout",
-            "could not convert string to float: 'bad'",
+            "value of type 'str' is not of type 'float'",
             id="suicide-str",
         ),
         pytest.param(
             f'interrupt_timeout = "bad"\n{_CMD}',
             "interrupt_timeout",
-            "could not convert string to float: 'bad'",
+            "value of type 'str' is not of type 'float'",
             id="interrupt-str",
         ),
         pytest.param(
             f'terminate_timeout = "bad"\n{_CMD}',
             "terminate_timeout",
-            "could not convert string to float: 'bad'",
+            "value of type 'str' is not of type 'float'",
             id="terminate-str",
         ),
-        # --- Path fields ---
         pytest.param(f"env_dir = 1\n{_CMD}", "env_dir", "1 is not of type 'str'", id="env-dir-int"),
         pytest.param(f"env_tmp_dir = 1\n{_CMD}", "env_tmp_dir", "1 is not of type 'str'", id="env-tmp-dir-int"),
         pytest.param(f"env_log_dir = 1\n{_CMD}", "env_log_dir", "1 is not of type 'str'", id="env-log-dir-int"),
         pytest.param(f"change_dir = 1\n{_CMD}", "change_dir", "1 is not of type 'str'", id="change-dir-int"),
-        # --- list[str] fields ---
         pytest.param(f"pass_env = 42\n{_CMD}", "pass_env", "42 is not list", id="pass-env-not-list"),
         pytest.param(f"pass_env = [1]\n{_CMD}", "pass_env", "1 is not of type 'str'", id="pass-env-int-item"),
         pytest.param(
@@ -1133,14 +1127,12 @@ _CMD = 'commands = [["python", "--version"]]'
             "42 cannot cast to list[str] | str",
             id="base-python-not-list",
         ),
-        # --- set[str] fields ---
         pytest.param(f"labels = 42\n{_CMD}", "labels", "42 is not list", id="labels-not-list"),
         pytest.param(f"labels = [1]\n{_CMD}", "labels", "1 is not of type 'str'", id="labels-int-item"),
         pytest.param(f"extras = 42\n{_CMD}", "extras", "42 is not list", id="extras-not-list"),
         pytest.param(
             f"dependency_groups = 42\n{_CMD}", "dependency_groups", "42 is not list", id="dep-groups-not-list"
         ),
-        # --- list[Command] fields ---
         pytest.param("commands = 42", "commands", "42 is not list", id="commands-not-list"),
         pytest.param("commands = [[1]]", "commands", "1 is not of type 'str'", id="commands-int-arg"),
         pytest.param("commands_pre = 42", "commands_pre", "42 is not list", id="commands-pre-not-list"),
@@ -1151,7 +1143,6 @@ _CMD = 'commands = [["python", "--version"]]'
         pytest.param(
             "extra_setup_commands = 42", "extra_setup_commands", "42 is not list", id="extra-setup-cmds-not-list"
         ),
-        # --- EnvList fields ---
         pytest.param(f"depends = 42\n{_CMD}", "depends", "env_list must be a list, got int", id="depends-not-list"),
         pytest.param(
             f"depends = [1]\n{_CMD}",
@@ -1159,7 +1150,6 @@ _CMD = 'commands = [["python", "--version"]]'
             "env_list items must be strings, product dicts, range dicts, or labeled dicts, got int",
             id="depends-int-item",
         ),
-        # --- factory fields ---
         pytest.param("deps = [1]", "deps", "deps expected str, list[str], or list[Requirement]", id="deps-int-item"),
         pytest.param("deps = true", "deps", "deps expected str, list[str], or list[Requirement]", id="deps-bool"),
         pytest.param(
@@ -1485,3 +1475,50 @@ def test_config_in_toml_type_error_hides_substituted_value(
 
     assert "failed to load A.commands: value of type 'str' is not list" in outcome.out, outcome.out
     assert all(expanded_value not in output for output in (outcome.out, outcome.err))
+
+
+@pytest.mark.parametrize(
+    ("key", "expected_type"),
+    [
+        pytest.param("commands_retry", "int", id="retry"),
+        pytest.param("suicide_timeout", "float", id="suicide"),
+        pytest.param("interrupt_timeout", "float", id="interrupt"),
+        pytest.param("terminate_timeout", "float", id="terminate"),
+    ],
+)
+def test_config_in_toml_numeric_error_hides_substituted_value(
+    tox_project: ToxProjectCreator, monkeypatch: pytest.MonkeyPatch, key: str, expected_type: str
+) -> None:
+    expanded_value: Final[str] = "s3cr3t-t0ken"
+    monkeypatch.setenv("DEPLOY_TOKEN", expanded_value)
+    outcome: Final[ToxRunOutcome] = tox_project({
+        "pyproject.toml": f"""
+        [tool.tox.env.A]
+        {key} = "{{env:DEPLOY_TOKEN}}"
+        """
+    }).run("c", "-e", "A", "-k", key)
+    assert f"failed to load A.{key}: value of type 'str' is not of type '{expected_type}'" in outcome.out
+    assert all(expanded_value not in output for output in (outcome.out, outcome.err))
+
+
+@pytest.mark.parametrize(
+    ("key", "numeric_value"),
+    [
+        pytest.param("commands_retry", "2", id="retry"),
+        pytest.param("suicide_timeout", "1.5", id="suicide"),
+        pytest.param("interrupt_timeout", "1.5", id="interrupt"),
+        pytest.param("terminate_timeout", "1.5", id="terminate"),
+    ],
+)
+def test_config_in_toml_numeric_substitution_still_converts(
+    tox_project: ToxProjectCreator, monkeypatch: pytest.MonkeyPatch, key: str, numeric_value: str
+) -> None:
+    monkeypatch.setenv("NUMERIC_VALUE", numeric_value)
+    outcome: Final[ToxRunOutcome] = tox_project({
+        "pyproject.toml": f"""
+        [tool.tox.env.A]
+        {key} = "{{env:NUMERIC_VALUE}}"
+        """
+    }).run("c", "-e", "A", "-k", key)
+    outcome.assert_success()
+    assert f"{key} = {numeric_value}" in outcome.out

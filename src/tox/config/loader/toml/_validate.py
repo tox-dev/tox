@@ -36,7 +36,6 @@ def validate(val: TomlTypes, of_type: type[T]) -> T:  # ruff:ignore[complex-stru
         else:
             msg = f"{_describe(val)} is not list"
     elif isclass(of_type) and issubclass(of_type, Command):
-        # first we cast it to list then create commands, so for now validate it as a nested list
         validate(val, list[str])
     elif isclass(of_type) and issubclass(of_type, EnvList):
         # validation is performed by TomlLoader.to_env_list
@@ -50,7 +49,7 @@ def validate(val: TomlTypes, of_type: type[T]) -> T:  # ruff:ignore[complex-stru
                 validate(va, value_type)
         else:
             msg = f"{_describe(val)} is not dictionary"
-    elif casting_to in {Union, UnionType}:  # handle Optional values
+    elif casting_to in {Union, UnionType}:
         args: list[type[Any]] = list(type_args)
         for arg in args:
             try:
@@ -68,7 +67,7 @@ def validate(val: TomlTypes, of_type: type[T]) -> T:  # ruff:ignore[complex-stru
         if issubclass(of_type, (bool, str, int)):
             fail = True  # the enclosing branch established the value is not an instance already
         else:
-            try:  # check if it can be converted
+            try:
                 cast("Callable[[TomlTypes], object]", of_type)(val)
                 fail = False
             except Exception:  # ruff:ignore[blind-except]
@@ -80,11 +79,11 @@ def validate(val: TomlTypes, of_type: type[T]) -> T:  # ruff:ignore[complex-stru
     return cast("T", val)
 
 
-def _describe(val: TomlTypes) -> str:
+def _describe(value: TomlTypes) -> str:
     # Substitution can put secret text in values.
-    if val is None or isinstance(val, (bool, int, float)):
-        return repr(val)
-    return f"value of type {type(val).__name__!r}"
+    if value is None or isinstance(value, (bool, int, float)):
+        return repr(value)
+    return f"value of type {type(value).__name__!r}"
 
 
 __all__ = [

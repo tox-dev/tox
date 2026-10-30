@@ -110,6 +110,17 @@ class TomlLoader(Loader[TomlTypes]):
         return result
 
     @override
+    def to(self, raw: TomlTypes, of_type: type[_V] | UnionType, factory: Factory[_V]) -> _V:
+        # Built-in numeric conversion errors quote input that may contain a substituted secret.
+        if isinstance(raw, str) and (of_type is int or of_type is float):
+            try:
+                return super().to(raw, of_type, factory)
+            except ValueError:
+                msg = f"value of type 'str' is not of type {of_type.__name__!r}"
+                raise TypeError(msg) from None
+        return super().to(raw, of_type, factory)
+
+    @override
     def substitute(self, value: str, conf: Config, args: ConfigLoadArgs, *, of_type: type[_V] | UnionType) -> str:
         reference: Final[TomlReplaceLoader] = TomlReplaceLoader(conf, self)
         if of_type in {PythonDeps, PythonConstraints}:
