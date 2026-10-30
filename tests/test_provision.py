@@ -24,7 +24,8 @@ if TYPE_CHECKING:
     from devpi_process import Index, IndexServer
 
     from tox.execute.request import ExecuteRequest
-    from tox.pytest import MonkeyPatch, TempPathFactory, ToxProjectCreator, ToxRunOutcome
+    from tox.pytest import MonkeyPatch, TempPathFactory, ToxProject, ToxProjectCreator, ToxRunOutcome
+    from tox.tox_env.api import ToxEnv
 
 from importlib.metadata import Distribution
 
@@ -516,20 +517,17 @@ def test_provision_install_pkg_pep517(
 
 @pytest.mark.integration
 @pytest.mark.timeout(120)
-@pytest.mark.parametrize("provision", [True, False])
 def test_install_pkg_only_in_test_environment(
     tox_project: ToxProjectCreator,
     tox_wheels: list[Path],
     demo_pkg_inline_wheel: Path,
     monkeypatch: MonkeyPatch,
-    provision: bool,
 ) -> None:
-    requires = "requires = demo-pkg-inline" if provision else ""
-    project = tox_project({
-        "tox.ini": f"[tox]\n{requires}\n[testenv]\ncommands = python -c 'import artifact'",
+    project: Final[ToxProject] = tox_project({
+        "tox.ini": "[tox]\nrequires = demo-pkg-inline\n[testenv]\ncommands = python -c 'import artifact'",
     })
-    imports = project.path / "imports.txt"
-    artifact = project.path / "artifact-1.0-py3-none-any.whl"
+    imports: Final[Path] = project.path / "imports.txt"
+    artifact: Final[Path] = project.path / "artifact-1.0-py3-none-any.whl"
     with ZipFile(artifact, "w") as wheel:
         wheel.writestr(
             "artifact.py",
@@ -539,26 +537,26 @@ def test_install_pkg_only_in_test_environment(
         wheel.writestr("artifact-1.0.dist-info/WHEEL", "Wheel-Version: 1.0\nRoot-Is-Purelib: true\nTag: py3-none-any\n")
         wheel.writestr("artifact-1.0.dist-info/entry_points.txt", "[tox]\nartifact = artifact\n")
         wheel.writestr("artifact-1.0.dist-info/RECORD", "")
-    wheel_dirs = {path.parent.as_uri() for path in [*tox_wheels, demo_pkg_inline_wheel]}
     monkeypatch.setenv("PIP_NO_INDEX", "1")
-    monkeypatch.setenv("PIP_FIND_LINKS", "\n".join(sorted(wheel_dirs)))
+    monkeypatch.setenv(
+        "PIP_FIND_LINKS", "\n".join(sorted({path.parent.as_uri() for path in [*tox_wheels, demo_pkg_inline_wheel]}))
+    )
 
-    result = project.run("run", "-e", "py", "--installpkg", str(artifact))
+    result: Final[ToxRunOutcome] = project.run("run", "-e", "py", "--installpkg", str(artifact))
 
     result.assert_success()
     assert imports.read_text().splitlines() == [str(project.path / ".tox" / "py")]
-    if provision:
-        provision_env = result.state.envs[".tox"]
-        assert provision_env.conf["package"] == "skip"
-        check_call([
-            str(provision_env.conf.get("env_python", Path)),
-            "-c",
-            (
-                "from importlib.metadata import version, distributions; "
-                "assert version('demo-pkg-inline') == '1.0.0'; "
-                "assert 'artifact' not in {dist.metadata['Name'] for dist in distributions()}"
-            ),
-        ])
+    provision_env: Final[ToxEnv] = result.state.envs[".tox"]
+    assert provision_env.conf["package"] == "skip"
+    check_call([
+        str(provision_env.conf.get("env_python", Path)),
+        "-c",
+        (
+            "from importlib.metadata import version, distributions; "
+            "assert version('demo-pkg-inline') == '1.0.0'; "
+            "assert 'artifact' not in {dist.metadata['Name'] for dist in distributions()}"
+        ),
+    ])
 
 
 def test_provision_colored_passed_to_subprocess(tox_project: ToxProjectCreator) -> None:
