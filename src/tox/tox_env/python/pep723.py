@@ -103,16 +103,15 @@ class Pep723Mixin(Python, RunToxEnv):
         if getattr(self.options, "skip_env_install", False):
             logging.warning("skip installing dependencies")
             return
-        dependencies = metadata.dependencies
-        script = self.conf["script"]
+        dependencies: Final[list[str]] = metadata.dependencies
         if not isinstance(dependencies, list):
-            msg = f"invalid dependencies {dependencies!r} in {script}: expected a list"
+            msg = f"invalid dependencies {dependencies!r} in {self.conf['script']}: expected a list"
             raise Fail(msg)
         for dependency in dependencies:
             try:
                 Requirement(dependency)
             except (InvalidRequirement, TypeError) as exc:
-                msg = f"invalid dependency {dependency!r} in {script}: {exc}"
+                msg = f"invalid dependency {dependency!r} in {self.conf['script']}: {exc}"
                 raise Fail(msg) from exc
         if dependencies:
             self._install(PythonDeps(dependencies, self.core.get("tox_root", Path)), type(self).__name__, "deps")

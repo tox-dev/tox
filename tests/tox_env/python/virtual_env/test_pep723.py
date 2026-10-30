@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 import sys
 from textwrap import dedent
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Final
 
 import pytest
 from packaging.requirements import Requirement
@@ -83,8 +83,15 @@ def test_requires_python_not_satisfied(tox_project: ToxProjectCreator) -> None:
     assert "does not satisfy requires-python" in result.out
 
 
-def test_skip_env_install(tox_project: ToxProjectCreator) -> None:
-    script = "# /// script\n# dependencies = [\"setuptools\"]\n# ///\nprint('ok')\n"
+@pytest.mark.parametrize(
+    "dependency",
+    [
+        pytest.param("setuptools", id="valid"),
+        pytest.param("-i https://example.com/simple", id="invalid"),
+    ],
+)
+def test_skip_env_install(tox_project: ToxProjectCreator, dependency: str) -> None:
+    script: Final[str] = f"# /// script\n# dependencies = {json.dumps([dependency])}\n# ///\nprint('ok')\n"
     result, execute_calls = _run(tox_project, {"tox.ini": _tox_ini(), "check.py": script}, "--skip-env-install")
     result.assert_success()
     assert not [i for i in execute_calls.call_args_list if "install" in i[0][3].run_id]
@@ -143,10 +150,10 @@ def test_invalid_script_metadata(tox_project: ToxProjectCreator, script: str) ->
     ],
 )
 def test_invalid_dependency_fails_before_install(tox_project: ToxProjectCreator, dependency: str | int) -> None:
-    script = f"# /// script\n# dependencies = {json.dumps(['demo-pkg', dependency])}\n# ///\nprint('ok')\n"
+    script: Final[str] = f"# /// script\n# dependencies = {json.dumps(['demo-pkg', dependency])}\n# ///\nprint('ok')\n"
     result, execute_calls = _run(tox_project, {"tox.ini": _tox_ini(), "check.py": script})
     result.assert_failed(1)
-    assert "invalid dependenc" in result.out, result.out
+    assert f"invalid dependency {dependency!r}" in result.out, result.out
     assert "internal error" not in result.out
     assert not any("install" in call[0][3].run_id for call in execute_calls.call_args_list)
 
@@ -161,10 +168,10 @@ def test_invalid_dependency_fails_before_install(tox_project: ToxProjectCreator,
 def test_invalid_dependencies_type_fails_before_install(
     tox_project: ToxProjectCreator, dependencies: str | int
 ) -> None:
-    script = f"# /// script\n# dependencies = {json.dumps(dependencies)}\n# ///\nprint('ok')\n"
+    script: Final[str] = f"# /// script\n# dependencies = {json.dumps(dependencies)}\n# ///\nprint('ok')\n"
     result, execute_calls = _run(tox_project, {"tox.ini": _tox_ini(), "check.py": script})
     result.assert_failed(1)
-    assert "invalid dependencies" in result.out
+    assert f"invalid dependencies {dependencies!r}" in result.out
     assert not any("install" in call[0][3].run_id for call in execute_calls.call_args_list)
 
 
@@ -177,7 +184,7 @@ def test_invalid_dependencies_type_fails_before_install(
     ],
 )
 def test_pep508_dependency_forms(tox_project: ToxProjectCreator, dependency: str) -> None:
-    script = f"# /// script\n# dependencies = {json.dumps([dependency])}\n# ///\nprint('ok')\n"
+    script: Final[str] = f"# /// script\n# dependencies = {json.dumps([dependency])}\n# ///\nprint('ok')\n"
     result, execute_calls = _run(tox_project, {"tox.ini": _tox_ini(), "check.py": script})
     result.assert_success()
     assert str(Requirement(dependency)) in [
