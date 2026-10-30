@@ -64,15 +64,23 @@ def test_override_repr() -> None:
     assert repr(Override("b.a=c")) == "Override('b.a=c')"
 
 
-def test_override_redacts_inline_secret() -> None:
-    override = Override("testenv.commands=python deploy.py --password=hunter2")
-    assert str(override) == "testenv.commands=python deploy.py --password=*******"
-    assert repr(override) == "Override('testenv.commands=python deploy.py --password=*******')"
+@pytest.mark.parametrize(
+    ("secret", "mask"),
+    [
+        pytest.param("hunter2", "*******", id="plain"),
+        pytest.param("hun ter2", "********", id="space"),
+        pytest.param("hun\nter2", "********", id="newline"),
+        pytest.param("hun;ter2", "********", id="semicolon"),
+    ],
+)
+def test_override_redacts_inline_secret(secret: str, mask: str) -> None:
+    override: Final[Override] = Override(f"testenv.commands=python deploy.py --password={secret}")
+    assert str(override) == f"testenv.commands=python deploy.py --password={mask}"
+    assert repr(override) == f"Override('testenv.commands=python deploy.py --password={mask}')"
 
 
 def test_override_redacts_secret_in_key() -> None:
-    # an override with no namespace puts the flag left of the first ``=``, so the secret sits in the key half
-    override = Override("--password=hunter2")
+    override: Final[Override] = Override("--password=hunter2")
     assert str(override) == "--password=*******"
     assert repr(override) == "Override('--password=*******')"
 

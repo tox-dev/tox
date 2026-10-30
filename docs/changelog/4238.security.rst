@@ -1,2 +1,0 @@
-``tox -h`` and the warning for a ``TOX_OVERRIDE`` value that cannot be parsed no longer print the secret-looking
-``--key=value`` tokens an override carries.

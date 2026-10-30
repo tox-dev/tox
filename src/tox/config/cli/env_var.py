@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import logging
 import os
-import re
 from typing import TYPE_CHECKING, Any
 
 from tox.config.loader.str_convert import StrConvert
@@ -37,8 +36,7 @@ def get_env_var(key: str, of_type: type[Any] | UnionType) -> tuple[Any, str] | N
                 else:
                     result = CONVERT.to(raw=value, of_type=of_type, factory=None)
             except Exception as exception:  # ruff:ignore[blind-except]
-                masked = ";".join(redact_argv(value.split(";")))
-                redacted_value = "".join(redact_argv(re.split(r"(\s+|;)", masked)))
+                redacted_value = redact_argv([value])[0]
                 logging.warning(
                     "env var %s=%r cannot be transformed to %r because %s",
                     environ_key,

@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import inspect
-import re
 from abc import abstractmethod
 from argparse import ArgumentTypeError
 from collections.abc import Iterable, Mapping
@@ -57,10 +56,8 @@ class Override:  # ruff:ignore[eq-without-hash]
     @override
     def __str__(self) -> str:
         escaped_ns = ".".join(part.replace(".", "\\.") for part in self._namespace_parts)
-        raw = f"{escaped_ns}{'.' if escaped_ns else ''}{self.key}{'+' if self.append else ''}={self.value}"
-        redacted = "".join(redact_argv([raw]))
-        redacted = "".join(redact_argv(re.split(r"(\s+|;)", redacted)))
-        return redacted if redacted != raw else raw
+        raw: Final[str] = f"{escaped_ns}{'.' if escaped_ns else ''}{self.key}{'+' if self.append else ''}={self.value}"
+        return redact_argv([raw])[0]
 
     @override
     def __eq__(self, other: object) -> bool:
@@ -357,3 +354,13 @@ def tox_add_option(parser: ToxParser) -> None:
 
 
 _STR_CONVERT = StrConvert()
+
+
+__all__ = [
+    "ConfigLoadArgs",
+    "Loader",
+    "Override",
+    "OverrideMap",
+    "apply_overrides_to_raw",
+    "tox_add_option",
+]

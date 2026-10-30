@@ -209,6 +209,7 @@ def test_bad_env_var_redacts_secret(raw: str, monkeypatch: MonkeyPatch, capsys: 
         pytest.param("hun ter2", "********", id="space"),
         pytest.param("hun\nter2", "********", id="newline"),
         pytest.param(r"hun\ter2", "********", id="backslash"),
+        pytest.param("hun;ter2", "********", id="semicolon"),
     ],
 )
 def test_bad_env_var_redacts_secret_in_reason(
@@ -218,4 +219,5 @@ def test_bad_env_var_redacts_secret_in_reason(
     get_options()
     out, err = capsys.readouterr()
     assert "hun" not in out + err
+    assert "ter2" not in out + err
     assert f"--password={mask}" in out
