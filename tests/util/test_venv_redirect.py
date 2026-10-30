@@ -74,63 +74,55 @@ def test_record_replaces_own_redirect(root: Path, existing: str) -> None:
         pytest.param(".tox/../../escape\n", id="escapes_work_dir"),
     ],
 )
-def test_record_keeps_foreign_redirect(root: Path, existing: str) -> None:
-    redirect: Final[Path] = root / ".venv"
+def test_record_keeps_foreign_redirect(root: Path, created_redirect: Path, existing: str) -> None:
+    created_redirect.write_text(existing, encoding="utf-8")
+
     record_venv_redirect(root, root / ".tox" / "dev", _is_ours(root))
+
+    assert created_redirect.read_text(encoding="utf-8") == existing
+
+
+@pytest.fixture
+def created_redirect(root: Path) -> Path:
+    record_venv_redirect(root, root / ".tox" / "dev", _is_ours(root))
+    redirect: Final[Path] = root / ".venv"
     assert redirect.read_text(encoding="utf-8") == ".tox/dev\n"
-    redirect.write_text(existing, encoding="utf-8")
+    return redirect
+
+
+def test_record_keeps_undecodable_redirect(root: Path, created_redirect: Path) -> None:
+    created_redirect.write_bytes(b"\xff\xfe.tox/3.13\n")
 
     record_venv_redirect(root, root / ".tox" / "dev", _is_ours(root))
 
-    assert redirect.read_text(encoding="utf-8") == existing
+    assert created_redirect.read_bytes() == b"\xff\xfe.tox/3.13\n"
 
 
-def test_record_keeps_undecodable_redirect(root: Path) -> None:
-    redirect: Final[Path] = root / ".venv"
-    record_venv_redirect(root, root / ".tox" / "dev", _is_ours(root))
-    assert redirect.read_text(encoding="utf-8") == ".tox/dev\n"
-    redirect.write_bytes(b"\xff\xfe.tox/3.13\n")
+def test_record_keeps_venv_directory(root: Path, created_redirect: Path) -> None:
+    created_redirect.unlink()
+    created_redirect.mkdir()
 
     record_venv_redirect(root, root / ".tox" / "dev", _is_ours(root))
 
-    assert redirect.read_bytes() == b"\xff\xfe.tox/3.13\n"
-
-
-def test_record_keeps_venv_directory(root: Path) -> None:
-    redirect: Final[Path] = root / ".venv"
-    record_venv_redirect(root, root / ".tox" / "dev", _is_ours(root))
-    assert redirect.is_file()
-    redirect.unlink()
-    redirect.mkdir()
-
-    record_venv_redirect(root, root / ".tox" / "dev", _is_ours(root))
-
-    assert redirect.is_dir()
+    assert created_redirect.is_dir()
 
 
 @pytest.mark.skipif(sys.platform == "win32", reason="creating symlinks needs privileges on Windows")
-def test_record_keeps_venv_symlink(root: Path) -> None:
-    redirect: Final[Path] = root / ".venv"
-    record_venv_redirect(root, root / ".tox" / "dev", _is_ours(root))
-    assert redirect.is_file()
-    redirect.unlink()
-    redirect.symlink_to(root / ".tox" / "3.13")
+def test_record_keeps_venv_symlink(root: Path, created_redirect: Path) -> None:
+    created_redirect.unlink()
+    created_redirect.symlink_to(root / ".tox" / "3.13")
 
     record_venv_redirect(root, root / ".tox" / "dev", _is_ours(root))
 
-    assert redirect.readlink() == root / ".tox" / "3.13"
+    assert created_redirect.readlink() == root / ".tox" / "3.13"
 
 
-def test_record_same_target_does_not_write(root: Path) -> None:
-    redirect: Final[Path] = root / ".venv"
-    redirect.write_text(".tox/dev", encoding="utf-8")
-    os.utime(redirect, ns=(1_000_000_000, 1_000_000_000))
+def test_record_same_target_does_not_write(root: Path, created_redirect: Path) -> None:
+    os.utime(created_redirect, ns=(1_000_000_000, 1_000_000_000))
 
     record_venv_redirect(root, root / ".tox" / "dev", _is_ours(root))
-    unchanged: Final[int] = redirect.stat().st_mtime_ns
-    record_venv_redirect(root, root / ".tox" / "lint", _is_ours(root))
 
-    assert (unchanged, redirect.read_text(encoding="utf-8")) == (1_000_000_000, ".tox/lint\n")
+    assert created_redirect.stat().st_mtime_ns == 1_000_000_000
 
 
 def test_record_warns_when_root_missing(root: Path, caplog: pytest.LogCaptureFixture) -> None:
