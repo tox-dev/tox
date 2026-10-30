@@ -1984,10 +1984,10 @@ Python run
 
     A substitution inside a dependency or option entry cannot add a requirements-file line. tox refuses a line break in
     that value, or a backslash at the end of a substituted line, before starting pip. A partial substitution also cannot
-    add, remove, or split parsed pip option tokens. This includes ``${VAR}`` expansion; tox still accepts options written
-    on the same line in the configuration. A substitution alone in its entry, such as ``{[testenv]deps}``, can still
-    supply multiple requirements. tox also refuses a globbed requirement path containing a line break or ending in a
-    backslash.
+    add, remove, or split parsed pip option tokens. This includes ``${VAR}`` expansion. tox still accepts options
+    written on the same line in the configuration. A substitution alone in its entry, such as ``{[testenv]deps}``, can
+    still supply multiple requirements. tox also refuses a globbed requirement path containing a line break or ending
+    in a backslash.
 
     If you are only defining :pep:`508` requirements (aka no pip requirement files), you should use
     :ref:`dependency_groups` instead.
