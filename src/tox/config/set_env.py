@@ -350,6 +350,9 @@ class SetEnv:
     def _extract_key_value(line: str) -> tuple[str, str]:
         """Split an environment file line; markers do not apply here, so ``;`` is a plain value character."""
         key, sep, value = line.partition("=")
+        if "\x00" in line:
+            nul_error: Final[str] = "invalid line in set_env"
+            raise Fail(nul_error)
         if not sep:
             msg = f"invalid line {line!r} in set_env"
             raise Fail(msg)
@@ -451,10 +454,10 @@ class SetEnv:
                 self.changed = True
 
 
-__all__ = (
+__all__ = [
     "SetEnv",
     "SetEnvEntry",
     "SetEnvRaw",
     "SetEnvReference",
     "SetEnvValue",
-)
+]

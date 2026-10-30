@@ -103,7 +103,11 @@ class _LogThreadLocal(local):
 
     @staticmethod
     def _make(prefix: str, based_of: TextIOWrapper) -> TextIOWrapper:
-        return TextIOWrapper(NamedBytesIO(f"{prefix}-{based_of.name}"), encoding=locale.getpreferredencoding(False))  # ruff:ignore[boolean-positional-value-in-call]
+        return TextIOWrapper(
+            NamedBytesIO(f"{prefix}-{based_of.name}"),
+            encoding=locale.getpreferredencoding(do_setlocale=False),
+            errors="backslashreplace",
+        )
 
 
 class NamedBytesIO(BytesIO):
@@ -246,6 +250,10 @@ class ToxHandler(_STREAM_HANDLER_BASE):
 
 
 def setup_report(verbosity: int, is_colored: bool) -> ToxHandler:  # ruff:ignore[boolean-type-hint-positional-argument]
+    for std_stream in (sys.stdout, sys.stderr):
+        if isinstance(std_stream, TextIOWrapper):
+            # Redirected Windows streams may use code pages that cannot encode tox output.
+            std_stream.reconfigure(errors="backslashreplace")
     _clean_handlers(LOGGER)
     level = _get_level(verbosity)
     LOGGER.setLevel(level)
@@ -270,3 +278,14 @@ def _clean_handlers(log: logging.Logger) -> None:
 
 class HandledError(RuntimeError):
     """Error that has been handled so no need for stack trace."""
+
+
+__all__ = [
+    "LEVELS",
+    "LOGGER",
+    "HandledError",
+    "NamedBytesIO",
+    "OutErr",
+    "ToxHandler",
+    "setup_report",
+]

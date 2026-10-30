@@ -22,7 +22,7 @@ from tox.config.loader.replacer import (
     replace_program,
     replace_requirement_lines,
 )
-from tox.config.loader.stringify import stringify
+from tox.config.loader.stringify import stringify, stringify_reference
 from tox.config.set_env import SetEnvReference
 from tox.config.sets import EnvConfigSet
 from tox.config.types import Command, EnvList
@@ -75,9 +75,15 @@ class Unroll:
             return value
         if isinstance(value, str):
             if not skip_str and self.conf is not None:  # core config does not support string substitution
-                reference = TomlReplaceLoader(self.conf, self.loader)
+                reference: Final[TomlReplaceLoader] = TomlReplaceLoader(self.conf, self.loader)
                 if self.requirement_entries:
-                    value = replace_requirement_lines(self.conf, reference, value, self.args)
+                    value = replace_requirement_lines(
+                        self.conf,
+                        reference,
+                        value,
+                        self.args,
+                        validate_options=PythonDeps.validate_requirement_options,
+                    )
                 elif self._program_depth is not None:
                     value = replace_program(self.conf, reference, value, self.args)
                 else:
@@ -351,21 +357,16 @@ class TomlReplaceLoader(ReplaceReference):
 
     @override
     def __call__(self, value: str, conf_args: ConfigLoadArgs) -> str | None:
-        if match := _REFERENCE_PATTERN.search(value):
+        # Searching inside brace content mistakes JSON fields for references.
+        if match := _REFERENCE_PATTERN.match(value):
             settings = match.groupdict()
             exception: Exception | None = None
             try:
                 for src in self._config_value_sources(settings["section"], conf_args.env_name):
                     try:
-                        value = (
-                            src.set_env_lines(conf_args.chain)
-                            if isinstance(src, EnvConfigSet) and settings["key"] in {"set_env", "setenv"}
-                            else src.load(settings["key"], conf_args.chain)
-                        )
+                        return self._load_reference_value(src, settings["key"], conf_args)
                     except KeyError as exc:  # if fails, keep trying maybe another source can satisfy
                         exception = exc
-                    else:
-                        return (RawText if isinstance(src, RawLoader) else str)(stringify(value)[0])
             except Exception as exc:  # ruff:ignore[blind-except]
                 exception = exc
             if exception is not None:
@@ -376,6 +377,17 @@ class TomlReplaceLoader(ReplaceReference):
                     return None  # keep original text, consistent with ini loader behavior
                 raise exception
         return None  # not a reference, such as the {} of a format string
+
+    @staticmethod
+    def _load_reference_value(src: ConfigSet | RawLoader, key: str, conf_args: ConfigLoadArgs) -> str:
+        if isinstance(src, RawLoader):
+            return RawText(stringify(src.load(key, conf_args.chain))[0])
+        return stringify_reference(
+            src.set_env_lines(conf_args.chain)
+            if isinstance(src, EnvConfigSet) and key in {"set_env", "setenv"}
+            else src.load(key, conf_args.chain),
+            constant=src.is_constant(key),
+        )
 
     def _config_value_sources(self, sec: str | None, current_env: str | None) -> Iterator[ConfigSet | RawLoader]:
         if sec is None:
