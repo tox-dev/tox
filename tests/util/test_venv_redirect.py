@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+import ctypes
 import os
 import stat
 import sys
+from ctypes import wintypes
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Final
 
@@ -158,6 +160,100 @@ def test_record_stays_in_root_swapped_after_check(root: Path, swap_root: _SwapRo
     assert (swap_root.moved / ".venv").read_text(encoding="utf-8") == ".tox/dev\n"
 
 
+@pytest.mark.skipif(sys.platform != "win32", reason="Windows directory sharing")
+@pytest.mark.parametrize(
+    "directory_parts",
+    [pytest.param(("parent", "project"), id="root"), pytest.param(("parent",), id="parent")],
+)
+def test_record_windows_blocks_directory_rename_during_check(tmp_path: Path, directory_parts: tuple[str, ...]) -> None:
+    project: Final[Path] = tmp_path / "parent" / "project"
+    project.mkdir(parents=True)
+    (project / ".venv").write_text(".tox/old\n", encoding="utf-8")
+    moved: Final[Path] = tmp_path / "moved"
+
+    def swap(_: Path) -> bool:
+        with pytest.raises(PermissionError):
+            tmp_path.joinpath(*directory_parts).rename(moved)
+        return True
+
+    record_venv_redirect(project, project / ".tox" / "dev", swap)
+
+    assert ((project / ".venv").read_text(encoding="utf-8"), moved.exists()) == (".tox/dev\n", False)
+
+
+@pytest.mark.skipif(sys.platform != "win32", reason="Windows project reparse points")
+def test_record_windows_refuses_project_symlink(tmp_path: Path, caplog: pytest.LogCaptureFixture) -> None:
+    target: Final[Path] = tmp_path / "other"
+    target.mkdir()
+    (target / ".venv").write_text(".tox/old\n", encoding="utf-8")
+    project: Final[Path] = tmp_path / "project"
+    project.symlink_to(target, target_is_directory=True)
+
+    record_venv_redirect(project, project / ".tox" / "dev", lambda _: True)
+
+    assert ((target / ".venv").read_text(encoding="utf-8"), "could not point" in caplog.text) == (
+        ".tox/old\n",
+        True,
+    )
+
+
+@pytest.mark.skipif(sys.platform != "win32", reason="Windows parent reparse points")
+def test_record_windows_refuses_parent_symlink(tmp_path: Path, caplog: pytest.LogCaptureFixture) -> None:
+    original: Final[Path] = tmp_path / "original"
+    project: Final[Path] = original / "project"
+    project.mkdir(parents=True)
+    (project / ".venv").write_text(".tox/old\n", encoding="utf-8")
+    parent: Final[Path] = tmp_path / "parent"
+    parent.symlink_to(original, target_is_directory=True)
+
+    record_venv_redirect(parent / "project", parent / "project" / ".tox" / "dev", lambda _: True)
+
+    assert ((project / ".venv").read_text(encoding="utf-8"), "could not point" in caplog.text) == (".tox/old\n", True)
+
+
+@pytest.mark.skipif(sys.platform != "win32", reason="Windows directory handles")
+def test_record_windows_warns_if_directory_info_fails(
+    root: Path, windows_kernel32: ctypes.CDLL, mocker: MockerFixture, caplog: pytest.LogCaptureFixture
+) -> None:
+    redirect: Final[Path] = root / ".venv"
+    redirect.write_text(".tox/old\n", encoding="utf-8")
+    mocker.patch.object(windows_kernel32, "GetFileInformationByHandleEx", return_value=0)
+    mocker.patch.object(ctypes, "get_last_error", return_value=5)
+
+    record_venv_redirect(root, root / ".tox" / "dev", _is_ours(root))
+
+    assert (redirect.read_text(encoding="utf-8"), "[WinError 5]" in caplog.text) == (".tox/old\n", True)
+
+
+@pytest.mark.skipif(sys.platform != "win32", reason="Windows directory handles")
+def test_record_windows_warns_if_directory_close_fails(
+    root: Path, windows_kernel32: ctypes.CDLL, mocker: MockerFixture, caplog: pytest.LogCaptureFixture
+) -> None:
+    redirect: Final[Path] = root / ".venv"
+    redirect.write_text(".tox/old\n", encoding="utf-8")
+    close_handle: Final[Callable[[int], int]] = windows_kernel32.CloseHandle
+    close_handle.argtypes = [wintypes.HANDLE]
+    close_handle.restype = wintypes.BOOL
+
+    def report_failed_close(handle: int) -> int:
+        assert close_handle(handle)
+        return 0
+
+    mocker.patch.object(windows_kernel32, "CloseHandle", side_effect=report_failed_close)
+    mocker.patch.object(ctypes, "get_last_error", return_value=5)
+
+    record_venv_redirect(root, root / ".tox" / "dev", _is_ours(root))
+
+    assert (redirect.read_text(encoding="utf-8"), "could not point" in caplog.text) == (".tox/dev\n", True)
+
+
+@pytest.fixture
+def windows_kernel32(mocker: MockerFixture) -> ctypes.CDLL:
+    kernel32: Final[ctypes.CDLL] = ctypes.WinDLL("kernel32", use_last_error=True)
+    mocker.patch("tox.util.venv_redirect.ctypes.WinDLL", return_value=kernel32)
+    return kernel32
+
+
 @pytest.fixture
 def swap_root(root: Path, tmp_path_factory: pytest.TempPathFactory) -> _SwapRoot:
     other: Final[Path] = tmp_path_factory.mktemp("other") / "project"
@@ -222,7 +318,6 @@ class _LinkedDirectory:
     foreign: Path
 
 
-@pytest.mark.skipif(sys.platform == "win32", reason="creating symlinks needs privileges on Windows")
 def test_record_keeps_target_of_symlink_swapped_in_after_check(
     root: Path, tmp_path_factory: pytest.TempPathFactory
 ) -> None:
@@ -244,7 +339,6 @@ def test_record_keeps_target_of_symlink_swapped_in_after_check(
     )
 
 
-@pytest.mark.skipif(sys.platform == "win32", reason="POSIX directory-relative replacement")
 def test_record_keeps_target_of_hard_link_swapped_in_after_check(
     root: Path, tmp_path_factory: pytest.TempPathFactory
 ) -> None:
@@ -313,6 +407,39 @@ def test_release_stays_in_directory_swapped_after_check(root: Path, swap_root: _
 
     assert (swap_root.other / ".venv").read_text(encoding="utf-8") == "../shared\n"
     assert not (swap_root.moved / ".venv").exists()
+
+
+@pytest.mark.skipif(sys.platform != "win32", reason="Windows directory sharing")
+def test_release_windows_blocks_root_rename_before_unlink(root: Path) -> None:
+    redirect: Final[Path] = root / ".venv"
+    redirect.write_text(".tox/lint\n", encoding="utf-8")
+    moved: Final[Path] = root.with_name(f"{root.name}-moved")
+
+    def try_swap(_: Path) -> bool:
+        with pytest.raises(PermissionError):
+            root.rename(moved)
+        return True
+
+    assert (release_venv_redirect(redirect, try_swap), redirect.exists(), moved.exists()) == (True, False, False)
+
+
+@pytest.mark.skipif(sys.platform != "win32", reason="Windows temporary replacement")
+def test_record_windows_removes_temporary_after_failed_replace(root: Path, caplog: pytest.LogCaptureFixture) -> None:
+    redirect: Final[Path] = root / ".venv"
+    redirect.write_text(".tox/old\n", encoding="utf-8")
+
+    with redirect.open(encoding="utf-8"):
+        record_venv_redirect(root, root / ".tox" / "dev", _is_ours(root))
+
+    assert (
+        redirect.read_text(encoding="utf-8"),
+        sorted(path.name for path in root.iterdir()),
+        "could not point" in caplog.text,
+    ) == (
+        ".tox/old\n",
+        [".tox", ".venv"],
+        True,
+    )
 
 
 def test_release_without_directory(root: Path) -> None:
