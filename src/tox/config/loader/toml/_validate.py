@@ -34,7 +34,7 @@ def validate(val: TomlTypes, of_type: type[T]) -> T:  # ruff:ignore[complex-stru
             for va in val:
                 validate(va, entry_type)
         else:
-            msg = f"{val!r} is not list"
+            msg = f"{_describe(val)} is not list"
     elif isclass(of_type) and issubclass(of_type, Command):
         # first we cast it to list then create commands, so for now validate it as a nested list
         validate(val, list[str])
@@ -49,7 +49,7 @@ def validate(val: TomlTypes, of_type: type[T]) -> T:  # ruff:ignore[complex-stru
             for va in val.values():
                 validate(va, value_type)
         else:
-            msg = f"{val!r} is not dictionary"
+            msg = f"{_describe(val)} is not dictionary"
     elif casting_to in {Union, UnionType}:  # handle Optional values
         args: list[type[Any]] = list(type_args)
         for arg in args:
@@ -59,11 +59,11 @@ def validate(val: TomlTypes, of_type: type[T]) -> T:  # ruff:ignore[complex-stru
             except TypeError:
                 pass
         else:
-            msg = f"{val!r} is not union of {', '.join(a.__name__ for a in args)}"
+            msg = f"{_describe(val)} is not union of {', '.join(a.__name__ for a in args)}"
     elif casting_to in {Literal, type(Literal)}:
         choice = type_args
         if val not in choice:
-            msg = f"{val!r} is not one of literal {','.join(repr(i) for i in choice)}"
+            msg = f"{_describe(val)} is not one of literal {','.join(repr(i) for i in choice)}"
     elif not isinstance(val, of_type):
         if issubclass(of_type, (bool, str, int)):
             fail = True  # the enclosing branch established the value is not an instance already
@@ -74,10 +74,17 @@ def validate(val: TomlTypes, of_type: type[T]) -> T:  # ruff:ignore[complex-stru
             except Exception:  # ruff:ignore[blind-except]
                 fail = True
         if fail:
-            msg = f"{val!r} is not of type {of_type.__name__!r}"
+            msg = f"{_describe(val)} is not of type {of_type.__name__!r}"
     if msg:
         raise TypeError(msg)
     return cast("T", val)
+
+
+def _describe(val: object) -> str:
+    # validation runs after substitution, so text may hold expanded secrets: only echo inert scalars
+    if val is None or isinstance(val, (bool, int, float)):
+        return repr(val)
+    return f"value of type {type(val).__name__!r}"
 
 
 __all__ = [

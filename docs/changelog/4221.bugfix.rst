@@ -1,0 +1,2 @@
+A TOML configuration type error no longer echoes the offending value after substitution, so a malformed setting
+referencing ``{env:...}`` cannot print a secret in the clear; strings and containers are now reported by type only.

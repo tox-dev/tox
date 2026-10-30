@@ -1468,3 +1468,20 @@ def test_empty_tool_tox_table_defers_to_tox_toml(tox_project: ToxProjectCreator)
 
     outcome.assert_success()
     outcome.assert_out_err("special\n", "")
+
+
+def test_config_in_toml_type_error_hides_substituted_value(
+    tox_project: ToxProjectCreator, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    project = tox_project({
+        "pyproject.toml": """
+        [tool.tox.env.A]
+        commands = ["python deploy.py --token={env:DEPLOY_TOKEN}"]
+        """
+    })
+    monkeypatch.setenv("DEPLOY_TOKEN", "s3cr3t-t0ken")
+
+    outcome = project.run("c", "-e", "A", "-k", "commands")
+
+    assert "failed to load A.commands: value of type 'str' is not list" in outcome.out, outcome.out
+    assert "s3cr3t-t0ken" not in outcome.out + outcome.err
