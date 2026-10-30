@@ -39,7 +39,8 @@ tox logs command invocations inside ``.tox/<env_name>/log``. Environment variabl
 (``access``, ``api``, ``auth``, ``client``, ``cred``, ``key``, ``passwd``, ``password``, ``private``, ``pwd``,
 ``secret``, ``token``) are logged with their values redacted to prevent accidental secret leaking in CI/CD environments.
 tox also masks secret-looking inline ``--name=value`` flags in command displays, ``TOX_OVERRIDE`` help defaults, and
-warnings for invalid ``TOX_`` values. The space-separated ``--name value`` form is outside this masking rule.
+warnings for invalid ``TOX_`` values. tox masks URL userinfo in command displays, including provisioning commands, and
+in missing ``requires`` messages. The space-separated ``--name value`` form is outside the flag masking rule.
 
 .. ------------------------------------------------------------------------------------------
 
@@ -1814,7 +1815,7 @@ tox logs command invocations inside ``.tox/<env_name>/log``. Each execution is r
 
 Environment variables with names containing sensitive words (``access``, ``api``, ``auth``, ``client``, ``cred``,
 ``key``, ``passwd``, ``password``, ``private``, ``pwd``, ``secret``, ``token``) are logged with their values redacted to
-prevent accidental secret leaking.
+prevent accidental secret leaking. tox also masks URL userinfo in logged commands.
 
 ***************************************
  Understand InvocationError exit codes

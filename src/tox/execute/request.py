@@ -72,7 +72,7 @@ class ExecuteRequest:
 
     @property
     def shell_cmd_redacted(self) -> str:
-        """:returns: the command to run as a shell command with secret-looking flag values masked"""
+        """:returns: the command with URL userinfo and secret-looking inline flag values masked"""
         return self._shell_cmd(redact=True)
 
     def _shell_cmd(self, *, redact: bool) -> str:

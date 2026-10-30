@@ -106,7 +106,6 @@ def provision(state: State) -> int | bool:
     requires = state.conf.core.get("requires", list[Requirement])
     missing = _get_missing(requires)
 
-    deps = ", ".join(f"{p}{'' if v is None else f' ({v})'}" for p, v in missing)
     loader = MemoryLoader(  # these configuration values are loaded from in-memory always (no file conf)
         base=[],  # disable inheritance for provision environments
         skip_install=True,  # no packaging, including artifacts selected with --installpkg
@@ -128,6 +127,7 @@ def provision(state: State) -> int | bool:
             raise HandledError(msg)
         return False
 
+    deps: Final[str] = redact_argv([", ".join(f"{p}{'' if v is None else f' ({v})'}" for p, v in missing)])[0]
     miss_msg = f"is missing [requires (has)]: {deps}"
 
     no_provision: bool | str = state.conf.options.no_provision

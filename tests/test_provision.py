@@ -582,6 +582,37 @@ def test_provision_no_recreate(tox_project: ToxProjectCreator) -> None:
     assert f"provisioning explicitly disabled within {sys.executable}, but is missing [requires (has)]: p" in result.out
 
 
+@pytest.mark.parametrize(
+    ("command_args", "expected_code"),
+    [
+        pytest.param(("l", "--no-provision"), -2, id="disabled"),
+        pytest.param(("l",), 0, id="automatic"),
+    ],
+)
+def test_provision_masks_requires_url_userinfo(
+    tox_project: ToxProjectCreator,
+    mocker: MockerFixture,
+    command_args: tuple[str, ...],
+    expected_code: int,
+) -> None:
+    mocker.patch("tox.provision.run_provision", autospec=True, return_value=0)
+    result: Final[ToxRunOutcome] = tox_project({
+        "tox.ini": "[tox]\nrequires = demo-pkg @ https://user:pass@example.invalid/demo_pkg-1.0-py3-none-any.whl\n",
+    }).run(*command_args)
+    assert result.code == expected_code
+    assert "https://*********@example.invalid/demo_pkg-1.0-py3-none-any.whl" in result.out
+    assert "user:pass" not in result.out
+
+
+def test_provision_masks_url_before_inline_flag(tox_project: ToxProjectCreator) -> None:
+    result: Final[ToxRunOutcome] = tox_project({
+        "tox.ini": "[tox]\nrequires = demo-pkg @ https://user:pass@example.invalid/demo.whl?x=--token=abc\n",
+    }).run("l", "--no-provision")
+    result.assert_failed(-2)
+    assert "https://*********@example.invalid/demo.whl?x=--token=***" in result.out
+    assert "user:pass" not in result.out
+
+
 def test_no_provision_before_command_keeps_command(tox_project: ToxProjectCreator) -> None:
     project = tox_project({"tox.toml": 'env_list = ["py"]\n'})
     result = project.run("--no-provision", "l")
