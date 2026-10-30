@@ -72,7 +72,7 @@ def redact_argv(argv: Sequence[str]) -> list[str]:
     return result
 
 
-__all__ = (
+__all__ = [
     "redact_argv",
     "redact_value",
-)
+]
