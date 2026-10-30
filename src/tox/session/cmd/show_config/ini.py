@@ -10,7 +10,7 @@ from colorama import Fore
 
 from tox.config.loader.stringify import stringify
 
-from .common import write_output_file
+from .common import format_config_error, write_output_file
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Sequence
@@ -71,7 +71,8 @@ def _emit_conf(emit: Callable[[str], None], conf: ConfigSet, keys: Sequence[str]
         except Exception as exception:  # because e.g. the interpreter cannot be found
             if os.environ.get("_TOX_SHOW_CONFIG_RAISE"):  # pragma: no branch
                 raise  # pragma: no cover
-            as_str, multi_line = _colored(f"# Exception: {exception!r}", Fore.LIGHTRED_EX, enabled=is_colored), False
+            as_str = _colored(f"# Exception: {format_config_error(exception)}", Fore.LIGHTRED_EX, enabled=is_colored)
+            multi_line = False
             has_exception = True
         if multi_line and "\n" not in as_str:
             multi_line = False

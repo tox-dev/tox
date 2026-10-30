@@ -1,0 +1,2 @@
+tox now rejects sdist members whose paths or link targets escape the extraction directory. On Python versions without
+the ``tarfile`` data filter, tox checks each member as it extracts the archive.
