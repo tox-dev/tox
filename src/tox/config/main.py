@@ -73,22 +73,17 @@ class Config:
                     logging.debug("could not check if %r is an existing path", redact_argv([arg])[0])
                     is_existing_path = False
                 # A wrapper can run the first positional value as a program without tox knowing that it does.
-                if (
-                    is_existing_path
-                    and not path_arg.is_absolute()
-                    and not (
-                        index == 0
-                        and path_arg.name == arg
-                        and (
-                            program_first
-                            or (
-                                path_arg.is_file()
-                                and os.access(path_arg, os.X_OK)
-                                and (os.name != "nt" or path_arg.suffix.lower() in {".bat", ".cmd", ".com", ".exe"})
-                            )
-                        )
-                    )
-                ):
+                bare_first_value: bool = is_existing_path and index == 0 and path_arg.name == arg
+                executable_file: bool = (
+                    bare_first_value
+                    and path_arg.is_file()
+                    and os.access(path_arg, os.X_OK)
+                    and (os.name != "nt" or path_arg.suffix.lower() in {".bat", ".cmd", ".com", ".exe"})
+                )
+                if bare_first_value and (program_first or executable_file):
+                    args.append(arg)
+                    continue
+                if is_existing_path and not path_arg.is_absolute():
                     # we use os.path to unroll .. in path without resolve
                     path_arg_str = os.path.abspath(str(path_arg))  # ruff:ignore[os-path-abspath]
                     try:
