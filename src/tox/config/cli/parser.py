@@ -464,9 +464,8 @@ class ToxParser(ArgumentParserWithEnvAndConfig):
         namespace: _N | None = None,
     ) -> tuple[_N, list[str]]:
         args_list: list[str] = list(args) if args is not None else sys.argv[1:]
-        cmd_at = self._find_command(args_list)
-        if cmd_at is not None:  # if we found a command move it to the start
-            args_list = [args_list[cmd_at], *args_list[:cmd_at], *args_list[cmd_at + 1 :]]
+        if (command_index := self._find_command(args_list)) is not None:
+            args_list = [args_list[command_index], *args_list[:command_index], *args_list[command_index + 1 :]]
         elif tuple(args_list) not in {("--help",), ("-h",)} and (
             self._cmd is not None and "legacy" in self._cmd.choices
         ):
@@ -479,9 +478,8 @@ class ToxParser(ArgumentParserWithEnvAndConfig):
     def _find_command(self, args_list: list[str]) -> int | None:
         if self._cmd is None or not args_list:
             return None
-        # options that consume a value; a subcommand name appearing as such a value (e.g. ``-e list``) must not
-        # be mistaken for the command. Options live on the subparsers (``-e`` on legacy), so consult those too.
-        actions = {
+        # Legacy options live on its subparser, so include them when searching for the command.
+        option_actions: Final[dict[str, Action]] = {
             name: action
             for parser in (self, self._cmd.choices.get("legacy"))
             if parser is not None
@@ -489,21 +487,26 @@ class ToxParser(ArgumentParserWithEnvAndConfig):
                 parser._option_string_actions.items()  # ruff:ignore[private-member-access]  # no public lookup
             )
         }
-        skip: int | None = 0  # values still owned by the last option; ``None`` means all until the next option
-        for at, arg in enumerate(args_list):
+        remaining_values: int | None = 0
+        for index, arg in enumerate(args_list):
             if arg.startswith("-") and arg != "-":
-                skip = 0
-            if skip is None or skip > 0:
-                if skip is not None:
-                    skip -= 1
-            elif (action := actions.get(arg)) is not None and action.nargs != 0:
-                if action.nargs in {"?", "*"} and at + 1 < len(args_list) and args_list[at + 1] in self._cmd.choices:
+                remaining_values = 0
+            if remaining_values is None or remaining_values > 0:
+                if remaining_values is not None:
+                    remaining_values -= 1
+            elif (action := option_actions.get(arg)) is not None and action.nargs != 0:
+                if (
+                    action.nargs in {"?", "*"}
+                    and index + 1 < len(args_list)
+                    and args_list[index + 1] in self._cmd.choices
+                ):
                     continue
-                # argparse greedily consumes every following non-option token for ``+`` and ``*``
-                greedy = action.nargs in {"+", "*"}
-                skip = None if greedy else (action.nargs if isinstance(action.nargs, int) else 1)
+                if action.nargs in {"+", "*"}:
+                    remaining_values = None
+                else:
+                    remaining_values = action.nargs if isinstance(action.nargs, int) else 1
             elif arg in self._cmd.choices:
-                return at
+                return index
         return None
 
 
