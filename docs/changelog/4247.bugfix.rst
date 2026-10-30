@@ -1,0 +1,3 @@
+For active packages in a ``pylock.toml``, reject whitespace or control characters in hash tokens, archive or VCS URLs,
+commit IDs, and subdirectories before writing pip requirements. A line break in one of these fields could add a pip
+option such as ``--index-url``.

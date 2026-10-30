@@ -1,3 +1,0 @@
-Reject a ``pylock.toml`` whose hashes, archive or VCS URLs, revisions, or subdirectories contain whitespace or control
-characters instead of writing them verbatim into the pip requirements file, where a line break could inject extra pip
-options such as ``--index-url``.

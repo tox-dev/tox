@@ -261,6 +261,10 @@ using the ``packaging.pylock`` module, evaluates markers to filter packages, tra
 requirements file (``{env_dir}/pylock.txt``), and passes it to pip with ``--no-deps``. The ``--no-deps`` flag prevents
 pip from re-resolving transitive dependencies, ensuring the exact versions from the lock file are installed.
 
+tox rejects whitespace and control characters in source and hash fields written to the pip requirements file because
+those characters could add another requirement or pip option. A VCS ``requested-revision`` remains informational;
+``commit-id`` selects the installed source.
+
 **Plugin support:** the ``Pylock`` object is passed through the ``tox_on_install`` plugin hook. Installer plugins can
 inspect it via ``isinstance(arguments, Pylock)`` and handle lock files natively (e.g. ``uv pip install --pylock``)
 instead of relying on the transpile path.
