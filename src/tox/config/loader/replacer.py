@@ -452,7 +452,7 @@ class RequirementLinesReplacer(Replacer):
 
     @override
     def join_value(self, value: MatchArg) -> str:
-        replaced: Final = self(value)
+        replaced: Final[Sequence[str]] = self(value)
         for at, part in enumerate(value):
             if not isinstance(part, MatchExpression):
                 continue
@@ -541,7 +541,7 @@ def replace_pos_args(conf: Config, args: list[str], conf_args: ConfigLoadArgs) -
 
 def quote_args(args: Sequence[str]) -> str:
     # INI settings split lines before parsing quotes.
-    normalized: Final = [" ".join(arg.splitlines()) for arg in args]
+    normalized: Final[list[str]] = [" ".join(arg.splitlines()) for arg in args]
     if sys.platform != "win32":
         return shlex.join(normalized)
     # Windows command splitting keeps a lone backslash, so paths stay unquoted where a value is not split into a command

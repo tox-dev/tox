@@ -23,10 +23,12 @@ from tox.tox_env.python.pip.req_file import PythonConstraints, PythonDeps
 from tox.util.typing_compat import override
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
     from configparser import ConfigParser, SectionProxy
     from types import UnionType
 
     from tox.config.loader.convert import Factory
+    from tox.config.loader.replacer import ReplaceReference
     from tox.config.loader.section import Section
     from tox.config.main import Config
 
@@ -93,7 +95,7 @@ class IniLoader(StrConvert, Loader[str]):
         if conf is None:  # no replacement supported in the core section
             return self.to(raw, of_type, factory)
         delay_replace = inspect.isclass(of_type) and issubclass(of_type, SetEnv)
-        replace_all: Final = (
+        replace_all: Final[Callable[[Config, ReplaceReference, str | MatchExpression, ConfigLoadArgs], str]] = (
             replace_requirement_lines
             if of_type in {PythonDeps, PythonConstraints}
             else replace_command_lines
