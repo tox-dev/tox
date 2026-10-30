@@ -99,7 +99,7 @@ class Pip(PythonInstallerListDependencies):
         self._env.conf.add_config(
             keys=["constraints"],
             of_type=PythonConstraints,
-            factory=partial(PythonConstraints.factory, root),
+            factory=partial(PythonConstraints.factory, root, environment=lambda: self._env.environment_variables),
             default=PythonConstraints("", root),
             desc="constraints to apply to installed python dependencies",
         )

@@ -458,6 +458,17 @@ def test_requirements_env_var_missing(monkeypatch: MonkeyPatch, tmp_path: Path) 
     assert found == [f".{os.sep}${{ENV_VAR}}"]
 
 
+def test_requirements_env_var_from_environment_provider(monkeypatch: MonkeyPatch, tmp_path: Path) -> None:
+    monkeypatch.setenv("ENV_VAR", "host")
+    monkeypatch.setenv("OTHER_VAR", "host")
+    (tmp_path / "nested.txt").write_text("${OTHER_VAR}")
+    requirements_file = tmp_path / "req.txt"
+    requirements_file.write_text("${ENV_VAR} >= 1\n-r nested.txt")
+    req_file = RequirementsFile(requirements_file, constraint=False, environment=lambda: {"ENV_VAR": "beta"})
+    found = [str(i) for i in req_file.requirements]
+    assert found == ["beta>=1", f".{os.sep}${{OTHER_VAR}}"]
+
+
 @pytest.mark.parametrize("flag", ["-r", "--requirement"])
 def test_requirements_txt_transitive(tmp_path: Path, flag: str) -> None:
     other_req = tmp_path / "other-requirements.txt"

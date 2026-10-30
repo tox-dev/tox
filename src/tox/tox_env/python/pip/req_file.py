@@ -22,7 +22,7 @@ _UNESCAPED_SPACE_RE = re.compile(
 
 if TYPE_CHECKING:
     from argparse import ArgumentParser
-    from collections.abc import Iterator
+    from collections.abc import Callable, Iterator, Mapping
     from pathlib import Path
     from typing import ClassVar, Self
 
@@ -31,8 +31,13 @@ class _PythonRequirementsFile(RequirementsFile):
     _CONSTRAINT: ClassVar[bool]
     _FIELD: ClassVar[str]
 
-    def __init__(self, raw: str | list[str] | list[Requirement], root: Path) -> None:
-        super().__init__(root / "tox.ini", constraint=self._CONSTRAINT)
+    def __init__(
+        self,
+        raw: str | list[str] | list[Requirement],
+        root: Path,
+        environment: Callable[[], Mapping[str, str]] | None = None,
+    ) -> None:
+        super().__init__(root / "tox.ini", constraint=self._CONSTRAINT, environment=environment)
         if isinstance(raw, list):
             for item in raw:
                 if isinstance(item, Requirement):
@@ -49,7 +54,9 @@ class _PythonRequirementsFile(RequirementsFile):
     @override
     def _req_parser(self) -> RequirementsFile:
         if self._req_parser_ is None:
-            self._req_parser_ = RequirementsFile(path=self._path, constraint=self._CONSTRAINT)
+            self._req_parser_ = RequirementsFile(
+                path=self._path, constraint=self._CONSTRAINT, environment=self._environment
+            )
         return self._req_parser_
 
     @override
@@ -203,7 +210,12 @@ class _PythonRequirementsFile(RequirementsFile):
         return self._unroll
 
     @classmethod
-    def factory(cls, root: Path, raw: object) -> Self:
+    def factory(
+        cls,
+        root: Path,
+        raw: object,
+        environment: Callable[[], Mapping[str, str]] | None = None,
+    ) -> Self:
         if not (
             isinstance(raw, str)
             or (
@@ -212,7 +224,7 @@ class _PythonRequirementsFile(RequirementsFile):
             )
         ):
             raise TypeError(_factory_type_error(cls._FIELD, raw))
-        return cls(cast("str | list[str] | list[Requirement]", raw), root)
+        return cls(cast("str | list[str] | list[Requirement]", raw), root, environment)
 
 
 class PythonDeps(_PythonRequirementsFile):
@@ -247,7 +259,7 @@ class PythonDeps(_PythonRequirementsFile):
 
     def __add__(self, other: PythonDeps) -> Self:
         # a new instance, so nothing parsed from the earlier text outlives it
-        return type(self)(f"{self._raw}\n{other._raw}", self._path.parent)
+        return type(self)(f"{self._raw}\n{other._raw}", self._path.parent, self._environment)
 
 
 class PythonConstraints(_PythonRequirementsFile):

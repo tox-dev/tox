@@ -10,7 +10,7 @@ import shlex
 import sys
 import urllib.parse
 from argparse import ArgumentParser, Namespace
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator, Mapping
 from pathlib import Path
 from time import monotonic
 from typing import TYPE_CHECKING, Any, Final, cast
@@ -201,8 +201,22 @@ class ParsedLine:
 
 
 class RequirementsFile:
-    def __init__(self, path: Path, constraint: bool) -> None:  # ruff:ignore[boolean-type-hint-positional-argument]
+    def __init__(
+        self,
+        path: Path,
+        constraint: bool,  # ruff:ignore[boolean-type-hint-positional-argument]
+        environment: Callable[[], Mapping[str, str]] | None = None,
+    ) -> None:
+        """Create a requirements file parser.
+
+        :param path: path of the requirements file
+        :param constraint: whether the file is a constraints file
+        :param environment: provider of the environment variables pip runs with, used to expand ``${VAR}`` references;
+            when not set the variables of the tox process are used
+
+        """
         self._path = path
+        self._environment = environment
         self._is_constraint: bool = constraint
         self._opt = Namespace()
         self._requirements: list[ParsedRequirement] | None = None
@@ -528,7 +542,7 @@ class RequirementsFile:
                 yield line_number, processed_line
 
     def _expand_env_variables(self, lines_enum: ReqFileLines) -> ReqFileLines:
-        """Replace all environment variables that can be retrieved via `os.getenv`.
+        """Replace all environment variables set in the environment pip runs with.
 
         The only allowed format for environment variables defined in the requirement file is `${MY_VARIABLE_1}` to
         ensure two things:
@@ -541,10 +555,13 @@ class RequirementsFile:
         <http://pubs.opengroup.org/onlinepubs/9699919799/>`_ and are limited to uppercase letter, digits and the `_`.
 
         """
+        environment: Mapping[str, str] | None = None
         for line_number, line in lines_enum:
             expanded_line = line
             for env_var, var_name in _ENV_VAR_RE.findall(expanded_line):
-                value = os.getenv(var_name)
+                if environment is None:  # resolve lazily, only files that reference a variable need it
+                    environment = os.environ if self._environment is None else self._environment()
+                value = environment.get(var_name)
                 if not value:
                     continue
                 expanded_line = expanded_line.replace(env_var, value)

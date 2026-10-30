@@ -114,7 +114,9 @@ class Pep723Mixin(Python, RunToxEnv):
                 msg = f"invalid dependency {dependency!r} in {self.conf['script']}: {exc}"
                 raise Fail(msg) from exc
         if dependencies:
-            self._install(PythonDeps(dependencies, self.core.get("tox_root", Path)), type(self).__name__, "deps")
+            root = self.core.get("tox_root", Path)
+            requirements = PythonDeps(dependencies, root, lambda: self.environment_variables)
+            self._install(requirements, type(self).__name__, "deps")
 
     def _get_script_metadata(self) -> ScriptMetadata:
         if self._script_metadata is None:
