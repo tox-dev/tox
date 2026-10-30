@@ -3,9 +3,10 @@ from __future__ import annotations
 import io
 import json
 import os
+import subprocess
 import tarfile
 from textwrap import dedent
-from typing import TYPE_CHECKING, Any, Final, cast
+from typing import TYPE_CHECKING, Any, Final, Protocol, cast
 
 import pytest
 
@@ -115,25 +116,61 @@ def test_package_dirs_are_relative_to_conf(tox_project: ToxProjectCreator, key: 
     assert result.env_conf(".pkg")[key] == proj.path / path
 
 
-@pytest.mark.skipif(os.name == "nt", reason="creating symlinks needs privileges on Windows")
-def test_meta_dir_symlink_fails_without_touching_target(
-    tox_project: ToxProjectCreator, demo_pkg_inline: Path, tmp_path: Path
+def _symlink_to(link: Path, target: Path) -> None:
+    link.symlink_to(target, target_is_directory=True)
+
+
+def _junction_to(link: Path, target: Path) -> None:
+    subprocess.run(
+        [os.environ["COMSPEC"], "/c", "mklink", "/J", str(link), str(target)], check=True, capture_output=True
+    )
+
+
+@pytest.mark.parametrize(
+    ("create_link", "is_symlink"),
+    [
+        pytest.param(
+            _symlink_to,
+            True,
+            id="symlink",
+            marks=pytest.mark.skipif(os.name == "nt", reason="creating symlinks needs privileges on Windows"),
+        ),
+        pytest.param(
+            _junction_to,
+            False,
+            id="junction",
+            marks=pytest.mark.skipif(os.name != "nt", reason="junctions require Windows"),
+        ),
+    ],
+)
+def test_meta_dir_link_fails_without_touching_target(
+    tox_project: ToxProjectCreator,
+    demo_pkg_inline: Path,
+    tmp_path: Path,
+    create_link: LinkCreator,
+    is_symlink: bool,
 ) -> None:
-    outside: Final = tmp_path / "outside"
+    outside: Final[Path] = tmp_path / "outside"
     outside.mkdir()
     (outside / "keep").write_text("keep")
-    ini: Final = f"[tox]\npackage_root={demo_pkg_inline}\n[testenv]\npackage=wheel\nwheel_build_env=.pkg"
-    proj: Final = tox_project({"tox.ini": ini})
-    meta_dir: Final = proj.path / ".tox" / ".pkg" / ".meta"
+    project: Final[ToxProject] = tox_project({
+        "tox.ini": f"[tox]\npackage_root={demo_pkg_inline}\n[testenv]\npackage=wheel\nwheel_build_env=.pkg",
+    })
+    meta_dir: Final[Path] = project.path / ".tox" / ".pkg" / ".meta"
     meta_dir.parent.mkdir(parents=True)
-    meta_dir.symlink_to(outside, target_is_directory=True)
-    proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
+    create_link(meta_dir, outside)
+    assert meta_dir.is_symlink() is is_symlink
+    project.patch_execute(lambda request: 0 if "install" in request.run_id else None)
 
-    result: Final = proj.run("r", "--notest")
+    result: Final[ToxRunOutcome] = project.run("r", "--notest")
 
     result.assert_failed()
-    assert "is a symlink where the package metadata should live" in result.out
-    assert sorted(p.name for p in outside.iterdir()) == ["keep"]
+    assert "is a link where the package metadata should live" in result.out
+    assert [(entry.name, entry.read_text()) for entry in outside.iterdir()] == [("keep", "keep")]
+
+
+class LinkCreator(Protocol):
+    def __call__(self, link: Path, target: Path) -> None: ...
 
 
 def test_core_package_root_is_relative_to_conf(tox_project: ToxProjectCreator) -> None:

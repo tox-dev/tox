@@ -2258,6 +2258,9 @@ Python virtual environment packaging
 
     Directory where to put the project metadata files.
 
+    tox refuses a symlink or Windows junction at this path because the build frontend empties the directory before
+    preparing metadata.
+
 .. conf::
     :keys: pkg_dir
     :version_added: 4.0.0
