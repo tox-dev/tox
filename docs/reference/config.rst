@@ -3520,6 +3520,9 @@ Inside a tox environment, tox looks up ``KEY`` in this order:
 
 So ``commands = echo {env:FOO}`` prints the ``set_env`` value of ``FOO`` when the environment sets one.
 
+Within :ref:`deps` and :ref:`constraints`, a value taken from the host environment reaches pip as written: a pip-style
+``${NAME}`` reference inside it is not expanded, while one written in the configuration itself still is.
+
 Environment variable substitutions with default values
 ======================================================
 

@@ -10,7 +10,7 @@ from packaging.requirements import Requirement
 
 from tox.util.typing_compat import override
 
-from .req.file import ParsedRequirement, ReqFileLines, RequirementsFile
+from .req.file import ParsedRequirement, ReqFileLines, RequirementsFile, unprotect_env_variables
 
 _UNESCAPED_SPACE_RE = re.compile(
     r"""
@@ -74,7 +74,9 @@ class _PythonRequirementsFile(RequirementsFile):
         expanded: Final[str] = next(super()._expand_env_variables(iter(((line_number, line),))))[1]
         env_var_pattern: Final[re.Pattern[str]] = re.compile(r"\$\{[A-Z0-9_]+\}")
         if not env_var_pattern.fullmatch(line):
-            marked: Final[str] = env_var_pattern.sub(lambda match: f"\x00{match.start()}\x00", line)
+            marked: Final[str] = unprotect_env_variables(
+                env_var_pattern.sub(lambda match: f"\x00{match.start()}\x00", line)
+            )
             self.validate_requirement_options(marked, expanded, preprocessed=True)
         return expanded
 
@@ -118,7 +120,7 @@ class _PythonRequirementsFile(RequirementsFile):
         # renderer, at the first option line, while requirements, comments and -r/-c/-e lines stay as written.
         lines: list[str] = []
         merged, at = Namespace(), None
-        for line in self._raw.splitlines():
+        for line in unprotect_env_variables(self._raw).splitlines():
             if (opts := self._global_options(line)) is None:
                 lines.append(line)
             else:

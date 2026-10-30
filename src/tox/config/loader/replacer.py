@@ -16,6 +16,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, Final, Protocol, Union, get_args, get_origin
 
 from tox.config.types import CircularChainError, Command, EnvList
+from tox.tox_env.python.pip.req.file import protect_env_variables
 from tox.util.typing_compat import override
 
 if TYPE_CHECKING:
@@ -55,6 +56,10 @@ class MatchError(Exception):
 
 
 class RawText(str):  # ruff:ignore[subclass-builtin] # keep the origin through the str replacement interface
+    __slots__ = ()
+
+
+class HostText(RawText):  # the value of a host environment variable
     __slots__ = ()
 
 
@@ -555,6 +560,14 @@ class RequirementLinesReplacer(Replacer):
         self._validate_options = validate_options
 
     @override
+    def _resolve_replace(
+        self, of_type: str, args: list[str], flattened_args: list[str], conf_args: ConfigLoadArgs
+    ) -> str | ConfigDefault | None:
+        value: Final = super()._resolve_replace(of_type, args, flattened_args, conf_args)
+        # pip's ${NAME} syntax belongs to the configuration, a host variable's value reaches pip as written
+        return HostText(protect_env_variables(value)) if isinstance(value, HostText) else value
+
+    @override
     def _flatten_arg(self, value: MatchArg) -> str:
         return self.join_value(value)
 
@@ -696,7 +709,8 @@ def _loading_change_dir(conf_args: ConfigLoadArgs) -> bool:
 
 
 def replace_env(conf: Config | None, args: list[str], conf_args: ConfigLoadArgs) -> str:
-    return str(_replace_env(conf, args, conf_args))
+    value: Final = _replace_env(conf, args, conf_args)
+    return value if isinstance(value, str) else str(value)  # keep HostText so callers know a host value came back
 
 
 def _replace_env(conf: Config | None, args: list[str], conf_args: ConfigLoadArgs) -> str | ConfigDefault:
@@ -727,7 +741,7 @@ def _replace_env(conf: Config | None, args: list[str], conf_args: ConfigLoadArgs
             raise MatchRecursionError(msg)
 
     if key in os.environ:
-        return RawText(os.environ[key])  # a host variable has always been allowed to hold tokens of its own
+        return HostText(os.environ[key])  # a host variable has always been allowed to hold tokens of its own
 
     return ConfigDefault(text="" if len(args) == 1 else ARG_DELIMITER.join(args[1:]), start=2)
 
@@ -787,6 +801,7 @@ def replace_factor(conf: Config, args: list[str], conf_args: ConfigLoadArgs) -> 
 __all__ = [
     "Arguments",
     "ConfigDefault",
+    "HostText",
     "MatchExpression",
     "MatchRecursionError",
     "RawText",

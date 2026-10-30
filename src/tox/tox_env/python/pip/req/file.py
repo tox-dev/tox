@@ -35,6 +35,8 @@ _ENV_VAR_RE = re.compile(
     """,
     re.VERBOSE,
 )
+# Placed between ``$`` and ``{`` in inline text supplied by the host, so it reaches pip as written instead of expanding.
+_LITERAL_MARK: Final[str] = "\x00"
 _SCHEME_RE = re.compile(
     r"""
     ^                       # start of string
@@ -522,7 +524,7 @@ class RequirementsFile:
                 expanded_line = expanded_line.replace(env_var, value)
                 if (redacted := redact_value(var_name, value)) != value:
                     self._secrets[value] = redacted
-            yield line_number, expanded_line
+            yield line_number, unprotect_env_variables(expanded_line)
 
     def redact(self, text: str) -> str:
         secrets: Final = self._secrets | self._req_parser._secrets  # ruff:ignore[private-member-access]  # nested files
@@ -574,8 +576,32 @@ class RequirementsFile:
                 yield f"--{name.replace('_', '-')}", ",".join(sorted(getattr(opt, name)))
 
 
+def protect_env_variables(text: str) -> str:
+    """Keep the ``${NAME}`` references of ``text`` from being expanded when parsed as an inline requirement.
+
+    :param text: the text to protect
+
+    :returns: the protected text, :func:`unprotect_env_variables` restores it
+
+    """
+    return text.replace("${", f"${_LITERAL_MARK}{{")
+
+
+def unprotect_env_variables(text: str) -> str:
+    """Restore text protected by :func:`protect_env_variables`.
+
+    :param text: the protected text
+
+    :returns: the text as originally written
+
+    """
+    return text.replace(f"${_LITERAL_MARK}{{", "${")
+
+
 __all__ = (
     "ParsedRequirement",
     "ReqFileLines",
     "RequirementsFile",
+    "protect_env_variables",
+    "unprotect_env_variables",
 )

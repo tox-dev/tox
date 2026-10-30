@@ -1,0 +1,3 @@
+A host environment variable substituted into :ref:`deps` or :ref:`constraints` (via ``{env:NAME}`` or a TOML ``replace =
+"env"`` table) now reaches pip as written: a pip-style ``${OTHER}`` inside its value is no longer expanded from the host
+environment. ``${NAME}`` references written in the configuration itself still expand.
