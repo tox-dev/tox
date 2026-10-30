@@ -184,3 +184,40 @@ def test_bad_env_var(
     assert caplog.messages[0] == first
     assert caplog.messages[1] == second
     assert len(caplog.messages) == 2, caplog.text
+
+
+@pytest.mark.parametrize(
+    "raw",
+    [
+        pytest.param("badoverride;testenv.commands=python deploy.py --password=hunter2", id="space-separated"),
+        pytest.param("badoverride;--password=hunter2", id="semicolon-separated"),
+    ],
+)
+def test_bad_env_var_redacts_secret(raw: str, monkeypatch: MonkeyPatch, capsys: CaptureFixture) -> None:
+    monkeypatch.setenv("TOX_OVERRIDE", raw)
+    get_options()
+    out, err = capsys.readouterr()
+    assert "hunter2" not in out + err
+    assert "--password=*******" in out
+    assert "badoverride;" in out
+
+
+@pytest.mark.parametrize(
+    ("secret", "mask"),
+    [
+        pytest.param("hunter2", "*******", id="plain"),
+        pytest.param("hun ter2", "********", id="space"),
+        pytest.param("hun\nter2", "********", id="newline"),
+        pytest.param(r"hun\ter2", "********", id="backslash"),
+        pytest.param("hun;ter2", "********", id="semicolon"),
+    ],
+)
+def test_bad_env_var_redacts_secret_in_reason(
+    secret: str, mask: str, monkeypatch: MonkeyPatch, capsys: CaptureFixture
+) -> None:
+    monkeypatch.setenv("TOX_PARALLEL", f"--password={secret}")
+    get_options()
+    out, err = capsys.readouterr()
+    assert "hun" not in out + err
+    assert "ter2" not in out + err
+    assert f"--password={mask}" in out
