@@ -621,9 +621,12 @@ the top level of ``tox.toml``. Placing these options in an environment section (
     :default: {work_dir}/.tmp
     :version_added: 3.5
 
-    Directory where to put tox temporary files. For example: we create a hard link (if possible, otherwise new copy) in
-    this directory for the project package. This ensures tox works correctly when having parallel runs (as each session
-    will have its own copy of the project package - e.g. the source distribution).
+    Directory for tox temporary files. Each package build creates a separate copy here so parallel runs do not share the
+    same staged package.
+
+    If this directory is a symlink inside :ref:`work_dir`, tox replaces the link with a directory. A configured path
+    outside :ref:`work_dir` may remain a symlink. On POSIX, package staging rejects a path that another account can
+    rename based on its ownership and permissions at validation time.
 
 .. conf::
     :keys: venv_redirect
@@ -1516,9 +1519,9 @@ Run
         On Windows, ``.bat`` and ``.cmd`` commands run through ``cmd.exe``, so tox quotes their arguments for that
         parser. A batch file reading raw ``%1`` can see surrounding quotes for arguments that need them.
 
-        tox pastes string settings and environment values into the command text before splitting it. A value with spaces
-        then splits into several arguments unless the argument holding it is quoted. Keep such values unquoted in
-        ``[vars]`` and quote the complete argument where it is used:
+        tox pastes string settings and environment values into the command text before splitting it. Unquoted values
+        containing spaces split into arguments. A substitution within a quoted argument stays in that argument, even
+        if the value contains quotes or backslashes:
 
         .. code-block:: ini
 
@@ -1529,10 +1532,8 @@ Run
             [testenv]
             commands = python -c 'import sys; print(sys.argv[1])' "--source={[vars]common_source}"
 
-        Quotes stored in a ``[vars]`` value are pasted in too and pair up with the quotes around them. With
-        ``source = "{tox_root}/source tree"``, ``"--source={[vars]source}/sub dir"`` splits at the spaces in
-        the stored path and keeps ``sub dir`` whole, and ``common_source = "{[vars]source}/common"`` splits at every
-        space in the path when used unquoted.
+        Quotes stored in a ``[vars]`` value remain part of that value when substituted into a quoted argument.
+        Unquoted substitutions still follow ``shlex`` quoting rules.
 
         Inside an unquoted or double-quoted path, double backslashes escape one backslash. Single-quoted text is
         literal; TOML argument arrays bypass command-line splitting. Escape a quote or wrap it in the other quote type to
@@ -3443,10 +3444,10 @@ create your virtual env for the developers. This also supports ranges in the sam
 **Value substitution** operates through the ``{...}`` string-substitution pattern. The string inside the curly braces
 may reference a global or per-environment config key as described above.
 
-tox substitutes a key's value when it loads the key, and substitutes the text of a referenced key or host environment
-variable again until no ``{...}`` expression remains, so a referenced value may contain substitutions of its own.
-:ref:`set_env` is the exception: tox substitutes each of its values only when it reads that value, see :ref:`set_env
-resolution rules <set-env-resolution>`.
+tox substitutes a key's value when it loads the key, then substitutes expressions in referenced configuration text or
+host environment variables. If nested expansion exceeds the depth limit, tox logs one warning for that value and leaves
+the remaining references as text. :ref:`set_env` is the exception: tox substitutes each of its values only when it reads
+that value, see :ref:`set_env resolution rules <set-env-resolution>`.
 
 Positional arguments, file names matched by ``{glob:PATTERN}`` and ``TOX_FACTOR_<label>`` overrides are data rather than
 configuration, so tox inserts them as they are: a ``{...}`` or ``[]`` within them is not a substitution.
@@ -3480,8 +3481,9 @@ INI splits a command into arguments after substitution. A path reference such as
 stays within one argument even if it contains spaces, quotes or backslashes. The same applies to tox-provided scalar
 values such as ``{host_python}`` and ``{tox_root_name}``, and to each unquoted entry of a referenced list such as
 ``{base_python}``. A reference inside a larger word stays in that word, so ``python {tox_root}{/}scripts{/}report.py``
-needs no extra quotes. A string setting, a key from another section, or an environment variable remains command text;
-quote the complete argument for those values, as in ``"{env:HOME}"``.
+needs no extra quotes. A string setting, a key from another section, or an environment variable remains command text
+when unquoted, so ``shlex`` may split it. Within a quoted argument, a substitution stays in that argument even if its
+value contains quotes or backslashes; for example, ``"--title={env:TITLE}"`` remains one argument.
 
 Special substitutions that accept additional colon-delimited ``:`` parameters cannot have a space after the ``:`` at the
 beginning of line (e.g. ``{posargs: magic}`` would be parsed as factorial ``{posargs``, having value magic).
