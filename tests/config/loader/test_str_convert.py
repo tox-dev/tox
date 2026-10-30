@@ -15,7 +15,7 @@ if TYPE_CHECKING:
 
     from pytest_mock import MockerFixture
 
-    from tox.pytest import MonkeyPatch, SubRequest, ToxProjectCreator
+    from tox.pytest import MonkeyPatch, SubRequest, ToxProject, ToxProjectCreator, ToxRunOutcome
 
 from typing import Literal
 
@@ -45,6 +45,7 @@ from typing import Literal
         pytest.param("1=2", {1: 2}, dict[int, int], id="str_1eq2_to_dict_int_int"),
         pytest.param("a=1\n\nc=2", {"a": 1, "c": 2}, dict[str, int], id="str_multiline_dict_str_int"),
         pytest.param("a", Path("a"), Path, id="str_a_to_path"),
+        pytest.param(" path ", Path(" path "), Path, id="str_spaced_to_path"),
         pytest.param("a", Command(["a"]), Command, id="str_a_to_command"),
         pytest.param("a,b", EnvList(["a", "b"]), EnvList, id="str_a_b_to_envlist"),
         pytest.param("", None, Optional[int], id="empty_to_optional_int"),  # ruff:ignore[non-pep604-annotation-optional]
@@ -56,6 +57,7 @@ from typing import Literal
         pytest.param("", None, int | None, id="empty_to_int_or_none"),
         pytest.param("1", 1, int | None, id="str_1_to_int_or_none"),
         pytest.param("", None, str | None, id="empty_to_str_or_none"),
+        pytest.param("", None, Path | None, id="empty_to_path_or_none"),
         pytest.param("1", "1", str | None, id="str_1_to_str_or_none"),
         pytest.param("", None, list[str] | None, id="empty_to_list_str_or_none"),
         pytest.param("1,2", ["1", "2"], list[str] | None, id="str_1_2_to_list_str_or_none"),
@@ -87,11 +89,48 @@ def test_str_convert_ok(raw: str, value: Any, of_type: type[Any]) -> None:
             id="fail_union_bar_str_int",
         ),
         pytest.param("", Command, ValueError, r"attempting to parse '' into a command failed", id="fail_empty_command"),
+        pytest.param("", Path, ValueError, r"path value is empty", id="fail_empty_path"),
+        pytest.param("  ", Path, ValueError, r"path value is empty", id="fail_blank_path"),
     ],
 )
 def test_str_convert_nok(raw: str, of_type: type[Any], msg: str, exc_type: type[Exception]) -> None:
     with pytest.raises(exc_type, match=msg):
         StrConvert().to(raw, of_type, None)
+
+
+@pytest.mark.parametrize(
+    "config_files",
+    [
+        pytest.param(
+            {
+                "tox.ini": (
+                    "[tox]\nno_package = true\n[testenv]\n"
+                    "env_tmp_dir = {env:SCRATCH_DIR}\n"
+                    "commands = python -c 'print(1)'\n"
+                ),
+            },
+            id="ini",
+        ),
+        pytest.param(
+            {
+                "tox.toml": (
+                    'no_package = true\n[env_run_base]\nenv_tmp_dir = "{env:SCRATCH_DIR}"\n'
+                    'commands = [["python", "-c", "print(1)"]]\n'
+                ),
+            },
+            id="toml",
+        ),
+    ],
+)
+def test_unset_env_path_does_not_resolve_to_cwd(
+    tox_project: ToxProjectCreator, monkeypatch: MonkeyPatch, config_files: dict[str, str]
+) -> None:
+    monkeypatch.delenv("SCRATCH_DIR", raising=False)
+    project: Final[ToxProject] = tox_project({**config_files, "keep.txt": "precious"})
+    outcome: Final[ToxRunOutcome] = project.run("r", "-e", "py")
+    outcome.assert_failed()
+    assert "failed to load py.env_tmp_dir: path value is empty" in outcome.out
+    assert (project.path / "keep.txt").read_text() == "precious"
 
 
 @pytest.mark.parametrize(

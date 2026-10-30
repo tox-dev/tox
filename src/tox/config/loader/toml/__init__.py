@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import inspect
 import logging
-from pathlib import Path
 from types import GenericAlias
 from typing import TYPE_CHECKING, Any, Final, TypeVar, cast
 
@@ -17,6 +16,7 @@ from tox.config.loader.replacer import (
     replace_once,
     replace_requirement_lines,
 )
+from tox.config.loader.str_convert import StrConvert
 from tox.config.set_env import SetEnv
 from tox.config.types import CircularChainError, Command, EnvList
 from tox.report import HandledError
@@ -30,6 +30,7 @@ from ._validate import validate
 
 if TYPE_CHECKING:
     from collections.abc import Iterator, Mapping
+    from pathlib import Path
     from types import UnionType
 
     from tox.config.loader.convert import Factory
@@ -163,7 +164,7 @@ class TomlLoader(Loader[TomlTypes]):
     @staticmethod
     @override
     def to_path(value: TomlTypes) -> Path:
-        return Path(TomlLoader.to_str(value))
+        return StrConvert.to_path(TomlLoader.to_str(value))
 
     @staticmethod
     @override

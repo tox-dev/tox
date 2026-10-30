@@ -30,6 +30,9 @@ class StrConvert(Convert[str]):
     @staticmethod
     @override
     def to_path(value: str) -> Path:
+        if not value.strip():
+            msg = "path value is empty (does it reference an unset variable?)"
+            raise ValueError(msg)
         return Path(value)
 
     @staticmethod
@@ -160,4 +163,6 @@ class StrConvert(Convert[str]):
         raise TypeError(msg)
 
 
-__all__ = ("StrConvert",)
+__all__ = [
+    "StrConvert",
+]
