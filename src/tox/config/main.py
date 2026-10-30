@@ -94,7 +94,7 @@ class Config:
                     except ValueError:  # on Windows, relpath fails across drives (e.g. subst mounts)
                         args.append(path_arg_str)
                     else:
-                        if relative.startswith("-") and not arg.startswith("-"):  # keep a path operand a path
+                        if relative.startswith("-") and not arg.startswith("-"):
                             relative = f"{os.curdir}{os.sep}{relative}"
                         args.append(relative)
                 else:

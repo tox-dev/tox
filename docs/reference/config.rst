@@ -1580,11 +1580,13 @@ Run
     :version_added: 0.5
 
     When true, tox rewrites a relative positional argument that names an existing file or directory to keep it pointing
-    at the same entry after the command changes to :ref:`change_dir`. For ``tox exec`` or a command whose program comes
-    from ``{posargs}``, tox leaves a bare first value such as ``python`` for ``PATH`` lookup. It also leaves a bare
-    executable first positional value unchanged because wrappers such as ``env {posargs}`` may run it as a program. This
-    also applies when the command uses that value as data. Pass ``./python`` when you mean a file in the start
-    directory. An empty positional argument stays empty.
+    at the same entry after the command changes to :ref:`change_dir`. If the rewrite makes an argument start with ``-``
+    when it did not before, tox prefixes ``./`` (``.\\`` on Windows) so the command receives a path operand.
+
+    For ``tox exec`` or a command whose program comes from ``{posargs}``, tox leaves a bare first value such as
+    ``python`` for ``PATH`` lookup. It also leaves a bare executable first positional value unchanged because wrappers
+    such as ``env {posargs}`` may run it as a program. This also applies when the command uses that value as data. Pass
+    ``./python`` when you mean a file in the start directory. An empty positional argument stays empty.
     If a wrapper runs a later positional value as a program, set ``args_are_paths = false``.
 
 .. conf::
