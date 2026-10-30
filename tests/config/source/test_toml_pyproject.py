@@ -805,6 +805,48 @@ def test_config_in_toml_replace_if_extend_no_match_contributes_nothing(
 
 
 @pytest.mark.parametrize(
+    ("key", "first", "then"),
+    [
+        pytest.param("deps", '"demo-base"', '["demo-linux-only"]', id="deps"),
+        pytest.param("commands", '["echo", "hi"]', '[["echo", "bye"]]', id="commands"),
+    ],
+)
+def test_config_in_toml_replace_extend_with_marker_rejected(
+    tox_project: ToxProjectCreator,
+    monkeypatch: pytest.MonkeyPatch,
+    key: str,
+    first: str,
+    then: str,
+) -> None:
+    monkeypatch.setenv("CI", "1")
+    with pytest.raises(MatchError, match=r"\Aa replace with extend=true cannot have a marker\Z"):
+        tox_project({
+            "pyproject.toml": f"""\
+            [tool.tox.env.A]
+            {key} = [
+                {first},
+                {{ replace = "if", condition = "env.CI", then = {then}, extend = true, marker = "os_name == 'posix'" }},
+            ]
+            """
+        }).run("c", "-e", "A", "-k", key)
+
+
+def test_config_in_toml_replace_extend_with_marker_rejected_in_requires(
+    tox_project: ToxProjectCreator, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("CI", "1")
+    with pytest.raises(MatchError, match="a replace with extend=true cannot have a marker"):
+        tox_project({
+            "tox.toml": """\
+            requires = [
+              "tox>=4",
+              { replace = "if", condition = "env.CI", then = ["demo"], extend = true, marker = "extra == 'x'" },
+            ]
+            """
+        }).run("c", "--core", "-k", "requires")
+
+
+@pytest.mark.parametrize(
     ("condition_toml", "error_match"),
     [
         pytest.param(

@@ -2803,6 +2803,8 @@ spread into the host, while a scalar string result is appended as a single eleme
 (e.g. ``then = "-v"``) adds one item rather than its individual characters, and a false ``if`` with no ``else`` adds
 nothing.
 
+An extending ``replace`` table cannot also set a nonempty ``marker``. Markers on ``set_env`` values remain supported.
+
 When referencing Command-type configuration values (like ``list_dependencies_command``), the reference automatically
 extracts the command's argument list, making it compatible with TOML's structured ``commands`` format. For example:
 

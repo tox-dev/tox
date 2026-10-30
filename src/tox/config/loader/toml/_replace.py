@@ -119,6 +119,10 @@ class Unroll:
                 res_list.append(got)
             elif not (isinstance(val, dict) and val.get("replace") and val.get("extend")):
                 res_list.append(got)
+            elif val.get("marker"):
+                # A marked result is a table; extending it would add its keys as list entries.
+                msg = "a replace with extend=true cannot have a marker"
+                raise MatchError(msg)
             elif isinstance(got, str):
                 # ``extend`` spreads an iterable result (list, set of extras, ...) into the
                 # parent. A scalar string is the exception: iterating it would split it

@@ -1,0 +1,2 @@
+An extending TOML ``replace`` table with a nonempty ``marker`` now raises an error instead of adding its internal
+``value`` and ``marker`` keys to :ref:`deps` or :ref:`requires`. Markers on ``set_env`` values remain supported.
