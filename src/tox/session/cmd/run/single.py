@@ -141,7 +141,7 @@ def run_command_set(  # ruff:ignore[too-many-arguments]
                         "command failed (attempt %d of %d), retrying ...: %s",
                         attempt,
                         max_attempts,
-                        cmd.shell,
+                        current_outcome.request.shell_cmd_redacted,
                     )
                     continue
                 if ignore_errors:

@@ -1,9 +1,10 @@
 from __future__ import annotations
 
+import json
 import os
 from textwrap import dedent
-from typing import TYPE_CHECKING, Any
-from unittest.mock import Mock
+from typing import TYPE_CHECKING, Any, Final
+from unittest.mock import MagicMock, Mock
 
 import pytest
 from packaging.requirements import Requirement
@@ -14,7 +15,7 @@ if TYPE_CHECKING:
     from collections.abc import Callable
     from pathlib import Path
 
-    from tox.pytest import CaptureFixture, SubRequest, ToxProject, ToxProjectCreator
+    from tox.pytest import CaptureFixture, SubRequest, ToxProject, ToxProjectCreator, ToxRunOutcome
 
 
 @pytest.mark.parametrize("arg", [object, [object]])
@@ -137,6 +138,240 @@ def test_pip_install_no_binary_on_separate_lines(tox_project: ToxProjectCreator)
         "--no-binary",
         "packaging,six",
     ]
+
+
+@pytest.mark.parametrize(
+    "files",
+    [
+        pytest.param(
+            {"tox.toml": '[env_run_base]\npackage="skip"\ndeps=["a=={env:VERSION}", "-c c.txt"]'}, id="toml-list"
+        ),
+        pytest.param({"tox.toml": '[env_run_base]\npackage="skip"\ndeps="a=={env:VERSION}\\n-c c.txt"'}, id="toml-str"),
+        pytest.param(
+            {
+                "tox.toml": '[env_run_base]\npackage="skip"\ndeps=["a=={env:VERSION}"]\n'
+                '[env.py]\ndeps=["{[env_run_base]deps}", "-c c.txt"]'
+            },
+            id="toml-reference",
+        ),
+        pytest.param(
+            {"tox.toml": '[env_run_base]\npackage="skip"\ndeps=["{env:MISSING:a=={env:VERSION}}"]'},
+            id="nested-default",
+        ),
+        pytest.param({"tox.ini": "[testenv]\npackage=skip\ndeps=\n a=={env:VERSION}\n -c c.txt"}, id="ini"),
+    ],
+)
+@pytest.mark.parametrize(
+    ("version", "message"),
+    [
+        pytest.param("1\n--pre", "cannot add a line break", id="line-feed"),
+        pytest.param("1\u2028--pre", "cannot add a line break", id="line-separator"),
+        pytest.param("1 \\", "cannot end a line with a backslash", id="line-continuation"),
+    ],
+)
+def test_pip_install_deps_substitution_cannot_add_line(
+    tox_project: ToxProjectCreator, monkeypatch: pytest.MonkeyPatch, files: dict[str, str], version: str, message: str
+) -> None:
+    monkeypatch.setenv("VERSION", version)
+    monkeypatch.delenv("MISSING", raising=False)
+    project: Final = tox_project({**files, "c.txt": ""})
+    execute_calls: Final = project.patch_execute(lambda request: 0 if "install" in request.run_id else None)
+
+    result: Final = project.run("r", "-e", "py")
+
+    result.assert_failed()
+    assert message in result.out
+    assert execute_calls.call_count == 0
+
+
+@pytest.mark.parametrize(
+    "files",
+    [
+        pytest.param({"tox.toml": '[env_run_base]\npackage="skip"\ndeps="a"\nconstraints=["{env:C}.txt"]'}, id="toml"),
+        pytest.param({"tox.ini": "[testenv]\npackage=skip\ndeps=a\nconstraints={env:C}.txt"}, id="ini"),
+    ],
+)
+def test_pip_install_constraints_substitution_cannot_add_line(
+    tox_project: ToxProjectCreator, monkeypatch: pytest.MonkeyPatch, files: dict[str, str]
+) -> None:
+    monkeypatch.setenv("C", "c.txt\nd")
+    project: Final = tox_project({**files, "c.txt": "", "d.txt": ""})
+    execute_calls: Final = project.patch_execute(lambda request: 0 if "install" in request.run_id else None)
+
+    result: Final = project.run("r", "-e", "py")
+
+    result.assert_failed()
+    assert "a substitution within a requirement cannot add a line break" in result.out
+    assert execute_calls.call_count == 0
+
+
+@pytest.mark.parametrize(
+    "files",
+    [
+        pytest.param(
+            {"tox.toml": '[env_run_base]\npackage="skip"\ndeps=["--extra-index-url https://host/{env:PART}", "pkg"]'},
+            id="toml",
+        ),
+        pytest.param(
+            {"tox.ini": "[testenv]\npackage=skip\ndeps=\n --extra-index-url https://host/{env:PART}\n pkg"},
+            id="ini",
+        ),
+    ],
+)
+def test_pip_install_deps_substitution_cannot_add_option(
+    tox_project: ToxProjectCreator, monkeypatch: pytest.MonkeyPatch, files: dict[str, str]
+) -> None:
+    monkeypatch.setenv("PART", "value --index-url=https://other/simple")
+    project: Final[ToxProject] = tox_project(files)
+    execute_calls: Final[MagicMock] = project.patch_execute(lambda request: 0 if "install" in request.run_id else None)
+
+    result: Final[ToxRunOutcome] = project.run("r", "-e", "py")
+
+    result.assert_failed()
+    assert "a requirement substitution cannot change pip options" in result.out
+    assert execute_calls.call_count == 0
+
+
+@pytest.mark.parametrize(
+    "files",
+    [
+        pytest.param(
+            {"tox.toml": '[env_run_base]\npackage="skip"\nconstraints=["constraints/{env:PART}.txt"]'},
+            id="toml",
+        ),
+        pytest.param(
+            {"tox.ini": "[testenv]\npackage=skip\nconstraints=constraints/{env:PART}.txt"},
+            id="ini",
+        ),
+    ],
+)
+def test_pip_install_constraints_substitution_cannot_add_option(
+    tox_project: ToxProjectCreator, monkeypatch: pytest.MonkeyPatch, files: dict[str, str]
+) -> None:
+    monkeypatch.setenv("PART", "stable.txt --index-url=https://other/simple #")
+    result: Final[ToxRunOutcome] = tox_project(files).run("c", "-e", "py", "-k", "constraints")
+
+    result.assert_failed()
+    assert "a requirement substitution cannot change pip options" in result.out
+
+
+def test_pip_install_deps_substitution_keeps_static_options(
+    tox_project: ToxProjectCreator, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("PART", "cpu")
+    result: Final[ToxRunOutcome] = tox_project({
+        "tox.toml": '[env_run_base]\npackage="skip"\ndeps=["--index-url https://host/{env:PART} '
+        '--extra-index-url https://mirror/simple", "pkg"]',
+    }).run("c", "-e", "py", "-k", "deps")
+
+    result.assert_success()
+    assert "  -i https://host/cpu\n  --extra-index-url https://mirror/simple\n" in result.out
+
+
+def test_pip_install_deps_substitution_cannot_replace_static_option(
+    tox_project: ToxProjectCreator, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("PART", "cpu --index-url https://other/simple #")
+    result: Final[ToxRunOutcome] = tox_project({
+        "tox.toml": '[env_run_base]\npackage="skip"\ndeps=["--index-url https://host/{env:PART} '
+        '--index-url https://trusted/simple", "pkg"]',
+    }).run("c", "-e", "py", "-k", "deps")
+
+    result.assert_failed()
+    assert "a requirement substitution cannot change pip options" in result.out
+
+
+@pytest.mark.timeout(5)
+def test_pip_install_deps_recursive_fan_out_stops(
+    tox_project: ToxProjectCreator, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("PART", "{env:PART}" * 100)
+    result: Final[ToxRunOutcome] = tox_project({
+        "tox.ini": "[testenv]\npackage=skip\ndeps=--index-url https://example.invalid/{env:PART}",
+    }).run("c", "-e", "py", "-k", "deps")
+
+    result.assert_success()
+    assert result.out.count("Could not expand") == 1
+    assert 100 < result.out.count("{env:PART}") < 100_000
+
+
+@pytest.mark.parametrize(
+    ("filename", "content", "namespace"),
+    [
+        pytest.param("tox.toml", '[env_run_base]\npackage="skip"\ndeps=["a"]', "env_run_base", id="toml"),
+        pytest.param("tox.ini", "[testenv]\npackage=skip\ndeps=a", "testenv", id="ini"),
+    ],
+)
+def test_pip_install_deps_override_cannot_add_line(
+    tox_project: ToxProjectCreator,
+    monkeypatch: pytest.MonkeyPatch,
+    filename: str,
+    content: str,
+    namespace: str,
+) -> None:
+    monkeypatch.setenv("VERSION", "1\n--pre")
+    result: Final = tox_project({filename: content}).run(
+        "c", "-e", "py", "-k", "deps", "-x", f"{namespace}.deps+=a=={{env:VERSION}}"
+    )
+    result.assert_failed()
+    assert "a substitution within a requirement cannot add a line break" in result.out
+
+
+@pytest.mark.parametrize(
+    "name",
+    [
+        pytest.param("a\n--pre", id="line-break"),
+        pytest.param("a\\", id="line-continuation"),
+    ],
+)
+@pytest.mark.skipif(os.name == "nt", reason="Windows file names cannot contain line breaks or trailing backslashes")
+def test_pip_install_globbed_requirement_cannot_add_line(tox_project: ToxProjectCreator, name: str) -> None:
+    project: Final = tox_project({
+        "tox.toml": '[env_run_base]\npackage="skip"\ndeps=[{replace="glob",pattern="wheelhouse/*",extend=true}]',
+    })
+    wheelhouse: Final = project.path / "wheelhouse"
+    wheelhouse.mkdir()
+    (wheelhouse / name).write_text("")
+    result: Final = project.run("c", "-e", "py", "-k", "deps")
+    result.assert_failed()
+    assert "a globbed requirement path cannot contain a line break or end in a backslash" in result.out
+
+
+def test_pip_install_substitution_keeps_internal_backslash(
+    tox_project: ToxProjectCreator, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("DEP_PATH", ".\\")
+    result: Final = tox_project({"tox.ini": "[testenv]\npackage=skip\ndeps=-r {env:DEP_PATH}a.txt"}).run(
+        "c", "-e", "py", "-k", "deps"
+    )
+
+    result.assert_success()
+    assert "-r .\\a.txt" in result.out
+
+
+@pytest.mark.parametrize(
+    ("files", "expected"),
+    [
+        pytest.param({"tox.toml": '[env_run_base]\npackage="skip"\ndeps=["{env:EXTRA_DEPS}"]'}, ["a", "b"], id="toml"),
+        pytest.param(
+            {"tox.toml": '[env_run_base]\npackage="skip"\ndeps="{env:EXTRA_DEPS}\\u2028c"'},
+            ["a", "b", "c"],
+            id="toml-unicode-separator",
+        ),
+        pytest.param(
+            {"tox.ini": "[testenv]\npackage=skip\ndeps=\n a\u2028{env:EXTRA_DEPS}"},
+            ["a", "b"],
+            id="ini-unicode-separator",
+        ),
+    ],
+)
+def test_pip_install_whole_substitution_can_supply_requirements(
+    tox_project: ToxProjectCreator, monkeypatch: pytest.MonkeyPatch, files: dict[str, str], expected: list[str]
+) -> None:
+    monkeypatch.setenv("EXTRA_DEPS", "a\nb")
+    result: Final = tox_project(files).run("c", "-e", "py", "-k", "deps")
+    result.assert_success()
+    assert result.env_conf("py")["deps"].as_root_args == expected
 
 
 def test_pip_install_path(tox_project: ToxProjectCreator) -> None:
@@ -325,6 +560,124 @@ def test_pip_install_requirements_file_deps(tox_project: ToxProjectCreator) -> N
     assert "py: recreate env because requirements removed: a" in result_third.out, result_third.out
     assert execute_calls.call_count == 1
     assert execute_calls.call_args[0][3].cmd == ["python", "-I", "-m", "pip", "install", "b", "-r", "r.txt"]
+
+
+@pytest.fixture
+def secret_requirements_project(tox_project: ToxProjectCreator, monkeypatch: pytest.MonkeyPatch) -> ToxProject:
+    monkeypatch.setenv("PYPI_TOKEN", "magic-one")
+    return tox_project({
+        "tox.ini": "[testenv]\ndeps=-r r.txt\nconstraints=c.txt\nskip_install=true",
+        "r.txt": "-i https://ci:${PYPI_TOKEN}@host/simple\nhttps://ci:${PYPI_TOKEN}@host/a.whl",
+        "c.txt": "https://ci:${PYPI_TOKEN}@host/b.whl",
+    })
+
+
+def test_pip_install_requirements_file_secret_cache(secret_requirements_project: ToxProject) -> None:
+    secret_requirements_project.patch_execute(lambda request: 0 if "install" in request.run_id else None)
+
+    result: Final = secret_requirements_project.run("r")
+
+    result.assert_success()
+    cache: Final = (secret_requirements_project.path / ".tox" / "py" / ".tox-info.json").read_text()
+    assert "magic-one" not in cache
+    assert "https://ci:*********@host/" in cache
+
+
+def test_pip_install_requirements_file_token_rotation(
+    secret_requirements_project: ToxProject, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    execute_calls: Final = secret_requirements_project.patch_execute(
+        lambda request: 0 if "install" in request.run_id else None
+    )
+    secret_requirements_project.run("r").assert_success()
+
+    execute_calls.reset_mock()
+    monkeypatch.setenv("PYPI_TOKEN", "magic-two")
+    secret_requirements_project.run("r").assert_success()
+
+    assert execute_calls.call_count == 0
+
+
+def test_pip_install_legacy_secret_cache_migration(
+    secret_requirements_project: ToxProject, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    secret_requirements_project.patch_execute(lambda request: 0 if "install" in request.run_id else None)
+    secret_requirements_project.run("r").assert_success()
+    cache: Final = secret_requirements_project.path / ".tox" / "py" / ".tox-info.json"
+    old_cache: Final = json.loads(cache.read_text())
+    old_cache["PythonRun"]["deps"].pop("redaction_format")
+    cache.write_text(json.dumps(old_cache).replace("*********", "legacy-secret"))
+    monkeypatch.setenv("PYPI_TOKEN", "magic-two")
+
+    result: Final = secret_requirements_project.run("r")
+
+    result.assert_success()
+    assert "recreate env because install cache format changed" in result.out
+    assert "legacy-secret" not in result.out
+    assert "legacy-secret" not in cache.read_text()
+
+
+@pytest.mark.parametrize("name", [pytest.param("r.txt", id="requirements"), pytest.param("c.txt", id="constraints")])
+def test_pip_install_secret_recreate_warning(secret_requirements_project: ToxProject, name: str) -> None:
+    secret_requirements_project.patch_execute(lambda request: 0 if "install" in request.run_id else None)
+    secret_requirements_project.run("r").assert_success()
+    path: Final = secret_requirements_project.path / name
+    path.write_text(path.read_text().replace("@host", "@other"))
+
+    result: Final = secret_requirements_project.run("r")
+
+    result.assert_success()
+    assert "recreate env because " in result.out
+    assert "https://ci:*********@host/" in result.out
+    assert "magic-one" not in result.out
+
+
+def test_constrain_package_deps_keeps_secret_env_var(
+    tox_project: ToxProjectCreator, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    project: Final = tox_project({
+        "tox.ini": "[testenv]\ndeps=-r r.txt\nskip_install=true\nconstrain_package_deps=true",
+        "r.txt": "https://ci:${PYPI_TOKEN}@host/a.whl\n-c c.txt",
+        "c.txt": "b<2",
+    })
+    project.patch_execute(lambda request: 0 if "install" in request.run_id else None)
+    monkeypatch.setenv("PYPI_TOKEN", "magic")
+
+    result: Final = project.run("r")
+
+    result.assert_success()
+    assert (project.path / ".tox" / "py" / "constraints.txt").read_text() == "https://ci:magic@host/a.whl\nb<2"
+
+
+@pytest.mark.parametrize(
+    ("field", "value", "nested", "expected"),
+    [
+        pytest.param("deps", "-r requirements.txt", "-r missing-${PYPI_TOKEN}.txt", "missing-*****.txt", id="deps"),
+        pytest.param(
+            "constraints", "requirements.txt", "-c missing-${PYPI_TOKEN}.txt", "missing-*****.txt", id="constraints"
+        ),
+        pytest.param("deps", "-r requirements.txt", "-r file://${PYPI_TOKEN}/base.txt", "file://*****", id="file-url"),
+    ],
+)
+def test_pip_install_missing_nested_file_redacts_secret(
+    tox_project: ToxProjectCreator,
+    monkeypatch: pytest.MonkeyPatch,
+    field: str,
+    value: str,
+    nested: str,
+    expected: str,
+) -> None:
+    monkeypatch.setenv("PYPI_TOKEN", "magic")
+    project: Final = tox_project({
+        "tox.ini": f"[testenv]\npackage=skip\n{field}={value}",
+        "requirements.txt": nested,
+    })
+
+    result: Final = project.run("r")
+
+    result.assert_failed()
+    assert expected in result.out
+    assert "magic" not in result.out
 
 
 @pytest.fixture(params=[True, False])

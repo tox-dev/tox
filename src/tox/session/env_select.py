@@ -8,7 +8,8 @@ from dataclasses import dataclass
 from difflib import get_close_matches
 from importlib.util import find_spec
 from itertools import chain
-from typing import TYPE_CHECKING, Any, cast
+from pathlib import PurePath
+from typing import TYPE_CHECKING, Any, Final, cast
 
 from tox.config.cli.parser import Parsed
 from tox.config.loader.ini.factor import extend_factors
@@ -177,14 +178,15 @@ def _env_completer(
     prefix: str,  # ruff:ignore[unused-function-argument]
     action: Action,  # ruff:ignore[unused-function-argument]
     parser: ArgumentParser,  # ruff:ignore[unused-function-argument]
-    parsed_args: Namespace,  # ruff:ignore[unused-function-argument]
+    parsed_args: Namespace,
 ) -> list[str]:
     from tox.plugin.manager import MANAGER  # ruff:ignore[import-outside-top-level]  # circular import
 
     try:
-        source = discover_source(None, None)
+        root_dir: Final = getattr(parsed_args, "root_dir", None)
+        source = discover_source(getattr(parsed_args, "config_file", None), root_dir)
         conf = Config.make(
-            Parsed(override=[], root_dir=None, work_dir=None),
+            Parsed(override=[], root_dir=root_dir, work_dir=None),
             None,
             source,
             chain.from_iterable(MANAGER.tox_extend_envs()),
@@ -366,6 +368,7 @@ class EnvSelector:
         env_name_to_active_map = {}
         for a_collection, is_active in self._collect_names():
             for name in a_collection:
+                self._ensure_env_name_is_path_safe(name)
                 if name not in env_name_to_active_map:
                     env_name_to_active_map[name] = is_active
         # for factor/label selection update the active flag
@@ -377,6 +380,13 @@ class EnvSelector:
         ):
             env_name_to_active_map["py"] = True
         return env_name_to_active_map
+
+    @staticmethod
+    def _ensure_env_name_is_path_safe(name: str) -> None:
+        # A traversal name can make recreation remove paths outside work_dir.
+        if not name or name in {".", ".."} or PurePath(name).name != name:
+            msg = f"environment name {name!r} is not a valid single path component"
+            raise HandledError(msg)
 
     @property
     def _defined_envs(self) -> dict[str, _ToxEnvInfo]:
@@ -516,6 +526,7 @@ class EnvSelector:
     def _build_pkg_env(self, name_type: tuple[str, str], run_env_name: str, active: dict[str, bool]) -> PackageToxEnv:
         name, core_type = name_type
         with self._log_handler.with_context(name):
+            self._ensure_env_name_is_path_safe(name)
             if run_env_name == name:
                 msg = f"{run_env_name} cannot self-package"
                 raise HandledError(msg)

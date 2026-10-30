@@ -1,2 +1,1 @@
-An empty string positional argument is preserved instead of being rewritten to the current working directory when
-rewriting relative paths.
+Preserve empty positional arguments when rewriting relative paths for ``change_dir``.

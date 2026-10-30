@@ -1,18 +1,23 @@
 from __future__ import annotations
 
 import re
+import sys
 from argparse import Namespace
 from textwrap import dedent
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Final
 
 import pytest
+from packaging.requirements import Requirement
 
 from tox.config.loader.native import to_native
+from tox.config.loader.str_convert import StrConvert
 from tox.config.loader.stringify import stringify
 from tox.tox_env.python.pip.req_file import PythonConstraints, PythonDeps
 
 if TYPE_CHECKING:
     from pathlib import Path
+
+    from tox.pytest import ToxProjectCreator
 
 
 @pytest.mark.parametrize("legacy_flag", ["-r", "-c"])
@@ -48,6 +53,48 @@ def test_constraints_with_editable_requirement(tmp_path: Path) -> None:
     python_constraints = PythonConstraints("constraints.txt -e ./pkg", tmp_path)
     with pytest.raises(ValueError, match="Cannot provide options in constraints list"):
         _ = python_constraints.requirements
+
+
+def test_constraints_keep_static_same_line_option(tmp_path: Path) -> None:
+    (tmp_path / "constraints.txt").write_text("")
+    assert PythonConstraints("constraints.txt --pre", tmp_path).as_root_args == ["-c", "constraints.txt", "--pre"]
+
+
+@pytest.mark.parametrize(
+    "line",
+    [
+        pytest.param("--extra-index-url https://host/${INDEX_PART}", id="extra-index"),
+        pytest.param("--index-url=https://host/${INDEX_PART}", id="index-equals"),
+        pytest.param("--trusted-host ${INDEX_PART}", id="trusted-host"),
+    ],
+)
+def test_deps_pip_env_variable_cannot_add_option(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, line: str) -> None:
+    monkeypatch.setenv("INDEX_PART", "value --index-url=https://other/simple")
+    with pytest.raises(ValueError, match="a requirement substitution cannot change pip options"):
+        _ = PythonDeps(line, tmp_path).as_root_args
+
+
+def test_deps_pip_env_variable_keeps_full_line_option(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("PIP_OPTIONS", "--index-url https://host/simple --extra-index-url https://mirror/simple")
+    assert PythonDeps("${PIP_OPTIONS}\npkg", tmp_path).as_root_args == [
+        "pkg",
+        "-i",
+        "https://host/simple",
+        "--extra-index-url",
+        "https://mirror/simple",
+    ]
+
+
+def test_deps_pip_env_variable_cannot_change_line_boundary(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("INDEX_PART", "cpu\n--index-url=https://other/simple")
+    with pytest.raises(ValueError, match="a requirement substitution cannot change pip options"):
+        _ = PythonDeps("--extra-index-url https://host/${INDEX_PART}", tmp_path).as_root_args
+
+
+def test_constraints_pip_env_variable_cannot_add_option(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("CONSTRAINT_NAME", "stable.txt --index-url=https://other/simple")
+    with pytest.raises(ValueError, match="a requirement substitution cannot change pip options"):
+        _ = PythonConstraints("constraints/${CONSTRAINT_NAME}", tmp_path).as_root_args
 
 
 def test_deps_with_requirements_with_hash(tmp_path: Path) -> None:
@@ -109,6 +156,18 @@ def test_deps_factory_invalid_list(tmp_path: Path) -> None:
     assert "got list with invalid items: [1] int" in str(exc_info.value)
 
 
+@pytest.mark.parametrize(
+    "suffix",
+    [
+        pytest.param("\n--find-links=/tmp/other", id="line-break"),
+        pytest.param("\\", id="line-continuation"),
+    ],
+)
+def test_provision_requirement_entry_cannot_change_lines(tmp_path: Path, suffix: str) -> None:
+    with pytest.raises(ValueError, match="a requirement entry cannot contain a line break or end in a backslash"):
+        PythonDeps.factory(tmp_path, [Requirement(f"plug @ file:///tmp/plug.whl#{suffix}")])
+
+
 def test_deps_factory_invalid_type(tmp_path: Path) -> None:
     with pytest.raises(TypeError, match="deps expected str, list\\[str\\], or list\\[Requirement\\]") as exc_info:
         PythonDeps.factory(tmp_path, 123)
@@ -142,6 +201,29 @@ def test_deps_unroll_binary_options_deterministic(tmp_path: Path) -> None:
     options, _ = python_deps.unroll()
 
     assert options == ["no_binary=packaging,six"]
+
+
+def test_unroll_redacts_secret_env_vars(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("PYPI_TOKEN", "magic")
+    monkeypatch.setenv("LONG_PYPI_TOKEN", "magical")
+    monkeypatch.setenv("PYPI_HOST", "host")
+    nested: Final = dedent("""\
+        --index-url https://ci:${PYPI_TOKEN}@${PYPI_HOST}/simple
+        --find-links https://${PYPI_HOST}/${LONG_PYPI_TOKEN}/
+        https://ci:${PYPI_TOKEN}@${PYPI_HOST}/a.whl
+    """)
+    (tmp_path / "nested.txt").write_text(nested)
+    python_deps: Final = PythonDeps(raw="-r nested.txt\nhttps://${LONG_PYPI_TOKEN}@${PYPI_HOST}/b.whl", root=tmp_path)
+
+    assert python_deps.unroll() == (
+        ["index_url=['https://ci:*****@host/simple']", "find_links=['https://host/*******/']"],
+        ["https://ci:*****@host/a.whl", "https://*******@host/b.whl"],
+    )
+    assert python_deps.as_root_args == ["https://magical@host/b.whl", "-r", "nested.txt"]
+    assert [str(req) for req in python_deps.requirements] == [
+        "https://ci:magic@host/a.whl",
+        "https://magical@host/b.whl",
+    ]
 
 
 def test_deps_binary_options_accumulate_across_lines_and_files(tmp_path: Path) -> None:
@@ -229,6 +311,48 @@ def test_deps_show_global_options_as_pip_gets_them(
         shown,
         pip_args,
     )
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason=r"on windows the escaped \ is overloaded by path separator")
+@pytest.mark.parametrize(
+    ("raw", "shown", "pip_args"),
+    [
+        pytest.param("--find-links a --pre", r"-f a\ --pre", ["-f", "a --pre"], id="find-links"),
+        pytest.param("-f a\t--pre", "-f a\\\t--pre", ["-f", "a\t--pre"], id="tab"),
+        pytest.param(r"-f 'a\ --pre'", r"-f a\\\ --pre", ["-f", r"a\ --pre"], id="after-backslash"),
+        pytest.param("-i 'a --pre'", r"-i a\ --pre", ["-i", "a --pre"], id="quoted-index"),
+        pytest.param(
+            "--extra-index-url 'a --pre'", r"--extra-index-url a\ --pre", ["--extra-index-url", "a --pre"], id="extra"
+        ),
+        pytest.param('--trusted-host "a --pre"', r"--trusted-host a\ --pre", ["--trusted-host", "a --pre"], id="host"),
+        pytest.param("""-i "a'b" """, r"-i a\'b", ["-i", "a'b"], id="quote"),
+        pytest.param("--extra-index-url ''", "--extra-index-url ''", ["--extra-index-url", ""], id="empty"),
+    ],
+)
+def test_deps_show_option_operand_as_one_operand(tmp_path: Path, raw: str, shown: str, pip_args: list[str]) -> None:
+    python_deps: Final = PythonDeps(f"{raw}\npkg", tmp_path)
+    assert (python_deps.lines(), python_deps.as_root_args) == ([shown, "pkg"], ["pkg", *pip_args])
+    assert PythonDeps(stringify(python_deps)[0], tmp_path).as_root_args == ["pkg", *pip_args]
+    assert StrConvert.to_command(" ".join(["pip", *python_deps.lines()])).args == ["pip", *pip_args, "pkg"]
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason=r"on windows the escaped \ is overloaded by path separator")
+@pytest.mark.parametrize(
+    "reference",
+    [pytest.param("{deps}", id="local"), pytest.param("{[testenv:inherits]deps}", id="inherited")],
+)
+def test_deps_reference_in_command_keeps_substituted_operand(
+    tox_project: ToxProjectCreator, monkeypatch: pytest.MonkeyPatch, reference: str
+) -> None:
+    monkeypatch.setenv("WHEELS", "wheels --index-url=https://x/simple")
+    ini: Final[str] = (
+        f"[testenv:inherits]\n[testenv]\ndeps =\n  -f {{env:WHEELS}}\n  pkg\ncommands = pip download {reference}"
+    )
+    result: Final = tox_project({"tox.ini": ini}).run("c", "-e", "py", "-k", "commands")
+    result.assert_success()
+    assert [command.args for command in result.env_conf("py")["commands"]] == [
+        ["pip", "download", "-f", "wheels --index-url=https://x/simple", "pkg"]
+    ]
 
 
 @pytest.mark.parametrize(

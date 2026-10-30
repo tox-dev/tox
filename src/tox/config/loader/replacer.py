@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import dataclasses
 import glob
 import logging
 import os
@@ -9,14 +10,18 @@ import re
 import shlex
 import sys
 from abc import ABC, abstractmethod
-from collections.abc import Callable, Sequence
+from collections.abc import Callable, Iterable, Iterator, Sequence
+from functools import partial
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Final, Union
+from typing import TYPE_CHECKING, Any, Final, Protocol, Union, get_args, get_origin
 
-from tox.config.types import CircularChainError
+from tox.config.types import CircularChainError, Command, EnvList
 from tox.util.typing_compat import override
 
 if TYPE_CHECKING:
+    from types import UnionType
+    from typing import Self
+
     from tox.config.loader.api import ConfigLoadArgs
     from tox.config.main import Config
     from tox.config.set_env import SetEnv
@@ -30,8 +35,9 @@ REPLACE_START: Final[str] = "{"
 REPLACE_END: Final[str] = "}"
 BACKSLASH_ESCAPE_CHARS: Final[tuple[str, ...]] = (ARG_DELIMITER, REPLACE_START, REPLACE_END, "[", "]")
 MAX_REPLACE_DEPTH: Final[int] = 100
-# lets a run resolve a labeled factor to a value the configuration does not list, without renaming environments
+# Factor overrides can supply values absent from the configuration without renaming environments.
 _FACTOR_ENV_PREFIX: Final[str] = "TOX_FACTOR_"
+_REQUIREMENT_LINE_BREAKS: Final[str] = r"[\n\r\v\f\x1c-\x1e\x85\u2028\u2029]"
 
 
 class MatchRecursionError(ValueError):
@@ -48,15 +54,19 @@ class MatchError(Exception):
     """Couldn't find end terminator in MatchExpression."""
 
 
+class RawText(str):  # ruff:ignore[subclass-builtin] # keep the origin through the str replacement interface
+    __slots__ = ()
+
+
 class ReplaceReference(ABC):
     @abstractmethod
-    def __call__(self, value: str, conf_args: ConfigLoadArgs) -> str | None:
+    def __call__(self, value: str, conf_args: ConfigLoadArgs) -> str | ConfigDefault | None:
         """Perform a reference replacement.
 
         :param value: the raw value
         :param conf_args: the configuration loads argument object
 
-        :returns: the replaced value, None if it can't do it.
+        :returns: replacement text, an authored fallback, or None if no reference matches
 
         """
         raise NotImplementedError
@@ -83,7 +93,52 @@ def replace_command_lines(
     conf: Config, reference: ReplaceReference, value: str | MatchExpression, args: ConfigLoadArgs
 ) -> str:
     """Replace all active tokens within value, where each line of value is one command."""
-    return CommandLinesReplacer(conf, reference, conf_args=args).expand(value)
+    replacer: Final[CommandLinesReplacer] = CommandLinesReplacer(conf, reference, conf_args=args)
+    replacer.program = True
+    return replacer.expand(value)
+
+
+def replace_program(conf: Config, reference: ReplaceReference, value: str, args: ConfigLoadArgs) -> str:
+    replacer: Final[Replacer] = Replacer(conf, reference, conf_args=args)
+    replacer.program = True
+    return replacer.expand(value)
+
+
+def replace_requirement_lines(
+    conf: Config,
+    reference: ReplaceReference,
+    value: str | MatchExpression,
+    args: ConfigLoadArgs,
+    *,
+    validate_options: _RequirementOptionsValidator,
+) -> str:
+    return RequirementLinesReplacer(conf, reference, conf_args=args, validate_options=validate_options).expand(value)
+
+
+def replace_entries(
+    conf: Config,
+    reference: ReplaceReference,
+    value: str | MatchExpression,
+    args: ConfigLoadArgs,
+    *,
+    separators: str = ",\n",
+) -> str:
+    return EntriesReplacer(conf, reference, conf_args=args, separators=separators).expand(value)
+
+
+def replace_for(
+    of_type: type[object] | UnionType,
+) -> Callable[[Config, ReplaceReference, str | MatchExpression, ConfigLoadArgs], str]:
+    kinds: Final[set[type[object] | UnionType]] = {get_origin(kind) or kind for kind in (of_type, *get_args(of_type))}
+    if of_type == list[Command]:
+        return replace
+    if EnvList in kinds:
+        return partial(replace_entries, separators=",\n{}")
+    if dict in kinds:
+        return partial(replace_entries, separators="\n")
+    if kinds & {list, set}:
+        return replace_entries
+    return replace
 
 
 def replace_once(conf: Config, reference: ReplaceReference, value: str | MatchExpression, args: ConfigLoadArgs) -> str:
@@ -153,13 +208,11 @@ class MatchExpression:  # ruff:ignore[eq-without-hash]
         while pos < len(value):
             if len(value) > pos + 1 and value[pos] == "\\":
                 if value[pos + 1] in BACKSLASH_ESCAPE_CHARS:
-                    # backslash escapes the next character from a special set
                     last_arg.append(value[pos + 1])
                     pos += 2
                     continue
                 if value[pos + 1] == "\\":
-                    # backlash doesn't escape a backslash, but does prevent it from affecting the next char
-                    # a subsequent `shlex` pass will eat the double backslash during command splitting.
+                    # Keep both backslashes for the later shlex pass.
                     last_arg.append(value[pos : pos + 2])
                     pos += 2
                     continue
@@ -223,100 +276,365 @@ class Replacer:
         self.conf_args = conf_args
         self.depth = depth
         self.recursive = recursive
+        self.program = False
+        self.root: Replacer = self
+        self.depth_exhausted: bool = False
 
     def __call__(self, value: MatchArg) -> Sequence[str]:
-        return [self._replace_match(me) if isinstance(me, MatchExpression) else str(me) for me in value]
+        result: Final[list[str]] = []
+        for part in value:
+            if isinstance(part, MatchExpression):
+                result.append(self._literal_match(part) if self.root.depth_exhausted else self._replace_match(part)[0])
+            else:
+                result.append(part)
+        return result
+
+    @classmethod
+    def _literal_match(cls, value: MatchExpression) -> str:
+        args: Final[Iterator[str]] = (
+            "".join(cls._literal_match(part) if isinstance(part, MatchExpression) else part for part in arg)
+            for arg in value.expr
+        )
+        return f"{{{ARG_DELIMITER.join(args)}}}"
 
     def join(self, value: MatchArg) -> str:
         return "".join(self(value))
 
     def expand(self, value: str | MatchExpression) -> str:
+        if self.depth > MAX_REPLACE_DEPTH:
+            self.root.depth_exhausted = True
         MatchRecursionError.check(self.depth, value)
         return self.join_value(find_replace_expr(value))
 
     def join_value(self, value: MatchArg) -> str:
         return self.join(value)
 
-    def _replace_match(self, value: MatchExpression) -> str:
-        # use a copy of conf_args so any changes from this replacement don't, affect adjacent substitutions (#2869)
-        conf_args = self.conf_args.copy()
-        flattened_args = [self.join(arg) for arg in value.expr]
-        of_type, *args = flattened_args
-        replace_value = self._resolve_replace(of_type, args, flattened_args, conf_args)
+    def _replace_match(self, value: MatchExpression) -> tuple[str, bool]:
+        flattened_args: Final[list[str]] = [self._flatten_arg(arg) for arg in value.expr]
+        replace_value: Final[str | ConfigDefault | None] = self._replace_args(flattened_args)
         if replace_value is not None:
-            needs_expansion = any(isinstance(m, MatchExpression) for m in find_replace_expr(replace_value))
-            if needs_expansion and self.recursive:
+            return str(replace_value), True
+        # Preserve unmatched braces for factor expressions such as {py39,py38}-{,dep}.
+        return f"{REPLACE_START}{ARG_DELIMITER.join(flattened_args)}{REPLACE_END}", False
+
+    def _replace_args(
+        self, flattened_args: list[str], *, preserve_defaults: bool = False
+    ) -> str | ConfigDefault | None:
+        # Isolate chain updates from adjacent substitutions (#2869).
+        conf_args: Final[ConfigLoadArgs] = self.conf_args.copy()
+        replace_value: Final[str | ConfigDefault | None] = self._resolve_replace(
+            flattened_args[0], flattened_args[1:], flattened_args, conf_args
+        )
+        if replace_value is not None:
+            if preserve_defaults and isinstance(replace_value, ConfigDefault):
+                return replace_value
+            if (
+                self.recursive
+                and not self.root.depth_exhausted
+                and isinstance(replace_value, RawText)
+                and any(isinstance(match, MatchExpression) for match in find_replace_expr(str(replace_value)))
+            ):
                 try:
-                    return type(self)(self.conf, self.reference, conf_args, self.depth + 1).expand(replace_value)
-                except MatchRecursionError as err:
-                    LOGGER.warning(str(err))
-                    return replace_value
-            return replace_value
-        # else: fall through -- when replacement is impossible, treat `{` as if escaped.
-        #     If we can't replace, keep what was there, and continue looking for additional replaces
-        #     NOTE: can't raise because the content may be a factorial expression where we don't
-        #           want to enforce escaping curly braces, for example`env_list = {py39,py38}-{,dep}` should work
-        return f"{REPLACE_START}{ARG_DELIMITER.join(flattened_args)}{REPLACE_END}"
+                    return self._nested(conf_args).expand(str(replace_value))
+                except MatchRecursionError as error:
+                    LOGGER.warning(str(error))
+        return (
+            str(replace_value) if isinstance(replace_value, ConfigDefault) and not preserve_defaults else replace_value
+        )
+
+    def _nested(self, conf_args: ConfigLoadArgs) -> Self:
+        nested: Final[Self] = type(self)(self.conf, self.reference, conf_args, self.depth + 1)
+        nested.program = self.program
+        nested.root = self.root
+        return nested
+
+    def _flatten_arg(self, value: MatchArg) -> str:
+        return self.join(value)
 
     def _resolve_replace(
         self, of_type: str, args: list[str], flattened_args: list[str], conf_args: ConfigLoadArgs
-    ) -> str | None:
+    ) -> str | ConfigDefault | None:
         if of_type == "/":
             return os.sep
         if not of_type and args == [""]:
             return os.pathsep
-        dispatch: dict[str, Callable[[], str | None]] = {
-            "env": lambda: replace_env(self.conf, args, conf_args),
+        dispatch: dict[str, Callable[[], str | ConfigDefault | None]] = {
+            "env": lambda: _replace_env(self.conf, args, conf_args),
             "tty": lambda: replace_tty(args),
-            "posargs": lambda: replace_pos_args(self.conf, args, conf_args),
+            "posargs": lambda: replace_pos_args(self.conf, args, conf_args, program_first=self.program),
             "glob": lambda: replace_glob(self.conf, args),
-            "factor": lambda: replace_factor(self.conf, args, conf_args),
+            "factor": lambda: (
+                ConfigDefault(text=replace_factor(self.conf, args, conf_args), start=2)
+                if not self.conf.factor_labels(conf_args.env_name)
+                else replace_factor(self.conf, args, conf_args)
+            ),
         }
         if handler := dispatch.get(of_type):
             return handler()
         return self.reference(ARG_DELIMITER.join(flattened_args), conf_args)
 
 
+@dataclasses.dataclass(frozen=True, slots=True, kw_only=True)
+class ConfigDefault:
+    text: str
+    start: int
+    stop: int | None = None
+
+    @override
+    def __str__(self) -> str:
+        return self.text
+
+
 class CommandLinesReplacer(Replacer):
-    """Expand a value holding one command per line.
+    @override
+    def join_value(self, value: MatchArg) -> str:
+        parts: Final[Sequence[str | _Replaced]] = _flatten_string_fragments(list(self._split_replaced(value)))
+        result: Final[list[str]] = []
+        quote = ""
+        for at, part in enumerate(parts):
+            text = (
+                part.quoted_text
+                if quote and isinstance(part, _Replaced) and part.quoted_text is not None
+                else str(part)
+            )
+            if isinstance(part, _Replaced):
+                if quote or self._shares_line(parts, at):
+                    text = " ".join(text.splitlines())
+                if quote:
+                    result.append(self._escape_within_quote(quote, text))
+                    continue
+            quote = self._open_quote(quote, text)
+            result.append(text)
+        return "".join(result)
 
-    A token alone on its line may expand into several commands, while a token sharing its line with other text joins its
-    lines into that one command.
+    def _split_replaced(self, value: MatchArg) -> Iterator[str | _Replaced]:
+        program: Final[bool] = self.program
+        preceding: Final[list[str]] = []
+        try:
+            for part in value:
+                self.program = program and self._within_program("".join(preceding))
+                replaced_parts: list[str | _Replaced] = self._split_part(part)
+                preceding.extend(map(str, replaced_parts))
+                yield from replaced_parts
+        finally:
+            self.program = program
 
-    """
+    @staticmethod
+    def _within_program(text: str) -> bool:
+        return not re.search(r"\S\s", text.rpartition("\n")[2].lstrip().lstrip("-!"))
+
+    def _split_part(self, part: str | MatchExpression) -> list[str | _Replaced]:
+        if not isinstance(part, MatchExpression):
+            return [part]
+        if self.root.depth_exhausted:
+            return [self._literal_match(part)]
+        args: Final[list[list[str | _Replaced]]] = [list(self._split_replaced(arg)) for arg in part.expr]
+        flattened_args: Final[list[str]] = ["".join(map(str, arg)) for arg in args]
+        replaced: Final[str | ConfigDefault | None] = self._replace_args(flattened_args, preserve_defaults=True)
+        if isinstance(replaced, ConfigDefault):
+            default_parts: Final[list[str | _Replaced]] = []
+            for at, arg in enumerate(args[replaced.start : replaced.stop]):
+                if at:
+                    default_parts.append(ARG_DELIMITER)
+                default_parts.extend(arg)
+            return default_parts
+        if replaced is not None:
+            quoted_text: Final[str | None] = (
+                " ".join(pos_args)
+                if flattened_args[0] == "posargs"
+                and (pos_args := load_posargs(self.conf, self.conf_args, program_first=self.program)) is not None
+                else None
+            )
+            return [_Replaced(text=replaced, quoted_text=quoted_text)]
+        unresolved_parts: Final[list[str | _Replaced]] = [REPLACE_START]
+        for at, arg in enumerate(args):
+            if at:
+                unresolved_parts.append(ARG_DELIMITER)
+            unresolved_parts.extend(arg)
+        unresolved_parts.append(REPLACE_END)
+        return unresolved_parts
+
+    @staticmethod
+    def _shares_line(value: Sequence[str | _Replaced], at: int) -> bool:
+        before: Final[str | _Replaced] = value[at - 1] if at else ""
+        after: Final[str | _Replaced] = value[at + 1] if at + 1 < len(value) else ""
+        if isinstance(before, _Replaced) or isinstance(after, _Replaced):
+            return True
+        return bool(before.rpartition("\n")[2].strip() or after.partition("\n")[0].strip())
+
+    @staticmethod
+    def _escape_within_quote(quote: str, text: str) -> str:
+        if quote == "'":
+            return text.replace("'", "'\"'\"'")
+        # escaped comments are restored before command splitting
+        return re.sub(r'\\(?!\#)|"', r"\\\g<0>", text)
+
+    @staticmethod
+    def _open_quote(quote: str, text: str) -> str:
+        escaped = False
+        for char in text:
+            if char == "\n":
+                quote, escaped = "", False
+            elif escaped:
+                escaped = False
+            elif char == "\\" and quote != "'":
+                escaped = True
+            elif char == quote:
+                quote = ""
+            elif not quote and char in {"'", '"'}:
+                quote = char
+        return quote
+
+
+@dataclasses.dataclass(frozen=True, slots=True, kw_only=True)
+class _Replaced:
+    text: str
+    quoted_text: str | None
+
+    @override
+    def __str__(self) -> str:
+        return self.text
+
+
+class RequirementLinesReplacer(Replacer):
+    def __init__(
+        self,
+        conf: Config,
+        reference: ReplaceReference,
+        conf_args: ConfigLoadArgs,
+        depth: int = 0,
+        *,
+        validate_options: _RequirementOptionsValidator,
+    ) -> None:
+        super().__init__(conf, reference, conf_args, depth)
+        self._validate_options = validate_options
+
+    @override
+    def _flatten_arg(self, value: MatchArg) -> str:
+        return self.join_value(value)
 
     @override
     def join_value(self, value: MatchArg) -> str:
-        return "".join(
-            " ".join(replaced.splitlines()) if _shares_line(value, at) else replaced
-            for at, replaced in enumerate(self(value))
+        replaced: Final[Sequence[str]] = self(value)
+        baseline: Final[list[str]] = list(replaced)
+        for at, part in enumerate(value):
+            if not isinstance(part, MatchExpression):
+                continue
+            text = replaced[at]
+            following = "".join(replaced[at + 1 :])
+            if re.search(rf"\\(?={_REQUIREMENT_LINE_BREAKS})", text) or (
+                text.endswith("\\") and (not following or re.match(_REQUIREMENT_LINE_BREAKS, following))
+            ):
+                msg = "a requirement substitution cannot end a line with a backslash"
+                raise ValueError(msg)
+            if (shares_line := self._shares_line(value, at)) and text != "".join(text.splitlines()):
+                msg = "a substitution within a requirement cannot add a line break"
+                raise ValueError(msg)
+            if shares_line:
+                baseline[at] = f"\x00{at}\x00"
+        result: Final[str] = "".join(replaced)
+        if baseline != replaced:
+            self._validate_options("".join(baseline), result)
+        return result
+
+    @override
+    def _nested(self, conf_args: ConfigLoadArgs) -> Self:
+        nested: Final[Self] = type(self)(
+            self.conf, self.reference, conf_args, self.depth + 1, validate_options=self._validate_options
         )
+        nested.root = self.root
+        return nested
 
-
-def _shares_line(value: MatchArg, at: int) -> bool:
-    if not isinstance(value[at], MatchExpression):
+    @staticmethod
+    def _shares_line(value: MatchArg, at: int) -> bool:
+        for part in reversed(value[:at]):
+            if isinstance(part, MatchExpression) or re.split(_REQUIREMENT_LINE_BREAKS, part)[-1].strip():
+                return True
+            if re.search(_REQUIREMENT_LINE_BREAKS, part):
+                break
+        for part in value[at + 1 :]:
+            if isinstance(part, MatchExpression) or re.split(_REQUIREMENT_LINE_BREAKS, part)[0].strip():
+                return True
+            if re.search(_REQUIREMENT_LINE_BREAKS, part):
+                break
         return False
-    before = value[at - 1] if at else ""
-    after = value[at + 1] if at + 1 < len(value) else ""
-    if isinstance(before, MatchExpression) or isinstance(after, MatchExpression):
-        return True
-    return bool(before.rpartition("\n")[2].strip() or after.partition("\n")[0].strip())
 
 
-def replace_pos_args(conf: Config, args: list[str], conf_args: ConfigLoadArgs) -> str:
-    pos_args = load_posargs(conf, conf_args)
-    # if we use the defaults, join back remaining args else quote them for the command splitting that follows.
-    return ARG_DELIMITER.join(args) if pos_args is None else _quote_pos_args(pos_args)
+class _RequirementOptionsValidator(Protocol):
+    def __call__(self, source: str, expanded: str) -> None: ...
 
 
-def _quote_pos_args(pos_args: Sequence[str]) -> str:
+class EntriesReplacer(Replacer):
+    def __init__(
+        self,
+        conf: Config,
+        reference: ReplaceReference,
+        conf_args: ConfigLoadArgs,
+        depth: int = 0,
+        *,
+        separators: str = ",\n",
+    ) -> None:
+        super().__init__(conf, reference, conf_args, depth)
+        self.separators = separators
+
+    @override
+    def __call__(self, value: MatchArg) -> Sequence[str]:
+        replaced: Final[list[tuple[str, bool]]] = [
+            ((self._literal_match(part), False) if self.root.depth_exhausted else self._replace_match(part))
+            if isinstance(part, MatchExpression)
+            else (part, False)
+            for part in value
+        ]
+        for at, (text, resolved) in enumerate(replaced):
+            if resolved and self._shares_entry(value, at) and any(char in text for char in self.separators):
+                msg = "a substitution within an entry cannot add an entry separator"
+                raise ValueError(msg)
+        return [text for text, _ in replaced]
+
+    def _shares_entry(self, value: MatchArg, at: int) -> bool:
+        return self._has_text(reversed(value[:at]), -1) or self._has_text(value[at + 1 :], 0)
+
+    def _has_text(self, parts: Iterable[str | MatchExpression], side: int) -> bool:
+        for part in parts:
+            if isinstance(part, MatchExpression):
+                return True
+            text = re.split(f"[{self.separators}]", part)[side]
+            if text.strip():
+                return True
+            if text != part:
+                return False
+        return False
+
+    @override
+    def join_value(self, value: MatchArg) -> str:
+        if self.separators == ",\n" and any("\n" in part for part in value if isinstance(part, str)):
+            self.separators = "\n"  # A comma is data when the author chose line-separated entries.
+        return super().join_value(value)
+
+    @override
+    def _nested(self, conf_args: ConfigLoadArgs) -> Self:
+        nested: Final[Self] = super()._nested(conf_args)
+        nested.separators = self.separators
+        return nested
+
+
+def replace_pos_args(
+    conf: Config, args: list[str], conf_args: ConfigLoadArgs, *, program_first: bool
+) -> str | ConfigDefault:
+    pos_args = load_posargs(conf, conf_args, program_first=program_first)
+    return ConfigDefault(text=ARG_DELIMITER.join(args), start=1) if pos_args is None else quote_args(pos_args)
+
+
+def quote_args(args: Sequence[str]) -> str:
+    # INI settings split lines before parsing quotes.
+    normalized: Final[list[str]] = [" ".join(arg.splitlines()) for arg in args]
     if sys.platform != "win32":
-        return shlex.join(pos_args)
+        return shlex.join(normalized)
     # Windows command splitting keeps a lone backslash, so paths stay unquoted where a value is not split into a command
-    return " ".join(arg if arg and not re.search(r"[\s'\"]|\\\\", arg) else shlex.quote(arg) for arg in pos_args)
+    return " ".join(arg if arg and not re.search(r"[\s'\"]|\\\\", arg) else shlex.quote(arg) for arg in normalized)
 
 
-def load_posargs(conf: Config, conf_args: ConfigLoadArgs) -> tuple[str, ...] | None:
+def load_posargs(conf: Config, conf_args: ConfigLoadArgs, *, program_first: bool) -> tuple[str, ...] | None:
     to_path: Path | None = None
     if conf_args.env_name is not None:  # pragma: no branch
         env_conf = conf.get_env(conf_args.env_name)
@@ -325,7 +643,7 @@ def load_posargs(conf: Config, conf_args: ConfigLoadArgs) -> tuple[str, ...] | N
                 to_path = env_conf.get("change_dir", Path)
         except KeyError:
             pass
-    return conf.pos_args(to_path)
+    return conf.pos_args(to_path, program_first=program_first)
 
 
 def _loading_change_dir(conf_args: ConfigLoadArgs) -> bool:
@@ -333,6 +651,10 @@ def _loading_change_dir(conf_args: ConfigLoadArgs) -> bool:
 
 
 def replace_env(conf: Config | None, args: list[str], conf_args: ConfigLoadArgs) -> str:
+    return str(_replace_env(conf, args, conf_args))
+
+
+def _replace_env(conf: Config | None, args: list[str], conf_args: ConfigLoadArgs) -> str | ConfigDefault:
     if not args or not args[0]:
         msg = "No variable name was supplied in {env} substitution"
         raise MatchError(msg)
@@ -360,27 +682,33 @@ def replace_env(conf: Config | None, args: list[str], conf_args: ConfigLoadArgs)
             raise MatchRecursionError(msg)
 
     if key in os.environ:
-        return os.environ[key]
+        return RawText(os.environ[key])  # a host variable has always been allowed to hold tokens of its own
 
-    return "" if len(args) == 1 else ARG_DELIMITER.join(args[1:])
-
-
-def replace_tty(args: list[str]) -> str:
-    return (args[0] if len(args) > 0 else "") if sys.stdout.isatty() else args[1] if len(args) > 1 else ""
+    return ConfigDefault(text="" if len(args) == 1 else ARG_DELIMITER.join(args[1:]), start=2)
 
 
-def replace_glob(conf: Config | None, args: list[str]) -> str:
+def replace_tty(args: list[str]) -> ConfigDefault:
+    selected: Final[int] = 0 if sys.stdout.isatty() else 1
+    return ConfigDefault(
+        text=args[selected] if len(args) > selected else "",
+        start=selected + 1,
+        stop=selected + 2,
+    )
+
+
+def replace_glob(conf: Config | None, args: list[str]) -> str | ConfigDefault:
     if not args or not args[0]:
         msg = "No pattern was supplied in glob substitution"
         raise MatchError(msg)
     # rejoin Windows drive letter that was split on colon (e.g. C:\path -> ["C", "\\path"])
-    if (
+    is_win_drive: Final[bool] = (
         sys.platform == "win32"
         and len(args[0]) == 1
         and args[0].isalpha()
         and len(args) > 1
         and args[1][:1] in {"\\", "/"}
-    ):
+    )
+    if is_win_drive:
         pattern = f"{args[0]}:{args[1]}"
         default_args = args[2:]
     else:
@@ -390,7 +718,7 @@ def replace_glob(conf: Config | None, args: list[str]) -> str:
         pattern = str(conf.core["tox_root"] / pattern)
     if matches := sorted(glob.glob(pattern, recursive=True)):  # ruff:ignore[glob]
         return " ".join(matches)
-    return ARG_DELIMITER.join(default_args) if default_args else ""
+    return ConfigDefault(text=ARG_DELIMITER.join(default_args), start=3 if is_win_drive else 2)
 
 
 def replace_factor(conf: Config, args: list[str], conf_args: ConfigLoadArgs) -> str:
@@ -412,13 +740,21 @@ def replace_factor(conf: Config, args: list[str], conf_args: ConfigLoadArgs) -> 
 
 
 __all__ = [
+    "ConfigDefault",
     "MatchExpression",
     "MatchRecursionError",
+    "RawText",
+    "ReplaceReference",
     "find_replace_expr",
     "load_posargs",
+    "quote_args",
     "replace",
     "replace_command_lines",
+    "replace_entries",
     "replace_env",
     "replace_factor",
+    "replace_for",
     "replace_once",
+    "replace_program",
+    "replace_requirement_lines",
 ]
