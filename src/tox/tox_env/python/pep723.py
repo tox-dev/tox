@@ -9,6 +9,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import TYPE_CHECKING, Final, cast
 
+from packaging.requirements import InvalidRequirement, Requirement
 from packaging.specifiers import SpecifierSet
 from packaging.version import Version
 
@@ -26,7 +27,7 @@ if TYPE_CHECKING:
     from tox.config.of_type import ConfigDynamicDefinition
     from tox.tox_env.api import ToxEnvCreateArgs
 
-_SCRIPT_METADATA_RE: Final = re.compile(
+_SCRIPT_METADATA_RE: Final[re.Pattern[str]] = re.compile(
     r"""
     (?m)
     ^[#][ ]///[ ](?P<type>[a-zA-Z0-9-]+)$  # opening: # /// <type>
@@ -102,10 +103,18 @@ class Pep723Mixin(Python, RunToxEnv):
         if getattr(self.options, "skip_env_install", False):
             logging.warning("skip installing dependencies")
             return
-        if metadata.dependencies:
-            root = self.core.get("tox_root", Path)
-            requirements = PythonDeps(metadata.dependencies, root)
-            self._install(requirements, type(self).__name__, "deps")
+        dependencies: Final[list[str]] = metadata.dependencies
+        if not isinstance(dependencies, list):
+            msg = f"invalid dependencies {dependencies!r} in {self.conf['script']}: expected a list"
+            raise Fail(msg)
+        for dependency in dependencies:
+            try:
+                Requirement(dependency)
+            except (InvalidRequirement, TypeError) as exc:
+                msg = f"invalid dependency {dependency!r} in {self.conf['script']}: {exc}"
+                raise Fail(msg) from exc
+        if dependencies:
+            self._install(PythonDeps(dependencies, self.core.get("tox_root", Path)), type(self).__name__, "deps")
 
     def _get_script_metadata(self) -> ScriptMetadata:
         if self._script_metadata is None:

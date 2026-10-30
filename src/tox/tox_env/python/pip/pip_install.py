@@ -55,7 +55,7 @@ class PythonInstallerListDependencies(Installer[Python], ABC):
     @override
     def installed(self) -> list[str]:
         cmd = self._env.conf.get("list_dependencies_command", Command)
-        result = self._env.execute(cmd=cmd.args, stdin=StdinSource.OFF, run_id="freeze", show=False)
+        result = self._env.execute(cmd=cmd.args, stdin=StdinSource.OFF, run_id="freeze", show=False, capture=True)
         result.assert_success()
         return result.out.splitlines()
 

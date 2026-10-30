@@ -55,6 +55,9 @@ def test_redact_argv_does_not_mask_space_separated_value() -> None:
         pytest.param("tool '--token=abc'", "tool '--token=****", id="quoted-script"),
         pytest.param("--tool-args=--token=abc", "--tool-args=--token=***", id="nested-flag"),
         pytest.param("--ref=main --password=a b", "--ref=main --password=***", id="mask-to-end"),
+        pytest.param("badoverride;--password=hunter2", "badoverride;--password=*******", id="semicolon-delimiter"),
+        pytest.param("--password=hun;ter2", "--password=********", id="semicolon-value"),
+        pytest.param("--password;extra=foo", "--password;extra=***", id="semicolon-flag-name"),
     ],
 )
 def test_redact_argv_masks_secret_flag_inside_token(token: str, expected: str) -> None:
@@ -93,6 +96,7 @@ def test_redact_argv_empty() -> None:
         pytest.param(["app", "--a\nb\nsecret=x"], ["app", "--a\nb\nsecret=*"], id="two-newlines"),
         pytest.param(["app", "--\napi-key=v"], ["app", "--\napi-key=*"], id="leading-newline"),
         pytest.param(["app", "--a\r\nb\r\nsecret=x"], ["app", "--a\r\nb\r\nsecret=*"], id="crlf"),
+        pytest.param(["app", "bad;--a\nsecret=x"], ["app", "bad;--a\nsecret=*"], id="semicolon-and-newline"),
     ],
 )
 def test_redact_argv_masks_when_a_newline_precedes_the_keyword(argv: list[str], expected: list[str]) -> None:
