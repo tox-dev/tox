@@ -1,0 +1,2 @@
+``base_python_file`` rejects non-regular files, undecodable content, and version lines over 1024 characters with a
+handled error naming the file. It reads comments in bounded chunks, so a long comment can still precede the version.
