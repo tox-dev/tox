@@ -2123,6 +2123,8 @@ tox supports operating with externally built packages. External packages might b
   :ref:`package_env`) to build the package. The tox packaging environment takes all configuration flags of a
   :ref:`python environment <python-options>`, plus the following:
 
+tox rejects a wheel if a ``.dist-info`` metadata entry it reads declares more than 8 MiB uncompressed.
+
 .. conf::
     :keys: deps
     :default: <empty list>

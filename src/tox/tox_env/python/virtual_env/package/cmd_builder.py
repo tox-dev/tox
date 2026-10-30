@@ -3,7 +3,7 @@ from __future__ import annotations
 import glob
 import tarfile
 from abc import ABC
-from functools import partial
+from functools import cached_property, partial
 from io import TextIOWrapper
 from pathlib import Path
 from typing import TYPE_CHECKING, Final, cast
@@ -28,6 +28,7 @@ if TYPE_CHECKING:
     from collections.abc import Generator, Iterator
     from importlib.metadata import PackageMetadata
     from os import PathLike
+    from zipfile import ZipInfo
 
     from tox.config.sets import EnvConfigSet
     from tox.tox_env.api import ToxEnvCreateArgs
@@ -186,14 +187,27 @@ class WheelDistribution(Distribution):  # cannot subclass has type Any
                     raise Fail(msg)
         return self._dist_name
 
+    @cached_property
+    @override
+    def metadata(self) -> PackageMetadata:
+        return super().metadata
+
     @override
     def read_text(self, filename: str) -> str | None:
+        member: Final[str] = f"{self.dist_name}/{filename}"
         with ZipFile(self._wheel) as zip_file:
             try:
-                with TextIOWrapper(zip_file.open(f"{self.dist_name}/{filename}"), encoding="utf-8") as file_handler:
-                    return file_handler.read()
+                info: Final[ZipInfo] = zip_file.getinfo(member)
             except KeyError:
                 return None
+            limit: Final[int] = 8 * 1024 * 1024
+            if info.file_size > limit:
+                msg: Final[str] = (
+                    f"{member} inside {self._wheel} is {info.file_size} bytes, exceeds the {limit} byte limit"
+                )
+                raise Fail(msg)
+            with TextIOWrapper(zip_file.open(info), encoding="utf-8") as file_handler:
+                return file_handler.read()
 
     @override
     def locate_file(self, path: str | PathLike[str]) -> Path:

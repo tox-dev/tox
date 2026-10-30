@@ -3,7 +3,7 @@ from __future__ import annotations
 import shutil
 import tarfile
 from typing import TYPE_CHECKING, Final
-from zipfile import ZipFile
+from zipfile import ZIP_DEFLATED, ZipFile
 
 import pytest
 
@@ -273,6 +273,23 @@ def malformed_install_pkg_artifact(tmp_path: Path, request: pytest.FixtureReques
         with ZipFile(str(artifact), "w") as wheel:
             wheel.writestr("no_metadata-1.0.dist-info/WHEEL", "Wheel-Version: 1.0\n")
     return artifact
+
+
+def test_tox_install_pkg_wheel_metadata_too_large(tox_project: ToxProjectCreator, tmp_path: Path) -> None:
+    wheel: Final[Path] = tmp_path / "demo-1.0-py3-none-any.whl"
+    with ZipFile(wheel, "w", ZIP_DEFLATED) as zip_file:
+        zip_file.writestr(
+            "demo-1.0.dist-info/METADATA",
+            b"Metadata-Version: 2.1\nName: demo\nVersion: 1.0\n\n" + b"\n" * (16 * 1024 * 1024),
+        )
+        zip_file.writestr("demo-1.0.dist-info/WHEEL", b"Wheel-Version: 1.0\nRoot-Is-Purelib: true\nTag: py3-none-any\n")
+    result: Final[ToxRunOutcome] = tox_project({"tox.ini": "[testenv]"}).run(
+        "r", "-e", "py", "--installpkg", str(wheel)
+    )
+
+    result.assert_failed()
+    assert "demo-1.0.dist-info/METADATA inside " in result.out, result.out
+    assert "exceeds the 8388608 byte limit" in result.out, result.out
 
 
 def test_tox_install_pkg_with_skip_install(
