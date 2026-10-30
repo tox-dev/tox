@@ -56,4 +56,6 @@ def get_env_var(key: str, of_type: type[Any] | UnionType) -> tuple[Any, str] | N
     return None
 
 
-__all__ = ("get_env_var",)
+__all__ = [
+    "get_env_var",
+]
