@@ -83,6 +83,8 @@ def _describe(value: TomlTypes) -> str:
     # Substitution can put secret text in values.
     if value is None or isinstance(value, (bool, int, float)):
         return repr(value)
+    if isinstance(value, str):
+        return "value of type 'str'"
     return f"value of type {type(value).__name__!r}"
 
 
