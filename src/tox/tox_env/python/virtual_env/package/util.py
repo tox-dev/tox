@@ -80,8 +80,7 @@ def dependencies_with_extras_from_markers(
 
 
 def _by_extra_and_markers(state: tuple[str | None, frozenset[Marker]]) -> tuple[str, tuple[str, ...]]:
-    extra, markers = state
-    return extra or "", tuple(sorted(str(marker) for marker in markers))
+    return state[0] or "", tuple(sorted(str(marker) for marker in state[1]))
 
 
 def extract_extra_markers(deps: list[Requirement]) -> list[tuple[Requirement, set[str | None]]]:
@@ -151,4 +150,8 @@ def safe_extractall(tar: tarfile.TarFile, path: Path) -> None:
         tar.extractall(path=str(path), members=safe_members)  # ruff:ignore[tarfile-unsafe-members]
 
 
-__all__ = ["dependencies_with_extras", "dependencies_with_extras_from_markers", "safe_extractall"]
+__all__ = [
+    "dependencies_with_extras",
+    "dependencies_with_extras_from_markers",
+    "safe_extractall",
+]
