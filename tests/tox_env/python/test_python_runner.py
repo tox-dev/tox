@@ -684,6 +684,19 @@ def test_dependency_groups_no_pyproject_file(failed_output: Callable[[dict[str, 
             id="extras",
         ),
         pytest.param(
+            'extras = ["all"]',
+            """
+            [project]
+            name = "demo"
+            version = "1.0"
+            [project.optional-dependencies]
+            all = ["demo[dev]; python_version < '3.0'"]
+            dev = ["six; implementation_name == 'cpython'"]
+            """,
+            [("install_package_deps", ['six; python_version < "3.0" and implementation_name == "cpython"'])],
+            id="self-reference-marker",
+        ),
+        pytest.param(
             'extras = ["docs", "testing"]',
             """
             [project]

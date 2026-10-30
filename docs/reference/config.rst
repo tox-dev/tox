@@ -2097,6 +2097,9 @@ Python run
     A list of "extras" from the package to be installed. For example, ``extras = testing`` is equivalent to ``[testing]``
     in a ``pip install`` command.
 
+    With :ref:`package` set to ``deps-only``, a self-reference in an extra can select another extra of the same package.
+    A marker on that reference also applies to the dependencies selected through it.
+
 .. _external-package-builder:
 
 External package builder
