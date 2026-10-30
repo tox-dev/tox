@@ -14,7 +14,6 @@ from typing import IO, TYPE_CHECKING, Final
 if TYPE_CHECKING:
     from collections.abc import Callable, Generator
 
-_LOGGER: Final[logging.Logger] = logging.getLogger(__name__)
 _FILE_NAME: Final[str] = ".venv"
 
 
@@ -34,7 +33,7 @@ def record_venv_redirect(root: Path, env: Path, is_ours: Callable[[Path], bool])
             line: Final[str] = env.relative_to(root).as_posix() if env.is_relative_to(root) else str(env)
             _write_redirect(file, dir_fd, f"{line}\n")
     except OSError as exc:
-        _LOGGER.warning("could not point %s at %s: %s", file, env, exc)
+        logging.getLogger(__name__).warning("could not point %s at %s: %s", file, env, exc)
 
 
 @contextmanager
