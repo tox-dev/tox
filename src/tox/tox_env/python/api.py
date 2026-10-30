@@ -82,6 +82,9 @@ PY_FACTORS_RE_EXPLICIT_VERSION = re.compile(
     """,
     re.VERBOSE,
 )
+_VERSION_FILE_IMPLEMENTATIONS = frozenset(
+    {"python", "cpython", "pypy", "jython", "graalpy", "rustpython", "ironpython"},
+)
 
 
 class Python(ToxEnv, ABC):
@@ -235,6 +238,10 @@ class Python(ToxEnv, ABC):
                 msg = f"base_python_file: cannot read {file_path!r}: {exc}"
                 raise Fail(msg) from exc
             if version is not None:
+                if not self._is_python_version_spec(version):
+                    # do not echo the content: the file may be a symlink to something secret
+                    msg = f"base_python_file: {file_path!r} does not contain a Python version specifier"
+                    raise Fail(msg)
                 return [version]
         paths = ", ".join(repr(f) for f in file_paths)
         msg = f"base_python_file: no valid Python version found in {paths}"
@@ -262,6 +269,14 @@ class Python(ToxEnv, ABC):
                 if stripped and not stripped.startswith("#"):
                     return stripped
         return None
+
+    @staticmethod
+    def _is_python_version_spec(value: str) -> bool:
+        """Accept only version specs, never paths or program names that discovery would execute."""
+        spec = PythonSpec.from_string_spec(value)
+        if spec.path is not None or spec.major is None:
+            return False
+        return spec.implementation is None or spec.implementation.lower() in _VERSION_FILE_IMPLEMENTATIONS
 
     @classmethod
     def extract_base_python(cls, env_name: str) -> str | None:

@@ -1,0 +1,3 @@
+``base_python_file`` now accepts only a Python version specifier (such as ``3.13`` or ``pypy3.10``) from the version
+file. A path or program name there no longer makes tox start that program during interpreter discovery, and the
+rejected line is not echoed in the error message.

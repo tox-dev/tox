@@ -805,6 +805,32 @@ def test_base_python_file_long_ignored_line(tox_project: ToxProjectCreator, igno
     assert f"base_python = {_PY_VER}\n" in result.out
 
 
+@pytest.mark.parametrize(
+    "content",
+    [
+        pytest.param("bin/python3\n", id="relative-path"),
+        pytest.param("/usr/bin/python3\n", id="absolute-path"),
+        pytest.param("evil\n", id="program-name"),
+        pytest.param("system\n", id="no-version"),
+        pytest.param("https://user:ghp_SECRET@github.com\n", id="secret-not-echoed"),
+    ],
+)
+def test_base_python_file_rejects_non_version(tox_project: ToxProjectCreator, content: str) -> None:
+    ini = "[testenv:mypy]\npackage=skip\nbase_python_file=.python-version\n"
+    project = tox_project({"tox.ini": ini, ".python-version": content})
+    result = project.run("c", "-e", "mypy", "-k", "base_python", raise_on_config_fail=False)
+    result.assert_failed(code=-1)
+    assert "'.python-version' does not contain a Python version specifier" in result.out
+    assert content.strip() not in result.out
+
+
+@pytest.mark.parametrize(
+    "value", ["3.12", "3.12.1", "python3", "py312", "pypy3.10", "cpython3.13t", "3.14t", "PyPy3.10"]
+)
+def test_is_python_version_spec_accepts(value: str) -> None:
+    assert VirtualEnv._is_python_version_spec(value)  # ruff:ignore[private-member-access]
+
+
 def test_base_python_file_conflict(tox_project: ToxProjectCreator) -> None:
     """Setting both base_python and base_python_file is an error."""
     ini = f"[testenv:mypy]\npackage=skip\nbase_python=python{_PY_VER}\nbase_python_file=.python-version\n"
