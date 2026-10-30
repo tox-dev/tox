@@ -3,9 +3,12 @@ from __future__ import annotations
 import ctypes
 import os
 import stat
+import struct
+import subprocess
 import sys
 from ctypes import wintypes
 from dataclasses import dataclass
+from pathlib import Path
 from typing import TYPE_CHECKING, Final
 
 import pytest
@@ -13,8 +16,7 @@ import pytest
 from tox.util.venv_redirect import forget_venv_redirect, record_venv_redirect, release_venv_redirect
 
 if TYPE_CHECKING:
-    from collections.abc import Callable
-    from pathlib import Path
+    from collections.abc import Callable, Generator
 
     from pytest_mock import MockerFixture
 
@@ -23,6 +25,20 @@ def test_record_creates_redirect(root: Path) -> None:
     record_venv_redirect(root, root / ".tox" / "dev", _is_ours(root))
 
     assert (root / ".venv").read_text(encoding="utf-8") == ".tox/dev\n"
+
+
+@pytest.mark.skipif(sys.platform != "win32", reason="Windows directory handles")
+def test_record_windows_empty_root(tmp_path: Path) -> None:
+    root: Final[Path] = tmp_path / "project"
+    root.mkdir()
+    env: Final[Path] = tmp_path / "work" / "dev"
+
+    record_venv_redirect(root, env, lambda _target: True)
+
+    assert ((root / ".venv").read_text(encoding="utf-8"), sorted(path.name for path in root.iterdir())) == (
+        f"{env}\n",
+        [".venv"],
+    )
 
 
 @pytest.mark.skipif(sys.platform == "win32", reason="POSIX file modes")
@@ -250,7 +266,15 @@ def test_record_windows_warns_if_directory_close_fails(
 @pytest.fixture
 def windows_kernel32(mocker: MockerFixture) -> ctypes.CDLL:
     kernel32: Final[ctypes.CDLL] = ctypes.WinDLL("kernel32", use_last_error=True)
-    mocker.patch("tox.util.venv_redirect.ctypes.WinDLL", return_value=kernel32)
+    libraries: Final[dict[str, ctypes.CDLL]] = {
+        "kernel32": kernel32,
+        "ntdll": ctypes.WinDLL("ntdll"),
+    }
+
+    def load_library(name: str, **_options: bool) -> ctypes.CDLL:
+        return libraries[name]
+
+    mocker.patch("tox.util.venv_redirect.ctypes.WinDLL", side_effect=load_library)
     return kernel32
 
 
@@ -444,3 +468,157 @@ def test_record_windows_removes_temporary_after_failed_replace(root: Path, caplo
 
 def test_release_without_directory(root: Path) -> None:
     assert release_venv_redirect(root / "missing" / ".venv", _is_ours(root)) is False
+
+
+@pytest.mark.skipif(sys.platform != "win32", reason="Windows reparse points")
+def test_record_rejects_in_place_junction(junction_directory: Path, mocker: MockerFixture) -> None:
+    target: Final[Path] = junction_directory.with_name("other")
+
+    def set_junction(_requested_bytes: int) -> str:
+        assert (_set_windows_junction(junction_directory, target), junction_directory.resolve()) == (True, target)
+        return "0" * 32
+
+    mocker.patch("tox.util.venv_redirect.secrets.token_hex", side_effect=set_junction)
+    record_venv_redirect(junction_directory, junction_directory / ".tox" / "dev", lambda _target: True)
+
+    assert (target / ".venv").read_text(encoding="utf-8") == "keep\n"
+
+
+@pytest.fixture
+def junction_directory(tmp_path: Path) -> Path:
+    directory: Final[Path] = tmp_path / "project"
+    directory.mkdir()
+    target: Final[Path] = directory.with_name("other")
+    target.mkdir()
+    (target / ".venv").write_text("keep\n", encoding="utf-8")
+    return directory
+
+
+def _set_windows_junction(directory: Path, target: Path) -> bool:
+    substitute: Final[bytes] = f"\\??\\{target}".encode("utf-16-le")
+    display: Final[bytes] = str(target).encode("utf-16-le")
+    path_buffer: Final[bytes] = substitute + b"\0\0" + display + b"\0\0"
+    data: Final[bytes] = (
+        struct.pack(
+            "<IHHHHHH", 0xA0000003, 8 + len(path_buffer), 0, 0, len(substitute), len(substitute) + 2, len(display)
+        )
+        + path_buffer
+    )
+    kernel32: Final[ctypes.CDLL] = ctypes.WinDLL("kernel32", use_last_error=True)
+    kernel32.CreateFileW.argtypes = [
+        wintypes.LPCWSTR,
+        wintypes.DWORD,
+        wintypes.DWORD,
+        wintypes.LPVOID,
+        wintypes.DWORD,
+        wintypes.DWORD,
+        wintypes.HANDLE,
+    ]
+    kernel32.CreateFileW.restype = wintypes.HANDLE
+    kernel32.DeviceIoControl.argtypes = [
+        wintypes.HANDLE,
+        wintypes.DWORD,
+        wintypes.LPVOID,
+        wintypes.DWORD,
+        wintypes.LPVOID,
+        wintypes.DWORD,
+        wintypes.LPVOID,
+        wintypes.LPVOID,
+    ]
+    kernel32.DeviceIoControl.restype = wintypes.BOOL
+    kernel32.CloseHandle.argtypes = [wintypes.HANDLE]
+    kernel32.CloseHandle.restype = wintypes.BOOL
+
+    writer: Final[int] = kernel32.CreateFileW(str(directory), 0x100, 0x1 | 0x2 | 0x4, None, 3, 0x02200000, None)
+    assert writer != ctypes.c_void_p(-1).value, ctypes.get_last_error()
+    try:
+        returned: Final[wintypes.DWORD] = wintypes.DWORD()
+        return bool(
+            kernel32.DeviceIoControl(
+                writer, 0x000900A4, ctypes.create_string_buffer(data), len(data), None, 0, ctypes.byref(returned), None
+            )
+        )
+    finally:
+        assert kernel32.CloseHandle(writer)
+
+
+@pytest.mark.skipif(sys.platform != "win32", reason="Windows reparse points")
+def test_record_blocks_junction_during_write(junction_directory: Path, mocker: MockerFixture) -> None:
+    target: Final[Path] = junction_directory.with_name("other")
+    control: Final[Path] = junction_directory.with_name("control")
+    control.mkdir()
+    assert (_set_windows_junction(control, target), control.resolve()) == (True, target)
+    replace: Final[Callable[[Path, Path], Path]] = Path.replace
+
+    def try_junction(source: Path, destination: Path) -> Path:
+        assert not _set_windows_junction(junction_directory, target)
+        return replace(source, destination)
+
+    mocker.patch("tox.util.venv_redirect.Path.replace", autospec=True, side_effect=try_junction)
+    record_venv_redirect(junction_directory, junction_directory / ".tox" / "dev", lambda _target: True)
+
+    assert (
+        (junction_directory / ".venv").read_text(encoding="utf-8"),
+        (target / ".venv").read_text(encoding="utf-8"),
+    ) == (
+        ".tox/dev\n",
+        "keep\n",
+    )
+
+
+@pytest.mark.skipif(sys.platform != "win32", reason="Windows reparse points")
+def test_release_keeps_target_of_in_place_junction(junction_directory: Path) -> None:
+    redirect: Final[Path] = junction_directory / ".venv"
+    redirect.write_text(".tox/dev\n", encoding="utf-8")
+    moved: Final[Path] = junction_directory.with_name("moved")
+    target: Final[Path] = junction_directory.with_name("other")
+
+    def swap(_path: Path) -> bool:
+        redirect.rename(moved)
+        assert (_set_windows_junction(junction_directory, target), junction_directory.resolve()) == (True, target)
+        return True
+
+    assert (release_venv_redirect(redirect, swap), (target / ".venv").read_text(encoding="utf-8"), moved.exists()) == (
+        True,
+        "keep\n",
+        False,
+    )
+
+
+@pytest.mark.skipif(sys.platform != "win32", reason="Windows ACLs")
+def test_record_windows_delete_only_acl_noop(delete_only_directory: Path, caplog: pytest.LogCaptureFixture) -> None:
+    record_venv_redirect(delete_only_directory, delete_only_directory / ".tox" / "dev", _is_ours(delete_only_directory))
+
+    assert ((delete_only_directory / ".venv").read_text(encoding="utf-8"), caplog.text) == (".tox/dev\n", "")
+
+
+@pytest.mark.skipif(sys.platform != "win32", reason="Windows ACLs")
+def test_release_windows_delete_only_acl(delete_only_directory: Path) -> None:
+    redirect: Final[Path] = delete_only_directory / ".venv"
+
+    assert (release_venv_redirect(redirect, _is_ours(delete_only_directory)), redirect.exists()) == (True, False)
+
+
+@pytest.mark.skipif(sys.platform != "win32", reason="Windows ACLs")
+def test_forget_windows_delete_only_acl(delete_only_directory: Path) -> None:
+    forget_venv_redirect(delete_only_directory, delete_only_directory / ".tox" / "dev")
+
+    assert not (delete_only_directory / ".venv").exists()
+
+
+@pytest.fixture
+def delete_only_directory(tmp_path: Path) -> Generator[Path, None, None]:
+    directory: Final[Path] = tmp_path / "acl"
+    directory.mkdir()
+    (directory / ".venv").write_text(".tox/dev\n", encoding="utf-8")
+    system32: Final[Path] = Path(os.environ["SYSTEMROOT"]) / "System32"
+    user: Final[str] = subprocess.run(
+        [system32 / "whoami.exe"], capture_output=True, text=True, check=True
+    ).stdout.strip()
+    subprocess.run([system32 / "icacls.exe", str(directory), "/deny", f"{user}:(WD)"], check=True, capture_output=True)
+    try:
+        with pytest.raises(PermissionError):
+            (directory / "guard").write_text("x", encoding="utf-8")
+        yield directory
+    finally:
+        subprocess.run([system32 / "icacls.exe", str(directory), "/remove:d", user], check=True, capture_output=True)

@@ -1,3 +1,3 @@
-On Windows, tox holds every directory in the project path open without delete sharing while it checks or changes a
-``.venv`` redirect. This blocks ordinary directory renames and rejects a parent directory symlink. Redirect writes
+On Windows, tox pins the project path while reading or changing a ``.venv`` redirect. A concurrent directory rename or
+junction added to an empty project directory cannot redirect a write or removal into another project. Redirect writes
 replace ``.venv`` with a temporary file, leaving the target of a swapped ``.venv`` symlink or hard link unchanged.
