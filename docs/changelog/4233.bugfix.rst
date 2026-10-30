@@ -1,0 +1,2 @@
+tox now validates inline script ``dependencies`` as requirements before installing them. An invalid entry such as a pip
+option fails before tox passes the dependencies to pip.

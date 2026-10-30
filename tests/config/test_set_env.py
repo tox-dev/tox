@@ -413,7 +413,7 @@ def test_set_env_environment_file_nul(
 
     result.assert_failed(code=1)
     output: Final[str] = f"{result.out}{result.err}"
-    assert "py: failed with invalid line in set_env" in result.out
+    assert f"py: failed with invalid line in set_env at {project.path / '.env'}:2: NUL character" in result.out
     assert "SENTINEL" not in output
     assert "Traceback" not in output
     assert "commands[0]>" not in result.out

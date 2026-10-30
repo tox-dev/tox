@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import shutil
+import tarfile
 from typing import TYPE_CHECKING, Final
 from zipfile import ZipFile
 
@@ -216,6 +217,62 @@ def test_tox_install_pkg_bad_wheel(tox_project: ToxProjectCreator, tmp_path: Pat
 
     result.assert_failed()
     assert "failed with no .dist-info inside " in result.out, result.out
+
+
+@pytest.mark.parametrize(
+    ("malformed_install_pkg_artifact", "expected"),
+    [
+        pytest.param("not_gzip-1.0.tar.gz", "could not extract", id="invalid-gzip"),
+        pytest.param("no_members-1.0.tar.gz", "no files inside", id="empty-source-archive"),
+        pytest.param("not_a_zip-1.0-py3-none-any.whl", "the metadata of", id="invalid-wheel"),
+        pytest.param("invalid_utf8-1.0-py3-none-any.whl", "the metadata of", id="invalid-metadata-encoding"),
+        pytest.param("bad_requires-1.0-py3-none-any.whl", "the metadata of", id="invalid-requirement"),
+        pytest.param("missing_name-1.0-py3-none-any.whl", "no Name in the metadata of", id="missing-name"),
+        pytest.param("no_metadata-1.0-py3-none-any.whl", "the metadata of", id="missing-wheel-metadata"),
+    ],
+    indirect=["malformed_install_pkg_artifact"],
+)
+def test_tox_install_pkg_malformed(
+    tox_project: ToxProjectCreator, malformed_install_pkg_artifact: Path, expected: str
+) -> None:
+    result: Final[ToxRunOutcome] = tox_project({"tox.ini": "[testenv]"}).run(
+        "r", "-e", "py", "--installpkg", str(malformed_install_pkg_artifact)
+    )
+
+    result.assert_failed(1)
+    assert result.out.startswith("py: failed with ")
+    assert "internal error" not in result.out + result.err
+    assert expected in result.out
+    assert str(malformed_install_pkg_artifact) in result.out
+
+
+@pytest.fixture
+def malformed_install_pkg_artifact(tmp_path: Path, request: pytest.FixtureRequest) -> Path:
+    filename: Final[str] = request.param
+    artifact: Final[Path] = tmp_path / filename
+    if filename == "not_gzip-1.0.tar.gz":
+        artifact.write_bytes(b"not a gzip stream\n")
+    elif filename == "no_members-1.0.tar.gz":
+        with tarfile.open(str(artifact), "w:gz"):
+            pass
+    elif filename == "not_a_zip-1.0-py3-none-any.whl":
+        artifact.write_bytes(b"not a zip archive\n")
+    elif filename == "invalid_utf8-1.0-py3-none-any.whl":
+        with ZipFile(str(artifact), "w") as wheel:
+            wheel.writestr("invalid_utf8-1.0.dist-info/METADATA", b"Metadata-Version: 2.1\nName: invalid_utf8\n\xff")
+    elif filename == "bad_requires-1.0-py3-none-any.whl":
+        with ZipFile(str(artifact), "w") as wheel:
+            wheel.writestr(
+                "bad_requires-1.0.dist-info/METADATA",
+                "Metadata-Version: 2.1\nName: bad_requires\nVersion: 1.0\nRequires-Dist: requests => 2.0\n",
+            )
+    elif filename == "missing_name-1.0-py3-none-any.whl":
+        with ZipFile(str(artifact), "w") as wheel:
+            wheel.writestr("missing_name-1.0.dist-info/METADATA", "Metadata-Version: 2.1\nVersion: 1.0\n")
+    else:
+        with ZipFile(str(artifact), "w") as wheel:
+            wheel.writestr("no_metadata-1.0.dist-info/WHEEL", "Wheel-Version: 1.0\n")
+    return artifact
 
 
 def test_tox_install_pkg_with_skip_install(

@@ -3,6 +3,7 @@ build:
   os: ubuntu-lts-latest
   tools: {}
   commands:
+    - git fetch --unshallow --tags
     - curl -LsSf https://astral.sh/uv/install.sh | sh
     - ~/.local/bin/uv venv -p 3.15 --managed-python
     - ~/.local/bin/uv pip install tox-uv tox@.
