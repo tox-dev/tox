@@ -94,7 +94,7 @@ def provision(state: State) -> int | bool:
     deps = ", ".join(f"{p}{'' if v is None else f' ({v})'}" for p, v in missing)
     loader = MemoryLoader(  # these configuration values are loaded from in-memory always (no file conf)
         base=[],  # disable inheritance for provision environments
-        package="skip",  # no packaging for this please
+        skip_install=True,  # no packaging, including artifacts selected with --installpkg
         # use our own dependency specification
         deps=PythonDeps(requires, root=state.conf.core["tox_root"]),
         pass_env=["*"],  # do not filter environment variables, will be handled by provisioned tox
