@@ -1,1 +1,1 @@
-Reject NUL characters in ``set_env`` files with a handled input error instead of a subprocess traceback.
+Reject NUL characters in ``set_env`` file assignments with a handled input error instead of a subprocess traceback.

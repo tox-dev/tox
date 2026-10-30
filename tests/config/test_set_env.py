@@ -19,7 +19,7 @@ if TYPE_CHECKING:
     from pytest_mock import MockerFixture
 
     from tox.config.set_env import SetEnvRaw
-    from tox.pytest import MonkeyPatch, ToxProjectCreator
+    from tox.pytest import MonkeyPatch, ToxProject, ToxProjectCreator, ToxRunOutcome
 
 from typing import Protocol
 
@@ -399,21 +399,23 @@ def test_set_env_environment_file_unreadable(
 @pytest.mark.parametrize(
     "line",
     [
-        pytest.param("LOG\x00_LEVEL=info", id="key"),
-        pytest.param("LOG_LEVEL=\x00info", id="value-start"),
-        pytest.param("LOG_LEVEL=in\x00fo", id="value-middle"),
-        pytest.param("LOG_LEVEL=info\x00", id="value-end"),
+        pytest.param("LOG\x00_LEVEL=SENTINEL", id="key"),
+        pytest.param("LOG_LEVEL=\x00SENTINEL", id="value-start"),
+        pytest.param("LOG_LEVEL=SEC\x00RET_SENTINEL", id="value-middle"),
+        pytest.param("LOG_LEVEL=SENTINEL\x00", id="value-end"),
     ],
 )
 def test_set_env_environment_file_nul(
     tox_project: ToxProjectCreator, of_type: ConfigFileFormat, config: str, line: str
 ) -> None:
-    project = tox_project({f"tox.{of_type}": config, ".env": f"VALID=before\n{line}\nOTHER=after\n"})
-    result = project.run("r", "-e", "py")
+    project: Final[ToxProject] = tox_project({f"tox.{of_type}": config, ".env": f"VALID=before\n{line}\nOTHER=after\n"})
+    result: Final[ToxRunOutcome] = project.run("r", "-e", "py")
 
     result.assert_failed(code=1)
-    assert f"py: failed with invalid line {line!r} in set_env" in result.out
-    assert "Traceback" not in result.out + result.err
+    output: Final[str] = f"{result.out}{result.err}"
+    assert "py: failed with invalid line in set_env" in result.out
+    assert "SENTINEL" not in output
+    assert "Traceback" not in output
     assert "commands[0]>" not in result.out
 
 
