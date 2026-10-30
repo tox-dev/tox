@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import sys
 from itertools import zip_longest
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Final
 
 import pytest
 from packaging.requirements import Requirement
@@ -69,37 +69,36 @@ def test_loads_deps_recursive_extras() -> None:
 
 
 def test_recursive_extra_keeps_marker_of_self_reference() -> None:
-    """A marker on a self-referencing extra applies to the dependencies it pulls in."""
-    requires = [
+    requires: Final = [
         Requirement('six; extra == "dev"'),
         Requirement('name[dev]; python_version < "3.0" and extra == "all"'),
     ]
-    result = dependencies_with_extras(requires, {"all"}, "name")
-    assert [str(i) for i in result] == ['six; python_version < "3.0"']
+    result: Final = dependencies_with_extras(requires, {"all"}, "name")
+    assert [str(requirement) for requirement in result] == ['six; python_version < "3.0"']
 
 
 def test_recursive_extra_combines_markers_through_nested_self_references() -> None:
-    requires = [
+    requires: Final = [
         Requirement('six; implementation_name == "cpython" and extra == "dev"'),
         Requirement('name[dev]; sys_platform == "win32" and extra == "mid"'),
         Requirement('name[mid]; python_version < "3.0" and extra == "all"'),
         Requirement('name[dev]; extra == "other"'),
     ]
-    result = dependencies_with_extras(requires, {"all", "other"}, "name")
-    assert sorted(str(i) for i in result) == [
+    result: Final = dependencies_with_extras(requires, {"all", "other"}, "name")
+    assert sorted(str(requirement) for requirement in result) == [
         'six; implementation_name == "cpython"',
         'six; python_version < "3.0" and sys_platform == "win32" and implementation_name == "cpython"',
     ]
 
 
 def test_recursive_extra_cycle_with_markers_ends() -> None:
-    requires = [
+    requires: Final = [
         Requirement('six; extra == "dev"'),
         Requirement('name[dev]; python_version < "3.0" and extra == "all"'),
         Requirement('name[all]; sys_platform == "win32" and extra == "dev"'),
     ]
-    result = dependencies_with_extras(requires, {"all"}, "name")
-    assert [str(i) for i in result] == [
+    result: Final = dependencies_with_extras(requires, {"all"}, "name")
+    assert [str(requirement) for requirement in result] == [
         'six; python_version < "3.0"',
         'six; python_version < "3.0" and sys_platform == "win32"',
     ]

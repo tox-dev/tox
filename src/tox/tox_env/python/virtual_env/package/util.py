@@ -4,7 +4,7 @@ import os
 import sys
 import tarfile
 from copy import deepcopy
-from typing import TYPE_CHECKING, Literal, cast
+from typing import TYPE_CHECKING, Final, Literal, cast
 
 from packaging.markers import Marker
 from packaging.utils import canonicalize_name
@@ -38,34 +38,38 @@ def dependencies_with_extras_from_markers(
     *,
     available_extras: set[str] | None = None,
 ) -> list[Requirement]:
-    normalized_extras: set[str] = {canonicalize_name(e) for e in extras}
+    normalized_extras: Final[set[str]] = {canonicalize_name(extra) for extra in extras}
     if available_extras is not None and normalized_extras:
-        normalized_available = {canonicalize_name(e) for e in available_extras}
+        normalized_available: Final = {canonicalize_name(extra) for extra in available_extras}
         if unknown := normalized_extras - normalized_available:
             available_str = ", ".join(sorted(normalized_available)) or "none"
             unknown_str = ", ".join(sorted(unknown))
             msg = f"extras not found for package {package_name}: {unknown_str} (available: {available_str})"
             raise Fail(msg)
-    result: list[Requirement] = []
-    found: set[str] = set()
-    # an extra is reached together with the markers of the self-references it was reached through
+    result: Final[list[Requirement]] = []
+    found: Final[set[str]] = set()
+    normalized_package_name: Final = canonicalize_name(package_name)
+    # Distinct marker paths to one extra can produce distinct requirements.
     todo: set[tuple[str | None, frozenset[Marker]]] = {(extra, frozenset()) for extra in normalized_extras | {None}}
-    visited: set[tuple[str | None, frozenset[Marker]]] = set()
+    visited: Final[set[tuple[str | None, frozenset[Marker]]]] = set()
     while todo:
         new_extras: set[tuple[str | None, frozenset[Marker]]] = set()
+        # Set iteration order must not change dependency order.
+        ordered_todo = sorted(todo, key=_by_extra_and_markers)
         for req, extra_markers in deps_with_markers:
-            for extra, via in sorted(todo, key=_by_extra_and_markers):  # sorted: the output order must not vary
+            for extra, via in ordered_todo:
                 if extra not in extra_markers:
                     continue
-                if canonicalize_name(req.name) == canonicalize_name(package_name):  # support for recursive extras
+                if canonicalize_name(req.name) == normalized_package_name:
                     nested = via | {req.marker} if req.marker is not None else via
-                    new_extras.update((canonicalize_name(e), nested) for e in (req.extras or set()))
+                    new_extras.update((canonicalize_name(extra_name), nested) for extra_name in req.extras)
                 else:
-                    dep = req
-                    if via:  # the self-reference this came from only applies where its own marker does
-                        dep = deepcopy(req)
+                    dep = deepcopy(req) if via else req
+                    if via:
                         dep.marker = Marker(
-                            " and ".join(f"({m})" for m in (*sorted(via, key=str), req.marker) if m is not None)
+                            " and ".join(
+                                f"({marker})" for marker in (*sorted(via, key=str), req.marker) if marker is not None
+                            )
                         )
                     if (dep_str := str(dep)) not in found:
                         found.add(dep_str)
@@ -75,9 +79,9 @@ def dependencies_with_extras_from_markers(
     return result
 
 
-def _by_extra_and_markers(state: tuple[str | None, frozenset[Marker]]) -> tuple[str, list[str]]:
+def _by_extra_and_markers(state: tuple[str | None, frozenset[Marker]]) -> tuple[str, tuple[str, ...]]:
     extra, markers = state
-    return extra or "", sorted(str(marker) for marker in markers)
+    return extra or "", tuple(sorted(str(marker) for marker in markers))
 
 
 def extract_extra_markers(deps: list[Requirement]) -> list[tuple[Requirement, set[str | None]]]:
@@ -145,3 +149,6 @@ def safe_extractall(tar: tarfile.TarFile, path: Path) -> None:
                 raise Fail(msg)
             safe_members.append(member)
         tar.extractall(path=str(path), members=safe_members)  # ruff:ignore[tarfile-unsafe-members]
+
+
+__all__ = ["dependencies_with_extras", "dependencies_with_extras_from_markers", "safe_extractall"]
