@@ -1,0 +1,3 @@
+Inline script ``dependencies`` for the ``virtualenv-pep-723`` runner are now validated as requirements
+before installation. A malformed entry such as a pip option (for example ``-i`` or ``--index-url``) fails
+the run instead of reaching pip as an argument.

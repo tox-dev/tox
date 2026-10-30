@@ -9,6 +9,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import TYPE_CHECKING, Final, cast
 
+from packaging.requirements import InvalidRequirement, Requirement
 from packaging.specifiers import SpecifierSet
 from packaging.version import Version
 
@@ -104,7 +105,18 @@ class Pep723Mixin(Python, RunToxEnv):
             return
         if metadata.dependencies:
             root = self.core.get("tox_root", Path)
-            requirements = PythonDeps(metadata.dependencies, root)
+            script = self.conf["script"]
+            dependencies = metadata.dependencies
+            if not isinstance(dependencies, list):
+                msg = f"invalid dependencies {dependencies!r} in {script}: expected a list"
+                raise Fail(msg)
+            for dependency in dependencies:
+                try:
+                    Requirement(dependency)
+                except (InvalidRequirement, TypeError) as exc:
+                    msg = f"invalid dependency {dependency!r} in {script}: {exc}"
+                    raise Fail(msg) from exc
+            requirements = PythonDeps(dependencies, root)
             self._install(requirements, type(self).__name__, "deps")
 
     def _get_script_metadata(self) -> ScriptMetadata:

