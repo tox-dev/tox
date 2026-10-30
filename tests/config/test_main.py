@@ -482,6 +482,17 @@ def test_args_are_paths_rewrites_name_after_program(
     assert result.out == f"[testenv:py]\n{key} = {prefix}w{os.sep}python\n"
 
 
+def test_args_are_paths_rewrite_does_not_become_option(tox_project: ToxProjectCreator) -> None:
+    project = tox_project({
+        "tox.ini": "[testenv]\npackage=skip\ncommands={posargs}\nchange_dir=w",
+        "w": {"--config=evil.cfg": "", "a.txt": ""},
+    })
+    args = f"w{os.sep}a.txt", f"w{os.sep}--config=evil.cfg"
+    result = project.run("c", "-e", "py", "-k", "commands", "--", *args)
+    result.assert_success()
+    assert result.out == f"[testenv:py]\ncommands = a.txt .{os.sep}--config=evil.cfg\n"
+
+
 @pytest.mark.skipif(sys.platform == "win32", reason="symlinks need privileges on Windows, and .. is unrolled lexically")
 @pytest.mark.parametrize(
     "change_dir",
