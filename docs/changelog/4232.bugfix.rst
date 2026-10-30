@@ -1,0 +1,3 @@
+Bound requirement and constraint file reads to 10 MiB per file and remote fetches to 120 seconds in total, so an
+oversized, endless (e.g. ``/dev/zero``) or slow-drip include reports a clear error instead of exhausting memory or
+hanging.

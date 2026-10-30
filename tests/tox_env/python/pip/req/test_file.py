@@ -606,6 +606,44 @@ def test_req_over_http(tmp_path: Path, flag: str, mocker: MockerFixture) -> None
     assert url_open.call_args.kwargs.get("timeout") is not None
 
 
+def test_req_file_over_size_limit(tmp_path: Path, mocker: MockerFixture) -> None:
+    mocker.patch("tox.tox_env.python.pip.req.file._MAX_REQ_FILE_BYTES", 16)
+    (tmp_path / "big.txt").write_bytes(b"a" * 17)
+    requirements_txt = tmp_path / "req.txt"
+    requirements_txt.write_text("-c big.txt")
+    req_file = RequirementsFile(requirements_txt, constraint=False)
+    with pytest.raises(ValueError, match=r"big\.txt exceeds the 16 byte limit"):
+        _ = req_file.requirements
+
+
+def test_req_file_at_size_limit(tmp_path: Path, mocker: MockerFixture) -> None:
+    mocker.patch("tox.tox_env.python.pip.req.file._MAX_REQ_FILE_BYTES", 16)
+    requirements_txt = tmp_path / "req.txt"
+    requirements_txt.write_bytes(b"a" * 16)
+    assert [str(i) for i in RequirementsFile(requirements_txt, constraint=False).requirements] == ["a" * 16]
+
+
+def test_req_file_endless_stream_is_bounded(mocker: MockerFixture) -> None:
+    mocker.patch("tox.tox_env.python.pip.req.file._MAX_REQ_FILE_BYTES", 1024)
+    endless = mocker.MagicMock()
+    endless.read.side_effect = lambda size: b"\0" * size
+    with pytest.raises(ValueError, match="exceeds the 1024 byte limit"):
+        RequirementsFile._read_decode(endless, "/dev/zero")  # ruff:ignore[private-member-access]
+
+
+def test_req_over_http_slow_drip_hits_deadline(tmp_path: Path, mocker: MockerFixture) -> None:
+    url_open = mocker.patch("tox.tox_env.python.pip.req.file.urlopen", autospec=True)
+    url_open.return_value.__enter__.return_value.read.side_effect = lambda _size: b"#"
+    clock = iter(range(0, 10_000, 100))
+    mocker.patch("tox.tox_env.python.pip.req.file.monotonic", side_effect=lambda: next(clock))
+    requirements_txt = tmp_path / "req.txt"
+    requirements_txt.write_text("-c https://user:hunter2@example.com/c.txt")
+    req_file = RequirementsFile(requirements_txt, constraint=False)
+    with pytest.raises(ValueError, match=r"https://example\.com/c\.txt took longer than 120 seconds") as exc:
+        _ = req_file.requirements
+    assert "hunter2" not in str(exc.value)
+
+
 def test_req_over_http_has_req(tmp_path: Path, mocker: MockerFixture) -> None:
     @contextmanager
     def enter(url: str, timeout: float | None = None) -> Generator[IO[bytes], None, None]:  # ruff:ignore[unused-function-argument]
