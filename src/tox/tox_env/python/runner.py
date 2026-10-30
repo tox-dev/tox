@@ -10,6 +10,7 @@ from functools import partial
 from pathlib import Path
 from typing import TYPE_CHECKING, Final, Literal, TypeAlias, get_args
 
+from packaging.markers import default_environment
 from packaging.utils import canonicalize_name
 
 from tox.config.types import Command
@@ -33,9 +34,12 @@ PackageType: TypeAlias = Literal[
 
 
 if TYPE_CHECKING:
+    from typing_extensions import TypeIs
+
     from tox.config.sets import EnvConfigSet
     from tox.tox_env.api import ToxEnvCreateArgs
     from tox.tox_env.package import Package
+    from tox.util.json_types import JsonValue
 
 
 class PythonRun(Python, RunToxEnv, ABC):
@@ -178,11 +182,62 @@ class PythonRun(Python, RunToxEnv, ABC):
         if not (path := self.core.get("package_root", Path) / pylock_path).exists():
             msg = f"pylock file {pylock_path!r} not found at {path}"
             raise Fail(msg)
-        marker_env = _target_marker_environment(self.env_python())
+        marker_env: Final[dict[str, str]] = self._target_marker_environment(self.env_python())
         extras = self.conf.get("extras", set[str])
         groups = self.conf.get("dependency_groups", set[str])
         pylock = Pylock(path=path, extras=frozenset(extras), groups=frozenset(groups), marker_env=marker_env)
         self._install(pylock, PythonRun.__name__, "pylock")
+
+    @staticmethod
+    def _target_marker_environment(python: Path) -> dict[str, str]:
+        # packaging fills omitted keys from the tox host, so request the complete target environment.
+        script: Final[str] = """\
+import json
+import os
+import platform
+import sys
+version = sys.implementation.version
+implementation_version = f"{version.major}.{version.minor}.{version.micro}"
+if version.releaselevel != "final":
+    implementation_version = f"{implementation_version}{version.releaselevel[0]}{version.serial}"
+print(json.dumps({
+    "implementation_name": sys.implementation.name,
+    "implementation_version": implementation_version,
+    "os_name": os.name,
+    "platform_machine": platform.machine(),
+    "platform_release": platform.release(),
+    "platform_system": platform.system(),
+    "platform_version": platform.version(),
+    "python_full_version": platform.python_version(),
+    "platform_python_implementation": platform.python_implementation(),
+    "python_version": ".".join(platform.python_version_tuple()[:2]),
+    "sys_platform": sys.platform,
+}))
+"""
+        try:
+            result: Final[subprocess.CompletedProcess[str]] = subprocess.run(
+                [str(python), "-I", "-c", script],
+                capture_output=True,
+                text=True,
+                timeout=60,
+                check=True,
+            )
+            values: Final[JsonValue] = json.loads(result.stdout)
+        except (OSError, subprocess.SubprocessError, ValueError) as exc:
+            msg = f"failed to determine the marker environment of {python}: {exc}"
+            raise Fail(msg) from exc
+        if not PythonRun._is_marker_environment(values):
+            msg = f"failed to determine the marker environment of {python}: incomplete or invalid data"
+            raise Fail(msg)
+        return values
+
+    @staticmethod
+    def _is_marker_environment(value: object) -> TypeIs[dict[str, str]]:
+        return (
+            isinstance(value, dict)
+            and value.keys() == default_environment().keys()
+            and all(isinstance(item, str) for item in value.values())
+        )
 
     @override
     def _setup_with_env(self) -> None:
@@ -229,49 +284,6 @@ def _normalize_extras(values: set[str]) -> set[str]:
     # although _ and . is allowed this will be normalized during packaging to -
     # https://packaging.python.org/en/latest/specifications/dependency-specifiers/#grammar
     return {canonicalize_name(v) for v in values}
-
-
-# mirrors packaging.markers.default_environment using only the standard library, so it runs in any target interpreter
-_MARKER_ENV_SCRIPT: Final[str] = """\
-import json, os, platform, sys
-info = sys.implementation.version
-iver = "{0}.{1}.{2}".format(info.major, info.minor, info.micro)
-if info.releaselevel != "final":
-    iver += info.releaselevel[0] + str(info.serial)
-print(json.dumps({
-    "implementation_name": sys.implementation.name,
-    "implementation_version": iver,
-    "os_name": os.name,
-    "platform_machine": platform.machine(),
-    "platform_release": platform.release(),
-    "platform_system": platform.system(),
-    "platform_version": platform.version(),
-    "python_full_version": platform.python_version(),
-    "platform_python_implementation": platform.python_implementation(),
-    "python_version": ".".join(platform.python_version_tuple()[:2]),
-    "sys_platform": sys.platform,
-}))
-"""
-
-
-def _target_marker_environment(python: Path) -> dict[str, str]:
-    """Evaluate the PEP 508 marker environment inside the target interpreter.
-
-    Every key must be filled in, otherwise packaging falls back to the values of the interpreter running tox.
-
-    """
-    try:
-        result = subprocess.run(
-            [str(python), "-I", "-c", _MARKER_ENV_SCRIPT],
-            capture_output=True,
-            text=True,
-            timeout=60,
-            check=True,
-        )
-        return {str(key): str(value) for key, value in json.loads(result.stdout).items()}
-    except (OSError, subprocess.SubprocessError, ValueError, AttributeError) as exc:
-        msg = f"failed to determine the marker environment of {python}: {exc}"
-        raise Fail(msg) from exc
 
 
 __all__ = [

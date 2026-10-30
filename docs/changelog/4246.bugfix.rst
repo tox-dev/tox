@@ -1,3 +1,3 @@
-``pylock`` markers are now evaluated entirely against the environment's interpreter. Before, markers such as
-``implementation_version``, ``os_name`` or ``platform_release`` used the values of the interpreter running tox, so an
-environment could install the entry locked for a different interpreter.
+``pylock`` now evaluates every marker value using the environment's interpreter. Before, markers such as
+``implementation_version``, ``os_name``, and ``platform_release`` used values from the interpreter running tox, so an
+environment could install an entry locked for a different interpreter.
