@@ -1576,10 +1576,13 @@ Run
     :default: True
     :version_added: 0.5
 
-    Treat positional arguments passed to tox as file system paths and - if they exist on the filesystem and are in
-    relative format - rewrite them according to the current and :ref:`change_dir` working directory. This handles
-    automatically transforming relative paths specified on the CLI to relative paths respective of the commands executing
+    When true, tox rewrites a relative positional argument that names an existing file or directory to keep it pointing
+    at the same entry after the command changes to :ref:`change_dir`. For ``tox exec`` or a command whose program comes
+    from ``{posargs}``, tox leaves a bare first value such as ``python`` for ``PATH`` lookup. It also leaves a bare
+    executable first positional value unchanged because wrappers such as ``env {posargs}`` may run it as a program. This
+    also applies when the command uses that value as data. Pass ``./python`` when you mean a file in the start
     directory.
+    If a wrapper runs a later positional value as a program, set ``args_are_paths = false``.
 
 .. conf::
     :keys: ignore_errors
@@ -1983,9 +1986,11 @@ Python run
       ``-c`` (followed by a file path or URL).
 
     A substitution inside a dependency or option entry cannot add a requirements-file line. tox refuses a line break in
-    that value, or a backslash at the end of a substituted line, before starting pip. A substitution alone in its entry,
-    such as ``{[testenv]deps}``, can still supply multiple requirements. A globbed requirement path containing a line
-    break or ending in a backslash is refused.
+    that value, or a backslash at the end of a substituted line, before starting pip. A partial substitution also cannot
+    add, remove, or split parsed pip option tokens. This includes ``${VAR}`` expansion. tox still accepts options
+    written on the same line in the configuration. A substitution alone in its entry, such as ``{[testenv]deps}``, can
+    still supply multiple requirements. tox also refuses a globbed requirement path containing a line break or ending
+    in a backslash.
 
     If you are only defining :pep:`508` requirements (aka no pip requirement files), you should use
     :ref:`dependency_groups` instead.
@@ -2025,8 +2030,8 @@ Python run
     `Constraints files <https://pip.pypa.io/en/stable/user_guide/#constraints-files>`_ to use during package and
     dependency installation. Provided constraints files will be used when installing package dependencies and any
     additional dependencies specified in :ref:`deps`, but will not be used when installing the package itself.
-    Each value must be a file path or URL. A substitution within one value cannot add a line break or end a line with a
-    backslash, as in :ref:`deps`.
+    Each value must be a file path or URL. A substitution within one value cannot add a line break, end a line with a
+    backslash, or add a parsed pip option. tox still accepts options written on the same line in the configuration.
 
 .. conf::
     :keys: use_develop, usedevelop
@@ -3581,9 +3586,9 @@ Use a double ``--`` if you also want to pass options to an underlying test comma
 
     tox run -e 3.14 -- --opt1 ARG1
 
-will make the ``--opt1 ARG1`` appear in all test commands where ``[]`` or ``{posargs}`` was specified. By default (see
-``args_are_paths`` setting), ``tox`` rewrites each positional argument if it is a relative path and exists on the
-filesystem to become a path relative to the ``changedir`` setting.
+will make the ``--opt1 ARG1`` appear in all test commands where ``[]`` or ``{posargs}`` was specified. By default, tox
+rewrites an existing relative path to keep it pointing at the same entry after :ref:`change_dir`. Bare command names and
+bare executable first positional values are exceptions described under :ref:`args_are_paths`.
 
 When an INI value uses ``{posargs}``, tox replaces line breaks within each positional argument with spaces before
 quoting it. INI command and list values use line breaks to separate entries. The same replacement applies to TOML
