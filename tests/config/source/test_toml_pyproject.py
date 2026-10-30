@@ -819,7 +819,7 @@ def test_config_in_toml_replace_extend_with_marker_rejected(
     then: str,
 ) -> None:
     monkeypatch.setenv("CI", "1")
-    with pytest.raises(MatchError) as error:
+    with pytest.raises(MatchError, match=r"\Aa replace with extend=true cannot have a marker\Z"):
         tox_project({
             "pyproject.toml": f"""\
             [tool.tox.env.A]
@@ -829,7 +829,6 @@ def test_config_in_toml_replace_extend_with_marker_rejected(
             ]
             """
         }).run("c", "-e", "A", "-k", key)
-    assert str(error.value) == "a replace with extend=true cannot have a marker"
 
 
 def test_config_in_toml_replace_extend_with_marker_rejected_in_requires(
@@ -841,8 +840,7 @@ def test_config_in_toml_replace_extend_with_marker_rejected_in_requires(
             "tox.toml": """\
             requires = [
               "tox>=4",
-              { replace = "if", condition = "env.CI", then = ["demo-ci-plugin"], extend = true,
-                marker = "python_version >= '3.11'" },
+              { replace = "if", condition = "env.CI", then = ["demo"], extend = true, marker = "extra == 'x'" },
             ]
             """
         }).run("c", "--core", "-k", "requires")
