@@ -84,7 +84,11 @@ class TomlLoader(Loader[TomlTypes]):
     ) -> _T:
         delay_replace = inspect.isclass(of_type) and issubclass(of_type, SetEnv)
         unroll = Unroll(
-            conf=conf, loader=self, args=args, requirement_entries=of_type in {PythonDeps, PythonConstraints}
+            conf=conf,
+            loader=self,
+            args=args,
+            program_depth=2 if of_type == list[Command] else 1 if of_type == Command else None,
+            requirement_entries=of_type in {PythonDeps, PythonConstraints},
         )
         exploded = unroll(raw, skip_str=True) if delay_replace else unroll(raw)
         result = self.to(exploded, of_type, factory)
