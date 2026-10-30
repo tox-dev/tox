@@ -8,7 +8,8 @@ import logging
 import sys
 from importlib.metadata import PackageNotFoundError, distribution
 from pathlib import Path
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING, Final, cast
+from urllib.parse import urlsplit
 
 from filelock import FileLock
 from packaging.requirements import Requirement
@@ -25,9 +26,23 @@ from tox.util.redact import redact_argv
 
 if TYPE_CHECKING:
     from argparse import ArgumentParser
+    from importlib.metadata import Distribution
+    from urllib.parse import SplitResult
 
     from tox.session.state import State
     from tox.tox_env.python.runner import PythonRun
+    from tox.util.json_types import JsonValue
+
+
+# pip records only these URL fragment hashes in direct_url.json.
+_PIP_HASH_ALGORITHMS: Final[frozenset[str]] = frozenset({
+    "md5",
+    "sha1",
+    "sha224",
+    "sha256",
+    "sha384",
+    "sha512",
+})
 
 
 @impl
@@ -145,9 +160,73 @@ def _get_missing(requires: list[Requirement]) -> list[tuple[Requirement, str | N
         except PackageNotFoundError:
             missing.append((package, None))
         else:
-            if not package.specifier.contains(dist.version, prereleases=True):
+            if package.url is not None:
+                if not _installed_from_url(dist, package.url):
+                    missing.append((package, dist.version))
+            elif not package.specifier.contains(dist.version, prereleases=True):
                 missing.append((package, dist.version))
     return missing
+
+
+def _installed_from_url(dist: Distribution, url: str) -> bool:
+    try:
+        info: Final[JsonValue] = json.loads(dist.read_text("direct_url.json") or "null")
+    except (json.JSONDecodeError, UnicodeDecodeError):
+        return False
+    if not isinstance(info, dict) or not isinstance(installed := info.get("url"), str):
+        return False
+    if not any(isinstance(info.get(kind), dict) for kind in ("vcs_info", "archive_info", "dir_info")):
+        return False
+    if isinstance(vcs_info := info.get("vcs_info"), dict) and isinstance(vcs := vcs_info.get("vcs"), str):
+        installed = f"{vcs}+{installed}"
+        if isinstance(revision := vcs_info.get("requested_revision"), str):
+            installed = f"{installed}@{revision}"
+    requested, _, fragment = url.partition("#")
+    if installed != requested:
+        try:
+            parts: Final[SplitResult] = urlsplit(requested)
+        except ValueError:
+            return False
+        if "@" not in parts.netloc or installed != parts._replace(netloc=parts.netloc.rsplit("@", 1)[1]).geturl():
+            return False
+        if not isinstance(info.get("archive_info"), dict) or not any(
+            algorithm in _PIP_HASH_ALGORITHMS for algorithm, _ in _fragment_fields(fragment)
+        ):
+            msg = "cannot verify the installed origin of a credentialed direct URL without an archive hash"
+            raise HandledError(msg)
+    return _origin_fragment_matches(info, fragment)
+
+
+def _fragment_fields(fragment: str) -> list[tuple[str, str]]:
+    # pip retains percent escapes and plus signs in the recorded subdirectory.
+    fields: Final[list[tuple[str, str]]] = []
+    for part in fragment.split("&"):
+        key, separator, value = part.partition("=")
+        if separator:
+            fields.append((key, value))
+    return fields
+
+
+def _origin_fragment_matches(info: dict[str, JsonValue], fragment: str) -> bool:
+    fields: Final[list[tuple[str, str]]] = _fragment_fields(fragment)
+    if (next((value for key, value in fields if key == "subdirectory"), None) or None) != info.get("subdirectory"):
+        return False
+    hash_fragment: Final[tuple[str, str] | None] = next(
+        ((key, value) for key, value in fields if key in _PIP_HASH_ALGORITHMS), None
+    )
+    if hash_fragment is None:
+        return True
+    archive_info: Final[JsonValue] = info.get("archive_info")
+    if not isinstance(archive_info, dict):
+        return False
+    algorithm, expected = hash_fragment
+    hashes: Final[JsonValue] = archive_info.get("hashes")
+    actual = hashes.get(algorithm) if isinstance(hashes, dict) else None
+    if actual is None and isinstance(legacy_hash := archive_info.get("hash"), str):
+        legacy_algorithm, _, legacy_value = legacy_hash.partition("=")
+        if legacy_algorithm == algorithm:
+            actual = legacy_value
+    return isinstance(actual, str) and actual.lower() == expected.lower()
 
 
 def run_provision(name: str, state: State) -> int:
@@ -175,3 +254,8 @@ def _setup_and_execute(tox_env: PythonRun, env_python: Path, state: State) -> in
     args.extend(state.args)
     outcome = tox_env.execute(cmd=args, stdin=StdinSource.user_only(), show=True, run_id="provision", cwd=Path.cwd())
     return cast("int", outcome.exit_code)
+
+
+__all__ = [
+    "provision",
+]

@@ -493,6 +493,14 @@ the top level of ``tox.toml``. Placing these options in an environment section (
 
     A requirement containing a line break or ending in a backslash is refused before provisioning installs it.
 
+    For a direct URL requirement, tox checks the installed distribution's :pep:`610` ``direct_url.json`` against the
+    requested URL, subdirectory, and supported archive hash. `pip <https://pip.pypa.io/en/stable/>`_ discards fragment
+    fields such as ``egg``; these do not affect origin matching. Missing or different origin metadata triggers
+    provisioning.
+    Installers must omit sensitive URL credentials from that record. If credentials are omitted, tox cannot verify a
+    credentialed direct URL without an archive hash and reports an error. Pin a ``sha256`` archive hash to verify it.
+    In INI configuration, escape the fragment marker as ``\#``; TOML strings keep ``#`` unchanged.
+
      .. tab:: TOML
 
         .. code-block:: toml
