@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import sys
 from typing import TYPE_CHECKING
 
 import pytest
@@ -25,6 +26,33 @@ def test_dont_cleanup_temp_dir(tox_project: ToxProjectCreator, tmp_path: Path) -
     result = project.run()
     result.assert_success()
     assert (tmp_path / "foo" / "bar").exists()
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="creating symlinks needs privileges on Windows")
+def test_replace_linked_default_temp_dir(tox_project: ToxProjectCreator, tmp_path: Path) -> None:
+    project = tox_project({"tox.ini": "[testenv]\npackage=skip"})
+    (outside := tmp_path / "outside").mkdir()
+    (project.path / ".tox").mkdir()
+    (temp_dir := project.path / ".tox" / ".tmp").symlink_to(outside, target_is_directory=True)
+
+    project.run("r", "-e", "py").assert_success()
+
+    assert (temp_dir.is_symlink(), temp_dir.is_dir(), list(outside.iterdir())) == (False, True, [])
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="creating symlinks needs privileges on Windows")
+def test_keep_configured_external_temp_dir_link(
+    tox_project: ToxProjectCreator, demo_pkg_inline: Path, tmp_path: Path
+) -> None:
+    project = tox_project(
+        {"tox.ini": "[tox]\ntemp_dir={tox_root}/temp\n[testenv]\npackage=wheel"}, base=demo_pkg_inline
+    )
+    (outside := tmp_path / "outside").mkdir()
+    (temp_dir := project.path / "temp").symlink_to(outside, target_is_directory=True)
+
+    project.run("r", "-e", "py").assert_success()
+
+    assert temp_dir.is_symlink()
 
 
 def test_setenv_section_substitution(tox_project: ToxProjectCreator) -> None:
