@@ -1986,9 +1986,11 @@ Python run
       ``-c`` (followed by a file path or URL).
 
     A substitution inside a dependency or option entry cannot add a requirements-file line. tox refuses a line break in
-    that value, or a backslash at the end of a substituted line, before starting pip. A substitution alone in its entry,
-    such as ``{[testenv]deps}``, can still supply multiple requirements. A globbed requirement path containing a line
-    break or ending in a backslash is refused.
+    that value, or a backslash at the end of a substituted line, before starting pip. A partial substitution also cannot
+    add, remove, or split parsed pip option tokens. This includes ``${VAR}`` expansion. tox still accepts options
+    written on the same line in the configuration. A substitution alone in its entry, such as ``{[testenv]deps}``, can
+    still supply multiple requirements. tox also refuses a globbed requirement path containing a line break or ending
+    in a backslash.
 
     If you are only defining :pep:`508` requirements (aka no pip requirement files), you should use
     :ref:`dependency_groups` instead.
@@ -2028,8 +2030,8 @@ Python run
     `Constraints files <https://pip.pypa.io/en/stable/user_guide/#constraints-files>`_ to use during package and
     dependency installation. Provided constraints files will be used when installing package dependencies and any
     additional dependencies specified in :ref:`deps`, but will not be used when installing the package itself.
-    Each value must be a file path or URL. A substitution within one value cannot add a line break or end a line with a
-    backslash, as in :ref:`deps`.
+    Each value must be a file path or URL. A substitution within one value cannot add a line break, end a line with a
+    backslash, or add a parsed pip option. tox still accepts options written on the same line in the configuration.
 
 .. conf::
     :keys: use_develop, usedevelop

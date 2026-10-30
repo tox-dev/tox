@@ -75,9 +75,15 @@ class Unroll:
             return value
         if isinstance(value, str):
             if not skip_str and self.conf is not None:  # core config does not support string substitution
-                reference = TomlReplaceLoader(self.conf, self.loader)
+                reference: Final[TomlReplaceLoader] = TomlReplaceLoader(self.conf, self.loader)
                 if self.requirement_entries:
-                    value = replace_requirement_lines(self.conf, reference, value, self.args)
+                    value = replace_requirement_lines(
+                        self.conf,
+                        reference,
+                        value,
+                        self.args,
+                        validate_options=PythonDeps.validate_requirement_options,
+                    )
                 elif self._program_depth is not None:
                     value = replace_program(self.conf, reference, value, self.args)
                 else:
