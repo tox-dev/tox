@@ -117,9 +117,13 @@ class Python(ToxEnv, ABC):
         self._base_python_explicitly_set = True  # track whether base_python was explicitly configured
 
         def validate_base_python(value: list[str] | str) -> list[str]:
-            result = _ensure_list(value)
+            result = [entry for entry in _ensure_list(value) if entry.strip()]
             if self._base_python_explicitly_set and self.conf["base_python_file"]:
                 msg = "cannot set both base_python and base_python_file"
+                raise Fail(msg)
+            if not result:
+                # an empty spec would make virtualenv silently fall back to the host interpreter
+                msg = f"base_python for env {self.name} is empty"
                 raise Fail(msg)
             return self._validate_base_python(self.name, result, self.core["ignore_base_python_conflict"])
 

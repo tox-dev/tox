@@ -1,0 +1,3 @@
+An empty ``base_python`` (for example ``{env:TOXPYTHON:python3.11}`` with ``TOXPYTHON`` set to an empty string) now
+fails the environment instead of silently running the host interpreter under the requested environment name. Blank
+entries in a ``base_python`` list are ignored.

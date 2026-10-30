@@ -70,6 +70,32 @@ def test_conflicting_base_python_factor_no_ignore(tox_project: ToxProjectCreator
     result.assert_failed(code=-1)
 
 
+@pytest.mark.parametrize(
+    ("files", "env"),
+    [
+        pytest.param({"tox.ini": "[testenv:py311]\npackage=skip\nbase_python = {env:TOXPYTHON:python3.11}"}, "py311"),
+        pytest.param({"tox.ini": "[testenv:magic]\npackage=skip\nbase_python ="}, "magic"),
+        pytest.param({"tox.toml": '[env.magic]\npackage = "skip"\nbase_python = ""'}, "magic"),
+        pytest.param({"tox.toml": '[env.magic]\npackage = "skip"\nbase_python = ["", " "]'}, "magic"),
+    ],
+)
+def test_empty_base_python_fails(
+    tox_project: ToxProjectCreator, monkeypatch: pytest.MonkeyPatch, files: dict[str, str], env: str
+) -> None:
+    monkeypatch.setenv("TOXPYTHON", "")
+    project = tox_project(files)
+    result = project.run("c", "-e", env, "-k", "base_python", raise_on_config_fail=False)
+    result.assert_failed(code=-1)
+    assert f"base_python for env {env} is empty" in result.out
+
+
+def test_blank_base_python_entries_skipped(tox_project: ToxProjectCreator) -> None:
+    project = tox_project({"tox.toml": '[env.magic]\npackage = "skip"\nbase_python = ["", "python3"]'})
+    result = project.run("c", "-e", "magic", "-k", "base_python")
+    result.assert_success()
+    assert "base_python = python3\n" in result.out
+
+
 def test_validate_base_python_conflicting_factors_ignore() -> None:
     result = Python._validate_base_python("unit-py3.10-2.16", ["python3"], ignore_base_python_conflict=True)  # ruff:ignore[private-member-access]
     assert result == ["python3"]
