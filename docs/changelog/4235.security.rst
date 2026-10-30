@@ -1,3 +1,3 @@
 Commands such as ``tox list`` no longer create a packaging environment's ``file.lock`` (or its directory) through a
 symlink planted where that environment should live, so a link in the work directory cannot make tox write a file into a
-directory the link's creator cannot write to - by :user:`rahuldevikar`.
+directory the link's creator cannot write to.
