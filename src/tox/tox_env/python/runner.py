@@ -168,20 +168,12 @@ class PythonRun(Python, RunToxEnv, ABC):
         groups = self.conf.get("dependency_groups", set[str])
         if not groups:
             return
-        try:
-            root = self.core.get("package_root", Path)
-        except KeyError:
-            root = self.core["tox_root"]
-        requirements = resolve_dependency_groups(root, groups)
+        requirements = resolve_dependency_groups(self.core.get("package_root", Path), groups)
         self._install(list(requirements), PythonRun.__name__, "dependency-groups")
 
     def _install_pylock(self) -> None:
         pylock_path = self.conf.get("pylock", str)
-        try:
-            root = self.core.get("package_root", Path)
-        except KeyError:
-            root = self.core["tox_root"]
-        if not (path := root / pylock_path).exists():
+        if not (path := self.core.get("package_root", Path) / pylock_path).exists():
             msg = f"pylock file {pylock_path!r} not found at {path}"
             raise Fail(msg)
         info = self.base_python

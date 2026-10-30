@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+import re
 import sys
+import tomllib
 from textwrap import dedent
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Final
 
 import pytest
 
@@ -10,7 +12,9 @@ from tox.tox_env.errors import Fail
 from tox.tox_env.python.pylock import Pylock
 
 if TYPE_CHECKING:
+    from collections.abc import Sequence
     from pathlib import Path
+    from unittest.mock import MagicMock
 
     from tox.pytest import ToxProject, ToxProjectCreator
 
@@ -40,30 +44,63 @@ PYLOCK_TOML = dedent("""\
 """)
 
 
-def test_pylock_install(tox_project: ToxProjectCreator) -> None:
-    project = tox_project(
-        {
-            "tox.toml": """
-            [env_run_base]
-            skip_install = true
-            pylock = "pylock.toml"
-            """,
-            "pylock.toml": PYLOCK_TOML,
-        },
-    )
-    execute_calls = project.patch_execute()
-    result = project.run("r", "-e", "py")
+@pytest.mark.parametrize(
+    "files",
+    [
+        pytest.param(
+            {
+                "tox.toml": '[env_run_base]\nskip_install = true\npylock = "pylock.toml"',
+                "pylock.toml": PYLOCK_TOML,
+            },
+            id="tox-root",
+        ),
+        pytest.param(
+            {
+                "tox.toml": 'package_root = "sub"\n[env_run_base]\nskip_install = true\npylock = "pylock.toml"',
+                "sub": {"pylock.toml": PYLOCK_TOML},
+            },
+            id="package-root",
+        ),
+    ],
+)
+def test_pylock_install(tox_project: ToxProjectCreator, files: dict[str, str | dict[str, str]]) -> None:
+    project: Final[ToxProject] = tox_project(files)
+    execute_calls: Final[MagicMock] = project.patch_execute()
+    project.run("r", "-e", "py").assert_success()
 
-    result.assert_success()
-
-    req_file = str(project.path / ".tox" / "py" / "pylock.txt")
-    found_calls = [(i[0][0].conf.name, i[0][3].run_id, i[0][3].cmd) for i in execute_calls.call_args_list]
+    req_file: Final[str] = str(project.path / ".tox" / "py" / "pylock.txt")
+    found_calls: Final[list[tuple[str, str, Sequence[str]]]] = [
+        (call[0][0].conf.name, call[0][3].run_id, call[0][3].cmd) for call in execute_calls.call_args_list
+    ]
     assert found_calls == [
         ("py", "install_pylock", ["python", "-I", "-m", "pip", "install", "--no-deps", "-r", req_file]),
     ]
     assert (
         project.path / ".tox" / "py" / "pylock.txt"
     ).read_text() == "alpha==1.0.0 --hash=sha256:abc123\nbeta==2.0.0 --hash=sha256:def456"
+
+
+def test_dependency_groups_use_package_root_without_package_env(tox_project: ToxProjectCreator) -> None:
+    project: Final[ToxProject] = tox_project(
+        {
+            "tox.toml": """
+            package_root = "sub"
+
+            [env_run_base]
+            skip_install = true
+            dependency_groups = ["dev"]
+            """,
+            "sub": {"pyproject.toml": '[dependency-groups]\ndev = ["six"]\n'},
+        },
+    )
+    execute_calls: Final[MagicMock] = project.patch_execute()
+    project.run("r", "-e", "py").assert_success()
+
+    found_calls: Final[list[tuple[str, str]]] = [
+        (call[0][0].conf.name, call[0][3].run_id) for call in execute_calls.call_args_list
+    ]
+    assert found_calls == [("py", "install_dependency-groups")]
+    assert "six" in execute_calls.call_args_list[0][0][3].cmd
 
 
 def test_pylock_empty(tox_project: ToxProjectCreator) -> None:
@@ -424,6 +461,36 @@ def test_pylock_requirements_invalid(tmp_path: Path) -> None:
 
     with pytest.raises(Fail, match="invalid pylock file"):
         pylock.install_lines()
+
+
+@pytest.mark.parametrize(
+    ("content", "cause"),
+    [
+        pytest.param(b'lock-version = "1.0"\n\n[[packages]\nname = "alpha"\n', tomllib.TOMLDecodeError, id="toml"),
+        pytest.param(b"\xff", UnicodeDecodeError, id="utf8"),
+    ],
+)
+def test_pylock_requirements_invalid_file(
+    tmp_path: Path, content: bytes, cause: type[tomllib.TOMLDecodeError | UnicodeDecodeError]
+) -> None:
+    lock_file: Final[Path] = tmp_path / "pylock.toml"
+    lock_file.write_bytes(content)
+
+    with pytest.raises(Fail, match=rf"invalid pylock file {re.escape(str(lock_file))}:") as caught:
+        Pylock(path=lock_file).install_lines()
+
+    assert isinstance(caught.value.__cause__, cause)
+    assert str(caught.value.__cause__) in str(caught.value)
+
+
+def test_pylock_requirements_with_utf8_bom(tmp_path: Path) -> None:
+    lock_file: Final[Path] = tmp_path / "pylock.toml"
+    lock_file.write_bytes(b"\xef\xbb\xbf" + PYLOCK_TOML.encode())
+
+    assert Pylock(path=lock_file).install_lines() == [
+        "alpha==1.0.0 --hash=sha256:abc123",
+        "beta==2.0.0 --hash=sha256:def456",
+    ]
 
 
 @pytest.mark.slow
