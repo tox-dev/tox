@@ -198,6 +198,10 @@ class Pep517VenvPackager(PythonPackageToxEnv, ABC):
     @property
     def meta_folder(self) -> Path:
         meta_folder = self.conf.get("meta_dir", Path)
+        # the build frontend empties this folder before each metadata build, which would wipe a link's target
+        if meta_folder.is_symlink():
+            msg = f"{meta_folder} is a symlink where the package metadata should live; delete it"
+            raise Fail(msg)
         meta_folder.mkdir(exist_ok=True)
         return meta_folder
 

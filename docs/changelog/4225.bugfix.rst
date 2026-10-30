@@ -1,0 +1,2 @@
+tox now refuses to use a package metadata directory (``meta_dir``) that is a symlink, instead of letting the build
+frontend empty the link's target before preparing metadata.

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import io
 import json
+import os
 import tarfile
 from textwrap import dedent
 from typing import TYPE_CHECKING, Any, Final, cast
@@ -112,6 +113,27 @@ def test_package_dirs_are_relative_to_conf(tox_project: ToxProjectCreator, key: 
     result: Final[ToxRunOutcome] = proj.run("c", "-e", "py,.pkg", "-c", proj.path.name, from_cwd=proj.path.parent)
     result.assert_success()
     assert result.env_conf(".pkg")[key] == proj.path / path
+
+
+@pytest.mark.skipif(os.name == "nt", reason="creating symlinks needs privileges on Windows")
+def test_meta_dir_symlink_fails_without_touching_target(
+    tox_project: ToxProjectCreator, demo_pkg_inline: Path, tmp_path: Path
+) -> None:
+    outside: Final = tmp_path / "outside"
+    outside.mkdir()
+    (outside / "keep").write_text("keep")
+    ini: Final = f"[tox]\npackage_root={demo_pkg_inline}\n[testenv]\npackage=wheel\nwheel_build_env=.pkg"
+    proj: Final = tox_project({"tox.ini": ini})
+    meta_dir: Final = proj.path / ".tox" / ".pkg" / ".meta"
+    meta_dir.parent.mkdir(parents=True)
+    meta_dir.symlink_to(outside, target_is_directory=True)
+    proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
+
+    result: Final = proj.run("r", "--notest")
+
+    result.assert_failed()
+    assert "is a symlink where the package metadata should live" in result.out
+    assert sorted(p.name for p in outside.iterdir()) == ["keep"]
 
 
 def test_core_package_root_is_relative_to_conf(tox_project: ToxProjectCreator) -> None:
