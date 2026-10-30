@@ -22,9 +22,13 @@ _UNESCAPED_SPACE_RE = re.compile(
 
 if TYPE_CHECKING:
     from argparse import ArgumentParser
-    from collections.abc import Callable, Iterator, Mapping
+    from collections.abc import Iterator
     from pathlib import Path
     from typing import ClassVar, Self
+
+    from typing_extensions import TypeIs
+
+    from .req.file import EnvironmentProvider
 
 
 class _PythonRequirementsFile(RequirementsFile):
@@ -35,9 +39,9 @@ class _PythonRequirementsFile(RequirementsFile):
         self,
         raw: str | list[str] | list[Requirement],
         root: Path,
-        environment: Callable[[], Mapping[str, str]] | None = None,
+        environment_provider: EnvironmentProvider | None = None,
     ) -> None:
-        super().__init__(root / "tox.ini", constraint=self._CONSTRAINT, environment=environment)
+        super().__init__(root / "tox.ini", constraint=self._CONSTRAINT, environment_provider=environment_provider)
         if isinstance(raw, list):
             for item in raw:
                 if isinstance(item, Requirement):
@@ -55,7 +59,7 @@ class _PythonRequirementsFile(RequirementsFile):
     def _req_parser(self) -> RequirementsFile:
         if self._req_parser_ is None:
             self._req_parser_ = RequirementsFile(
-                path=self._path, constraint=self._CONSTRAINT, environment=self._environment
+                path=self._path, constraint=self._CONSTRAINT, environment_provider=self._environment_provider
             )
         return self._req_parser_
 
@@ -214,17 +218,18 @@ class _PythonRequirementsFile(RequirementsFile):
         cls,
         root: Path,
         raw: object,
-        environment: Callable[[], Mapping[str, str]] | None = None,
+        environment_provider: EnvironmentProvider | None = None,
     ) -> Self:
-        if not (
-            isinstance(raw, str)
-            or (
-                isinstance(raw, list)
-                and (all(isinstance(i, str) for i in raw) or all(isinstance(i, Requirement) for i in raw))
-            )
-        ):
+        if not cls._valid_raw(raw):
             raise TypeError(_factory_type_error(cls._FIELD, raw))
-        return cls(cast("str | list[str] | list[Requirement]", raw), root, environment)
+        return cls(raw, root, environment_provider)
+
+    @staticmethod
+    def _valid_raw(raw: object) -> TypeIs[str | list[str] | list[Requirement]]:
+        return isinstance(raw, str) or (
+            isinstance(raw, list)
+            and (all(isinstance(item, str) for item in raw) or all(isinstance(item, Requirement) for item in raw))
+        )
 
 
 class PythonDeps(_PythonRequirementsFile):
@@ -259,7 +264,7 @@ class PythonDeps(_PythonRequirementsFile):
 
     def __add__(self, other: PythonDeps) -> Self:
         # a new instance, so nothing parsed from the earlier text outlives it
-        return type(self)(f"{self._raw}\n{other._raw}", self._path.parent, self._environment)
+        return type(self)(f"{self._raw}\n{other._raw}", self._path.parent, self._environment_provider)
 
 
 class PythonConstraints(_PythonRequirementsFile):

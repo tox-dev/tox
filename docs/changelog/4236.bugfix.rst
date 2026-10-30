@@ -1,4 +1,3 @@
-``${VAR}`` references in requirements and constraints files are now expanded from the environment variables of the tox
-environment (``pass_env`` and ``set_env``), the same ones pip runs with, instead of from the tox process. A host
-variable not forwarded by ``pass_env`` is no longer substituted, so tox no longer fetches a URL that holds its value;
-add the variable to ``pass_env`` or ``set_env`` to keep it expanded.
+tox now expands ``${VAR}`` in requirements and constraints files using the environment running pip, including
+``pass_env`` and ``set_env``, instead of the tox process. A variable absent from that environment stays literal, so tox
+cannot put its host value in a fetched URL. To retain expansion, add it to ``pass_env`` or define it with ``set_env``.

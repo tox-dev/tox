@@ -47,7 +47,7 @@ class PythonRun(Python, RunToxEnv, ABC):
         self.conf.add_config(
             keys=["deps"],
             of_type=PythonDeps,
-            factory=partial(PythonDeps.factory, root, environment=lambda: self.environment_variables),
+            factory=partial(PythonDeps.factory, root, environment_provider=lambda: self.environment_variables),
             default=PythonDeps("", root),
             desc="python dependencies with optional version specifiers, as specified by PEP-440",
         )

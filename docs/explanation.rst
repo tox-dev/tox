@@ -136,6 +136,10 @@ External commands need to be explicitly allowed via :ref:`allowlist_externals`.
 5. **Injected variables** -- tox adds ``TOX_ENV_NAME``, ``TOX_WORK_DIR``, ``TOX_ENV_DIR``, ``VIRTUAL_ENV``,
    ``PIP_USER=0``, and ``PYTHONIOENCODING=utf-8``. These cannot be overridden.
 
+tox also uses this environment when expanding ``${NAME}`` in dependency entries, requirement files, and constraint
+files. A variable absent from the composed environment stays literal; ``disallow_pass_env`` can exclude it, and
+``set_env`` can define it after that exclusion.
+
 **PATH behavior**: because tox prepends the virtualenv ``bin/`` directory to ``PATH`` at step 3, commands like
 ``python`` and ``pip`` resolve to the virtualenv versions. If you override ``PATH`` in ``set_env``, be aware that this
 replaces the composed ``PATH`` entirely -- you should include ``{env_bin_dir}`` in your custom value to preserve

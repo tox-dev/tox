@@ -2020,6 +2020,11 @@ Python run
     still supply multiple requirements. tox also refuses a globbed requirement path containing a line break or ending
     in a backslash.
 
+    tox expands ``${NAME}`` written in dependency entries and referenced requirement or constraint files from the
+    installer environment. Add a host variable to :ref:`pass_env` (unless :ref:`disallow_pass_env` excludes it), or
+    define it with :ref:`set_env`, to make it available. Otherwise the reference stays unexpanded. The same rule applies
+    to nested ``-r`` and ``-c`` files.
+
     If you are only defining :pep:`508` requirements (aka no pip requirement files), you should use
     :ref:`dependency_groups` instead.
 
@@ -2060,6 +2065,7 @@ Python run
     additional dependencies specified in :ref:`deps`, but will not be used when installing the package itself.
     Each value must be a file path or URL. A substitution within one value cannot add a line break, end a line with a
     backslash, or add a parsed pip option. tox still accepts options written on the same line in the configuration.
+    Variable references inside these files follow the :ref:`deps` expansion rules.
     The file size and remote body deadline described under :ref:`deps` also apply.
 
 .. conf::

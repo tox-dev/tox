@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 import os
 from textwrap import dedent
-from typing import TYPE_CHECKING, Any, Final
+from typing import TYPE_CHECKING, Any, Final, TypedDict
 from unittest.mock import Mock
 from zipfile import ZipFile
 
@@ -18,6 +18,8 @@ if TYPE_CHECKING:
     from unittest.mock import MagicMock
 
     from pytest_mock import MockerFixture
+
+    from typing_extensions import TypeIs
 
     from tox.pytest import CaptureFixture, SubRequest, ToxProject, ToxProjectCreator, ToxRunOutcome
 
@@ -836,28 +838,107 @@ def test_pip_install_missing_nested_file_redacts_secret(
         pytest.param("pass_env=PKG_HOST", "host-value", id="pass-env"),
         pytest.param("set_env=PKG_HOST=set-value", "set-value", id="set-env"),
         pytest.param("pass_env=PKG_HOST\nset_env=PKG_HOST=set-value", "set-value", id="set-env-wins"),
+        pytest.param("pass_env=PKG_HOST\ndisallow_pass_env=PKG_HOST", "${PKG_HOST}", id="disallowed"),
+        pytest.param(
+            "pass_env=PKG_HOST\ndisallow_pass_env=PKG_HOST\nset_env=PKG_HOST=set-value",
+            "set-value",
+            id="set-env-after-disallow",
+        ),
     ],
 )
-@pytest.mark.parametrize("field", ["deps", "constraints"])
+@pytest.mark.parametrize(
+    ("deps", "expected_requirement"),
+    [
+        pytest.param("deps=-r r.txt\nconstraints=c.txt", "https://${PKG_HOST}/a.whl", id="deps"),
+        pytest.param("deps=a\nconstraints=c.txt", "a", id="constraints"),
+    ],
+)
 def test_pip_install_requirements_file_expands_env_of_tox_env(
-    tox_project: ToxProjectCreator, monkeypatch: pytest.MonkeyPatch, ini: str, expected: str, field: str
+    tox_project: ToxProjectCreator,
+    monkeypatch: pytest.MonkeyPatch,
+    ini: str,
+    expected: str,
+    deps: str,
+    expected_requirement: str,
 ) -> None:
     monkeypatch.setenv("PKG_HOST", "host-value")
-    deps: Final = "deps=-r r.txt\nconstraints=c.txt" if field == "deps" else "deps=a\nconstraints=c.txt"
-    project: Final = tox_project({
+    project: Final[ToxProject] = tox_project({
         "tox.ini": f"[testenv]\nskip_install=true\n{deps}\n{ini}",
         "r.txt": "https://${PKG_HOST}/a.whl",
         "c.txt": "https://${PKG_HOST}/b.whl",
     })
     project.patch_execute(lambda request: 0 if "install" in request.run_id else None)
 
-    result: Final = project.run("r")
+    project.run("r").assert_success()
+    cache: Final[_ToxCache] = json.loads((project.path / ".tox" / "py" / ".tox-info.json").read_text())
+    assert _is_install_cache(cache)
+    install: Final[_DependencyCache] = cache["PythonRun"]["deps"]
+    assert (install["requirements"], install["constraints"]) == (
+        [expected_requirement.replace("${PKG_HOST}", expected)],
+        [f"-c https://{expected}/b.whl"],
+    )
 
-    result.assert_success()
-    install: Final = json.loads((project.path / ".tox" / "py" / ".tox-info.json").read_text())["PythonRun"]["deps"]
-    if field == "deps":
-        assert install["requirements"] == [f"https://{expected}/a.whl"]
-    assert install["constraints"] == [f"-c https://{expected}/b.whl"]
+
+def _is_install_cache(value: object) -> TypeIs[_ToxCache]:
+    return (
+        isinstance(value, dict)
+        and isinstance((run := value.get("PythonRun")), dict)
+        and isinstance((deps := run.get("deps")), dict)
+        and isinstance((requirements := deps.get("requirements")), list)
+        and all(isinstance(item, str) for item in requirements)
+        and isinstance((constraints := deps.get("constraints")), list)
+        and all(isinstance(item, str) for item in constraints)
+    )
+
+
+class _DependencyCache(TypedDict):
+    requirements: list[str]
+    constraints: list[str]
+
+
+class _EnvironmentCache(TypedDict):
+    deps: _DependencyCache
+
+
+class _ToxCache(TypedDict):
+    PythonRun: _EnvironmentCache
+
+
+@pytest.mark.parametrize(
+    ("source_pass_env", "target_pass_env", "expected"),
+    [
+        pytest.param('pass_env = ["PKG_HOST"]', "", "${PKG_HOST}", id="source-only"),
+        pytest.param("", 'pass_env = ["PKG_HOST"]', "host-value", id="target-only"),
+    ],
+)
+def test_pip_install_referenced_deps_use_target_env(
+    tox_project: ToxProjectCreator,
+    monkeypatch: pytest.MonkeyPatch,
+    source_pass_env: str,
+    target_pass_env: str,
+    expected: str,
+) -> None:
+    monkeypatch.setenv("PKG_HOST", "host-value")
+    project: Final[ToxProject] = tox_project({
+        "tox.toml": f"""
+        [env.a]
+        package = "skip"
+        {source_pass_env}
+        deps = ["-r r.txt"]
+
+        [env.b]
+        package = "skip"
+        {target_pass_env}
+        deps = [{{ replace = "ref", env = "a", key = "deps", extend = true }}]
+        """,
+        "r.txt": "https://${PKG_HOST}/a.whl",
+    })
+    project.patch_execute(lambda request: 0 if "install" in request.run_id else None)
+
+    project.run("r", "-e", "b").assert_success()
+    cache: Final[_ToxCache] = json.loads((project.path / ".tox" / "b" / ".tox-info.json").read_text())
+    assert _is_install_cache(cache)
+    assert cache["PythonRun"]["deps"]["requirements"] == [f"https://{expected}/a.whl"]
 
 
 @pytest.fixture(params=[True, False])
