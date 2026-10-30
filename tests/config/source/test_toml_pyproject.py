@@ -1460,44 +1460,39 @@ def test_empty_tool_tox_table_defers_to_tox_toml(tox_project: ToxProjectCreator)
     outcome.assert_out_err("special\n", "")
 
 
-def test_config_in_toml_type_error_hides_substituted_value(
-    tox_project: ToxProjectCreator, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    expanded_value: Final[str] = "s3cr3t-t0ken"
-    monkeypatch.setenv("DEPLOY_TOKEN", expanded_value)
-
-    outcome: Final[ToxRunOutcome] = tox_project({
-        "pyproject.toml": """
-        [tool.tox.env.A]
-        commands = ["python deploy.py --token={env:DEPLOY_TOKEN}"]
-        """
-    }).run("c", "-e", "A", "-k", "commands")
-
-    assert "failed to load A.commands: value of type 'str' is not list" in outcome.out, outcome.out
-    assert all(expanded_value not in output for output in (outcome.out, outcome.err))
-
-
 @pytest.mark.parametrize(
-    ("key", "expected_type"),
+    ("key", "toml_value", "expected_error"),
     [
-        pytest.param("commands_retry", "int", id="retry"),
-        pytest.param("suicide_timeout", "float", id="suicide"),
-        pytest.param("interrupt_timeout", "float", id="interrupt"),
-        pytest.param("terminate_timeout", "float", id="terminate"),
+        pytest.param(
+            "commands",
+            '["python deploy.py --token={env:DEPLOY_TOKEN}"]',
+            "value of type 'str' is not list",
+            id="commands",
+        ),
+        pytest.param("commands_retry", '"{env:DEPLOY_TOKEN}"', "value of type 'str' is not of type 'int'", id="retry"),
+        pytest.param(
+            "suicide_timeout", '"{env:DEPLOY_TOKEN}"', "value of type 'str' is not of type 'float'", id="suicide"
+        ),
+        pytest.param(
+            "interrupt_timeout", '"{env:DEPLOY_TOKEN}"', "value of type 'str' is not of type 'float'", id="interrupt"
+        ),
+        pytest.param(
+            "terminate_timeout", '"{env:DEPLOY_TOKEN}"', "value of type 'str' is not of type 'float'", id="terminate"
+        ),
     ],
 )
-def test_config_in_toml_numeric_error_hides_substituted_value(
-    tox_project: ToxProjectCreator, monkeypatch: pytest.MonkeyPatch, key: str, expected_type: str
+def test_config_in_toml_type_error_hides_substituted_value(
+    tox_project: ToxProjectCreator, monkeypatch: pytest.MonkeyPatch, key: str, toml_value: str, expected_error: str
 ) -> None:
     expanded_value: Final[str] = "s3cr3t-t0ken"
     monkeypatch.setenv("DEPLOY_TOKEN", expanded_value)
     outcome: Final[ToxRunOutcome] = tox_project({
         "pyproject.toml": f"""
         [tool.tox.env.A]
-        {key} = "{{env:DEPLOY_TOKEN}}"
+        {key} = {toml_value}
         """
     }).run("c", "-e", "A", "-k", key)
-    assert f"failed to load A.{key}: value of type 'str' is not of type '{expected_type}'" in outcome.out
+    assert f"failed to load A.{key}: {expected_error}" in outcome.out
     assert all(expanded_value not in output for output in (outcome.out, outcome.err))
 
 

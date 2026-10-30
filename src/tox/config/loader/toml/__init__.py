@@ -116,7 +116,7 @@ class TomlLoader(Loader[TomlTypes]):
             try:
                 return super().to(raw, of_type, factory)
             except ValueError:
-                msg = f"value of type 'str' is not of type {of_type.__name__!r}"
+                msg: Final[str] = f"value of type 'str' is not of type {of_type.__name__!r}"
                 raise TypeError(msg) from None
         return super().to(raw, of_type, factory)
 
