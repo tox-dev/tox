@@ -58,20 +58,6 @@ class RawText(str):  # ruff:ignore[subclass-builtin] # keep the origin through t
     __slots__ = ()
 
 
-class Arguments(str):  # ruff:ignore[subclass-builtin]  # keep argument values distinct from command text
-    __slots__ = ()
-
-
-class _GlobMatches(str):  # ruff:ignore[subclass-builtin]  # retain match boundaries through substitution
-    __slots__ = ("matches",)
-    matches: tuple[str, ...]
-
-    def __new__(cls, matches: Sequence[str]) -> Self:
-        result = super().__new__(cls, " ".join(matches))
-        result.matches = tuple(matches)
-        return result
-
-
 class ReplaceReference(ABC):
     @abstractmethod
     def __call__(self, value: str, conf_args: ConfigLoadArgs) -> str | ConfigDefault | None:
@@ -524,6 +510,20 @@ class CommandLinesReplacer(Replacer):
             elif not quote and char in {"'", '"'}:
                 quote = char
         return quote
+
+
+class Arguments(str):  # ruff:ignore[subclass-builtin]  # keep argument values distinct from command text
+    __slots__ = ()
+
+
+class _GlobMatches(str):  # ruff:ignore[subclass-builtin]  # retain match boundaries through substitution
+    __slots__ = ("matches",)
+    matches: tuple[str, ...]
+
+    def __new__(cls, matches: Sequence[str]) -> Self:
+        result = super().__new__(cls, " ".join(matches))
+        result.matches = tuple(matches)
+        return result
 
 
 @dataclasses.dataclass(frozen=True, slots=True, kw_only=True)

@@ -1,14 +1,13 @@
 from __future__ import annotations
 
 import sys
-from typing import TYPE_CHECKING, Final
+from typing import TYPE_CHECKING, Final, Protocol
 
 import pytest
 
 from tox.config.types import Command
 
 if TYPE_CHECKING:
-    from collections.abc import Callable
     from pathlib import Path
 
     from tests.config.loader.conftest import ReplaceOne
@@ -83,7 +82,7 @@ def test_replace_glob_match_one_argument_of_command(
     tox_project: ToxProjectCreator,
     tmp_path: Path,
     token: str,
-    expected_args: Callable[[list[str]], list[str]],
+    expected_args: _ExpectedArgs,
 ) -> None:
     project: Final[ToxProject] = tox_project(
         {"tox.ini": f"[testenv]\ncommands = python {token} -x", "a b.txt": "", "it's.txt": ""},
@@ -93,6 +92,10 @@ def test_replace_glob_match_one_argument_of_command(
     outcome.assert_success()
     matches: Final[list[str]] = [str(project.path / "a b.txt"), str(project.path / "it's.txt")]
     assert outcome.env_conf("py")["commands"] == [Command(args=["python", *expected_args(matches), "-x"])]
+
+
+class _ExpectedArgs(Protocol):
+    def __call__(self, matches: list[str]) -> list[str]: ...
 
 
 def test_replace_glob_match_as_is_outside_command(replace_one: ReplaceOne, tmp_path: Path) -> None:

@@ -5,7 +5,7 @@ import sys
 from collections.abc import Callable
 from pathlib import Path
 from textwrap import dedent
-from typing import TYPE_CHECKING, Final
+from typing import TYPE_CHECKING, Final, Protocol
 
 import pytest
 from packaging.requirements import Requirement
@@ -667,13 +667,17 @@ def test_replace_reference_one_argument_of_command(
     config: str,
     expected: str,
     of_type: type[Command | list[Command]],
-    wrap: Callable[[Command], Command | list[Command]],
+    wrap: _WrapCommand,
 ) -> None:
     monkeypatch.delenv("MISSING", raising=False)
     env_config: Final[ConfigSet] = example(config)
     env_config.add_constant(keys="p", desc="p", value=value)
     env_config.add_config(keys="c", of_type=of_type, default=None, desc="c")
     assert env_config["c"] == wrap(Command(args=["python", expected.replace("{}", value), "-x"]))
+
+
+class _WrapCommand(Protocol):
+    def __call__(self, command: Command) -> Command | list[Command]: ...
 
 
 @pytest.mark.parametrize(
@@ -764,7 +768,7 @@ def test_replace_reference_one_argument_of_command_override(
     section: str,
     content: str,
     key: str,
-    wrap: Callable[[Command], Command | list[Command]],
+    wrap: _WrapCommand,
 ) -> None:
     project: Final[ToxProject] = tox_project({config: content})
     override: Final[str] = f"{section}.{key}=python {{work_dir}}{{/}}a -x"
