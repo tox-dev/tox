@@ -1,2 +1,2 @@
-tox now writes ``.tox-info.json`` through a temporary file and an atomic rename, so a symlink planted at that path is
-replaced instead of followed and tox state can no longer overwrite a file outside the environment directory.
+A pre-existing symlink at ``.tox-info.json`` no longer supplies cached state. When tox writes state, it replaces the
+link and leaves its target untouched.

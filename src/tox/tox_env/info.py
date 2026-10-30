@@ -12,7 +12,7 @@ import os
 import tempfile
 from contextlib import contextmanager
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Final
 
 from tox.util.typing_compat import override
 
@@ -26,7 +26,7 @@ class Info:
     def __init__(self, path: Path) -> None:
         self._path = path / ".tox-info.json"
         try:
-            value = json.loads(self._path.read_text())
+            value = {} if self._path.is_symlink() else json.loads(self._path.read_text())
         except (ValueError, OSError):
             value = {}
         # a corrupted file must trigger recreation rather than crash, whatever shape the corruption takes
@@ -79,16 +79,17 @@ class Info:
 
     def _write(self) -> None:
         self._path.parent.mkdir(parents=True, exist_ok=True)
-        # write to a fresh file and rename it over the target, so a planted symlink is replaced instead of followed
+        # Replace the state path itself so a link cannot redirect the write.
         fd, tmp_name = tempfile.mkstemp(dir=self._path.parent, prefix=f"{self._path.name}.", suffix=".tmp")
-        tmp_path = Path(tmp_name)
+        tmp_path: Final[Path] = Path(tmp_name)
         try:
             with os.fdopen(fd, "w", encoding="utf-8") as handler:
                 handler.write(json.dumps(self._content, indent=2))
             tmp_path.replace(self._path)
-        except BaseException:
+        finally:
             tmp_path.unlink(missing_ok=True)
-            raise
 
 
-__all__ = ("Info",)
+__all__ = [
+    "Info",
+]
