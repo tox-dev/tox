@@ -119,14 +119,11 @@ class IniLoader(StrConvert, Loader[str]):
 
     @override
     def substitute(self, value: str, conf: Config, args: ConfigLoadArgs, *, of_type: type[V] | UnionType) -> str:
-        replace_all: Final = (
-            replace_requirement_lines
-            if of_type in {PythonDeps, PythonConstraints}
-            else replace_command_lines
-            if of_type in {Command, list[Command]}
-            else replace_for(of_type)
-        )
-        return replace_all(conf, ReplaceReferenceIni(conf, self), value, args)
+        if of_type in {PythonDeps, PythonConstraints}:
+            return replace_requirement_lines(conf, ReplaceReferenceIni(conf, self), value, args)
+        if of_type in {Command, list[Command]}:
+            return replace_command_lines(conf, ReplaceReferenceIni(conf, self), value, args)
+        return replace_for(of_type)(conf, ReplaceReferenceIni(conf, self), value, args)
 
     @override
     def found_keys(self) -> set[str]:
