@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from contextlib import nullcontext
 from pathlib import Path
 from threading import RLock
 from types import MethodType
@@ -58,21 +59,16 @@ class PackageToxEnv(ToxEnv, ABC):
     @staticmethod
     def _lock_method(thread_lock: RLock, file_lock: BaseFileLock | None, meth: Callable[_P, _R]) -> Callable[_P, _R]:
         def _func(*args: _P.args, **kwargs: _P.kwargs) -> _R:
-            with thread_lock:
-                acquired_lock: BaseFileLock | None = None
-                # A pre-existing package environment link must not redirect the lock file.
-                if (
-                    file_lock is not None
-                    and file_lock.is_locked is False
-                    and not Path(file_lock.lock_file).parent.is_symlink()
-                ):
-                    file_lock.acquire()
-                    acquired_lock = file_lock
-                try:
-                    return meth(*args, **kwargs)
-                finally:
-                    if acquired_lock is not None:
-                        acquired_lock.release()
+            # A pre-existing package environment link must not redirect the lock file.
+            with (
+                thread_lock,
+                file_lock
+                if file_lock is not None
+                and file_lock.is_locked is False
+                and not Path(file_lock.lock_file).parent.is_symlink()
+                else nullcontext(),
+            ):
+                return meth(*args, **kwargs)
 
         return _func
 
