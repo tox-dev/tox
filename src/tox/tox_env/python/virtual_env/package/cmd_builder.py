@@ -37,6 +37,8 @@ if TYPE_CHECKING:
 
 from importlib.metadata import Distribution
 
+_MAX_DIST_INFO_FILE_BYTES: Final[int] = 8 * 1024 * 1024  # 8 MiB; real METADATA files are far smaller
+
 
 class VenvCmdBuilder(PythonPackageToxEnv, ABC):
     def __init__(self, create_args: ToxEnvCreateArgs) -> None:
@@ -171,6 +173,7 @@ class WheelDistribution(Distribution):  # cannot subclass has type Any
     def __init__(self, wheel: Path) -> None:
         self._wheel = wheel
         self._dist_name: str | None = None
+        self._text_cache: dict[str, str | None] = {}
 
     @property
     def dist_name(self) -> str:
@@ -188,12 +191,26 @@ class WheelDistribution(Distribution):  # cannot subclass has type Any
 
     @override
     def read_text(self, filename: str) -> str | None:
+        if filename in self._text_cache:
+            return self._text_cache[filename]
+        member = f"{self.dist_name}/{filename}"
         with ZipFile(self._wheel) as zip_file:
             try:
-                with TextIOWrapper(zip_file.open(f"{self.dist_name}/{filename}"), encoding="utf-8") as file_handler:
-                    return file_handler.read()
+                info = zip_file.getinfo(member)
             except KeyError:
-                return None
+                result = None
+            else:
+                # ZipExtFile never inflates past the declared size, so checking it bounds memory use
+                if info.file_size > _MAX_DIST_INFO_FILE_BYTES:
+                    msg = (
+                        f"{member} inside {self._wheel} is {info.file_size} bytes,"
+                        f" exceeds the {_MAX_DIST_INFO_FILE_BYTES} byte limit"
+                    )
+                    raise Fail(msg)
+                with TextIOWrapper(zip_file.open(info), encoding="utf-8") as file_handler:
+                    result = file_handler.read()
+        self._text_cache[filename] = result
+        return result
 
     @override
     def locate_file(self, path: str | PathLike[str]) -> Path:

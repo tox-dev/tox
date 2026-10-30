@@ -3,14 +3,18 @@ from __future__ import annotations
 import shutil
 import tarfile
 from typing import TYPE_CHECKING, Final
-from zipfile import ZipFile
+from zipfile import ZIP_DEFLATED, ZipFile
 
 import pytest
+
+from tox.tox_env.python.virtual_env.package.cmd_builder import WheelDistribution
 
 if TYPE_CHECKING:
     from collections.abc import Callable
     from pathlib import Path
     from unittest.mock import MagicMock
+
+    from pytest_mock import MockerFixture
 
     from tox.pytest import ToxProject, ToxProjectCreator, ToxRunOutcome
 
@@ -273,6 +277,36 @@ def malformed_install_pkg_artifact(tmp_path: Path, request: pytest.FixtureReques
         with ZipFile(str(artifact), "w") as wheel:
             wheel.writestr("no_metadata-1.0.dist-info/WHEEL", "Wheel-Version: 1.0\n")
     return artifact
+
+
+def _make_wheel(wheel: Path, metadata: bytes) -> None:
+    with ZipFile(str(wheel), "w", ZIP_DEFLATED) as zip_file:
+        zip_file.writestr("demo-1.0.dist-info/METADATA", metadata)
+        zip_file.writestr("demo-1.0.dist-info/WHEEL", b"Wheel-Version: 1.0\nRoot-Is-Purelib: true\nTag: py3-none-any\n")
+
+
+def test_tox_install_pkg_wheel_metadata_too_large(tox_project: ToxProjectCreator, tmp_path: Path) -> None:
+    wheel = tmp_path / "demo-1.0-py3-none-any.whl"
+    _make_wheel(wheel, b"Metadata-Version: 2.1\nName: demo\nVersion: 1.0\n\n" + b"\n" * (16 * 1024 * 1024))
+    proj = tox_project({"tox.ini": "[testenv]"})
+    result = proj.run("r", "-e", "py", "--installpkg", str(wheel))
+
+    result.assert_failed()
+    assert "demo-1.0.dist-info/METADATA inside " in result.out, result.out
+    assert "exceeds the 8388608 byte limit" in result.out, result.out
+
+
+def test_wheel_distribution_read_text_cached(tmp_path: Path, mocker: MockerFixture) -> None:
+    wheel = tmp_path / "demo-1.0-py3-none-any.whl"
+    _make_wheel(wheel, b"Metadata-Version: 2.1\r\nName: demo\r\nVersion: 1.0\r\n\r\n")
+    dist = WheelDistribution(wheel)
+    assert dist.read_text("METADATA") == "Metadata-Version: 2.1\nName: demo\nVersion: 1.0\n\n"
+    assert dist.read_text("missing") is None
+
+    zip_file = mocker.patch("tox.tox_env.python.virtual_env.package.cmd_builder.ZipFile")
+    assert dist.read_text("METADATA") == "Metadata-Version: 2.1\nName: demo\nVersion: 1.0\n\n"
+    assert dist.read_text("missing") is None
+    zip_file.assert_not_called()
 
 
 def test_tox_install_pkg_with_skip_install(
