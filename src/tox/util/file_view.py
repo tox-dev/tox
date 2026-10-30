@@ -4,7 +4,6 @@ import logging
 import os
 import shutil
 import stat
-from itertools import chain
 from os.path import commonpath
 from typing import TYPE_CHECKING, Final
 
@@ -18,11 +17,10 @@ def create_session_view(package: Path, temp_path: Path, trust_root: Path | None 
     temp_path.mkdir(parents=True, exist_ok=True)
     if os.name == "posix":
         _ensure_private_staging_path(temp_path, trust_root)
-    exists = [i.name for i in temp_path.iterdir()]
-    file_id = max(chain((0,), (int(i) for i in exists if str(i).isnumeric())))
-    session_dir = temp_path / str(file_id + 1)
+    file_id: Final[int] = max((int(entry.name) for entry in temp_path.iterdir() if entry.name.isnumeric()), default=0)
+    session_dir: Final[Path] = temp_path / str(file_id + 1)
     session_dir.mkdir()
-    session_package = session_dir / package.name
+    session_package: Final[Path] = session_dir / package.name
 
     with package.open("rb") as source, session_package.open("xb") as target:
         shutil.copyfileobj(source, target)
@@ -37,16 +35,16 @@ def create_session_view(package: Path, temp_path: Path, trust_root: Path | None 
 
 
 def _ensure_private_staging_path(temp_path: Path, trust_root: Path | None) -> None:
-    user_id: Final = os.geteuid()
-    trusted_roots: Final = {trust_root, trust_root.resolve()} if trust_root else set()
+    user_id: Final[int] = os.geteuid()
+    trusted_roots: Final[set[Path]] = {trust_root, trust_root.resolve()} if trust_root is not None else set()
     for candidate in {temp_path, temp_path.resolve()}:
         for parent in (candidate, *candidate.parents):
             if parent in trusted_roots:
                 break
-            metadata = parent.stat()
-            mutable_link = (
+            metadata: os.stat_result = parent.stat()
+            mutable_link: bool = (
                 parent.is_symlink()
-                and parent.parent.stat().st_mode & (stat.S_IWGRP | stat.S_IWOTH)
+                and bool(parent.parent.stat().st_mode & (stat.S_IWGRP | stat.S_IWOTH))
                 and parent.lstat().st_uid not in {0, user_id}
             )
             if (
@@ -54,7 +52,7 @@ def _ensure_private_staging_path(temp_path: Path, trust_root: Path | None) -> No
                 or (metadata.st_mode & (stat.S_IWGRP | stat.S_IWOTH) and not metadata.st_mode & stat.S_ISVTX)
                 or mutable_link
             ):
-                msg = f"package staging path {parent} can be changed by another account"
+                msg: str = f"package staging path {parent} can be changed by another account"
                 raise PermissionError(msg)
 
 

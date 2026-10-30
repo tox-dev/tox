@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import sys
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Final
 
 import pytest
 
@@ -10,7 +10,7 @@ from tox.tox_env.api import redact_value
 if TYPE_CHECKING:
     from pathlib import Path
 
-    from tox.pytest import ToxProjectCreator
+    from tox.pytest import ToxProject, ToxProjectCreator
 
 
 def test_ensure_temp_dir_exists(tox_project: ToxProjectCreator) -> None:
@@ -30,10 +30,12 @@ def test_dont_cleanup_temp_dir(tox_project: ToxProjectCreator, tmp_path: Path) -
 
 @pytest.mark.skipif(sys.platform == "win32", reason="creating symlinks needs privileges on Windows")
 def test_replace_linked_default_temp_dir(tox_project: ToxProjectCreator, tmp_path: Path) -> None:
-    project = tox_project({"tox.ini": "[testenv]\npackage=skip"})
-    (outside := tmp_path / "outside").mkdir()
+    project: Final[ToxProject] = tox_project({"tox.ini": "[testenv]\npackage=skip"})
+    outside: Final[Path] = tmp_path / "outside"
+    outside.mkdir()
     (project.path / ".tox").mkdir()
-    (temp_dir := project.path / ".tox" / ".tmp").symlink_to(outside, target_is_directory=True)
+    temp_dir: Final[Path] = project.path / ".tox" / ".tmp"
+    temp_dir.symlink_to(outside, target_is_directory=True)
 
     project.run("r", "-e", "py").assert_success()
 
@@ -44,11 +46,13 @@ def test_replace_linked_default_temp_dir(tox_project: ToxProjectCreator, tmp_pat
 def test_keep_configured_external_temp_dir_link(
     tox_project: ToxProjectCreator, demo_pkg_inline: Path, tmp_path: Path
 ) -> None:
-    project = tox_project(
+    project: Final[ToxProject] = tox_project(
         {"tox.ini": "[tox]\ntemp_dir={tox_root}/temp\n[testenv]\npackage=wheel"}, base=demo_pkg_inline
     )
-    (outside := tmp_path / "outside").mkdir()
-    (temp_dir := project.path / "temp").symlink_to(outside, target_is_directory=True)
+    outside: Final[Path] = tmp_path / "outside"
+    outside.mkdir()
+    temp_dir: Final[Path] = project.path / "temp"
+    temp_dir.symlink_to(outside, target_is_directory=True)
 
     project.run("r", "-e", "py").assert_success()
 
