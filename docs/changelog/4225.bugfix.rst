@@ -1,0 +1,2 @@
+tox refuses a symlink or Windows junction at ``meta_dir`` because the build frontend empties that directory during
+metadata preparation.
