@@ -471,7 +471,7 @@ def _shares_line(value: MatchArg, at: int) -> bool:
     return bool(before.rpartition("\n")[2].strip() or after.partition("\n")[0].strip())
 
 
-def replace_pos_args(conf: Config, args: list[str], conf_args: ConfigLoadArgs, *, program_first: bool = False) -> str:
+def replace_pos_args(conf: Config, args: list[str], conf_args: ConfigLoadArgs, *, program_first: bool) -> str:
     pos_args = load_posargs(conf, conf_args, program_first=program_first)
     return ARG_DELIMITER.join(args) if pos_args is None else quote_args(pos_args)
 
@@ -485,7 +485,7 @@ def quote_args(args: Sequence[str]) -> str:
     return " ".join(arg if arg and not re.search(r"[\s'\"]|\\\\", arg) else shlex.quote(arg) for arg in normalized)
 
 
-def load_posargs(conf: Config, conf_args: ConfigLoadArgs, *, program_first: bool = False) -> tuple[str, ...] | None:
+def load_posargs(conf: Config, conf_args: ConfigLoadArgs, *, program_first: bool) -> tuple[str, ...] | None:
     to_path: Path | None = None
     if conf_args.env_name is not None:  # pragma: no branch
         env_conf = conf.get_env(conf_args.env_name)
