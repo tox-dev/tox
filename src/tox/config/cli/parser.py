@@ -464,33 +464,7 @@ class ToxParser(ArgumentParserWithEnvAndConfig):
         namespace: _N | None = None,
     ) -> tuple[_N, list[str]]:
         args_list: list[str] = list(args) if args is not None else sys.argv[1:]
-        cmd_at: int | None = None
-        if self._cmd is not None and args_list:
-            # options that consume a value; a subcommand name appearing as such a value (e.g. ``-e list``) must not
-            # be mistaken for the command. Options live on the subparsers (``-e`` on legacy), so consult those too.
-            actions = {
-                name: action
-                for parser in (self, self._cmd.choices.get("legacy"))
-                if parser is not None
-                for name, action in (
-                    parser._option_string_actions.items()  # ruff:ignore[private-member-access]  # no public lookup
-                )
-            }
-            skip_next = False
-            for at, arg in enumerate(args_list):
-                if skip_next:
-                    skip_next = False
-                elif (action := actions.get(arg)) is not None and action.nargs != 0:
-                    if (
-                        action.nargs in {"?", "*"}
-                        and at + 1 < len(args_list)
-                        and args_list[at + 1] in self._cmd.choices
-                    ):
-                        continue
-                    skip_next = True
-                elif arg in self._cmd.choices:
-                    cmd_at = at
-                    break
+        cmd_at = self._find_command(args_list)
         if cmd_at is not None:  # if we found a command move it to the start
             args_list = [args_list[cmd_at], *args_list[:cmd_at], *args_list[cmd_at + 1 :]]
         elif tuple(args_list) not in {("--help",), ("-h",)} and (
@@ -501,6 +475,36 @@ class ToxParser(ArgumentParserWithEnvAndConfig):
         result = Parsed() if namespace is None else namespace
         _, remainder = super().parse_known_args(args_list, namespace=result)
         return cast("tuple[_N, list[str]]", (result, remainder))
+
+    def _find_command(self, args_list: list[str]) -> int | None:
+        if self._cmd is None or not args_list:
+            return None
+        # options that consume a value; a subcommand name appearing as such a value (e.g. ``-e list``) must not
+        # be mistaken for the command. Options live on the subparsers (``-e`` on legacy), so consult those too.
+        actions = {
+            name: action
+            for parser in (self, self._cmd.choices.get("legacy"))
+            if parser is not None
+            for name, action in (
+                parser._option_string_actions.items()  # ruff:ignore[private-member-access]  # no public lookup
+            )
+        }
+        skip: int | None = 0  # values still owned by the last option; ``None`` means all until the next option
+        for at, arg in enumerate(args_list):
+            if arg.startswith("-") and arg != "-":
+                skip = 0
+            if skip is None or skip > 0:
+                if skip is not None:
+                    skip -= 1
+            elif (action := actions.get(arg)) is not None and action.nargs != 0:
+                if action.nargs in {"?", "*"} and at + 1 < len(args_list) and args_list[at + 1] in self._cmd.choices:
+                    continue
+                # argparse greedily consumes every following non-option token for ``+`` and ``*``
+                greedy = action.nargs in {"+", "*"}
+                skip = None if greedy else (action.nargs if isinstance(action.nargs, int) else 1)
+            elif arg in self._cmd.choices:
+                return at
+        return None
 
 
 class _RecordingArgumentGroup(argparse._ArgumentGroup):  # ruff:ignore[private-member-access]
