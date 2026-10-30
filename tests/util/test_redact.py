@@ -35,6 +35,40 @@ def test_redact_argv_masks_short_flag() -> None:
     assert result == ["foo", "-key=***"]
 
 
+@pytest.mark.parametrize(
+    ("token", "expected"),
+    [
+        pytest.param(
+            "demo-pkg @ https://user:pass@example.invalid/demo.whl",
+            "demo-pkg @ https://*********@example.invalid/demo.whl",
+            id="direct-url",
+        ),
+        pytest.param(
+            "git+ssh://git@example.invalid/repo.git",
+            "git+ssh://***@example.invalid/repo.git",
+            id="username-only",
+        ),
+        pytest.param(
+            "https://user:p@ss@example.invalid/demo.whl",
+            "https://*********@example.invalid/demo.whl",
+            id="at-in-password",
+        ),
+        pytest.param(
+            "--url=https://u:token=abc@host",
+            "--url=https://***********@host",
+            id="option-value",
+        ),
+        pytest.param(
+            "https://a:b@one.invalid, https://c:d@two.invalid",
+            "https://***@one.invalid, https://***@two.invalid",
+            id="multiple-urls",
+        ),
+    ],
+)
+def test_redact_argv_masks_url_userinfo(token: str, expected: str) -> None:
+    assert redact_argv([token]) == [expected]
+
+
 def test_redact_argv_leaves_innocuous_flags_alone() -> None:
     result = redact_argv(["pytest", "-k", "test_foo", "--cov=tox"])
     assert result == ["pytest", "-k", "test_foo", "--cov=tox"]
@@ -70,7 +104,9 @@ def test_redact_argv_masks_secret_flag_inside_token(token: str, expected: str) -
         pytest.param("tests/test_api.py::test[a=b]", id="test-id"),
         pytest.param("key=1", id="assignment"),
         pytest.param("--ref=token --cov=tox", id="innocuous-flags"),
-        pytest.param("--url=https://u:token=abc@host", id="keyword-inside-value"),
+        pytest.param("--ref=u:token=abc@host", id="keyword-inside-value"),
+        pytest.param("https://example.invalid/path@version", id="at-in-path"),
+        pytest.param("https://example.invalid?email=user@example.org", id="at-in-query"),
         pytest.param("--deselect=tests/test_a.py::test[--token=1]", id="flag-inside-word"),
     ],
 )

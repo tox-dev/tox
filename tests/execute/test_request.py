@@ -39,6 +39,18 @@ def test_shell_cmd_redacted_masks_secret_flag_value() -> None:
     assert "--token=*******" in request.shell_cmd_redacted
 
 
+def test_shell_cmd_redacted_masks_url_userinfo() -> None:
+    request: Final[ExecuteRequest] = ExecuteRequest(
+        cmd=["pip", "install", "demo-pkg @ https://user:pass@example.invalid/demo.whl"],
+        cwd=Path.cwd(),
+        env={},
+        stdin=StdinSource.OFF,
+        run_id="",
+    )
+    assert "https://*********@example.invalid/demo.whl" in request.shell_cmd_redacted
+    assert "https://user:pass@example.invalid/demo.whl" in request.shell_cmd
+
+
 def test_shell_cmd_unredacted_preserves_secret_value() -> None:
     request = ExecuteRequest(
         cmd=["pytest", "--token=hunter2"],

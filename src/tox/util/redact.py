@@ -60,8 +60,16 @@ def redact_argv(argv: Sequence[str]) -> list[str]:
                 result.append(f"{token[: match.end()]}{'*' * (len(token) - match.end())}")
                 break
         else:
-            result.append(token)
+            result.append(_redact_url_userinfo(token))
     return result
+
+
+def _redact_url_userinfo(token: str) -> str:
+    return re.sub(
+        r"([a-zA-Z][a-zA-Z0-9+.-]*://)([^/?#\s]+)@",
+        lambda match: f"{match[1]}{'*' * len(match[2])}@",
+        token,
+    )
 
 
 __all__ = [
