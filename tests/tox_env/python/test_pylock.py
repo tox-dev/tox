@@ -3,18 +3,22 @@ from __future__ import annotations
 import re
 import sys
 import tomllib
+from pathlib import Path
 from textwrap import dedent
 from typing import TYPE_CHECKING, Final
 
 import pytest
+from packaging.markers import default_environment
 
 from tox.tox_env.errors import Fail
 from tox.tox_env.python.pylock import Pylock
+from tox.tox_env.python.runner import _target_marker_environment  # ruff:ignore[import-private-name]
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
-    from pathlib import Path
     from unittest.mock import MagicMock
+
+    from pytest_mock import MockerFixture
 
     from tox.pytest import ToxProject, ToxProjectCreator
 
@@ -785,3 +789,55 @@ def test_pylock_rejects_field_injecting_requirements_syntax(
         Fail, match=rf"invalid pylock file .*'alpha' {field_label} .* no whitespace or control characters"
     ):
         Pylock(path=lock_file).install_lines()
+
+
+def test_target_marker_environment_matches_packaging() -> None:
+    assert _target_marker_environment(Path(sys.executable)) == default_environment()
+
+
+def test_target_marker_environment_failure(tmp_path: Path) -> None:
+    with pytest.raises(Fail, match="failed to determine the marker environment"):
+        _target_marker_environment(tmp_path / "missing-python")
+
+
+def test_pylock_markers_use_target_interpreter(
+    tox_project: ToxProjectCreator, pylock_run_base: str, mocker: MockerFixture
+) -> None:
+    """Every marker variable comes from the environment's interpreter, none from the one running tox."""
+    target_env = {**default_environment(), "implementation_version": "0.0.1", "platform_release": "target-release"}
+    probe = mocker.patch("tox.tox_env.python.runner._target_marker_environment", return_value=target_env)
+    lock = dedent("""\
+        lock-version = "1.0"
+        created-by = "test-tool"
+
+        [[packages]]
+        name = "target"
+        version = "1.0"
+        marker = "implementation_version == '0.0.1' and platform_release == 'target-release'"
+
+        [[packages.wheels]]
+        url = "https://files.example.com/target-1.0-py3-none-any.whl"
+
+        [packages.wheels.hashes]
+        sha256 = "abc"
+
+        [[packages]]
+        name = "host"
+        version = "2.0"
+        marker = "implementation_version != '0.0.1' or platform_release != 'target-release'"
+
+        [[packages.wheels]]
+        url = "https://files.example.com/host-2.0-py3-none-any.whl"
+
+        [packages.wheels.hashes]
+        sha256 = "def"
+    """)
+    project = tox_project({"tox.toml": pylock_run_base, "pylock.toml": lock})
+    project.patch_execute()
+
+    result = project.run("r", "-e", "py")
+
+    result.assert_success()
+    assert _pylock_txt(project) == "target==1.0 --hash=sha256:abc"
+    probe.assert_called_once()
+    assert probe.call_args.args[0] == result.state.envs["py"].env_python()

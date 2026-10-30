@@ -2,11 +2,13 @@
 
 from __future__ import annotations
 
+import json
 import logging
+import subprocess
 from abc import ABC
 from functools import partial
 from pathlib import Path
-from typing import TYPE_CHECKING, Literal, TypeAlias, get_args
+from typing import TYPE_CHECKING, Final, Literal, TypeAlias, get_args
 
 from packaging.utils import canonicalize_name
 
@@ -176,14 +178,7 @@ class PythonRun(Python, RunToxEnv, ABC):
         if not (path := self.core.get("package_root", Path) / pylock_path).exists():
             msg = f"pylock file {pylock_path!r} not found at {path}"
             raise Fail(msg)
-        info = self.base_python
-        marker_env = {
-            "implementation_name": info.impl_lower,
-            "platform_python_implementation": info.implementation,
-            "python_version": info.version_dot,
-            "python_full_version": f"{info.version_info.major}.{info.version_info.minor}.{info.version_info.micro}",
-            "sys_platform": info.platform,
-        }
+        marker_env = _target_marker_environment(self.env_python())
         extras = self.conf.get("extras", set[str])
         groups = self.conf.get("dependency_groups", set[str])
         pylock = Pylock(path=path, extras=frozenset(extras), groups=frozenset(groups), marker_env=marker_env)
@@ -234,6 +229,49 @@ def _normalize_extras(values: set[str]) -> set[str]:
     # although _ and . is allowed this will be normalized during packaging to -
     # https://packaging.python.org/en/latest/specifications/dependency-specifiers/#grammar
     return {canonicalize_name(v) for v in values}
+
+
+# mirrors packaging.markers.default_environment using only the standard library, so it runs in any target interpreter
+_MARKER_ENV_SCRIPT: Final[str] = """\
+import json, os, platform, sys
+info = sys.implementation.version
+iver = "{0}.{1}.{2}".format(info.major, info.minor, info.micro)
+if info.releaselevel != "final":
+    iver += info.releaselevel[0] + str(info.serial)
+print(json.dumps({
+    "implementation_name": sys.implementation.name,
+    "implementation_version": iver,
+    "os_name": os.name,
+    "platform_machine": platform.machine(),
+    "platform_release": platform.release(),
+    "platform_system": platform.system(),
+    "platform_version": platform.version(),
+    "python_full_version": platform.python_version(),
+    "platform_python_implementation": platform.python_implementation(),
+    "python_version": ".".join(platform.python_version_tuple()[:2]),
+    "sys_platform": sys.platform,
+}))
+"""
+
+
+def _target_marker_environment(python: Path) -> dict[str, str]:
+    """
+    Evaluate the PEP 508 marker environment inside the target interpreter.
+
+    Every key must be filled in, otherwise packaging falls back to the values of the interpreter running tox.
+    """
+    try:
+        result = subprocess.run(
+            [str(python), "-I", "-c", _MARKER_ENV_SCRIPT],
+            capture_output=True,
+            text=True,
+            timeout=60,
+            check=True,
+        )
+        return {str(key): str(value) for key, value in json.loads(result.stdout).items()}
+    except (OSError, subprocess.SubprocessError, ValueError, AttributeError) as exc:
+        msg = f"failed to determine the marker environment of {python}: {exc}"
+        raise Fail(msg) from exc
 
 
 __all__ = [
