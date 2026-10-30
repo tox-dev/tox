@@ -56,4 +56,6 @@ def _ensure_private_staging_path(temp_path: Path, trust_root: Path | None, user_
                 raise PermissionError(msg)
 
 
-__all__ = ["create_session_view"]
+__all__ = [
+    "create_session_view",
+]
