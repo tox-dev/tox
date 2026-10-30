@@ -1,0 +1,1 @@
+Recreate an environment when its ``.tox-info.json`` contains a non-mapping value for a section that requires a mapping.

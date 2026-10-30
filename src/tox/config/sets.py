@@ -208,6 +208,9 @@ class ConfigSet(ABC):
         config_definition = self._defined[item]
         return config_definition.__call__(self._conf, self.loaders, ConfigLoadArgs(chain, self.name, self.env_name))  # ruff:ignore[unnecessary-dunder-call]
 
+    def is_constant(self, item: str) -> bool:
+        return isinstance(self._defined[item], ConfigConstantDefinition)
+
     def get(self, item: str, of_type: type[V]) -> V:
         """Get the config value for a given key, verified to be of the declared type.
 
@@ -330,6 +333,13 @@ class CoreConfigSet(ConfigSet):
             desc="the root directory (where the configuration file is found)",
         )
         self.add_constant("tox_root_name", "name of the root directory", self._root.name)
+        self.add_config(
+            keys=["package_root", "setupdir"],
+            of_type=Path,
+            default=self._default_package_root,
+            post_process=self._relative_to_tox_root,
+            desc="indicates where the packaging root file exists (historically setup.py file or pyproject.toml now)",
+        )
         self.add_constant("home", "the user's home directory", Path.home)
 
         self.add_config(
@@ -360,6 +370,9 @@ class CoreConfigSet(ConfigSet):
             desc="(provisional) the tox environment the .venv redirect file points at, picked automatically when unset",
         )
         self.add_constant("host_python", "the host python executable path", sys.executable)
+
+    def _default_package_root(self, _conf: Config, _env_name: str | None) -> Path:
+        return self.get("tox_root", Path)
 
     @override
     def _on_duplicate_conf(self, key: str, definition: ConfigDefinition[V]) -> None:
@@ -420,8 +433,10 @@ class EnvConfigSet(ConfigSet):
     def set_env_lines(self, chain: list[str]) -> str:
         # load first: a {env:...} in an environment file name reads this set_env, and the chain would reject that load
         self.load("set_env", chain)
-        loaded: Final = cast("ConfigDynamicDefinition[SetEnv]", self._defined["set_env"])
-        configured: Final = ConfigDynamicDefinition(
+        loaded: Final[ConfigDynamicDefinition[SetEnv]] = cast(
+            "ConfigDynamicDefinition[SetEnv]", self._defined["set_env"]
+        )
+        configured: Final[ConfigDynamicDefinition[SetEnv]] = ConfigDynamicDefinition(
             loaded.keys,
             loaded.desc,
             SetEnv,
@@ -435,8 +450,8 @@ class EnvConfigSet(ConfigSet):
         return f"{self.__class__.__name__}(name={self._env_name!r}, loaders={self.loaders!r})"
 
 
-__all__ = (
+__all__ = [
     "ConfigSet",
     "CoreConfigSet",
     "EnvConfigSet",
-)
+]

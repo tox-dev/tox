@@ -689,6 +689,7 @@ the top level of ``tox.toml``. Placing these options in an environment section (
     :version_added: 1.0
 
      Indicates where the packaging root file exists (historically setup.py file or pyproject.toml now).
+     tox also resolves :ref:`pylock` files and :ref:`dependency_groups` from this directory.
 
 .. conf::
     :keys: labels
@@ -1078,6 +1079,7 @@ Base options
         - blank lines are ignored,
         - lines starting with the ``#`` character are ignored,
         - each line is in KEY=VALUE format; both the key and the value are stripped,
+        - NUL characters in keys and values are rejected,
         - a leading ``export`` followed by a space or tab is ignored, so ``export KEY=value`` sets ``KEY``,
         - there is no special handling of quotation marks, they are part of the key or value,
         - PEP-508 markers are not supported in environment files, so a ``;`` is a plain value character.
@@ -1519,8 +1521,9 @@ Run
         On Windows, ``.bat`` and ``.cmd`` commands run through ``cmd.exe``, so tox quotes their arguments for that
         parser. A batch file reading raw ``%1`` can see surrounding quotes for arguments that need them.
 
-        tox splits unquoted substitution values into arguments when they contain spaces. A substitution within a
-        quoted argument stays in that argument, even if the value contains quotes or backslashes:
+        tox pastes string settings and environment values into the command text before splitting it. Unquoted values
+        containing spaces split into arguments. A substitution within a quoted argument stays in that argument, even
+        if the value contains quotes or backslashes:
 
         .. code-block:: ini
 
@@ -2095,6 +2098,9 @@ Python run
 
     A list of "extras" from the package to be installed. For example, ``extras = testing`` is equivalent to ``[testing]``
     in a ``pip install`` command.
+
+    With :ref:`package` set to ``deps-only``, a self-reference in an extra can select another extra of the same package.
+    A marker on that reference also applies to the dependencies selected through it.
 
 .. _external-package-builder:
 
@@ -3446,7 +3452,8 @@ create your virtual env for the developers. This also supports ranges in the sam
 ***************
 
 **Value substitution** operates through the ``{...}`` string-substitution pattern. The string inside the curly braces
-may reference a global or per-environment config key as described above.
+may reference a global or per-environment config key as described above. A brace group is a reference only when its
+content starts with a key or ``[section]key``. For example, ``{"url": "https://example.com"}`` remains text.
 
 tox substitutes a key's value when it loads the key, then substitutes expressions in referenced configuration text or
 host environment variables. If nested expansion exceeds the depth limit, tox logs one warning for that value and leaves
@@ -3481,9 +3488,13 @@ platforms, the backslash escapes the following character. On Windows, it escapes
 backslashes before whitespace remain path separators. UNC prefixes retain their leading pair. Single-quoted text is
 literal on both platforms.
 
-A substitution within a quoted argument of an INI command stays within that argument, including any quotes or
-backslashes in its value. For example, ``"--title={env:TITLE}"`` remains one argument. Outside quotes, ``shlex`` splits
-the replacement into arguments like the text around it.
+INI splits a command into arguments after substitution. A path reference such as ``{tox_root}`` or ``{env_tmp_dir}``
+stays within one argument even if it contains spaces, quotes or backslashes. The same applies to tox-provided scalar
+values such as ``{host_python}`` and ``{tox_root_name}``, and to each unquoted entry of a referenced list such as
+``{base_python}``. A reference inside a larger word stays in that word, so ``python {tox_root}{/}scripts{/}report.py``
+needs no extra quotes. A string setting, a key from another section, or an environment variable remains command text
+when unquoted, so ``shlex`` may split it. Within a quoted argument, a substitution stays in that argument even if its
+value contains quotes or backslashes; for example, ``"--title={env:TITLE}"`` remains one argument.
 
 Special substitutions that accept additional colon-delimited ``:`` parameters cannot have a space after the ``:`` at the
 beginning of line (e.g. ``{posargs: magic}`` would be parsed as factorial ``{posargs``, having value magic).
@@ -3607,8 +3618,9 @@ You can expand glob/wildcard patterns to matching file paths:
 
     {glob:PATTERN}
 
-Matches are sorted and returned as a space-separated string. If no files match, the result is an empty string. You can
-provide a default value for when no files match:
+Matches are sorted and returned as a space-separated string. An unquoted glob substitution in an INI command passes each
+match as one argument, including file names with blanks or quotes. Quoting the whole substitution joins the matches into
+one argument. If no files match, the result is an empty string. You can provide a default value for when no files match:
 
 ::
 

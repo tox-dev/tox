@@ -317,30 +317,23 @@ class Replacer:
         # Preserve unmatched braces for factor expressions such as {py39,py38}-{,dep}.
         return f"{REPLACE_START}{ARG_DELIMITER.join(flattened_args)}{REPLACE_END}", False
 
-    def _replace_args(
-        self, flattened_args: list[str], *, preserve_defaults: bool = False
-    ) -> str | ConfigDefault | None:
+    def _replace_args(self, flattened_args: list[str]) -> str | None:
         # Isolate chain updates from adjacent substitutions (#2869).
         conf_args: Final[ConfigLoadArgs] = self.conf_args.copy()
         replace_value: Final[str | ConfigDefault | None] = self._resolve_replace(
             flattened_args[0], flattened_args[1:], flattened_args, conf_args
         )
-        if replace_value is not None:
-            if preserve_defaults and isinstance(replace_value, ConfigDefault):
-                return replace_value
-            if (
-                self.recursive
-                and not self.root.depth_exhausted
-                and isinstance(replace_value, RawText)
-                and any(isinstance(match, MatchExpression) for match in find_replace_expr(str(replace_value)))
-            ):
-                try:
-                    return self._nested(conf_args).expand(str(replace_value))
-                except MatchRecursionError as error:
-                    LOGGER.warning(str(error))
-        return (
-            str(replace_value) if isinstance(replace_value, ConfigDefault) and not preserve_defaults else replace_value
-        )
+        if replace_value is not None and (
+            self.recursive
+            and not self.root.depth_exhausted
+            and isinstance(replace_value, RawText)
+            and any(isinstance(match, MatchExpression) for match in find_replace_expr(str(replace_value)))
+        ):
+            try:
+                return self._nested(conf_args).expand(str(replace_value))
+            except MatchRecursionError as error:
+                LOGGER.warning(str(error))
+        return str(replace_value) if isinstance(replace_value, ConfigDefault) else replace_value
 
     def _nested(self, conf_args: ConfigLoadArgs) -> Self:
         nested: Final[Self] = type(self)(self.conf, self.reference, conf_args, self.depth + 1)
@@ -389,6 +382,9 @@ class CommandLinesReplacer(Replacer):
     @override
     def join_value(self, value: MatchArg) -> str:
         parts: Final[Sequence[str | _Replaced]] = _flatten_string_fragments(list(self._split_replaced(value)))
+        return self._join_replaced(parts)
+
+    def _join_replaced(self, parts: Sequence[str | _Replaced]) -> str:
         result: Final[list[str]] = []
         quote = ""
         for at, part in enumerate(parts):
@@ -398,6 +394,10 @@ class CommandLinesReplacer(Replacer):
                 else str(part)
             )
             if isinstance(part, _Replaced):
+                if not quote and isinstance(part.text, Arguments):
+                    text = "\n".join(quote_args([line]) if line else line for line in part.text.split("\n"))
+                elif not quote and isinstance(part.text, _GlobMatches):
+                    text = quote_args(part.text.matches)
                 if quote or self._shares_line(parts, at):
                     text = " ".join(text.splitlines())
                 if quote:
@@ -430,7 +430,10 @@ class CommandLinesReplacer(Replacer):
             return [self._literal_match(part)]
         args: Final[list[list[str | _Replaced]]] = [list(self._split_replaced(arg)) for arg in part.expr]
         flattened_args: Final[list[str]] = ["".join(map(str, arg)) for arg in args]
-        replaced: Final[str | ConfigDefault | None] = self._replace_args(flattened_args, preserve_defaults=True)
+        conf_args: Final[ConfigLoadArgs] = self.conf_args.copy()
+        replaced: Final[str | ConfigDefault | None] = self._resolve_replace(
+            flattened_args[0], flattened_args[1:], flattened_args, conf_args
+        )
         if isinstance(replaced, ConfigDefault):
             default_parts: Final[list[str | _Replaced]] = []
             for at, arg in enumerate(args[replaced.start : replaced.stop]):
@@ -438,6 +441,8 @@ class CommandLinesReplacer(Replacer):
                     default_parts.append(ARG_DELIMITER)
                 default_parts.extend(arg)
             return default_parts
+        if (expanded := self._expand_raw(replaced, conf_args)) is not None:
+            return [expanded]
         if replaced is not None:
             quoted_text: Final[str | None] = (
                 " ".join(pos_args)
@@ -453,6 +458,32 @@ class CommandLinesReplacer(Replacer):
             unresolved_parts.extend(arg)
         unresolved_parts.append(REPLACE_END)
         return unresolved_parts
+
+    def _expand_raw(self, replaced: str | None, conf_args: ConfigLoadArgs) -> _Replaced | None:
+        if not (
+            self.recursive
+            and isinstance(replaced, RawText)
+            and any(isinstance(match, MatchExpression) for match in find_replace_expr(replaced))
+        ):
+            return None
+        nested: Final[CommandLinesReplacer] = self._nested(conf_args)
+        if nested.depth > MAX_REPLACE_DEPTH:
+            self.root.depth_exhausted = True
+        try:
+            MatchRecursionError.check(nested.depth, replaced)
+        except MatchRecursionError as error:
+            LOGGER.warning(str(error))
+            return None
+        nested_parts: Final[Sequence[str | _Replaced]] = _flatten_string_fragments(
+            list(nested._split_replaced(find_replace_expr(replaced)))  # ruff:ignore[private-member-access]  # own class
+        )
+        return _Replaced(
+            text=nested._join_replaced(nested_parts),  # ruff:ignore[private-member-access]  # same class
+            quoted_text="".join(
+                part.quoted_text if isinstance(part, _Replaced) and part.quoted_text is not None else str(part)
+                for part in nested_parts
+            ),
+        )
 
     @staticmethod
     def _shares_line(value: Sequence[str | _Replaced], at: int) -> bool:
@@ -484,6 +515,20 @@ class CommandLinesReplacer(Replacer):
             elif not quote and char in {"'", '"'}:
                 quote = char
         return quote
+
+
+class Arguments(str):  # ruff:ignore[subclass-builtin]  # keep argument values distinct from command text
+    __slots__ = ()
+
+
+class _GlobMatches(str):  # ruff:ignore[subclass-builtin]  # retain match boundaries through substitution
+    __slots__ = ("matches",)
+    matches: tuple[str, ...]
+
+    def __new__(cls, matches: Sequence[str]) -> Self:
+        result = super().__new__(cls, " ".join(matches))
+        result.matches = tuple(matches)
+        return result
 
 
 @dataclasses.dataclass(frozen=True, slots=True, kw_only=True)
@@ -717,7 +762,7 @@ def replace_glob(conf: Config | None, args: list[str]) -> str | ConfigDefault:
     if conf is not None and not Path(pattern).is_absolute():
         pattern = str(conf.core["tox_root"] / pattern)
     if matches := sorted(glob.glob(pattern, recursive=True)):  # ruff:ignore[glob]
-        return " ".join(matches)
+        return _GlobMatches(matches)
     return ConfigDefault(text=ARG_DELIMITER.join(default_args), start=3 if is_win_drive else 2)
 
 
@@ -740,6 +785,7 @@ def replace_factor(conf: Config, args: list[str], conf_args: ConfigLoadArgs) -> 
 
 
 __all__ = [
+    "Arguments",
     "ConfigDefault",
     "MatchExpression",
     "MatchRecursionError",

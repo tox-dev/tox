@@ -11,6 +11,7 @@ from tox.config.loader.replacer import (
     MatchExpression,
     MatchRecursionError,
     replace,
+    replace_command_lines,
     replace_for,
     replace_once,
     replace_requirement_lines,
@@ -112,6 +113,8 @@ class TomlLoader(Loader[TomlTypes]):
             return replace_requirement_lines(
                 conf, reference, value, args, validate_options=PythonDeps.validate_requirement_options
             )
+        if of_type in {Command, list[Command]}:
+            return replace_command_lines(conf, reference, value, args)
         return replace_for(of_type)(conf, reference, value, args)
 
     @override
