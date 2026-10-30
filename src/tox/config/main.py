@@ -6,7 +6,7 @@ import sys
 from collections import OrderedDict, defaultdict
 from itertools import chain, tee
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, TypeVar, cast
+from typing import TYPE_CHECKING, Any, Final, TypeVar, cast
 
 from tox.util.redact import redact_argv
 from tox.util.typing_compat import override
@@ -59,13 +59,16 @@ class Config:
 
     def pos_args(self, to_path: Path | None, *, program_first: bool = False) -> tuple[str, ...] | None:
         if self._pos_args is not None and to_path is not None and Path.cwd() != to_path:
-            args = []
+            args: Final[list[str]] = []
             # Windows resolves parent segments before following directory links.
             if sys.platform == "win32":
                 to_path_str = os.path.abspath(str(to_path))  # ruff:ignore[os-path-abspath]
             else:
                 to_path_str = os.path.realpath(to_path)
             for index, arg in enumerate(self._pos_args):
+                if not arg:
+                    args.append(arg)
+                    continue
                 path_arg = Path(arg)
                 try:
                     is_existing_path = path_arg.exists()

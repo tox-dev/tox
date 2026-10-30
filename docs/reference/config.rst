@@ -689,6 +689,7 @@ the top level of ``tox.toml``. Placing these options in an environment section (
     :version_added: 1.0
 
      Indicates where the packaging root file exists (historically setup.py file or pyproject.toml now).
+     tox also resolves :ref:`pylock` files and :ref:`dependency_groups` from this directory.
 
 .. conf::
     :keys: labels
@@ -1583,7 +1584,7 @@ Run
     from ``{posargs}``, tox leaves a bare first value such as ``python`` for ``PATH`` lookup. It also leaves a bare
     executable first positional value unchanged because wrappers such as ``env {posargs}`` may run it as a program. This
     also applies when the command uses that value as data. Pass ``./python`` when you mean a file in the start
-    directory.
+    directory. An empty positional argument stays empty.
     If a wrapper runs a later positional value as a program, set ``args_are_paths = false``.
 
 .. conf::

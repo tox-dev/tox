@@ -4,7 +4,7 @@ import os
 import re
 import sys
 from argparse import ArgumentError, ArgumentParser, Namespace
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Final
 from urllib.parse import quote
 
 import pytest
@@ -62,6 +62,18 @@ def test_install_pkg_file_uri_percent_encoded(tmp_path: Path) -> None:
         uri = "file://" + quote(str(path), safe="/")
     namespace = Namespace()
     InstallPackageAction(option_strings=["--install-pkg"], dest="into")(argument_parser, namespace, uri)
+    assert namespace.into == path
+
+
+def test_install_pkg_file_uri_decoded_once(tmp_path: Path) -> None:
+    directory: Final[Path] = tmp_path / "feature%2Flogin"
+    directory.mkdir()
+    path: Final[Path] = directory / "pkg-1.0.whl"
+    path.write_text("")
+    uri: Final[str] = path.as_uri()
+    assert "%252F" in uri
+    namespace: Final[Namespace] = Namespace()
+    InstallPackageAction(option_strings=["--install-pkg"], dest="into")(ArgumentParser(), namespace, uri)
     assert namespace.into == path
 
 
