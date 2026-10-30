@@ -14,6 +14,7 @@ from tox.tox_env.python.virtual_env.subprocess_adapter import (
     SubprocessSession,
     _bootstrap_path,  # ruff:ignore[import-private-name]
     _has_correct_virtualenv,  # ruff:ignore[import-private-name]
+    _remove_stale_bootstrap,  # ruff:ignore[import-private-name]
     _VersionInfo,  # ruff:ignore[import-private-name]
     ensure_bootstrap,
     probe_python,
@@ -311,6 +312,90 @@ def test_ensure_bootstrap_removes_stale_base(tmp_path: Path, mocker: MockerFixtu
     with pytest.raises(RuntimeError, match="failed to install"):
         ensure_bootstrap(tmp_path, "virtualenv<20.22.0")
     assert not (base / "stale_file").exists()
+
+
+def _symlink_or_skip(link: Path, target: Path) -> None:
+    try:
+        link.symlink_to(target, target_is_directory=True)
+    except OSError as exc:  # pragma: no cover - Windows without symlink privilege
+        pytest.skip(f"cannot create symlink: {exc}")
+
+
+def test_ensure_bootstrap_link_swapped_after_removal_does_not_empty_target(
+    tmp_path: Path, mocker: MockerFixture
+) -> None:
+    victim = tmp_path / "victim"
+    victim.mkdir()
+    (victim / "keep").write_text("data")
+    base = _bootstrap_path(tmp_path / "work", "virtualenv<20.22.0")
+    base.mkdir(parents=True)
+    mocker.patch(
+        "tox.tox_env.python.virtual_env.subprocess_adapter._has_correct_virtualenv",
+        return_value=False,
+    )
+    create = mocker.patch("tox.tox_env.python.virtual_env.subprocess_adapter.venv.create")
+    run_mock = mocker.patch("tox.tox_env.python.virtual_env.subprocess_adapter.subprocess.run")
+    remove: Final = _remove_stale_bootstrap
+
+    def remove_then_swap(path: Path) -> None:
+        remove(path)
+        _symlink_or_skip(path, victim)
+
+    mocker.patch(
+        "tox.tox_env.python.virtual_env.subprocess_adapter._remove_stale_bootstrap", side_effect=remove_then_swap
+    )
+
+    with pytest.raises(FileExistsError):
+        ensure_bootstrap(tmp_path / "work", "virtualenv<20.22.0")
+
+    assert (victim / "keep").read_text() == "data"
+    create.assert_not_called()
+    run_mock.assert_not_called()
+
+
+def test_ensure_bootstrap_does_not_clear_venv(tmp_path: Path, mocker: MockerFixture) -> None:
+    mocker.patch(
+        "tox.tox_env.python.virtual_env.subprocess_adapter._has_correct_virtualenv",
+        return_value=False,
+    )
+    create = mocker.patch("tox.tox_env.python.virtual_env.subprocess_adapter.venv.create")
+    mocker.patch(
+        "tox.tox_env.python.virtual_env.subprocess_adapter.subprocess.run",
+        return_value=mocker.MagicMock(returncode=0),
+    )
+
+    ensure_bootstrap(tmp_path, "virtualenv<20.22.0")
+
+    assert create.call_args.kwargs.get("clear", False) is False
+
+
+def test_remove_stale_bootstrap_unlinks_symlink_without_following(tmp_path: Path) -> None:
+    victim = tmp_path / "victim"
+    victim.mkdir()
+    (victim / "keep").write_text("data")
+    base = tmp_path / "base"
+    _symlink_or_skip(base, victim)
+
+    _remove_stale_bootstrap(base)
+
+    assert not base.is_symlink()
+    assert not base.exists()
+    assert (victim / "keep").read_text() == "data"
+
+
+def test_remove_stale_bootstrap_file(tmp_path: Path) -> None:
+    base = tmp_path / "base"
+    base.write_text("stale")
+
+    _remove_stale_bootstrap(base)
+
+    assert not base.exists()
+
+
+def test_remove_stale_bootstrap_missing(tmp_path: Path) -> None:
+    _remove_stale_bootstrap(tmp_path / "base")
+
+    assert not (tmp_path / "base").exists()
 
 
 def test_ensure_bootstrap_install_failure(tmp_path: Path, mocker: MockerFixture) -> None:
