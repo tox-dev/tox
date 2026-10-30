@@ -236,6 +236,15 @@ def test_replace_alone_in_env_list_entry_can_expand(
     assert tox_ini_conf("[tox]\nenv_list = {env:BACKEND}").core["env_list"] == EnvList(["lint", "release"])
 
 
+@pytest.mark.timeout(5)
+def test_replace_list_circular_fan_out_stops(example: EnvConfigCreator, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("MAGIC", "{env:MAGIC}" * 100)
+    env_config: Final = example("items = {env:MAGIC}")
+    env_config.add_config(keys="items", of_type=list[str], default=[], desc="items")
+
+    assert len("{env:MAGIC}") < len(env_config["items"][0]) < 1_000_000
+
+
 def test_replace_within_env_list_entry_accepts_value(
     tox_ini_conf: ToxIniCreator, monkeypatch: pytest.MonkeyPatch
 ) -> None:
