@@ -68,8 +68,22 @@ def _collect_conf(conf: ConfigSet, keys: list[str]) -> tuple[dict[str, JsonValue
         except Exception as exception:
             if os.environ.get("_TOX_SHOW_CONFIG_RAISE"):  # pragma: no branch
                 raise  # pragma: no cover
-            data[key] = {"error": repr(exception)}
+            data[key] = {"error": format_config_error(exception)}
             has_exception = True
     if (unused := conf.unused()) and not keys:
         data["unused"] = sorted(unused)
     return data, has_exception
+
+
+def format_config_error(exception: Exception) -> str:
+    if isinstance(exception, UnicodeDecodeError):
+        return f"UnicodeDecodeError at byte {exception.start}"
+    return repr(exception)
+
+
+__all__ = [
+    "build_structured_result",
+    "format_config_error",
+    "write_output",
+    "write_output_file",
+]

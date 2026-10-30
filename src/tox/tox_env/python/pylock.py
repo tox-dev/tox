@@ -25,10 +25,11 @@ class Pylock:
 
     def install_lines(self) -> list[str]:
         """Return pip requirement lines for the packages this environment locks."""
-        data = tomllib.loads(self.path.read_text(encoding="utf-8-sig"))
         try:
-            parsed = PackagingPylock.from_dict(data)
-        except PylockValidationError as exc:
+            parsed: Final[PackagingPylock] = PackagingPylock.from_dict(
+                tomllib.loads(self.path.read_text(encoding="utf-8-sig"))
+            )
+        except (UnicodeDecodeError, tomllib.TOMLDecodeError, PylockValidationError) as exc:
             msg = f"invalid pylock file {self.path}: {exc}"
             raise Fail(msg) from exc
         # PEP 751: when no dependency groups are selected, the lock's default-groups apply

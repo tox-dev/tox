@@ -12,6 +12,7 @@ from tox.plugin import impl
 from tox.report import HandledError
 from tox.tox_env.errors import Skip
 from tox.tox_env.python.pip.req_file import PythonDeps
+from tox.util.redact import redact_argv
 from tox.util.typing_compat import override
 
 from .convert import Convert, Factory
@@ -55,7 +56,8 @@ class Override:  # ruff:ignore[eq-without-hash]
     @override
     def __str__(self) -> str:
         escaped_ns = ".".join(part.replace(".", "\\.") for part in self._namespace_parts)
-        return f"{escaped_ns}{'.' if escaped_ns else ''}{self.key}{'+' if self.append else ''}={self.value}"
+        raw: Final[str] = f"{escaped_ns}{'.' if escaped_ns else ''}{self.key}{'+' if self.append else ''}={self.value}"
+        return redact_argv([raw])[0]
 
     @override
     def __eq__(self, other: object) -> bool:
@@ -352,3 +354,13 @@ def tox_add_option(parser: ToxParser) -> None:
 
 
 _STR_CONVERT = StrConvert()
+
+
+__all__ = [
+    "ConfigLoadArgs",
+    "Loader",
+    "Override",
+    "OverrideMap",
+    "apply_overrides_to_raw",
+    "tox_add_option",
+]

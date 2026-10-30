@@ -7,6 +7,7 @@ import os
 from typing import TYPE_CHECKING, Any
 
 from tox.config.loader.str_convert import StrConvert
+from tox.util.redact import redact_argv
 
 if TYPE_CHECKING:
     from types import UnionType
@@ -35,16 +36,19 @@ def get_env_var(key: str, of_type: type[Any] | UnionType) -> tuple[Any, str] | N
                 else:
                     result = CONVERT.to(raw=value, of_type=of_type, factory=None)
             except Exception as exception:  # ruff:ignore[blind-except]
+                redacted_value = redact_argv([value])[0]
                 logging.warning(
-                    "env var %s=%r cannot be transformed to %r because %r",
+                    "env var %s=%r cannot be transformed to %r because %s",
                     environ_key,
-                    value,
+                    redacted_value,
                     of_type,
-                    exception,
+                    repr(exception) if redacted_value == value else type(exception).__name__,
                 )
             else:
                 return result, f"env var {environ_key}"
     return None
 
 
-__all__ = ("get_env_var",)
+__all__ = [
+    "get_env_var",
+]
