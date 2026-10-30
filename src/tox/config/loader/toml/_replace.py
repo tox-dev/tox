@@ -357,7 +357,8 @@ class TomlReplaceLoader(ReplaceReference):
 
     @override
     def __call__(self, value: str, conf_args: ConfigLoadArgs) -> str | None:
-        if match := _REFERENCE_PATTERN.search(value):
+        # Searching inside brace content mistakes JSON fields for references.
+        if match := _REFERENCE_PATTERN.match(value):
             settings = match.groupdict()
             exception: Exception | None = None
             try:

@@ -3451,7 +3451,8 @@ create your virtual env for the developers. This also supports ranges in the sam
 ***************
 
 **Value substitution** operates through the ``{...}`` string-substitution pattern. The string inside the curly braces
-may reference a global or per-environment config key as described above.
+may reference a global or per-environment config key as described above. A brace group is a reference only when its
+content starts with a key or ``[section]key``. For example, ``{"url": "https://example.com"}`` remains text.
 
 tox substitutes a key's value when it loads the key, then substitutes expressions in referenced configuration text or
 host environment variables. If nested expansion exceeds the depth limit, tox logs one warning for that value and leaves
