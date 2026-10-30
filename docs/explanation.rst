@@ -768,6 +768,9 @@ The bootstrap is content-addressed by a hash of the spec string, so different sp
 file lock protects against concurrent bootstrap creation (relevant in parallel mode). Once bootstrapped, subsequent runs
 skip directly to step 3.
 
+Before reusing or creating a bootstrap, tox checks that the cache parent resolves within :ref:`work_dir`. A symlink or
+Windows junction pointing outside it stops the bootstrap.
+
 When ``virtualenv_spec`` resolves to empty, tox uses the imported virtualenv with zero overhead -- the subprocess path
 only activates for a non-empty spec. The spec is included in the environment cache key, so changing it (or a virtualenv
 upgrade that changes the derived value) triggers automatic recreation.
