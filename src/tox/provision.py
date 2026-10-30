@@ -2,13 +2,15 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 import locale
 import logging
 import sys
 from importlib.metadata import PackageNotFoundError, distribution
 from pathlib import Path
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING, Final, cast
+from urllib.parse import parse_qsl, urlsplit
 
 from filelock import FileLock
 from packaging.requirements import Requirement
@@ -26,9 +28,11 @@ from tox.util.redact import redact_argv
 if TYPE_CHECKING:
     from argparse import ArgumentParser
     from importlib.metadata import Distribution
+    from urllib.parse import SplitResult
 
     from tox.session.state import State
     from tox.tox_env.python.runner import PythonRun
+    from tox.util.json_types import JsonValue
 
 
 @impl
@@ -155,22 +159,55 @@ def _get_missing(requires: list[Requirement]) -> list[tuple[Requirement, str | N
 
 
 def _installed_from_url(dist: Distribution, url: str) -> bool:
-    """Check if a distribution was installed from the given direct URL using its PEP 610 ``direct_url.json``."""
     try:
-        info = json.loads(dist.read_text("direct_url.json") or "null")
-    except ValueError:
+        info: Final[JsonValue] = json.loads(dist.read_text("direct_url.json") or "null")
+    except (json.JSONDecodeError, UnicodeDecodeError):
         return False
     if not isinstance(info, dict) or not isinstance(installed := info.get("url"), str):
+        return False
+    if not any(isinstance(info.get(kind), dict) for kind in ("vcs_info", "archive_info", "dir_info")):
         return False
     if isinstance(vcs_info := info.get("vcs_info"), dict) and isinstance(vcs := vcs_info.get("vcs"), str):
         installed = f"{vcs}+{installed}"
         if isinstance(revision := vcs_info.get("requested_revision"), str):
             installed = f"{installed}@{revision}"
-    return _strip_fragment(installed) == _strip_fragment(url)
+    requested, _, fragment = url.partition("#")
+    if installed != requested:
+        try:
+            parts: Final[SplitResult] = urlsplit(requested)
+        except ValueError:
+            return False
+        if "@" not in parts.netloc or installed != parts._replace(netloc=parts.netloc.rsplit("@", 1)[1]).geturl():
+            return False
+        if not isinstance(info.get("archive_info"), dict) or not any(
+            algorithm in hashlib.algorithms_available for algorithm, _ in parse_qsl(fragment, keep_blank_values=True)
+        ):
+            msg = "cannot verify the installed origin of a credentialed direct URL without an archive hash"
+            raise HandledError(msg)
+    return _origin_fragment_matches(info, fragment)
 
 
-def _strip_fragment(url: str) -> str:
-    return url.split("#", 1)[0].rstrip("/")
+def _origin_fragment_matches(info: dict[str, JsonValue], fragment: str) -> bool:
+    fields: Final[list[tuple[str, str]]] = parse_qsl(fragment, keep_blank_values=True)
+    subdirectories: Final[list[str]] = [value for key, value in fields if key == "subdirectory"]
+    stored_subdirectory: Final[JsonValue] = info.get("subdirectory")
+    if subdirectories != ([stored_subdirectory] if isinstance(stored_subdirectory, str) else []):
+        return False
+    archive_info: Final[JsonValue] = info.get("archive_info")
+    for algorithm, expected in fields:
+        if algorithm == "subdirectory":
+            continue
+        if not isinstance(archive_info, dict):
+            return False
+        hashes: JsonValue = archive_info.get("hashes")
+        actual = hashes.get(algorithm) if isinstance(hashes, dict) else None
+        if actual is None and isinstance(legacy_hash := archive_info.get("hash"), str):
+            legacy_algorithm, _, legacy_value = legacy_hash.partition("=")
+            if legacy_algorithm == algorithm:
+                actual = legacy_value
+        if not isinstance(actual, str) or actual.lower() != expected.lower():
+            return False
+    return True
 
 
 def run_provision(name: str, state: State) -> int:
@@ -198,3 +235,8 @@ def _setup_and_execute(tox_env: PythonRun, env_python: Path, state: State) -> in
     args.extend(state.args)
     outcome = tox_env.execute(cmd=args, stdin=StdinSource.user_only(), show=True, run_id="provision", cwd=Path.cwd())
     return cast("int", outcome.exit_code)
+
+
+__all__ = [
+    "provision",
+]

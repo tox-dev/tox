@@ -1,3 +1,4 @@
-A direct URL entry in :ref:`requires` (such as ``tox @ file:///path/to/tox.whl``) is no longer considered satisfied by
-any installed distribution of the same name; tox now provisions unless the installed distribution's ``direct_url.json``
-records the requested URL.
+A direct URL entry in :ref:`requires` (such as ``tox @ file:///path/to/tox.whl``) now triggers provisioning unless the
+installed distribution's ``direct_url.json`` records the requested source, including any archive hash, subdirectory, or
+VCS revision. When the installer omits credentials from the origin record, a credentialed direct URL without a requested
+archive hash now fails with an explanation instead of hanging during provisioning.

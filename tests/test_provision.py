@@ -5,6 +5,7 @@ import os
 import sys
 import time
 from contextlib import contextmanager
+from importlib.metadata import Distribution
 from pathlib import Path
 from shutil import which
 from subprocess import check_call
@@ -17,19 +18,17 @@ import pytest
 from filelock import FileLock
 from packaging.requirements import Requirement
 
-from tox.provision import _get_missing  # ruff:ignore[import-private-name]
-
 if TYPE_CHECKING:
     from collections.abc import Callable, Generator, Sequence
 
     from build import DistributionType
     from devpi_process import Index, IndexServer
+    from pytest_mock import MockerFixture
 
     from tox.execute.request import ExecuteRequest
     from tox.pytest import MonkeyPatch, TempPathFactory, ToxProject, ToxProjectCreator, ToxRunOutcome
     from tox.tox_env.api import ToxEnv
 
-from importlib.metadata import Distribution
 
 ROOT = Path(__file__).parents[1]
 
@@ -196,26 +195,56 @@ def test_provision_requires_checks_true_markers(tox_project: ToxProjectCreator) 
 
 
 def test_provision_requires_direct_url_not_satisfied_by_installed_name(tox_project: ToxProjectCreator) -> None:
-    url = "file:///srv/wheels/tox-99.0-py3-none-any.whl"
-    project = tox_project({"tox.ini": f"[tox]\nrequires = tox @ {url}\nno_package = true\n"})
-    outcome = project.run("c", "-e", "py", "--no-provision")
+    url: Final[str] = "file:///srv/wheels/tox-99.0-py3-none-any.whl"
+    project: Final[ToxProject] = tox_project({"tox.ini": f"[tox]\nrequires = tox @ {url}\nno_package = true\n"})
+    outcome: Final[ToxRunOutcome] = project.run("c", "-e", "py", "--no-provision")
     outcome.assert_failed()
     assert f"is missing [requires (has)]: {Requirement(f'tox @ {url}')} (" in outcome.out
 
 
-def _dist_with_direct_url(direct_url: str | None) -> mock.MagicMock:
-    dist = mock.MagicMock(version="1.0")
-    dist.read_text.side_effect = lambda name: direct_url if name == "direct_url.json" else None
-    return dist
+@pytest.mark.usefixtures("installed_pkg_info")
+def test_provision_requires_direct_url_without_origin(tox_project: ToxProjectCreator) -> None:
+    outcome: Final[ToxRunOutcome] = tox_project({"tox.ini": "[tox]\nrequires = pkg @ file:///w/pkg-1.0.whl\n"}).run(
+        "c", "-e", "py", "--no-provision"
+    )
+
+    assert ("is missing [requires (has)]" in outcome.out, outcome.success) == (True, False)
+
+
+def test_provision_requires_direct_url_invalid_encoding(
+    tox_project: ToxProjectCreator, installed_pkg_info: Path
+) -> None:
+    (installed_pkg_info / "direct_url.json").write_bytes(b"\xff")
+    outcome: Final[ToxRunOutcome] = tox_project({"tox.ini": "[tox]\nrequires = pkg @ file:///w/pkg-1.0.whl\n"}).run(
+        "c", "-e", "py", "--no-provision"
+    )
+
+    assert ("is missing [requires (has)]" in outcome.out, outcome.success) == (True, False)
+
+
+def test_provision_requires_direct_url_credentialed_without_hash(
+    tox_project: ToxProjectCreator, installed_pkg_info: Path
+) -> None:
+    (installed_pkg_info / "direct_url.json").write_text(
+        '{"url": "https://h/pkg-1.0.whl", "archive_info": {"hashes": {"sha256": "abc"}}}'
+    )
+    outcome: Final[ToxRunOutcome] = tox_project({
+        "tox.toml": 'requires = ["pkg @ https://user:token@h/pkg-1.0.whl"]\n'
+    }).run("c", "-e", "py")
+
+    assert ("cannot verify the installed origin of a credentialed direct URL" in outcome.out, outcome.success) == (
+        True,
+        False,
+    )
 
 
 @pytest.mark.parametrize(
     ("requirement", "direct_url", "is_missing"),
     [
-        pytest.param("pkg @ file:///w/pkg-1.0.whl", None, True, id="no-direct-url"),
         pytest.param("pkg @ file:///w/pkg-1.0.whl", "not json", True, id="invalid-json"),
         pytest.param("pkg @ file:///w/pkg-1.0.whl", "[]", True, id="not-object"),
         pytest.param("pkg @ file:///w/pkg-1.0.whl", '{"url": 1}', True, id="url-not-str"),
+        pytest.param("pkg @ file:///w/pkg-1.0.whl", '{"url": "file:///w/pkg-1.0.whl"}', True, id="missing-origin"),
         pytest.param(
             "pkg @ file:///w/pkg-1.0.whl", '{"url": "file:///other/pkg-1.0.whl", "archive_info": {}}', True, id="other"
         ),
@@ -227,6 +256,60 @@ def _dist_with_direct_url(direct_url: str | None) -> mock.MagicMock:
             '{"url": "https://h/pkg-1.0.whl", "archive_info": {"hashes": {"sha256": "abc"}}}',
             False,
             id="hash-fragment",
+        ),
+        pytest.param(
+            "pkg @ https://h/pkg-1.0.whl#sha256=def",
+            '{"url": "https://h/pkg-1.0.whl", "archive_info": {"hashes": {"sha256": "abc"}}}',
+            True,
+            id="different-hash",
+        ),
+        pytest.param(
+            "pkg @ https://user:pass@[bad/pkg-1.0.whl",
+            '{"url": "https://h/pkg-1.0.whl", "archive_info": {}}',
+            True,
+            id="invalid-url-authority",
+        ),
+        pytest.param(
+            "pkg @ https://user:token@h/pkg-1.0.whl#sha256=abc",
+            '{"url": "https://h/pkg-1.0.whl", "archive_info": {"hashes": {"sha256": "abc"}}}',
+            False,
+            id="credentialed-matching-hash",
+        ),
+        pytest.param(
+            "pkg @ https://user:token@h/pkg-1.0.whl#sha256=def",
+            '{"url": "https://h/pkg-1.0.whl", "archive_info": {"hashes": {"sha256": "abc"}}}',
+            True,
+            id="credentialed-different-hash",
+        ),
+        pytest.param(
+            "pkg @ https://h/pkg-1.0.whl#sha256=abc",
+            '{"url": "https://h/pkg-1.0.whl", "archive_info": {"hash": "sha256=abc"}}',
+            False,
+            id="legacy-hash",
+        ),
+        pytest.param(
+            "pkg @ https://h/pkg-1.0.whl#subdirectory=src",
+            '{"url": "https://h/pkg-1.0.whl", "archive_info": {}, "subdirectory": "src"}',
+            False,
+            id="same-subdirectory",
+        ),
+        pytest.param(
+            "pkg @ https://h/pkg-1.0.whl#subdirectory=src",
+            '{"url": "https://h/pkg-1.0.whl", "archive_info": {}, "subdirectory": "other"}',
+            True,
+            id="different-subdirectory",
+        ),
+        pytest.param(
+            "pkg @ https://h/pkg-1.0.whl",
+            '{"url": "https://h/pkg-1.0.whl", "archive_info": {}, "subdirectory": "src"}',
+            True,
+            id="unexpected-subdirectory",
+        ),
+        pytest.param(
+            "pkg @ https://h/pkg-1.0.whl/",
+            '{"url": "https://h/pkg-1.0.whl", "archive_info": {}}',
+            True,
+            id="different-trailing-slash",
         ),
         pytest.param(
             "pkg @ git+https://h/r.git@v1",
@@ -241,6 +324,12 @@ def _dist_with_direct_url(direct_url: str | None) -> mock.MagicMock:
             id="vcs-other-revision",
         ),
         pytest.param(
+            "pkg @ git+https://h/r.git@v1#sha256=abc",
+            '{"url": "https://h/r.git", "vcs_info": {"vcs": "git", "requested_revision": "v1", "commit_id": "c"}}',
+            True,
+            id="vcs-unverifiable-hash",
+        ),
+        pytest.param(
             "pkg @ git+https://h/r.git",
             '{"url": "https://h/r.git", "vcs_info": {"vcs": "git", "commit_id": "c"}}',
             False,
@@ -248,11 +337,28 @@ def _dist_with_direct_url(direct_url: str | None) -> mock.MagicMock:
         ),
     ],
 )
-def test_get_missing_direct_url(requirement: str, direct_url: str | None, is_missing: bool) -> None:
-    req = Requirement(requirement)
-    with mock.patch("tox.provision.distribution", return_value=_dist_with_direct_url(direct_url)):
-        missing = _get_missing([req])
-    assert missing == ([(req, "1.0")] if is_missing else [])
+def test_provision_requires_direct_url_origin(
+    tox_project: ToxProjectCreator,
+    installed_pkg_info: Path,
+    requirement: str,
+    direct_url: str,
+    is_missing: bool,
+) -> None:
+    (installed_pkg_info / "direct_url.json").write_text(direct_url)
+    project: Final[ToxProject] = tox_project({"tox.toml": f"requires = [{json.dumps(requirement)}]\n"})
+
+    outcome: Final[ToxRunOutcome] = project.run("c", "-e", "py", "--no-provision")
+
+    assert ("is missing [requires (has)]" in outcome.out, outcome.success) == (is_missing, not is_missing)
+
+
+@pytest.fixture
+def installed_pkg_info(tmp_path: Path, mocker: MockerFixture) -> Path:
+    dist_info: Final[Path] = tmp_path / "pkg-1.0.dist-info"
+    dist_info.mkdir()
+    (dist_info / "METADATA").write_text("Metadata-Version: 2.1\nName: pkg\nVersion: 1.0\n")
+    mocker.patch("tox.provision.distribution", return_value=Distribution.at(dist_info))
+    return dist_info
 
 
 @pytest.mark.integration
