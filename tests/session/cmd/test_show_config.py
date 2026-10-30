@@ -19,7 +19,7 @@ if TYPE_CHECKING:
     from pytest_mock import MockerFixture
 
     from tests.conftest import PatchPrevPy
-    from tox.pytest import MonkeyPatch, ToxProjectCreator, ToxRunOutcome
+    from tox.pytest import MonkeyPatch, ToxProject, ToxProjectCreator, ToxRunOutcome
 
 
 def test_show_config_default_run_env(tox_project: ToxProjectCreator, monkeypatch: MonkeyPatch) -> None:
@@ -126,19 +126,29 @@ def test_show_config_exception(tox_project: ToxProjectCreator) -> None:
     assert txt in outcome.out
 
 
-def test_show_config_unicode_decode_error_does_not_expose_input(tox_project: ToxProjectCreator) -> None:
-    config_bytes = b"private-config-marker\xff"
-    project = tox_project({"tox.ini": "[tox]\nenv_list = py\nno_package = true"})
-    pyvenv_cfg = project.path / ".tox" / "py" / "pyvenv.cfg"
+@pytest.mark.parametrize(
+    "format_args",
+    [
+        pytest.param([], id="ini"),
+        pytest.param(["--format", "json"], id="json"),
+        pytest.param(["--format", "toml"], id="toml"),
+    ],
+)
+def test_show_config_unicode_decode_error_does_not_expose_input(
+    tox_project: ToxProjectCreator, format_args: list[str]
+) -> None:
+    project: Final[ToxProject] = tox_project({"tox.ini": "[tox]\nenv_list = py\nno_package = true"})
+    pyvenv_cfg: Final[Path] = project.path / ".tox" / "py" / "pyvenv.cfg"
     pyvenv_cfg.parent.mkdir(parents=True)
-    pyvenv_cfg.write_bytes(config_bytes)
+    pyvenv_cfg.write_bytes(b"private-config-marker\xff")
 
-    outcome = project.run("c", "-e", "py", "-k", "env_python", raise_on_config_fail=False)
+    outcome: Final[ToxRunOutcome] = project.run(
+        "c", "-e", "py", "-k", "env_python", *format_args, raise_on_config_fail=False
+    )
 
     outcome.assert_failed(code=-1)
-    assert "private-config-marker" not in outcome.out
-    assert "UnicodeDecodeError" in outcome.out
-    assert "byte" in outcome.out
+    assert "private-config-marker" not in outcome.out + outcome.err
+    assert "UnicodeDecodeError at byte 21" in outcome.out
 
 
 def test_show_config_empty_install_command_exception(tox_project: ToxProjectCreator) -> None:
