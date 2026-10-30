@@ -652,6 +652,9 @@ the top level of ``tox.toml``. Placing these options in an environment section (
     tox leaves a ``.venv`` directory or symlink alone, and a redirect file pointing outside the :ref:`work_dir` and the
     tox environments, since then the user or another tool chose the environment.
 
+    On Windows, tox warns instead of writing a redirect when any directory in the project path is a reparse point, such
+    as a symlink or junction.
+
     Left unset, tox writes the redirect file unless a tox environment's :ref:`env_dir` is the ``.venv`` path, since that
     environment is the project's ``.venv``. With ``true``, tox writes it and fails the run before any environment starts
     when such an environment exists; with ``false``, tox writes nothing. When a file sits where an environment should

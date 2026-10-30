@@ -197,6 +197,20 @@ def test_record_windows_refuses_project_symlink(tmp_path: Path, caplog: pytest.L
     )
 
 
+@pytest.mark.skipif(sys.platform != "win32", reason="Windows parent reparse points")
+def test_record_windows_refuses_parent_symlink(tmp_path: Path, caplog: pytest.LogCaptureFixture) -> None:
+    original: Final[Path] = tmp_path / "original"
+    project: Final[Path] = original / "project"
+    project.mkdir(parents=True)
+    (project / ".venv").write_text(".tox/old\n", encoding="utf-8")
+    parent: Final[Path] = tmp_path / "parent"
+    parent.symlink_to(original, target_is_directory=True)
+
+    record_venv_redirect(parent / "project", parent / "project" / ".tox" / "dev", lambda _: True)
+
+    assert ((project / ".venv").read_text(encoding="utf-8"), "could not point" in caplog.text) == (".tox/old\n", True)
+
+
 @pytest.mark.skipif(sys.platform != "win32", reason="Windows directory handles")
 def test_record_windows_warns_if_directory_info_fails(
     root: Path, windows_kernel32: ctypes.CDLL, mocker: MockerFixture, caplog: pytest.LogCaptureFixture
@@ -235,10 +249,7 @@ def test_record_windows_warns_if_directory_close_fails(
 
 @pytest.fixture
 def windows_kernel32(mocker: MockerFixture) -> ctypes.CDLL:
-    kernel32: Final[ctypes.CDLL] = ctypes.WinDLL(  # type: ignore[attr-defined]  # Windows-only API.
-        "kernel32",
-        use_last_error=True,
-    )
+    kernel32: Final[ctypes.CDLL] = ctypes.WinDLL("kernel32", use_last_error=True)
     mocker.patch("tox.util.venv_redirect.ctypes.WinDLL", return_value=kernel32)
     return kernel32
 

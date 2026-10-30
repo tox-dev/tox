@@ -9,7 +9,7 @@ import os
 import secrets
 import stat
 import sys
-from contextlib import contextmanager, suppress
+from contextlib import ExitStack, contextmanager, suppress
 from ctypes import wintypes
 from pathlib import Path
 from typing import IO, TYPE_CHECKING, Final
@@ -57,51 +57,64 @@ def _open_dir(directory: Path) -> Generator[int | None, None, None]:
             os.close(dir_fd)
 
 
-@contextmanager
-def _pin_windows_directory(directory: Path) -> Generator[None, None, None]:
-    class FileAttributeTagInfo(ctypes.Structure):
-        _fields_ = [("file_attributes", wintypes.DWORD), ("reparse_tag", wintypes.DWORD)]
+if sys.platform == "win32":  # pragma: win32 cover
 
-    kernel32: Final[ctypes.CDLL] = ctypes.WinDLL(  # type: ignore[attr-defined]  # Windows-only API.
-        "kernel32",
-        use_last_error=True,
-    )
-    kernel32.CreateFileW.argtypes = [
-        wintypes.LPCWSTR,
-        wintypes.DWORD,
-        wintypes.DWORD,
-        wintypes.LPVOID,
-        wintypes.DWORD,
-        wintypes.DWORD,
-        wintypes.HANDLE,
-    ]
-    kernel32.CreateFileW.restype = wintypes.HANDLE
-    kernel32.GetFileInformationByHandleEx.argtypes = [wintypes.HANDLE, wintypes.DWORD, wintypes.LPVOID, wintypes.DWORD]
-    kernel32.GetFileInformationByHandleEx.restype = wintypes.BOOL
-    kernel32.CloseHandle.argtypes = [wintypes.HANDLE]
-    kernel32.CloseHandle.restype = wintypes.BOOL
-    handle: Final[int] = kernel32.CreateFileW(
-        ntpath.abspath(str(directory)),
-        0x20 | 0x80,
-        0x1 | 0x2,
-        None,
-        3,
-        0x02200000,
-        None,
-    )
-    if handle == ctypes.c_void_p(-1).value:
-        raise ctypes.WinError(ctypes.get_last_error())  # type: ignore[attr-defined]  # Windows-only API.
-    try:
-        info: Final[FileAttributeTagInfo] = FileAttributeTagInfo()
-        if not kernel32.GetFileInformationByHandleEx(handle, 9, ctypes.byref(info), ctypes.sizeof(info)):
-            raise ctypes.WinError(ctypes.get_last_error())  # type: ignore[attr-defined]  # Windows-only API.
-        if info.file_attributes & 0x400 or not info.file_attributes & 0x10:
-            msg = f"redirect path is not a plain directory: {directory}"
-            raise NotADirectoryError(msg)
-        yield
-    finally:
-        if not kernel32.CloseHandle(handle):
-            raise ctypes.WinError(ctypes.get_last_error())  # type: ignore[attr-defined]  # Windows-only API.
+    @contextmanager
+    def _pin_windows_directory(directory: Path) -> Generator[None, None, None]:
+        path: Final[Path] = Path(ntpath.abspath(str(directory)))
+        with ExitStack() as stack:
+            # A pinned ancestor cannot be swapped before its child is checked.
+            for component in (*reversed(path.parents), path):
+                stack.enter_context(_pin_windows_component(component))
+            yield
+
+    @contextmanager
+    def _pin_windows_component(directory: Path) -> Generator[None, None, None]:
+        class FileAttributeTagInfo(ctypes.Structure):
+            _fields_ = [("file_attributes", wintypes.DWORD), ("reparse_tag", wintypes.DWORD)]
+
+        kernel32: Final[ctypes.CDLL] = ctypes.WinDLL("kernel32", use_last_error=True)
+        kernel32.CreateFileW.argtypes = [
+            wintypes.LPCWSTR,
+            wintypes.DWORD,
+            wintypes.DWORD,
+            wintypes.LPVOID,
+            wintypes.DWORD,
+            wintypes.DWORD,
+            wintypes.HANDLE,
+        ]
+        kernel32.CreateFileW.restype = wintypes.HANDLE
+        kernel32.GetFileInformationByHandleEx.argtypes = [
+            wintypes.HANDLE,
+            wintypes.DWORD,
+            wintypes.LPVOID,
+            wintypes.DWORD,
+        ]
+        kernel32.GetFileInformationByHandleEx.restype = wintypes.BOOL
+        kernel32.CloseHandle.argtypes = [wintypes.HANDLE]
+        kernel32.CloseHandle.restype = wintypes.BOOL
+        handle: Final[int] = kernel32.CreateFileW(
+            str(directory),
+            0x20 | 0x80,
+            0x1 | 0x2,
+            None,
+            3,
+            0x02200000,
+            None,
+        )
+        if handle == ctypes.c_void_p(-1).value:
+            raise ctypes.WinError(ctypes.get_last_error())
+        try:
+            info: Final[FileAttributeTagInfo] = FileAttributeTagInfo()
+            if not kernel32.GetFileInformationByHandleEx(handle, 9, ctypes.byref(info), ctypes.sizeof(info)):
+                raise ctypes.WinError(ctypes.get_last_error())
+            if info.file_attributes & 0x400 or not info.file_attributes & 0x10:
+                msg = f"redirect path is not a plain directory: {directory}"
+                raise NotADirectoryError(msg)
+            yield
+        finally:
+            if not kernel32.CloseHandle(handle):
+                raise ctypes.WinError(ctypes.get_last_error())
 
 
 def _mode(file: Path, dir_fd: int | None) -> int | None:
