@@ -3,7 +3,7 @@ from __future__ import annotations
 import glob
 import tarfile
 from abc import ABC
-from functools import partial
+from functools import cached_property, partial
 from io import TextIOWrapper
 from pathlib import Path
 from typing import TYPE_CHECKING, Final, cast
@@ -28,6 +28,7 @@ if TYPE_CHECKING:
     from collections.abc import Generator, Iterator
     from importlib.metadata import PackageMetadata
     from os import PathLike
+    from zipfile import ZipInfo
 
     from tox.config.sets import EnvConfigSet
     from tox.tox_env.api import ToxEnvCreateArgs
@@ -36,8 +37,6 @@ if TYPE_CHECKING:
     from tox.tox_env.runner import RunToxEnv
 
 from importlib.metadata import Distribution
-
-_MAX_DIST_INFO_FILE_BYTES: Final[int] = 8 * 1024 * 1024  # 8 MiB; real METADATA files are far smaller
 
 
 class VenvCmdBuilder(PythonPackageToxEnv, ABC):
@@ -173,7 +172,6 @@ class WheelDistribution(Distribution):  # cannot subclass has type Any
     def __init__(self, wheel: Path) -> None:
         self._wheel = wheel
         self._dist_name: str | None = None
-        self._text_cache: dict[str, str | None] = {}
 
     @property
     def dist_name(self) -> str:
@@ -189,28 +187,27 @@ class WheelDistribution(Distribution):  # cannot subclass has type Any
                     raise Fail(msg)
         return self._dist_name
 
+    @cached_property
+    @override
+    def metadata(self) -> PackageMetadata:
+        return super().metadata
+
     @override
     def read_text(self, filename: str) -> str | None:
-        if filename in self._text_cache:
-            return self._text_cache[filename]
-        member = f"{self.dist_name}/{filename}"
+        member: Final[str] = f"{self.dist_name}/{filename}"
         with ZipFile(self._wheel) as zip_file:
             try:
-                info = zip_file.getinfo(member)
+                info: Final[ZipInfo] = zip_file.getinfo(member)
             except KeyError:
-                result = None
-            else:
-                # ZipExtFile never inflates past the declared size, so checking it bounds memory use
-                if info.file_size > _MAX_DIST_INFO_FILE_BYTES:
-                    msg = (
-                        f"{member} inside {self._wheel} is {info.file_size} bytes,"
-                        f" exceeds the {_MAX_DIST_INFO_FILE_BYTES} byte limit"
-                    )
-                    raise Fail(msg)
-                with TextIOWrapper(zip_file.open(info), encoding="utf-8") as file_handler:
-                    result = file_handler.read()
-        self._text_cache[filename] = result
-        return result
+                return None
+            limit: Final[int] = 8 * 1024 * 1024
+            if info.file_size > limit:
+                msg: Final[str] = (
+                    f"{member} inside {self._wheel} is {info.file_size} bytes, exceeds the {limit} byte limit"
+                )
+                raise Fail(msg)
+            with TextIOWrapper(zip_file.open(info), encoding="utf-8") as file_handler:
+                return file_handler.read()
 
     @override
     def locate_file(self, path: str | PathLike[str]) -> Path:
