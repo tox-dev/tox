@@ -41,7 +41,7 @@ def exec_(state: State) -> int:
     conf = state.envs[envs[0]].conf
     conf.loaders.insert(0, loader)
     to_path = conf.get("change_dir", Path) if conf["args_are_paths"] else None
-    pos_args = state.conf.pos_args(to_path)
+    pos_args = state.conf.pos_args(to_path, program_first=True)
     if not pos_args:
         msg = "You must specify a command as positional arguments, use -- <command>"
         raise HandledError(msg)

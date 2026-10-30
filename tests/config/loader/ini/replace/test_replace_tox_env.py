@@ -81,6 +81,16 @@ def test_replace_section_alone_on_command_line_expands_to_commands(
     assert commands == [["pip", "install", "requests", "pytest>=8"], ["python", "-V"], ["python", "-c", "pass"]]
 
 
+def test_replace_command_circular_fan_out_keeps_following_token(
+    load_commands: Callable[[str], list[list[str]]], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("MAGIC", "{env:MAGIC}" * 2)
+    monkeypatch.setenv("NEXT", "expanded")
+    commands: Final[list[list[str]]] = load_commands("{env:MAGIC} {env:NEXT}")
+
+    assert commands[0][-1] == "{env:NEXT}"
+
+
 @pytest.mark.parametrize(
     ("command", "expected"),
     [
@@ -383,7 +393,7 @@ def test_replace_alone_in_env_list_entry_can_expand(
 @pytest.mark.timeout(5)
 def test_replace_list_circular_fan_out_stops(example: EnvConfigCreator, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("MAGIC", "{env:MAGIC}" * 100)
-    env_config: Final = example("items = {env:MAGIC}")
+    env_config: Final[ConfigSet] = example("items = {env:MAGIC}")
     env_config.add_config(keys="items", of_type=list[str], default=[], desc="items")
 
     assert len("{env:MAGIC}") < len(env_config["items"][0]) < 1_000_000

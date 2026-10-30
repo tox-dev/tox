@@ -19,6 +19,7 @@ from tox.config.loader.replacer import (
     load_posargs,
     replace,
     replace_env,
+    replace_program,
     replace_requirement_lines,
 )
 from tox.config.loader.stringify import stringify
@@ -54,11 +55,14 @@ class Unroll:
         loader: TomlLoader,
         args: ConfigLoadArgs,
         *,
+        program_depth: int | None,
         requirement_entries: bool,
     ) -> None:
         self.conf = conf
         self.loader = loader
         self.args = args
+        # Spreads can move the first program word through nested lists.
+        self._program_depth = program_depth
         self.requirement_entries = requirement_entries
         self._refs: list[str] = []
         self.factors = active_factors(args.env_name)
@@ -72,9 +76,12 @@ class Unroll:
         if isinstance(value, str):
             if not skip_str and self.conf is not None:  # core config does not support string substitution
                 reference = TomlReplaceLoader(self.conf, self.loader)
-                value = (replace_requirement_lines if self.requirement_entries else replace)(
-                    self.conf, reference, value, self.args
-                )
+                if self.requirement_entries:
+                    value = replace_requirement_lines(self.conf, reference, value, self.args)
+                elif self._program_depth is not None:
+                    value = replace_program(self.conf, reference, value, self.args)
+                else:
+                    value = replace(self.conf, reference, value, self.args)
             return value
         if isinstance(value, list):
             return self._replace_list(value, depth, skip_str=skip_str)
@@ -84,9 +91,14 @@ class Unroll:
 
     def _replace_list(self, value: list[TomlTypes], depth: int, *, skip_str: bool) -> TomlTypes:
         # need to inspect every entry of the list to check for reference.
-        res_list: list[TomlTypes] = []
+        res_list: Final[list[TomlTypes]] = []
+        program_depth: Final[int | None] = self._program_depth
         for val in value:  # apply replacement for every entry
-            got = self(val, depth, skip_str=skip_str)
+            self._program_depth = self._entry_program_depth(program_depth, val, res_list)
+            try:
+                got = self(val, depth, skip_str=skip_str)
+            finally:
+                self._program_depth = program_depth
             if isinstance(got, SetEnvReference):
                 extending = isinstance(val, dict) and bool(val.get("extend"))
                 if got.shape != ("array" if extending else "table"):
@@ -105,6 +117,14 @@ class Unroll:
             else:
                 res_list.extend(cast("list[Any]", got))
         return res_list
+
+    @staticmethod
+    def _entry_program_depth(depth: int | None, entry: TomlTypes, before: list[TomlTypes]) -> int | None:
+        if depth == 1 and before not in ([], ["-"], ["!"]):
+            return None
+        if depth and not (isinstance(entry, dict) and entry.get("replace") and entry.get("extend")):
+            return depth - 1
+        return depth
 
     def _replace_dict(self, value: dict[str, TomlTypes], depth: int, *, skip_str: bool) -> TomlTypes:
         replace_type = value.get("replace")
@@ -129,7 +149,7 @@ class Unroll:
         return None
 
     def _replace_posargs(self, value: dict[str, TomlTypes], depth: int, *, skip_str: bool) -> TomlTypes:
-        got_posargs = load_posargs(cast("Config", self.conf), self.args)
+        got_posargs = load_posargs(cast("Config", self.conf), self.args, program_first=self._program_depth == 1)
         if got_posargs is None:
             return [self(v, depth, skip_str=skip_str) for v in cast("list[str]", value.get("default", []))]
         if validate(value.get("substitute", False), bool):
@@ -153,7 +173,7 @@ class Unroll:
         }
         if skip_str:  # set_env resolves it when read, seeing the keys next to it
             return MatchExpression([["glob"], *(_parse_arg(resolved.get(key, "")) for key in ("pattern", "default"))])
-        result: Final = _replace_glob_toml(self.conf, {**value, **resolved})
+        result: Final[list[TomlTypes] | str] = _replace_glob_toml(self.conf, {**value, **resolved})
         if self.requirement_entries:
             for entry in result if isinstance(result, list) else [result]:
                 if isinstance(entry, str) and (entry != "".join(entry.splitlines()) or entry.endswith("\\")):
