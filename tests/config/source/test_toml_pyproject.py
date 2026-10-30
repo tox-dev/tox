@@ -804,6 +804,28 @@ def test_config_in_toml_replace_if_extend_no_match_contributes_nothing(
     assert "bye" not in commands_line
 
 
+@pytest.mark.parametrize("key", ["deps", "commands"])
+def test_config_in_toml_replace_extend_with_marker_rejected(
+    tox_project: ToxProjectCreator,
+    monkeypatch: pytest.MonkeyPatch,
+    key: str,
+) -> None:
+    """A marker on an extending replace must not spread its ``{value, marker}`` wrapper keys into the list."""
+    monkeypatch.setenv("CI", "1")
+    then = '["demo-linux-only"]' if key == "deps" else '[["echo", "bye"]]'
+    first = '"demo-base"' if key == "deps" else '["echo", "hi"]'
+    toml = f"""\
+    [tool.tox.env.A]
+    {key} = [
+        {first},
+        {{ replace = "if", condition = "env.CI", then = {then}, extend = true, marker = "sys_platform == 'linux'" }},
+    ]
+    """
+    project = tox_project({"pyproject.toml": toml})
+    with pytest.raises(MatchError, match="a replace with extend=true cannot have a marker"):
+        project.run("c", "-e", "A", "-k", key)
+
+
 @pytest.mark.parametrize(
     ("condition_toml", "error_match"),
     [
