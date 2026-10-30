@@ -273,14 +273,32 @@ class Replacer:
         self.depth = depth
         self.recursive = recursive
         self.program = False
+        self.root: Replacer = self
+        self.depth_exhausted: bool = False
 
     def __call__(self, value: MatchArg) -> Sequence[str]:
-        return [self._replace_match(me)[0] if isinstance(me, MatchExpression) else str(me) for me in value]
+        result: Final[list[str]] = []
+        for part in value:
+            if isinstance(part, MatchExpression):
+                result.append(self._literal_match(part) if self.root.depth_exhausted else self._replace_match(part)[0])
+            else:
+                result.append(part)
+        return result
+
+    @classmethod
+    def _literal_match(cls, value: MatchExpression) -> str:
+        args: Final = (
+            "".join(cls._literal_match(part) if isinstance(part, MatchExpression) else part for part in arg)
+            for arg in value.expr
+        )
+        return f"{{{ARG_DELIMITER.join(args)}}}"
 
     def join(self, value: MatchArg) -> str:
         return "".join(self(value))
 
     def expand(self, value: str | MatchExpression) -> str:
+        if self.depth > MAX_REPLACE_DEPTH:
+            self.root.depth_exhausted = True
         MatchRecursionError.check(self.depth, value)
         return self.join_value(find_replace_expr(value))
 
@@ -297,6 +315,7 @@ class Replacer:
             # Only raw configuration text gets another pass; positional arguments and file names are data.
             if (
                 self.recursive
+                and not self.root.depth_exhausted
                 and isinstance(replace_value, RawText)
                 and any(isinstance(match, MatchExpression) for match in find_replace_expr(replace_value))
             ):
@@ -315,6 +334,7 @@ class Replacer:
     def _nested(self, conf_args: ConfigLoadArgs) -> Self:
         nested: Final[Self] = type(self)(self.conf, self.reference, conf_args, self.depth + 1)
         nested.program = self.program
+        nested.root = self.root
         return nested
 
     def _flatten_arg(self, value: MatchArg) -> str:
@@ -354,7 +374,7 @@ class CommandLinesReplacer(Replacer):
         for part in value:
             if isinstance(part, MatchExpression):
                 self.program = outer_program and self._within_program("".join(parts))
-                parts.append(self._replace_match(part)[0])
+                parts.append(self._literal_match(part) if self.root.depth_exhausted else self._replace_match(part)[0])
             else:
                 parts.append(str(part))
         self.program = outer_program
@@ -426,7 +446,10 @@ class EntriesReplacer(Replacer):
     @override
     def __call__(self, value: MatchArg) -> Sequence[str]:
         replaced: Final[list[tuple[str, bool]]] = [
-            self._replace_match(part) if isinstance(part, MatchExpression) else (part, False) for part in value
+            ((self._literal_match(part), False) if self.root.depth_exhausted else self._replace_match(part))
+            if isinstance(part, MatchExpression)
+            else (part, False)
+            for part in value
         ]
         for at, (text, resolved) in enumerate(replaced):
             if resolved and self._shares_entry(value, at) and any(char in text for char in self.separators):

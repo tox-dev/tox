@@ -3446,10 +3446,10 @@ create your virtual env for the developers. This also supports ranges in the sam
 **Value substitution** operates through the ``{...}`` string-substitution pattern. The string inside the curly braces
 may reference a global or per-environment config key as described above.
 
-tox substitutes a key's value when it loads the key, and substitutes the text of a referenced key or host environment
-variable again until no ``{...}`` expression remains, so a referenced value may contain substitutions of its own.
-:ref:`set_env` is the exception: tox substitutes each of its values only when it reads that value, see :ref:`set_env
-resolution rules <set-env-resolution>`.
+tox substitutes a key's value when it loads the key, then substitutes expressions in referenced configuration text or
+host environment variables. If nested expansion exceeds the depth limit, tox logs one warning for that value and leaves
+the remaining references as text. :ref:`set_env` is the exception: tox substitutes each of its values only when it reads
+that value, see :ref:`set_env resolution rules <set-env-resolution>`.
 
 Positional arguments, file names matched by ``{glob:PATTERN}`` and ``TOX_FACTOR_<label>`` overrides are data rather than
 configuration, so tox inserts them as they are: a ``{...}`` or ``[]`` within them is not a substitution.
