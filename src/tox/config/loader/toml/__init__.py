@@ -4,7 +4,7 @@ import inspect
 import logging
 from pathlib import Path
 from types import GenericAlias
-from typing import TYPE_CHECKING, Any, TypeVar, cast
+from typing import TYPE_CHECKING, Any, Final, TypeVar, cast
 
 from tox.config.loader.api import ConfigLoadArgs, Loader, Override
 from tox.config.loader.replacer import (
@@ -108,11 +108,14 @@ class TomlLoader(Loader[TomlTypes]):
 
     @override
     def substitute(self, value: str, conf: Config, args: ConfigLoadArgs, *, of_type: type[_V] | UnionType) -> str:
+        reference: Final[TomlReplaceLoader] = TomlReplaceLoader(conf, self)
         if of_type in {PythonDeps, PythonConstraints}:
-            return replace_requirement_lines(conf, TomlReplaceLoader(conf, self), value, args)
+            return replace_requirement_lines(
+                conf, reference, value, args, validate_options=PythonDeps.validate_requirement_options
+            )
         if of_type in {Command, list[Command]}:
-            return replace_command_lines(conf, TomlReplaceLoader(conf, self), value, args)
-        return replace_for(of_type)(conf, TomlReplaceLoader(conf, self), value, args)
+            return replace_command_lines(conf, reference, value, args)
+        return replace_for(of_type)(conf, reference, value, args)
 
     @override
     def found_keys(self) -> set[str]:
