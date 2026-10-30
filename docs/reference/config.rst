@@ -1584,7 +1584,7 @@ Run
     from ``{posargs}``, tox leaves a bare first value such as ``python`` for ``PATH`` lookup. It also leaves a bare
     executable first positional value unchanged because wrappers such as ``env {posargs}`` may run it as a program. This
     also applies when the command uses that value as data. Pass ``./python`` when you mean a file in the start
-    directory.
+    directory. An empty positional argument stays empty.
     If a wrapper runs a later positional value as a program, set ``args_are_paths = false``.
 
 .. conf::
