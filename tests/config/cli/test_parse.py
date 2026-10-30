@@ -1,13 +1,14 @@
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Final
 
 import pytest
 
 from tox.config.cli.parse import get_options
 
 if TYPE_CHECKING:
+    from tox.config.cli.parse import Options
     from tox.pytest import CaptureFixture
 
 
@@ -42,3 +43,20 @@ def test_verbosity_guess_miss_match(capsys: CaptureFixture) -> None:
 def test_verbosity(arg: str) -> None:
     result = get_options(arg)
     assert result.parsed.verbosity == 3
+
+
+@pytest.mark.parametrize(
+    ("args", "command", "factors"),
+    [
+        pytest.param(("-f", "py", "legacy"), "legacy", [["py", "legacy"]], id="cmd-name-as-later-value"),
+        pytest.param(("-f", "py", "run"), "legacy", [["py", "run"]], id="run-as-later-value"),
+        pytest.param(("-f", "py", "l"), "legacy", [["py", "l"]], id="alias-as-later-value"),
+        pytest.param(("run", "-f", "py", "legacy"), "run", [["py", "legacy"]], id="explicit-command-first"),
+        pytest.param(("-f", "py", "list", "-r"), "legacy", [["py", "list"]], id="cmd-name-then-option"),
+        pytest.param(("-f", "py", "legacy", "-f", "list"), "legacy", [["py", "legacy"], ["list"]], id="repeated"),
+        pytest.param(("-f", "py", "-e", "a", "list"), "list", [["py"]], id="cmd-after-single-value-option"),
+    ],
+)
+def test_multi_value_option_keeps_all_values(args: tuple[str, ...], command: str, factors: list[list[str]]) -> None:
+    result: Final[Options] = get_options(*args)
+    assert (result.parsed.command, result.parsed.factors) == (command, factors)

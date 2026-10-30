@@ -1,0 +1,2 @@
+Keep every value of a multi-value command line flag, such as ``-f py legacy``, with that flag. The command scanner took
+a later value matching a subcommand as the command, causing environments without that factor to run.
