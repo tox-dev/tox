@@ -76,8 +76,8 @@ def test_setup_report(mocker: MockerFixture, capsys: CaptureFixture, verbosity: 
 
 def test_setup_report_degrades_unencodable_output(monkeypatch: pytest.MonkeyPatch, mocker: MockerFixture) -> None:
     mocker.patch("tox.report.init")
-    raw: Final = io.BytesIO()
-    redirected: Final = io.TextIOWrapper(raw, encoding="cp1252", errors="strict")
+    raw: Final[io.BytesIO] = io.BytesIO()
+    redirected: Final[io.TextIOWrapper] = io.TextIOWrapper(raw, encoding="cp1252", errors="strict")
     monkeypatch.setattr(sys, "stdout", redirected)
     monkeypatch.setattr(sys, "stderr", redirected)
 
