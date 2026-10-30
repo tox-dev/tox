@@ -226,24 +226,32 @@ class MatchExpression:  # ruff:ignore[eq-without-hash]
                     last_arg.append(cls._fragment(value, pos, pos + 2))
                     pos += 2
                     continue
-            fragment = cls._fragment(value, pos)
-            if terminator and fragment.startswith(terminator):
+            if terminator and value.startswith(terminator, pos):
                 pos += len(terminator)
                 break
-            if split and fragment.startswith(split):
+            if split and value.startswith(split, pos):
                 # found a new argument
                 args.append(last_arg)
                 last_arg = []
                 pos += len(split)
                 continue
-            expr = cls._next_replace_expression(fragment)
-            if expr is not None:
+            if (value[pos] == REPLACE_START or value.startswith("[]", pos)) and (
+                expr := cls._next_replace_expression(cls._fragment(value, pos))
+            ) is not None:
                 pos += (expr.term_pos or 0) + 1
                 last_arg.append(expr)
                 continue
-            # default case: consume the next character
-            last_arg.append(cls._fragment(value, pos, pos + 1))
-            pos += 1
+            # Group plain text to avoid rebuilding origin spans per character.
+            next_pos: int = min(
+                (
+                    at
+                    for char in ("\\", REPLACE_START, "[", terminator, split)
+                    if char and (at := value.find(char, pos + 1)) >= 0
+                ),
+                default=len(value),
+            )
+            last_arg.append(cls._fragment(value, pos, next_pos))
+            pos = next_pos
         else:  # fell out of the loop
             if terminator:
                 msg = f"{terminator!r} remains unmatched in {value!r}"
@@ -668,6 +676,20 @@ class HostText(RawText):
             offset += len(part) + (len(separator) if index + 1 < len(parts) else 0)
         joined: Final[str] = separator.join(parts)
         return cls(joined, spans=tuple(spans), literal_spans=tuple(literal_spans)) if spans else joined
+
+    @override
+    def splitlines(self, keepends: bool = False) -> list[str]:
+        lines: Final[list[str]] = []
+        offset = 0
+        for line in super().splitlines(keepends=True):
+            line_length: int = len(line) if keepends else len(line.rstrip("\r\n\v\f\x1c\x1d\x1e\x85\u2028\u2029"))
+            lines.append(self.fragment(offset, offset + line_length))
+            offset += len(line)
+        return lines
+
+    @override
+    def strip(self, chars: str | None = None) -> str:
+        return self.fragment(len(self) - len(super().lstrip(chars)), len(super().rstrip(chars)))
 
     def fragment(self, start: int, end: int | None = None) -> str:
         stop: Final[int] = len(self) if end is None else end
