@@ -66,6 +66,54 @@ def test_pylock_install(tox_project: ToxProjectCreator) -> None:
     ).read_text() == "alpha==1.0.0 --hash=sha256:abc123\nbeta==2.0.0 --hash=sha256:def456"
 
 
+def test_pylock_install_uses_package_root_without_package_env(tox_project: ToxProjectCreator) -> None:
+    project = tox_project(
+        {
+            "tox.toml": """
+            package_root = "sub"
+
+            [env_run_base]
+            skip_install = true
+            pylock = "pylock.toml"
+            """,
+            "sub": {"pylock.toml": PYLOCK_TOML},
+        },
+    )
+    execute_calls = project.patch_execute()
+    result = project.run("r", "-e", "py")
+
+    result.assert_success()
+
+    req_file = str(project.path / ".tox" / "py" / "pylock.txt")
+    found_calls = [(i[0][0].conf.name, i[0][3].run_id, i[0][3].cmd) for i in execute_calls.call_args_list]
+    assert found_calls == [
+        ("py", "install_pylock", ["python", "-I", "-m", "pip", "install", "--no-deps", "-r", req_file]),
+    ]
+
+
+def test_dependency_groups_use_package_root_without_package_env(tox_project: ToxProjectCreator) -> None:
+    project = tox_project(
+        {
+            "tox.toml": """
+            package_root = "sub"
+
+            [env_run_base]
+            skip_install = true
+            dependency_groups = ["dev"]
+            """,
+            "sub": {"pyproject.toml": '[dependency-groups]\ndev = ["six"]\n'},
+        },
+    )
+    execute_calls = project.patch_execute()
+    result = project.run("r", "-e", "py")
+
+    result.assert_success()
+
+    found_calls = [(i[0][0].conf.name, i[0][3].run_id) for i in execute_calls.call_args_list]
+    assert found_calls == [("py", "install_dependency-groups")]
+    assert "six" in execute_calls.call_args_list[0][0][3].cmd
+
+
 def test_pylock_empty(tox_project: ToxProjectCreator) -> None:
     project = tox_project(
         {

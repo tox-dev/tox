@@ -308,6 +308,9 @@ class CoreConfigSet(ConfigSet):
     def _default_work_dir(self, conf: Config, env_name: str | None) -> Path:  # ruff:ignore[unused-method-argument]
         return self.get("tox_root", Path) / ".tox"
 
+    def _default_package_root(self, conf: Config, env_name: str | None) -> Path:  # ruff:ignore[unused-method-argument]
+        return self.get("tox_root", Path)
+
     def _default_temp_dir(self, conf: Config, env_name: str | None) -> Path:  # ruff:ignore[unused-method-argument]
         return self.get("work_dir", Path) / ".tmp"
 
@@ -330,6 +333,13 @@ class CoreConfigSet(ConfigSet):
             desc="the root directory (where the configuration file is found)",
         )
         self.add_constant("tox_root_name", "name of the root directory", self._root.name)
+        self.add_config(
+            keys=["package_root", "setupdir"],
+            of_type=Path,
+            default=self._default_package_root,
+            post_process=self._relative_to_tox_root,
+            desc="indicates where the packaging root file exists (historically setup.py file or pyproject.toml now)",
+        )
         self.add_constant("home", "the user's home directory", Path.home)
 
         self.add_config(

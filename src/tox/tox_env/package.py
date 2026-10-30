@@ -77,13 +77,6 @@ class PackageToxEnv(ToxEnv, ABC):
         file_lock_path = self.conf.get("env_dir", Path) / "file.lock"
         self._file_lock = FileLock(file_lock_path)
         file_lock_path.parent.mkdir(parents=True, exist_ok=True)
-        self.core.add_config(
-            keys=["package_root", "setupdir"],
-            of_type=Path,
-            default=self.core.get("tox_root", Path),
-            post_process=self._relative_to_tox_root,
-            desc="indicates where the packaging root file exists (historically setup.py file or pyproject.toml now)",
-        )
         self.conf.add_config(
             keys=["package_root", "setupdir"],
             of_type=Path,
