@@ -695,9 +695,7 @@ def test_pylock_locked_sources_install_as_locked(
     project: Final[ToxProject] = tox_project({"tox.toml": pylock_run_base, "pylock.toml": lock})
     project.patch_execute()
 
-    result = project.run("r", "-e", "py")
-
-    result.assert_success()
+    project.run("r", "-e", "py").assert_success()
     assert (project.path / ".tox" / "py" / "pylock.txt").read_text() == expected.format(
         project_uri=project.path.as_uri()
     )

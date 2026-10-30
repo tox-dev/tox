@@ -92,8 +92,7 @@ class Pylock:
         return target.resolve().as_uri()
 
     def _check_tokens(self, pkg: Package, fields: Mapping[str, str | None]) -> None:
-        # these values are written verbatim into a pip requirements file, where whitespace or a line break would let a
-        # malformed field inject extra options or requirement lines, so each must stay a single token
+        # pip reads whitespace here as another requirement or option.
         for name, value in fields.items():
             if value is not None and (not value or any(char.isspace() or not char.isprintable() for char in value)):
                 msg = (
