@@ -87,11 +87,31 @@ def test_str_convert_ok(raw: str, value: Any, of_type: type[Any]) -> None:
             id="fail_union_bar_str_int",
         ),
         pytest.param("", Command, ValueError, r"attempting to parse '' into a command failed", id="fail_empty_command"),
+        pytest.param("", Path, ValueError, r"path value is empty", id="fail_empty_path"),
+        pytest.param("  ", Path, ValueError, r"path value is empty", id="fail_blank_path"),
     ],
 )
 def test_str_convert_nok(raw: str, of_type: type[Any], msg: str, exc_type: type[Exception]) -> None:
     with pytest.raises(exc_type, match=msg):
         StrConvert().to(raw, of_type, None)
+
+
+@pytest.mark.parametrize("config", ["ini", "toml"])
+def test_unset_env_path_does_not_resolve_to_cwd(
+    tox_project: ToxProjectCreator, monkeypatch: MonkeyPatch, config: str
+) -> None:
+    monkeypatch.delenv("SCRATCH_DIR", raising=False)
+    ini = "[tox]\nno_package = true\n[testenv]\nenv_tmp_dir = {env:SCRATCH_DIR}\ncommands = python -c 'print(1)'\n"
+    toml = 'no_package = true\n[env_run_base]\nenv_tmp_dir = "{env:SCRATCH_DIR}"\n'
+    toml += 'commands = [["python", "-c", "print(1)"]]\n'
+    files = {"tox.ini": ini} if config == "ini" else {"tox.toml": toml}
+    project = tox_project({**files, "keep.txt": "precious"})
+
+    outcome = project.run("r", "-e", "py")
+
+    outcome.assert_failed()
+    assert "failed to load py.env_tmp_dir: path value is empty" in outcome.out
+    assert (project.path / "keep.txt").read_text() == "precious"
 
 
 @pytest.mark.parametrize(

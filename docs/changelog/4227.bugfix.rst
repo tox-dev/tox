@@ -1,0 +1,3 @@
+A path setting that expands to an empty value, such as ``env_tmp_dir = {env:SCRATCH_DIR}`` with ``SCRATCH_DIR``
+unset, now fails with a configuration error instead of resolving to the current directory, which tox could then
+clear.
