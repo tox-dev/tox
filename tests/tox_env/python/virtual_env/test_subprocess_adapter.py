@@ -47,9 +47,11 @@ def test_probe_python_current_interpreter() -> None:
 
 
 def test_subprocess_python_info_positional_constructor() -> None:
+    probed: Final[SubprocessPythonInfo | None] = probe_python(sys.executable)
+    assert probed is not None
     info: Final[SubprocessPythonInfo] = SubprocessPythonInfo(
         "cpython",
-        _VersionInfo(major=3, minor=11, micro=0, releaselevel="final", serial=0),
+        probed.version_info,
         "3.11.0",
         64,
         "linux",

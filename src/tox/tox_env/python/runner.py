@@ -2,9 +2,7 @@
 
 from __future__ import annotations
 
-import json
 import logging
-import subprocess
 from abc import ABC
 from functools import partial
 from pathlib import Path
@@ -12,6 +10,7 @@ from typing import TYPE_CHECKING, Final, Literal, TypeAlias, get_args
 
 from packaging.markers import default_environment
 from packaging.utils import canonicalize_name
+from python_discovery import PythonInfo as DiscoveredPythonInfo
 
 from tox.config.types import Command
 from tox.execute import Outcome
@@ -34,13 +33,11 @@ PackageType: TypeAlias = Literal[
 
 
 if TYPE_CHECKING:
-    from python_discovery import MarkerEnvironment
     from typing_extensions import TypeIs
 
     from tox.config.sets import EnvConfigSet
     from tox.tox_env.api import ToxEnvCreateArgs
     from tox.tox_env.package import Package
-    from tox.util.json_types import JsonValue
 
 
 class PythonRun(Python, RunToxEnv, ABC):
@@ -190,13 +187,19 @@ class PythonRun(Python, RunToxEnv, ABC):
         self._install(pylock, PythonRun.__name__, "pylock")
 
     def _target_marker_environment(self) -> dict[str, str]:
-        discovered: Final[MarkerEnvironment | None] = self.base_python.marker_environment
-        if discovered is not None:
-            if not self._is_marker_environment(discovered):
-                msg = f"failed to determine the marker environment of {self.env_python()}: incomplete or invalid data"
+        if (discovered := self.base_python.marker_environment) is None:
+            python: Final[Path] = self.env_python()
+            interpreter: Final[DiscoveredPythonInfo | None] = DiscoveredPythonInfo.from_exe(
+                str(python), raise_on_error=False, resolve_to_host=False, env=self.environment_variables
+            )
+            if interpreter is None:
+                msg = f"failed to determine the marker environment of {python}"
                 raise Fail(msg)
-            return discovered
-        return self._probe_marker_environment(self.env_python())
+            discovered = interpreter.marker_environment
+        if not self._is_marker_environment(discovered):
+            msg = f"failed to determine the marker environment of {self.env_python()}: incomplete or invalid data"
+            raise Fail(msg)
+        return discovered
 
     @staticmethod
     def _is_marker_environment(value: object) -> TypeIs[dict[str, str]]:
@@ -205,49 +208,6 @@ class PythonRun(Python, RunToxEnv, ABC):
             and value.keys() == default_environment().keys()
             and all(isinstance(item, str) for item in value.values())
         )
-
-    @staticmethod
-    def _probe_marker_environment(python: Path) -> dict[str, str]:
-        # packaging fills omitted keys from the tox host, so request the complete target environment.
-        script: Final[str] = """\
-import json
-import os
-import platform
-import sys
-version = sys.implementation.version
-implementation_version = f"{version.major}.{version.minor}.{version.micro}"
-if version.releaselevel != "final":
-    implementation_version = f"{implementation_version}{version.releaselevel[0]}{version.serial}"
-print(json.dumps({
-    "implementation_name": sys.implementation.name,
-    "implementation_version": implementation_version,
-    "os_name": os.name,
-    "platform_machine": platform.machine(),
-    "platform_release": platform.release(),
-    "platform_system": platform.system(),
-    "platform_version": platform.version(),
-    "python_full_version": platform.python_version(),
-    "platform_python_implementation": platform.python_implementation(),
-    "python_version": ".".join(platform.python_version_tuple()[:2]),
-    "sys_platform": sys.platform,
-}))
-"""
-        try:
-            result: Final[subprocess.CompletedProcess[str]] = subprocess.run(
-                [str(python), "-I", "-c", script],
-                capture_output=True,
-                text=True,
-                timeout=60,
-                check=True,
-            )
-            values: Final[JsonValue] = json.loads(result.stdout)
-        except (OSError, subprocess.SubprocessError, ValueError) as exc:
-            msg = f"failed to determine the marker environment of {python}: {exc}"
-            raise Fail(msg) from exc
-        if not PythonRun._is_marker_environment(values):
-            msg = f"failed to determine the marker environment of {python}: incomplete or invalid data"
-            raise Fail(msg)
-        return values
 
     @override
     def _setup_with_env(self) -> None:
