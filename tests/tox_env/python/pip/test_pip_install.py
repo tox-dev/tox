@@ -589,7 +589,7 @@ _SET_ENV_HOST_DEPS_INI: Final[str] = "[testenv]\npackage=skip\nset_env=MIRROR={e
         ),
         pytest.param(
             {
-                "tox.toml": '[env_run_base]\npackage="skip"\n'
+                "tox.toml": '[env_run_base]\npackage="skip"\npass_env=["AUTHORED","HOST","DEPLOY_TOKEN"]\n'
                 'source="a==${AUTHORED}"\nset_env={MIRROR="{env:DEMO}"}\ndeps=["{env:MIRROR}"]'
             },
             "{[env_run_base]source}",
@@ -600,6 +600,7 @@ _SET_ENV_HOST_DEPS_INI: Final[str] = "[testenv]\npackage=skip\nset_env=MIRROR={e
         pytest.param(
             {
                 "tox.ini": "[vars]\nsource=a==${AUTHORED}\n[testenv]\n"
+                "pass_env=AUTHORED,HOST,DEPLOY_TOKEN\n"
                 "package=skip\nset_env=MIRROR={env:DEMO}\ndeps={env:MIRROR}"
             },
             "{[vars]source}",
@@ -659,7 +660,7 @@ _SET_ENV_HOST_DEPS_INI: Final[str] = "[testenv]\npackage=skip\nset_env=MIRROR={e
         ),
         pytest.param(
             {
-                "tox.toml": '[env_run_base]\npackage="skip"\n'
+                "tox.toml": '[env_run_base]\npackage="skip"\npass_env=["AUTHORED","HOST","DEPLOY_TOKEN"]\n'
                 'set_env={VERSION="1${AUTHORED}",MIRROR="{env:DEMO}"}\ndeps=["{env:MIRROR}"]'
             },
             "a=={env:VERSION}${DEPLOY_TOKEN}",
@@ -679,7 +680,7 @@ _SET_ENV_HOST_DEPS_INI: Final[str] = "[testenv]\npackage=skip\nset_env=MIRROR={e
         ),
         pytest.param(
             {
-                "tox.toml": '[env_run_base]\npackage="skip"\n'
+                "tox.toml": '[env_run_base]\npackage="skip"\npass_env=["AUTHORED","HOST","DEPLOY_TOKEN"]\n'
                 'set_env={MIRROR="--index-url {env:DEMO}?from=${AUTHORED}"}\ndeps=["{env:MIRROR}"]'
             },
             "https://example.invalid/${HOST}",
@@ -689,7 +690,7 @@ _SET_ENV_HOST_DEPS_INI: Final[str] = "[testenv]\npackage=skip\nset_env=MIRROR={e
         ),
         pytest.param(
             {
-                "tox.toml": '[env_run_base]\npackage="skip"\n'
+                "tox.toml": '[env_run_base]\npackage="skip"\npass_env=["AUTHORED","HOST","DEPLOY_TOKEN"]\n'
                 'set_env={BASE="--index-url {env:DEMO}?from=${AUTHORED}",MIRROR="{env:BASE}"}\n'
                 'deps=["{env:MIRROR}"]'
             },
