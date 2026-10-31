@@ -33,7 +33,7 @@ if TYPE_CHECKING:
 
 
 def test_probe_python_current_interpreter() -> None:
-    info = probe_python(sys.executable)
+    info: Final[SubprocessPythonInfo | None] = probe_python(sys.executable)
     assert info is not None
     assert info.version_info.major == sys.version_info.major
     assert info.version_info.minor == sys.version_info.minor
@@ -43,6 +43,25 @@ def test_probe_python_current_interpreter() -> None:
     assert info.system_executable
     assert info.sysconfig_platform is not None
     assert info.machine  # should be non-empty on all platforms
+    assert info.marker_environment is None
+
+
+def test_subprocess_python_info_positional_constructor() -> None:
+    probed: Final[SubprocessPythonInfo | None] = probe_python(sys.executable)
+    assert probed is not None
+    info: Final[SubprocessPythonInfo] = SubprocessPythonInfo(
+        "cpython",
+        probed.version_info,
+        "3.11.0",
+        64,
+        "linux",
+        "/usr/bin/python3",
+        False,
+        True,
+        "linux-x86_64",
+    )
+
+    assert (info.debug_build, info.sysconfig_platform, info.marker_environment) == (True, "linux-x86_64", None)
 
 
 def test_probe_python_nonexistent() -> None:

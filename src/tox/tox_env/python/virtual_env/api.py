@@ -174,7 +174,7 @@ class VirtualEnv(Python, ABC):
             resolved = get_interpreter(base_python, try_first_with=try_first_with, cache=cache, env=env)
             if resolved is None or (executable := resolved.system_executable) is None:
                 continue
-            if (interpreter := probe_python(executable)) is not None:
+            if (interpreter := probe_python(executable, resolved.marker_environment)) is not None:
                 break
         # only pay the bootstrap cost once an interpreter is found; a missing one skips without it
         bootstrap = ensure_bootstrap(self.core.get("work_dir", Path), spec) if interpreter is not None else None
@@ -235,6 +235,7 @@ class VirtualEnv(Python, ABC):
             free_threaded=interpreter.free_threaded,
             debug=interpreter.debug_build,
             machine=getattr(interpreter, "machine", None),
+            marker_environment=interpreter.marker_environment,
         )
 
     @override
@@ -369,3 +370,8 @@ _VIRTUALENV_DROPS: tuple[_VirtualenvDrop, ...] = (
     _VirtualenvDrop(newest_unsupported=_PyVersion(major=3, minor=8), dropped_in=Version("21.5.0")),
     _VirtualenvDrop(newest_unsupported=_PyVersion(major=3, minor=6), dropped_in=Version("20.22.0")),
 )
+
+
+__all__ = [
+    "VirtualEnv",
+]

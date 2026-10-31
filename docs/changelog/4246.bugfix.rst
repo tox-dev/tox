@@ -1,0 +1,3 @@
+``pylock`` now evaluates Python and platform markers using a complete environment from the target interpreter.
+Previously, missing values such as ``implementation_version`` came from the Python running tox, which could select a
+package locked for the wrong interpreter.

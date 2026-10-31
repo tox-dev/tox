@@ -6,9 +6,11 @@ import logging
 from abc import ABC
 from functools import partial
 from pathlib import Path
-from typing import TYPE_CHECKING, Literal, TypeAlias, get_args
+from typing import TYPE_CHECKING, Final, Literal, TypeAlias, get_args
 
+from packaging.markers import default_environment
 from packaging.utils import canonicalize_name
+from python_discovery import PythonInfo as DiscoveredPythonInfo
 
 from tox.config.types import Command
 from tox.execute import Outcome
@@ -31,6 +33,8 @@ PackageType: TypeAlias = Literal[
 
 
 if TYPE_CHECKING:
+    from typing_extensions import TypeIs
+
     from tox.config.sets import EnvConfigSet
     from tox.tox_env.api import ToxEnvCreateArgs
     from tox.tox_env.package import Package
@@ -176,18 +180,34 @@ class PythonRun(Python, RunToxEnv, ABC):
         if not (path := self.core.get("package_root", Path) / pylock_path).exists():
             msg = f"pylock file {pylock_path!r} not found at {path}"
             raise Fail(msg)
-        info = self.base_python
-        marker_env = {
-            "implementation_name": info.impl_lower,
-            "platform_python_implementation": info.implementation,
-            "python_version": info.version_dot,
-            "python_full_version": f"{info.version_info.major}.{info.version_info.minor}.{info.version_info.micro}",
-            "sys_platform": info.platform,
-        }
+        marker_env: Final[dict[str, str]] = self._target_marker_environment()
         extras = self.conf.get("extras", set[str])
         groups = self.conf.get("dependency_groups", set[str])
         pylock = Pylock(path=path, extras=frozenset(extras), groups=frozenset(groups), marker_env=marker_env)
         self._install(pylock, PythonRun.__name__, "pylock")
+
+    def _target_marker_environment(self) -> dict[str, str]:
+        if (discovered := self.base_python.marker_environment) is None:
+            python: Final[Path] = self.env_python()
+            interpreter: Final[DiscoveredPythonInfo | None] = DiscoveredPythonInfo.from_exe(
+                str(python), raise_on_error=False, resolve_to_host=False, env=self.environment_variables
+            )
+            if interpreter is None:
+                msg = f"failed to determine the marker environment of {python}"
+                raise Fail(msg)
+            discovered = interpreter.marker_environment
+        if not self._is_marker_environment(discovered):
+            msg = f"failed to determine the marker environment of {self.env_python()}: incomplete or invalid data"
+            raise Fail(msg)
+        return discovered
+
+    @staticmethod
+    def _is_marker_environment(value: object) -> TypeIs[dict[str, str]]:
+        return (
+            isinstance(value, dict)
+            and value.keys() == default_environment().keys()
+            and all(isinstance(item, str) for item in value.values())
+        )
 
     @override
     def _setup_with_env(self) -> None:
