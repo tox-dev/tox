@@ -1,4 +1,0 @@
-An inline :ref:`deps` or :ref:`constraints` entry that directly substitutes a host variable via ``{env:NAME}`` or a TOML
-``replace = "env"`` table now passes ``${OTHER}`` text in that value to pip unchanged. A TOML reference to the loaded
-entry keeps the same behavior. A ``${NAME}`` reference written in the configuration or a substitution default still
-expands.

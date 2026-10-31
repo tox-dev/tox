@@ -1,2 +1,0 @@
-A pre-existing symlink at ``.tox-info.json`` no longer supplies cached state. When tox writes state, it replaces the
-link and leaves its target untouched.

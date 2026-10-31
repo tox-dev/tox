@@ -1,2 +1,0 @@
-A TOML type mismatch no longer includes an expanded string or container value. A malformed ``commands`` setting with
-``{env:...}`` reports its type instead of the substituted text.

@@ -1,3 +1,0 @@
-Keep environment markers when a package extra refers to another extra of the same package.
-
-For example, ``demo[dev]; python_version < '3.10'`` keeps the version condition on dependencies from ``dev``.

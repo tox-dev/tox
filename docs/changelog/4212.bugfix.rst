@@ -1,3 +1,0 @@
-A packaging environment whose ``base_python`` (or ``default_base_python``) is not installed no longer crashes with
-``KeyError: 'skip_missing_interpreters'``. It now fails with the missing interpreter, or skips the run environment when
-``skip_missing_interpreters`` is true, as tox did before 4.36.0.

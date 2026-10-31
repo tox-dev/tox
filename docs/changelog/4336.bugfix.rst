@@ -1,1 +1,0 @@
-Read the Docs now fetches Git history and tags before installing tox, so VCS version detection can satisfy ``tox-uv``.

@@ -1,2 +1,0 @@
-A relative ``TOX_INSTALL_PKG`` or user configuration ``install_pkg`` path is now resolved against the invocation
-directory, as ``--installpkg`` already was, so tox inspects and installs from the same path.

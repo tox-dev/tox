@@ -1,1 +1,0 @@
-Mask values when a flag or environment variable name contains a secret keyword after a newline.

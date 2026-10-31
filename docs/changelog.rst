@@ -6,6 +6,276 @@
 
 .. towncrier release notes start
 
+.. _release-4-67-5:
+
+*********************
+ 4.67.5 (2026-10-31)
+*********************
+
+.. _release-4-67-5-fixed:
+
+Fixed
+-----
+
+- A packaging environment whose ``base_python`` (or ``default_base_python``) is not installed no longer crashes with
+  ``KeyError: 'skip_missing_interpreters'``. It now fails with the missing interpreter, or skips the run environment
+  when ``skip_missing_interpreters`` is true, as tox did before 4.36.0 (:pr:`4213`) by :user:`gaborbernat`.
+  (:issue:`4212`)
+- Keep environment markers when a package extra refers to another extra of the same package.
+
+  For example, ``demo[dev]; python_version < '3.10'`` keeps the version condition on dependencies from ``dev``
+  (:pr:`4216`) by :user:`ericdelorefice` and :user:`gaborbernat`.
+
+- A ``pylock.toml`` or a tox user configuration file (``TOX_USER_CONFIG_FILE``) saved with a UTF-8 byte order mark, as
+  some Windows editors do, is now read instead of failing with a TOML decode error or being ignored with ``failed to
+  read config file`` (:pr:`4217`) by :user:`pcbeingused333`.
+- With ``args_are_paths`` enabled, a positional argument naming an existing file whose rewritten path relative to
+  ``change_dir`` starts with ``-`` (for example ``tests/--config=evil.cfg``) is now prefixed with ``./`` so the command
+  still receives a path instead of an option (:pr:`4317`) by :user:`rahuldevikar` and :user:`gaborbernat`.
+  (:issue:`4218`)
+- An extending TOML ``replace`` table with a nonempty ``marker`` now raises an error instead of adding its internal
+  ``value`` and ``marker`` keys to :ref:`deps` or :ref:`requires`. Markers on ``set_env`` values remain supported
+  (:pr:`4320`) by :user:`rahuldevikar` and :user:`gaborbernat`. (:issue:`4220`)
+- A TOML type mismatch no longer includes an expanded string or container value. A malformed ``commands`` setting with
+  ``{env:...}`` reports its type instead of the substituted text (:pr:`4327`) by :user:`rahuldevikar` and
+  :user:`gaborbernat`. (:issue:`4221`)
+- Keep artifacts supplied with ``--installpkg`` out of tox's provisioning environment while installing them in the
+  requested test environments (:pr:`4304`) by :user:`Pratham2511` and :user:`gaborbernat`. (:issue:`4222`)
+- A ``file:`` URI passed to ``--installpkg`` is now percent-decoded once instead of twice, so a path containing a
+  literal ``%`` sequence, such as a directory named ``feature%2Flogin``, selects the package the user named (:pr:`4300`)
+  by :user:`pcbeingused333` and :user:`gaborbernat`. (:issue:`4223`)
+- A relative ``TOX_INSTALL_PKG`` or user configuration ``install_pkg`` path is now resolved against the invocation
+  directory, as ``--installpkg`` already was, so tox inspects and installs from the same path (:pr:`4333`) by
+  :user:`rahuldevikar` and :user:`gaborbernat`. (:issue:`4224`)
+- tox refuses a symlink or Windows junction at ``meta_dir`` because the build frontend empties that directory during
+  metadata preparation (:pr:`4332`) by :user:`rahuldevikar` and :user:`gaborbernat`. (:issue:`4225`)
+- An explicitly empty ``base_python`` (for example ``{env:TOXPYTHON:python3.11}`` with ``TOXPYTHON`` empty) now fails
+  during configuration with ``base_python for env <name> is empty``. Blank entries in a ``base_python`` list are ignored
+  (:pr:`4326`) by :user:`rahuldevikar` and :user:`gaborbernat`. (:issue:`4226`)
+- A path setting that expands to an empty value, such as ``env_tmp_dir = {env:SCRATCH_DIR}`` with ``SCRATCH_DIR`` unset,
+  now fails with a configuration error instead of resolving to the current directory, which tox could then clear
+  (:pr:`4330`) by :user:`rahuldevikar` and :user:`gaborbernat`. (:issue:`4227`)
+- Keep every value of a multi-value command line flag, such as ``-f py legacy``, with that flag. The command scanner
+  took a later value matching a subcommand as the command, causing environments without that factor to run (:pr:`4319`)
+  by :user:`rahuldevikar` and :user:`gaborbernat`. (:issue:`4228`)
+- Unreadable wheels, invalid wheel metadata, and unreadable or empty source archives supplied through ``--installpkg``
+  now produce errors that name the artifact instead of internal error tracebacks (:pr:`4287`) by :user:`santhiprakash`
+  and :user:`gaborbernat`. (:issue:`4230`)
+- Reject NUL characters in ``set_env`` file assignments with a handled input error instead of a subprocess traceback
+  (:pr:`4279`) by :user:`Doomguy-BFG9000` and :user:`gaborbernat`. (:issue:`4231`)
+- Limit each requirement or constraint file to 10 MiB, so oversized and endless includes fail with a size error. For
+  remote files, tox checks a 120-second deadline between response body reads. Slow HTTP framing can delay that check
+  (:pr:`4312`) by :user:`rahuldevikar` and :user:`gaborbernat`. (:issue:`4232`)
+- tox now validates inline script ``dependencies`` as requirements before installing them. An invalid entry such as a
+  pip option fails before tox passes the dependencies to pip (:pr:`4306`) by :user:`santhiprakash` and
+  :user:`gaborbernat`. (:issue:`4233`)
+- Read static package dependencies and the ``editable-legacy`` install path from the packaging environment's
+  :ref:`package_root` instead of the core one, so a ``package_root`` set in ``[testenv:.pkg]`` no longer pairs the built
+  package with the dependencies declared next to ``tox.ini`` (:pr:`4321`) by :user:`rahuldevikar` and
+  :user:`gaborbernat`. (:issue:`4234`)
+- A package environment path that is already a symlink no longer causes ``tox list`` to create ``file.lock`` under the
+  link target (:pr:`4311`) by :user:`rahuldevikar` and :user:`gaborbernat`. (:issue:`4235`)
+- tox now expands ``${VAR}`` in requirements and constraints files using the environment running pip, including
+  ``pass_env`` and ``set_env``, instead of the tox process. A variable absent from that environment stays literal, so
+  tox cannot put its host value in a fetched URL. To retain expansion, add it to ``pass_env`` or define it with
+  ``set_env`` (:pr:`4323`) by :user:`rahuldevikar` and :user:`gaborbernat`. (:issue:`4236`)
+- Mask values when a flag or environment variable name contains a secret keyword after a newline (:pr:`4259`) by
+  :user:`haigou-web` and :user:`gaborbernat`. (:issue:`4237`)
+- ``tox -h`` no longer prints secret-looking ``--key=value`` values from ``TOX_OVERRIDE``. Conversion warnings also mask
+  those values in invalid ``TOX_`` options (:pr:`4303`) by :user:`faresrafat3` and :user:`gaborbernat`. (:issue:`4238`)
+- A ``tox.toml`` or ``pyproject.toml`` string with literal braces around text containing a colon, such as a JSON
+  argument holding a URL or a time, is now kept as written, as in ``tox.ini``, instead of being read as a
+  ``{key:default}`` reference. Positional arguments such as ``set_env:x`` passed into such braces through ``{posargs}``
+  no longer expand into the value of that setting (:pr:`4269`) by :user:`Anandb71` and :user:`gaborbernat`.
+  (:issue:`4239`)
+- Reject wheel metadata entries over 8 MiB uncompressed, limiting memory use during package installation (:pr:`4328`) by
+  :user:`rahuldevikar` and :user:`gaborbernat`. (:issue:`4240`)
+- Recreate an environment when its ``.tox-info.json`` contains a non-mapping value for a section that requires a mapping
+  (:pr:`4258`) by :user:`haigou-web` and :user:`gaborbernat`. (:issue:`4241`)
+- Preserve empty positional arguments when rewriting relative paths for ``change_dir`` (:pr:`4256`) by :user:`Fire162`
+  and :user:`gaborbernat`. (:issue:`4242`)
+- ``base_python_file`` rejects non-regular files, undecodable content, and version lines over 1024 characters with a
+  handled error naming the file. It reads comments in bounded chunks, so a long comment can still precede the version
+  (:pr:`4325`) by :user:`rahuldevikar` and :user:`gaborbernat`. (:issue:`4243`)
+- ``base_python_file`` now accepts only a Python version specifier (such as ``3.13`` or ``pypy3.10``) from the version
+  file. A path or program name there no longer makes tox start that program during interpreter discovery, and the
+  rejected line is not echoed in the error message (:pr:`4324`) by :user:`rahuldevikar` and :user:`gaborbernat`.
+  (:issue:`4244`)
+- An inline :ref:`deps` or :ref:`constraints` entry that directly substitutes a host variable via ``{env:NAME}`` or a
+  TOML ``replace = "env"`` table now passes ``${OTHER}`` text in that value to pip unchanged. A TOML reference to the
+  loaded entry keeps the same behavior. A ``${NAME}`` reference written in the configuration or a substitution default
+  still expands (:pr:`4329`) by :user:`rahuldevikar` and :user:`gaborbernat`. (:issue:`4245`)
+- ``pylock`` now evaluates Python and platform markers using a complete environment from the target interpreter.
+  Previously, missing values such as ``implementation_version`` came from the Python running tox, which could select a
+  package locked for the wrong interpreter (:pr:`4331`) by :user:`rahuldevikar` and :user:`gaborbernat`. (:issue:`4246`)
+- For active packages in a ``pylock.toml``, reject whitespace or control characters in hash tokens, archive or VCS URLs,
+  commit IDs, and subdirectories before writing pip requirements. A line break in one of these fields could add a pip
+  option such as ``--index-url``. The check also covers values pip expands from ``${VAR}`` references. Changing a
+  referenced value reinstalls the locked packages (:pr:`4315`) by :user:`rahuldevikar` and :user:`gaborbernat`.
+  (:issue:`4247`)
+- A direct URL entry in :ref:`requires` (such as ``tox @ file:///path/to/tox.whl``) now triggers provisioning unless the
+  installed distribution's ``direct_url.json`` records the requested source, including a supported archive hash,
+  subdirectory, or VCS revision. `pip <https://pip.pypa.io/en/stable/>`_ discards fragment fields such as ``egg``; these
+  no longer trigger repeat provisioning. When the installer omits credentials from the origin record, a credentialed
+  direct URL without a requested archive hash fails with an explanation instead of hanging during provisioning
+  (:pr:`4314`) by :user:`rahuldevikar` and :user:`gaborbernat`. (:issue:`4248`)
+- tox now rejects sdist members whose paths or link targets escape the extraction directory. On Python versions without
+  the ``tarfile`` data filter, tox checks each member as it extracts the archive (:pr:`4316`) by :user:`rahuldevikar`
+  and :user:`gaborbernat`. (:issue:`4249`)
+- Report the file and line number for an invalid ``set_env`` file line, since its content may contain a secret
+  (:pr:`4298`) by :user:`r3wretrhy` and :user:`gaborbernat`. (:issue:`4250`)
+- Keep input bytes out of ``tox config`` INI, JSON, and TOML output when a configuration key reads non-UTF-8 data
+  (:pr:`4302`) by :user:`ducanhnguyen223`, ducanhnguyen223 and :user:`gaborbernat`. (:issue:`4251`)
+- A pre-existing symlink at ``.tox-info.json`` no longer supplies cached state. When tox writes state, it replaces the
+  link and leaves its target untouched (:pr:`4322`) by :user:`rahuldevikar` and :user:`gaborbernat`. (:issue:`4253`)
+- When rebuilding a stale bootstrap environment for ``virtualenv_spec``, tox removes a link at the cache path and
+  creates the replacement without ``venv``'s ``clear`` option. A link placed there after cleanup and before directory
+  creation stops the rebuild without emptying its target (:pr:`4313`) by :user:`rahuldevikar` and :user:`gaborbernat`.
+  (:issue:`4254`)
+- Redirected Windows output now escapes characters its code page cannot encode instead of raising
+  ``UnicodeEncodeError``. The stream keeps its encoding (:pr:`4257`) by :user:`haigou-web` and :user:`gaborbernat`.
+  (:issue:`4255`)
+- Read the Docs now fetches Git history and tags before installing tox, so VCS version detection can satisfy ``tox-uv``
+  (:pr:`4337`) by :user:`gaborbernat`. (:issue:`4336`)
+- A host variable substituted through ``set_env`` into :ref:`deps` or :ref:`constraints` now keeps ``${NAME}`` text
+  literal for pip. A ``${NAME}`` written in the configuration still expands (:pr:`4342`) by :user:`gaborbernat`.
+  (:issue:`4338`)
+- On Windows, building a ``virtualenv_spec`` bootstrap environment no longer writes through a junction swapped into its
+  cache entry. A linked project work directory still works; the work directory must allow temporary subdirectories
+  (:pr:`4341`) by :user:`gaborbernat`. (:issue:`4339`)
+- ``test_parallel_general`` uses an absolute missing-interpreter path to avoid Windows registry probes in CI
+  (:pr:`4346`) by :user:`gaborbernat`. (:issue:`4344`)
+- A ``set_env`` line with a substituted key keeps its value in one variable, even when the input contains a line break.
+  A key that expands to ``=`` or a line separator raises an error (:pr:`4265`) by :user:`gaborbernat`.
+- A host environment value selected by ``{env:NAME}`` that references itself twice could stall tox during recursive
+  expansion. tox now stops expansion at the first depth-limit hit, logs one warning, and leaves the remaining text
+  unexpanded (:pr:`4272`) by :user:`gaborbernat`.
+- An included ``set_env`` keeps ``{env:...}`` values intact when the source environment inherits the setting, uses
+  ``setenv`` or comes from a generative section. The TOML string form ``"{[env.name]set_env}"`` does the same. Line
+  breaks, ``;`` and ``file|`` text inside values no longer become ``set_env`` syntax (:pr:`4268`) by
+  :user:`gaborbernat`.
+- An invalid ``pylock.toml``, including malformed TOML or non-UTF-8 bytes, now reports ``invalid pylock file`` with the
+  filename and the parser or decoder error instead of an internal traceback (:pr:`4215`) by :user:`PRINCE2-AI`, Prince
+  and :user:`gaborbernat`.
+- Help with an invalid ``-c`` configuration now looks for an inline plugin in the requested file's parent directory or
+  inside the selected directory (:pr:`4267`) by :user:`gaborbernat`.
+- INI commands now keep a path reference such as ``{tox_root}``, ``{env_tmp_dir}`` or ``{env_python}`` within one
+  argument, including when the path contains spaces, quotes or backslashes. The same applies to tox-provided values such
+  as ``{host_python}`` and ``{tox_root_name}``, entries of a list such as ``{base_python}``, and file names matched by
+  ``{glob:PATTERN}``. Command values set with ``-x`` or ``TOX_OVERRIDE`` follow the same rule (:pr:`4290`) by
+  :user:`gaborbernat`.
+- INI commands that reference :ref:`deps` now preserve each pip option operand as one argument. A substituted
+  ``--find-links`` path containing spaces can no longer add options to the command. The ``tox config`` display escapes
+  spaces, quotes and backslashes in those operands (:pr:`4276`) by :user:`gaborbernat`.
+- Keep a substitution within the quoted INI command argument it is part of: ``"--title={env:TITLE}"`` is one argument
+  even when the value of ``TITLE`` holds quotes or whitespace, as it is for a TOML argument array. tox used to paste the
+  value into the command text before splitting it, so a quote in the value ended the argument and the rest of the value
+  arrived as further arguments of the command. ``install_command`` and ``list_dependencies_command`` get the same
+  handling (:pr:`4283`) by :user:`gaborbernat`.
+- Mask credentials in ``requires`` direct URLs in missing-requirement messages and echoed provisioning commands
+  (:pr:`4334`) by :user:`gaborbernat`.
+- Mask secret-looking inline flag values in result JSON command lists, retry warnings, subprocess start errors, path
+  debug logs, unknown-argument errors, and ``ExecuteRequest`` representations (:pr:`4264`) by :user:`gaborbernat`.
+- On POSIX, tox now pins each directory on the path to the project root while reading or changing a ``.venv`` redirect.
+  A concurrent path swap can no longer redirect removal or replacement into another directory (:pr:`4308`) by
+  :user:`gaborbernat`.
+- On POSIX, tox now resolves relative commands and ``PATH`` entries from the command's working directory. The
+  ``allowlist_externals`` check and ``TOX_LIMITED_SHEBANG`` interpreter selection use the file that the child executes
+  (:pr:`4275`) by :user:`gaborbernat`.
+- On Windows, INI command references such as ``{[testenv:a]commands}`` now preserve argument boundaries when a
+  positional argument contains an apostrophe or backslash. ``tox config`` displays the command with the same quoting tox
+  uses to parse a reference (:pr:`4277`) by :user:`gaborbernat`.
+- On Windows, tox pins the project path while reading or changing a ``.venv`` redirect. A concurrent directory rename or
+  junction added to an empty project directory cannot redirect a write or removal into another project. Redirect writes
+  replace ``.venv`` with a temporary file, leaving the target of a swapped ``.venv`` symlink or hard link unchanged
+  (:pr:`4335`) by :user:`gaborbernat`.
+- On Windows, tox quotes arguments passed to ``.bat`` and ``.cmd`` commands for ``cmd.exe``. Values containing shell
+  operators or percent signs reach the batch file without starting another command or expanding environment variables.
+  Batch scripts that inspect raw ``%1`` may now see surrounding quotes for arguments that need them (:pr:`4288`) by
+  :user:`gaborbernat`.
+- Pass each :ref:`base_python` entry to virtualenv as a separate ``--python`` argument. virtualenv split the old
+  ``VIRTUALENV_PYTHON`` value on commas and ``os.pathsep``, then tried the first candidate last; that could start an
+  unintended program (:pr:`4292`) by :user:`gaborbernat`.
+- Prefix normalized dependency paths whose first component starts with ``-`` using ``./`` on POSIX or ``.\`` on Windows.
+  The resulting pip argument no longer starts with ``-`` (:pr:`4266`) by :user:`gaborbernat`.
+- Preserve ``#`` in INI references to paths, so ``change_dir``, ``env_dir`` and ``set_env = file|...`` use the checkout
+  directory when its name contains ``#``. On POSIX, requirement-file paths with a space before ``#`` remain readable
+  (:pr:`4285`) by :user:`gaborbernat`.
+- Preserve frozen dependency constraints when using ``--no-capture`` or setting up an environment with ``tox exec``
+  (:pr:`4301`) by :user:`Pratham2511` and :user:`gaborbernat`.
+- Reject a bootstrap cache parent that already resolves outside the work directory before opening its lock or creating
+  an environment (:pr:`4345`) by :user:`gaborbernat`.
+- Reject a line break in a substitution within one ``deps`` or ``constraints`` entry, and a backslash ending a
+  substituted requirement line. Also reject line breaks and trailing backslashes in globbed requirement paths and
+  provisioning requirements. These values can no longer add pip options or consume the following entry (:pr:`4295`) by
+  :user:`gaborbernat`.
+- Reject an entry separator supplied by a substitution within an INI list, set, dictionary or :ref:`env_list` entry.
+  This prevents a value inside one :ref:`requires` entry from adding a requirement, and a value inside one
+  :ref:`env_list` entry from selecting another environment. A substitution that occupies a whole entry can still expand
+  to several entries. The same check applies to text overrides supplied with ``-x`` or ``TOX_OVERRIDE`` (:pr:`4284`) by
+  :user:`gaborbernat`.
+- Replace line breaks in positional arguments before quoting them for ``{posargs}`` and INI command references. This
+  prevents a line break in one argument from starting another command (:pr:`4294`) by :user:`gaborbernat`.
+- Shell completion now uses the ``-c``/``--conf`` path from the typed line when loading ``toxfile.py`` and offering
+  environments. While that path is incomplete, completion loads no inline plugin (:pr:`4278`) by :user:`gaborbernat`.
+- The provisioned tox now starts with Python's safe path option. During its ``-m tox`` re-exec, Python no longer puts
+  the start directory first on ``sys.path``, where an unrelated file could replace tox or a dependency (:pr:`4270`) by
+  :user:`gaborbernat`.
+- Validate built-in command options before selecting an inline plugin. An invalid option value no longer causes tox to
+  import a plugin from an unselected project. Put ``-c``/``--conf`` or ``--root`` before options defined by an inline
+  plugin (:pr:`4281`) by :user:`gaborbernat`.
+- Values expanded from secret-named environment variables in requirements files no longer appear in the install cache,
+  recreation warnings, or file-read errors. tox may recreate an existing environment once to replace a cache written by
+  an older version (:pr:`4280`) by :user:`gaborbernat`.
+- When positional arguments supply the command, as in ``tox exec`` or ``commands = {posargs}``, tox now leaves a bare
+  program name such as ``python`` unchanged. It also leaves a bare executable first positional value unchanged,
+  including when a command uses that value as data, because wrappers can run it as a program. A same-named file in the
+  start directory no longer replaces the environment's program. An explicit path such as ``./python`` still follows
+  :ref:`args_are_paths` (:pr:`4289`) by :user:`gaborbernat`.
+- With ``TOX_LIMITED_SHEBANG`` enabled, tox now keeps quote and backslash characters in an unquoted shebang interpreter
+  path. They no longer change the executable tox starts. The existing double-quoted form for paths with spaces remains
+  supported (:pr:`4274`) by :user:`gaborbernat`.
+- With ``args_are_paths`` on POSIX, tox now rewrites positional paths from the resolved :ref:`change_dir`. A linked
+  ``.tox`` can no longer redirect a positional path to a file beside the link target (:pr:`4273`) by
+  :user:`gaborbernat`.
+- ``pylock`` and ``dependency_groups`` now use ``package_root`` when a run has no package environment. They previously
+  used ``tox_root`` in that case (:pr:`4299`) by :user:`pcbeingused333` and :user:`gaborbernat`.
+- tox now rejects environment names that are not a single path component before creating an environment. This prevents a
+  substituted ``env_list``, label or package environment name from selecting a directory outside ``work_dir``
+  (:pr:`4271`) by :user:`gaborbernat`.
+- tox now resolves relative ``env_dir``, ``env_tmp_dir``, ``env_log_dir``, ``work_dir``, ``temp_dir``, ``package_root``,
+  ``meta_dir``, ``pkg_dir`` and ``package_glob`` values against :ref:`tox_root`. With ``tox -c path/to/tox.ini`` started
+  elsewhere, it no longer clears or reuses those directories in the start directory or selects a package from there
+  (:pr:`4291`) by :user:`gaborbernat`.
+- tox passes positional arguments, ``{glob:PATTERN}`` matches and ``TOX_FACTOR_<label>`` overrides literally in INI
+  configuration: a ``{...}`` or ``[]`` in them is no longer substituted again, so ``tox run -- '{env:SECRET}'`` hands
+  the command ``{env:SECRET}`` instead of the variable's value and ``tox run -- '{posargs} -x'`` stays one argument. The
+  ``DEFAULTS`` of ``{posargs:DEFAULTS}`` and referenced keys still expand their own substitutions (:pr:`4286`) by
+  :user:`gaborbernat`.
+
+.. _release-4-67-5-security:
+
+Security
+--------
+
+- Keep virtualenv's pip seeder debug line visible and mask secret-named environment values before tox prints it
+  (:pr:`4293`) by :user:`gaborbernat`.
+- Mask secret-looking inline flags inside a command argument when INI parsing leaves several words in that argument
+  (:pr:`4263`) by :user:`gaborbernat`.
+- Reject pip options added through partial ``deps`` or ``constraints`` substitutions, including ``${VAR}`` expansion.
+  tox still accepts options written on the same line in either setting (:pr:`4297`) by :user:`gaborbernat`.
+- Replace stale package staging links under the work directory and reject staging paths another account can change.
+  Create the staged package exclusively so a substituted destination link cannot overwrite its target (:pr:`4305`) by
+  :user:`gaborbernat`.
+- Validate ``virtualenv_spec`` as a ``virtualenv`` requirement with optional version specifiers before invoking pip
+  (:pr:`4261`) by :user:`gaborbernat`.
+- Where descriptor-based ``rmtree`` and ``O_DIRECTORY``/``O_NOFOLLOW`` are available, clean environment, log, and
+  temporary directories relative to an open directory descriptor so a symlink swap cannot redirect deletions outside
+  tox's work directory. Replace a link already at the cleanup path without emptying its target (:pr:`4296`) by
+  :user:`gaborbernat`.
+- ``set_env`` environment files now split entries only at LF or CR line endings. Embedded Unicode separators no longer
+  start a new variable (:pr:`4260`) by :user:`gaborbernat`.
+
 .. _release-4-67-4:
 
 *********************

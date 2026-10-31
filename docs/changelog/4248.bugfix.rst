@@ -1,5 +1,0 @@
-A direct URL entry in :ref:`requires` (such as ``tox @ file:///path/to/tox.whl``) now triggers provisioning unless the
-installed distribution's ``direct_url.json`` records the requested source, including a supported archive hash,
-subdirectory, or VCS revision. `pip <https://pip.pypa.io/en/stable/>`_ discards fragment fields such as ``egg``; these
-no longer trigger repeat provisioning. When the installer omits credentials from the origin record, a credentialed
-direct URL without a requested archive hash fails with an explanation instead of hanging during provisioning.

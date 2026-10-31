@@ -1,1 +1,0 @@
-Keep input bytes out of ``tox config`` INI, JSON, and TOML output when a configuration key reads non-UTF-8 data.

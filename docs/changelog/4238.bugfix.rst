@@ -1,2 +1,0 @@
-``tox -h`` no longer prints secret-looking ``--key=value`` values from ``TOX_OVERRIDE``. Conversion warnings also mask
-those values in invalid ``TOX_`` options.

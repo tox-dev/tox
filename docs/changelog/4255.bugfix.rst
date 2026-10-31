@@ -1,2 +1,0 @@
-Redirected Windows output now escapes characters its code page cannot encode instead of raising ``UnicodeEncodeError``.
-The stream keeps its encoding.
