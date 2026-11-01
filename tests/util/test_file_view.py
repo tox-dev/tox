@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import stat
 import sys
 from pathlib import Path
 from typing import TYPE_CHECKING, Final
@@ -85,6 +86,26 @@ def test_create_session_view_rejects_writable_staging_parent(tmp_path: Path) -> 
         create_session_view(package, staging, tmp_path)
 
     assert list(staging.iterdir()) == []
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="POSIX directory permissions")
+def test_create_session_view_tightens_umask_group_writable(tmp_path: Path) -> None:
+    package: Final[Path] = tmp_path / "pkg.whl"
+    package.write_bytes(b"data")
+    work_dir: Final[Path] = tmp_path / ".tox"
+    temp_dir: Final[Path] = work_dir / ".tmp"
+    staging: Final[Path] = temp_dir / "package"
+    staging.mkdir(parents=True)
+    for folder in (work_dir, temp_dir, staging):
+        folder.chmod(0o775)
+
+    result: Final[Path] = create_session_view(package, staging, tmp_path)
+
+    assert result.read_bytes() == b"data"
+    group_or_other_write: Final[int] = stat.S_IWGRP | stat.S_IWOTH
+    assert work_dir.stat().st_mode & group_or_other_write == 0
+    assert temp_dir.stat().st_mode & group_or_other_write == 0
+    assert staging.stat().st_mode & group_or_other_write == 0
 
 
 @pytest.mark.skipif(sys.platform == "win32", reason="POSIX directory ownership")

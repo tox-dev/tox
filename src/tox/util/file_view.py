@@ -17,7 +17,9 @@ def create_session_view(package: Path, temp_path: Path, trust_root: Path | None 
         temp_path.unlink()
     temp_path.mkdir(parents=True, exist_ok=True)
     if sys.platform != "win32":
-        _ensure_private_staging_path(temp_path, trust_root, os.geteuid())
+        user_id: Final[int] = os.geteuid()
+        _tighten_owned_group_writable(temp_path, trust_root, user_id)
+        _ensure_private_staging_path(temp_path, trust_root, user_id)
     file_id: Final[int] = max((int(entry.name) for entry in temp_path.iterdir() if entry.name.isnumeric()), default=0)
     session_dir: Final[Path] = temp_path / str(file_id + 1)
     session_dir.mkdir()
@@ -33,6 +35,25 @@ def create_session_view(package: Path, temp_path: Path, trust_root: Path | None 
         rel_session, rel_package = session_package.relative_to(common), package.relative_to(common)
         logging.debug("package %s copied to %s (%s)", rel_session, rel_package, common)
     return session_package
+
+
+def _tighten_owned_group_writable(temp_path: Path, trust_root: Path | None, user_id: int) -> None:
+    """Drop group-write on directories we own so umask ``002`` does not fail the check.
+
+    World-writable directories are left for :func:`_ensure_private_staging_path` to reject.
+    """
+    trusted_roots: Final[set[Path]] = {trust_root, trust_root.resolve()} if trust_root is not None else set()
+    seen: Final[set[Path]] = set()
+    for candidate in {temp_path, temp_path.resolve()}:
+        for parent in (candidate, *candidate.parents):
+            if parent in trusted_roots:
+                break
+            if parent in seen:
+                continue
+            seen.add(parent)
+            metadata: os.stat_result = parent.stat()
+            if metadata.st_uid == user_id and metadata.st_mode & stat.S_IWGRP and not metadata.st_mode & stat.S_IWOTH:
+                parent.chmod(stat.S_IMODE(metadata.st_mode) & ~stat.S_IWGRP)
 
 
 def _ensure_private_staging_path(temp_path: Path, trust_root: Path | None, user_id: int) -> None:
