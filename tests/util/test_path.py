@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING, Final
 
 import pytest
 
-from tox.util.path import ensure_cachedir_tag, ensure_empty_dir, ensure_gitignore
+from tox.util.path import ensure_cachedir_tag, ensure_empty_dir, ensure_gitignore, ensure_private_dir
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
@@ -54,6 +54,28 @@ def test_ensure_cachedir_tag_does_not_overwrite(tmp_path: Path) -> None:
     tag.write_text("Signature: 8a477f597d28d172789f06886806bc55\n# custom\n", encoding="utf-8")
     ensure_cachedir_tag(tmp_path)
     assert tag.read_text(encoding="utf-8") == "Signature: 8a477f597d28d172789f06886806bc55\n# custom\n"
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="POSIX directory permissions")
+def test_ensure_private_dir_keeps_existing_permissions(tmp_path: Path) -> None:
+    parent = tmp_path / "existing"
+    parent.mkdir()
+    parent.chmod(0o775)
+    child = parent / "private"
+
+    ensure_private_dir(child)
+    ensure_private_dir(child)
+
+    assert stat.S_IMODE(parent.stat().st_mode) == 0o775
+    assert stat.S_IMODE(child.stat().st_mode) == 0o700
+
+
+def test_ensure_private_dir_rejects_file(tmp_path: Path) -> None:
+    path = tmp_path / "file"
+    path.touch()
+
+    with pytest.raises(FileExistsError):
+        ensure_private_dir(path)
 
 
 def test_ensure_empty_dir_file(tmp_path: Path) -> None:

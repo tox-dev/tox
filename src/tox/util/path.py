@@ -29,6 +29,15 @@ def ensure_cachedir_tag(work_dir: Path) -> None:
         tag_path.write_text(_CACHEDIR_TAG, encoding="utf-8")
 
 
+def ensure_private_dir(path: Path) -> None:
+    """Create a directory and missing parents with access restricted to the current user."""
+    try:
+        path.mkdir(mode=0o700, exist_ok=True)
+    except FileNotFoundError:
+        ensure_private_dir(path.parent)
+        path.mkdir(mode=0o700, exist_ok=True)
+
+
 def ensure_empty_dir(path: Path, except_filename: str | None = None) -> None:
     if path.is_symlink():
         path.unlink()
@@ -112,4 +121,5 @@ __all__ = [
     "ensure_cachedir_tag",
     "ensure_empty_dir",
     "ensure_gitignore",
+    "ensure_private_dir",
 ]
