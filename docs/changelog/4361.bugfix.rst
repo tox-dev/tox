@@ -1,0 +1,2 @@
+``tox config`` no longer fails with an ``AssertionError`` when an environment uses a runner whose plugin is not
+installed. It skips that environment, as ``tox run`` and ``tox list`` already do.
