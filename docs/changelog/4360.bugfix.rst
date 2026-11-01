@@ -1,0 +1,3 @@
+Fix package staging failures with permissive umasks such as ``0002`` by creating new staging directories and missing
+parents with owner-only access, rather than permissions that fail tox's own security checks. Existing directory
+permissions are left unchanged.
