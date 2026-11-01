@@ -41,6 +41,7 @@ def _tighten_owned_group_writable(temp_path: Path, trust_root: Path | None, user
     """Drop group-write on directories we own so umask ``002`` does not fail the check.
 
     World-writable directories are left for :func:`_ensure_private_staging_path` to reject.
+
     """
     trusted_roots: Final[set[Path]] = {trust_root, trust_root.resolve()} if trust_root is not None else set()
     seen: Final[set[Path]] = set()
