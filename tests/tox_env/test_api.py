@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import os
+import stat
 import sys
 from typing import TYPE_CHECKING, Final
 
@@ -18,6 +20,23 @@ def test_ensure_temp_dir_exists(tox_project: ToxProjectCreator) -> None:
     project = tox_project({"tox.ini": ini})
     result = project.run()
     result.assert_success()
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="POSIX directory permissions")
+@pytest.mark.parametrize("umask", [0o002, 0o000])
+def test_package_staging_with_permissive_umask(
+    tox_project: ToxProjectCreator, demo_pkg_inline: Path, umask: int
+) -> None:
+    project: Final[ToxProject] = tox_project({"tox.ini": "[testenv]\npackage=wheel"}, base=demo_pkg_inline)
+    previous: Final[int] = os.umask(umask)
+    try:
+        project.run("r", "-e", "py", "--notest").assert_success()
+    finally:
+        os.umask(previous)
+
+    work_dir: Final[Path] = project.path / ".tox"
+    for directory in (work_dir, work_dir / ".tmp", work_dir / ".tmp" / "package"):
+        assert stat.S_IMODE(directory.stat().st_mode) == 0o700
 
 
 def test_dont_cleanup_temp_dir(tox_project: ToxProjectCreator, tmp_path: Path) -> None:
