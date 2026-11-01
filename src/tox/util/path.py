@@ -29,6 +29,21 @@ def ensure_cachedir_tag(work_dir: Path) -> None:
         tag_path.write_text(_CACHEDIR_TAG, encoding="utf-8")
 
 
+def ensure_private_dir(path: Path) -> None:
+    """Remove group and other write permission from a tox-owned directory."""
+    if sys.platform == "win32" or path.is_symlink():
+        return
+    try:
+        metadata: Final[os.stat_result] = path.stat()
+    except OSError:
+        return
+    if metadata.st_uid != os.geteuid():
+        return
+    mode: Final[int] = stat.S_IMODE(metadata.st_mode)
+    if mode & (stat.S_IWGRP | stat.S_IWOTH):
+        path.chmod(mode & ~(stat.S_IWGRP | stat.S_IWOTH))
+
+
 def ensure_empty_dir(path: Path, except_filename: str | None = None) -> None:
     if path.is_symlink():
         path.unlink()
@@ -112,4 +127,5 @@ __all__ = [
     "ensure_cachedir_tag",
     "ensure_empty_dir",
     "ensure_gitignore",
+    "ensure_private_dir",
 ]

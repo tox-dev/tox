@@ -15,12 +15,13 @@ if TYPE_CHECKING:
 def create_session_view(package: Path, temp_path: Path, trust_root: Path | None = None) -> Path:
     if temp_path.is_symlink():
         temp_path.unlink()
-    temp_path.mkdir(parents=True, exist_ok=True)
+    _make_private_dirs(temp_path)
+    temp_path.mkdir(parents=True, exist_ok=True, mode=0o700)
     if sys.platform != "win32":
         _ensure_private_staging_path(temp_path, trust_root, os.geteuid())
     file_id: Final[int] = max((int(entry.name) for entry in temp_path.iterdir() if entry.name.isnumeric()), default=0)
     session_dir: Final[Path] = temp_path / str(file_id + 1)
-    session_dir.mkdir()
+    session_dir.mkdir(mode=0o700)
     session_package: Final[Path] = session_dir / package.name
 
     with package.open("rb") as source, session_package.open("xb") as target:
@@ -33,6 +34,18 @@ def create_session_view(package: Path, temp_path: Path, trust_root: Path | None 
         rel_session, rel_package = session_package.relative_to(common), package.relative_to(common)
         logging.debug("package %s copied to %s (%s)", rel_session, rel_package, common)
     return session_package
+
+
+def _make_private_dirs(path: Path) -> None:
+    missing: list[Path] = []
+    current: Path = path
+    while not current.exists():
+        missing.append(current)
+        if current.parent == current:
+            break
+        current = current.parent
+    for directory in reversed(missing):
+        directory.mkdir(mode=0o700, exist_ok=True)
 
 
 def _ensure_private_staging_path(temp_path: Path, trust_root: Path | None, user_id: int) -> None:

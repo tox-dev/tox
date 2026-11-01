@@ -18,7 +18,7 @@ from tox.execute.request import ExecuteRequest
 from tox.report import HandledError
 from tox.tox_env.errors import Fail, Recreate, Skip
 from tox.tox_env.info import Info
-from tox.util.path import ensure_cachedir_tag, ensure_empty_dir, ensure_gitignore
+from tox.util.path import ensure_cachedir_tag, ensure_empty_dir, ensure_gitignore, ensure_private_dir
 from tox.util.redact import redact_value
 from tox.util.typing_compat import override
 from tox.util.venv_redirect import forget_venv_redirect, release_venv_redirect
@@ -371,9 +371,15 @@ class ToxEnv(ABC):  # ruff:ignore[too-many-public-methods]
 
     def _handle_core_tmp_dir(self) -> None:
         temp_dir: Final[Path] = self.core.get("temp_dir", Path)
-        if self.core.get("work_dir", Path) in temp_dir.parents and temp_dir.is_symlink():
+        work_dir: Final[Path] = self.core.get("work_dir", Path)
+        if work_dir in temp_dir.parents and temp_dir.is_symlink():
             temp_dir.unlink()
         temp_dir.mkdir(parents=True, exist_ok=True)
+        if temp_dir.is_relative_to(work_dir):
+            for directory in (temp_dir, *temp_dir.parents):
+                ensure_private_dir(directory)
+                if directory == work_dir:
+                    break
         ensure_cachedir_tag(self.core["work_dir"])
         ensure_gitignore(self.core.get("work_dir", Path))
 
