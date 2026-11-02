@@ -1749,6 +1749,8 @@ Python options
     An explicitly configured empty value fails during configuration. Empty entries in a list are ignored when another
     interpreter remains.
     A base interpreter ending with ``t`` means that only free threaded Python implementations are accepted.
+    When the environment name specifies an implementation (such as ``pypy39``), validation compares it with the
+    interpreter's reported implementation without regard to case. Version and build constraints still apply.
 
     The preferred naming convention is ``N.M`` (e.g. ``3.14``, ``3.13``) rather than ``pyNMM`` (e.g. ``py314``,
     ``py313``). The dotted form is clearer, avoids ambiguity for Python versions >= 3.10, and reads more naturally in

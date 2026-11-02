@@ -348,10 +348,13 @@ class Python(ToxEnv, ABC):
                         spec_base = cls._python_spec_for_sys_executable()
                     else:
                         spec_base = cls.python_spec_for_path(path)
-                if any(
+                implementation_conflict = spec_name.implementation is not None and (
+                    spec_base.implementation is None
+                    or spec_base.implementation.lower() != spec_name.implementation.lower()
+                )
+                if implementation_conflict or any(
                     getattr(spec_base, key) != getattr(spec_name, key)
                     for key in (
-                        "implementation",
                         "major",
                         "minor",
                         "micro",
