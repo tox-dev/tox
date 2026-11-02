@@ -240,6 +240,71 @@ def test_script_file_too_large_rejected(tox_project: ToxProjectCreator, mocker: 
     assert "exceeds the 1 byte limit" in result.out
 
 
+@pytest.mark.parametrize(
+    "line",
+    [
+        pytest.param('#requires-python = ">=99.0"', id="no-space-requires-python"),
+        pytest.param('#dependencies = ["setuptools"]', id="no-space-dependencies"),
+        pytest.param('## dependencies = ["setuptools"]', id="double-hash"),
+        pytest.param('# requires-python = ">=99.0"\n#dependencies = ["setuptools"]', id="mixed-lines"),
+        pytest.param('# requires-python = ">=99.0"\n', id="blank-line"),
+        pytest.param('# requires-python = ">=99.0"\n  ', id="whitespace-only-line"),
+    ],
+)
+def test_invalid_content_line_is_not_metadata(tox_project: ToxProjectCreator, line: str) -> None:
+    result, execute_calls = _run(
+        tox_project,
+        {"tox.ini": _tox_ini(), "check.py": f"# /// script\n{line}\n# ///\nprint('ok')\n"},
+    )
+    result.assert_success()
+    assert not any("install" in call[0][3].run_id for call in execute_calls.call_args_list)
+
+
+def test_metadata_honored_with_bare_hash_line(tox_project: ToxProjectCreator) -> None:
+    result, _ = _run(
+        tox_project,
+        {"tox.ini": _tox_ini(), "check.py": '# /// script\n#\n# requires-python = ">=99.0"\n# ///\nprint("ok")\n'},
+    )
+    result.assert_failed()
+    assert "does not satisfy requires-python" in result.out
+
+
+@pytest.mark.parametrize(
+    "script",
+    [
+        pytest.param(
+            '# /// script\n# ///\n\n# /// script\n# requires-python = ">=99.0"\n# ///\n',
+            id="empty-first",
+        ),
+        pytest.param(
+            '# /// script\n# requires-python = ">=99.0"\n# ///\n\n# /// script\n# ///\n',
+            id="empty-second",
+        ),
+    ],
+)
+def test_duplicate_script_metadata_with_empty_block(tox_project: ToxProjectCreator, script: str) -> None:
+    result, _ = _run(tox_project, {"tox.ini": _tox_ini(), "check.py": script})
+    result.assert_failed()
+    assert "multiple [script] metadata blocks" in result.out
+
+
+@pytest.mark.parametrize(
+    "value",
+    [
+        pytest.param('"not a specifier"', id="invalid-specifier"),
+        pytest.param("42", id="non-string"),
+    ],
+)
+def test_invalid_requires_python_reports_metadata_error(tox_project: ToxProjectCreator, value: str) -> None:
+    result, _ = _run(
+        tox_project,
+        {"tox.ini": _tox_ini(), "check.py": f'# /// script\n# requires-python = {value}\n# ///\nprint("ok")\n'},
+    )
+    result.assert_failed()
+    assert "invalid inline script metadata" in result.out
+    assert "requires-python" in result.out
+
+
 def test_metadata_honored_with_bom(tox_project: ToxProjectCreator) -> None:
     """A UTF-8 BOM (common Windows editor artifact) must not silently disable the metadata block."""
     script = "\ufeff" + dedent("""\

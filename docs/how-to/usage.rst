@@ -786,6 +786,9 @@ If you have a standalone Python script with :PEP:`723` inline metadata:
 
     print(requests.get("https://httpbin.org/get").json())
 
+Each metadata line with content must start with ``# `` (a hash followed by a space). A line such as ``#dependencies =
+["requests"]`` makes the block invalid, so tox ignores its metadata.
+
 You can run it through tox without duplicating the dependency list:
 
 .. tab:: TOML
