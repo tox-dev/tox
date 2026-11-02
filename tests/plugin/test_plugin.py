@@ -18,13 +18,55 @@ from tox.pytest import ToxProjectCreator, register_inline_plugin
 from tox.report import HandledError
 from tox.session.state import State
 from tox.tox_env.api import ToxEnv
+from tox.tox_env.python.virtual_env.runner import VirtualEnvRunner
 from tox.tox_env.register import ToxEnvRegister
+from tox.util.typing_compat import override
 
 if TYPE_CHECKING:
     from pathlib import Path
 
     import pluggy
     from pytest_mock import MockerFixture
+
+
+def test_builtin_runner_cli_choice(tox_project: ToxProjectCreator) -> None:
+    tox_project({
+        "tox.toml": """
+        env_list = ["smoke"]
+        [env_run_base]
+        package = "skip"
+        """,
+    }).run("r", "--runner", "virtualenv", "--notest").assert_success()
+
+
+def test_external_runner_cli_choice(tox_project: ToxProjectCreator) -> None:
+    class ExternalRunner(VirtualEnvRunner):
+        @staticmethod
+        @override
+        def id() -> str:
+            return "external"
+
+    class ExternalPlugin:
+        @staticmethod
+        @impl
+        def tox_register_tox_env(register: ToxEnvRegister) -> None:
+            register.add_run_env(ExternalRunner)
+
+    def fake_load_entrypoints(self: pluggy.PluginManager, name: str) -> None:  # ruff:ignore[unused-function-argument]
+        self.register(ExternalPlugin(), name="external_plugin")
+
+    project = tox_project({
+        "tox.toml": """
+        env_list = ["smoke"]
+        [env_run_base]
+        package = "skip"
+        """,
+    })
+    with (
+        patch("pluggy.PluginManager.load_setuptools_entrypoints", fake_load_entrypoints),
+        patch("tox.plugin.manager.MANAGER", Plugin()),
+    ):
+        project.run("r", "--runner", "external", "--notest").assert_success()
 
 
 def test_plugin_hooks_and_order(tox_project: ToxProjectCreator, mocker: MockerFixture) -> None:

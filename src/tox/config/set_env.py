@@ -7,7 +7,7 @@ from itertools import chain
 from pathlib import Path
 from typing import TYPE_CHECKING, NotRequired, Protocol, TypedDict, final
 
-from packaging.markers import Marker
+from packaging.markers import InvalidMarker, Marker
 
 from tox.config.loader.api import ConfigLoadArgs
 from tox.report import HandledError
@@ -133,7 +133,13 @@ class SetEnv:
         self._defined_keys.add(key)
         keys_after_file.add(key)
         if marker:
-            self._markers[key] = Marker(marker)
+            try:
+                self._markers[key] = Marker(marker)
+            except InvalidMarker as exception:
+                msg = f"invalid marker for set_env key {key!r}: {exception}"
+                if self.shape == "string":
+                    msg = f"{msg}\nescape a literal ';' in the value as '\\;'"
+                raise ValueError(msg) from exception
         else:  # an unconditional redefinition drops the marker an earlier entry set, as the INI form does
             self._markers.pop(key, None)
 

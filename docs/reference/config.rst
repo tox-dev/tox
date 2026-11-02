@@ -634,7 +634,8 @@ the top level of ``tox.toml``. Placing these options in an environment section (
 
     If this directory is a symlink inside :ref:`work_dir`, tox replaces the link with a directory. A configured path
     outside :ref:`work_dir` may remain a symlink. On POSIX, package staging rejects a path that another account can
-    rename based on its ownership and permissions at validation time.
+    rename based on its ownership and permissions at validation time. If package staging needs new work, temporary or
+    staging directories, tox creates them with owner-only access. Existing directories keep their permissions.
 
 .. conf::
     :keys: venv_redirect
@@ -1134,6 +1135,8 @@ Base options
                LINUX_VAR = 1; sys_platform == 'linux'
                DARWIN_VAR = 1; sys_platform == 'darwin'
                WIN_ONLY = 1; sys_platform == 'win32'
+
+    In INI values, write a literal semicolon as ``\;`` so it is not parsed as a marker separator.
 
     Available markers include ``sys_platform``, ``os_name``, ``platform_machine``, ``platform_system``,
     ``python_version``, ``implementation_name``, and others as defined in PEP-508.

@@ -131,8 +131,7 @@ class Plugin:
             self.manager.unregister(plugin)
         inline = None if path is None else _load_inline(path)
         self._register_plugins(inline)
-        if path is not None:
-            REGISTER._register_tox_env_types(self)  # ruff:ignore[private-member-access]
+        REGISTER._register_tox_env_types(self)  # ruff:ignore[private-member-access]
 
 
 def _load_inline(path: Path) -> ModuleType | None:  # used to be able to unregister plugin tests
