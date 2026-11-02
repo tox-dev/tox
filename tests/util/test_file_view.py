@@ -27,14 +27,17 @@ def test_create_session_view_copies(tmp_path: Path) -> None:
 
 
 @pytest.mark.skipif(sys.platform == "win32", reason="POSIX directory permissions")
-@pytest.mark.parametrize("umask", [0o002, 0o000, 0o022])
+@pytest.mark.parametrize(
+    "umask",
+    [pytest.param(0o002, id="group"), pytest.param(0o000, id="all"), pytest.param(0o022, id="owner")],
+)
 def test_create_session_view_private_directories(tmp_path: Path, umask: int) -> None:
     package: Final[Path] = tmp_path / "pkg.whl"
     package.write_bytes(b"data")
     staging: Final[Path] = tmp_path / ".tox" / ".tmp" / "package"
     previous: Final[int] = os.umask(umask)
     try:
-        result = create_session_view(package, staging, tmp_path)
+        result: Final[Path] = create_session_view(package, staging, tmp_path)
     finally:
         os.umask(previous)
 

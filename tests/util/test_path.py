@@ -58,10 +58,10 @@ def test_ensure_cachedir_tag_does_not_overwrite(tmp_path: Path) -> None:
 
 @pytest.mark.skipif(sys.platform == "win32", reason="POSIX directory permissions")
 def test_ensure_private_dir_keeps_existing_permissions(tmp_path: Path) -> None:
-    parent = tmp_path / "existing"
+    parent: Final[Path] = tmp_path / "existing"
     parent.mkdir()
     parent.chmod(0o775)
-    child = parent / "private"
+    child: Final[Path] = parent / "private"
 
     ensure_private_dir(child)
     ensure_private_dir(child)
@@ -71,7 +71,7 @@ def test_ensure_private_dir_keeps_existing_permissions(tmp_path: Path) -> None:
 
 
 def test_ensure_private_dir_rejects_file(tmp_path: Path) -> None:
-    path = tmp_path / "file"
+    path: Final[Path] = tmp_path / "file"
     path.touch()
 
     with pytest.raises(FileExistsError):

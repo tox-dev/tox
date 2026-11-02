@@ -23,7 +23,7 @@ def test_ensure_temp_dir_exists(tox_project: ToxProjectCreator) -> None:
 
 
 @pytest.mark.skipif(sys.platform == "win32", reason="POSIX directory permissions")
-@pytest.mark.parametrize("umask", [0o002, 0o000])
+@pytest.mark.parametrize("umask", [pytest.param(0o002, id="group"), pytest.param(0o000, id="all")])
 def test_package_staging_with_permissive_umask(
     tox_project: ToxProjectCreator, demo_pkg_inline: Path, umask: int
 ) -> None:
