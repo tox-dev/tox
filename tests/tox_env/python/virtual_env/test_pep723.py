@@ -251,8 +251,9 @@ def test_script_file_too_large_rejected(tox_project: ToxProjectCreator, mocker: 
 def test_metadata_line_without_space_is_not_metadata(tox_project: ToxProjectCreator, line: str) -> None:
     """A content line with characters after the # must have a space there, else the block is not one.
 
-    PEP 723: "If there are characters after the # then the first character MUST be a space", and a block that
-    does not close with a conforming content run is unclosed, which tools must ignore.
+    PEP 723: "If there are characters after the # then the first character MUST be a space", and a block that does not
+    close with a conforming content run is unclosed, which tools must ignore.
+
     """
     script = f"# /// script\n{line}\n# ///\nprint('ok')\n"
     result, execute_calls = _run(tox_project, {"tox.ini": _tox_ini(), "check.py": script})
