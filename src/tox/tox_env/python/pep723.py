@@ -30,10 +30,13 @@ if TYPE_CHECKING:
 _SCRIPT_METADATA_RE: Final[re.Pattern[str]] = re.compile(
     r"""
     (?m)
-    ^[#][ ]///[ ](?P<type>[a-zA-Z0-9-]+)$
-    \s
-    (?P<content>(?:^[#](?:|[ ].*)$\s)*)  # [ ] survives VERBOSE; * admits empty blocks
-    ^[#][ ]///$
+    ^[#][ ]///[ ](?P<type>[a-zA-Z0-9-]+)$  # opening: # /// <type>
+    \s                                      # blank line or whitespace
+    (?P<content>                            # TOML content lines:
+        (?:^[#](?:|[ ].*)$\s)*              #   each line starts with # (optionally followed by space + text)
+                                                #   [ ] survives VERBOSE; * admits empty blocks
+    )
+    ^[#][ ]///$                             # closing: # ///
     """,
     re.VERBOSE,
 )
