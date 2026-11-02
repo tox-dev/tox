@@ -6,6 +6,33 @@
 
 .. towncrier release notes start
 
+.. _release-4-67-6:
+
+*********************
+ 4.67.6 (2026-11-02)
+*********************
+
+.. _release-4-67-6-fixed:
+
+Fixed
+-----
+
+- Package builds now work under umasks such as ``0002`` because tox creates new staging directories and missing parents
+  with owner-only access. Existing directories keep their permissions (:pr:`4360`) by :user:`stephenfin` and
+  :user:`gaborbernat`.
+- ``tox config`` no longer fails with an ``AssertionError`` when an environment uses a runner whose plugin is not
+  installed. It skips that environment, as ``tox run`` and ``tox list`` already do (:pr:`4361`) by :user:`nk-batman21`
+  and :user:`gaborbernat`.
+- Invalid ``set_env`` markers now report the key. For INI values, the error explains how to write a literal semicolon as
+  ``\;`` (:pr:`4364`) by :user:`faresrafat3` and :user:`gaborbernat`.
+- Restore built-in runner choices for ``--runner`` so ``--runner virtualenv`` does not fail with an empty choices list
+  (:issue:`4365`) (:pr:`4367`) by :user:`gaborbernat`.
+- Compare interpreter implementation names without regard to case when validating ``base_python`` against environment
+  names (:pr:`4369`) by :user:`mayankdhingra02` and :user:`gaborbernat`.
+- Accept ``--config-settings`` (``-C``) on requirement lines in requirements files, which pip supports, instead of
+  failing with ``unrecognized arguments``; it is still rejected when written in ``deps`` directly, like ``--hash``
+  (:pr:`4366`) by :user:`mmporong` and :user:`gaborbernat`.
+
 .. _release-4-67-5:
 
 *********************

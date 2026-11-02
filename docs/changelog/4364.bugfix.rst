@@ -1,2 +1,0 @@
-Invalid ``set_env`` markers now report the key. For INI values, the error explains how to write a literal semicolon as
-``\;``.
