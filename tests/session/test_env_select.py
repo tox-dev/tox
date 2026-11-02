@@ -609,6 +609,36 @@ def test_multiple_unavailable_runners_implicit(tox_project: ToxProjectCreator) -
 
 
 @pytest.mark.parametrize(
+    ("format_args", "expected"),
+    [
+        pytest.param([], "[testenv:available]\nenv_name = available\n", id="ini"),
+        pytest.param(
+            ["--format", "json"],
+            '{\n  "env": {\n    "available": {\n      "env_name": "available"\n    }\n  }\n}\n',
+            id="json",
+        ),
+        pytest.param(["--format", "toml"], '[env.available]\nenv_name = "available"\n', id="toml"),
+    ],
+)
+def test_unavailable_runner_show_config(tox_project: ToxProjectCreator, format_args: list[str], expected: str) -> None:
+    tox_toml: Final[str] = """
+        [tool.tox]
+        env_list = ["available", "unavailable"]
+
+        [tool.tox.env_run_base]
+        skip_install = true
+
+        [tool.tox.env.unavailable]
+        runner = "nonexistent-runner"
+        """
+    project: Final[ToxProject] = tox_project({"pyproject.toml": tox_toml})
+    outcome: Final[ToxRunOutcome] = project.run("c", "-k", "env_name", *format_args)
+    outcome.assert_success()
+    assert "environment unavailable marked as unavailable" in outcome.out
+    assert outcome.out.endswith(expected)
+
+
+@pytest.mark.parametrize(
     ("env_list", "env_sections", "cli_env", "expected_suggestion"),
     [
         pytest.param(
