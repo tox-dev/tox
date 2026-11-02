@@ -312,9 +312,6 @@ def test_extract_base_python(env: str, base_python: str | None) -> None:
     [
         ("magic", ["pypy"]),
         ("magic", ["py39"]),
-        ("pypy3", ["PyPy3"]),
-        ("pypy39", ["PYPY3.9"]),
-        ("py39", ["PyPy3.9"]),
     ],
     ids=lambda a: "|".join(a) if isinstance(a, list) else str(a),
 )
@@ -355,19 +352,51 @@ def test_base_python_env_conflict(
             Python._validate_base_python(env, base_python, ignore_conflict)  # ruff:ignore[private-member-access]
 
 
-@pytest.mark.parametrize("ignore_conflict", [True, False])
 @pytest.mark.parametrize(
-    ("env", "implementation", "conflicts"),
+    ("env", "base_python", "ignore_conflict", "expected_code", "expected_output"),
     [
-        ("pypy3", "PyPy", False),
-        ("pypy39", "PyPy", False),
-        ("pypy-3.9", "PyPy", False),
-        ("pypy39", "PYPY", False),
-        ("pypy39", "pypy", False),
-        ("py39", "PyPy", False),
-        ("pypy39", "CPython", True),
-        ("pypy39", None, True),
-        ("pypy310", "PyPy", True),
+        pytest.param("pypy3", "PyPy3", False, 0, "base_python = PyPy3\n", id="major"),
+        pytest.param("pypy39", "PYPY3.9", False, 0, "base_python = PYPY3.9\n", id="minor"),
+        pytest.param("py39", "PyPy3.9", False, 0, "base_python = PyPy3.9\n", id="generic-implementation"),
+        pytest.param("pypy39", "3.9", False, -1, "env name pypy39 conflicting with base python 3.9", id="missing"),
+        pytest.param("pypy39", "3.9", True, 0, "base_python = pypy39\n", id="missing-override"),
+    ],
+)
+def test_base_python_spec_implementation_case(
+    tox_project: ToxProjectCreator,
+    env: str,
+    base_python: str,
+    ignore_conflict: bool,
+    expected_code: int,
+    expected_output: str,
+) -> None:
+    project = tox_project({
+        "tox.toml": f"""
+        ignore_base_python_conflict = {str(ignore_conflict).lower()}
+        [env."{env}"]
+        package = "skip"
+        base_python = "{base_python}"
+        """,
+    })
+    result = project.run("c", "-e", env, "-k", "base_python", raise_on_config_fail=False)
+    assert result.code == expected_code, result
+    assert expected_output in result.out
+
+
+@pytest.mark.parametrize(
+    ("env", "implementation", "ignore_conflict", "expected_code", "expected_output"),
+    [
+        pytest.param("pypy3", "PyPy", False, 0, "base_python = {path}\n", id="major"),
+        pytest.param("pypy39", "PyPy", False, 0, "base_python = {path}\n", id="minor"),
+        pytest.param("pypy-3.9", "PyPy", False, 0, "base_python = {path}\n", id="explicit-version"),
+        pytest.param("pypy39", "PYPY", False, 0, "base_python = {path}\n", id="uppercase"),
+        pytest.param("pypy39", "pypy", False, 0, "base_python = {path}\n", id="lowercase"),
+        pytest.param("py39", "PyPy", False, 0, "base_python = {path}\n", id="generic-implementation"),
+        pytest.param("pypy39", "PyPy", True, 0, "base_python = {path}\n", id="matching-override"),
+        pytest.param("pypy39", "CPython", False, -1, "base_python = # Exception: Fail({error})\n", id="conflict"),
+        pytest.param("pypy310", "PyPy", False, -1, "base_python = # Exception: Fail({error})\n", id="version"),
+        pytest.param("pypy39", "CPython", True, 0, "base_python = pypy39\n", id="conflict-override"),
+        pytest.param("pypy310", "PyPy", True, 0, "base_python = pypy310\n", id="version-override"),
     ],
 )
 def test_base_python_path_implementation_case(
@@ -375,28 +404,32 @@ def test_base_python_path_implementation_case(
     tmp_path: Path,
     mocker: MockerFixture,
     env: str,
-    implementation: str | None,
-    conflicts: bool,
+    implementation: str,
     ignore_conflict: bool,
+    expected_code: int,
+    expected_output: str,
 ) -> None:
-    spec = PythonSpec("discovered", implementation, 3, 9, None, 64, None, free_threaded=False)
     path = tmp_path / "interpreter"
-    mocker.patch.object(VirtualEnv, "python_spec_for_path", return_value=spec)
+    mocker.patch.object(
+        VirtualEnv,
+        "python_spec_for_path",
+        return_value=PythonSpec("discovered", implementation, 3, 9, None, 64, None, free_threaded=False),
+    )
     project = tox_project({
-        "tox.ini": f"[tox]\nignore_base_python_conflict={ignore_conflict}\n"
-        f"[testenv:{env}]\npackage=skip\nbase_python={path}\n"
+        "tox.toml": f"""
+        ignore_base_python_conflict = {str(ignore_conflict).lower()}
+        [env."{env}"]
+        package = "skip"
+        base_python = '{path}'
+        """,
     })
 
     result = project.run("c", "-e", env, "-k", "base_python", raise_on_config_fail=False)
-
-    if conflicts and not ignore_conflict:
-        result.assert_failed(code=-1)
-        assert f"env name {env} conflicting with base python {path}" in result.out
-    else:
-        result.assert_success()
-        expected = Python.extract_base_python(env) if conflicts else str(path)
-        assert f"base_python = {expected}\n" in result.out
-    assert spec.implementation == implementation
+    assert result.code == expected_code, result
+    assert (
+        expected_output.format(path=path, error=repr(f"env name {env} conflicting with base python {path}"))
+        in result.out
+    )
 
 
 @pytest.mark.parametrize("ignore_conflict", [True, False, None])
