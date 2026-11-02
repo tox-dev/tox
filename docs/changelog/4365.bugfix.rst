@@ -1,0 +1,2 @@
+Restore built-in runner choices for ``--runner`` so ``--runner virtualenv`` does not fail with an empty choices list
+(:issue:`4365`).

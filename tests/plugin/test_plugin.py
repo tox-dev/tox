@@ -27,6 +27,12 @@ if TYPE_CHECKING:
     from pytest_mock import MockerFixture
 
 
+def test_builtin_runner_cli_choice(tox_project: ToxProjectCreator) -> None:
+    tox_project({"tox.ini": "[tox]\nenv_list=smoke\n[testenv]\npackage=skip"}).run(
+        "r", "--runner", "virtualenv", "--notest"
+    ).assert_success()
+
+
 def test_plugin_hooks_and_order(tox_project: ToxProjectCreator, mocker: MockerFixture) -> None:
     @impl
     def tox_register_tox_env(register: ToxEnvRegister) -> None:
