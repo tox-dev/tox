@@ -312,6 +312,9 @@ def test_extract_base_python(env: str, base_python: str | None) -> None:
     [
         ("magic", ["pypy"]),
         ("magic", ["py39"]),
+        ("pypy3", ["PyPy3"]),
+        ("pypy39", ["PYPY3.9"]),
+        ("py39", ["PyPy3.9"]),
     ],
     ids=lambda a: "|".join(a) if isinstance(a, list) else str(a),
 )
@@ -350,6 +353,50 @@ def test_base_python_env_conflict(
         msg = f"env name {env} conflicting with base python {conflict[0]}"
         with pytest.raises(Fail, match=msg):
             Python._validate_base_python(env, base_python, ignore_conflict)  # ruff:ignore[private-member-access]
+
+
+@pytest.mark.parametrize("ignore_conflict", [True, False])
+@pytest.mark.parametrize(
+    ("env", "implementation", "conflicts"),
+    [
+        ("pypy3", "PyPy", False),
+        ("pypy39", "PyPy", False),
+        ("pypy-3.9", "PyPy", False),
+        ("pypy39", "PYPY", False),
+        ("pypy39", "pypy", False),
+        ("py39", "PyPy", False),
+        ("pypy39", "CPython", True),
+        ("pypy39", None, True),
+        ("pypy310", "PyPy", True),
+    ],
+)
+def test_base_python_path_implementation_case(
+    tox_project: ToxProjectCreator,
+    tmp_path: Path,
+    mocker: MockerFixture,
+    env: str,
+    implementation: str | None,
+    conflicts: bool,
+    ignore_conflict: bool,
+) -> None:
+    spec = PythonSpec("discovered", implementation, 3, 9, None, 64, None, free_threaded=False)
+    path = tmp_path / "interpreter"
+    mocker.patch.object(VirtualEnv, "python_spec_for_path", return_value=spec)
+    project = tox_project({
+        "tox.ini": f"[tox]\nignore_base_python_conflict={ignore_conflict}\n"
+        f"[testenv:{env}]\npackage=skip\nbase_python={path}\n"
+    })
+
+    result = project.run("c", "-e", env, "-k", "base_python", raise_on_config_fail=False)
+
+    if conflicts and not ignore_conflict:
+        result.assert_failed(code=-1)
+        assert f"env name {env} conflicting with base python {path}" in result.out
+    else:
+        result.assert_success()
+        expected = Python.extract_base_python(env) if conflicts else str(path)
+        assert f"base_python = {expected}\n" in result.out
+    assert spec.implementation == implementation
 
 
 @pytest.mark.parametrize("ignore_conflict", [True, False, None])
