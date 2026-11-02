@@ -30,7 +30,7 @@ if TYPE_CHECKING:
 
 
 def test_builtin_runner_cli_choice(tox_project: ToxProjectCreator) -> None:
-    tox_project({"tox.ini": "[tox]\nenv_list=smoke\n[testenv]\npackage=skip"}).run(
+    tox_project({"tox.toml": 'env_list = ["smoke"]\n[env_run_base]\npackage = "skip"'}).run(
         "r", "--runner", "virtualenv", "--notest"
     ).assert_success()
 
@@ -51,7 +51,7 @@ def test_external_runner_cli_choice(tox_project: ToxProjectCreator) -> None:
     def fake_load_entrypoints(self: pluggy.PluginManager, name: str) -> None:  # ruff:ignore[unused-function-argument]
         self.register(ExternalPlugin(), name="external_plugin")
 
-    project = tox_project({"tox.ini": "[tox]\nenv_list=smoke\n[testenv]\npackage=skip"})
+    project = tox_project({"tox.toml": 'env_list = ["smoke"]\n[env_run_base]\npackage = "skip"'})
     with (
         patch("pluggy.PluginManager.load_setuptools_entrypoints", fake_load_entrypoints),
         patch("tox.plugin.manager.MANAGER", Plugin()),
