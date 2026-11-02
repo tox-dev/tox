@@ -233,9 +233,6 @@ class _PythonRequirementsFile(RequirementsFile):
 
 
 class PythonDeps(_PythonRequirementsFile):
-    # these options are valid in requirements.txt, but not via pip cli and
-    # thus cannot be used in the testenv `deps` list
-    _illegal_options: Final[list[str]] = ["hash", "config_settings"]
     _CONSTRAINT = False
     _FIELD = "deps"
 
@@ -257,9 +254,10 @@ class PythonDeps(_PythonRequirementsFile):
 
     @override
     def _validate_requirement(self, req: ParsedRequirement) -> None:
-        for illegal_option in self._illegal_options:
+        # Per-requirement options belong in a requirements file, not a deps entry.
+        for illegal_option in ("hash", "config_settings"):
             if req.options.get(illegal_option):
-                option = illegal_option.replace("_", "-")
+                option: str = illegal_option.replace("_", "-")
                 msg = f"Cannot use --{option} in deps list, it must be in requirements file. ({req})"
                 raise ValueError(msg)
 

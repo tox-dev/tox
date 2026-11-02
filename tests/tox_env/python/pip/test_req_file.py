@@ -48,8 +48,7 @@ def test_deps_with_hash(tmp_path: Path) -> None:
 
 
 def test_deps_with_config_settings(tmp_path: Path) -> None:
-    """deps with --config-settings should raise an exception."""
-    python_deps = PythonDeps(raw="foo==1 --config-settings editable_mode=compat", root=tmp_path)
+    python_deps: Final[PythonDeps] = PythonDeps(raw="foo==1 --config-settings editable_mode=compat", root=tmp_path)
     with pytest.raises(ValueError, match="Cannot use --config-settings in deps list"):
         _ = python_deps.requirements
 

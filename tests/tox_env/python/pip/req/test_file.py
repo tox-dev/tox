@@ -374,6 +374,18 @@ _REQ_FILE_TEST_CASES = [
         id="config-settings",
     ),
     pytest.param(
+        "attrs -C foo=first -C foo=first -C foo=second --config-settings bar=other",
+        {},
+        [
+            (
+                "attrs --config-settings foo=first --config-settings foo=first "
+                "--config-settings foo=second --config-settings bar=other"
+            )
+        ],
+        ["attrs"],
+        id="config-settings-repeated",
+    ),
+    pytest.param(
         "attrs --hash=sha256:af957b369adcd07e5b3c64d2cdb76d6808c5e0b16c35ca41c79c8eee34808152\\\n "
         "--hash sha384:142d9b02f3f4511ccabf6c14bd34d2b0a9ed043a898228b48343cfdf4eb10856ef7ad5"
         "e2ff2c528ecae04912224782ab\n",

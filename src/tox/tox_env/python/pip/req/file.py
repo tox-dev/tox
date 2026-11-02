@@ -402,7 +402,7 @@ class RequirementsFile:
         hash_values = getattr(line.opts, "hash", [])
         if hash_values:
             req_options["hash"] = hash_values
-        config_settings = getattr(line.opts, "config_settings", [])
+        config_settings: Final[list[str]] = getattr(line.opts, "config_settings", [])
         if config_settings:
             req_options["config_settings"] = config_settings
         return ParsedRequirement(line.requirement, req_options, line.filename, line.lineno)
