@@ -10,7 +10,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Final, cast
 
 from packaging.requirements import InvalidRequirement, Requirement
-from packaging.specifiers import SpecifierSet
+from packaging.specifiers import InvalidSpecifier, SpecifierSet
 from packaging.version import Version
 
 from tox.config.types import Command
@@ -27,18 +27,6 @@ if TYPE_CHECKING:
     from tox.config.of_type import ConfigDynamicDefinition
     from tox.tox_env.api import ToxEnvCreateArgs
 
-_SCRIPT_METADATA_RE: Final[re.Pattern[str]] = re.compile(
-    r"""
-    (?m)
-    ^[#][ ]///[ ](?P<type>[a-zA-Z0-9-]+)$  # opening: # /// <type>
-    \s                                      # blank line or whitespace
-    (?P<content>                            # TOML content lines:
-        (?:^[#](?:|[ ].*)$\s)+              #   each line is bare # or # + space + text; [ ] so VERBOSE keeps it
-    )
-    ^[#][ ]///$                             # closing: # ///
-    """,
-    re.VERBOSE,
-)
 _MAX_SCRIPT_BYTES: Final[int] = 5 * 1024 * 1024  # 5 MiB; PEP 723 metadata blocks are tiny in practice
 
 
@@ -164,20 +152,39 @@ class Pep723Mixin(Python, RunToxEnv):
 
 
 def _parse_script_metadata(script: str) -> ScriptMetadata:
-    blocks = [(m.group("type"), m.group("content")) for m in _SCRIPT_METADATA_RE.finditer(script)]
-    script_blocks = [(t, c) for t, c in blocks if t == "script"]
+    pattern: Final[re.Pattern[str]] = re.compile(
+        r"""
+        (?m)
+        ^[#][ ]///[ ](?P<type>[a-zA-Z0-9-]+)$
+        \s
+        (?P<content>(?:^[#](?:|[ ].*)$\s)*)  # [ ] survives VERBOSE; * admits empty blocks
+        ^[#][ ]///$
+        """,
+        re.VERBOSE,
+    )
+    script_blocks: Final[list[str]] = [
+        match.group("content") for match in pattern.finditer(script) if match.group("type") == "script"
+    ]
     if len(script_blocks) > 1:
         msg = "multiple [script] metadata blocks found in script"
         raise ValueError(msg)
     if not script_blocks:
         return ScriptMetadata()
-    content = script_blocks[0][1]
-    stripped = "".join(
-        line[2:] if len(line) > 1 and line[1] == " " else line[1:] for line in content.splitlines(keepends=True)
+    metadata = tomllib.loads(
+        "".join(line[2:] if line.startswith("# ") else line[1:] for line in script_blocks[0].splitlines(keepends=True))
     )
-    metadata = tomllib.loads(stripped)
+    requires_python = metadata.get("requires-python")
+    if requires_python is not None:
+        if not isinstance(requires_python, str):
+            msg = f"requires-python must be a string, got {type(requires_python).__name__}"
+            raise ValueError(msg)
+        try:
+            SpecifierSet(requires_python)
+        except InvalidSpecifier as exc:
+            msg = f"invalid requires-python {requires_python!r}: {exc}"
+            raise ValueError(msg) from exc
     return ScriptMetadata(
-        requires_python=metadata.get("requires-python"),
+        requires_python=requires_python,
         dependencies=metadata.get("dependencies", []),
     )
 

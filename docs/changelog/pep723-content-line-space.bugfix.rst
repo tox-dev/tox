@@ -1,4 +1,3 @@
-A PEP 723 inline script metadata block is read only when every content line is a bare ``#`` or a ``#`` followed by a
-space, which is what the specification requires. A ``#key = value`` line used to be accepted as metadata, so the same
-script could resolve to one set of dependencies under the ``virtualenv-pep-723`` runner and to none under any other PEP
-723 runner.
+PEP 723 metadata lines with content now require a space after ``#``. Empty blocks count when detecting duplicates, and
+invalid ``requires-python`` values report a configuration error. Previously, malformed content lines could make tox read
+metadata that other script runners ignored.
