@@ -170,8 +170,8 @@ conditionally set variables based on platform:
         COVERAGE_FILE = {work_dir}/.coverage.{env_name}
         LDFLAGS = -L/usr/local/lib ; sys_platform == "darwin"
 
-Because ``;`` starts the marker, a value that needs a literal semicolon escapes it as ``\;``. Written bare, the
-text after it is read as a marker and the value cannot be loaded:
+Because ``;`` starts the marker, a value that needs a literal semicolon escapes it as ``\;``. Written bare, the text
+after it is read as a marker and the value cannot be loaded:
 
 .. code-block:: ini
 
