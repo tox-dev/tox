@@ -1,0 +1,2 @@
+A ``set_env`` value that carries a literal semicolon now fails with an error that names the key it belongs to, and says
+that ``\;`` writes a literal semicolon; that escape is documented too.
