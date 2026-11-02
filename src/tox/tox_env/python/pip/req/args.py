@@ -64,6 +64,7 @@ def _req_options(parser: ArgumentParser) -> None:
     parser.add_argument("--install-option", action=AddSortedUniqueAction)
     parser.add_argument("--global-option", action=AddSortedUniqueAction)
     parser.add_argument("--hash", action=AddSortedUniqueAction, type=_validate_hash)
+    parser.add_argument("-C", "--config-settings", action=AddSortedUniqueAction, dest="config_settings")
 
 
 _HASH = re.compile(

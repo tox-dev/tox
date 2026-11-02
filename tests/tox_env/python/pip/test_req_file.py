@@ -47,6 +47,13 @@ def test_deps_with_hash(tmp_path: Path) -> None:
         _ = python_deps.requirements
 
 
+def test_deps_with_config_settings(tmp_path: Path) -> None:
+    """deps with --config-settings should raise an exception."""
+    python_deps = PythonDeps(raw="foo==1 --config-settings editable_mode=compat", root=tmp_path)
+    with pytest.raises(ValueError, match="Cannot use --config-settings in deps list"):
+        _ = python_deps.requirements
+
+
 def test_constraints_with_editable_requirement(tmp_path: Path) -> None:
     """A requirement smuggled onto a constraints line must be rejected."""
     (tmp_path / "constraints.txt").write_text("")
