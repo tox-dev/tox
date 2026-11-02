@@ -665,7 +665,7 @@ class EnvSelector:
         for name, env_info in self._defined_envs.items():
             if only_active and not env_info.is_active:
                 continue
-            if env_info.env is None:  # runner unavailable
+            if env_info.env is None:
                 continue
             if not package and not isinstance(env_info.env, RunToxEnv):
                 continue

@@ -621,8 +621,7 @@ def test_multiple_unavailable_runners_implicit(tox_project: ToxProjectCreator) -
     ],
 )
 def test_unavailable_runner_show_config(tox_project: ToxProjectCreator, format_args: list[str], expected: str) -> None:
-    """Unavailable runner in config should be skipped by show config instead of crashing."""
-    tox_toml = """
+    tox_toml: Final[str] = """
         [tool.tox]
         env_list = ["available", "unavailable"]
 
@@ -632,8 +631,8 @@ def test_unavailable_runner_show_config(tox_project: ToxProjectCreator, format_a
         [tool.tox.env.unavailable]
         runner = "nonexistent-runner"
         """
-    proj = tox_project({"pyproject.toml": tox_toml})
-    outcome = proj.run("c", "-k", "env_name", *format_args)
+    project: Final[ToxProject] = tox_project({"pyproject.toml": tox_toml})
+    outcome: Final[ToxRunOutcome] = project.run("c", "-k", "env_name", *format_args)
     outcome.assert_success()
     assert "environment unavailable marked as unavailable" in outcome.out
     assert outcome.out.endswith(expected)
