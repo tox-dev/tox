@@ -165,6 +165,8 @@ class ParsedRequirement:
         result.append(str(self.requirement))
         for hash_value in self.options.get("hash", []):
             result.extend(("--hash", hash_value))
+        for setting in self.options.get("config_settings", []):
+            result.extend(("--config-settings", setting))
         return " ".join(result)
 
     def as_args(self) -> Iterator[str]:
@@ -400,6 +402,9 @@ class RequirementsFile:
         hash_values = getattr(line.opts, "hash", [])
         if hash_values:
             req_options["hash"] = hash_values
+        config_settings: Final[list[str]] = getattr(line.opts, "config_settings", [])
+        if config_settings:
+            req_options["config_settings"] = config_settings
         return ParsedRequirement(line.requirement, req_options, line.filename, line.lineno)
 
     def _merge_option_line(  # ruff:ignore[complex-structure, too-many-branches]

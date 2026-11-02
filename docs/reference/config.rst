@@ -2012,6 +2012,9 @@ Python run
     - a `constraint file <https://pip.pypa.io/en/stable/user_guide/#constraints-files>`_ when the value starts with
       ``-c`` (followed by a file path or URL).
 
+    A referenced requirements file may use pip's per-requirement ``--config-settings`` (``-C``) option. Put the option
+    in that file, on the requirement line; it is not supported on a ``deps`` entry itself.
+
     tox rejects requirement and constraint files larger than 10 MiB. For HTTP(S) files, it checks a 120-second deadline
     between response body reads. A server that sends HTTP framing bytes slowly can delay the check.
 
