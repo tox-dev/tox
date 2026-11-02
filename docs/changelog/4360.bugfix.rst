@@ -1,0 +1,2 @@
+Package builds now work under umasks such as ``0002`` because tox creates new staging directories and missing parents
+with owner-only access. Existing directories keep their permissions.

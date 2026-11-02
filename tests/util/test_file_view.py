@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import stat
 import sys
 from pathlib import Path
 from typing import TYPE_CHECKING, Final
@@ -23,6 +24,26 @@ def test_create_session_view_copies(tmp_path: Path) -> None:
     result: Final[Path] = create_session_view(package, tmp_path / "temp")
     assert result.read_bytes() == b"data"
     assert result.parent.parent == tmp_path / "temp"
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="POSIX directory permissions")
+@pytest.mark.parametrize(
+    "umask",
+    [pytest.param(0o002, id="group"), pytest.param(0o000, id="all"), pytest.param(0o022, id="owner")],
+)
+def test_create_session_view_private_directories(tmp_path: Path, umask: int) -> None:
+    package: Final[Path] = tmp_path / "pkg.whl"
+    package.write_bytes(b"data")
+    staging: Final[Path] = tmp_path / ".tox" / ".tmp" / "package"
+    previous: Final[int] = os.umask(umask)
+    try:
+        result: Final[Path] = create_session_view(package, staging, tmp_path)
+    finally:
+        os.umask(previous)
+
+    assert result.read_bytes() == b"data"
+    for directory in (staging.parent.parent, staging.parent, staging, result.parent):
+        assert stat.S_IMODE(directory.stat().st_mode) == 0o700
 
 
 def test_create_session_view_no_common_path(tmp_path: Path, monkeypatch: MonkeyPatch) -> None:

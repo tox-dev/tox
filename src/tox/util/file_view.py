@@ -8,6 +8,8 @@ import sys
 from os.path import commonpath
 from typing import TYPE_CHECKING, Final
 
+from tox.util.path import ensure_private_dir
+
 if TYPE_CHECKING:
     from pathlib import Path
 
@@ -15,12 +17,12 @@ if TYPE_CHECKING:
 def create_session_view(package: Path, temp_path: Path, trust_root: Path | None = None) -> Path:
     if temp_path.is_symlink():
         temp_path.unlink()
-    temp_path.mkdir(parents=True, exist_ok=True)
+    ensure_private_dir(temp_path)
     if sys.platform != "win32":
         _ensure_private_staging_path(temp_path, trust_root, os.geteuid())
     file_id: Final[int] = max((int(entry.name) for entry in temp_path.iterdir() if entry.name.isnumeric()), default=0)
     session_dir: Final[Path] = temp_path / str(file_id + 1)
-    session_dir.mkdir()
+    session_dir.mkdir(mode=0o700)
     session_package: Final[Path] = session_dir / package.name
 
     with package.open("rb") as source, session_package.open("xb") as target:
