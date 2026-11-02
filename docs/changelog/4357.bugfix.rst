@@ -1,1 +1,2 @@
-``tox`` no longer fails to stage packages when the process umask makes the just created directories group writable - by :user:``haigou-web``.
+``tox`` no longer fails to stage packages when the process umask makes the just created directories group writable - by
+:user:``haigou-web``.
