@@ -27,6 +27,16 @@ if TYPE_CHECKING:
     from tox.config.of_type import ConfigDynamicDefinition
     from tox.tox_env.api import ToxEnvCreateArgs
 
+_SCRIPT_METADATA_RE: Final[re.Pattern[str]] = re.compile(
+    r"""
+    (?m)
+    ^[#][ ]///[ ](?P<type>[a-zA-Z0-9-]+)$
+    \s
+    (?P<content>(?:^[#](?:|[ ].*)$\s)*)  # [ ] survives VERBOSE; * admits empty blocks
+    ^[#][ ]///$
+    """,
+    re.VERBOSE,
+)
 _MAX_SCRIPT_BYTES: Final[int] = 5 * 1024 * 1024  # 5 MiB; PEP 723 metadata blocks are tiny in practice
 
 
@@ -152,18 +162,8 @@ class Pep723Mixin(Python, RunToxEnv):
 
 
 def _parse_script_metadata(script: str) -> ScriptMetadata:
-    pattern: Final[re.Pattern[str]] = re.compile(
-        r"""
-        (?m)
-        ^[#][ ]///[ ](?P<type>[a-zA-Z0-9-]+)$
-        \s
-        (?P<content>(?:^[#](?:|[ ].*)$\s)*)  # [ ] survives VERBOSE; * admits empty blocks
-        ^[#][ ]///$
-        """,
-        re.VERBOSE,
-    )
     script_blocks: Final[list[str]] = [
-        match.group("content") for match in pattern.finditer(script) if match.group("type") == "script"
+        match.group("content") for match in _SCRIPT_METADATA_RE.finditer(script) if match.group("type") == "script"
     ]
     if len(script_blocks) > 1:
         msg = "multiple [script] metadata blocks found in script"
