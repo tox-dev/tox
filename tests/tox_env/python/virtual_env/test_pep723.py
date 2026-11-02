@@ -240,6 +240,34 @@ def test_script_file_too_large_rejected(tox_project: ToxProjectCreator, mocker: 
     assert "exceeds the 1 byte limit" in result.out
 
 
+@pytest.mark.parametrize(
+    "line",
+    [
+        pytest.param('#requires-python = ">=99.0"', id="no-space-requires-python"),
+        pytest.param('#dependencies = ["setuptools"]', id="no-space-dependencies"),
+        pytest.param('## dependencies = ["setuptools"]', id="double-hash"),
+    ],
+)
+def test_metadata_line_without_space_is_not_metadata(tox_project: ToxProjectCreator, line: str) -> None:
+    """A content line with characters after the # must have a space there, else the block is not one.
+
+    PEP 723: "If there are characters after the # then the first character MUST be a space", and a block that
+    does not close with a conforming content run is unclosed, which tools must ignore.
+    """
+    script = f"# /// script\n{line}\n# ///\nprint('ok')\n"
+    result, execute_calls = _run(tox_project, {"tox.ini": _tox_ini(), "check.py": script})
+    result.assert_success()
+    assert not [i for i in execute_calls.call_args_list if "install" in i[0][3].run_id]
+
+
+def test_metadata_honored_with_bare_hash_line(tox_project: ToxProjectCreator) -> None:
+    """A line that is only a # carries no characters after it, so it stays a valid content line."""
+    script = '# /// script\n#\n# requires-python = ">=99.0"\n# ///\nprint("ok")\n'
+    result, _ = _run(tox_project, {"tox.ini": _tox_ini(), "check.py": script})
+    result.assert_failed()
+    assert "does not satisfy requires-python" in result.out
+
+
 def test_metadata_honored_with_bom(tox_project: ToxProjectCreator) -> None:
     """A UTF-8 BOM (common Windows editor artifact) must not silently disable the metadata block."""
     script = "\ufeff" + dedent("""\

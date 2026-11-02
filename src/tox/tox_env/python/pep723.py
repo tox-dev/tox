@@ -33,7 +33,7 @@ _SCRIPT_METADATA_RE: Final[re.Pattern[str]] = re.compile(
     ^[#][ ]///[ ](?P<type>[a-zA-Z0-9-]+)$  # opening: # /// <type>
     \s                                      # blank line or whitespace
     (?P<content>                            # TOML content lines:
-        (?:^[#](?:| .*)$\s)+               #   each line starts with # (optionally followed by space + text)
+        (?:^[#](?:|[ ].*)$\s)+              #   each line is bare # or # + space + text; [ ] so VERBOSE keeps it
     )
     ^[#][ ]///$                             # closing: # ///
     """,
