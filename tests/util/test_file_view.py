@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import stat
 import sys
 from pathlib import Path
 from typing import TYPE_CHECKING, Final
@@ -125,3 +126,45 @@ def test_create_session_view_rejects_foreign_link_in_sticky_parent(tmp_path: Pat
         create_session_view(package, link / "package", tmp_path)
 
     assert list((target / "package").iterdir()) == []
+
+
+def test_create_session_view_creates_missing_directories_private(
+    tmp_path: Path,
+    mocker: MockerFixture,
+) -> None:
+    package: Final[Path] = tmp_path / "pkg.whl"
+    package.write_bytes(b"data")
+    staging: Final[Path] = tmp_path / ".tox" / ".tmp" / "package"
+    modes: Final[dict[Path, int]] = {}
+    mkdir: Final[Callable[[Path, int, bool, bool], None]] = Path.mkdir
+
+    def recording_mkdir(path: Path, mode: int = 0o777, parents: bool = False, exist_ok: bool = False) -> None:
+        modes[path] = mode
+        mkdir(path, mode, parents, exist_ok)
+
+    mocker.patch.object(Path, "mkdir", autospec=True, side_effect=recording_mkdir)
+
+    create_session_view(package, staging, tmp_path)
+
+    # a permissive umask (e.g. 002) would make the intermediate directories group writable,
+    # which _ensure_private_staging_path then rejects -- so every one of them must be private
+    assert {path: modes[path] for path in (staging, staging.parent, staging.parent.parent)} == {
+        staging: 0o700,
+        staging.parent: 0o700,
+        staging.parent.parent: 0o700,
+    }
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="POSIX directory permissions")
+@pytest.mark.parametrize("mask", [0o000, 0o002, 0o022])
+def test_create_session_view_tolerates_permissive_umask(tmp_path: Path, mask: int) -> None:
+    package: Final[Path] = tmp_path / "pkg.whl"
+    package.write_bytes(b"data")
+    staging: Final[Path] = tmp_path / ".tox" / ".tmp" / "package"
+    previous: Final[int] = os.umask(mask)
+    try:
+        result: Final[Path] = create_session_view(package, staging, tmp_path)
+    finally:
+        os.umask(previous)
+
+    assert (result.read_bytes(), stat.S_IMODE(staging.stat().st_mode)) == (b"data", 0o700)

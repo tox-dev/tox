@@ -15,7 +15,7 @@ if TYPE_CHECKING:
 def create_session_view(package: Path, temp_path: Path, trust_root: Path | None = None) -> Path:
     if temp_path.is_symlink():
         temp_path.unlink()
-    temp_path.mkdir(parents=True, exist_ok=True)
+    _make_private_dir(temp_path)
     if sys.platform != "win32":
         _ensure_private_staging_path(temp_path, trust_root, os.geteuid())
     file_id: Final[int] = max((int(entry.name) for entry in temp_path.iterdir() if entry.name.isnumeric()), default=0)
@@ -33,6 +33,24 @@ def create_session_view(package: Path, temp_path: Path, trust_root: Path | None 
         rel_session, rel_package = session_package.relative_to(common), package.relative_to(common)
         logging.debug("package %s copied to %s (%s)", rel_session, rel_package, common)
     return session_package
+
+
+def _make_private_dir(path: Path) -> None:
+    """Create ``path`` and its missing parents with owner-only permissions.
+
+    :meth:`Path.mkdir` defers to the process umask, and the ``mode`` given with ``parents=True`` only applies to the
+    leaf directory -- the intermediate directories always get ``0o777 & ~umask``. Under a permissive umask such as
+    ``002`` the directories tox created itself therefore end up group writable and are rejected by
+    :func:`_ensure_private_staging_path`. Walk the missing directories explicitly so each of them is private.
+
+    """
+    missing: list[Path] = []
+    current: Path = path
+    while not current.exists() and current != current.parent:
+        missing.append(current)
+        current = current.parent
+    for directory in reversed(missing):
+        directory.mkdir(mode=0o700)
 
 
 def _ensure_private_staging_path(temp_path: Path, trust_root: Path | None, user_id: int) -> None:
