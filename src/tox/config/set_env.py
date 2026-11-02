@@ -136,9 +136,9 @@ class SetEnv:
             try:
                 self._markers[key] = Marker(marker)
             except InvalidMarker as exception:
-                # A bare ';' is the marker separator, so a value that carries one fails to load. Naming the key,
-                # and the escape, is the difference between a hunt through the file and a one-line fix.
-                msg = f"invalid marker for set_env key {key!r}: {exception}\nescape a literal ';' in the value as '\\;'"
+                msg = f"invalid marker for set_env key {key!r}: {exception}"
+                if self.shape == "string":
+                    msg = f"{msg}\nescape a literal ';' in the value as '\\;'"
                 raise ValueError(msg) from exception
         else:  # an unconditional redefinition drops the marker an earlier entry set, as the INI form does
             self._markers.pop(key, None)

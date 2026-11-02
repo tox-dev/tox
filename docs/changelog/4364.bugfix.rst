@@ -1,2 +1,2 @@
-A ``set_env`` value that carries a literal semicolon now fails with an error that names the key it belongs to, and says
-that ``\;`` writes a literal semicolon; that escape is documented too.
+Invalid ``set_env`` markers now report the key. For INI values, the error explains how to write a literal semicolon as
+``\;``.

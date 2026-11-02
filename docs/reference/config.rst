@@ -1135,6 +1135,8 @@ Base options
                DARWIN_VAR = 1; sys_platform == 'darwin'
                WIN_ONLY = 1; sys_platform == 'win32'
 
+    In INI values, write a literal semicolon as ``\;`` so it is not parsed as a marker separator.
+
     Available markers include ``sys_platform``, ``os_name``, ``platform_machine``, ``platform_system``,
     ``python_version``, ``implementation_name``, and others as defined in PEP-508.
 

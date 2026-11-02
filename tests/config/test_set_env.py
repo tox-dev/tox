@@ -60,12 +60,17 @@ def test_set_env_bad_line() -> None:
 
 
 def test_set_env_invalid_marker_names_the_key_and_the_escape() -> None:
-    # a bare ';' is the marker separator, so a value that carries one and no marker fails to load;
-    # the error has to say which key failed and how to write a literal semicolon instead
     with pytest.raises(ValueError, match=r"key 'WINPATH'") as exc:
         SetEnv("\nWINPATH = C:\\one;C:\\two", "py", "py", Path())
 
     assert r"escape a literal ';' in the value as '\;'" in str(exc.value)
+
+
+def test_set_env_invalid_table_marker_omits_ini_hint() -> None:
+    with pytest.raises(ValueError, match=r"invalid marker for set_env key 'WINPATH'") as exc:
+        SetEnv({"WINPATH": {"value": "C:\\one", "marker": "invalid"}}, "py", "py", Path())
+
+    assert "escape a literal" not in str(exc.value)
 
 
 @pytest.mark.parametrize(
