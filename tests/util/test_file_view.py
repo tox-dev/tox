@@ -66,8 +66,9 @@ def test_create_session_view_repairs_existing_staging(tmp_path: Path, mode: int)
 
     assert result.read_bytes() == b"data"
     assert stat.S_IMODE(tmp_path.stat().st_mode) == 0o775
-    for directory in (work_dir, staging.parent, staging):
-        assert stat.S_IMODE(directory.stat().st_mode) & stat.S_IWGRP == 0
+    assert stat.S_IMODE(work_dir.stat().st_mode) == mode & ~0o077
+    for directory in (staging.parent, staging):
+        assert stat.S_IMODE(directory.stat().st_mode) == mode & ~stat.S_IWGRP
 
 
 @pytest.mark.skipif(sys.platform == "win32", reason="POSIX directory permissions")
@@ -103,7 +104,7 @@ def test_create_session_view_repairs_nested_work_dir(tmp_path: Path) -> None:
 
     assert result.read_bytes() == b"data"
     assert stat.S_IMODE(shared.stat().st_mode) == 0o755
-    assert stat.S_IMODE(work_dir.stat().st_mode) == 0o755
+    assert stat.S_IMODE(work_dir.stat().st_mode) == 0o700
 
 
 @pytest.mark.skipif(sys.platform == "win32", reason="POSIX directory permissions")

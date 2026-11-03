@@ -60,7 +60,7 @@ def _repair_owned_staging_path(temp_path: Path, trust_root: Path, work_dir: Path
     with ExitStack() as stack:
         directory: int = os.open(trust_root.resolve(), flags)
         stack.callback(os.close, directory)
-        owned: Final[list[tuple[int, int]]] = []
+        owned: Final[list[tuple[int, int, int]]] = []
         entries: Final[list[tuple[int, str, int, Path]]] = []
         parts: Final[tuple[str, ...]] = (*work_parts, *staging_parts)
         for index, part in enumerate(parts):
@@ -75,18 +75,20 @@ def _repair_owned_staging_path(temp_path: Path, trust_root: Path, work_dir: Path
             if metadata.st_uid != user_id or metadata.st_mode & stat.S_IWOTH:
                 return
             if index >= len(work_parts) - 1:
-                owned.append((directory, stat.S_IMODE(metadata.st_mode)))
+                # a fresh work dir is owner-only, which also hides group-writable environments left inside it
+                revoked: int = 0o077 if index == len(work_parts) - 1 else stat.S_IWGRP
+                owned.append((directory, stat.S_IMODE(metadata.st_mode), revoked))
             elif metadata.st_mode & stat.S_IWGRP:
                 return
 
-        _remove_group_write(owned)
+        _revoke_access(owned)
         _verify_unchanged_staging_path(entries)
 
 
-def _remove_group_write(directories: list[tuple[int, int]]) -> None:
-    for descriptor, mode in directories:
-        if mode & stat.S_IWGRP:
-            os.fchmod(descriptor, mode & ~stat.S_IWGRP)
+def _revoke_access(directories: list[tuple[int, int, int]]) -> None:
+    for descriptor, mode, revoked in directories:
+        if mode & revoked:
+            os.fchmod(descriptor, mode & ~revoked)
 
 
 def _verify_unchanged_staging_path(entries: list[tuple[int, str, int, Path]]) -> None:

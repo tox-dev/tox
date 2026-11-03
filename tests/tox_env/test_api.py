@@ -57,7 +57,8 @@ def test_package_staging_reuses_group_writable_directories(
         os.umask(previous)
 
     assert stat.S_IMODE(project.path.stat().st_mode) == 0o775
-    for directory in (work_dir, staging.parent, staging):
+    assert stat.S_IMODE(work_dir.stat().st_mode) == 0o700
+    for directory in (staging.parent, staging):
         assert stat.S_IMODE(directory.stat().st_mode) == 0o755
 
 
