@@ -5,6 +5,8 @@
 [![Downloads](https://static.pepy.tech/badge/tox/month)](https://pepy.tech/project/tox)
 [![Documentation status](https://readthedocs.org/projects/tox/badge/?version=latest)](https://tox.readthedocs.io/en/latest/?badge=latest)
 [![check](https://github.com/tox-dev/tox/actions/workflows/check.yaml/badge.svg)](https://github.com/tox-dev/tox/actions/workflows/check.yaml)
+[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/tox-dev/tox/badge)](https://scorecard.dev/viewer/?uri=github.com/tox-dev/tox)
+[![OpenSSF Best Practices](https://www.bestpractices.dev/projects/16248/badge)](https://www.bestpractices.dev/projects/16248)
 
 `tox` aims to automate and standardize testing in Python. It is part of a larger vision of easing the packaging, testing
 and release process of Python software (alongside [pytest](https://docs.pytest.org/en/latest/) and
