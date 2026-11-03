@@ -5,6 +5,7 @@ import os
 import shutil
 import stat
 import sys
+from contextlib import ExitStack
 from os.path import commonpath
 from typing import TYPE_CHECKING, Final
 
@@ -14,12 +15,17 @@ if TYPE_CHECKING:
     from pathlib import Path
 
 
-def create_session_view(package: Path, temp_path: Path, trust_root: Path | None = None) -> Path:
+def create_session_view(
+    package: Path, temp_path: Path, trust_root: Path | None = None, work_dir: Path | None = None
+) -> Path:
     if temp_path.is_symlink():
         temp_path.unlink()
     ensure_private_dir(temp_path)
     if sys.platform != "win32":
-        _ensure_private_staging_path(temp_path, trust_root, os.geteuid())
+        user_id: Final[int] = os.geteuid()
+        if trust_root is not None and work_dir is not None:
+            _repair_owned_staging_path(temp_path, trust_root, work_dir, user_id)
+        _ensure_private_staging_path(temp_path, trust_root, user_id)
     file_id: Final[int] = max((int(entry.name) for entry in temp_path.iterdir() if entry.name.isnumeric()), default=0)
     session_dir: Final[Path] = temp_path / str(file_id + 1)
     session_dir.mkdir(mode=0o700)
@@ -35,6 +41,39 @@ def create_session_view(package: Path, temp_path: Path, trust_root: Path | None 
         rel_session, rel_package = session_package.relative_to(common), package.relative_to(common)
         logging.debug("package %s copied to %s (%s)", rel_session, rel_package, common)
     return session_package
+
+
+def _repair_owned_staging_path(temp_path: Path, trust_root: Path, work_dir: Path, user_id: int) -> None:
+    try:
+        work_parts: Final[tuple[str, ...]] = work_dir.relative_to(trust_root).parts
+        staging_parts: Final[tuple[str, ...]] = temp_path.relative_to(work_dir).parts
+    except ValueError:
+        return
+    if not staging_parts or ".." in {*work_parts, *staging_parts}:
+        return
+
+    flags: Final[int] = os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW
+    with ExitStack() as stack:
+        directory: int = os.open(trust_root.resolve(), flags)
+        stack.callback(os.close, directory)
+        owned: list[tuple[int, int]] = []
+        for index, part in enumerate((*work_parts, *staging_parts)):
+            try:
+                directory = os.open(part, flags, dir_fd=directory)
+            except OSError:
+                return
+            stack.callback(os.close, directory)
+            metadata: os.stat_result = os.fstat(directory)
+            if metadata.st_uid != user_id or metadata.st_mode & stat.S_IWOTH:
+                return
+            if index >= len(work_parts) - 1:
+                owned.append((directory, stat.S_IMODE(metadata.st_mode)))
+            elif metadata.st_mode & stat.S_IWGRP:
+                return
+
+        for descriptor, mode in owned:
+            if mode & stat.S_IWGRP:
+                os.fchmod(descriptor, mode & ~stat.S_IWGRP)
 
 
 def _ensure_private_staging_path(temp_path: Path, trust_root: Path | None, user_id: int) -> None:

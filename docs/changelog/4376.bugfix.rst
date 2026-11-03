@@ -1,0 +1,1 @@
+Reuse staging directories from older tox versions by removing group-write permissions when the current user owns them.
