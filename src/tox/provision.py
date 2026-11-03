@@ -22,6 +22,7 @@ from tox.plugin import impl
 from tox.report import HandledError
 from tox.tox_env.errors import Skip
 from tox.tox_env.python.pip.req_file import PythonDeps
+from tox.util.file_view import PACKAGE_STAGING_DIR, repair_staging_path
 from tox.util.path import ensure_private_dir
 from tox.util.redact import redact_argv
 
@@ -234,6 +235,8 @@ def run_provision(name: str, state: State) -> int:
     tox_env: PythonRun = cast("PythonRun", state.envs[name])
     env_python = tox_env.env_python()
     logging.info("will run in a automatically provisioned python environment under %s", env_python)
+    core = state.conf.core
+    repair_staging_path(core["temp_dir"] / PACKAGE_STAGING_DIR, core["tox_root"], core["work_dir"])
     lock_path = tox_env.env_dir / "file.lock"
     ensure_private_dir(lock_path.parent)
     with FileLock(lock_path):

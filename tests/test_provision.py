@@ -727,6 +727,26 @@ def test_provision_creates_private_work_dir(tox_project: ToxProjectCreator) -> N
     assert stat.S_IMODE((project.path / ".tox").stat().st_mode) == 0o700
 
 
+@pytest.mark.skipif(sys.platform == "win32", reason="POSIX directory permissions")
+@pytest.mark.parametrize(
+    "legacy", [pytest.param(".tox", id="work-dir"), pytest.param(".tox/.tmp/package", id="staging")]
+)
+def test_provision_repairs_legacy_staging(tox_project: ToxProjectCreator, legacy: str) -> None:
+    project = tox_project({"tox.ini": "[tox]\nrequires = tox<4.14\n[testenv]\npackage = skip"})
+    project.patch_execute(lambda request: 0 if request.run_id == "provision" or "install" in request.run_id else None)
+    work_dir: Final[Path] = project.path / ".tox"
+    previous: Final[int] = os.umask(0o002)
+    try:
+        (project.path / legacy).mkdir(parents=True)
+        project.run("r")
+    finally:
+        os.umask(previous)
+    staging: Final[Path] = work_dir / ".tmp" / "package"
+    modes: Final[list[int]] = [stat.S_IMODE(path.stat().st_mode) for path in (work_dir, staging.parent, staging)]
+    assert modes[0] == 0o700
+    assert all(mode & stat.S_IWGRP == 0 for mode in modes)
+
+
 def test_provision_unrecognized_args_no_provision(tox_project: ToxProjectCreator) -> None:
     """When provisioning is not needed, unknown CLI args should still error."""
     proj = tox_project({

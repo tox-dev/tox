@@ -36,7 +36,7 @@ from tox.tox_env.python.package import (
     WheelPackage,
 )
 from tox.tox_env.python.virtual_env.api import VirtualEnv
-from tox.util.file_view import create_session_view
+from tox.util.file_view import PACKAGE_STAGING_DIR, create_session_view
 from tox.util.typing_compat import override
 
 from .util import dependencies_with_extras, safe_extractall
@@ -403,7 +403,7 @@ class Pep517VenvPackager(PythonPackageToxEnv, ABC):
 
     @property
     def _package_temp_path(self) -> Path:
-        return self.core.get("temp_dir", Path) / "package"
+        return self.core.get("temp_dir", Path) / PACKAGE_STAGING_DIR
 
     @override
     def load_deps_for_env(self, for_env: EnvConfigSet) -> list[Requirement]:

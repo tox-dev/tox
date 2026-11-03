@@ -15,6 +15,16 @@ if TYPE_CHECKING:
     from pathlib import Path
 
 
+PACKAGE_STAGING_DIR: Final[str] = "package"
+
+
+def repair_staging_path(temp_path: Path, trust_root: Path, work_dir: Path) -> None:
+    """Create the package staging path and repair it, for a provisioned tox that may predate the repair."""
+    if sys.platform != "win32":
+        ensure_private_dir(temp_path)
+        _repair_owned_staging_path(temp_path, trust_root, work_dir, os.geteuid())
+
+
 def create_session_view(
     package: Path, temp_path: Path, trust_root: Path | None = None, work_dir: Path | None = None
 ) -> Path:
@@ -125,5 +135,7 @@ def _ensure_private_staging_path(temp_path: Path, trust_root: Path | None, user_
 
 
 __all__ = [
+    "PACKAGE_STAGING_DIR",
     "create_session_view",
+    "repair_staging_path",
 ]

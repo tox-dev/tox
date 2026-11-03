@@ -1,4 +1,5 @@
 Reuse work directories created by older tox versions under umask ``002``: package staging now makes a group-writable
-``.tox`` owned by the current user owner-only and removes group write from its staging directories. Provisioning and the
+``.tox`` owned by the current user owner-only and removes group write from its staging directories. Provisioning applies
+the same repair before it starts the provisioned tox, which may be a release without it. Provisioning and the
 ``CACHEDIR.TAG`` setup now create a missing work directory owner-only, so a fresh ``.tox`` no longer fails the staging
 check.
