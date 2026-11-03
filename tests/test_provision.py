@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import os
+import stat
 import sys
 import time
 from contextlib import contextmanager
@@ -712,6 +713,18 @@ def test_provision_acquires_file_lock(tox_project: ToxProjectCreator) -> None:
     project.patch_execute(_check_lock)
     project.run("r")
     assert lock_held_during_provision.get("held") is True
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="POSIX directory permissions")
+def test_provision_creates_private_work_dir(tox_project: ToxProjectCreator) -> None:
+    project = tox_project({"tox.ini": "[tox]\nrequires = tox<4.14\n[testenv]\npackage = skip"})
+    project.patch_execute(lambda request: 0 if request.run_id == "provision" or "install" in request.run_id else None)
+    previous: Final[int] = os.umask(0o002)
+    try:
+        project.run("r")
+    finally:
+        os.umask(previous)
+    assert stat.S_IMODE((project.path / ".tox").stat().st_mode) == 0o700
 
 
 def test_provision_unrecognized_args_no_provision(tox_project: ToxProjectCreator) -> None:

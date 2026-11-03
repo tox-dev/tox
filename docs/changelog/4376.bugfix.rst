@@ -1,1 +1,3 @@
 Reuse staging directories from older tox versions by removing group-write permissions when the current user owns them.
+Provisioning and the ``CACHEDIR.TAG`` setup now create a missing work directory with owner-only permissions, so a fresh
+``.tox`` no longer fails the staging check under umask ``002``.

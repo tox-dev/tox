@@ -22,6 +22,7 @@ from tox.plugin import impl
 from tox.report import HandledError
 from tox.tox_env.errors import Skip
 from tox.tox_env.python.pip.req_file import PythonDeps
+from tox.util.path import ensure_private_dir
 from tox.util.redact import redact_argv
 
 if TYPE_CHECKING:
@@ -234,7 +235,7 @@ def run_provision(name: str, state: State) -> int:
     env_python = tox_env.env_python()
     logging.info("will run in a automatically provisioned python environment under %s", env_python)
     lock_path = tox_env.env_dir / "file.lock"
-    lock_path.parent.mkdir(parents=True, exist_ok=True)
+    ensure_private_dir(lock_path.parent)
     with FileLock(lock_path):
         try:
             return _setup_and_execute(tox_env, env_python, state)

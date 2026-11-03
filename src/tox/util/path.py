@@ -25,7 +25,7 @@ def ensure_cachedir_tag(work_dir: Path) -> None:
     """Ensure a ``CACHEDIR.TAG`` file exists in *work_dir* per https://bford.info/cachedir/spec.html."""
     tag_path = work_dir / "CACHEDIR.TAG"
     if not tag_path.exists():
-        work_dir.mkdir(parents=True, exist_ok=True)
+        ensure_private_dir(work_dir)
         tag_path.write_text(_CACHEDIR_TAG, encoding="utf-8")
 
 
