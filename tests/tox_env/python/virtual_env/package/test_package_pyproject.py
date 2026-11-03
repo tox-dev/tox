@@ -864,11 +864,14 @@ def test_build_wheel_via_sdist_restores_root(tox_project: ToxProjectCreator, dem
     ("skip", "message"),
     [
         pytest.param(
-            "false", "a: failed with could not find python interpreter matching any of the specs missing", id="fail"
+            "false", "a: failed with could not find python interpreter matching any of the specs python3.99", id="fail"
         ),
         pytest.param(
             "true",
-            "a: skipped because could not find python interpreter with spec(s): missing for package environment .pkg",
+            (
+                "a: skipped because could not find python interpreter with spec(s): python3.99 "
+                "for package environment .pkg"
+            ),
             id="skip",
         ),
     ],
@@ -876,7 +879,7 @@ def test_build_wheel_via_sdist_restores_root(tox_project: ToxProjectCreator, dem
 def test_pkg_env_missing_interpreter(
     tox_project: ToxProjectCreator, demo_pkg_inline: Path, skip: str, message: str
 ) -> None:
-    toml_cfg = 'env_list = ["a"]\n[env_pkg_base]\nbase_python = ["missing"]\n'
+    toml_cfg = 'env_list = ["a"]\n[env_pkg_base]\nbase_python = ["python3.99"]\n'
     proj = tox_project({"tox.toml": toml_cfg}, base=demo_pkg_inline)
 
     result = proj.run("r", "-e", "a", "--skip-missing-interpreters", skip)
