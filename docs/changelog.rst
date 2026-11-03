@@ -6,6 +6,24 @@
 
 .. towncrier release notes start
 
+.. _release-4-67-8:
+
+*********************
+ 4.67.8 (2026-11-03)
+*********************
+
+.. _release-4-67-8-fixed:
+
+Fixed
+-----
+
+- A ``.tox`` created under umask ``002`` no longer fails the package staging check. When the current user owns a
+  group-writable work directory left by an older tox, tox makes it owner-only and removes group write from the staging
+  directories inside it. Provisioning runs the same repair before starting the provisioned tox, which may be a release
+  without it, and creates a missing work directory owner-only. Previously, such checkouts failed until ``.tox`` was
+  deleted, and a fresh ``.tox`` also failed when tox provisioned itself (:pr:`4377`) by :user:`gaborbernat`.
+  (:issue:`4376`)
+
 .. _release-4-67-7:
 
 *********************
