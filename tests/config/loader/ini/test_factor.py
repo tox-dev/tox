@@ -204,6 +204,26 @@ def test_factor_config_no_env_list_creates_env(tox_ini_conf: ToxIniCreator) -> N
             "3.10-2,3.11-2",
             id="digit run continuing a dotted version is not a range",
         ),
+        pytest.param(
+            "py-django-4-2,py-django-5-0",
+            "py-django-4-2,py-django-5-0",
+            id="digit run after a factor separator is not a range",
+        ),
+        pytest.param(
+            "py-1-3,x",
+            "py-1-3,x",
+            id="unbraced range after a factor separator is not a range",
+        ),
+        pytest.param(
+            "py-3-,x",
+            "py-3-,x",
+            id="unbraced open range after a factor separator is not a range",
+        ),
+        pytest.param(
+            "py-django-{4-5},x",
+            "py-django-{4,5},x",
+            id="braced range after a factor separator still expands",
+        ),
     ],
 )
 def test_expand_ranges_targets_matched_range(value: str, expected: str) -> None:
@@ -309,6 +329,26 @@ def test_expand_ranges_targets_matched_range(value: str, expected: str) -> None:
             "3.10-2,3.11-2",
             ["3.10-2", "3.11-2"],
             id="Don't expand a digit run that continues a dotted version",
+        ),
+        pytest.param(
+            "py-django-4-2,py-django-5-0",
+            ["py-django-4-2", "py-django-5-0"],
+            id="Don't expand a digit run after a factor separator",
+        ),
+        pytest.param(
+            "py-django-5-0,py-django-4-2",
+            ["py-django-5-0", "py-django-4-2"],
+            id="Don't expand a digit run after a factor separator, reversed",
+        ),
+        pytest.param(
+            "py-1-3,x",
+            ["py-1-3", "x"],
+            id="Don't expand an unbraced range after a factor separator",
+        ),
+        pytest.param(
+            "py-django-{4-5},x",
+            ["py-django-4", "py-django-5", "x"],
+            id="Expand a braced range after a factor separator",
         ),
         pytest.param(
             "py3{10-11, 13-14}",
