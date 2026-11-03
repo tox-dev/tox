@@ -61,11 +61,15 @@ def _repair_owned_staging_path(temp_path: Path, trust_root: Path, work_dir: Path
         directory: int = os.open(trust_root.resolve(), flags)
         stack.callback(os.close, directory)
         owned: Final[list[tuple[int, int]]] = []
-        for index, part in enumerate((*work_parts, *staging_parts)):
+        entries: Final[list[tuple[int, str, int, Path]]] = []
+        parts: Final[tuple[str, ...]] = (*work_parts, *staging_parts)
+        for index, part in enumerate(parts):
             try:
-                directory = os.open(part, flags, dir_fd=directory)
+                child = os.open(part, flags, dir_fd=directory)
             except OSError:
                 return
+            entries.append((directory, part, child, trust_root.joinpath(*parts[: index + 1])))
+            directory = child
             stack.callback(os.close, directory)
             metadata: os.stat_result = os.fstat(directory)
             if metadata.st_uid != user_id or metadata.st_mode & stat.S_IWOTH:
@@ -76,12 +80,25 @@ def _repair_owned_staging_path(temp_path: Path, trust_root: Path, work_dir: Path
                 return
 
         _remove_group_write(owned)
+        _verify_unchanged_staging_path(entries)
 
 
 def _remove_group_write(directories: list[tuple[int, int]]) -> None:
     for descriptor, mode in directories:
         if mode & stat.S_IWGRP:
             os.fchmod(descriptor, mode & ~stat.S_IWGRP)
+
+
+def _verify_unchanged_staging_path(entries: list[tuple[int, str, int, Path]]) -> None:
+    for parent, name, child, path in entries:
+        msg: str = f"package staging path {path} can be changed by another account"
+        try:
+            current: os.stat_result = os.stat(name, dir_fd=parent, follow_symlinks=False)
+        except OSError as exc:
+            raise PermissionError(msg) from exc
+        original: os.stat_result = os.fstat(child)
+        if (current.st_dev, current.st_ino) != (original.st_dev, original.st_ino):
+            raise PermissionError(msg)
 
 
 def _ensure_private_staging_path(temp_path: Path, trust_root: Path | None, user_id: int) -> None:

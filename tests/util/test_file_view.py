@@ -106,6 +106,33 @@ def test_create_session_view_keeps_link_target_permissions(tmp_path: Path) -> No
 
 
 @pytest.mark.skipif(sys.platform == "win32", reason="POSIX directory permissions")
+def test_create_session_view_rejects_staging_child_swapped_during_repair(tmp_path: Path, mocker: MockerFixture) -> None:
+    package: Final[Path] = tmp_path / "pkg.whl"
+    package.write_bytes(b"data")
+    work_dir: Final[Path] = tmp_path / ".tox"
+    staging: Final[Path] = work_dir / ".tmp" / "package"
+    staging.mkdir(parents=True)
+    work_dir.chmod(0o775)
+    outside: Final[Path] = tmp_path / "outside"
+    (outside / "package").mkdir(parents=True)
+    original_fchmod: Final[Callable[[int, int], None]] = os.fchmod
+    work_inode: Final[int] = work_dir.stat().st_ino
+
+    def swap_before_chmod(descriptor: int, mode: int) -> None:
+        if os.fstat(descriptor).st_ino == work_inode:
+            staging.parent.rename(tmp_path / "moved")
+            staging.parent.symlink_to(outside, target_is_directory=True)
+        original_fchmod(descriptor, mode)
+
+    mocker.patch("os.fchmod", autospec=True, side_effect=swap_before_chmod)
+
+    with pytest.raises(PermissionError, match="package staging path"):
+        create_session_view(package, staging, tmp_path, work_dir)
+
+    assert (staging.parent.is_symlink(), list((outside / "package").iterdir())) == (True, [])
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="POSIX directory permissions")
 def test_create_session_view_does_not_repair_outside_work_dir(tmp_path: Path) -> None:
     package: Final[Path] = tmp_path / "pkg.whl"
     package.write_bytes(b"data")
