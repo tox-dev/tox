@@ -168,6 +168,25 @@ def test_create_session_view_does_not_repair_outside_work_dir(tmp_path: Path, pa
 
 
 @pytest.mark.skipif(sys.platform == "win32", reason="POSIX directory permissions")
+@pytest.mark.parametrize(
+    "flag", [pytest.param("O_DIRECTORY", id="directory"), pytest.param("O_NOFOLLOW", id="nofollow")]
+)
+def test_create_session_view_rejects_group_write_without_safe_open_flags(
+    tmp_path: Path, package: Path, monkeypatch: MonkeyPatch, flag: str
+) -> None:
+    work_dir: Final[Path] = tmp_path / ".tox"
+    staging: Final[Path] = work_dir / ".tmp" / "package"
+    staging.mkdir(parents=True)
+    work_dir.chmod(0o775)
+    monkeypatch.delattr(os, flag, raising=False)
+
+    with pytest.raises(PermissionError):
+        create_session_view(package, staging, tmp_path, work_dir)
+
+    assert stat.S_IMODE(work_dir.stat().st_mode) == 0o775
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="POSIX directory permissions")
 def test_create_session_view_does_not_repair_unmanaged_ancestor(tmp_path: Path, package: Path) -> None:
     shared: Final[Path] = tmp_path / "shared"
     work_dir: Final[Path] = shared / ".tox"

@@ -54,7 +54,11 @@ def repair_staging_path(temp_path: Path, trust_root: Path, work_dir: Path) -> No
     if ".." in {*work_parts, *staging_parts}:
         return
 
-    flags: Final[int] = os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW
+    directory_flag: Final[int | None] = getattr(os, "O_DIRECTORY", None)
+    nofollow_flag: Final[int | None] = getattr(os, "O_NOFOLLOW", None)
+    if directory_flag is None or nofollow_flag is None:
+        return
+    flags: Final[int] = os.O_RDONLY | directory_flag | nofollow_flag
     user_id: Final[int] = os.geteuid()
     work_index: Final[int] = len(work_parts) - 1
     parts: Final[tuple[str, ...]] = (*work_parts, *staging_parts)
