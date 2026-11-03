@@ -49,14 +49,18 @@ def _repair_owned_staging_path(temp_path: Path, trust_root: Path, work_dir: Path
         staging_parts: Final[tuple[str, ...]] = temp_path.relative_to(work_dir).parts
     except ValueError:
         return
-    if not staging_parts or ".." in {*work_parts, *staging_parts}:
+    if ".." in {*work_parts, *staging_parts}:
         return
 
-    flags: Final[int] = os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW
+    directory_flag: Final[int | None] = getattr(os, "O_DIRECTORY", None)
+    nofollow_flag: Final[int | None] = getattr(os, "O_NOFOLLOW", None)
+    if directory_flag is None or nofollow_flag is None:
+        return
+    flags: Final[int] = os.O_RDONLY | directory_flag | nofollow_flag
     with ExitStack() as stack:
         directory: int = os.open(trust_root.resolve(), flags)
         stack.callback(os.close, directory)
-        owned: list[tuple[int, int]] = []
+        owned: Final[list[tuple[int, int]]] = []
         for index, part in enumerate((*work_parts, *staging_parts)):
             try:
                 directory = os.open(part, flags, dir_fd=directory)
@@ -71,9 +75,13 @@ def _repair_owned_staging_path(temp_path: Path, trust_root: Path, work_dir: Path
             elif metadata.st_mode & stat.S_IWGRP:
                 return
 
-        for descriptor, mode in owned:
-            if mode & stat.S_IWGRP:
-                os.fchmod(descriptor, mode & ~stat.S_IWGRP)
+        _remove_group_write(owned)
+
+
+def _remove_group_write(directories: list[tuple[int, int]]) -> None:
+    for descriptor, mode in directories:
+        if mode & stat.S_IWGRP:
+            os.fchmod(descriptor, mode & ~stat.S_IWGRP)
 
 
 def _ensure_private_staging_path(temp_path: Path, trust_root: Path | None, user_id: int) -> None:
