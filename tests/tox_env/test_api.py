@@ -50,16 +50,12 @@ def test_package_staging_reuses_group_writable_directories(
     try:
         staging.mkdir(parents=True)
         project.path.chmod(0o775)
-        for directory in (work_dir, staging.parent, staging):
-            directory.chmod(0o775)
         project.run("r", "-e", "py", "--notest").assert_success()
     finally:
         os.umask(previous)
 
-    assert stat.S_IMODE(project.path.stat().st_mode) == 0o775
-    assert stat.S_IMODE(work_dir.stat().st_mode) == 0o700
-    for directory in (staging.parent, staging):
-        assert stat.S_IMODE(directory.stat().st_mode) == 0o755
+    directories: Final[tuple[Path, ...]] = (project.path, work_dir, staging.parent, staging)
+    assert [stat.S_IMODE(directory.stat().st_mode) for directory in directories] == [0o775, 0o700, 0o755, 0o755]
 
 
 def test_dont_cleanup_temp_dir(tox_project: ToxProjectCreator, tmp_path: Path) -> None:

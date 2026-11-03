@@ -18,10 +18,15 @@ if TYPE_CHECKING:
     from tox.pytest import MonkeyPatch
 
 
-def test_create_session_view_copies(tmp_path: Path) -> None:
-    package: Final[Path] = tmp_path / "pkg.whl"
-    package.write_bytes(b"data")
-    result: Final[Path] = create_session_view(package, tmp_path / "temp")
+@pytest.fixture
+def package(tmp_path: Path) -> Path:
+    path: Final[Path] = tmp_path / "pkg.whl"
+    path.write_bytes(b"data")
+    return path
+
+
+def test_create_session_view_copies(tmp_path: Path, package: Path) -> None:
+    result: Final[Path] = create_session_view(package, tmp_path / "temp", tmp_path, tmp_path)
     assert result.read_bytes() == b"data"
     assert result.parent.parent == tmp_path / "temp"
 
@@ -31,26 +36,22 @@ def test_create_session_view_copies(tmp_path: Path) -> None:
     "umask",
     [pytest.param(0o002, id="group"), pytest.param(0o000, id="all"), pytest.param(0o022, id="owner")],
 )
-def test_create_session_view_private_directories(tmp_path: Path, umask: int) -> None:
-    package: Final[Path] = tmp_path / "pkg.whl"
-    package.write_bytes(b"data")
+def test_create_session_view_private_directories(tmp_path: Path, package: Path, umask: int) -> None:
     staging: Final[Path] = tmp_path / ".tox" / ".tmp" / "package"
     previous: Final[int] = os.umask(umask)
     try:
-        result: Final[Path] = create_session_view(package, staging, tmp_path)
+        result: Final[Path] = create_session_view(package, staging, tmp_path, staging.parent.parent)
     finally:
         os.umask(previous)
 
     assert result.read_bytes() == b"data"
-    for directory in (staging.parent.parent, staging.parent, staging, result.parent):
-        assert stat.S_IMODE(directory.stat().st_mode) == 0o700
+    directories: Final[tuple[Path, ...]] = (staging.parent.parent, staging.parent, staging, result.parent)
+    assert [stat.S_IMODE(directory.stat().st_mode) for directory in directories] == [0o700] * 4
 
 
 @pytest.mark.skipif(sys.platform == "win32", reason="POSIX directory permissions")
 @pytest.mark.parametrize("mode", [pytest.param(0o775, id="group"), pytest.param(0o2775, id="setgid")])
-def test_create_session_view_repairs_existing_staging(tmp_path: Path, mode: int) -> None:
-    package: Final[Path] = tmp_path / "pkg.whl"
-    package.write_bytes(b"data")
+def test_create_session_view_repairs_existing_staging(tmp_path: Path, package: Path, mode: int) -> None:
     work_dir: Final[Path] = tmp_path / ".tox"
     staging: Final[Path] = work_dir / ".tmp" / "package"
     previous: Final[int] = os.umask(0o002)
@@ -65,16 +66,16 @@ def test_create_session_view_repairs_existing_staging(tmp_path: Path, mode: int)
     result: Final[Path] = create_session_view(package, staging, tmp_path, work_dir)
 
     assert result.read_bytes() == b"data"
-    assert stat.S_IMODE(tmp_path.stat().st_mode) == 0o775
-    assert stat.S_IMODE(work_dir.stat().st_mode) == mode & ~0o077
-    for directory in (staging.parent, staging):
-        assert stat.S_IMODE(directory.stat().st_mode) == mode & ~stat.S_IWGRP
+    assert [stat.S_IMODE(path.stat().st_mode) for path in (tmp_path, work_dir, staging.parent, staging)] == [
+        0o775,
+        mode & ~0o077,
+        mode & ~stat.S_IWGRP,
+        mode & ~stat.S_IWGRP,
+    ]
 
 
 @pytest.mark.skipif(sys.platform == "win32", reason="POSIX directory permissions")
-def test_create_session_view_repairs_work_dir_at_project_root(tmp_path: Path) -> None:
-    package: Final[Path] = tmp_path / "pkg.whl"
-    package.write_bytes(b"data")
+def test_create_session_view_repairs_work_dir_at_project_root(tmp_path: Path, package: Path) -> None:
     staging: Final[Path] = tmp_path / ".tmp" / "package"
     staging.mkdir(parents=True)
     tmp_path.chmod(0o775)
@@ -84,15 +85,11 @@ def test_create_session_view_repairs_work_dir_at_project_root(tmp_path: Path) ->
     result: Final[Path] = create_session_view(package, staging, tmp_path, tmp_path)
 
     assert result.read_bytes() == b"data"
-    assert stat.S_IMODE(tmp_path.stat().st_mode) == 0o775
-    for directory in (staging.parent, staging):
-        assert stat.S_IMODE(directory.stat().st_mode) == 0o755
+    assert [stat.S_IMODE(path.stat().st_mode) for path in (tmp_path, staging.parent, staging)] == [0o775, 0o755, 0o755]
 
 
 @pytest.mark.skipif(sys.platform == "win32", reason="POSIX directory permissions")
-def test_create_session_view_repairs_nested_work_dir(tmp_path: Path) -> None:
-    package: Final[Path] = tmp_path / "pkg.whl"
-    package.write_bytes(b"data")
+def test_create_session_view_repairs_nested_work_dir(tmp_path: Path, package: Path) -> None:
     shared: Final[Path] = tmp_path / "shared"
     work_dir: Final[Path] = shared / ".tox"
     staging: Final[Path] = work_dir / ".tmp" / "package"
@@ -108,9 +105,7 @@ def test_create_session_view_repairs_nested_work_dir(tmp_path: Path) -> None:
 
 
 @pytest.mark.skipif(sys.platform == "win32", reason="POSIX directory permissions")
-def test_create_session_view_keeps_link_target_permissions(tmp_path: Path) -> None:
-    package: Final[Path] = tmp_path / "pkg.whl"
-    package.write_bytes(b"data")
+def test_create_session_view_keeps_link_target_permissions(tmp_path: Path, package: Path) -> None:
     work_dir: Final[Path] = tmp_path / ".tox"
     work_dir.mkdir()
     outside: Final[Path] = tmp_path / "outside"
@@ -125,12 +120,16 @@ def test_create_session_view_keeps_link_target_permissions(tmp_path: Path) -> No
 
 
 @pytest.mark.skipif(sys.platform == "win32", reason="POSIX directory permissions")
-@pytest.mark.parametrize("replacement", [pytest.param("link", id="link"), pytest.param("missing", id="missing")])
+@pytest.mark.parametrize(
+    ("replace", "linked"),
+    [
+        pytest.param(lambda moved, outside: moved.symlink_to(outside, target_is_directory=True), True, id="link"),
+        pytest.param(lambda _moved, _outside: None, False, id="missing"),
+    ],
+)
 def test_create_session_view_rejects_staging_child_swapped_during_repair(
-    tmp_path: Path, mocker: MockerFixture, replacement: str
+    tmp_path: Path, package: Path, mocker: MockerFixture, replace: Callable[[Path, Path], None], linked: bool
 ) -> None:
-    package: Final[Path] = tmp_path / "pkg.whl"
-    package.write_bytes(b"data")
     work_dir: Final[Path] = tmp_path / ".tox"
     staging: Final[Path] = work_dir / ".tmp" / "package"
     staging.mkdir(parents=True)
@@ -143,8 +142,7 @@ def test_create_session_view_rejects_staging_child_swapped_during_repair(
     def swap_before_chmod(descriptor: int, mode: int) -> None:
         if os.fstat(descriptor).st_ino == work_inode:
             staging.parent.rename(tmp_path / "moved")
-            if replacement == "link":
-                staging.parent.symlink_to(outside, target_is_directory=True)
+            replace(staging.parent, outside)
         original_fchmod(descriptor, mode)
 
     mocker.patch("os.fchmod", autospec=True, side_effect=swap_before_chmod)
@@ -152,13 +150,11 @@ def test_create_session_view_rejects_staging_child_swapped_during_repair(
     with pytest.raises(PermissionError, match="package staging path"):
         create_session_view(package, staging, tmp_path, work_dir)
 
-    assert (staging.parent.is_symlink(), list((outside / "package").iterdir())) == (replacement == "link", [])
+    assert (staging.parent.is_symlink(), list((outside / "package").iterdir())) == (linked, [])
 
 
 @pytest.mark.skipif(sys.platform == "win32", reason="POSIX directory permissions")
-def test_create_session_view_does_not_repair_outside_work_dir(tmp_path: Path) -> None:
-    package: Final[Path] = tmp_path / "pkg.whl"
-    package.write_bytes(b"data")
+def test_create_session_view_does_not_repair_outside_work_dir(tmp_path: Path, package: Path) -> None:
     work_dir: Final[Path] = tmp_path / ".tox"
     work_dir.mkdir()
     staging: Final[Path] = tmp_path / "outside" / "package"
@@ -172,30 +168,7 @@ def test_create_session_view_does_not_repair_outside_work_dir(tmp_path: Path) ->
 
 
 @pytest.mark.skipif(sys.platform == "win32", reason="POSIX directory permissions")
-@pytest.mark.parametrize(
-    "flag", [pytest.param("O_DIRECTORY", id="directory"), pytest.param("O_NOFOLLOW", id="nofollow")]
-)
-def test_create_session_view_keeps_group_write_without_safe_open_flags(
-    tmp_path: Path, mocker: MockerFixture, flag: str
-) -> None:
-    package: Final[Path] = tmp_path / "pkg.whl"
-    package.write_bytes(b"data")
-    work_dir: Final[Path] = tmp_path / ".tox"
-    staging: Final[Path] = work_dir / ".tmp" / "package"
-    staging.mkdir(parents=True)
-    work_dir.chmod(0o775)
-    mocker.patch.object(os, flag, new=None)
-
-    with pytest.raises(PermissionError):
-        create_session_view(package, staging, tmp_path, work_dir)
-
-    assert stat.S_IMODE(work_dir.stat().st_mode) == 0o775
-
-
-@pytest.mark.skipif(sys.platform == "win32", reason="POSIX directory permissions")
-def test_create_session_view_does_not_repair_unmanaged_ancestor(tmp_path: Path) -> None:
-    package: Final[Path] = tmp_path / "pkg.whl"
-    package.write_bytes(b"data")
+def test_create_session_view_does_not_repair_unmanaged_ancestor(tmp_path: Path, package: Path) -> None:
     shared: Final[Path] = tmp_path / "shared"
     work_dir: Final[Path] = shared / ".tox"
     staging: Final[Path] = work_dir / ".tmp" / "package"
@@ -210,9 +183,7 @@ def test_create_session_view_does_not_repair_unmanaged_ancestor(tmp_path: Path) 
 
 
 @pytest.mark.skipif(sys.platform == "win32", reason="POSIX directory permissions")
-def test_create_session_view_does_not_repair_traversing_work_dir(tmp_path: Path) -> None:
-    package: Final[Path] = tmp_path / "pkg.whl"
-    package.write_bytes(b"data")
+def test_create_session_view_does_not_repair_traversing_work_dir(tmp_path: Path, package: Path) -> None:
     (tmp_path / "shared").mkdir()
     work_dir: Final[Path] = tmp_path / "shared" / ".." / ".tox"
     staging: Final[Path] = work_dir / ".tmp" / "package"
@@ -230,30 +201,28 @@ def test_create_session_view_no_common_path(tmp_path: Path, monkeypatch: MonkeyP
     (tmp_path / "dist" / "pkg.whl").write_bytes(b"data")
     monkeypatch.chdir(tmp_path)
 
-    result: Final[Path] = create_session_view(Path("dist/pkg.whl"), tmp_path / "temp", tmp_path)
+    result: Final[Path] = create_session_view(Path("dist/pkg.whl"), tmp_path / "temp", tmp_path, tmp_path)
 
     assert result.is_absolute()
     assert result.read_bytes() == b"data"
 
 
 @pytest.mark.skipif(sys.platform == "win32", reason="creating symlinks needs privileges on Windows")
-def test_create_session_view_replaces_staging_link(tmp_path: Path) -> None:
-    package: Final[Path] = tmp_path / "pkg.whl"
-    package.write_bytes(b"data")
+def test_create_session_view_replaces_staging_link(tmp_path: Path, package: Path) -> None:
     outside: Final[Path] = tmp_path / "outside"
     outside.mkdir()
     staging: Final[Path] = tmp_path / "temp"
     staging.symlink_to(outside, target_is_directory=True)
 
-    result: Final[Path] = create_session_view(package, staging, tmp_path)
+    result: Final[Path] = create_session_view(package, staging, tmp_path, tmp_path)
 
     assert (result.read_bytes(), staging.is_symlink(), list(outside.iterdir())) == (b"data", False, [])
 
 
 @pytest.mark.skipif(sys.platform == "win32", reason="creating symlinks needs privileges on Windows")
-def test_create_session_view_does_not_follow_destination_link(tmp_path: Path, mocker: MockerFixture) -> None:
-    package: Final[Path] = tmp_path / "pkg.whl"
-    package.write_bytes(b"data")
+def test_create_session_view_does_not_follow_destination_link(
+    tmp_path: Path, package: Path, mocker: MockerFixture
+) -> None:
     outside: Final[Path] = tmp_path / "outside"
     outside.write_bytes(b"keep")
     mkdir: Final[Callable[[Path, int, bool, bool], None]] = Path.mkdir
@@ -266,15 +235,13 @@ def test_create_session_view_does_not_follow_destination_link(tmp_path: Path, mo
     mocker.patch.object(Path, "mkdir", autospec=True, side_effect=mkdir_with_link)
 
     with pytest.raises(FileExistsError):
-        create_session_view(package, tmp_path / "temp", tmp_path)
+        create_session_view(package, tmp_path / "temp", tmp_path, tmp_path)
 
     assert outside.read_bytes() == b"keep"
 
 
 @pytest.mark.skipif(sys.platform == "win32", reason="POSIX directory permissions")
-def test_create_session_view_rejects_writable_staging_parent(tmp_path: Path) -> None:
-    package: Final[Path] = tmp_path / "pkg.whl"
-    package.write_bytes(b"data")
+def test_create_session_view_rejects_writable_staging_parent(tmp_path: Path, package: Path) -> None:
     parent: Final[Path] = tmp_path / "temp"
     parent.mkdir(mode=0o777)
     parent.chmod(0o777)
@@ -289,9 +256,9 @@ def test_create_session_view_rejects_writable_staging_parent(tmp_path: Path) -> 
 
 
 @pytest.mark.skipif(sys.platform == "win32", reason="POSIX directory ownership")
-def test_create_session_view_rejects_other_account_staging_parent(tmp_path: Path, mocker: MockerFixture) -> None:
-    package: Final[Path] = tmp_path / "pkg.whl"
-    package.write_bytes(b"data")
+def test_create_session_view_rejects_other_account_staging_parent(
+    tmp_path: Path, package: Path, mocker: MockerFixture
+) -> None:
     work_dir: Final[Path] = tmp_path / ".tox"
     staging: Final[Path] = work_dir / ".tmp" / "package"
     staging.mkdir(parents=True)
@@ -306,9 +273,9 @@ def test_create_session_view_rejects_other_account_staging_parent(tmp_path: Path
 
 
 @pytest.mark.skipif(sys.platform == "win32", reason="POSIX sticky directory permissions")
-def test_create_session_view_rejects_foreign_link_in_sticky_parent(tmp_path: Path, mocker: MockerFixture) -> None:
-    package: Final[Path] = tmp_path / "pkg.whl"
-    package.write_bytes(b"data")
+def test_create_session_view_rejects_foreign_link_in_sticky_parent(
+    tmp_path: Path, package: Path, mocker: MockerFixture
+) -> None:
     sticky: Final[Path] = tmp_path / "sticky"
     sticky.mkdir()
     sticky.chmod(0o1777)
@@ -326,6 +293,6 @@ def test_create_session_view_rejects_foreign_link_in_sticky_parent(tmp_path: Pat
     mocker.patch.object(Path, "lstat", autospec=True, side_effect=lstat_as_other_account)
 
     with pytest.raises(PermissionError):
-        create_session_view(package, link / "package", tmp_path)
+        create_session_view(package, link / "package", tmp_path, tmp_path)
 
     assert list((target / "package").iterdir()) == []

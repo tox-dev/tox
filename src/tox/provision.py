@@ -236,6 +236,7 @@ def run_provision(name: str, state: State) -> int:
     env_python = tox_env.env_python()
     logging.info("will run in a automatically provisioned python environment under %s", env_python)
     core = state.conf.core
+    # the provisioned tox does the packaging and may be a release without the staging repair
     repair_staging_path(core["temp_dir"] / PACKAGE_STAGING_DIR, core["tox_root"], core["work_dir"])
     lock_path = tox_env.env_dir / "file.lock"
     ensure_private_dir(lock_path.parent)

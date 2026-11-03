@@ -716,35 +716,26 @@ def test_provision_acquires_file_lock(tox_project: ToxProjectCreator) -> None:
 
 
 @pytest.mark.skipif(sys.platform == "win32", reason="POSIX directory permissions")
-def test_provision_creates_private_work_dir(tox_project: ToxProjectCreator) -> None:
-    project = tox_project({"tox.ini": "[tox]\nrequires = tox<4.14\n[testenv]\npackage = skip"})
-    project.patch_execute(lambda request: 0 if request.run_id == "provision" or "install" in request.run_id else None)
-    previous: Final[int] = os.umask(0o002)
-    try:
-        project.run("r")
-    finally:
-        os.umask(previous)
-    assert stat.S_IMODE((project.path / ".tox").stat().st_mode) == 0o700
-
-
-@pytest.mark.skipif(sys.platform == "win32", reason="POSIX directory permissions")
 @pytest.mark.parametrize(
-    "legacy", [pytest.param(".tox", id="work-dir"), pytest.param(".tox/.tmp/package", id="staging")]
+    ("legacy", "modes"),
+    [
+        pytest.param((), [0o700, 0o700, 0o700], id="fresh"),
+        pytest.param((".tox",), [0o700, 0o700, 0o700], id="work-dir"),
+        pytest.param((".tox/.tmp/package",), [0o700, 0o755, 0o755], id="staging"),
+    ],
 )
-def test_provision_repairs_legacy_staging(tox_project: ToxProjectCreator, legacy: str) -> None:
+def test_provision_private_staging(tox_project: ToxProjectCreator, legacy: tuple[str, ...], modes: list[int]) -> None:
     project = tox_project({"tox.ini": "[tox]\nrequires = tox<4.14\n[testenv]\npackage = skip"})
     project.patch_execute(lambda request: 0 if request.run_id == "provision" or "install" in request.run_id else None)
-    work_dir: Final[Path] = project.path / ".tox"
     previous: Final[int] = os.umask(0o002)
     try:
-        (project.path / legacy).mkdir(parents=True)
+        for directory in legacy:
+            (project.path / directory).mkdir(parents=True)
         project.run("r")
     finally:
         os.umask(previous)
-    staging: Final[Path] = work_dir / ".tmp" / "package"
-    modes: Final[list[int]] = [stat.S_IMODE(path.stat().st_mode) for path in (work_dir, staging.parent, staging)]
-    assert modes[0] == 0o700
-    assert all(mode & stat.S_IWGRP == 0 for mode in modes)
+    staging: Final[Path] = project.path / ".tox" / ".tmp" / "package"
+    assert [stat.S_IMODE(path.stat().st_mode) for path in (staging.parent.parent, staging.parent, staging)] == modes
 
 
 def test_provision_unrecognized_args_no_provision(tox_project: ToxProjectCreator) -> None:
