@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import os
+import stat
 import sys
 import time
 from contextlib import contextmanager
@@ -712,6 +713,29 @@ def test_provision_acquires_file_lock(tox_project: ToxProjectCreator) -> None:
     project.patch_execute(_check_lock)
     project.run("r")
     assert lock_held_during_provision.get("held") is True
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="POSIX directory permissions")
+@pytest.mark.parametrize(
+    ("legacy", "modes"),
+    [
+        pytest.param((), [0o700, 0o700, 0o700], id="fresh"),
+        pytest.param((".tox",), [0o700, 0o700, 0o700], id="work-dir"),
+        pytest.param((".tox/.tmp/package",), [0o700, 0o755, 0o755], id="staging"),
+    ],
+)
+def test_provision_private_staging(tox_project: ToxProjectCreator, legacy: tuple[str, ...], modes: list[int]) -> None:
+    project = tox_project({"tox.ini": "[tox]\nrequires = tox<4.14\n[testenv]\npackage = skip"})
+    project.patch_execute(lambda request: 0 if request.run_id == "provision" or "install" in request.run_id else None)
+    previous: Final[int] = os.umask(0o002)
+    try:
+        for directory in legacy:
+            (project.path / directory).mkdir(parents=True)
+        project.run("r")
+    finally:
+        os.umask(previous)
+    staging: Final[Path] = project.path / ".tox" / ".tmp" / "package"
+    assert [stat.S_IMODE(path.stat().st_mode) for path in (staging.parent.parent, staging.parent, staging)] == modes
 
 
 def test_provision_unrecognized_args_no_provision(tox_project: ToxProjectCreator) -> None:

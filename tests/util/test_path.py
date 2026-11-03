@@ -41,6 +41,17 @@ def test_ensure_cachedir_tag_creates_parent_dirs(tmp_path: Path) -> None:
     assert (nested / "CACHEDIR.TAG").is_file()
 
 
+@pytest.mark.skipif(sys.platform == "win32", reason="POSIX directory permissions")
+def test_ensure_cachedir_tag_creates_private_dirs(tmp_path: Path) -> None:
+    nested: Final[Path] = tmp_path / "a" / "b"
+    previous: Final[int] = os.umask(0o002)
+    try:
+        ensure_cachedir_tag(nested)
+    finally:
+        os.umask(previous)
+    assert {stat.S_IMODE(path.stat().st_mode) for path in (nested, nested.parent)} == {0o700}
+
+
 def test_ensure_cachedir_tag_idempotent(tmp_path: Path) -> None:
     ensure_cachedir_tag(tmp_path)
     tag = tmp_path / "CACHEDIR.TAG"
