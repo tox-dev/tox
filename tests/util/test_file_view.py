@@ -89,6 +89,24 @@ def test_create_session_view_repairs_work_dir_at_project_root(tmp_path: Path) ->
 
 
 @pytest.mark.skipif(sys.platform == "win32", reason="POSIX directory permissions")
+def test_create_session_view_repairs_nested_work_dir(tmp_path: Path) -> None:
+    package: Final[Path] = tmp_path / "pkg.whl"
+    package.write_bytes(b"data")
+    shared: Final[Path] = tmp_path / "shared"
+    work_dir: Final[Path] = shared / ".tox"
+    staging: Final[Path] = work_dir / ".tmp" / "package"
+    staging.mkdir(parents=True)
+    shared.chmod(0o755)
+    work_dir.chmod(0o775)
+
+    result: Final[Path] = create_session_view(package, staging, tmp_path, work_dir)
+
+    assert result.read_bytes() == b"data"
+    assert stat.S_IMODE(shared.stat().st_mode) == 0o755
+    assert stat.S_IMODE(work_dir.stat().st_mode) == 0o755
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="POSIX directory permissions")
 def test_create_session_view_keeps_link_target_permissions(tmp_path: Path) -> None:
     package: Final[Path] = tmp_path / "pkg.whl"
     package.write_bytes(b"data")
@@ -106,7 +124,10 @@ def test_create_session_view_keeps_link_target_permissions(tmp_path: Path) -> No
 
 
 @pytest.mark.skipif(sys.platform == "win32", reason="POSIX directory permissions")
-def test_create_session_view_rejects_staging_child_swapped_during_repair(tmp_path: Path, mocker: MockerFixture) -> None:
+@pytest.mark.parametrize("replacement", [pytest.param("link", id="link"), pytest.param("missing", id="missing")])
+def test_create_session_view_rejects_staging_child_swapped_during_repair(
+    tmp_path: Path, mocker: MockerFixture, replacement: str
+) -> None:
     package: Final[Path] = tmp_path / "pkg.whl"
     package.write_bytes(b"data")
     work_dir: Final[Path] = tmp_path / ".tox"
@@ -121,7 +142,8 @@ def test_create_session_view_rejects_staging_child_swapped_during_repair(tmp_pat
     def swap_before_chmod(descriptor: int, mode: int) -> None:
         if os.fstat(descriptor).st_ino == work_inode:
             staging.parent.rename(tmp_path / "moved")
-            staging.parent.symlink_to(outside, target_is_directory=True)
+            if replacement == "link":
+                staging.parent.symlink_to(outside, target_is_directory=True)
         original_fchmod(descriptor, mode)
 
     mocker.patch("os.fchmod", autospec=True, side_effect=swap_before_chmod)
@@ -129,7 +151,7 @@ def test_create_session_view_rejects_staging_child_swapped_during_repair(tmp_pat
     with pytest.raises(PermissionError, match="package staging path"):
         create_session_view(package, staging, tmp_path, work_dir)
 
-    assert (staging.parent.is_symlink(), list((outside / "package").iterdir())) == (True, [])
+    assert (staging.parent.is_symlink(), list((outside / "package").iterdir())) == (replacement == "link", [])
 
 
 @pytest.mark.skipif(sys.platform == "win32", reason="POSIX directory permissions")
@@ -146,6 +168,60 @@ def test_create_session_view_does_not_repair_outside_work_dir(tmp_path: Path) ->
         create_session_view(package, staging, tmp_path, work_dir)
 
     assert stat.S_IMODE(staging.parent.stat().st_mode) == 0o775
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="POSIX directory permissions")
+@pytest.mark.parametrize(
+    "flag", [pytest.param("O_DIRECTORY", id="directory"), pytest.param("O_NOFOLLOW", id="nofollow")]
+)
+def test_create_session_view_keeps_group_write_without_safe_open_flags(
+    tmp_path: Path, mocker: MockerFixture, flag: str
+) -> None:
+    package: Final[Path] = tmp_path / "pkg.whl"
+    package.write_bytes(b"data")
+    work_dir: Final[Path] = tmp_path / ".tox"
+    staging: Final[Path] = work_dir / ".tmp" / "package"
+    staging.mkdir(parents=True)
+    work_dir.chmod(0o775)
+    mocker.patch.object(os, flag, new=None)
+
+    with pytest.raises(PermissionError):
+        create_session_view(package, staging, tmp_path, work_dir)
+
+    assert stat.S_IMODE(work_dir.stat().st_mode) == 0o775
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="POSIX directory permissions")
+def test_create_session_view_does_not_repair_unmanaged_ancestor(tmp_path: Path) -> None:
+    package: Final[Path] = tmp_path / "pkg.whl"
+    package.write_bytes(b"data")
+    shared: Final[Path] = tmp_path / "shared"
+    work_dir: Final[Path] = shared / ".tox"
+    staging: Final[Path] = work_dir / ".tmp" / "package"
+    staging.mkdir(parents=True)
+    shared.chmod(0o775)
+    work_dir.chmod(0o775)
+
+    with pytest.raises(PermissionError):
+        create_session_view(package, staging, tmp_path, work_dir)
+
+    assert (stat.S_IMODE(shared.stat().st_mode), stat.S_IMODE(work_dir.stat().st_mode)) == (0o775, 0o775)
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="POSIX directory permissions")
+def test_create_session_view_does_not_repair_traversing_work_dir(tmp_path: Path) -> None:
+    package: Final[Path] = tmp_path / "pkg.whl"
+    package.write_bytes(b"data")
+    (tmp_path / "shared").mkdir()
+    work_dir: Final[Path] = tmp_path / "shared" / ".." / ".tox"
+    staging: Final[Path] = work_dir / ".tmp" / "package"
+    staging.mkdir(parents=True)
+    work_dir.chmod(0o775)
+
+    with pytest.raises(PermissionError):
+        create_session_view(package, staging, tmp_path, work_dir)
+
+    assert stat.S_IMODE(work_dir.stat().st_mode) == 0o775
 
 
 def test_create_session_view_no_common_path(tmp_path: Path, monkeypatch: MonkeyPatch) -> None:
