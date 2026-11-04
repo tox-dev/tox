@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 import re
 import sys
@@ -504,37 +505,37 @@ def test_pylock_requirements_with_utf8_bom(tmp_path: Path) -> None:
 @pytest.mark.slow
 @pytest.mark.integration
 def test_pylock_install_integration(
-    tox_project: ToxProjectCreator,
-    enable_pip_pypi_access: str | None,  # ruff:ignore[unused-function-argument]
+    tox_project: ToxProjectCreator, demo_pkg_inline_wheel: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    project = tox_project(
-        {
-            "tox.toml": """
+    # resolve name==version from a local folder, so a slow or unreachable index cannot stall the install
+    monkeypatch.setenv("PIP_NO_INDEX", "1")
+    monkeypatch.setenv("PIP_FIND_LINKS", str(demo_pkg_inline_wheel.parent))
+    project: Final[ToxProject] = tox_project({
+        "tox.toml": """
             [env_run_base]
             skip_install = true
             pylock = "pylock.toml"
-            commands = [["python", "-c", "import six; print(six.__version__)"]]
+            commands = [["python", "-c", "from importlib.metadata import version; print(version('demo-pkg-inline'))"]]
             """,
-            "pylock.toml": dedent("""\
-                lock-version = "1.0"
-                created-by = "test-tool"
+        "pylock.toml": dedent(f"""\
+            lock-version = "1.0"
+            created-by = "test-tool"
 
-                [[packages]]
-                name = "six"
-                version = "1.17.0"
+            [[packages]]
+            name = "demo-pkg-inline"
+            version = "1.0.0"
 
-                [[packages.wheels]]
-                url = "https://files.pythonhosted.org/packages/b7/ce/149a00dd41f10bc29e5921b496af8b574d8413afcd5e30f4c7e48bb4cb87/six-1.17.0-py2.py3-none-any.whl"
+            [[packages.wheels]]
+            url = "{demo_pkg_inline_wheel.as_uri()}"
 
-                [packages.wheels.hashes]
-                sha256 = "4721f391ed90541fddacab5acf947aa0d3dc7d27b2e1e8eda2be8970586c3274"
-            """),
-        },
-    )
-    result = project.run("r", "-e", "py")
+            [packages.wheels.hashes]
+            sha256 = "{hashlib.sha256(demo_pkg_inline_wheel.read_bytes()).hexdigest()}"
+        """),
+    })
+    result: Final[ToxRunOutcome] = project.run("r", "-e", "py")
 
     result.assert_success()
-    assert "1.17.0" in result.out
+    assert "1.0.0" in result.out
 
 
 @pytest.fixture
