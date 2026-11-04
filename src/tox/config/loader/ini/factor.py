@@ -194,7 +194,7 @@ def expand_ranges(value: str) -> str:
     return re.sub(
         r"""
         (                       # outer capture group
-            (?<! [\w.] )        # a range opens a factor, so digits carrying on a name are not one (py313-django4-2)
+            (?<! [\w.-] )       # only an env or brace item opens a range, so py-django-4-2 stays one name
             (?:
                 ( \d+ ) - ( \d+ ) # closed range: start-end
                 |
