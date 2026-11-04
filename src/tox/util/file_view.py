@@ -22,7 +22,7 @@ def create_session_view(package: Path, temp_path: Path, trust_root: Path) -> Pat
         temp_path.unlink()
     ensure_private_dir(temp_path)
     if sys.platform != "win32":
-        _ensure_private_staging_path(temp_path, trust_root)
+        _ensure_private_staging_path(temp_path, trust_root, os.geteuid())
     file_id: Final[int] = max((int(entry.name) for entry in temp_path.iterdir() if entry.name.isnumeric()), default=0)
     session_dir: Final[Path] = temp_path / str(file_id + 1)
     session_dir.mkdir(mode=0o700)
@@ -40,10 +40,10 @@ def create_session_view(package: Path, temp_path: Path, trust_root: Path) -> Pat
     return session_package
 
 
-def _ensure_private_staging_path(temp_path: Path, trust_root: Path) -> None:
+def _ensure_private_staging_path(temp_path: Path, trust_root: Path, user_id: int) -> None:
     trusted_roots: Final[set[Path]] = {trust_root, trust_root.resolve()}
     project: Final[os.stat_result] = trust_root.resolve().stat()
-    owners: Final[frozenset[int]] = frozenset({0, os.geteuid(), project.st_uid})
+    owners: Final[frozenset[int]] = frozenset({0, user_id, project.st_uid})
     for candidate in {temp_path, temp_path.resolve()}:
         for parent in (candidate, *candidate.parents):
             if parent in trusted_roots:
@@ -219,9 +219,10 @@ def _kept_entry(directory: Path) -> str | None:
 def _mark_stale(environment: Path) -> None:
     info: Final[Path] = environment / ".tox-info.json"
     with suppress(FileNotFoundError):
-        info.unlink()  # may be a planted link, so remove the entry itself rather than following it
-    # an empty Python section never equals the configuration, so the next setup recreates the environment
-    descriptor: Final[int] = os.open(info, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600)
+        info.unlink()  # a planted link is removed itself, never followed
+    # O_EXCL fails on any existing entry, a new link included; an empty Python section never equals the
+    # configuration, so the next setup recreates the environment
+    descriptor: Final[int] = os.open(info, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
     with os.fdopen(descriptor, "w", encoding="utf-8") as handler:
         handler.write(json.dumps({"Python": {}}))
 
