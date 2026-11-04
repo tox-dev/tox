@@ -570,6 +570,19 @@ def test_req_path_with_space_escape(tmp_path: Path) -> None:
     assert found == ["c"]
 
 
+def test_req_path_with_space_quoted(tmp_path: Path) -> None:
+    (tmp_path / "a b").mkdir()
+    (tmp_path / "a b" / "base.txt").write_text("c")
+    (tmp_path / "a b" / "constraints.txt").write_text("d<2")
+    requirements_file = tmp_path / "req.txt"
+    requirements_file.write_text('-r "a b/base.txt"\n-c "a b/constraints.txt"\n--index-url "https://a/simple"')
+    req_file = RequirementsFile(requirements_file, constraint=False)
+
+    assert vars(req_file.options) == {"index_url": ["https://a/simple"]}
+    found = [str(i) for i in req_file.requirements]
+    assert found == ["c", "-c d<2"]
+
+
 @pytest.mark.parametrize(
     "hash_value",
     [
