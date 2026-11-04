@@ -188,8 +188,8 @@ class _PythonRequirementsFile(RequirementsFile):
             (e for e in ONE_ARG_ESCAPE if line.startswith(e) and len(line) > len(e) and line[len(e)].isspace()), None
         )
         # a quoted value already keeps its spaces, escaping inside the quotes would add literal backslashes
-        if escape_match is not None and line[len(escape_match) + 1 :].lstrip()[:1] not in {"'", '"'}:
-            escaped = _UNESCAPED_SPACE_RE.sub(r"\\\1", line[len(escape_match) + 1 :])
+        if escape_match is not None and (value := line[len(escape_match) + 1 :]).lstrip()[:1] not in {"'", '"'}:
+            escaped = _UNESCAPED_SPACE_RE.sub(r"\\\1", value)
             line = f"{line[: len(escape_match)]} {escaped}"
         return line
 
