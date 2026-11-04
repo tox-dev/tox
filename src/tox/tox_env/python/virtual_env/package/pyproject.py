@@ -301,17 +301,12 @@ class Pep517VenvPackager(PythonPackageToxEnv, ABC):
             with self._pkg_lock:
                 config_settings = self.conf["config_settings_build_sdist"]
                 sdist = self._frontend.build_sdist(sdist_directory=self.pkg_dir, config_settings=config_settings).sdist
-                sdist = create_session_view(
-                    sdist, self._package_temp_path, self.core["tox_root"], self.core["work_dir"]
-                )
+                sdist = create_session_view(sdist, self._package_temp_path, self.core["tox_root"])
                 self._package_paths.add(sdist)
                 package = SdistPackage(sdist, deps, config_settings=self.conf["config_settings_build_wheel"])
         elif of_type == "sdist-wheel":
             wheel = create_session_view(
-                self._build_wheel_via_sdist(for_env),
-                self._package_temp_path,
-                self.core["tox_root"],
-                self.core["work_dir"],
+                self._build_wheel_via_sdist(for_env), self._package_temp_path, self.core["tox_root"]
             )
             self._package_paths.add(wheel)
             package = WheelPackage(wheel, deps)
@@ -336,9 +331,7 @@ class Pep517VenvPackager(PythonPackageToxEnv, ABC):
                         metadata_directory=self.meta_folder_if_populated,
                         config_settings=config_settings,
                     ).wheel
-                    wheel = create_session_view(
-                        wheel, self._package_temp_path, self.core["tox_root"], self.core["work_dir"]
-                    )
+                    wheel = create_session_view(wheel, self._package_temp_path, self.core["tox_root"])
                     self._package_paths.add(wheel)
                 package = (EditablePackage if of_type == "editable" else WheelPackage)(wheel, deps)
         else:  # pragma: no cover # for when we introduce new packaging types and don't implement

@@ -716,26 +716,49 @@ def test_provision_acquires_file_lock(tox_project: ToxProjectCreator) -> None:
 
 
 @pytest.mark.skipif(sys.platform == "win32", reason="POSIX directory permissions")
-@pytest.mark.parametrize(
-    ("legacy", "modes"),
-    [
-        pytest.param((), [0o700, 0o700, 0o700], id="fresh"),
-        pytest.param((".tox",), [0o700, 0o700, 0o700], id="work-dir"),
-        pytest.param((".tox/.tmp/package",), [0o700, 0o755, 0o755], id="staging"),
-    ],
-)
-def test_provision_private_staging(tox_project: ToxProjectCreator, legacy: tuple[str, ...], modes: list[int]) -> None:
+def test_provision_locks_legacy_work_dir_before_provisioned_tox(tox_project: ToxProjectCreator) -> None:
     project = tox_project({"tox.ini": "[tox]\nrequires = tox<4.14\n[testenv]\npackage = skip"})
-    project.patch_execute(lambda request: 0 if request.run_id == "provision" or "install" in request.run_id else None)
-    previous: Final[int] = os.umask(0o002)
-    try:
-        for directory in legacy:
-            (project.path / directory).mkdir(parents=True)
-        project.run("r")
-    finally:
-        os.umask(previous)
-    staging: Final[Path] = project.path / ".tox" / ".tmp" / "package"
-    assert [stat.S_IMODE(path.stat().st_mode) for path in (staging.parent.parent, staging.parent, staging)] == modes
+    work_dir: Final[Path] = project.path / ".tox"
+    work_dir.mkdir()
+    (work_dir / "planted").write_bytes(b"planted")
+    work_dir.chmod(0o777)
+    seen: dict[str, tuple[int, bool]] = {}
+
+    def _check(request: ExecuteRequest) -> int | None:
+        if request.run_id == "provision":
+            seen["state"] = (stat.S_IMODE(work_dir.stat().st_mode), (work_dir / "planted").exists())
+            return 0
+        return 0 if "install" in request.run_id else None
+
+    project.patch_execute(_check)
+    project.run("r")
+    assert seen == {"state": (0o700, False)}
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="POSIX directory permissions")
+def test_provision_reports_entry_owned_by_other_account(tox_project: ToxProjectCreator, mocker: MockerFixture) -> None:
+    project = tox_project({"tox.ini": "[tox]\nrequires = tox<4.14\n[testenv]\npackage = skip"})
+    work_dir: Final[Path] = project.path / ".tox"
+    work_dir.mkdir()
+    planted: Final[Path] = work_dir / "planted"
+    planted.write_bytes(b"planted")
+    work_dir.chmod(0o777)
+    original_lstat: Final[Callable[..., os.stat_result]] = os.lstat
+
+    def lstat_as_other_account(path: Path, *, dir_fd: int | None = None) -> os.stat_result:
+        values: Final[list[int | float]] = list(original_lstat(path, dir_fd=dir_fd))
+        values[4] += int(path == planted)
+        return os.stat_result(values)
+
+    mocker.patch("tox.util.file_view.os.lstat", autospec=True, side_effect=lstat_as_other_account)
+
+    result = project.run("r")
+
+    output: Final[str] = result.out + result.err
+    result.assert_failed()
+    assert f"{planted} is owned by uid" in output
+    assert "Traceback" not in output
+    assert planted.read_bytes() == b"planted"
 
 
 def test_provision_unrecognized_args_no_provision(tox_project: ToxProjectCreator) -> None:

@@ -104,6 +104,12 @@ def provision(state: State) -> int | bool:
     from tox.plugin.manager import MANAGER  # ruff:ignore[import-outside-top-level]
 
     MANAGER.tox_add_core_config(state.conf.core, state)
+    # the provisioned tox does the packaging and may be a release without the staging repair, so repair first
+    core = state.conf.core
+    try:
+        repair_staging_path(core["temp_dir"] / PACKAGE_STAGING_DIR, core["tox_root"], core["work_dir"])
+    except PermissionError as exc:
+        raise HandledError(str(exc)) from exc
 
     requires = state.conf.core.get("requires", list[Requirement])
     missing = _get_missing(requires)
@@ -235,9 +241,6 @@ def run_provision(name: str, state: State) -> int:
     tox_env: PythonRun = cast("PythonRun", state.envs[name])
     env_python = tox_env.env_python()
     logging.info("will run in a automatically provisioned python environment under %s", env_python)
-    core = state.conf.core
-    # the provisioned tox does the packaging and may be a release without the staging repair
-    repair_staging_path(core["temp_dir"] / PACKAGE_STAGING_DIR, core["tox_root"], core["work_dir"])
     lock_path = tox_env.env_dir / "file.lock"
     ensure_private_dir(lock_path.parent)
     with FileLock(lock_path):

@@ -633,9 +633,11 @@ the top level of ``tox.toml``. Placing these options in an environment section (
     same staged package.
 
     If this directory is a symlink inside :ref:`work_dir`, tox replaces the link with a directory. A configured path
-    outside :ref:`work_dir` may remain a symlink. On POSIX, package staging rejects a path that another account can
-    rename based on its ownership and permissions at validation time. If package staging needs new work, temporary or
-    staging directories, tox creates them with owner-only access. Existing directories keep their permissions.
+    outside :ref:`work_dir` may remain a symlink. On POSIX, package staging rejects a path that an account unable to
+    change the project directory can rename. A work directory left writable by such accounts is made private and emptied
+    once at the start of a run, so tox recreates its environments. If package staging needs new work, temporary or
+    staging directories, tox creates them with owner-only access. Existing directories that only the project's writers
+    can change keep their permissions.
 
 .. conf::
     :keys: venv_redirect
