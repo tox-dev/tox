@@ -395,10 +395,7 @@ class RequirementsFile:
     def _split_options(options: str) -> list[str]:
         # pip splits with POSIX rules, which drop quotes; on Windows protect path backslashes first, as commands do
         if sys.platform == "win32":  # pragma: win32 cover
-            splitter: Final[shlex.shlex] = shlex.shlex(posix=True)
-            options = StrConvert._win32_process_path_backslash(  # ruff:ignore[private-member-access]
-                options, escape=splitter.escape, special_chars=splitter.quotes
-            )
+            options = StrConvert.protect_windows_path_backslashes(options)
         return shlex.split(options)
 
     @staticmethod
