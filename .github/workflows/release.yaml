@@ -10,12 +10,12 @@ permissions:
 jobs:
   tag-build:
     name: 🏗️ Build
-    uses: tox-dev/github-workflows/.github/workflows/validate-python-release.yaml@bceb5c005e19823dc8835f536f53f172ae223927 # 6.5.0
+    uses: tox-dev/github-workflows/.github/workflows/validate-python-release.yaml@13381289334b15375958be7f7438f3c3d860e575 # 6.5.5
     permissions:
       contents: read
   notes:
     name: 📝 Render GitHub Release notes
-    uses: tox-dev/github-workflows/.github/workflows/release-notes.yaml@bceb5c005e19823dc8835f536f53f172ae223927 # 6.5.0
+    uses: tox-dev/github-workflows/.github/workflows/release-notes.yaml@13381289334b15375958be7f7438f3c3d860e575 # 6.5.5
     permissions:
       contents: read
     with:
@@ -24,7 +24,7 @@ jobs:
       artifact-url: https://pypi.org/project/tox/${{ github.ref_name }}/
   publish:
     name: 🚀 Publish to PyPI
-    needs: tag-build
+    needs: [tag-build, notes]
     runs-on: ubuntu-26.04
     environment:
       name: release
@@ -44,7 +44,7 @@ jobs:
   github-release:
     name: 🚀 Publish GitHub Release
     needs: [tag-build, publish, notes]
-    uses: tox-dev/github-workflows/.github/workflows/github-release.yaml@bceb5c005e19823dc8835f536f53f172ae223927 # 6.5.0
+    uses: tox-dev/github-workflows/.github/workflows/github-release.yaml@13381289334b15375958be7f7438f3c3d860e575 # 6.5.5
     permissions:
       contents: write
     with:
