@@ -6,6 +6,25 @@
 
 .. towncrier release notes start
 
+.. _release-4-67-10:
+
+**********************
+ 4.67.10 (2026-11-04)
+**********************
+
+.. _release-4-67-10-fixed:
+
+Fixed
+-----
+
+- A pair of numbers after a ``-`` is no longer read as a range, so ``py-django-4-2`` keeps its name instead of splitting
+  into ``py-django-4``, ``3`` and ``2``. Braced ranges such as ``py-django-{4-5}`` still expand (:pr:`4380`) by
+  :user:`ericdelorefice` and :user:`gaborbernat`.
+- On Windows, quoted option values in requirements files and ``deps``, such as ``-r "sub dir/base.txt"``, now have their
+  quotes removed as they do on other platforms and in pip; before, the quotes stayed in the path and the file could not
+  be opened. On every platform, a quoted ``-r``, ``-c`` or ``-f`` value in ``deps`` keeps its spaces as written instead
+  of gaining literal backslashes (:pr:`4381`) by :user:`abo3losh1` and :user:`gaborbernat`.
+
 .. _release-4-67-9:
 
 *********************
