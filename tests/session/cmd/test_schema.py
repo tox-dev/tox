@@ -4,10 +4,11 @@ import json
 import re
 import shutil
 import subprocess
+import sysconfig
 from collections.abc import Mapping, Sequence
 from pathlib import Path
 from textwrap import dedent
-from typing import TYPE_CHECKING, Any, Protocol
+from typing import TYPE_CHECKING, Any, Final, Protocol
 
 import pytest
 
@@ -94,8 +95,9 @@ def replace_form_content() -> dict[str, str]:
 
 @pytest.fixture
 def tombi_bin() -> str:
-    tombi = shutil.which("tombi")
-    assert tombi is not None, "tombi must be installed (declared in the test extra)"
+    # the test group installs tombi beside the interpreter, whose scripts directory is on PATH only inside tox run
+    tombi: Final[str | None] = shutil.which("tombi", path=sysconfig.get_path("scripts"))
+    assert tombi is not None, "tombi must be installed (declared in the test dependency group)"
     return tombi
 
 
