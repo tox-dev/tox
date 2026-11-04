@@ -70,14 +70,8 @@ class StrConvert(Convert[str]):
         Value will typically be stripped of whitespace when coming from an ini file.
 
         """
-        is_win = sys.platform == "win32"
-        if is_win:  # pragma: win32 cover
-            s = shlex.shlex(posix=True)
-            value = StrConvert._win32_process_path_backslash(
-                value,
-                escape=s.escape,
-                special_chars=s.quotes,
-            )
+        if sys.platform == "win32":  # pragma: win32 cover
+            value = StrConvert.protect_windows_path_backslashes(value)
         splitter = shlex.shlex(value, posix=True)
         splitter.whitespace_split = True
         splitter.commenters = ""  # comments handled earlier, and the shlex does not know escaped comment characters
@@ -98,8 +92,11 @@ class StrConvert(Convert[str]):
         return Command(args)
 
     @staticmethod
-    def _win32_process_path_backslash(value: str, escape: str, special_chars: str) -> str:
+    def protect_windows_path_backslashes(value: str) -> str:
         """Allow Windows paths while retaining shlex quote and backslash escapes."""
+        defaults: Final[shlex.shlex] = shlex.shlex(posix=True)
+        escape: Final[str] = defaults.escape
+        special_chars: Final[str] = defaults.quotes
         result: Final[list[str]] = []
         quote = ""
         path_start = True

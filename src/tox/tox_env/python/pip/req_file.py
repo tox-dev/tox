@@ -113,7 +113,7 @@ class _PythonRequirementsFile(RequirementsFile):
         result: Final[list[list[str]]] = []
         for _, line in lines:
             args, options = cls._break_args_options(line)
-            result.append([args, *shlex.split(options, posix=sys.platform != "win32")])
+            result.append([args, *cls._split_options(options)])
         return result
 
     @staticmethod
@@ -143,8 +143,11 @@ class _PythonRequirementsFile(RequirementsFile):
 
     @staticmethod
     def _escape(arg: str) -> str:
-        # The rendered option must keep its argument boundary when parsed again.
-        return arg if sys.platform == "win32" else re.sub(r"""[\s\\'"]""", r"\\\g<0>", arg) or "''"
+        # The rendered option must keep its argument boundary when parsed again. On Windows a backslash is a path
+        # separator, so quote instead of escaping.
+        if sys.platform == "win32":  # pragma: win32 cover
+            return shlex.quote(arg)
+        return re.sub(r"""[\s\\'"]""", r"\\\g<0>", arg) or "''"
 
     def _global_options(self, line: str) -> Namespace | None:
         for _, content in self._ignore_comments(enumerate([line])):
@@ -184,8 +187,9 @@ class _PythonRequirementsFile(RequirementsFile):
         escape_match = next(
             (e for e in ONE_ARG_ESCAPE if line.startswith(e) and len(line) > len(e) and line[len(e)].isspace()), None
         )
-        if escape_match is not None:
-            escaped = _UNESCAPED_SPACE_RE.sub(r"\\\1", line[len(escape_match) + 1 :])
+        # a quoted value already keeps its spaces, escaping inside the quotes would add literal backslashes
+        if escape_match is not None and (value := line[len(escape_match) + 1 :]).lstrip()[:1] not in {"'", '"'}:
+            escaped = _UNESCAPED_SPACE_RE.sub(r"\\\1", value)
             line = f"{line[: len(escape_match)]} {escaped}"
         return line
 

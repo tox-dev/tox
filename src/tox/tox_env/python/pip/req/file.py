@@ -18,6 +18,7 @@ from urllib.request import urlopen
 
 from packaging.requirements import InvalidRequirement, Requirement
 
+from tox.config.loader.str_convert import StrConvert
 from tox.util.redact import redact_argv, redact_value
 from tox.util.typing_compat import override
 
@@ -383,12 +384,19 @@ class RequirementsFile:
 
     def _parse_line(self, line: str) -> tuple[str, Namespace]:
         args_str, options_str = self._break_args_options(line)
-        args = shlex.split(options_str, posix=sys.platform != "win32")
+        args = self._split_options(options_str)
         opts, unknown = self._parser.parse_known_args(args)
         if unknown:
             msg = f"unrecognized arguments: {' '.join(redact_argv(unknown))}"
             raise ValueError(msg)
         return args_str, opts
+
+    @staticmethod
+    def _split_options(options: str) -> list[str]:
+        # pip splits with POSIX rules, which drop quotes; on Windows protect path backslashes first, as commands do
+        if sys.platform == "win32":  # pragma: win32 cover
+            options = StrConvert.protect_windows_path_backslashes(options)
+        return shlex.split(options)
 
     @staticmethod
     def _handle_requirement_line(line: ParsedLine) -> ParsedRequirement:

@@ -19,6 +19,10 @@ if TYPE_CHECKING:
 
     from tox.pytest import ToxProjectCreator
 
+_BACKSLASH_ESCAPE: Final[pytest.MarkDecorator] = pytest.mark.skipif(
+    sys.platform == "win32", reason=r"on windows the escaped \ is overloaded by path separator"
+)
+
 
 @pytest.mark.parametrize("legacy_flag", ["-r", "-c"])
 def test_legacy_requirement_file(tmp_path: Path, legacy_flag: str) -> None:
@@ -330,30 +334,52 @@ def test_deps_show_global_options_as_pip_gets_them(
     )
 
 
-@pytest.mark.skipif(sys.platform == "win32", reason=r"on windows the escaped \ is overloaded by path separator")
+@_BACKSLASH_ESCAPE
 @pytest.mark.parametrize(
-    ("raw", "shown", "pip_args"),
+    ("raw", "shown"),
     [
-        pytest.param("--find-links a --pre", r"-f a\ --pre", ["-f", "a --pre"], id="find-links"),
-        pytest.param("-f a\t--pre", "-f a\\\t--pre", ["-f", "a\t--pre"], id="tab"),
-        pytest.param(r"-f 'a\ --pre'", r"-f a\\\ --pre", ["-f", r"a\ --pre"], id="after-backslash"),
-        pytest.param("-i 'a --pre'", r"-i a\ --pre", ["-i", "a --pre"], id="quoted-index"),
-        pytest.param(
-            "--extra-index-url 'a --pre'", r"--extra-index-url a\ --pre", ["--extra-index-url", "a --pre"], id="extra"
-        ),
-        pytest.param('--trusted-host "a --pre"', r"--trusted-host a\ --pre", ["--trusted-host", "a --pre"], id="host"),
-        pytest.param("""-i "a'b" """, r"-i a\'b", ["-i", "a'b"], id="quote"),
-        pytest.param("--extra-index-url ''", "--extra-index-url ''", ["--extra-index-url", ""], id="empty"),
+        pytest.param("--find-links a --pre", r"-f a\ --pre", id="find-links"),
+        pytest.param("-f a\t--pre", "-f a\\\t--pre", id="tab"),
+        pytest.param(r"-f 'a\ --pre'", r"-f a\\\ --pre", id="after-backslash"),
+        pytest.param("-i 'a --pre'", r"-i a\ --pre", id="quoted-index"),
+        pytest.param("--extra-index-url 'a --pre'", r"--extra-index-url a\ --pre", id="extra"),
+        pytest.param('--trusted-host "a --pre"', r"--trusted-host a\ --pre", id="host"),
+        pytest.param("""-i "a'b" """, r"-i a\'b", id="quote"),
+        pytest.param("--extra-index-url ''", "--extra-index-url ''", id="empty"),
     ],
 )
-def test_deps_show_option_operand_as_one_operand(tmp_path: Path, raw: str, shown: str, pip_args: list[str]) -> None:
+def test_deps_show_option_operand_as_one_operand(tmp_path: Path, raw: str, shown: str) -> None:
+    assert PythonDeps(f"{raw}\npkg", tmp_path).lines() == [shown, "pkg"]
+
+
+@pytest.mark.parametrize(
+    ("raw", "pip_args"),
+    [
+        pytest.param("--find-links a --pre", ["-f", "a --pre"], id="find-links", marks=_BACKSLASH_ESCAPE),
+        pytest.param("-f a\t--pre", ["-f", "a\t--pre"], id="tab", marks=_BACKSLASH_ESCAPE),
+        pytest.param(r"-f 'a\ --pre'", ["-f", r"a\ --pre"], id="after-backslash", marks=_BACKSLASH_ESCAPE),
+        pytest.param("-i 'a --pre'", ["-i", "a --pre"], id="quoted-index"),
+        pytest.param("--extra-index-url 'a --pre'", ["--extra-index-url", "a --pre"], id="extra"),
+        pytest.param('--trusted-host "a --pre"', ["--trusted-host", "a --pre"], id="host"),
+        pytest.param("""-i "a'b" """, ["-i", "a'b"], id="quote"),
+        pytest.param("--extra-index-url ''", ["--extra-index-url", ""], id="empty"),
+    ],
+)
+def test_deps_option_operand_round_trip(tmp_path: Path, raw: str, pip_args: list[str]) -> None:
     python_deps: Final = PythonDeps(f"{raw}\npkg", tmp_path)
-    assert (python_deps.lines(), python_deps.as_root_args) == ([shown, "pkg"], ["pkg", *pip_args])
+    assert python_deps.as_root_args == ["pkg", *pip_args]
     assert PythonDeps(stringify(python_deps)[0], tmp_path).as_root_args == ["pkg", *pip_args]
     assert StrConvert.to_command(" ".join(["pip", *python_deps.lines()])).args == ["pip", *pip_args, "pkg"]
 
 
-@pytest.mark.skipif(sys.platform == "win32", reason=r"on windows the escaped \ is overloaded by path separator")
+@pytest.mark.parametrize("option", [pytest.param("-r", id="requirement"), pytest.param("-c", id="constraint")])
+def test_deps_quoted_path_with_space(tmp_path: Path, option: str) -> None:
+    (tmp_path / "a b").mkdir()
+    (tmp_path / "a b" / "req.txt").write_text("pkg")
+    assert PythonDeps(f'{option} "a b/req.txt"', tmp_path).as_root_args == [option, "a b/req.txt"]
+
+
+@_BACKSLASH_ESCAPE
 @pytest.mark.parametrize(
     "reference",
     [pytest.param("{deps}", id="local"), pytest.param("{[testenv:inherits]deps}", id="inherited")],
