@@ -353,6 +353,30 @@ def test_deps_show_option_operand_as_one_operand(tmp_path: Path, raw: str, shown
     assert StrConvert.to_command(" ".join(["pip", *python_deps.lines()])).args == ["pip", *pip_args, "pkg"]
 
 
+@pytest.mark.parametrize(
+    ("raw", "pip_args"),
+    [
+        pytest.param("-i 'a --pre'", ["-i", "a --pre"], id="single-quoted"),
+        pytest.param('--trusted-host "a --pre"', ["--trusted-host", "a --pre"], id="double-quoted"),
+        pytest.param("""-i "a'b" """, ["-i", "a'b"], id="quote"),
+        pytest.param("--extra-index-url ''", ["--extra-index-url", ""], id="empty"),
+    ],
+)
+def test_deps_quoted_option_operand_round_trip(tmp_path: Path, raw: str, pip_args: list[str]) -> None:
+    python_deps: Final = PythonDeps(f"{raw}\npkg", tmp_path)
+    assert python_deps.as_root_args == ["pkg", *pip_args]
+    assert PythonDeps(stringify(python_deps)[0], tmp_path).as_root_args == ["pkg", *pip_args]
+    assert StrConvert.to_command(" ".join(["pip", *python_deps.lines()])).args == ["pip", *pip_args, "pkg"]
+
+
+@pytest.mark.parametrize("option", ["-r", "-c"])
+def test_deps_quoted_path_with_space(tmp_path: Path, option: str) -> None:
+    (tmp_path / "a b").mkdir()
+    (tmp_path / "a b" / "req.txt").write_text("pkg")
+    python_deps: Final = PythonDeps(f'{option} "a b/req.txt"', tmp_path)
+    assert python_deps.as_root_args == [option, "a b/req.txt"]
+
+
 @pytest.mark.skipif(sys.platform == "win32", reason=r"on windows the escaped \ is overloaded by path separator")
 @pytest.mark.parametrize(
     "reference",
