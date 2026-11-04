@@ -7,7 +7,7 @@ on:
   pull_request:
     types: [opened, synchronize, reopened]
   schedule:
-    - cron: "47 0 * * *"
+    - cron: "3 7 * * *"
 permissions:
   contents: read
 env:
