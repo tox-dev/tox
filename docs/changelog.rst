@@ -6,6 +6,23 @@
 
 .. towncrier release notes start
 
+.. _release-4-67-11:
+
+**********************
+ 4.67.11 (2026-11-04)
+**********************
+
+.. _release-4-67-11-fixed:
+
+Fixed
+-----
+
+- Package staging no longer fails on a ``.tox`` that only the project's own writers can change, such as one owned by the
+  workspace owner while root runs tox, or a ``777`` build directory on Bitbucket. A work directory that other accounts
+  could change, such as a ``777`` ``.tox`` left by an older tox under umask ``000`` or restored from a CI cache, is made
+  private and emptied once at the start of a run, so tox recreates its environments instead of failing. When staging
+  still refuses a path, the error names its owner and mode (:pr:`4386`) by :user:`gaborbernat`. (:issue:`4376`)
+
 .. _release-4-67-10:
 
 **********************
