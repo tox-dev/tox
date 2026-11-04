@@ -1,28 +1,26 @@
 from __future__ import annotations
 
+import json
 import logging
 import os
 import shutil
 import stat
 import sys
-from contextlib import ExitStack
+from contextlib import ExitStack, suppress
 from dataclasses import dataclass
 from os.path import commonpath
-from typing import TYPE_CHECKING, Final
+from pathlib import Path
+from typing import Final
 
-from tox.util.path import ensure_private_dir
-
-if TYPE_CHECKING:
-    from pathlib import Path
-
+from tox.util.path import ensure_empty_dir, ensure_private_dir
 
 PACKAGE_STAGING_DIR: Final[str] = "package"
 
 
-def create_session_view(package: Path, temp_path: Path, trust_root: Path, work_dir: Path) -> Path:
+def create_session_view(package: Path, temp_path: Path, trust_root: Path) -> Path:
     if temp_path.is_symlink():
         temp_path.unlink()
-    repair_staging_path(temp_path, trust_root, work_dir)
+    ensure_private_dir(temp_path)
     if sys.platform != "win32":
         _ensure_private_staging_path(temp_path, trust_root, os.geteuid())
     file_id: Final[int] = max((int(entry.name) for entry in temp_path.iterdir() if entry.name.isnumeric()), default=0)
@@ -42,8 +40,45 @@ def create_session_view(package: Path, temp_path: Path, trust_root: Path, work_d
     return session_package
 
 
+def _ensure_private_staging_path(temp_path: Path, trust_root: Path, user_id: int) -> None:
+    trusted_roots: Final[set[Path]] = {trust_root, trust_root.resolve()}
+    project: Final[os.stat_result] = trust_root.resolve().stat()
+    owners: Final[frozenset[int]] = frozenset({0, user_id, project.st_uid})
+    for candidate in {temp_path, temp_path.resolve()}:
+        for parent in (candidate, *candidate.parents):
+            if parent in trusted_roots:
+                break
+            metadata: os.stat_result = parent.stat()
+            mutable_link: bool = (
+                parent.is_symlink()
+                and bool(parent.parent.stat().st_mode & (stat.S_IWGRP | stat.S_IWOTH))
+                and parent.lstat().st_uid not in owners
+            )
+            if mutable_link or _exceeds_project_writers(metadata, project, owners):
+                mode: int = stat.S_IMODE(metadata.st_mode)
+                msg: str = (
+                    f"package staging path {parent} (owner uid {metadata.st_uid}, mode {mode:04o}) "
+                    f"can be changed by an account that cannot change {trust_root}"
+                )
+                raise PermissionError(msg)
+
+
+def _exceeds_project_writers(metadata: os.stat_result, project: os.stat_result, owners: frozenset[int]) -> bool:
+    if metadata.st_uid not in owners:
+        return True
+    if metadata.st_mode & stat.S_ISVTX:
+        return False
+    project_sticky: Final[bool] = bool(project.st_mode & stat.S_ISVTX)
+    project_world_writable: Final[bool] = bool(project.st_mode & stat.S_IWOTH) and not project_sticky
+    project_group_writable: Final[bool] = bool(project.st_mode & stat.S_IWGRP) and not project_sticky
+    if metadata.st_mode & stat.S_IWOTH and not project_world_writable:
+        return True
+    return bool(metadata.st_mode & stat.S_IWGRP) and not (
+        project_world_writable or (project_group_writable and metadata.st_gid == project.st_gid)
+    )
+
+
 def repair_staging_path(temp_path: Path, trust_root: Path, work_dir: Path) -> None:
-    ensure_private_dir(temp_path)
     if sys.platform == "win32":  # pragma: win32 cover
         return
     try:
@@ -59,44 +94,18 @@ def repair_staging_path(temp_path: Path, trust_root: Path, work_dir: Path) -> No
     if directory_flag is None or nofollow_flag is None:
         return
     flags: Final[int] = os.O_RDONLY | directory_flag | nofollow_flag
-    user_id: Final[int] = os.geteuid()
+    project: Final[os.stat_result] = trust_root.resolve().stat()
+    owners: Final[frozenset[int]] = frozenset({0, os.geteuid(), project.st_uid})
     work_index: Final[int] = len(work_parts) - 1
-    parts: Final[tuple[str, ...]] = (*work_parts, *staging_parts)
-    directories: Final[list[_StagingDirectory]] = []
     with ExitStack() as stack:
-        directory: int = os.open(trust_root.resolve(), flags)
-        stack.callback(os.close, directory)
-        for index, part in enumerate(parts):
-            try:
-                child = os.open(part, flags, dir_fd=directory)
-            except OSError:
-                return
-            stack.callback(os.close, child)
-            metadata: os.stat_result = os.fstat(child)
-            if (
-                metadata.st_uid != user_id
-                or metadata.st_mode & stat.S_IWOTH
-                or (index < work_index and metadata.st_mode & stat.S_IWGRP)
-            ):
-                return
-            mode: int = stat.S_IMODE(metadata.st_mode)
-            directories.append(
-                _StagingDirectory(
-                    parent_descriptor=directory,
-                    name=part,
-                    descriptor=child,
-                    path=trust_root.joinpath(*parts[: index + 1]),
-                    mode=mode,
-                    # a fresh work dir is owner-only, which also hides group-writable environments left inside it
-                    private_mode=mode & ~(0o077 if index == work_index else stat.S_IWGRP),
-                )
-            )
-            directory = child
-
-        for entry in directories:
-            if entry.mode != entry.private_mode:
-                os.fchmod(entry.descriptor, entry.private_mode)
-        _verify_unchanged_staging_path(directories)
+        directories: Final = _open_staging_chain(stack, trust_root, (*work_parts, *staging_parts), flags)
+        if directories is None:
+            return
+        exposed: Final = _exposed_index(directories, work_index, project, owners)
+        if exposed is None:
+            return
+        _lock_exposed_directories(directories, exposed, work_index)
+        _empty_exposed_directory(directories[exposed].path, owners, trust_root)
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)
@@ -105,8 +114,64 @@ class _StagingDirectory:
     name: str
     descriptor: int
     path: Path
-    mode: int
-    private_mode: int
+    metadata: os.stat_result
+
+
+def _open_staging_chain(
+    stack: ExitStack, trust_root: Path, parts: tuple[str, ...], flags: int
+) -> list[_StagingDirectory] | None:
+    # the chain stops at the first missing component; any other failure (a symlink, a file) leaves it unrepaired
+    directories: Final[list[_StagingDirectory]] = []
+    directory: int = os.open(trust_root.resolve(), flags)
+    stack.callback(os.close, directory)
+    for index, part in enumerate(parts):
+        try:
+            child = os.open(part, flags, dir_fd=directory)
+        except FileNotFoundError:
+            break
+        except OSError:
+            return None
+        stack.callback(os.close, child)
+        directories.append(
+            _StagingDirectory(
+                parent_descriptor=directory,
+                name=part,
+                descriptor=child,
+                path=trust_root.joinpath(*parts[: index + 1]),
+                metadata=os.fstat(child),
+            )
+        )
+        directory = child
+    return directories
+
+
+def _exposed_index(
+    directories: list[_StagingDirectory], work_index: int, project: os.stat_result, owners: frozenset[int]
+) -> int | None:
+    # the outermost directory the project's writers do not control is locked together with everything below it
+    first: Final[int] = max(work_index, 0)
+    # between the project and the work dir tox must not change user directories; the check reports them later
+    if any(_exceeds_project_writers(entry.metadata, project, owners) for entry in directories[:first]):
+        return None
+    if any(entry.metadata.st_uid not in owners for entry in directories[first:]):
+        return None
+    return next(
+        (
+            index
+            for index in range(first, len(directories))
+            if _exceeds_project_writers(directories[index].metadata, project, owners)
+        ),
+        None,
+    )
+
+
+def _lock_exposed_directories(directories: list[_StagingDirectory], exposed: int, work_index: int) -> None:
+    for index, entry in enumerate(directories[exposed:], start=exposed):
+        mode: int = stat.S_IMODE(entry.metadata.st_mode)
+        # a fresh work dir is owner-only, which also hides group-writable environments left inside it
+        private_mode: int = mode & ~0o077 if index == work_index else mode & ~(stat.S_IWGRP | stat.S_IWOTH)
+        os.fchmod(entry.descriptor, private_mode)
+    _verify_unchanged_staging_path(directories)
 
 
 def _verify_unchanged_staging_path(directories: list[_StagingDirectory]) -> None:
@@ -121,25 +186,45 @@ def _verify_unchanged_staging_path(directories: list[_StagingDirectory]) -> None
             raise PermissionError(msg)
 
 
-def _ensure_private_staging_path(temp_path: Path, trust_root: Path, user_id: int) -> None:
-    trusted_roots: Final[set[Path]] = {trust_root, trust_root.resolve()}
-    for candidate in {temp_path, temp_path.resolve()}:
-        for parent in (candidate, *candidate.parents):
-            if parent in trusted_roots:
-                break
-            metadata: os.stat_result = parent.stat()
-            mutable_link: bool = (
-                parent.is_symlink()
-                and bool(parent.parent.stat().st_mode & (stat.S_IWGRP | stat.S_IWOTH))
-                and parent.lstat().st_uid not in {0, user_id}
-            )
-            if (
-                metadata.st_uid not in {0, user_id}
-                or (metadata.st_mode & (stat.S_IWGRP | stat.S_IWOTH) and not metadata.st_mode & stat.S_ISVTX)
-                or mutable_link
-            ):
-                msg: str = f"package staging path {parent} can be changed by another account"
+def _empty_exposed_directory(path: Path, owners: frozenset[int], trust_root: Path) -> None:
+    for directory, dirnames, filenames in os.walk(path, followlinks=False):
+        for name in (*dirnames, *filenames):
+            entry: Path = Path(directory, name)
+            uid: int = os.lstat(entry).st_uid
+            if uid not in owners:
+                msg = f"{entry} is owned by uid {uid}, which cannot change {trust_root}; tox will not remove it"
                 raise PermissionError(msg)
+    kept: Final[str | None] = _kept_entry(path)
+    ensure_empty_dir(path, except_filename=kept)
+    if kept is not None and not (path / kept).is_symlink():
+        # the kept environment may have been changed while exposed, so its setup must not be reused
+        _mark_stale(path / kept)
+    logging.warning(
+        "%s could be changed by accounts that cannot change %s; made it private and removed its contents so tox"
+        " recreates them",
+        path,
+        trust_root,
+    )
+
+
+def _kept_entry(directory: Path) -> str | None:
+    # the running environment may live in the work dir; keep it so the provisioned tox can finish
+    try:
+        relative: Final[Path] = Path(sys.prefix).resolve().relative_to(directory.resolve())
+    except ValueError:
+        return None
+    return relative.parts[0] if relative.parts else None
+
+
+def _mark_stale(environment: Path) -> None:
+    info: Final[Path] = environment / ".tox-info.json"
+    with suppress(FileNotFoundError):
+        info.unlink()  # a planted link is removed itself, never followed
+    # O_EXCL fails on any existing entry, a new link included; an empty Python section never equals the
+    # configuration, so the next setup recreates the environment
+    descriptor: Final[int] = os.open(info, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+    with os.fdopen(descriptor, "w", encoding="utf-8") as handler:
+        handler.write(json.dumps({"Python": {}}))
 
 
 __all__ = [

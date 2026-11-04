@@ -55,7 +55,7 @@ def test_package_staging_reuses_group_writable_directories(
         os.umask(previous)
 
     directories: Final[tuple[Path, ...]] = (project.path, work_dir, staging.parent, staging)
-    assert [stat.S_IMODE(directory.stat().st_mode) for directory in directories] == [0o775, 0o700, 0o755, 0o755]
+    assert [stat.S_IMODE(directory.stat().st_mode) for directory in directories] == [0o775] * 4
 
 
 def test_dont_cleanup_temp_dir(tox_project: ToxProjectCreator, tmp_path: Path) -> None:
@@ -134,3 +134,16 @@ def test_redact(key: str, do_redact: bool) -> None:
         assert result == "***"
     else:
         assert result == "foo"
+
+
+def test_info_without_matching_python_section_rebuilds_env(tox_project: ToxProjectCreator) -> None:
+    project: Final[ToxProject] = tox_project({"tox.ini": "[testenv]\npackage=skip"})
+    env_dir: Final[Path] = project.path / ".tox" / "py"
+    env_dir.mkdir(parents=True)
+    (env_dir / ".tox-info.json").write_text('{"Python": {}}', encoding="utf-8")
+    planted: Final[Path] = env_dir / "planted"
+    planted.write_bytes(b"planted")
+
+    project.run("r", "-e", "py").assert_success()
+
+    assert not planted.exists()
