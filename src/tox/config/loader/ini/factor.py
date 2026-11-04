@@ -194,7 +194,7 @@ def expand_ranges(value: str) -> str:
     return re.sub(
         r"""
         (                       # outer capture group
-            (?<! [\w.-] )       # outside braces, digits after a name, a dot or a dash are not a range (py-django-4-2)
+            (?<! [\w.-] )       # only an env or brace item opens a range, so py-django-4-2 stays one name
             (?:
                 ( \d+ ) - ( \d+ ) # closed range: start-end
                 |

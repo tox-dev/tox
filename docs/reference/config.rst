@@ -3357,10 +3357,10 @@ will create the following envs:
 Negative ranges will also be expanded (``{3-1}`` -> ``{3,2,1}``). Non-numerical open ranges such as ``{a-}`` and
 ``{-b}`` will not be expanded.
 
-A range is recognized only where a factor starts, so digits carrying on a name stay part of it: ``py313-django4-2``
-names one environment rather than three, and ``3.10-2`` keeps its version. Outside braces, a pair of numbers after a
-``-`` is not a range either, so ``py-django-4-2`` stays one environment; write ``py-django-{4-5}`` for a range. The same
-rule applies wherever tox reads factors, including ``-e`` on the command line.
+A range is recognized only where an environment or a brace item starts, so numbers following a name, a dot or a ``-``
+stay part of it: ``py313-django4-2`` and ``py-django-4-2`` each name one environment, and ``3.10-2`` keeps its version.
+Write ``py-django-{4-5}`` for a range after a ``-``. The same rule applies wherever tox reads factors, including ``-e``
+on the command line.
 
 Open-ended numerical ranges use bounds derived from the `supported CPython versions
 <https://devguide.python.org/versions/>`_ at the time of the tox release:

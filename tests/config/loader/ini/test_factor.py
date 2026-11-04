@@ -224,6 +224,11 @@ def test_factor_config_no_env_list_creates_env(tox_ini_conf: ToxIniCreator) -> N
             "py-django-{4,5},x",
             id="braced range after a factor separator still expands",
         ),
+        pytest.param(
+            "{py-1-3,x}",
+            "{py-1-3,x}",
+            id="range after a factor separator inside braces is not a range",
+        ),
     ],
 )
 def test_expand_ranges_targets_matched_range(value: str, expected: str) -> None:
