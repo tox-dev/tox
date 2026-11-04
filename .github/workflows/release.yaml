@@ -15,52 +15,16 @@ jobs:
       contents: read
   notes:
     name: 📝 Render GitHub Release notes
-    runs-on: ubuntu-26.04
+    uses: tox-dev/github-workflows/.github/workflows/release-notes.yaml@bceb5c005e19823dc8835f536f53f172ae223927 # 6.5.0
     permissions:
       contents: read
-    outputs:
-      artifact-id: ${{ steps.upload.outputs.artifact-id }}
-    steps:
-      - name: 📥 Check out code
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          fetch-depth: 0
-          persist-credentials: false
-      - name: 🐍 Install uv
-        uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
-        with:
-          version: latest-known
-          python-version: "3.15"
-          enable-cache: false
-      - name: 📦 Install locked release tools
-        uses: tox-dev/github-workflows/install-locked-tools@bceb5c005e19823dc8835f536f53f172ae223927 # 6.5.0
-        with:
-          groups: release-notes
-          venv: ${{ runner.temp }}/release-tools
-      - name: 🏷️ Select previous tag
-        id: previous
-        uses: tox-dev/github-workflows/select-previous-tag@bceb5c005e19823dc8835f536f53f172ae223927 # 6.5.0
-        with:
-          tag: ${{ github.ref_name }}
-      - name: 📝 Render release notes
-        uses: tox-dev/github-workflows/render-release-notes@bceb5c005e19823dc8835f536f53f172ae223927 # 6.5.0
-        with:
-          tag: ${{ github.ref_name }}
-          previous: ${{ steps.previous.outputs.previous }}
-          changelog: docs/changelog.rst
-          artifact-url: https://pypi.org/project/tox/${{ github.ref_name }}/
-      - name: 📤 Upload release notes
-        id: upload
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        with:
-          name: github-release-notes
-          path: ${{ runner.temp }}/release-notes.md
-          if-no-files-found: error
+    with:
+      tag: ${{ github.ref_name }}
+      changelog: docs/changelog.rst
+      artifact-url: https://pypi.org/project/tox/${{ github.ref_name }}/
   publish:
     name: 🚀 Publish to PyPI
-    needs:
-      - tag-build
-      - notes
+    needs: tag-build
     runs-on: ubuntu-26.04
     environment:
       name: release
@@ -79,44 +43,14 @@ jobs:
           packages-dir: dist
   github-release:
     name: 🚀 Publish GitHub Release
-    needs:
-      - tag-build
-      - publish
-      - notes
-    runs-on: ubuntu-26.04
-    environment: release
+    needs: [tag-build, publish, notes]
+    uses: tox-dev/github-workflows/.github/workflows/github-release.yaml@bceb5c005e19823dc8835f536f53f172ae223927 # 6.5.0
     permissions:
       contents: write
-    steps:
-      - name: 🐍 Install uv
-        uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
-        with:
-          version: latest-known
-          python-version: "3.15"
-          enable-cache: false
-          ignore-empty-workdir: true
-      - name: 📩 Download distributions
-        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
-        with:
-          artifact-ids: ${{ needs.tag-build.outputs.distributions-artifact-id }}
-          path: dist/
-      - name: 📩 Download release notes
-        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
-        with:
-          artifact-ids: ${{ needs.notes.outputs.artifact-id }}
-          path: ${{ runner.temp }}
-      - name: 🔍 Verify PyPI artifacts
-        uses: tox-dev/github-workflows/reconcile-pypi-artifacts@bceb5c005e19823dc8835f536f53f172ae223927 # 6.5.0
-        with:
-          project: tox
-          version: ${{ github.ref_name }}
-          dist: dist
-      - name: 🚀 Publish GitHub release
-        uses: tox-dev/github-workflows/publish-github-release@bceb5c005e19823dc8835f536f53f172ae223927 # 6.5.0
-        env:
-          GH_TOKEN: ${{ github.token }}
-        with:
-          tag: ${{ github.ref_name }}
-          commit: ${{ github.sha }}
-          title: v${{ github.ref_name }}
-          notes-file: ${{ runner.temp }}/release-notes.md
+    with:
+      project: tox
+      version: ${{ github.ref_name }}
+      tag: ${{ github.ref_name }}
+      title-prefix: v
+      artifact-pattern: python-package-distributions
+      notes-artifact-id: ${{ needs.notes.outputs.artifact-id }}
