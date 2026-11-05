@@ -711,6 +711,35 @@ def test_set_env_escaped_semicolon() -> None:
 
 
 @pytest.mark.parametrize(
+    ("raw", "expected"),
+    [
+        pytest.param(r'WINPATH="C:\tools;C:\bin\\"', '"C:\\tools;C:\\bin\\\\"', id="no-marker"),
+        pytest.param(
+            r'WINPATH="C:\tools;C:\bin\\"; sys_platform != "nonexistent"',
+            '"C:\\tools;C:\\bin\\\\"',
+            id="marker-true",
+        ),
+        pytest.param(
+            r'WINPATH="C:\tools;C:\bin\\"; sys_platform == "nonexistent"',
+            None,
+            id="marker-false",
+        ),
+    ],
+)
+def test_set_env_quoted_value_ending_with_escaped_backslash(raw: str, expected: str | None) -> None:
+    set_env = SetEnv(raw, "py", "py", Path())
+    if expected is None:
+        assert "WINPATH" not in set_env
+    else:
+        assert set_env.load("WINPATH") == expected
+
+
+def test_set_env_double_backslash_before_semicolon_still_separates() -> None:
+    set_env = SetEnv(r"WINPATH=C:\tools\\; sys_platform != 'nonexistent'", "py", "py", Path())
+    assert set_env.load("WINPATH") == "C:\\tools\\\\"
+
+
+@pytest.mark.parametrize(
     ("of_type", "config"),
     [
         pytest.param(

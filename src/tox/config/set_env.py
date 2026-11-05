@@ -199,6 +199,16 @@ class SetEnv:
         return key.strip(), value, marker
 
     @staticmethod
+    def _is_escaped(value: str, index: int) -> bool:
+        """A character is escaped when an odd number of backslashes precedes it."""
+        backslashes = 0
+        at = index - 1
+        while at >= 0 and value[at] == "\\":
+            backslashes += 1
+            at -= 1
+        return backslashes % 2 == 1
+
+    @staticmethod
     def _split_value_marker(value: str) -> tuple[str, str]:
         # Parse value; marker format (PEP-496 style)
         # Handle escaped semicolons (\;) and quoted strings. Quotes keep a ";" inside a quoted value from being read
@@ -210,12 +220,12 @@ class SetEnv:
             index = 0
             while index < len(value):
                 char = value[index]
-                if respect_quotes and char in {'"', "'"} and (index == 0 or value[index - 1] != "\\"):
+                if respect_quotes and char in {'"', "'"} and not SetEnv._is_escaped(value, index):
                     if not in_quotes:
                         in_quotes, quote_char = True, char
                     elif char == quote_char:
                         in_quotes = False
-                elif char == ";" and not in_quotes and (index == 0 or value[index - 1] != "\\"):
+                elif char == ";" and not in_quotes and not SetEnv._is_escaped(value, index):
                     text: str = value.fragment(0, index) if isinstance(value, HostText) else value[:index]
                     return SetEnv._unescape_semicolons(text.strip()), value[index + 1 :].strip()
                 index += 1
