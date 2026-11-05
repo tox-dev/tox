@@ -13,7 +13,8 @@ from tox.config.loader.api import ConfigLoadArgs
 from tox.report import HandledError
 from tox.tox_env.errors import Fail
 
-from .loader.replacer import HostText, MatchError, MatchExpression
+from .loader.replacer import MatchError, MatchExpression
+from .set_env_line import format_line, split_line, split_value_marker
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterable, Iterator, Mapping
@@ -114,7 +115,7 @@ class SetEnv:
         from .loader.replacer import MatchExpression, find_replace_expr  # ruff:ignore[import-outside-top-level]
 
         try:
-            key, value, marker = self._extract_key_value_marker(line)
+            key, value, marker = split_line(line)
             # in substituted text a brace that opens no expression is part of the key, as before
             if "{" in key and (
                 not substituted or any(isinstance(expr, MatchExpression) for expr in find_replace_expr(line))
@@ -186,66 +187,6 @@ class SetEnv:
 
     def use_replacer(self, value: Replacer, args: ConfigLoadArgs) -> None:
         self._replacer, self._args = value, args.copy()
-
-    @staticmethod
-    def _extract_key_value_marker(line: str) -> tuple[str, str, str]:
-        key, sep, rest = line.partition("=")
-        if not sep:
-            msg = f"invalid line {line!r} in set_env"
-            raise ValueError(msg)
-        if isinstance(line, HostText):
-            rest = line.fragment(len(key) + 1)
-        value, marker = SetEnv._split_value_marker(rest.strip())
-        return key.strip(), value, marker
-
-    @staticmethod
-    def _is_escaped(value: str, index: int) -> bool:
-        """A character is escaped when an odd number of backslashes precedes it."""
-        backslashes = 0
-        at = index - 1
-        while at >= 0 and value[at] == "\\":
-            backslashes += 1
-            at -= 1
-        return backslashes % 2 == 1
-
-    @staticmethod
-    def _split_value_marker(value: str) -> tuple[str, str]:
-        # Parse value; marker format (PEP-496 style)
-        # Handle escaped semicolons (\;) and quoted strings. Quotes keep a ";" inside a quoted value from being read
-        # as the marker separator, but only when balanced -- a lone quote (e.g. an apostrophe in the value) must not
-        # swallow the marker, so retry ignoring quotes if one is left open.
-        for respect_quotes in (True, False):
-            in_quotes = False
-            quote_char = ""
-            index = 0
-            while index < len(value):
-                char = value[index]
-                if respect_quotes and char in {'"', "'"} and not SetEnv._is_escaped(value, index):
-                    if not in_quotes:
-                        in_quotes, quote_char = True, char
-                    elif char == quote_char:
-                        in_quotes = False
-                elif char == ";" and not in_quotes and not SetEnv._is_escaped(value, index):
-                    text: str = value.fragment(0, index) if isinstance(value, HostText) else value[:index]
-                    return SetEnv._unescape_semicolons(text.strip()), value[index + 1 :].strip()
-                index += 1
-            if not in_quotes:
-                break  # quotes balanced or absent: the first pass is authoritative
-        return SetEnv._unescape_semicolons(value), ""
-
-    @staticmethod
-    def _unescape_semicolons(value: str) -> str:
-        if "\\;" not in value:
-            return value
-        if not isinstance(value, HostText):
-            return value.replace("\\;", ";")
-        parts: Final[list[str]] = []
-        offset = 0
-        for match in re.finditer(r"\\;", value):
-            parts.extend((value.fragment(offset, match.start()), value.fragment(match.start() + 1, match.end())))
-            offset = match.end()
-        parts.append(value.fragment(offset))
-        return HostText.from_parts(parts)
 
     def load(self, item: str, args: ConfigLoadArgs | None = None) -> str:
         self._resolve_replacements()
@@ -404,11 +345,11 @@ class SetEnv:
             if "=" in expanded_key or any(char in expanded_key for char in "\r\n\v\f\x1c\x1d\x1e\x85\u2028\u2029"):
                 msg = f"invalid set_env key {key!r} after substitution"
                 raise ValueError(msg)
-            value, marker = self._split_value_marker(rest.strip())
+            value, marker = split_value_marker(rest.strip())
             return {expanded_key.strip(): (value, Marker(marker) if marker else None)}
         # paste the text as written and parse it like lines written in place, so its values resolve only when read
         if (text := self._replacer(line, args, recursive=False)) == line:  # nothing left to substitute, keep it as text
-            key, value, marker = self._extract_key_value_marker(line)
+            key, value, marker = split_line(line)
             return {key: (value, Marker(marker) if marker else None)}
         block = SetEnv(text, self._name, self._env_name, self._root, substituted=True)
         block.use_replacer(self._replacer, args)
@@ -438,14 +379,10 @@ class SetEnv:
         return result
 
     def lines(self) -> str:
-        escaped_semicolon: Final[str] = r"\;"
-        lines: Final[list[str]] = []
-        for name, value in self.raw(self._args.copy()).items():
-            line = f"{name}={str(value['value']).replace(';', escaped_semicolon)}"
-            if marker := value.get("marker"):
-                line = f"{line}; {marker}"
-            lines.append(line)
-        return "\n".join(lines)
+        return "\n".join(
+            format_line(name, str(entry["value"]), entry.get("marker"))
+            for name, entry in self.raw(self._args.copy()).items()
+        )
 
     def export(self, values: Mapping[str, Callable[[], str]]) -> None:
         """Set tox's own variables over the configured ones, resolved on first read.

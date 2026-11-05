@@ -179,6 +179,9 @@ semicolon is not a valid marker, tox reports the key and the escape:
     set_env =
         WINDOWS_PATH = C:\tools\;C:\bin
 
+TOML ``set_env`` tables keep the marker in a separate ``marker`` field, so their values need no escaping. The escape
+still applies to ``--override env_run_base.set_env+=...`` in a TOML project, because an override is a line of text.
+
 .. _set-env-two-phases:
 
 Why set_env resolves values late
