@@ -1,4 +1,4 @@
 A quoted ``set_env`` value that ends with a literal backslash and contains a semicolon no longer loses its quote
 protection, so ``WINPATH="C:\tools;C:\bin\\"`` keeps the whole value instead of failing with ``invalid marker``. The
-escape check now counts the backslashes in front of a quote or a semicolon, which also makes ``\\;`` separate the
-value from the marker again.
+escape check now counts the backslashes in front of a quote or a semicolon, which also makes ``\\;`` separate the value
+from the marker again.
