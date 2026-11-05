@@ -1138,7 +1138,14 @@ Base options
                DARWIN_VAR = 1; sys_platform == 'darwin'
                WIN_ONLY = 1; sys_platform == 'win32'
 
-    In INI values, write a literal semicolon as ``\;`` so it is not parsed as a marker separator.
+    The ``KEY = VALUE; marker`` syntax applies to INI ``set_env`` lines and to ``--override`` values for ``set_env`` in
+    both formats. TOML tables carry the marker in its own ``marker`` field, so their values take ``;``, quotes and
+    backslashes literally. In the line syntax:
+
+    - write a literal semicolon as ``\;`` so it is not parsed as a marker separator; in an INI file,
+      ``C:\tools\\;C:\bin`` sets ``C:\tools\;C:\bin``,
+    - a ``;`` inside balanced quotes stays in the value, and so do the quotes,
+    - ``\"`` does not close a quote, while ``\\"`` does, so ``"C:\tools;C:\bin\\"`` is one value.
 
     Available markers include ``sys_platform``, ``os_name``, ``platform_machine``, ``platform_system``,
     ``python_version``, ``implementation_name``, and others as defined in PEP-508.

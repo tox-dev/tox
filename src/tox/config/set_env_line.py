@@ -1,0 +1,77 @@
+"""The ``KEY=VALUE; marker`` line syntax of ``set_env`` text in INI files and ``--override`` values."""
+
+from __future__ import annotations
+
+import re
+from typing import TYPE_CHECKING
+
+from .loader.replacer import HostText
+
+if TYPE_CHECKING:
+    from typing import Final
+
+
+def split_line(line: str) -> tuple[str, str, str]:
+    key, sep, rest = line.partition("=")
+    if not sep:
+        msg = f"invalid line {line!r} in set_env"
+        raise ValueError(msg)
+    if isinstance(line, HostText):
+        rest = line.fragment(len(key) + 1)
+    value, marker = split_value_marker(rest.strip())
+    return key.strip(), value, marker
+
+
+def split_value_marker(value: str) -> tuple[str, str]:
+    # Quotes keep a ";" inside a quoted value from being read as the marker separator, but only when balanced -- a lone
+    # quote (e.g. an apostrophe in the value) must not swallow the marker, so retry ignoring quotes if one is left open.
+    respect_quotes = True
+    while True:  # the second pass ignores quotes, so it always ends balanced
+        in_quotes = False
+        quote_char = ""
+        for index, char in enumerate(value):
+            if respect_quotes and char in {'"', "'"} and not _quote_is_escaped(value, index):
+                if not in_quotes:
+                    in_quotes, quote_char = True, char
+                elif char == quote_char:
+                    in_quotes = False
+            # one backslash is enough: C:\tools\\;C:\bin means C:\tools\ followed by an escaped semicolon
+            elif char == ";" and not in_quotes and (index == 0 or value[index - 1] != "\\"):
+                text: str = value.fragment(0, index) if isinstance(value, HostText) else value[:index]
+                return _unescape_semicolons(text.strip()), value[index + 1 :].strip()
+        if not in_quotes:
+            return _unescape_semicolons(value), ""
+        respect_quotes = False
+
+
+def _quote_is_escaped(value: str, index: int) -> bool:
+    # an even run of backslashes is literal, so the closing quote of "C:\bin\\" still closes
+    before = value[:index]
+    return (len(before) - len(before.rstrip("\\"))) % 2 == 1
+
+
+def _unescape_semicolons(value: str) -> str:
+    if "\\;" not in value:
+        return value
+    if not isinstance(value, HostText):
+        return value.replace("\\;", ";")
+    parts: Final[list[str]] = []
+    offset = 0
+    for match in re.finditer(r"\\;", value):
+        parts.extend((value.fragment(offset, match.start()), value.fragment(match.start() + 1, match.end())))
+        offset = match.end()
+    parts.append(value.fragment(offset))
+    return HostText.from_parts(parts)
+
+
+def format_line(key: str, value: str, marker: str | None) -> str:
+    escaped_semicolon: Final[str] = r"\;"  # Python 3.11 rejects a backslash inside an f-string expression
+    line = f"{key}={value.replace(';', escaped_semicolon)}"
+    return f"{line}; {marker}" if marker else line
+
+
+__all__ = [
+    "format_line",
+    "split_line",
+    "split_value_marker",
+]
