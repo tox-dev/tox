@@ -6,6 +6,22 @@
 
 .. towncrier release notes start
 
+.. _release-4-67-12:
+
+**********************
+ 4.67.12 (2026-11-05)
+**********************
+
+.. _release-4-67-12-fixed:
+
+Fixed
+-----
+
+- A quoted ``set_env`` value that ends with a literal backslash and contains a semicolon no longer loses its quote
+  protection, so ``WINPATH="C:\tools;C:\bin\\"`` keeps the whole value instead of failing with ``invalid marker``. tox
+  now counts the backslashes in front of a quote: an even number leaves the quote unescaped (:pr:`4388`) by
+  :user:`haigou-web` and :user:`gaborbernat`. (:issue:`4387`)
+
 .. _release-4-67-11:
 
 **********************
