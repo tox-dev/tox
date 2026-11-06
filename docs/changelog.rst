@@ -6,6 +6,25 @@
 
 .. towncrier release notes start
 
+.. _release-4-67-13:
+
+**********************
+ 4.67.13 (2026-11-06)
+**********************
+
+.. _release-4-67-13-fixed:
+
+Fixed
+-----
+
+- Relative ``{glob:...}`` and TOML ``replace = "glob"`` patterns now match files when :ref:`tox_root` contains ``[``,
+  ``*`` or ``?``. tox treats those characters in the project path literally while keeping wildcards in the configured
+  pattern (:pr:`4389`) by :user:`qodelicious` and :user:`gaborbernat`.
+- When :ref:`work_dir` or :ref:`tox_root` contains ``[``, ``*`` or ``?``, tox now treats those characters literally in
+  its own executable paths and in default or relative :ref:`package_glob` patterns. This lets it run environment
+  commands and find packages built by ``package = external`` (:pr:`4390`) by :user:`qodelicious` and
+  :user:`gaborbernat`.
+
 .. _release-4-67-12:
 
 **********************
