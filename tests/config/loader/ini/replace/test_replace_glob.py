@@ -123,3 +123,15 @@ def test_replace_glob_single_letter_pattern_absolute_default(
 ) -> None:
     (tmp_path / existing).touch()
     assert replace_one("{glob:z:/fallback}") == str(tmp_path / expected)
+
+
+def test_replace_glob_relative_pattern_root_with_glob_characters(
+    tox_project: ToxProjectCreator, tmp_path: Path
+) -> None:
+    project: Final[ToxProject] = tox_project(
+        {"tox.ini": "[testenv]\ncommands = python {glob:dist/*.whl:none}", "dist": {"a.whl": ""}},
+        prj_path=tmp_path / "proj[1]",
+    )
+    outcome: Final[ToxRunOutcome] = project.run("c", "-k", "commands")
+    outcome.assert_success()
+    assert outcome.env_conf("py")["commands"] == [Command(args=["python", str(project.path / "dist" / "a.whl")])]

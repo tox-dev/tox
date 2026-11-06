@@ -901,7 +901,8 @@ def replace_glob(conf: Config | None, args: list[str]) -> str | ConfigDefault:
         pattern = args[0]
         default_args = args[1:]
     if conf is not None and not Path(pattern).is_absolute():
-        pattern = str(conf.core["tox_root"] / pattern)
+        # escape the root so a [, * or ? in the project path is matched literally, not as part of the pattern
+        pattern = str(Path(glob.escape(str(conf.core["tox_root"]))) / pattern)
     if matches := sorted(glob.glob(pattern, recursive=True)):  # ruff:ignore[glob]
         return _GlobMatches(matches)
     return ConfigDefault(

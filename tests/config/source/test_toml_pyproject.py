@@ -1559,3 +1559,19 @@ def test_config_in_toml_numeric_substitution_still_converts(
     }).run("c", "-e", "A", "-k", key)
     outcome.assert_success()
     assert f"{key} = {numeric_value}" in outcome.out
+
+
+def test_config_in_toml_replace_glob_root_with_glob_characters(tox_project: ToxProjectCreator, tmp_path: Path) -> None:
+    project = tox_project(
+        {
+            "pyproject.toml": dedent("""
+            [tool.tox.env.A]
+            commands = [["echo", { replace = "glob", pattern = "dist/*.whl", default = ["none"], extend = true }]]
+            """),
+            "dist": {"a.whl": ""},
+        },
+        prj_path=tmp_path / "proj[1]",
+    )
+    outcome = project.run("c", "-e", "A", "-k", "commands")
+    outcome.assert_success()
+    assert outcome.env_conf("A")["commands"] == [Command(args=["echo", str(project.path / "dist" / "a.whl")])]
