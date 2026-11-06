@@ -113,9 +113,10 @@ class VirtualEnv(Python, ABC):
     def python_cache(self) -> dict[str, JsonValue]:
         base = super().python_cache()
         base["executable"] = str(self.base_python.extra["executable"])
-        # virtualenv reads VIRTUALENV_SYSTEM_SITE_PACKAGES while the environment is being created, so a change to it
-        # only takes effect once the environment is recreated
-        base["system_site_packages"] = self.conf["system_site_packages"]
+        # virtualenv applies this only while creating the environment, so a change must recreate it; left out when off,
+        # so environments cached before this key existed still match
+        if self.conf["system_site_packages"]:
+            base["system_site_packages"] = True
         if spec := self.conf["virtualenv_spec"]:
             base["virtualenv_spec"] = spec
         else:
