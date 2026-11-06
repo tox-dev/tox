@@ -258,7 +258,6 @@ def _replace_glob_toml(conf: Config | None, value: dict[str, Any]) -> list[TomlT
         msg = "No pattern was supplied in glob replacement"
         raise MatchError(msg)
     if conf is not None and not Path(pattern).is_absolute():
-        # escape the root so a [, * or ? in the project path is matched literally, not as part of the pattern
         pattern = str(Path(glob.escape(str(conf.core["tox_root"]))) / pattern)
     extending = value.get("extend", False)
     if matches := sorted(glob.glob(pattern, recursive=True)):  # ruff:ignore[glob]
