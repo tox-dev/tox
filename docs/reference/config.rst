@@ -2222,7 +2222,8 @@ Python virtual environment
     :version_added: 0.8
 
     Create virtual environments that also have access to globally installed packages. Note the default value may be
-    overwritten by the ``VIRTUALENV_SYSTEM_SITE_PACKAGES`` environment variable.
+    overwritten by the ``VIRTUALENV_SYSTEM_SITE_PACKAGES`` environment variable. virtualenv applies it only when it
+    creates the environment, so tox recreates an existing environment when the value changes.
 
     .. warning::
 
