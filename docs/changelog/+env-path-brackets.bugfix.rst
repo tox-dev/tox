@@ -1,4 +1,3 @@
-tox can now run commands from an environment, and find the package built by a ``package = external`` environment, when
-the :ref:`work_dir` or :ref:`tox_root` path contains a ``[``, ``*`` or ``?``. Before, those characters were read as glob
-syntax, so the environment's own ``python`` was reported as not allowed and the default or relative :ref:`package_glob`
-matched nothing.
+When :ref:`work_dir` or :ref:`tox_root` contains ``[``, ``*`` or ``?``, tox now treats those characters literally in its
+own executable paths and in default or relative :ref:`package_glob` patterns. This lets it run environment commands and
+find packages built by ``package = external``.

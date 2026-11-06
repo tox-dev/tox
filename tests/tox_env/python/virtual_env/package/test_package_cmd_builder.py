@@ -184,9 +184,8 @@ def test_build_wheel_external_default_glob_work_dir_with_brackets(
     result: Final[ToxRunOutcome] = project.run("r", "-e", "py", "--workdir", str(work_dir))
 
     result.assert_success()
-    built: Final[Path] = work_dir / ".pkg_external" / "tmp" / "dist" / wheel.name
     assert [call[0][3].cmd[-1] for call in execute_calls.call_args_list if call[0][3].run_id == "install_package"] == [
-        str(built)
+        str(work_dir / ".pkg_external" / "tmp" / "dist" / wheel.name)
     ]
 
 
