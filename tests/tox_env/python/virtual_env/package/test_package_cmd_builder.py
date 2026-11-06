@@ -165,6 +165,53 @@ def test_build_wheel_external_relative_glob_uses_project(
     ]
 
 
+def test_build_wheel_external_default_glob_work_dir_with_brackets(
+    tox_project: ToxProjectCreator, pkg_with_extras_project_wheel: Path
+) -> None:
+    wheel: Final[Path] = pkg_with_extras_project_wheel
+    ini: Final[str] = f"""
+    [testenv]
+    package = external
+    [testenv:.pkg_external]
+    commands =
+        python -c 'from pathlib import Path; (Path(r"{{env_tmp_dir}}") / "dist").mkdir()'
+        python -c 'import shutil; shutil.copy(r"{wheel}", r"{{env_tmp_dir}}{{/}}dist")'
+    """
+    project: Final[ToxProject] = tox_project({"tox.ini": ini})
+    work_dir: Final[Path] = project.path / "work[1]"
+    execute_calls: Final[MagicMock] = project.patch_execute(lambda run: 0 if "install" in run.run_id else None)
+
+    result: Final[ToxRunOutcome] = project.run("r", "-e", "py", "--workdir", str(work_dir))
+
+    result.assert_success()
+    built: Final[Path] = work_dir / ".pkg_external" / "tmp" / "dist" / wheel.name
+    assert [call[0][3].cmd[-1] for call in execute_calls.call_args_list if call[0][3].run_id == "install_package"] == [
+        str(built)
+    ]
+
+
+def test_build_wheel_external_relative_glob_root_with_brackets(
+    tox_project: ToxProjectCreator, pkg_with_extras_project_wheel: Path, tmp_path: Path
+) -> None:
+    ini: Final[str] = (
+        "[testenv]\npackage=external\n[testenv:.pkg_external]\npackage_glob=dist/*.whl\ncommands=python -c pass"
+    )
+    project: Final[ToxProject] = tox_project({"tox.ini": ini})
+    dist: Final[Path] = project.path / "dist"
+    dist.mkdir()
+    shutil.copy(pkg_with_extras_project_wheel, dist / pkg_with_extras_project_wheel.name)
+    root: Final[Path] = tmp_path / "proj[1]"
+    shutil.copytree(project.path, root)
+    execute_calls: Final[MagicMock] = project.patch_execute(lambda run: 0 if "install" in run.run_id else None)
+
+    result: Final[ToxRunOutcome] = project.run("r", "-e", "py", "--root", str(root), "--workdir", str(tmp_path / "w"))
+
+    result.assert_success()
+    assert [call[0][3].cmd[-1] for call in execute_calls.call_args_list if call[0][3].run_id == "install_package"] == [
+        str(root / "dist" / pkg_with_extras_project_wheel.name)
+    ]
+
+
 def test_build_wheel_external_fail_build(tox_project: ToxProjectCreator) -> None:
     ini = """
     [testenv]
