@@ -62,10 +62,15 @@ class VenvCmdBuilder(PythonPackageToxEnv, ABC):
         self.conf.add_config(
             keys=["package_glob"],
             of_type=str,
-            default=str(self.conf["env_tmp_dir"] / "dist" / "*"),
-            post_process=lambda value: str(self._relative_to_tox_root(Path(value))),
+            default=str(Path(glob.escape(str(self.conf["env_tmp_dir"] / "dist"))) / "*"),
+            post_process=self._package_glob_relative_to_tox_root,
             desc="glob used to find the built package to install",
         )
+
+    def _package_glob_relative_to_tox_root(self, value: str) -> str:
+        if (path := Path(value)).is_absolute():
+            return str(path)
+        return str(Path(glob.escape(str(self.core["tox_root"]))) / value)
 
     @override
     def requires(self) -> PythonDeps:

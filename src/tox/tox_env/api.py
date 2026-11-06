@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import fnmatch
+import glob
 import logging
 import os
 import re
@@ -449,7 +450,7 @@ class ToxEnv(ABC):  # ruff:ignore[too-many-public-methods]
 
     @property
     def _allow_externals(self) -> list[str]:
-        result: list[str] = [f"{i}{os.sep}*" for i in self._paths]
+        result: list[str] = [f"{glob.escape(str(i))}{os.sep}*" for i in self._paths]
         result.extend(i.strip() for i in self.conf["allowlist_externals"])
         return result
 

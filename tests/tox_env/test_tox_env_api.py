@@ -123,6 +123,17 @@ def test_allow_list_external_fail(tox_project: ToxProjectCreator, fake_exe_on_pa
     execute_calls.assert_called()
 
 
+def test_allow_env_executable_with_brackets_in_work_dir(tox_project: ToxProjectCreator) -> None:
+    project: Final[ToxProject] = tox_project({
+        "tox.ini": "[testenv]\npackage=skip\ncommands=python -c 'print(\"done\")'"
+    })
+
+    result: Final[ToxRunOutcome] = project.run("r", "--workdir", str(project.path / "work[1]"))
+
+    result.assert_success()
+    assert "done" in result.out
+
+
 def test_env_log(tox_project: ToxProjectCreator) -> None:
     cmd = "commands=python -c 'import sys; print(1); print(2); print(3, file=sys.stderr); print(4, file=sys.stderr)'"
     env_vars = "    UNPREDICTABLE = 🪟"
