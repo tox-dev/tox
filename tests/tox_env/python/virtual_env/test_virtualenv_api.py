@@ -89,6 +89,22 @@ def test_virtualenv_flipped_settings(
     assert list(dict.fromkeys(spec for spec in virtualenv_opt.python if spec != "<0")) == ["py3"]
 
 
+@pytest.mark.parametrize(("first", "second"), [("False", "True"), ("True", "False")])
+def test_virtualenv_system_site_packages_change_recreates(
+    tox_project: ToxProjectCreator, first: str, second: str
+) -> None:
+    proj = tox_project({"tox.ini": f"[testenv]\npackage=skip\nsystem_site_packages={first}"})
+    proj.run("r", "-e", "py").assert_success()
+
+    (proj.path / "tox.ini").write_text(f"[testenv]\npackage=skip\nsystem_site_packages={second}\n")
+    proj.run("r", "-e", "py").assert_success()
+
+    # virtualenv only writes this while creating the environment, so it tracks whether we recreated
+    cfg = (proj.path / ".tox" / "py" / "pyvenv.cfg").read_text()
+    got = next(line.partition("=")[2].strip() for line in cfg.splitlines() if line.startswith("include-system-site"))
+    assert got == second.lower()
+
+
 def test_virtualenv_base_python_entries_whole_and_in_order(
     tox_project: ToxProjectCreator,
     mocker: MockerFixture,
