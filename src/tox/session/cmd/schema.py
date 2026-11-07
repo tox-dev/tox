@@ -274,11 +274,11 @@ def gen_schema(state: State) -> int:
 
 def _get_schema(conf: ConfigSet, path: str) -> dict[str, dict[str, typing.Any]]:
     properties: dict[str, dict[str, typing.Any]] = {}
-    for x in conf.get_configs():
-        name, *aliases = x.keys
-        if (of_type := getattr(x, "of_type", None)) is None:
+    for definition in conf.get_configs():
+        name, *aliases = definition.keys
+        if (of_type := getattr(definition, "of_type", None)) is None:
             continue
-        desc = getattr(x, "desc", None)
+        desc = getattr(definition, "desc", None)
         try:
             properties[name] = {**_process_type(of_type), "description": desc}
         except ValueError:
