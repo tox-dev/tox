@@ -32,7 +32,7 @@ LEVELS = {
     5: logging.NOTSET,
 }
 
-_MAX_LEVEL = max(LEVELS.keys())
+MAX_LEVEL = max(LEVELS.keys())
 LOGGER = logging.getLogger()
 OutErr = tuple[TextIOWrapper, TextIOWrapper]
 
@@ -275,7 +275,7 @@ def _clean_handlers(log: logging.Logger) -> None:
 
 
 def _get_level(verbosity: int) -> int:
-    return LEVELS[min(verbosity, _MAX_LEVEL)]
+    return LEVELS[min(verbosity, MAX_LEVEL)]
 
 
 class HandledError(RuntimeError):

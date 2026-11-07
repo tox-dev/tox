@@ -381,4 +381,5 @@ __all__ = [
     "Override",
     "OverrideMap",
     "apply_overrides_to_raw",
+    "tox_add_option",
 ]

@@ -32,6 +32,9 @@ def expand_product(value: dict[str, TomlTypes]) -> list[str]:
     return [name for combo in product(*expanded) if (name := "-".join(combo)) not in exclude]
 
 
+_RESERVED_LABELS: frozenset[str] = frozenset({"env", "posargs", "tty", "glob", "factor"})
+
+
 def expand_factor_group(group: TomlTypes) -> list[str]:
     if isinstance(group, list):
         result: list[str] = []
@@ -73,7 +76,7 @@ def _expand_range(range_dict: dict[str, TomlTypes]) -> list[str]:
 
 
 def _expand_labeled(label: str, values: TomlTypes) -> list[str]:
-    if label in frozenset({"env", "posargs", "tty", "glob", "factor"}):
+    if label in _RESERVED_LABELS:
         msg = f"'{label}' is reserved and cannot be used as a factor label"
         raise TypeError(msg)
     if isinstance(values, dict):
@@ -115,6 +118,7 @@ def extract_label(group: TomlTypes) -> str | None:
 
 
 __all__ = [
+    "_RESERVED_LABELS",
     "expand_factor_group",
     "expand_product",
     "extract_default",

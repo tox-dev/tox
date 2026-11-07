@@ -154,7 +154,7 @@ class InstallPackageAction(Action):
         return self._resolve_path(value.as_posix())
 
 
-LOGGER = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 
 def execute(state: State, max_workers: int | None, has_spinner: bool, live: bool) -> int:  # ruff:ignore[boolean-type-hint-positional-argument]
@@ -194,7 +194,7 @@ def execute(state: State, max_workers: int | None, has_spinner: bool, live: bool
         except KeyboardInterrupt:
             previous = signal(SIGINT, Handlers.SIG_IGN)
             spinner.print_report = False  # no need to print reports at this point, final report coming up
-            LOGGER.error("[%s] KeyboardInterrupt - teardown started", os.getpid())  # ruff:ignore[error-instead-of-exception]
+            logger.error("[%s] KeyboardInterrupt - teardown started", os.getpid())  # ruff:ignore[error-instead-of-exception]
             interrupt.set()
             # cancel in reverse order to not allow submitting new jobs as we cancel running ones
             for future, tox_env in reversed(list(future_to_env.items())):
@@ -308,7 +308,7 @@ def _do_queue_and_wait(  # ruff:ignore[complex-structure, too-many-arguments, to
         # selection does not raise ValueError from ThreadPoolExecutor
         max_workers = max(1, len(to_run_list)) if max_workers is None else max_workers
         completed: set[str] = set()
-        envs_to_run_generator = _ready_to_run_envs(state, to_run_list, completed)
+        envs_to_run_generator = ready_to_run_envs(state, to_run_list, completed)
 
         def _run(tox_env: RunToxEnv) -> ToxEnvRunResult:
             spinner.add(tox_env.conf.name)
@@ -390,7 +390,7 @@ def _do_queue_and_wait(  # ruff:ignore[complex-structure, too-many-arguments, to
                     break
 
 
-def _ready_to_run_envs(state: State, to_run: list[str], completed: set[str]) -> Iterator[list[str]]:
+def ready_to_run_envs(state: State, to_run: list[str], completed: set[str]) -> Iterator[list[str]]:
     # Generate tox environments ready to run.
     order, todo = run_order(state, to_run)
     while order:
@@ -465,7 +465,7 @@ def _tear_down(tox_env: ToxEnv) -> None:
     try:
         tox_env.teardown()
     except (Fail, OSError):  # one environment failing to clean up must not leak the others' resources
-        LOGGER.warning("failed to tear down environment %s", tox_env.conf.name, exc_info=True)
+        logger.warning("failed to tear down environment %s", tox_env.conf.name, exc_info=True)
 
 
 def _order_results(state: State, results: list[ToxEnvRunResult], to_run_list: list[str]) -> list[ToxEnvRunResult]:
@@ -495,7 +495,7 @@ def _record_venv_redirect(state: State) -> None:
 def _venv_redirect_target(state: State, env_dirs: dict[str, Path]) -> Path | None:
     # the pick depends on the configuration alone, so it stays the same whichever environments ran
     if (pinned := state.conf.core.get_optional("venv_redirect_env", str)) is not None and pinned not in env_dirs:
-        LOGGER.warning("venv_redirect_env names %s, which is not a tox environment", pinned)
+        logger.warning("venv_redirect_env names %s, which is not a tox environment", pinned)
         return None
     develop = next((name for name in env_dirs if _installs_develop(state.envs[name])), None)
     name = pinned or ("dev" if "dev" in env_dirs else develop)

@@ -225,4 +225,5 @@ def tox_register_tox_env(register: ToxEnvRegister) -> None:
 
 __all__ = [
     "VenvCmdBuilder",
+    "VirtualEnvCmdBuilder",
 ]

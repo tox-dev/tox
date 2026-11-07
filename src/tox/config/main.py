@@ -252,8 +252,3 @@ class Config:
 ___all__ = [
     "Config",
 ]
-
-
-__all__ = [
-    "Config",
-]

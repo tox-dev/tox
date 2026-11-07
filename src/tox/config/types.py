@@ -108,10 +108,8 @@ class FactorGroup:
     default: str | None = None
 
 
-__all__ = [
-    "CircularChainError",
+__all__ = (
     "Command",
     "EnvList",
     "FactorGroup",
-    "MissingRequiredConfigKeyError",
-]
+)

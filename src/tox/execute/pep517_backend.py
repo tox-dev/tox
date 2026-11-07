@@ -157,8 +157,3 @@ class LocalSubProcessPep517ExecuteInstance(ExecuteInstance):
     @override
     def cmd(self) -> Sequence[str]:
         return self._instance.cmd
-
-
-__all__ = [
-    "LocalSubProcessPep517Executor",
-]

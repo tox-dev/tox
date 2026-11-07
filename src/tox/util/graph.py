@@ -43,13 +43,13 @@ def stable_topological_sort(graph: dict[str, set[str]]) -> list[str]:  # ruff:ig
     result = [n for n in topology if n in to_order]  # filter out missing nodes we extended
 
     if len(result) < len(to_order):
-        _identify_cycle(graph)
+        identify_cycle(graph)
         msg = "could not order tox environments and failed to detect circle"  # pragma: no cover
         raise ValueError(msg)  # pragma: no cover
     return result
 
 
-def _identify_cycle(graph: dict[str, set[str]]) -> None:
+def identify_cycle(graph: dict[str, set[str]]) -> None:
     path: dict[str, None] = OrderedDict()
     visited = set()
 
@@ -68,8 +68,3 @@ def _identify_cycle(graph: dict[str, set[str]]) -> None:
         if (result := visit(node)) is not None:
             msg = f"{' | '.join(result.keys())}"
             raise ValueError(msg)
-
-
-__all__ = [
-    "stable_topological_sort",
-]

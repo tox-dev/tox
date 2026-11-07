@@ -15,8 +15,8 @@ from .read_via_thread import ReadViaThread  # pragma: win32 no cover
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-_TIMEOUT_FOR_INTERRUPT: Final[float] = 0.05  # pragma: win32 no cover
-_READ_CHUNK_SIZE: Final[int] = 32768  # pragma: win32 no cover
+TIMEOUT_FOR_INTERRUPT: Final[float] = 0.05  # pragma: win32 no cover
+READ_CHUNK_SIZE: Final[int] = 32768  # pragma: win32 no cover
 
 
 class ReadViaThreadUnix(ReadViaThread):  # pragma: win32 no cover
@@ -39,7 +39,7 @@ class ReadViaThreadUnix(ReadViaThread):  # pragma: win32 no cover
     def _read_until_eof(self, selector: selectors.DefaultSelector) -> None:
         while selector.get_map() and not self.stop.is_set():
             try:
-                ready = selector.select(timeout=_TIMEOUT_FOR_INTERRUPT)
+                ready = selector.select(timeout=TIMEOUT_FOR_INTERRUPT)
             except (InterruptedError, OSError) as exception:
                 if isinstance(exception, OSError) and exception.errno != errno.EINTR:
                     raise
@@ -53,7 +53,7 @@ class ReadViaThreadUnix(ReadViaThread):  # pragma: win32 no cover
 
     def _read_chunk(self, selector: selectors.DefaultSelector, key: selectors.SelectorKey) -> None:
         try:
-            data = os.read(key.fd, _READ_CHUNK_SIZE)
+            data = os.read(key.fd, READ_CHUNK_SIZE)
         except OSError as exception:
             if exception.errno == errno.EINTR:
                 return
@@ -93,8 +93,3 @@ class ReadViaThreadUnix(ReadViaThread):  # pragma: win32 no cover
 
                 for key, _ in ready:
                     self._read_chunk(selector, key)
-
-
-__all__ = [
-    "ReadViaThreadUnix",
-]

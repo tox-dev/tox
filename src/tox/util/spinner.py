@@ -197,10 +197,3 @@ def td_human_readable(seconds: float) -> str:
         if period_str is not None:
             texts.append(f"{period_str} {period_name}{'' if period_str == '1' else 's'}")
     return " ".join(texts)
-
-
-__all__ = [
-    "MISS_DURATION",
-    "Spinner",
-    "td_human_readable",
-]

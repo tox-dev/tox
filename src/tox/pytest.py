@@ -493,11 +493,11 @@ def enable_pip_pypi_access_fixture(
 ) -> str | None:
     # Set a fake pip index url, tests that want to use a pypi server should create and overwrite this.
     _, previous_url = disable_pip_pypi_access
-    _enable_pypi_server(monkeypatch, previous_url)
+    enable_pypi_server(monkeypatch, previous_url)
     return previous_url
 
 
-def _enable_pypi_server(monkeypatch: pytest.MonkeyPatch, url: str | None) -> None:
+def enable_pypi_server(monkeypatch: pytest.MonkeyPatch, url: str | None) -> None:
     if url is None:  # pragma: no cover # only one of the branches can be hit depending on env
         monkeypatch.delenv("PIP_INDEX_URL", raising=False)
     else:  # pragma: no cover

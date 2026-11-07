@@ -84,8 +84,3 @@ class MemoryLoader(Loader[object]):
             return StrConvert.to_env_list(value)
         msg = f"env_list expected EnvList or str, got {type(value).__name__}: {value!r}"
         raise TypeError(msg)
-
-
-__all__ = [
-    "MemoryLoader",
-]

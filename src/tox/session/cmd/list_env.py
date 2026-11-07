@@ -56,8 +56,3 @@ def list_env(state: State) -> int:
         for env in inactive:
             report_env(env)
     return 0
-
-
-__all__ = [
-    "list_env",
-]

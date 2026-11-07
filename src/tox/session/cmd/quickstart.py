@@ -66,8 +66,3 @@ def quickstart(state: State) -> int:
     root.mkdir(parents=True, exist_ok=True)
     tox_ini.write_text(content)
     return 0
-
-
-__all__ = [
-    "quickstart",
-]

@@ -8,11 +8,11 @@ from urllib.request import url2pathname
 from packaging.utils import canonicalize_name
 
 VCS = ["ftp", "ssh", "git", "hg", "bzr", "sftp", "svn"]
-_VALID_SCHEMAS = ["http", "https", "file", *VCS]
+VALID_SCHEMAS = ["http", "https", "file", *VCS]
 
 
 def is_url(name: str) -> bool:
-    return get_url_scheme(name) in _VALID_SCHEMAS
+    return get_url_scheme(name) in VALID_SCHEMAS
 
 
 def get_url_scheme(url: str) -> str | None:
@@ -47,12 +47,3 @@ def handle_binary_option(value: str, target: set[str], other: set[str]) -> None:
         normalized_name = canonicalize_name(name)
         other.discard(normalized_name)
         target.add(normalized_name)
-
-
-__all__ = [
-    "VCS",
-    "get_url_scheme",
-    "handle_binary_option",
-    "is_url",
-    "url_to_path",
-]

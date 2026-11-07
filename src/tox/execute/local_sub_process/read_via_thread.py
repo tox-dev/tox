@@ -12,6 +12,9 @@ if TYPE_CHECKING:
     from typing import Self
 
 
+WAIT_GENERAL = 0.05
+
+
 class ReadViaThread(ABC):
     def __init__(self, file_no: int, handler: Callable[[bytes], int], name: str, drain: bool) -> None:  # ruff:ignore[boolean-type-hint-positional-argument]
         self.file_no = file_no
@@ -35,17 +38,11 @@ class ReadViaThread(ABC):
         exc_tb: TracebackType | None,
     ) -> None:
         self.stop.set()
-        wait_general: float = 0.05
         while self.thread.is_alive():
-            self.thread.join(wait_general)
+            self.thread.join(WAIT_GENERAL)
         if self._on_exit_drain:
             self._drain_stream()
 
     @abstractmethod
     def _drain_stream(self) -> None:
         raise NotImplementedError
-
-
-__all__ = [
-    "ReadViaThread",
-]

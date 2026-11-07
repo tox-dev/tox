@@ -62,10 +62,3 @@ def setup_state(args: Sequence[str]) -> State:
         faulthandler.dump_traceback_later(timeout=options.parsed.exit_and_dump_after, exit=True)  # pragma: no cover
     # build tox environment config objects
     return State(options, args)
-
-
-__all__ = [
-    "main",
-    "run",
-    "setup_state",
-]

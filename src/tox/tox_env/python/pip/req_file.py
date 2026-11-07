@@ -65,27 +65,10 @@ class _PythonRequirementsFile(RequirementsFile):
 
     @classmethod
     def _normalize_line(cls, line: str) -> str:
-        one_arg = {
-            "-i",
-            "--index-url",
-            "--extra-index-url",
-            "-e",
-            "--editable",
-            "-c",
-            "--constraint",
-            "-r",
-            "--requirement",
-            "-f",
-            "--find-links",
-            "--trusted-host",
-            "--use-feature",
-            "--no-binary",
-            "--only-binary",
-        }
         arg_match = next(
             (
                 arg
-                for arg in one_arg
+                for arg in ONE_ARG
                 if line.startswith(arg)
                 and len(line) > len(arg)
                 and not (line[len(arg)].isspace() or line[len(arg)] == "=")
@@ -94,18 +77,8 @@ class _PythonRequirementsFile(RequirementsFile):
         )
         if arg_match is not None:
             line = f"{arg_match} {line[len(arg_match) :]}"
-        one_arg_escape = {
-            "-c",
-            "--constraint",
-            "-r",
-            "--requirement",
-            "-f",
-            "--find-links",
-            "-e",
-            "--editable",
-        }
         escape_match = next(
-            (e for e in one_arg_escape if line.startswith(e) and len(line) > len(e) and line[len(e)].isspace()), None
+            (e for e in ONE_ARG_ESCAPE if line.startswith(e) and len(line) > len(e) and line[len(e)].isspace()), None
         )
         # a quoted value already keeps its spaces, escaping inside the quotes would add literal backslashes
         if escape_match is not None and (value := line[len(escape_match) + 1 :]).lstrip()[:1] not in {"'", '"'}:
@@ -330,6 +303,35 @@ def _factory_type_error(field: str, raw: object) -> str:
     return f"{field} expected {expected}, got {type(raw).__name__}: {raw!r}"
 
 
+ONE_ARG = {
+    "-i",
+    "--index-url",
+    "--extra-index-url",
+    "-e",
+    "--editable",
+    "-c",
+    "--constraint",
+    "-r",
+    "--requirement",
+    "-f",
+    "--find-links",
+    "--trusted-host",
+    "--use-feature",
+    "--no-binary",
+    "--only-binary",
+}
+ONE_ARG_ESCAPE = {
+    "-c",
+    "--constraint",
+    "-r",
+    "--requirement",
+    "-f",
+    "--find-links",
+    "-e",
+    "--editable",
+}
+
+
 def _render_options(options: dict[str, object]) -> list[str]:
     # set-valued options (e.g. no_binary) render sorted so the value is stable across hash seeds - the install
     # cache compares these strings and an order change would force a spurious recreate
@@ -340,6 +342,7 @@ def _render_options(options: dict[str, object]) -> list[str]:
 
 
 __all__ = [
+    "ONE_ARG",
     "PythonConstraints",
     "PythonDeps",
 ]

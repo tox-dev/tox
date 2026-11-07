@@ -88,7 +88,7 @@ _VERSION_SPECIFIER = re.compile(
 )
 ReqFileLines = Iterator[tuple[int, str]]
 
-_DEFAULT_INDEX_URL: Final[str] = "https://pypi.org/simple"
+DEFAULT_INDEX_URL: Final[str] = "https://pypi.org/simple"
 _HTTP_BODY_TIMEOUT: Final[int] = 120
 
 
@@ -491,7 +491,7 @@ class RequirementsFile:
                 base_opt.index_url = [opt.index_url]
         if opt.extra_index_url and getattr(base_opt, "index_url", None) != []:
             if not getattr(base_opt, "index_url", []):
-                base_opt.index_url = [_DEFAULT_INDEX_URL]
+                base_opt.index_url = [DEFAULT_INDEX_URL]
             for url in opt.extra_index_url:
                 if url not in base_opt.index_url:
                     base_opt.index_url.append(url)
@@ -561,7 +561,7 @@ class RequirementsFile:
             yield "-c", req
         if (index_url := getattr(opt, "index_url", None)) is not None:
             if index_url:
-                if index_url[0] != _DEFAULT_INDEX_URL:
+                if index_url[0] != DEFAULT_INDEX_URL:
                     yield "-i", index_url[0]
                 for url in index_url[1:]:
                     yield "--extra-index-url", url

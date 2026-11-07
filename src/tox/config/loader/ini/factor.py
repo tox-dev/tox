@@ -22,7 +22,7 @@ def filter_for_env(value: str, name: str | None) -> str:
     overall: list[str] = []
     active_continuation = False
     pending_skip = False
-    for factors, content in _expand_factors(value):
+    for factors, content in expand_factors(value):
         if factors is None:
             if pending_skip and not active_continuation and not content.endswith("\\"):
                 pending_skip = False
@@ -47,7 +47,7 @@ def active_factors(env_name: str | None) -> set[str]:
     :returns:
     """
     env_factors = (
-        set(chain.from_iterable([(i for i, _ in a) for a in _find_factor_groups(env_name)]))
+        set(chain.from_iterable([(i for i, _ in a) for a in find_factor_groups(env_name)]))
         if env_name is not None
         else set()
     )
@@ -64,11 +64,11 @@ def active_factors(env_name: str | None) -> set[str]:
     return current
 
 
-def _find_factor_groups(value: str) -> Iterator[list[tuple[str, bool]]]:
+def find_factor_groups(value: str) -> Iterator[list[tuple[str, bool]]]:
     # Transform '{py,!pi}-{a,b},c' to [{'py', 'a'}, {'py', 'b'}, {'pi', 'a'}, {'pi', 'b'}, {'c'}].
     value = expand_ranges(value)
-    for env in _expand_env_with_negation(value):
-        yield [_name_with_negate(f) for f in env.split("-")]
+    for env in expand_env_with_negation(value):
+        yield [name_with_negate(f) for f in env.split("-")]
 
 
 def expand_ranges(value: str) -> str:
@@ -125,7 +125,7 @@ def open_minor_range(start: int | None = None, stop: int | None = None) -> list[
     return list(range(first, last + 1)) or [last if start is None else first]
 
 
-def _expand_env_with_negation(value: str) -> Iterator[str]:
+def expand_env_with_negation(value: str) -> Iterator[str]:
     # Transform '{py,!pi}-{a,b},c' to ['py-a', 'py-b', '!pi-a', '!pi-b', 'c'].
     for key, group in groupby(
         re.split(
@@ -157,16 +157,16 @@ def _expand_env_with_negation(value: str) -> Iterator[str]:
                 yield variant_str
 
 
-def _name_with_negate(factor: str) -> tuple[str, bool]:
-    negated = _is_negated(factor)
+def name_with_negate(factor: str) -> tuple[str, bool]:
+    negated = is_negated(factor)
     return (factor[1:] if negated else factor), negated
 
 
-def _is_negated(factor: str) -> bool:
+def is_negated(factor: str) -> bool:
     return factor.startswith("!")
 
 
-def _expand_factors(value: str) -> Iterator[tuple[list[list[tuple[str, bool]]] | None, str]]:
+def expand_factors(value: str) -> Iterator[tuple[list[list[tuple[str, bool]]] | None, str]]:
     for line in value.split("\n"):
         factors: list[list[tuple[str, bool]]] | None = None
         marker_search = re.search(
@@ -180,7 +180,7 @@ def _expand_factors(value: str) -> Iterator[tuple[list[list[tuple[str, bool]]] |
         marker_at, content = marker_search.start() if marker_search else -1, line
         if marker_at != -1:
             try:
-                factors = list(_find_factor_groups(line[:marker_at].strip()))
+                factors = list(find_factor_groups(line[:marker_at].strip()))
             except ValueError:
                 pass  # when cannot extract factors keep the entire line
             else:
@@ -190,21 +190,21 @@ def _expand_factors(value: str) -> Iterator[tuple[list[list[tuple[str, bool]]] |
 
 def find_envs(value: str) -> Iterator[str]:
     seen = set()
-    for factors, _ in _expand_factors(value):
+    for factors, _ in expand_factors(value):
         if factors is not None:
             for group in factors:
-                if (env := _explode_factor(group)) not in seen:
+                if (env := explode_factor(group)) not in seen:
                     yield env
                     seen.add(env)
 
 
-def _explode_factor(group: list[tuple[str, bool]]) -> str:
+def explode_factor(group: list[tuple[str, bool]]) -> str:
     return "-".join([name for name, _ in group])
 
 
 def extend_factors(value: str) -> Iterator[str]:
-    for group in _find_factor_groups(value):
-        yield _explode_factor(group)
+    for group in find_factor_groups(value):
+        yield explode_factor(group)
 
 
 _FACTOR_RE: Final[re.Pattern[str]] = re.compile(
@@ -221,13 +221,14 @@ _FACTOR_RE: Final[re.Pattern[str]] = re.compile(
 )
 
 
-__all__ = [
+__all__ = (
     "LATEST_PYTHON_MINOR_MAX",
     "LATEST_PYTHON_MINOR_MIN",
     "active_factors",
+    "expand_factors",
     "expand_ranges",
     "extend_factors",
     "filter_for_env",
     "find_envs",
     "open_minor_range",
-]
+)

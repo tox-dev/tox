@@ -131,8 +131,3 @@ _HASH = re.compile(
     """,
     re.VERBOSE,
 )
-
-
-__all__ = [
-    "build_parser",
-]

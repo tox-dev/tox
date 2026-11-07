@@ -57,8 +57,3 @@ def devenv(state: State) -> int:
             # asking for a development environment is the explicit consent PEP 832 wants before replacing a redirect
             record_venv_redirect(state.conf.core.get("tox_root", Path), opt.devenv_path, lambda _: True)
     return result
-
-
-__all__ = [
-    "devenv",
-]

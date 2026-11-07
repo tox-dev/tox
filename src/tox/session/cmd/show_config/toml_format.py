@@ -38,9 +38,3 @@ def show_config_toml(state: State) -> int:
 def colorize(text: str) -> str:
     text = _HEADER_RE.sub(lambda m: f"{Fore.YELLOW}{m.group()}{Fore.RESET}", text)
     return _KEY_RE.sub(rf"{Fore.GREEN}\1{Fore.RESET} =", text)
-
-
-__all__ = [
-    "colorize",
-    "show_config_toml",
-]

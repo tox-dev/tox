@@ -241,7 +241,7 @@ def _normalize_extras(values: set[str]) -> set[str]:
     return {canonicalize_name(v) for v in values}
 
 
-def _add_extras_to_env(conf: EnvConfigSet) -> None:
+def add_extras_to_env(conf: EnvConfigSet) -> None:
     conf.add_config(
         keys=["extras"],
         of_type=set[str],
@@ -252,7 +252,9 @@ def _add_extras_to_env(conf: EnvConfigSet) -> None:
 
 
 __all__ = [
+    "PackageType",
     "PythonRun",
+    "add_extras_to_env",
     "add_skip_missing_interpreters_to_core",
     "add_skip_missing_interpreters_to_env",
 ]

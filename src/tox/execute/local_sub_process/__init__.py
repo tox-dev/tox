@@ -48,7 +48,7 @@ else:  # pragma: win32 no cover
     from .read_via_thread_unix import ReadViaThreadUnix as ReadViaThread
 
 
-_IS_WIN = sys.platform == "win32"
+IS_WIN = sys.platform == "win32"
 
 
 class LocalSubProcessExecutor(Execute):

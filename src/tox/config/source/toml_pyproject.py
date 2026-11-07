@@ -262,6 +262,4 @@ def _extract_env_list_labels(env_list_raw: TomlTypes) -> dict[str, FactorGroup]:
 
 __all__ = [
     "TomlPyProject",
-    "TomlPyProjectSection",
-    "TomlSection",
 ]

@@ -17,10 +17,11 @@ if TYPE_CHECKING:
     from tox.config.cli.parser import ToxParser
     from tox.session.state import State
 
-LOGGER = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 ENV_VAR_KEY: Final[str] = "TOX_PARALLEL_ENV"
 OFF_VALUE: Final[int] = 0
+DEFAULT_PARALLEL = "auto"
 
 
 @impl
@@ -28,7 +29,7 @@ def tox_add_option(parser: ToxParser) -> None:
     our = parser.add_command("run-parallel", ["p"], "run environments in parallel", run_parallel)
     register_env_select_flags(our, default=CliEnv())
     env_run_create_flags(our, mode="run-parallel")
-    parallel_flags(our, default_parallel="auto")
+    parallel_flags(our, default_parallel=DEFAULT_PARALLEL)
 
 
 def run_parallel(state: State) -> int:
@@ -98,12 +99,3 @@ def parse_num_processes(str_value: str) -> int | None:
         msg = f"value must be positive, is {value!r}"
         raise ArgumentTypeError(msg)
     return value
-
-
-__all__ = [
-    "ENV_VAR_KEY",
-    "OFF_VALUE",
-    "parallel_flags",
-    "parse_num_processes",
-    "run_parallel",
-]

@@ -109,8 +109,3 @@ def _print_manpath_instructions() -> None:
         f"To complete setup, add this to {rc_file}:\n\n  {export_line}\n\n"
         f"Then restart your shell or run:\n  {reload} {rc_file}\n\nAfter that, you can use: man tox\n"
     )
-
-
-__all__ = [
-    "setup_man",
-]

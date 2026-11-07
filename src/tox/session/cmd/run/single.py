@@ -44,7 +44,7 @@ def _run_with_teardown(tox_env: RunToxEnv, no_test: bool) -> tuple[bool, int, li
     outcomes: list[Outcome] = []
     try:
         tox_env.setup()
-        code, outcomes = _run_commands(tox_env, no_test)
+        code, outcomes = run_commands(tox_env, no_test)
     except Skip as exception:
         LOGGER.warning("skipped because %s", exception)
         code = 0
@@ -66,7 +66,7 @@ def _run_with_teardown(tox_env: RunToxEnv, no_test: bool) -> tuple[bool, int, li
     return skipped, code, outcomes
 
 
-def _run_commands(tox_env: RunToxEnv, no_test: bool) -> tuple[int, list[Outcome]]:  # ruff:ignore[boolean-type-hint-positional-argument]
+def run_commands(tox_env: RunToxEnv, no_test: bool) -> tuple[int, list[Outcome]]:  # ruff:ignore[boolean-type-hint-positional-argument]
     outcomes: list[Outcome] = []
     if no_test:
         exit_code = Outcome.OK

@@ -122,8 +122,3 @@ class SyncWrite:
         finally:
             self._start()
         return len(content)
-
-
-__all__ = [
-    "SyncWrite",
-]

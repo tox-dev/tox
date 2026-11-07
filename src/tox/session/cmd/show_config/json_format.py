@@ -29,9 +29,3 @@ def show_config_json(state: State) -> int:
 
 def colorize(text: str) -> str:
     return _KEY_RE.sub(rf"\1{Fore.GREEN}\2{Fore.RESET}:", text)
-
-
-__all__ = [
-    "colorize",
-    "show_config_json",
-]

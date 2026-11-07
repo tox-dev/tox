@@ -47,8 +47,3 @@ def exec_(state: State) -> int:
         raise HandledError(msg)
     loader.raw["commands"] = [Command(list(pos_args))]
     return run_sequential(state)
-
-
-__all__ = [
-    "exec_",
-]

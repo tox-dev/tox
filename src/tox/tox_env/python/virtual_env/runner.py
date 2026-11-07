@@ -45,8 +45,3 @@ class VirtualEnvRunner(VirtualEnv, PythonRun):
     @override
     def id() -> str:
         return "virtualenv"
-
-
-__all__ = [
-    "VirtualEnvRunner",
-]

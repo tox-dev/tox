@@ -79,8 +79,3 @@ class IniConfig:
             return None
         args = ConfigLoadArgs(chain=[key], name=CORE.prefix, env_name=None)
         return self.ini.load(key, of_type=of_type, conf=None, factory=None, args=args), "file"
-
-
-__all__ = [
-    "IniConfig",
-]
