@@ -78,7 +78,7 @@ def _disable_root_tox_py(request: SubRequest, mocker: MockerFixture) -> Iterator
         if module is not None and manager.MANAGER.manager.is_registered(module):  # pragma: no branch
             manager.MANAGER.manager.unregister(module)
     else:  # do not allow loading inline plugins
-        mocker.patch("tox.plugin.inline._load_plugin", return_value=None)
+        mocker.patch("tox.plugin.inline._load_plugin", autospec=True, return_value=None)
         yield
 
 
@@ -526,7 +526,7 @@ def register_inline_plugin(mocker: MockerFixture, *args: FunctionType) -> None:
     plugin.__file__ = caller_module.__file__
     for hook in args:
         setattr(plugin, hook.__name__, hook)
-    mocker.patch("tox.plugin.manager.load_inline", return_value=plugin)
+    mocker.patch("tox.plugin.manager.load_inline", autospec=True, return_value=plugin)
 
 
 LogCaptureFixture = pytest.LogCaptureFixture
