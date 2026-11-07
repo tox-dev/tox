@@ -27,7 +27,7 @@ def pkg_with_extras_project_wheel(
 
 def test_tox_install_pkg_wheel(tox_project: ToxProjectCreator, pkg_with_extras_project_wheel: Path) -> None:
     proj = tox_project({"tox.ini": "[testenv]\nextras=docs,format"})
-    execute_calls = proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
+    execute_calls = proj.patch_execute(lambda request: 0 if "install" in request.run_id else None)
     proj.run("r", "-e", "py", "--installpkg", str(pkg_with_extras_project_wheel)).assert_success()
     calls = [(i[0][0].conf.name, i[0][3].run_id, i[0][3].cmd[5:]) for i in execute_calls.call_args_list]
     deps = ["black>=3", "colorama>=0.4.6", "flake8", "platformdirs>=4.3.8", "sphinx-rtd-theme<1,>=0.4.3", "sphinx>=3"]
@@ -60,7 +60,7 @@ def pkg_with_extras_project_sdist(
 
 def test_tox_install_pkg_sdist(tox_project: ToxProjectCreator, pkg_with_extras_project_sdist: Path) -> None:
     proj = tox_project({"tox.ini": "[testenv]\nextras=docs,format"})
-    execute_calls = proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
+    execute_calls = proj.patch_execute(lambda request: 0 if "install" in request.run_id else None)
     proj.run("r", "-e", "py", "--installpkg", str(pkg_with_extras_project_sdist)).assert_success()
     calls = [(i[0][0].conf.name, i[0][3].run_id, i[0][3].cmd[5:]) for i in execute_calls.call_args_list]
     deps = ["black>=3", "colorama>=0.4.6", "flake8", "platformdirs>=4.3.8", "sphinx-rtd-theme<1,>=0.4.3", "sphinx>=3"]
@@ -78,7 +78,7 @@ def test_tox_install_pkg_sdist(tox_project: ToxProjectCreator, pkg_with_extras_p
 @pytest.mark.parametrize("mode", ["p", "le"])  # no need for r as is tested above
 def test_install_pkg_via(tox_project: ToxProjectCreator, mode: str, pkg_with_extras_project_wheel: Path) -> None:
     proj = tox_project({"tox.ini": "[testenv]\npackage=wheel"})
-    execute_calls = proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
+    execute_calls = proj.patch_execute(lambda request: 0 if "install" in request.run_id else None)
 
     proj.run(mode, "--installpkg", str(pkg_with_extras_project_wheel)).assert_success()
     calls = [(i[0][0].conf.name, i[0][3].run_id) for i in execute_calls.call_args_list]

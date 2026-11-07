@@ -50,7 +50,7 @@ def test_tox_ini_package_type_invalid(tox_project: ToxProjectCreator) -> None:
 def test_get_package_deps_different_extras(pkg_with_extras_project: Path, tox_project: ToxProjectCreator) -> None:
     ini = "[testenv:a]\npackage=editable-legacy\nextras=docs\n[testenv:b]\npackage=sdist\nextras=format"
     proj = tox_project({"tox.ini": ini})
-    execute_calls = proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
+    execute_calls = proj.patch_execute(lambda request: 0 if "install" in request.run_id else None)
     proj.run("r", "--root", str(pkg_with_extras_project), "-e", "a,b").assert_success()
     installs = {
         i[0][0].conf.name: i[0][3].cmd[5:]
@@ -75,7 +75,7 @@ def test_root_setter_no_frontend_rebuild_when_unbuilt(
     # Swapping root before a frontend exists must not build a throwaway one for the old root.
     ini = f"[tox]\npackage_root={demo_pkg_inline}\n[testenv]\npackage=wheel\nwheel_build_env=.pkg"
     proj = tox_project({"tox.ini": ini, "pyproject.toml": ""})
-    proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
+    proj.patch_execute(lambda request: 0 if "install" in request.run_id else None)
     result = proj.run("r", "--notest")
     result.assert_success()
 
@@ -92,7 +92,7 @@ def test_root_setter_no_frontend_rebuild_when_unbuilt(
 def test_package_root_via_testenv(tox_project: ToxProjectCreator, demo_pkg_inline: Path) -> None:
     ini = f"[testenv]\npackage=wheel\nwheel_build_env=.pkg\npackage_root={demo_pkg_inline}"
     proj = tox_project({"tox.ini": ini, "pyproject.toml": ""})
-    proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
+    proj.patch_execute(lambda request: 0 if "install" in request.run_id else None)
     proj.run("r", "--notest").assert_success()
 
 
@@ -310,7 +310,7 @@ def test_pyproject_deps_from_static(
 ) -> None:
     toml = f"{(demo_pkg_inline / 'pyproject.toml').read_text()}{conf}"
     proj = tox_project({"tox.ini": f"[testenv]\nextras={extra}", "pyproject.toml": toml}, base=demo_pkg_inline)
-    execute_calls = proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
+    execute_calls = proj.patch_execute(lambda request: 0 if "install" in request.run_id else None)
     proj.run("r", "--notest").assert_success()
 
     found_calls = [(i[0][0].conf.name, i[0][3].run_id) for i in execute_calls.call_args_list]
@@ -348,7 +348,7 @@ def test_pyproject_invalid_extra_static(tox_project: ToxProjectCreator, demo_pkg
     conf = "[project]\nname='demo'\ndependencies=['A']\noptional-dependencies.alpha=['B']"
     toml = f"{(demo_pkg_inline / 'pyproject.toml').read_text()}{conf}"
     proj = tox_project({"tox.ini": "[testenv]\nextras=typo", "pyproject.toml": toml}, base=demo_pkg_inline)
-    proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
+    proj.patch_execute(lambda request: 0 if "install" in request.run_id else None)
     result = proj.run("r", "--notest")
     result.assert_failed()
     assert "extras not found for package demo: typo (available: alpha)" in result.out
@@ -358,7 +358,7 @@ def test_pyproject_invalid_extra_no_optional_deps(tox_project: ToxProjectCreator
     conf = "[project]\nname='demo'"
     toml = f"{(demo_pkg_inline / 'pyproject.toml').read_text()}{conf}"
     proj = tox_project({"tox.ini": "[testenv]\nextras=alpha", "pyproject.toml": toml}, base=demo_pkg_inline)
-    proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
+    proj.patch_execute(lambda request: 0 if "install" in request.run_id else None)
     result = proj.run("r", "--notest")
     result.assert_failed()
     assert "extras not found for package demo: alpha (available: none)" in result.out
@@ -398,7 +398,7 @@ def test_pyproject_deps_static_with_dynamic(
     ini = f"[testenv]\nextras={extra}\n[testenv:.pkg]\npass_env=METADATA_EXTRA"
     proj = tox_project({"tox.ini": ini, "pyproject.toml": toml}, base=demo_pkg_inline)
 
-    execute_calls = proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
+    execute_calls = proj.patch_execute(lambda request: 0 if "install" in request.run_id else None)
     proj.run("r", "--notest").assert_success()
 
     found_calls = [(i[0][0].conf.name, i[0][3].run_id) for i in execute_calls.call_args_list]
@@ -420,7 +420,7 @@ def test_pyproject_deps_static_with_dynamic(
 
 def test_pyproject_no_build_editable_fallback(tox_project: ToxProjectCreator, demo_pkg_inline: Path) -> None:
     proj = tox_project({"tox.ini": "[tox]\nenv_list=a,b"}, base=demo_pkg_inline)
-    execute_calls = proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
+    execute_calls = proj.patch_execute(lambda request: 0 if "install" in request.run_id else None)
     result = proj.run("r", "-e", "a,b", "--notest", "--develop")
     result.assert_success()
     warning = (
@@ -445,7 +445,7 @@ def test_pyproject_no_build_editable_fallback(tox_project: ToxProjectCreator, de
 @pytest.mark.parametrize("package", ["sdist", "sdist-wheel", "wheel", "editable"])
 def test_pep517_pkg_env_rejects_deps(tox_project: ToxProjectCreator, demo_pkg_setuptools: Path, package: str) -> None:
     proj = tox_project({"tox.ini": f"[testenv]\npackage={package}\n[pkgenv]\ndeps = A"}, base=demo_pkg_setuptools)
-    proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
+    proj.patch_execute(lambda request: 0 if "install" in request.run_id else None)
     result = proj.run("r", "--notest")
     result.assert_failed()
     assert "does not support the deps configuration" in result.out
@@ -456,7 +456,7 @@ def test_pep517_pkg_env_allows_deps_for_editable_legacy(
     demo_pkg_setuptools: Path,
 ) -> None:
     proj = tox_project({"tox.ini": "[testenv]\npackage=editable-legacy\n[pkgenv]\ndeps = A"}, base=demo_pkg_setuptools)
-    proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
+    proj.patch_execute(lambda request: 0 if "install" in request.run_id else None)
     result = proj.run("r", "--notest")
     result.assert_success()
     assert "does not support the deps configuration" not in result.out
@@ -467,7 +467,7 @@ def test_pep517_pkg_env_rejects_deps_via_testenv(
     demo_pkg_setuptools: Path,
 ) -> None:
     proj = tox_project({"tox.ini": "[testenv]\npackage=sdist\n[testenv:.pkg]\ndeps = B"}, base=demo_pkg_setuptools)
-    proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
+    proj.patch_execute(lambda request: 0 if "install" in request.run_id else None)
     result = proj.run("r", "--notest")
     result.assert_failed()
     assert "does not support the deps configuration" in result.out
@@ -485,7 +485,7 @@ def test_pyproject_build_editable_and_wheel(tox_project: ToxProjectCreator, demo
     package = wheel
     """
     proj = tox_project({"tox.ini": ini}, base=demo_pkg_inline)
-    execute_calls = proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
+    execute_calls = proj.patch_execute(lambda request: 0 if "install" in request.run_id else None)
 
     proj.run("r", "-e", "a,b,c,d", "--notest", "--workdir", str(proj.path / ".tox")).assert_success()
     found_calls = [(i[0][0].conf.name, i[0][3].run_id) for i in execute_calls.call_args_list]
@@ -522,7 +522,7 @@ def test_pyproject_config_settings_sdist(
     config_settings_prepare_metadata_for_build_wheel = D = 4
     """
     proj = tox_project({"tox.ini": ini}, base=demo_pkg_setuptools)
-    proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
+    proj.patch_execute(lambda request: 0 if "install" in request.run_id else None)
 
     write_stdin = mocker.spy(LocalSubprocessExecuteStatus, "write_stdin")
 
@@ -560,7 +560,7 @@ def test_pyproject_config_settings_wheel(
     config_settings_build_wheel = E = 5
     """
     proj = tox_project({"tox.ini": ini}, base=demo_pkg_setuptools)
-    proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
+    proj.patch_execute(lambda request: 0 if "install" in request.run_id else None)
 
     write_stdin = mocker.spy(LocalSubprocessExecuteStatus, "write_stdin")
     mocker.patch.object(Pep517VirtualEnvFrontend, "_can_skip_prepare", autospec=True, return_value=False)
@@ -598,7 +598,7 @@ def test_pyproject_config_settings_editable(
     package = editable
     """
     proj = tox_project({"tox.ini": ini}, base=demo_pkg_setuptools)
-    proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
+    proj.patch_execute(lambda request: 0 if "install" in request.run_id else None)
 
     write_stdin = mocker.spy(LocalSubprocessExecuteStatus, "write_stdin")
     mocker.patch.object(Pep517VirtualEnvFrontend, "_can_skip_prepare", autospec=True, return_value=False)
@@ -636,7 +636,7 @@ def test_pyproject_config_settings_editable_legacy(
     package = editable-legacy
     """
     proj = tox_project({"tox.ini": ini}, base=demo_pkg_setuptools)
-    proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
+    proj.patch_execute(lambda request: 0 if "install" in request.run_id else None)
 
     write_stdin = mocker.spy(LocalSubprocessExecuteStatus, "write_stdin")
     mocker.patch.object(Pep517VirtualEnvFrontend, "_can_skip_prepare", autospec=True, return_value=False)
@@ -672,7 +672,7 @@ def test_pyproject_config_settings_sdist_passed_to_pip_install(
     config_settings_build_wheel = {X = "y", Z = "w"}
     """
     proj = tox_project({"tox.toml": dedent(toml)}, base=demo_pkg_setuptools)
-    execute_calls = proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
+    execute_calls = proj.patch_execute(lambda request: 0 if "install" in request.run_id else None)
     mocker.spy(LocalSubprocessExecuteStatus, "write_stdin")
 
     proj.run("r", "--notest", from_cwd=proj.path).assert_success()
@@ -706,7 +706,7 @@ def test_pyproject_installpkg_pep517_envs(tox_project: ToxProjectCreator, pkg_wi
 
 def test_sdist_wheel_package_type(tox_project: ToxProjectCreator, demo_pkg_inline: Path) -> None:
     proj = tox_project({"tox.ini": "[testenv]\npackage=sdist-wheel"}, base=demo_pkg_inline)
-    execute_calls = proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
+    execute_calls = proj.patch_execute(lambda request: 0 if "install" in request.run_id else None)
     proj.run("r", "--notest").assert_success()
 
     found_calls = [(i[0][0].conf.name, i[0][3].run_id) for i in execute_calls.call_args_list]
@@ -743,7 +743,7 @@ def test_sdist_wheel_config(tox_project: ToxProjectCreator, demo_pkg_inline: Pat
 def test_sdist_wheel_custom_build_env(tox_project: ToxProjectCreator, demo_pkg_inline: Path) -> None:
     ini = "[testenv]\npackage=sdist-wheel\nwheel_build_env=.custom-wheel-builder"
     proj = tox_project({"tox.ini": ini}, base=demo_pkg_inline)
-    execute_calls = proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
+    execute_calls = proj.patch_execute(lambda request: 0 if "install" in request.run_id else None)
     proj.run("r", "--notest").assert_success()
 
     found_calls = [(i[0][0].conf.name, i[0][3].run_id) for i in execute_calls.call_args_list]
@@ -753,7 +753,7 @@ def test_sdist_wheel_custom_build_env(tox_project: ToxProjectCreator, demo_pkg_i
 
 def test_wheel_package_does_not_build_sdist(tox_project: ToxProjectCreator, demo_pkg_inline: Path) -> None:
     proj = tox_project({"tox.ini": "[testenv]\npackage=wheel"}, base=demo_pkg_inline)
-    execute_calls = proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
+    execute_calls = proj.patch_execute(lambda request: 0 if "install" in request.run_id else None)
     proj.run("r", "--notest").assert_success()
     # Verify that build_sdist was NOT called with plain wheel package type
     call_ids = [i[0][3].run_id for i in execute_calls.call_args_list]
@@ -765,7 +765,7 @@ def test_sdist_wheel_rejects_path_traversal(
     tox_project: ToxProjectCreator, demo_pkg_inline: Path, mocker: MockerFixture
 ) -> None:
     proj = tox_project({"tox.ini": "[testenv]\npackage=sdist-wheel"}, base=demo_pkg_inline)
-    proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
+    proj.patch_execute(lambda request: 0 if "install" in request.run_id else None)
 
     original_build_sdist = Pep517VirtualEnvFrontend.build_sdist
 
@@ -806,7 +806,7 @@ def test_pyproject_no_build_editable_fallback_from_config(
         package = "editable"
     """)
     proj = tox_project({"tox.toml": toml_cfg}, base=demo_pkg_inline)
-    proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
+    proj.patch_execute(lambda request: 0 if "install" in request.run_id else None)
     result = proj.run("r", "-e", "a,b", "--notest")
     result.assert_success()
     warning = (
@@ -827,7 +827,7 @@ def test_pyproject_no_build_editable_fallback_static_meta(
         package = "editable"
     """)
     proj = tox_project({"tox.toml": toml_cfg, "pyproject.toml": toml}, base=demo_pkg_inline)
-    proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
+    proj.patch_execute(lambda request: 0 if "install" in request.run_id else None)
     result = proj.run("r", "-e", "a", "--notest")
     result.assert_success()
     warning = (
@@ -845,7 +845,7 @@ def test_build_wheel_via_sdist_restores_root(tox_project: ToxProjectCreator, dem
         package = "sdist-wheel"
     """)
     proj = tox_project({"tox.toml": toml_cfg}, base=demo_pkg_inline)
-    proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
+    proj.patch_execute(lambda request: 0 if "install" in request.run_id else None)
 
     result = proj.run("r", "-e", "a", "--notest")
 
