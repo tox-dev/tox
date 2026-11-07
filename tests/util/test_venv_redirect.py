@@ -233,8 +233,8 @@ def test_record_windows_warns_if_directory_info_fails(
 ) -> None:
     redirect: Final[Path] = root / ".venv"
     redirect.write_text(".tox/old\n", encoding="utf-8")
-    mocker.patch.object(windows_kernel32, "GetFileInformationByHandleEx", return_value=0)
-    mocker.patch.object(ctypes, "get_last_error", return_value=5)
+    mocker.patch.object(windows_kernel32, "GetFileInformationByHandleEx", autospec=True, return_value=0)
+    mocker.patch.object(ctypes, "get_last_error", autospec=True, return_value=5)
 
     record_venv_redirect(root, root / ".tox" / "dev", _is_ours(root))
 
@@ -255,8 +255,8 @@ def test_record_windows_warns_if_directory_close_fails(
         assert close_handle(handle)
         return 0
 
-    mocker.patch.object(windows_kernel32, "CloseHandle", side_effect=report_failed_close)
-    mocker.patch.object(ctypes, "get_last_error", return_value=5)
+    mocker.patch.object(windows_kernel32, "CloseHandle", autospec=True, side_effect=report_failed_close)
+    mocker.patch.object(ctypes, "get_last_error", autospec=True, return_value=5)
 
     record_venv_redirect(root, root / ".tox" / "dev", _is_ours(root))
 
@@ -274,7 +274,7 @@ def windows_kernel32(mocker: MockerFixture) -> ctypes.CDLL:
     def load_library(name: str, **_options: bool) -> ctypes.CDLL:
         return libraries[name]
 
-    mocker.patch("tox.util.venv_redirect.ctypes.WinDLL", side_effect=load_library)
+    mocker.patch("tox.util.venv_redirect.ctypes.WinDLL", autospec=True, side_effect=load_library)
     return kernel32
 
 
@@ -478,7 +478,7 @@ def test_record_rejects_in_place_junction(junction_directory: Path, mocker: Mock
         assert (_set_windows_junction(junction_directory, target), junction_directory.resolve()) == (True, target)
         return "0" * 32
 
-    mocker.patch("tox.util.venv_redirect.secrets.token_hex", side_effect=set_junction)
+    mocker.patch("tox.util.venv_redirect.secrets.token_hex", autospec=True, side_effect=set_junction)
     record_venv_redirect(junction_directory, junction_directory / ".tox" / "dev", lambda _target: True)
 
     assert (target / ".venv").read_text(encoding="utf-8") == "keep\n"

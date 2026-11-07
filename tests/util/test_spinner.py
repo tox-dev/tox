@@ -132,7 +132,7 @@ def test_spinner_long_text(capfd: CaptureFixture, monkeypatch: MonkeyPatch) -> N
 
 
 def test_spinner_stdout_not_unicode(capfd: CaptureFixture, mocker: MockerFixture) -> None:
-    stdout = mocker.patch("tox.util.spinner.sys.stdout")
+    stdout = mocker.patch("tox.util.spinner.sys.stdout", autospec=True)
     stdout.encoding = "ascii"
     with spinner.Spinner(refresh_rate=100) as spin:
         for _ in range(len(spin.frames)):  # pragma: no branch  # other outcome untested
