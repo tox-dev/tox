@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from .hello import do
 
-def do() -> None:
-    print("greetings from demo_pkg_setuptools")  # ruff:ignore[print]  # test output
+__all__ = [
+    "do",
+]
