@@ -112,7 +112,7 @@ def test_env_child_symlink_replaced_without_touching_target(
 
 def test_allow_list_external_fail(tox_project: ToxProjectCreator, fake_exe_on_path: Path) -> None:
     prj = tox_project({"tox.ini": f"[testenv]\npackage=skip\ncommands={fake_exe_on_path.stem}"})
-    execute_calls = prj.patch_execute(lambda r: 0 if "cmd" in r.run_id else None)
+    execute_calls = prj.patch_execute(lambda request: 0 if "cmd" in request.run_id else None)
 
     result = prj.run("r")
 

@@ -14,7 +14,7 @@ def test_register_set_new_default_no_register() -> None:
 
 
 def test_register_set_new_default_with_register() -> None:
-    class B(VirtualEnvRunner):
+    class NewDefaultRunner(VirtualEnvRunner):
         @staticmethod
         @override
         def id() -> str:
@@ -23,7 +23,7 @@ def test_register_set_new_default_with_register() -> None:
     register = ToxEnvRegister()
     register.add_run_env(VirtualEnvRunner)
     assert register.default_env_runner == VirtualEnvRunner.id()
-    register.add_run_env(B)
+    register.add_run_env(NewDefaultRunner)
     assert register.default_env_runner == VirtualEnvRunner.id()
-    register.default_env_runner = B.id()
+    register.default_env_runner = NewDefaultRunner.id()
     assert register.default_env_runner == "B"

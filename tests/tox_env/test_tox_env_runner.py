@@ -109,7 +109,7 @@ def test_package_only(
         {"tox.ini": ini, "pyproject.toml": (demo_pkg_inline / "pyproject.toml").read_text()},
         base=demo_pkg_inline,
     )
-    execute_calls = proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
+    execute_calls = proj.patch_execute(lambda request: 0 if "install" in request.run_id else None)
     proj.run("r", "--sdistonly").assert_success()
 
     found_calls = [(i[0][0].conf.name, i[0][3].run_id) for i in execute_calls.call_args_list]
