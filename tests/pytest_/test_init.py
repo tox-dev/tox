@@ -69,23 +69,23 @@ def test_tox_project_base(tmp_path: Path, tox_project: ToxProjectCreator) -> Non
     ],
 )
 def test_env_var(monkeypatch: MonkeyPatch, changes: list[tuple[str, ...]], exp: str) -> None:
-    with monkeypatch.context() as m:
-        m.setenv("DIFF", "B")
-        m.setenv("MISS", "1")
-        m.setenv("NO_CHANGE", "yes")
-        m.setenv("PYTHONPATH", "yes")  # values to clean before run
+    with monkeypatch.context() as patcher:
+        patcher.setenv("DIFF", "B")
+        patcher.setenv("MISS", "1")
+        patcher.setenv("NO_CHANGE", "yes")
+        patcher.setenv("PYTHONPATH", "yes")  # values to clean before run
 
         with check_os_environ():
             assert "PYTHONPATH" not in os.environ
             for method, *args in changes:
-                getattr(m, method)(*args)
+                getattr(patcher, method)(*args)
 
             from tox.pytest import pytest as tox_pytest  # ruff:ignore[import-outside-top-level]  # deferred import
 
             def fail(msg: str) -> None:
                 assert msg == exp
 
-            m.setattr(tox_pytest, "fail", fail)
+            patcher.setattr(tox_pytest, "fail", fail)
         assert "PYTHONPATH" in os.environ
 
 
