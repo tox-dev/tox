@@ -316,8 +316,8 @@ def test_plugin_extend_set_env(tox_project: ToxProjectCreator, mocker: MockerFix
 def test_plugin_config_frozen_past_add_env(tox_project: ToxProjectCreator, mocker: MockerFixture) -> None:
     def _cannot_extend_config(config_set: ConfigSet) -> None:
         for conf in (
-            lambda c: c.add_constant("c", "desc", "v"),
-            lambda c: c.add_config("c", of_type=str, default="c", desc="d"),
+            lambda config: config.add_constant("c", "desc", "v"),
+            lambda config: config.add_config("c", of_type=str, default="c", desc="d"),
         ):
             try:
                 conf(config_set)  # call to not typed function
