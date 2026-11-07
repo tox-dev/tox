@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from itertools import product
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Final
 
 from tox.config.loader.ini.factor import open_minor_range
 
@@ -93,7 +93,7 @@ def _expand_labeled(label: str, values: TomlTypes) -> list[str]:
     return [str(v) for v in values]
 
 
-_RESERVED_LABELS: frozenset[str] = frozenset({"env", "posargs", "tty", "glob", "factor"})
+_RESERVED_LABELS: Final[frozenset[str]] = frozenset({"env", "posargs", "tty", "glob", "factor"})
 
 
 def extract_default(group: TomlTypes, values: list[str]) -> str | None:

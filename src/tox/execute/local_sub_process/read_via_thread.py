@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from threading import Event, Thread
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Final
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -12,7 +12,7 @@ if TYPE_CHECKING:
     from typing import Self
 
 
-WAIT_GENERAL = 0.05
+WAIT_GENERAL: Final[float] = 0.05
 
 
 class ReadViaThread(ABC):

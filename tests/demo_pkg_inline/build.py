@@ -7,19 +7,20 @@ import sys
 import tarfile
 from pathlib import Path
 from textwrap import dedent
+from typing import Final
 from zipfile import ZipFile
 
-name = "demo_pkg_inline"
+name: Final[str] = "demo_pkg_inline"
 pkg_name = name.replace("_", "-")
 
-version = "1.0.0"
-dist_info = f"{name}-{version}.dist-info"
-logic = f"{name}/__init__.py"
-plugin = f"{name}/example_plugin.py"
-entry_points = f"{dist_info}/entry_points.txt"
-metadata = f"{dist_info}/METADATA"
-wheel = f"{dist_info}/WHEEL"
-record = f"{dist_info}/RECORD"
+version: Final[str] = "1.0.0"
+dist_info: Final[str] = f"{name}-{version}.dist-info"
+logic: Final[str] = f"{name}/__init__.py"
+plugin: Final[str] = f"{name}/example_plugin.py"
+entry_points: Final[str] = f"{dist_info}/entry_points.txt"
+metadata: Final[str] = f"{dist_info}/METADATA"
+wheel: Final[str] = f"{dist_info}/WHEEL"
+record: Final[str] = f"{dist_info}/RECORD"
 content = {
     logic: f"def do():\n    print('greetings from {name}')",
     plugin: """

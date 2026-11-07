@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 
 ENV_VAR_KEY: Final[str] = "TOX_PARALLEL_ENV"
 OFF_VALUE: Final[int] = 0
-DEFAULT_PARALLEL = "auto"
+DEFAULT_PARALLEL: Final[str] = "auto"
 
 
 @impl

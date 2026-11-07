@@ -35,10 +35,10 @@ if TYPE_CHECKING:
 
 _N = TypeVar("_N")  # unbounded to match typeshed, argparse accepts any object as namespace
 
-_ACTION_OF_TYPE: MutableMapping[Action, type[Any] | UnionType] = WeakKeyDictionary()
+_ACTION_OF_TYPE: Final[MutableMapping[Action, type[Any] | UnionType]] = WeakKeyDictionary()
 """The value type an action's option was declared with (actions come from argparse, so no attribute can be added)."""
 
-_ACTION_DEFAULT_SOURCE: MutableMapping[Action, str] = WeakKeyDictionary()
+_ACTION_DEFAULT_SOURCE: Final[MutableMapping[Action, str]] = WeakKeyDictionary()
 """Where an action's default was overridden from (environment variable or user level configuration file)."""
 
 
@@ -149,11 +149,11 @@ class HelpFormatter(ArgumentDefaultsHelpFormatter):
 
 
 ToxParserT = TypeVar("ToxParserT", bound="ToxParser")
-DEFAULT_VERBOSITY = 2
+DEFAULT_VERBOSITY: Final[int] = 2
 
-CORE = "core"
-ENV = "env"
-_INHERIT_ALL: frozenset[str] = frozenset({CORE, ENV})
+CORE: Final[str] = "core"
+ENV: Final[str] = "env"
+_INHERIT_ALL: Final[frozenset[str]] = frozenset({CORE, ENV})
 
 
 class Parsed(Namespace):
