@@ -427,7 +427,7 @@ def test_matches_hyphenated_env(env_name: str, tox_project: ToxProjectCreator) -
     assert not outcome.err
 
 
-_MINOR = sys.version_info.minor
+_MINOR: Final[int] = sys.version_info.minor
 
 
 @pytest.mark.parametrize(

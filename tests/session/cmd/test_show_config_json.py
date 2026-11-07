@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 import tomllib
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Final
 
 import pytest
 
@@ -15,7 +15,7 @@ if TYPE_CHECKING:
 
     from tox.pytest import ToxProjectCreator
 
-_FORMATS = [
+_FORMATS: Final[list[pytest.ParameterSet]] = [
     pytest.param("json", json.loads, id="json"),
     pytest.param("toml", tomllib.loads, id="toml"),
 ]

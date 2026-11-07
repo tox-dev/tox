@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 import re
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Final
 
 from colorama import Fore
 
@@ -11,7 +11,7 @@ from .common import build_structured_result, write_output
 if TYPE_CHECKING:
     from tox.session.state import State
 
-_KEY_RE = re.compile(
+_KEY_RE: Final[re.Pattern[str]] = re.compile(
     r"""
     ^ ([ ]*)        # leading indentation
     " ([^"]+) "     # quoted key name

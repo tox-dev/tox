@@ -12,7 +12,7 @@ from fnmatch import fnmatchcase
 from pathlib import Path
 from signal import SIGINT, Handlers, signal
 from threading import Event, Thread
-from typing import TYPE_CHECKING, Any, Literal, cast
+from typing import TYPE_CHECKING, Any, Final, Literal, cast
 from urllib.parse import urlparse
 from urllib.request import url2pathname
 
@@ -154,7 +154,7 @@ class InstallPackageAction(Action):
         return self._resolve_path(value.as_posix())
 
 
-logger = logging.getLogger(__name__)
+logger: Final[logging.Logger] = logging.getLogger(__name__)
 
 
 def execute(  # keeps the signature

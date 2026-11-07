@@ -3,7 +3,7 @@ from __future__ import annotations
 import bisect
 import re
 from argparse import Action, ArgumentParser, ArgumentTypeError, Namespace
-from typing import TYPE_CHECKING, Any, NoReturn, Protocol, TypeVar, cast
+from typing import TYPE_CHECKING, Any, Final, NoReturn, Protocol, TypeVar, cast
 
 from tox.util.typing_compat import override
 
@@ -120,7 +120,7 @@ def _validate_hash(value: str) -> str:
     return value
 
 
-_HASH = re.compile(
+_HASH: Final[re.Pattern[str]] = re.compile(
     r"""
     sha
     (

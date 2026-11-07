@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, Generic, TypeVar, cast
+from typing import TYPE_CHECKING, Final, Generic, TypeVar, cast
 
 from tox.util.typing_compat import override
 
@@ -103,7 +103,7 @@ class ConfigConstantDefinition(ConfigDefinition[T]):  # ruff:ignore[eq-without-h
         self.value = value
 
 
-_PLACE_HOLDER = object()
+_PLACE_HOLDER: Final[object] = object()
 
 
 class ConfigDynamicDefinition(ConfigDefinition[T]):  # ruff:ignore[eq-without-hash]  # mutable value type

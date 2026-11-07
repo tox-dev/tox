@@ -191,7 +191,7 @@ def test_skip_missing_interpreters_default_is_false(tox_project: ToxProjectCreat
     assert result.code == 1
 
 
-_SYS_PY_VER = "".join(str(i) for i in sys.version_info[0:2]) + (
+_SYS_PY_VER: Final[str] = "".join(str(i) for i in sys.version_info[0:2]) + (
     "t" if sysconfig.get_config_var("Py_GIL_DISABLED") == 1 else ""
 )
 

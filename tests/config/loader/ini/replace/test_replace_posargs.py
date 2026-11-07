@@ -101,7 +101,7 @@ def test_half_escaped_braces(replace_one: ReplaceOne) -> None:
     assert outcome == "{posargs} foo"
 
 
-_LINE_BREAK_COMMANDS: Final = pytest.mark.parametrize(
+_LINE_BREAK_COMMANDS: Final[pytest.MarkDecorator] = pytest.mark.parametrize(
     ("commands", "prefix"),
     [
         pytest.param("{posargs}", ["python", "-c"], id="alone"),

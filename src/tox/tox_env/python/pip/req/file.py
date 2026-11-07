@@ -29,7 +29,7 @@ if TYPE_CHECKING:
     from io import BufferedIOBase
 
 # Restrict ``${NAME}`` to uppercase letters, digits, and ``_`` to avoid partial expansion and platform differences.
-_ENV_VAR_RE = re.compile(
+_ENV_VAR_RE: Final[re.Pattern[str]] = re.compile(
     r"""
     (?P<var>
         \$ \{               # dollar sign and opening brace
@@ -39,7 +39,7 @@ _ENV_VAR_RE = re.compile(
     """,
     re.VERBOSE,
 )
-_SCHEME_RE = re.compile(
+_SCHEME_RE: Final[re.Pattern[str]] = re.compile(
     r"""
     ^                       # start of string
     ( http | https | file ) # URL scheme
@@ -62,7 +62,7 @@ _COMMENT_RE: Final[re.Pattern[str]] = re.compile(
     """,
     re.VERBOSE,
 )
-_EXTRA_PATH = re.compile(
+_EXTRA_PATH: Final[re.Pattern[str]] = re.compile(
     r"""
     ( .* )                          # path portion
     \[                              # opening bracket
@@ -71,14 +71,14 @@ _EXTRA_PATH = re.compile(
     """,
     re.VERBOSE,
 )
-_EXTRA_ELEMENT = re.compile(
+_EXTRA_ELEMENT: Final[re.Pattern[str]] = re.compile(
     r"""
     [a-zA-Z0-9]*       # optional leading alphanumeric
     [-._a-zA-Z0-9]     # at least one valid extra char
     """,
     re.VERBOSE,
 )
-_VERSION_SPECIFIER = re.compile(
+_VERSION_SPECIFIER: Final[re.Pattern[str]] = re.compile(
     r"""
     [><=!~] =   # two-char operators: >=, <=, ==, !=, ~=
     | ===?      # === or ==

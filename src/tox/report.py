@@ -23,7 +23,7 @@ from .util.typing_compat import override
 if TYPE_CHECKING:
     from collections.abc import Generator, MutableMapping
 
-LEVELS = {
+LEVELS: Final[dict[int, int]] = {
     0: logging.CRITICAL,
     1: logging.ERROR,
     2: logging.WARNING,
@@ -32,8 +32,8 @@ LEVELS = {
     5: logging.NOTSET,
 }
 
-MAX_LEVEL = max(LEVELS.keys())
-LOGGER = logging.getLogger()
+MAX_LEVEL: Final[int] = max(LEVELS.keys())
+LOGGER: Final[logging.Logger] = logging.getLogger()
 OutErr = tuple[TextIOWrapper, TextIOWrapper]
 
 

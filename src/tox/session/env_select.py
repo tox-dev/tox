@@ -32,7 +32,7 @@ if TYPE_CHECKING:
     from .state import State
 
 
-LOGGER = logging.getLogger(__name__)
+LOGGER: Final[logging.Logger] = logging.getLogger(__name__)
 
 
 class CliEnv:  # ruff:ignore[eq-without-hash]  # mutable value type
@@ -210,7 +210,7 @@ class _ToxEnvInfo:
     package_skip: tuple[str, Skip] | None = None  #: if set the creation of the packaging environment failed
 
 
-_DYNAMIC_ENV_FACTORS = re.compile(
+_DYNAMIC_ENV_FACTORS: Final[re.Pattern[str]] = re.compile(
     r"""
     ( pypy | py | cpython | jython | graalpy | rustpython | ironpython | )  # interpreter prefix (or empty)
     (                                # version group
@@ -226,7 +226,7 @@ _DYNAMIC_ENV_FACTORS = re.compile(
     """,
     re.VERBOSE,
 )
-_PY_PRE_RELEASE_FACTOR = re.compile(
+_PY_PRE_RELEASE_FACTOR: Final[re.Pattern[str]] = re.compile(
     r"""
     alpha       # alpha release
     | beta      # beta release

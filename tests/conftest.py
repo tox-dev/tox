@@ -32,7 +32,7 @@ if TYPE_CHECKING:
     from tox.config.loader.api import Override
 
 pytest_plugins: Final[str] = "tox.pytest"
-_HERE = Path(__file__).absolute().parent
+_HERE: Final[Path] = Path(__file__).absolute().parent
 
 
 def _strip_broken_namespace_pth_files() -> None:
@@ -63,7 +63,7 @@ def value_error() -> Callable[[str], str]:
     return _fmt
 
 
-collect_ignore = []
+collect_ignore: Final[list[str]] = []
 if sys.implementation.name == "pypy":
     # time-machine causes segfaults on PyPy
     collect_ignore.append("util/test_spinner.py")

@@ -3,15 +3,17 @@ from __future__ import annotations
 import re
 import textwrap
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Final
 
 import pytest
 
 if TYPE_CHECKING:
     from tox.pytest import ToxProjectCreator
 
-_DOCS_DIR = Path(__file__).parents[2] / "docs"
-_PYTHON_BLOCK = re.compile(r"^\.\. code-block:: python\n\n(?P<body>(?:(?: {4}.*)?\n)+)", re.MULTILINE)
+_DOCS_DIR: Final[Path] = Path(__file__).parents[2] / "docs"
+_PYTHON_BLOCK: Final[re.Pattern[str]] = re.compile(
+    r"^\.\. code-block:: python\n\n(?P<body>(?:(?: {4}.*)?\n)+)", re.MULTILINE
+)
 
 
 def _version_info_examples() -> list[tuple[str, str]]:

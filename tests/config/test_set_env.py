@@ -138,7 +138,13 @@ def eval_set_env(tox_project: ToxProjectCreator) -> EvalSetEnv:
     return func
 
 
-_EXPORTED: Final = {"PIP_USER": "0", "TOX_ENV_DIR": ANY, "TOX_ENV_NAME": "py", "TOX_WORK_DIR": ANY, "VIRTUAL_ENV": ANY}
+_EXPORTED: Final[dict[str, Any]] = {
+    "PIP_USER": "0",
+    "TOX_ENV_DIR": ANY,
+    "TOX_ENV_NAME": "py",
+    "TOX_WORK_DIR": ANY,
+    "VIRTUAL_ENV": ANY,
+}
 
 
 def test_set_env_default(eval_set_env: EvalSetEnv) -> None:
@@ -1172,7 +1178,7 @@ def test_set_env_substituted_key_rejects_structure(
         eval_set_env("[testenv]\npackage=skip\nset_env=LABEL_{env:KEY_SUFFIX} = ok")
 
 
-_TOML_ENV_DEFAULTS: Final = pytest.mark.parametrize(
+_TOML_ENV_DEFAULTS: Final[pytest.MarkDecorator] = pytest.mark.parametrize(
     "default",
     [
         pytest.param("C:\\tools\\", id="trailing-backslash"),
@@ -1316,7 +1322,7 @@ def test_set_env_cycle_fails_env(
     assert f"{message}\n" in result.out
 
 
-_INCLUDE_ENV: Final = [
+_INCLUDE_ENV: Final[list[pytest.ParameterSet]] = [
     pytest.param(
         "ini",
         """

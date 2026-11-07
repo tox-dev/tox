@@ -21,7 +21,7 @@ from tox.tox_env.api import ToxEnv
 from tox.tox_env.errors import Fail
 from tox.tox_env.info import Info
 
-_INTERRUPT_SIGNAL: Final = signal.CTRL_C_EVENT if sys.platform == "win32" else signal.SIGINT
+_INTERRUPT_SIGNAL: Final[int] = signal.CTRL_C_EVENT if sys.platform == "win32" else signal.SIGINT
 
 if TYPE_CHECKING:
     from pytest_mock import MockerFixture

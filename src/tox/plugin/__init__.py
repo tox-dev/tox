@@ -36,7 +36,7 @@ import pluggy
 
 NAME: Final[str] = "tox"  #: the name of the tox hook
 
-impl = pluggy.HookimplMarker(NAME)  #: decorator to mark tox plugin hooks
+impl: Final[pluggy.HookimplMarker] = pluggy.HookimplMarker(NAME)  #: decorator to mark tox plugin hooks
 
 
 __all__ = [

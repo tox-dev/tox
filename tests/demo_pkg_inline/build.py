@@ -11,7 +11,7 @@ from typing import Final
 from zipfile import ZipFile
 
 name: Final[str] = "demo_pkg_inline"
-pkg_name = name.replace("_", "-")
+pkg_name: Final[str] = name.replace("_", "-")
 
 version: Final[str] = "1.0.0"
 dist_info: Final[str] = f"{name}-{version}.dist-info"
@@ -44,7 +44,7 @@ content = {
                 parser.add_argument("--demo-plugin", action="store_true", help="demo plugin flag")
         """,
 }
-metadata_files = {
+metadata_files: Final[dict[str, str]] = {
     entry_points: f"""
         [tox]
         example = {name}.example_plugin""",

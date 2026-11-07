@@ -8,7 +8,7 @@ import time
 from abc import ABC, abstractmethod
 from collections.abc import Callable, Generator, Sequence
 from contextlib import contextmanager, suppress
-from typing import IO, TYPE_CHECKING, NoReturn, cast
+from typing import IO, TYPE_CHECKING, Final, NoReturn, cast
 
 from colorama import Fore
 
@@ -26,7 +26,7 @@ if TYPE_CHECKING:
 
 ContentHandler = Callable[[bytes], int]
 Executor = Callable[[ExecuteRequest, ContentHandler, ContentHandler], int]
-LOGGER = logging.getLogger(__name__)
+LOGGER: Final[logging.Logger] = logging.getLogger(__name__)
 
 
 class ExecuteOptions:

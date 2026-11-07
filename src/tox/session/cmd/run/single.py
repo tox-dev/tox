@@ -5,7 +5,7 @@ from __future__ import annotations
 import logging
 import time
 from pathlib import Path
-from typing import TYPE_CHECKING, NamedTuple, cast
+from typing import TYPE_CHECKING, Final, NamedTuple, cast
 
 from tox.config.types import Command
 from tox.execute.api import Outcome, StdinSource
@@ -17,7 +17,7 @@ if TYPE_CHECKING:
     from tox.tox_env.api import ToxEnv
     from tox.tox_env.runner import RunToxEnv
 
-LOGGER = logging.getLogger(__name__)
+LOGGER: Final[logging.Logger] = logging.getLogger(__name__)
 
 
 def run_one(  # keeps the signature

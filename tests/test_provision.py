@@ -31,7 +31,7 @@ if TYPE_CHECKING:
     from tox.tox_env.api import ToxEnv
 
 
-ROOT = Path(__file__).parents[1]
+ROOT: Final[Path] = Path(__file__).parents[1]
 
 
 @pytest.fixture(scope="session")

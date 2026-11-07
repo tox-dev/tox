@@ -4,14 +4,15 @@ import re
 import subprocess
 import sys
 from pathlib import Path
+from typing import Final
 
 import pytest
 
 if sys.platform == "win32":
     pytest.skip("man command not available on Windows", allow_module_level=True)
 
-ROOT = Path(__file__).parents[2]
-_RST_PATH = ROOT / "docs" / "man" / "tox.1.rst"
+ROOT: Final[Path] = Path(__file__).parents[2]
+_RST_PATH: Final[Path] = ROOT / "docs" / "man" / "tox.1.rst"
 
 
 @pytest.fixture

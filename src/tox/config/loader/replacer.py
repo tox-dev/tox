@@ -28,7 +28,7 @@ if TYPE_CHECKING:
     from .api import ConfigLoadArgs
 
 
-LOGGER = logging.getLogger(__name__)
+LOGGER: Final[logging.Logger] = logging.getLogger(__name__)
 
 # split alongside :, unless it is preceded by a single capital letter (Windows drive letters in paths)
 ARG_DELIMITER: Final[str] = ":"

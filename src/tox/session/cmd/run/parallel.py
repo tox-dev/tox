@@ -17,7 +17,7 @@ if TYPE_CHECKING:
     from tox.config.cli.parser import ToxParser
     from tox.session.state import State
 
-logger = logging.getLogger(__name__)
+logger: Final[logging.Logger] = logging.getLogger(__name__)
 
 ENV_VAR_KEY: Final[str] = "TOX_PARALLEL_ENV"
 OFF_VALUE: Final[int] = 0

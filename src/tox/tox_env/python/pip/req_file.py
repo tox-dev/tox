@@ -12,7 +12,7 @@ from tox.util.typing_compat import override
 
 from .req.file import ParsedRequirement, ReqFileLines, RequirementsFile, unprotect_env_variables
 
-_UNESCAPED_SPACE_RE = re.compile(
+_UNESCAPED_SPACE_RE: Final[re.Pattern[str]] = re.compile(
     r"""
     (?<! \\ )   # not preceded by backslash
     ( \s )      # capture whitespace
@@ -303,7 +303,7 @@ def _factory_type_error(field: str, raw: object) -> str:
     return f"{field} expected {expected}, got {type(raw).__name__}: {raw!r}"
 
 
-ONE_ARG = {
+ONE_ARG: Final[set[str]] = {
     "-i",
     "--index-url",
     "--extra-index-url",
@@ -320,7 +320,7 @@ ONE_ARG = {
     "--no-binary",
     "--only-binary",
 }
-ONE_ARG_ESCAPE = {
+ONE_ARG_ESCAPE: Final[set[str]] = {
     "-c",
     "--constraint",
     "-r",

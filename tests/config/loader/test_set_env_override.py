@@ -39,7 +39,7 @@ def test_set_env_override_preserves_exports(
     ] == expected
 
 
-_PROPAGATES_FILES: Final = pytest.mark.parametrize(
+_PROPAGATES_FILES: Final[pytest.MarkDecorator] = pytest.mark.parametrize(
     ("filename", "config", "namespace"),
     [
         pytest.param(
@@ -57,7 +57,7 @@ _PROPAGATES_FILES: Final = pytest.mark.parametrize(
         ),
     ],
 )
-_PROPAGATES_OVERRIDES: Final = pytest.mark.parametrize(
+_PROPAGATES_OVERRIDES: Final[pytest.MarkDecorator] = pytest.mark.parametrize(
     ("overrides", "expected"),
     [
         pytest.param(["set_env+={env:BLOCK}"], ["MAGIC=a", "NEW=a"], id="append-block"),
@@ -151,8 +151,10 @@ def test_set_env_override_reference_cycle_fails(
     assert "circular set_env reference" in result.out
 
 
-_CHILD_KEYS_INI: Final = "[testenv]\nset_env=MAGIC=base\n[testenv:py]\nset_env=\n {[testenv]set_env}\n MAGIC=child\n"
-_CHILD_KEYS_TOML: Final = (
+_CHILD_KEYS_INI: Final[str] = (
+    "[testenv]\nset_env=MAGIC=base\n[testenv:py]\nset_env=\n {[testenv]set_env}\n MAGIC=child\n"
+)
+_CHILD_KEYS_TOML: Final[str] = (
     '[env_run_base]\nset_env.MAGIC="base"\n[env.py]\n'
     'set_env=[{replace="ref", of=["env_run_base", "set_env"]}, {MAGIC="child"}]\n'
 )

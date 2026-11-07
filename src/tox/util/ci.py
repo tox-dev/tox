@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import os
+from typing import Final
 
-_ENV_VARS = {  # per https://adamj.eu/tech/2020/03/09/detect-if-your-tests-are-running-on-ci
+# per https://adamj.eu/tech/2020/03/09/detect-if-your-tests-are-running-on-ci
+_ENV_VARS: Final[dict[str, str | None]] = {
     "CI": None,  # generic flag
     "TF_BUILD": "true",  # Azure Pipelines
     "bamboo.buildKey": None,  # Bamboo

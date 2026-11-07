@@ -1,12 +1,12 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Final
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
-_HERE = Path(__file__).parent
+_HERE: Final[Path] = Path(__file__).parent
 
 
 def pytest_collection_modifyitems(items: Sequence[Any]) -> None:

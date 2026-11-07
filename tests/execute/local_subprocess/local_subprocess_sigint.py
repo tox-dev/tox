@@ -8,8 +8,8 @@ import sys
 from io import TextIOWrapper
 from pathlib import Path
 from types import SimpleNamespace
-from typing import TYPE_CHECKING
-from unittest.mock import create_autospec
+from typing import TYPE_CHECKING, Final
+from unittest.mock import MagicMock, create_autospec
 
 from tox.execute.local_sub_process import LocalSubProcessExecutor
 from tox.execute.request import ExecuteRequest, StdinSource
@@ -23,9 +23,9 @@ if TYPE_CHECKING:
     from tox.execute.api import ExecuteStatus
 
 logging.basicConfig(level=logging.DEBUG, format="%(relativeCreated)d\t%(levelname).1s\t%(message)s")
-bad_process = Path(__file__).parent / "bad_process.py"
+bad_process: Final[Path] = Path(__file__).parent / "bad_process.py"
 
-executor = LocalSubProcessExecutor(colored=False)
+executor: Final[LocalSubProcessExecutor] = LocalSubProcessExecutor(colored=False)
 request = ExecuteRequest(
     cmd=[sys.executable, bad_process, sys.argv[1]],
     cwd=Path().absolute(),
@@ -68,7 +68,7 @@ def _wait_for_exit(status: ExecuteStatus) -> None:
 _INTERRUPT_DONE = False
 signal.signal(signal.SIGINT, handler)
 logging.info("PID %d start %r", os.getpid(), request)
-tox_env = create_autospec(
+tox_env: Final[MagicMock] = create_autospec(
     ToxEnv,
     instance=True,
     conf={"suicide_timeout": 0.01, "interrupt_timeout": 0.05, "terminate_timeout": 0.07},

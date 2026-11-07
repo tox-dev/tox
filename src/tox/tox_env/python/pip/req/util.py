@@ -2,13 +2,14 @@
 
 from __future__ import annotations
 
+from typing import Final
 from urllib.parse import urlsplit
 from urllib.request import url2pathname
 
 from packaging.utils import canonicalize_name
 
-VCS = ["ftp", "ssh", "git", "hg", "bzr", "sftp", "svn"]
-VALID_SCHEMAS = ["http", "https", "file", *VCS]
+VCS: Final[list[str]] = ["ftp", "ssh", "git", "hg", "bzr", "sftp", "svn"]
+VALID_SCHEMAS: Final[list[str]] = ["http", "https", "file", *VCS]
 
 
 def is_url(name: str) -> bool:

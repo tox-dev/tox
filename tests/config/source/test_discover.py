@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import os
 import sys
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Final
 
 import pytest
 
@@ -18,7 +18,7 @@ if TYPE_CHECKING:
 
 # Root ignores the permission bits, and Windows does not model them this way,
 # so the file stays readable and there is nothing to assert.
-_UNREADABLE_FILES_POSSIBLE = pytest.mark.skipif(
+_UNREADABLE_FILES_POSSIBLE: Final[pytest.MarkDecorator] = pytest.mark.skipif(
     sys.platform == "win32" or os.getuid() == 0,
     reason="cannot make a file unreadable as root or on Windows",
 )

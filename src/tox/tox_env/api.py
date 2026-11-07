@@ -38,7 +38,7 @@ if TYPE_CHECKING:
 
     from .installer import InstallArguments, Installer
 
-LOGGER = logging.getLogger(__name__)
+LOGGER: Final[logging.Logger] = logging.getLogger(__name__)
 
 
 class ToxEnvCreateArgs(NamedTuple):

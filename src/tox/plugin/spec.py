@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Final
 
 import pluggy
 
@@ -17,7 +17,7 @@ if TYPE_CHECKING:
     from tox.tox_env.installer import InstallArguments
     from tox.tox_env.register import ToxEnvRegister
 
-_spec = pluggy.HookspecMarker(NAME)
+_spec: Final[pluggy.HookspecMarker] = pluggy.HookspecMarker(NAME)
 
 
 @_spec

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import re
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Final
 
 import tomli_w
 from colorama import Fore
@@ -11,13 +11,13 @@ from .common import build_structured_result, write_output
 if TYPE_CHECKING:
     from tox.session.state import State
 
-_HEADER_RE = re.compile(
+_HEADER_RE: Final[re.Pattern[str]] = re.compile(
     r"""
     ^ \[ .* ] $     # section header like [env.py]
     """,
     re.MULTILINE | re.VERBOSE,
 )
-_KEY_RE = re.compile(
+_KEY_RE: Final[re.Pattern[str]] = re.compile(
     r"""
     ^ ( [a-zA-Z_]       # key starts with letter or underscore
         [a-zA-Z0-9_-]*  # followed by alphanumerics, underscores, or hyphens

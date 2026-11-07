@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 import os
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Final
 
 from tox.config.loader.str_convert import StrConvert
 from tox.util.redact import redact_argv
@@ -12,7 +12,7 @@ from tox.util.redact import redact_argv
 if TYPE_CHECKING:
     from types import UnionType
 
-CONVERT = StrConvert()
+CONVERT: Final[StrConvert] = StrConvert()
 
 
 def get_env_var(key: str, of_type: type[Any] | UnionType) -> tuple[Any, str] | None:

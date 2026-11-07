@@ -6,7 +6,7 @@ import signal
 import sys
 import time
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Final
 
 if TYPE_CHECKING:
     from types import FrameType
@@ -27,7 +27,7 @@ _p(f"start {__name__} with {sys.argv!r}")
 signal.signal(signal.SIGINT, handler)
 signal.signal(signal.SIGTERM, handler)
 
-_START_FILE = Path(sys.argv[1])
+_START_FILE: Final[Path] = Path(sys.argv[1])
 _p(f"create {_START_FILE}")
 _START_FILE.write_text("", encoding="utf-8")
 _p(f"created {_START_FILE}")

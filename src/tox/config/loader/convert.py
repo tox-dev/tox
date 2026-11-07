@@ -7,11 +7,11 @@ from collections.abc import Callable, Iterator
 from inspect import isclass
 from pathlib import Path
 from types import UnionType
-from typing import Any, Generic, Literal, TypeVar, Union, cast, get_args, get_origin
+from typing import Any, Final, Generic, Literal, TypeVar, Union, cast, get_args, get_origin
 
 from tox.config.types import Command, EnvList
 
-_NO_MAPPING = object()
+_NO_MAPPING: Final[object] = object()
 T = TypeVar("T")
 V = TypeVar("V")
 

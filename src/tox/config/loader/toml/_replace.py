@@ -351,7 +351,7 @@ def _lookup_namespace(namespace: str, key: str, factors: set[str]) -> str | bool
     raise MatchError(msg)
 
 
-_REFERENCE_PATTERN = re.compile(
+_REFERENCE_PATTERN: Final[re.Pattern[str]] = re.compile(
     r"""
     (\[(?P<section>.*)])? # default value
     (?P<key>[-a-zA-Z0-9_]+) # key

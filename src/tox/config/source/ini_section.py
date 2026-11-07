@@ -22,7 +22,7 @@ class IniSection(Section):
 
 TEST_ENV_PREFIX: Final[str] = "testenv"
 PKG_ENV_PREFIX: Final[str] = "pkgenv"
-CORE = IniSection(None, "tox")
+CORE: Final[IniSection] = IniSection(None, "tox")
 
 __all__ = [
     "CORE",

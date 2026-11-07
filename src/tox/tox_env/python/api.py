@@ -62,7 +62,7 @@ class PythonInfo:
         return f"{self.version_info.major}.{self.version_info.minor}"
 
 
-PY_FACTORS_RE = re.compile(
+PY_FACTORS_RE: Final[re.Pattern[str]] = re.compile(
     r"""
     ^(?!py$)                                               # don't match 'py' as it doesn't provide any info
     (?P<impl>py|pypy|cpython|jython|graalpy|rustpython|ironpython) # the interpreter; most users will simply use 'py'
@@ -74,7 +74,7 @@ PY_FACTORS_RE = re.compile(
     """,
     re.VERBOSE,
 )
-PY_FACTORS_RE_EXPLICIT_VERSION = re.compile(
+PY_FACTORS_RE_EXPLICIT_VERSION: Final[re.Pattern[str]] = re.compile(
     r"""
     ^
     ( (?P<impl> cpython | pypy ) - )?   # optional interpreter prefix with dash

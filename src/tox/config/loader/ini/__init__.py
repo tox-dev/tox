@@ -34,7 +34,7 @@ if TYPE_CHECKING:
     from tox.config.main import Config
 
 V = TypeVar("V")
-_COMMENTS = re.compile(
+_COMMENTS: Final[re.Pattern[str]] = re.compile(
     r"""
     ( \s )*     # optional leading whitespace
     (?<! \\ )   # not preceded by backslash

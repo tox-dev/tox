@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Final
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
@@ -85,7 +85,7 @@ class ToxEnvRegister:
         return self._package_envs[name]
 
 
-REGISTER = ToxEnvRegister()  #: the tox register
+REGISTER: Final[ToxEnvRegister] = ToxEnvRegister()  #: the tox register
 
 __all__ = [
     "REGISTER",

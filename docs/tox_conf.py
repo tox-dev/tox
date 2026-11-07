@@ -1,13 +1,13 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, ClassVar, cast
+from typing import TYPE_CHECKING, ClassVar, Final, cast
 
 from docutils.nodes import Element, Node, Text, container, fully_normalize_name, literal, paragraph, reference, strong
 from docutils.parsers.rst.directives import flag, unchanged, unchanged_required
 from docutils.statemachine import StringList, string2lines
 from sphinx.locale import __
 from sphinx.util.docutils import SphinxDirective
-from sphinx.util.logging import getLogger
+from sphinx.util.logging import SphinxLoggerAdapter, getLogger
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -15,7 +15,7 @@ if TYPE_CHECKING:
     from docutils.parsers.rst.states import RSTState, RSTStateMachine
     from sphinx.domains.std import StandardDomain
 
-LOGGER = getLogger(__name__)
+LOGGER: Final[SphinxLoggerAdapter] = getLogger(__name__)
 
 
 class ToxConfig(SphinxDirective):

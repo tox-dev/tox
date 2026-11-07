@@ -29,12 +29,12 @@ def test_set_env_override_native_toml_reference_runs(tox_project: ToxProjectCrea
     assert "native" in result.out.splitlines()
 
 
-_SELECTOR_TOML: Final = (
+_SELECTOR_TOML: Final[str] = (
     '[env_run_base]\nset_env={file="{env:FILE}"}\n[env.py]\n'
     'package="skip"\nset_env=[{replace="ref", of=["env_run_base", "set_env"]}, {FILE="child.env"}]\n'
     'commands=[["python", "-c", "import os; print(os.environ[\\"MAGIC\\"])"]]\n'
 )
-_SELECTOR_INI: Final = (
+_SELECTOR_INI: Final[str] = (
     "[testenv]\nset_env=file|{env:FILE}\n[testenv:py]\npackage=skip\n"
     "set_env=\n {[testenv]set_env}\n FILE=child.env\n"
     """commands=python -c "import os; print(os.environ['MAGIC'])"\n"""

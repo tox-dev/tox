@@ -381,7 +381,7 @@ def tox_add_option(parser: ToxParser) -> None:
     )
 
 
-_STR_CONVERT = StrConvert()
+_STR_CONVERT: Final[StrConvert] = StrConvert()
 
 
 __all__ = [

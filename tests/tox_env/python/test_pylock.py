@@ -27,7 +27,7 @@ if TYPE_CHECKING:
 
     from tox.pytest import ToxProject, ToxProjectCreator, ToxRunOutcome
 
-_PYLOCK_TOML = dedent("""\
+_PYLOCK_TOML: Final[str] = dedent("""\
     lock-version = "1.0"
     created-by = "test-tool"
 

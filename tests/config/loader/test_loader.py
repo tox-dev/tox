@@ -310,7 +310,7 @@ def test_override_list_value_substituted_cannot_add_entries(
     assert f"failed to load a.{key}: a substitution within an entry cannot add an entry separator" in outcome.out
 
 
-_BLOCK_PRECEDENCE_FILES: Final = pytest.mark.parametrize(
+_BLOCK_PRECEDENCE_FILES: Final[pytest.MarkDecorator] = pytest.mark.parametrize(
     ("filename", "content", "namespace"),
     [
         pytest.param("tox.ini", "[tox]\nenv_list = a\n[testenv]\nset_env = MAGIC=base\n", "testenv", id="ini"),
@@ -319,7 +319,7 @@ _BLOCK_PRECEDENCE_FILES: Final = pytest.mark.parametrize(
         ),
     ],
 )
-_BLOCK_PRECEDENCE_OVERRIDES: Final = pytest.mark.parametrize(
+_BLOCK_PRECEDENCE_OVERRIDES: Final[pytest.MarkDecorator] = pytest.mark.parametrize(
     ("overrides", "expected"),
     [
         pytest.param(["{env:BLOCK}"], ["MAGIC=a", "NEW=a"], id="block-over-base"),
