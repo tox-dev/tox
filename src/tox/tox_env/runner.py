@@ -24,24 +24,6 @@ if TYPE_CHECKING:
     from tox.journal import EnvJournal
 
 
-__all__ = [
-    "Command",
-    "EnvList",
-    "Fail",
-    "Outcome",
-    "Package",
-    "PackageToxEnv",
-    "PathPackage",
-    "RunToxEnv",
-    "ToxEnv",
-    "ToxEnvCreateArgs",
-    "add_change_dir_conf",
-    "add_commands_conf",
-    "add_ignore_errors_conf",
-    "override",
-]
-
-
 class RunToxEnv(ToxEnv, ABC):
     """The base of the tox environments that run commands.
 
@@ -310,3 +292,21 @@ def _call_guarded(package_env: PackageToxEnv, method_name: str, *args: object) -
         getattr(package_env, method_name)(*args)
     except (Fail, OSError):  # one package env failing must not leak the others' resources
         logging.warning("failed to %s package environment %s", method_name, package_env.name, exc_info=True)
+
+
+__all__ = [
+    "Command",
+    "EnvList",
+    "Fail",
+    "Outcome",
+    "Package",
+    "PackageToxEnv",
+    "PathPackage",
+    "RunToxEnv",
+    "ToxEnv",
+    "ToxEnvCreateArgs",
+    "add_change_dir_conf",
+    "add_commands_conf",
+    "add_ignore_errors_conf",
+    "override",
+]

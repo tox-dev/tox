@@ -18,17 +18,6 @@ if TYPE_CHECKING:
     from tox.config.cli.parser import ToxParser
 
 
-__all__ = [
-    "MANAGER",
-    "Config",
-    "EnvSelector",
-    "Journal",
-    "State",
-    "impl",
-    "tox_add_option",
-]
-
-
 class State:
     """
     Runtime state holder.
@@ -74,3 +63,14 @@ def tox_add_option(parser: ToxParser) -> None:
         default=REGISTER.default_env_runner,
         choices=list(REGISTER.env_runners),
     )
+
+
+__all__ = [
+    "MANAGER",
+    "Config",
+    "EnvSelector",
+    "Journal",
+    "State",
+    "impl",
+    "tox_add_option",
+]

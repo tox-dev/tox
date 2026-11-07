@@ -45,12 +45,6 @@ _COMMENTS: Final[re.Pattern[str]] = re.compile(
 )
 
 
-__all__ = [
-    "IniLoader",
-    "V",
-]
-
-
 class IniLoader(StrConvert, Loader[str]):
     """Load configuration from an ini section (ini file is a string to string dictionary).
 
@@ -188,3 +182,9 @@ class IniLoader(StrConvert, Loader[str]):
         if self._parser.has_section(name):
             return self._parser[name]
         return None
+
+
+__all__ = [
+    "IniLoader",
+    "V",
+]

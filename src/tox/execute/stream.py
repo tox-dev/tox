@@ -14,12 +14,6 @@ if TYPE_CHECKING:
     from typing import Self
 
 
-__all__ = [
-    "SyncWrite",
-    "override",
-]
-
-
 class SyncWrite:
     """Make sure data collected is synced in-memory and to the target stream on every newline and time period.
 
@@ -138,3 +132,9 @@ class SyncWrite:
         finally:
             self._start()
         return len(content)
+
+
+__all__ = [
+    "SyncWrite",
+    "override",
+]

@@ -16,17 +16,6 @@ if TYPE_CHECKING:
     from tox.config.main import Config
 
 
-__all__ = [
-    "Command",
-    "EnvList",
-    "Loader",
-    "MemoryLoader",
-    "Section",
-    "StrConvert",
-    "override",
-]
-
-
 class MemoryLoader(Loader[object]):
     """Loads configuration directly from data in memory.
 
@@ -97,3 +86,14 @@ class MemoryLoader(Loader[object]):
             return StrConvert.to_env_list(value)
         msg = f"env_list expected EnvList or str, got {type(value).__name__}: {value!r}"
         raise TypeError(msg)
+
+
+__all__ = [
+    "Command",
+    "EnvList",
+    "Loader",
+    "MemoryLoader",
+    "Section",
+    "StrConvert",
+    "override",
+]

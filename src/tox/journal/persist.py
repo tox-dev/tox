@@ -10,11 +10,6 @@ if TYPE_CHECKING:
     from .main import Journal
 
 
-__all__ = [
-    "write_journal",
-]
-
-
 def write_journal(path: Path | None, journal: Journal) -> None:
     """Write the journal of the run to a file as JSON.
 
@@ -27,3 +22,8 @@ def write_journal(path: Path | None, journal: Journal) -> None:
     # captured output keeps undecodable bytes as lone surrogates; backslashreplace turns them into JSON \uXXXX escapes
     with Path(path).open("w", encoding="utf-8", errors="backslashreplace") as file_handler:
         json.dump(journal.content, file_handler, indent=2, ensure_ascii=False)
+
+
+__all__ = [
+    "write_journal",
+]

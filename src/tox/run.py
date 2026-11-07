@@ -17,17 +17,6 @@ if TYPE_CHECKING:
     from collections.abc import Sequence
 
 
-__all__ = [
-    "HandledError",
-    "State",
-    "ToxHandler",
-    "get_options",
-    "main",
-    "run",
-    "setup_state",
-]
-
-
 def run(args: Sequence[str] | None = None) -> None:
     """Run tox with the command line arguments, and exit the process with its outcome.
 
@@ -91,3 +80,14 @@ def setup_state(args: Sequence[str]) -> State:
         faulthandler.dump_traceback_later(timeout=options.parsed.exit_and_dump_after, exit=True)  # pragma: no cover
     # build tox environment config objects
     return State(options, args)
+
+
+__all__ = [
+    "HandledError",
+    "State",
+    "ToxHandler",
+    "get_options",
+    "main",
+    "run",
+    "setup_state",
+]

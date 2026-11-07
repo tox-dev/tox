@@ -13,12 +13,6 @@ if TYPE_CHECKING:
     from tox.config.cli.parser import ToxParser
     from tox.session.state import State
 
-__all__ = [
-    "ConfigFormat",
-    "show_config",
-    "tox_add_option",
-]
-
 ConfigFormat = Literal["ini", "json", "toml"]
 """The formats the configuration can be shown in."""
 
@@ -80,3 +74,10 @@ def show_config(state: State) -> int:
     if fmt == "toml":
         return show_config_toml(state)
     return show_config_ini(state)
+
+
+__all__ = [
+    "ConfigFormat",
+    "show_config",
+    "tox_add_option",
+]
