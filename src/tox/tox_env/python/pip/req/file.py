@@ -64,9 +64,9 @@ _COMMENT_RE: Final[re.Pattern[str]] = re.compile(
 )
 _EXTRA_PATH: Final[re.Pattern[str]] = re.compile(
     r"""
-    ( .* )                          # path portion
+    (?P<path> .* )                  # path portion
     \[                              # opening bracket
-    ( [-._,\s a-zA-Z0-9]* )        # extras list
+    (?P<extras> [-._,\s a-zA-Z0-9]* )  # extras list
     ]                               # closing bracket
     """,
     re.VERBOSE,
@@ -109,14 +109,14 @@ def _local_requirement(req: str, from_file: str) -> str:
 def _extras_and_path(req: str, root: Path) -> tuple[list[str], Path]:
     if match := _EXTRA_PATH.fullmatch(Path(req).name):
         extras: list[str] = []
-        for extra in match.group(2).split(","):
+        for extra in match["extras"].split(","):
             extra = extra.strip()  # ruff:ignore[redefined-loop-name]  # loop rebinding intended
             if not extra:
                 continue
             if not _EXTRA_ELEMENT.fullmatch(extra):
                 return [], root / req
             extras.append(extra)
-        return extras, root / Path(req).parent / match.group(1)
+        return extras, root / Path(req).parent / match["path"]
     return [], root / req
 
 

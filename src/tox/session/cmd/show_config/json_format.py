@@ -13,8 +13,8 @@ if TYPE_CHECKING:
 
 _KEY_RE: Final[re.Pattern[str]] = re.compile(
     r"""
-    ^ ([ ]*)        # leading indentation
-    " ([^"]+) "     # quoted key name
+    ^ (?P<indent>[ ]*)  # leading indentation
+    " (?P<key>[^"]+) "  # quoted key name
     :               # colon separator
     """,
     re.MULTILINE | re.VERBOSE,
@@ -40,4 +40,4 @@ def colorize(text: str) -> str:
 
     :returns: the colored text
     """
-    return _KEY_RE.sub(rf"\1{Fore.GREEN}\2{Fore.RESET}:", text)
+    return _KEY_RE.sub(rf"\g<indent>{Fore.GREEN}\g<key>{Fore.RESET}:", text)

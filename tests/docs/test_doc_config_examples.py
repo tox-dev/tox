@@ -100,8 +100,22 @@ def _is_tox_config(lang: str, content: str) -> bool:
         return False
     return bool(
         "legacy_tox_ini" in content
-        or re.search(r"^\[tool\.tox", content, re.MULTILINE)
-        or re.search(r"^\[(env|env_run_base|env_pkg_base|env_base)\b", content, re.MULTILINE)
+        or re.search(
+            r"""
+            ^ \[ tool\.tox      # a tox table in a pyproject file
+            """,
+            content,
+            re.MULTILINE | re.VERBOSE,
+        )
+        or re.search(
+            r"""
+            ^ \[                                  # the opening bracket of a table header
+            (env|env_run_base|env_pkg_base|env_base)  # the environment table names
+            \b                                    # the end of the name
+            """,
+            content,
+            re.MULTILINE | re.VERBOSE,
+        )
         or re.search(r"^env_list\s*=", content, re.MULTILINE)
         or re.search(r"^(requires|no_package)\s*=", content, re.MULTILINE)
         or (re.search(r"^\w+\s*=", content, re.MULTILINE) and not first_section)
@@ -206,9 +220,27 @@ def _wrap_tox_toml_in_pyproject(content: str) -> str:
 def _find_env_names(filename: str, content: str) -> list[str]:
     envs: list[str] = []
     if filename in {"tox.toml", "pyproject.toml"}:
-        if re.search(r"\[(?:tool\.tox\.)?env_base\.", content):
+        if re.search(
+            r"""
+            \[                  # the opening bracket of a table header
+            (?:tool\.tox\.)?    # the optional pyproject prefix
+            env_base\.          # the base environment table
+            """,
+            content,
+            re.VERBOSE,
+        ):
             return ["__env_base__"]
-        for match in re.finditer(r"\[(?:tool\.tox\.)?env\.(?P<name>[^\]]+)\]", content):
+        for match in re.finditer(
+            r"""
+            \[                       # the opening bracket of a table header
+            (?:tool\.tox\.)?         # the optional pyproject prefix
+            env\.                     # the environment table prefix
+            (?P<name> [^\]]+ )        # the environment name
+            \]                       # the closing bracket of the table header
+            """,
+            content,
+            re.VERBOSE,
+        ):
             if (name := match.group("name").strip('"').strip("'")) not in envs:
                 envs.append(name)
     elif filename in {"tox.ini", "setup.cfg"}:

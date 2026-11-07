@@ -33,11 +33,22 @@ def shebang(exe: str) -> list[str] | None:
     except UnicodeDecodeError:
         return None
     # Match literal shebang paths while keeping tox's quoted path form.
-    match: Final = re.fullmatch(r'(?:"([^"]+)"|([^ \t]+))(.*)', decoded.strip())
+    match: Final = re.fullmatch(
+        r"""
+        (?:
+            " (?P<quoted> [^"]+ ) "    # a double-quoted path
+            |
+            (?P<bare> [^ \t]+ )        # an unquoted path up to the first whitespace
+        )
+        (?P<rest> .* )                 # the arguments that follow the path
+        """,
+        decoded.strip(),
+        re.VERBOSE,
+    )
     if match is None:
         return None
     try:
-        return [match[1] or match[2], *shlex.split(match[3], posix=True)]
+        return [match["quoted"] or match["bare"], *shlex.split(match["rest"], posix=True)]
     except ValueError:
         return None
 
@@ -83,7 +94,16 @@ def _quote_batch_file_arg(arg: str) -> str:
     # A trailing backslash can escape a quote added by the batch file.
     if re.fullmatch(r"[\w#$*+\-./:?@\\]*[\w#$*+\-./:?@]", arg):
         return arg
-    escaped: Final[str] = re.sub(r'(?<!\\)(\\*)("|\Z)', lambda match: match[1] * 2 + match[2] * 2, arg)
+    escaped: Final[str] = re.sub(
+        r"""
+        (?<! \\ )                # the run starts after a character that is not a backslash
+        (?P<slashes> \\* )       # backslashes that precede the quote
+        (?P<quote> " | \Z )      # a double quote or the end of the argument
+        """,
+        lambda match: match["slashes"] * 2 + match["quote"] * 2,
+        arg,
+        flags=re.VERBOSE,
+    )
     return f'"{_escape_percent(escaped)}"'
 
 

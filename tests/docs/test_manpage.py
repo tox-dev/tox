@@ -42,18 +42,29 @@ def manpage_rendered(manpage_troff: bytes, tmp_path: Path) -> str:
 
 def test_manpage_has_title_header(manpage_troff: bytes) -> None:
     output = manpage_troff.decode()
-    match = re.search(r'^\.TH "([^"]*)" "([^"]*)" "([^"]*)" "([^"]*)" "([^"]*)"', output, re.MULTILINE)
+    match = re.search(
+        r"""
+        ^ \.TH [ ]                    # the title header macro
+        " (?P<program> [^"]* ) "      # the program name
+        [ ] " (?P<section> [^"]* ) "  # the manual section
+        [ ] " (?P<date> [^"]* ) "     # the date
+        [ ] " (?P<source> [^"]* ) "   # the source of the page
+        [ ] " (?P<manual> [^"]* ) "   # the manual title
+        """,
+        output,
+        re.MULTILINE | re.VERBOSE,
+    )
     assert match is not None, f".TH header not found in:\n{output[:500]}"
-    assert match.group(1) == "tox"
-    assert match.group(2) == "1"
-    assert match.group(5) == "User Commands"
+    assert match["program"] == "tox"
+    assert match["section"] == "1"
+    assert match["manual"] == "User Commands"
 
 
 def test_manpage_has_name_section(manpage_troff: bytes) -> None:
-    match = re.search(r"\.SH Name\n(.+)", manpage_troff.decode())
+    match = re.search(r"\.SH Name\n(?P<body>.+)", manpage_troff.decode())
     assert match is not None, "Name section not found"
-    assert "tox" in match.group(1)
-    assert "virtualenv-based automation of test activities" in match.group(1)
+    assert "tox" in match["body"]
+    assert "virtualenv-based automation of test activities" in match["body"]
 
 
 def test_manpage_has_all_sections(manpage_troff: bytes) -> None:

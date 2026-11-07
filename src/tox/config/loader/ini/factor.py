@@ -95,7 +95,7 @@ def expand_ranges(value: str) -> str:
     """
 
     def _expand(match: re.Match[str]) -> str:
-        src, start_, end_, open_start, open_end = match.groups()
+        src, start_, end_, open_start, open_end = match.group("src", "start", "end", "open_start", "open_end")
         delimiter = match.group()[-1]  # the ',' or '}' that terminated the match
         if src and start_ and end_:
             start, end = int(start_), int(end_)
@@ -111,15 +111,15 @@ def expand_ranges(value: str) -> str:
 
     return re.sub(
         r"""
-        (                       # outer capture group
+        (?P<src>                # outer capture group
             (?<! [\w.-] )       # only an env or brace item opens a range, so py-django-4-2 stays one name
             (?:
-                ( \d+ ) - ( \d+ ) # closed range: start-end
+                (?P<start> \d+ ) - (?P<end> \d+ ) # closed range: start-end
                 |
-                ( \d+ ) -         # right-open range: start-
+                (?P<open_start> \d+ ) -  # right-open range: start-
             )
             |
-            (?<= [{,] ) - ( \d+ )  # left-open range: -end (preceded by { or ,)
+            (?<= [{,] ) - (?P<open_end> \d+ )  # left-open range: -end (preceded by { or ,)
             |
             \d+                 # single number
         )

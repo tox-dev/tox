@@ -34,7 +34,15 @@ _SECRET_ENV_VAR_REGEX: Final[re.Pattern[str]] = re.compile(
     re.VERBOSE | re.IGNORECASE | re.DOTALL,  # a newline before a keyword must not expose its value
 )
 # Compile once for command logging; broken quotes, semicolons, and line breaks can fuse flags into one token.
-_INLINE_FLAG_REGEX: Final[re.Pattern[str]] = re.compile(r"""(?<![^\s'"=;])-(?:[^\s'"=]|[\r\n])*=""")
+_INLINE_FLAG_REGEX: Final[re.Pattern[str]] = re.compile(
+    r"""
+    (?<! [^\s'"=;] )          # not after a word character, quote, equals sign, or semicolon
+    -                         # the dash that starts the flag
+    (?: [^\s'"=] | [\r\n] )*  # the flag name, which may span line breaks in a fused token
+    =                         # the equals sign that ends the flag
+    """,
+    re.VERBOSE,
+)
 
 
 def redact_value(name: str, value: str) -> str:
@@ -73,9 +81,14 @@ def redact_argv(argv: Sequence[str]) -> list[str]:
 
 def _redact_url_userinfo(token: str) -> str:
     return re.sub(
-        r"([a-zA-Z][a-zA-Z0-9+.-]*://)([^/?#\s]+)@",
-        lambda match: f"{match[1]}{'*' * len(match[2])}@",
+        r"""
+        (?P<scheme> [a-zA-Z] [a-zA-Z0-9+.-]* :// )  # the URL scheme
+        (?P<userinfo> [^/?#\s]+ )                    # the user and password before the host
+        @                                            # the separator before the host
+        """,
+        lambda match: f"{match['scheme']}{'*' * len(match['userinfo'])}@",
         token,
+        flags=re.VERBOSE,
     )
 
 

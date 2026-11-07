@@ -12,7 +12,12 @@ if TYPE_CHECKING:
 
 _DOCS_DIR: Final[Path] = Path(__file__).parents[2] / "docs"
 _PYTHON_BLOCK: Final[re.Pattern[str]] = re.compile(
-    r"^\.\. code-block:: python\n\n(?P<body>(?:(?: {4}.*)?\n)+)", re.MULTILINE
+    r"""
+    ^ \.\.[ ]code-block::[ ]python \n  # the python code block directive
+    \n                                       # a blank line before the body
+    (?P<body> (?: (?: [ ]{4} .* )? \n )+ )   # the indented body lines, blank lines included
+    """,
+    re.MULTILINE | re.VERBOSE,
 )
 
 

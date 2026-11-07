@@ -349,9 +349,9 @@ def _lookup_namespace(namespace: str, key: str, factors: set[str]) -> str | bool
 
 _REFERENCE_PATTERN: Final[re.Pattern[str]] = re.compile(
     r"""
-    (\[(?P<section>.*)])? # default value
+    (?P<section_ref>\[(?P<section>.*)])? # section of the reference
     (?P<key>[-a-zA-Z0-9_]+) # key
-    (:(?P<default>.*))? # default value
+    (?P<default_ref>:(?P<default>.*))? # default value
     $
 """,
     re.VERBOSE,
