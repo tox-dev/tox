@@ -49,23 +49,7 @@ def _extract_config_blocks() -> list[tuple[str, int, str, str]]:
                 directive_indent = len(match.group("indent")) + len(match.group("space")) + 2
                 lang = match.group("lang")
                 line_no = idx + 1
-                idx += 1
-                while idx < len(lines) and not lines[idx].strip():
-                    idx += 1
-                content_lines: list[str] = []
-                while idx < len(lines):
-                    line = lines[idx]
-                    if not line.strip():
-                        content_lines.append("")
-                        idx += 1
-                        continue
-                    if (len(line) - len(line.lstrip())) > directive_indent:
-                        content_lines.append(line)
-                        idx += 1
-                    else:
-                        break
-                while content_lines and not content_lines[-1].strip():
-                    content_lines.pop()
+                content_lines, idx = _read_block(lines, idx + 1, directive_indent)
                 if content_lines:
                     results.append((
                         str(rst_path.relative_to(docs_dir.parent)),
@@ -76,6 +60,26 @@ def _extract_config_blocks() -> list[tuple[str, int, str, str]]:
             else:
                 idx += 1
     return results
+
+
+def _read_block(lines: list[str], idx: int, directive_indent: int) -> tuple[list[str], int]:
+    while idx < len(lines) and not lines[idx].strip():
+        idx += 1
+    content_lines: list[str] = []
+    while idx < len(lines):
+        line = lines[idx]
+        if not line.strip():
+            content_lines.append("")
+            idx += 1
+            continue
+        if (len(line) - len(line.lstrip())) > directive_indent:
+            content_lines.append(line)
+            idx += 1
+        else:
+            break
+    while content_lines and not content_lines[-1].strip():
+        content_lines.pop()
+    return content_lines, idx
 
 
 def _is_tox_config(lang: str, content: str) -> bool:

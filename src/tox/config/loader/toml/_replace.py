@@ -372,22 +372,24 @@ class TomlReplaceLoader(ReplaceReference):
         # Searching inside brace content mistakes JSON fields for references.
         if match := _REFERENCE_PATTERN.match(value):
             settings = match.groupdict()
-            exception: Exception | None = None
             try:
-                for src in self._config_value_sources(settings["section"], conf_args.env_name):
-                    try:
-                        return self._load_reference_value(src, settings["key"], conf_args)
-                    except KeyError as exc:  # if fails, keep trying maybe another source can satisfy
-                        exception = exc
-            except Exception as exc:  # ruff:ignore[blind-except]  # failure must not stop run
-                exception = exc
-            if exception is not None:
-                if isinstance(exception, KeyError):  # if the lookup failed replace - else keep
-                    if (default := settings["default"]) is not None:
-                        return value.fragment(*match.span("default")) if isinstance(value, HostText) else default
-                    return None  # keep original text, consistent with ini loader behavior
-                raise exception
+                return self._load_first_source(match, conf_args)
+            except KeyError:  # if the lookup failed replace - else keep
+                if (default := settings["default"]) is not None:
+                    return value.fragment(*match.span("default")) if isinstance(value, HostText) else default
+                return None  # keep original text, consistent with ini loader behavior
         return None  # not a reference, such as the {} of a format string
+
+    def _load_first_source(self, match: re.Match[str], conf_args: ConfigLoadArgs) -> str | None:
+        error: KeyError | None = None
+        for src in self._config_value_sources(match["section"], conf_args.env_name):
+            try:
+                return self._load_reference_value(src, match["key"], conf_args)
+            except KeyError as exc:  # if fails, keep trying maybe another source can satisfy
+                error = exc
+        if error is not None:
+            raise error
+        return None
 
     def _config_value_sources(self, sec: str | None, current_env: str | None) -> Iterator[ConfigSet | RawLoader]:
         if sec is None:

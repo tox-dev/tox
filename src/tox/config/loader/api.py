@@ -188,8 +188,6 @@ class Loader(Convert[T]):
         :raises ValueError: when the value cannot be converted to the requested type
 
         """
-        from tox.config.set_env import SetEnv  # ruff:ignore[import-outside-top-level]  # avoids an import cycle
-
         overrides = [o for alias in (key, *all_keys) for o in self.overrides.get(alias, [])]
         converted: V | None = None  # merged across loader/overrides, only the final cast can name the type
         for alias in (key, *all_keys):
@@ -208,17 +206,7 @@ class Loader(Convert[T]):
             for entry in overrides:
                 converted_override = self._build_override(entry, of_type, factory, conf, args)
                 if entry.append and converted is not None:
-                    if isinstance(converted, list) and isinstance(converted_override, list):
-                        converted.extend(converted_override)
-                    elif isinstance(converted, dict) and isinstance(converted_override, dict):
-                        converted.update(converted_override)
-                    elif isinstance(converted, SetEnv) and isinstance(converted_override, SetEnv):
-                        converted.extend(converted_override)
-                    elif isinstance(converted, PythonDeps) and isinstance(converted_override, PythonDeps):
-                        converted += converted_override
-                    else:
-                        msg = "Only able to append to lists and dicts"
-                        raise ValueError(msg)
+                    converted = _append_override(converted, converted_override)
                 else:
                     converted = converted_override
 
@@ -336,6 +324,23 @@ def _handle_bad_value(key: str, args: ConfigLoadArgs) -> Generator[None]:
     except Exception as exception:  # a bad value is a user error, report it without a traceback
         msg = f"failed to load {args.env_name or 'core'}.{key}: {exception}"
         raise HandledError(msg) from exception
+
+
+def _append_override(converted: V, override: V) -> V:
+    from tox.config.set_env import SetEnv  # ruff:ignore[import-outside-top-level]  # avoids an import cycle
+
+    if isinstance(converted, list) and isinstance(override, list):
+        converted.extend(override)
+    elif isinstance(converted, dict) and isinstance(override, dict):
+        converted.update(override)
+    elif isinstance(converted, SetEnv) and isinstance(override, SetEnv):
+        converted.extend(override)
+    elif isinstance(converted, PythonDeps) and isinstance(override, PythonDeps):
+        converted += override
+    else:
+        msg = "Only able to append to lists and dicts"
+        raise TypeError(msg)
+    return converted
 
 
 def apply_overrides_to_raw(overrides: Iterable[Override], key: str, value: T) -> T:

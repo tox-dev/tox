@@ -314,16 +314,10 @@ class MatchExpression:  # ruff:ignore[eq-without-hash]  # mutable value type
         pos = 0
 
         while pos < len(value):
-            if len(value) > pos + 1 and value[pos] == "\\":
-                if value[pos + 1] in BACKSLASH_ESCAPE_CHARS:
-                    last_arg.append(cls._fragment(value, pos + 1, pos + 2))
-                    pos += 2
-                    continue
-                if value[pos + 1] == "\\":
-                    # Keep both backslashes for the later shlex pass.
-                    last_arg.append(cls._fragment(value, pos, pos + 2))
-                    pos += 2
-                    continue
+            if (escaped := cls._escaped_fragment(value, pos)) is not None:
+                last_arg.append(escaped)
+                pos += 2
+                continue
             if terminator and value.startswith(terminator, pos):
                 pos += len(terminator)
                 break
@@ -339,15 +333,7 @@ class MatchExpression:  # ruff:ignore[eq-without-hash]  # mutable value type
                 pos += (expr.term_pos or 0) + 1
                 last_arg.append(expr)
                 continue
-            # Group plain text to avoid rebuilding origin spans per character.
-            next_pos: int = min(
-                (
-                    at
-                    for char in ("\\", REPLACE_START, "[", terminator, split)
-                    if char and (at := value.find(char, pos + 1)) >= 0
-                ),
-                default=len(value),
-            )
+            next_pos = cls._next_special_position(value, pos, terminator, split)
             last_arg.append(cls._fragment(value, pos, next_pos))
             pos = next_pos
         else:  # fell out of the loop
@@ -356,6 +342,28 @@ class MatchExpression:  # ruff:ignore[eq-without-hash]  # mutable value type
                 raise MatchError(msg)
         args.append(last_arg)
         return [_flatten_string_fragments(a) for a in args], pos
+
+    @classmethod
+    def _escaped_fragment(cls, value: str, pos: int) -> str | None:
+        if len(value) > pos + 1 and value[pos] == "\\":
+            if value[pos + 1] in BACKSLASH_ESCAPE_CHARS:
+                return cls._fragment(value, pos + 1, pos + 2)
+            if value[pos + 1] == "\\":
+                # Keep both backslashes for the later shlex pass.
+                return cls._fragment(value, pos, pos + 2)
+        return None
+
+    @staticmethod
+    def _next_special_position(value: str, pos: int, terminator: str, split: str | None) -> int:
+        # Group plain text to avoid rebuilding origin spans per character.
+        return min(
+            (
+                at
+                for char in ("\\", REPLACE_START, "[", terminator, split)
+                if char and (at := value.find(char, pos + 1)) >= 0
+            ),
+            default=len(value),
+        )
 
     @staticmethod
     def _fragment(value: str, start: int, end: int | None = None) -> str:
@@ -610,24 +618,26 @@ class CommandLinesReplacer(Replacer):
         result: Final[list[str]] = []
         quote = ""
         for at, part in enumerate(parts):
-            text = (
-                part.quoted_text
-                if quote and isinstance(part, _Replaced) and part.quoted_text is not None
-                else str(part)
-            )
             if isinstance(part, _Replaced):
-                if not quote and isinstance(part.text, Arguments):
-                    text = "\n".join(quote_args([line]) if line else line for line in part.text.split("\n"))
-                elif not quote and isinstance(part.text, _GlobMatches):
-                    text = quote_args(part.text.matches)
-                if quote or self._shares_line(parts, at):
-                    text = " ".join(text.splitlines())
+                text = self._replaced_text(part, quote, parts, at)
                 if quote:
                     result.append(self._escape_within_quote(quote, text))
                     continue
+            else:
+                text = str(part)
             quote = self._open_quote(quote, text)
             result.append(text)
         return "".join(result)
+
+    def _replaced_text(self, part: _Replaced, quote: str, parts: Sequence[str | _Replaced], at: int) -> str:
+        text = part.quoted_text if quote and part.quoted_text is not None else str(part)
+        if not quote and isinstance(part.text, Arguments):
+            text = "\n".join(quote_args([line]) if line else line for line in part.text.split("\n"))
+        elif not quote and isinstance(part.text, _GlobMatches):
+            text = quote_args(part.text.matches)
+        if quote or self._shares_line(parts, at):
+            text = " ".join(text.splitlines())
+        return text
 
     @staticmethod
     def _shares_line(value: Sequence[str | _Replaced], at: int) -> bool:
@@ -1034,19 +1044,8 @@ def _replace_env(conf: Config | None, args: list[str], conf_args: ConfigLoadArgs
 
     if conf is not None and conf_args.env_name is not None:  # on core no set env support # pragma: no branch
         if new_key not in conf_args.chain:  # check if set env
-            conf_args.chain.append(new_key)
-            env_conf = conf.get_env(conf_args.env_name)
-            try:
-                set_env: SetEnv = env_conf.load("set_env", chain=conf_args.chain)
-            except CircularChainError:
-                if not (
-                    conf_args.chain[-1].endswith(".set_env")
-                    and any(i.endswith(".set_env") for i in conf_args.chain[:-1])
-                ):  # pragma: no branch  # other outcome untested
-                    raise
-            else:
-                if key in set_env:
-                    return set_env.load(key, conf_args)
+            if (value := _load_set_env(conf, conf_args.env_name, conf_args, key)) is not None:
+                return value
         elif conf_args.chain[-1] != new_key:  # if there's a chain but only self-refers than use os.environ
             circular = ", ".join(i[4:] for i in conf_args.chain[conf_args.chain.index(new_key) :])
             msg = f"circular chain between set env {circular}"
@@ -1056,6 +1055,22 @@ def _replace_env(conf: Config | None, args: list[str], conf_args: ConfigLoadArgs
         return HostText(os.environ[key])  # a host variable has always been allowed to hold tokens of its own
 
     return ConfigDefault(text=HostText.from_parts(args[1:], separator=ARG_DELIMITER), start=2)
+
+
+def _load_set_env(conf: Config, env_name: str, conf_args: ConfigLoadArgs, key: str) -> str | None:
+    conf_args.chain.append(f"env:{key}")
+    env_conf = conf.get_env(env_name)
+    try:
+        set_env: SetEnv = env_conf.load("set_env", chain=conf_args.chain)
+    except CircularChainError:
+        if not (
+            conf_args.chain[-1].endswith(".set_env") and any(i.endswith(".set_env") for i in conf_args.chain[:-1])
+        ):  # pragma: no branch  # other outcome untested
+            raise
+        return None
+    if key in set_env:
+        return set_env.load(key, conf_args)
+    return None
 
 
 def replace_tty(args: list[str]) -> ConfigDefault:

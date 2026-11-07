@@ -14,6 +14,8 @@ from tox.tox_env.errors import Fail, Skip
 from tox.tox_env.python.virtual_env.package.pyproject import ToxBackendFailed
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     from tox.tox_env.api import ToxEnv
     from tox.tox_env.runner import RunToxEnv
 
@@ -135,43 +137,60 @@ def run_command_set(  # ruff:ignore[too-many-arguments]  # public signature
 
     :returns: the exit code
     """
+
+    def _execute(cmd: Command, run_id: str) -> Outcome:
+        return tox_env.execute(
+            cmd.args,
+            cwd=cwd,
+            stdin=StdinSource.USER if getattr(tox_env.options, "no_capture", False) else StdinSource.user_only(),
+            show=True,
+            run_id=run_id,
+        )
+
     exit_code = Outcome.OK
     for at, cmd in enumerate(tox_env.conf.get(key, list[Command])):
         max_attempts = 1 if cmd.ignore_exit_code else retry_count + 1
-        for attempt in range(1, max_attempts + 1):
-            current_outcome = tox_env.execute(
-                cmd.args,
-                cwd=cwd,
-                stdin=StdinSource.USER if getattr(tox_env.options, "no_capture", False) else StdinSource.user_only(),
-                show=True,
-                run_id=f"{key}[{at}]",
-            )
-            outcomes.append(current_outcome)
-            try:
-                if cmd.invert_exit_code:
-                    current_outcome.assert_failure()
-                else:
-                    current_outcome.assert_success()
-            except SystemExit as exception:
-                if cmd.ignore_exit_code:
-                    logging.warning("command failed but is marked ignore outcome so handling it as success")
-                    break
-                if attempt < max_attempts:
-                    logging.warning(
-                        "command failed (attempt %d of %d), retrying ...: %s",
-                        attempt,
-                        max_attempts,
-                        current_outcome.request.shell_cmd_redacted,
-                    )
-                    continue
-                if ignore_errors:
-                    if exit_code == Outcome.OK:
-                        exit_code = cast("int", exception.code)
-                    break
-                return cast("int", exception.code)
-            else:
-                break
+        failed_code = _run_attempts(cmd, f"{key}[{at}]", max_attempts, outcomes, _execute)
+        if failed_code is None:
+            continue
+        if not ignore_errors:
+            return failed_code
+        if exit_code == Outcome.OK:
+            exit_code = failed_code
     return exit_code
+
+
+def _run_attempts(
+    cmd: Command,
+    run_id: str,
+    max_attempts: int,
+    outcomes: list[Outcome],
+    execute: Callable[[Command, str], Outcome],
+) -> int | None:
+    for attempt in range(1, max_attempts + 1):
+        current_outcome = execute(cmd, run_id)
+        outcomes.append(current_outcome)
+        try:
+            if cmd.invert_exit_code:
+                current_outcome.assert_failure()
+            else:
+                current_outcome.assert_success()
+        except SystemExit as exception:
+            if cmd.ignore_exit_code:
+                logging.warning("command failed but is marked ignore outcome so handling it as success")
+                return None
+            if attempt < max_attempts:
+                logging.warning(
+                    "command failed (attempt %d of %d), retrying ...: %s",
+                    attempt,
+                    max_attempts,
+                    current_outcome.request.shell_cmd_redacted,
+                )
+                continue
+            return cast("int", exception.code)
+        else:
+            return None
+    return None
 
 
 class ToxEnvRunResult(NamedTuple):

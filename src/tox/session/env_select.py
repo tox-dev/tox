@@ -211,6 +211,25 @@ def _env_completer(
         return ["ALL", *conf]
 
 
+def _activate_by_labels(
+    defined_envs: dict[str, _ToxEnvInfo], labels: set[str], label_envs: dict[str, list[str]]
+) -> None:
+    for label in labels:
+        for env_name in label_envs.get(label, []):
+            defined_envs[env_name].is_active = True
+    for env_info in defined_envs.values():
+        if env_info.env is not None and labels.intersection(env_info.env.conf["labels"]):
+            env_info.is_active = True
+
+
+def _activate_by_factors(defined_envs: dict[str, _ToxEnvInfo], factors: tuple[set[str], ...]) -> None:
+    for name, env_info in defined_envs.items():
+        for factor_set in factors:
+            if factor_set.issubset(set(name.split("-"))):
+                env_info.is_active = True
+                break
+
+
 @dataclass(slots=True, kw_only=True)
 class _ToxEnvInfo:
     env: PackageToxEnv | RunToxEnv | None  #: the tox environment (None if runner unavailable)
@@ -384,25 +403,9 @@ class EnvSelector:
             if (normalized_env := self._normalize_env_name(env)) != env and normalized_env in known_envs:
                 invalid_envs[env] = normalized_env
                 continue
-            factors: dict[str, str | None] = dict.fromkeys(env.split("-"), None)
-            found_factors: set[str] = set()
-            for factor in factors:
-                if (
-                    _DYNAMIC_ENV_FACTORS.fullmatch(factor)
-                    or _PY_PRE_RELEASE_FACTOR.fullmatch(factor)
-                    or factor in combinable
-                ):
-                    found_factors.add(factor)
-                else:
-                    closest = get_close_matches(factor, all_factors, n=1)
-                    suggestion = closest[0] if closest else None
-                    factors[factor] = None if suggestion == factor else suggestion
-            if set(factors) - found_factors:
-                invalid_envs[env] = (
-                    None
-                    if any(i is None for i in factors.values())
-                    else "-".join(cast("Iterable[str]", factors.values()))
-                )
+            is_invalid, suggestion = self._invalid_env_suggestion(env, combinable, all_factors)
+            if is_invalid:
+                invalid_envs[env] = suggestion
         if invalid_envs:
             self._raise_invalid_envs(invalid_envs)
 
@@ -436,6 +439,28 @@ class EnvSelector:
             else:
                 normalized_factors.append(factor)
         return "-".join(normalized_factors)
+
+    @staticmethod
+    def _invalid_env_suggestion(env: str, combinable: set[str], all_factors: set[str]) -> tuple[bool, str | None]:
+        factors: dict[str, str | None] = dict.fromkeys(env.split("-"), None)
+        found_factors: set[str] = set()
+        for factor in factors:
+            if (
+                _DYNAMIC_ENV_FACTORS.fullmatch(factor)
+                or _PY_PRE_RELEASE_FACTOR.fullmatch(factor)
+                or factor in combinable
+            ):
+                found_factors.add(factor)
+            else:
+                closest = get_close_matches(factor, all_factors, n=1)
+                suggestion = closest[0] if closest else None
+                factors[factor] = None if suggestion == factor else suggestion
+        if not set(factors) - found_factors:
+            return False, None
+        suggested = (
+            None if any(i is None for i in factors.values()) else "-".join(cast("Iterable[str]", factors.values()))
+        )
+        return True, suggested
 
     @staticmethod
     def _raise_invalid_envs(invalid_envs: dict[str, str | None]) -> None:
@@ -641,7 +666,7 @@ class EnvSelector:
                 tox_env.env.conf.mark_finalized()
         self._state.conf.core.mark_finalized()
 
-    def _mark_active(self) -> None:  # ruff:ignore[complex-structure]  # follows the protocol
+    def _mark_active(self) -> None:
         labels = set(getattr(self._state.conf.options, "labels", []))
         factors = self._parse_factors()
 
@@ -651,18 +676,9 @@ class EnvSelector:
                 env_info.is_active = False  # if any was selected reset
             # ignore labels when provisioning will occur
             if labels and (self._provision is None or not self._provision[0]):
-                for label in labels:
-                    for env_name in self._state.conf.core["labels"].get(label, []):
-                        self._defined_envs_[env_name].is_active = True
-                for env_info in self._defined_envs_.values():
-                    if env_info.env is not None and labels.intersection(env_info.env.conf["labels"]):
-                        env_info.is_active = True
+                _activate_by_labels(self._defined_envs_, labels, self._state.conf.core["labels"])
             if factors:  # if matches mark it active
-                for name, env_info in self._defined_envs_.items():
-                    for factor_set in factors:
-                        if factor_set.issubset(set(name.split("-"))):
-                            env_info.is_active = True
-                            break
+                _activate_by_factors(self._defined_envs_, factors)
 
     def _parse_factors(self) -> tuple[set[str], ...]:
         # factors is a list of lists, from the combination of nargs="+" and action="append"

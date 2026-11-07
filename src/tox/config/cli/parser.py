@@ -24,7 +24,7 @@ from .env_var import get_env_var
 from .ini import IniConfig
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, Iterable, MutableMapping, Sequence
+    from collections.abc import Callable, Container, Iterable, MutableMapping, Sequence
     from typing import Final
 
     from packaging.requirements import Requirement
@@ -100,26 +100,7 @@ class ArgumentParserWithEnvAndConfig(ArgumentParser):
         """
         of_type = _ACTION_OF_TYPE.get(action)
         if of_type is None:
-            many: Final[bool] = action.nargs in {"+", "*"} or (isinstance(action.nargs, int) and action.nargs >= 1)
-            if isinstance(action, argparse._AppendAction):  # ruff:ignore[private-member-access]  # internal access
-                if many:
-                    of_type = cast("type[Any]", GenericAlias(list, (GenericAlias(list, (action.type or str,)),)))
-                else:
-                    of_type = cast("type[Any]", GenericAlias(list, (action.type or str,)))
-            # argparse has no public action class
-            elif isinstance(action, argparse._StoreAction) and action.choices:  # ruff:ignore[private-member-access]
-                of_type = cast("type[Any]", Literal[tuple(action.choices)])  # ty: ignore[invalid-type-form] # pyrefly: ignore[invalid-literal] # choices are only known at runtime and no checker can express a Literal built from them
-                if many:
-                    of_type = cast("type[Any]", GenericAlias(list, (of_type,)))
-            elif many:
-                of_type = cast("type[Any]", GenericAlias(list, (action.type or str,)))
-            elif action.default is not None:
-                of_type = type(action.default)
-            # argparse has no public action class
-            elif isinstance(action, argparse._StoreConstAction) and action.const is not None:  # ruff:ignore[private-member-access]
-                of_type = type(action.const)
-            else:
-                raise TypeError(action)
+            of_type = _infer_type(action)
         return of_type
 
     @overload
@@ -344,6 +325,40 @@ class Parsed(Namespace):
 
 
 ArgumentArgs = tuple[tuple[str, ...], type[Any] | UnionType | None, dict[str, Any]]
+
+
+def _infer_type(action: Action) -> type | UnionType:
+    many: Final[bool] = action.nargs in {"+", "*"} or (isinstance(action.nargs, int) and action.nargs >= 1)
+    if isinstance(action, argparse._AppendAction):  # ruff:ignore[private-member-access]  # internal access
+        if many:
+            of_type = cast("type[Any]", GenericAlias(list, (GenericAlias(list, (action.type or str,)),)))
+        else:
+            of_type = cast("type[Any]", GenericAlias(list, (action.type or str,)))
+    # argparse has no public action class
+    elif isinstance(action, argparse._StoreAction) and action.choices:  # ruff:ignore[private-member-access]
+        of_type = cast("type[Any]", Literal[tuple(action.choices)])  # ty: ignore[invalid-type-form] # pyrefly: ignore[invalid-literal] # choices are only known at runtime and no checker can express a Literal built from them
+        if many:
+            of_type = cast("type[Any]", GenericAlias(list, (of_type,)))
+    elif many:
+        of_type = cast("type[Any]", GenericAlias(list, (action.type or str,)))
+    elif action.default is not None:
+        of_type = type(action.default)
+    # argparse has no public action class
+    elif isinstance(action, argparse._StoreConstAction) and action.const is not None:  # ruff:ignore[private-member-access]
+        of_type = type(action.const)
+    else:
+        raise TypeError(action)
+    return of_type
+
+
+def _values_for_option(action: Action) -> int | None:
+    if action.nargs in {"+", "*"}:
+        return None
+    return action.nargs if isinstance(action.nargs, int) else 1
+
+
+def _option_takes_command_as_value(action: Action, index: int, args_list: list[str], commands: Container[str]) -> bool:
+    return action.nargs in {"?", "*"} and index + 1 < len(args_list) and args_list[index + 1] in commands
 
 
 class ToxParser(ArgumentParserWithEnvAndConfig):
@@ -650,16 +665,9 @@ class ToxParser(ArgumentParserWithEnvAndConfig):
                 if remaining_values is not None:
                     remaining_values -= 1
             elif (action := option_actions.get(arg)) is not None and action.nargs != 0:
-                if (
-                    action.nargs in {"?", "*"}
-                    and index + 1 < len(args_list)
-                    and args_list[index + 1] in self._cmd.choices
-                ):
+                if _option_takes_command_as_value(action, index, args_list, self._cmd.choices):
                     continue
-                if action.nargs in {"+", "*"}:
-                    remaining_values = None
-                else:
-                    remaining_values = action.nargs if isinstance(action.nargs, int) else 1
+                remaining_values = _values_for_option(action)
             elif arg in self._cmd.choices:
                 return index
         return None

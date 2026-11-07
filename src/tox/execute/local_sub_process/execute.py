@@ -181,33 +181,44 @@ class LocalSubProcessExecuteInstance(ExecuteInstance):
     def cmd(self) -> Sequence[str]:
         if self._cmd is None:
             base = self.request.cmd[0]
-            lookup, path = base, self.request.env["PATH"]
-            if sys.platform != "win32":
-                # The allowlist and shebang checks must inspect the file the child runs.
-                cwd = self.request.cwd.absolute()
-                if os.sep in base:
-                    lookup = str(cwd / base)
-                path = os.pathsep.join(str(cwd / entry) for entry in path.split(os.pathsep))
+            lookup, path = self._search_target(base)
             if (executable := shutil.which(lookup, path=path)) is None:
                 cmd = self.request.cmd  # if failed to find leave as it is
             else:
-                if self.request.allow is not None:
-                    for allow in self.request.allow:
-                        # 1. allow matches just the original name of the executable
-                        # 2. allow matches the entire resolved path
-                        if fnmatch.fnmatch(self.request.cmd[0], allow) or fnmatch.fnmatch(executable, allow):
-                            break
-                    else:
-                        msg = f"{base} (resolves to {executable})" if base == executable else base
-                        msg = f"{msg} is not allowed, use allowlist_externals to allow it"
-                        raise Fail(msg)
-                cmd = [executable]
-                if sys.platform != "win32" and self.request.env.get("TOX_LIMITED_SHEBANG", "").strip():
-                    if shebang_line := shebang(executable):
-                        cmd = [*shebang_line, executable]
-                cmd.extend(self.request.cmd[1:])
+                self._check_allowed(base, executable)
+                cmd = self._executable_cmd(executable)
             self._cmd = cmd
         return self._cmd
+
+    def _search_target(self, base: str) -> tuple[str, str]:
+        lookup, path = base, self.request.env["PATH"]
+        if sys.platform != "win32":
+            # The allowlist and shebang checks must inspect the file the child runs.
+            cwd = self.request.cwd.absolute()
+            if os.sep in base:
+                lookup = str(cwd / base)
+            path = os.pathsep.join(str(cwd / entry) for entry in path.split(os.pathsep))
+        return lookup, path
+
+    def _check_allowed(self, base: str, executable: str) -> None:
+        if self.request.allow is None:
+            return
+        for allow in self.request.allow:
+            # 1. allow matches just the original name of the executable
+            # 2. allow matches the entire resolved path
+            if fnmatch.fnmatch(self.request.cmd[0], allow) or fnmatch.fnmatch(executable, allow):
+                return
+        msg = f"{base} (resolves to {executable})" if base == executable else base
+        msg = f"{msg} is not allowed, use allowlist_externals to allow it"
+        raise Fail(msg)
+
+    def _executable_cmd(self, executable: str) -> list[str]:
+        cmd = [executable]
+        if sys.platform != "win32" and self.request.env.get("TOX_LIMITED_SHEBANG", "").strip():
+            if shebang_line := shebang(executable):
+                cmd = [*shebang_line, executable]
+        cmd.extend(self.request.cmd[1:])
+        return cmd
 
     @override
     def __exit__(

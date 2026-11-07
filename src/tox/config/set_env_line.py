@@ -41,21 +41,28 @@ def split_value_marker(value: str) -> tuple[str, str]:
     """
     respect_quotes = True
     while True:  # the second pass ignores quotes, so it always ends balanced
-        in_quotes = False
-        quote_char = ""
-        for index, char in enumerate(value):
-            if respect_quotes and char in {'"', "'"} and not _quote_is_escaped(value, index):
-                if not in_quotes:
-                    in_quotes, quote_char = True, char
-                elif char == quote_char:
-                    in_quotes = False
-            # one backslash is enough: C:\tools\\;C:\bin means C:\tools\ followed by an escaped semicolon
-            elif char == ";" and not in_quotes and (index == 0 or value[index - 1] != "\\"):
-                text: str = value.fragment(0, index) if isinstance(value, HostText) else value[:index]
-                return _unescape_semicolons(text.strip()), value[index + 1 :].strip()
+        marker_at, in_quotes = _marker_position(value, respect_quotes=respect_quotes)
+        if marker_at is not None:
+            text: str = value.fragment(0, marker_at) if isinstance(value, HostText) else value[:marker_at]
+            return _unescape_semicolons(text.strip()), value[marker_at + 1 :].strip()
         if not in_quotes:
             return _unescape_semicolons(value), ""
         respect_quotes = False
+
+
+def _marker_position(value: str, *, respect_quotes: bool) -> tuple[int | None, bool]:
+    in_quotes = False
+    quote_char = ""
+    for index, char in enumerate(value):
+        if respect_quotes and char in {'"', "'"} and not _quote_is_escaped(value, index):
+            if not in_quotes:
+                in_quotes, quote_char = True, char
+            elif char == quote_char:
+                in_quotes = False
+        # one backslash is enough: C:\tools\\;C:\bin means C:\tools\ followed by an escaped semicolon
+        elif char == ";" and not in_quotes and (index == 0 or value[index - 1] != "\\"):
+            return index, in_quotes
+    return None, in_quotes
 
 
 def _quote_is_escaped(value: str, index: int) -> bool:

@@ -368,12 +368,26 @@ class Pip(PythonInstallerListDependencies):
                     req_file.write_text("\n".join(new_deps))
                     self._execute_installer(["--no-deps", "-r", str(req_file)], of_type)
 
-    def _install_list_of_deps(  # ruff:ignore[complex-structure, too-many-branches]  # follows the protocol
+    def _install_list_of_deps(
         self,
         arguments: Sequence[Requirement | Package],
         section: str,
         of_type: str,
     ) -> None:
+        groups, config_settings = self._group_arguments(arguments)
+        req_of_type = f"{of_type}_deps" if groups["pkg"] or groups["dev_pkg"] else of_type
+        for value in groups.values():
+            value.sort()
+        cache_value = {"req": groups["req"], "env": self._install_env_vars()}
+        with self._env.cache.compare(cache_value, section, req_of_type) as (eq, old):
+            if not eq:  # pragma: no branch  # other outcome untested
+                old_req: list[str] = old["req"] if isinstance(old, dict) else (old or [])
+                self._install_new_deps(groups["req"], old_req, req_of_type)
+        self._install_packages(groups, config_settings, of_type)
+
+    def _group_arguments(
+        self, arguments: Sequence[Requirement | Package]
+    ) -> tuple[dict[str, list[str]], dict[str, str]]:
         groups: dict[str, list[str]] = defaultdict(list)
         config_settings: dict[str, str] = {}
         for arg in arguments:
@@ -390,22 +404,26 @@ class Pip(PythonInstallerListDependencies):
             else:
                 logging.warning("pip cannot install %r", arg)
                 raise SystemExit(1)
-        req_of_type = f"{of_type}_deps" if groups["pkg"] or groups["dev_pkg"] else of_type
-        for value in groups.values():
-            value.sort()
-        cache_value = {"req": groups["req"], "env": self._install_env_vars()}
-        with self._env.cache.compare(cache_value, section, req_of_type) as (eq, old):
-            if not eq:  # pragma: no branch  # other outcome untested
-                old_req: list[str] = old["req"] if isinstance(old, dict) else (old or [])
-                if miss := sorted(
-                    set(old_req) - set(groups["req"])
-                ):  # no way yet to know what to uninstall here (transitive dependencies?)
-                    msg = f"dependencies removed: {', '.join(str(i) for i in miss)}"
-                    raise Recreate(msg)  # pragma: no branch  # other outcome untested
-                # other outcome untested
-                if new_deps := sorted(set(groups["req"]) - set(old_req)) or list(groups["req"]):  # pragma: no branch
-                    new_deps.extend(self.constraints.as_root_args)
-                    self._execute_installer(new_deps, req_of_type)
+        return groups, config_settings
+
+    def _apply_force_deps(self, deps: Sequence[Requirement]) -> list[str]:
+        forced: dict[NormalizedName, Requirement] = {
+            canonicalize_name(r.name): r for r in getattr(self._env.options, "force_dep", [])
+        }
+        return [str(forced.get(canonicalize_name(dep.name), dep)) for dep in deps]
+
+    def _install_new_deps(self, req: list[str], old_req: list[str], req_of_type: str) -> None:
+        if miss := sorted(
+            set(old_req) - set(req)
+        ):  # no way yet to know what to uninstall here (transitive dependencies?)
+            msg = f"dependencies removed: {', '.join(str(i) for i in miss)}"
+            raise Recreate(msg)  # pragma: no branch  # other outcome untested
+        # other outcome untested
+        if new_deps := sorted(set(req) - set(old_req)) or list(req):  # pragma: no branch
+            new_deps.extend(self.constraints.as_root_args)
+            self._execute_installer(new_deps, req_of_type)
+
+    def _install_packages(self, groups: dict[str, list[str]], config_settings: dict[str, str], of_type: str) -> None:
         cs_args = [f"--config-settings={k}={v}" for k, v in config_settings.items()]
         install_args = ["--force-reinstall", "--no-deps"]
         if groups["pkg"]:
@@ -418,12 +436,6 @@ class Pip(PythonInstallerListDependencies):
             # we intentionally ignore constraints when installing the package itself
             # https://github.com/tox-dev/tox/issues/3550
             self._execute_installer(install_args, of_type)
-
-    def _apply_force_deps(self, deps: Sequence[Requirement]) -> list[str]:
-        forced: dict[NormalizedName, Requirement] = {
-            canonicalize_name(r.name): r for r in getattr(self._env.options, "force_dep", [])
-        }
-        return [str(forced.get(canonicalize_name(dep.name), dep)) for dep in deps]
 
 
 __all__ = [

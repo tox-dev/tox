@@ -122,18 +122,11 @@ class StrConvert(Convert[str]):
                     quote = ""
                 path_start = False
             elif char == escape:
-                if (following := value[index + 1 : index + 2]) == escape:
-                    after_pair = value[index + 2 : index + 3]
-                    # UNC prefixes need two literal backslashes; a bare pair still escapes one.
-                    is_prefix = path_start and bool(after_pair) and after_pair not in f"{escape}{special_chars} \t\r\n"
-                    result.append(escape * (4 if is_prefix else 2))
-                    index += 1
-                elif following and following in special_chars:
-                    result.extend((escape, following))
-                    index += 1
-                else:
-                    result.append(escape if value[index - 1 : index] == escape else escape * 2)
+                text, consumed = _escape_text(value, index, escape, special_chars, path_start=path_start)
+                result.append(text)
+                index += consumed
                 path_start = False
+                continue
             else:
                 result.append(char)
                 if char in special_chars and not quote:
@@ -169,6 +162,17 @@ class StrConvert(Convert[str]):
 
         msg = f"value {value!r} cannot be transformed to bool, valid: {', '.join(StrConvert.VALID_BOOL)}"
         raise TypeError(msg)
+
+
+def _escape_text(value: str, index: int, escape: str, special_chars: str, *, path_start: bool) -> tuple[str, int]:
+    if (following := value[index + 1 : index + 2]) == escape:
+        after_pair = value[index + 2 : index + 3]
+        # UNC prefixes need two literal backslashes; a bare pair still escapes one.
+        is_prefix = path_start and bool(after_pair) and after_pair not in f"{escape}{special_chars} \t\r\n"
+        return escape * (4 if is_prefix else 2), 2
+    if following and following in special_chars:
+        return escape + following, 2
+    return (escape if value[index - 1 : index] == escape else escape * 2), 1
 
 
 __all__ = [

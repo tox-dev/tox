@@ -20,6 +20,8 @@ from tox.tox_env.errors import Fail, Recreate, Skip
 from tox.util.typing_compat import override
 
 if TYPE_CHECKING:
+    from io import TextIOWrapper
+
     from python_discovery import MarkerEnvironment
 
     from tox.config.cli.parser import Parsed
@@ -214,30 +216,7 @@ class Python(ToxEnv, ABC):
         if env_base_python is not None:
             spec_name = PythonSpec.from_string_spec(env_base_python)
             for base_python in base_pythons:
-                spec_base = PythonSpec.from_string_spec(base_python)
-                if spec_base.path is not None:
-                    path = Path(spec_base.path).absolute()
-                    if str(spec_base.path) == sys.executable:
-                        spec_base = cls._python_spec_for_sys_executable()
-                    else:
-                        spec_base = cls.python_spec_for_path(path)
-                implementation_conflict = spec_name.implementation is not None and (
-                    spec_base.implementation is None
-                    or spec_base.implementation.lower() != spec_name.implementation.lower()
-                )
-                if implementation_conflict or any(
-                    getattr(spec_base, key) != getattr(spec_name, key)
-                    for key in (
-                        "major",
-                        "minor",
-                        "micro",
-                        "architecture",
-                        "machine",
-                        "free_threaded",
-                        "debug",
-                    )
-                    if getattr(spec_name, key) is not None
-                ):
+                if cls._conflicts(spec_name, cls._resolve_base_spec(base_python)):
                     msg = f"env name {env_name} conflicting with base python {base_python}"
                     if ignore_base_python_conflict:
                         # ignore the base python settings and return the thing that looks like a Python version
@@ -274,6 +253,34 @@ class Python(ToxEnv, ABC):
     @staticmethod
     def _explicit_version_spec(found: dict[str, str | None]) -> str:
         return f"{('pypy' if found['impl'] == 'pypy' else '')}{found['version']}{found['threaded']}{found['debug']}"
+
+    @staticmethod
+    def _conflicts(spec_name: PythonSpec, spec_base: PythonSpec) -> bool:
+        implementation_conflict = spec_name.implementation is not None and (
+            spec_base.implementation is None or spec_base.implementation.lower() != spec_name.implementation.lower()
+        )
+        return implementation_conflict or any(
+            getattr(spec_base, key) != getattr(spec_name, key)
+            for key in (
+                "major",
+                "minor",
+                "micro",
+                "architecture",
+                "machine",
+                "free_threaded",
+                "debug",
+            )
+            if getattr(spec_name, key) is not None
+        )
+
+    @classmethod
+    def _resolve_base_spec(cls, base_python: str) -> PythonSpec:
+        spec_base = PythonSpec.from_string_spec(base_python)
+        if spec_base.path is None:
+            return spec_base
+        if str(spec_base.path) == sys.executable:
+            return cls._python_spec_for_sys_executable()
+        return cls.python_spec_for_path(Path(spec_base.path).absolute())
 
     @classmethod
     def _python_spec_for_sys_executable(cls) -> PythonSpec:
@@ -341,28 +348,32 @@ class Python(ToxEnv, ABC):
         msg = f"base_python_file: no valid Python version found in {', '.join(repr(f) for f in file_paths)}"
         raise Fail(msg)
 
-    @staticmethod
-    def _first_version_line(path: Path, file_path: str) -> str | None:
+    @classmethod
+    def _first_version_line(cls, path: Path, file_path: str) -> str | None:
         with path.open(encoding="utf-8-sig") as file_handler:
             max_length: Final[int] = 1024
             while line := file_handler.readline(max_length + 1):
                 stripped = line.strip()
                 if len(line) > max_length and not line.endswith("\n"):
-                    msg = f"base_python_file: line in {file_path!r} exceeds {max_length} characters"
-                    if stripped and not stripped.startswith("#"):
-                        raise Fail(msg)
-                    is_comment = stripped.startswith("#")
-                    while continuation := file_handler.readline(max_length + 1):
-                        stripped_continuation = continuation.strip()
-                        if not is_comment and stripped_continuation and not stripped_continuation.startswith("#"):
-                            raise Fail(msg)
-                        is_comment = is_comment or stripped_continuation.startswith("#")
-                        if continuation.endswith("\n"):
-                            break
+                    cls._skip_overlong_line(file_handler, stripped, file_path, max_length)
                     continue
                 if stripped and not stripped.startswith("#"):
                     return stripped
         return None
+
+    @staticmethod
+    def _skip_overlong_line(file_handler: TextIOWrapper, stripped: str, file_path: str, max_length: int) -> None:
+        msg = f"base_python_file: line in {file_path!r} exceeds {max_length} characters"
+        if stripped and not stripped.startswith("#"):
+            raise Fail(msg)
+        is_comment = stripped.startswith("#")
+        while continuation := file_handler.readline(max_length + 1):
+            stripped_continuation = continuation.strip()
+            if not is_comment and stripped_continuation and not stripped_continuation.startswith("#"):
+                raise Fail(msg)
+            is_comment = is_comment or stripped_continuation.startswith("#")
+            if continuation.endswith("\n"):
+                break
 
     @staticmethod
     def _is_python_version_spec(value: str) -> bool:

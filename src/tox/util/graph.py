@@ -3,11 +3,13 @@
 from __future__ import annotations
 
 from collections import OrderedDict, defaultdict
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
 
 
-def stable_topological_sort(  # ruff:ignore[complex-structure]  # follows the protocol
-    graph: dict[str, set[str]],
-) -> list[str]:
+def stable_topological_sort(graph: dict[str, set[str]]) -> list[str]:
     """Sort the nodes of a graph, so that each node comes after the nodes it depends on.
 
     :param graph: the nodes, each mapped to the nodes it depends on
@@ -18,11 +20,7 @@ def stable_topological_sort(  # ruff:ignore[complex-structure]  # follows the pr
     """
     to_order = set(graph.keys())  # keep a log of what  we need to order
 
-    # normalize graph - fill missing nodes (assume no dependency)
-    for values in list(graph.values()):
-        for value in values:
-            if value not in graph:
-                graph[value] = set()
+    _fill_missing_nodes(graph)
 
     inverse_graph = defaultdict(set)
     for key, depends in graph.items():
@@ -34,11 +32,7 @@ def stable_topological_sort(  # ruff:ignore[complex-structure]  # follows the pr
     need_to_visit = OrderedDict((i, None) for i in graph)
     topology = []
     while need_to_visit:
-        # to keep stable, pick the first node ready to visit in the original order
-        for node in need_to_visit:
-            if node in ready_to_visit:
-                break
-        else:
+        if (node := _next_ready(need_to_visit, ready_to_visit)) is None:
             break
         del need_to_visit[node]
 
@@ -57,6 +51,18 @@ def stable_topological_sort(  # ruff:ignore[complex-structure]  # follows the pr
         msg = "could not order tox environments and failed to detect circle"  # pragma: no cover  # untested error path
         raise ValueError(msg)  # pragma: no cover  # untested error path
     return result
+
+
+def _fill_missing_nodes(graph: dict[str, set[str]]) -> None:
+    for values in list(graph.values()):
+        for value in values:
+            if value not in graph:
+                graph[value] = set()
+
+
+def _next_ready(need_to_visit: Iterable[str], ready_to_visit: set[str]) -> str | None:
+    # to keep stable, pick the first node ready to visit in the original order
+    return next((node for node in need_to_visit if node in ready_to_visit), None)
 
 
 def identify_cycle(graph: dict[str, set[str]]) -> None:

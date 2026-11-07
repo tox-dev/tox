@@ -93,6 +93,107 @@ DEFAULT_INDEX_URL: Final[str] = "https://pypi.org/simple"
 _HTTP_BODY_TIMEOUT: Final[int] = 120
 
 
+def _local_requirement(req: str, from_file: str) -> str:
+    root = Path(from_file).parent
+    extras, path = _extras_and_path(req, root)
+    extra_part = f"[{','.join(sorted(extras))}]" if extras else ""
+    try:
+        rel_path = str(path.resolve().relative_to(root))
+        if rel_path != "." and (os.sep not in rel_path or rel_path.startswith("-")):
+            rel_path = f".{os.sep}{rel_path}"
+    except ValueError:
+        rel_path = str(path.resolve())
+    return f"{rel_path}{extra_part}"
+
+
+def _extras_and_path(req: str, root: Path) -> tuple[list[str], Path]:
+    if match := _EXTRA_PATH.fullmatch(Path(req).name):
+        extras: list[str] = []
+        for extra in match.group(2).split(","):
+            extra = extra.strip()  # ruff:ignore[redefined-loop-name]  # loop rebinding intended
+            if not extra:
+                continue
+            if not _EXTRA_ELEMENT.fullmatch(extra):
+                return [], root / req
+            extras.append(extra)
+        return extras, root / Path(req).parent / match.group(1)
+    return [], root / req
+
+
+def _merge_requirement_files(base_opt: Namespace, opt: Namespace) -> None:
+    if opt.requirements:
+        if not hasattr(base_opt, "requirements"):
+            base_opt.requirements = []
+        if opt.requirements[0] not in base_opt.requirements:
+            base_opt.requirements.append(opt.requirements[0])
+    if opt.constraints:
+        if not hasattr(base_opt, "constraints"):
+            base_opt.constraints = []
+        if opt.constraints[0] not in base_opt.constraints:
+            base_opt.constraints.append(opt.constraints[0])
+
+
+def _merge_hashes_and_features(base_opt: Namespace, opt: Namespace) -> None:
+    if opt.require_hashes:
+        base_opt.require_hashes = True
+    if opt.features_enabled:
+        if not hasattr(base_opt, "features_enabled"):
+            base_opt.features_enabled = []
+        for feature in opt.features_enabled:
+            if feature not in base_opt.features_enabled:
+                base_opt.features_enabled.append(feature)
+        base_opt.features_enabled.sort()
+
+
+def _merge_index_urls(base_opt: Namespace, opt: Namespace) -> None:
+    # pip ignores every index once --no-index is given, wherever the index options appear
+    if opt.no_index is True or getattr(base_opt, "index_url", None) == []:
+        base_opt.index_url = []
+    elif opt.index_url:
+        if getattr(base_opt, "index_url", []):
+            base_opt.index_url[0] = opt.index_url
+        else:
+            base_opt.index_url = [opt.index_url]
+    if opt.extra_index_url and getattr(base_opt, "index_url", None) != []:
+        if not getattr(base_opt, "index_url", []):
+            base_opt.index_url = [DEFAULT_INDEX_URL]
+        for url in opt.extra_index_url:
+            if url not in base_opt.index_url:
+                base_opt.index_url.append(url)
+
+
+def _merge_find_links(base_opt: Namespace, opt: Namespace, filename: str) -> None:
+    if opt.find_links:
+        # relative to a requirements file.
+        if not hasattr(base_opt, "find_links"):
+            base_opt.find_links = []
+        value = opt.find_links[0]
+        relative_to_reqs_file = Path(filename).absolute().parent / value
+        if os.path.exists(str(relative_to_reqs_file)):  # ruff:ignore[os-path-exists] # Path.exists fails on win32 <=3.7 with URI
+            value = str(relative_to_reqs_file)  # pragma: no cover  # setup not built by tests
+        if value not in base_opt.find_links:
+            base_opt.find_links.append(value)
+
+
+def _index_option_groups(opt: Namespace) -> Iterator[tuple[str, ...]]:
+    if (index_url := getattr(opt, "index_url", None)) is not None:
+        if index_url:
+            if index_url[0] != DEFAULT_INDEX_URL:
+                yield "-i", index_url[0]
+            for url in index_url[1:]:
+                yield "--extra-index-url", url
+        else:
+            yield ("--no-index",)
+
+
+def _binary_option_groups(opt: Namespace) -> Iterator[tuple[str, ...]]:
+    # pip drops the --no-binary names it read before an --only-binary :all:, so that one goes first
+    only_binary_first = ":all:" in getattr(opt, "only_binary", ())
+    for name in ("only_binary", "no_binary") if only_binary_first else ("no_binary", "only_binary"):
+        if hasattr(opt, name):
+            yield f"--{name.replace('_', '-')}", ",".join(sorted(getattr(opt, name)))
+
+
 class ParsedRequirement:
     """A requirement parsed from a requirements file.
 
@@ -112,31 +213,7 @@ class ParsedRequirement:
             elif _VERSION_SPECIFIER.search(req):
                 self._requirement = req  # invalid requirement with version specifier — let pip report the error
             else:
-                root = Path(from_file).parent
-                extras: list[str] = []
-                if match := _EXTRA_PATH.fullmatch(Path(req).name):
-                    for extra in match.group(2).split(","):
-                        extra = extra.strip()  # ruff:ignore[redefined-loop-name]  # loop rebinding intended
-                        if not extra:
-                            continue
-                        if not _EXTRA_ELEMENT.fullmatch(extra):
-                            extras = []
-                            path = root / req
-                            break
-                        extras.append(extra)
-                    else:
-                        path = root / Path(req).parent / match.group(1)
-                else:
-                    path = root / req
-                extra_part = f"[{','.join(sorted(extras))}]" if extras else ""
-                try:
-                    rel_path = str(path.resolve().relative_to(root))
-                    if rel_path != "." and (os.sep not in rel_path or rel_path.startswith("-")):
-                        rel_path = f".{os.sep}{rel_path}"
-                except ValueError:
-                    rel_path = str(path.resolve())
-
-                self._requirement = f"{rel_path}{extra_part}"
+                self._requirement = _local_requirement(req, from_file)
         self._options = options
         self._from_file = from_file
         self._lineno = lineno
@@ -491,56 +568,12 @@ class RequirementsFile:
             req_options["config_settings"] = config_settings
         return ParsedRequirement(line.requirement, req_options, line.filename, line.lineno)
 
-    def _merge_option_line(  # ruff:ignore[complex-structure, too-many-branches]  # follows the protocol
-        self,
-        base_opt: Namespace,
-        opt: Namespace,
-        filename: str,
-    ) -> None:
+    def _merge_option_line(self, base_opt: Namespace, opt: Namespace, filename: str) -> None:
         # percolate options upward
-        if opt.requirements:
-            if not hasattr(base_opt, "requirements"):
-                base_opt.requirements = []
-            if opt.requirements[0] not in base_opt.requirements:
-                base_opt.requirements.append(opt.requirements[0])
-        if opt.constraints:
-            if not hasattr(base_opt, "constraints"):
-                base_opt.constraints = []
-            if opt.constraints[0] not in base_opt.constraints:
-                base_opt.constraints.append(opt.constraints[0])
-        if opt.require_hashes:
-            base_opt.require_hashes = True
-        if opt.features_enabled:
-            if not hasattr(base_opt, "features_enabled"):
-                base_opt.features_enabled = []
-            for feature in opt.features_enabled:
-                if feature not in base_opt.features_enabled:
-                    base_opt.features_enabled.append(feature)
-            base_opt.features_enabled.sort()
-        # pip ignores every index once --no-index is given, wherever the index options appear
-        if opt.no_index is True or getattr(base_opt, "index_url", None) == []:
-            base_opt.index_url = []
-        elif opt.index_url:
-            if getattr(base_opt, "index_url", []):
-                base_opt.index_url[0] = opt.index_url
-            else:
-                base_opt.index_url = [opt.index_url]
-        if opt.extra_index_url and getattr(base_opt, "index_url", None) != []:
-            if not getattr(base_opt, "index_url", []):
-                base_opt.index_url = [DEFAULT_INDEX_URL]
-            for url in opt.extra_index_url:
-                if url not in base_opt.index_url:
-                    base_opt.index_url.append(url)
-        if opt.find_links:
-            # relative to a requirements file.
-            if not hasattr(base_opt, "find_links"):
-                base_opt.find_links = []
-            value = opt.find_links[0]
-            relative_to_reqs_file = Path(filename).absolute().parent / value
-            if os.path.exists(str(relative_to_reqs_file)):  # ruff:ignore[os-path-exists] # Path.exists fails on win32 <=3.7 with URI
-                value = str(relative_to_reqs_file)  # pragma: no cover  # setup not built by tests
-            if value not in base_opt.find_links:
-                base_opt.find_links.append(value)
+        _merge_requirement_files(base_opt, opt)
+        _merge_hashes_and_features(base_opt, opt)
+        _merge_index_urls(base_opt, opt)
+        _merge_find_links(base_opt, opt, filename)
         if opt.pre:
             base_opt.pre = True
         if opt.prefer_binary:
@@ -595,19 +628,12 @@ class RequirementsFile:
         return self._as_root_args
 
     # one dispatch over all pip option groups
-    def _option_groups(self, opt: Namespace) -> Iterator[tuple[str, ...]]:  # ruff:ignore[complex-structure, too-many-branches, no-self-use]
+    def _option_groups(self, opt: Namespace) -> Iterator[tuple[str, ...]]:  # ruff:ignore[no-self-use]  # override keeps self
         for req in getattr(opt, "requirements", []):
             yield "-r", req
         for req in getattr(opt, "constraints", []):
             yield "-c", req
-        if (index_url := getattr(opt, "index_url", None)) is not None:
-            if index_url:
-                if index_url[0] != DEFAULT_INDEX_URL:
-                    yield "-i", index_url[0]
-                for url in index_url[1:]:
-                    yield "--extra-index-url", url
-            else:
-                yield ("--no-index",)
+        yield from _index_option_groups(opt)
         for link in getattr(opt, "find_links", []):
             yield "-f", link
         if hasattr(opt, "pre"):
@@ -620,11 +646,7 @@ class RequirementsFile:
             yield ("--require-hashes",)
         for feature in getattr(opt, "features_enabled", []):
             yield "--use-feature", feature
-        # pip drops the --no-binary names it read before an --only-binary :all:, so that one goes first
-        only_binary_first = ":all:" in getattr(opt, "only_binary", ())
-        for name in ("only_binary", "no_binary") if only_binary_first else ("no_binary", "only_binary"):
-            if hasattr(opt, name):
-                yield f"--{name.replace('_', '-')}", ",".join(sorted(getattr(opt, name)))
+        yield from _binary_option_groups(opt)
 
     def redact(self, text: str) -> str:
         """Replace the secret values in a text with a placeholder.

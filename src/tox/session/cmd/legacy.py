@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 from packaging.requirements import InvalidRequirement, Requirement
-from packaging.utils import canonicalize_name
+from packaging.utils import NormalizedName, canonicalize_name
 
 from tox.config.cli.parser import DEFAULT_VERBOSITY, Parsed, ToxParser
 from tox.config.loader.memory import MemoryLoader
@@ -21,6 +21,7 @@ from .run.sequential import run_sequential
 from .show_config import show_config
 
 if TYPE_CHECKING:
+    from tox.config.sets import EnvConfigSet
     from tox.session.state import State
 
 
@@ -128,9 +129,7 @@ def legacy(state: State) -> int:
     return run_sequential(state)
 
 
-def _handle_legacy_only_flags(  # ruff:ignore[complex-structure]  # follows the protocol
-    option: Parsed, envs: EnvSelector
-) -> None:
+def _handle_legacy_only_flags(option: Parsed, envs: EnvSelector) -> None:
     override = {}
     if getattr(option, "site_packages", False):
         override["system_site_packages"] = True
@@ -148,13 +147,17 @@ def _handle_legacy_only_flags(  # ruff:ignore[complex-structure]  # follows the 
             if set_env:
                 env_conf.get("set_env", SetEnv).update(set_env, override=True)
             if forced:
-                to_force = forced.copy()
-                as_root_args = env_conf.get("deps", PythonDeps).as_root_args
-                for at, entry in enumerate(as_root_args):
-                    try:
-                        req = Requirement(entry)
-                    except InvalidRequirement:
-                        continue
-                    if (name := canonicalize_name(req.name)) in to_force:
-                        as_root_args[at] = str(to_force.pop(name))
-                as_root_args.extend(str(v) for v in to_force.values())
+                _force_root_deps(env_conf, forced)
+
+
+def _force_root_deps(env_conf: EnvConfigSet, forced: dict[NormalizedName, Requirement]) -> None:
+    to_force = forced.copy()
+    as_root_args = env_conf.get("deps", PythonDeps).as_root_args
+    for at, entry in enumerate(as_root_args):
+        try:
+            req = Requirement(entry)
+        except InvalidRequirement:
+            continue
+        if (name := canonicalize_name(req.name)) in to_force:
+            as_root_args[at] = str(to_force.pop(name))
+    as_root_args.extend(str(v) for v in to_force.values())

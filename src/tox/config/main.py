@@ -157,39 +157,44 @@ class Config:
         :returns: the positional arguments, or ``None`` when none were passed
         """
         if self._pos_args is not None and to_path is not None and Path.cwd() != to_path:
-            args: Final[list[str]] = []
             # Windows resolves parent segments before following directory links.
             if sys.platform == "win32":
                 to_path_str = os.path.abspath(str(to_path))  # ruff:ignore[os-path-abspath]  # path as written
             else:
                 to_path_str = os.path.realpath(to_path)
-            for index, arg in enumerate(self._pos_args):
-                if not arg:
-                    args.append(arg)
-                    continue
-                path_arg = Path(arg)
-                try:
-                    is_existing_path = path_arg.exists()
-                except OSError:
-                    logging.debug("could not check if %r is an existing path", redact_argv([arg])[0])
-                    is_existing_path = False
-                # A wrapper can run the first positional value as a program without tox knowing that it does.
-                bare_first_value: bool = is_existing_path and index == 0 and path_arg.name == arg
-                executable_file: bool = (
-                    bare_first_value
-                    and path_arg.is_file()
-                    and os.access(path_arg, os.X_OK)
-                    and (os.name != "nt" or path_arg.suffix.lower() in {".bat", ".cmd", ".com", ".exe"})
-                )
-                if bare_first_value and (program_first or executable_file):
-                    args.append(arg)
-                    continue
-                if is_existing_path and not path_arg.is_absolute():
-                    args.append(self._rewrite_relative_path(arg, to_path_str))
-                else:
-                    args.append(arg)
-            return tuple(args)
+            return tuple(
+                self._rewrite_pos_arg(index, arg, to_path_str, program_first=program_first)
+                for index, arg in enumerate(self._pos_args)
+            )
         return self._pos_args
+
+    @staticmethod
+    def _rewrite_pos_arg(index: int, arg: str, to_path_str: str, *, program_first: bool) -> str:
+        if not arg:
+            return arg
+        path_arg = Path(arg)
+        is_existing_path = Config._is_existing_path(path_arg, arg)
+        # A wrapper can run the first positional value as a program without tox knowing that it does.
+        bare_first_value: bool = is_existing_path and index == 0 and path_arg.name == arg
+        executable_file: bool = (
+            bare_first_value
+            and path_arg.is_file()
+            and os.access(path_arg, os.X_OK)
+            and (os.name != "nt" or path_arg.suffix.lower() in {".bat", ".cmd", ".com", ".exe"})
+        )
+        if bare_first_value and (program_first or executable_file):
+            return arg
+        if is_existing_path and not path_arg.is_absolute():
+            return Config._rewrite_relative_path(arg, to_path_str)
+        return arg
+
+    @staticmethod
+    def _is_existing_path(path_arg: Path, arg: str) -> bool:
+        try:
+            return path_arg.exists()
+        except OSError:
+            logging.debug("could not check if %r is an existing path", redact_argv([arg])[0])
+            return False
 
     @staticmethod
     def _rewrite_relative_path(arg: str, to_path_str: str) -> str:
