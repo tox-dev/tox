@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from argparse import Action, ArgumentParser, Namespace
 from typing import TYPE_CHECKING, TypedDict
-from unittest.mock import MagicMock
 
 import pytest
 
@@ -26,12 +25,12 @@ class _CompleterArgs(TypedDict):
 
 
 @pytest.fixture
-def completer_args() -> _CompleterArgs:
+def completer_args(mocker: MockerFixture) -> _CompleterArgs:
     return {
         "prefix": "",
-        "action": MagicMock(spec=Action),
-        "parser": MagicMock(spec=ArgumentParser),
-        "parsed_args": MagicMock(spec=Namespace),
+        "action": mocker.MagicMock(spec=Action),
+        "parser": mocker.MagicMock(spec=ArgumentParser),
+        "parsed_args": mocker.MagicMock(spec=Namespace),
     }
 
 

@@ -9,9 +9,7 @@ import pytest
 from packaging.requirements import Requirement
 
 if TYPE_CHECKING:
-    from unittest.mock import MagicMock
-
-    from pytest_mock import MockerFixture
+    from pytest_mock import MockerFixture, MockType
 
     from tox.pytest import ToxProjectCreator, ToxRunOutcome
 
@@ -24,7 +22,7 @@ def test_deps_installed(tox_project: ToxProjectCreator) -> None:
     assert any("setuptools" in arg for cmd in install_cmds for arg in cmd)
 
 
-def _run(project: ToxProjectCreator, files: dict[str, str], *extra_args: str) -> tuple[ToxRunOutcome, MagicMock]:
+def _run(project: ToxProjectCreator, files: dict[str, str], *extra_args: str) -> tuple[ToxRunOutcome, MockType]:
     proj = project(files)
     execute_calls = proj.patch_execute(lambda request: 0 if "install" in request.run_id else None)
     return proj.run("r", "-e", "check", "--discover", sys.executable, *extra_args), execute_calls

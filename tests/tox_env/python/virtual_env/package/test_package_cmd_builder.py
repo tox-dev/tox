@@ -10,7 +10,8 @@ import pytest
 if TYPE_CHECKING:
     from collections.abc import Callable
     from pathlib import Path
-    from unittest.mock import MagicMock
+
+    from pytest_mock import MockType
 
     from tox.pytest import ToxProject, ToxProjectCreator, ToxRunOutcome
 
@@ -151,7 +152,7 @@ def test_build_wheel_external_relative_glob_uses_project(
     dist.mkdir()
     wheel: Final[Path] = dist / pkg_with_extras_project_wheel.name
     shutil.copy(pkg_with_extras_project_wheel, wheel)
-    execute_calls: Final[MagicMock] = project.patch_execute(lambda run: 0 if "install" in run.run_id else None)
+    execute_calls: Final[MockType] = project.patch_execute(lambda run: 0 if "install" in run.run_id else None)
 
     result: Final[ToxRunOutcome] = project.run("r", "-e", "py", "-c", project.path.name, from_cwd=project.path.parent)
 
@@ -175,7 +176,7 @@ def test_build_wheel_external_default_glob_work_dir_with_brackets(
     """
     project: Final[ToxProject] = tox_project({"tox.ini": ini})
     work_dir: Final[Path] = project.path / "work[1]"
-    execute_calls: Final[MagicMock] = project.patch_execute(lambda run: 0 if "install" in run.run_id else None)
+    execute_calls: Final[MockType] = project.patch_execute(lambda run: 0 if "install" in run.run_id else None)
 
     result: Final[ToxRunOutcome] = project.run("r", "-e", "py", "--workdir", str(work_dir))
 
@@ -197,7 +198,7 @@ def test_build_wheel_external_relative_glob_root_with_brackets(
     shutil.copy(pkg_with_extras_project_wheel, dist / pkg_with_extras_project_wheel.name)
     root: Final[Path] = tmp_path / "proj[1]"
     shutil.copytree(project.path, root)
-    execute_calls: Final[MagicMock] = project.patch_execute(lambda run: 0 if "install" in run.run_id else None)
+    execute_calls: Final[MockType] = project.patch_execute(lambda run: 0 if "install" in run.run_id else None)
 
     result: Final[ToxRunOutcome] = project.run("r", "-e", "py", "--root", str(root), "--workdir", str(tmp_path / "w"))
 

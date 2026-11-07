@@ -14,9 +14,8 @@ from tox.report import HandledError
 if TYPE_CHECKING:
     from collections.abc import Callable
     from pathlib import Path
-    from unittest.mock import MagicMock
 
-    from pytest_mock import MockerFixture
+    from pytest_mock import MockerFixture, MockType
     from typing_extensions import TypeIs
 
     from tox.pytest import CaptureFixture, SubRequest, ToxProject, ToxProjectCreator, ToxRunOutcome
@@ -237,7 +236,7 @@ def test_pip_install_deps_substitution_cannot_add_option(
 ) -> None:
     monkeypatch.setenv("PART", "value --index-url=https://other/simple")
     project: Final[ToxProject] = tox_project(files)
-    execute_calls: Final[MagicMock] = project.patch_execute(lambda request: 0 if "install" in request.run_id else None)
+    execute_calls: Final[MockType] = project.patch_execute(lambda request: 0 if "install" in request.run_id else None)
 
     result: Final[ToxRunOutcome] = project.run("r", "-e", "py")
 
@@ -766,7 +765,7 @@ def test_pip_install_whole_host_entry_reaches_pip_literally(
         "tox.toml": '[env_run_base]\npackage="skip"\npass_env=["DEPLOY_TOKEN"]\n'
         'deps=[{replace="env",name="DEMO",default="a==1"}]'
     })
-    execute_calls: Final[MagicMock] = project.patch_execute(lambda request: 0 if "install" in request.run_id else None)
+    execute_calls: Final[MockType] = project.patch_execute(lambda request: 0 if "install" in request.run_id else None)
     result: Final[ToxRunOutcome] = project.run("r", "-e", "py")
     result.assert_success()
     assert execute_calls.call_args[0][3].cmd == ["python", "-I", "-m", "pip", "install", "a==${DEPLOY_TOKEN}"]
@@ -1788,7 +1787,7 @@ def test_pip_pylock_rejects_injected_environment_option(tox_project: ToxProjectC
         "tox.toml": f"{_PYLOCK_ENV_CONFIG}set_env = {{ LOCK_URL = {json.dumps(url)} }}\n",
         "pylock.toml": _PYLOCK_ENV_TOML,
     })
-    execute_calls: Final[MagicMock] = project.patch_execute()
+    execute_calls: Final[MockType] = project.patch_execute()
 
     result: Final[ToxRunOutcome] = project.run("r", "-e", "py")
 
@@ -1821,7 +1820,7 @@ def test_pip_pylock_rejects_windows_case_variant_environment_name(
         ),
         "pylock.toml": _PYLOCK_ENV_TOML,
     })
-    execute_calls: Final[MagicMock] = project.patch_execute()
+    execute_calls: Final[MockType] = project.patch_execute()
 
     result: Final[ToxRunOutcome] = project.run("r", "-e", "py")
 
@@ -1835,7 +1834,7 @@ def test_pip_pylock_reinstalls_when_referenced_environment_changes(tox_project: 
         "tox.toml": f'{_PYLOCK_ENV_CONFIG}set_env = {{ LOCK_URL = "https://example.invalid/first.tar.gz" }}\n',
         "pylock.toml": _PYLOCK_ENV_TOML,
     })
-    execute_calls: Final[MagicMock] = project.patch_execute()
+    execute_calls: Final[MockType] = project.patch_execute()
     project.run("r", "-e", "py").assert_success()
     execute_calls.reset_mock()
     (project.path / "tox.toml").write_text(

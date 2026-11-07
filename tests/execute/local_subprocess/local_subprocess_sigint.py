@@ -8,19 +8,18 @@ import sys
 from io import TextIOWrapper
 from pathlib import Path
 from types import SimpleNamespace
-from typing import TYPE_CHECKING, Final
-from unittest.mock import MagicMock, create_autospec
+from typing import TYPE_CHECKING, Final, cast
 
 from tox.execute.local_sub_process import LocalSubProcessExecutor
 from tox.execute.request import ExecuteRequest, StdinSource
 from tox.report import NamedBytesIO
-from tox.tox_env.api import ToxEnv
 
 if TYPE_CHECKING:
     from types import FrameType
 
     from tox.execute import Outcome
     from tox.execute.api import ExecuteStatus
+    from tox.tox_env.api import ToxEnv
 
 logging.basicConfig(level=logging.DEBUG, format="%(relativeCreated)d\t%(levelname).1s\t%(message)s")
 bad_process: Final[Path] = Path(__file__).parent / "bad_process.py"
@@ -68,11 +67,12 @@ def _wait_for_exit(status: ExecuteStatus) -> None:
 _INTERRUPT_DONE = False
 signal.signal(signal.SIGINT, handler)
 logging.info("PID %d start %r", os.getpid(), request)
-tox_env: Final[MagicMock] = create_autospec(
-    ToxEnv,
-    instance=True,
-    conf={"suicide_timeout": 0.01, "interrupt_timeout": 0.05, "terminate_timeout": 0.07},
-    options=SimpleNamespace(no_capture=False),
+tox_env: Final[ToxEnv] = cast(
+    "ToxEnv",
+    SimpleNamespace(
+        conf={"suicide_timeout": 0.01, "interrupt_timeout": 0.05, "terminate_timeout": 0.07},
+        options=SimpleNamespace(no_capture=False),
+    ),
 )
 
 _STATUS_OUTCOME: Outcome | None = None

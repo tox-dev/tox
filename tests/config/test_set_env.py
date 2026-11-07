@@ -6,7 +6,6 @@ import textwrap
 from functools import partial
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Final, Literal
-from unittest.mock import ANY
 
 import pytest
 
@@ -138,22 +137,23 @@ def eval_set_env(tox_project: ToxProjectCreator) -> EvalSetEnv:
     return func
 
 
-_EXPORTED: Final[dict[str, Any]] = {
-    "PIP_USER": "0",
-    "TOX_ENV_DIR": ANY,
-    "TOX_ENV_NAME": "py",
-    "TOX_WORK_DIR": ANY,
-    "VIRTUAL_ENV": ANY,
-}
+def _exported(mocker: MockerFixture) -> dict[str, str]:
+    return {
+        "PIP_USER": "0",
+        "TOX_ENV_DIR": mocker.ANY,
+        "TOX_ENV_NAME": "py",
+        "TOX_WORK_DIR": mocker.ANY,
+        "VIRTUAL_ENV": mocker.ANY,
+    }
 
 
-def test_set_env_default(eval_set_env: EvalSetEnv) -> None:
+def test_set_env_default(eval_set_env: EvalSetEnv, mocker: MockerFixture) -> None:
     set_env = eval_set_env("")
     assert {key: set_env.load(key) for key in set_env} == {
-        "PYTHONHASHSEED": ANY,
+        "PYTHONHASHSEED": mocker.ANY,
         "PIP_DISABLE_PIP_VERSION_CHECK": "1",
         "PYTHONIOENCODING": "utf-8",
-        **_EXPORTED,
+        **_exported(mocker),
     }
 
 
@@ -210,7 +210,7 @@ def test_set_env_invalid_lines(tox_project: ToxProjectCreator) -> None:
     assert "failed to load py.set_env: invalid line 'a' in set_env" in outcome.out
 
 
-def test_set_env_replacer(eval_set_env: EvalSetEnv, monkeypatch: MonkeyPatch) -> None:
+def test_set_env_replacer(eval_set_env: EvalSetEnv, monkeypatch: MonkeyPatch, mocker: MockerFixture) -> None:
     monkeypatch.setenv("MAGIC", "\nb=2\n")
     set_env = eval_set_env("[testenv]\npackage=skip\nset_env=a=1\n {env:MAGIC}")
     env = {k: set_env.load(k) for k in set_env}
@@ -219,8 +219,8 @@ def test_set_env_replacer(eval_set_env: EvalSetEnv, monkeypatch: MonkeyPatch) ->
         "a": "1",
         "b": "2",
         "PYTHONIOENCODING": "utf-8",
-        "PYTHONHASHSEED": ANY,
-        **_EXPORTED,
+        "PYTHONHASHSEED": mocker.ANY,
+        **_exported(mocker),
     }
 
 
@@ -241,7 +241,7 @@ def test_set_env_honor_override(eval_set_env: EvalSetEnv) -> None:
     ],
 )
 def test_set_env_environment_file(
-    of_type: ConfigFileFormat, config: str, eval_set_env: EvalSetEnv, monkeypatch: MonkeyPatch
+    of_type: ConfigFileFormat, config: str, eval_set_env: EvalSetEnv, monkeypatch: MonkeyPatch, mocker: MockerFixture
 ) -> None:
     env_file = """
     A=1
@@ -258,14 +258,14 @@ def test_set_env_environment_file(
     content = {k: set_env.load(k) for k in set_env}
     assert content == {
         "PIP_DISABLE_PIP_VERSION_CHECK": "1",
-        "PYTHONHASHSEED": ANY,
+        "PYTHONHASHSEED": mocker.ANY,
         "A": "1",
         "B": "2",
         "C": "1",
         "E": '"1"',
         "F": "",
         "PYTHONIOENCODING": "utf-8",
-        **_EXPORTED,
+        **_exported(mocker),
     }
 
 
@@ -293,7 +293,7 @@ def test_set_env_environment_file_is_utf8(eval_set_env: EvalSetEnv) -> None:
     ],
 )
 def test_set_env_environment_file_combined_with_normal_setting(
-    of_type: ConfigFileFormat, config: str, eval_set_env: EvalSetEnv, monkeypatch: MonkeyPatch
+    of_type: ConfigFileFormat, config: str, eval_set_env: EvalSetEnv, monkeypatch: MonkeyPatch, mocker: MockerFixture
 ) -> None:
     env_file = """
     A=1
@@ -306,11 +306,11 @@ def test_set_env_environment_file_combined_with_normal_setting(
     content = {k: set_env.load(k) for k in set_env}
     assert content == {
         "PIP_DISABLE_PIP_VERSION_CHECK": "1",
-        "PYTHONHASHSEED": ANY,
+        "PYTHONHASHSEED": mocker.ANY,
         "A": "1",
         "X": "y",
         "PYTHONIOENCODING": "utf-8",
-        **_EXPORTED,
+        **_exported(mocker),
     }
 
 
@@ -433,7 +433,7 @@ def test_set_env_environment_file_nul(
     assert "commands[0]>" not in result.out
 
 
-def test_set_env_file_ignores_export_keyword(eval_set_env: EvalSetEnv) -> None:
+def test_set_env_file_ignores_export_keyword(eval_set_env: EvalSetEnv, mocker: MockerFixture) -> None:
     set_env = eval_set_env(
         textwrap.dedent("""\
             [testenv]
@@ -452,14 +452,14 @@ def test_set_env_file_ignores_export_keyword(eval_set_env: EvalSetEnv) -> None:
     )
     assert {key: set_env.load(key) for key in set_env} == {
         "PIP_DISABLE_PIP_VERSION_CHECK": "1",
-        "PYTHONHASHSEED": ANY,
+        "PYTHONHASHSEED": mocker.ANY,
         "PYTHONIOENCODING": "utf-8",
         "FIRST": "1",
         "SECOND": "2",
         "export": "3",
         "exported": "4",
         "export\u00a0FIFTH": "5",
-        **_EXPORTED,
+        **_exported(mocker),
     }
 
 
@@ -505,7 +505,7 @@ def test_set_env_environment_file_utf8_bom(tox_project: ToxProjectCreator) -> No
 
 # https://github.com/tox-dev/tox/issues/2435
 def test_set_env_environment_with_file_and_expanded_substitution(
-    tox_project: ToxProjectCreator, monkeypatch: MonkeyPatch
+    tox_project: ToxProjectCreator, monkeypatch: MonkeyPatch, mocker: MockerFixture
 ) -> None:
     monkeypatch.setenv("env_file", ".env")
     conf = {
@@ -539,12 +539,12 @@ def test_set_env_environment_with_file_and_expanded_substitution(
     content = {k: set_env.load(k) for k in set_env}
     assert content == {
         "PIP_DISABLE_PIP_VERSION_CHECK": "1",
-        "PYTHONHASHSEED": ANY,
+        "PYTHONHASHSEED": mocker.ANY,
         "PYTHONIOENCODING": "utf-8",
         "PRECENDENCE_TEST_1": "1_self_precedence",
         "PRECENDENCE_TEST_2": "2_self_precedence",
         "PRECENDENCE_TEST_3": "3_file_precedence",
-        **_EXPORTED,
+        **_exported(mocker),
         "TOX_ENV_NAME": "check",
     }
 
@@ -1398,7 +1398,12 @@ _INCLUDE_ENV: Final[list[pytest.ParameterSet]] = [
 )
 @pytest.mark.parametrize(("of_type", "config"), _INCLUDE_ENV)
 def test_set_env_include_env_keeps_values_as_data(
-    tox_project: ToxProjectCreator, monkeypatch: MonkeyPatch, of_type: ConfigFileFormat, config: str, envs: str
+    tox_project: ToxProjectCreator,
+    monkeypatch: MonkeyPatch,
+    of_type: ConfigFileFormat,
+    config: str,
+    envs: str,
+    mocker: MockerFixture,
 ) -> None:
     message: Final = "subject; 'x' # y\nINJECTED = 1\nfile|missing\u2028OTHER = 2"
     monkeypatch.setenv("HOST_MESSAGE", message)
@@ -1412,10 +1417,10 @@ def test_set_env_include_env_keeps_values_as_data(
         "NAME": "py",
         "ESCAPED": "a;b",
         "FACTOR": "other",
-        "PYTHONHASHSEED": ANY,
+        "PYTHONHASHSEED": mocker.ANY,
         "PIP_DISABLE_PIP_VERSION_CHECK": "1",
         "PYTHONIOENCODING": "utf-8",
-        **_EXPORTED,
+        **_exported(mocker),
     }
 
 
@@ -1466,11 +1471,13 @@ def test_set_env_unresolved_key_kept_literal(eval_set_env: EvalSetEnv, line: str
         ),
     ],
 )
-def test_set_env_shows_what_commands_get(tox_project: ToxProjectCreator, ini: str) -> None:
+def test_set_env_shows_what_commands_get(tox_project: ToxProjectCreator, ini: str, mocker: MockerFixture) -> None:
     result = tox_project({"tox.ini": ini}).run("c", "-e", "py", "-k", "set_env")
     result.assert_success()
     shown, used = result.env_conf("py")["set_env"], result.state.envs["py"].environment_variables
-    assert {key: shown.load(key) for key in shown if key in _EXPORTED} == {key: used[key] for key in _EXPORTED}
+    assert {key: shown.load(key) for key in shown if key in _exported(mocker)} == {
+        key: used[key] for key in _exported(mocker)
+    }
 
 
 @pytest.mark.parametrize(

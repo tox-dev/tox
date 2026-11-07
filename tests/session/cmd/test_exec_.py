@@ -9,7 +9,7 @@ import pytest
 from tox.execute.request import ExecuteRequest, StdinSource
 
 if TYPE_CHECKING:
-    from unittest.mock import MagicMock
+    from pytest_mock import MockType
 
     from tox.pytest import ToxProject, ToxProjectCreator, ToxRunOutcome
 
@@ -40,7 +40,7 @@ def test_exec(tox_project: ToxProjectCreator, exit_code: int) -> None:
 
 def test_exec_keeps_program_name(tox_project: ToxProjectCreator) -> None:
     project: Final[ToxProject] = tox_project({"tox.ini": "[testenv]\npackage=skip", "w": {"python": "", "a.txt": ""}})
-    execute_calls: Final[MagicMock] = project.patch_execute(lambda _: 0)
+    execute_calls: Final[MockType] = project.patch_execute(lambda _: 0)
 
     result: Final[ToxRunOutcome] = project.run("e", "-e", "py", "--", "python", "a.txt", from_cwd=project.path / "w")
 

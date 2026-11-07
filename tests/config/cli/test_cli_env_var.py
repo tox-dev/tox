@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Final
-from unittest.mock import ANY
 
 import pytest
 
@@ -14,6 +13,8 @@ from tox.util.ci import is_ci
 if TYPE_CHECKING:
     from collections.abc import Callable
     from pathlib import Path
+
+    from pytest_mock import MockerFixture
 
     from tox.pytest import CaptureFixture, LogCaptureFixture, MonkeyPatch
     from tox.session.state import State
@@ -29,7 +30,7 @@ def test_verbose_compound() -> None:
     assert parsed.verbosity == 4
 
 
-def test_verbose_no_test() -> None:
+def test_verbose_no_test(mocker: MockerFixture) -> None:
     parsed, _, __, ___, ____ = get_options("--notest", "-vv", "--runner", "virtualenv")
     assert vars(parsed) == {
         "verbose": 4,
@@ -65,7 +66,7 @@ def test_verbose_no_test() -> None:
         "install_pkg": None,
         "fail_fast": False,
         "develop": False,
-        "hash_seed": ANY,
+        "hash_seed": mocker.ANY,
         "discover": [],
         "parallel": 0,
         "parallel_live": False,
@@ -87,6 +88,7 @@ def test_env_var_empty_list_is_empty(monkeypatch: MonkeyPatch) -> None:
 def test_env_var_exhaustive_parallel_values(
     monkeypatch: MonkeyPatch,
     core_handlers: dict[str, Callable[[State], int]],
+    mocker: MockerFixture,
 ) -> None:
     monkeypatch.setenv("TOX_COMMAND", "run-parallel")
     monkeypatch.setenv("TOX_VERBOSE", "5")
@@ -112,7 +114,7 @@ def test_env_var_exhaustive_parallel_values(
         "discover": ["/foo/bar", "/bar/baz", "/baz/foo"],
         "env": CliEnv(["py37", "py36"]),
         "force_dep": [],
-        "hash_seed": ANY,
+        "hash_seed": mocker.ANY,
         "install_pkg": None,
         "fail_fast": False,
         "no_provision": False,

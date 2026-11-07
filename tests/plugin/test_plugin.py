@@ -1,10 +1,8 @@
 from __future__ import annotations
 
 import logging
-import os
 import sys
 from typing import TYPE_CHECKING
-from unittest.mock import patch
 
 import pytest
 
@@ -41,7 +39,7 @@ def test_builtin_runner_cli_choice(tox_project: ToxProjectCreator) -> None:
     }).run("r", "--runner", "virtualenv", "--notest").assert_success()
 
 
-def test_external_runner_cli_choice(tox_project: ToxProjectCreator) -> None:
+def test_external_runner_cli_choice(tox_project: ToxProjectCreator, mocker: MockerFixture) -> None:
     class ExternalRunner(VirtualEnvRunner):
         @staticmethod
         @override
@@ -67,11 +65,9 @@ def test_external_runner_cli_choice(tox_project: ToxProjectCreator) -> None:
         package = "skip"
         """,
     })
-    with (
-        patch("pluggy.PluginManager.load_setuptools_entrypoints", fake_load_entrypoints),
-        patch("tox.plugin.manager.MANAGER", Plugin()),
-    ):
-        project.run("r", "--runner", "external", "--notest").assert_success()
+    mocker.patch("pluggy.PluginManager.load_setuptools_entrypoints", fake_load_entrypoints)
+    mocker.patch("tox.plugin.manager.MANAGER", Plugin())
+    project.run("r", "--runner", "external", "--notest").assert_success()
 
 
 @pytest.mark.parametrize(
@@ -265,7 +261,9 @@ def test_plugin_injects_invalid_python_run(tox_project: ToxProjectCreator, mocke
     assert "failed to load py.deps: deps expected" in result.out
 
 
-def test_plugin_extend_pass_env(tox_project: ToxProjectCreator, mocker: MockerFixture) -> None:
+def test_plugin_extend_pass_env(
+    tox_project: ToxProjectCreator, mocker: MockerFixture, monkeypatch: pytest.MonkeyPatch
+) -> None:
     @impl
     def tox_add_env_config(  # interface signature
         env_conf: EnvConfigSet,
@@ -280,8 +278,9 @@ def test_plugin_extend_pass_env(tox_project: ToxProjectCreator, mocker: MockerFi
     commands=python -c 'import os; print(os.environ["MAGIC_1"]); print(os.environ["MAGIC_2"])'
     """
     project = tox_project({"tox.ini": ini})
-    with patch.dict(os.environ, {"MAGIC_1": "magic_1", "MAGIC_2": "magic_2"}):
-        result = project.run("r")
+    monkeypatch.setenv("MAGIC_1", "magic_1")
+    monkeypatch.setenv("MAGIC_2", "magic_2")
+    result = project.run("r")
     result.assert_success()
     assert "magic_1" in result.out
     assert "magic_2" in result.out
@@ -361,6 +360,8 @@ def test_disable_external_plugins(
     env_val: str,
     expect_a: bool,
     expect_b: bool,
+    mocker: MockerFixture,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     class DummyPluginA:
         @staticmethod
@@ -386,12 +387,10 @@ def test_disable_external_plugins(
         self.register(DummyPluginB(), name="dummy_plugin_b")
 
     project = tox_project({"tox.ini": ""})
-    with (
-        patch("pluggy.PluginManager.load_setuptools_entrypoints", fake_load_entrypoints),
-        patch("tox.plugin.manager.MANAGER", Plugin()),
-        patch.dict(os.environ, {"TOX_DISABLED_EXTERNAL_PLUGINS": env_val}, clear=False),
-    ):
-        result = project.run("--version")
+    mocker.patch("pluggy.PluginManager.load_setuptools_entrypoints", fake_load_entrypoints)
+    mocker.patch("tox.plugin.manager.MANAGER", Plugin())
+    monkeypatch.setenv("TOX_DISABLED_EXTERNAL_PLUGINS", env_val)
+    result = project.run("--version")
 
     result.assert_success()
     assert ("dummy plugin A called" in result.out) == expect_a

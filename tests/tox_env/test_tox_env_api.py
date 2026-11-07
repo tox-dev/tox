@@ -4,7 +4,6 @@ import os
 from shutil import rmtree
 from textwrap import dedent
 from typing import TYPE_CHECKING, Final
-from unittest.mock import patch
 
 import pytest
 
@@ -212,15 +211,15 @@ def test_env_log_redacts_secret_argv_after_open_quote(
     assert "--token=*******" in result.out
 
 
-def test_tox_env_pass_env_literal_exist() -> None:
-    with patch("os.environ", {"A": "1"}):
-        env = ToxEnv._load_pass_env(["A"])  # ruff:ignore[private-member-access]  # internal state
+def test_tox_env_pass_env_literal_exist(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(os, "environ", {"A": "1"})
+    env = ToxEnv._load_pass_env(["A"])  # ruff:ignore[private-member-access]  # internal state
     assert env == {"A": "1"}
 
 
-def test_tox_env_pass_env_literal_miss() -> None:
-    with patch("os.environ", {}):
-        env = ToxEnv._load_pass_env(["A"])  # ruff:ignore[private-member-access]  # internal state
+def test_tox_env_pass_env_literal_miss(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(os, "environ", {})
+    env = ToxEnv._load_pass_env(["A"])  # ruff:ignore[private-member-access]  # internal state
     assert not env
 
 
@@ -246,13 +245,13 @@ def test_tox_env_pass_env_fails_on_whitespace(tox_project: ToxProjectCreator) ->
 
 @pytest.mark.parametrize("glob", ["*", "?"])
 @pytest.mark.parametrize("char", ["a", "A"])
-def test_tox_env_pass_env_match_ignore_case(char: str, glob: str) -> None:
-    with patch("os.environ", {"A1": "1", "a2": "2", "A2": "3", "B": "4"}):
-        env = ToxEnv._load_pass_env([f"{char}{glob}"])  # ruff:ignore[private-member-access]  # internal state
+def test_tox_env_pass_env_match_ignore_case(char: str, glob: str, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(os, "environ", {"A1": "1", "a2": "2", "A2": "3", "B": "4"})
+    env = ToxEnv._load_pass_env([f"{char}{glob}"])  # ruff:ignore[private-member-access]  # internal state
     assert env == {"A1": "1", "a2": "2", "A2": "3"}
 
 
-def test_disallow_pass_env(tox_project: ToxProjectCreator) -> None:
+def test_disallow_pass_env(tox_project: ToxProjectCreator, monkeypatch: pytest.MonkeyPatch) -> None:
     cmd = "import os; print(os.environ.get('FOO_BAR', '')); print(os.environ.get('FOO_SECRET', ''))"
     toml = f"""
     [env_run_base]
@@ -262,14 +261,15 @@ def test_disallow_pass_env(tox_project: ToxProjectCreator) -> None:
     commands = [["python", "-c", "{cmd}"]]
     """
     project = tox_project({"tox.toml": toml})
-    with patch.dict("os.environ", {"FOO_BAR": "visible", "FOO_SECRET": "hidden"}):
-        result = project.run("r")
+    monkeypatch.setenv("FOO_BAR", "visible")
+    monkeypatch.setenv("FOO_SECRET", "hidden")
+    result = project.run("r")
     result.assert_success()
     assert "visible" in result.out
     assert "hidden" not in result.out
 
 
-def test_disallow_pass_env_glob(tox_project: ToxProjectCreator) -> None:
+def test_disallow_pass_env_glob(tox_project: ToxProjectCreator, monkeypatch: pytest.MonkeyPatch) -> None:
     cmd = "import os; print(os.environ.get('APP_NAME', '')); print(os.environ.get('APP_SECRET_KEY', ''))"
     toml = f"""
     [env_run_base]
@@ -279,14 +279,15 @@ def test_disallow_pass_env_glob(tox_project: ToxProjectCreator) -> None:
     commands = [["python", "-c", "{cmd}"]]
     """
     project = tox_project({"tox.toml": toml})
-    with patch.dict("os.environ", {"APP_NAME": "myapp", "APP_SECRET_KEY": "s3cret"}):
-        result = project.run("r")
+    monkeypatch.setenv("APP_NAME", "myapp")
+    monkeypatch.setenv("APP_SECRET_KEY", "s3cret")
+    result = project.run("r")
     result.assert_success()
     assert "myapp" in result.out
     assert "s3cret" not in result.out
 
 
-def test_disallow_pass_env_empty(tox_project: ToxProjectCreator) -> None:
+def test_disallow_pass_env_empty(tox_project: ToxProjectCreator, monkeypatch: pytest.MonkeyPatch) -> None:
     toml = """
     [env_run_base]
     package = "skip"
@@ -294,8 +295,8 @@ def test_disallow_pass_env_empty(tox_project: ToxProjectCreator) -> None:
     commands = [["python", "-c", "import os; print(os.environ.get('FOO', ''))"]]
     """
     project = tox_project({"tox.toml": toml})
-    with patch.dict("os.environ", {"FOO": "bar"}):
-        result = project.run("r")
+    monkeypatch.setenv("FOO", "bar")
+    result = project.run("r")
     result.assert_success()
     assert "bar" in result.out
 

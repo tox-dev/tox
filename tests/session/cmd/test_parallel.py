@@ -7,7 +7,6 @@ from subprocess import PIPE, Popen
 from textwrap import dedent
 from time import sleep
 from typing import TYPE_CHECKING
-from unittest import mock
 
 import pytest
 
@@ -193,25 +192,25 @@ def test_parallel_all_empty_selection(tox_project: ToxProjectCreator) -> None:
     assert "Traceback" not in outcome.out
 
 
-def test_parallel_no_spinner(tox_project: ToxProjectCreator) -> None:
-    with mock.patch.object(parallel, "execute", autospec=True) as mocked:
-        tox_project({"tox.ini": ""}).run("p", "--parallel-no-spinner")
+def test_parallel_no_spinner(tox_project: ToxProjectCreator, mocker: MockerFixture) -> None:
+    mocked = mocker.patch.object(parallel, "execute", autospec=True)
+    tox_project({"tox.ini": ""}).run("p", "--parallel-no-spinner")
 
     mocked.assert_called_once_with(
-        mock.ANY,
+        mocker.ANY,
         max_workers=auto_detect_cpus(),
         has_spinner=False,
         live=False,
     )
 
 
-def test_parallel_no_spinner_with_parallel(tox_project: ToxProjectCreator) -> None:
+def test_parallel_no_spinner_with_parallel(tox_project: ToxProjectCreator, mocker: MockerFixture) -> None:
     # Ensure `--parallel N` is still respected with `--parallel-no-spinner`.
-    with mock.patch.object(parallel, "execute", autospec=True) as mocked:
-        tox_project({"tox.ini": ""}).run("p", "--parallel-no-spinner", "--parallel", "2")
+    mocked = mocker.patch.object(parallel, "execute", autospec=True)
+    tox_project({"tox.ini": ""}).run("p", "--parallel-no-spinner", "--parallel", "2")
 
     mocked.assert_called_once_with(
-        mock.ANY,
+        mocker.ANY,
         max_workers=2,
         has_spinner=False,
         live=False,
@@ -235,7 +234,7 @@ def test_parallel_no_spinner_ci(
     tox_project({"tox.ini": ""}).run(*args)
 
     mocked.assert_called_once_with(
-        mock.ANY,
+        mocker.ANY,
         max_workers=auto_detect_cpus(),
         has_spinner=False,
         live=False,
@@ -251,13 +250,13 @@ def test_parallel_no_spinner_legacy_sequential(tox_project: ToxProjectCreator, m
     mocked.assert_called_once()
 
 
-def test_parallel_no_spinner_legacy_with_parallel(tox_project: ToxProjectCreator) -> None:
+def test_parallel_no_spinner_legacy_with_parallel(tox_project: ToxProjectCreator, mocker: MockerFixture) -> None:
     # --parallel-no-spinner combined with -p should still run parallel without spinner.
-    with mock.patch.object(parallel, "execute", autospec=True) as mocked:
-        tox_project({"tox.ini": ""}).run("--parallel-no-spinner", "-p", "all")
+    mocked = mocker.patch.object(parallel, "execute", autospec=True)
+    tox_project({"tox.ini": ""}).run("--parallel-no-spinner", "-p", "all")
 
     mocked.assert_called_once_with(
-        mock.ANY,
+        mocker.ANY,
         max_workers=None,
         has_spinner=False,
         live=False,

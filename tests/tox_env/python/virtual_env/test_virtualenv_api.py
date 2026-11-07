@@ -5,7 +5,6 @@ import sys
 from pathlib import Path
 from textwrap import dedent
 from typing import TYPE_CHECKING
-from unittest.mock import MagicMock, PropertyMock, create_autospec
 
 import pytest
 from virtualenv import __version__ as virtualenv_version
@@ -20,7 +19,7 @@ if TYPE_CHECKING:
     from collections.abc import Callable
     from typing import Final
 
-    from pytest_mock import MockerFixture
+    from pytest_mock import MockerFixture, MockType
 
     from tox.execute import ExecuteRequest
     from tox.pytest import MonkeyPatch, ToxProject, ToxProjectCreator
@@ -200,7 +199,7 @@ def test_pip_pre(tox_project: ToxProjectCreator, on: bool, options: list[str], i
     proj: Final[ToxProject] = tox_project({
         "tox.ini": f"[testenv]\npackage=skip\npip_pre={on}\ndeps=magic\n{install_command}",
     })
-    execute_calls: Final[MagicMock] = proj.patch_execute(lambda request: 0 if "install" in request.run_id else None)
+    execute_calls: Final[MockType] = proj.patch_execute(lambda request: 0 if "install" in request.run_id else None)
     proj.run("r", "-e", "py").assert_success()
     assert execute_calls.call_args[0][3].cmd == ["python", "-I", "-m", "pip", "install", *options, "magic"]
 
@@ -325,7 +324,7 @@ def test_get_python_returns_none_when_system_executable_missing(
     mocker.patch.object(
         VirtualEnv,
         "creator",
-        new_callable=PropertyMock,
+        new_callable=mocker.PropertyMock,
         return_value=mocker.create_autospec(
             Creator,
             instance=True,
@@ -438,23 +437,24 @@ def test_virtualenv_spec_auto(
     "resolved",
     [
         pytest.param(None, id="interpreter-unresolved"),
-        pytest.param(
-            create_autospec(PythonInfo, instance=True, system_executable=sys.executable, marker_environment={}),
-            id="resolved-but-probe-fails",
-        ),
+        pytest.param("probe-fails", id="resolved-but-probe-fails"),
     ],
 )
 def test_virtualenv_spec_subprocess_missing_interpreter(
     tox_project: ToxProjectCreator,
     mocker: MockerFixture,
-    resolved: PythonInfo | None,
+    resolved: str | None,
 ) -> None:
     ensure_bootstrap = mocker.patch(
         "tox.tox_env.python.virtual_env.api.ensure_bootstrap",
         autospec=True,
         return_value=Path(sys.executable),
     )
-    mocker.patch("tox.tox_env.python.virtual_env.api.get_interpreter", autospec=True, return_value=resolved)
+    probe_fails = mocker.create_autospec(
+        PythonInfo, instance=True, system_executable=sys.executable, marker_environment={}
+    )
+    interpreter = {"probe-fails": probe_fails}.get(resolved)
+    mocker.patch("tox.tox_env.python.virtual_env.api.get_interpreter", autospec=True, return_value=interpreter)
     mocker.patch("tox.tox_env.python.virtual_env.api.probe_python", autospec=True, return_value=None)
     proj = tox_project({
         "tox.toml": dedent(

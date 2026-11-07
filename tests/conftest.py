@@ -10,7 +10,6 @@ from pathlib import Path
 from shutil import rmtree
 from tempfile import mkdtemp
 from typing import TYPE_CHECKING, Final, Protocol
-from unittest.mock import patch
 from uuid import uuid4
 
 import pytest
@@ -173,15 +172,15 @@ def pytest_collection_modifyitems(items: list[pytest.Item]) -> None:
 
 
 @pytest.fixture(scope="session")
-def fake_exe_on_path(tmp_path_factory: pytest.TempPathFactory) -> Iterator[Path]:
+def fake_exe_on_path(tmp_path_factory: pytest.TempPathFactory, session_mocker: MockerFixture) -> Path:
     tmp_path = Path(tmp_path_factory.mktemp("a"))
     cmd_name = uuid4().hex
     maker = ScriptMaker(None, str(tmp_path))
     maker.set_mode = True
     maker.variants = {""}
     maker.make(f"{cmd_name} = b:c")
-    with patch.dict(os.environ, {"PATH": f"{tmp_path}{os.pathsep}{os.environ['PATH']}"}):
-        yield tmp_path / cmd_name
+    session_mocker.patch.dict(os.environ, {"PATH": f"{tmp_path}{os.pathsep}{os.environ['PATH']}"})
+    return tmp_path / cmd_name
 
 
 @pytest.fixture(scope="session")

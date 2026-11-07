@@ -5,7 +5,6 @@ import sys
 import textwrap
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
-from unittest.mock import ANY
 
 import pytest
 
@@ -28,7 +27,7 @@ if TYPE_CHECKING:
 
 
 @pytest.fixture
-def default_options() -> dict[str, Any]:
+def default_options(mocker: MockerFixture) -> dict[str, Any]:
     return {
         "colored": "no",
         "stderr_color": "RED",
@@ -37,7 +36,7 @@ def default_options() -> dict[str, Any]:
         "develop": False,
         "discover": [],
         "env": CliEnv(),
-        "hash_seed": ANY,
+        "hash_seed": mocker.ANY,
         "install_pkg": None,
         "fail_fast": False,
         "no_test": False,
@@ -90,7 +89,7 @@ def test_ini_empty(
 
     to.unlink()
     missing_options = get_options("r")
-    missing_options.parsed.hash_seed = ANY
+    missing_options.parsed.hash_seed = mocker.ANY
     assert vars(missing_options.parsed) == vars(options.parsed)
 
 
@@ -238,7 +237,9 @@ def exhaustive_ini(tmp_path: Path, monkeypatch: MonkeyPatch) -> Path:
 
 
 @pytest.mark.usefixtures("exhaustive_ini")
-def test_ini_exhaustive_parallel_values(core_handlers: dict[str, Callable[[State], int]]) -> None:
+def test_ini_exhaustive_parallel_values(
+    core_handlers: dict[str, Callable[[State], int]], mocker: MockerFixture
+) -> None:
     options = get_options("p")
     assert vars(options.parsed) == {
         "colored": "yes",
@@ -248,7 +249,7 @@ def test_ini_exhaustive_parallel_values(core_handlers: dict[str, Callable[[State
         "develop": False,
         "discover": [],
         "env": CliEnv(["py37", "py36"]),
-        "hash_seed": ANY,
+        "hash_seed": mocker.ANY,
         "install_pkg": None,
         "fail_fast": False,
         "no_test": True,
