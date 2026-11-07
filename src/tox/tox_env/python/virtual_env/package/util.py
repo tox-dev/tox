@@ -125,8 +125,12 @@ def _get_extra(
         return None
     marker_tuple = cast("tuple[Variable | Value, Op, Variable | Value]", _marker)
     left, op, right = marker_tuple
-    if hasattr(left, "value") and left.value == "extra" and hasattr(op, "value") and op.value == "==":
-        return right.value if hasattr(right, "value") else None
+    if op.value == "==":
+        # Variables serialize without quotes, unlike string literals with the same value.
+        if left.serialize() == "extra":
+            return right.value
+        if right.serialize() == "extra":
+            return left.value
     return None
 
 

@@ -368,6 +368,13 @@ def test_pyproject_invalid_extra_no_optional_deps(tox_project: ToxProjectCreator
             ["A", "B"],
             id="deps_extra_dynamic_opt",
         ),
+        pytest.param(
+            "Provides-Extra: alpha\nRequires-Dist: A\nRequires-Dist: B;'alpha'==extra",
+            "['optional-dependencies']",
+            "alpha",
+            ["A", "B"],
+            id="deps_extra_reversed_marker",
+        ),
     ],
 )
 def test_pyproject_deps_static_with_dynamic(
