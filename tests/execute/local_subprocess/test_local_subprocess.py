@@ -14,6 +14,7 @@ import sys
 import time
 from io import TextIOWrapper
 from pathlib import Path
+from types import SimpleNamespace
 from typing import TYPE_CHECKING, Final, NoReturn
 from unittest.mock import MagicMock, create_autospec
 
@@ -22,6 +23,7 @@ import pytest
 from colorama import Fore
 from psutil import AccessDenied
 
+from tox.config.sets import EnvConfigSet
 from tox.execute import local_sub_process
 from tox.execute.api import ExecuteOptions, FinishedExecuteStatus, Outcome
 from tox.execute.local_sub_process import (
@@ -34,12 +36,12 @@ from tox.execute.local_sub_process.read_via_thread_unix import ReadViaThreadUnix
 from tox.execute.request import ExecuteRequest, StdinSource
 from tox.execute.stream import SyncWrite
 from tox.report import NamedBytesIO
+from tox.tox_env.api import ToxEnv
 
 if TYPE_CHECKING:
     from pytest_mock import MockerFixture
 
     from tox.pytest import CaptureFixture, LogCaptureFixture, MonkeyPatch, ToxProjectCreator
-    from tox.tox_env.api import ToxEnv
 
 _EXE_SUFFIX: Final[str] = ".EXE" if sys.platform == "win32" else ""
 
@@ -67,7 +69,10 @@ def _run_basic_pass(
     executor = LocalSubProcessExecutor(colored=color)
 
     tox_env = _create_mock_env()
-    tox_env.conf._conf.options.stderr_color = stderr_color  # ruff:ignore[private-member-access]  # internal state
+    tox_env.conf._conf = SimpleNamespace(  # ruff:ignore[private-member-access]  # internal state
+        options=SimpleNamespace(stderr_color=stderr_color),
+    )
+
     code = f"import sys; print({out!r}, end=''); print({err!r}, end='', file=sys.stderr)"
     request = ExecuteRequest(cmd=[sys.executable, "-c", code], cwd=Path(), env=os_env, stdin=StdinSource.OFF, run_id="")
     out_err = FakeOutErr()
@@ -84,11 +89,14 @@ def _run_basic_pass(
     return out_err
 
 
-def _create_mock_env() -> MagicMock:
+def _create_mock_env() -> ToxEnv:
     # Create a mock tox environment with no_capture=False to prevent console inheritance.
-    mock_env = MagicMock()
-    mock_env.options.no_capture = False
-    return mock_env
+    return create_autospec(
+        ToxEnv,
+        instance=True,
+        conf=create_autospec(EnvConfigSet, instance=True),
+        options=SimpleNamespace(no_capture=False),
+    )
 
 
 class FakeOutErr:
@@ -457,8 +465,8 @@ def test_pty_closes_fds_when_termios_fails(mocker: MockerFixture) -> None:
     # If terminal attributes cannot be inherited, the freshly opened pty fds must be released.
     termios = pytest.importorskip("termios")
     pty = pytest.importorskip("pty")
-    mocker.patch("sys.stdout.isatty", return_value=True)
-    mocker.patch.object(termios, "tcgetattr", side_effect=termios.error)
+    mocker.patch("sys.stdout.isatty", autospec=True, return_value=True)
+    mocker.patch.object(termios, "tcgetattr", autospec=True, side_effect=termios.error)
     openpty_spy = mocker.spy(pty, "openpty")
     close_spy = mocker.spy(os, "close")
 
@@ -475,10 +483,10 @@ def test_local_subprocess_tty_closes_master_fd(monkeypatch: MonkeyPatch, mocker:
     pytest.importorskip("termios")
     monkeypatch.setenv("COLUMNS", "100")
     monkeypatch.setenv("LINES", "100")
-    mocker.patch("sys.stdout.isatty", return_value=True)
-    mocker.patch("sys.stderr.isatty", return_value=True)
-    mocker.patch("termios.tcgetattr")
-    mocker.patch("termios.tcsetattr")
+    mocker.patch("sys.stdout.isatty", autospec=True, return_value=True)
+    mocker.patch("sys.stderr.isatty", autospec=True, return_value=True)
+    mocker.patch("termios.tcgetattr", autospec=True)
+    mocker.patch("termios.tcsetattr", autospec=True)
     pty_spy = mocker.spy(local_sub_process, "_pty")
 
     executor = LocalSubProcessExecutor(colored=False)
@@ -502,12 +510,12 @@ def test_get_stream_file_no_closes_each_pty_fd_once(mocker: MockerFixture) -> No
     # The child fd is closed once the child has inherited it; closing it a second time on generator teardown can race a
     # parallel run that has reused the freed fd number, corrupting the sibling's fd (see #3975).
     main_fd, child_fd = 11, 22
-    mocker.patch.object(local_sub_process, "_pty", return_value=(main_fd, child_fd))
-    close_spy = mocker.patch.object(os, "close")
+    mocker.patch.object(local_sub_process, "_pty", autospec=True, return_value=(main_fd, child_fd))
+    close_spy = mocker.patch.object(os, "close", autospec=True)
 
     gen = LocalSubProcessExecuteInstance.get_stream_file_no("stdout")
     assert next(gen) == child_fd
-    assert gen.send(MagicMock()) == main_fd
+    assert gen.send(create_autospec(subprocess.Popen, instance=True)) == main_fd
     gen.close()
 
     closed = [call.args[0] for call in close_spy.call_args_list]
@@ -544,8 +552,8 @@ def test_local_subprocess_tty(monkeypatch: MonkeyPatch, mocker: MockerFixture, t
     monkeypatch.setenv("COLUMNS", "100")
     monkeypatch.setenv("LINES", "100")
     tty = tty_mode == "on"
-    mocker.patch("sys.stdout.isatty", return_value=tty)
-    mocker.patch("sys.stderr.isatty", return_value=tty)
+    mocker.patch("sys.stdout.isatty", autospec=True, return_value=tty)
+    mocker.patch("sys.stderr.isatty", autospec=True, return_value=tty)
     try:
         import termios  # ruff:ignore[unused-import, import-outside-top-level]  # re-exported and deferred import
     except ImportError:
@@ -553,8 +561,8 @@ def test_local_subprocess_tty(monkeypatch: MonkeyPatch, mocker: MockerFixture, t
     else:
         # to avoid trying (and failing) to copy mode bits
         exp_tty = tty
-        mocker.patch("termios.tcgetattr")
-        mocker.patch("termios.tcsetattr")
+        mocker.patch("termios.tcgetattr", autospec=True)
+        mocker.patch("termios.tcsetattr", autospec=True)
 
     executor = LocalSubProcessExecutor(colored=False)
     cmd: list[str] = [sys.executable, str(Path(__file__).parent / "tty_check.py")]
@@ -603,7 +611,9 @@ def test_allow_list_external_ok(fake_exe_on_path: Path, mode: str) -> None:
         run_id="run-id",
         allow=[allow],
     )
-    inst = LocalSubProcessExecuteInstance(request, MagicMock(), out=SyncWrite("out", None), err=SyncWrite("err", None))
+    inst = LocalSubProcessExecuteInstance(
+        request, _create_mock_env(), out=SyncWrite("out", None), err=SyncWrite("err", None)
+    )
 
     assert inst.cmd == [exe]
 
@@ -656,7 +666,7 @@ def test_shebang_failed_to_parse(tmp_path: Path) -> None:
 def test_windows_batch_file_started_via_cmd_exe(
     tmp_path: Path, mocker: MockerFixture, monkeypatch: MonkeyPatch, name: str
 ) -> None:
-    mocker.patch.object(local_sub_process, "sys", mocker.MagicMock(platform="win32"))
+    mocker.patch.object(local_sub_process, "sys", mocker.create_autospec(sys, platform="win32"))
     popen: Final[MagicMock] = mocker.patch.object(
         local_sub_process, "Popen", autospec=True, side_effect=OSError(errno.ENOENT, "not started")
     )
@@ -745,7 +755,7 @@ def test_shebang_resolved_from_request_cwd(tmp_path: Path, monkeypatch: MonkeyPa
 
 @pytest.mark.parametrize("key", [pytest.param("COLUMNS", id="columns"), pytest.param("ROWS", id="rows")])
 def test_local_execute_does_not_overwrite(key: str, mocker: MockerFixture) -> None:
-    mocker.patch("shutil.get_terminal_size", return_value=(101, 102))
+    mocker.patch("shutil.get_terminal_size", autospec=True, return_value=(101, 102))
     env = dict(os.environ)
     env[key] = key
     executor = LocalSubProcessExecutor(colored=False)

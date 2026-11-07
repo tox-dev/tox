@@ -7,12 +7,14 @@ import signal
 import sys
 from io import TextIOWrapper
 from pathlib import Path
+from types import SimpleNamespace
 from typing import TYPE_CHECKING
-from unittest.mock import MagicMock
+from unittest.mock import create_autospec
 
 from tox.execute.local_sub_process import LocalSubProcessExecutor
 from tox.execute.request import ExecuteRequest, StdinSource
 from tox.report import NamedBytesIO
+from tox.tox_env.api import ToxEnv
 
 if TYPE_CHECKING:
     from types import FrameType
@@ -66,8 +68,13 @@ def _wait_for_exit(status: ExecuteStatus) -> None:
 _INTERRUPT_DONE = False
 signal.signal(signal.SIGINT, handler)
 logging.info("PID %d start %r", os.getpid(), request)
-tox_env = MagicMock(conf={"suicide_timeout": 0.01, "interrupt_timeout": 0.05, "terminate_timeout": 0.07})
-tox_env.options.no_capture = False
+tox_env = create_autospec(
+    ToxEnv,
+    instance=True,
+    conf={"suicide_timeout": 0.01, "interrupt_timeout": 0.05, "terminate_timeout": 0.07},
+    options=SimpleNamespace(no_capture=False),
+)
+
 _STATUS_OUTCOME: Outcome | None = None
 try:
     with executor.call(request, show=False, out_err=out_err, env=tox_env) as status:
