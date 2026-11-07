@@ -19,8 +19,10 @@ if TYPE_CHECKING:
 class MemoryLoader(Loader[object]):
     """Loads configuration directly from data in memory.
 
-    :param kwargs:
-    :ivar raw:
+    :param kwargs: the configuration values, keyed by name
+
+    :var raw: the configuration values as set in memory
+
     """
 
     def __init__(self, **kwargs: Any) -> None:

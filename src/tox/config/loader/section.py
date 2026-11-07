@@ -11,8 +11,9 @@ if TYPE_CHECKING:
 class Section:  # ruff:ignore[eq-without-hash]
     """tox configuration section.
 
-    :param prefix:
-    :param name:
+    :param prefix: the prefix that groups the keys of the section
+    :param name: the name of the section
+
     """
 
     SEP = ":"  #: string used to separate the prefix and the section in the key

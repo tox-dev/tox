@@ -23,9 +23,10 @@ if TYPE_CHECKING:
 class StrConvert(Convert[str]):
     """A class converting string values to tox types.
 
-    :ivar TRUTHFUL_VALUES:
-    :ivar FALSE_VALUES:
-    :cvar VALID_BOOL:
+    :var TRUTHFUL_VALUES: the strings that convert to ``True``
+    :var FALSE_VALUES: the strings that convert to ``False``
+    :var VALID_BOOL: the sorted list of all accepted boolean strings
+
     """
 
     @staticmethod
@@ -101,8 +102,10 @@ class StrConvert(Convert[str]):
     def protect_windows_path_backslashes(value: str) -> str:
         """Allow Windows paths while retaining shlex quote and backslash escapes.
 
-        :param value:
-        :returns:
+        :param value: the value to protect
+
+        :returns: the value with the Windows path backslashes kept
+
         """
         defaults: Final[shlex.shlex] = shlex.shlex(posix=True)
         escape: Final[str] = defaults.escape

@@ -27,7 +27,8 @@ ArgsT = TypeVar("ArgsT", default=InstallArguments)
 class Installer(ABC, Generic[EnvT_co, ArgsT]):
     """Install packages into a tox environment; ``ArgsT`` is what :meth:`install` accepts.
 
-    :param tox_env:
+    :param tox_env: the environment to install the packages into
+
     """
 
     def __init__(self, tox_env: EnvT_co) -> None:

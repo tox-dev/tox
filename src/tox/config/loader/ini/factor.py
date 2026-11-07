@@ -43,8 +43,10 @@ def filter_for_env(value: str, name: str | None) -> str:
 def active_factors(env_name: str | None) -> set[str]:
     """Factors that hold for an environment: those in its name, the platform and the machine ISA.
 
-    :param env_name:
-    :returns:
+    :param env_name: the name of the environment, or ``None`` when it has no name
+
+    :returns: the factors that hold for the environment
+
     """
     env_factors = (
         set(chain.from_iterable([(i for i, _ in a) for a in find_factor_groups(env_name)]))
@@ -77,8 +79,10 @@ def expand_ranges(value: str) -> str:
     Supports closed ranges ``{10-13}``, right-open ``{10-}`` (upper bound = :data:`LATEST_PYTHON_MINOR_MAX`), and
     left-open ``{-13}`` (lower bound = :data:`LATEST_PYTHON_MINOR_MIN`).
 
-    :param value:
-    :returns:
+    :param value: the text with the ranges to expand
+
+    :returns: the text with the numeric ranges expanded
+
     """
 
     def _expand(match: re.Match[str]) -> str:

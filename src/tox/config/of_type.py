@@ -25,8 +25,9 @@ V = TypeVar("V")
 class ConfigDefinition(ABC, Generic[T]):  # ruff:ignore[eq-without-hash]
     """Abstract base class for configuration definitions.
 
-    :param keys:
-    :param desc:
+    :param keys: the configuration keys, the first one is the name, the others are aliases
+    :param desc: the help text describing the configuration
+
     """
 
     def __init__(self, keys: Iterable[str], desc: str) -> None:
@@ -51,7 +52,8 @@ class ConfigDefinition(ABC, Generic[T]):  # ruff:ignore[eq-without-hash]
     def overwrite(self, value: T) -> None:
         """Force the configuration to the given value, replacing any constant or already loaded one.
 
-        :param value:
+        :param value: the new value
+
         """
         raise NotImplementedError
 
@@ -59,9 +61,10 @@ class ConfigDefinition(ABC, Generic[T]):  # ruff:ignore[eq-without-hash]
 class ConfigConstantDefinition(ConfigDefinition[T]):  # ruff:ignore[eq-without-hash]
     """A configuration definition whose value is defined upfront (such as the tox environment name).
 
-    :param keys:
-    :param desc:
-    :param value:
+    :param keys: the configuration keys, the first one is the name, the others are aliases
+    :param desc: the help text describing the configuration
+    :param value: the value the configuration is fixed to
+
     """
 
     def __init__(
@@ -106,12 +109,13 @@ _PLACE_HOLDER = object()
 class ConfigDynamicDefinition(ConfigDefinition[T]):  # ruff:ignore[eq-without-hash]
     """A configuration definition that comes from a source (such as in memory, an ini file, a toml file, etc.).
 
-    :param keys:
-    :param desc:
-    :param of_type:
-    :param default:
-    :param post_process:
-    :param factory:
+    :param keys: the configuration keys, the first one is the name, the others are aliases
+    :param desc: the help text describing the configuration
+    :param of_type: the type the loaded value is converted to
+    :param default: the value, or a callable computing it, used when the configuration is not set
+    :param post_process: a callable applied to the converted value
+    :param factory: the callable that builds the objects of the type, for container and custom types
+
     """
 
     def __init__(  # ruff:ignore[too-many-arguments]

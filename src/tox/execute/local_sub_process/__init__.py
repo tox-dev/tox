@@ -223,10 +223,11 @@ class LocalSubProcessExecuteInstance(ExecuteInstance):
 class LocalSubprocessExecuteFailedStatus(FinishedExecuteStatus):
     """The status of a command that could not be started.
 
-    :param options:
-    :param out:
-    :param err:
-    :param start_error:
+    :param options: the options the command runs with
+    :param out: the stream that collects the standard output
+    :param err: the stream that collects the standard error
+    :param start_error: the error raised when the command could not be started
+
     """
 
     def __init__(self, options: ExecuteOptions, out: SyncWrite, err: SyncWrite, start_error: OSError) -> None:

@@ -14,9 +14,11 @@ if TYPE_CHECKING:
 class SetupCfg(IniSource):
     """Configuration sourced from a setup.cfg file.
 
-    :param path:
-    :cvar CORE_SECTION:
-    :cvar FILENAME:
+    :param path: the path of the ``setup.cfg`` file
+
+    :var CORE_SECTION: the section that holds the tox settings
+    :var FILENAME: the name of the file, ``setup.cfg``
+
     """
 
     CORE_SECTION = IniSection("tox", "tox")

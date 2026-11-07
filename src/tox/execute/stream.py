@@ -19,11 +19,13 @@ class SyncWrite:
 
     Used to propagate executed commands output to the standard output/error streams visible to the user.
 
-    :param name:
-    :param target:
-    :param color:
-    :cvar REFRESH_RATE:
-    :ivar timer:
+    :param name: the name of the stream, used in the timer thread name
+    :param target: the stream the content is synced to, or ``None`` to only collect it
+    :param color: the color the content is shown in
+
+    :var REFRESH_RATE: the seconds between two syncs to the target stream
+    :var timer: the timer that syncs the content on the refresh period
+
     """
 
     REFRESH_RATE = 0.1
@@ -105,8 +107,10 @@ class SyncWrite:
     def handler(self, content: bytes) -> int:
         """A callback called whenever content is written.
 
-        :param content:
-        :returns:
+        :param content: the bytes that were written
+
+        :returns: the number of bytes handled
+
         """
         with self._content_lock:
             self._content.extend(content)

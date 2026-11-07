@@ -81,8 +81,10 @@ class TomlPyProjectSection(TomlSection):
 class TomlPyProject(Source):
     """Configuration sourced from a pyproject.toml files.
 
-    :param path:
-    :cvar FILENAME:
+    :param path: the path of the ``pyproject.toml`` file
+
+    :var FILENAME: the name of the file, ``pyproject.toml``
+
     """
 
     FILENAME = "pyproject.toml"

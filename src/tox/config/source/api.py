@@ -20,8 +20,10 @@ if TYPE_CHECKING:
 class Source(ABC):
     """Source is able to return a configuration value (for either the core or per environment source).
 
-    :param path:
-    :cvar FILENAME:
+    :param path: the path of the configuration file
+
+    :var FILENAME: the name of the configuration file
+
     """
 
     FILENAME = ""

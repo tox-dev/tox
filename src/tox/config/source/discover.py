@@ -33,7 +33,8 @@ def discover_source(config_file: Path | None, root_dir: Path | None) -> Source:
     :param root_dir: the root directory as set by the user (None means not set)
 
     :returns: the source of the config
-    :raises HandledError:
+
+    :raises HandledError: when a configuration file exists but cannot be loaded, or none is found
 
     """
     if config_file is None:

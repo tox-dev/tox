@@ -44,11 +44,12 @@ LOGGER = logging.getLogger(__name__)
 class ToxEnvCreateArgs(NamedTuple):
     """Arguments to pass on when creating a tox environment.
 
-    :param conf:
-    :param core:
-    :param options:
-    :param journal:
-    :param log_handler:
+    :param conf: the configuration of the environment
+    :param core: the core configuration of tox
+    :param options: the parsed command line options
+    :param journal: the journal the environment records its results in
+    :param log_handler: the handler that reports the output of the environment
+
     """
 
     conf: EnvConfigSet
@@ -425,7 +426,7 @@ class ToxEnv(ABC):  # ruff:ignore[too-many-public-methods]
 
         :raises SystemExit: if execution was interrupted
         :raises ValueError: if the command is empty
-        :raises RuntimeError:
+        :raises RuntimeError: when the execution produced no outcome
 
         """
         with self.execute_async(cmd, stdin, show, cwd, run_id, executor, capture=capture) as status:
@@ -457,10 +458,10 @@ class ToxEnv(ABC):  # ruff:ignore[too-many-public-methods]
         :param executor: executor override, or ``None`` for this environment's executor
         :param capture: capture output even in no-capture mode
 
-        :yields: context manager yielding the command's execution status
-
         :raises SystemExit: if execution was interrupted
         :raises ValueError: if the command is empty
+
+        :yields: context manager yielding the command's execution status
 
         """
         if self._fully_interrupted or (self._interrupted and not self._allow_interrupted_execution):
@@ -625,8 +626,10 @@ class ToxEnv(ABC):  # ruff:ignore[too-many-public-methods]
     def allow_post_commands_after_interrupt(self, enabled: bool) -> Generator[None, None, None]:  # ruff:ignore[boolean-type-hint-positional-argument]
         """Context manager to allow commands_post execution after interrupt when enabled.
 
-        :param enabled:
-        :yields:
+        :param enabled: whether ``commands_post`` may run after an interrupt
+
+        :yields: nothing, ``commands_post`` runs inside the block
+
         """
         if enabled and self._interrupted and not self._fully_interrupted:
             self._allow_interrupted_execution = True

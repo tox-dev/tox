@@ -47,11 +47,12 @@ _COMMENTS = re.compile(
 class IniLoader(StrConvert, Loader[str]):
     """Load configuration from an ini section (ini file is a string to string dictionary).
 
-    :param section:
-    :param parser:
-    :param overrides:
-    :param core_section:
-    :param section_key:
+    :param section: the section the values are read from
+    :param parser: the parser that reads the ini file
+    :param overrides: the overrides to apply to the values
+    :param core_section: the core section of the configuration
+    :param section_key: the key of the section in the ini file, if it is not the section name
+
     """
 
     def __init__(

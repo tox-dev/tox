@@ -60,7 +60,8 @@ class SubprocessPythonInfo:
 class SubprocessCreator:
     """Mimics virtualenv Creator + Describe interface using known venv directory layout.
 
-    :param interpreter:
+    :param interpreter: the Python interpreter the virtual environment is created with
+
     """
 
     _env_dir: Path
@@ -94,10 +95,11 @@ class SubprocessCreator:
 class SubprocessSession:
     """Mimics virtualenv Session interface, runs a bootstrapped virtualenv via subprocess.
 
-    :param env_dir:
-    :param bootstrap_python:
-    :param env_vars:
-    :param interpreter:
+    :param env_dir: the directory of the virtual environment
+    :param bootstrap_python: the Python used to bootstrap the environment, if any
+    :param env_vars: the environment variables of the subprocess
+    :param interpreter: the Python interpreter of the environment, if known
+
     """
 
     def __init__(

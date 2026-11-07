@@ -27,9 +27,10 @@ V = TypeVar("V")
 class ConfigSet(ABC):
     """A set of configuration that belong together (such as a tox environment settings, core tox settings).
 
-    :param conf:
-    :param section:
-    :param env_name:
+    :param conf: the global tox configuration
+    :param section: the section that holds the raw values of this set
+    :param env_name: the tox environment name, or ``None`` for the core set
+
     """
 
     def __init__(self, conf: Config, section: Section, env_name: str | None) -> None:
@@ -189,7 +190,8 @@ class ConfigSet(ABC):
             perform the contained item creation, otherwise creates objects that match the type)
 
         :returns: the new dynamic config definition
-        :raises RuntimeError:
+
+        :raises RuntimeError: when the set has been marked final
 
         """
         if self._final:
@@ -227,7 +229,8 @@ class ConfigSet(ABC):
         :param value: the config value to use
 
         :returns: the new constant config value
-        :raises RuntimeError:
+
+        :raises RuntimeError: when the set has been marked final
 
         """
         if self._final:
@@ -251,7 +254,8 @@ class ConfigSet(ABC):
         :param of_type: the type the config value was registered with
 
         :returns: the configuration value
-        :raises TypeError:
+
+        :raises TypeError: when the value is not of the requested type
 
         """
         value = self.load(item)
@@ -271,7 +275,8 @@ class ConfigSet(ABC):
         :param of_type: the type the config value was registered with
 
         :returns: the configuration value, or ``None`` when unset
-        :raises TypeError:
+
+        :raises TypeError: when the value is neither of the requested type nor ``None``
 
         """
         value = self.load(item)
@@ -305,10 +310,11 @@ class ConfigSet(ABC):
 class CoreConfigSet(ConfigSet):
     """Configuration set for the core tox config.
 
-    :param conf:
-    :param section:
-    :param root:
-    :param src_path:
+    :param conf: the global tox configuration
+    :param section: the core section of the configuration
+    :param root: the directory of the project root
+    :param src_path: the path to the configuration file
+
     """
 
     def __init__(self, conf: Config, section: Section, root: Path, src_path: Path) -> None:
@@ -392,11 +398,13 @@ class CoreConfigSet(ConfigSet):
 class EnvConfigSet(ConfigSet):
     """Configuration set for a tox environment.
 
-    :param conf:
-    :param section:
-    :param env_name:
-    :ivar default_set_env_loader:
-    :ivar exported_set_env_loader:
+    :param conf: the global tox configuration
+    :param section: the section that holds the environment settings
+    :param env_name: the name of the tox environment
+
+    :var default_set_env_loader: returns the ``set_env`` defaults of the environment
+    :var exported_set_env_loader: returns the variables tox exports to the environment
+
     """
 
     def __init__(self, conf: Config, section: Section, env_name: str) -> None:

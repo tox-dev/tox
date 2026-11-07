@@ -14,8 +14,9 @@ if TYPE_CHECKING:
 class EnvJournal:
     """Report the status of a tox environment.
 
-    :param enabled:
-    :param name:
+    :param enabled: whether the journal records anything
+    :param name: the name of the tox environment
+
     """
 
     def __init__(self, enabled: bool, name: str) -> None:  # ruff:ignore[boolean-type-hint-positional-argument]

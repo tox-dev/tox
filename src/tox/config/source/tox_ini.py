@@ -6,7 +6,8 @@ from .ini import IniSource
 class ToxIni(IniSource):
     """Configuration sourced from a tox.ini file.
 
-    :cvar FILENAME:
+    :var FILENAME: the name of the configuration file, ``tox.ini``
+
     """
 
     FILENAME = "tox.ini"

@@ -46,7 +46,8 @@ if TYPE_CHECKING:
 class VirtualEnv(Python, ABC):
     """A python executor that uses the virtualenv project with pip.
 
-    :param create_args:
+    :param create_args: the arguments to create the environment with
+
     """
 
     def __init__(self, create_args: ToxEnvCreateArgs) -> None:
@@ -309,7 +310,8 @@ class VirtualEnv(Python, ABC):
         :param path: the path investigated
 
         :returns: the found information (cached)
-        :raises RuntimeError:
+
+        :raises RuntimeError: when virtualenv cannot inspect the interpreter
 
         """
         from virtualenv.discovery import cached_py_info  # ruff:ignore[import-outside-top-level]

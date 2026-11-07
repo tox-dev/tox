@@ -48,7 +48,8 @@ class Pep723Mixin(Python, RunToxEnv):
 
     Concrete runners compose this with a venv backend (VirtualEnv, UvVenv, etc.) and RunToxEnv.
 
-    :param create_args:
+    :param create_args: the arguments to create the environment with
+
     """
 
     _script_metadata: ScriptMetadata | None

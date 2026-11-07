@@ -31,13 +31,15 @@ T = TypeVar("T", bound=ConfigSet)
 class Config:
     """Main configuration object for tox.
 
-    :param config_source:
-    :param options:
-    :param root:
-    :param pos_args:
-    :param work_dir:
-    :param extra_envs:
-    :ivar memory_seed_loaders:
+    :param config_source: the source the configuration is read from
+    :param options: the parsed command line options
+    :param root: the project root directory, where the configuration file is
+    :param pos_args: the positional arguments passed after ``--``
+    :param work_dir: the directory where tox keeps its own files
+    :param extra_envs: the environments to add to the configured ones
+
+    :var memory_seed_loaders: the in-memory loaders that seed the environments by name
+
     """
 
     def __init__(  # ruff:ignore[too-many-arguments]  # <- no way around many args
@@ -69,11 +71,13 @@ class Config:
     def make(cls, parsed: Parsed, pos_args: Sequence[str] | None, source: Source, extra_envs: Iterable[str]) -> Config:
         """Make a tox configuration object.
 
-        :param parsed:
-        :param pos_args:
-        :param source:
-        :param extra_envs:
-        :returns:
+        :param parsed: the parsed command line options
+        :param pos_args: the positional arguments passed after ``--``
+        :param source: the source the configuration is read from
+        :param extra_envs: the environments to add to the configured ones
+
+        :returns: the configuration object
+
         """
         # root is the project root, where the configuration file is at
         # work dir is where we put our own files

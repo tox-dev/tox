@@ -41,9 +41,10 @@ class WheelPackage(PythonPathPackageWithDeps):
 class SdistPackage(PythonPathPackageWithDeps):
     """sdist package.
 
-    :param path:
-    :param deps:
-    :param config_settings:
+    :param path: the path of the source distribution
+    :param deps: the dependencies to install with the package
+    :param config_settings: the build settings passed to the backend
+
     """
 
     def __init__(self, path: Path, deps: Sequence[Requirement], config_settings: dict[str, str] | None = None) -> None:

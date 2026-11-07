@@ -28,9 +28,11 @@ if TYPE_CHECKING:
 class IniSource(Source):
     """Configuration sourced from a ini file (such as tox.ini).
 
-    :param path:
-    :param content:
-    :cvar CORE_SECTION:
+    :param path: the path of the configuration file
+    :param content: the parsed content of the file
+
+    :var CORE_SECTION: the section that holds the tox settings
+
     """
 
     CORE_SECTION = CORE

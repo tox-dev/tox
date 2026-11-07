@@ -102,10 +102,12 @@ class ToxCmdStatus(CmdStatus):
 class Pep517VenvPackager(PythonPackageToxEnv, ABC):
     """local file system python virtual environment package builder.
 
-    :param create_args:
-    :ivar builds:
-    :ivar call_require_hooks:
-    :ivar root:
+    :param create_args: the arguments to create the environment with
+
+    :var builds: the configuration sets to build, keyed by package name
+    :var call_require_hooks: the packages whose build requirements come from the build backend hooks
+    :var root: the project root the build reads from
+
     """
 
     def __init__(self, create_args: ToxEnvCreateArgs) -> None:
@@ -124,8 +126,10 @@ class Pep517VenvPackager(PythonPackageToxEnv, ABC):
     def root_at(self, value: Path) -> Generator[None, None, None]:
         """Point the builder at another source tree for the duration of one build, then restore the project root.
 
-        :param value:
-        :yields:
+        :param value: the source tree to build from
+
+        :yields: nothing, the builds in the block use the other tree
+
         """
         previous = self.root
         self.root = value

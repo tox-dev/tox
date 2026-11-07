@@ -50,7 +50,8 @@ class CliEnv:  # ruff:ignore[eq-without-hash]
       `is_default_list()` will be true, and as a sequence this will be empty. This prints in string representation as
       ``<env_list>``.
 
-    :param value:
+    :param value: the selection as given on the command line or in the configuration
+
     """
 
     def __init__(self, value: list[str] | str | None = None) -> None:
@@ -117,7 +118,8 @@ def register_env_select_flags(
     :param default: the default value for env selection
     :param multiple: allow selecting multiple environments
     :param group_only: only register group selection flags
-    :returns:
+
+    :returns: the argument group the flags are registered on
 
     """
     option_group: argparse._ActionsContainer

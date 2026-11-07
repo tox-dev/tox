@@ -26,11 +26,13 @@ if TYPE_CHECKING:
 class LocalSubProcessPep517Executor(Execute):
     """Executor holding the backend process.
 
-    :param colored:
-    :param cmd:
-    :param env:
-    :param cwd:
-    :ivar is_alive:
+    :param colored: whether the output is colored
+    :param cmd: the command that starts the backend
+    :param env: the environment variables the backend runs with
+    :param cwd: the directory the backend runs in
+
+    :var is_alive: whether the backend process has started
+
     """
 
     def __init__(self, colored: bool, cmd: Sequence[str], env: dict[str, str], cwd: Path) -> None:  # ruff:ignore[boolean-type-hint-positional-argument]

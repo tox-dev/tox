@@ -123,9 +123,10 @@ else:
 class ToxHandler(_STREAM_HANDLER_BASE):
     """Controls tox output.
 
-    :param level:
-    :param is_colored:
-    :param out_err:
+    :param level: the minimum level of the messages to show
+    :param is_colored: whether the messages are colored
+    :param out_err: the standard output and error streams to write to
+
     """
 
     def __init__(self, level: int, is_colored: bool, out_err: OutErr) -> None:  # ruff:ignore[boolean-type-hint-positional-argument]
@@ -197,7 +198,8 @@ class ToxHandler(_STREAM_HANDLER_BASE):
         """Set a new tox environment context.
 
         :param name: the name of the tox environment
-        :yields:
+
+        :yields: nothing, the messages in the block are tagged with the name
 
         """
         with self._local.with_name(name):

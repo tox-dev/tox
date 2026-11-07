@@ -80,8 +80,10 @@ _OtherFragment = TypeVar("_OtherFragment")
 def find_replace_expr(value: str | MatchExpression) -> MatchArg:
     """Find all replaceable tokens within value.
 
-    :param value:
-    :returns:
+    :param value: the text or expression to scan for replaceable tokens
+
+    :returns: the replaceable tokens found, in order
+
     """
     if isinstance(value, MatchExpression):
         return [value]
@@ -93,11 +95,13 @@ def replace_command_lines(
 ) -> str:
     """Replace all active tokens within value, where each line of value is one command.
 
-    :param conf:
-    :param reference:
-    :param value:
-    :param args:
-    :returns:
+    :param conf: the configuration to resolve the tokens against
+    :param reference: the configuration key the value belongs to
+    :param value: the command lines to expand
+    :param args: the loader arguments that scope the lookup
+
+    :returns: the value with every active token replaced
+
     """
     replacer: Final[CommandLinesReplacer] = CommandLinesReplacer(conf, reference, conf_args=args)
     replacer.program = True
@@ -141,12 +145,14 @@ def replace(
 ) -> str:
     """Replace all active tokens within value according to the config.
 
-    :param conf:
-    :param reference:
-    :param value:
-    :param args:
-    :param depth:
-    :returns:
+    :param conf: the configuration to resolve the tokens against
+    :param reference: the configuration key the value belongs to
+    :param value: the text or expression to expand
+    :param args: the loader arguments that scope the lookup
+    :param depth: the current nesting depth, which stops runaway recursive references
+
+    :returns: the value with every active token replaced
+
     """
     return Replacer(conf, reference, conf_args=args, depth=depth).expand(value)
 
@@ -165,11 +171,13 @@ def replace_entries(
 def replace_once(conf: Config, reference: ReplaceReference, value: str | MatchExpression, args: ConfigLoadArgs) -> str:
     """Replace the active tokens within value, but not the tokens within the text they are replaced with.
 
-    :param conf:
-    :param reference:
-    :param value:
-    :param args:
-    :returns:
+    :param conf: the configuration to resolve the tokens against
+    :param reference: the configuration key the value belongs to
+    :param value: the text or expression whose tokens are replaced once
+    :param args: the loader arguments that scope the lookup
+
+    :returns: the value with its active tokens replaced, without expanding the replacements
+
     """
     return Replacer(conf, reference, conf_args=args, recursive=False).join(find_replace_expr(value))
 
@@ -177,10 +185,11 @@ def replace_once(conf: Config, reference: ReplaceReference, value: str | MatchEx
 class MatchExpression:  # ruff:ignore[eq-without-hash]
     """An expression that is handled specially by the Replacer.
 
-    :param expr:
-    :param term_pos:
-    :param host:
-    :param literal:
+    :param expr: the parsed parts of the expression
+    :param term_pos: the position in the source text where the expression ends
+    :param host: whether the expression comes from a host variable
+    :param literal: whether the expression is kept as written
+
     """
 
     def __init__(
@@ -243,11 +252,14 @@ class MatchExpression:  # ruff:ignore[eq-without-hash]
 
         This function recursively calls itself via `_next_replace_expression`.
 
-        :param value:
-        :param terminator:
-        :param split:
-        :returns:
-        :raises MatchError:
+        :param value: the text to tokenize
+        :param terminator: the character that ends the tokenized text
+        :param split: the character that separates multiple arguments
+
+        :returns: the parsed arguments and the position where tokenizing stopped
+
+        :raises MatchError: when the text does not form a valid expression
+
         """
         args = []
         last_arg: list[str | MatchExpression] = []

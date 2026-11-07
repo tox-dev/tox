@@ -17,7 +17,8 @@ if TYPE_CHECKING:
 class Journal:
     """The result of a tox session.
 
-    :param enabled:
+    :param enabled: whether the journal records anything
+
     """
 
     def __init__(self, enabled: bool) -> None:  # ruff:ignore[boolean-type-hint-positional-argument]
@@ -50,8 +51,10 @@ class Journal:
     def get_env_journal(self, name: str) -> EnvJournal:
         """Return the env log of an environment (create on first call).
 
-        :param name:
-        :returns:
+        :param name: the name of the tox environment
+
+        :returns: the journal of the environment
+
         """
         if name not in self._env:
             self._env[name] = EnvJournal(self._enabled, name)

@@ -51,8 +51,10 @@ def main(args: Sequence[str]) -> int:
 def setup_state(args: Sequence[str]) -> State:
     """Setup the state object of this run.
 
-    :param args:
-    :returns:
+    :param args: the command line arguments
+
+    :returns: the state of this run
+
     """
     start = time.monotonic()
     # parse CLI arguments

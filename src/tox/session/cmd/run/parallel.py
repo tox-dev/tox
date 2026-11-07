@@ -35,9 +35,12 @@ def tox_add_option(parser: ToxParser) -> None:
 def run_parallel(state: State) -> int:
     """Here we'll just start parallel sub-processes.
 
-    :param state:
-    :returns:
-    :raises SystemExit:
+    :param state: the state of the run
+
+    :returns: the exit code of the run
+
+    :raises SystemExit: when the run is interrupted
+
     """
     option = state.conf.options
     if option.no_capture:

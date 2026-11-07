@@ -17,7 +17,8 @@ if TYPE_CHECKING:
 def ensure_cachedir_tag(work_dir: Path) -> None:
     """Ensure a ``CACHEDIR.TAG`` file exists in *work_dir* per https://bford.info/cachedir/spec.html.
 
-    :param work_dir:
+    :param work_dir: the directory to create the tag in
+
     """
     tag_path = work_dir / "CACHEDIR.TAG"
     cachedir_tag = """\

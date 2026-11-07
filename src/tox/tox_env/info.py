@@ -23,7 +23,8 @@ if TYPE_CHECKING:
 class Info:
     """Stores metadata about the tox environment.
 
-    :param path:
+    :param path: the directory of the environment
+
     """
 
     def __init__(self, path: Path) -> None:

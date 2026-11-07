@@ -44,11 +44,12 @@ _V = TypeVar("_V")
 class TomlLoader(Loader[TomlTypes]):
     """Load configuration from a pyproject.toml file.
 
-    :param section:
-    :param overrides:
-    :param content:
-    :param root_content:
-    :param unused_exclude:
+    :param section: the section the values are read from
+    :param overrides: the overrides to apply to the values
+    :param content: the parsed content of the ``tox.toml`` or ``pyproject.toml`` file
+    :param root_content: the parsed content of the root of the file, used by references
+    :param unused_exclude: the keys that are not reported as unused
+
     """
 
     def __init__(

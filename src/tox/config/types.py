@@ -100,8 +100,9 @@ class EnvList:  # ruff:ignore[eq-without-hash]
 class FactorGroup:
     """``default`` stands in wherever an environment name carries none of ``values``.
 
-    :param values:
-    :param default:
+    :param values: the factor values of the group
+    :param default: the value used when no factor is active
+
     """
 
     values: list[str]

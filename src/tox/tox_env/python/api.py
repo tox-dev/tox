@@ -344,7 +344,8 @@ class Python(ToxEnv, ABC):
 
         Debian derivatives change site-packages to dist-packages, so we look at the last path under prefix.
 
-        :returns:
+        :returns: the site-packages directory of the environment
+
         """
         raise NotImplementedError
 
@@ -354,7 +355,8 @@ class Python(ToxEnv, ABC):
         On most platforms this is the same as purelib, but on some Linux distributions (Fedora, RHEL) platlib uses lib64
         instead of lib. Defaults to purelib so third-party runners don't need to override this.
 
-        :returns:
+        :returns: the platform-specific site-packages directory of the environment
+
         """
         return self.env_site_package_dir()
 
@@ -362,7 +364,8 @@ class Python(ToxEnv, ABC):
     def env_bin_dir(self) -> Path:
         """The binary folder within the tox environment.
 
-        :returns:
+        :returns: the directory holding the executables of the environment
+
         """
         raise NotImplementedError
 
@@ -370,7 +373,8 @@ class Python(ToxEnv, ABC):
     def env_python(self) -> Path:
         """The python executable within the tox environment.
 
-        :returns:
+        :returns: the path to the Python interpreter of the environment
+
         """
         raise NotImplementedError
 
@@ -381,8 +385,9 @@ class Python(ToxEnv, ABC):
     def base_python(self) -> PythonInfo:
         """Resolve base python.
 
-        :raises Skip:
-        :raises NoInterpreter:
+        :raises Skip: when the environment is skipped for lack of an interpreter
+        :raises NoInterpreter: when no matching base interpreter is found
+
         """
         base_pythons = self.conf.get("base_python", list[str])
 
@@ -514,7 +519,8 @@ class Python(ToxEnv, ABC):
 class NoInterpreter(Fail):
     """could not find interpreter.
 
-    :param base_pythons:
+    :param base_pythons: the base Python names that were searched for
+
     """
 
     def __init__(self, base_pythons: list[str]) -> None:

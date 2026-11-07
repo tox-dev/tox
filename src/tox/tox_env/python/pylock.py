@@ -26,8 +26,10 @@ class Pylock:
     def install_lines(self) -> list[str]:
         """Return pip requirement lines for the packages this environment locks.
 
-        :returns:
-        :raises Fail:
+        :returns: the requirement lines of the locked packages
+
+        :raises Fail: when the lock file cannot be parsed
+
         """
         try:
             parsed: Final[PackagingPylock] = PackagingPylock.from_dict(

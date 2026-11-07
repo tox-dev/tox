@@ -33,10 +33,12 @@ if TYPE_CHECKING:
 class Override:  # ruff:ignore[eq-without-hash]
     """An override for config definitions.
 
-    :param value:
-    :ivar append:
-    :ivar namespace:
-    :ivar key:
+    :param value: the ``[namespace.]key[+]=value`` text of the override
+
+    :var append: whether the value is appended to a list instead of replacing it
+    :var namespace: the dotted section path the key belongs to
+    :var key: the name of the configuration key the override applies to
+
     """
 
     def __init__(self, value: str) -> None:
@@ -126,9 +128,10 @@ V = TypeVar("V")
 class Loader(Convert[T]):
     """Loader loads configuration values and converts it.
 
-    :param section:
+    :param section: the section the values are read from
     :param overrides: A list of overrides to be applied.
-    :ivar parent:
+
+    :var parent: the loader this one was derived from, if any
 
     """
 
@@ -150,7 +153,8 @@ class Loader(Convert[T]):
     def found_keys(self) -> set[str]:
         """A list of configuration keys found within the configuration.
 
-        :returns:
+        :returns: the keys found within the configuration
+
         """
         raise NotImplementedError
 
@@ -178,8 +182,9 @@ class Loader(Convert[T]):
         :param all_keys: all alias keys for this config entry (to collect overrides from any alias)
 
         :returns: the converted type
-        :raises KeyError:
-        :raises ValueError:
+
+        :raises KeyError: when the key is not present in any source
+        :raises ValueError: when the value cannot be converted to the requested type
 
         """
         from tox.config.set_env import SetEnv  # ruff:ignore[import-outside-top-level]
@@ -225,7 +230,8 @@ class Loader(Convert[T]):
         :param key: the key under what we want the configuration
         :param env_name: load for env name
         :param conf: the global config object
-        :returns:
+
+        :returns: the raw value of the key, before conversion
 
         """
         raise NotImplementedError
@@ -247,7 +253,8 @@ class Loader(Convert[T]):
         :param conf: the global config
         :param raw: the raw value
         :param args: env args
-        :returns:
+
+        :returns: the object built from the raw value
 
         """
         return self.to(raw, of_type, factory)
@@ -326,10 +333,12 @@ def apply_overrides_to_raw(overrides: Iterable[Override], key: str, value: T) ->
     are normally applied. This re-applies them so that ``TOX_OVERRIDE`` propagates through ``{[section]key}`` (ini) and
     ``{replace = "ref", of = [...]}`` (toml) references.
 
-    :param overrides:
-    :param key:
-    :param value:
-    :returns:
+    :param overrides: the overrides that may target the key
+    :param key: the configuration key whose overrides apply
+    :param value: the raw value the overrides are folded into
+
+    :returns: the raw value with the matching overrides applied
+
     """
     for entry in overrides:
         if entry.key == key:
