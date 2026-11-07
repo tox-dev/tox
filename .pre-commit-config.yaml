@@ -28,9 +28,16 @@ repos:
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: "25bcf95026b96e2dd3c0aec3090c3d6ef6ca2e6c" # frozen: v0.17.3
     hooks:
-      - id: ruff-format
       - id: ruff-check
         args: ["--fix", "--unsafe-fixes", "--exit-non-zero-on-fix"]
+  - repo: https://github.com/gaborbernat/simplint-pre-commit
+    rev: "f15525433ac9797aa1580f46fdadfe60dd77923c" # frozen: v0.8.0
+    hooks:
+      - id: simplint
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: "25bcf95026b96e2dd3c0aec3090c3d6ef6ca2e6c" # frozen: v0.17.3
+    hooks:
+      - id: ruff-format
   - repo: https://github.com/asottile/blacken-docs
     rev: fda77690955e9b63c6687d8806bafd56a526e45f # frozen: 1.20.0
     hooks:
