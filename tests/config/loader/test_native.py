@@ -57,9 +57,9 @@ def test_list_of_paths(tmp_path: Path) -> None:
 @pytest.mark.parametrize(
     ("args", "expected_prefix"),
     [
-        (["pytest", "-v"], "pytest"),
-        (["-", "cmd"], "cmd"),
-        (["!", "cmd"], "cmd"),
+        pytest.param(["pytest", "-v"], "pytest", id="pytest-dash-v-pytest"),
+        pytest.param(["-", "cmd"], "cmd", id="dash-cmd-cmd"),
+        pytest.param(["!", "cmd"], "cmd", id="bang-cmd-cmd"),
     ],
 )
 def test_command_variants(args: list[str], expected_prefix: str) -> None:

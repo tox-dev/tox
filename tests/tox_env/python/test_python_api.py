@@ -222,91 +222,89 @@ def test_diff_msg_no_diff() -> None:
 @pytest.mark.parametrize(
     ("env", "base_python"),
     [
-        ("py3", "py3"),
-        ("py3t", "py3t"),
-        ("py311", "py311"),
-        ("py311t", "py311t"),
-        ("py3.12", "py3.12"),
-        ("py3.12t", "py3.12t"),
-        ("pypy2", "pypy2"),
-        ("pypy2t", "pypy2t"),
-        ("rustpython3", "rustpython3"),
-        ("rustpython3t", "rustpython3t"),
-        ("graalpy", "graalpy"),
-        ("graalpyt", None),
-        ("jython", "jython"),
-        ("jythont", None),
-        ("cpython3.8", "cpython3.8"),
-        ("cpython3.8t", "cpython3.8t"),
-        ("ironpython2.7", "ironpython2.7"),
-        ("ironpython2.7t", "ironpython2.7t"),
-        ("functional-py310", "py310"),
-        ("functional-py310t", "py310t"),
-        ("bar-pypy2-foo", "pypy2"),
-        ("bar-foo2t-py2", "py2"),
-        ("bar-pypy2t-foo", "pypy2t"),
-        ("py", None),
-        ("pyt", None),
-        ("django-32", None),
-        ("django-32t", None),
-        ("eslint-8.3", None),
-        ("eslint-8.3t", None),
-        ("py-310", None),
-        ("py-310t", None),
-        ("py3000", None),
-        ("py3000t", None),
-        ("4.foo", None),
-        ("4.foot", None),
-        ("310", None),
-        ("310t", None),
-        ("5", None),
-        ("5t", None),
-        ("2000", None),
-        ("2000t", None),
-        ("4000", None),
-        ("4000t", None),
-        ("3.10", "3.10"),
-        ("3.10t", "3.10t"),
-        ("3.9", "3.9"),
-        ("3.9t", "3.9t"),
-        ("2.7", "2.7"),
-        ("2.7t", "2.7t"),
-        ("pypy-3.10", "pypy3.10"),
-        ("pypy-3.10t", "pypy3.10t"),
-        ("3.10-tests", "3.10"),
-        ("3.10t-tests", "3.10t"),
-        ("tests-3.10", "3.10"),
-        ("tests-3.10t", "3.10t"),
-        ("foo-3.14-bar", "3.14"),
-        ("py311d", "py311d"),
-        ("py311td", "py311td"),
-        ("py3.12d", "py3.12d"),
-        ("cpython3.8d", "cpython3.8d"),
-        ("functional-py310d", "py310d"),
-        ("bar-pypy2d-foo", "pypy2d"),
-        ("3.10d", "3.10d"),
-        ("3.10td", "3.10td"),
-        ("pypy-3.10d", "pypy3.10d"),
-        ("3.10d-tests", "3.10d"),
-        ("pyd", None),
-        ("graalpyd", None),
-        ("django-32d", None),
+        pytest.param("py3", "py3", id="py3-py3"),
+        pytest.param("py3t", "py3t", id="py3t-py3t"),
+        pytest.param("py311", "py311", id="py311-py311"),
+        pytest.param("py311t", "py311t", id="py311t-py311t"),
+        pytest.param("py3.12", "py3.12", id="py3-dot-12-py3-dot-12"),
+        pytest.param("py3.12t", "py3.12t", id="py3-dot-12t-py3-dot-12t"),
+        pytest.param("pypy2", "pypy2", id="pypy2-pypy2"),
+        pytest.param("pypy2t", "pypy2t", id="pypy2t-pypy2t"),
+        pytest.param("rustpython3", "rustpython3", id="rustpython3-rustpython3"),
+        pytest.param("rustpython3t", "rustpython3t", id="rustpython3t-rustpython3t"),
+        pytest.param("graalpy", "graalpy", id="graalpy-graalpy"),
+        pytest.param("graalpyt", None, id="graalpyt-none"),
+        pytest.param("jython", "jython", id="jython-jython"),
+        pytest.param("jythont", None, id="jythont-none"),
+        pytest.param("cpython3.8", "cpython3.8", id="cpython3-dot-8-cpython3-dot-8"),
+        pytest.param("cpython3.8t", "cpython3.8t", id="cpython3-dot-8t-cpython3-dot-8t"),
+        pytest.param("ironpython2.7", "ironpython2.7", id="ironpython2-dot-7-ironpython2-dot-7"),
+        pytest.param("ironpython2.7t", "ironpython2.7t", id="ironpython2-dot-7t-ironpython2-dot-7t"),
+        pytest.param("functional-py310", "py310", id="functional-dash-py310-py310"),
+        pytest.param("functional-py310t", "py310t", id="functional-dash-py310t-py310t"),
+        pytest.param("bar-pypy2-foo", "pypy2", id="bar-dash-pypy2-dash-foo-pypy2"),
+        pytest.param("bar-foo2t-py2", "py2", id="bar-dash-foo2t-dash-py2-py2"),
+        pytest.param("bar-pypy2t-foo", "pypy2t", id="bar-dash-pypy2t-dash-foo-pypy2t"),
+        pytest.param("py", None, id="py-none"),
+        pytest.param("pyt", None, id="pyt-none"),
+        pytest.param("django-32", None, id="django-dash-32-none"),
+        pytest.param("django-32t", None, id="django-dash-32t-none"),
+        pytest.param("eslint-8.3", None, id="eslint-dash-8-dot-3-none"),
+        pytest.param("eslint-8.3t", None, id="eslint-dash-8-dot-3t-none"),
+        pytest.param("py-310", None, id="py-dash-310-none"),
+        pytest.param("py-310t", None, id="py-dash-310t-none"),
+        pytest.param("py3000", None, id="py3000-none"),
+        pytest.param("py3000t", None, id="py3000t-none"),
+        pytest.param("4.foo", None, id="4-dot-foo-none"),
+        pytest.param("4.foot", None, id="4-dot-foot-none"),
+        pytest.param("310", None, id="310-none"),
+        pytest.param("310t", None, id="310t-none"),
+        pytest.param("5", None, id="5-none"),
+        pytest.param("5t", None, id="5t-none"),
+        pytest.param("2000", None, id="2000-none"),
+        pytest.param("2000t", None, id="2000t-none"),
+        pytest.param("4000", None, id="4000-none"),
+        pytest.param("4000t", None, id="4000t-none"),
+        pytest.param("3.10", "3.10", id="3-dot-10-3-dot-10"),
+        pytest.param("3.10t", "3.10t", id="3-dot-10t-3-dot-10t"),
+        pytest.param("3.9", "3.9", id="3-dot-9-3-dot-9"),
+        pytest.param("3.9t", "3.9t", id="3-dot-9t-3-dot-9t"),
+        pytest.param("2.7", "2.7", id="2-dot-7-2-dot-7"),
+        pytest.param("2.7t", "2.7t", id="2-dot-7t-2-dot-7t"),
+        pytest.param("pypy-3.10", "pypy3.10", id="pypy-dash-3-dot-10-pypy3-dot-10"),
+        pytest.param("pypy-3.10t", "pypy3.10t", id="pypy-dash-3-dot-10t-pypy3-dot-10t"),
+        pytest.param("3.10-tests", "3.10", id="3-dot-10-dash-tests-3-dot-10"),
+        pytest.param("3.10t-tests", "3.10t", id="3-dot-10t-dash-tests-3-dot-10t"),
+        pytest.param("tests-3.10", "3.10", id="tests-dash-3-dot-10-3-dot-10"),
+        pytest.param("tests-3.10t", "3.10t", id="tests-dash-3-dot-10t-3-dot-10t"),
+        pytest.param("foo-3.14-bar", "3.14", id="foo-dash-3-dot-14-dash-bar-3-dot-14"),
+        pytest.param("py311d", "py311d", id="py311d-py311d"),
+        pytest.param("py311td", "py311td", id="py311td-py311td"),
+        pytest.param("py3.12d", "py3.12d", id="py3-dot-12d-py3-dot-12d"),
+        pytest.param("cpython3.8d", "cpython3.8d", id="cpython3-dot-8d-cpython3-dot-8d"),
+        pytest.param("functional-py310d", "py310d", id="functional-dash-py310d-py310d"),
+        pytest.param("bar-pypy2d-foo", "pypy2d", id="bar-dash-pypy2d-dash-foo-pypy2d"),
+        pytest.param("3.10d", "3.10d", id="3-dot-10d-3-dot-10d"),
+        pytest.param("3.10td", "3.10td", id="3-dot-10td-3-dot-10td"),
+        pytest.param("pypy-3.10d", "pypy3.10d", id="pypy-dash-3-dot-10d-pypy3-dot-10d"),
+        pytest.param("3.10d-tests", "3.10d", id="3-dot-10d-dash-tests-3-dot-10d"),
+        pytest.param("pyd", None, id="pyd-none"),
+        pytest.param("graalpyd", None, id="graalpyd-none"),
+        pytest.param("django-32d", None, id="django-dash-32d-none"),
     ],
-    ids=lambda a: "|".join(a) if isinstance(a, list) else str(a),
 )
 def test_extract_base_python(env: str, base_python: str | None) -> None:
     result = Python.extract_base_python(env)
     assert result == base_python
 
 
-@pytest.mark.parametrize("ignore_conflict", [True, False])
+@pytest.mark.parametrize("ignore_conflict", [pytest.param(True, id="true"), pytest.param(False, id="false")])
 @pytest.mark.parametrize(
     ("env", "base_python"),
     [
-        ("magic", ["pypy"]),
-        ("magic", ["py39"]),
+        pytest.param("magic", ["pypy"], id="magic-pypy"),
+        pytest.param("magic", ["py39"], id="magic-py39"),
     ],
-    ids=lambda a: "|".join(a) if isinstance(a, list) else str(a),
 )
 def test_base_python_env_no_conflict(env: str, base_python: list[str], ignore_conflict: bool) -> None:
     result = Python._validate_base_python(  # ruff:ignore[private-member-access]  # internal state
@@ -315,21 +313,20 @@ def test_base_python_env_no_conflict(env: str, base_python: list[str], ignore_co
     assert result is base_python
 
 
-@pytest.mark.parametrize("ignore_conflict", [True, False])
+@pytest.mark.parametrize("ignore_conflict", [pytest.param(True, id="true"), pytest.param(False, id="false")])
 @pytest.mark.parametrize(
     ("env", "base_python", "expected", "conflict"),
     [
-        ("pypy", ["cpython"], "pypy", ["cpython"]),
-        ("pypy2", ["pypy3"], "pypy2", ["pypy3"]),
-        ("py3", ["py2"], "py3", ["py2"]),
-        ("py38", ["py39"], "py38", ["py39"]),
-        ("py38", ["py38", "py39"], "py38", ["py39"]),
-        ("py38", ["python3"], "py38", ["python3"]),
-        ("py310", ["py38", "py39"], "py310", ["py38", "py39"]),
-        ("py3.11", ["py310"], "py3.11", ["py310"]),
-        ("py310-magic", ["py39"], "py310", ["py39"]),
+        pytest.param("pypy", ["cpython"], "pypy", ["cpython"], id="pypy-cpython-pypy-cpython"),
+        pytest.param("pypy2", ["pypy3"], "pypy2", ["pypy3"], id="pypy2-pypy3-pypy2-pypy3"),
+        pytest.param("py3", ["py2"], "py3", ["py2"], id="py3-py2-py3-py2"),
+        pytest.param("py38", ["py39"], "py38", ["py39"], id="py38-py39-py38-py39"),
+        pytest.param("py38", ["py38", "py39"], "py38", ["py39"], id="py38-py38-py39-py38-py39"),
+        pytest.param("py38", ["python3"], "py38", ["python3"], id="py38-python3-py38-python3"),
+        pytest.param("py310", ["py38", "py39"], "py310", ["py38", "py39"], id="py310-py38-py39-py310-py38-py39"),
+        pytest.param("py3.11", ["py310"], "py3.11", ["py310"], id="py3-dot-11-py310-py3-dot-11-py310"),
+        pytest.param("py310-magic", ["py39"], "py310", ["py39"], id="py310-dash-magic-py39-py310-py39"),
     ],
-    ids=lambda a: "|".join(a) if isinstance(a, list) else str(a),
 )
 def test_base_python_env_conflict(
     env: str,
@@ -430,7 +427,9 @@ def test_base_python_path_implementation_case(
     )
 
 
-@pytest.mark.parametrize("ignore_conflict", [True, False, None])
+@pytest.mark.parametrize(
+    "ignore_conflict", [pytest.param(True, id="true"), pytest.param(False, id="false"), pytest.param(None, id="none")]
+)
 def test_base_python_env_conflict_show_conf(tox_project: ToxProjectCreator, ignore_conflict: bool | None) -> None:
     py_ver = "".join(str(i) for i in sys.version_info[0:2])
     py_ver_next = "".join(str(i) for i in (sys.version_info[0], sys.version_info[1] + 2))
@@ -556,7 +555,7 @@ def test_python_hash_seed_from_env_and_disable(tox_project: ToxProjectCreator) -
         assert result.out.splitlines()[1] == "None"
 
 
-@pytest.mark.parametrize("in_ci", [True, False])
+@pytest.mark.parametrize("in_ci", [pytest.param(True, id="true"), pytest.param(False, id="false")])
 def test_list_installed_deps(in_ci: bool, tox_project: ToxProjectCreator, mocker: MockerFixture) -> None:
     mocker.patch("tox.config.cli.parser.is_ci", return_value=in_ci)
     result = tox_project({"tox.ini": "[testenv]\nskip_install = true"}).run("r", "-e", "py")
@@ -566,8 +565,14 @@ def test_list_installed_deps(in_ci: bool, tox_project: ToxProjectCreator, mocker
         assert "pip==" not in result.out
 
 
-@pytest.mark.parametrize("list_deps", ["--list-dependencies", "--no-list-dependencies"])
-@pytest.mark.parametrize("in_ci", [True, False])
+@pytest.mark.parametrize(
+    "list_deps",
+    [
+        pytest.param("--list-dependencies", id="dash-dash-list-dash-dependencies"),
+        pytest.param("--no-list-dependencies", id="dash-dash-no-dash-list-dash-dependencies"),
+    ],
+)
+@pytest.mark.parametrize("in_ci", [pytest.param(True, id="true"), pytest.param(False, id="false")])
 def test_list_installed_deps_explicit_cli(
     list_deps: str,
     in_ci: bool,
@@ -697,11 +702,51 @@ commands = [["python", "-c", "print('ok')"]]
 @pytest.mark.parametrize(
     ("impl", "major", "minor", "arch", "free_threaded", "debug", "platform_str", "expected_machine"),
     [
-        ("cpython", 3, 12, 64, None, False, "linux-x86_64", "x86_64"),
-        ("cpython", 3, 13, 64, True, True, "linux-aarch64", "arm64"),
-        ("cpython", 3, 13, 64, False, True, "win-amd64", "x86_64"),
-        ("pypy", 3, 9, 32, None, False, "win32", None),
-        ("cpython", 3, 12, 64, None, False, "macosx-14.0-arm64", "arm64"),
+        pytest.param(
+            "cpython",
+            3,
+            12,
+            64,
+            None,
+            False,
+            "linux-x86_64",
+            "x86_64",
+            id="cpython-3-12-64-none-false-linux-dash-x86-underscore-64-x86-underscore-64",
+        ),
+        pytest.param(
+            "cpython",
+            3,
+            13,
+            64,
+            True,
+            True,
+            "linux-aarch64",
+            "arm64",
+            id="cpython-3-13-64-true-true-linux-dash-aarch64-arm64",
+        ),
+        pytest.param(
+            "cpython",
+            3,
+            13,
+            64,
+            False,
+            True,
+            "win-amd64",
+            "x86_64",
+            id="cpython-3-13-64-false-true-win-dash-amd64-x86-underscore-64",
+        ),
+        pytest.param("pypy", 3, 9, 32, None, False, "win32", None, id="pypy-3-9-32-none-false-win32-none"),
+        pytest.param(
+            "cpython",
+            3,
+            12,
+            64,
+            None,
+            False,
+            "macosx-14.0-arm64",
+            "arm64",
+            id="cpython-3-12-64-none-false-macosx-dash-14-dot-0-dash-arm64-arm64",
+        ),
     ],
 )
 def test_python_spec_for_sys_executable(
@@ -750,10 +795,10 @@ def test_python_spec_for_sys_executable(
 @pytest.mark.parametrize(
     ("impl", "major", "minor", "arch", "free_threaded", "debug_build", "machine"),
     [
-        ("cpython", 3, 13, 64, True, False, "x86_64"),
-        ("cpython", 3, 13, 64, False, True, "x86_64"),
-        ("cpython", 3, 13, 64, True, True, "x86_64"),
-        ("cpython", 3, 12, 64, None, False, None),
+        pytest.param("cpython", 3, 13, 64, True, False, "x86_64", id="cpython-3-13-64-true-false-x86-underscore-64"),
+        pytest.param("cpython", 3, 13, 64, False, True, "x86_64", id="cpython-3-13-64-false-true-x86-underscore-64"),
+        pytest.param("cpython", 3, 13, 64, True, True, "x86_64", id="cpython-3-13-64-true-true-x86-underscore-64"),
+        pytest.param("cpython", 3, 12, 64, None, False, None, id="cpython-3-12-64-none-false-none"),
     ],
 )
 def test_python_spec_for_path(
@@ -788,9 +833,9 @@ def test_python_spec_for_path(
 @pytest.mark.parametrize(
     ("env", "base_debug", "conflicts"),
     [
-        ("py313d", True, False),
-        ("py313d", False, True),
-        ("py313", True, False),
+        pytest.param("py313d", True, False, id="py313d-true-false"),
+        pytest.param("py313d", False, True, id="py313d-false-true"),
+        pytest.param("py313", True, False, id="py313-true-false"),
     ],
 )
 def test_validate_base_python_debug(env: str, base_debug: bool, conflicts: bool, mocker: MockerFixture) -> None:

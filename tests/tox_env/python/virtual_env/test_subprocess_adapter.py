@@ -71,12 +71,12 @@ def test_probe_python_nonexistent() -> None:
 @pytest.mark.parametrize(
     ("sysconfig_platform", "expected_machine"),
     [
-        ("linux-x86_64", "x86_64"),
-        ("linux-aarch64", "aarch64"),
-        ("win-amd64", "amd64"),
-        ("macosx-14.0-arm64", "arm64"),
-        ("win32", ""),
-        (None, ""),
+        pytest.param("linux-x86_64", "x86_64", id="linux-dash-x86-underscore-64-x86-underscore-64"),
+        pytest.param("linux-aarch64", "aarch64", id="linux-dash-aarch64-aarch64"),
+        pytest.param("win-amd64", "amd64", id="win-dash-amd64-amd64"),
+        pytest.param("macosx-14.0-arm64", "arm64", id="macosx-dash-14-dot-0-dash-arm64-arm64"),
+        pytest.param("win32", "", id="win32-empty"),
+        pytest.param(None, "", id="none-empty"),
     ],
 )
 def test_subprocess_python_info_machine(sysconfig_platform: str | None, expected_machine: str) -> None:

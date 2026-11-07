@@ -8,10 +8,18 @@ from tox.session.env_select import CliEnv
 @pytest.mark.parametrize(
     ("val", "exp"),
     [
-        (CliEnv(["a", "b"]), "CliEnv('a,b')"),
-        (CliEnv(["ALL", "b"]), "CliEnv('ALL')"),
-        (CliEnv([]), "CliEnv()"),
-        (CliEnv(), "CliEnv()"),
+        pytest.param(
+            CliEnv(["a", "b"]),
+            "CliEnv('a,b')",
+            id="clienv-lparen-lbracket-quote-a-quote-comma-space-quote-b-quote-rbracket-rparen-clienv-lparen-quote-a-comma-b-quote-rparen",
+        ),
+        pytest.param(
+            CliEnv(["ALL", "b"]),
+            "CliEnv('ALL')",
+            id="clienv-lparen-lbracket-quote-all-quote-comma-space-quote-b-quote-rbracket-rparen-clienv-lparen-quote-all-quote-rparen",
+        ),
+        pytest.param(CliEnv([]), "CliEnv()", id="clienv-lparen-lbracket-rbracket-rparen-clienv-lparen-rparen"),
+        pytest.param(CliEnv(), "CliEnv()", id="clienv-lparen-rparen-clienv-lparen-rparen"),
     ],
 )
 def test_cli_env_repr(val: CliEnv, exp: str) -> None:
@@ -21,10 +29,18 @@ def test_cli_env_repr(val: CliEnv, exp: str) -> None:
 @pytest.mark.parametrize(
     ("val", "exp"),
     [
-        (CliEnv(["a", "b"]), "a,b"),
-        (CliEnv(["ALL", "b"]), "ALL"),
-        (CliEnv([]), "<env_list>"),
-        (CliEnv(), "<env_list>"),
+        pytest.param(
+            CliEnv(["a", "b"]),
+            "a,b",
+            id="clienv-lparen-lbracket-quote-a-quote-comma-space-quote-b-quote-rbracket-rparen-a-comma-b",
+        ),
+        pytest.param(
+            CliEnv(["ALL", "b"]),
+            "ALL",
+            id="clienv-lparen-lbracket-quote-all-quote-comma-space-quote-b-quote-rbracket-rparen-all",
+        ),
+        pytest.param(CliEnv([]), "<env_list>", id="clienv-lparen-lbracket-rbracket-rparen-lt-env-underscore-list-gt"),
+        pytest.param(CliEnv(), "<env_list>", id="clienv-lparen-rparen-lt-env-underscore-list-gt"),
     ],
 )
 def test_cli_env_str(val: CliEnv, exp: str) -> None:

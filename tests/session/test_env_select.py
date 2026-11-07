@@ -27,27 +27,48 @@ _TWO_WHEEL_ENVS_INI: Final[str] = "[tox]\nenv_list = a,b\n[testenv]\npackage = w
 @pytest.mark.parametrize(
     ("user_input", "env_names", "is_all", "is_default"),
     [
-        (None, (), False, True),
-        ("", (), False, True),
-        ("a1", ("a1",), False, False),
-        ("a1,b2,c3", ("a1", "b2", "c3"), False, False),
-        (" a1, b2 ,  c3  ", ("a1", "b2", "c3"), False, False),
+        pytest.param(None, (), False, True, id="none--false-true"),
+        pytest.param("", (), False, True, id="empty--false-true"),
+        pytest.param("a1", ("a1",), False, False, id="a1-a1-false-false"),
+        pytest.param("a1,b2,c3", ("a1", "b2", "c3"), False, False, id="a1-comma-b2-comma-c3-a1-b2-c3-false-false"),
+        pytest.param(
+            " a1, b2 ,  c3  ",
+            ("a1", "b2", "c3"),
+            False,
+            False,
+            id="space-a1-comma-space-b2-space-comma-space-space-c3-space-space-a1-b2-c3-false-false",
+        ),
         #   If the user gives "ALL" as any envname, this becomes an "is_all" and other envnames are ignored.
-        ("ALL", (), True, False),
-        ("a1,ALL,b2", (), True, False),
+        pytest.param("ALL", (), True, False, id="all--true-false"),
+        pytest.param("a1,ALL,b2", (), True, False, id="a1-comma-all-comma-b2--true-false"),
         #   Zero-length envnames are ignored as being not present. This is not intentional.
-        (",,a1,,,b2,,", ("a1", "b2"), False, False),
-        (",,", (), False, True),
+        pytest.param(
+            ",,a1,,,b2,,",
+            ("a1", "b2"),
+            False,
+            False,
+            id="comma-comma-a1-comma-comma-comma-b2-comma-comma-a1-b2-false-false",
+        ),
+        pytest.param(",,", (), False, True, id="comma-comma--false-true"),
         #   Environment names with "invalid" characters are accepted here; the client is expected to deal with this.
-        ("\x01.-@\x02,xxx", ("\x01.-@\x02", "xxx"), False, False),
+        pytest.param(
+            "\x01.-@\x02,xxx",
+            ("\x01.-@\x02", "xxx"),
+            False,
+            False,
+            id="u1-dot-dash-at-u2-comma-xxx-u1-dot-dash-at-u2-xxx-false-false",
+        ),
         #   Brace expansion produces the cartesian product of factors.
-        (
+        pytest.param(
             "py{38,39}-pytest{6.x,7.x}",
             ("py38-pytest6.x", "py38-pytest7.x", "py39-pytest6.x", "py39-pytest7.x"),
             False,
             False,
+            id="py-open-38-comma-39-close-dash-pytest-open-6-dot-x-comma-7-dot-x-close-py38-dash-pytest6-dot-x-py38-dash-pytest7-dot-x-py39-dash-pytest6-dot-x-py39-dash-pytest7-dot-x-false-false",
         ),
-        ("a{1,2},b", ("a1", "a2", "b"), False, False),
+        pytest.param(
+            "a{1,2},b", ("a1", "a2", "b"), False, False, id="a-open-1-comma-2-close-comma-b-a1-a2-b-false-false"
+        ),
     ],
 )
 def test_clienv(user_input: str, env_names: tuple[str], is_all: bool, is_default: bool) -> None:
@@ -59,11 +80,11 @@ def test_clienv(user_input: str, env_names: tuple[str], is_all: bool, is_default
 @pytest.mark.parametrize(
     ("user_input", "expected"),
     [
-        ("", False),
-        ("all", False),
-        ("All", False),
-        ("ALL", True),
-        ("a,ALL,b", True),
+        pytest.param("", False, id="empty-false"),
+        pytest.param("all", False, id="all-false"),
+        pytest.param("All", False, id="all-false-2"),
+        pytest.param("ALL", True, id="all-true"),
+        pytest.param("a,ALL,b", True, id="a-comma-all-comma-b-true"),
     ],
 )
 def test_clienv_is_all(user_input: str, expected: bool) -> None:
@@ -153,17 +174,20 @@ def test_label_core_and_trait(tox_project: ToxProjectCreator) -> None:
 @pytest.mark.parametrize(
     ("selection_arguments", "expect_envs"),
     [
-        (
+        pytest.param(
             ("-f", "cov", "django20"),
             ("py310-django20-cov", "py39-django20-cov"),
+            id="dash-f-cov-django20-py310-dash-django20-dash-cov-py39-dash-django20-dash-cov",
         ),
-        (
+        pytest.param(
             ("-f", "cov-django20"),
             ("py310-django20-cov", "py39-django20-cov"),
+            id="dash-f-cov-dash-django20-py310-dash-django20-dash-cov-py39-dash-django20-dash-cov",
         ),
-        (
+        pytest.param(
             ("-f", "py39", "django20", "-f", "py310", "django21"),
             ("py310-django21-cov", "py310-django21", "py39-django20-cov", "py39-django20"),
+            id="dash-f-py39-django20-dash-f-py310-django21-py310-dash-django21-dash-cov-py310-dash-django21-py39-dash-django20-dash-cov-py39-dash-django20",
         ),
     ],
 )
@@ -184,9 +208,17 @@ def test_factor_select(
 @pytest.mark.parametrize(
     ("env_value", "expect_envs"),
     [
-        ("cov", ("py310-django20-cov", "py310-django21-cov", "py39-django20-cov", "py39-django21-cov")),
-        ("py39,django20", ("py39-django20-cov", "py39-django20")),
-        (
+        pytest.param(
+            "cov",
+            ("py310-django20-cov", "py310-django21-cov", "py39-django20-cov", "py39-django21-cov"),
+            id="cov-py310-dash-django20-dash-cov-py310-dash-django21-dash-cov-py39-dash-django20-dash-cov-py39-dash-django21-dash-cov",
+        ),
+        pytest.param(
+            "py39,django20",
+            ("py39-django20-cov", "py39-django20"),
+            id="py39-comma-django20-py39-dash-django20-dash-cov-py39-dash-django20",
+        ),
+        pytest.param(
             "py39;py310",
             (
                 "py310-django20-cov",
@@ -198,6 +230,7 @@ def test_factor_select(
                 "py39-django21-cov",
                 "py39-django21",
             ),
+            id="py39-semicolon-py310-py310-dash-django20-dash-cov-py310-dash-django20-py310-dash-django21-dash-cov-py310-dash-django21-py39-dash-django20-dash-cov-py39-dash-django20-py39-dash-django21-dash-cov-py39-dash-django21",
         ),
     ],
 )
@@ -269,7 +302,9 @@ def test_tox_skip_env_logs(tox_project: ToxProjectCreator, monkeypatch: MonkeyPa
     outcome.assert_out_err("ROOT: skip environment mypy, matches filter 'm[y]py'\npy310\npy39\n", "")
 
 
-@pytest.mark.parametrize("bad_filter", ["[", "(", "*"])
+@pytest.mark.parametrize(
+    "bad_filter", [pytest.param("[", id="lbracket"), pytest.param("(", id="lparen"), pytest.param("*", id="star")]
+)
 def test_tox_skip_env_invalid_regex(tox_project: ToxProjectCreator, monkeypatch: MonkeyPatch, bad_filter: str) -> None:
     monkeypatch.delenv("TOX_SKIP_ENV", raising=False)
     project = tox_project({"tox.ini": "[tox]\nenv_list = py3{10,9},mypy"})
@@ -347,7 +382,14 @@ def test_cli_env_can_be_specified_in_additional_environments(tox_project: ToxPro
     assert not outcome.err
 
 
-@pytest.mark.parametrize("env_name", ["py", _CURRENT_PY_ENV, ".pkg"])
+@pytest.mark.parametrize(
+    "env_name",
+    [
+        pytest.param("py", id="py"),
+        pytest.param(_CURRENT_PY_ENV, id="underscore-current-underscore-py-underscore-env"),
+        pytest.param(".pkg", id="dot-pkg"),
+    ],
+)
 def test_allowed_implicit_cli_envs(env_name: str, tox_project: ToxProjectCreator) -> None:
     outcome = tox_project({"tox.ini": ""}).run("r", "-e", env_name)
     outcome.assert_success()
@@ -355,7 +397,15 @@ def test_allowed_implicit_cli_envs(env_name: str, tox_project: ToxProjectCreator
     assert not outcome.err
 
 
-@pytest.mark.parametrize("env_name", ["a", "b", "a-b", "b-a"])
+@pytest.mark.parametrize(
+    "env_name",
+    [
+        pytest.param("a", id="a"),
+        pytest.param("b", id="b"),
+        pytest.param("a-b", id="a-dash-b"),
+        pytest.param("b-a", id="b-dash-a"),
+    ],
+)
 def test_matches_hyphenated_env(env_name: str, tox_project: ToxProjectCreator) -> None:
     tox_ini = """
         [tox]
@@ -379,13 +429,13 @@ _MINOR = sys.version_info.minor
 @pytest.mark.parametrize(
     "env_name",
     [
-        f"3.{_MINOR}",
-        f"3.{_MINOR}-cov",
-        "3-cov",
-        "3",
-        f"py3.{_MINOR}",
-        f"py3{_MINOR}-cov",
-        f"py3.{_MINOR}-cov",
+        pytest.param(f"3.{_MINOR}", id="f-quote-3-dot-open-underscore-minor-close-quote"),
+        pytest.param(f"3.{_MINOR}-cov", id="f-quote-3-dot-open-underscore-minor-close-dash-cov-quote"),
+        pytest.param("3-cov", id="3-dash-cov"),
+        pytest.param("3", id="3"),
+        pytest.param(f"py3.{_MINOR}", id="f-quote-py3-dot-open-underscore-minor-close-quote"),
+        pytest.param(f"py3{_MINOR}-cov", id="f-quote-py3-open-underscore-minor-close-dash-cov-quote"),
+        pytest.param(f"py3.{_MINOR}-cov", id="f-quote-py3-dot-open-underscore-minor-close-dash-cov-quote"),
     ],
 )
 def test_matches_combined_env(env_name: str, tox_project: ToxProjectCreator) -> None:
@@ -405,22 +455,22 @@ def test_matches_combined_env(env_name: str, tox_project: ToxProjectCreator) -> 
 @pytest.mark.parametrize(
     "env",
     [
-        "py",
-        "pypy",
-        "pypy3",
-        "pypy3.12",
-        "pypy312",
-        "py3",
-        "py3.12",
-        "py3.12t",
-        "py312",
-        "py312t",
-        "3",
-        "3t",
-        "3.12",
-        "3.12t",
-        "3.12.0",
-        "3.12.0t",
+        pytest.param("py", id="py"),
+        pytest.param("pypy", id="pypy"),
+        pytest.param("pypy3", id="pypy3"),
+        pytest.param("pypy3.12", id="pypy3-dot-12"),
+        pytest.param("pypy312", id="pypy312"),
+        pytest.param("py3", id="py3"),
+        pytest.param("py3.12", id="py3-dot-12"),
+        pytest.param("py3.12t", id="py3-dot-12t"),
+        pytest.param("py312", id="py312"),
+        pytest.param("py312t", id="py312t"),
+        pytest.param("3", id="3"),
+        pytest.param("3t", id="3t"),
+        pytest.param("3.12", id="3-dot-12"),
+        pytest.param("3.12t", id="3-dot-12t"),
+        pytest.param("3.12.0", id="3-dot-12-dot-0"),
+        pytest.param("3.12.0t", id="3-dot-12-dot-0t"),
     ],
 )
 def test_dynamic_env_factors_match(env: str) -> None:
@@ -430,9 +480,9 @@ def test_dynamic_env_factors_match(env: str) -> None:
 @pytest.mark.parametrize(
     "env",
     [
-        "cy3",
-        "cov",
-        "py10.1",
+        pytest.param("cy3", id="cy3"),
+        pytest.param("cov", id="cov"),
+        pytest.param("py10.1", id="py10-dot-1"),
     ],
 )
 def test_dynamic_env_factors_not_match(env: str) -> None:
@@ -478,7 +528,10 @@ def test_undeclared_cython_env_rejected(lint_only_project: ToxProject) -> None:
     assert "provided environments not found in configuration file:\ncython313" in outcome.out
 
 
-@pytest.mark.parametrize("env_name", ["functional-py312", "functional"])
+@pytest.mark.parametrize(
+    "env_name",
+    [pytest.param("functional-py312", id="functional-dash-py312"), pytest.param("functional", id="functional")],
+)
 def test_partial_section_match_rejected(env_name: str, tox_project: ToxProjectCreator) -> None:
     tox_ini = "[testenv]\nskip_install = true\ncommands=python -c 'print(1)'\n[testenv:functional{-py310}]\n"
     outcome = tox_project({"tox.ini": tox_ini}).run("r", "-e", env_name)

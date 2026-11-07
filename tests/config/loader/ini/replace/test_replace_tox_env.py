@@ -333,7 +333,15 @@ def test_replace_within_list_entry_cannot_add_entries(
         load_list(entries, value)
 
 
-@pytest.mark.parametrize("of_type", [set[str], list[Requirement], list[str] | str, list[str] | None])
+@pytest.mark.parametrize(
+    "of_type",
+    [
+        pytest.param(set[str], id="set-lbracket-str-rbracket"),
+        pytest.param(list[Requirement], id="list-lbracket-requirement-rbracket"),
+        pytest.param(list[str] | str, id="list-lbracket-str-rbracket-space-pipe-space-str"),
+        pytest.param(list[str] | None, id="list-lbracket-str-rbracket-space-pipe-space-none"),
+    ],
+)
 def test_replace_within_entry_cannot_add_entries_for_type(
     example: EnvConfigCreator, monkeypatch: pytest.MonkeyPatch, of_type: type[object] | UnionType
 ) -> None:
@@ -410,7 +418,17 @@ def test_replace_within_env_list_entry_accepts_value(
     ])
 
 
-@pytest.mark.parametrize("depth", [5, 99, 100, 101, 150, 256])
+@pytest.mark.parametrize(
+    "depth",
+    [
+        pytest.param(5, id="5"),
+        pytest.param(99, id="99"),
+        pytest.param(100, id="100"),
+        pytest.param(101, id="101"),
+        pytest.param(150, id="150"),
+        pytest.param(256, id="256"),
+    ],
+)
 def test_replace_within_section_chain_deep(caplog: LogCaptureFixture, tox_ini_conf: ToxIniCreator, depth: int) -> None:
     config = tox_ini_conf(
         "\n".join(
@@ -507,20 +525,24 @@ def test_replace_ref_raw_value(tox_ini_conf: ToxIniCreator) -> None:
 @pytest.mark.parametrize(
     ("start", "end"),
     [
-        ("0", "0"),
-        ("0}", "0}"),
-        ("{0", "{0"),
-        ("{0}", "{0}"),
-        ("{}{0}", "{}{0}"),
-        ("{0}{}", "{0}{}"),
-        ("\\{0}", "{0}"),
-        ("{0\\}", "{0}"),
-        ("\\{0\\}", "{0}"),
-        ("f\\{0\\}", "f{0}"),
-        ("\\{0\\}f", "{0}f"),
-        ("\\{\\{0", "{{0"),
-        ("0\\}\\}", "0}}"),
-        ("\\{\\{0\\}\\}", "{{0}}"),
+        pytest.param("0", "0", id="0-0"),
+        pytest.param("0}", "0}", id="0-close-0-close"),
+        pytest.param("{0", "{0", id="open-0-open-0"),
+        pytest.param("{0}", "{0}", id="open-0-close-open-0-close"),
+        pytest.param("{}{0}", "{}{0}", id="open-close-open-0-close-open-close-open-0-close"),
+        pytest.param("{0}{}", "{0}{}", id="open-0-close-open-close-open-0-close-open-close"),
+        pytest.param("\\{0}", "{0}", id="backslash-open-0-close-open-0-close"),
+        pytest.param("{0\\}", "{0}", id="open-0-backslash-close-open-0-close"),
+        pytest.param("\\{0\\}", "{0}", id="backslash-open-0-backslash-close-open-0-close"),
+        pytest.param("f\\{0\\}", "f{0}", id="f-backslash-open-0-backslash-close-f-open-0-close"),
+        pytest.param("\\{0\\}f", "{0}f", id="backslash-open-0-backslash-close-f-open-0-close-f"),
+        pytest.param("\\{\\{0", "{{0", id="backslash-open-backslash-open-0-open-open-0"),
+        pytest.param("0\\}\\}", "0}}", id="0-backslash-close-backslash-close-0-close-close"),
+        pytest.param(
+            "\\{\\{0\\}\\}",
+            "{{0}}",
+            id="backslash-open-backslash-open-0-backslash-close-backslash-close-open-open-0-close-close",
+        ),
     ],
 )
 def test_do_not_replace(replace_one: ReplaceOne, start: str, end: str) -> None:
@@ -584,10 +606,10 @@ def test_replace_from_tox_other_tox_section_same_name(tox_ini_conf: ToxIniCreato
 @pytest.mark.parametrize(
     ("env_name", "exp"),
     [
-        ("testenv:foobar", "1"),
-        ("testenv:foo-bar", "1"),
-        ("foo-bar", "1"),
-        ("foobar", "1"),
+        pytest.param("testenv:foobar", "1", id="testenv-colon-foobar-1"),
+        pytest.param("testenv:foo-bar", "1", id="testenv-colon-foo-dash-bar-1"),
+        pytest.param("foo-bar", "1", id="foo-dash-bar-1"),
+        pytest.param("foobar", "1", id="foobar-1"),
     ],
 )
 def test_replace_valid_section_names(tox_ini_conf: ToxIniCreator, env_name: str, exp: str) -> None:

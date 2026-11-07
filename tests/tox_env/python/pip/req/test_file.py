@@ -489,7 +489,9 @@ def test_requirements_env_var_from_environment_provider(monkeypatch: MonkeyPatch
     assert [str(item) for item in req_file.requirements] == ["beta>=1", f".{os.sep}${{OTHER_VAR}}"]
 
 
-@pytest.mark.parametrize("flag", ["-r", "--requirement"])
+@pytest.mark.parametrize(
+    "flag", [pytest.param("-r", id="dash-r"), pytest.param("--requirement", id="dash-dash-requirement")]
+)
 def test_requirements_txt_transitive(tmp_path: Path, flag: str) -> None:
     other_req = tmp_path / "other-requirements.txt"
     other_req.write_text("magic\nmagical")
@@ -506,11 +508,27 @@ def test_requirements_txt_transitive(tmp_path: Path, flag: str) -> None:
 @pytest.mark.parametrize(
     ("raw", "error"),
     [
-        ("--pre something", "unrecognized arguments: something"),
-        ("--missing", "unrecognized arguments: --missing"),
-        ("--index-url a b", "unrecognized arguments: b"),
-        ("--index-url", "argument -i/--index-url/--pypi-url: expected one argument"),
-        ("-k", "unrecognized arguments: -k"),
+        pytest.param(
+            "--pre something",
+            "unrecognized arguments: something",
+            id="dash-dash-pre-space-something-unrecognized-space-arguments-colon-space-something",
+        ),
+        pytest.param(
+            "--missing",
+            "unrecognized arguments: --missing",
+            id="dash-dash-missing-unrecognized-space-arguments-colon-space-dash-dash-missing",
+        ),
+        pytest.param(
+            "--index-url a b",
+            "unrecognized arguments: b",
+            id="dash-dash-index-dash-url-space-a-space-b-unrecognized-space-arguments-colon-space-b",
+        ),
+        pytest.param(
+            "--index-url",
+            "argument -i/--index-url/--pypi-url: expected one argument",
+            id="dash-dash-index-dash-url-argument-space-dash-i-slash-dash-dash-index-dash-url-slash-dash-dash-pypi-dash-url-colon-space-expected-space-one-space-argument",
+        ),
+        pytest.param("-k", "unrecognized arguments: -k", id="dash-k-unrecognized-space-arguments-colon-space-dash-k"),
     ],
 )
 def test_bad_line(tmp_path: Path, raw: str, capfd: CaptureFixture, error: str) -> None:
@@ -541,7 +559,9 @@ def test_requirements_file_missing(tmp_path: Path) -> None:
         assert req_file.options
 
 
-@pytest.mark.parametrize("flag", ["-c", "--constraint"])
+@pytest.mark.parametrize(
+    "flag", [pytest.param("-c", id="dash-c"), pytest.param("--constraint", id="dash-dash-constraint")]
+)
 def test_constraint_txt_expanded(tmp_path: Path, flag: str) -> None:
     other_req = tmp_path / "other.txt"
     other_req.write_text("magic\nmagical\n-i a")
@@ -587,11 +607,17 @@ def test_req_path_with_space_quoted(tmp_path: Path) -> None:
 @pytest.mark.parametrize(
     "hash_value",
     [
-        "sha256:a",
-        "sha256:xxxxxxxxxx123456789012345678901234567890123456789012345678901234",
+        pytest.param("sha256:a", id="sha256-colon-a"),
+        pytest.param(
+            "sha256:xxxxxxxxxx123456789012345678901234567890123456789012345678901234",
+            id="sha256-colon-xxxxxxxxxx123456789012345678901234567890123456789012345678901234",
+        ),
         (
-            "sha512:thisshouldfail8525e477385ef5ee6cecdc8f8fcc2a79d1b35a9f57ad15c814"
-            "dada670026f41fdd62e5e10b3fd75d6112704a9521c3df105f0b6f3bb11b128a"
+            pytest.param(
+                "sha512:thisshouldfail8525e477385ef5ee6cecdc8f8fcc2a79d1b35a9f57ad15c814"
+                "dada670026f41fdd62e5e10b3fd75d6112704a9521c3df105f0b6f3bb11b128a",
+                id="sha512-colon-thisshouldfail8525e477385ef5ee6cecdc8f8fcc2a79d1b35a9f57ad15c814dada670026f41fdd62e5e10b3fd75d6112704a9521c3df105f0b6f3bb11b128a",
+            )
         ),
     ],
 )
@@ -603,7 +629,14 @@ def test_bad_hash(hash_value: str, tmp_path: Path) -> None:
         assert req_file.requirements
 
 
-@pytest.mark.parametrize("codec", ["utf-8", "utf-16", "utf-32"])
+@pytest.mark.parametrize(
+    "codec",
+    [
+        pytest.param("utf-8", id="utf-dash-8"),
+        pytest.param("utf-16", id="utf-dash-16"),
+        pytest.param("utf-32", id="utf-dash-32"),
+    ],
+)
 def test_custom_file_encoding(codec: str, tmp_path: Path) -> None:
     requirements_file = tmp_path / "r.txt"
     requirements_file.write_bytes("art".encode(codec))
@@ -635,7 +668,15 @@ def test_parsed_requirement_repr_no_opt(tmp_path: Path) -> None:
     assert repr(ParsedRequirement("a", {}, str(tmp_path), 2)) == "ParsedRequirement(requirement=a)"
 
 
-@pytest.mark.parametrize("flag", ["-r", "--requirement", "-c", "--constraint"])
+@pytest.mark.parametrize(
+    "flag",
+    [
+        pytest.param("-r", id="dash-r"),
+        pytest.param("--requirement", id="dash-dash-requirement"),
+        pytest.param("-c", id="dash-c"),
+        pytest.param("--constraint", id="dash-dash-constraint"),
+    ],
+)
 def test_req_over_http(tmp_path: Path, flag: str, mocker: MockerFixture) -> None:
     is_constraint = flag in {"-c", "--constraint"}
     url_open = mocker.patch("tox.tox_env.python.pip.req.file.urlopen", autospec=True)
@@ -717,7 +758,10 @@ def test_req_over_http_has_req(tmp_path: Path, mocker: MockerFixture) -> None:
 
 @pytest.mark.parametrize(
     "loc",
-    ["file://", "file://localhost"],
+    [
+        pytest.param("file://", id="file-colon-slash-slash"),
+        pytest.param("file://localhost", id="file-colon-slash-slash-localhost"),
+    ],
 )
 def test_requirement_via_file_protocol(tmp_path: Path, loc: str) -> None:
     other_req = tmp_path / "other-requirements.txt"
@@ -744,7 +788,13 @@ def test_requirement_via_file_protocol_na(tmp_path: Path) -> None:
         assert req_file.options
 
 
-@pytest.mark.parametrize("req", ["pre-commit ~= 4", "pre-commit~=4"])
+@pytest.mark.parametrize(
+    "req",
+    [
+        pytest.param("pre-commit ~= 4", id="pre-dash-commit-space-tilde-equal-space-4"),
+        pytest.param("pre-commit~=4", id="pre-dash-commit-tilde-equal-4"),
+    ],
+)
 def test_requirement_with_tilde_equals_not_treated_as_path(tmp_path: Path, req: str) -> None:
     # Deps with ``~=`` version specifier should not be treated as local paths (#3447).
     parsed = ParsedRequirement(req, {}, str(tmp_path / "tox.ini"), 1)

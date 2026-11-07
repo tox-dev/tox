@@ -42,13 +42,16 @@ if TYPE_CHECKING:
     from tox.tox_env.api import ToxEnv
 
 
-@pytest.mark.parametrize("color", [True, False], ids=["color", "no_color"])
-@pytest.mark.parametrize(("out", "err"), [("out", "err"), ("", "")], ids=["simple", "nothing"])
-@pytest.mark.parametrize("show", [True, False], ids=["show", "no_show"])
+@pytest.mark.parametrize("color", [pytest.param(True, id="color"), pytest.param(False, id="no_color")])
+@pytest.mark.parametrize(("out", "err"), [pytest.param("out", "err", id="simple"), pytest.param("", "", id="nothing")])
+@pytest.mark.parametrize("show", [pytest.param(True, id="show"), pytest.param(False, id="no_show")])
 @pytest.mark.parametrize(
     "stderr_color",
-    ["RED", "YELLOW", "RESET"],
-    ids=["stderr_color_default", "stderr_color_yellow", "stderr_color_reset"],
+    [
+        pytest.param("RED", id="stderr_color_default"),
+        pytest.param("YELLOW", id="stderr_color_yellow"),
+        pytest.param("RESET", id="stderr_color_reset"),
+    ],
 )
 def test_local_execute_basic_pass(
     caplog: LogCaptureFixture,
@@ -510,7 +513,7 @@ def test_read_via_thread_windows_stops_while_read_pending(mocker: MockerFixture)
     assert not reader.thread.is_alive()
 
 
-@pytest.mark.parametrize("tty_mode", ["on", "off"])
+@pytest.mark.parametrize("tty_mode", [pytest.param("on", id="on"), pytest.param("off", id="off")])
 def test_local_subprocess_tty(monkeypatch: MonkeyPatch, mocker: MockerFixture, tty_mode: str) -> None:
     monkeypatch.setenv("COLUMNS", "100")
     monkeypatch.setenv("LINES", "100")
@@ -546,7 +549,16 @@ def test_local_subprocess_tty(monkeypatch: MonkeyPatch, mocker: MockerFixture, t
     }
 
 
-@pytest.mark.parametrize("mode", ["stem", "full", "stem-pattern", "full-pattern", "all"])
+@pytest.mark.parametrize(
+    "mode",
+    [
+        pytest.param("stem", id="stem"),
+        pytest.param("full", id="full"),
+        pytest.param("stem-pattern", id="stem-dash-pattern"),
+        pytest.param("full-pattern", id="full-dash-pattern"),
+        pytest.param("all", id="all"),
+    ],
+)
 def test_allow_list_external_ok(fake_exe_on_path: Path, mode: str) -> None:
     exe = f"{fake_exe_on_path}{'.EXE' if sys.platform == 'win32' else ''}"
     allow = exe if "full" in mode else fake_exe_on_path.stem
@@ -585,7 +597,16 @@ def _create_shebang_test(tmp_path: Path, env: dict[str, str]) -> tuple[str, Path
     return exe, script, LocalSubProcessExecuteInstance(request, create_autospec(ExecuteOptions), writer, writer)
 
 
-@pytest.mark.parametrize("env", [{}, {"TOX_LIMITED_SHEBANG": ""}])
+@pytest.mark.parametrize(
+    "env",
+    [
+        pytest.param({}, id="open-close"),
+        pytest.param(
+            {"TOX_LIMITED_SHEBANG": ""},
+            id="open-quote-tox-underscore-limited-underscore-shebang-quote-colon-space-quote-quote-close",
+        ),
+    ],
+)
 def test_shebang_limited_off(tmp_path: Path, env: dict[str, str]) -> None:
     _, script, instance = _create_shebang_test(tmp_path, env=env)
     assert instance.cmd == [str(script), "--magic"]
@@ -688,7 +709,7 @@ def test_shebang_resolved_from_request_cwd(tmp_path: Path, monkeypatch: MonkeyPa
     assert instance.cmd == ["/bin/sh", str(tmp_path / "project" / "scripts" / "s"), "--magic"]
 
 
-@pytest.mark.parametrize("key", ["COLUMNS", "ROWS"])
+@pytest.mark.parametrize("key", [pytest.param("COLUMNS", id="columns"), pytest.param("ROWS", id="rows")])
 def test_local_execute_does_not_overwrite(key: str, mocker: MockerFixture) -> None:
     mocker.patch("shutil.get_terminal_size", return_value=(101, 102))
     env = dict(os.environ)

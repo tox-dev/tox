@@ -42,7 +42,7 @@ _PYLOCK_ENV_TOML: Final[str] = dedent("""\
 """)
 
 
-@pytest.mark.parametrize("arg", [object, [object]])
+@pytest.mark.parametrize("arg", [pytest.param(object, id="object"), pytest.param([object], id="object-2")])
 def test_pip_install_bad_type(tox_project: ToxProjectCreator, capfd: CaptureFixture, arg: Any) -> None:
     result = tox_project({"tox.ini": ""}).run("l")
     result.assert_success()
@@ -1537,7 +1537,7 @@ def test_constrain_package_deps(
         assert not constraints_file.exists()
 
 
-@pytest.mark.parametrize("use_frozen_constraints", [True, False])
+@pytest.mark.parametrize("use_frozen_constraints", [pytest.param(True, id="true"), pytest.param(False, id="false")])
 def test_constraints_option_disables_constrain_package_deps(
     tox_project: ToxProjectCreator,
     demo_pkg_with_deps: dict[str, str],
@@ -1738,7 +1738,13 @@ def test_pip_non_resolution_env_var_change_no_reinstall(tox_project: ToxProjectC
     assert execute_calls.call_count == 0
 
 
-@pytest.mark.parametrize("conf_key", ["constrain_package_deps", "use_frozen_constraints"])
+@pytest.mark.parametrize(
+    "conf_key",
+    [
+        pytest.param("constrain_package_deps", id="constrain-underscore-package-underscore-deps"),
+        pytest.param("use_frozen_constraints", id="use-underscore-frozen-underscore-constraints"),
+    ],
+)
 def test_change_constraint_options_recreates(tox_project: ToxProjectCreator, conf_key: str) -> None:
     tox_ini_content = "[testenv:py]\ndeps=a\nskip_install=true"
     proj = tox_project({"tox.ini": f"{tox_ini_content}\n{conf_key} = true"})

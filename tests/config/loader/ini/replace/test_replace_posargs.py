@@ -15,25 +15,33 @@ if TYPE_CHECKING:
     from tox.pytest import ToxProject, ToxProjectCreator, ToxRunOutcome
 
 
-@pytest.mark.parametrize("syntax", ["{posargs}", "[]"])
+@pytest.mark.parametrize(
+    "syntax", [pytest.param("{posargs}", id="open-posargs-close"), pytest.param("[]", id="lbracket-rbracket")]
+)
 def test_replace_pos_args_none_sys_argv(syntax: str, replace_one: ReplaceOne) -> None:
     result = replace_one(syntax, None)
     assert not result
 
 
-@pytest.mark.parametrize("syntax", ["{posargs}", "[]"])
+@pytest.mark.parametrize(
+    "syntax", [pytest.param("{posargs}", id="open-posargs-close"), pytest.param("[]", id="lbracket-rbracket")]
+)
 def test_replace_pos_args_empty_sys_argv(syntax: str, replace_one: ReplaceOne) -> None:
     result = replace_one(syntax, [])
     assert not result
 
 
-@pytest.mark.parametrize("syntax", ["{posargs}", "[]"])
+@pytest.mark.parametrize(
+    "syntax", [pytest.param("{posargs}", id="open-posargs-close"), pytest.param("[]", id="lbracket-rbracket")]
+)
 def test_replace_pos_args_extra_sys_argv(syntax: str, replace_one: ReplaceOne) -> None:
     result = replace_one(syntax, [sys.executable, "magic"])
     assert result == f"{sys.executable} magic"
 
 
-@pytest.mark.parametrize("syntax", ["{posargs}", "[]"])
+@pytest.mark.parametrize(
+    "syntax", [pytest.param("{posargs}", id="open-posargs-close"), pytest.param("[]", id="lbracket-rbracket")]
+)
 def test_replace_pos_args(syntax: str, replace_one: ReplaceOne) -> None:
     result = replace_one(syntax, ["ok", "what", " yes "])
     assert result == "ok what ' yes '"
@@ -42,11 +50,15 @@ def test_replace_pos_args(syntax: str, replace_one: ReplaceOne) -> None:
 @pytest.mark.parametrize(
     ("value", "result"),
     [
-        ("magic", "magic"),
-        ("magic:colon", "magic:colon"),
-        ("magic\n b c", "magic\nb c"),  # an unescaped newline keeps the newline
-        ("magi\\\n c d", "magic d"),  # an escaped newline merges the lines
-        ("\\{a\\}", "{a}"),  # escaped curly braces
+        pytest.param("magic", "magic", id="magic-magic"),
+        pytest.param("magic:colon", "magic:colon", id="magic-colon-colon-magic-colon-colon"),
+        pytest.param(
+            "magic\n b c", "magic\nb c", id="magic-newline-space-b-space-c-magic-newline-b-space-c"
+        ),  # an unescaped newline keeps the newline
+        pytest.param(
+            "magi\\\n c d", "magic d", id="magi-backslash-newline-space-c-space-d-magic-space-d"
+        ),  # an escaped newline merges the lines
+        pytest.param("\\{a\\}", "{a}", id="backslash-open-a-backslash-close-open-a-close"),  # escaped curly braces
     ],
 )
 def test_replace_pos_args_default(replace_one: ReplaceOne, value: str, result: str) -> None:
@@ -57,14 +69,14 @@ def test_replace_pos_args_default(replace_one: ReplaceOne, value: str, result: s
 @pytest.mark.parametrize(
     "value",
     [
-        "\\{posargs}",
-        "{posargs\\}",
-        "\\{posargs\\}",
-        "{\\{posargs}",
-        "{\\{posargs}{}",
-        "\\[]",
-        "[\\]",
-        "\\[\\]",
+        pytest.param("\\{posargs}", id="backslash-open-posargs-close"),
+        pytest.param("{posargs\\}", id="open-posargs-backslash-close"),
+        pytest.param("\\{posargs\\}", id="backslash-open-posargs-backslash-close"),
+        pytest.param("{\\{posargs}", id="open-backslash-open-posargs-close"),
+        pytest.param("{\\{posargs}{}", id="open-backslash-open-posargs-close-open-close"),
+        pytest.param("\\[]", id="backslash-lbracket-rbracket"),
+        pytest.param("[\\]", id="lbracket-backslash-rbracket"),
+        pytest.param("\\[\\]", id="backslash-lbracket-backslash-rbracket"),
     ],
 )
 def test_replace_pos_args_escaped(replace_one: ReplaceOne, value: str) -> None:
@@ -76,8 +88,8 @@ def test_replace_pos_args_escaped(replace_one: ReplaceOne, value: str) -> None:
 @pytest.mark.parametrize(
     ("value", "result"),
     [
-        ("[]-{posargs}", "foo-foo"),
-        ("{posargs}-[]", "foo-foo"),
+        pytest.param("[]-{posargs}", "foo-foo", id="lbracket-rbracket-dash-open-posargs-close-foo-dash-foo"),
+        pytest.param("{posargs}-[]", "foo-foo", id="open-posargs-close-dash-lbracket-rbracket-foo-dash-foo"),
     ],
 )
 def test_replace_mixed_brackets_and_braces(replace_one: ReplaceOne, value: str, result: str) -> None:
@@ -171,7 +183,13 @@ def test_replace_pos_args_within_quoted_command_argument_keeps_braces(tox_projec
         pytest.param("commands = python {glob:missing/*:{posargs}}", id="glob-default"),
     ],
 )
-@pytest.mark.parametrize("arg", ["{env_name}", "{posargs} -x"])
+@pytest.mark.parametrize(
+    "arg",
+    [
+        pytest.param("{env_name}", id="open-env-underscore-name-close"),
+        pytest.param("{posargs} -x", id="open-posargs-close-space-dash-x"),
+    ],
+)
 def test_replace_pos_args_reach_command_intact_when_nested(
     tox_project: ToxProjectCreator, monkeypatch: pytest.MonkeyPatch, config: str, arg: str
 ) -> None:

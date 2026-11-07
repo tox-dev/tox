@@ -15,7 +15,10 @@ if TYPE_CHECKING:
     from tox.pytest import ToxProjectCreator
 
 
-@pytest.mark.parametrize("exception", [HandledError, KeyboardInterrupt])
+@pytest.mark.parametrize(
+    "exception",
+    [pytest.param(HandledError, id="handlederror"), pytest.param(KeyboardInterrupt, id="keyboardinterrupt")],
+)
 def test_exit_code_minus_2_on_expected_exit(exception: Exception, mocker: MockerFixture) -> None:
     mocker.patch("tox.run.main", side_effect=exception)
     with pytest.raises(SystemExit) as system_exit:

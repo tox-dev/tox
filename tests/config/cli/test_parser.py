@@ -76,12 +76,53 @@ def test_parser_help_shows_default_source(monkeypatch: MonkeyPatch) -> None:
     assert "-> from env var TOX_VERBOSE" in parser.format_help()
 
 
-@pytest.mark.parametrize("is_atty", [True, False])
-@pytest.mark.parametrize("no_color", [None, "0", "1", "", "\t", " ", "false", "true"])
-@pytest.mark.parametrize("force_color", [None, "", "0", "1", "always", "not an empty string"])
-@pytest.mark.parametrize("tox_color", [None, "bad", "no", "yes"])
-@pytest.mark.parametrize("tty_compatible", [None, "", "0", "1", "other"])
-@pytest.mark.parametrize("term", [None, "xterm", "dumb"])
+@pytest.mark.parametrize("is_atty", [pytest.param(True, id="true"), pytest.param(False, id="false")])
+@pytest.mark.parametrize(
+    "no_color",
+    [
+        pytest.param(None, id="none"),
+        pytest.param("0", id="0"),
+        pytest.param("1", id="1"),
+        pytest.param("", id="empty"),
+        pytest.param("\t", id="tab"),
+        pytest.param(" ", id="space"),
+        pytest.param("false", id="false"),
+        pytest.param("true", id="true"),
+    ],
+)
+@pytest.mark.parametrize(
+    "force_color",
+    [
+        pytest.param(None, id="none"),
+        pytest.param("", id="empty"),
+        pytest.param("0", id="0"),
+        pytest.param("1", id="1"),
+        pytest.param("always", id="always"),
+        pytest.param("not an empty string", id="not-space-an-space-empty-space-string"),
+    ],
+)
+@pytest.mark.parametrize(
+    "tox_color",
+    [
+        pytest.param(None, id="none"),
+        pytest.param("bad", id="bad"),
+        pytest.param("no", id="no"),
+        pytest.param("yes", id="yes"),
+    ],
+)
+@pytest.mark.parametrize(
+    "tty_compatible",
+    [
+        pytest.param(None, id="none"),
+        pytest.param("", id="empty"),
+        pytest.param("0", id="0"),
+        pytest.param("1", id="1"),
+        pytest.param("other", id="other"),
+    ],
+)
+@pytest.mark.parametrize(
+    "term", [pytest.param(None, id="none"), pytest.param("xterm", id="xterm"), pytest.param("dumb", id="dumb")]
+)
 def test_parser_color(
     monkeypatch: MonkeyPatch,
     mocker: MockerFixture,

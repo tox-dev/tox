@@ -27,7 +27,7 @@ if TYPE_CHECKING:
     from tox.pytest import ToxProjectCreator
 
 
-@pytest.mark.parametrize("prefix", ["-", "- "])
+@pytest.mark.parametrize("prefix", [pytest.param("-", id="dash"), pytest.param("- ", id="dash-space")])
 def test_run_ignore_cmd_exit_code(tox_project: ToxProjectCreator, prefix: str) -> None:
     cmd = [
         f"{prefix}python -c 'import sys; print(\"magic fail\", file=sys.stderr); sys.exit(1)'",
@@ -66,9 +66,9 @@ def test_run_sequential_fail(tox_project: ToxProjectCreator) -> None:
 @pytest.mark.parametrize(
     ("envs", "expected_code"),
     [
-        ("a", 1),  # single failing env returns its exit code
-        ("a,b", 1),  # mixed fail+ok returns positive non-zero
-        ("a,c", 1),  # all failing returns positive non-zero
+        pytest.param("a", 1, id="a-1"),  # single failing env returns its exit code
+        pytest.param("a,b", 1, id="a-comma-b-1"),  # mixed fail+ok returns positive non-zero
+        pytest.param("a,c", 1, id="a-comma-c-1"),  # all failing returns positive non-zero
     ],
 )
 def test_run_multi_env_exit_code_positive(tox_project: ToxProjectCreator, envs: str, expected_code: int) -> None:
@@ -465,9 +465,9 @@ def test_commands_post_fails_exit_code(tox_project: ToxProjectCreator) -> None:
 @pytest.mark.parametrize(
     ("pre", "main", "post", "outcome"),
     [
-        (0, 8, 0, 8),
-        (0, 0, 8, 8),
-        (8, 0, 0, 8),
+        pytest.param(0, 8, 0, 8, id="0-8-0-8"),
+        pytest.param(0, 0, 8, 8, id="0-0-8-8"),
+        pytest.param(8, 0, 0, 8, id="8-0-0-8"),
     ],
 )
 def test_commands_ignore_errors(tox_project: ToxProjectCreator, pre: int, main: int, post: int, outcome: int) -> None:

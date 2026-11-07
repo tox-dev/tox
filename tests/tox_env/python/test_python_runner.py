@@ -136,9 +136,9 @@ def test_package_temp_dir_view(tox_project: ToxProjectCreator, demo_pkg_inline: 
 @pytest.mark.parametrize(
     ("extra", "used_extra"),
     [
-        ("d_oc", "d-oc"),
-        ("d-oc", "d-oc"),
-        ("d.oc", "d-oc"),
+        pytest.param("d_oc", "d-oc", id="d-underscore-oc-d-dash-oc"),
+        pytest.param("d-oc", "d-oc", id="d-dash-oc-d-dash-oc"),
+        pytest.param("d.oc", "d-oc", id="d-dot-oc-d-dash-oc"),
     ],
 )
 def test_extras_are_normalized(
@@ -165,7 +165,12 @@ def test_extras_are_normalized(
 
 @pytest.mark.parametrize(
     ("config", "cli", "expected"),
-    [("false", "true", True), ("true", "false", False), ("false", "config", False), ("true", "config", True)],
+    [
+        pytest.param("false", "true", True, id="false-true-true"),
+        pytest.param("true", "false", False, id="true-false-false"),
+        pytest.param("false", "config", False, id="false-config-false"),
+        pytest.param("true", "config", True, id="true-config-true"),
+    ],
 )
 def test_config_skip_missing_interpreters(
     tox_project: ToxProjectCreator,
@@ -192,12 +197,22 @@ _SYS_PY_VER = "".join(str(i) for i in sys.version_info[0:2]) + (
 @pytest.mark.parametrize(
     ("skip", "env", "retcode"),
     [
-        ("true", f"py{_SYS_PY_VER}", 0),
-        ("false", f"py{_SYS_PY_VER}", 0),
-        ("true", "py31", 1),
-        ("false", "py31", 1),
-        ("true", None, 0),
-        ("false", None, 1),
+        pytest.param(
+            "true",
+            f"py{_SYS_PY_VER}",
+            0,
+            id="true-f-quote-py-open-underscore-sys-underscore-py-underscore-ver-close-quote-0",
+        ),
+        pytest.param(
+            "false",
+            f"py{_SYS_PY_VER}",
+            0,
+            id="false-f-quote-py-open-underscore-sys-underscore-py-underscore-ver-close-quote-0",
+        ),
+        pytest.param("true", "py31", 1, id="true-py31-1"),
+        pytest.param("false", "py31", 1, id="false-py31-1"),
+        pytest.param("true", None, 0, id="true-none-0"),
+        pytest.param("false", None, 1, id="false-none-1"),
     ],
 )
 def test_skip_missing_interpreters_specified_env(

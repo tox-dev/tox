@@ -73,19 +73,19 @@ def test_factor_env_discover(complex_example: str) -> None:
 @pytest.mark.parametrize(
     "env",
     [
-        "py",
-        "py-a",
-        "py-a-dev",
-        "py-b",
-        "py-b-dev",
-        "pi-a",
-        "pi-a-dev",
-        "pi-b",
-        "pi-b-dev",
-        "c",
-        "extra",
-        "trailingcolon",
-        "tab",
+        pytest.param("py", id="py"),
+        pytest.param("py-a", id="py-dash-a"),
+        pytest.param("py-a-dev", id="py-dash-a-dash-dev"),
+        pytest.param("py-b", id="py-dash-b"),
+        pytest.param("py-b-dev", id="py-dash-b-dash-dev"),
+        pytest.param("pi-a", id="pi-dash-a"),
+        pytest.param("pi-a-dev", id="pi-dash-a-dash-dev"),
+        pytest.param("pi-b", id="pi-dash-b"),
+        pytest.param("pi-b-dev", id="pi-dash-b-dash-dev"),
+        pytest.param("c", id="c"),
+        pytest.param("extra", id="extra"),
+        pytest.param("trailingcolon", id="trailingcolon"),
+        pytest.param("tab", id="tab"),
     ],
 )
 def test_factor_env_filter(env: str, complex_example: str) -> None:
@@ -375,8 +375,16 @@ def test_env_list_expands_ranges(env_list: str, expected_envs: list[str], tox_in
 @pytest.mark.parametrize(
     ("env", "result"),
     [
-        ("py35", "python -m coverage html -d cov"),
-        ("py36", "python -m coverage html -d cov\n--show-contexts"),
+        pytest.param(
+            "py35",
+            "python -m coverage html -d cov",
+            id="py35-python-space-dash-m-space-coverage-space-html-space-dash-d-space-cov",
+        ),
+        pytest.param(
+            "py36",
+            "python -m coverage html -d cov\n--show-contexts",
+            id="py36-python-space-dash-m-space-coverage-space-html-space-dash-d-space-cov-newline-dash-dash-show-dash-contexts",
+        ),
     ],
 )
 def test_ini_loader_raw_with_factors(
@@ -399,8 +407,16 @@ def test_ini_loader_raw_with_factors(
 @pytest.mark.parametrize(
     ("env", "result"),
     [
-        ("foo", "python -c \"print('foo')\"\npython -c \"print('bar')\""),
-        ("bar", "python -c \"print('bar')\""),
+        pytest.param(
+            "foo",
+            "python -c \"print('foo')\"\npython -c \"print('bar')\"",
+            id="foo-python-space-dash-c-space-dquote-print-lparen-quote-foo-quote-rparen-dquote-newline-python-space-dash-c-space-dquote-print-lparen-quote-bar-quote-rparen-dquote",
+        ),
+        pytest.param(
+            "bar",
+            "python -c \"print('bar')\"",
+            id="bar-python-space-dash-c-space-dquote-print-lparen-quote-bar-quote-rparen-dquote",
+        ),
     ],
 )
 def test_ini_loader_factor_multiline_command(
@@ -423,8 +439,8 @@ def test_ini_loader_factor_multiline_command(
 @pytest.mark.parametrize(
     ("env", "result"),
     [
-        ("py-cov", "coverage run somefile.py"),
-        ("py-no_cov", "python somefile.py"),
+        pytest.param("py-cov", "coverage run somefile.py", id="py-dash-cov-coverage-space-run-space-somefile-dot-py"),
+        pytest.param("py-no_cov", "python somefile.py", id="py-dash-no-underscore-cov-python-space-somefile-dot-py"),
     ],
 )
 def test_ini_loader_factor_conditional_continuation(
@@ -447,8 +463,16 @@ def test_ini_loader_factor_conditional_continuation(
 @pytest.mark.parametrize(
     ("env", "result"),
     [
-        ("py312", "pytest --remote-data --durations=10"),
-        ("py312-coverage", "coverage run -m pytest --remote-data --durations=10"),
+        pytest.param(
+            "py312",
+            "pytest --remote-data --durations=10",
+            id="py312-pytest-space-dash-dash-remote-dash-data-space-dash-dash-durations-equal-10",
+        ),
+        pytest.param(
+            "py312-coverage",
+            "coverage run -m pytest --remote-data --durations=10",
+            id="py312-dash-coverage-coverage-space-run-space-dash-m-space-pytest-space-dash-dash-remote-dash-data-space-dash-dash-durations-equal-10",
+        ),
     ],
 )
 def test_ini_loader_factor_mixed_continuation(

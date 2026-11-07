@@ -116,13 +116,23 @@ def test_batch_file_command_line_script_only() -> None:
     assert batch_file_command_line(r"C:\%a%\c.cmd", []) == r'cmd.exe /e:ON /v:OFF /d /c ""C:\%%cd:~,%a%%cd:~,%\c.cmd""'
 
 
-@pytest.mark.parametrize("char", ["\r", "\n", "\0"])
+@pytest.mark.parametrize(
+    "char", [pytest.param("\r", id="ud"), pytest.param("\n", id="newline"), pytest.param("\0", id="u0")]
+)
 def test_batch_file_command_line_arg_cannot_be_quoted(char: str) -> None:
     with pytest.raises(Fail, match=r"cannot pass an argument containing a line break or null character to .*c\.cmd"):
         batch_file_command_line(r"C:\c.cmd", ["a", f"part{char}next"])
 
 
-@pytest.mark.parametrize("char", ['"', "\r", "\n", "\0"])
+@pytest.mark.parametrize(
+    "char",
+    [
+        pytest.param('"', id="dquote"),
+        pytest.param("\r", id="ud"),
+        pytest.param("\n", id="newline"),
+        pytest.param("\0", id="u0"),
+    ],
+)
 def test_batch_file_command_line_script_cannot_be_quoted(char: str) -> None:
     with pytest.raises(Fail, match=r"cannot run batch file .*, its name cannot be quoted"):
         batch_file_command_line(f"a{char}&next&.cmd", [])
