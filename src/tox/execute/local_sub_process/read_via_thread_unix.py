@@ -6,7 +6,7 @@ import contextlib  # pragma: win32 no cover
 import errno  # pragma: win32 no cover
 import os  # pragma: win32 no cover
 import selectors  # pragma: win32 no cover
-from typing import TYPE_CHECKING, Any, Final
+from typing import TYPE_CHECKING, Final
 
 from tox.util.typing_compat import override
 
@@ -14,6 +14,8 @@ from .read_via_thread import ReadViaThread  # pragma: win32 no cover
 
 if TYPE_CHECKING:
     from collections.abc import Callable
+
+    from _typeshed import FileDescriptorLike
 
 TIMEOUT_FOR_INTERRUPT: Final[float] = 0.05  # pragma: win32 no cover
 """Seconds to wait for output before checking whether the reader should stop."""
@@ -83,7 +85,7 @@ class ReadViaThreadUnix(ReadViaThread):  # pragma: win32 no cover
             self._safe_unregister(selector, key.fileobj)
 
     @staticmethod
-    def _safe_unregister(selector: selectors.DefaultSelector, fileobj: Any) -> None:
+    def _safe_unregister(selector: selectors.DefaultSelector, fileobj: FileDescriptorLike) -> None:
         with contextlib.suppress(KeyError, ValueError):
             selector.unregister(fileobj)
 

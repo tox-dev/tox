@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 import os
 import sys
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 from unittest.mock import patch
 
 import pytest
@@ -27,6 +27,8 @@ if TYPE_CHECKING:
 
     import pluggy
     from pytest_mock import MockerFixture
+
+    from tox.tox_env.installer import InstallArguments
 
 
 def test_builtin_runner_cli_choice(tox_project: ToxProjectCreator) -> None:
@@ -112,7 +114,7 @@ def test_plugin_hooks_and_order(tox_project: ToxProjectCreator, mocker: MockerFi
         logging.warning("tox_before_run_commands")
 
     @impl
-    def tox_on_install(tox_env: ToxEnv, arguments: Any, section: str, of_type: str) -> None:
+    def tox_on_install(tox_env: ToxEnv, arguments: InstallArguments, section: str, of_type: str) -> None:
         assert isinstance(tox_env, ToxEnv)
         assert arguments is not None
         assert isinstance(section, str)

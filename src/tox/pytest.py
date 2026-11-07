@@ -13,7 +13,7 @@ import warnings
 from contextlib import closing, contextmanager
 from pathlib import Path
 from types import FunctionType, ModuleType, TracebackType
-from typing import TYPE_CHECKING, Any, Final, Protocol, cast
+from typing import TYPE_CHECKING, Any, Final, Protocol, TypeAlias, cast
 
 import pytest
 from _pytest.fixtures import SubRequest  # ruff:ignore[import-private-name]  # sibling module internal
@@ -140,6 +140,9 @@ def no_color(  # interface signature
     monkeypatch.setenv("NO_COLOR", "yes")
 
 
+_ProjectFiles: TypeAlias = "dict[str, _ProjectFiles | str | Callable[[], object] | None]"
+
+
 class ToxProject:
     """A tox project that is created on disk for a test, from the files it is given.
 
@@ -167,7 +170,7 @@ class ToxProject:
         self._setup_files(self.path, base, files)
 
     @staticmethod
-    def _setup_files(dest: Path, base: Path | None, content: dict[str, Any]) -> None:
+    def _setup_files(dest: Path, base: Path | None, content: _ProjectFiles) -> None:
         if base is not None:
             shutil.copytree(str(base), str(dest), ignore=shutil.ignore_patterns(".tox", ".venv"))
         dest.mkdir(exist_ok=True)
@@ -513,7 +516,7 @@ def init_fixture(
     monkeypatch: pytest.MonkeyPatch,
     mocker: MockerFixture,
 ) -> ToxProjectCreator:
-    def _init(files: dict[str, Any], base: Path | None = None, prj_path: Path | None = None) -> ToxProject:
+    def _init(files: _ProjectFiles, base: Path | None = None, prj_path: Path | None = None) -> ToxProject:
         return ToxProject(files, base, prj_path or tmp_path / "p", capfd, monkeypatch, mocker)
 
     return _init

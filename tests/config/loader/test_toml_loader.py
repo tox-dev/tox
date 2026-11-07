@@ -50,7 +50,7 @@ _PREFIX: Final[str] = r"failed to load A\.k: "
         pytest.param(["a", "b"], list[Literal["a", "b"]], ["a", "b"], id="list_literal"),
     ],
 )
-def test_toml_loader_ok(value: TomlTypes, of_type: type[object] | UnionType, expected: object) -> None:
+def test_toml_loader_ok(value: TomlTypes, of_type: type | UnionType, expected: object) -> None:
     result = perform_load(value, of_type)
     assert result == expected
     assert isinstance(result, type(expected))
@@ -84,7 +84,7 @@ def factory_na(obj: object) -> TargetT:
         ),
     ],
 )
-def test_toml_loader_nok(value: TomlTypes, of_type: type[object] | UnionType, msg: str) -> None:
+def test_toml_loader_nok(value: TomlTypes, of_type: type | UnionType, msg: str) -> None:
     with pytest.raises(HandledError, match=_PREFIX + msg):
         perform_load(value, of_type)
 

@@ -64,7 +64,7 @@ class ToxBackendFailed(Fail, BackendFailed):
 
     def __init__(self, backend_failed: BackendFailed) -> None:
         Fail.__init__(self)
-        result: dict[str, Any] = {
+        result: dict[str, int | str | None] = {
             "code": backend_failed.code,
             "exc_type": backend_failed.exc_type,
             "exc_msg": backend_failed.exc_msg,

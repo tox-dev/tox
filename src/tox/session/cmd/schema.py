@@ -22,6 +22,7 @@ if TYPE_CHECKING:
     from tox.config.cli.parser import ToxParser
     from tox.config.sets import ConfigSet
     from tox.session.state import State
+    from tox.util.json_types import JsonValue
 
 
 @impl
@@ -282,8 +283,8 @@ def gen_schema(state: State) -> int:
     return 0
 
 
-def _get_schema(conf: ConfigSet, path: str) -> dict[str, dict[str, typing.Any]]:
-    properties: dict[str, dict[str, typing.Any]] = {}
+def _get_schema(conf: ConfigSet, path: str) -> dict[str, dict[str, JsonValue]]:
+    properties: dict[str, dict[str, JsonValue]] = {}
     for definition in conf.get_configs():
         name, *aliases = definition.keys
         if (of_type := getattr(definition, "of_type", None)) is None:

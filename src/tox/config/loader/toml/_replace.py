@@ -429,7 +429,7 @@ class RawLoader:
         self,
         item: str,
         chain: list[str] | None = None,  # ruff:ignore[unused-method-argument]  # override signature
-    ) -> Any:
+    ) -> TomlTypes:
         return self._loader.load_raw_from_root(f"{self._section}{self._loader.section.SEP}{item}")
 
 

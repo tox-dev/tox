@@ -83,7 +83,7 @@ class Convert(ABC, Generic[T]):
                 for k, v in self.to_dict(raw, (key_type, value_type))
             )
         elif origin in {Union, UnionType}:
-            args: list[type[object] | UnionType] = list(type_args)
+            args: list[type | UnionType] = list(type_args)
             none = type(None)
             if len(args) == 2 and none in args:  # ruff:ignore[magic-value-comparison]  # fixed protocol value
                 if isinstance(raw, str):
@@ -113,7 +113,7 @@ class Convert(ABC, Generic[T]):
 
     @staticmethod
     @abstractmethod
-    def to_list(value: T, of_type: type[Any]) -> Iterator[T]:
+    def to_list(value: T, of_type: type) -> Iterator[T]:
         """Convert to list.
 
         :param value: the value to convert
@@ -126,7 +126,7 @@ class Convert(ABC, Generic[T]):
 
     @staticmethod
     @abstractmethod
-    def to_set(value: T, of_type: type[Any]) -> Iterator[T]:
+    def to_set(value: T, of_type: type) -> Iterator[T]:
         """Convert to set.
 
         :param value: the value to convert
@@ -139,7 +139,7 @@ class Convert(ABC, Generic[T]):
 
     @staticmethod
     @abstractmethod
-    def to_dict(value: T, of_type: tuple[type[Any], type[Any]]) -> Iterator[tuple[T, T]]:
+    def to_dict(value: T, of_type: tuple[type, type]) -> Iterator[tuple[T, T]]:
         """Convert to dictionary.
 
         :param value: the value to convert

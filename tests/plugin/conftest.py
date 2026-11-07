@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING, Any, Final
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
+
 _HERE: Final[Path] = Path(__file__).parent
 
 

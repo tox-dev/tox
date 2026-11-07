@@ -166,7 +166,7 @@ def replace_for(
 
     :returns: the function that replaces the tokens of a value of that type
     """
-    kinds: Final[set[type[object] | UnionType]] = {get_origin(kind) or kind for kind in (of_type, *get_args(of_type))}
+    kinds: Final[set[type | UnionType]] = {get_origin(kind) or kind for kind in (of_type, *get_args(of_type))}
     if of_type == list[Command]:
         return replace
     if EnvList in kinds:
