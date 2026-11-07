@@ -22,6 +22,7 @@ class State:
     """
     Runtime state holder.
 
+    :param options: the parsed command line options and the command handlers
     :param args: the command line arguments tox was started with
     :ivar conf: the configuration of this run
     """

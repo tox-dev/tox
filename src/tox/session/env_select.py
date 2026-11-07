@@ -72,7 +72,11 @@ class CliEnv:  # ruff:ignore[eq-without-hash]  # mutable value type
         return self._names is not None and "ALL" in self._names
 
     def __bool__(self) -> bool:
-        """A `CliEnv` is `True` if it's not the default set of environments."""
+        """
+        A `CliEnv` is `True` if it's not the default set of environments.
+
+        :returns: whether the selection names environments other than the defaults
+        """
         return bool(self._names)
 
     @override

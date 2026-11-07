@@ -33,6 +33,8 @@ class SetEnvEntry(TypedDict):
     """
     A single ``set_env`` value in structured (TOML) form.
 
+    :ivar value: the value, a string or a ``replace`` table, the marker applies to
+
     :ivar marker: the environment marker that decides whether the value applies
     """
 
@@ -46,6 +48,7 @@ class SetEnvReference:
     """
     Keep overrides pending until the consuming environment has registered its keys.
 
+    :param config: the ``set_env`` the value is written to
     :param args: the load arguments the value is resolved with
     :param shape: the form the value was written in, a string, a table or an array
     """
@@ -177,7 +180,13 @@ class SetEnv:
         return line[len("file|") :]
 
     def _parse_line(self, line: str, *, substituted: bool) -> tuple[str, str, str] | None:
-        """Split a ``KEY=VALUE`` line, or return ``None`` once it is queued to be split after substitution."""
+        """
+        Split a ``KEY=VALUE`` line, or return ``None`` once it is queued to be split after substitution.
+
+        :param line: the line to split
+        :param substituted: whether the line is text produced by a substitution
+        :returns: the key, value and marker, or ``None`` when the line is deferred
+        """
         # deferred import
         from .loader.replacer import MatchExpression, find_replace_expr  # ruff:ignore[import-outside-top-level]
 

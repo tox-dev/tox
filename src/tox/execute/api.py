@@ -122,6 +122,7 @@ class FinishedExecuteStatus(ExecuteStatus):
     """
     Report a fixed exit code for a command that finished or never started, without running a process.
 
+    :param options: the execution options of the command
     :param out: the sink for the standard output
     :param err: the sink for the standard error
     :param exit_code: the exit code to report, ``None`` if there is none
@@ -240,6 +241,7 @@ class ExecuteInstance(ABC):
     An instance of a command execution.
 
     :param request: the command to execute
+    :param options: the execution options of the command
     :param out: the sink for the standard output
     :param err: the sink for the standard error
     """

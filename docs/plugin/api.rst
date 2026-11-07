@@ -28,6 +28,8 @@ config
 .. autoclass:: tox.config.cli.parser.Parsed
     :members:
 
+.. autoclass:: tox.config.cli.parse.Options
+
 .. autoclass:: tox.config.main.Config
     :members:
     :exclude-members: __init__, make
@@ -69,6 +71,14 @@ config
 .. autoclass:: tox.config.set_env.SetEnvReference
 
 .. autoclass:: tox.config.set_env.SetEnvEntry
+
+.. autoclass:: tox.config.set_env.SetEnv
+    :members:
+
+.. autoclass:: tox.config.loader.replacer.MatchExpression
+    :members:
+
+.. autoclass:: tox.config.loader.replacer.MatchError
 
 .. autoclass:: tox.config.loader.api.Loader
     :members:
@@ -144,6 +154,9 @@ execute
 .. autoclass:: tox.execute.api.Outcome
     :members:
 
+.. autoclass:: tox.execute.api.ExecuteOptions
+    :members:
+
 .. autoclass:: tox.execute.api.Execute
     :members:
 
@@ -178,6 +191,9 @@ session
 =======
 
 .. autoclass:: tox.session.state.State
+    :members:
+
+.. autoclass:: tox.session.env_select.CliEnv
     :members:
 
 .. autoclass:: tox.session.env_select.EnvSelector

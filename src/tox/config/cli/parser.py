@@ -200,6 +200,7 @@ class Parsed(Namespace):
 
     :ivar remainder: the arguments passed after ``--``
 
+    :ivar env: the environments selected with ``-e``
 
     :ivar labels: the environment labels selected with ``-m``
 
