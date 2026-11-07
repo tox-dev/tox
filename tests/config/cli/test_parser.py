@@ -103,8 +103,7 @@ def test_parser_color(
             monkeypatch.delenv(key, raising=False)
         else:
             monkeypatch.setenv(key, value)
-    stdout_mock = mocker.patch("tox.config.cli.parser.sys.stdout")
-    stdout_mock.isatty.return_value = is_atty
+    mocker.patch("tox.config.cli.parser.sys.stdout").isatty.return_value = is_atty
 
     if tox_color in {"yes", "no"}:
         expected = tox_color == "yes"
@@ -136,8 +135,7 @@ def test_parser_unsupported_type() -> None:
 def test_parser_choices_become_literal_type(monkeypatch: MonkeyPatch) -> None:
     monkeypatch.setenv("TOX_MODE", "fast")
     parser = ToxParser.base()
-    action = parser.add_argument("--mode", choices=["fast", "slow", "medium"], default="fast")
-    of_type = parser.get_type(action)
+    of_type = parser.get_type(parser.add_argument("--mode", choices=["fast", "slow", "medium"], default="fast"))
     assert of_type == Literal["fast", "slow", "medium"]
     assert set(get_args(of_type)) == {"fast", "slow", "medium"}
 
@@ -227,8 +225,7 @@ def test_sub_sub_command() -> None:
 
 def test_parse_known_args_not_set(mocker: MockerFixture) -> None:
     mocker.patch.object(sys, "argv", ["a", "--help"])
-    parser = ToxParser.base()
-    _, unknown = parser.parse_known_args(None)
+    _, unknown = ToxParser.base().parse_known_args(None)
     assert unknown == ["--help"]
 
 

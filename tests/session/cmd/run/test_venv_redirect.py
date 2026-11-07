@@ -10,10 +10,6 @@ if TYPE_CHECKING:
     from tox.pytest import ToxProject, ToxProjectCreator
 
 
-def _redirect(project: ToxProject) -> str:
-    return (project.path / ".venv").read_text(encoding="utf-8")
-
-
 @pytest.mark.parametrize(
     ("config", "expected"),
     [
@@ -27,6 +23,10 @@ def test_venv_redirect_default_pick(tox_project: ToxProjectCreator, config: str,
     project.run("r", "--notest").assert_success()
 
     assert _redirect(project) == expected
+
+
+def _redirect(project: ToxProject) -> str:
+    return (project.path / ".venv").read_text(encoding="utf-8")
 
 
 def test_venv_redirect_prefers_editable(tox_project: ToxProjectCreator, demo_pkg_inline: Path) -> None:

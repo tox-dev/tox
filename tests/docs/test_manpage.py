@@ -11,7 +11,7 @@ if sys.platform == "win32":
     pytest.skip("man command not available on Windows", allow_module_level=True)
 
 ROOT = Path(__file__).parents[2]
-RST_PATH = ROOT / "docs" / "man" / "tox.1.rst"
+_RST_PATH = ROOT / "docs" / "man" / "tox.1.rst"
 
 
 @pytest.fixture
@@ -20,7 +20,7 @@ def manpage_troff() -> bytes:
     from docutils.writers import get_writer_class  # ruff:ignore[import-outside-top-level]
 
     content = "\n".join(
-        line for line in RST_PATH.read_text(encoding="utf-8").splitlines() if line.strip() != ":orphan:"
+        line for line in _RST_PATH.read_text(encoding="utf-8").splitlines() if line.strip() != ":orphan:"
     )
     return publish_string(content, writer=get_writer_class("manpage")(), settings_overrides={"report_level": 5})
 
@@ -49,16 +49,14 @@ def test_manpage_has_title_header(manpage_troff: bytes) -> None:
 
 
 def test_manpage_has_name_section(manpage_troff: bytes) -> None:
-    output = manpage_troff.decode()
-    match = re.search(r"\.SH Name\n(.+)", output)
+    match = re.search(r"\.SH Name\n(.+)", manpage_troff.decode())
     assert match is not None, "Name section not found"
     assert "tox" in match.group(1)
     assert "virtualenv-based automation of test activities" in match.group(1)
 
 
 def test_manpage_has_all_sections(manpage_troff: bytes) -> None:
-    output = manpage_troff.decode()
-    sections = re.findall(r"^\.SH (.+)$", output, re.MULTILINE)
+    sections = re.findall(r"^\.SH (.+)$", manpage_troff.decode(), re.MULTILINE)
     expected = [
         "Name",
         "SYNOPSIS",
@@ -99,7 +97,7 @@ def test_manpage_documents_all_commands() -> None:
     from tox.config.cli.parse import _get_parser_doc  # ruff:ignore[import-outside-top-level, import-private-name]
 
     parser = _get_parser_doc()
-    rst = RST_PATH.read_text(encoding="utf-8")
+    rst = _RST_PATH.read_text(encoding="utf-8")
     assert parser._subparsers is not None  # ruff:ignore[private-member-access]
     for action in parser._subparsers._actions:  # ruff:ignore[private-member-access]
         if isinstance(action, _SubParsersAction):
@@ -116,7 +114,7 @@ def test_manpage_documents_all_options() -> None:
     from tox.config.cli.parse import _get_parser_doc  # ruff:ignore[import-outside-top-level, import-private-name]
 
     parser = _get_parser_doc()
-    rst = RST_PATH.read_text(encoding="utf-8")
+    rst = _RST_PATH.read_text(encoding="utf-8")
     seen: set[int] = set()
     for action in parser._actions:  # ruff:ignore[private-member-access]
         if id(action) in seen or action.help == SUPPRESS or isinstance(action, _SubParsersAction):

@@ -352,3 +352,8 @@ def _process_type(of_type: typing.Any) -> dict[str, typing.Any]:  # ruff:ignore[
         }
     msg = f"Unknown type: {of_type}"
     raise ValueError(msg)
+
+
+__all__ = [
+    "gen_schema",
+]

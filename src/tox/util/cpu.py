@@ -16,4 +16,6 @@ def auto_detect_cpus() -> int:
     return count or 1
 
 
-__all__ = ("auto_detect_cpus",)
+__all__ = [
+    "auto_detect_cpus",
+]

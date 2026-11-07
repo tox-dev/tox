@@ -15,12 +15,12 @@ from packaging.version import Version
 
 from tox.config.types import Command
 from tox.tox_env.errors import Fail
-from tox.tox_env.python.pip.req_file import PythonDeps
-from tox.tox_env.python.runner import add_skip_missing_interpreters_to_core, add_skip_missing_interpreters_to_env
 from tox.tox_env.runner import RunToxEnv
 from tox.util.typing_compat import override
 
 from .api import Python
+from .pip.req_file import PythonDeps
+from .runner import add_skip_missing_interpreters_to_core, add_skip_missing_interpreters_to_env
 
 if TYPE_CHECKING:
     from tox.config.main import Config
@@ -43,17 +43,12 @@ _SCRIPT_METADATA_RE: Final[re.Pattern[str]] = re.compile(
 _MAX_SCRIPT_BYTES: Final[int] = 5 * 1024 * 1024  # 5 MiB; PEP 723 metadata blocks are tiny in practice
 
 
-@dataclass(frozen=True)
-class ScriptMetadata:
-    requires_python: str | None = None
-    dependencies: list[str] = field(default_factory=list)
-
-
 class Pep723Mixin(Python, RunToxEnv):
     """Mixin providing PEP 723 script metadata support for any venv-backed runner.
 
     Concrete runners compose this with a venv backend (VirtualEnv, UvVenv, etc.) and RunToxEnv.
 
+    :param create_args:
     """
 
     _script_metadata: ScriptMetadata | None
@@ -74,8 +69,7 @@ class Pep723Mixin(Python, RunToxEnv):
 
         def default_commands(conf: Config, env_name: str | None) -> list[Command]:  # ruff:ignore[unused-function-argument]
             if script := self.conf["script"]:
-                tox_root = self.core.get("tox_root", Path)
-                args = ["python", str(tox_root / script)]
+                args = ["python", str(self.core.get("tox_root", Path) / script)]
                 if (pos_args := conf.pos_args(None)) is not None:
                     args.extend(pos_args)
                 return [Command(args)]
@@ -122,6 +116,28 @@ class Pep723Mixin(Python, RunToxEnv):
             )
             self._install(requirements, type(self).__name__, "deps")
 
+    def _resolve_script_path(self) -> Path | None:
+        # Resolve the configured script path and verify it stays inside ``tox_root``.
+        #
+        # :returns: the resolved absolute path if the script exists, ``None`` if no script is configured.
+        #
+        # :raises Fail: if the script escapes ``tox_root`` or does not exist when configured.
+        script = self.conf.get("script", str)
+        if not script:
+            return None
+        tox_root = self.core.get("tox_root", Path)
+        root_resolved = tox_root.resolve()
+        full_path = (tox_root / script).resolve()
+        try:
+            full_path.relative_to(root_resolved)
+        except ValueError as exc:
+            msg = f"script path {script!r} escapes tox_root {tox_root}"
+            raise Fail(msg) from exc
+        if not full_path.is_file():
+            msg = f"script file not found: {tox_root / script}"
+            raise Fail(msg)
+        return full_path
+
     def _get_script_metadata(self) -> ScriptMetadata:
         if self._script_metadata is None:
             full_path = self._resolve_script_path()
@@ -139,29 +155,11 @@ class Pep723Mixin(Python, RunToxEnv):
                 raise Fail(msg) from exc
         return self._script_metadata
 
-    def _resolve_script_path(self) -> Path | None:
-        """Resolve the configured script path and verify it stays inside ``tox_root``.
 
-        :returns: the resolved absolute path if the script exists, ``None`` if no script is configured.
-
-        :raises Fail: if the script escapes ``tox_root`` or does not exist when configured.
-
-        """
-        script = self.conf.get("script", str)
-        if not script:
-            return None
-        tox_root = self.core.get("tox_root", Path)
-        root_resolved = tox_root.resolve()
-        full_path = (tox_root / script).resolve()
-        try:
-            full_path.relative_to(root_resolved)
-        except ValueError as exc:
-            msg = f"script path {script!r} escapes tox_root {tox_root}"
-            raise Fail(msg) from exc
-        if not full_path.is_file():
-            msg = f"script file not found: {tox_root / script}"
-            raise Fail(msg)
-        return full_path
+@dataclass(frozen=True, slots=True, kw_only=True)
+class ScriptMetadata:
+    requires_python: str | None = None
+    dependencies: list[str] = field(default_factory=list)
 
 
 def _parse_script_metadata(script: str) -> ScriptMetadata:

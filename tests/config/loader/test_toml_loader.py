@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Literal, TypeVar
+from typing import TYPE_CHECKING, Any, Final, Literal, TypeVar
 
 import pytest
 
@@ -33,18 +33,7 @@ def test_toml_loader_found_keys() -> None:
 V = TypeVar("V")
 
 
-def factory_na(obj: object) -> V:
-    raise NotImplementedError
-
-
-def perform_load(value: Any, of_type: type[V] | UnionType) -> V:
-    env_name, key = "A", "k"
-    loader = TomlLoader(TomlPyProjectSection.from_key(f"tox.env.{env_name}"), [], {key: value}, {}, set())
-    args = ConfigLoadArgs(None, env_name, env_name)
-    return loader.load(key, of_type, factory_na, None, args)
-
-
-_PREFIX = r"failed to load A\.k: "
+_PREFIX: Final[str] = r"failed to load A\.k: "
 
 
 @pytest.mark.parametrize(
@@ -63,6 +52,16 @@ def test_toml_loader_ok(value: Any, of_type: type[Any] | UnionType, expected: ob
     result = perform_load(value, of_type)
     assert result == expected
     assert isinstance(result, type(expected))
+
+
+def perform_load(value: Any, of_type: type[V] | UnionType) -> V:
+    env_name, key = "A", "k"
+    loader = TomlLoader(TomlPyProjectSection.from_key(f"tox.env.{env_name}"), [], {key: value}, {}, set())
+    return loader.load(key, of_type, factory_na, None, ConfigLoadArgs(None, env_name, env_name))
+
+
+def factory_na(obj: object) -> V:
+    raise NotImplementedError
 
 
 @pytest.mark.parametrize(

@@ -15,13 +15,13 @@ if TYPE_CHECKING:
     from tox.tox_env.register import ToxEnvRegister
 
 
+@impl
+def tox_register_tox_env(register: ToxEnvRegister) -> None:
+    register.add_run_env(VirtualEnvRunner)
+
+
 class VirtualEnvRunner(VirtualEnv, PythonRun):
     """local file system python virtual environment via the virtualenv package."""
-
-    @staticmethod
-    @override
-    def id() -> str:
-        return "virtualenv"
 
     @property
     @override
@@ -41,7 +41,12 @@ class VirtualEnvRunner(VirtualEnv, PythonRun):
             return "skip"
         return super().default_pkg_type
 
+    @staticmethod
+    @override
+    def id() -> str:
+        return "virtualenv"
 
-@impl
-def tox_register_tox_env(register: ToxEnvRegister) -> None:
-    register.add_run_env(VirtualEnvRunner)
+
+__all__ = [
+    "VirtualEnvRunner",
+]

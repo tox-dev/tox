@@ -18,8 +18,7 @@ if TYPE_CHECKING:
 
 def test_recreate(tox_project: ToxProjectCreator) -> None:
     prj = tox_project({"tox.ini": "[testenv]\npackage=skip\nrecreate=True"})
-    result_first = prj.run("r")
-    result_first.assert_success()
+    prj.run("r").assert_success()
 
     result_second = prj.run("r")
     result_second.assert_success()
@@ -136,8 +135,7 @@ def test_allow_env_executable_with_brackets_in_work_dir(tox_project: ToxProjectC
 
 def test_env_log(tox_project: ToxProjectCreator) -> None:
     cmd = "commands=python -c 'import sys; print(1); print(2); print(3, file=sys.stderr); print(4, file=sys.stderr)'"
-    env_vars = "    UNPREDICTABLE = 🪟"
-    prj = tox_project({"tox.ini": f"[testenv]\npackage=skip\nset_env =\n{env_vars}\n{cmd}"})
+    prj = tox_project({"tox.ini": f"[testenv]\npackage=skip\nset_env =\n{'    UNPREDICTABLE = 🪟'}\n{cmd}"})
     result_first = prj.run("r")
     result_first.assert_success()
 
@@ -173,13 +171,13 @@ def test_env_log(tox_project: ToxProjectCreator) -> None:
 
 def test_env_log_cleared_without_commands(tox_project: ToxProjectCreator) -> None:
     config = '[env_run_base]\npackage = "skip"\n'
-    prj = tox_project({"tox.toml": config + 'commands = [["python", "-c", "pass"]]\n'})
+    prj = tox_project({"tox.toml": f'{config}commands = [["python", "-c", "pass"]]\n'})
     prj.run("r").assert_success()
 
     log_dir = prj.path / ".tox" / "py" / "log"
     assert {path.name for path in log_dir.iterdir()} == {"1-commands[0].log"}
 
-    (prj.path / "tox.toml").write_text(config + "commands = []\n")
+    (prj.path / "tox.toml").write_text(f"{config}commands = []\n")
     prj.run("r").assert_success()
 
     assert not list(log_dir.iterdir())
@@ -190,8 +188,7 @@ def test_env_log_redacts_secret_argv(tox_project: ToxProjectCreator) -> None:
     prj = tox_project({"tox.ini": f"[testenv]\npackage=skip\n{cmd}"})
     result = prj.run("r")
     result.assert_success()
-    log_dir = prj.path / ".tox" / "py" / "log"
-    content = (log_dir / "1-commands[0].log").read_text()
+    content = ((prj.path / ".tox" / "py" / "log") / "1-commands[0].log").read_text()
     cmd_line = next(line for line in content.splitlines() if line.startswith("cmd:"))
     assert "hunter2" not in cmd_line
     assert "--token=*******" in cmd_line
@@ -342,8 +339,7 @@ commands = [["python", "{posargs}"]]
 
 def test_change_dir_is_created_if_not_exist(tox_project: ToxProjectCreator) -> None:
     prj = tox_project({"tox.ini": "[testenv]\npackage=skip\nchange_dir=a{/}b\ncommands=python --version"})
-    result_first = prj.run("r")
-    result_first.assert_success()
+    prj.run("r").assert_success()
     assert (prj.path / "a" / "b").exists()
 
 
@@ -404,8 +400,7 @@ def test_setenv_path_not_overwritten(tox_project: ToxProjectCreator) -> None:
     set_env.PATH = "{{env:PATH}}:/custom/test/path"
     commands = [["python", "-c", "{cmd}"]]
     """
-    project = tox_project({"tox.toml": toml})
-    result = project.run("r")
+    result = tox_project({"tox.toml": toml}).run("r")
     result.assert_success()
     # The custom path from set_env must survive — not be overwritten
     assert "/custom/test/path" in result.out
@@ -419,8 +414,7 @@ def test_setenv_path_venv_paths_first(tox_project: ToxProjectCreator) -> None:
     set_env.PATH = "{{env:PATH}}:/trailing/path"
     commands = [["python", "-c", "{cmd}"]]
     """
-    project = tox_project({"tox.toml": toml})
-    result = project.run("r")
+    result = tox_project({"tox.toml": toml}).run("r")
     result.assert_success()
     path_line = next(line for line in result.out.splitlines() if "/trailing/path" in line)
     path_entries = path_line.split(":")
@@ -433,8 +427,7 @@ def test_setenv_path_venv_paths_first(tox_project: ToxProjectCreator) -> None:
 
 def test_cachedir_tag_created(tox_project: ToxProjectCreator) -> None:
     prj = tox_project({"tox.ini": "[testenv]\npackage=skip"})
-    result = prj.run("r")
-    result.assert_success()
+    prj.run("r").assert_success()
 
     tag = prj.path / ".tox" / "CACHEDIR.TAG"
     assert tag.is_file()
@@ -444,8 +437,7 @@ def test_cachedir_tag_created(tox_project: ToxProjectCreator) -> None:
 
 def test_gitignore_created_in_work_dir(tox_project: ToxProjectCreator) -> None:
     prj = tox_project({"tox.ini": "[testenv]\npackage=skip\ncommands=python -c 'print(1)'"})
-    result = prj.run("r")
-    result.assert_success()
+    prj.run("r").assert_success()
     gitignore = prj.path / ".tox" / ".gitignore"
     assert gitignore.exists()
     assert gitignore.read_text(encoding="utf-8") == "*\n"

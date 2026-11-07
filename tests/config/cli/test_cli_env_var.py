@@ -172,9 +172,7 @@ def test_bad_env_var(
     monkeypatch.setenv("TOX_VERBOSE", "should-be-number")
     monkeypatch.setenv("TOX_QUIET", "1.00")
     parsed, _, __, ___, ____ = get_options()
-    assert parsed.verbose == 2
-    assert parsed.quiet == 0
-    assert parsed.verbosity == 2
+    assert (parsed.verbose, parsed.quiet, parsed.verbosity) == (2, 0, 2)
     first = "env var TOX_VERBOSE='should-be-number' cannot be transformed to <class 'int'> because {}".format(
         value_error("invalid literal for int() with base 10: 'should-be-number'"),
     )
@@ -182,8 +180,7 @@ def test_bad_env_var(
         value_error("invalid literal for int() with base 10: '1.00'"),
     )
     capsys.readouterr()
-    assert caplog.messages[0] == first
-    assert caplog.messages[1] == second
+    assert (caplog.messages[0], caplog.messages[1]) == (first, second)
     assert len(caplog.messages) == 2, caplog.text
 
 

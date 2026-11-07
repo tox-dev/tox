@@ -17,17 +17,10 @@ if TYPE_CHECKING:
 
 # Root ignores the permission bits, and Windows does not model them this way,
 # so the file stays readable and there is nothing to assert.
-unreadable_files_possible = pytest.mark.skipif(
+_UNREADABLE_FILES_POSSIBLE = pytest.mark.skipif(
     sys.platform == "win32" or os.getuid() == 0,
     reason="cannot make a file unreadable as root or on Windows",
 )
-
-
-def out_no_src(path: Path) -> str:
-    return (
-        f"ROOT: No loadable tox.ini or setup.cfg or pyproject.toml or tox.toml found, assuming empty tox.ini at {path}"
-        f"\ndefault environments:\npy -> [no description]\n"
-    )
 
 
 def test_no_src_cwd(tox_project: ToxProjectCreator) -> None:
@@ -38,10 +31,16 @@ def test_no_src_cwd(tox_project: ToxProjectCreator) -> None:
     assert outcome.state.conf.src_path == (project.path / "tox.ini")
 
 
+def out_no_src(path: Path) -> str:
+    return (
+        f"ROOT: No loadable tox.ini or setup.cfg or pyproject.toml or tox.toml found, assuming empty tox.ini at {path}"
+        f"\ndefault environments:\npy -> [no description]\n"
+    )
+
+
 def test_no_src_has_py_project_toml_above(tox_project: ToxProjectCreator, tmp_path: Path) -> None:
     (tmp_path / "pyproject.toml").write_text("")
-    project = tox_project({})
-    outcome = project.run("l")
+    outcome = tox_project({}).run("l")
     outcome.assert_success()
     assert outcome.out == out_no_src(tmp_path)
     assert outcome.state.conf.src_path == (tmp_path / "tox.ini")
@@ -50,22 +49,20 @@ def test_no_src_has_py_project_toml_above(tox_project: ToxProjectCreator, tmp_pa
 def test_no_src_root_dir(tox_project: ToxProjectCreator, tmp_path: Path) -> None:
     root = tmp_path / "root"
     root.mkdir()
-    project = tox_project({})
-    outcome = project.run("l", "--root", str(root))
+    outcome = tox_project({}).run("l", "--root", str(root))
     outcome.assert_success()
     assert outcome.out == out_no_src(root)
     assert outcome.state.conf.src_path == (root / "tox.ini")
 
 
 def test_bad_src_content(tox_project: ToxProjectCreator, tmp_path: Path) -> None:
-    project = tox_project({})
 
-    outcome = project.run("l", "-c", str(tmp_path / "setup.cfg"))
+    outcome = tox_project({}).run("l", "-c", str(tmp_path / "setup.cfg"))
     outcome.assert_failed()
     assert outcome.out == f"ROOT: HandledError| config file {tmp_path / 'setup.cfg'} does not exist\n"
 
 
-@unreadable_files_possible
+@_UNREADABLE_FILES_POSSIBLE
 @pytest.mark.parametrize("named", [True, False], ids=["explicit-path", "discovery"])
 def test_unreadable_config_raises_handled_error(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, named: bool) -> None:
     """Reading the file raises an OSError subclass, not ValueError.
@@ -90,14 +87,13 @@ def test_unreadable_config_raises_handled_error(tmp_path: Path, monkeypatch: pyt
 
 
 def test_malformed_config_does_not_prevent_help(tox_project: ToxProjectCreator) -> None:
-    project = tox_project({"tox.toml": "deps =\n    mypy\n"})
-    outcome = project.run("--help")
+    outcome = tox_project({"tox.toml": "deps =\n    mypy\n"}).run("--help")
     outcome.assert_success()
     assert "usage: tox" in outcome.out
 
 
 def test_malformed_toml_in_dir_reports_error(tox_project: ToxProjectCreator) -> None:
-    """Config discovery in a directory should report TOML parse errors instead of silently ignoring them."""
+    # Config discovery in a directory should report TOML parse errors instead of silently ignoring them.
     project = tox_project({})
     # Write a pyproject.toml with an invalid TOML escape sequence (unescaped backslash)
     (project.path / "pyproject.toml").write_text('[tool.tox]\ntest = "c:\\path"\n', encoding="utf-8")
@@ -107,7 +103,7 @@ def test_malformed_toml_in_dir_reports_error(tox_project: ToxProjectCreator) -> 
 
 
 def test_malformed_ini_in_dir_reports_error(tox_project: ToxProjectCreator) -> None:
-    """Config discovery in a directory should report ini parse errors instead of raising a traceback."""
+    # Config discovery in a directory should report ini parse errors instead of raising a traceback.
     project = tox_project({})
     # Write a tox.ini with an unterminated section header
     (project.path / "tox.ini").write_text("[tox\nenv_list = a\n", encoding="utf-8")
@@ -126,7 +122,7 @@ def test_malformed_ini_in_dir_reports_error(tox_project: ToxProjectCreator) -> N
     ],
 )
 def test_bad_ini_core_value_reports_error(tox_project: ToxProjectCreator, core_value: str, message: str) -> None:
-    """A bad value in the ini core section should be a handled error rather than an unhandled traceback."""
+    # A bad value in the ini core section should be a handled error rather than an unhandled traceback.
     outcome = tox_project({"tox.ini": f"[tox]\n{core_value}\n"}).run("l")
     outcome.assert_failed()
     assert "failed to load core." in outcome.out
@@ -134,7 +130,7 @@ def test_bad_ini_core_value_reports_error(tox_project: ToxProjectCreator, core_v
 
 
 def test_toml_native_preferred_over_legacy_tox_ini(tox_project: ToxProjectCreator) -> None:
-    """When pyproject.toml has both legacy_tox_ini and native TOML config, native TOML should win."""
+    # When pyproject.toml has both legacy_tox_ini and native TOML config, native TOML should win.
     pyproject = """\
 [tool.tox]
 legacy_tox_ini = \"\"\"
@@ -149,8 +145,7 @@ env_list = ["native"]
 package = "skip"
 commands = [["python", "-c", "print('native')"]]
 """
-    project = tox_project({"pyproject.toml": pyproject})
-    outcome = project.run("l")
+    outcome = tox_project({"pyproject.toml": pyproject}).run("l")
     outcome.assert_success()
     assert "native" in outcome.out
     assert "legacy" not in outcome.out

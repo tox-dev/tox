@@ -146,7 +146,7 @@ def test_invalid_shell_expression(value: str, expected: list[str]) -> None:
     assert result.args == expected
 
 
-SIMPLE_ARGS = [
+_SIMPLE_ARGS = [
     (r"foo \"bar\"", ["foo", '"bar"']),
     (r"foo \'bar\'", ["foo", "'bar'"]),
     ("foo '\"bar baz\"'", ["foo", '"bar baz"']),
@@ -167,10 +167,10 @@ SIMPLE_ARGS = [
     (r"foo=\\\"bar baz\"", ['foo=\\"bar', 'baz"']),
     (r'foo=\\"bar baz\"', [r'foo=\\"bar baz\"']),
 ]
-NEWLINE_ARGS = [
+_NEWLINE_ARGS = [
     ('foo\n"bar\nbaz"', ["foo", "bar\nbaz"]),
 ]
-INI_CONFIG_NEWLINE_ARGS = [
+_INI_CONFIG_NEWLINE_ARGS = [
     ('foo\\\n    "bar\\\n    baz"', ["foobarbaz"]),  # behavior change from tox 3
     ('foo\\\n    "bar \\\n    baz"', ["foobar baz"]),  # behavior change from tox 3
     ('foo \\\n    "bar\\\n    baz"', ["foo", "barbaz"]),
@@ -178,7 +178,7 @@ INI_CONFIG_NEWLINE_ARGS = [
     ('foo \\\n    \\"bar \\\n    baz"', ["foo", '"bar', 'baz"']),
     ("foo \\\n    bar \\\n    baz", ["foo", "bar", "baz"]),
 ]
-WINDOWS_PATH_ARGS = [
+_WINDOWS_PATH_ARGS = [
     (r"SPECIAL:\foo\bar --quuz='baz atan'", [r"SPECIAL:\foo\bar", "--quuz=baz atan"]),
     (r"X:\\foo\\bar --quuz='baz atan'", [r"X:\foo\bar", "--quuz=baz atan"]),
     ("/foo/bar --quuz='baz atan'", ["/foo/bar", "--quuz=baz atan"]),
@@ -205,10 +205,10 @@ WINDOWS_PATH_ARGS = [
         ],
     ),
 ]
-WINDOWS_TRAILING_SEP_ARGS = [
+_WINDOWS_TRAILING_SEP_ARGS = [
     (r"command path\to\trailing\sep\ -b foo", ["command", "path\\to\\trailing\\sep\\", "-b", "foo"]),
 ]
-WACKY_SLASH_ARGS = [
+_WACKY_SLASH_ARGS = [
     ("\\\\\\", ["\\\\\\"]),
     (" \\'\\'\\ '", [" \\'\\'\\ '"]),
     ("\\'\\'\\ ", ["'' "]),
@@ -218,12 +218,6 @@ WACKY_SLASH_ARGS = [
     ("'\\' \\\\", ["\\", "\\"]),
     ('"\\\\" \\\\', ["\\", "\\"]),
 ]
-WACKY_SLASH_ARGS_WIN32 = {
-    " \\'\\'\\ '": ["''\\", "'"],
-    "\\'\\'\\ ": ["''\\"],
-    "\\'\\ \\\\": ["'\\", "\\"],
-    "\\'\\ ": ["'\\"],
-}
 
 
 @pytest.fixture(params=["win32", "linux2"])
@@ -235,24 +229,30 @@ def sys_platform(request: SubRequest, mocker: MockerFixture) -> str:
 @pytest.mark.parametrize(
     ("value", "expected"),
     [
-        *SIMPLE_ARGS,
-        *NEWLINE_ARGS,
-        *WINDOWS_PATH_ARGS,
-        *WACKY_SLASH_ARGS,
+        *_SIMPLE_ARGS,
+        *_NEWLINE_ARGS,
+        *_WINDOWS_PATH_ARGS,
+        *_WACKY_SLASH_ARGS,
     ],
 )
 def test_shlex_platform_specific(sys_platform: str, value: str, expected: list[str]) -> None:
     if sys_platform != "win32" and value.startswith("SPECIAL:"):
         # on non-windows platform, backslash is always an escape, not path separator
         expected = [exp.replace("\\", "") for exp in expected]
-    if sys_platform == "win32" and value in WACKY_SLASH_ARGS_WIN32:
-        expected = WACKY_SLASH_ARGS_WIN32[value]
+    wacky_slash_args_win32 = {
+        " \\'\\'\\ '": ["''\\", "'"],
+        "\\'\\'\\ ": ["''\\"],
+        "\\'\\ \\\\": ["'\\", "\\"],
+        "\\'\\ ": ["'\\"],
+    }
+    if sys_platform == "win32" and value in wacky_slash_args_win32:
+        expected = wacky_slash_args_win32[value]
     result = StrConvert().to_command(value)
     assert result is not None
     assert result.args == expected
 
 
-@pytest.mark.parametrize(("value", "expected"), WINDOWS_TRAILING_SEP_ARGS)
+@pytest.mark.parametrize(("value", "expected"), _WINDOWS_TRAILING_SEP_ARGS)
 def test_shlex_win32_trailing_sep(sys_platform: str, value: str, expected: list[str]) -> None:
     if sys_platform != "win32":
         pytest.skip("trailing path separator only relevant on Windows")
@@ -301,9 +301,9 @@ def test_shlex_win32_unc_path(
 @pytest.mark.parametrize(
     ("value", "expected"),
     [
-        *SIMPLE_ARGS,
-        *INI_CONFIG_NEWLINE_ARGS,
-        *WINDOWS_PATH_ARGS,
+        *_SIMPLE_ARGS,
+        *_INI_CONFIG_NEWLINE_ARGS,
+        *_WINDOWS_PATH_ARGS,
         #        *WACKY_SLASH_ARGS,
     ],
 )
@@ -329,8 +329,7 @@ def test_shlex_platform_specific_ini(
     )
     outcome = project.run("c")
     outcome.assert_success()
-    env_config = outcome.env_conf("py")
-    result = env_config["commands"]
+    result = outcome.env_conf("py")["commands"]
     assert result == [Command(args=expected)]
 
 
@@ -347,6 +346,5 @@ def test_trailing_path_sep_does_not_merge_args(
     })
     outcome = project.run("c")
     outcome.assert_success()
-    env_config = outcome.env_conf("py")
-    result = env_config["commands"]
+    result = outcome.env_conf("py")["commands"]
     assert result == [Command(args=["command", "path\\to\\sep\\", "-b", "foo"])]

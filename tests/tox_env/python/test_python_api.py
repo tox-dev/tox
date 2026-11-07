@@ -29,13 +29,12 @@ def test_requirements_txt(tox_project: ToxProjectCreator) -> None:
         },
     )
     execute_calls = prj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
-    result = prj.run("r", "-e", "py")
-    result.assert_success()
+    prj.run("r", "-e", "py").assert_success()
 
     assert execute_calls.call_count == 1
-    exp = ["python", "-I", "-m", "pip", "install", "-r", "requirements.txt"]
     got_cmd = execute_calls.call_args[0][3].cmd
 
+    exp = ["python", "-I", "-m", "pip", "install", "-r", "requirements.txt"]
     assert got_cmd == exp
 
 
@@ -58,16 +57,12 @@ def test_conflicting_base_python_factor_mixed_style() -> None:
 
 def test_conflicting_base_python_factor_ignore(tox_project: ToxProjectCreator) -> None:
     ini = "[tox]\nenv_list=unit-py3.10-2.16\nignore_base_python_conflict=true\n[testenv]\npackage=skip\n"
-    project = tox_project({"tox.ini": ini})
-    result = project.run("c", "-e", "unit-py3.10-2.16", "-k", "base_python")
-    result.assert_success()
+    tox_project({"tox.ini": ini}).run("c", "-e", "unit-py3.10-2.16", "-k", "base_python").assert_success()
 
 
 def test_conflicting_base_python_factor_no_ignore(tox_project: ToxProjectCreator) -> None:
-    ini = "[tox]\nenv_list=unit-py3.10-2.16\n[testenv]\npackage=skip\n"
-    project = tox_project({"tox.ini": ini})
-    result = project.run("c", "-e", "unit-py3.10-2.16", "-k", "base_python", raise_on_config_fail=False)
-    result.assert_failed(code=-1)
+    project = tox_project({"tox.ini": "[tox]\nenv_list=unit-py3.10-2.16\n[testenv]\npackage=skip\n"})
+    project.run("c", "-e", "unit-py3.10-2.16", "-k", "base_python", raise_on_config_fail=False).assert_failed(code=-1)
 
 
 @pytest.mark.parametrize(
@@ -134,11 +129,9 @@ def test_build_wheel_in_non_base_pkg_env(
 
     mocker.patch("tox.tox_env.python.virtual_env.api.session_via_cli", side_effect=_fake_session)
     prev_ver, impl, _ = patch_prev_py(True)
-    prev_py = f"py{prev_ver}"
-    prj = tox_project({"tox.ini": f"[tox]\nenv_list= {prev_py}\n[testenv]\npackage=wheel"})
+    prj = tox_project({"tox.ini": f"[tox]\nenv_list= {f'py{prev_ver}'}\n[testenv]\npackage=wheel"})
     execute_calls = prj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
-    result = prj.run("-r", "--root", str(demo_pkg_inline), "--workdir", str(prj.path / ".tox"))
-    result.assert_success()
+    prj.run("-r", "--root", str(demo_pkg_inline), "--workdir", str(prj.path / ".tox")).assert_success()
     calls = [(i[0][0].conf.name, i[0][3].run_id) for i in execute_calls.call_args_list]
     assert calls == [
         (f".pkg-{impl}{prev_ver}", "_optional_hooks"),
@@ -167,11 +160,9 @@ def test_build_wheel_in_free_threaded_pkg_env(
 
     mocker.patch("tox.tox_env.python.virtual_env.api.session_via_cli", side_effect=_fake_session)
     prev_ver, impl, _ = patch_prev_py(True, free_threaded=True)
-    prev_py = f"py{prev_ver}"
-    prj = tox_project({"tox.ini": f"[tox]\nenv_list= {prev_py}\n[testenv]\npackage=wheel"})
+    prj = tox_project({"tox.ini": f"[tox]\nenv_list= {f'py{prev_ver}'}\n[testenv]\npackage=wheel"})
     execute_calls = prj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
-    result = prj.run("-r", "--root", str(demo_pkg_inline), "--workdir", str(prj.path / ".tox"))
-    result.assert_success()
+    prj.run("-r", "--root", str(demo_pkg_inline), "--workdir", str(prj.path / ".tox")).assert_success()
     calls = [(i[0][0].conf.name, i[0][3].run_id) for i in execute_calls.call_args_list]
     assert calls == [
         (f".pkg-{impl}{prev_ver}t", "_optional_hooks"),
@@ -200,11 +191,9 @@ def test_build_wheel_in_debug_pkg_env(
 
     mocker.patch("tox.tox_env.python.virtual_env.api.session_via_cli", side_effect=_fake_session)
     prev_ver, impl, _ = patch_prev_py(True, debug=True)
-    prev_py = f"py{prev_ver}"
-    prj = tox_project({"tox.ini": f"[tox]\nenv_list= {prev_py}\n[testenv]\npackage=wheel"})
+    prj = tox_project({"tox.ini": f"[tox]\nenv_list= {f'py{prev_ver}'}\n[testenv]\npackage=wheel"})
     execute_calls = prj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
-    result = prj.run("-r", "--root", str(demo_pkg_inline), "--workdir", str(prj.path / ".tox"))
-    result.assert_success()
+    prj.run("-r", "--root", str(demo_pkg_inline), "--workdir", str(prj.path / ".tox")).assert_success()
     calls = [(i[0][0].conf.name, i[0][3].run_id) for i in execute_calls.call_args_list]
     assert calls == [
         (f".pkg-{impl}{prev_ver}d", "_optional_hooks"),
@@ -347,8 +336,7 @@ def test_base_python_env_conflict(
         result = Python._validate_base_python(env, base_python, ignore_conflict)  # ruff:ignore[private-member-access]
         assert result == [expected]
     else:
-        msg = f"env name {env} conflicting with base python {conflict[0]}"
-        with pytest.raises(Fail, match=msg):
+        with pytest.raises(Fail, match=f"env name {env} conflicting with base python {conflict[0]}"):
             Python._validate_base_python(env, base_python, ignore_conflict)  # ruff:ignore[private-member-access]
 
 
@@ -458,8 +446,7 @@ def test_base_python_env_conflict_show_conf(tox_project: ToxProjectCreator, igno
 
 def test_python_set_hash_seed(tox_project: ToxProjectCreator) -> None:
     ini = "[testenv]\npackage=skip\ncommands=python -c 'import os; print(os.environ[\"PYTHONHASHSEED\"])'"
-    prj = tox_project({"tox.ini": ini})
-    result = prj.run("r", "-e", "py", "--hashseed", "10")
+    result = tox_project({"tox.ini": ini}).run("r", "-e", "py", "--hashseed", "10")
     result.assert_success()
     assert result.out.splitlines()[1] == "10"
 
@@ -510,8 +497,7 @@ def test_python_hash_seed_via_section_substitution(tox_project: ToxProjectCreato
 
 def test_python_disable_hash_seed(tox_project: ToxProjectCreator) -> None:
     ini = "[testenv]\npackage=skip\ncommands=python -c 'import os; print(os.environ.get(\"PYTHONHASHSEED\"))'"
-    prj = tox_project({"tox.ini": ini})
-    result = prj.run("r", "-e", "py", "--hashseed", "notset")
+    result = tox_project({"tox.ini": ini}).run("r", "-e", "py", "--hashseed", "notset")
     result.assert_success()
     assert result.out.splitlines()[1] == "None"
 
@@ -588,8 +574,7 @@ def test_list_installed_deps_explicit_cli(
 
 def test_usedevelop_with_nonexistent_basepython(tox_project: ToxProjectCreator) -> None:
     ini = "[testenv]\nusedevelop = true\n[testenv:unused]\nbasepython = /nonexistent/bin/python"
-    project = tox_project({"tox.ini": ini})
-    result = project.run()
+    result = tox_project({"tox.ini": ini}).run()
     assert result.code == 0
 
 
@@ -809,8 +794,8 @@ def test_validate_base_python_debug(env: str, base_debug: bool, conflicts: bool,
         assert VirtualEnv._validate_base_python(env, base_python, False) == base_python  # ruff:ignore[private-member-access]
 
 
-_PY_VER = f"{sys.version_info[0]}.{sys.version_info[1]}"
-_PY_VER_NODOT = f"{sys.version_info[0]}{sys.version_info[1]}"
+_PY_VER: Final[str] = f"{sys.version_info[0]}.{sys.version_info[1]}"
+_PY_VER_NODOT: Final[str] = f"{sys.version_info[0]}{sys.version_info[1]}"
 
 
 @pytest.mark.parametrize(
@@ -971,7 +956,7 @@ def test_base_python_file_accepts_version_spec(tox_project: ToxProjectCreator, v
 
 
 def test_base_python_file_conflict(tox_project: ToxProjectCreator) -> None:
-    """Setting both base_python and base_python_file is an error."""
+    # Setting both base_python and base_python_file is an error.
     ini = f"[testenv:mypy]\npackage=skip\nbase_python=python{_PY_VER}\nbase_python_file=.python-version\n"
     project = tox_project({"tox.ini": ini, ".python-version": f"{_PY_VER}\n"})
     result = project.run("c", "-e", "mypy", "-k", "base_python", raise_on_config_fail=False)
@@ -980,7 +965,7 @@ def test_base_python_file_conflict(tox_project: ToxProjectCreator) -> None:
 
 
 def test_base_python_file_global_testenv(tox_project: ToxProjectCreator) -> None:
-    """base_python_file set in [testenv] applies to all non-factor envs."""
+    # base_python_file set in [testenv] applies to all non-factor envs.
     ini = f"[tox]\nenv_list=mypy,py{_PY_VER_NODOT}\n[testenv]\npackage=skip\nbase_python_file=.python-version\n"
     project = tox_project({"tox.ini": ini, ".python-version": f"{_PY_VER}\n"})
     result = project.run("c", "-e", "mypy", "-k", "base_python")

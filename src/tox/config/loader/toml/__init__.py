@@ -42,7 +42,14 @@ _V = TypeVar("_V")
 
 
 class TomlLoader(Loader[TomlTypes]):
-    """Load configuration from a pyproject.toml file."""
+    """Load configuration from a pyproject.toml file.
+
+    :param section:
+    :param overrides:
+    :param content:
+    :param root_content:
+    :param unused_exclude:
+    """
 
     def __init__(
         self,
@@ -94,8 +101,7 @@ class TomlLoader(Loader[TomlTypes]):
             program_depth=2 if of_type == list[Command] else 1 if of_type == Command else None,
             requirement_entries=of_type in {PythonDeps, PythonConstraints},
         )
-        exploded = unroll(raw, skip_str=True) if delay_replace else unroll(raw)
-        result = self.to(exploded, of_type, factory)
+        result = self.to(unroll(raw, skip_str=True) if delay_replace else unroll(raw), of_type, factory)
         if delay_replace and conf is not None:  # the core section supports no replacement
             loader = self
 
@@ -144,13 +150,13 @@ class TomlLoader(Loader[TomlTypes]):
 
     @staticmethod
     @override
-    def to_str(value: TomlTypes) -> str:
-        return validate(value, str)
+    def to_bool(value: TomlTypes) -> bool:
+        return validate(value, bool)
 
     @staticmethod
     @override
-    def to_bool(value: TomlTypes) -> bool:
-        return validate(value, bool)
+    def to_set(value: TomlTypes, of_type: type[_T]) -> Iterator[_T]:
+        return TomlLoader.to_list(value, of_type)
 
     @staticmethod
     @override
@@ -163,11 +169,6 @@ class TomlLoader(Loader[TomlTypes]):
 
     @staticmethod
     @override
-    def to_set(value: TomlTypes, of_type: type[_T]) -> Iterator[_T]:
-        return TomlLoader.to_list(value, of_type)
-
-    @staticmethod
-    @override
     def to_dict(value: TomlTypes, of_type: tuple[type[_T], type[_V]]) -> Iterator[tuple[_T, _V]]:
         result = validate(value, cast("type[dict[Any, Any]]", GenericAlias(dict, of_type)))
         return iter(cast("dict[_T, _V]", result).items())
@@ -176,6 +177,11 @@ class TomlLoader(Loader[TomlTypes]):
     @override
     def to_path(value: TomlTypes) -> Path:
         return StrConvert.to_path(TomlLoader.to_str(value))
+
+    @staticmethod
+    @override
+    def to_str(value: TomlTypes) -> str:
+        return validate(value, str)
 
     @staticmethod
     @override

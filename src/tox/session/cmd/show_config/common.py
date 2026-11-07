@@ -39,23 +39,6 @@ def build_structured_result(state: State) -> tuple[dict[str, JsonValue], bool]:
     return result, has_exception
 
 
-def write_output(
-    output: str,
-    output_file: Path | None,
-    is_colored: bool,  # ruff:ignore[boolean-type-hint-positional-argument]
-    colorize: Callable[[str], str],
-) -> None:
-    if output_file is not None:
-        write_output_file(Path(output_file), output)
-    else:
-        print(colorize(output) if is_colored else output)  # ruff:ignore[print]
-
-
-def write_output_file(output_file: Path, output: str) -> None:
-    output_file.parent.mkdir(parents=True, exist_ok=True)
-    output_file.write_text(f"{output}\n", encoding="utf-8")
-
-
 def _collect_conf(conf: ConfigSet, keys: list[str]) -> tuple[dict[str, JsonValue], bool]:
     data: dict[str, JsonValue] = {}
     has_exception = False
@@ -79,6 +62,23 @@ def format_config_error(exception: Exception) -> str:
     if isinstance(exception, UnicodeDecodeError):
         return f"UnicodeDecodeError at byte {exception.start}"
     return repr(exception)
+
+
+def write_output(
+    output: str,
+    output_file: Path | None,
+    is_colored: bool,  # ruff:ignore[boolean-type-hint-positional-argument]
+    colorize: Callable[[str], str],
+) -> None:
+    if output_file is not None:
+        write_output_file(Path(output_file), output)
+    else:
+        print(colorize(output) if is_colored else output)  # ruff:ignore[print]
+
+
+def write_output_file(output_file: Path, output: str) -> None:
+    output_file.parent.mkdir(parents=True, exist_ok=True)
+    output_file.write_text(f"{output}\n", encoding="utf-8")
 
 
 __all__ = [

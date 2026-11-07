@@ -4,9 +4,14 @@ from .ini import IniSource
 
 
 class ToxIni(IniSource):
-    """Configuration sourced from a tox.ini file."""
+    """Configuration sourced from a tox.ini file.
+
+    :cvar FILENAME:
+    """
 
     FILENAME = "tox.ini"
 
 
-__all__ = ("ToxIni",)
+__all__ = [
+    "ToxIni",
+]

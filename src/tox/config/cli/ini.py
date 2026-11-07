@@ -48,6 +48,17 @@ class IniConfig:
         if self.has_tox_section:
             self.ini = IniLoader(CORE, parser, overrides=[], core_section=CORE)
 
+    def __bool__(self) -> bool:
+        return bool(self.has_config_file) and bool(self.has_tox_section)
+
+    @property
+    def epilog(self) -> str:
+        # text to show within the parsers epilog
+        return (
+            f"{os.linesep}config file {str(self.config_file)!r} {self.STATE[self.has_config_file]} "
+            f"(change{'d' if self.is_env_var else ''} via env var {self.TOX_CONFIG_FILE_ENV_VAR})"
+        )
+
     def get(self, key: str, of_type: type[Any] | UnionType) -> Any:
         cache_key = key, of_type
         if cache_key in self._cache:
@@ -67,16 +78,9 @@ class IniConfig:
         if self.ini is None:  # pragma: no cover # this can only happen if we don't call __bool__ first
             return None
         args = ConfigLoadArgs(chain=[key], name=CORE.prefix, env_name=None)
-        value = self.ini.load(key, of_type=of_type, conf=None, factory=None, args=args)
-        return value, "file"
+        return self.ini.load(key, of_type=of_type, conf=None, factory=None, args=args), "file"
 
-    def __bool__(self) -> bool:
-        return bool(self.has_config_file) and bool(self.has_tox_section)
 
-    @property
-    def epilog(self) -> str:
-        # text to show within the parsers epilog
-        return (
-            f"{os.linesep}config file {str(self.config_file)!r} {self.STATE[self.has_config_file]} "
-            f"(change{'d' if self.is_env_var else ''} via env var {self.TOX_CONFIG_FILE_ENV_VAR})"
-        )
+__all__ = [
+    "IniConfig",
+]

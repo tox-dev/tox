@@ -16,16 +16,12 @@ if TYPE_CHECKING:
     from tox.tox_env.register import ToxEnvRegister
 
 
+@impl
+def tox_register_tox_env(register: ToxEnvRegister) -> None:
+    register.add_run_env(Pep723Runner)
+
+
 class Pep723Runner(Pep723Mixin, VirtualEnv, RunToxEnv):
-    @staticmethod
-    @override
-    def id() -> str:
-        return "virtualenv-pep-723"
-
-    @override
-    def _register_package_conf(self) -> bool:
-        return False
-
     @property
     @override
     def _package_tox_env_type(self) -> str:
@@ -36,16 +32,18 @@ class Pep723Runner(Pep723Mixin, VirtualEnv, RunToxEnv):
     def _external_pkg_tox_env_type(self) -> str:
         raise NotImplementedError
 
+    @staticmethod
+    @override
+    def id() -> str:
+        return "virtualenv-pep-723"
+
+    @override
+    def _register_package_conf(self) -> bool:
+        return False
+
     @override
     def _build_packages(self) -> list[Package]:
         return []
 
 
-@impl
-def tox_register_tox_env(register: ToxEnvRegister) -> None:
-    register.add_run_env(Pep723Runner)
-
-
-__all__ = [
-    "Pep723Runner",
-]
+__all__ = []

@@ -21,25 +21,6 @@ class ToxEnvRegister:
         self._package_envs: dict[str, type[PackageToxEnv]] = {}
         self._default_run_env: str = ""
 
-    def _register_tox_env_types(self, manager: Plugin) -> None:
-        manager.tox_register_tox_env(register=self)
-
-    def add_run_env(self, of_type: type[RunToxEnv]) -> None:
-        """Define a new run tox environment type.
-
-        :param of_type: the new run environment type
-
-        """
-        self._run_envs[of_type.id()] = of_type
-
-    def add_package_env(self, of_type: type[PackageToxEnv]) -> None:
-        """Define a new packaging tox environment type.
-
-        :param of_type: the new packaging environment type
-
-        """
-        self._package_envs[of_type.id()] = of_type
-
     @property
     def env_runners(self) -> Iterable[str]:
         """:returns: run environment types currently defined"""
@@ -64,6 +45,25 @@ class ToxEnvRegister:
             raise ValueError(msg)
         self._default_run_env = value
 
+    def _register_tox_env_types(self, manager: Plugin) -> None:
+        manager.tox_register_tox_env(register=self)
+
+    def add_run_env(self, of_type: type[RunToxEnv]) -> None:
+        """Define a new run tox environment type.
+
+        :param of_type: the new run environment type
+
+        """
+        self._run_envs[of_type.id()] = of_type
+
+    def add_package_env(self, of_type: type[PackageToxEnv]) -> None:
+        """Define a new packaging tox environment type.
+
+        :param of_type: the new packaging environment type
+
+        """
+        self._package_envs[of_type.id()] = of_type
+
     def runner(self, name: str) -> type[RunToxEnv]:
         """Lookup a run tox environment type by name.
 
@@ -87,7 +87,7 @@ class ToxEnvRegister:
 
 REGISTER = ToxEnvRegister()  #: the tox register
 
-__all__ = (
+__all__ = [
     "REGISTER",
     "ToxEnvRegister",
-)
+]

@@ -13,20 +13,22 @@ if TYPE_CHECKING:
 
     from _typeshed import ExcInfo
 
-_CACHEDIR_TAG = """\
+
+def ensure_cachedir_tag(work_dir: Path) -> None:
+    """Ensure a ``CACHEDIR.TAG`` file exists in *work_dir* per https://bford.info/cachedir/spec.html.
+
+    :param work_dir:
+    """
+    tag_path = work_dir / "CACHEDIR.TAG"
+    cachedir_tag = """\
 Signature: 8a477f597d28d172789f06886806bc55
 # This file is a cache directory tag created by tox.
 # For information about cache directory tags, see:
 #	https://bford.info/cachedir/spec.html
 """
-
-
-def ensure_cachedir_tag(work_dir: Path) -> None:
-    """Ensure a ``CACHEDIR.TAG`` file exists in *work_dir* per https://bford.info/cachedir/spec.html."""
-    tag_path = work_dir / "CACHEDIR.TAG"
     if not tag_path.exists():
         ensure_private_dir(work_dir)
-        tag_path.write_text(_CACHEDIR_TAG, encoding="utf-8")
+        tag_path.write_text(cachedir_tag, encoding="utf-8")
 
 
 def ensure_private_dir(path: Path) -> None:

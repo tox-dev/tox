@@ -16,24 +16,6 @@ if TYPE_CHECKING:
     from tox.pytest import ToxProjectCreator, ToxRunOutcome
 
 
-def _tox_ini(extra: str = "") -> str:
-    lines = ["[testenv:check]", "runner = virtualenv-pep-723", "script = check.py"]
-    if extra:
-        lines.append(extra)
-    return "\n".join(lines) + "\n"
-
-
-def _run(project: ToxProjectCreator, files: dict[str, str], *extra_args: str) -> tuple[ToxRunOutcome, MagicMock]:
-    proj = project(files)
-    execute_calls = proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
-    result = proj.run("r", "-e", "check", "--discover", sys.executable, *extra_args)
-    return result, execute_calls
-
-
-def _py_ver() -> str:
-    return f"{sys.version_info.major}.{sys.version_info.minor}"
-
-
 def test_deps_installed(tox_project: ToxProjectCreator) -> None:
     script = "# /// script\n# dependencies = [\"setuptools\"]\n# ///\nprint('ok')\n"
     result, execute_calls = _run(tox_project, {"tox.ini": _tox_ini(), "check.py": script})
@@ -42,11 +24,28 @@ def test_deps_installed(tox_project: ToxProjectCreator) -> None:
     assert any("setuptools" in arg for cmd in install_cmds for arg in cmd)
 
 
+def _run(project: ToxProjectCreator, files: dict[str, str], *extra_args: str) -> tuple[ToxRunOutcome, MagicMock]:
+    proj = project(files)
+    execute_calls = proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
+    return proj.run("r", "-e", "check", "--discover", sys.executable, *extra_args), execute_calls
+
+
+def _tox_ini(extra: str = "") -> str:
+    lines = ["[testenv:check]", "runner = virtualenv-pep-723", "script = check.py"]
+    if extra:
+        lines.append(extra)
+    return "\n".join(lines) + "\n"
+
+
 def test_no_deps_when_only_requires_python(tox_project: ToxProjectCreator) -> None:
     script = f'# /// script\n# requires-python = ">={_py_ver()}"\n# ///\nprint("ok")\n'
     result, execute_calls = _run(tox_project, {"tox.ini": _tox_ini(), "check.py": script})
     result.assert_success()
     assert not [i for i in execute_calls.call_args_list if "install" in i[0][3].run_id]
+
+
+def _py_ver() -> str:
+    return f"{sys.version_info.major}.{sys.version_info.minor}"
 
 
 def test_no_deps_when_no_metadata(tox_project: ToxProjectCreator) -> None:
@@ -196,8 +195,7 @@ def test_pep508_dependency_forms(tox_project: ToxProjectCreator, dependency: str
 
 
 def test_missing_script_file(tox_project: ToxProjectCreator) -> None:
-    proj = tox_project({"tox.ini": _tox_ini()})
-    result = proj.run("r", "-e", "check", "--discover", sys.executable)
+    result = tox_project({"tox.ini": _tox_ini()}).run("r", "-e", "check", "--discover", sys.executable)
     result.assert_failed()
     assert "script file not found" in result.out
 
@@ -212,15 +210,15 @@ def test_base_python_rejected(tox_project: ToxProjectCreator) -> None:
     assert "cannot set base_python" in result.out
 
 
-def _tox_ini_with_script(script_value: str) -> str:
-    return f"[testenv:check]\nrunner = virtualenv-pep-723\nscript = {script_value}\n"
-
-
 def test_script_path_outside_tox_root_rejected(tox_project: ToxProjectCreator) -> None:
     proj = tox_project({"tox.ini": _tox_ini_with_script("../escape.py")})
     result = proj.run("r", "-e", "check", "--discover", sys.executable)
     result.assert_failed()
     assert "escapes tox_root" in result.out
+
+
+def _tox_ini_with_script(script_value: str) -> str:
+    return f"[testenv:check]\nrunner = virtualenv-pep-723\nscript = {script_value}\n"
 
 
 def test_script_path_traversal_via_dot_dot_rejected(tox_project: ToxProjectCreator) -> None:
@@ -231,8 +229,7 @@ def test_script_path_traversal_via_dot_dot_rejected(tox_project: ToxProjectCreat
 
 
 def test_script_file_too_large_rejected(tox_project: ToxProjectCreator, mocker: MockerFixture) -> None:
-    script = "# /// script\n# dependencies = []\n# ///\nprint('ok')\n"
-    proj = tox_project({"tox.ini": _tox_ini(), "check.py": script})
+    proj = tox_project({"tox.ini": _tox_ini(), "check.py": "# /// script\n# dependencies = []\n# ///\nprint('ok')\n"})
     proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
     mocker.patch("tox.tox_env.python.pep723._MAX_SCRIPT_BYTES", 1)
     result = proj.run("r", "-e", "check", "--discover", sys.executable)
@@ -306,7 +303,7 @@ def test_invalid_requires_python_reports_metadata_error(tox_project: ToxProjectC
 
 
 def test_metadata_honored_with_bom(tox_project: ToxProjectCreator) -> None:
-    """A UTF-8 BOM (common Windows editor artifact) must not silently disable the metadata block."""
+    # A UTF-8 BOM (common Windows editor artifact) must not silently disable the metadata block.
     script = "\ufeff" + dedent("""\
         # /// script
         # requires-python = ">=99.0"

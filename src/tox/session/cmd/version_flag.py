@@ -44,8 +44,7 @@ def tox_add_option(parser: ToxParser) -> None:
 
 def get_version_info() -> str:
     out = [f"{version} from {Path(tox.__file__).absolute()}"]
-    plugin_info = MANAGER.manager.list_plugin_distinfo()
-    if plugin_info:
+    if plugin_info := MANAGER.manager.list_plugin_distinfo():
         out.append("registered plugins:")
         for module, egg_info in plugin_info:
             source = getattr(module, "__file__", repr(module))
@@ -53,8 +52,7 @@ def get_version_info() -> str:
             info = append_fn() if append_fn is not None else ""
             with_info = f" {info}" if info else ""
             out.append(f"    {egg_info.project_name}-{egg_info.version} at {source}{with_info}")
-    inline = MANAGER.inline_module
-    if inline is not None:
+    if (inline := MANAGER.inline_module) is not None:
         source = getattr(inline, "__file__", repr(inline))
         info = inline.tox_append_version_info() if hasattr(inline, "tox_append_version_info") else ""
         with_info = f" {info}" if info else ""

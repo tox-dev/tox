@@ -17,8 +17,7 @@ def test_quickstart_ok(tox_project: ToxProjectCreator) -> None:
     tox_ini = project.path / "demo" / "tox.ini"
     assert not tox_ini.exists()
 
-    outcome = project.run("q", str(tox_ini.parent))
-    outcome.assert_success()
+    project.run("q", str(tox_ini.parent)).assert_success()
 
     assert tox_ini.exists()
     found = tox_ini.read_text()
@@ -51,10 +50,8 @@ def test_quickstart_refuse(tox_project: ToxProjectCreator) -> None:
 
 
 def test_quickstart_help(tox_project: ToxProjectCreator) -> None:
-    outcome = tox_project({"tox.ini": ""}).run("q", "-h")
-    outcome.assert_success()
+    tox_project({"tox.ini": ""}).run("q", "-h").assert_success()
 
 
 def test_quickstart_no_args(tox_project: ToxProjectCreator) -> None:
-    outcome = tox_project({}).run("q")
-    outcome.assert_success()
+    tox_project({}).run("q").assert_success()

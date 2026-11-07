@@ -16,17 +16,21 @@ if TYPE_CHECKING:
     from types import UnionType
     from typing import Final
 
-    from tox.config.loader.api import Loader
-    from tox.config.main import Config
-
+    from .loader.api import Loader
     from .loader.convert import Factory
     from .loader.section import Section
+    from .main import Config
 
 V = TypeVar("V")
 
 
 class ConfigSet(ABC):
-    """A set of configuration that belong together (such as a tox environment settings, core tox settings)."""
+    """A set of configuration that belong together (such as a tox environment settings, core tox settings).
+
+    :param conf:
+    :param section:
+    :param env_name:
+    """
 
     def __init__(self, conf: Config, section: Section, env_name: str | None) -> None:
         self._section = section
@@ -39,15 +43,62 @@ class ConfigSet(ABC):
         self._final = False
         self.register_config()
 
+    @abstractmethod
+    def register_config(self) -> None:
+        raise NotImplementedError
+
+    def __getitem__(self, item: str) -> Any:
+        """Get the config value for a given key (will materialize in case of dynamic config).
+
+        :param item: the config key
+
+        :returns: the configuration value
+
+        """
+        return self.load(item)
+
+    def load(self, item: str, chain: list[str] | None = None) -> Any:
+        """Get the config value for a given key (will materialize in case of dynamic config).
+
+        :param item: the config key
+        :param chain: a chain of configuration keys already loaded for this load operation (used to detect circles)
+
+        :returns: the configuration value
+
+        """
+        return self._defined[item].__call__(self._conf, self.loaders, ConfigLoadArgs(chain, self.name, self.env_name))  # ruff:ignore[unnecessary-dunder-call]
+
+    @property
+    def name(self) -> str:
+        return self._section.name
+
+    @property
+    def env_name(self) -> str | None:
+        return self._env_name
+
+    @override
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}(loaders={self.loaders!r})"
+
+    def __iter__(self) -> Iterator[str]:
+        """:returns: iterate through the defined config keys (primary keys used)"""
+        return iter(self._keys.keys())
+
+    def __contains__(self, item: str) -> bool:
+        """Check if a configuration key is within the config set.
+
+        :param item: the configuration value
+
+        :returns: a boolean indicating the truthiness of the statement
+
+        """
+        return item in self._alias
+
     def get_configs(self) -> Generator[ConfigDefinition[Any], None, None]:
         """:returns: a mapping of config keys to their definitions"""
         for k, v in self._defined.items():
             if k == next(iter(v.keys)):
                 yield v
-
-    @abstractmethod
-    def register_config(self) -> None:
-        raise NotImplementedError
 
     def mark_finalized(self) -> None:
         self._final = True
@@ -138,33 +189,15 @@ class ConfigSet(ABC):
             perform the contained item creation, otherwise creates objects that match the type)
 
         :returns: the new dynamic config definition
+        :raises RuntimeError:
 
         """
         if self._final:
             msg = "config set has been marked final and cannot be extended"
             raise RuntimeError(msg)
         keys_ = self._make_keys(keys)
-        definition = ConfigDynamicDefinition(keys_, desc, of_type, default, post_process, factory)
-        result = self._add_conf(keys_, definition)
+        result = self._add_conf(keys_, ConfigDynamicDefinition(keys_, desc, of_type, default, post_process, factory))
         return cast("ConfigDynamicDefinition[V]", result)
-
-    def add_constant(self, keys: str | Sequence[str], desc: str, value: V) -> ConfigConstantDefinition[V]:
-        """Add a constant value.
-
-        :param keys: the keys under what to register the config (first is primary key)
-        :param desc: a help message describing the configuration
-        :param value: the config value to use
-
-        :returns: the new constant config value
-
-        """
-        if self._final:
-            msg = "config set has been marked final and cannot be extended"
-            raise RuntimeError(msg)
-        keys_ = self._make_keys(keys)
-        definition = ConfigConstantDefinition(keys_, desc, value)
-        result = self._add_conf(keys_, definition)
-        return cast("ConfigConstantDefinition[V]", result)
 
     @staticmethod
     def _make_keys(keys: str | Sequence[str]) -> Sequence[str]:
@@ -186,27 +219,22 @@ class ConfigSet(ABC):
         msg = f"duplicate configuration definition for {self.name}:\nhas: {self._defined[key]}\nnew: {definition}"
         raise ValueError(msg)
 
-    def __getitem__(self, item: str) -> Any:
-        """Get the config value for a given key (will materialize in case of dynamic config).
+    def add_constant(self, keys: str | Sequence[str], desc: str, value: V) -> ConfigConstantDefinition[V]:
+        """Add a constant value.
 
-        :param item: the config key
+        :param keys: the keys under what to register the config (first is primary key)
+        :param desc: a help message describing the configuration
+        :param value: the config value to use
 
-        :returns: the configuration value
-
-        """
-        return self.load(item)
-
-    def load(self, item: str, chain: list[str] | None = None) -> Any:
-        """Get the config value for a given key (will materialize in case of dynamic config).
-
-        :param item: the config key
-        :param chain: a chain of configuration keys already loaded for this load operation (used to detect circles)
-
-        :returns: the configuration value
+        :returns: the new constant config value
+        :raises RuntimeError:
 
         """
-        config_definition = self._defined[item]
-        return config_definition.__call__(self._conf, self.loaders, ConfigLoadArgs(chain, self.name, self.env_name))  # ruff:ignore[unnecessary-dunder-call]
+        if self._final:
+            msg = "config set has been marked final and cannot be extended"
+            raise RuntimeError(msg)
+        keys_ = self._make_keys(keys)
+        return cast("ConfigConstantDefinition[V]", self._add_conf(keys_, ConfigConstantDefinition(keys_, desc, value)))
 
     def is_constant(self, item: str) -> bool:
         return isinstance(self._defined[item], ConfigConstantDefinition)
@@ -223,6 +251,7 @@ class ConfigSet(ABC):
         :param of_type: the type the config value was registered with
 
         :returns: the configuration value
+        :raises TypeError:
 
         """
         value = self.load(item)
@@ -242,6 +271,7 @@ class ConfigSet(ABC):
         :param of_type: the type the config value was registered with
 
         :returns: the configuration value, or ``None`` when unset
+        :raises TypeError:
 
         """
         value = self.load(item)
@@ -249,24 +279,6 @@ class ConfigSet(ABC):
             return cast("V | None", value)
         msg = f"{item} is {type(value).__name__}, expected {of_type!r} or None"
         raise TypeError(msg)
-
-    @override
-    def __repr__(self) -> str:
-        return f"{self.__class__.__name__}(loaders={self.loaders!r})"
-
-    def __iter__(self) -> Iterator[str]:
-        """:returns: iterate through the defined config keys (primary keys used)"""
-        return iter(self._keys.keys())
-
-    def __contains__(self, item: str) -> bool:
-        """Check if a configuration key is within the config set.
-
-        :param item: the configuration value
-
-        :returns: a boolean indicating the truthiness of the statement
-
-        """
-        return item in self._alias
 
     def unused(self) -> list[str]:
         """:returns: Return a list of keys present in the config source but not used"""
@@ -289,17 +301,15 @@ class ConfigSet(ABC):
         """
         return self._alias[key]
 
-    @property
-    def name(self) -> str:
-        return self._section.name
-
-    @property
-    def env_name(self) -> str | None:
-        return self._env_name
-
 
 class CoreConfigSet(ConfigSet):
-    """Configuration set for the core tox config."""
+    """Configuration set for the core tox config.
+
+    :param conf:
+    :param section:
+    :param root:
+    :param src_path:
+    """
 
     def __init__(self, conf: Config, section: Section, root: Path, src_path: Path) -> None:
         self._root = root
@@ -307,20 +317,6 @@ class CoreConfigSet(ConfigSet):
         super().__init__(conf, section=section, env_name=None)
         desc = "define environments to automatically run"
         self.add_config(keys=["env_list", "envlist"], of_type=EnvList, default=EnvList([]), desc=desc)
-
-    def _default_work_dir(self, conf: Config, env_name: str | None) -> Path:  # ruff:ignore[unused-method-argument]
-        return self.get("tox_root", Path) / ".tox"
-
-    def _default_temp_dir(self, conf: Config, env_name: str | None) -> Path:  # ruff:ignore[unused-method-argument]
-        return self.get("work_dir", Path) / ".tmp"
-
-    def _work_dir_post_process(self, folder: Path) -> Path:
-        return self._conf.work_dir if self._conf.options.work_dir else self._relative_to_tox_root(folder)
-
-    def _relative_to_tox_root(self, folder: Path) -> Path:
-        if not folder.is_absolute():
-            folder = self.get("tox_root", Path) / folder
-        return folder
 
     @override
     def register_config(self) -> None:
@@ -374,18 +370,43 @@ class CoreConfigSet(ConfigSet):
     def _default_package_root(self, _conf: Config, _env_name: str | None) -> Path:
         return self.get("tox_root", Path)
 
+    def _relative_to_tox_root(self, folder: Path) -> Path:
+        if not folder.is_absolute():
+            folder = self.get("tox_root", Path) / folder
+        return folder
+
+    def _default_work_dir(self, conf: Config, env_name: str | None) -> Path:  # ruff:ignore[unused-method-argument]
+        return self.get("tox_root", Path) / ".tox"
+
+    def _work_dir_post_process(self, folder: Path) -> Path:
+        return self._conf.work_dir if self._conf.options.work_dir else self._relative_to_tox_root(folder)
+
+    def _default_temp_dir(self, conf: Config, env_name: str | None) -> Path:  # ruff:ignore[unused-method-argument]
+        return self.get("work_dir", Path) / ".tmp"
+
     @override
     def _on_duplicate_conf(self, key: str, definition: ConfigDefinition[V]) -> None:
         pass  # core definitions may be defined multiple times as long as all their options match, first defined wins
 
 
 class EnvConfigSet(ConfigSet):
-    """Configuration set for a tox environment."""
+    """Configuration set for a tox environment.
+
+    :param conf:
+    :param section:
+    :param env_name:
+    :ivar default_set_env_loader:
+    :ivar exported_set_env_loader:
+    """
 
     def __init__(self, conf: Config, section: Section, env_name: str) -> None:
         super().__init__(conf, section, env_name)
         self.default_set_env_loader: Callable[[], Mapping[str, str]] = dict
         self.exported_set_env_loader: Callable[[], Mapping[str, Callable[[], str]]] = dict
+
+    @override
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}(name={self._env_name!r}, loaders={self.loaders!r})"
 
     @override
     def register_config(self) -> None:
@@ -444,10 +465,6 @@ class EnvConfigSet(ConfigSet):
             factory=loaded.factory,
         )
         return configured(self._conf, self.loaders, ConfigLoadArgs(chain, self.name, self.env_name)).lines()
-
-    @override
-    def __repr__(self) -> str:
-        return f"{self.__class__.__name__}(name={self._env_name!r}, loaders={self.loaders!r})"
 
 
 __all__ = [

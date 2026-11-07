@@ -5,8 +5,6 @@ import re
 from typing import TYPE_CHECKING, Final, TypeVar, cast
 
 from tox.config.loader.api import ConfigLoadArgs, Loader, Override
-from tox.config.loader.ini.factor import filter_for_env
-from tox.config.loader.ini.replace import ReplaceReferenceIni
 from tox.config.loader.replacer import (
     MatchExpression,
     RequirementLineCallbacks,
@@ -23,6 +21,9 @@ from tox.tox_env.errors import Skip
 from tox.tox_env.python.pip.req.file import protect_env_variables
 from tox.tox_env.python.pip.req_file import PythonConstraints, PythonDeps
 from tox.util.typing_compat import override
+
+from .factor import filter_for_env
+from .replace import ReplaceReferenceIni
 
 if TYPE_CHECKING:
     from configparser import ConfigParser, SectionProxy
@@ -44,7 +45,14 @@ _COMMENTS = re.compile(
 
 
 class IniLoader(StrConvert, Loader[str]):
-    """Load configuration from an ini section (ini file is a string to string dictionary)."""
+    """Load configuration from an ini section (ini file is a string to string dictionary).
+
+    :param section:
+    :param parser:
+    :param overrides:
+    :param core_section:
+    :param section_key:
+    """
 
     def __init__(
         self,
@@ -62,17 +70,19 @@ class IniLoader(StrConvert, Loader[str]):
         super().__init__(section, overrides)
 
     @override
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}(section={self._section.key}, overrides={self.overrides!r})"
+
+    @override
     def load_raw(self, key: str, conf: Config | None, env_name: str | None) -> str:
         return self.process_raw(conf, env_name, self._section_proxy[key])
 
     @staticmethod
     def process_raw(conf: Config | None, env_name: str | None, value: str) -> str:
         # strip comments
-        elements: list[str] = []
-        for line in value.split("\n"):
-            if not line.startswith("#"):
-                part = _COMMENTS.sub("", line)
-                elements.append(part.replace("\\#", "#"))
+        elements: list[str] = [
+            _COMMENTS.sub("", line).replace("\\#", "#") for line in value.split("\n") if not line.startswith("#")
+        ]
         strip_comments = "\n".join(elements).replace("\r", "")
         if conf is None:  # conf is None when we're loading the global tox configuration file for the CLI
             factor_filtered = strip_comments  # we don't support factor and replace functionality there
@@ -154,7 +164,3 @@ class IniLoader(StrConvert, Loader[str]):
         if self._parser.has_section(name):
             return self._parser[name]
         return None
-
-    @override
-    def __repr__(self) -> str:
-        return f"{self.__class__.__name__}(section={self._section.key}, overrides={self.overrides!r})"

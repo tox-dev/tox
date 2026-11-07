@@ -69,14 +69,11 @@ def test_command_variants(args: list[str], expected_prefix: str) -> None:
 
 
 def test_set_env(tmp_path: Path) -> None:
-    raw = "A=1\nB=hello"
-    se = SetEnv(raw, "set_env", "py", tmp_path)
-    result = to_native(se)
+    result = to_native(SetEnv("A=1\nB=hello", "set_env", "py", tmp_path))
     assert result == {"A": "1", "B": "hello"}
 
 
 def test_python_deps(tmp_path: Path) -> None:
     (tmp_path / "tox.ini").touch()
-    deps = PythonDeps("pytest\nflask>=2.0", tmp_path)
-    result = to_native(deps)
+    result = to_native(PythonDeps("pytest\nflask>=2.0", tmp_path))
     assert result == ["pytest", "flask>=2.0"]

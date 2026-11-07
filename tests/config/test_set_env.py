@@ -315,13 +315,11 @@ def test_set_env_file_keeps_semicolon_in_value(tox_project: ToxProjectCreator) -
         file|.env
     """
     env_file = "DATABASE_URL=postgresql://host/db?opt=1;sslmode=require\nFLAGS=a;b\n"
-    project = tox_project({"tox.ini": ini, ".env": env_file})
-    result = project.run("c", "-e", "py", "-k", "set_env")
+    result = tox_project({"tox.ini": ini, ".env": env_file}).run("c", "-e", "py", "-k", "set_env")
     result.assert_success()
     set_env = result.env_conf("py")["set_env"]
     content = {k: set_env.load(k) for k in set_env}
-    assert content["DATABASE_URL"] == "postgresql://host/db?opt=1;sslmode=require"
-    assert content["FLAGS"] == "a;b"
+    assert (content["DATABASE_URL"], content["FLAGS"]) == ("postgresql://host/db?opt=1;sslmode=require", "a;b")
 
 
 def test_set_env_file_does_not_override_later_values(tox_project: ToxProjectCreator) -> None:
@@ -332,13 +330,11 @@ def test_set_env_file_does_not_override_later_values(tox_project: ToxProjectCrea
         file|.env
         FOO=QUX
     """
-    project = tox_project({"tox.ini": ini, ".env": "FOO=BAR\nEXTRA=from_file"})
-    result = project.run("c", "-e", "py", "-k", "set_env")
+    result = tox_project({"tox.ini": ini, ".env": "FOO=BAR\nEXTRA=from_file"}).run("c", "-e", "py", "-k", "set_env")
     result.assert_success()
     set_env = result.env_conf("py")["set_env"]
     content = {k: set_env.load(k) for k in set_env}
-    assert content["FOO"] == "QUX"
-    assert content["EXTRA"] == "from_file"
+    assert (content["FOO"], content["EXTRA"]) == ("QUX", "from_file")
 
 
 def test_set_env_list_keeps_every_file_entry(tox_project: ToxProjectCreator) -> None:
@@ -347,13 +343,11 @@ def test_set_env_list_keeps_every_file_entry(tox_project: ToxProjectCreator) -> 
     skip_install = true
     set_env = [{ file = "a.env" }, { file = "b.env" }]
     """
-    project = tox_project({"tox.toml": toml, "a.env": "A=1", "b.env": "B=2"})
-    result = project.run("c", "-e", "py", "-k", "set_env")
+    result = tox_project({"tox.toml": toml, "a.env": "A=1", "b.env": "B=2"}).run("c", "-e", "py", "-k", "set_env")
     result.assert_success()
     set_env = result.env_conf("py")["set_env"]
     content = {k: set_env.load(k) for k in set_env}
-    assert content["A"] == "1"
-    assert content["B"] == "2"
+    assert (content["A"], content["B"]) == ("1", "2")
 
 
 def test_set_env_list_file_does_not_override_later_values(tox_project: ToxProjectCreator) -> None:
@@ -367,8 +361,7 @@ def test_set_env_list_file_does_not_override_later_values(tox_project: ToxProjec
     result.assert_success()
     set_env = result.env_conf("py")["set_env"]
     content = {k: set_env.load(k) for k in set_env}
-    assert content["FOO"] == "QUX"
-    assert content["EXTRA"] == "from_file"
+    assert (content["FOO"], content["EXTRA"]) == ("QUX", "from_file")
 
 
 def test_set_env_environment_file_missing(tox_project: ToxProjectCreator) -> None:
@@ -507,6 +500,7 @@ def test_set_env_environment_file_utf8_bom(tox_project: ToxProjectCreator) -> No
 def test_set_env_environment_with_file_and_expanded_substitution(
     tox_project: ToxProjectCreator, monkeypatch: MonkeyPatch
 ) -> None:
+    monkeypatch.setenv("env_file", ".env")
     conf = {
         "tox.ini": """
         [tox]
@@ -530,7 +524,6 @@ def test_set_env_environment_with_file_and_expanded_substitution(
         PRECENDENCE_TEST_3=3_file_precedence
         """,
     }
-    monkeypatch.setenv("env_file", ".env")
     project = tox_project(conf)
 
     result = project.run("c", "-k", "set_env", "-e", "check")
@@ -742,8 +735,7 @@ def test_set_env_marker_mixed(eval_set_env: EvalSetEnv) -> None:
     config = (
         f"[testenv]\npackage=skip\nset_env=ALWAYS=1\n CONDITIONAL=2; {marker}\n NEVER=3; sys_platform == 'nonexistent'"
     )
-    set_env = eval_set_env(config)
-    keys = list(set_env)
+    keys = list(eval_set_env(config))
     assert "ALWAYS" in keys
     assert "CONDITIONAL" in keys
     assert "NEVER" not in keys

@@ -9,9 +9,10 @@ from itertools import chain
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, cast
 
-from tox.config.loader.convert import Convert
 from tox.config.types import Command, EnvList
 from tox.util.typing_compat import override
+
+from .convert import Convert
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
@@ -20,7 +21,12 @@ if TYPE_CHECKING:
 
 
 class StrConvert(Convert[str]):
-    """A class converting string values to tox types."""
+    """A class converting string values to tox types.
+
+    :ivar TRUTHFUL_VALUES:
+    :ivar FALSE_VALUES:
+    :cvar VALID_BOOL:
+    """
 
     @staticmethod
     @override
@@ -37,6 +43,11 @@ class StrConvert(Convert[str]):
 
     @staticmethod
     @override
+    def to_set(value: str, of_type: type[Any]) -> Iterator[str]:
+        yield from StrConvert.to_list(value, of_type)
+
+    @staticmethod
+    @override
     def to_list(value: str, of_type: type[Any]) -> Iterator[str]:
         splitter = "\n" if (isclass(of_type) and issubclass(of_type, Command)) or "\n" in value else ","
         splitter = splitter.replace("\r", "")
@@ -44,11 +55,6 @@ class StrConvert(Convert[str]):
             value = token.strip()
             if value:
                 yield value
-
-    @staticmethod
-    @override
-    def to_set(value: str, of_type: type[Any]) -> Iterator[str]:
-        yield from StrConvert.to_list(value, of_type)
 
     @staticmethod
     @override
@@ -93,7 +99,11 @@ class StrConvert(Convert[str]):
 
     @staticmethod
     def protect_windows_path_backslashes(value: str) -> str:
-        """Allow Windows paths while retaining shlex quote and backslash escapes."""
+        """Allow Windows paths while retaining shlex quote and backslash escapes.
+
+        :param value:
+        :returns:
+        """
         defaults: Final[shlex.shlex] = shlex.shlex(posix=True)
         escape: Final[str] = defaults.escape
         special_chars: Final[str] = defaults.quotes
@@ -109,11 +119,10 @@ class StrConvert(Convert[str]):
                     quote = ""
                 path_start = False
             elif char == escape:
-                following = value[index + 1 : index + 2]
-                if following == escape:
+                if (following := value[index + 1 : index + 2]) == escape:
                     after_pair = value[index + 2 : index + 3]
                     # UNC prefixes need two literal backslashes; a bare pair still escapes one.
-                    is_prefix = path_start and bool(after_pair) and after_pair not in escape + special_chars + " \t\r\n"
+                    is_prefix = path_start and bool(after_pair) and after_pair not in f"{escape}{special_chars} \t\r\n"
                     result.append(escape * (4 if is_prefix else 2))
                     index += 1
                 elif following and following in special_chars:
@@ -138,10 +147,9 @@ class StrConvert(Convert[str]):
     @staticmethod
     @override
     def to_env_list(value: str) -> EnvList:
-        from tox.config.loader.ini.factor import extend_factors  # ruff:ignore[import-outside-top-level]
+        from .ini.factor import extend_factors  # ruff:ignore[import-outside-top-level]
 
-        elements = list(chain.from_iterable(extend_factors(expr) for expr in value.split("\n")))
-        return EnvList(elements)
+        return EnvList(list(chain.from_iterable(extend_factors(expr) for expr in value.split("\n"))))
 
     TRUTHFUL_VALUES: Final[set[str]] = {"true", "1", "yes", "on"}
     FALSE_VALUES: Final[set[str]] = {"false", "0", "no", "off", ""}

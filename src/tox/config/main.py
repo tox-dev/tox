@@ -17,20 +17,28 @@ from .source.api import FactorLabelSource
 if TYPE_CHECKING:
     from collections.abc import Iterable, Iterator, Sequence
 
-    from tox.config.loader.api import Loader, OverrideMap
-    from tox.config.types import FactorGroup
-
     from .cli.parser import Parsed
+    from .loader.api import Loader, OverrideMap
     from .loader.memory import MemoryLoader
     from .loader.section import Section
     from .source import Source
+    from .types import FactorGroup
 
 
 T = TypeVar("T", bound=ConfigSet)
 
 
 class Config:
-    """Main configuration object for tox."""
+    """Main configuration object for tox.
+
+    :param config_source:
+    :param options:
+    :param root:
+    :param pos_args:
+    :param work_dir:
+    :param extra_envs:
+    :ivar memory_seed_loaders:
+    """
 
     def __init__(  # ruff:ignore[too-many-arguments]  # <- no way around many args
         self,
@@ -56,6 +64,78 @@ class Config:
         self._env_to_conf_set: dict[str, EnvConfigSet] = {}
         self._core_set: CoreConfigSet | None = None
         self.memory_seed_loaders: defaultdict[str, list[MemoryLoader]] = defaultdict(list)
+
+    @classmethod
+    def make(cls, parsed: Parsed, pos_args: Sequence[str] | None, source: Source, extra_envs: Iterable[str]) -> Config:
+        """Make a tox configuration object.
+
+        :param parsed:
+        :param pos_args:
+        :param source:
+        :param extra_envs:
+        :returns:
+        """
+        # root is the project root, where the configuration file is at
+        # work dir is where we put our own files
+        root: Path = source.path.parent if parsed.root_dir is None else parsed.root_dir
+        work_dir: Path = source.path.parent if parsed.work_dir is None else parsed.work_dir
+        # if these are relative we need to expand them them to ensure paths built on this can resolve independent on cwd
+        root = root.resolve()
+        work_dir = work_dir.resolve()
+        return cls(
+            config_source=source,
+            options=parsed,
+            pos_args=pos_args,
+            root=root,
+            work_dir=work_dir,
+            extra_envs=extra_envs,
+        )
+
+    def __iter__(self) -> Iterator[str]:
+        """:returns: an iterator that goes through existing environments"""
+        # NOTE: `tee(self._extra_envs)[1]` is necessary for compatibility with
+        # NOTE: Python 3.11 and older versions. Once Python 3.12 is the lowest
+        # NOTE: supported version, it can be changed to
+        # NOTE: `chain.from_iterable(tee(self._extra_envs, 1))`.
+        return chain(self._src.envs(self.core), tee(self._extra_envs)[1])
+
+    @property
+    def core(self) -> CoreConfigSet:
+        """:returns: the core configuration"""
+        if self._core_set is not None:
+            return self._core_set
+        core_section = self._src.get_core_section()
+        core = CoreConfigSet(self, core_section, self._root, self.src_path)
+        core.loaders.extend(self._src.get_loaders(core_section, base=[], override_map=self._overrides, conf=core))
+        self._core_set = core
+        return core
+
+    @property
+    def src_path(self) -> Path:
+        """:returns: the location of the tox configuration source"""
+        return self._src.path
+
+    @override
+    def __repr__(self) -> str:
+        return f"{type(self).__name__}(config_source={self._src!r})"
+
+    def __contains__(self, item: str) -> bool:
+        """:returns: check if an environment already exists"""
+        return any(name == item for name in self)
+
+    @property
+    def work_dir(self) -> Path:
+        """:returns: working directory for this project"""
+        return self._work_dir
+
+    @property
+    def options(self) -> Parsed:
+        return self._options
+
+    @property
+    def overrides(self) -> OverrideMap:
+        """:returns: the configuration overrides keyed by their target namespace"""
+        return self._overrides
 
     def pos_args(self, to_path: Path | None, *, program_first: bool = False) -> tuple[str, ...] | None:
         if self._pos_args is not None and to_path is not None and Path.cwd() != to_path:
@@ -105,98 +185,11 @@ class Config:
             return f"{os.curdir}{os.sep}{relative}"
         return relative
 
-    @property
-    def work_dir(self) -> Path:
-        """:returns: working directory for this project"""
-        return self._work_dir
-
-    @property
-    def src_path(self) -> Path:
-        """:returns: the location of the tox configuration source"""
-        return self._src.path
-
-    def __iter__(self) -> Iterator[str]:
-        """:returns: an iterator that goes through existing environments"""
-        # NOTE: `tee(self._extra_envs)[1]` is necessary for compatibility with
-        # NOTE: Python 3.11 and older versions. Once Python 3.12 is the lowest
-        # NOTE: supported version, it can be changed to
-        # NOTE: `chain.from_iterable(tee(self._extra_envs, 1))`.
-        return chain(self._src.envs(self.core), tee(self._extra_envs)[1])
-
     def sections(self) -> Iterator[Section]:
         yield from self._src.sections()
 
-    @override
-    def __repr__(self) -> str:
-        return f"{type(self).__name__}(config_source={self._src!r})"
-
-    def __contains__(self, item: str) -> bool:
-        """:returns: check if an environment already exists"""
-        return any(name == item for name in self)
-
-    @classmethod
-    def make(cls, parsed: Parsed, pos_args: Sequence[str] | None, source: Source, extra_envs: Iterable[str]) -> Config:
-        """Make a tox configuration object."""
-        # root is the project root, where the configuration file is at
-        # work dir is where we put our own files
-        root: Path = source.path.parent if parsed.root_dir is None else parsed.root_dir
-        work_dir: Path = source.path.parent if parsed.work_dir is None else parsed.work_dir
-        # if these are relative we need to expand them them to ensure paths built on this can resolve independent on cwd
-        root = root.resolve()
-        work_dir = work_dir.resolve()
-        return cls(
-            config_source=source,
-            options=parsed,
-            pos_args=pos_args,
-            root=root,
-            work_dir=work_dir,
-            extra_envs=extra_envs,
-        )
-
-    @property
-    def options(self) -> Parsed:
-        return self._options
-
-    @property
-    def overrides(self) -> OverrideMap:
-        """:returns: the configuration overrides keyed by their target namespace"""
-        return self._overrides
-
     def factor_labels(self, env_name: str | None) -> dict[str, FactorGroup]:
         return self._src.factor_labels(env_name) if isinstance(self._src, FactorLabelSource) else {}
-
-    @property
-    def core(self) -> CoreConfigSet:
-        """:returns: the core configuration"""
-        if self._core_set is not None:
-            return self._core_set
-        core_section = self._src.get_core_section()
-        core = CoreConfigSet(self, core_section, self._root, self.src_path)
-        core.loaders.extend(self._src.get_loaders(core_section, base=[], override_map=self._overrides, conf=core))
-        self._core_set = core
-        return core
-
-    def get_section_config(
-        self,
-        section: Section,
-        base: list[str] | None,
-        of_type: type[T],
-        for_env: str | None,
-        loaders: Sequence[Loader[Any]] | None = None,
-    ) -> T:
-        key = section.key, for_env or "", "-".join(base or [])
-        try:
-            return cast("T", self._key_to_conf_set[key])
-        except KeyError:
-            conf_set = of_type(self, section, for_env)
-            self._key_to_conf_set[key] = conf_set
-            if for_env is not None:
-                conf_set.loaders.extend(self.memory_seed_loaders.get(for_env, []))
-            for loader in self._src.get_loaders(section, base, self._overrides, conf_set):
-                conf_set.loaders.append(loader)
-            if loaders is not None:
-                conf_set.loaders.extend(loaders)
-            return conf_set
 
     def get_env(
         self,
@@ -226,6 +219,28 @@ class Config:
         self._env_to_conf_set[item] = result
         return result
 
+    def get_section_config(
+        self,
+        section: Section,
+        base: list[str] | None,
+        of_type: type[T],
+        for_env: str | None,
+        loaders: Sequence[Loader[Any]] | None = None,
+    ) -> T:
+        key = section.key, for_env or "", "-".join(base or [])
+        try:
+            return cast("T", self._key_to_conf_set[key])
+        except KeyError:
+            conf_set = of_type(self, section, for_env)
+            self._key_to_conf_set[key] = conf_set
+            if for_env is not None:
+                conf_set.loaders.extend(self.memory_seed_loaders.get(for_env, []))
+            for loader in self._src.get_loaders(section, base, self._overrides, conf_set):
+                conf_set.loaders.append(loader)
+            if loaders is not None:
+                conf_set.loaders.extend(loaders)
+            return conf_set
+
     def clear_env(self, name: str) -> None:
         section, _, __ = self._src.get_tox_env_section(name)
         self._key_to_conf_set = {
@@ -235,5 +250,10 @@ class Config:
 
 
 ___all__ = [
+    "Config",
+]
+
+
+__all__ = [
     "Config",
 ]

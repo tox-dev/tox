@@ -140,11 +140,11 @@ def test_config_override_appends_to_dict(tox_ini_conf: ToxIniCreator) -> None:
 
 
 def test_config_override_sequence(tox_ini_conf: ToxIniCreator) -> None:
+    overrides = [Override("testenv.passenv=bar"), Override("testenv.passenv+=baz")]
     example = """
     [testenv]
     passenv = foo
     """
-    overrides = [Override("testenv.passenv=bar"), Override("testenv.passenv+=baz")]
     conf = tox_ini_conf(example, override=overrides).get_env("testenv")
     conf.add_config("passenv", of_type=list[str], default=[], desc="desc")
     assert conf["passenv"] == ["bar", "baz"]
@@ -187,12 +187,12 @@ def test_config_override_appends_to_setenv(tox_ini_conf: ToxIniCreator) -> None:
 
 
 def test_config_override_appends_to_setenv_multiple(tox_ini_conf: ToxIniCreator) -> None:
+    overrides = [Override("testenv.setenv+=baz=quux"), Override("testenv.setenv+=less=more")]
     example = """
     [testenv]
     setenv =
       foo = bar
     """
-    overrides = [Override("testenv.setenv+=baz=quux"), Override("testenv.setenv+=less=more")]
     conf = tox_ini_conf(example, override=overrides).get_env("testenv")
     assert conf["setenv"].load("foo") == "bar"
     assert conf["setenv"].load("baz") == "quux"
@@ -200,12 +200,12 @@ def test_config_override_appends_to_setenv_multiple(tox_ini_conf: ToxIniCreator)
 
 
 def test_config_override_sequential_processing(tox_ini_conf: ToxIniCreator) -> None:
+    overrides = [Override("testenv.setenv+=a=b"), Override("testenv.setenv=c=d"), Override("testenv.setenv+=e=f")]
     example = """
     [testenv]
     setenv =
       foo = bar
     """
-    overrides = [Override("testenv.setenv+=a=b"), Override("testenv.setenv=c=d"), Override("testenv.setenv+=e=f")]
     conf = tox_ini_conf(example, override=overrides).get_env("testenv")
     with pytest.raises(KeyError):
         assert conf["setenv"].load("foo") == "bar"
@@ -237,11 +237,11 @@ def test_config_override_appends_to_pythondeps(tox_ini_conf: ToxIniCreator, tmp_
 
 
 def test_config_multiple_overrides(tox_ini_conf: ToxIniCreator, tmp_path: Path) -> None:
+    overrides = [Override("testenv.deps+=bar"), Override("testenv.deps+=baz")]
     example = """
     [testenv]
     deps = foo
     """
-    overrides = [Override("testenv.deps+=bar"), Override("testenv.deps+=baz")]
     conf = tox_ini_conf(example, override=overrides).get_env("testenv")
     conf.add_config(
         "deps",

@@ -23,8 +23,7 @@ def shebang(exe: str) -> list[str] | None:
     # see https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git/tree/fs/binfmt_script.c#n34
     try:
         with Path(exe).open("rb") as file_handler:
-            marker = file_handler.read(2)
-            if marker != b"#!":
+            if file_handler.read(2) != b"#!":
                 return None
             shebang_line = file_handler.readline()
     except OSError:
@@ -60,17 +59,17 @@ def batch_file_command_line(script: str, args: Sequence[str]) -> str:
     return f'cmd.exe /e:ON /v:OFF /d /c "{line}"'
 
 
+def _escape_percent(value: str) -> str:
+    # The empty expansion prevents cmd from pairing the percent signs in a value.
+    return value.replace("%", "%%cd:~,%")
+
+
 def _quote_batch_file_arg(arg: str) -> str:
     # A trailing backslash can escape a quote added by the batch file.
     if re.fullmatch(r"[\w#$*+\-./:?@\\]*[\w#$*+\-./:?@]", arg):
         return arg
     escaped: Final[str] = re.sub(r'(?<!\\)(\\*)("|\Z)', lambda match: match[1] * 2 + match[2] * 2, arg)
     return f'"{_escape_percent(escaped)}"'
-
-
-def _escape_percent(value: str) -> str:
-    # The empty expansion prevents cmd from pairing the percent signs in a value.
-    return value.replace("%", "%%cd:~,%")
 
 
 __all__ = [

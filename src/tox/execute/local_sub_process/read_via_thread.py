@@ -12,9 +12,6 @@ if TYPE_CHECKING:
     from typing import Self
 
 
-WAIT_GENERAL = 0.05
-
-
 class ReadViaThread(ABC):
     def __init__(self, file_no: int, handler: Callable[[bytes], int], name: str, drain: bool) -> None:  # ruff:ignore[boolean-type-hint-positional-argument]
         self.file_no = file_no
@@ -22,6 +19,10 @@ class ReadViaThread(ABC):
         self.thread = Thread(target=self._read_stream, name=f"tox-r-{name}-{file_no}")
         self.handler = handler
         self._on_exit_drain = drain
+
+    @abstractmethod
+    def _read_stream(self) -> None:
+        raise NotImplementedError
 
     def __enter__(self) -> Self:
         self.thread.start()
@@ -34,15 +35,17 @@ class ReadViaThread(ABC):
         exc_tb: TracebackType | None,
     ) -> None:
         self.stop.set()
+        wait_general: float = 0.05
         while self.thread.is_alive():
-            self.thread.join(WAIT_GENERAL)
+            self.thread.join(wait_general)
         if self._on_exit_drain:
             self._drain_stream()
 
     @abstractmethod
-    def _read_stream(self) -> None:
-        raise NotImplementedError
-
-    @abstractmethod
     def _drain_stream(self) -> None:
         raise NotImplementedError
+
+
+__all__ = [
+    "ReadViaThread",
+]

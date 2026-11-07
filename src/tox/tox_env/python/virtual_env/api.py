@@ -23,8 +23,9 @@ from tox.report import HandledError
 from tox.tox_env.errors import Skip
 from tox.tox_env.python.api import Python, PythonInfo, VersionInfo
 from tox.tox_env.python.pip.pip_install import Pip
-from tox.tox_env.python.virtual_env.subprocess_adapter import SubprocessCreator, SubprocessPythonInfo, SubprocessSession
 from tox.util.typing_compat import override
+
+from .subprocess_adapter import SubprocessCreator, SubprocessPythonInfo, SubprocessSession
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -43,7 +44,10 @@ if TYPE_CHECKING:
 
 
 class VirtualEnv(Python, ABC):
-    """A python executor that uses the virtualenv project with pip."""
+    """A python executor that uses the virtualenv project with pip.
+
+    :param create_args:
+    """
 
     def __init__(self, create_args: ToxEnvCreateArgs) -> None:
         self._virtualenv_session: Session | SubprocessSession | None = None
@@ -51,6 +55,25 @@ class VirtualEnv(Python, ABC):
         self._executor: Execute | None = None
         self._installer: Pip | None = None
         super().__init__(create_args)
+
+    @property
+    @override
+    def executor(self) -> Execute:
+        if self._executor is None:
+            self._executor = LocalSubProcessExecutor(self.options.is_colored)
+        return self._executor
+
+    @property
+    @override
+    def installer(self) -> Pip:
+        if self._installer is None:
+            self._installer = Pip(self)
+        return self._installer
+
+    @property
+    @override
+    def runs_on_platform(self) -> str:
+        return sys.platform
 
     @override
     def register_config(self) -> None:
@@ -95,20 +118,6 @@ class VirtualEnv(Python, ABC):
     def _default_virtualenv_spec(self, conf: Config, name: str | None) -> str:  # ruff:ignore[unused-method-argument]
         return _auto_virtualenv_spec(self.conf["base_python"], virtualenv_version)
 
-    @property
-    @override
-    def executor(self) -> Execute:
-        if self._executor is None:
-            self._executor = LocalSubProcessExecutor(self.options.is_colored)
-        return self._executor
-
-    @property
-    @override
-    def installer(self) -> Pip:
-        if self._installer is None:
-            self._installer = Pip(self)
-        return self._installer
-
     @override
     def python_cache(self) -> dict[str, JsonValue]:
         base = super().python_cache()
@@ -146,6 +155,10 @@ class VirtualEnv(Python, ABC):
             "PIP_USER": lambda: "0",
         }
 
+    @override
+    def create_python_env(self) -> None:
+        self.session.run()
+
     @property
     def session(self) -> Session | SubprocessSession:
         if self._virtualenv_session_error is not None:
@@ -163,6 +176,21 @@ class VirtualEnv(Python, ABC):
                     self._virtualenv_session_error = exc
                     raise
         return self._virtualenv_session
+
+    def virtualenv_env_vars(self) -> dict[str, str]:
+        env = self.environment_variables.copy()
+        if "VIRTUALENV_NO_PERIODIC_UPDATE" not in env:
+            env["VIRTUALENV_NO_PERIODIC_UPDATE"] = "True"
+        env["VIRTUALENV_CLEAR"] = "False"
+        env["VIRTUALENV_SYSTEM_SITE_PACKAGES"] = str(self.conf["system_site_packages"])
+        env["VIRTUALENV_COPIES"] = str(self.conf["always_copy"])
+        env["VIRTUALENV_DOWNLOAD"] = str(self.conf["download"])
+        env["VIRTUALENV_NO_VENV_REDIRECT"] = "True"  # tox manages the PEP 832 .venv redirect itself
+        # Override virtualenv.ini's Python default; 21.15.1 tries <0 last, and 21.15.2 drops it for CLI specs.
+        env["VIRTUALENV_PYTHON"] = "<0"
+        if hasattr(self.options, "discover"):
+            env["VIRTUALENV_TRY_FIRST_WITH"] = os.pathsep.join(self.options.discover)
+        return env
 
     def _create_subprocess_session(self, spec: str, env: dict[str, str]) -> SubprocessSession:
         from .subprocess_adapter import ensure_bootstrap, probe_python  # ruff:ignore[import-outside-top-level]
@@ -190,29 +218,6 @@ class VirtualEnv(Python, ABC):
             msg = f"virtualenv session creation failed for {self.env_dir}"
             raise RuntimeError(msg) from exc
 
-    def virtualenv_env_vars(self) -> dict[str, str]:
-        env = self.environment_variables.copy()
-        if "VIRTUALENV_NO_PERIODIC_UPDATE" not in env:
-            env["VIRTUALENV_NO_PERIODIC_UPDATE"] = "True"
-        env["VIRTUALENV_CLEAR"] = "False"
-        env["VIRTUALENV_SYSTEM_SITE_PACKAGES"] = str(self.conf["system_site_packages"])
-        env["VIRTUALENV_COPIES"] = str(self.conf["always_copy"])
-        env["VIRTUALENV_DOWNLOAD"] = str(self.conf["download"])
-        env["VIRTUALENV_NO_VENV_REDIRECT"] = "True"  # tox manages the PEP 832 .venv redirect itself
-        # Override virtualenv.ini's Python default; 21.15.1 tries <0 last, and 21.15.2 drops it for CLI specs.
-        env["VIRTUALENV_PYTHON"] = "<0"
-        if hasattr(self.options, "discover"):
-            env["VIRTUALENV_TRY_FIRST_WITH"] = os.pathsep.join(self.options.discover)
-        return env
-
-    @property
-    def creator(self) -> Creator | SubprocessCreator:
-        return self.session.creator
-
-    @override
-    def create_python_env(self) -> None:
-        self.session.run()
-
     @override
     def _get_python(self, base_python: list[str]) -> PythonInfo | None:
         # the base pythons are passed to virtualenv when the session is created, so we don't need to use it here
@@ -238,6 +243,10 @@ class VirtualEnv(Python, ABC):
             marker_environment=interpreter.marker_environment,
         )
 
+    @property
+    def creator(self) -> Creator | SubprocessCreator:
+        return self.session.creator
+
     @override
     def prepend_env_var_path(self) -> list[Path]:
         """Paths to add to the executable."""
@@ -247,9 +256,20 @@ class VirtualEnv(Python, ABC):
         described = cast("Describe", creator)
         return list(dict.fromkeys((described.bin_dir, described.script_dir)))
 
+    def _creator_with_skip(self) -> Creator | SubprocessCreator:
+        try:
+            return self.creator
+        except RuntimeError as exc:
+            raise Skip(str(exc)) from exc
+
     @override
     def env_site_package_dir(self) -> Path:
         return self._describe_path("purelib")
+
+    def _describe_path(self, attr: str) -> Path:
+        creator = self._creator_with_skip()
+        source = creator if isinstance(creator, SubprocessCreator) else cast("Describe", creator)
+        return cast("Path", getattr(source, attr))
 
     @override
     def env_site_package_dir_plat(self) -> Path:
@@ -262,22 +282,6 @@ class VirtualEnv(Python, ABC):
     @override
     def env_bin_dir(self) -> Path:
         return self._describe_path("script_dir")
-
-    def _describe_path(self, attr: str) -> Path:
-        creator = self._creator_with_skip()
-        source = creator if isinstance(creator, SubprocessCreator) else cast("Describe", creator)
-        return cast("Path", getattr(source, attr))
-
-    def _creator_with_skip(self) -> Creator | SubprocessCreator:
-        try:
-            return self.creator
-        except RuntimeError as exc:
-            raise Skip(str(exc)) from exc
-
-    @property
-    @override
-    def runs_on_platform(self) -> str:
-        return sys.platform
 
     @classmethod
     @override
@@ -305,6 +309,7 @@ class VirtualEnv(Python, ABC):
         :param path: the path investigated
 
         :returns: the found information (cached)
+        :raises RuntimeError:
 
         """
         from virtualenv.discovery import cached_py_info  # ruff:ignore[import-outside-top-level]
@@ -319,19 +324,13 @@ class VirtualEnv(Python, ABC):
         return result
 
 
-def _shared_app_data() -> PyInfoCache:
-    """Interpreter metadata cache, shared so tox discovery reuses what virtualenv already probed (and vice versa)."""
-    return app_data.make_app_data(None, read_only=False, env=os.environ)
-
-
 def _auto_virtualenv_spec(base_pythons: list[str], installed: str) -> str:
-    """Pin an older virtualenv when the installed one cannot create the targeted Python.
-
-    Returns an empty string unless *every* candidate in ``base_pythons`` targets a Python the installed virtualenv can
-    no longer create an environment for -- only then is a downgrade guaranteed to be required, since tox picks the first
-    candidate that resolves on the host and any supported candidate offers a path to success without bootstrapping.
-
-    """
+    # Pin an older virtualenv when the installed one cannot create the targeted Python.
+    #
+    # Returns an empty string unless *every* candidate in ``base_pythons`` targets a Python the installed virtualenv can
+    # no longer create an environment for -- only then is a downgrade guaranteed to be required, since tox picks the
+    # first candidate that resolves on the host and any supported candidate offers a path to success without
+    # bootstrapping.
     installed_version = Version(installed)
     floors: list[Version] = []
     for base_python in base_pythons:
@@ -348,25 +347,28 @@ def _auto_virtualenv_spec(base_pythons: list[str], installed: str) -> str:
     return f"virtualenv<{min(floors)}"
 
 
-@dataclass(frozen=True, kw_only=True, order=True)
-class _PyVersion:
-    """A ``(major, minor)`` Python version, ordered oldest-to-newest."""
+def _shared_app_data() -> PyInfoCache:
+    # Interpreter metadata cache, shared so tox discovery reuses what virtualenv already probed (and vice versa).
+    return app_data.make_app_data(None, read_only=False, env=os.environ)
 
+
+@dataclass(frozen=True, kw_only=True, order=True, slots=True)
+class _PyVersion:
+    # A ``(major, minor)`` Python version, ordered oldest-to-newest.
     major: int
     minor: int
 
 
-@dataclass(frozen=True, kw_only=True)
+@dataclass(frozen=True, kw_only=True, slots=True)
 class _VirtualenvDrop:
-    """A virtualenv release that dropped the ability to create environments for older Python versions."""
-
+    # A virtualenv release that dropped the ability to create environments for older Python versions.
     newest_unsupported: _PyVersion
     dropped_in: Version
 
 
 # virtualenv releases that dropped the ability to *create* environments for a target Python, with the newest
 # (major, minor) each stopped supporting -- https://virtualenv.pypa.io/en/latest/reference/compatibility.html
-_VIRTUALENV_DROPS: tuple[_VirtualenvDrop, ...] = (
+_VIRTUALENV_DROPS: Final[tuple[_VirtualenvDrop, ...]] = (
     _VirtualenvDrop(newest_unsupported=_PyVersion(major=3, minor=8), dropped_in=Version("21.5.0")),
     _VirtualenvDrop(newest_unsupported=_PyVersion(major=3, minor=6), dropped_in=Version("20.22.0")),
 )

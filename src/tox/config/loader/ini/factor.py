@@ -14,13 +14,40 @@ if TYPE_CHECKING:
     from collections.abc import Iterator
 
 LATEST_PYTHON_MINOR_MIN: Final[int] = 11
-LATEST_PYTHON_MINOR_MAX: int = 15
+LATEST_PYTHON_MINOR_MAX: Final[int] = 15
+
+
+def filter_for_env(value: str, name: str | None) -> str:
+    current = active_factors(name)
+    overall: list[str] = []
+    active_continuation = False
+    pending_skip = False
+    for factors, content in _expand_factors(value):
+        if factors is None:
+            if pending_skip and not active_continuation and not content.endswith("\\"):
+                pending_skip = False
+                continue
+            if content:
+                overall.append(content)
+            active_continuation = content.endswith("\\") if content else active_continuation
+            pending_skip = False
+        elif any(all((a_name in current) ^ negate for a_name, negate in group) for group in factors):
+            overall.append(content)
+            active_continuation = content.endswith("\\")
+            pending_skip = False
+        else:
+            pending_skip = content.endswith("\\")
+    return "\n".join(overall)
 
 
 def active_factors(env_name: str | None) -> set[str]:
-    """Factors that hold for an environment: those in its name, the platform and the machine ISA."""
+    """Factors that hold for an environment: those in its name, the platform and the machine ISA.
+
+    :param env_name:
+    :returns:
+    """
     env_factors = (
-        set(chain.from_iterable([(i for i, _ in a) for a in find_factor_groups(env_name)]))
+        set(chain.from_iterable([(i for i, _ in a) for a in _find_factor_groups(env_name)]))
         if env_name is not None
         else set()
     )
@@ -37,135 +64,11 @@ def active_factors(env_name: str | None) -> set[str]:
     return current
 
 
-def filter_for_env(value: str, name: str | None) -> str:
-    current = active_factors(name)
-    overall: list[str] = []
-    active_continuation = False
-    pending_skip = False
-    for factors, content in expand_factors(value):
-        if factors is None:
-            if pending_skip and not active_continuation and not content.endswith("\\"):
-                pending_skip = False
-                continue
-            if content:
-                overall.append(content)
-            active_continuation = content.endswith("\\") if content else active_continuation
-            pending_skip = False
-        else:
-            matched = any(all((a_name in current) ^ negate for a_name, negate in group) for group in factors)
-            if matched:
-                overall.append(content)
-                active_continuation = content.endswith("\\")
-                pending_skip = False
-            else:
-                pending_skip = content.endswith("\\")
-    return "\n".join(overall)
-
-
-def find_envs(value: str) -> Iterator[str]:
-    seen = set()
-    for factors, _ in expand_factors(value):
-        if factors is not None:
-            for group in factors:
-                env = explode_factor(group)
-                if env not in seen:
-                    yield env
-                    seen.add(env)
-
-
-def extend_factors(value: str) -> Iterator[str]:
-    for group in find_factor_groups(value):
-        yield explode_factor(group)
-
-
-def explode_factor(group: list[tuple[str, bool]]) -> str:
-    return "-".join([name for name, _ in group])
-
-
-def expand_factors(value: str) -> Iterator[tuple[list[list[tuple[str, bool]]] | None, str]]:
-    for line in value.split("\n"):
-        factors: list[list[tuple[str, bool]]] | None = None
-        marker_search = re.search(
-            r"""
-            :           # colon separator
-            ( \s | $ )  # followed by whitespace or end of string
-            """,
-            line,
-            re.VERBOSE,
-        )
-        marker_at, content = marker_search.start() if marker_search else -1, line
-        if marker_at != -1:
-            try:
-                factors = list(find_factor_groups(line[:marker_at].strip()))
-            except ValueError:
-                pass  # when cannot extract factors keep the entire line
-            else:
-                content = line[marker_at + 1 :].strip()
-        yield factors, content
-
-
-def find_factor_groups(value: str) -> Iterator[list[tuple[str, bool]]]:
-    """Transform '{py,!pi}-{a,b},c' to [{'py', 'a'}, {'py', 'b'}, {'pi', 'a'}, {'pi', 'b'}, {'c'}]."""
+def _find_factor_groups(value: str) -> Iterator[list[tuple[str, bool]]]:
+    # Transform '{py,!pi}-{a,b},c' to [{'py', 'a'}, {'py', 'b'}, {'pi', 'a'}, {'pi', 'b'}, {'c'}].
     value = expand_ranges(value)
-    for env in expand_env_with_negation(value):
-        yield [name_with_negate(f) for f in env.split("-")]
-
-
-_FACTOR_RE: Final[re.Pattern[str]] = re.compile(
-    r"""
-    (?:
-        !?              # optional negation prefix
-        (?: \[!? | [\w.*?\]] )    # first char: word char, dot, or fnmatch glob (*, ?, [seq], [!seq])
-        (?: \[!? | [\w.*?\]-] )*  # remaining chars: the same, or hyphens
-    |
-        ^$              # or an empty string
-    )
-    """,
-    re.VERBOSE,
-)
-
-
-def expand_env_with_negation(value: str) -> Iterator[str]:
-    """Transform '{py,!pi}-{a,b},c' to ['py-a', 'py-b', '!pi-a', '!pi-b', 'c']."""
-    for key, group in groupby(
-        re.split(
-            r"""
-            ( (?: \{ [^}]+ \} )+ )  # one or more brace groups
-            |                        # or
-            ,                        # comma separator
-            """,
-            value,
-            flags=re.VERBOSE,
-        ),
-        key=bool,
-    ):
-        if key:
-            group_str = "".join(group).strip()
-            elements = re.split(
-                r"""
-                \{          # opening brace
-                ( [^}]+ )   # capture contents
-                \}          # closing brace
-                """,
-                group_str,
-                flags=re.VERBOSE,
-            )
-            parts = [[i.strip() for i in elem.split(",")] for elem in elements]
-            for variant in product(*parts):
-                variant_str = "".join(variant)
-                if not all(_FACTOR_RE.fullmatch(i) for i in variant_str.split("-")):
-                    raise ValueError(variant_str)
-                yield variant_str
-
-
-def name_with_negate(factor: str) -> tuple[str, bool]:
-    negated = is_negated(factor)
-    result = factor[1:] if negated else factor
-    return result, negated
-
-
-def is_negated(factor: str) -> bool:
-    return factor.startswith("!")
+    for env in _expand_env_with_negation(value):
+        yield [_name_with_negate(f) for f in env.split("-")]
 
 
 def expand_ranges(value: str) -> str:
@@ -174,6 +77,8 @@ def expand_ranges(value: str) -> str:
     Supports closed ranges ``{10-13}``, right-open ``{10-}`` (upper bound = :data:`LATEST_PYTHON_MINOR_MAX`), and
     left-open ``{-13}`` (lower bound = :data:`LATEST_PYTHON_MINOR_MIN`).
 
+    :param value:
+    :returns:
     """
 
     def _expand(match: re.Match[str]) -> str:
@@ -220,14 +125,109 @@ def open_minor_range(start: int | None = None, stop: int | None = None) -> list[
     return list(range(first, last + 1)) or [last if start is None else first]
 
 
-__all__ = (
+def _expand_env_with_negation(value: str) -> Iterator[str]:
+    # Transform '{py,!pi}-{a,b},c' to ['py-a', 'py-b', '!pi-a', '!pi-b', 'c'].
+    for key, group in groupby(
+        re.split(
+            r"""
+            ( (?: \{ [^}]+ \} )+ )  # one or more brace groups
+            |                        # or
+            ,                        # comma separator
+            """,
+            value,
+            flags=re.VERBOSE,
+        ),
+        key=bool,
+    ):
+        if key:
+            group_str = "".join(group).strip()
+            elements = re.split(
+                r"""
+                \{          # opening brace
+                ( [^}]+ )   # capture contents
+                \}          # closing brace
+                """,
+                group_str,
+                flags=re.VERBOSE,
+            )
+            for variant in product(*[[i.strip() for i in elem.split(",")] for elem in elements]):
+                variant_str = "".join(variant)
+                if not all(_FACTOR_RE.fullmatch(i) for i in variant_str.split("-")):
+                    raise ValueError(variant_str)
+                yield variant_str
+
+
+def _name_with_negate(factor: str) -> tuple[str, bool]:
+    negated = _is_negated(factor)
+    return (factor[1:] if negated else factor), negated
+
+
+def _is_negated(factor: str) -> bool:
+    return factor.startswith("!")
+
+
+def _expand_factors(value: str) -> Iterator[tuple[list[list[tuple[str, bool]]] | None, str]]:
+    for line in value.split("\n"):
+        factors: list[list[tuple[str, bool]]] | None = None
+        marker_search = re.search(
+            r"""
+            :           # colon separator
+            ( \s | $ )  # followed by whitespace or end of string
+            """,
+            line,
+            re.VERBOSE,
+        )
+        marker_at, content = marker_search.start() if marker_search else -1, line
+        if marker_at != -1:
+            try:
+                factors = list(_find_factor_groups(line[:marker_at].strip()))
+            except ValueError:
+                pass  # when cannot extract factors keep the entire line
+            else:
+                content = line[marker_at + 1 :].strip()
+        yield factors, content
+
+
+def find_envs(value: str) -> Iterator[str]:
+    seen = set()
+    for factors, _ in _expand_factors(value):
+        if factors is not None:
+            for group in factors:
+                if (env := _explode_factor(group)) not in seen:
+                    yield env
+                    seen.add(env)
+
+
+def _explode_factor(group: list[tuple[str, bool]]) -> str:
+    return "-".join([name for name, _ in group])
+
+
+def extend_factors(value: str) -> Iterator[str]:
+    for group in _find_factor_groups(value):
+        yield _explode_factor(group)
+
+
+_FACTOR_RE: Final[re.Pattern[str]] = re.compile(
+    r"""
+    (?:
+        !?              # optional negation prefix
+        (?: \[!? | [\w.*?\]] )    # first char: word char, dot, or fnmatch glob (*, ?, [seq], [!seq])
+        (?: \[!? | [\w.*?\]-] )*  # remaining chars: the same, or hyphens
+    |
+        ^$              # or an empty string
+    )
+    """,
+    re.VERBOSE,
+)
+
+
+__all__ = [
     "LATEST_PYTHON_MINOR_MAX",
     "LATEST_PYTHON_MINOR_MIN",
     "active_factors",
-    "expand_factors",
     "expand_ranges",
     "extend_factors",
     "filter_for_env",
     "find_envs",
     "open_minor_range",
-)
+]

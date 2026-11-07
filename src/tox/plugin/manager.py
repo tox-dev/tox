@@ -38,6 +38,42 @@ class Plugin:
         self.manager.add_hookspecs(spec)
         self.inline_module: ModuleType | None = None
 
+    def tox_extend_envs(self) -> list[Iterable[str]]:
+        additional_env_names_hook_value = self.manager.hook.tox_extend_envs()
+        # NOTE: S101 is suppressed below to allow for type narrowing in MyPy
+        assert isinstance(additional_env_names_hook_value, list)  # ruff:ignore[assert]
+        return additional_env_names_hook_value
+
+    def tox_add_option(self, parser: ToxParser) -> None:
+        self.manager.hook.tox_add_option(parser=parser)
+
+    def tox_add_core_config(self, core_conf: ConfigSet, state: State) -> None:
+        self.manager.hook.tox_add_core_config(core_conf=core_conf, state=state)
+
+    def tox_add_env_config(self, env_conf: EnvConfigSet, state: State) -> None:
+        self.manager.hook.tox_add_env_config(env_conf=env_conf, state=state)
+
+    def tox_register_tox_env(self, register: ToxEnvRegister) -> None:
+        self.manager.hook.tox_register_tox_env(register=register)
+
+    def tox_before_run_commands(self, tox_env: ToxEnv) -> None:
+        self.manager.hook.tox_before_run_commands(tox_env=tox_env)
+
+    def tox_after_run_commands(self, tox_env: ToxEnv, exit_code: int, outcomes: list[Outcome]) -> None:
+        self.manager.hook.tox_after_run_commands(tox_env=tox_env, exit_code=exit_code, outcomes=outcomes)
+
+    def tox_on_install(self, tox_env: ToxEnv, arguments: InstallArguments, section: str, of_type: str) -> None:
+        self.manager.hook.tox_on_install(tox_env=tox_env, arguments=arguments, section=section, of_type=of_type)
+
+    def tox_env_teardown(self, tox_env: ToxEnv) -> None:
+        self.manager.hook.tox_env_teardown(tox_env=tox_env)
+
+    def load_plugins(self, path: Path | None) -> None:
+        for plugin in self.manager.get_plugins():  # make sure we start with a clean state, repeated in memory run
+            self.manager.unregister(plugin)
+        self._register_plugins(None if path is None else _load_inline(path))
+        REGISTER._register_tox_env_types(self)  # ruff:ignore[private-member-access]
+
     def _register_plugins(self, inline: ModuleType | None) -> None:
         from tox.session import state  # ruff:ignore[import-outside-top-level]
         from tox.session.cmd import (  # ruff:ignore[import-outside-top-level]
@@ -96,43 +132,6 @@ class Plugin:
             self.manager.set_blocked(name)
         self.manager.load_setuptools_entrypoints(NAME)
 
-    def tox_extend_envs(self) -> list[Iterable[str]]:
-        additional_env_names_hook_value = self.manager.hook.tox_extend_envs()
-        # NOTE: S101 is suppressed below to allow for type narrowing in MyPy
-        assert isinstance(additional_env_names_hook_value, list)  # ruff:ignore[assert]
-        return additional_env_names_hook_value
-
-    def tox_add_option(self, parser: ToxParser) -> None:
-        self.manager.hook.tox_add_option(parser=parser)
-
-    def tox_add_core_config(self, core_conf: ConfigSet, state: State) -> None:
-        self.manager.hook.tox_add_core_config(core_conf=core_conf, state=state)
-
-    def tox_add_env_config(self, env_conf: EnvConfigSet, state: State) -> None:
-        self.manager.hook.tox_add_env_config(env_conf=env_conf, state=state)
-
-    def tox_register_tox_env(self, register: ToxEnvRegister) -> None:
-        self.manager.hook.tox_register_tox_env(register=register)
-
-    def tox_before_run_commands(self, tox_env: ToxEnv) -> None:
-        self.manager.hook.tox_before_run_commands(tox_env=tox_env)
-
-    def tox_after_run_commands(self, tox_env: ToxEnv, exit_code: int, outcomes: list[Outcome]) -> None:
-        self.manager.hook.tox_after_run_commands(tox_env=tox_env, exit_code=exit_code, outcomes=outcomes)
-
-    def tox_on_install(self, tox_env: ToxEnv, arguments: InstallArguments, section: str, of_type: str) -> None:
-        self.manager.hook.tox_on_install(tox_env=tox_env, arguments=arguments, section=section, of_type=of_type)
-
-    def tox_env_teardown(self, tox_env: ToxEnv) -> None:
-        self.manager.hook.tox_env_teardown(tox_env=tox_env)
-
-    def load_plugins(self, path: Path | None) -> None:
-        for plugin in self.manager.get_plugins():  # make sure we start with a clean state, repeated in memory run
-            self.manager.unregister(plugin)
-        inline = None if path is None else _load_inline(path)
-        self._register_plugins(inline)
-        REGISTER._register_tox_env_types(self)  # ruff:ignore[private-member-access]
-
 
 def _load_inline(path: Path) -> ModuleType | None:  # used to be able to unregister plugin tests
     return load_inline(path)
@@ -140,7 +139,7 @@ def _load_inline(path: Path) -> ModuleType | None:  # used to be able to unregis
 
 MANAGER = Plugin()
 
-__all__ = (
+__all__ = [
     "MANAGER",
     "Plugin",
-)
+]

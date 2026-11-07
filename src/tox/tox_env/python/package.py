@@ -25,8 +25,7 @@ if TYPE_CHECKING:
     from .pip.req_file import PythonDeps
 
 
-class PythonPackage(Package):
-    """python package."""
+class PythonPackage(Package): ...
 
 
 class PythonPathPackageWithDeps(PathPackage):
@@ -40,7 +39,12 @@ class WheelPackage(PythonPathPackageWithDeps):
 
 
 class SdistPackage(PythonPathPackageWithDeps):
-    """sdist package."""
+    """sdist package.
+
+    :param path:
+    :param deps:
+    :param config_settings:
+    """
 
     def __init__(self, path: Path, deps: Sequence[Requirement], config_settings: dict[str, str] | None = None) -> None:
         super().__init__(path=path, deps=deps)
@@ -113,8 +117,7 @@ class PythonPackageToxEnv(Python, PackageToxEnv, ABC):
                 run_py = None
 
             if run_py is None:
-                base = ",".join(run_env.conf["base_python"])
-                msg = f"could not resolve base python with {base}"
+                msg = f"could not resolve base python with {','.join(run_env.conf['base_python'])}"
                 raise Skip(msg)
 
             default_pkg_py = self.base_python
@@ -148,8 +151,7 @@ class PythonPackageToxEnv(Python, PackageToxEnv, ABC):
             except Skip:
                 # the __getitem__ method might raise Skip if the interpreter is not available
                 return
-            env = self._wheel_build_envs.get(conf)
-            if env is not None and env.name != self.name:
+            if (env := self._wheel_build_envs.get(conf)) is not None and env.name != self.name:
                 yield env
 
     @override
@@ -159,3 +161,13 @@ class PythonPackageToxEnv(Python, PackageToxEnv, ABC):
                 with env.display_context(self._has_display_suspended):
                     env.teardown()
         super()._teardown()
+
+
+__all__ = [
+    "EditableLegacyPackage",
+    "EditablePackage",
+    "PythonPackageToxEnv",
+    "PythonPathPackageWithDeps",
+    "SdistPackage",
+    "WheelPackage",
+]

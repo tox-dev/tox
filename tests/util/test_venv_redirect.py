@@ -27,6 +27,10 @@ def test_record_creates_redirect(root: Path) -> None:
     assert (root / ".venv").read_text(encoding="utf-8") == ".tox/dev\n"
 
 
+def _is_ours(root: Path) -> Callable[[Path], bool]:
+    return lambda path: path.is_relative_to(root / ".tox")
+
+
 @pytest.mark.skipif(sys.platform != "win32", reason="Windows directory handles")
 def test_record_windows_empty_root(tmp_path: Path) -> None:
     root: Final[Path] = tmp_path / "project"
@@ -52,10 +56,6 @@ def test_record_creates_private_redirect(root: Path) -> None:
 def root(tmp_path: Path) -> Path:
     (tmp_path / ".tox").mkdir()
     return tmp_path
-
-
-def _is_ours(root: Path) -> Callable[[Path], bool]:
-    return lambda path: path.is_relative_to(root / ".tox")
 
 
 def test_record_env_outside_root_is_absolute(root: Path, tmp_path_factory: pytest.TempPathFactory) -> None:
@@ -484,16 +484,6 @@ def test_record_rejects_in_place_junction(junction_directory: Path, mocker: Mock
     assert (target / ".venv").read_text(encoding="utf-8") == "keep\n"
 
 
-@pytest.fixture
-def junction_directory(tmp_path: Path) -> Path:
-    directory: Final[Path] = tmp_path / "project"
-    directory.mkdir()
-    target: Final[Path] = directory.with_name("other")
-    target.mkdir()
-    (target / ".venv").write_text("keep\n", encoding="utf-8")
-    return directory
-
-
 def _set_windows_junction(directory: Path, target: Path) -> bool:
     substitute: Final[bytes] = f"\\??\\{target}".encode("utf-16-le")
     display: Final[bytes] = str(target).encode("utf-16-le")
@@ -540,6 +530,16 @@ def _set_windows_junction(directory: Path, target: Path) -> bool:
         )
     finally:
         assert kernel32.CloseHandle(writer)
+
+
+@pytest.fixture
+def junction_directory(tmp_path: Path) -> Path:
+    directory: Final[Path] = tmp_path / "project"
+    directory.mkdir()
+    target: Final[Path] = directory.with_name("other")
+    target.mkdir()
+    (target / ".venv").write_text("keep\n", encoding="utf-8")
+    return directory
 
 
 @pytest.mark.skipif(sys.platform != "win32", reason="Windows reparse points")

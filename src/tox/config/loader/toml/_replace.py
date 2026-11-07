@@ -39,11 +39,11 @@ if TYPE_CHECKING:
 
     from tox.config.loader.api import ConfigLoadArgs
     from tox.config.loader.replacer import MatchArg
-    from tox.config.loader.toml import TomlLoader
     from tox.config.main import Config
     from tox.config.sets import ConfigSet
     from tox.config.source.toml_pyproject import TomlSection
 
+    from . import TomlLoader
     from ._api import TomlTypes
 
 
@@ -71,7 +71,7 @@ class Unroll:
         self.factors = active_factors(args.env_name)
 
     def __call__(self, value: TomlTypes, depth: int = 0, *, skip_str: bool = False) -> TomlTypes:
-        """Replace all active tokens within value according to the config."""
+        # Replace all active tokens within value according to the config.
         depth += 1
         MatchRecursionError.check(depth, value)
         if isinstance(value, SetEnvReference):
@@ -112,8 +112,7 @@ class Unroll:
             finally:
                 self._program_depth = program_depth
             if isinstance(got, SetEnvReference):
-                extending = isinstance(val, dict) and bool(val.get("extend"))
-                if got.shape != ("array" if extending else "table"):
+                if got.shape != ("array" if (isinstance(val, dict) and bool(val.get("extend"))) else "table"):
                     msg = "set_env arrays require table references or array references with extend=true"
                     raise TypeError(msg)
                 res_list.append(got)
@@ -270,7 +269,7 @@ def _replace_glob_toml(conf: Config | None, value: dict[str, Any]) -> list[TomlT
 
 
 def _replace_if_toml(
-    value: dict[str, Any], unroll: Unroll, depth: int, factors: set[str], *, skip_str: bool = False
+    value: dict[str, Any], unroll: Unroll, depth: int, factors: set[str], *, skip_str: bool
 ) -> TomlTypes:
     condition = value.get("condition")
     if not condition or not isinstance(condition, str):
@@ -284,7 +283,7 @@ def _replace_if_toml(
 
 
 def _evaluate_condition(expr: str, factors: set[str], env_name: str | None) -> bool:
-    """Evaluate a condition expression supporting env.VAR, factor.NAME lookups, comparisons, and boolean logic."""
+    # Evaluate a condition expression supporting env.VAR, factor.NAME lookups, comparisons, and boolean logic.
     try:
         tree = ast.parse(expr, mode="eval")
     except SyntaxError:
@@ -384,23 +383,11 @@ class TomlReplaceLoader(ReplaceReference):
                 exception = exc
             if exception is not None:
                 if isinstance(exception, KeyError):  # if the lookup failed replace - else keep
-                    default = settings["default"]
-                    if default is not None:
+                    if (default := settings["default"]) is not None:
                         return value.fragment(*match.span("default")) if isinstance(value, HostText) else default
                     return None  # keep original text, consistent with ini loader behavior
                 raise exception
         return None  # not a reference, such as the {} of a format string
-
-    @staticmethod
-    def _load_reference_value(src: ConfigSet | RawLoader, key: str, conf_args: ConfigLoadArgs) -> str:
-        if isinstance(src, RawLoader):
-            return RawText(stringify(src.load(key, conf_args.chain))[0])
-        return stringify_reference(
-            src.set_env_lines(conf_args.chain)
-            if isinstance(src, EnvConfigSet) and key in {"set_env", "setenv"}
-            else src.load(key, conf_args.chain),
-            constant=src.is_constant(key),
-        )
 
     def _config_value_sources(self, sec: str | None, current_env: str | None) -> Iterator[ConfigSet | RawLoader]:
         if sec is None:
@@ -415,12 +402,22 @@ class TomlReplaceLoader(ReplaceReference):
         run_env_base = section.run_env_base()
         pkg_env_base = section.package_env_base()
         if sec.startswith(env_prefix) and sec not in {run_env_base, pkg_env_base}:
-            env = sec[len(env_prefix) + len(section.SEP) :]
-            yield self.conf.get_env(env)
+            yield self.conf.get_env(sec[len(env_prefix) + len(section.SEP) :])
         else:
             yield RawLoader(self.loader, sec)
         if sec == core_prefix:
             yield self.conf.core  # try via registered configs
+
+    @staticmethod
+    def _load_reference_value(src: ConfigSet | RawLoader, key: str, conf_args: ConfigLoadArgs) -> str:
+        if isinstance(src, RawLoader):
+            return RawText(stringify(src.load(key, conf_args.chain))[0])
+        return stringify_reference(
+            src.set_env_lines(conf_args.chain)
+            if isinstance(src, EnvConfigSet) and key in {"set_env", "setenv"}
+            else src.load(key, conf_args.chain),
+            constant=src.is_constant(key),
+        )
 
 
 class RawLoader:

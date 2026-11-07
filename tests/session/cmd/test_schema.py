@@ -59,13 +59,13 @@ def committed_schema(schema_path: Path) -> dict[str, Any]:
 
 @pytest.fixture(scope="session")
 def implemented_replace_types(replace_py: Path) -> set[str]:
-    """Replace tokens parsed out of the loader implementation."""
+    # Replace tokens parsed out of the loader implementation.
     return set(re.findall(r'replace_type == "([a-z]+)"', replace_py.read_text(encoding="utf-8")))
 
 
 @pytest.fixture(scope="session")
 def replace_form_content() -> dict[str, str]:
-    """Each replace form rendered as a minimal `tox.toml` snippet that exercises it."""
+    # Each replace form rendered as a minimal `tox.toml` snippet that exercises it.
     return {
         "env": dedent("""\
             [env_run_base]
@@ -103,8 +103,7 @@ def tombi_bin() -> str:
 
 @pytest.fixture
 def lint_workspace(tmp_path: Path, tombi_bin: str, schema_path: Path, default_tombi_cfg: str) -> LintWorkspace:
-    """Stage a tox config + the committed schema and assert `tombi lint` succeeds."""
-
+    # Stage a tox config + the committed schema and assert `tombi lint` succeeds.
     def _run(filename: str, content: str, tombi_cfg: str = default_tombi_cfg) -> None:
         shutil.copy2(schema_path, tmp_path / "tox.schema.json")
         (tmp_path / filename).write_text(content)
@@ -124,9 +123,7 @@ def lint_workspace(tmp_path: Path, tombi_bin: str, schema_path: Path, default_to
 def test_show_schema_empty_dir(tox_project: ToxProjectCreator, monkeypatch: MonkeyPatch, tmp_path: Path) -> None:
     monkeypatch.chdir(tmp_path)
 
-    project = tox_project({})
-    result = project.run("-qq", "schema")
-    schema = json.loads(result.out)
+    schema = json.loads(tox_project({}).run("-qq", "schema").out)
     assert "properties" in schema
     assert "tox_root" in schema["properties"]
 
@@ -142,21 +139,10 @@ def test_schema_freshness(
         "tox.toml": 'env_list = ["py"]',
         "pyproject.toml": '[build-system]\nrequires = ["setuptools"]\nbuild-backend = "setuptools.build_meta"',
     })
-    result = project.run("-qq", "schema")
-    generated = json.loads(result.out)
+    generated = json.loads(project.run("-qq", "schema").out)
     assert generated == committed_schema, (
         "tox.schema.json is out of date — regenerate with: tox schema > src/tox/tox.schema.json"
     )
-
-
-def _subschemas(node: JsonValue, pointer: str = "#") -> Iterator[tuple[str, Mapping[str, JsonValue]]]:
-    if isinstance(node, Mapping):
-        yield pointer, node
-        for key, value in node.items():
-            yield from _subschemas(value, f"{pointer}/{key}")
-    elif isinstance(node, Sequence) and not isinstance(node, str):
-        for index, value in enumerate(node):
-            yield from _subschemas(value, f"{pointer}/{index}")
 
 
 def test_schema_required_properties_are_declared(committed_schema: Mapping[str, JsonValue]) -> None:
@@ -173,6 +159,16 @@ def test_schema_required_properties_are_declared(committed_schema: Mapping[str, 
     assert undeclared == []
 
 
+def _subschemas(node: JsonValue, pointer: str = "#") -> Iterator[tuple[str, Mapping[str, JsonValue]]]:
+    if isinstance(node, Mapping):
+        yield pointer, node
+        for key, value in node.items():
+            yield from _subschemas(value, f"{pointer}/{key}")
+    elif isinstance(node, Sequence) and not isinstance(node, str):
+        for index, value in enumerate(node):
+            yield from _subschemas(value, f"{pointer}/{index}")
+
+
 def test_schema_allows_deps_array(committed_schema: dict[str, Any]) -> None:
     deps_schema = committed_schema["properties"]["env_run_base"]["properties"]["deps"]
 
@@ -182,7 +178,7 @@ def test_schema_allows_deps_array(committed_schema: dict[str, Any]) -> None:
 
 @pytest.fixture
 def project_lint_case(request: pytest.FixtureRequest, repo_root: Path, default_tombi_cfg: str) -> tuple[str, str, str]:
-    """Resolve a parametrized lint case (`filename`, `content`, `tombi_cfg`) by id."""
+    # Resolve a parametrized lint case (`filename`, `content`, `tombi_cfg`) by id.
     if request.param == "tox.toml":
         return "tox.toml", (repo_root / "tox.toml").read_text(), default_tombi_cfg
     if request.param == "pyproject.toml":
@@ -227,12 +223,10 @@ def test_schema_covers_every_replace_type(
     implemented_replace_types: set[str],
     replace_form_content: dict[str, str],
 ) -> None:
-    """Guard: every ``replace_type == "..."`` in _replace.py needs a schema variant.
-
-    Catches the failure mode behind issue #3939, where a new replace form (``if``) was added to the loader but never
-    wired into the JSON schema.
-
-    """
+    # Guard: every ``replace_type == "..."`` in _replace.py needs a schema variant.
+    #
+    # Catches the failure mode behind issue #3939, where a new replace form (``if``) was added to the loader but never
+    # wired into the JSON schema.
     in_schema = {
         name.removeprefix("replace_") for name in committed_schema["definitions"] if name.startswith("replace_")
     } - {"object"}

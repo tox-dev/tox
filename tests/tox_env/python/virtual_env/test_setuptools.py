@@ -30,9 +30,8 @@ def test_setuptools_package(
         commands = python -c 'from demo_pkg_setuptools import do; do()'
         commands_post = python -c 'import sys; print("end", sys.executable)'
     """
-    project = tox_project({"tox.ini": tox_ini}, base=demo_pkg_setuptools)
 
-    outcome = project.run("r", "-e", "py")
+    outcome = tox_project({"tox.ini": tox_ini}, base=demo_pkg_setuptools).run("r", "-e", "py")
 
     outcome.assert_success()
     assert f"\ngreetings from demo_pkg_setuptools{os.linesep}" in outcome.out

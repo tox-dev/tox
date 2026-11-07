@@ -174,12 +174,11 @@ def test_config_skip_missing_interpreters(
 
 
 def test_skip_missing_interpreters_default_is_false(tox_project: ToxProjectCreator) -> None:
-    project = tox_project({"tox.toml": 'env_list = ["py4"]'})
-    result = project.run()
+    result = tox_project({"tox.toml": 'env_list = ["py4"]'}).run()
     assert result.code == 1
 
 
-SYS_PY_VER = "".join(str(i) for i in sys.version_info[0:2]) + (
+_SYS_PY_VER = "".join(str(i) for i in sys.version_info[0:2]) + (
     "t" if sysconfig.get_config_var("Py_GIL_DISABLED") == 1 else ""
 )
 
@@ -187,8 +186,8 @@ SYS_PY_VER = "".join(str(i) for i in sys.version_info[0:2]) + (
 @pytest.mark.parametrize(
     ("skip", "env", "retcode"),
     [
-        ("true", f"py{SYS_PY_VER}", 0),
-        ("false", f"py{SYS_PY_VER}", 0),
+        ("true", f"py{_SYS_PY_VER}", 0),
+        ("false", f"py{_SYS_PY_VER}", 0),
         ("true", "py31", 1),
         ("false", "py31", 1),
         ("true", None, 0),
@@ -201,7 +200,7 @@ def test_skip_missing_interpreters_specified_env(
     env: str | None,
     retcode: int,
 ) -> None:
-    project = tox_project({"tox.ini": f"[tox]\nenvlist=py31,py{SYS_PY_VER}\n[testenv]\nusedevelop=true"})
+    project = tox_project({"tox.ini": f"[tox]\nenvlist=py31,py{_SYS_PY_VER}\n[testenv]\nusedevelop=true"})
     args = [f"--skip-missing-interpreters={skip}"]
     if env:
         args += ["-e", env]

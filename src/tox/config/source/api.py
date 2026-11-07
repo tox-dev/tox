@@ -18,7 +18,11 @@ if TYPE_CHECKING:
 
 
 class Source(ABC):
-    """Source is able to return a configuration value (for either the core or per environment source)."""
+    """Source is able to return a configuration value (for either the core or per environment source).
+
+    :param path:
+    :cvar FILENAME:
+    """
 
     FILENAME = ""
 
@@ -43,7 +47,7 @@ class Source(ABC):
         :param override_map: a list of overrides to apply
         :param conf: the config set to use
 
-        :returns: the loaders to use
+        :yields: the loaders to use
 
         """
         # loaders are built fresh per config set: their parent chain depends on the base sections, and a section can

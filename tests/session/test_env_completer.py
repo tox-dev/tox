@@ -33,8 +33,7 @@ def completer_args() -> _CompleterArgs:
 
 
 def test_env_completer_ini(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, completer_args: _CompleterArgs) -> None:
-    config = tmp_path / "tox.ini"
-    config.write_text("[tox]\nenv_list = py311,lint\n[testenv:docs]\n")
+    (tmp_path / "tox.ini").write_text("[tox]\nenv_list = py311,lint\n[testenv:docs]\n")
     monkeypatch.chdir(tmp_path)
     result = _env_completer(**completer_args)
     assert "ALL" in result
@@ -44,8 +43,7 @@ def test_env_completer_ini(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, comp
 
 
 def test_env_completer_toml(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, completer_args: _CompleterArgs) -> None:
-    config = tmp_path / "tox.toml"
-    config.write_text('[env.lint]\ncommands = [["ruff", "check"]]\n')
+    (tmp_path / "tox.toml").write_text('[env.lint]\ncommands = [["ruff", "check"]]\n')
     monkeypatch.chdir(tmp_path)
     result = _env_completer(**completer_args)
     assert "ALL" in result
@@ -69,8 +67,7 @@ def test_env_completer_handled_error(mocker: MockerFixture, completer_args: _Com
 def test_env_completer_includes_plugin_envs(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, mocker: MockerFixture, completer_args: _CompleterArgs
 ) -> None:
-    config = tmp_path / "tox.ini"
-    config.write_text("[tox]\nenv_list = py311\n")
+    (tmp_path / "tox.ini").write_text("[tox]\nenv_list = py311\n")
     monkeypatch.chdir(tmp_path)
     mocker.patch("tox.plugin.manager.Plugin.tox_extend_envs", return_value=[["plugin-env"]])
     result = _env_completer(**completer_args)

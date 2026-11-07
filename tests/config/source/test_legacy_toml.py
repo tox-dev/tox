@@ -7,9 +7,8 @@ if TYPE_CHECKING:
 
 
 def test_conf_in_legacy_toml(tox_project: ToxProjectCreator) -> None:
-    project = tox_project({"pyproject.toml": '[tool.tox]\nlegacy_tox_ini="""[tox]\nenv_list=\n a\n b\n"""'})
 
-    outcome = project.run("l")
+    outcome = tox_project({"pyproject.toml": '[tool.tox]\nlegacy_tox_ini="""[tox]\nenv_list=\n a\n b\n"""'}).run("l")
     outcome.assert_success()
     assert outcome.out == "default environments:\na -> [no description]\nb -> [no description]\n"
 

@@ -103,30 +103,6 @@ class Convert(ABC, Generic[T]):
 
     @staticmethod
     @abstractmethod
-    def to_str(value: T) -> str:
-        """Convert to string.
-
-        :param value: the value to convert
-
-        :returns: a string representation of the value
-
-        """
-        raise NotImplementedError
-
-    @staticmethod
-    @abstractmethod
-    def to_bool(value: T) -> bool:
-        """Convert to boolean.
-
-        :param value: the value to convert
-
-        :returns: a boolean representation of the value
-
-        """
-        raise NotImplementedError
-
-    @staticmethod
-    @abstractmethod
     def to_list(value: T, of_type: type[Any]) -> Iterator[T]:
         """Convert to list.
 
@@ -178,6 +154,18 @@ class Convert(ABC, Generic[T]):
 
     @staticmethod
     @abstractmethod
+    def to_bool(value: T) -> bool:
+        """Convert to boolean.
+
+        :param value: the value to convert
+
+        :returns: a boolean representation of the value
+
+        """
+        raise NotImplementedError
+
+    @staticmethod
+    @abstractmethod
     def to_command(value: T) -> Command:
         """Convert to a command to execute.
 
@@ -196,6 +184,18 @@ class Convert(ABC, Generic[T]):
         :param value: the value to convert
 
         :returns: a list of tox environments from the value
+
+        """
+        raise NotImplementedError
+
+    @staticmethod
+    @abstractmethod
+    def to_str(value: T) -> str:
+        """Convert to string.
+
+        :param value: the value to convert
+
+        :returns: a string representation of the value
 
         """
         raise NotImplementedError

@@ -29,8 +29,7 @@ def test_depends_wheel(tox_project: ToxProjectCreator, patch_prev_py: PatchPrevP
     depends = cov
     skip_install = true
     """
-    project = tox_project({"tox.ini": ini, "pyproject.toml": ""})
-    outcome = project.run("de")
+    outcome = tox_project({"tox.ini": ini, "pyproject.toml": ""}).run("de")
     outcome.assert_success()
 
     expected = f"""
@@ -72,8 +71,7 @@ def test_depends_sdist(tox_project: ToxProjectCreator, patch_prev_py: PatchPrevP
     depends = cov
     skip_install = true
     """
-    project = tox_project({"tox.ini": ini, "pyproject.toml": ""})
-    outcome = project.run("de")
+    outcome = tox_project({"tox.ini": ini, "pyproject.toml": ""}).run("de")
     outcome.assert_success()
 
     expected = f"""
@@ -227,22 +225,19 @@ def test_depends_glob(
         [testenv:cov]
         depends = {",".join(depends)}
         """
-    project = tox_project({f"tox.{fmt}": conf})
-    outcome = project.run("de")
+    outcome = tox_project({f"tox.{fmt}": conf}).run("de")
     outcome.assert_success()
     assert outcome.out == dedent(expected)
 
 
 def test_depends_help(tox_project: ToxProjectCreator) -> None:
-    outcome = tox_project({"tox.ini": ""}).run("de", "-h")
-    outcome.assert_success()
+    tox_project({"tox.ini": ""}).run("de", "-h").assert_success()
 
 
 def test_depends_circular(tox_project: ToxProjectCreator) -> None:
     ini = "[tox]\nenv_list = a,b\n[testenv]\npackage = skip\n[testenv:a]\ndepends = b\n[testenv:b]\ndepends = a\n"
-    project = tox_project({"tox.ini": ini})
 
-    outcome = project.run("de")
+    outcome = tox_project({"tox.ini": ini}).run("de")
 
     outcome.assert_failed(code=-2)
     assert "circular dependency detected between environments: a | b" in outcome.out, outcome.out
@@ -250,9 +245,8 @@ def test_depends_circular(tox_project: ToxProjectCreator) -> None:
 
 def test_depends_circular_run(tox_project: ToxProjectCreator) -> None:
     ini = "[tox]\nenv_list = a,b\n[testenv]\npackage = skip\n[testenv:a]\ndepends = b\n[testenv:b]\ndepends = a\n"
-    project = tox_project({"tox.ini": ini})
 
-    outcome = project.run("r", "--notest")
+    outcome = tox_project({"tox.ini": ini}).run("r", "--notest")
 
     outcome.assert_failed(code=-2)
     assert "circular dependency detected between environments: a | b" in outcome.out, outcome.out

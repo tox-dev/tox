@@ -180,8 +180,7 @@ def test_plugin_can_set_core_conf(
 
     register_inline_plugin(mocker, tox_add_core_config)
 
-    project = tox_project({})
-    result = project.run("c")
+    result = tox_project({}).run("c")
     result.assert_success()
 
     assert result.state.conf.core[dir_name] == tmp_path
@@ -203,8 +202,7 @@ def test_plugin_can_read_env_list(tox_project: ToxProjectCreator, mocker: Mocker
         implicit: A=1
     [testenv:section]
     """
-    project = tox_project({"tox.ini": ini})
-    result = project.run()
+    result = tox_project({"tox.ini": ini}).run()
     assert "ROOT: All envs: explicit, section, implicit" in result.out
     assert "ROOT: Default envs: explicit" in result.out
 
@@ -222,8 +220,7 @@ def test_plugin_can_read_sections(tox_project: ToxProjectCreator, mocker: Mocker
     [testenv:section]
     [other:section]
     """
-    project = tox_project({"tox.ini": ini})
-    result = project.run()
+    result = tox_project({"tox.ini": ini}).run()
     result.assert_success()
     assert "ROOT: Sections: tox, testenv, testenv:section, other:section" in result.out
 
@@ -236,8 +233,7 @@ def test_plugin_injects_invalid_python_run(tox_project: ToxProjectCreator, mocke
             assert env_conf["deps"]
 
     register_inline_plugin(mocker, tox_add_env_config)
-    project = tox_project({"tox.ini": "[testenv]\npackage=skip"})
-    result = project.run()
+    result = tox_project({"tox.ini": "[testenv]\npackage=skip"}).run()
     result.assert_failed()
     assert "failed to load py.deps: deps expected" in result.out
 
@@ -310,9 +306,7 @@ def test_plugin_config_frozen_past_add_env(tox_project: ToxProjectCreator, mocke
 
     register_inline_plugin(mocker, tox_before_run_commands, tox_after_run_commands)
 
-    project = tox_project({"tox.ini": "[testenv]\npackage=skip"})
-    result = project.run("r")
-    result.assert_success()
+    tox_project({"tox.ini": "[testenv]\npackage=skip"}).run("r").assert_success()
 
 
 @pytest.mark.parametrize(

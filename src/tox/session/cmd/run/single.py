@@ -20,17 +20,6 @@ if TYPE_CHECKING:
 LOGGER = logging.getLogger(__name__)
 
 
-class ToxEnvRunResult(NamedTuple):
-    name: str
-    skipped: bool
-    code: int
-    outcomes: list[Outcome]
-    duration: float
-    ignore_outcome: bool = False
-    fail_fast: bool = False
-    unavailable: bool = False
-
-
 def run_one(tox_env: RunToxEnv, no_test: bool, suspend_display: bool) -> ToxEnvRunResult:  # ruff:ignore[boolean-type-hint-positional-argument]
     start_one = time.monotonic()
     name = tox_env.conf.name
@@ -55,7 +44,7 @@ def _run_with_teardown(tox_env: RunToxEnv, no_test: bool) -> tuple[bool, int, li
     outcomes: list[Outcome] = []
     try:
         tox_env.setup()
-        code, outcomes = run_commands(tox_env, no_test)
+        code, outcomes = _run_commands(tox_env, no_test)
     except Skip as exception:
         LOGGER.warning("skipped because %s", exception)
         code = 0
@@ -77,7 +66,7 @@ def _run_with_teardown(tox_env: RunToxEnv, no_test: bool) -> tuple[bool, int, li
     return skipped, code, outcomes
 
 
-def run_commands(tox_env: RunToxEnv, no_test: bool) -> tuple[int, list[Outcome]]:  # ruff:ignore[boolean-type-hint-positional-argument]
+def _run_commands(tox_env: RunToxEnv, no_test: bool) -> tuple[int, list[Outcome]]:  # ruff:ignore[boolean-type-hint-positional-argument]
     outcomes: list[Outcome] = []
     if no_test:
         exit_code = Outcome.OK
@@ -115,8 +104,7 @@ def run_command_set(  # ruff:ignore[too-many-arguments]
     retry_count: int = 0,
 ) -> int:
     exit_code = Outcome.OK
-    command_set = tox_env.conf.get(key, list[Command])
-    for at, cmd in enumerate(command_set):
+    for at, cmd in enumerate(tox_env.conf.get(key, list[Command])):
         max_attempts = 1 if cmd.ignore_exit_code else retry_count + 1
         for attempt in range(1, max_attempts + 1):
             current_outcome = tox_env.execute(
@@ -154,8 +142,19 @@ def run_command_set(  # ruff:ignore[too-many-arguments]
     return exit_code
 
 
-__all__ = (
+class ToxEnvRunResult(NamedTuple):
+    name: str
+    skipped: bool
+    code: int
+    outcomes: list[Outcome]
+    duration: float
+    ignore_outcome: bool = False
+    fail_fast: bool = False
+    unavailable: bool = False
+
+
+__all__ = [
     "ToxEnvRunResult",
     "run_command_set",
     "run_one",
-)
+]

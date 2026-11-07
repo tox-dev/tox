@@ -9,7 +9,7 @@ from functools import partial
 from pathlib import Path
 from shutil import rmtree
 from tempfile import mkdtemp
-from typing import TYPE_CHECKING, Protocol
+from typing import TYPE_CHECKING, Final, Protocol
 from unittest.mock import patch
 from uuid import uuid4
 
@@ -31,8 +31,8 @@ if TYPE_CHECKING:
 
     from tox.config.loader.api import Override
 
-pytest_plugins = "tox.pytest"
-HERE = Path(__file__).absolute().parent
+pytest_plugins: Final[str] = "tox.pytest"
+_HERE = Path(__file__).absolute().parent
 
 
 def _strip_broken_namespace_pth_files() -> None:
@@ -102,12 +102,12 @@ def tox_ini_conf(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> ToxIniCreat
 
 @pytest.fixture(scope="session")
 def demo_pkg_setuptools() -> Path:
-    return HERE / "demo_pkg_setuptools"
+    return _HERE / "demo_pkg_setuptools"
 
 
 @pytest.fixture(scope="session")
 def demo_pkg_inline() -> Path:
-    return HERE / "demo_pkg_inline"
+    return _HERE / "demo_pkg_inline"
 
 
 @pytest.fixture
@@ -201,7 +201,7 @@ def pkg_builder() -> Callable[[Path, Path, Sequence[DistributionType], bool], Pa
 @pytest.fixture(autouse=True)
 def _ensure_demo_pkg_clean() -> Iterator[None]:
     yield
-    for path in HERE.iterdir():
+    for path in _HERE.iterdir():
         if path.is_dir() and path.name.startswith("demo_pkg_") and (tox_dir := path / ".tox").exists():
             msg = f"test left behind {tox_dir}, fix the test to not pollute the source tree"
             raise AssertionError(msg)
@@ -209,5 +209,4 @@ def _ensure_demo_pkg_clean() -> Iterator[None]:
 
 @pytest.fixture(scope="session", autouse=True)
 def no_default_config_ini(session_mocker: MockerFixture) -> None:
-    filename = str(uuid4())
-    session_mocker.patch("tox.config.cli.ini.DEFAULT_CONFIG_FILE", Path(filename))
+    session_mocker.patch("tox.config.cli.ini.DEFAULT_CONFIG_FILE", Path(str(uuid4())))

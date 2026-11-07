@@ -18,8 +18,8 @@ def write_journal(path: Path | None, journal: Journal) -> None:
         json.dump(journal.content, file_handler, indent=2, ensure_ascii=False)
 
 
-__all__ = (
+__all__ = [
     "EnvJournal",
     "Journal",
     "write_journal",
-)
+]

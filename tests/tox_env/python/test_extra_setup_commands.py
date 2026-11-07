@@ -25,8 +25,7 @@ def test_extra_setup_commands_runs(
         extra_setup_commands = python -c 'print("extra setup")'
         commands = python -c 'print("main command")'
     """
-    proj = tox_project({"tox.ini": ini})
-    result = proj.run("r", *run_args)
+    result = tox_project({"tox.ini": ini}).run("r", *run_args)
     result.assert_success()
     assert "extra setup" in result.out
     assert ("main command" in result.out) is main_command_runs
@@ -38,14 +37,11 @@ def test_extra_setup_commands_with_package_skip(tox_project: ToxProjectCreator) 
         package = skip
         extra_setup_commands = python -c 'import sys; sys.exit(0)'
     """
-    proj = tox_project({"tox.ini": ini})
-    result = proj.run("r", "--notest")
-    result.assert_success()
+    tox_project({"tox.ini": ini}).run("r", "--notest").assert_success()
 
 
 def test_extra_setup_commands_with_package_install(tox_project: ToxProjectCreator) -> None:
-    ini = "[testenv]\nextra_setup_commands = python -c 'print(\"after package install\")'"
-    proj = tox_project({"tox.ini": ini})
+    proj = tox_project({"tox.ini": "[testenv]\nextra_setup_commands = python -c 'print(\"after package install\")'"})
     result = proj.run("r", "--notest")
     result.assert_success()
     assert "after package install" in result.out
@@ -58,8 +54,7 @@ def test_extra_setup_commands_failure_stops_execution(tox_project: ToxProjectCre
         extra_setup_commands = python -c 'import sys; sys.exit(1)'
         commands = python -c 'print("should not run")'
     """
-    proj = tox_project({"tox.ini": ini})
-    result = proj.run("r", "--notest")
+    result = tox_project({"tox.ini": ini}).run("r", "--notest")
     result.assert_failed()
     assert "extra_setup_commands failed" in result.out
 
@@ -72,8 +67,7 @@ def test_extra_setup_commands_failure_with_ignore_errors(tox_project: ToxProject
         extra_setup_commands = python -c 'import sys; sys.exit(1)'
         commands = python -c 'print("main command")'
     """
-    proj = tox_project({"tox.ini": ini})
-    result = proj.run("r")
+    result = tox_project({"tox.ini": ini}).run("r")
     result.assert_success()
     assert "main command" in result.out
 
@@ -87,8 +81,7 @@ def test_extra_setup_commands_multiple_commands(tox_project: ToxProjectCreator) 
             python -c 'print("cmd2")'
             python -c 'print("cmd3")'
     """
-    proj = tox_project({"tox.ini": ini})
-    result = proj.run("r", "--notest")
+    result = tox_project({"tox.ini": ini}).run("r", "--notest")
     result.assert_success()
     assert "cmd1" in result.out
     assert "cmd2" in result.out
@@ -96,10 +89,7 @@ def test_extra_setup_commands_multiple_commands(tox_project: ToxProjectCreator) 
 
 
 def test_extra_setup_commands_empty_default(tox_project: ToxProjectCreator) -> None:
-    ini = "[testenv]\npackage = skip"
-    proj = tox_project({"tox.ini": ini})
-    result = proj.run("r", "--notest")
-    result.assert_success()
+    tox_project({"tox.ini": "[testenv]\npackage = skip"}).run("r", "--notest").assert_success()
 
 
 def test_extra_setup_commands_execution_order(tox_project: ToxProjectCreator) -> None:
@@ -112,8 +102,7 @@ def test_extra_setup_commands_execution_order(tox_project: ToxProjectCreator) ->
         commands = python -c 'print("COMMANDS")'
         commands_post = python -c 'print("COMMANDS_POST")'
     """
-    proj = tox_project({"tox.ini": ini})
-    result = proj.run("r")
+    result = tox_project({"tox.ini": ini}).run("r")
     result.assert_success()
 
     assert "EXTRA_SETUP" in result.out

@@ -57,6 +57,61 @@ def _open_dir(directory: Path) -> Generator[int, None, None]:
             os.close(dir_fd)
 
 
+def _mode(file: Path, dir_fd: int) -> int | None:
+    try:
+        return (
+            file.lstat() if sys.platform == "win32" else os.stat(file.name, dir_fd=dir_fd, follow_symlinks=False)
+        ).st_mode
+    except OSError:
+        return None
+
+
+def _redirect_target(file: Path, dir_fd: int) -> Path | None:
+    if (mode := _mode(file, dir_fd)) is None or not stat.S_ISREG(mode):
+        return None
+    try:
+        with _open(file, dir_fd) as handler:
+            return Path(os.path.normpath(file.parent / handler.read().removesuffix("\n")))
+    except (OSError, UnicodeDecodeError):  # not a redirect file tox can read, so not one tox wrote
+        return None
+
+
+def _open(file: Path, dir_fd: int) -> IO[str]:
+    if sys.platform == "win32":  # pragma: win32 cover  # Windows opens by path.
+        return file.open(encoding="utf-8")
+
+    def opener(path: str, flags: int) -> int:
+        # Refuse a link swapped in after the metadata check.
+        return os.open(path, flags | os.O_NOFOLLOW, dir_fd=dir_fd)
+
+    return open(file.name, encoding="utf-8", opener=opener)
+
+
+def _write_redirect(file: Path, dir_fd: int, text: str) -> None:
+    name: Final[str] = f".{_FILE_NAME}.{secrets.token_hex(16)}"
+    if sys.platform == "win32":  # pragma: win32 cover
+        temporary: Final[Path] = file.with_name(name)
+        with _hold_windows_child(dir_fd):
+            try:
+                with os.fdopen(
+                    os.open(temporary, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600), "w", encoding="utf-8"
+                ) as handler:
+                    handler.write(text)
+                temporary.replace(file)
+            finally:
+                temporary.unlink(missing_ok=True)
+        return
+    descriptor: Final[int] = os.open(name, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600, dir_fd=dir_fd)
+    try:
+        with os.fdopen(descriptor, "w", encoding="utf-8") as handler:
+            handler.write(text)
+        # Replacement cannot follow a link or truncate a hard link swapped in after the read.
+        os.replace(name, file.name, src_dir_fd=dir_fd, dst_dir_fd=dir_fd)
+    finally:
+        with suppress(FileNotFoundError):
+            os.unlink(name, dir_fd=dir_fd)
+
+
 if sys.platform == "win32":  # pragma: win32 cover
     import msvcrt
 
@@ -196,61 +251,6 @@ if sys.platform == "win32":  # pragma: win32 cover
         return child.value
 
 
-def _mode(file: Path, dir_fd: int) -> int | None:
-    try:
-        return (
-            file.lstat() if sys.platform == "win32" else os.stat(file.name, dir_fd=dir_fd, follow_symlinks=False)
-        ).st_mode
-    except OSError:
-        return None
-
-
-def _redirect_target(file: Path, dir_fd: int) -> Path | None:
-    if (mode := _mode(file, dir_fd)) is None or not stat.S_ISREG(mode):
-        return None
-    try:
-        with _open(file, dir_fd) as handler:
-            return Path(os.path.normpath(file.parent / handler.read().removesuffix("\n")))
-    except (OSError, UnicodeDecodeError):  # not a redirect file tox can read, so not one tox wrote
-        return None
-
-
-def _open(file: Path, dir_fd: int) -> IO[str]:
-    if sys.platform == "win32":  # pragma: win32 cover  # Windows opens by path.
-        return file.open(encoding="utf-8")
-
-    def opener(path: str, flags: int) -> int:
-        # Refuse a link swapped in after the metadata check.
-        return os.open(path, flags | os.O_NOFOLLOW, dir_fd=dir_fd)
-
-    return open(file.name, encoding="utf-8", opener=opener)
-
-
-def _write_redirect(file: Path, dir_fd: int, text: str) -> None:
-    name: Final[str] = f".{_FILE_NAME}.{secrets.token_hex(16)}"
-    if sys.platform == "win32":  # pragma: win32 cover
-        temporary: Final[Path] = file.with_name(name)
-        with _hold_windows_child(dir_fd):
-            try:
-                with os.fdopen(
-                    os.open(temporary, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600), "w", encoding="utf-8"
-                ) as handler:
-                    handler.write(text)
-                temporary.replace(file)
-            finally:
-                temporary.unlink(missing_ok=True)
-        return
-    descriptor: Final[int] = os.open(name, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600, dir_fd=dir_fd)
-    try:
-        with os.fdopen(descriptor, "w", encoding="utf-8") as handler:
-            handler.write(text)
-        # Replacement cannot follow a link or truncate a hard link swapped in after the read.
-        os.replace(name, file.name, src_dir_fd=dir_fd, dst_dir_fd=dir_fd)
-    finally:
-        with suppress(FileNotFoundError):
-            os.unlink(name, dir_fd=dir_fd)
-
-
 def forget_venv_redirect(root: Path, env: Path) -> None:
     file: Final[Path] = root / _FILE_NAME
     if sys.platform == "win32":  # pragma: win32 cover
@@ -267,6 +267,11 @@ def forget_venv_redirect(root: Path, env: Path) -> None:
                 _unlink(file, dir_fd)
     except (FileNotFoundError, NotADirectoryError):  # no root, so no redirect
         pass
+
+
+def _unlink(file: Path, dir_fd: int) -> None:
+    with suppress(FileNotFoundError):
+        os.unlink(file.name, dir_fd=dir_fd)
 
 
 if sys.platform == "win32":  # pragma: win32 cover
@@ -317,11 +322,6 @@ if sys.platform == "win32":  # pragma: win32 cover
             ):
                 raise ctypes.WinError(ctypes.get_last_error())
             return True
-
-
-def _unlink(file: Path, dir_fd: int) -> None:
-    with suppress(FileNotFoundError):
-        os.unlink(file.name, dir_fd=dir_fd)
 
 
 def release_venv_redirect(path: Path, is_ours: Callable[[Path], bool]) -> bool:

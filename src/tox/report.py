@@ -11,14 +11,14 @@ from io import BytesIO, TextIOWrapper
 from pathlib import Path
 from threading import Thread, current_thread, local
 from threading import enumerate as enumerate_threads
-from typing import TYPE_CHECKING, ClassVar, cast
+from typing import TYPE_CHECKING, ClassVar, Final, cast
 from weakref import WeakKeyDictionary
 
 from colorama import Fore, Style, init
 from virtualenv.util.subprocess import LogCmd
 
-from tox.util.redact import redact_value
-from tox.util.typing_compat import override
+from .util.redact import redact_value
+from .util.typing_compat import override
 
 if TYPE_CHECKING:
     from collections.abc import Generator, MutableMapping
@@ -32,23 +32,33 @@ LEVELS = {
     5: logging.NOTSET,
 }
 
-MAX_LEVEL = max(LEVELS.keys())
+_MAX_LEVEL = max(LEVELS.keys())
 LOGGER = logging.getLogger()
 OutErr = tuple[TextIOWrapper, TextIOWrapper]
 
 
-_THREAD_PARENT_IDENT: MutableMapping[Thread, int | None] = WeakKeyDictionary()
+_THREAD_PARENT_IDENT: Final[MutableMapping[Thread, int | None]] = WeakKeyDictionary()
 
 
 class _LogThreadLocal(local):
-    """A thread local variable that inherits values from its parent."""
-
+    # A thread local variable that inherits values from its parent.
     _ident_to_data: ClassVar[dict[int | None, str]] = {}
 
     def __init__(self, out_err: OutErr) -> None:
-        thread = current_thread()
-        self.name = self._ident_to_data.get(_THREAD_PARENT_IDENT.get(thread), "ROOT")
+        self.name = self._ident_to_data.get(_THREAD_PARENT_IDENT.get(current_thread()), "ROOT")
         self.out_err = out_err
+
+    @property
+    def name(self) -> str:
+        return self._name
+
+    @name.setter
+    def name(self, value: str) -> None:
+        self._name = value
+
+        for ident in self._ident_to_data.keys() - {t.ident for t in enumerate_threads()}:
+            self._ident_to_data.pop(ident)
+        self._ident_to_data[current_thread().ident] = value
 
     @staticmethod
     @contextmanager
@@ -64,18 +74,6 @@ class _LogThreadLocal(local):
             yield
         finally:
             Thread.start = old_start  # type: ignore[method-assign] # no typed way to swap a method, and CPython offers no hook to track the parent thread
-
-    @property
-    def name(self) -> str:
-        return self._name
-
-    @name.setter
-    def name(self, value: str) -> None:
-        self._name = value
-
-        for ident in self._ident_to_data.keys() - {t.ident for t in enumerate_threads()}:
-            self._ident_to_data.pop(ident)
-        self._ident_to_data[current_thread().ident] = value
 
     @contextmanager
     def with_name(self, name: str) -> Generator[None, None, None]:
@@ -123,7 +121,12 @@ else:
 
 
 class ToxHandler(_STREAM_HANDLER_BASE):
-    """Controls tox output."""
+    """Controls tox output.
+
+    :param level:
+    :param is_colored:
+    :param out_err:
+    """
 
     def __init__(self, level: int, is_colored: bool, out_err: OutErr) -> None:  # ruff:ignore[boolean-type-hint-positional-argument]
         self._local = _LogThreadLocal(out_err)
@@ -133,63 +136,16 @@ class ToxHandler(_STREAM_HANDLER_BASE):
         self._is_colored = is_colored
         self._setup_level(is_colored, level)
 
-    def _setup_level(self, is_colored: bool, level: int) -> None:  # ruff:ignore[boolean-type-hint-positional-argument]
-        self.setLevel(level)
-        self._error_formatter = self._get_formatter(logging.ERROR, level, is_colored)
-        self._warning_formatter = self._get_formatter(logging.WARNING, level, is_colored)
-        self._remaining_formatter = self._get_formatter(logging.INFO, level, is_colored)
-
-    @contextmanager
-    def with_context(self, name: str) -> Generator[None, None, None]:
-        """Set a new tox environment context.
-
-        :param name: the name of the tox environment
-
-        """
-        with self._local.with_name(name):
-            yield
-
-    @property
-    @override
-    def name(self) -> str:  # pyrefly: ignore[bad-override] # the value follows the active tox env so it must be a property, pyrefly rejects that over a typeshed attribute: https://github.com/facebook/pyrefly/issues/2771
-        """:returns: the current tox environment name"""
-        return self._local.name  # pragma: no cover
-
-    @name.setter
-    @override
-    def name(self, value: str | None) -> None:
-        """Ignore anyone changing this, the name always reflects the active tox environment."""
-
     @property
     def stdout(self) -> TextIOWrapper:
         """:returns: the current standard output"""
         return self._local.out_err[0]
 
-    @property
-    def stderr(self) -> TextIOWrapper:
-        """:returns: the current standard error"""
-        return self._local.out_err[1]
-
-    @property
-    @override
-    def stream(self) -> TextIOWrapper:  # pyrefly: ignore[bad-override] # the value follows the active tox env so it must be a property, pyrefly rejects that over a typeshed attribute: https://github.com/facebook/pyrefly/issues/2771
-        """:returns: the current stream to write to (alias for the current standard output)"""
-        return self.stdout
-
-    @stream.setter
-    @override
-    def stream(self, value: TextIOWrapper) -> None:
-        """Ignore anyone changing this."""
-
-    @contextmanager
-    def suspend_out_err(self, yes: bool, out_err: OutErr | None = None) -> Generator[OutErr, None, None]:  # ruff:ignore[boolean-type-hint-positional-argument]
-        with self._local.suspend_out_err(yes, out_err) as out_err_res:
-            yield out_err_res
-
-    def write_out_err(self, out_err: tuple[bytes, bytes]) -> None:
-        # read/write through the buffer as we collect bytes to print bytes (no transcoding needed)
-        self.stdout.buffer.write(out_err[0])
-        self.stderr.buffer.write(out_err[1])
+    def _setup_level(self, is_colored: bool, level: int) -> None:  # ruff:ignore[boolean-type-hint-positional-argument]
+        self.setLevel(level)
+        self._error_formatter = self._get_formatter(logging.ERROR, level, is_colored)
+        self._warning_formatter = self._get_formatter(logging.WARNING, level, is_colored)
+        self._remaining_formatter = self._get_formatter(logging.INFO, level, is_colored)
 
     @staticmethod
     def _get_formatter(level: int, enabled_level: int, is_colored: bool) -> logging.Formatter:  # ruff:ignore[boolean-type-hint-positional-argument]
@@ -211,8 +167,56 @@ class ToxHandler(_STREAM_HANDLER_BASE):
                 f"{_c(Fore.GREEN)} %(relativeCreated)d %(levelname).1s{_c(Style.RESET_ALL)}{fmt}{_c(Style.DIM)}"
                 f" [%(pathname)s:%(lineno)d]{_c(Style.RESET_ALL)}"
             )
-        fmt = f"{_c(Style.BRIGHT)}{_c(Fore.MAGENTA)}%(env_name)s:{_c(Style.RESET_ALL)}" + fmt
+        fmt = f"{_c(Style.BRIGHT)}{_c(Fore.MAGENTA)}%(env_name)s:{_c(Style.RESET_ALL)}{fmt}"
         return logging.Formatter(fmt)
+
+    @property
+    @override
+    def name(self) -> str:  # pyrefly: ignore[bad-override] # the value follows the active tox env so it must be a property, pyrefly rejects that over a typeshed attribute: https://github.com/facebook/pyrefly/issues/2771
+        """:returns: the current tox environment name"""
+        return self._local.name  # pragma: no cover
+
+    @name.setter
+    @override
+    def name(self, value: str | None) -> None:
+        """Ignore anyone changing this, the name always reflects the active tox environment."""
+
+    @property
+    @override
+    def stream(self) -> TextIOWrapper:  # pyrefly: ignore[bad-override] # the value follows the active tox env so it must be a property, pyrefly rejects that over a typeshed attribute: https://github.com/facebook/pyrefly/issues/2771
+        """:returns: the current stream to write to (alias for the current standard output)"""
+        return self.stdout
+
+    @stream.setter
+    @override
+    def stream(self, value: TextIOWrapper) -> None:
+        """Ignore anyone changing this."""
+
+    @contextmanager
+    def with_context(self, name: str) -> Generator[None, None, None]:
+        """Set a new tox environment context.
+
+        :param name: the name of the tox environment
+        :yields:
+
+        """
+        with self._local.with_name(name):
+            yield
+
+    @contextmanager
+    def suspend_out_err(self, yes: bool, out_err: OutErr | None = None) -> Generator[OutErr, None, None]:  # ruff:ignore[boolean-type-hint-positional-argument]
+        with self._local.suspend_out_err(yes, out_err) as out_err_res:
+            yield out_err_res
+
+    def write_out_err(self, out_err: tuple[bytes, bytes]) -> None:
+        # read/write through the buffer as we collect bytes to print bytes (no transcoding needed)
+        self.stdout.buffer.write(out_err[0])
+        self.stderr.buffer.write(out_err[1])
+
+    @property
+    def stderr(self) -> TextIOWrapper:
+        """:returns: the current standard error"""
+        return self._local.out_err[1]
 
     @override
     def format(self, record: logging.LogRecord) -> str:
@@ -226,8 +230,7 @@ class ToxHandler(_STREAM_HANDLER_BASE):
         # shorten the pathname to start from within the site-packages folder
         record.env_name = "root" if self._local.name is None else self._local.name
         basename = str(Path(record.pathname).parent)
-        len_sys_path_match = max((len(p) for p in sys.path if basename.startswith(p)), default=-1)
-        record.pathname = record.pathname[len_sys_path_match + 1 :]
+        record.pathname = record.pathname[max((len(p) for p in sys.path if basename.startswith(p)), default=-1) + 1 :]
 
         if record.levelno >= logging.ERROR:
             return self._error_formatter.format(record)
@@ -258,8 +261,7 @@ def setup_report(verbosity: int, is_colored: bool) -> ToxHandler:  # ruff:ignore
     level = _get_level(verbosity)
     LOGGER.setLevel(level)
     for name in ("distlib.util", "filelock"):
-        logger = logging.getLogger(name)
-        logger.disabled = True
+        logging.getLogger(name).disabled = True
     out_err: OutErr = cast("OutErr", (sys.stdout, sys.stderr))
     handler = ToxHandler(level, is_colored, out_err)
     LOGGER.addHandler(handler)
@@ -267,13 +269,13 @@ def setup_report(verbosity: int, is_colored: bool) -> ToxHandler:  # ruff:ignore
     return handler
 
 
-def _get_level(verbosity: int) -> int:
-    return LEVELS[min(verbosity, MAX_LEVEL)]
-
-
 def _clean_handlers(log: logging.Logger) -> None:
     for log_handler in list(log.handlers):  # remove handlers of libraries
         log.removeHandler(log_handler)
+
+
+def _get_level(verbosity: int) -> int:
+    return LEVELS[min(verbosity, _MAX_LEVEL)]
 
 
 class HandledError(RuntimeError):

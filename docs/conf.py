@@ -5,7 +5,7 @@ import re
 from importlib.machinery import SourceFileLoader
 from pathlib import Path
 from types import ModuleType
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Final
 
 from truststore import inject_into_ssl
 
@@ -21,13 +21,13 @@ if TYPE_CHECKING:
 company, name = "tox-dev", "tox"
 project = name
 release, version = __version__, ".".join(__version__.split(".")[:2])
-copyright = f"{company}"  # ruff:ignore[builtin-variable-shadowing]
-html_theme = "furo"
+copyright: Final[str] = f"{company}"  # ruff:ignore[builtin-variable-shadowing]
+html_theme: Final[str] = "furo"
 html_theme_options = {
     "sidebar_hide_name": True,
 }
 html_title, html_last_updated_fmt = "tox", "%Y-%m-%dT%H:%M:%S"
-html_show_sourcelink = False
+html_show_sourcelink: Final[bool] = False
 pygments_style, pygments_dark_style = "sphinx", "monokai"
 html_static_path, html_css_files = ["_static"], ["custom.css"]
 html_js_files = ["mermaid-reset.js"]
@@ -48,9 +48,9 @@ extensions = [
     "sphinxcontrib.towncrier.ext",
     "sphinx_reredirects",
 ]
-mermaid_output_format = "raw"
-mermaid_d3_zoom = True
-mermaid_height = "auto"
+mermaid_output_format: Final[str] = "raw"
+mermaid_d3_zoom: Final[bool] = True
+mermaid_height: Final[str] = "auto"
 
 exclude_patterns = ["_build", "changelog/*"]
 autodoc_member_order, autodoc_typehints = "bysource", "none"
@@ -58,8 +58,8 @@ autodoc_default_options = {
     "undoc-members": True,
     "show-inheritance": True,
 }
-autosectionlabel_prefix_document = True
-autosectionlabel_maxdepth = 2
+autosectionlabel_prefix_document: Final[bool] = True
+autosectionlabel_maxdepth: Final[int] = 2
 
 extlinks = {
     "discussion": ("https://github.com/tox-dev/tox/discussions/%s", "#%s"),
@@ -70,10 +70,10 @@ intersphinx_mapping = {
     "python": ("https://docs.python.org/3", None),
     "packaging": ("https://packaging.pypa.io/en/latest", None),
 }
-nitpicky = True
+nitpicky: Final[bool] = True
 # a private stdlib class we cannot document, the stdlib itself has no public name for it
 nitpick_ignore = [("py:class", "argparse._ArgumentGroup")]
-linkcheck_workers = 10
+linkcheck_workers: Final[int] = 10
 linkcheck_exclude_documents = [r"^index$"]
 linkcheck_ignore = [
     re.escape(i)
@@ -84,13 +84,13 @@ linkcheck_ignore = [
     )
 ]
 linkcheck_allowed_redirects = {r"https://github.com/tox-dev/tox/issues/\d+": r"https://github.com/tox-dev/tox/pull/\d+"}
-extlinks_detect_hardcoded_links = True
+extlinks_detect_hardcoded_links: Final[bool] = True
 
-issues_github_path = f"{company}/{name}"  # `sphinx-issues` ext
+issues_github_path: Final[str] = f"{company}/{name}"  # `sphinx-issues` ext
 
 # Man page configuration
 man_pages = [("man/tox.1", "tox", "virtualenv-based automation of test activities", [], 1)]
-man_show_urls = True
+man_show_urls: Final[bool] = True
 
 redirects = {
     "config": "reference/config.html",
@@ -120,8 +120,8 @@ redirects = {
     "example/unittest": "index.html",
 }
 
-towncrier_draft_autoversion_mode = "draft"
-towncrier_draft_include_empty = True
+towncrier_draft_autoversion_mode: Final[str] = "draft"
+towncrier_draft_include_empty: Final[bool] = True
 towncrier_draft_working_directory = Path(__file__).parent.parent
 
 

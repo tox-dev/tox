@@ -18,13 +18,6 @@ if TYPE_CHECKING:
     from _typeshed import StrPath
     from pytest_mock import MockerFixture
 
-_EXPECTED_CACHEDIR_TAG = """\
-Signature: 8a477f597d28d172789f06886806bc55
-# This file is a cache directory tag created by tox.
-# For information about cache directory tags, see:
-#\thttps://bford.info/cachedir/spec.html
-"""
-
 
 def test_ensure_cachedir_tag_creates_file(tmp_path: Path) -> None:
     ensure_cachedir_tag(tmp_path)
@@ -32,7 +25,13 @@ def test_ensure_cachedir_tag_creates_file(tmp_path: Path) -> None:
     assert tag.is_file()
     content = tag.read_text(encoding="utf-8")
     assert content.startswith("Signature: 8a477f597d28d172789f06886806bc55\n")
-    assert content == _EXPECTED_CACHEDIR_TAG
+    expected_cachedir_tag = """\
+Signature: 8a477f597d28d172789f06886806bc55
+# This file is a cache directory tag created by tox.
+# For information about cache directory tags, see:
+#\thttps://bford.info/cachedir/spec.html
+"""
+    assert content == expected_cachedir_tag
 
 
 def test_ensure_cachedir_tag_creates_parent_dirs(tmp_path: Path) -> None:
@@ -291,7 +290,7 @@ def test_ensure_gitignore_idempotent(tmp_path: Path) -> None:
 
 @pytest.fixture
 def windows_unlink(mocker: MockerFixture) -> set[str]:
-    """Names added to the returned set fail to unlink, like a file another process holds open."""
+    # Names added to the returned set fail to unlink, like a file another process holds open.
     mocker.patch.object(rmtree, "avoids_symlink_attacks", False)
     locked: Final[set[str]] = set()
     real_unlink: Final = os.unlink

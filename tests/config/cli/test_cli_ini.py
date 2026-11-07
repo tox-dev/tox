@@ -179,8 +179,7 @@ def test_conf_arg(tmp_path: Path, conf_arg: str, filename: str, content: str) ->
     dest = tmp_path / "c"
     dest.mkdir()
     if filename:
-        cfg = dest / filename
-        cfg.write_bytes(content.encode(encoding="utf-8"))
+        (dest / filename).write_bytes(content.encode(encoding="utf-8"))
 
     config_file = dest / conf_arg
     source = discover_source(config_file, None)

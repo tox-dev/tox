@@ -157,12 +157,10 @@ def test_define_custom_set(tox_project: ToxProjectCreator) -> None:
             self.add_config("a", of_type=int, default=0, desc="number")
             self.add_config("b", of_type=str, default="", desc="string")
 
-    project = tox_project({"tox.ini": "[testenv]\npackage=skip\n[A]\na=1\n[magic]\nb = ok"})
-    result = project.run()
+    result = tox_project({"tox.ini": "[testenv]\npackage=skip\n[A]\na=1\n[magic]\nb = ok"}).run()
     section = MagicConfigSet.SECTION
     conf = result.state.conf.get_section_config(section, base=["A"], of_type=MagicConfigSet, for_env=None)
-    assert conf["a"] == 1
-    assert conf["b"] == "ok"
+    assert (conf["a"], conf["b"]) == (1, "ok")
     exp = "MagicConfigSet(loaders=[IniLoader(section=magic, overrides={}), IniLoader(section=A, overrides={})])"
     assert repr(conf) == exp
 

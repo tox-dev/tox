@@ -30,8 +30,7 @@ EnvConfigCreator = Callable[[str], ConfigSet]
 @pytest.fixture
 def example(tox_ini_conf: ToxIniCreator) -> EnvConfigCreator:
     def func(conf: str) -> ConfigSet:
-        config = tox_ini_conf(f"""[tox]\nenv_list = a\n[testenv]\n{conf}\n""")
-        return config.get_env("a")
+        return tox_ini_conf(f"""[tox]\nenv_list = a\n[testenv]\n{conf}\n""").get_env("a")
 
     return func
 
@@ -497,8 +496,7 @@ def test_replace_ref_raw_value(tox_ini_conf: ToxIniCreator) -> None:
             if value != "magic":
                 raise ValueError(value)
 
-    conf_b = config.get_env("b")
-    conf_b.add_config(keys="v", of_type=BadType, default=BadType("magic"), desc="p")
+    config.get_env("b").add_config(keys="v", of_type=BadType, default=BadType("magic"), desc="p")
 
     conf_a = config.get_env("a")
     conf_a.add_config(keys="x", of_type=str, default="o", desc="o")
@@ -526,7 +524,7 @@ def test_replace_ref_raw_value(tox_ini_conf: ToxIniCreator) -> None:
     ],
 )
 def test_do_not_replace(replace_one: ReplaceOne, start: str, end: str) -> None:
-    """If we have a factor that is not specified within the core env-list then that's also an environment"""
+    # If we have a factor that is not specified within the core env-list then that's also an environment
     value = replace_one(start)
     assert value == end
 
@@ -606,7 +604,7 @@ def test_replace_valid_section_names(tox_ini_conf: ToxIniCreator, env_name: str,
     ],
 )
 def test_override_propagates_through_section_ref(tox_ini_conf: ToxIniCreator, override: str, expected: str) -> None:
-    """An override on a base section propagates through a ``{[section]key}`` reference (#3950)."""
+    # An override on a base section propagates through a ``{[section]key}`` reference (#3950).
     config = tox_ini_conf(
         dedent("""
             [testenv]

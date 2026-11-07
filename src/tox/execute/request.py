@@ -65,15 +65,15 @@ class ExecuteRequest:
             allow = None  # if we allow everything we can just disable the check
         self.allow = allow
 
+    @override
+    def __repr__(self) -> str:
+        cmd: Final = redact_argv(self.cmd)
+        return f"{self.__class__.__name__}(cmd={cmd!r}, cwd={self.cwd!r}, env=..., stdin={self.stdin!r})"
+
     @property
     def shell_cmd(self) -> str:
         """:returns: the command to run as a shell command"""
         return self._shell_cmd(redact=False)
-
-    @property
-    def shell_cmd_redacted(self) -> str:
-        """:returns: the command with URL userinfo and secret-looking inline flag values masked"""
-        return self._shell_cmd(redact=True)
 
     def _shell_cmd(self, *, redact: bool) -> str:
         try:
@@ -85,10 +85,10 @@ class ExecuteRequest:
             cmd = redact_argv(cmd)
         return shell_cmd(cmd)
 
-    @override
-    def __repr__(self) -> str:
-        cmd: Final = redact_argv(self.cmd)
-        return f"{self.__class__.__name__}(cmd={cmd!r}, cwd={self.cwd!r}, env=..., stdin={self.stdin!r})"
+    @property
+    def shell_cmd_redacted(self) -> str:
+        """:returns: the command with URL userinfo and secret-looking inline flag values masked"""
+        return self._shell_cmd(redact=True)
 
 
 def shell_cmd(cmd: Sequence[str]) -> str:

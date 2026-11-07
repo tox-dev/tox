@@ -52,8 +52,7 @@ def test_install_pkg_file_uri(tmp_path: Path) -> None:
 
 def test_install_pkg_file_uri_percent_encoded(tmp_path: Path) -> None:
     argument_parser = ArgumentParser()
-    name = "pkg+extra-1.0.whl"
-    path = tmp_path / name
+    path = tmp_path / "pkg+extra-1.0.whl"
     path.write_text("")
     # Build a file: URI with percent-encoded '+' in the filename
     if sys.platform == "win32":
@@ -106,8 +105,7 @@ def test_install_pkg_empty() -> None:
 
 
 def test_empty_report(tox_project: ToxProjectCreator) -> None:
-    proj = tox_project({"tox.ini": ""})
-    outcome = proj.run("exec", "-qq", "--", "python", "-c", "print('foo')")
+    outcome = tox_project({"tox.ini": ""}).run("exec", "-qq", "--", "python", "-c", "print('foo')")
 
     outcome.assert_success()
     outcome.assert_out_err(f"foo{os.linesep}", "")

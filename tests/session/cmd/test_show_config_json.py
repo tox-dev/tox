@@ -27,30 +27,26 @@ def test_basic_structure(tox_project: ToxProjectCreator, fmt: str, loader: Calla
     result = project.run("c", "-e", "py", "--format", fmt)
     result.assert_success()
     env = loader(result.out)["env"]["py"]
-    assert env["type"] == "VirtualEnvRunner"
-    assert env["env_name"] == "py"
+    assert (env["type"], env["env_name"]) == ("VirtualEnvRunner", "py")
 
 
 @pytest.mark.parametrize(("fmt", "loader"), _FORMATS)
 def test_core_with_flag(tox_project: ToxProjectCreator, fmt: str, loader: Callable[[str], Any]) -> None:
-    project = tox_project({"tox.ini": "[tox]\nno_package = true"})
-    result = project.run("c", "-e", "py", "--core", "--format", fmt)
+    result = tox_project({"tox.ini": "[tox]\nno_package = true"}).run("c", "-e", "py", "--core", "--format", fmt)
     result.assert_success()
     assert "tox_root" in loader(result.out)["tox"]
 
 
 @pytest.mark.parametrize(("fmt", "loader"), _FORMATS)
 def test_no_core_by_default(tox_project: ToxProjectCreator, fmt: str, loader: Callable[[str], Any]) -> None:
-    project = tox_project({"tox.ini": "[tox]\nno_package = true"})
-    result = project.run("c", "-e", "py", "--format", fmt)
+    result = tox_project({"tox.ini": "[tox]\nno_package = true"}).run("c", "-e", "py", "--format", fmt)
     result.assert_success()
     assert "tox" not in loader(result.out)
 
 
 @pytest.mark.parametrize(("fmt", "loader"), _FORMATS)
 def test_core_with_all_envs(tox_project: ToxProjectCreator, fmt: str, loader: Callable[[str], Any]) -> None:
-    project = tox_project({"tox.ini": "[tox]\nno_package = true\nenv_list = py"})
-    result = project.run("c", "-e", "ALL", "--format", fmt)
+    result = tox_project({"tox.ini": "[tox]\nno_package = true\nenv_list = py"}).run("c", "-e", "ALL", "--format", fmt)
     result.assert_success()
     assert "tox" in loader(result.out)
 
@@ -88,8 +84,7 @@ def test_multiple_envs(tox_project: ToxProjectCreator, fmt: str, loader: Callabl
 
 @pytest.mark.parametrize(("fmt", "loader"), _FORMATS)
 def test_unused_keys(tox_project: ToxProjectCreator, fmt: str, loader: Callable[[str], Any]) -> None:
-    project = tox_project({"tox.ini": "[testenv:py]\nmagical = yes\nmagic = yes"})
-    result = project.run("c", "-e", "py", "--format", fmt)
+    result = tox_project({"tox.ini": "[testenv:py]\nmagical = yes\nmagic = yes"}).run("c", "-e", "py", "--format", fmt)
     result.assert_success()
     assert sorted(loader(result.out)["env"]["py"]["unused"]) == ["magic", "magical"]
 
@@ -116,8 +111,7 @@ def test_output_to_file(tox_project: ToxProjectCreator, fmt: str, loader: Callab
 def test_file_output_no_ansi(tox_project: ToxProjectCreator, fmt: str, tmp_path: Path) -> None:
     out_file = tmp_path / f"config.{fmt}"
     project = tox_project({"tox.ini": "[tox]\nno_package = true"})
-    result = project.run("c", "-e", "py", "--format", fmt, "-o", str(out_file))
-    result.assert_success()
+    project.run("c", "-e", "py", "--format", fmt, "-o", str(out_file)).assert_success()
     assert "\x1b[" not in out_file.read_text()
 
 
@@ -127,8 +121,7 @@ def test_set_env(tox_project: ToxProjectCreator, fmt: str, loader: Callable[[str
     result = project.run("c", "-e", "py", "--format", fmt, "-k", "set_env")
     result.assert_success()
     se = loader(result.out)["env"]["py"]["set_env"]
-    assert se["A"] == "1"
-    assert se["B"] == "hello"
+    assert (se["A"], se["B"]) == ("1", "hello")
 
 
 @pytest.mark.parametrize(("fmt", "loader"), _FORMATS)
@@ -168,8 +161,7 @@ def test_json_alias_key(tox_project: ToxProjectCreator) -> None:
 @pytest.mark.parametrize("fmt", [pytest.param("json", id="json"), pytest.param("toml", id="toml")])
 def test_key_filter_skips_missing(tox_project: ToxProjectCreator, fmt: str) -> None:
     project = tox_project({"tox.ini": "[tox]\nno_package = true"})
-    result = project.run("c", "-e", "py", "--format", fmt, "-k", "no_such_key")
-    result.assert_success()
+    project.run("c", "-e", "py", "--format", fmt, "-k", "no_such_key").assert_success()
 
 
 def test_core_exception_json(tox_project: ToxProjectCreator) -> None:

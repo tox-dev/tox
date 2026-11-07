@@ -19,7 +19,12 @@ if TYPE_CHECKING:
 
 
 class State:
-    """Runtime state holder."""
+    """Runtime state holder.
+
+    :param options:
+    :param args:
+    :ivar conf:
+    """
 
     def __init__(self, options: Options, args: Sequence[str]) -> None:
         (extended_envs,) = tee(chain.from_iterable(MANAGER.tox_extend_envs()), 1)
@@ -53,3 +58,8 @@ def tox_add_option(parser: ToxParser) -> None:
         default=REGISTER.default_env_runner,
         choices=list(REGISTER.env_runners),
     )
+
+
+__all__ = [
+    "State",
+]

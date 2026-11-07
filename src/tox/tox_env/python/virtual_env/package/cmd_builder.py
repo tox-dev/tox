@@ -94,8 +94,7 @@ class VenvCmdBuilder(PythonPackageToxEnv, ABC):
             return Path(path)
         chdir = self.conf.get("change_dir", Path)
         chdir.mkdir(exist_ok=True, parents=True)
-        ignore_errors = self.conf.get("ignore_errors", bool)
-        if run_command_set(self, "commands", chdir, ignore_errors, []) != Outcome.OK:
+        if run_command_set(self, "commands", chdir, self.conf.get("ignore_errors", bool), []) != Outcome.OK:
             msg = "stopping as failed to build package"
             raise Fail(msg)
         package_glob = self.conf["package_glob"]
@@ -178,20 +177,6 @@ class WheelDistribution(Distribution):  # cannot subclass has type Any
         self._wheel = wheel
         self._dist_name: str | None = None
 
-    @property
-    def dist_name(self) -> str:
-        if self._dist_name is None:
-            with ZipFile(self._wheel) as zip_file:
-                for name in zip_file.namelist():
-                    root = name.split("/")[0]
-                    if root.endswith(".dist-info"):
-                        self._dist_name = root
-                        break
-                else:
-                    msg = f"no .dist-info inside {self._wheel}"
-                    raise Fail(msg)
-        return self._dist_name
-
     @cached_property
     @override
     def metadata(self) -> PackageMetadata:
@@ -214,6 +199,20 @@ class WheelDistribution(Distribution):  # cannot subclass has type Any
             with TextIOWrapper(zip_file.open(info), encoding="utf-8") as file_handler:
                 return file_handler.read()
 
+    @property
+    def dist_name(self) -> str:
+        if self._dist_name is None:
+            with ZipFile(self._wheel) as zip_file:
+                for name in zip_file.namelist():
+                    root = name.split("/")[0]
+                    if root.endswith(".dist-info"):
+                        self._dist_name = root
+                        break
+                else:
+                    msg = f"no .dist-info inside {self._wheel}"
+                    raise Fail(msg)
+        return self._dist_name
+
     @override
     def locate_file(self, path: str | PathLike[str]) -> Path:
         return self._wheel / path  # pragma: no cover # not used by us, but part of the ABC
@@ -226,5 +225,4 @@ def tox_register_tox_env(register: ToxEnvRegister) -> None:
 
 __all__ = [
     "VenvCmdBuilder",
-    "VirtualEnvCmdBuilder",
 ]

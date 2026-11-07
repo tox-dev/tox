@@ -26,7 +26,12 @@ if TYPE_CHECKING:
 
 
 class IniSource(Source):
-    """Configuration sourced from a ini file (such as tox.ini)."""
+    """Configuration sourced from a ini file (such as tox.ini).
+
+    :param path:
+    :param content:
+    :cvar CORE_SECTION:
+    """
 
     CORE_SECTION = CORE
 
@@ -50,11 +55,6 @@ class IniSource(Source):
     @override
     def transform_section(self, section: Section) -> Section:
         return IniSection(section.prefix, section.name)
-
-    @override
-    def sections(self) -> Iterator[IniSection]:
-        for section in self._parser.sections():
-            yield IniSection.from_key(section)
 
     @override
     def get_loader(self, section: Section, override_map: OverrideMap) -> IniLoader | None:
@@ -119,6 +119,11 @@ class IniSource(Source):
         for section in self.sections():
             if self._is_tox_section(section):
                 yield from self._discover_from_section(section, known_factors)
+
+    @override
+    def sections(self) -> Iterator[IniSection]:
+        for section in self._parser.sections():
+            yield IniSection.from_key(section)
 
     def _is_tox_section(self, section: IniSection) -> bool:
         if section.is_test_env or section == self.CORE_SECTION:

@@ -13,7 +13,7 @@ if TYPE_CHECKING:
 
 
 def test_legacy_env_name_matches_command(tox_project: ToxProjectCreator, mocker: MockerFixture) -> None:
-    """An env selected via -e whose name matches a subcommand must not be parsed as that command."""
+    # An env selected via -e whose name matches a subcommand must not be parsed as that command.
     run_sequential = mocker.patch("tox.session.cmd.legacy.run_sequential", return_value=0)
 
     outcome = tox_project({"tox.toml": 'env_list = ["list"]'}).run("-e", "list")
@@ -69,7 +69,7 @@ def test_legacy_list_default(tox_project: ToxProjectCreator, mocker: MockerFixtu
     ],
 )
 def test_legacy_list_env_with_empty_or_missing_env_list(tox_project: ToxProjectCreator, configuration: str) -> None:
-    """we want to stay backwards compatible with tox 3 and show no output"""
+    # we want to stay backwards compatible with tox 3 and show no output
     outcome = tox_project({"tox.ini": configuration}).run("le", "-l")
 
     outcome.assert_success()
@@ -143,7 +143,7 @@ def test_legacy_run_sequential(tox_project: ToxProjectCreator, mocker: MockerFix
 def test_legacy_run_sequential_ci(
     tox_project: ToxProjectCreator, mocker: MockerFixture, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """Test legacy run sequential in CI by default."""
+    # Test legacy run sequential in CI by default.
     run_sequential = mocker.patch("tox.session.cmd.legacy.run_sequential")
     monkeypatch.setenv("CI", "1")
 
@@ -163,8 +163,7 @@ def test_legacy_no_spinner_does_not_suppress_output(
 
 
 def test_legacy_help(tox_project: ToxProjectCreator) -> None:
-    outcome = tox_project({"tox.ini": ""}).run("le", "-h")
-    outcome.assert_success()
+    tox_project({"tox.ini": ""}).run("le", "-h").assert_success()
 
 
 def test_legacy_cli_flags(tox_project: ToxProjectCreator, mocker: MockerFixture) -> None:
@@ -183,13 +182,11 @@ def test_legacy_cli_flags(tox_project: ToxProjectCreator, mocker: MockerFixture)
     interpreter.version_info.releaselevel = "final"
     interpreter.version_info.serial = 0
     virtualenv_session = mocker.patch("tox.tox_env.python.virtual_env.api.session_via_cli", return_value=session)
-    ini = "[testenv]\ndeps = p>6\n c\n -rr.txt\npackage=skip\nset_env = PIP_PRE = 0"
-    proj = tox_project({"tox.ini": ini})
+    proj = tox_project({"tox.ini": "[testenv]\ndeps = p>6\n c\n -rr.txt\npackage=skip\nset_env = PIP_PRE = 0"})
     (proj.path / "r.txt").write_text("d")
     execute_calls = proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
     args = ["--pre", "--force-dep", "p<1", "--force-dep", "b>2", "--sitepackages", "--alwayscopy"]
-    result = proj.run("le", "-e", "py", *args)
-    result.assert_success()
+    proj.run("le", "-e", "py", *args).assert_success()
 
     calls = [(i[0][0].conf.name, i[0][3].run_id, i[0][3].cmd[5:]) for i in execute_calls.call_args_list]
     assert calls[0] == ("py", "install_deps", ["c", "p<1", "-r", "r.txt", "b>2"])
@@ -198,8 +195,7 @@ def test_legacy_cli_flags(tox_project: ToxProjectCreator, mocker: MockerFixture)
             assert call[0][3].env["PIP_PRE"] == "1"
     assert len(virtualenv_session.call_args_list) == 1
     v_env = virtualenv_session.call_args_list[0][1]["env"]
-    assert v_env["VIRTUALENV_SYSTEM_SITE_PACKAGES"] == "True"
-    assert v_env["VIRTUALENV_COPIES"] == "True"
+    assert (v_env["VIRTUALENV_SYSTEM_SITE_PACKAGES"], v_env["VIRTUALENV_COPIES"]) == ("True", "True")
 
 
 def test_legacy_force_dep_matches_normalized_name(tox_project: ToxProjectCreator) -> None:

@@ -9,7 +9,11 @@ if TYPE_CHECKING:
 
 
 class Section:  # ruff:ignore[eq-without-hash]
-    """tox configuration section."""
+    """tox configuration section.
+
+    :param prefix:
+    :param name:
+    """
 
     SEP = ":"  #: string used to separate the prefix and the section in the key
 
@@ -26,31 +30,20 @@ class Section:  # ruff:ignore[eq-without-hash]
         :returns: the constructed section
 
         """
-        sep_at = key.find(cls.SEP)
-        if sep_at == -1:
+        if (sep_at := key.find(cls.SEP)) == -1:
             prefix, name = None, key
         else:
             prefix, name = key[:sep_at], key[sep_at + 1 :]
         return cls(prefix, name)
 
-    @property
-    def prefix(self) -> str | None:
-        """:returns: the prefix of the section"""
-        return self._prefix
-
-    @property
-    def name(self) -> str:
-        """:returns: the name of the section"""
-        return self._name
+    @override
+    def __str__(self) -> str:
+        return self.key
 
     @property
     def key(self) -> str:
         """:returns: the section key"""
         return self.SEP.join(i for i in (self._prefix, self._name) if i is not None)
-
-    @override
-    def __str__(self) -> str:
-        return self.key
 
     @override
     def __repr__(self) -> str:
@@ -62,6 +55,16 @@ class Section:  # ruff:ignore[eq-without-hash]
             other._prefix,
             other.name,
         )
+
+    @property
+    def prefix(self) -> str | None:
+        """:returns: the prefix of the section"""
+        return self._prefix
+
+    @property
+    def name(self) -> str:
+        """:returns: the name of the section"""
+        return self._name
 
 
 __all__ = [

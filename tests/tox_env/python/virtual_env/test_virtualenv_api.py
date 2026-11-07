@@ -134,18 +134,6 @@ def test_virtualenv_env_ignored_if_set(
     run_and_check_set(proj, virtualenv_opt)
 
 
-def test_virtualenv_env_used_if_not_set(
-    tox_project: ToxProjectCreator,
-    virtualenv_opt: VirtualEnvOptions,
-    monkeypatch: MonkeyPatch,
-) -> None:
-    proj = tox_project({"tox.ini": "[testenv]\npackage=skip"})
-    monkeypatch.setenv("VIRTUALENV_COPIES", "1")
-    monkeypatch.setenv("VIRTUALENV_DOWNLOAD", "1")
-    monkeypatch.setenv("VIRTUALENV_SYSTEM_SITE_PACKAGES", "1")
-    run_and_check_set(proj, virtualenv_opt)
-
-
 def run_and_check_set(proj: ToxProject, virtualenv_opt: VirtualEnvOptions) -> None:
     result = proj.run("r", "-e", "py")
     result.assert_success()
@@ -159,14 +147,24 @@ def run_and_check_set(proj: ToxProject, virtualenv_opt: VirtualEnvOptions) -> No
         assert virtualenv_opt.copies is True
 
 
+def test_virtualenv_env_used_if_not_set(
+    tox_project: ToxProjectCreator,
+    virtualenv_opt: VirtualEnvOptions,
+    monkeypatch: MonkeyPatch,
+) -> None:
+    proj = tox_project({"tox.ini": "[testenv]\npackage=skip"})
+    monkeypatch.setenv("VIRTUALENV_COPIES", "1")
+    monkeypatch.setenv("VIRTUALENV_DOWNLOAD", "1")
+    monkeypatch.setenv("VIRTUALENV_SYSTEM_SITE_PACKAGES", "1")
+    run_and_check_set(proj, virtualenv_opt)
+
+
 def test_honor_set_env_for_clear_periodic_update(
     tox_project: ToxProjectCreator,
     virtualenv_opt: VirtualEnvOptions,
 ) -> None:
     ini = "[testenv]\npackage=skip\nset_env=\n  VIRTUALENV_CLEAR=0\n  VIRTUALENV_NO_PERIODIC_UPDATE=0"
-    proj = tox_project({"tox.ini": ini})
-    result = proj.run("r", "-e", "py")
-    result.assert_success()
+    tox_project({"tox.ini": ini}).run("r", "-e", "py").assert_success()
 
     assert virtualenv_opt.clear is False
     assert virtualenv_opt.no_periodic_update is False
@@ -208,8 +206,7 @@ def test_install_command_no_packages(tox_project: ToxProjectCreator, disable_pip
     install_cmd = "python -m pip install -i {env:PIP_INDEX_URL}"
     proj = tox_project({"tox.ini": f"[testenv]\npackage=skip\ninstall_command={install_cmd}\npip_pre=true\ndeps=magic"})
     execute_calls = proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
-    result = proj.run("r")
-    result.assert_success()
+    proj.run("r").assert_success()
     request: ExecuteRequest = execute_calls.call_args[0][3]
     found_cmd = request.cmd
     assert found_cmd == ["python", "-m", "pip", "install", "-i", disable_pip_pypi_access[0], "--pre", "magic"]
@@ -217,11 +214,9 @@ def test_install_command_no_packages(tox_project: ToxProjectCreator, disable_pip
 
 @pytest.mark.slow
 def test_list_dependencies_command(tox_project: ToxProjectCreator) -> None:
-    install_cmd = "python -m pip freeze"
-    proj = tox_project({"tox.ini": f"[testenv]\npackage=skip\nlist_dependencies_command={install_cmd}"})
+    proj = tox_project({"tox.ini": f"[testenv]\npackage=skip\nlist_dependencies_command={'python -m pip freeze'}"})
     execute_calls = proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
-    result = proj.run("r", "--result-json", str(proj.path / "out.json"))
-    result.assert_success()
+    proj.run("r", "--result-json", str(proj.path / "out.json")).assert_success()
     request: ExecuteRequest = execute_calls.call_args[0][3]
     assert request.cmd == ["python", "-m", "pip", "freeze"]
 
@@ -330,8 +325,7 @@ def test_get_python_returns_none_when_system_executable_missing(
         new_callable=PropertyMock,
         return_value=MagicMock(interpreter=MagicMock(system_executable=None)),
     )
-    proj = tox_project({"tox.ini": "[testenv]\npackage=skip\nbase_python=missing-interp"})
-    result = proj.run("r")
+    result = tox_project({"tox.ini": "[testenv]\npackage=skip\nbase_python=missing-interp"}).run("r")
     result.assert_failed()
     assert "could not find python interpreter" in result.out
 

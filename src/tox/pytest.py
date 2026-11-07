@@ -13,7 +13,7 @@ import warnings
 from contextlib import closing, contextmanager
 from pathlib import Path
 from types import FunctionType, ModuleType, TracebackType
-from typing import TYPE_CHECKING, Any, Protocol, cast
+from typing import TYPE_CHECKING, Any, Final, Protocol, cast
 
 import pytest
 from _pytest.fixtures import SubRequest  # ruff:ignore[import-private-name]
@@ -21,16 +21,17 @@ from devpi_process import IndexServer
 from virtualenv.info import fs_supports_symlink
 
 import tox.run
-from tox.execute.api import Execute, ExecuteInstance, ExecuteOptions, ExecuteStatus, FinishedExecuteStatus, Outcome
-from tox.execute.request import ExecuteRequest, shell_cmd
-from tox.plugin import manager
-from tox.report import LOGGER, OutErr
-from tox.run import run as tox_run
-from tox.run import setup_state as previous_setup_state
-from tox.session.cmd.run.parallel import ENV_VAR_KEY
-from tox.tox_env import api as tox_env_api
-from tox.tox_env.api import ToxEnv
-from tox.util.typing_compat import override
+
+from .execute.api import Execute, ExecuteInstance, ExecuteOptions, ExecuteStatus, FinishedExecuteStatus, Outcome
+from .execute.request import ExecuteRequest, shell_cmd
+from .plugin import manager
+from .report import LOGGER, OutErr
+from .run import run as tox_run
+from .run import setup_state as previous_setup_state
+from .session.cmd.run.parallel import ENV_VAR_KEY
+from .tox_env import api as tox_env_api
+from .tox_env.api import ToxEnv
+from .util.typing_compat import override
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Generator, Iterator, Sequence
@@ -38,9 +39,9 @@ if TYPE_CHECKING:
 
     from pytest_mock import MockerFixture
 
-    from tox.config.sets import EnvConfigSet
-    from tox.execute.stream import SyncWrite
-    from tox.session.state import State
+    from .config.sets import EnvConfigSet
+    from .execute.stream import SyncWrite
+    from .session.state import State
 
     CaptureFixture = pytest.CaptureFixture[str]
 else:
@@ -63,7 +64,7 @@ def ensure_logging_framework_not_altered() -> Iterator[None]:
 
 @pytest.fixture(autouse=True)
 def _disable_root_tox_py(request: SubRequest, mocker: MockerFixture) -> Iterator[None]:
-    """Unless this is a plugin test do not allow loading toxfile.py."""
+    # Unless this is a plugin test do not allow loading toxfile.py.
     if request.node.get_closest_marker("plugin_test"):  # unregister inline plugin
         module, load_inline = None, manager._load_inline  # ruff:ignore[private-member-access]
 
@@ -79,6 +80,13 @@ def _disable_root_tox_py(request: SubRequest, mocker: MockerFixture) -> Iterator
     else:  # do not allow loading inline plugins
         mocker.patch("tox.plugin.inline._load_plugin", return_value=None)
         yield
+
+
+@pytest.fixture(autouse=True)
+def check_os_environ_stable(monkeypatch: pytest.MonkeyPatch) -> Iterator[None]:
+    with check_os_environ():
+        yield
+        monkeypatch.undo()
 
 
 @contextmanager
@@ -115,13 +123,6 @@ def check_os_environ() -> Generator[None, None, None]:
             if diff:
                 msg += f" diff {diff}"
             pytest.fail(msg)
-
-
-@pytest.fixture(autouse=True)
-def check_os_environ_stable(monkeypatch: pytest.MonkeyPatch) -> Iterator[None]:
-    with check_os_environ():
-        yield
-        monkeypatch.undo()
 
 
 @pytest.fixture(autouse=True)
@@ -168,6 +169,22 @@ class ToxProject:
             else:
                 msg = f"could not handle {at_path / key} with content {value!r}"  # pragma: no cover
                 raise TypeError(msg)  # pragma: no cover
+
+    @override
+    def __repr__(self) -> str:
+        return f"{type(self).__name__}(path={self.path}) at {id(self)}"
+
+    @property
+    def structure(self) -> dict[str, Any]:
+        result: dict[str, Any] = {}
+        for dir_name, _, files in os.walk(str(self.path)):
+            dir_path = Path(dir_name)
+            into = result
+            for elem in dir_path.relative_to(str(self.path)).parts:
+                into = into.setdefault(elem, {})
+            for file_name in files:
+                into[file_name] = (dir_path / file_name).read_text()
+        return result
 
     def patch_execute(self, handle: Callable[[ExecuteRequest], int | None] | None = None) -> MagicMock:
         class MockExecute(Execute):
@@ -223,36 +240,13 @@ class ToxProject:
             request: ExecuteRequest,
             show: bool,  # ruff:ignore[boolean-type-hint-positional-argument]
         ) -> Generator[ExecuteStatus, None, None]:
-            exit_code = 0 if handle is None else handle(request)
-            if exit_code is not None:
+            if (exit_code := 0 if handle is None else handle(request)) is not None:
                 executor = MockExecute(colored=executor._colored, exit_code=exit_code)  # ruff:ignore[private-member-access]
             with original_execute_call(self, executor, out_err, request, show) as status:
                 yield status
 
         original_execute_call = ToxEnv._execute_call  # ruff:ignore[private-member-access]
         return self.mocker.patch.object(ToxEnv, "_execute_call", side_effect=_execute_call, autospec=True)
-
-    @property
-    def structure(self) -> dict[str, Any]:
-        result: dict[str, Any] = {}
-        for dir_name, _, files in os.walk(str(self.path)):
-            dir_path = Path(dir_name)
-            into = result
-            relative = dir_path.relative_to(str(self.path))
-            for elem in relative.parts:
-                into = into.setdefault(elem, {})
-            for file_name in files:
-                into[file_name] = (dir_path / file_name).read_text()
-        return result
-
-    @contextmanager
-    def chdir(self, to: Path | None = None) -> Generator[None, None, None]:
-        cur_dir = Path.cwd()
-        os.chdir(to or self.path)
-        try:
-            yield
-        finally:
-            os.chdir(cur_dir)
 
     def run(self, *args: str, from_cwd: Path | None = None, raise_on_config_fail: bool = True) -> ToxRunOutcome:
         if raise_on_config_fail and args and args[0] in {"c", "config"}:
@@ -287,9 +281,14 @@ class ToxProject:
             out, err = self._capfd.readouterr()
             return ToxRunOutcome(args, self.path, cast("int", code), out, err, state)
 
-    @override
-    def __repr__(self) -> str:
-        return f"{type(self).__name__}(path={self.path}) at {id(self)}"
+    @contextmanager
+    def chdir(self, to: Path | None = None) -> Generator[None, None, None]:
+        cur_dir = Path.cwd()
+        os.chdir(to or self.path)
+        try:
+            yield
+        finally:
+            os.chdir(cur_dir)
 
 
 @pytest.fixture(autouse=True, scope="session")
@@ -300,7 +299,7 @@ def enable_pep517_backend_coverage() -> Iterator[None]:
         yield  # pragma: no cover
         return  # pragma: no cover
     # the COV_ env variables needs to be passed on for the PEP-517 backend
-    from tox.tox_env.python.virtual_env.package.pyproject import (  # ruff:ignore[import-outside-top-level]
+    from .tox_env.python.virtual_env.package.pyproject import (  # ruff:ignore[import-outside-top-level]
         Pep517VirtualEnvPackager,
     )
 
@@ -335,27 +334,6 @@ class ToxRunOutcome:
         self.err: str = err
         self._state: State | None = state
 
-    @property
-    def state(self) -> State:
-        if self._state is None:
-            msg = "no state"
-            raise RuntimeError(msg)
-        return self._state
-
-    def env_conf(self, name: str) -> EnvConfigSet:
-        return self.state.conf.get_env(name)
-
-    @property
-    def success(self) -> bool:
-        return self.code == Outcome.OK
-
-    def assert_success(self) -> None:
-        assert self.success, repr(self)  # ruff:ignore[assert]
-
-    def assert_failed(self, code: int | None = None) -> None:
-        status_match = self.code != 0 if code is None else self.code == code
-        assert status_match, f"should be {code}, got {self}"  # ruff:ignore[assert]
-
     @override
     def __repr__(self) -> str:
         return "\n".join(
@@ -373,6 +351,27 @@ class ToxRunOutcome:
     @property
     def shell_cmd(self) -> str:
         return shell_cmd(self.cmd)
+
+    def env_conf(self, name: str) -> EnvConfigSet:
+        return self.state.conf.get_env(name)
+
+    @property
+    def state(self) -> State:
+        if self._state is None:
+            msg = "no state"
+            raise RuntimeError(msg)
+        return self._state
+
+    def assert_success(self) -> None:
+        assert self.success, repr(self)  # ruff:ignore[assert]
+
+    @property
+    def success(self) -> bool:
+        return self.code == Outcome.OK
+
+    def assert_failed(self, code: int | None = None) -> None:
+        status_match = self.code != 0 if code is None else self.code == code
+        assert status_match, f"should be {code}, got {self}"  # ruff:ignore[assert]
 
     def assert_out_err(self, out: str, err: str, *, dedent: bool = True, regex: bool = False) -> None:
         if dedent:
@@ -418,7 +417,6 @@ def init_fixture(
     mocker: MockerFixture,
 ) -> ToxProjectCreator:
     def _init(files: dict[str, Any], base: Path | None = None, prj_path: Path | None = None) -> ToxProject:
-        """Create tox projects."""
         return ToxProject(files, base, prj_path or tmp_path / "p", capfd, monkeypatch, mocker)
 
     return _init
@@ -431,7 +429,7 @@ def empty_project(tox_project: ToxProjectCreator, monkeypatch: pytest.MonkeyPatc
     return project
 
 
-_RUN_INTEGRATION_TEST_FLAG = "--run-integration"
+_RUN_INTEGRATION_TEST_FLAG: Final[str] = "--run-integration"
 
 
 def pytest_addoption(parser: pytest.Parser) -> None:
@@ -454,8 +452,7 @@ def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Func
     def is_integration(test_item: pytest.Function) -> bool:
         return test_item.get_closest_marker("integration") is not None
 
-    integration_enabled = config.getoption(_RUN_INTEGRATION_TEST_FLAG)
-    if not integration_enabled:  # pragma: no cover # hard to test
+    if not config.getoption(_RUN_INTEGRATION_TEST_FLAG):  # pragma: no cover # hard to test
         for item in items:
             if is_integration(item):
                 item.add_marker(skip_int)
@@ -463,20 +460,10 @@ def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Func
     items.sort(key=is_integration)
 
 
-def enable_pypi_server(monkeypatch: pytest.MonkeyPatch, url: str | None) -> None:
-    if url is None:  # pragma: no cover # only one of the branches can be hit depending on env
-        monkeypatch.delenv("PIP_INDEX_URL", raising=False)
-    else:  # pragma: no cover
-        monkeypatch.setenv("PIP_INDEX_URL", url)
-    monkeypatch.setenv("PIP_RETRIES", str(5))
-    monkeypatch.setenv("PIP_TIMEOUT", str(2))
-
-
 @pytest.fixture(scope="session")
 def pypi_server(tmp_path_factory: pytest.TempPathFactory) -> Iterator[IndexServer]:
     # takes around 2.5s
-    path = tmp_path_factory.mktemp("pypi")
-    with IndexServer(path) as server:
+    with IndexServer(tmp_path_factory.mktemp("pypi")) as server:
         server.create_index("empty", "volatile=False")
         yield server
 
@@ -490,7 +477,7 @@ def _invalid_index_fake_port() -> int:
 
 @pytest.fixture(autouse=True)
 def disable_pip_pypi_access(_invalid_index_fake_port: int, monkeypatch: pytest.MonkeyPatch) -> tuple[str, str | None]:
-    """Set a fake pip index url, tests that want to use a pypi server should create and overwrite this."""
+    # Set a fake pip index url, tests that want to use a pypi server should create and overwrite this.
     previous_url = os.environ.get("PIP_INDEX_URL")
     new_url = f"http://localhost:{_invalid_index_fake_port}/bad-pypi-server"
     monkeypatch.setenv("PIP_INDEX_URL", new_url)
@@ -504,10 +491,19 @@ def enable_pip_pypi_access_fixture(
     disable_pip_pypi_access: tuple[str, str | None],
     monkeypatch: pytest.MonkeyPatch,
 ) -> str | None:
-    """Set a fake pip index url, tests that want to use a pypi server should create and overwrite this."""
+    # Set a fake pip index url, tests that want to use a pypi server should create and overwrite this.
     _, previous_url = disable_pip_pypi_access
-    enable_pypi_server(monkeypatch, previous_url)
+    _enable_pypi_server(monkeypatch, previous_url)
     return previous_url
+
+
+def _enable_pypi_server(monkeypatch: pytest.MonkeyPatch, url: str | None) -> None:
+    if url is None:  # pragma: no cover # only one of the branches can be hit depending on env
+        monkeypatch.delenv("PIP_INDEX_URL", raising=False)
+    else:  # pragma: no cover
+        monkeypatch.setenv("PIP_INDEX_URL", url)
+    monkeypatch.setenv("PIP_RETRIES", str(5))
+    monkeypatch.setenv("PIP_TIMEOUT", str(2))
 
 
 def register_inline_plugin(mocker: MockerFixture, *args: FunctionType) -> None:
@@ -525,7 +521,7 @@ LogCaptureFixture = pytest.LogCaptureFixture
 TempPathFactory = pytest.TempPathFactory
 MonkeyPatch = pytest.MonkeyPatch
 
-__all__ = (
+__all__ = [
     "CaptureFixture",
     "LogCaptureFixture",
     "MonkeyPatch",
@@ -536,4 +532,4 @@ __all__ = (
     "ToxRunOutcome",
     "check_os_environ",
     "register_inline_plugin",
-)
+]

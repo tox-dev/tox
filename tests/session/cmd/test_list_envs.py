@@ -90,8 +90,7 @@ def test_list_env_package_env_before_run(tox_project: ToxProjectCreator) -> None
         package = wheel
         wheel_build_env = pkg
     """
-    project = tox_project({"tox.ini": ini})
-    outcome = project.run("l")
+    outcome = tox_project({"tox.ini": ini}).run("l")
 
     outcome.assert_success()
     expected = """
@@ -112,13 +111,11 @@ def test_list_env_package_self(tox_project: ToxProjectCreator) -> None:
         package = wheel
         wheel_build_env = pkg
     """
-    project = tox_project({"tox.ini": ini})
-    outcome = project.run("l")
+    outcome = tox_project({"tox.ini": ini}).run("l")
 
     outcome.assert_failed()
     assert outcome.out.splitlines() == ["ROOT: HandledError| pkg cannot self-package"]
 
 
 def test_list_envs_help(tox_project: ToxProjectCreator) -> None:
-    outcome = tox_project({"tox.ini": ""}).run("l", "-h")
-    outcome.assert_success()
+    tox_project({"tox.ini": ""}).run("l", "-h").assert_success()

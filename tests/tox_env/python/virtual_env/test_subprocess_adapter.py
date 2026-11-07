@@ -50,15 +50,15 @@ def test_subprocess_python_info_positional_constructor() -> None:
     probed: Final[SubprocessPythonInfo | None] = probe_python(sys.executable)
     assert probed is not None
     info: Final[SubprocessPythonInfo] = SubprocessPythonInfo(
-        "cpython",
-        probed.version_info,
-        "3.11.0",
-        64,
-        "linux",
-        "/usr/bin/python3",
-        False,
-        True,
-        "linux-x86_64",
+        implementation="cpython",
+        version_info=probed.version_info,
+        version="3.11.0",
+        architecture=64,
+        platform="linux",
+        system_executable="/usr/bin/python3",
+        free_threaded=False,
+        debug_build=True,
+        sysconfig_platform="linux-x86_64",
     )
 
     assert (info.debug_build, info.sysconfig_platform, info.marker_environment) == (True, "linux-x86_64", None)
@@ -676,8 +676,7 @@ def test_virtualenv_spec_cache_includes_spec(tox_project: ToxProjectCreator, moc
             commands = [["python", "-c", "print('ok')"]]
         """),
     })
-    result = proj.run("r", "-e", "py")
-    result.assert_success()
+    proj.run("r", "-e", "py").assert_success()
 
 
 def test_virtualenv_spec_empty_uses_imported(tox_project: ToxProjectCreator) -> None:

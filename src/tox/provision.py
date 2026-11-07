@@ -16,24 +16,24 @@ from packaging.requirements import Requirement
 from packaging.utils import canonicalize_name
 from packaging.version import Version
 
-from tox.config.loader.memory import MemoryLoader
-from tox.execute.api import StdinSource
-from tox.plugin import impl
-from tox.report import HandledError
-from tox.tox_env.errors import Skip
-from tox.tox_env.python.pip.req_file import PythonDeps
-from tox.util.file_view import PACKAGE_STAGING_DIR, repair_staging_path
-from tox.util.path import ensure_private_dir
-from tox.util.redact import redact_argv
+from .config.loader.memory import MemoryLoader
+from .execute.api import StdinSource
+from .plugin import impl
+from .report import HandledError
+from .tox_env.errors import Skip
+from .tox_env.python.pip.req_file import PythonDeps
+from .util.file_view import PACKAGE_STAGING_DIR, repair_staging_path
+from .util.path import ensure_private_dir
+from .util.redact import redact_argv
 
 if TYPE_CHECKING:
     from argparse import ArgumentParser
     from importlib.metadata import Distribution
     from urllib.parse import SplitResult
 
-    from tox.session.state import State
-    from tox.tox_env.python.runner import PythonRun
-    from tox.util.json_types import JsonValue
+    from .session.state import State
+    from .tox_env.python.runner import PythonRun
+    from .util.json_types import JsonValue
 
 
 # pip records only these URL fragment hashes in direct_url.json.
@@ -101,7 +101,7 @@ def provision(state: State) -> int | bool:
         post_process=add_tox_requires_min_version,
     )
 
-    from tox.plugin.manager import MANAGER  # ruff:ignore[import-outside-top-level]
+    from .plugin.manager import MANAGER  # ruff:ignore[import-outside-top-level]
 
     MANAGER.tox_add_core_config(state.conf.core, state)
     # the provisioned tox does the packaging and may be a release without the staging repair, so repair first

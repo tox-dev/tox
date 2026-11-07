@@ -606,8 +606,7 @@ def test_bad_hash(hash_value: str, tmp_path: Path) -> None:
 @pytest.mark.parametrize("codec", ["utf-8", "utf-16", "utf-32"])
 def test_custom_file_encoding(codec: str, tmp_path: Path) -> None:
     requirements_file = tmp_path / "r.txt"
-    raw = "art".encode(codec)
-    requirements_file.write_bytes(raw)
+    requirements_file.write_bytes("art".encode(codec))
     req_file = RequirementsFile(requirements_file, constraint=False)
     assert [str(i) for i in req_file.requirements] == ["art"]
 
@@ -624,8 +623,7 @@ def test_parsed_requirement_properties(tmp_path: Path) -> None:
     req = ParsedRequirement("a", {"b": 1}, str(tmp_path), 1)
     assert req.options == {"b": 1}
     assert str(req.requirement) == "a"
-    assert req.from_file == str(tmp_path)
-    assert req.lineno == 1
+    assert (req.from_file, req.lineno) == (str(tmp_path), 1)
 
 
 def test_parsed_requirement_repr_with_opt(tmp_path: Path) -> None:
@@ -745,7 +743,7 @@ def test_requirement_via_file_protocol_na(tmp_path: Path) -> None:
 
 @pytest.mark.parametrize("req", ["pre-commit ~= 4", "pre-commit~=4"])
 def test_requirement_with_tilde_equals_not_treated_as_path(tmp_path: Path, req: str) -> None:
-    """Deps with ``~=`` version specifier should not be treated as local paths (#3447)."""
+    # Deps with ``~=`` version specifier should not be treated as local paths (#3447).
     parsed = ParsedRequirement(req, {}, str(tmp_path / "tox.ini"), 1)
     assert str(parsed.requirement) == req
 
@@ -753,6 +751,5 @@ def test_requirement_with_tilde_equals_not_treated_as_path(tmp_path: Path, req: 
 def test_requirement_to_path_one_level_up(tmp_path: Path) -> None:
     other_req = tmp_path / "other.txt"
     other_req.write_text("-e ..")
-    req_file = RequirementsFile(other_req, constraint=False)
-    result = req_file.requirements
+    result = RequirementsFile(other_req, constraint=False).requirements
     assert result[0].requirement == str(tmp_path.parent.resolve())

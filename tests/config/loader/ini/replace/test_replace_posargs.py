@@ -86,7 +86,6 @@ def test_replace_mixed_brackets_and_braces(replace_one: ReplaceOne, value: str, 
 
 
 def test_half_escaped_braces(replace_one: ReplaceOne) -> None:
-    """See https://github.com/tox-dev/tox/issues/1956"""
     outcome = replace_one(r"\{posargs} {posargs}", ["foo"])
     assert outcome == "{posargs} foo"
 
@@ -114,8 +113,7 @@ def test_replace_pos_args_reach_command_intact(
 ) -> None:
     for module in ("tox.config.loader.replacer", "tox.config.loader.str_convert"):
         mocker.patch(f"{module}.sys", mocker.create_autospec(sys, platform=platform))
-    project = tox_project({"tox.ini": "[testenv]\ncommands = python {posargs}"})
-    outcome = project.run("c", "-k", "commands", "--", arg)
+    outcome = tox_project({"tox.ini": "[testenv]\ncommands = python {posargs}"}).run("c", "-k", "commands", "--", arg)
     outcome.assert_success()
     assert outcome.env_conf("py")["commands"] == [Command(args=["python", arg])]
 

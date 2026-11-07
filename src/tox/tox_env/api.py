@@ -17,12 +17,13 @@ from typing import TYPE_CHECKING, Final, NamedTuple, cast
 from tox.config.set_env import SetEnv
 from tox.execute.request import ExecuteRequest
 from tox.report import HandledError
-from tox.tox_env.errors import Fail, Recreate, Skip
-from tox.tox_env.info import Info
 from tox.util.path import ensure_cachedir_tag, ensure_empty_dir, ensure_gitignore, ensure_private_dir
 from tox.util.redact import redact_value
 from tox.util.typing_compat import override
 from tox.util.venv_redirect import forget_venv_redirect, release_venv_redirect
+
+from .errors import Fail, Recreate, Skip
+from .info import Info
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Generator, Sequence
@@ -34,13 +35,21 @@ if TYPE_CHECKING:
     from tox.execute.api import Execute, ExecuteStatus, Outcome, StdinSource
     from tox.journal import EnvJournal
     from tox.report import OutErr, ToxHandler
-    from tox.tox_env.installer import InstallArguments, Installer
+
+    from .installer import InstallArguments, Installer
 
 LOGGER = logging.getLogger(__name__)
 
 
 class ToxEnvCreateArgs(NamedTuple):
-    """Arguments to pass on when creating a tox environment."""
+    """Arguments to pass on when creating a tox environment.
+
+    :param conf:
+    :param core:
+    :param options:
+    :param journal:
+    :param log_handler:
+    """
 
     conf: EnvConfigSet
     core: CoreConfigSet
@@ -78,23 +87,17 @@ class ToxEnv(ABC):  # ruff:ignore[too-many-public-methods]
         self._allow_interrupted_execution = False
         self._log_id = 0
 
+    @override
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}(name={self.conf['env_name']})"
+
     @property
-    def cache(self) -> Info:
-        return Info(self.env_dir)
+    def _has_display_suspended(self) -> bool:
+        return self._suspended_out_err is not None
 
     @staticmethod
     @abstractmethod
     def id() -> str:
-        raise NotImplementedError
-
-    @property
-    @abstractmethod
-    def executor(self) -> Execute:
-        raise NotImplementedError
-
-    @property
-    @abstractmethod
-    def installer(self) -> Installer[ToxEnv]:
         raise NotImplementedError
 
     def _install(self, arguments: InstallArguments, section: str, of_type: str) -> None:
@@ -103,9 +106,10 @@ class ToxEnv(ABC):  # ruff:ignore[too-many-public-methods]
         MANAGER.tox_on_install(self, arguments, section, of_type)
         self.installer.install(arguments, section, of_type)
 
-    @override
-    def __repr__(self) -> str:
-        return f"{self.__class__.__name__}(name={self.conf['env_name']})"
+    @property
+    @abstractmethod
+    def installer(self) -> Installer[ToxEnv]:
+        raise NotImplementedError
 
     def register_config(self) -> None:
         self.conf.add_constant(
@@ -154,8 +158,7 @@ class ToxEnv(ABC):  # ruff:ignore[too-many-public-methods]
             values.extend(self._default_pass_env())
             result = sorted(dict.fromkeys(values).keys())
             invalid_chars = set(string.whitespace)
-            invalid = [v for v in result if any(c in invalid_chars for c in v)]
-            if invalid:
+            if invalid := [v for v in result if any(c in invalid_chars for c in v)]:
                 invalid_repr = ", ".join(repr(i) for i in invalid)
                 msg = (
                     f"pass_env values cannot contain whitespace, use comma to have multiple values in a single line,"
@@ -197,32 +200,19 @@ class ToxEnv(ABC):  # ruff:ignore[too-many-public-methods]
         )
         assert self.installer is not None  # ruff:ignore[assert] # trigger installer creation to allow config registration
 
+    @property
+    def name(self) -> str:
+        return self.conf.get("env_name", str)
+
     def _relative_to_tox_root(self, value: Path) -> Path:
         if not value.is_absolute():
             value = self.core.get("tox_root", Path) / value
         return value
 
-    def _recreate_default(self, conf: Config, value: str | None) -> bool:  # ruff:ignore[unused-method-argument]
-        return self.options.recreate
-
     @property
-    def env_dir(self) -> Path:
-        """:returns: the tox environments environment folder"""
-        return self.conf.get("env_dir", Path)
-
-    @property
-    def env_tmp_dir(self) -> Path:
-        """:returns: the tox environments temp folder"""
-        return self.conf.get("env_tmp_dir", Path)
-
-    @property
-    def env_log_dir(self) -> Path:
-        """:returns: the tox environments log folder"""
-        return self.conf.get("env_log_dir", Path)
-
-    @property
-    def name(self) -> str:
-        return self.conf.get("env_name", str)
+    @abstractmethod
+    def executor(self) -> Execute:
+        raise NotImplementedError
 
     def _default_set_env(self) -> dict[str, str]:  # ruff:ignore[no-self-use]
         return {}
@@ -283,6 +273,9 @@ class ToxEnv(ABC):  # ruff:ignore[too-many-public-methods]
             )
         return env
 
+    def _recreate_default(self, conf: Config, value: str | None) -> bool:  # ruff:ignore[unused-method-argument]
+        return self.options.recreate
+
     def setup(self) -> None:
         """Setup the tox environment."""
         if self._run_state["setup"] is False:  # pragma: no branch
@@ -304,22 +297,8 @@ class ToxEnv(ABC):  # ruff:ignore[too-many-public-methods]
             finally:
                 self._run_state["setup"] = True
 
-    def teardown(self) -> None:
-        if not self._run_state["teardown"]:
-            try:
-                self._teardown()
-            finally:
-                from tox.plugin.manager import MANAGER  # ruff:ignore[import-outside-top-level]
-
-                MANAGER.tox_env_teardown(self)
-                self._run_state["teardown"] = True
-
-    def _teardown(self) -> None:  # ruff:ignore[empty-method-without-abstract-decorator] # empty abstract base class
-        pass
-
     def _platform_check(self) -> None:
-        platform_str = self.conf.get("platform", str)
-        if platform_str:
+        if platform_str := self.conf.get("platform", str):
             try:
                 match = re.fullmatch(platform_str, self.runs_on_platform)
             except re.error as exc:
@@ -334,11 +313,32 @@ class ToxEnv(ABC):  # ruff:ignore[too-many-public-methods]
     def runs_on_platform(self) -> str:
         raise NotImplementedError
 
-    def _setup_env(self) -> None:
-        """1. env dir exists
-        2. contains a runner with the same type.
+    def _clean(self, transitive: bool = False) -> None:  # ruff:ignore[unused-method-argument, boolean-type-hint-positional-argument, boolean-default-value-positional-argument]
+        if self._run_state["clean"]:  # pragma: no branch
+            return  # pragma: no cover
+        env_dir: Final = self.env_dir
+        if env_dir.exists() or env_dir.is_symlink():
+            LOGGER.warning("remove tox env folder %s", env_dir)
+            # retract the redirect so nothing points at the environment while it rebuilds
+            if self.core.get_optional("venv_redirect", bool) is not False:
+                forget_venv_redirect(self.core.get("tox_root", Path), env_dir)
+            ensure_empty_dir(env_dir, except_filename="file.lock")
+        self._log_id = 0  # we deleted logs, so start over counter
+        self.cache.reset()
+        self._run_state.update({"setup": False, "clean": True})
 
-        """
+    @property
+    def env_dir(self) -> Path:
+        """:returns: the tox environments environment folder"""
+        return self.conf.get("env_dir", Path)
+
+    @property
+    def cache(self) -> Info:
+        return Info(self.env_dir)
+
+    def _setup_env(self) -> None:
+        # 1. env dir exists
+        # 2. contains a runner with the same type.
         if self.env_dir.is_symlink():
             symlink_msg: Final = f"{self.env_dir} is a symlink where this environment should live; delete it"
             raise Fail(symlink_msg)
@@ -356,19 +356,17 @@ class ToxEnv(ABC):  # ruff:ignore[too-many-public-methods]
         self._handle_core_tmp_dir()
         ensure_empty_dir(self.env_log_dir)
 
-    def _setup_with_env(self) -> None:  # ruff:ignore[empty-method-without-abstract-decorator] # empty abstract base class
-        pass
-
-    def _done_with_setup(self) -> None:  # ruff:ignore[empty-method-without-abstract-decorator] # empty abstract base class
-        """Called when setup is done."""
-
     def _handle_env_tmp_dir(self) -> None:
-        """Ensure exists and empty."""
         env_tmp_dir: Final = self.env_tmp_dir
         if env_tmp_dir.is_symlink() or (env_tmp_dir.exists() and next(env_tmp_dir.iterdir(), None) is not None):
             LOGGER.debug("clear env temp folder %s", env_tmp_dir)
             ensure_empty_dir(env_tmp_dir)
         env_tmp_dir.mkdir(parents=True, exist_ok=True)
+
+    @property
+    def env_tmp_dir(self) -> Path:
+        """:returns: the tox environments temp folder"""
+        return self.conf.get("env_tmp_dir", Path)
 
     def _handle_core_tmp_dir(self) -> None:
         temp_dir: Final[Path] = self.core.get("temp_dir", Path)
@@ -378,19 +376,126 @@ class ToxEnv(ABC):  # ruff:ignore[too-many-public-methods]
         ensure_cachedir_tag(self.core["work_dir"])
         ensure_gitignore(self.core.get("work_dir", Path))
 
-    def _clean(self, transitive: bool = False) -> None:  # ruff:ignore[unused-method-argument, boolean-type-hint-positional-argument, boolean-default-value-positional-argument]
-        if self._run_state["clean"]:  # pragma: no branch
-            return  # pragma: no cover
-        env_dir: Final = self.env_dir
-        if env_dir.exists() or env_dir.is_symlink():
-            LOGGER.warning("remove tox env folder %s", env_dir)
-            # retract the redirect so nothing points at the environment while it rebuilds
-            if self.core.get_optional("venv_redirect", bool) is not False:
-                forget_venv_redirect(self.core.get("tox_root", Path), env_dir)
-            ensure_empty_dir(env_dir, except_filename="file.lock")
-        self._log_id = 0  # we deleted logs, so start over counter
-        self.cache.reset()
-        self._run_state.update({"setup": False, "clean": True})
+    @property
+    def env_log_dir(self) -> Path:
+        """:returns: the tox environments log folder"""
+        return self.conf.get("env_log_dir", Path)
+
+    def _setup_with_env(self) -> None:  # ruff:ignore[empty-method-without-abstract-decorator] # empty abstract base class
+        pass
+
+    def _done_with_setup(self) -> None:  # ruff:ignore[empty-method-without-abstract-decorator] # empty abstract base class
+        ...
+
+    def teardown(self) -> None:
+        if not self._run_state["teardown"]:
+            try:
+                self._teardown()
+            finally:
+                from tox.plugin.manager import MANAGER  # ruff:ignore[import-outside-top-level]
+
+                MANAGER.tox_env_teardown(self)
+                self._run_state["teardown"] = True
+
+    def _teardown(self) -> None:  # ruff:ignore[empty-method-without-abstract-decorator] # empty abstract base class
+        pass
+
+    def execute(  # ruff:ignore[too-many-arguments]
+        self,
+        cmd: Sequence[Path | str],
+        stdin: StdinSource,
+        show: bool | None = None,  # ruff:ignore[boolean-type-hint-positional-argument]
+        cwd: Path | None = None,
+        run_id: str = "",
+        executor: Execute | None = None,
+        *,
+        capture: bool = False,
+    ) -> Outcome:
+        """Execute a command and wait for its outcome.
+
+        :param cmd: executable and arguments
+        :param stdin: permitted standard input source
+        :param show: whether to display output, or ``None`` to follow verbosity
+        :param cwd: working directory, or ``None`` for the project root
+        :param run_id: label for command logs
+        :param executor: executor override, or ``None`` for this environment's executor
+        :param capture: capture output even in no-capture mode
+
+        :returns: completed command outcome
+
+        :raises SystemExit: if execution was interrupted
+        :raises ValueError: if the command is empty
+        :raises RuntimeError:
+
+        """
+        with self.execute_async(cmd, stdin, show, cwd, run_id, executor, capture=capture) as status:
+            while status.wait() is None:
+                pass  # pragma: no cover
+        if status.outcome is None:  # pragma: no cover # this should not happen
+            raise RuntimeError  # pragma: no cover
+        return status.outcome
+
+    @contextmanager
+    def execute_async(  # ruff:ignore[too-many-arguments]
+        self,
+        cmd: Sequence[Path | str],
+        stdin: StdinSource,
+        show: bool | None = None,  # ruff:ignore[boolean-type-hint-positional-argument]
+        cwd: Path | None = None,
+        run_id: str = "",
+        executor: Execute | None = None,
+        *,
+        capture: bool = False,
+    ) -> Generator[ExecuteStatus, None, None]:
+        """Run a command while exposing its execution status.
+
+        :param cmd: executable and arguments
+        :param stdin: permitted standard input source
+        :param show: whether to display output, or ``None`` to follow verbosity
+        :param cwd: working directory, or ``None`` for the project root
+        :param run_id: label for command logs
+        :param executor: executor override, or ``None`` for this environment's executor
+        :param capture: capture output even in no-capture mode
+
+        :yields: context manager yielding the command's execution status
+
+        :raises SystemExit: if execution was interrupted
+        :raises ValueError: if the command is empty
+
+        """
+        if self._fully_interrupted or (self._interrupted and not self._allow_interrupted_execution):
+            raise SystemExit(-2)  # pragma: no cover
+        if cwd is None:
+            cwd = cast("Path", self.core["tox_root"])
+        if show is None:
+            show = self.options.verbosity > 3  # ruff:ignore[magic-value-comparison]
+        request = ExecuteRequest(
+            cmd, cwd, self.environment_variables, stdin, run_id, allow=self._allow_externals, capture=capture
+        )
+        if request.cwd == _CWD:
+            repr_cwd = ""
+        else:
+            try:
+                repr_cwd = f" {_CWD.relative_to(cwd)}"
+            except ValueError:
+                repr_cwd = f" {cwd}"
+        LOGGER.warning("%s%s> %s", run_id, repr_cwd, request.shell_cmd_redacted)
+        out_err = self.log_handler.stdout, self.log_handler.stderr
+        if executor is None:
+            executor = self.executor
+        with self._execute_call(executor, out_err, request, show) as execute_status:
+            execute_id = id(execute_status)
+            try:
+                self._execute_statuses[execute_id] = execute_status
+                yield execute_status
+            finally:
+                self._execute_statuses.pop(execute_id)
+        if show and self._hidden_outcomes is not None and execute_status.outcome is not None:
+            # if it gets canceled before even starting
+            self._hidden_outcomes.append(execute_status.outcome)
+        if self.journal and execute_status.outcome is not None:
+            self.journal.add_execute(execute_status.outcome, run_id)
+        self._log_execute(request, execute_status)
 
     @property
     def environment_variables(self) -> dict[str, str]:
@@ -438,6 +543,11 @@ class ToxEnv(ABC):  # ruff:ignore[too-many-public-methods]
         result: dict[str, str] = {e: v for e, v in os.environ.items() if any(p.match(e) for p in patterns)}
         return result
 
+    def _make_path(self, existing: str | None = None) -> str:
+        values = dict.fromkeys(str(i) for i in self._paths)
+        values.update(dict.fromkeys((existing or os.environ.get("PATH", "")).split(os.pathsep)))
+        return os.pathsep.join(values)
+
     @property
     def _paths(self) -> list[Path]:
         return self._paths_private
@@ -453,160 +563,6 @@ class ToxEnv(ABC):  # ruff:ignore[too-many-public-methods]
         result: list[str] = [f"{glob.escape(str(i))}{os.sep}*" for i in self._paths]
         result.extend(i.strip() for i in self.conf["allowlist_externals"])
         return result
-
-    def _make_path(self, existing: str | None = None) -> str:
-        values = dict.fromkeys(str(i) for i in self._paths)
-        values.update(dict.fromkeys((existing or os.environ.get("PATH", "")).split(os.pathsep)))
-        return os.pathsep.join(values)
-
-    def execute(  # ruff:ignore[too-many-arguments]
-        self,
-        cmd: Sequence[Path | str],
-        stdin: StdinSource,
-        show: bool | None = None,  # ruff:ignore[boolean-type-hint-positional-argument]
-        cwd: Path | None = None,
-        run_id: str = "",
-        executor: Execute | None = None,
-        *,
-        capture: bool = False,
-    ) -> Outcome:
-        """Execute a command and wait for its outcome.
-
-        :param cmd: executable and arguments
-        :param stdin: permitted standard input source
-        :param show: whether to display output, or ``None`` to follow verbosity
-        :param cwd: working directory, or ``None`` for the project root
-        :param run_id: label for command logs
-        :param executor: executor override, or ``None`` for this environment's executor
-        :param capture: capture output even in no-capture mode
-
-        :returns: completed command outcome
-
-        :raises SystemExit: if execution was interrupted
-        :raises ValueError: if the command is empty
-
-        """
-        with self.execute_async(cmd, stdin, show, cwd, run_id, executor, capture=capture) as status:
-            while status.wait() is None:
-                pass  # pragma: no cover
-        if status.outcome is None:  # pragma: no cover # this should not happen
-            raise RuntimeError  # pragma: no cover
-        return status.outcome
-
-    def interrupt(self) -> None:
-        """Interrupt the execution of a tox environment."""
-        if self._interrupted:
-            logging.warning("second interrupt received for tox environment: %s - forcing full stop", self.conf.name)
-            self._fully_interrupted = True
-        else:
-            logging.warning("interrupt tox environment: %s", self.conf.name)
-            self._interrupted = True
-        for status in list(self._execute_statuses.values()):
-            status.interrupt()
-
-    @contextmanager
-    def allow_post_commands_after_interrupt(self, enabled: bool) -> Generator[None, None, None]:  # ruff:ignore[boolean-type-hint-positional-argument]
-        """Context manager to allow commands_post execution after interrupt when enabled."""
-        if enabled and self._interrupted and not self._fully_interrupted:
-            self._allow_interrupted_execution = True
-        try:
-            yield
-        finally:
-            self._allow_interrupted_execution = False
-
-    @contextmanager
-    def execute_async(  # ruff:ignore[too-many-arguments]
-        self,
-        cmd: Sequence[Path | str],
-        stdin: StdinSource,
-        show: bool | None = None,  # ruff:ignore[boolean-type-hint-positional-argument]
-        cwd: Path | None = None,
-        run_id: str = "",
-        executor: Execute | None = None,
-        *,
-        capture: bool = False,
-    ) -> Generator[ExecuteStatus, None, None]:
-        """Run a command while exposing its execution status.
-
-        :param cmd: executable and arguments
-        :param stdin: permitted standard input source
-        :param show: whether to display output, or ``None`` to follow verbosity
-        :param cwd: working directory, or ``None`` for the project root
-        :param run_id: label for command logs
-        :param executor: executor override, or ``None`` for this environment's executor
-        :param capture: capture output even in no-capture mode
-
-        :returns: context manager yielding the command's execution status
-
-        :raises SystemExit: if execution was interrupted
-        :raises ValueError: if the command is empty
-
-        """
-        if self._fully_interrupted or (self._interrupted and not self._allow_interrupted_execution):
-            raise SystemExit(-2)  # pragma: no cover
-        if cwd is None:
-            cwd = cast("Path", self.core["tox_root"])
-        if show is None:
-            show = self.options.verbosity > 3  # ruff:ignore[magic-value-comparison]
-        request = ExecuteRequest(
-            cmd, cwd, self.environment_variables, stdin, run_id, allow=self._allow_externals, capture=capture
-        )
-        if request.cwd == _CWD:
-            repr_cwd = ""
-        else:
-            try:
-                repr_cwd = f" {_CWD.relative_to(cwd)}"
-            except ValueError:
-                repr_cwd = f" {cwd}"
-        LOGGER.warning("%s%s> %s", run_id, repr_cwd, request.shell_cmd_redacted)
-        out_err = self.log_handler.stdout, self.log_handler.stderr
-        if executor is None:
-            executor = self.executor
-        with self._execute_call(executor, out_err, request, show) as execute_status:
-            execute_id = id(execute_status)
-            try:
-                self._execute_statuses[execute_id] = execute_status
-                yield execute_status
-            finally:
-                self._execute_statuses.pop(execute_id)
-        if show and self._hidden_outcomes is not None and execute_status.outcome is not None:
-            # if it gets canceled before even starting
-            self._hidden_outcomes.append(execute_status.outcome)
-        if self.journal and execute_status.outcome is not None:
-            self.journal.add_execute(execute_status.outcome, run_id)
-        self._log_execute(request, execute_status)
-
-    def _log_execute(self, request: ExecuteRequest, status: ExecuteStatus) -> None:
-        self._log_id += 1
-        self._write_execute_log(self.name, self.env_log_dir / f"{self._log_id}-{request.run_id}.log", request, status)
-
-    @staticmethod
-    def _write_execute_log(env_name: str, log_file: Path, request: ExecuteRequest, status: ExecuteStatus) -> None:
-        if not log_file.parent.exists():
-            log_file.parent.mkdir(parents=True, exist_ok=True)
-        with log_file.open("wt", encoding="utf-8") as file:
-            file.write(f"name: {env_name}\n")
-            file.write(f"run_id: {request.run_id}\n")
-            msg = ""
-            for env_key, env_value in sorted(request.env.items()):
-                redacted_value = redact_value(name=env_key, value=env_value)
-                msg += f"env {env_key}: {redacted_value}\n"
-            file.write(msg)
-            for meta_key, meta_value in status.metadata.items():
-                file.write(f"metadata {meta_key}: {meta_value}\n")
-            file.write(f"cwd: {request.cwd}\n")
-            allow = ["*"] if request.allow is None else request.allow
-            file.write(f"allow: {':'.join(allow)}\n")
-            file.write(f"cmd: {request.shell_cmd_redacted}\n")
-            file.write(f"exit_code: {status.exit_code}\n")
-        with log_file.open("ab") as file_b:
-            if status.out:
-                file_b.write(status.out)
-            if status.err:  # pragma: no branch
-                file_b.write(os.linesep.encode())
-                file_b.write(b"standard error:")
-                file_b.write(os.linesep.encode())
-                file_b.write(status.err)
 
     @contextmanager
     def _execute_call(
@@ -624,11 +580,71 @@ class ToxEnv(ABC):  # ruff:ignore[too-many-public-methods]
         ) as execute_status:
             yield execute_status
 
+    def _log_execute(self, request: ExecuteRequest, status: ExecuteStatus) -> None:
+        self._log_id += 1
+        self._write_execute_log(self.name, self.env_log_dir / f"{self._log_id}-{request.run_id}.log", request, status)
+
+    @staticmethod
+    def _write_execute_log(env_name: str, log_file: Path, request: ExecuteRequest, status: ExecuteStatus) -> None:
+        if not log_file.parent.exists():
+            log_file.parent.mkdir(parents=True, exist_ok=True)
+        with log_file.open("wt", encoding="utf-8") as file:
+            file.write(f"name: {env_name}\n")
+            file.write(f"run_id: {request.run_id}\n")
+            msg = ""
+            for env_key, env_value in sorted(request.env.items()):
+                msg += f"env {env_key}: {redact_value(name=env_key, value=env_value)}\n"
+            file.write(msg)
+            for meta_key, meta_value in status.metadata.items():
+                file.write(f"metadata {meta_key}: {meta_value}\n")
+            file.write(f"cwd: {request.cwd}\n")
+            file.write(f"allow: {':'.join(['*'] if request.allow is None else request.allow)}\n")
+            file.write(f"cmd: {request.shell_cmd_redacted}\n")
+            file.write(f"exit_code: {status.exit_code}\n")
+        with log_file.open("ab") as file_b:
+            if status.out:
+                file_b.write(status.out)
+            if status.err:  # pragma: no branch
+                file_b.write(os.linesep.encode())
+                file_b.write(b"standard error:")
+                file_b.write(os.linesep.encode())
+                file_b.write(status.err)
+
+    def interrupt(self) -> None:
+        """Interrupt the execution of a tox environment."""
+        if self._interrupted:
+            logging.warning("second interrupt received for tox environment: %s - forcing full stop", self.conf.name)
+            self._fully_interrupted = True
+        else:
+            logging.warning("interrupt tox environment: %s", self.conf.name)
+            self._interrupted = True
+        for status in list(self._execute_statuses.values()):
+            status.interrupt()
+
+    @contextmanager
+    def allow_post_commands_after_interrupt(self, enabled: bool) -> Generator[None, None, None]:  # ruff:ignore[boolean-type-hint-positional-argument]
+        """Context manager to allow commands_post execution after interrupt when enabled.
+
+        :param enabled:
+        :yields:
+        """
+        if enabled and self._interrupted and not self._fully_interrupted:
+            self._allow_interrupted_execution = True
+        try:
+            yield
+        finally:
+            self._allow_interrupted_execution = False
+
     @contextmanager
     def display_context(self, suspend: bool) -> Generator[None, None, None]:  # ruff:ignore[boolean-type-hint-positional-argument]
         with self._log_context(), self.log_handler.suspend_out_err(suspend, self._suspended_out_err) as out_err:
             if suspend:  # only set if suspended
                 self._suspended_out_err = out_err
+            yield
+
+    @contextmanager
+    def _log_context(self) -> Generator[None, None, None]:
+        with self.log_handler.with_context(self.conf.name):
             yield
 
     def close_and_read_out_err(self) -> tuple[bytes, bytes] | None:
@@ -639,15 +655,6 @@ class ToxEnv(ABC):  # ruff:ignore[too-many-public-methods]
         out.close()
         err.close()
         return out_b, err_b
-
-    @contextmanager
-    def _log_context(self) -> Generator[None, None, None]:
-        with self.log_handler.with_context(self.conf.name):
-            yield
-
-    @property
-    def _has_display_suspended(self) -> bool:
-        return self._suspended_out_err is not None
 
 
 _CWD: Final[Path] = Path.cwd()

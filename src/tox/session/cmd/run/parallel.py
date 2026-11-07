@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 from argparse import ArgumentParser, ArgumentTypeError
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Final
 
 from tox.plugin import impl
 from tox.session.env_select import CliEnv, register_env_select_flags
@@ -17,11 +17,10 @@ if TYPE_CHECKING:
     from tox.config.cli.parser import ToxParser
     from tox.session.state import State
 
-logger = logging.getLogger(__name__)
+LOGGER = logging.getLogger(__name__)
 
-ENV_VAR_KEY = "TOX_PARALLEL_ENV"
-OFF_VALUE = 0
-DEFAULT_PARALLEL = "auto"
+ENV_VAR_KEY: Final[str] = "TOX_PARALLEL_ENV"
+OFF_VALUE: Final[int] = 0
 
 
 @impl
@@ -29,23 +28,26 @@ def tox_add_option(parser: ToxParser) -> None:
     our = parser.add_command("run-parallel", ["p"], "run environments in parallel", run_parallel)
     register_env_select_flags(our, default=CliEnv())
     env_run_create_flags(our, mode="run-parallel")
-    parallel_flags(our, default_parallel=DEFAULT_PARALLEL)
+    parallel_flags(our, default_parallel="auto")
 
 
-def parse_num_processes(str_value: str) -> int | None:
-    if str_value == "all":
-        return None
-    if str_value == "auto":
-        return auto_detect_cpus()
-    try:
-        value = int(str_value)
-    except ValueError as exc:
-        msg = f"value must be a positive number, is {str_value!r}"
-        raise ArgumentTypeError(msg) from exc
-    if value < 0:
-        msg = f"value must be positive, is {value!r}"
-        raise ArgumentTypeError(msg)
-    return value
+def run_parallel(state: State) -> int:
+    """Here we'll just start parallel sub-processes.
+
+    :param state:
+    :returns:
+    :raises SystemExit:
+    """
+    option = state.conf.options
+    if option.no_capture:
+        msg = "--no-capture cannot be used with parallel mode"
+        raise SystemExit(msg)
+    return execute(
+        state,
+        max_workers=1 if option.parallel == OFF_VALUE else option.parallel,
+        has_spinner=option.parallel_no_spinner is False and option.parallel_live is False,
+        live=option.parallel_live,
+    )
 
 
 def parallel_flags(
@@ -82,15 +84,26 @@ def parallel_flags(
     )
 
 
-def run_parallel(state: State) -> int:
-    """Here we'll just start parallel sub-processes."""
-    option = state.conf.options
-    if option.no_capture:
-        msg = "--no-capture cannot be used with parallel mode"
-        raise SystemExit(msg)
-    return execute(
-        state,
-        max_workers=1 if option.parallel == OFF_VALUE else option.parallel,
-        has_spinner=option.parallel_no_spinner is False and option.parallel_live is False,
-        live=option.parallel_live,
-    )
+def parse_num_processes(str_value: str) -> int | None:
+    if str_value == "all":
+        return None
+    if str_value == "auto":
+        return auto_detect_cpus()
+    try:
+        value = int(str_value)
+    except ValueError as exc:
+        msg = f"value must be a positive number, is {str_value!r}"
+        raise ArgumentTypeError(msg) from exc
+    if value < 0:
+        msg = f"value must be positive, is {value!r}"
+        raise ArgumentTypeError(msg)
+    return value
+
+
+__all__ = [
+    "ENV_VAR_KEY",
+    "OFF_VALUE",
+    "parallel_flags",
+    "parse_num_processes",
+    "run_parallel",
+]

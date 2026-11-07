@@ -73,7 +73,8 @@ class ToxBackendFailed(Fail, BackendFailed):
 
 
 class BuildEditableNotSupportedError(RuntimeError):
-    """raised when build editable is not supported."""
+    # raised when build editable is not supported.
+    ...
 
 
 class ToxCmdStatus(CmdStatus):
@@ -99,7 +100,13 @@ class ToxCmdStatus(CmdStatus):
 
 
 class Pep517VenvPackager(PythonPackageToxEnv, ABC):
-    """local file system python virtual environment package builder."""
+    """local file system python virtual environment package builder.
+
+    :param create_args:
+    :ivar builds:
+    :ivar call_require_hooks:
+    :ivar root:
+    """
 
     def __init__(self, create_args: ToxEnvCreateArgs) -> None:
         super().__init__(create_args)
@@ -112,6 +119,20 @@ class Pep517VenvPackager(PythonPackageToxEnv, ABC):
         self._pkg_lock = RLock()  # can build only one package at a time
         self._package_paths: set[Path] = set()
         self._root: Path | None = None
+
+    @contextmanager
+    def root_at(self, value: Path) -> Generator[None, None, None]:
+        """Point the builder at another source tree for the duration of one build, then restore the project root.
+
+        :param value:
+        :yields:
+        """
+        previous = self.root
+        self.root = value
+        try:
+            yield
+        finally:
+            self.root = previous
 
     @property
     def root(self) -> Path:
@@ -130,26 +151,10 @@ class Pep517VenvPackager(PythonPackageToxEnv, ABC):
         self._root = value
         self._frontend_ = None  # force recreating the frontend with new root
 
-    @contextmanager
-    def root_at(self, value: Path) -> Generator[None, None, None]:
-        """Point the builder at another source tree for the duration of one build, then restore the project root."""
-        previous = self.root
-        self.root = value
-        try:
-            yield
-        finally:
-            self.root = previous
-
     @staticmethod
     @override
     def id() -> str:
         return "virtualenv-pep-517"
-
-    @property
-    def _frontend(self) -> Pep517VirtualEnvFrontend:
-        if self._frontend_ is None:
-            self._frontend_ = Pep517VirtualEnvFrontend(self.root, self)
-        return self._frontend_
 
     @override
     def register_config(self) -> None:
@@ -194,37 +199,10 @@ class Pep517VenvPackager(PythonPackageToxEnv, ABC):
             )
 
     @property
-    def pkg_dir(self) -> Path:
-        return self.conf.get("pkg_dir", Path)
-
-    @property
-    def meta_folder(self) -> Path:
-        meta_folder = self.conf.get("meta_dir", Path)
-        # the build frontend empties this folder before each metadata build, which would wipe a link's target
-        if meta_folder.is_symlink() or (
-            sys.platform == "win32" and meta_folder.exists() and self._is_windows_junction(meta_folder)
-        ):
-            msg = f"{meta_folder} is a link where the package metadata should live; delete it"
-            raise Fail(msg)
-        meta_folder.mkdir(exist_ok=True)
-        return meta_folder
-
-    @staticmethod
-    def _is_windows_junction(path: Path) -> bool:
-        # Linux type stubs omit the Windows-only stat fields.
-        return (
-            isinstance(reparse_tag := getattr(path.lstat(), "st_reparse_tag", None), int)
-            and isinstance(junction_tag := getattr(stat, "IO_REPARSE_TAG_MOUNT_POINT", None), int)
-            and reparse_tag == junction_tag
-        )
-
-    @property
-    def meta_folder_if_populated(self) -> Path | None:
-        """Return the metadata directory if it contains any files, otherwise None."""
-        meta_folder = self.meta_folder
-        if meta_folder.exists() and tuple(meta_folder.iterdir()):
-            return meta_folder
-        return None
+    def _frontend(self) -> Pep517VirtualEnvFrontend:
+        if self._frontend_ is None:
+            self._frontend_ = Pep517VirtualEnvFrontend(self.root, self)
+        return self._frontend_
 
     @override
     def register_run_env(self, run_env: RunToxEnv) -> Generator[tuple[str, str], PackageToxEnv, None]:
@@ -339,6 +317,99 @@ class Pep517VenvPackager(PythonPackageToxEnv, ABC):
             raise TypeError(msg)  # pragma: no cover
         return [package]
 
+    def _load_deps(self, for_env: EnvConfigSet) -> list[Requirement]:
+        # first check if this is statically available via PEP-621
+        deps = self._load_deps_from_static(for_env)
+        if deps is None:
+            deps = self._load_deps_from_built_metadata(for_env)
+        return deps
+
+    def _load_deps_from_static(self, for_env: EnvConfigSet) -> list[Requirement] | None:
+        return resolve_extras_static(self.root, for_env.get("extras", set[str]))
+
+    def _load_deps_from_built_metadata(self, for_env: EnvConfigSet) -> list[Requirement]:
+        # dependencies might depend on the python environment we're running in => if we build a wheel use that env
+        # to calculate the package metadata, otherwise ourselves
+        of_type = for_env.get("package", str)
+        reqs: list[Requirement] | None = None
+        name = ""
+        available: set[str] | None = None
+        if of_type in {"wheel", "editable"}:  # wheel packages - use wheel_build_env for metadata
+            w_env = self._wheel_build_envs.get(for_env["wheel_build_env"])
+            if w_env is not None and w_env is not self:
+                with w_env.display_context(self._has_display_suspended):
+                    if isinstance(w_env, Pep517VirtualEnvPackager):
+                        reqs = w_env.get_package_dependencies(for_env)
+                        name = w_env.get_package_name(for_env)
+                        available = w_env.get_package_extras(for_env)
+                    else:
+                        reqs = []
+        if reqs is None:
+            reqs = self.get_package_dependencies(for_env)
+            name = self.get_package_name(for_env)
+            available = self.get_package_extras(for_env)
+        return dependencies_with_extras(reqs, for_env.get("extras", set[str]), name, available_extras=available)
+
+    def get_package_dependencies(self, for_env: EnvConfigSet) -> list[Requirement]:
+        with self._pkg_lock:
+            if self._package_dependencies is None:  # pragma: no branch
+                self._ensure_meta_present(for_env)
+                requires: list[str] = cast("PathDistribution", self._distribution_meta).requires or []
+                self._package_dependencies = [Requirement(i) for i in requires]  # pragma: no branch
+        return self._package_dependencies
+
+    def _ensure_meta_present(self, for_env: EnvConfigSet) -> None:
+        if self._distribution_meta is not None:  # pragma: no branch
+            return  # pragma: no cover
+        # even if we don't build a wheel we need the requirements for it should we want to build its metadata
+        target: Literal["editable", "wheel"] = "editable" if for_env["package"] == "editable" else "wheel"
+        self.call_require_hooks.add(target)
+
+        self.setup()
+        hook = getattr(self._frontend, f"prepare_metadata_for_build_{target}")
+        config = self.conf.get_optional(f"config_settings_prepare_metadata_for_build_{target}", dict[str, Any])
+        result: MetadataForBuildWheelResult | MetadataForBuildEditableResult | None = hook(self.meta_folder, config)
+        if result is None:
+            config = self.conf[f"config_settings_build_{target}"]
+            dist_info_path, _, __ = self._frontend.metadata_from_built(self.meta_folder, target, config)
+            dist_info = str(dist_info_path)
+        else:
+            dist_info = str(result.metadata)
+        self._distribution_meta = Distribution.at(dist_info)
+
+    @property
+    def meta_folder(self) -> Path:
+        meta_folder = self.conf.get("meta_dir", Path)
+        # the build frontend empties this folder before each metadata build, which would wipe a link's target
+        if meta_folder.is_symlink() or (
+            sys.platform == "win32" and meta_folder.exists() and self._is_windows_junction(meta_folder)
+        ):
+            msg = f"{meta_folder} is a link where the package metadata should live; delete it"
+            raise Fail(msg)
+        meta_folder.mkdir(exist_ok=True)
+        return meta_folder
+
+    @staticmethod
+    def _is_windows_junction(path: Path) -> bool:
+        # Linux type stubs omit the Windows-only stat fields.
+        return (
+            isinstance(reparse_tag := getattr(path.lstat(), "st_reparse_tag", None), int)
+            and isinstance(junction_tag := getattr(stat, "IO_REPARSE_TAG_MOUNT_POINT", None), int)
+            and reparse_tag == junction_tag
+        )
+
+    def get_package_name(self, for_env: EnvConfigSet) -> str:
+        with self._pkg_lock:
+            if self._package_name is None:  # pragma: no branch
+                self._ensure_meta_present(for_env)
+                self._package_name = cast("PathDistribution", self._distribution_meta).metadata["Name"]
+        return self._package_name
+
+    def get_package_extras(self, for_env: EnvConfigSet) -> set[str]:
+        with self._pkg_lock:
+            self._ensure_meta_present(for_env)
+            return set(cast("PathDistribution", self._distribution_meta).metadata.get_all("Provides-Extra") or [])
+
     def _fallback_to_editable_legacy(self) -> None:
         self.call_require_hooks.remove("editable")
         targets = [e for e in self.builds.pop("editable") if e["package"] == "editable"]
@@ -354,8 +425,20 @@ class Pep517VenvPackager(PythonPackageToxEnv, ABC):
             self.builds["editable-legacy"].append(env)
         self._run_state["setup"] = False  # force setup again as we need to provision wheel to get dependencies
 
+    @override
+    def requires(self) -> tuple[Requirement, ...]:
+        return self._frontend.requires
+
+    @property
+    def pkg_dir(self) -> Path:
+        return self.conf.get("pkg_dir", Path)
+
+    @property
+    def _package_temp_path(self) -> Path:
+        return self.core.get("temp_dir", Path) / PACKAGE_STAGING_DIR
+
     def _build_wheel_via_sdist(self, for_env: EnvConfigSet) -> Path:
-        """Build a wheel by first building an sdist, then building a wheel from it."""
+        # Build a wheel by first building an sdist, then building a wheel from it.
         self.setup()
         with self._pkg_lock:
             # Step 1: Build the sdist in this (parent) environment
@@ -388,96 +471,23 @@ class Pep517VenvPackager(PythonPackageToxEnv, ABC):
 
     @staticmethod
     def _find_sdist_root(extract_dir: Path) -> Path:
-        """Find the source root inside an extracted sdist (standard sdists have a single top-level directory)."""
+        # Find the source root inside an extracted sdist (standard sdists have a single top-level directory).
         extracted_items = list(extract_dir.iterdir())
         if len(extracted_items) == 1 and extracted_items[0].is_dir():
             return extracted_items[0]
         return extract_dir  # non-standard flat layout
 
     @property
-    def _package_temp_path(self) -> Path:
-        return self.core.get("temp_dir", Path) / PACKAGE_STAGING_DIR
+    def meta_folder_if_populated(self) -> Path | None:
+        """Return the metadata directory if it contains any files, otherwise None."""
+        meta_folder = self.meta_folder
+        if meta_folder.exists() and tuple(meta_folder.iterdir()):
+            return meta_folder
+        return None
 
     @override
     def load_deps_for_env(self, for_env: EnvConfigSet) -> list[Requirement]:
         return self._load_deps(for_env)
-
-    def _load_deps(self, for_env: EnvConfigSet) -> list[Requirement]:
-        # first check if this is statically available via PEP-621
-        deps = self._load_deps_from_static(for_env)
-        if deps is None:
-            deps = self._load_deps_from_built_metadata(for_env)
-        return deps
-
-    def _load_deps_from_static(self, for_env: EnvConfigSet) -> list[Requirement] | None:
-        return resolve_extras_static(self.root, for_env.get("extras", set[str]))
-
-    def _load_deps_from_built_metadata(self, for_env: EnvConfigSet) -> list[Requirement]:
-        # dependencies might depend on the python environment we're running in => if we build a wheel use that env
-        # to calculate the package metadata, otherwise ourselves
-        of_type = for_env.get("package", str)
-        reqs: list[Requirement] | None = None
-        name = ""
-        available: set[str] | None = None
-        if of_type in {"wheel", "editable"}:  # wheel packages - use wheel_build_env for metadata
-            w_env = self._wheel_build_envs.get(for_env["wheel_build_env"])
-            if w_env is not None and w_env is not self:
-                with w_env.display_context(self._has_display_suspended):
-                    if isinstance(w_env, Pep517VirtualEnvPackager):
-                        reqs = w_env.get_package_dependencies(for_env)
-                        name = w_env.get_package_name(for_env)
-                        available = w_env.get_package_extras(for_env)
-                    else:
-                        reqs = []
-        if reqs is None:
-            reqs = self.get_package_dependencies(for_env)
-            name = self.get_package_name(for_env)
-            available = self.get_package_extras(for_env)
-        extras = for_env.get("extras", set[str])
-        return dependencies_with_extras(reqs, extras, name, available_extras=available)
-
-    def get_package_dependencies(self, for_env: EnvConfigSet) -> list[Requirement]:
-        with self._pkg_lock:
-            if self._package_dependencies is None:  # pragma: no branch
-                self._ensure_meta_present(for_env)
-                requires: list[str] = cast("PathDistribution", self._distribution_meta).requires or []
-                self._package_dependencies = [Requirement(i) for i in requires]  # pragma: no branch
-        return self._package_dependencies
-
-    def get_package_name(self, for_env: EnvConfigSet) -> str:
-        with self._pkg_lock:
-            if self._package_name is None:  # pragma: no branch
-                self._ensure_meta_present(for_env)
-                self._package_name = cast("PathDistribution", self._distribution_meta).metadata["Name"]
-        return self._package_name
-
-    def get_package_extras(self, for_env: EnvConfigSet) -> set[str]:
-        with self._pkg_lock:
-            self._ensure_meta_present(for_env)
-            return set(cast("PathDistribution", self._distribution_meta).metadata.get_all("Provides-Extra") or [])
-
-    def _ensure_meta_present(self, for_env: EnvConfigSet) -> None:
-        if self._distribution_meta is not None:  # pragma: no branch
-            return  # pragma: no cover
-        # even if we don't build a wheel we need the requirements for it should we want to build its metadata
-        target: Literal["editable", "wheel"] = "editable" if for_env["package"] == "editable" else "wheel"
-        self.call_require_hooks.add(target)
-
-        self.setup()
-        hook = getattr(self._frontend, f"prepare_metadata_for_build_{target}")
-        config = self.conf.get_optional(f"config_settings_prepare_metadata_for_build_{target}", dict[str, Any])
-        result: MetadataForBuildWheelResult | MetadataForBuildEditableResult | None = hook(self.meta_folder, config)
-        if result is None:
-            config = self.conf[f"config_settings_build_{target}"]
-            dist_info_path, _, __ = self._frontend.metadata_from_built(self.meta_folder, target, config)
-            dist_info = str(dist_info_path)
-        else:
-            dist_info = str(result.metadata)
-        self._distribution_meta = Distribution.at(dist_info)
-
-    @override
-    def requires(self) -> tuple[Requirement, ...]:
-        return self._frontend.requires
 
 
 class Pep517VirtualEnvPackager(Pep517VenvPackager, VirtualEnv):
@@ -506,10 +516,6 @@ class Pep517VirtualEnvFrontend(Frontend):
                 return bound_return
 
             setattr(self, hook, cached(into, key=key)(getattr(self, hook)))
-
-    @property
-    def backend_cmd(self) -> Sequence[str]:
-        return ["python", *self.backend_args]
 
     @override
     def _send(self, cmd: str, **kwargs: Any) -> tuple[Any, str, str]:
@@ -550,21 +556,9 @@ class Pep517VirtualEnvFrontend(Frontend):
             if self._tox_env.conf["fresh_subprocess"]:
                 self.backend_executor.close()
 
-    @override
-    def _unexpected_response(
-        self,
-        cmd: str,
-        got: Any,
-        expected_type: Any,
-        out: str,
-        err: str,
-    ) -> NoReturn:
-        try:
-            super()._unexpected_response(cmd, got, expected_type, out, err)
-        except BackendFailed as exception:
-            raise exception if isinstance(exception, ToxBackendFailed) else ToxBackendFailed(exception) from exception
-        msg = "super()._unexpected_response did not raise"
-        raise RuntimeError(msg)
+    @property
+    def backend_cmd(self) -> Sequence[str]:
+        return ["python", *self.backend_args]
 
     @property
     def backend_executor(self) -> LocalSubProcessPep517Executor:
@@ -581,6 +575,22 @@ class Pep517VirtualEnvFrontend(Frontend):
             )
 
         return self._backend_executor_
+
+    @override
+    def _unexpected_response(
+        self,
+        cmd: str,
+        got: Any,
+        expected_type: Any,
+        out: str,
+        err: str,
+    ) -> NoReturn:
+        try:
+            super()._unexpected_response(cmd, got, expected_type, out, err)
+        except BackendFailed as exception:
+            raise exception if isinstance(exception, ToxBackendFailed) else ToxBackendFailed(exception) from exception
+        msg = "super()._unexpected_response did not raise"
+        raise RuntimeError(msg)
 
     @contextmanager
     @override

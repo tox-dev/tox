@@ -9,12 +9,13 @@ from typing import TYPE_CHECKING
 
 from pyproject_api import BackendFailed
 
-from tox.execute import ExecuteRequest
-from tox.execute.api import Execute, ExecuteInstance, ExecuteOptions, ExecuteStatus
-from tox.execute.local_sub_process import LocalSubProcessExecuteInstance
-from tox.execute.request import StdinSource
-from tox.execute.stream import SyncWrite
 from tox.util.typing_compat import override
+
+from . import ExecuteRequest
+from .api import Execute, ExecuteInstance, ExecuteOptions, ExecuteStatus
+from .local_sub_process import LocalSubProcessExecuteInstance
+from .request import StdinSource
+from .stream import SyncWrite
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -23,7 +24,14 @@ if TYPE_CHECKING:
 
 
 class LocalSubProcessPep517Executor(Execute):
-    """Executor holding the backend process."""
+    """Executor holding the backend process.
+
+    :param colored:
+    :param cmd:
+    :param env:
+    :param cwd:
+    :ivar is_alive:
+    """
 
     def __init__(self, colored: bool, cmd: Sequence[str], env: dict[str, str], cwd: Path) -> None:  # ruff:ignore[boolean-type-hint-positional-argument]
         super().__init__(colored)
@@ -87,7 +95,6 @@ class LocalSubProcessPep517Executor(Execute):
 
     @staticmethod
     def _handler(into: bytearray, content: bytes) -> None:
-        """Ignore content generated."""
         into.extend(content)  # pragma: no cover
 
     def close(self) -> None:
@@ -104,8 +111,13 @@ class LocalSubProcessPep517Executor(Execute):
 
 
 class LocalSubProcessPep517ExecuteInstance(ExecuteInstance):
-    """A backend invocation."""
-
+    # A backend invocation.
+    #
+    # :param request:
+    # :param options:
+    # :param out:
+    # :param err:
+    # :param instance_status:
     def __init__(
         self,
         request: ExecuteRequest,
@@ -118,16 +130,18 @@ class LocalSubProcessPep517ExecuteInstance(ExecuteInstance):
         self._instance, self._status = instance_status
         self._lock = Lock()
 
-    @property
-    @override
-    def cmd(self) -> Sequence[str]:
-        return self._instance.cmd
-
     @override
     def __enter__(self) -> ExecuteStatus:
         self._lock.acquire()
         self._swap_out_err()
         return self._status
+
+    def _swap_out_err(self) -> None:
+        out, err = self._out, self._err
+        # update status to see the newly collected content
+        self._out, self._err = self._instance.set_out_err(out, err)
+        # update the thread out/err
+        self._status.set_out_err(out, err)
 
     @override
     def __exit__(
@@ -139,9 +153,12 @@ class LocalSubProcessPep517ExecuteInstance(ExecuteInstance):
         self._swap_out_err()
         self._lock.release()
 
-    def _swap_out_err(self) -> None:
-        out, err = self._out, self._err
-        # update status to see the newly collected content
-        self._out, self._err = self._instance.set_out_err(out, err)
-        # update the thread out/err
-        self._status.set_out_err(out, err)
+    @property
+    @override
+    def cmd(self) -> Sequence[str]:
+        return self._instance.cmd
+
+
+__all__ = [
+    "LocalSubProcessPep517Executor",
+]

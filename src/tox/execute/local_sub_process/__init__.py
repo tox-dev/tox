@@ -48,7 +48,7 @@ else:  # pragma: win32 no cover
     from .read_via_thread_unix import ReadViaThreadUnix as ReadViaThread
 
 
-IS_WIN = sys.platform == "win32"
+_IS_WIN = sys.platform == "win32"
 
 
 class LocalSubProcessExecutor(Execute):
@@ -63,11 +63,191 @@ class LocalSubProcessExecutor(Execute):
         return LocalSubProcessExecuteInstance(request, options, out, err)
 
 
+class LocalSubProcessExecuteInstance(ExecuteInstance):
+    def __init__(
+        self,
+        request: ExecuteRequest,
+        options: ExecuteOptions,
+        out: SyncWrite,
+        err: SyncWrite,
+        on_exit_drain: bool = True,  # ruff:ignore[boolean-type-hint-positional-argument, boolean-default-value-positional-argument]
+    ) -> None:
+        super().__init__(request, options, out, err)
+        self.process: Popen[bytes] | None = None
+        self._cmd: list[str] | None = None
+        self._read_stderr: ReadViaThread | None = None
+        self._read_stdout: ReadViaThread | None = None
+        self._file_no_generators: list[Generator[int, Popen[bytes], None]] = []
+        self._on_exit_drain = on_exit_drain
+
+    @override
+    def __enter__(self) -> ExecuteStatus:
+        # adjust sub-process terminal size
+        columns, lines = shutil.get_terminal_size(fallback=(-1, -1))
+        if columns != -1:  # pragma: no branch
+            self.request.env.setdefault("COLUMNS", str(columns))
+        if lines != -1:  # pragma: no branch
+            self.request.env.setdefault("LINES", str(lines))
+
+        stdout, stderr = self.get_stream_file_no("stdout"), self.get_stream_file_no("stderr")
+        self._file_no_generators = [stdout, stderr]
+        # API replies and internal commands must return their output to tox.
+        inherit_console: Final[bool] = (
+            self.options.no_capture and not self.request.capture and self.request.stdin is not StdinSource.API
+        )
+        resolved_cmd: Final[Sequence[str]] = self.cmd
+        cmd: Sequence[str] | str = resolved_cmd
+        executable: str | None = None
+        if sys.platform == "win32" and is_batch_file(resolved_cmd[0]):
+            cmd = batch_file_command_line(resolved_cmd[0], resolved_cmd[1:])
+            executable = str(Path(os.environ.get("SYSTEMROOT", r"C:\Windows")) / "System32" / "cmd.exe")
+        try:
+            self.process = process = Popen(
+                cmd,
+                executable=executable,
+                stdout=None if inherit_console else next(stdout),
+                stderr=None if inherit_console else next(stderr),
+                stdin={StdinSource.USER: None, StdinSource.OFF: DEVNULL, StdinSource.API: PIPE}[self.request.stdin],
+                cwd=str(self.request.cwd),
+                env=self.request.env,
+            )
+        except OSError as exception:
+            # We log a nice error message to avout returning opaque error codes,
+            # like exit code 2 (filenotfound).
+            error = str(exception)
+            if isinstance(exception.filename, str):
+                error = error.replace(repr(exception.filename), repr(redact_argv([exception.filename])[0]))
+            logging.error("Exception running subprocess %s", error)  # ruff:ignore[error-instead-of-exception]
+            return LocalSubprocessExecuteFailedStatus(self.options, self._out, self._err, exception)
+
+        status = LocalSubprocessExecuteStatus(self.options, self._out, self._err, process)
+        if not inherit_console:
+            drain, pid = self._on_exit_drain, self.process.pid
+            self._read_stderr = ReadViaThread(stderr.send(process), self.err_handler, name=f"err-{pid}", drain=drain)
+            self._read_stderr.__enter__()
+            self._read_stdout = ReadViaThread(stdout.send(process), self.out_handler, name=f"out-{pid}", drain=drain)
+            self._read_stdout.__enter__()
+        return status
+
+    @staticmethod
+    def get_stream_file_no(key: str) -> Generator[int, Popen[bytes], None]:
+        if (allocated_pty := _pty(key)) is not None:
+            main_fd, child_fd = allocated_pty
+            child_fd_open = True
+            try:
+                yield child_fd
+                os.close(child_fd)  # close the child process pipe once the child inherited it
+                child_fd_open = False
+                yield main_fd
+            finally:
+                # close on generator teardown; the master fd is not a process stream so nobody else closes it.
+                # Skip the child fd if it was already closed above: re-closing a freed fd number can race with a
+                # parallel run that has since reused it, corrupting the sibling's fd (see #3975).
+                for fd in (child_fd, main_fd) if child_fd_open else (main_fd,):
+                    with suppress(OSError):
+                        os.close(fd)
+        else:
+            process = yield PIPE
+            stream = getattr(process, key)
+            if sys.platform == "win32":  # explicit check for mypy # pragma: win32 cover
+                yield stream.handle
+            else:
+                yield stream.name
+
+    @property
+    @override
+    def cmd(self) -> Sequence[str]:
+        if self._cmd is None:
+            base = self.request.cmd[0]
+            lookup, path = base, self.request.env["PATH"]
+            if sys.platform != "win32":
+                # The allowlist and shebang checks must inspect the file the child runs.
+                cwd = self.request.cwd.absolute()
+                if os.sep in base:
+                    lookup = str(cwd / base)
+                path = os.pathsep.join(str(cwd / entry) for entry in path.split(os.pathsep))
+            if (executable := shutil.which(lookup, path=path)) is None:
+                cmd = self.request.cmd  # if failed to find leave as it is
+            else:
+                if self.request.allow is not None:
+                    for allow in self.request.allow:
+                        # 1. allow matches just the original name of the executable
+                        # 2. allow matches the entire resolved path
+                        if fnmatch.fnmatch(self.request.cmd[0], allow) or fnmatch.fnmatch(executable, allow):
+                            break
+                    else:
+                        msg = f"{base} (resolves to {executable})" if base == executable else base
+                        msg = f"{msg} is not allowed, use allowlist_externals to allow it"
+                        raise Fail(msg)
+                cmd = [executable]
+                if sys.platform != "win32" and self.request.env.get("TOX_LIMITED_SHEBANG", "").strip():
+                    if shebang_line := shebang(executable):
+                        cmd = [*shebang_line, executable]
+                cmd.extend(self.request.cmd[1:])
+            self._cmd = cmd
+        return self._cmd
+
+    @override
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
+    ) -> None:
+        if self._read_stderr is not None:
+            self._read_stderr.__exit__(exc_type, exc_val, exc_tb)
+        if self._read_stdout is not None:
+            self._read_stdout.__exit__(exc_type, exc_val, exc_tb)
+        if self.process is not None:  # cleanup the file handlers
+            for stream in (self.process.stdout, self.process.stderr, self.process.stdin):
+                if stream is not None and not getattr(stream, "closed", False):
+                    try:
+                        stream.close()
+                    except OSError as exc:  # pragma: no cover
+                        logging.warning("error while trying to close %r with %r", stream, exc)  # pragma: no cover
+        # release any file descriptors the stream generators still own (e.g. a pty master fd, which is not
+        # exposed as a process stream and would otherwise leak); the read threads above have already stopped
+        for generator in self._file_no_generators:
+            generator.close()
+        self._file_no_generators = []
+
+    def set_out_err(self, out: SyncWrite, err: SyncWrite) -> tuple[SyncWrite, SyncWrite]:
+        prev = self._out, self._err
+        if self._read_stdout is not None:  # pragma: no branch
+            self._read_stdout.handler = out.handler
+        if self._read_stderr is not None:  # pragma: no branch
+            self._read_stderr.handler = err.handler
+        return prev
+
+
+class LocalSubprocessExecuteFailedStatus(FinishedExecuteStatus):
+    """The status of a command that could not be started.
+
+    :param options:
+    :param out:
+    :param err:
+    :param start_error:
+    """
+
+    def __init__(self, options: ExecuteOptions, out: SyncWrite, err: SyncWrite, start_error: OSError) -> None:
+        super().__init__(options, out, err, start_error.errno)
+        self._start_error = start_error
+
+    @property
+    @override
+    def start_error(self) -> OSError:
+        return self._start_error
+
+
 class LocalSubprocessExecuteStatus(ExecuteStatus):
     def __init__(self, options: ExecuteOptions, out: SyncWrite, err: SyncWrite, process: Popen[bytes]) -> None:
         self._process: Popen[bytes] = process
         super().__init__(options, out, err)
         self._interrupted = False
+
+    @override
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}(pid={self._process.pid}, returncode={self._process.returncode!r})"
 
     @property
     @override
@@ -75,6 +255,11 @@ class LocalSubprocessExecuteStatus(ExecuteStatus):
         # need to poll here, to make sure the returncode we get is current
         self._process.poll()
         return self._process.returncode
+
+    @property
+    @override
+    def metadata(self) -> dict[str, JsonValue]:
+        return {"pid": self._process.pid} if self._process.pid else {}
 
     @override
     def interrupt(self) -> None:
@@ -139,202 +324,18 @@ class LocalSubprocessExecuteStatus(ExecuteStatus):
             stdin.write(bytes_content)
             stdin.flush()
 
-    @override
-    def __repr__(self) -> str:
-        return f"{self.__class__.__name__}(pid={self._process.pid}, returncode={self._process.returncode!r})"
-
-    @property
-    @override
-    def metadata(self) -> dict[str, JsonValue]:
-        return {"pid": self._process.pid} if self._process.pid else {}
-
-
-class LocalSubprocessExecuteFailedStatus(FinishedExecuteStatus):
-    """The status of a command that could not be started."""
-
-    def __init__(self, options: ExecuteOptions, out: SyncWrite, err: SyncWrite, start_error: OSError) -> None:
-        super().__init__(options, out, err, start_error.errno)
-        self._start_error = start_error
-
-    @property
-    @override
-    def start_error(self) -> OSError:
-        return self._start_error
-
-
-class LocalSubProcessExecuteInstance(ExecuteInstance):
-    def __init__(
-        self,
-        request: ExecuteRequest,
-        options: ExecuteOptions,
-        out: SyncWrite,
-        err: SyncWrite,
-        on_exit_drain: bool = True,  # ruff:ignore[boolean-type-hint-positional-argument, boolean-default-value-positional-argument]
-    ) -> None:
-        super().__init__(request, options, out, err)
-        self.process: Popen[bytes] | None = None
-        self._cmd: list[str] | None = None
-        self._read_stderr: ReadViaThread | None = None
-        self._read_stdout: ReadViaThread | None = None
-        self._file_no_generators: list[Generator[int, Popen[bytes], None]] = []
-        self._on_exit_drain = on_exit_drain
-
-    @property
-    @override
-    def cmd(self) -> Sequence[str]:
-        if self._cmd is None:
-            base = self.request.cmd[0]
-            lookup, path = base, self.request.env["PATH"]
-            if sys.platform != "win32":
-                # The allowlist and shebang checks must inspect the file the child runs.
-                cwd = self.request.cwd.absolute()
-                if os.sep in base:
-                    lookup = str(cwd / base)
-                path = os.pathsep.join(str(cwd / entry) for entry in path.split(os.pathsep))
-            executable = shutil.which(lookup, path=path)
-            if executable is None:
-                cmd = self.request.cmd  # if failed to find leave as it is
-            else:
-                if self.request.allow is not None:
-                    for allow in self.request.allow:
-                        # 1. allow matches just the original name of the executable
-                        # 2. allow matches the entire resolved path
-                        if fnmatch.fnmatch(self.request.cmd[0], allow) or fnmatch.fnmatch(executable, allow):
-                            break
-                    else:
-                        msg = f"{base} (resolves to {executable})" if base == executable else base
-                        msg = f"{msg} is not allowed, use allowlist_externals to allow it"
-                        raise Fail(msg)
-                cmd = [executable]
-                if sys.platform != "win32" and self.request.env.get("TOX_LIMITED_SHEBANG", "").strip():
-                    shebang_line = shebang(executable)
-                    if shebang_line:
-                        cmd = [*shebang_line, executable]
-                cmd.extend(self.request.cmd[1:])
-            self._cmd = cmd
-        return self._cmd
-
-    @override
-    def __enter__(self) -> ExecuteStatus:
-        # adjust sub-process terminal size
-        columns, lines = shutil.get_terminal_size(fallback=(-1, -1))
-        if columns != -1:  # pragma: no branch
-            self.request.env.setdefault("COLUMNS", str(columns))
-        if lines != -1:  # pragma: no branch
-            self.request.env.setdefault("LINES", str(lines))
-
-        stdout, stderr = self.get_stream_file_no("stdout"), self.get_stream_file_no("stderr")
-        self._file_no_generators = [stdout, stderr]
-        # API replies and internal commands must return their output to tox.
-        inherit_console: Final[bool] = (
-            self.options.no_capture and not self.request.capture and self.request.stdin is not StdinSource.API
-        )
-        resolved_cmd: Final[Sequence[str]] = self.cmd
-        cmd: Sequence[str] | str = resolved_cmd
-        executable: str | None = None
-        if sys.platform == "win32" and is_batch_file(resolved_cmd[0]):
-            cmd = batch_file_command_line(resolved_cmd[0], resolved_cmd[1:])
-            executable = str(Path(os.environ.get("SYSTEMROOT", r"C:\Windows")) / "System32" / "cmd.exe")
-        try:
-            self.process = process = Popen(
-                cmd,
-                executable=executable,
-                stdout=None if inherit_console else next(stdout),
-                stderr=None if inherit_console else next(stderr),
-                stdin={StdinSource.USER: None, StdinSource.OFF: DEVNULL, StdinSource.API: PIPE}[self.request.stdin],
-                cwd=str(self.request.cwd),
-                env=self.request.env,
-            )
-        except OSError as exception:
-            # We log a nice error message to avout returning opaque error codes,
-            # like exit code 2 (filenotfound).
-            error = str(exception)
-            if isinstance(exception.filename, str):
-                error = error.replace(repr(exception.filename), repr(redact_argv([exception.filename])[0]))
-            logging.error("Exception running subprocess %s", error)  # ruff:ignore[error-instead-of-exception]
-            return LocalSubprocessExecuteFailedStatus(self.options, self._out, self._err, exception)
-
-        status = LocalSubprocessExecuteStatus(self.options, self._out, self._err, process)
-        if not inherit_console:
-            drain, pid = self._on_exit_drain, self.process.pid
-            self._read_stderr = ReadViaThread(stderr.send(process), self.err_handler, name=f"err-{pid}", drain=drain)
-            self._read_stderr.__enter__()
-            self._read_stdout = ReadViaThread(stdout.send(process), self.out_handler, name=f"out-{pid}", drain=drain)
-            self._read_stdout.__enter__()
-        return status
-
-    @override
-    def __exit__(
-        self,
-        exc_type: type[BaseException] | None,
-        exc_val: BaseException | None,
-        exc_tb: TracebackType | None,
-    ) -> None:
-        if self._read_stderr is not None:
-            self._read_stderr.__exit__(exc_type, exc_val, exc_tb)
-        if self._read_stdout is not None:
-            self._read_stdout.__exit__(exc_type, exc_val, exc_tb)
-        if self.process is not None:  # cleanup the file handlers
-            for stream in (self.process.stdout, self.process.stderr, self.process.stdin):
-                if stream is not None and not getattr(stream, "closed", False):
-                    try:
-                        stream.close()
-                    except OSError as exc:  # pragma: no cover
-                        logging.warning("error while trying to close %r with %r", stream, exc)  # pragma: no cover
-        # release any file descriptors the stream generators still own (e.g. a pty master fd, which is not
-        # exposed as a process stream and would otherwise leak); the read threads above have already stopped
-        for generator in self._file_no_generators:
-            generator.close()
-        self._file_no_generators = []
-
-    @staticmethod
-    def get_stream_file_no(key: str) -> Generator[int, Popen[bytes], None]:
-        allocated_pty = _pty(key)
-        if allocated_pty is not None:
-            main_fd, child_fd = allocated_pty
-            child_fd_open = True
-            try:
-                yield child_fd
-                os.close(child_fd)  # close the child process pipe once the child inherited it
-                child_fd_open = False
-                yield main_fd
-            finally:
-                # close on generator teardown; the master fd is not a process stream so nobody else closes it.
-                # Skip the child fd if it was already closed above: re-closing a freed fd number can race with a
-                # parallel run that has since reused it, corrupting the sibling's fd (see #3975).
-                for fd in (child_fd, main_fd) if child_fd_open else (main_fd,):
-                    with suppress(OSError):
-                        os.close(fd)
-        else:
-            process = yield PIPE
-            stream = getattr(process, key)
-            if sys.platform == "win32":  # explicit check for mypy # pragma: win32 cover
-                yield stream.handle
-            else:
-                yield stream.name
-
-    def set_out_err(self, out: SyncWrite, err: SyncWrite) -> tuple[SyncWrite, SyncWrite]:
-        prev = self._out, self._err
-        if self._read_stdout is not None:  # pragma: no branch
-            self._read_stdout.handler = out.handler
-        if self._read_stderr is not None:  # pragma: no branch
-            self._read_stderr.handler = err.handler
-        return prev
-
 
 def _pty(key: str) -> tuple[int, int] | None:
-    """Allocate a virtual terminal (pty) for a subprocess.
-
-    A virtual terminal allows a process to perform syscalls that fetch attributes related to the tty, for example to
-    determine whether to use colored output or enter interactive mode.
-
-    The termios attributes of the controlling terminal stream will be copied to the allocated pty.
-
-    :param key: The stream to copy attributes from. Either "stdout" or "stderr".
-
-    :returns: (main_fd, child_fd) of an allocated pty; or None on error or if unsupported (win32).
-
-    """
+    # Allocate a virtual terminal (pty) for a subprocess.
+    #
+    # A virtual terminal allows a process to perform syscalls that fetch attributes related to the tty, for example to
+    # determine whether to use colored output or enter interactive mode.
+    #
+    # The termios attributes of the controlling terminal stream will be copied to the allocated pty.
+    #
+    # :param key: The stream to copy attributes from. Either "stdout" or "stderr".
+    #
+    # :returns: (main_fd, child_fd) of an allocated pty; or None on error or if unsupported (win32).
     if sys.platform == "win32":  # explicit check for mypy # pragma: win32 cover
         return None
 
@@ -369,8 +370,7 @@ def _pty(key: str) -> tuple[int, int] | None:
     # adjust sub-process terminal size
     columns, lines = shutil.get_terminal_size(fallback=(-1, -1))
     if columns != -1 and lines != -1:
-        size = struct.pack("HHHH", lines, columns, 0, 0)
-        fcntl.ioctl(child, termios.TIOCSWINSZ, size)  # Unix-only
+        fcntl.ioctl(child, termios.TIOCSWINSZ, struct.pack("HHHH", lines, columns, 0, 0))  # Unix-only
 
     return main, child
 

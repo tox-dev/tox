@@ -12,7 +12,7 @@ from os.path import commonpath
 from pathlib import Path
 from typing import Final
 
-from tox.util.path import ensure_empty_dir, ensure_private_dir
+from .path import ensure_empty_dir, ensure_private_dir
 
 PACKAGE_STAGING_DIR: Final[str] = "package"
 
@@ -108,15 +108,6 @@ def repair_staging_path(temp_path: Path, trust_root: Path, work_dir: Path) -> No
         _empty_exposed_directory(directories[exposed].path, owners, trust_root)
 
 
-@dataclass(frozen=True, slots=True, kw_only=True)
-class _StagingDirectory:
-    parent_descriptor: int
-    name: str
-    descriptor: int
-    path: Path
-    metadata: os.stat_result
-
-
 def _open_staging_chain(
     stack: ExitStack, trust_root: Path, parts: tuple[str, ...], flags: int
 ) -> list[_StagingDirectory] | None:
@@ -143,6 +134,15 @@ def _open_staging_chain(
         )
         directory = child
     return directories
+
+
+@dataclass(frozen=True, slots=True, kw_only=True)
+class _StagingDirectory:
+    parent_descriptor: int
+    name: str
+    descriptor: int
+    path: Path
+    metadata: os.stat_result
 
 
 def _exposed_index(

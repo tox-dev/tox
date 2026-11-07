@@ -48,9 +48,9 @@ def show_outcome(outcome: Outcome | None) -> None:
 
 def handler(s: int, f: FrameType | None) -> None:
     logging.info("signal %s at %s", s, f)
-    global interrupt_done  # ruff:ignore[global-statement]
-    if interrupt_done is False:  # pragma: no branch
-        interrupt_done = True
+    global _INTERRUPT_DONE  # ruff:ignore[global-statement]
+    if _INTERRUPT_DONE is False:  # pragma: no branch
+        _INTERRUPT_DONE = True
         logging.info("interrupt via %s", status)
         status.interrupt()
         logging.info("interrupt finished via %s", status)
@@ -63,19 +63,19 @@ def _wait_for_exit(status: ExecuteStatus) -> None:
     logging.info("wait over on %r", status)
 
 
-interrupt_done = False
+_INTERRUPT_DONE = False
 signal.signal(signal.SIGINT, handler)
 logging.info("PID %d start %r", os.getpid(), request)
 tox_env = MagicMock(conf={"suicide_timeout": 0.01, "interrupt_timeout": 0.05, "terminate_timeout": 0.07})
 tox_env.options.no_capture = False
-status_outcome: Outcome | None = None
+_STATUS_OUTCOME: Outcome | None = None
 try:
     with executor.call(request, show=False, out_err=out_err, env=tox_env) as status:
         _wait_for_exit(status)
-    status_outcome = status.outcome
+    _STATUS_OUTCOME = status.outcome
 except Exception as exception:  # pragma: no cover
     logging.exception(exception)  # ruff:ignore[verbose-log-message] # pragma: no cover
 finally:
     logging.info("done")
     logging.shutdown()
-show_outcome(status_outcome)
+show_outcome(_STATUS_OUTCOME)

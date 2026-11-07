@@ -12,7 +12,7 @@ from tox.util.redact import redact_argv
 if TYPE_CHECKING:
     from types import UnionType
 
-CONVERT = StrConvert()
+_CONVERT = StrConvert()
 
 
 def get_env_var(key: str, of_type: type[Any] | UnionType) -> tuple[Any, str] | None:
@@ -32,9 +32,9 @@ def get_env_var(key: str, of_type: type[Any] | UnionType) -> tuple[Any, str] | N
             try:
                 if origin is list:
                     entry_type = of_type.__args__[0]
-                    result = [CONVERT.to(raw=v, of_type=entry_type, factory=None) for v in value.split(";") if v]
+                    result = [_CONVERT.to(raw=v, of_type=entry_type, factory=None) for v in value.split(";") if v]
                 else:
-                    result = CONVERT.to(raw=value, of_type=of_type, factory=None)
+                    result = _CONVERT.to(raw=value, of_type=of_type, factory=None)
             except Exception as exception:  # ruff:ignore[blind-except]
                 redacted_value = redact_argv([value])[0]
                 logging.warning(

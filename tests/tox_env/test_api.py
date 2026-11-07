@@ -16,10 +16,8 @@ if TYPE_CHECKING:
 
 
 def test_ensure_temp_dir_exists(tox_project: ToxProjectCreator) -> None:
-    ini = "[testenv]\ncommands=python -c 'import os; os.path.exists(r\"{temp_dir}\")'"
-    project = tox_project({"tox.ini": ini})
-    result = project.run()
-    result.assert_success()
+    project = tox_project({"tox.ini": "[testenv]\ncommands=python -c 'import os; os.path.exists(r\"{temp_dir}\")'"})
+    project.run().assert_success()
 
 
 @pytest.mark.skipif(sys.platform == "win32", reason="POSIX directory permissions")
@@ -60,9 +58,7 @@ def test_package_staging_reuses_group_writable_directories(
 
 def test_dont_cleanup_temp_dir(tox_project: ToxProjectCreator, tmp_path: Path) -> None:
     (tmp_path / "foo" / "bar").mkdir(parents=True)
-    project = tox_project({"tox.ini": "[tox]\ntemp_dir=foo"})
-    result = project.run()
-    result.assert_success()
+    tox_project({"tox.ini": "[tox]\ntemp_dir=foo"}).run().assert_success()
     assert (tmp_path / "foo" / "bar").exists()
 
 
@@ -103,9 +99,7 @@ def test_setenv_section_substitution(tox_project: ToxProjectCreator) -> None:
     [testenv]
     setenv = {[variables]var}
     commands = python -c 'import os; os.environ["VAR"]'"""
-    project = tox_project({"tox.ini": ini})
-    result = project.run()
-    result.assert_success()
+    tox_project({"tox.ini": ini}).run().assert_success()
 
 
 @pytest.mark.parametrize(
@@ -128,7 +122,7 @@ def test_setenv_section_substitution(tox_project: ToxProjectCreator) -> None:
     ],
 )
 def test_redact(key: str, do_redact: bool) -> None:
-    """Ensures that redact_value works as expected."""
+    # Ensures that redact_value works as expected.
     result = redact_value(key, "foo")
     if do_redact:
         assert result == "***"

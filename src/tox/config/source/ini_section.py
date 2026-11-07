@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Final
+
 from tox.config.loader.ini.factor import extend_factors
 from tox.config.loader.section import Section
 
@@ -18,8 +20,8 @@ class IniSection(Section):
         return list(extend_factors(self.name))
 
 
-TEST_ENV_PREFIX = "testenv"
-PKG_ENV_PREFIX = "pkgenv"
+TEST_ENV_PREFIX: Final[str] = "testenv"
+PKG_ENV_PREFIX: Final[str] = "pkgenv"
 CORE = IniSection(None, "tox")
 
 __all__ = [

@@ -9,9 +9,9 @@ import sys
 import time
 from typing import TYPE_CHECKING
 
-from tox.config.cli.parse import get_options
-from tox.report import HandledError, ToxHandler
-from tox.session.state import State
+from .config.cli.parse import get_options
+from .report import HandledError, ToxHandler
+from .session.state import State
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -40,17 +40,20 @@ def run(args: Sequence[str] | None = None) -> None:
 
 def main(args: Sequence[str]) -> int:
     state = setup_state(args)
-    from tox.provision import provision  # ruff:ignore[import-outside-top-level]
+    from .provision import provision  # ruff:ignore[import-outside-top-level]
 
-    result = provision(state)
-    if result is not False:
+    if (result := provision(state)) is not False:
         return result
     handler = state._options.cmd_handlers[state.conf.options.command]  # ruff:ignore[private-member-access]
     return handler(state)
 
 
 def setup_state(args: Sequence[str]) -> State:
-    """Setup the state object of this run."""
+    """Setup the state object of this run.
+
+    :param args:
+    :returns:
+    """
     start = time.monotonic()
     # parse CLI arguments
     options = get_options(*args)
@@ -59,3 +62,10 @@ def setup_state(args: Sequence[str]) -> State:
         faulthandler.dump_traceback_later(timeout=options.parsed.exit_and_dump_after, exit=True)  # pragma: no cover
     # build tox environment config objects
     return State(options, args)
+
+
+__all__ = [
+    "main",
+    "run",
+    "setup_state",
+]

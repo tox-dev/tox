@@ -60,48 +60,6 @@ def _global_options(parser: ArgumentParser) -> None:
     )
 
 
-def _req_options(parser: ArgumentParser) -> None:
-    parser.add_argument("--install-option", action=AddSortedUniqueAction)
-    parser.add_argument("--global-option", action=AddSortedUniqueAction)
-    parser.add_argument("--hash", action=AddSortedUniqueAction, type=_validate_hash)
-    parser.add_argument("-C", "--config-settings", action="append", dest="config_settings")
-
-
-_HASH = re.compile(
-    r"""
-    sha
-    (
-        256 : [a-f0-9]{64}      # SHA-256 hash
-        | 384 : [a-f0-9]{96}    # SHA-384 hash
-        | 512 : [a-f0-9]{128}   # SHA-512 hash
-    )
-    """,
-    re.VERBOSE,
-)
-
-
-def _validate_hash(value: str) -> str:
-    if not _HASH.fullmatch(value):
-        raise ArgumentTypeError(value)
-    return value
-
-
-class AddSortedUniqueAction(Action):
-    @override
-    def __call__(
-        self,
-        parser: ArgumentParser,
-        namespace: Namespace,
-        values: str | Sequence[Any] | None,
-        option_string: str | None = None,
-    ) -> None:
-        if getattr(namespace, self.dest, None) is None:
-            setattr(namespace, self.dest, [])
-        current = getattr(namespace, self.dest)
-        if values is not None and values not in current:
-            bisect.insort(current, cast("str", values))
-
-
 class AddUniqueAction(Action):
     @override
     def __call__(
@@ -131,3 +89,50 @@ class BinaryAction(Action):
     ) -> None:
         assert values is not None  # ruff:ignore[assert]
         namespace.binary_options = [*(namespace.binary_options or []), (self.const, values[0])]
+
+
+class AddSortedUniqueAction(Action):
+    @override
+    def __call__(
+        self,
+        parser: ArgumentParser,
+        namespace: Namespace,
+        values: str | Sequence[Any] | None,
+        option_string: str | None = None,
+    ) -> None:
+        if getattr(namespace, self.dest, None) is None:
+            setattr(namespace, self.dest, [])
+        current = getattr(namespace, self.dest)
+        if values is not None and values not in current:
+            bisect.insort(current, cast("str", values))
+
+
+def _req_options(parser: ArgumentParser) -> None:
+    parser.add_argument("--install-option", action=AddSortedUniqueAction)
+    parser.add_argument("--global-option", action=AddSortedUniqueAction)
+    parser.add_argument("--hash", action=AddSortedUniqueAction, type=_validate_hash)
+    parser.add_argument("-C", "--config-settings", action="append", dest="config_settings")
+
+
+def _validate_hash(value: str) -> str:
+    if not _HASH.fullmatch(value):
+        raise ArgumentTypeError(value)
+    return value
+
+
+_HASH = re.compile(
+    r"""
+    sha
+    (
+        256 : [a-f0-9]{64}      # SHA-256 hash
+        | 384 : [a-f0-9]{96}    # SHA-384 hash
+        | 512 : [a-f0-9]{128}   # SHA-512 hash
+    )
+    """,
+    re.VERBOSE,
+)
+
+
+__all__ = [
+    "build_parser",
+]

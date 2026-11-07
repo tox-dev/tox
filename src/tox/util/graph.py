@@ -19,10 +19,10 @@ def stable_topological_sort(graph: dict[str, set[str]]) -> list[str]:  # ruff:ig
         for depend in depends:
             inverse_graph[depend].add(key)
 
-    topology = []
     degree = {k: len(v) for k, v in graph.items()}
     ready_to_visit = {n for n, d in degree.items() if not d}
     need_to_visit = OrderedDict((i, None) for i in graph)
+    topology = []
     while need_to_visit:
         # to keep stable, pick the first node ready to visit in the original order
         for node in need_to_visit:
@@ -43,13 +43,13 @@ def stable_topological_sort(graph: dict[str, set[str]]) -> list[str]:  # ruff:ig
     result = [n for n in topology if n in to_order]  # filter out missing nodes we extended
 
     if len(result) < len(to_order):
-        identify_cycle(graph)
+        _identify_cycle(graph)
         msg = "could not order tox environments and failed to detect circle"  # pragma: no cover
         raise ValueError(msg)  # pragma: no cover
     return result
 
 
-def identify_cycle(graph: dict[str, set[str]]) -> None:
+def _identify_cycle(graph: dict[str, set[str]]) -> None:
     path: dict[str, None] = OrderedDict()
     visited = set()
 
@@ -65,7 +65,11 @@ def identify_cycle(graph: dict[str, set[str]]) -> None:
         return None
 
     for node in graph:  # pragma: no branch # we never get here if the graph is empty
-        result = visit(node)
-        if result is not None:
+        if (result := visit(node)) is not None:
             msg = f"{' | '.join(result.keys())}"
             raise ValueError(msg)
+
+
+__all__ = [
+    "stable_topological_sort",
+]

@@ -44,4 +44,6 @@ def _to_native_collection(value: object) -> JsonValue:
     return str(value)
 
 
-__all__ = ("to_native",)
+__all__ = [
+    "to_native",
+]

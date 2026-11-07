@@ -7,10 +7,11 @@ from typing import TYPE_CHECKING
 from tox.config.loader.memory import MemoryLoader
 from tox.plugin import impl
 from tox.report import HandledError
-from tox.session.cmd.run.common import env_run_create_flags
-from tox.session.cmd.run.sequential import run_sequential
 from tox.session.env_select import CliEnv, register_env_select_flags
 from tox.util.venv_redirect import record_venv_redirect
+
+from .run.common import env_run_create_flags
+from .run.sequential import run_sequential
 
 if TYPE_CHECKING:
     from tox.config.cli.parser import ToxParser
@@ -34,8 +35,7 @@ def devenv(state: State) -> int:
     opt.package_only = False
     opt.install_pkg = None
     if opt.env.is_all or len(list(opt.env)) != 1:
-        found = ", ".join(opt.env) or "ALL"
-        msg = f"exactly one target environment allowed in devenv mode but found {found}"
+        msg = f"exactly one target environment allowed in devenv mode but found {(', '.join(opt.env) or 'ALL')}"
         raise HandledError(msg)
     opt.fail_fast = False
     opt.skip_pkg_install = False
@@ -57,3 +57,8 @@ def devenv(state: State) -> int:
             # asking for a development environment is the explicit consent PEP 832 wants before replacing a redirect
             record_venv_redirect(state.conf.core.get("tox_root", Path), opt.devenv_path, lambda _: True)
     return result
+
+
+__all__ = [
+    "devenv",
+]

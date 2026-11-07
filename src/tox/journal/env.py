@@ -12,7 +12,11 @@ if TYPE_CHECKING:
 
 
 class EnvJournal:
-    """Report the status of a tox environment."""
+    """Report the status of a tox environment.
+
+    :param enabled:
+    :param name:
+    """
 
     def __init__(self, enabled: bool, name: str) -> None:  # ruff:ignore[boolean-type-hint-positional-argument]
         self._enabled = enabled
@@ -32,15 +36,6 @@ class EnvJournal:
     def __bool__(self) -> bool:
         """:returns: a flag indicating if the event journal is on or not"""
         return self._enabled
-
-    def add_execute(self, outcome: Outcome, run_id: str) -> None:
-        """Add a command execution to the journal.
-
-        :param outcome: the execution outcome
-        :param run_id: the execution id
-
-        """
-        self._executes.append((run_id, outcome))
 
     @property
     def content(self) -> dict[str, JsonValue]:
@@ -69,5 +64,16 @@ class EnvJournal:
             self["setup"] = setup
         return self._content
 
+    def add_execute(self, outcome: Outcome, run_id: str) -> None:
+        """Add a command execution to the journal.
 
-__all__ = ("EnvJournal",)
+        :param outcome: the execution outcome
+        :param run_id: the execution id
+
+        """
+        self._executes.append((run_id, outcome))
+
+
+__all__ = [
+    "EnvJournal",
+]

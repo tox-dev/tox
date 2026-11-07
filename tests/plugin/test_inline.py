@@ -25,8 +25,7 @@ def test_inline_tox_py(tox_project: ToxProjectCreator) -> None:
             logging.warning("Add magic")
             parser.add_argument("--magic", action="store_true")
 
-    project = tox_project({"toxfile.py": plugin})
-    result = project.run("-h")
+    result = tox_project({"toxfile.py": plugin}).run("-h")
     result.assert_success()
     assert "--magic" in result.out
 
@@ -122,15 +121,13 @@ def test_toxfile_unknown_hook_skipped(tox_project: ToxProjectCreator) -> None:
         @impl
         def tox_nonexistent_hook() -> None: ...
 
-    project = tox_project({"toxfile.py": plugin, "tox.toml": ""})
-    result = project.run("l")
+    result = tox_project({"toxfile.py": plugin, "tox.toml": ""}).run("l")
     result.assert_success()
     assert "skipping inline plugin" in result.out
 
 
 def test_toxfile_py_w_ephemeral_envs(tox_project: ToxProjectCreator) -> None:
-    """Ensure additional ephemeral tox envs can be plugin-injected."""
-
+    # Ensure additional ephemeral tox envs can be plugin-injected.
     def plugin() -> None:  # pragma: no cover # the code is copied to a python file
         from tox.config.loader.memory import MemoryLoader  # ruff:ignore[import-outside-top-level]
         from tox.plugin import impl  # ruff:ignore[import-outside-top-level]

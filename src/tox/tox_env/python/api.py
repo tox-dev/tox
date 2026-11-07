@@ -36,7 +36,7 @@ class VersionInfo(NamedTuple):
     serial: int
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class PythonInfo:
     implementation: str
     version_info: VersionInfo
@@ -62,7 +62,7 @@ class PythonInfo:
         return f"{self.version_info.major}.{self.version_info.minor}"
 
 
-PY_FACTORS_RE = re.compile(
+_PY_FACTORS_RE = re.compile(
     r"""
     ^(?!py$)                                               # don't match 'py' as it doesn't provide any info
     (?P<impl>py|pypy|cpython|jython|graalpy|rustpython|ironpython) # the interpreter; most users will simply use 'py'
@@ -74,7 +74,7 @@ PY_FACTORS_RE = re.compile(
     """,
     re.VERBOSE,
 )
-PY_FACTORS_RE_EXPLICIT_VERSION = re.compile(
+_PY_FACTORS_RE_EXPLICIT_VERSION = re.compile(
     r"""
     ^
     ( (?P<impl> cpython | pypy ) - )?   # optional interpreter prefix with dash
@@ -167,164 +167,6 @@ class Python(ToxEnv, ABC):
         self.conf.add_constant("py_free_threaded", "is no-gil interpreted", value=self.py_free_threaded)
         self.conf.add_constant("py_debug", "is a debug build", value=self.py_debug)
 
-    @override
-    def _default_set_env(self) -> dict[str, str]:
-        env = super()._default_set_env()
-        hash_seed: int | None = getattr(self.options, "hash_seed", None)
-        if hash_seed is not None:
-            env["PYTHONHASHSEED"] = str(hash_seed)
-        return env
-
-    def py_dot_ver(self) -> str:
-        return self.base_python.version_dot
-
-    def py_free_threaded(self) -> bool:
-        return self.base_python.free_threaded
-
-    def py_debug(self) -> bool:
-        return self.base_python.debug
-
-    def py_impl(self) -> str:
-        return self.base_python.impl_lower
-
-    @override
-    def _default_pass_env(self) -> list[str]:
-        env = super()._default_pass_env()
-        if sys.platform == "win32":  # pragma: win32 cover
-            env.extend(
-                [
-                    "APPDATA",  # Needed for PIP platformsdirs.windows
-                    "LOCALAPPDATA",  # Needed for pymanager
-                    "PROGRAMDATA",  # needed for discovering the VS compiler
-                    "PROGRAMFILES(x86)",  # needed for discovering the VS compiler
-                    "PROGRAMFILES",  # needed for discovering the VS compiler
-                    "SYSTEMDRIVE",
-                    "SYSTEMROOT",  # needed for python's crypto module
-                    "COMSPEC",  # needed for distutils cygwin compiler
-                    "PROCESSOR_ARCHITECTURE",  # platform.machine()
-                    "NUMBER_OF_PROCESSORS",  # multiprocessing.cpu_count()
-                ],
-            )
-        binary_extension_build = ["PKG_CONFIG", "PKG_CONFIG_PATH", "PKG_CONFIG_SYSROOT_DIR"]
-        env.extend(binary_extension_build)  # used by binary extensions during installation
-        env.extend(["REQUESTS_CA_BUNDLE"])
-        return env
-
-    def _base_python_default(self, conf: Config, env_name: str | None) -> list[str]:  # ruff:ignore[unused-method-argument]
-        self._base_python_explicitly_set = False
-        try:
-            base_python = None if env_name is None else self.extract_base_python(env_name)
-        except ValueError:
-            if self.core["ignore_base_python_conflict"]:
-                base_python = None
-            else:
-                raise
-        if base_python is not None:
-            return [base_python]
-        base_python_files = self.conf.get("base_python_file", list[str])
-        if base_python_files:
-            return self._read_python_version_file(base_python_files)
-        return self.conf.get("default_base_python", list[str])
-
-    def _read_python_version_file(self, file_paths: list[str]) -> list[str]:
-        tox_root = self.core.get("toxinidir", Path)
-        for file_path in file_paths:
-            path = tox_root / file_path
-            if not path.exists():
-                continue
-            if not path.is_file():
-                msg = f"base_python_file: {file_path!r} is not a regular file"
-                raise Fail(msg)
-            try:
-                version = self._first_version_line(path, file_path)
-            except (OSError, UnicodeDecodeError) as exc:
-                msg = f"base_python_file: cannot read {file_path!r}: {exc}"
-                raise Fail(msg) from exc
-            if version is not None:
-                if not self._is_python_version_spec(version):
-                    # A version file can be a symlink to a secret; only name the configured path.
-                    msg = f"base_python_file: {file_path!r} does not contain a Python version specifier"
-                    raise Fail(msg)
-                return [version]
-        paths = ", ".join(repr(f) for f in file_paths)
-        msg = f"base_python_file: no valid Python version found in {paths}"
-        raise Fail(msg)
-
-    @staticmethod
-    def _first_version_line(path: Path, file_path: str) -> str | None:
-        with path.open(encoding="utf-8-sig") as file_handler:
-            max_length: Final[int] = 1024
-            while line := file_handler.readline(max_length + 1):
-                stripped = line.strip()
-                if len(line) > max_length and not line.endswith("\n"):
-                    msg = f"base_python_file: line in {file_path!r} exceeds {max_length} characters"
-                    if stripped and not stripped.startswith("#"):
-                        raise Fail(msg)
-                    is_comment = stripped.startswith("#")
-                    while continuation := file_handler.readline(max_length + 1):
-                        stripped_continuation = continuation.strip()
-                        if not is_comment and stripped_continuation and not stripped_continuation.startswith("#"):
-                            raise Fail(msg)
-                        is_comment = is_comment or stripped_continuation.startswith("#")
-                        if continuation.endswith("\n"):
-                            break
-                    continue
-                if stripped and not stripped.startswith("#"):
-                    return stripped
-        return None
-
-    @staticmethod
-    def _is_python_version_spec(value: str) -> bool:
-        spec: Final[PythonSpec] = PythonSpec.from_string_spec(value)
-        if spec.path is not None or spec.major is None:
-            return False
-        if spec.implementation is None:
-            return True
-        return spec.implementation.lower() in {
-            "python",
-            "cpython",
-            "pypy",
-            "jython",
-            "graalpy",
-            "rustpython",
-            "ironpython",
-        }
-
-    @classmethod
-    def extract_base_python(cls, env_name: str) -> str | None:
-        candidates: list[str] = []
-        if match := PY_FACTORS_RE_EXPLICIT_VERSION.match(env_name):
-            candidates.append(cls._explicit_version_spec(match.groupdict()))
-        else:
-            for factor in env_name.split("-"):
-                if match := PY_FACTORS_RE.match(factor):
-                    candidates.append(factor)
-                elif match := PY_FACTORS_RE_EXPLICIT_VERSION.match(factor):
-                    candidates.append(cls._explicit_version_spec(match.groupdict()))
-        if candidates:
-            if len(candidates) > 1:
-                msg = f"conflicting factors {', '.join(candidates)} in {env_name}"
-                raise ValueError(msg)
-            return next(iter(candidates))
-        return None
-
-    @staticmethod
-    def _explicit_version_spec(found: dict[str, str | None]) -> str:
-        prefix = "pypy" if found["impl"] == "pypy" else ""
-        return f"{prefix}{found['version']}{found['threaded']}{found['debug']}"
-
-    @classmethod
-    def _python_spec_for_sys_executable(cls) -> PythonSpec:
-        implementation = sys.implementation.name
-        version = sys.version_info
-        bits = "64" if sys.maxsize > 2**32 else "32"
-        threaded = "t" if sysconfig.get_config_var("Py_GIL_DISABLED") == 1 else ""
-        debug = "d" if sysconfig.get_config_var("Py_DEBUG") else ""
-        parts = sysconfig.get_platform().rsplit("-", 1)
-        machine_suffix = f"-{isa}" if len(parts) > 1 and (isa := parts[-1]) else ""
-        string_spec = f"{implementation}{version.major}{version.minor}{threaded}{debug}-{bits}{machine_suffix}"
-        return PythonSpec.from_string_spec(string_spec)
-
     @classmethod
     def _validate_base_python(
         cls,
@@ -373,6 +215,40 @@ class Python(ToxEnv, ABC):
         return base_pythons
 
     @classmethod
+    def extract_base_python(cls, env_name: str) -> str | None:
+        candidates: list[str] = []
+        if match := _PY_FACTORS_RE_EXPLICIT_VERSION.match(env_name):
+            candidates.append(cls._explicit_version_spec(match.groupdict()))
+        else:
+            for factor in env_name.split("-"):
+                if match := _PY_FACTORS_RE.match(factor):
+                    candidates.append(factor)
+                elif match := _PY_FACTORS_RE_EXPLICIT_VERSION.match(factor):
+                    candidates.append(cls._explicit_version_spec(match.groupdict()))
+        if candidates:
+            if len(candidates) > 1:
+                msg = f"conflicting factors {', '.join(candidates)} in {env_name}"
+                raise ValueError(msg)
+            return next(iter(candidates))
+        return None
+
+    @staticmethod
+    def _explicit_version_spec(found: dict[str, str | None]) -> str:
+        return f"{('pypy' if found['impl'] == 'pypy' else '')}{found['version']}{found['threaded']}{found['debug']}"
+
+    @classmethod
+    def _python_spec_for_sys_executable(cls) -> PythonSpec:
+        implementation = sys.implementation.name
+        version = sys.version_info
+        bits = "64" if sys.maxsize > 2**32 else "32"
+        threaded = "t" if sysconfig.get_config_var("Py_GIL_DISABLED") == 1 else ""
+        debug = "d" if sysconfig.get_config_var("Py_DEBUG") else ""
+        parts = sysconfig.get_platform().rsplit("-", 1)
+        machine_suffix = f"-{isa}" if len(parts) > 1 and (isa := parts[-1]) else ""
+        string_spec = f"{implementation}{version.major}{version.minor}{threaded}{debug}-{bits}{machine_suffix}"
+        return PythonSpec.from_string_spec(string_spec)
+
+    @classmethod
     @abstractmethod
     def python_spec_for_path(cls, path: Path) -> PythonSpec:
         """Get the spec for an absolute path to a Python executable.
@@ -384,12 +260,91 @@ class Python(ToxEnv, ABC):
         """
         raise NotImplementedError
 
+    def _base_python_default(self, conf: Config, env_name: str | None) -> list[str]:  # ruff:ignore[unused-method-argument]
+        self._base_python_explicitly_set = False
+        try:
+            base_python = None if env_name is None else self.extract_base_python(env_name)
+        except ValueError:
+            if self.core["ignore_base_python_conflict"]:
+                base_python = None
+            else:
+                raise
+        if base_python is not None:
+            return [base_python]
+        if base_python_files := self.conf.get("base_python_file", list[str]):
+            return self._read_python_version_file(base_python_files)
+        return self.conf.get("default_base_python", list[str])
+
+    def _read_python_version_file(self, file_paths: list[str]) -> list[str]:
+        tox_root = self.core.get("toxinidir", Path)
+        for file_path in file_paths:
+            path = tox_root / file_path
+            if not path.exists():
+                continue
+            if not path.is_file():
+                msg = f"base_python_file: {file_path!r} is not a regular file"
+                raise Fail(msg)
+            try:
+                version = self._first_version_line(path, file_path)
+            except (OSError, UnicodeDecodeError) as exc:
+                msg = f"base_python_file: cannot read {file_path!r}: {exc}"
+                raise Fail(msg) from exc
+            if version is not None:
+                if not self._is_python_version_spec(version):
+                    # A version file can be a symlink to a secret; only name the configured path.
+                    msg = f"base_python_file: {file_path!r} does not contain a Python version specifier"
+                    raise Fail(msg)
+                return [version]
+        msg = f"base_python_file: no valid Python version found in {', '.join(repr(f) for f in file_paths)}"
+        raise Fail(msg)
+
+    @staticmethod
+    def _first_version_line(path: Path, file_path: str) -> str | None:
+        with path.open(encoding="utf-8-sig") as file_handler:
+            max_length: Final[int] = 1024
+            while line := file_handler.readline(max_length + 1):
+                stripped = line.strip()
+                if len(line) > max_length and not line.endswith("\n"):
+                    msg = f"base_python_file: line in {file_path!r} exceeds {max_length} characters"
+                    if stripped and not stripped.startswith("#"):
+                        raise Fail(msg)
+                    is_comment = stripped.startswith("#")
+                    while continuation := file_handler.readline(max_length + 1):
+                        stripped_continuation = continuation.strip()
+                        if not is_comment and stripped_continuation and not stripped_continuation.startswith("#"):
+                            raise Fail(msg)
+                        is_comment = is_comment or stripped_continuation.startswith("#")
+                        if continuation.endswith("\n"):
+                            break
+                    continue
+                if stripped and not stripped.startswith("#"):
+                    return stripped
+        return None
+
+    @staticmethod
+    def _is_python_version_spec(value: str) -> bool:
+        spec: Final[PythonSpec] = PythonSpec.from_string_spec(value)
+        if spec.path is not None or spec.major is None:
+            return False
+        if spec.implementation is None:
+            return True
+        return spec.implementation.lower() in {
+            "python",
+            "cpython",
+            "pypy",
+            "jython",
+            "graalpy",
+            "rustpython",
+            "ironpython",
+        }
+
     @abstractmethod
     def env_site_package_dir(self) -> Path:
         """Return the pure-python site-packages directory (purelib) for this environment.
 
         Debian derivatives change site-packages to dist-packages, so we look at the last path under prefix.
 
+        :returns:
         """
         raise NotImplementedError
 
@@ -399,18 +354,111 @@ class Python(ToxEnv, ABC):
         On most platforms this is the same as purelib, but on some Linux distributions (Fedora, RHEL) platlib uses lib64
         instead of lib. Defaults to purelib so third-party runners don't need to override this.
 
+        :returns:
         """
         return self.env_site_package_dir()
 
     @abstractmethod
-    def env_python(self) -> Path:
-        """The python executable within the tox environment."""
+    def env_bin_dir(self) -> Path:
+        """The binary folder within the tox environment.
+
+        :returns:
+        """
         raise NotImplementedError
 
     @abstractmethod
-    def env_bin_dir(self) -> Path:
-        """The binary folder within the tox environment."""
+    def env_python(self) -> Path:
+        """The python executable within the tox environment.
+
+        :returns:
+        """
         raise NotImplementedError
+
+    def py_dot_ver(self) -> str:
+        return self.base_python.version_dot
+
+    @property
+    def base_python(self) -> PythonInfo:
+        """Resolve base python.
+
+        :raises Skip:
+        :raises NoInterpreter:
+        """
+        base_pythons = self.conf.get("base_python", list[str])
+
+        if self._base_python_searched is False:
+            self._base_python_searched = True
+            self._base_python = self._get_python(base_pythons)
+            if self._base_python is not None and self.journal:
+                self.journal["python"] = self._get_env_journal_python()
+
+        if self._base_python is None:
+            if self.conf["skip_missing_interpreters"]:
+                msg = f"could not find python interpreter with spec(s): {', '.join(base_pythons)}"
+                raise Skip(msg)
+            raise NoInterpreter(base_pythons)
+
+        return self._base_python
+
+    @abstractmethod
+    def _get_python(self, base_python: list[str]) -> PythonInfo | None:
+        raise NotImplementedError
+
+    def _get_env_journal_python(self) -> dict[str, JsonValue]:
+        return {
+            "implementation": self.base_python.implementation,
+            "version_info": tuple(self.base_python.version_info),
+            "version": self.base_python.version,
+            "is_64": self.base_python.is_64,
+            "sysplatform": self.base_python.platform,
+            "extra_version_info": None,
+            "free_threaded": self.base_python.free_threaded,
+            "debug": self.base_python.debug,
+            "machine": self.base_python.machine,
+        }
+
+    def py_impl(self) -> str:
+        return self.base_python.impl_lower
+
+    def py_free_threaded(self) -> bool:
+        return self.base_python.free_threaded
+
+    def py_debug(self) -> bool:
+        return self.base_python.debug
+
+    @override
+    def _default_set_env(self) -> dict[str, str]:
+        env = super()._default_set_env()
+        hash_seed: int | None = getattr(self.options, "hash_seed", None)
+        if hash_seed is not None:
+            env["PYTHONHASHSEED"] = str(hash_seed)
+        return env
+
+    @override
+    def _default_pass_env(self) -> list[str]:
+        env = super()._default_pass_env()
+        if sys.platform == "win32":  # pragma: win32 cover
+            env.extend(
+                [
+                    "APPDATA",  # Needed for PIP platformsdirs.windows
+                    "LOCALAPPDATA",  # Needed for pymanager
+                    "PROGRAMDATA",  # needed for discovering the VS compiler
+                    "PROGRAMFILES(x86)",  # needed for discovering the VS compiler
+                    "PROGRAMFILES",  # needed for discovering the VS compiler
+                    "SYSTEMDRIVE",
+                    "SYSTEMROOT",  # needed for python's crypto module
+                    "COMSPEC",  # needed for distutils cygwin compiler
+                    "PROCESSOR_ARCHITECTURE",  # platform.machine()
+                    "NUMBER_OF_PROCESSORS",  # multiprocessing.cpu_count()
+                ],
+            )
+        env.extend([
+            "PKG_CONFIG",
+            "PKG_CONFIG_PATH",
+            "PKG_CONFIG_SYSROOT_DIR",
+        ])  # used by binary extensions during installation
+        env.extend(["REQUESTS_CA_BUNDLE"])
+        return env
 
     @override
     def _setup_env(self) -> None:
@@ -427,17 +475,23 @@ class Python(ToxEnv, ABC):
             elif eq is False:  # pragma: no branch # exists but changed -> recreate
                 raise Recreate(self._diff_msg(conf, old))
 
+    def python_cache(self) -> dict[str, JsonValue]:
+        return {
+            "version_info": list(self.base_python.version_info),
+        }
+
+    @abstractmethod
+    def create_python_env(self) -> None:
+        raise NotImplementedError
+
     @staticmethod
     def _diff_msg(conf: dict[str, Any], old: dict[str, Any]) -> str:
         result: list[str] = []
-        added = [f"{k}={v!r}" for k, v in conf.items() if k not in old]
-        if added:  # pragma: no branch
+        if added := [f"{k}={v!r}" for k, v in conf.items() if k not in old]:  # pragma: no branch
             result.append(f"added {' | '.join(added)}")
-        removed = [f"{k}={v!r}" for k, v in old.items() if k not in conf]
-        if removed:
+        if removed := [f"{k}={v!r}" for k, v in old.items() if k not in conf]:
             result.append(f"removed {' | '.join(removed)}")
-        changed = [f"{k}={old[k]!r}->{v!r}" for k, v in conf.items() if k in old and v != old[k]]
-        if changed:
+        if changed := [f"{k}={old[k]!r}->{v!r}" for k, v in conf.items() if k in old and v != old[k]]:
             result.append(f"changed {' | '.join(changed)}")
         return f"python {', '.join(result)}"
 
@@ -456,55 +510,12 @@ class Python(ToxEnv, ABC):
             if self.options.list_dependencies:
                 logging.warning(",".join(outcome))
 
-    def python_cache(self) -> dict[str, JsonValue]:
-        return {
-            "version_info": list(self.base_python.version_info),
-        }
-
-    @property
-    def base_python(self) -> PythonInfo:
-        """Resolve base python."""
-        base_pythons = self.conf.get("base_python", list[str])
-
-        if self._base_python_searched is False:
-            self._base_python_searched = True
-            self._base_python = self._get_python(base_pythons)
-            if self._base_python is not None and self.journal:
-                value = self._get_env_journal_python()
-                self.journal["python"] = value
-
-        if self._base_python is None:
-            if self.conf["skip_missing_interpreters"]:
-                msg = f"could not find python interpreter with spec(s): {', '.join(base_pythons)}"
-                raise Skip(msg)
-            raise NoInterpreter(base_pythons)
-
-        return self._base_python
-
-    def _get_env_journal_python(self) -> dict[str, JsonValue]:
-        return {
-            "implementation": self.base_python.implementation,
-            "version_info": tuple(self.base_python.version_info),
-            "version": self.base_python.version,
-            "is_64": self.base_python.is_64,
-            "sysplatform": self.base_python.platform,
-            "extra_version_info": None,
-            "free_threaded": self.base_python.free_threaded,
-            "debug": self.base_python.debug,
-            "machine": self.base_python.machine,
-        }
-
-    @abstractmethod
-    def _get_python(self, base_python: list[str]) -> PythonInfo | None:
-        raise NotImplementedError
-
-    @abstractmethod
-    def create_python_env(self) -> None:
-        raise NotImplementedError
-
 
 class NoInterpreter(Fail):
-    """could not find interpreter."""
+    """could not find interpreter.
+
+    :param base_pythons:
+    """
 
     def __init__(self, base_pythons: list[str]) -> None:
         self.base_pythons = base_pythons

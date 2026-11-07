@@ -41,10 +41,10 @@ def test_tox_project_base(tmp_path: Path, tox_project: ToxProjectCreator) -> Non
     assert project.structure
 
 
-COMB = list(chain.from_iterable(combinations(["DIFF", "MISS", "EXTRA"], i) for i in range(4)))
+_COMB = list(chain.from_iterable(combinations(["DIFF", "MISS", "EXTRA"], i) for i in range(4)))
 
 
-@pytest.mark.parametrize("ops", COMB, ids=["-".join(i) for i in COMB])
+@pytest.mark.parametrize("ops", _COMB, ids=["-".join(i) for i in _COMB])
 def test_env_var(monkeypatch: MonkeyPatch, ops: list[str]) -> None:
     with monkeypatch.context() as m:
         if "DIFF" in ops:
@@ -121,5 +121,4 @@ def test_tox_run_assert_out_err_no_dedent(tox_project: ToxProjectCreator, mocker
         return 0
 
     mocker.patch("tox.run.main", side_effect=_main)
-    outcome = project.run("c")
-    outcome.assert_out_err(" goes on out\n", " goes on err\n", dedent=False)
+    project.run("c").assert_out_err(" goes on out\n", " goes on err\n", dedent=False)

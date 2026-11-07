@@ -8,7 +8,7 @@ from tox.config.loader.replacer import MatchExpression, find_replace_expr
 from tox.report import HandledError
 
 if TYPE_CHECKING:
-    from tests.config.loader.conftest import ReplaceOne
+    from .conftest import ReplaceOne
 
 
 @pytest.mark.parametrize(
@@ -77,7 +77,7 @@ def test_match_expr(value: str, exp_output: list[str | MatchExpression]) -> None
     ],
 )
 def test_dont_replace(replace_one: ReplaceOne, value: str, exp_exception: str | None) -> None:
-    """Test that invalid expressions are not replaced."""
+    # Test that invalid expressions are not replaced.
     if exp_exception:
         with pytest.raises(HandledError, match=exp_exception):
             replace_one(value)

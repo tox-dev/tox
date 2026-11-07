@@ -4,7 +4,8 @@ from typing import TYPE_CHECKING, cast
 
 from tox.config.cli.parser import CORE
 from tox.plugin import impl
-from tox.session.cmd.run.common import env_run_create_flags, run_order
+
+from .run.common import env_run_create_flags, run_order
 
 if TYPE_CHECKING:
     from tox.config.cli.parser import ToxParser
@@ -43,8 +44,7 @@ def depends(state: State) -> int:
                     packager_list.append(pkg_env.name)  # ruff:ignore[manual-list-comprehension]
             except Exception as exception:  # ruff:ignore[blind-except]
                 packager_list.append(f"... ({exception})")
-            names = " | ".join(packager_list)
-            if names:
+            if names := " | ".join(packager_list):
                 print(f" ~ {names}", end="")  # ruff:ignore[print]
         print()  # ruff:ignore[print]
         at += 1
@@ -53,3 +53,8 @@ def depends(state: State) -> int:
 
     _handle(0, "ALL")
     return 0
+
+
+__all__ = [
+    "depends",
+]

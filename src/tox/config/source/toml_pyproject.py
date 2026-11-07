@@ -41,24 +41,12 @@ class TomlSection(Section):
         return cls.SEP.join((*cls.PREFIX, cls.ENV))
 
     @classmethod
-    def core_prefix(cls) -> str:
-        return cls.SEP.join(cls.PREFIX)
-
-    @classmethod
-    def package_env_base(cls) -> str:
-        return cls.SEP.join((*cls.PREFIX, cls.PKG_ENV_BASE))
-
-    @classmethod
-    def run_env_base(cls) -> str:
-        return cls.SEP.join((*cls.PREFIX, cls.RUN_ENV_BASE))
+    def env_base(cls, name: str) -> TomlSection:
+        return cls(cls.env_base_prefix(), name)
 
     @classmethod
     def env_base_prefix(cls) -> str:
         return cls.SEP.join((*cls.PREFIX, cls.ENV_BASE))
-
-    @classmethod
-    def env_base(cls, name: str) -> TomlSection:
-        return cls(cls.env_base_prefix(), name)
 
     @property
     def keys(self) -> Iterable[str]:
@@ -73,13 +61,29 @@ class TomlSection(Section):
             parts.append(name)
         return parts
 
+    @classmethod
+    def core_prefix(cls) -> str:
+        return cls.SEP.join(cls.PREFIX)
+
+    @classmethod
+    def package_env_base(cls) -> str:
+        return cls.SEP.join((*cls.PREFIX, cls.PKG_ENV_BASE))
+
+    @classmethod
+    def run_env_base(cls) -> str:
+        return cls.SEP.join((*cls.PREFIX, cls.RUN_ENV_BASE))
+
 
 class TomlPyProjectSection(TomlSection):
     PREFIX = ("tool", "tox")
 
 
 class TomlPyProject(Source):
-    """Configuration sourced from a pyproject.toml files."""
+    """Configuration sourced from a pyproject.toml files.
+
+    :param path:
+    :cvar FILENAME:
+    """
 
     FILENAME = "pyproject.toml"
     _Section: type[TomlSection] = TomlPyProjectSection
@@ -169,8 +173,7 @@ class TomlPyProject(Source):
     def get_base_sections(self, base: list[str], in_section: Section) -> Iterator[Section]:
         core_prefix = self._Section.core_prefix()
         strip = f"{core_prefix}{self._Section.SEP}" if core_prefix else ""
-        env_base_pfx = self._Section.env_base_prefix()
-        env_base_dot = f"{env_base_pfx}{self._Section.SEP}"
+        env_base_dot = f"{self._Section.env_base_prefix()}{self._Section.SEP}"
         for entry in base:
             if entry.startswith(env_base_dot):
                 yield self._Section.env_base(entry[len(env_base_dot) :])
@@ -259,4 +262,6 @@ def _extract_env_list_labels(env_list_raw: TomlTypes) -> dict[str, FactorGroup]:
 
 __all__ = [
     "TomlPyProject",
+    "TomlPyProjectSection",
+    "TomlSection",
 ]

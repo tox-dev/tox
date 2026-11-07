@@ -96,16 +96,22 @@ class EnvList:  # ruff:ignore[eq-without-hash]
         return iter(self.envs)
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True, kw_only=True)
 class FactorGroup:
-    """``default`` stands in wherever an environment name carries none of ``values``."""
+    """``default`` stands in wherever an environment name carries none of ``values``.
+
+    :param values:
+    :param default:
+    """
 
     values: list[str]
     default: str | None = None
 
 
-__all__ = (
+__all__ = [
+    "CircularChainError",
     "Command",
     "EnvList",
     "FactorGroup",
-)
+    "MissingRequiredConfigKeyError",
+]

@@ -12,7 +12,12 @@ if TYPE_CHECKING:
 
 
 class SetupCfg(IniSource):
-    """Configuration sourced from a setup.cfg file."""
+    """Configuration sourced from a setup.cfg file.
+
+    :param path:
+    :cvar CORE_SECTION:
+    :cvar FILENAME:
+    """
 
     CORE_SECTION = IniSection("tox", "tox")
     FILENAME = "setup.cfg"
@@ -23,4 +28,6 @@ class SetupCfg(IniSource):
             raise MissingRequiredConfigKeyError(path)
 
 
-__all__ = ("SetupCfg",)
+__all__ = [
+    "SetupCfg",
+]

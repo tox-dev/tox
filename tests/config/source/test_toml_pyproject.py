@@ -512,8 +512,7 @@ def test_config_env_run_base_deps_reference_with_additional_deps(tox_project: To
     })
     outcome = project.run("c", "-e", "test", "-k", "deps")
     outcome.assert_success()
-    out = "[testenv:test]\ndeps =\n  pytest>=8\n  coverage>=7\n  pytest-xdist\n  pytest-timeout\n"
-    outcome.assert_out_err(out, "")
+    outcome.assert_out_err("[testenv:test]\ndeps =\n  pytest>=8\n  coverage>=7\n  pytest-xdist\n  pytest-timeout\n", "")
 
 
 def test_config_env_pkg_base_deps_reference_with_additional_deps(tox_project: ToxProjectCreator) -> None:
@@ -528,8 +527,7 @@ def test_config_env_pkg_base_deps_reference_with_additional_deps(tox_project: To
     })
     outcome = project.run("c", "-e", "pkg", "-k", "deps")
     outcome.assert_success()
-    out = "[testenv:pkg]\ndeps =\n  build\n  wheel\n  setuptools>=40\n"
-    outcome.assert_out_err(out, "")
+    outcome.assert_out_err("[testenv:pkg]\ndeps =\n  build\n  wheel\n  setuptools>=40\n", "")
 
 
 def test_config_env_base_inherit_from_arbitrary_section(tox_project: ToxProjectCreator) -> None:
@@ -551,8 +549,7 @@ def test_config_env_base_inherit_from_arbitrary_section(tox_project: ToxProjectC
     })
     outcome = project.run("c", "-e", "a,b", "-k", "description")
     outcome.assert_success()
-    out = "[testenv:a]\ndescription = shared config\n\n[testenv:b]\ndescription = shared config\n"
-    outcome.assert_out_err(out, "")
+    outcome.assert_out_err("[testenv:a]\ndescription = shared config\n\n[testenv:b]\ndescription = shared config\n", "")
 
 
 def test_config_in_toml_replace_glob_match(tox_project: ToxProjectCreator, tmp_path: Path) -> None:
@@ -731,8 +728,7 @@ def test_config_in_toml_replace_if_extend(tox_project: ToxProjectCreator, monkey
     [tool.tox.env.A]
     commands = [["echo", { replace = "if", condition = "env.V", then = ["-v"], else = ["-q"], extend = true }]]
     """
-    project = tox_project({"pyproject.toml": toml})
-    outcome = project.run("c", "-e", "A", "-k", "commands")
+    outcome = tox_project({"pyproject.toml": toml}).run("c", "-e", "A", "-k", "commands")
     outcome.assert_success()
     assert "-v" in outcome.out
 
@@ -750,13 +746,11 @@ def test_config_in_toml_replace_if_extend_scalar_string(
     set_q: bool,
     expected_arg: str,
 ) -> None:
-    """Scalar-string then/else with extend=true must append as one item, not characters.
-
-    Regression for a bug where ``commands = [["echo", { replace = "if", condition = "env.Q", then = "-v", else = "-q",
-    extend = true }]]`` produced ``commands = echo - v`` because ``list.extend(string)`` iterates over the string's
-    characters.
-
-    """
+    # Scalar-string then/else with extend=true must append as one item, not characters.
+    #
+    # Regression for a bug where ``commands = [["echo", { replace = "if", condition = "env.Q", then = "-v", else = "-q",
+    # extend = true }]]`` produced ``commands = echo - v`` because ``list.extend(string)`` iterates over the string's
+    # characters.
     monkeypatch.delenv("V", raising=False)
     monkeypatch.delenv("Q", raising=False)
     if set_q:
@@ -767,8 +761,7 @@ def test_config_in_toml_replace_if_extend_scalar_string(
     [tool.tox.env.A]
     commands = [["echo", { replace = "if", condition = "env.Q", then = "-v", else = "-q", extend = true }]]
     """
-    project = tox_project({"pyproject.toml": toml})
-    outcome = project.run("c", "-e", "A", "-k", "commands")
+    outcome = tox_project({"pyproject.toml": toml}).run("c", "-e", "A", "-k", "commands")
     outcome.assert_success()
     commands_line = outcome.out.split("commands = ", 1)[1].rstrip()
     assert commands_line.endswith(expected_arg), (
@@ -782,12 +775,10 @@ def test_config_in_toml_replace_if_extend_no_match_contributes_nothing(
     tox_project: ToxProjectCreator,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """A false ``if`` with no ``else`` and extend=true adds nothing, not an empty element.
-
-    Regression for a bug where such an entry yielded ``commands = ''`` (failing as "'' is not list") because the
-    empty-string no-match result was appended instead of spread away.
-
-    """
+    # A false ``if`` with no ``else`` and extend=true adds nothing, not an empty element.
+    #
+    # Regression for a bug where such an entry yielded ``commands = ''`` (failing as "'' is not list") because the
+    # empty-string no-match result was appended instead of spread away.
     monkeypatch.delenv("Q", raising=False)
     toml = """\
     [tool.tox.env.A]
@@ -796,8 +787,7 @@ def test_config_in_toml_replace_if_extend_no_match_contributes_nothing(
         { replace = "if", condition = "env.Q", then = [["echo", "bye"]], extend = true },
     ]
     """
-    project = tox_project({"pyproject.toml": toml})
-    outcome = project.run("c", "-e", "A", "-k", "commands")
+    outcome = tox_project({"pyproject.toml": toml}).run("c", "-e", "A", "-k", "commands")
     outcome.assert_success()
     commands_line = outcome.out.split("commands = ", 1)[1].rstrip()
     assert "echo hi" in commands_line
@@ -922,8 +912,7 @@ def test_config_in_toml_replace_if_factor_platform(tox_project: ToxProjectCreato
         description.then = "correct platform"
         description.else = "wrong platform"
         """
-    project = tox_project({"pyproject.toml": dedent(toml_str)})
-    outcome = project.run("c", "-e", "task", "-k", "description")
+    outcome = tox_project({"pyproject.toml": dedent(toml_str)}).run("c", "-e", "task", "-k", "description")
     outcome.assert_success()
     outcome.assert_out_err("[testenv:task]\ndescription = correct platform\n", "")
 
@@ -1071,7 +1060,7 @@ def test_config_in_toml_replace_if_list_with_extend(
     assert "extra-pkg" in outcome.out
 
 
-_CMD = 'commands = [["python", "--version"]]'
+_CMD: Final[str] = 'commands = [["python", "--version"]]'
 
 
 @pytest.mark.parametrize(
@@ -1434,7 +1423,7 @@ def extras_replace_ref_project(tox_project: ToxProjectCreator) -> ToxProject:
 def test_override_propagates_through_replace_ref_of(
     extras_replace_ref_project: ToxProject, monkeypatch: pytest.MonkeyPatch, override: str, expected: str
 ) -> None:
-    """TOX_OVERRIDE on a referenced base value propagates through a ``{replace = "ref", of = [...]}`` ref (#3950)."""
+    # TOX_OVERRIDE on a referenced base value propagates through a ``{replace = "ref", of = [...]}`` ref (#3950).
     monkeypatch.setenv("TOX_OVERRIDE", override)
 
     outcome = extras_replace_ref_project.run("c", "-e", "test", "-k", "extras")
@@ -1443,7 +1432,7 @@ def test_override_propagates_through_replace_ref_of(
 
 
 def test_toml_machine_isa_does_not_override_explicit_env_factor(tox_project: ToxProjectCreator) -> None:
-    """Regression test for #3903: explicit ISA in env name takes precedence over machine ISA in TOML."""
+    # Regression test for #3903: explicit ISA in env name takes precedence over machine ISA in TOML.
     parts = sysconfig.get_platform().rsplit("-", 1)
     if len(parts) < 2:
         pytest.skip("sysconfig.get_platform() has no machine component")
@@ -1468,7 +1457,7 @@ else = {{ replace = "if", condition = "factor.{other_isa}", then = "{other_isa}_
 
 
 def test_toml_machine_isa_implicit_when_no_env_isa(tox_project: ToxProjectCreator) -> None:
-    """Machine ISA is added implicitly to TOML factors when no ISA factor is in the env name."""
+    # Machine ISA is added implicitly to TOML factors when no ISA factor is in the env name.
     parts = sysconfig.get_platform().rsplit("-", 1)
     if len(parts) < 2:
         pytest.skip("sysconfig.get_platform() has no machine component")
@@ -1490,7 +1479,7 @@ def test_toml_machine_isa_implicit_when_no_env_isa(tox_project: ToxProjectCreato
 
 
 def test_empty_tool_tox_table_defers_to_tox_toml(tox_project: ToxProjectCreator) -> None:
-    """A leftover empty [tool.tox] stub has no usable configuration and must not shadow tox.toml."""
+    # A leftover empty [tool.tox] stub has no usable configuration and must not shadow tox.toml.
     project = tox_project({
         "pyproject.toml": "[project]\nname='demo'\nversion='1.0'\n[tool.tox]\n",
         "tox.toml": 'env_list = ["special"]\n',

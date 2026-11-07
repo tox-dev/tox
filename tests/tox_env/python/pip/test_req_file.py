@@ -35,14 +35,14 @@ def test_legacy_requirement_file(tmp_path: Path, legacy_flag: str) -> None:
 
 @pytest.mark.parametrize("flag", ["-c", "-r", "-f", "-e"])
 def test_deps_bare_flag_no_argument(tmp_path: Path, flag: str) -> None:
-    """A one-argument flag with no argument reports a clean error, not an IndexError."""
+    # A one-argument flag with no argument reports a clean error, not an IndexError.
     python_deps = PythonDeps(raw=flag, root=tmp_path)
     with pytest.raises(ValueError, match="expected one argument"):
         python_deps.requirements  # ruff:ignore[useless-expression]
 
 
 def test_deps_with_hash(tmp_path: Path) -> None:
-    """deps with --hash should raise an exception."""
+    # deps with --hash should raise an exception.
     python_deps = PythonDeps(
         raw="foo==1 --hash sha256:97a702083b0d906517b79672d8501eee470d60ae55df0fa9d4cfba56c7f65a82",
         root=tmp_path,
@@ -58,7 +58,7 @@ def test_deps_with_config_settings(tmp_path: Path) -> None:
 
 
 def test_constraints_with_editable_requirement(tmp_path: Path) -> None:
-    """A requirement smuggled onto a constraints line must be rejected."""
+    # A requirement smuggled onto a constraints line must be rejected.
     (tmp_path / "constraints.txt").write_text("")
     python_constraints = PythonConstraints("constraints.txt -e ./pkg", tmp_path)
     with pytest.raises(ValueError, match="Cannot provide options in constraints list"):
@@ -108,16 +108,15 @@ def test_constraints_pip_env_variable_cannot_add_option(tmp_path: Path, monkeypa
 
 
 def test_deps_with_requirements_with_hash(tmp_path: Path) -> None:
-    """deps can point to a requirements file that has --hash."""
-    exp_hash = "sha256:97a702083b0d906517b79672d8501eee470d60ae55df0fa9d4cfba56c7f65a82"
+    # deps can point to a requirements file that has --hash.
     requirements = tmp_path / "requirements.txt"
+    exp_hash = "sha256:97a702083b0d906517b79672d8501eee470d60ae55df0fa9d4cfba56c7f65a82"
     requirements.write_text(f"foo==1 --hash {exp_hash}")
     python_deps = PythonDeps(raw="-r requirements.txt", root=tmp_path)
     assert len(python_deps.requirements) == 1
     parsed_req = python_deps.requirements[0]
     assert str(parsed_req.requirement) == "foo==1"
-    assert parsed_req.options == {"hash": [exp_hash]}
-    assert parsed_req.from_file == str(requirements)
+    assert (parsed_req.options, parsed_req.from_file) == ({"hash": [exp_hash]}, str(requirements))
 
 
 def test_deps_with_no_deps(tmp_path: Path) -> None:
@@ -212,14 +211,13 @@ def test_constraints_factory_invalid_type(tmp_path: Path) -> None:
 
 
 def test_deps_unroll_binary_options_deterministic(tmp_path: Path) -> None:
-    """Set-valued options must render in a stable order, or the install cache breaks across hash seeds."""
+    # Set-valued options must render in a stable order, or the install cache breaks across hash seeds.
     raw = dedent("""\
         --no-binary six,packaging
         pkg
     """)
-    python_deps = PythonDeps(raw=raw, root=tmp_path)
 
-    options, _ = python_deps.unroll()
+    options, _ = PythonDeps(raw=raw, root=tmp_path).unroll()
 
     assert options == ["no_binary=packaging,six"]
 
@@ -248,7 +246,7 @@ def test_unroll_redacts_secret_env_vars(tmp_path: Path, monkeypatch: pytest.Monk
 
 
 def test_deps_binary_options_accumulate_across_lines_and_files(tmp_path: Path) -> None:
-    """Like pip, --no-binary on separate lines (and in a nested requirements file) all apply."""
+    # Like pip, --no-binary on separate lines (and in a nested requirements file) all apply.
     (tmp_path / "nested.txt").write_text("--no-binary nested\n")
     raw = dedent("""\
         --no-binary six

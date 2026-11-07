@@ -56,7 +56,17 @@ def show_config_ini(state: State) -> int:
 
 
 def _write_line(line: str) -> None:
-    sys.stdout.write(line + "\n")
+    sys.stdout.write(f"{line}\n")
+
+
+def _colored(msg: str, color: str, *, enabled: bool) -> str:
+    return f"{color}{msg}{Fore.RESET}" if enabled else msg
+
+
+def _key_value(key: str, value: str, *, is_colored: bool, multi_line: bool = False) -> str:
+    if multi_line:
+        return f"{_colored(key, Fore.GREEN, enabled=is_colored)} =\n{indent(value, prefix='  ')}"
+    return f"{_colored(key, Fore.GREEN, enabled=is_colored)} = {value}"
 
 
 def _emit_conf(emit: Callable[[str], None], conf: ConfigSet, keys: Sequence[str], *, is_colored: bool) -> bool:
@@ -66,8 +76,7 @@ def _emit_conf(emit: Callable[[str], None], conf: ConfigSet, keys: Sequence[str]
             continue
         key = conf.primary_key(key)  # ruff:ignore[redefined-loop-name]
         try:
-            value = conf[key]
-            as_str, multi_line = stringify(value)
+            as_str, multi_line = stringify(conf[key])
         except Exception as exception:  # because e.g. the interpreter cannot be found
             if os.environ.get("_TOX_SHOW_CONFIG_RAISE"):  # pragma: no branch
                 raise  # pragma: no cover
@@ -77,20 +86,9 @@ def _emit_conf(emit: Callable[[str], None], conf: ConfigSet, keys: Sequence[str]
         if multi_line and "\n" not in as_str:
             multi_line = False
         emit(_key_value(key, as_str, is_colored=is_colored, multi_line=multi_line))
-    unused = conf.unused()
-    if unused and not keys:
+    if (unused := conf.unused()) and not keys:
         emit(_colored(f"# !!! unused: {', '.join(unused)}", Fore.CYAN, enabled=is_colored))
     return has_exception
-
-
-def _key_value(key: str, value: str, *, is_colored: bool, multi_line: bool = False) -> str:
-    if multi_line:
-        return f"{_colored(key, Fore.GREEN, enabled=is_colored)} =\n{indent(value, prefix='  ')}"
-    return f"{_colored(key, Fore.GREEN, enabled=is_colored)} = {value}"
-
-
-def _colored(msg: str, color: str, *, enabled: bool) -> str:
-    return f"{color}{msg}{Fore.RESET}" if enabled else msg
 
 
 __all__ = [

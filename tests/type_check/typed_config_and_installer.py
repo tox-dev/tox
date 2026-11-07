@@ -1,5 +1,3 @@
-"""Pin the inference behavior of the typed config and installer APIs (checked statically, never imported)."""
-
 from __future__ import annotations
 
 from pathlib import Path
@@ -23,8 +21,7 @@ class CheckConfigSet(ConfigSet):
             keys="a", of_type=Path, default=self._default_path, desc="d", post_process=self._keep
         )
         assert_type(with_callable_default, ConfigDynamicDefinition[Path])
-        with_none_default = self.add_config(keys="b", of_type=str, default=None, desc="d")
-        assert_type(with_none_default, ConfigDynamicDefinition[str | None])
+        assert_type(self.add_config(keys="b", of_type=str, default=None, desc="d"), ConfigDynamicDefinition[str | None])
         with_container = self.add_config(keys="c", of_type=list[str], default=["x"], desc="d")
         assert_type(with_container, ConfigDynamicDefinition[list[str]])
         assert_type(self.get("a", Path), Path)
@@ -39,8 +36,7 @@ class CheckConfigSet(ConfigSet):
 
 
 class CheckInstallerDefaultArgs(Installer[ToxEnv]):
-    """A single type parameter must keep working, defaulting the arguments to ``InstallArguments``."""
-
+    # A single type parameter must keep working, defaulting the arguments to ``InstallArguments``.
     @override
     def _register_config(self) -> None:
         raise NotImplementedError

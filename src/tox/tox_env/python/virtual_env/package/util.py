@@ -83,13 +83,11 @@ def _by_extra_and_markers(state: tuple[str | None, frozenset[Marker]]) -> tuple[
 
 
 def extract_extra_markers(deps: list[Requirement]) -> list[tuple[Requirement, set[str | None]]]:
-    """Extract extra markers from dependencies.
-
-    :param deps: the dependencies
-
-    :returns: a list of requirement, extras set
-
-    """
+    # Extract extra markers from dependencies.
+    #
+    # :param deps: the dependencies
+    #
+    # :returns: a list of requirement, extras set
     return [_extract_extra_markers(d) for d in deps]
 
 
@@ -100,8 +98,7 @@ def _extract_extra_markers(req: Requirement) -> tuple[Requirement, set[str | Non
     extra_markers: set[str | None] = set()
     marker = markers.pop(0) if markers else None
     while marker:
-        extra = _get_extra(marker)
-        if extra is not None:
+        if (extra := _get_extra(marker)) is not None:
             extra_markers.add(canonicalize_name(extra))
             if new_markers and new_markers[-1] in {"and", "or"}:
                 del new_markers[-1]
@@ -123,8 +120,7 @@ def _get_extra(
 ) -> str | None:
     if not isinstance(_marker, tuple) or len(_marker) != 3:  # ruff:ignore[magic-value-comparison]
         return None
-    marker_tuple = cast("tuple[Variable | Value, Op, Variable | Value]", _marker)
-    left, op, right = marker_tuple
+    left, op, right = cast("tuple[Variable | Value, Op, Variable | Value]", _marker)
     if hasattr(left, "value") and left.value == "extra" and hasattr(op, "value") and op.value == "==":
         return right.value if hasattr(right, "value") else None
     return None

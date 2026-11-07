@@ -49,10 +49,7 @@ def setup_man(state: State) -> int:  # ruff:ignore[unused-function-argument]
 
     print()  # ruff:ignore[print]
 
-    manpath = os.environ.get("MANPATH", "")
-    user_man_base = str(Path.home() / ".local" / "share" / "man")
-
-    if user_man_base in manpath:
+    if str(Path.home() / ".local" / "share" / "man") in os.environ.get("MANPATH", ""):
         print("✓ MANPATH already includes ~/.local/share/man")  # ruff:ignore[print]
         print("  Try running: man tox")  # ruff:ignore[print]
         return 0
@@ -112,3 +109,8 @@ def _print_manpath_instructions() -> None:
         f"To complete setup, add this to {rc_file}:\n\n  {export_line}\n\n"
         f"Then restart your shell or run:\n  {reload} {rc_file}\n\nAfter that, you can use: man tox\n"
     )
+
+
+__all__ = [
+    "setup_man",
+]

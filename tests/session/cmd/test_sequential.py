@@ -55,8 +55,7 @@ def test_run_sequential_fail(tox_project: ToxProjectCreator) -> None:
         return f"python -c 'import sys; print(\"exit {value}\"); sys.exit({value})'"
 
     ini = f"[tox]\nenv_list=a,b\nno_package=true\n[testenv:a]\ncommands={_cmd(1)}\n[testenv:b]\ncommands={_cmd(0)}"
-    project = tox_project({"tox.ini": ini})
-    outcome = project.run("r", "-e", "a,b")
+    outcome = tox_project({"tox.ini": ini}).run("r", "-e", "a,b")
     outcome.assert_failed()
     reports = outcome.out.splitlines()[-3:]
     assert Matches(r"  evaluation failed :\( \(.* seconds\)") == reports[-1]
@@ -73,8 +72,7 @@ def test_run_sequential_fail(tox_project: ToxProjectCreator) -> None:
     ],
 )
 def test_run_multi_env_exit_code_positive(tox_project: ToxProjectCreator, envs: str, expected_code: int) -> None:
-    """Exit code must be a positive integer so Windows CMD ``IF ERRORLEVEL 1`` detects failure (see #2945)."""
-
+    # Exit code must be a positive integer so Windows CMD ``IF ERRORLEVEL 1`` detects failure (see #2945).
     def _cmd(value: int) -> str:
         return f"python -c 'import sys; sys.exit({value})'"
 
@@ -84,14 +82,12 @@ def test_run_multi_env_exit_code_positive(tox_project: ToxProjectCreator, envs: 
         f"[testenv:b]\ncommands={_cmd(0)}\n"
         f"[testenv:c]\ncommands={_cmd(2)}\n"
     )
-    project = tox_project({"tox.ini": ini})
-    outcome = project.run("r", "-e", envs)
+    outcome = tox_project({"tox.ini": ini}).run("r", "-e", envs)
     assert outcome.code == expected_code
 
 
 def test_run_sequential_quiet(tox_project: ToxProjectCreator) -> None:
-    ini = "[tox]\nenv_list=a\nno_package=true\n[testenv]\ncommands=python -V"
-    project = tox_project({"tox.ini": ini})
+    project = tox_project({"tox.ini": "[tox]\nenv_list=a\nno_package=true\n[testenv]\ncommands=python -V"})
     outcome = project.run("r", "-q", "-e", "a")
     outcome.assert_success()
     reports = outcome.out.splitlines()[-3:]
@@ -119,8 +115,7 @@ def test_result_json_sequential(
         },
     )
     log = project.path / "log.json"
-    outcome = project.run("r", "-vv", "-e", "py", "--result-json", str(log))
-    outcome.assert_success()
+    project.run("r", "-vv", "-e", "py", "--result-json", str(log)).assert_success()
     with log.open("rt") as file_handler:
         log_report = json.load(file_handler)
 
@@ -190,21 +185,17 @@ def get_cmd_exit_run_id(report: dict[str, Any], name: str, group: str) -> list[t
 
 def test_rerun_sequential_skip(tox_project: ToxProjectCreator, demo_pkg_inline: Path) -> None:
     proj = tox_project({"tox.ini": "[testenv]\npackage=skip\ncommands=python -c 'print(1)'"})
-    result_first = proj.run("--root", str(demo_pkg_inline), "--workdir", str(proj.path / ".tox"))
-    result_first.assert_success()
-    result_rerun = proj.run("--root", str(demo_pkg_inline), "--workdir", str(proj.path / ".tox"))
-    result_rerun.assert_success()
+    proj.run("--root", str(demo_pkg_inline), "--workdir", str(proj.path / ".tox")).assert_success()
+    proj.run("--root", str(demo_pkg_inline), "--workdir", str(proj.path / ".tox")).assert_success()
 
 
 def test_rerun_sequential_wheel(tox_project: ToxProjectCreator, demo_pkg_inline: Path) -> None:
     proj = tox_project(
         {"tox.ini": "[testenv]\npackage=wheel\ncommands=python -c 'from demo_pkg_inline import do; do()'"},
     )
-    result_first = proj.run("--root", str(demo_pkg_inline), "--workdir", str(proj.path / ".tox"), "-vv")
-    result_first.assert_success()
+    proj.run("--root", str(demo_pkg_inline), "--workdir", str(proj.path / ".tox"), "-vv").assert_success()
 
-    result_rerun = proj.run("--root", str(demo_pkg_inline), "--workdir", str(proj.path / ".tox"))
-    result_rerun.assert_success()
+    proj.run("--root", str(demo_pkg_inline), "--workdir", str(proj.path / ".tox")).assert_success()
 
 
 @pytest.mark.slow
@@ -213,18 +204,15 @@ def test_rerun_sequential_sdist(tox_project: ToxProjectCreator, demo_pkg_inline:
     proj = tox_project(
         {"tox.ini": "[testenv]\npackage=sdist\ncommands=python -c 'from demo_pkg_inline import do; do()'"},
     )
-    result_first = proj.run("--root", str(demo_pkg_inline), "--workdir", str(proj.path / ".tox"))
-    result_first.assert_success()
-    result_rerun = proj.run("--root", str(demo_pkg_inline), "--workdir", str(proj.path / ".tox"))
-    result_rerun.assert_success()
+    proj.run("--root", str(demo_pkg_inline), "--workdir", str(proj.path / ".tox")).assert_success()
+    proj.run("--root", str(demo_pkg_inline), "--workdir", str(proj.path / ".tox")).assert_success()
 
 
 def test_recreate_package(tox_project: ToxProjectCreator, demo_pkg_inline: Path) -> None:
     proj = tox_project(
         {"tox.ini": "[testenv]\npackage=wheel\ncommands=python -c 'from demo_pkg_inline import do; do()'"},
     )
-    result_first = proj.run("--root", str(demo_pkg_inline), "--workdir", str(proj.path / ".tox"), "-r")
-    result_first.assert_success()
+    proj.run("--root", str(demo_pkg_inline), "--workdir", str(proj.path / ".tox"), "-r").assert_success()
 
     result_rerun = proj.run(
         "-r", "--root", str(demo_pkg_inline), "--workdir", str(proj.path / ".tox"), "--no-recreate-pkg"
@@ -249,8 +237,7 @@ recreate = true
         "pyproject.toml": toml,
         "build.py": build,
     })
-    result = proj.run("r", "-e", "a,b")
-    result.assert_success()
+    proj.run("r", "-e", "a,b").assert_success()
 
 
 def test_package_deps_change(tox_project: ToxProjectCreator, demo_pkg_inline: Path) -> None:
@@ -309,9 +296,8 @@ def test_backend_not_found(tox_project: ToxProjectCreator) -> None:
 @pytest.mark.timeout(120)
 def test_missing_interpreter_skip_on(tox_project: ToxProjectCreator) -> None:
     ini = "[tox]\nskip_missing_interpreters=true\n[testenv]\npackage=skip\nbase_python=missing-interpreter"
-    proj = tox_project({"tox.ini": ini})
 
-    result = proj.run("r")
+    result = tox_project({"tox.ini": ini}).run("r")
     result.assert_failed()
     assert "py: SKIP" in result.out
 
@@ -320,9 +306,8 @@ def test_missing_interpreter_skip_on(tox_project: ToxProjectCreator) -> None:
 @pytest.mark.timeout(120)
 def test_missing_interpreter_skip_off(tox_project: ToxProjectCreator) -> None:
     ini = "[tox]\nskip_missing_interpreters=false\n[testenv]\npackage=skip\nbase_python=missing-interpreter"
-    proj = tox_project({"tox.ini": ini})
 
-    result = proj.run("r")
+    result = tox_project({"tox.ini": ini}).run("r")
     result.assert_failed()
     exp = "py: failed with could not find python interpreter matching any of the specs missing-interpreter"
     assert exp in result.out
@@ -374,8 +359,7 @@ set_env = {DATA_DIR = "{envsitepackagesdir}", EXTRA = "yes"}
 def test_env_tmp_dir_reset(tox_project: ToxProjectCreator) -> None:
     ini = '[testenv]\npackage=skip\ncommands=python -c \'import os; os.mkdir(os.path.join( r"{env_tmp_dir}", "a"))\''
     proj = tox_project({"tox.ini": ini})
-    result_first = proj.run("r")
-    result_first.assert_success()
+    proj.run("r").assert_success()
 
     result_second = proj.run("r", "-v", "-v")
     result_second.assert_success()
@@ -389,8 +373,7 @@ def test_env_name_change_recreate(tox_project: ToxProjectCreator) -> None:
 
     tox_env = result_first.state.envs["py"]
     assert repr(tox_env) == "VirtualEnvRunner(name=py)"
-    path = tox_env.env_dir
-    with Info(path).compare({"name": "p", "type": "magical"}, ToxEnv.__name__):
+    with Info(tox_env.env_dir).compare({"name": "p", "type": "magical"}, ToxEnv.__name__):
         pass
 
     result_second = proj.run("r")
@@ -436,8 +419,7 @@ def test_skip_env_install_no_install_calls(tox_project: ToxProjectCreator, demo_
 def test_skip_develop_mode(tox_project: ToxProjectCreator, demo_pkg_setuptools: Path) -> None:
     proj = tox_project({"tox.ini": "[testenv]\npackage=wheel\n"})
     execute_calls = proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
-    result = proj.run("--root", str(demo_pkg_setuptools), "--develop", "--workdir", str(proj.path / ".tox"))
-    result.assert_success()
+    proj.run("--root", str(demo_pkg_setuptools), "--develop", "--workdir", str(proj.path / ".tox")).assert_success()
     calls = [(i[0][0].conf.name, i[0][3].run_id) for i in execute_calls.call_args_list]
     expected = [
         (".pkg", "install_requires"),
@@ -449,24 +431,22 @@ def test_skip_develop_mode(tox_project: ToxProjectCreator, demo_pkg_setuptools: 
     assert calls == expected
 
 
-def _c(code: int) -> str:
-    return f"python -c 'raise SystemExit({code})'"
-
-
 def test_commands_pre_fail_post_runs(tox_project: ToxProjectCreator) -> None:
     ini = f"[testenv]\npackage=skip\ncommands_pre={_c(8)}\ncommands={_c(0)}\ncommands_post={_c(9)}"
-    proj = tox_project({"tox.ini": ini})
-    result = proj.run()
+    result = tox_project({"tox.ini": ini}).run()
     result.assert_failed(code=8)
     assert "commands_pre[0]" in result.out
     assert "commands[0]" not in result.out
     assert "commands_post[0]" in result.out
 
 
+def _c(code: int) -> str:
+    return f"python -c 'raise SystemExit({code})'"
+
+
 def test_commands_pre_pass_post_runs_main_fails(tox_project: ToxProjectCreator) -> None:
     ini = f"[testenv]\npackage=skip\ncommands_pre={_c(0)}\ncommands={_c(8)}\ncommands_post={_c(9)}"
-    proj = tox_project({"tox.ini": ini})
-    result = proj.run()
+    result = tox_project({"tox.ini": ini}).run()
     result.assert_failed(code=8)
     assert "commands_pre[0]" in result.out
     assert "commands[0]" in result.out
@@ -475,8 +455,7 @@ def test_commands_pre_pass_post_runs_main_fails(tox_project: ToxProjectCreator) 
 
 def test_commands_post_fails_exit_code(tox_project: ToxProjectCreator) -> None:
     ini = f"[testenv]\npackage=skip\ncommands_pre={_c(0)}\ncommands={_c(0)}\ncommands_post={_c(9)}"
-    proj = tox_project({"tox.ini": ini})
-    result = proj.run()
+    result = tox_project({"tox.ini": ini}).run()
     result.assert_failed(code=9)
     assert "commands_pre[0]" in result.out
     assert "commands[0]" in result.out
@@ -496,8 +475,7 @@ def test_commands_ignore_errors(tox_project: ToxProjectCreator, pre: int, main: 
         return f"\ncommands{key}=\n {_c(code)}\n {'' if code == 0 else _c(code + 1)}"
 
     ini = f"[testenv]\npackage=skip\nignore_errors=True{_s('_pre', pre)}{_s('', main)}{_s('_post', post)}"
-    proj = tox_project({"tox.ini": ini})
-    result = proj.run()
+    result = tox_project({"tox.ini": ini}).run()
     result.assert_failed(code=outcome)
     assert "commands_pre[0]" in result.out
     assert "commands[0]" in result.out
@@ -506,8 +484,7 @@ def test_commands_ignore_errors(tox_project: ToxProjectCreator, pre: int, main: 
 
 def test_ignore_outcome(tox_project: ToxProjectCreator) -> None:
     ini = "[tox]\nno_package=true\n[testenv]\ncommands=python -c 'exit(1)'\nignore_outcome=true"
-    project = tox_project({"tox.ini": ini})
-    result = project.run("r")
+    result = tox_project({"tox.ini": ini}).run("r")
 
     result.assert_success()
     reports = result.out.splitlines()
@@ -517,20 +494,15 @@ def test_ignore_outcome(tox_project: ToxProjectCreator) -> None:
 
 
 def test_platform_does_not_match_run_env(tox_project: ToxProjectCreator) -> None:
-    ini = "[testenv]\npackage=skip\nplatform=wrong_platform"
-    proj = tox_project({"tox.ini": ini})
 
-    result = proj.run("r")
+    result = tox_project({"tox.ini": "[testenv]\npackage=skip\nplatform=wrong_platform"}).run("r")
     result.assert_failed()
     exp = f"py: skipped because platform {sys.platform} does not match wrong_platform"
     assert exp in result.out
 
 
 def test_platform_matches_run_env(tox_project: ToxProjectCreator) -> None:
-    ini = f"[testenv]\npackage=skip\nplatform={sys.platform}"
-    proj = tox_project({"tox.ini": ini})
-    result = proj.run("r")
-    result.assert_success()
+    tox_project({"tox.ini": f"[testenv]\npackage=skip\nplatform={sys.platform}"}).run("r").assert_success()
 
 
 def test_platform_invalid_regex_run_env(tox_project: ToxProjectCreator) -> None:
@@ -558,8 +530,7 @@ def test_machine_factor_run_env(tox_project: ToxProjectCreator) -> None:
     assert machine in result.out
 
     # verify the created virtualenv reports the correct machine in the journal
-    result_journal = proj.run("r", "-e", f"py-{machine}", "--result-json", str(proj.path / "out.json"))
-    result_journal.assert_success()
+    proj.run("r", "-e", f"py-{machine}", "--result-json", str(proj.path / "out.json")).assert_success()
     with (proj.path / "out.json").open() as f:
         report = json.load(f)
     py_journal = report["testenvs"][f"py-{machine}"]["python"]
@@ -569,9 +540,7 @@ def test_machine_factor_run_env(tox_project: ToxProjectCreator) -> None:
 
 @pytest.mark.timeout(120)
 def test_machine_factor_unavailable(tox_project: ToxProjectCreator) -> None:
-    ini = "[testenv]\npackage=skip\nbase_python=cpython3-64-fakearch999"
-    proj = tox_project({"tox.ini": ini})
-    result = proj.run("r")
+    result = tox_project({"tox.ini": "[testenv]\npackage=skip\nbase_python=cpython3-64-fakearch999"}).run("r")
     result.assert_failed()
     assert "could not find python interpreter" in result.out
 
@@ -580,8 +549,7 @@ def test_platform_does_not_match_package_env(tox_project: ToxProjectCreator, dem
     toml = (demo_pkg_inline / "pyproject.toml").read_text()
     build = (demo_pkg_inline / "build.py").read_text()
     ini = "[tox]\nenv_list=a,b\n[testenv]\npackage=wheel\n[testenv:.pkg]\nplatform=wrong_platform"
-    proj = tox_project({"tox.ini": ini, "pyproject.toml": toml, "build.py": build})
-    result = proj.run("r", "-e", "a,b")
+    result = tox_project({"tox.ini": ini, "pyproject.toml": toml, "build.py": build}).run("r", "-e", "a,b")
     result.assert_failed()  # tox run fails as all envs are skipped
     assert "a: SKIP" in result.out
     assert "b: SKIP" in result.out
@@ -591,15 +559,13 @@ def test_platform_does_not_match_package_env(tox_project: ToxProjectCreator, dem
 
 
 def test_sequential_run_all(tox_project: ToxProjectCreator) -> None:
-    ini = "[tox]\nenv_list=a\n[testenv]\npackage=skip\n[testenv:b]"
-    outcome = tox_project({"tox.ini": ini}).run("r", "-e", "ALL")
+    outcome = tox_project({"tox.ini": "[tox]\nenv_list=a\n[testenv]\npackage=skip\n[testenv:b]"}).run("r", "-e", "ALL")
     assert "a: OK" in outcome.out
     assert "b: OK" in outcome.out
 
 
 def test_virtualenv_cache(tox_project: ToxProjectCreator) -> None:
-    ini = "[testenv]\npackage=skip"
-    proj = tox_project({"tox.ini": ini})
+    proj = tox_project({"tox.ini": "[testenv]\npackage=skip"})
     result_first = proj.run("r", "-v", "-v")
     result_first.assert_success()
     assert " create virtual environment via " in result_first.out
@@ -610,8 +576,7 @@ def test_virtualenv_cache(tox_project: ToxProjectCreator) -> None:
 
 
 def test_sequential_help(tox_project: ToxProjectCreator) -> None:
-    outcome = tox_project({"tox.ini": ""}).run("r", "-h")
-    outcome.assert_success()
+    tox_project({"tox.ini": ""}).run("r", "-h").assert_success()
 
 
 def test_sequential_clears_pkg_at_most_once(tox_project: ToxProjectCreator, demo_pkg_inline: Path) -> None:
@@ -642,8 +607,7 @@ def test_sequential_inserted_env_vars(tox_project: ToxProjectCreator, demo_pkg_i
 
 
 def test_missing_command_success_if_ignored(tox_project: ToxProjectCreator) -> None:
-    project = tox_project({"tox.ini": "[testenv]\ncommands= - missing-command\nskip_install=true"})
-    result = project.run()
+    result = tox_project({"tox.ini": "[testenv]\ncommands= - missing-command\nskip_install=true"}).run()
     result.assert_success()
     assert "py: command failed but is marked ignore outcome so handling it as success" in result.out
 
@@ -737,37 +701,30 @@ def test_fail_fast_respects_ignore_outcome(tox_project: ToxProjectCreator) -> No
 
 def test_no_capture_with_result_json_fails(tox_project: ToxProjectCreator) -> None:
     ini = "[testenv]\npackage=skip\ncommands=python --version"
-    result = tox_project({"tox.ini": ini}).run("r", "-e", "py", "--no-capture", "--result-json", "result.json")
-    result.assert_failed()
+    tox_project({"tox.ini": ini}).run("r", "-e", "py", "--no-capture", "--result-json", "result.json").assert_failed()
 
 
 def test_no_capture_short_flag_with_result_json_fails(tox_project: ToxProjectCreator) -> None:
     ini = "[testenv]\npackage=skip\ncommands=python --version"
-    result = tox_project({"tox.ini": ini}).run("r", "-e", "py", "-i", "--result-json", "result.json")
-    result.assert_failed()
+    tox_project({"tox.ini": ini}).run("r", "-e", "py", "-i", "--result-json", "result.json").assert_failed()
 
 
 def test_no_capture_flag_parsed(tox_project: ToxProjectCreator) -> None:
-    ini = "[testenv]\npackage=skip\ncommands=python -c 'print(\"hello\")'"
-    project = tox_project({"tox.ini": ini})
+    project = tox_project({"tox.ini": "[testenv]\npackage=skip\ncommands=python -c 'print(\"hello\")'"})
     execute_calls = project.patch_execute(lambda r: 0)  # ruff:ignore[unused-lambda-argument]
-    result = project.run("r", "-e", "py", "--no-capture")
-    result.assert_success()
+    project.run("r", "-e", "py", "--no-capture").assert_success()
     assert execute_calls.call_count > 0
 
 
 def test_no_capture_short_flag_parsed(tox_project: ToxProjectCreator) -> None:
-    ini = "[testenv]\npackage=skip\ncommands=python -c 'print(\"hello\")'"
-    project = tox_project({"tox.ini": ini})
+    project = tox_project({"tox.ini": "[testenv]\npackage=skip\ncommands=python -c 'print(\"hello\")'"})
     execute_calls = project.patch_execute(lambda r: 0)  # ruff:ignore[unused-lambda-argument]
-    result = project.run("r", "-e", "py", "-i")
-    result.assert_success()
+    project.run("r", "-e", "py", "-i").assert_success()
     assert execute_calls.call_count > 0
 
 
 def test_interrupt_post_commands_config_and_context_manager(tox_project: ToxProjectCreator) -> None:
-    toml = "[env_run_base]\npackage = 'skip'\ninterrupt_post_commands = true"
-    proj = tox_project({"tox.toml": toml})
+    proj = tox_project({"tox.toml": "[env_run_base]\npackage = 'skip'\ninterrupt_post_commands = true"})
     result = proj.run("c", "-e", "py", "-k", "interrupt_post_commands")
     result.assert_success()
     assert "interrupt_post_commands = True" in result.out
@@ -787,13 +744,11 @@ def test_interrupt_post_commands_runs_after_sigint(tox_project: ToxProjectCreato
     commands = [["python", "-c", "{main_cmd}"]]
     commands_post = [["python", "-c", "{post_cmd}"]]
     """
-    proj = tox_project({"tox.toml": toml})
-    cmd = ["-c", str(proj.path / "tox.toml"), "r", "-e", "py"]
+    cmd = ["-c", str(tox_project({"tox.toml": toml}).path / "tox.toml"), "r", "-e", "py"]
     process = Popen([sys.executable, "-m", "tox", *cmd], stdout=PIPE, stderr=PIPE, universal_newlines=True)
     while not marker_main.exists() and (process.poll() is None):
         sleep(0.05)
-    sig = signal.CTRL_C_EVENT if sys.platform == "win32" else signal.SIGINT
-    process.send_signal(sig)
+    process.send_signal(signal.CTRL_C_EVENT if sys.platform == "win32" else signal.SIGINT)
     _out, err = process.communicate()
     assert process.returncode != 0
     assert "KeyboardInterrupt" in err
@@ -814,13 +769,11 @@ def test_interrupt_post_commands_not_run_by_default(tox_project: ToxProjectCreat
     commands = [["python", "-c", "{main_cmd}"]]
     commands_post = [["python", "-c", "{post_cmd}"]]
     """
-    proj = tox_project({"tox.toml": toml})
-    cmd = ["-c", str(proj.path / "tox.toml"), "r", "-e", "py"]
+    cmd = ["-c", str(tox_project({"tox.toml": toml}).path / "tox.toml"), "r", "-e", "py"]
     process = Popen([sys.executable, "-m", "tox", *cmd], stdout=PIPE, stderr=PIPE, universal_newlines=True)
     while not marker_main.exists() and (process.poll() is None):
         sleep(0.05)
-    sig = signal.CTRL_C_EVENT if sys.platform == "win32" else signal.SIGINT
-    process.send_signal(sig)
+    process.send_signal(signal.CTRL_C_EVENT if sys.platform == "win32" else signal.SIGINT)
     _out, err = process.communicate()
     assert process.returncode != 0
     assert "KeyboardInterrupt" in err
@@ -847,8 +800,7 @@ def test_second_interrupt_stops_post_commands(tox_project: ToxProjectCreator, tm
         ["python", "-c", "{post_end_cmd}"],
     ]
     """
-    proj = tox_project({"tox.toml": toml})
-    cmd = ["-c", str(proj.path / "tox.toml"), "r", "-e", "py"]
+    cmd = ["-c", str(tox_project({"tox.toml": toml}).path / "tox.toml"), "r", "-e", "py"]
     process = Popen([sys.executable, "-m", "tox", *cmd], stdout=PIPE, stderr=PIPE, universal_newlines=True)
     while not marker_main.exists() and (process.poll() is None):
         sleep(0.05)
@@ -865,7 +817,7 @@ def test_second_interrupt_stops_post_commands(tox_project: ToxProjectCreator, tm
 
 
 def test_fail_fast_exit_code_is_first_failure(tox_project: ToxProjectCreator) -> None:
-    """Documented contract: the overall exit code under fail fast is the first failed environment's code."""
+    # Documented contract: the overall exit code under fail fast is the first failed environment's code.
     toml = dedent("""\
         env_list = ["a", "b"]
         [env_run_base]
@@ -875,15 +827,12 @@ def test_fail_fast_exit_code_is_first_failure(tox_project: ToxProjectCreator) ->
         [env.b]
         commands = [["python", "-c", "print('ok')"]]
     """)
-    project = tox_project({"tox.toml": toml})
 
-    outcome = project.run("r", "--fail-fast")
-
-    outcome.assert_failed(code=7)
+    tox_project({"tox.toml": toml}).run("r", "--fail-fast").assert_failed(code=7)
 
 
 def test_teardown_continues_after_failure(tox_project: ToxProjectCreator, mocker: MockerFixture) -> None:
-    """One environment's teardown failure must not leave the remaining environments' resources alive."""
+    # One environment's teardown failure must not leave the remaining environments' resources alive.
     toml = dedent("""\
         env_list = ["a", "b"]
         [env_run_base]
@@ -914,7 +863,7 @@ def test_teardown_continues_after_failure(tox_project: ToxProjectCreator, mocker
 
 
 def test_result_json_marks_skipped(tox_project: ToxProjectCreator) -> None:
-    """A consumer of the JSON report can tell a skipped environment from a passing one."""
+    # A consumer of the JSON report can tell a skipped environment from a passing one.
     toml = dedent("""\
         env_list = ["a", "b"]
         [env_run_base]
@@ -924,9 +873,7 @@ def test_result_json_marks_skipped(tox_project: ToxProjectCreator) -> None:
     """)
     project = tox_project({"tox.toml": toml})
 
-    outcome = project.run("r", "--result-json", "out.json")
-
-    outcome.assert_success()
+    project.run("r", "--result-json", "out.json").assert_success()
     result = json.loads((project.path / "out.json").read_text())["testenvs"]["a"]["result"]
     assert result == {"success": True, "exit_code": 0, "duration": result["duration"], "skipped": True}
 

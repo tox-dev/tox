@@ -88,8 +88,7 @@ class _TomlProjectCreator(Protocol):
 
 
 def test_config_in_toml_replace_default(toml_project: _TomlProjectCreator) -> None:
-    project = toml_project('[${prefix}env_run_base]\ndescription = "{missing:miss}"')
-    outcome = project.run("c", "-k", "description")
+    outcome = toml_project('[${prefix}env_run_base]\ndescription = "{missing:miss}"').run("c", "-k", "description")
     outcome.assert_success()
     outcome.assert_out_err("[testenv:py]\ndescription = miss\n", "")
 

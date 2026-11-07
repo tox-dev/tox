@@ -36,8 +36,7 @@ def list_env(state: State) -> int:
 
     def report_env(name: str) -> None:
         if not option.list_no_description:
-            tox_env = state.envs[name]
-            text = tox_env.conf["description"]
+            text = state.envs[name].conf["description"]
             if not text.strip():
                 text = "[no description]"
             text = text.replace("\n", " ")
@@ -57,3 +56,8 @@ def list_env(state: State) -> int:
         for env in inactive:
             report_env(env)
     return 0
+
+
+__all__ = [
+    "list_env",
+]

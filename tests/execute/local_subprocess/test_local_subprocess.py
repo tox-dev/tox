@@ -42,26 +42,6 @@ if TYPE_CHECKING:
     from tox.tox_env.api import ToxEnv
 
 
-class FakeOutErr:
-    def __init__(self) -> None:
-        self.out_err = (
-            TextIOWrapper(NamedBytesIO("out"), encoding=locale.getpreferredencoding(False)),
-            TextIOWrapper(NamedBytesIO("err"), encoding=locale.getpreferredencoding(False)),
-        )
-
-    def read_out_err(self) -> tuple[str, str]:
-        out_got = self.out_err[0].buffer.getvalue().decode(self.out_err[0].encoding)
-        err_got = self.out_err[1].buffer.getvalue().decode(self.out_err[1].encoding)
-        return out_got, err_got
-
-
-def _create_mock_env() -> MagicMock:
-    """Create a mock tox environment with no_capture=False to prevent console inheritance."""
-    mock_env = MagicMock()
-    mock_env.options.no_capture = False
-    return mock_env
-
-
 @pytest.mark.parametrize("color", [True, False], ids=["color", "no_color"])
 @pytest.mark.parametrize(("out", "err"), [("out", "err"), ("", "")], ids=["simple", "nothing"])
 @pytest.mark.parametrize("show", [True, False], ids=["show", "no_show"])
@@ -91,15 +71,11 @@ def test_local_execute_basic_pass(
     with executor.call(request, show=show, out_err=out_err.out_err, env=tox_env) as status:
         while status.exit_code is None:  # pragma: no branch
             status.wait()
-    assert status.out == out.encode()
-    assert status.err == err.encode()
+    assert (status.out, status.err) == (out.encode(), err.encode())
     outcome = status.outcome
     assert outcome is not None
     assert bool(outcome) is True, outcome
-    assert outcome.exit_code == Outcome.OK
-    assert outcome.err == err
-    assert outcome.out == out
-    assert outcome.request == request
+    assert (outcome.exit_code, outcome.err, outcome.out, outcome.request) == (Outcome.OK, err, out, request)
 
     out_got, err_got = out_err.read_out_err()
     if show:
@@ -110,6 +86,25 @@ def test_local_execute_basic_pass(
         assert not out_got
         assert not err_got
     assert not caplog.records
+
+
+def _create_mock_env() -> MagicMock:
+    # Create a mock tox environment with no_capture=False to prevent console inheritance.
+    mock_env = MagicMock()
+    mock_env.options.no_capture = False
+    return mock_env
+
+
+class FakeOutErr:
+    def __init__(self) -> None:
+        self.out_err = (
+            TextIOWrapper(NamedBytesIO("out"), encoding=locale.getpreferredencoding(False)),
+            TextIOWrapper(NamedBytesIO("err"), encoding=locale.getpreferredencoding(False)),
+        )
+
+    def read_out_err(self) -> tuple[str, str]:
+        out_got = self.out_err[0].buffer.getvalue().decode(self.out_err[0].encoding)
+        return out_got, self.out_err[1].buffer.getvalue().decode(self.out_err[1].encoding)
 
 
 @pytest.mark.parametrize(
@@ -190,8 +185,8 @@ def test_local_execute_start_error_masks_secret_flag(caplog: LogCaptureFixture, 
 
 
 def test_local_execute_write_a_lot(os_env: dict[str, str]) -> None:
-    count = 10_000
     executor = LocalSubProcessExecutor(colored=False)
+    count = 10_000
     request = ExecuteRequest(
         cmd=[
             sys.executable,
@@ -210,8 +205,7 @@ def test_local_execute_write_a_lot(os_env: dict[str, str]) -> None:
         stdin=StdinSource.OFF,
         run_id="",
     )
-    out_err = FakeOutErr()
-    with executor.call(request, show=False, out_err=out_err.out_err, env=_create_mock_env()) as status:
+    with executor.call(request, show=False, out_err=FakeOutErr().out_err, env=_create_mock_env()) as status:
         while status.exit_code is None:  # pragma: no branch
             status.wait()
     outcome = status.outcome
@@ -225,7 +219,7 @@ def test_local_execute_write_a_lot(os_env: dict[str, str]) -> None:
 
 @pytest.mark.skipif(sys.platform == "win32", reason="Unix terminal size test")
 def test_local_execute_terminal_size(os_env: dict[str, str], monkeypatch: MonkeyPatch) -> None:
-    """Regression test for #2999 - check terminal size is set correctly in tox subprocess."""
+    # Regression test for #2999 - check terminal size is set correctly in tox subprocess.
     import pty  # ruff:ignore[import-outside-top-level]
 
     terminal_size = os.terminal_size((84, 42))
@@ -253,8 +247,7 @@ def test_local_execute_terminal_size(os_env: dict[str, str], monkeypatch: Monkey
             stdin=StdinSource.OFF,
             run_id="",
         )
-        out_err = FakeOutErr()
-        with executor.call(request, show=False, out_err=out_err.out_err, env=_create_mock_env()) as status:
+        with executor.call(request, show=False, out_err=FakeOutErr().out_err, env=_create_mock_env()) as status:
             while status.exit_code is None:  # pragma: no branch
                 status.wait()
     outcome = status.outcome
@@ -295,10 +288,7 @@ def test_local_execute_basic_fail(capsys: CaptureFixture, caplog: LogCaptureFixt
 
     # assert return object
     assert bool(outcome) is False, outcome
-    assert outcome.exit_code == 3
-    assert outcome.err == "err"
-    assert outcome.out == "out"
-    assert outcome.request == request
+    assert (outcome.exit_code, outcome.err, outcome.out, outcome.request) == (3, "err", "out", request)
 
     # asset fail
     with pytest.raises(SystemExit) as context:
@@ -313,8 +303,7 @@ def test_local_execute_basic_fail(capsys: CaptureFixture, caplog: LogCaptureFixt
 
     assert len(caplog.records) == 1
     record = caplog.records[0]
-    assert record.levelno == logging.CRITICAL
-    assert record.msg == "exit %s (%.2f seconds) %s> %s%s"
+    assert (record.levelno, record.msg) == (logging.CRITICAL, "exit %s (%.2f seconds) %s> %s%s")
     assert record.args is not None
     code, duration, cwd_, cmd_, metadata = record.args
     assert code == 3
@@ -336,8 +325,7 @@ def test_command_does_not_exist(caplog: LogCaptureFixture, os_env: dict[str, str
         stdin=StdinSource.OFF,
         run_id="",
     )
-    out_err = FakeOutErr()
-    with executor.call(request, show=False, out_err=out_err.out_err, env=_create_mock_env()) as status:
+    with executor.call(request, show=False, out_err=FakeOutErr().out_err, env=_create_mock_env()) as status:
         while status.exit_code is None:  # pragma: no branch
             status.wait()  # pragma: no cover
     outcome = status.outcome
@@ -435,7 +423,7 @@ def test_command_keyboard_interrupt(tmp_path: Path, monkeypatch: MonkeyPatch, ca
 
 @pytest.mark.skipif(sys.platform == "win32", reason="pty is Unix-only")
 def test_pty_closes_fds_when_termios_fails(mocker: MockerFixture) -> None:
-    """If terminal attributes cannot be inherited, the freshly opened pty fds must be released."""
+    # If terminal attributes cannot be inherited, the freshly opened pty fds must be released.
     termios = pytest.importorskip("termios")
     pty = pytest.importorskip("pty")
     mocker.patch("sys.stdout.isatty", return_value=True)
@@ -452,7 +440,7 @@ def test_pty_closes_fds_when_termios_fails(mocker: MockerFixture) -> None:
 
 @pytest.mark.skipif(sys.platform == "win32", reason="pty is Unix-only")
 def test_local_subprocess_tty_closes_master_fd(monkeypatch: MonkeyPatch, mocker: MockerFixture) -> None:
-    """The pty master fd is not a process stream, so it must be closed explicitly and not leaked."""
+    # The pty master fd is not a process stream, so it must be closed explicitly and not leaked.
     pytest.importorskip("termios")
     monkeypatch.setenv("COLUMNS", "100")
     monkeypatch.setenv("LINES", "100")
@@ -465,8 +453,7 @@ def test_local_subprocess_tty_closes_master_fd(monkeypatch: MonkeyPatch, mocker:
     executor = LocalSubProcessExecutor(colored=False)
     cmd = [sys.executable, str(Path(__file__).parent / "tty_check.py")]
     request = ExecuteRequest(cmd=cmd, stdin=StdinSource.API, cwd=Path.cwd(), env=dict(os.environ), run_id="")
-    out_err = FakeOutErr()
-    with executor.call(request, show=False, out_err=out_err.out_err, env=_create_mock_env()) as status:
+    with executor.call(request, show=False, out_err=FakeOutErr().out_err, env=_create_mock_env()) as status:
         while status.exit_code is None:  # pragma: no branch
             status.wait()
 
@@ -479,12 +466,10 @@ def test_local_subprocess_tty_closes_master_fd(monkeypatch: MonkeyPatch, mocker:
 
 @pytest.mark.skipif(sys.platform == "win32", reason="pty is Unix-only")
 def test_get_stream_file_no_closes_each_pty_fd_once(mocker: MockerFixture) -> None:
-    """Each pty fd must be closed exactly once.
-
-    The child fd is closed once the child has inherited it; closing it a second time on generator teardown can race a
-    parallel run that has reused the freed fd number, corrupting the sibling's fd (see #3975).
-
-    """
+    # Each pty fd must be closed exactly once.
+    #
+    # The child fd is closed once the child has inherited it; closing it a second time on generator teardown can race a
+    # parallel run that has reused the freed fd number, corrupting the sibling's fd (see #3975).
     main_fd, child_fd = 11, 22
     mocker.patch.object(local_sub_process, "_pty", return_value=(main_fd, child_fd))
     close_spy = mocker.patch.object(os, "close")
@@ -501,7 +486,7 @@ def test_get_stream_file_no_closes_each_pty_fd_once(mocker: MockerFixture) -> No
 
 @pytest.mark.skipif(sys.platform != "win32", reason="overlapped I/O reader is Windows-only")
 def test_read_via_thread_windows_stops_while_read_pending(mocker: MockerFixture) -> None:
-    """A never-completing overlapped read must not keep the reader thread alive after stop is set."""
+    # A never-completing overlapped read must not keep the reader thread alive after stop is set.
     pending = OSError()
     pending.winerror = read_via_thread_windows.ERROR_IO_INCOMPLETE
     overlapped = mocker.MagicMock()
@@ -543,8 +528,7 @@ def test_local_subprocess_tty(monkeypatch: MonkeyPatch, mocker: MockerFixture, t
     executor = LocalSubProcessExecutor(colored=False)
     cmd: list[str] = [sys.executable, str(Path(__file__).parent / "tty_check.py")]
     request = ExecuteRequest(cmd=cmd, stdin=StdinSource.API, cwd=Path.cwd(), env=dict(os.environ), run_id="")
-    out_err = FakeOutErr()
-    with executor.call(request, show=False, out_err=out_err.out_err, env=_create_mock_env()) as status:
+    with executor.call(request, show=False, out_err=FakeOutErr().out_err, env=_create_mock_env()) as status:
         while status.exit_code is None:  # pragma: no branch
             status.wait()
     outcome = status.outcome
@@ -588,6 +572,17 @@ def test_shebang_limited_on(tmp_path: Path) -> None:
         assert instance.cmd == [exe, "-s", str(script), "--magic"]
 
 
+def _create_shebang_test(tmp_path: Path, env: dict[str, str]) -> tuple[str, Path, LocalSubProcessExecuteInstance]:
+    exe: Final[str] = sys.executable
+    script = tmp_path / f"s{'.EXE' if sys.platform == 'win32' else ''}"
+    script.write_text(f"#!{exe} -s")
+    script.chmod(script.stat().st_mode | stat.S_IEXEC)  # mark it executable
+    env["PATH"] = str(script.parent)
+    request = create_autospec(ExecuteRequest, cmd=["s", "--magic"], cwd=tmp_path, env=env, allow=None)
+    writer = create_autospec(SyncWrite)
+    return exe, script, LocalSubProcessExecuteInstance(request, create_autospec(ExecuteOptions), writer, writer)
+
+
 @pytest.mark.parametrize("env", [{}, {"TOX_LIMITED_SHEBANG": ""}])
 def test_shebang_limited_off(tmp_path: Path, env: dict[str, str]) -> None:
     _, script, instance = _create_shebang_test(tmp_path, env=env)
@@ -598,18 +593,6 @@ def test_shebang_failed_to_parse(tmp_path: Path) -> None:
     _, script, instance = _create_shebang_test(tmp_path, env={"TOX_LIMITED_SHEBANG": "yes"})
     script.write_text("")
     assert instance.cmd == [str(script), "--magic"]
-
-
-def _create_shebang_test(tmp_path: Path, env: dict[str, str]) -> tuple[str, Path, LocalSubProcessExecuteInstance]:
-    exe: Final[str] = sys.executable
-    script = tmp_path / f"s{'.EXE' if sys.platform == 'win32' else ''}"
-    script.write_text(f"#!{exe} -s")
-    script.chmod(script.stat().st_mode | stat.S_IEXEC)  # mark it executable
-    env["PATH"] = str(script.parent)
-    request = create_autospec(ExecuteRequest, cmd=["s", "--magic"], cwd=tmp_path, env=env, allow=None)
-    writer = create_autospec(SyncWrite)
-    instance = LocalSubProcessExecuteInstance(request, create_autospec(ExecuteOptions), writer, writer)
-    return exe, script, instance
 
 
 @pytest.mark.parametrize("name", [pytest.param("build.cmd", id="cmd"), pytest.param("build.BAT", id="bat-uppercase")])
@@ -711,8 +694,7 @@ def test_local_execute_does_not_overwrite(key: str, mocker: MockerFixture) -> No
     executor = LocalSubProcessExecutor(colored=False)
     cmd = [sys.executable, "-c", f"import os; print(os.environ['{key}'], end='')"]
     request = ExecuteRequest(cmd=cmd, stdin=StdinSource.API, cwd=Path.cwd(), env=env, run_id="")
-    out_err = FakeOutErr()
-    with executor.call(request, show=False, out_err=out_err.out_err, env=_create_mock_env()) as status:
+    with executor.call(request, show=False, out_err=FakeOutErr().out_err, env=_create_mock_env()) as status:
         while status.exit_code is None:  # pragma: no branch
             status.wait()
     outcome = status.outcome
@@ -723,7 +705,7 @@ def test_local_execute_does_not_overwrite(key: str, mocker: MockerFixture) -> No
 
 @pytest.mark.skipif(sys.platform == "win32", reason="Unix-specific tests")
 def test_read_via_thread_eintr_during_select(mocker: MockerFixture) -> None:
-    """Test that EINTR during selector.select() is handled correctly."""
+    # Test that EINTR during selector.select() is handled correctly.
     # Create a pipe
     data_received: list[bytes] = []
     eintr_raised = [False]
@@ -759,7 +741,7 @@ def test_read_via_thread_eintr_during_select(mocker: MockerFixture) -> None:
 
 @pytest.mark.skipif(sys.platform == "win32", reason="Unix-specific tests")
 def test_read_via_thread_eintr_during_read(mocker: MockerFixture) -> None:
-    """Test that EINTR during os.read() is handled correctly."""
+    # Test that EINTR during os.read() is handled correctly.
     data_received: list[bytes] = []
     original_read = os.read
     call_count = [0]
@@ -792,7 +774,7 @@ def test_read_via_thread_eintr_during_read(mocker: MockerFixture) -> None:
 
 @pytest.mark.skipif(sys.platform == "win32", reason="Unix-specific tests")
 def test_read_via_thread_ebadf_during_read(mocker: MockerFixture) -> None:
-    """Test that EBADF during os.read() is handled correctly."""
+    # Test that EBADF during os.read() is handled correctly.
     data_received: list[bytes] = []
 
     def handler(data: bytes) -> int:
@@ -820,7 +802,7 @@ def test_read_via_thread_ebadf_during_read(mocker: MockerFixture) -> None:
 
 @pytest.mark.skipif(sys.platform == "win32", reason="Unix-specific tests")
 def test_read_via_thread_drain_no_data() -> None:
-    """Test drain_stream when there's no data ready."""
+    # Test drain_stream when there's no data ready.
     data_received: list[bytes] = []
 
     def handler(data: bytes) -> int:
@@ -830,8 +812,7 @@ def test_read_via_thread_drain_no_data() -> None:
     read_fd, write_fd = os.pipe()
     try:
         os.close(write_fd)
-        reader = ReadViaThreadUnix(read_fd, handler, "test", drain=True)
-        reader._drain_stream()  # ruff:ignore[private-member-access]
+        ReadViaThreadUnix(read_fd, handler, "test", drain=True)._drain_stream()  # ruff:ignore[private-member-access]
     finally:
         with contextlib.suppress(OSError):
             os.close(read_fd)

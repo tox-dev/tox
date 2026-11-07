@@ -26,4 +26,6 @@ class LegacyToml(IniSource):
         super().__init__(path, content=content)
 
 
-__all__ = ("LegacyToml",)
+__all__ = [
+    "LegacyToml",
+]

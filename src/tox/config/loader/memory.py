@@ -17,7 +17,11 @@ if TYPE_CHECKING:
 
 
 class MemoryLoader(Loader[object]):
-    """Loads configuration directly from data in memory."""
+    """Loads configuration directly from data in memory.
+
+    :param kwargs:
+    :ivar raw:
+    """
 
     def __init__(self, **kwargs: Any) -> None:
         super().__init__(Section(prefix="<memory>", name=str(id(self))), [])
@@ -80,3 +84,8 @@ class MemoryLoader(Loader[object]):
             return StrConvert.to_env_list(value)
         msg = f"env_list expected EnvList or str, got {type(value).__name__}: {value!r}"
         raise TypeError(msg)
+
+
+__all__ = [
+    "MemoryLoader",
+]

@@ -23,8 +23,7 @@ from importlib.metadata import Distribution, PathDistribution
 @pytest.fixture(scope="session")
 def pkg_with_extras(pkg_with_extras_project: Path) -> PathDistribution:
     frontend = SubprocessFrontend(*SubprocessFrontend.create_args_from_folder(pkg_with_extras_project)[:-1])
-    meta = pkg_with_extras_project / "meta"
-    result = frontend.prepare_metadata_for_build_wheel(meta)
+    result = frontend.prepare_metadata_for_build_wheel(pkg_with_extras_project / "meta")
     assert result is not None
     return Distribution.at(result.metadata)
 
@@ -114,7 +113,7 @@ def test_recursive_extra_combines_markers_through_nested_self_references() -> No
 
 
 def test_loads_deps_recursive_extras_non_canonical_name() -> None:
-    """A self-referential extra resolves even when the package name is not canonical."""
+    # A self-referential extra resolves even when the package name is not canonical.
     requires = [
         Requirement('dep1; extra == "dev"'),
         Requirement('my-pkg[sub]; extra == "dev"'),
@@ -171,7 +170,7 @@ def test_validate_extras_no_available() -> None:
 
 
 def test_extras_underscore_hyphen_matching() -> None:
-    """Extras with underscores in tox.ini should match hyphens in metadata markers (#3433)."""
+    # Extras with underscores in tox.ini should match hyphens in metadata markers (#3433).
     requires = [
         Requirement('dep-a; extra == "kebab-case"'),
         Requirement('dep-b; extra == "snake-case"'),
@@ -182,7 +181,7 @@ def test_extras_underscore_hyphen_matching() -> None:
 
 
 def test_extras_underscore_in_markers() -> None:
-    """Extras with underscores in markers should match hyphens in tox.ini (#3433)."""
+    # Extras with underscores in markers should match hyphens in tox.ini (#3433).
     requires = [
         Requirement('dep-a; extra == "snake_case"'),
     ]
@@ -191,7 +190,7 @@ def test_extras_underscore_in_markers() -> None:
 
 
 def test_extras_normalization_with_recursive() -> None:
-    """Recursive extras with underscores should be resolved correctly (#3433)."""
+    # Recursive extras with underscores should be resolved correctly (#3433).
     requires = [
         Requirement('dep1; extra == "my-extra"'),
         Requirement('name[sub_extra]; extra == "my-extra"'),
@@ -209,24 +208,6 @@ def test_safe_extractall_regular(tmp_path: Path) -> None:
     with tarfile.open(archive) as tar:
         safe_extractall(tar, dest)
     assert (dest / "pkg-1.0" / "a.txt").read_text() == "hi"
-
-
-@pytest.fixture(
-    params=[
-        pytest.param(
-            "data_filter",
-            id="data-filter",
-            marks=pytest.mark.skipif(not hasattr(tarfile, "data_filter"), reason="tarfile data filter unavailable"),
-        ),
-        pytest.param("fallback", id="fallback"),
-    ],
-)
-def extract_mode(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) -> None:
-    if request.param == "fallback":
-        # Exercise the fallback even when tarfile provides its own filter.
-        if hasattr(tarfile.TarFile, "extraction_filter"):
-            monkeypatch.setattr(tarfile.TarFile, "extraction_filter", staticmethod(tarfile.fully_trusted_filter))
-        monkeypatch.delattr(tarfile, "data_filter", raising=False)
 
 
 def _make_tar(path: Path, members: list[tuple[str, str, str]]) -> Path:
@@ -247,6 +228,24 @@ def _make_tar(path: Path, members: list[tuple[str, str, str]]) -> Path:
                 info.size = len(data)
                 tar.addfile(info, io.BytesIO(data))
     return path
+
+
+@pytest.fixture(
+    params=[
+        pytest.param(
+            "data_filter",
+            id="data-filter",
+            marks=pytest.mark.skipif(not hasattr(tarfile, "data_filter"), reason="tarfile data filter unavailable"),
+        ),
+        pytest.param("fallback", id="fallback"),
+    ],
+)
+def extract_mode(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) -> None:
+    if request.param == "fallback":
+        # Exercise the fallback even when tarfile provides its own filter.
+        if hasattr(tarfile.TarFile, "extraction_filter"):
+            monkeypatch.setattr(tarfile.TarFile, "extraction_filter", staticmethod(tarfile.fully_trusted_filter))
+        monkeypatch.delattr(tarfile, "data_filter", raising=False)
 
 
 @pytest.mark.parametrize(

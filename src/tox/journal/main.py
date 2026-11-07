@@ -15,7 +15,10 @@ if TYPE_CHECKING:
 
 
 class Journal:
-    """The result of a tox session."""
+    """The result of a tox session.
+
+    :param enabled:
+    """
 
     def __init__(self, enabled: bool) -> None:  # ruff:ignore[boolean-type-hint-positional-argument]
         self._enabled = enabled
@@ -32,12 +35,8 @@ class Journal:
                 },
             )
 
-    def get_env_journal(self, name: str) -> EnvJournal:
-        """Return the env log of an environment (create on first call)."""
-        if name not in self._env:
-            env = EnvJournal(self._enabled, name)
-            self._env[name] = env
-        return self._env[name]
+    def __bool__(self) -> bool:
+        return self._enabled
 
     @property
     def content(self) -> dict[str, JsonValue]:
@@ -48,8 +47,17 @@ class Journal:
             self._content["testenvs"] = test_env_journals
         return self._content
 
-    def __bool__(self) -> bool:
-        return self._enabled
+    def get_env_journal(self, name: str) -> EnvJournal:
+        """Return the env log of an environment (create on first call).
+
+        :param name:
+        :returns:
+        """
+        if name not in self._env:
+            self._env[name] = EnvJournal(self._enabled, name)
+        return self._env[name]
 
 
-__all__ = ("Journal",)
+__all__ = [
+    "Journal",
+]

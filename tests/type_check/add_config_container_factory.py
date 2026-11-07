@@ -1,5 +1,3 @@
-"""check that factory for a container works"""
-
 from __future__ import annotations
 
 from tox.config.sets import ConfigSet

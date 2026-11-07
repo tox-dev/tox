@@ -111,8 +111,7 @@ def test_factor_env_filter(env: str, complex_example: str) -> None:
 
 
 def test_factor_env_list(tox_ini_conf: ToxIniCreator) -> None:
-    config = tox_ini_conf("[tox]\nenv_list = {py27,py36}-django{ 15, 16 }{,-dev}, docs, flake")
-    result = list(config)
+    result = list(tox_ini_conf("[tox]\nenv_list = {py27,py36}-django{ 15, 16 }{,-dev}, docs, flake"))
     assert result == [
         "py27-django15",
         "py27-django15-dev",
@@ -171,7 +170,7 @@ def test_factor_config_do_not_replace_unescaped_comma(tox_ini_conf: ToxIniCreato
 
 
 def test_factor_config_no_env_list_creates_env(tox_ini_conf: ToxIniCreator) -> None:
-    """If we have a factor that is not specified within the core env-list then that's also an environment"""
+    # If we have a factor that is not specified within the core env-list then that's also an environment
     config = tox_ini_conf(
         """
         [tox]
@@ -550,8 +549,7 @@ def test_generative_section_name(tox_ini_conf: ToxIniCreator) -> None:
 
 
 def test_multiple_factor_match(tox_ini_conf: ToxIniCreator) -> None:
-    config = tox_ini_conf("[testenv]\nconf = a{,-b}: x")
-    env_config = config.get_env("a-b")
+    env_config = tox_ini_conf("[testenv]\nconf = a{,-b}: x").get_env("a-b")
     env_config.add_config(keys="conf", of_type=str, default="", desc="conf")
     deps = env_config["conf"]
     assert deps == "x"
@@ -614,7 +612,7 @@ def test_platform_factor(tox_ini_conf: ToxIniCreator) -> None:
 
 
 def test_machine_isa_does_not_override_explicit_env_factor() -> None:
-    """Regression test for #3903: explicit ISA in env name takes precedence over machine ISA."""
+    # Regression test for #3903: explicit ISA in env name takes precedence over machine ISA.
     parts = sysconfig.get_platform().rsplit("-", 1)
     if len(parts) < 2:
         pytest.skip("sysconfig.get_platform() has no machine component")
@@ -630,7 +628,7 @@ def test_machine_isa_does_not_override_explicit_env_factor() -> None:
 
 
 def test_machine_isa_implicit_when_no_env_isa() -> None:
-    """Machine ISA is added implicitly when no ISA factor is in the env name."""
+    # Machine ISA is added implicitly when no ISA factor is in the env name.
     parts = sysconfig.get_platform().rsplit("-", 1)
     if len(parts) < 2:
         pytest.skip("sysconfig.get_platform() has no machine component")

@@ -10,7 +10,10 @@ class TomlToxSection(TomlSection):
 
 
 class TomlTox(TomlPyProject):
-    """Configuration sourced from a pyproject.toml files."""
+    """Configuration sourced from a pyproject.toml files.
+
+    :cvar FILENAME:
+    """
 
     FILENAME = "tox.toml"
     _Section = TomlToxSection

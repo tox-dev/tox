@@ -25,8 +25,7 @@ def test_override_add(flag: str) -> None:
     parsed, _, __, ___, ____ = get_options(flag, "magic=true")
     assert len(parsed.override) == 1
     value = parsed.override[0]
-    assert value.key == "magic"
-    assert value.value == "true"
+    assert (value.key, value.value) == ("magic", "true")
     assert not value.namespace
     assert value.append is False
 
@@ -36,8 +35,7 @@ def test_override_append(flag: str) -> None:
     parsed, _, __, ___, ____ = get_options(flag, "magic+=true")
     assert len(parsed.override) == 1
     value = parsed.override[0]
-    assert value.key == "magic"
-    assert value.value == "true"
+    assert (value.key, value.value) == ("magic", "true")
     assert not value.namespace
     assert value.append is True
 
@@ -105,9 +103,7 @@ def test_override_str_keeps_spacing_when_nothing_is_redacted() -> None:
 )
 def test_override_escaped_dot(raw: str, namespace: str, key: str, value: str, append: bool, expected_str: str) -> None:
     override = Override(raw)
-    assert override.namespace == namespace
-    assert override.key == key
-    assert override.value == value
+    assert (override.namespace, override.key, override.value) == (namespace, key, value)
     assert override.append is append
     assert str(override) == expected_str
 

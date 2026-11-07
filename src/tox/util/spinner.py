@@ -8,7 +8,7 @@ import textwrap
 import threading
 import time
 from collections import OrderedDict
-from typing import IO, TYPE_CHECKING, NamedTuple, Self, TypeVar
+from typing import IO, TYPE_CHECKING, Final, NamedTuple, Self, TypeVar
 
 from colorama import Fore
 
@@ -25,8 +25,9 @@ if sys.platform == "win32":  # pragma: win32 cover
 
 
 def _file_support_encoding(chars: Sequence[str], file: IO[str]) -> bool:
-    encoding = getattr(file, "encoding", None)
-    if encoding is not None:  # pragma: no branch  # this should be always set, unless someone passes in something bad
+    if (
+        encoding := getattr(file, "encoding", None)
+    ) is not None:  # pragma: no branch  # this should be always set, unless someone passes in something bad
         try:
             for char in chars:
                 char.encode(encoding)
@@ -38,7 +39,7 @@ def _file_support_encoding(chars: Sequence[str], file: IO[str]) -> bool:
 
 
 T = TypeVar("T", bound="Spinner")
-MISS_DURATION = 0.01
+MISS_DURATION: Final[float] = 0.01
 
 
 class Outcome(NamedTuple):
@@ -78,23 +79,36 @@ class Spinner:
         self._envs: dict[str, float] = OrderedDict()
         self._frame_index = 0
 
-    def clear(self) -> None:
+    def __enter__(self) -> Self:
         if self.enabled:
-            self.stream.write("\r")
-            self.stream.write(self.CLEAR_LINE)
-
-    def render(self) -> Spinner:
-        while True:
-            self._stop_spinner.wait(self.refresh_rate)
-            if self._stop_spinner.is_set():
-                break
-            self.render_frame()
+            self.disable_cursor()
+        self.render_frame()
+        self._stop_spinner = threading.Event()
+        self._spinner_thread = threading.Thread(target=self.render)
+        self._spinner_thread.daemon = True
+        self._spinner_thread.start()
         return self
+
+    def disable_cursor(self) -> None:
+        if self.stream.isatty():
+            if sys.platform == "win32":  # pragma: win32 cover
+                ci = _CursorInfo()
+                handle = ctypes.windll.kernel32.GetStdHandle(-11)  # Windows-only
+                ctypes.windll.kernel32.GetConsoleCursorInfo(handle, ctypes.byref(ci))  # Windows-only
+                ci.visible = False
+                ctypes.windll.kernel32.SetConsoleCursorInfo(handle, ctypes.byref(ci))  # Windows-only
+            else:
+                self.stream.write("\033[?25l")
 
     def render_frame(self) -> None:
         if self.enabled:
             self.clear()
             self.stream.write(f"\r{self.frame()}")
+
+    def clear(self) -> None:
+        if self.enabled:
+            self.stream.write("\r")
+            self.stream.write(self.CLEAR_LINE)
 
     def frame(self) -> str:
         frame = self.frames[self._frame_index]
@@ -105,14 +119,12 @@ class Spinner:
         text_frame = textwrap.shorten(text_frame, width=self.max_width - 1, placeholder="...")
         return f"{frame} {text_frame}"
 
-    def __enter__(self) -> Self:
-        if self.enabled:
-            self.disable_cursor()
-        self.render_frame()
-        self._stop_spinner = threading.Event()
-        self._spinner_thread = threading.Thread(target=self.render)
-        self._spinner_thread.daemon = True
-        self._spinner_thread.start()
+    def render(self) -> Spinner:
+        while True:
+            self._stop_spinner.wait(self.refresh_rate)
+            if self._stop_spinner.is_set():
+                break
+            self.render_frame()
         return self
 
     def __exit__(
@@ -131,17 +143,22 @@ class Spinner:
                 self.clear()
                 self.enable_cursor()
 
+    def enable_cursor(self) -> None:
+        if self.stream.isatty():
+            if sys.platform == "win32":  # pragma: win32 cover
+                ci = _CursorInfo()
+                handle = ctypes.windll.kernel32.GetStdHandle(-11)  # Windows-only
+                ctypes.windll.kernel32.GetConsoleCursorInfo(handle, ctypes.byref(ci))  # Windows-only
+                ci.visible = True
+                ctypes.windll.kernel32.SetConsoleCursorInfo(handle, ctypes.byref(ci))  # Windows-only
+            else:
+                self.stream.write("\033[?25h")
+
     def add(self, name: str) -> None:
         self._envs[name] = time.monotonic()
 
     def succeed(self, key: str) -> None:
         self.finalize(key, f"OK {self.outcome.ok}", str(Fore.GREEN))
-
-    def fail(self, key: str) -> None:
-        self.finalize(key, f"FAIL {self.outcome.fail}", str(Fore.RED))
-
-    def skip(self, key: str) -> None:
-        self.finalize(key, f"SKIP {self.outcome.skip}", str(Fore.YELLOW))
 
     def finalize(self, key: str, status: str, color: str) -> None:
         start_at = self._envs.pop(key, None)
@@ -155,40 +172,22 @@ class Spinner:
             base += os.linesep
             self.stream.write(base)
 
-    def disable_cursor(self) -> None:
-        if self.stream.isatty():
-            if sys.platform == "win32":  # pragma: win32 cover
-                ci = _CursorInfo()
-                handle = ctypes.windll.kernel32.GetStdHandle(-11)  # Windows-only
-                ctypes.windll.kernel32.GetConsoleCursorInfo(handle, ctypes.byref(ci))  # Windows-only
-                ci.visible = False
-                ctypes.windll.kernel32.SetConsoleCursorInfo(handle, ctypes.byref(ci))  # Windows-only
-            else:
-                self.stream.write("\033[?25l")
+    def fail(self, key: str) -> None:
+        self.finalize(key, f"FAIL {self.outcome.fail}", str(Fore.RED))
 
-    def enable_cursor(self) -> None:
-        if self.stream.isatty():
-            if sys.platform == "win32":  # pragma: win32 cover
-                ci = _CursorInfo()
-                handle = ctypes.windll.kernel32.GetStdHandle(-11)  # Windows-only
-                ctypes.windll.kernel32.GetConsoleCursorInfo(handle, ctypes.byref(ci))  # Windows-only
-                ci.visible = True
-                ctypes.windll.kernel32.SetConsoleCursorInfo(handle, ctypes.byref(ci))  # Windows-only
-            else:
-                self.stream.write("\033[?25h")
-
-
-_PERIODS = [
-    ("day", 60 * 60 * 24),
-    ("hour", 60 * 60),
-    ("minute", 60),
-    ("second", 1),
-]
+    def skip(self, key: str) -> None:
+        self.finalize(key, f"SKIP {self.outcome.skip}", str(Fore.YELLOW))
 
 
 def td_human_readable(seconds: float) -> str:
     texts: list[str] = []
-    for period_name, period_seconds in _PERIODS:
+    periods = [
+        ("day", 60 * 60 * 24),
+        ("hour", 60 * 60),
+        ("minute", 60),
+        ("second", 1),
+    ]
+    for period_name, period_seconds in periods:
         period_str = None
         if period_name == "second" and (seconds >= 0.01 or not texts):  # ruff:ignore[magic-value-comparison]
             period_str = f"{seconds:.2f}".rstrip("0").rstrip(".")
@@ -198,3 +197,10 @@ def td_human_readable(seconds: float) -> str:
         if period_str is not None:
             texts.append(f"{period_str} {period_name}{'' if period_str == '1' else 's'}")
     return " ".join(texts)
+
+
+__all__ = [
+    "MISS_DURATION",
+    "Spinner",
+    "td_human_readable",
+]

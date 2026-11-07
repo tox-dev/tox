@@ -9,9 +9,10 @@ from tox.config.loader.memory import MemoryLoader
 from tox.config.types import Command
 from tox.plugin import impl
 from tox.report import HandledError
-from tox.session.cmd.run.common import env_run_create_flags
-from tox.session.cmd.run.sequential import run_sequential
 from tox.session.env_select import CliEnv, register_env_select_flags
+
+from .run.common import env_run_create_flags
+from .run.sequential import run_sequential
 
 if TYPE_CHECKING:
     from tox.config.cli.parser import ToxParser
@@ -40,10 +41,14 @@ def exec_(state: State) -> int:
     )
     conf = state.envs[envs[0]].conf
     conf.loaders.insert(0, loader)
-    to_path = conf.get("change_dir", Path) if conf["args_are_paths"] else None
-    pos_args = state.conf.pos_args(to_path, program_first=True)
+    pos_args = state.conf.pos_args(conf.get("change_dir", Path) if conf["args_are_paths"] else None, program_first=True)
     if not pos_args:
         msg = "You must specify a command as positional arguments, use -- <command>"
         raise HandledError(msg)
     loader.raw["commands"] = [Command(list(pos_args))]
     return run_sequential(state)
+
+
+__all__ = [
+    "exec_",
+]

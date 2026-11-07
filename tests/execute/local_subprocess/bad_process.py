@@ -1,5 +1,3 @@
-"""This is a non compliant process that does not listens to signals"""
-
 # pragma: no cover
 from __future__ import annotations
 
@@ -29,10 +27,10 @@ _p(f"start {__name__} with {sys.argv!r}")
 signal.signal(signal.SIGINT, handler)
 signal.signal(signal.SIGTERM, handler)
 
-start_file = Path(sys.argv[1])
-_p(f"create {start_file}")
-start_file.write_text("", encoding="utf-8")
-_p(f"created {start_file}")
+_START_FILE = Path(sys.argv[1])
+_p(f"create {_START_FILE}")
+_START_FILE.write_text("", encoding="utf-8")
+_p(f"created {_START_FILE}")
 try:
     while True:
         time.sleep(0.01)

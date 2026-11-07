@@ -17,21 +17,6 @@ if TYPE_CHECKING:
     from tox.pytest import CaptureFixture
 
 
-def _emit_test_log_messages() -> None:
-    logging.critical("critical")
-    logging.error("error")
-    logging.warning("%s%s> %s", "warning", "foo", "bar")  # special warning: auto-colored
-    logging.info("info")
-    logging.debug("debug")
-    logging.log(logging.NOTSET, "not-set")  # this should not be logged
-    for name in ("distlib.util", "filelock"):
-        logger = logging.getLogger(name)
-        logger.warning("%s-warn", name)
-        logger.info("%s-info", name)
-        logger.debug("%s-debug", name)
-        logger.log(logging.NOTSET, "%s-notset", name)
-
-
 @pytest.mark.parametrize("color", [True, False], ids=["on", "off"])
 @pytest.mark.parametrize("verbosity", range(7))
 def test_setup_report(mocker: MockerFixture, capsys: CaptureFixture, verbosity: int, color: bool) -> None:
@@ -72,6 +57,21 @@ def test_setup_report(mocker: MockerFixture, capsys: CaptureFixture, verbosity: 
         expected_warning_text = "warningfoo> bar"
     if verbosity >= 4:  # where warnings are logged
         assert expected_warning_text in lines[3]
+
+
+def _emit_test_log_messages() -> None:
+    logging.critical("critical")
+    logging.error("error")
+    logging.warning("%s%s> %s", "warning", "foo", "bar")  # special warning: auto-colored
+    logging.info("info")
+    logging.debug("debug")
+    logging.log(logging.NOTSET, "not-set")  # this should not be logged
+    for name in ("distlib.util", "filelock"):
+        logger = logging.getLogger(name)
+        logger.warning("%s-warn", name)
+        logger.info("%s-info", name)
+        logger.debug("%s-debug", name)
+        logger.log(logging.NOTSET, "%s-notset", name)
 
 
 def test_setup_report_degrades_logged_output(

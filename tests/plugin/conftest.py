@@ -6,12 +6,12 @@ from typing import TYPE_CHECKING, Any
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
-HERE = Path(__file__).parent
+_HERE = Path(__file__).parent
 
 
 def pytest_collection_modifyitems(items: Sequence[Any]) -> None:
-    """automatically apply plugin test to all the test in this suite"""
-    root = str(HERE)
+    # automatically apply plugin test to all the test in this suite
+    root = str(_HERE)
     for item in items:
         if item.module.__file__.startswith(root):
             item.add_marker("plugin_test")

@@ -4,7 +4,7 @@ from __future__ import annotations  # pragma: win32 cover
 
 import contextlib  # pragma: win32 cover
 import sys  # pragma: win32 cover
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING, Final, cast
 
 from tox.util.typing_compat import override
 
@@ -18,9 +18,9 @@ from .read_via_thread import ReadViaThread  # pragma: win32 cover
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-READ_CHUNK_SIZE = 32768  # pragma: win32 cover
-POLL_INTERVAL = 0.05  # pragma: win32 cover
-ERROR_IO_INCOMPLETE = 996  # pragma: win32 cover
+_READ_CHUNK_SIZE: Final[int] = 32768  # pragma: win32 cover
+_POLL_INTERVAL: Final[float] = 0.05  # pragma: win32 cover
+ERROR_IO_INCOMPLETE: Final[int] = 996  # pragma: win32 cover
 
 
 class ReadViaThreadWindows(ReadViaThread):  # pragma: win32 cover
@@ -36,7 +36,7 @@ class ReadViaThreadWindows(ReadViaThread):  # pragma: win32 cover
         while not self.stop.is_set():
             ov = _overlapped.Overlapped(0)
             try:
-                ov.ReadFile(self.file_no, READ_CHUNK_SIZE)
+                ov.ReadFile(self.file_no, _READ_CHUNK_SIZE)
             except OSError:
                 break
 
@@ -49,7 +49,7 @@ class ReadViaThreadWindows(ReadViaThread):  # pragma: win32 cover
                         return
                     if self.stop.is_set():  # stop requested while the read is still pending; abandon it
                         return
-                    time.sleep(POLL_INTERVAL)
+                    time.sleep(_POLL_INTERVAL)
 
             if not data:
                 break
@@ -64,7 +64,7 @@ class ReadViaThreadWindows(ReadViaThread):  # pragma: win32 cover
         while True:
             ov = _overlapped.Overlapped(0)
             try:
-                ov.ReadFile(self.file_no, READ_CHUNK_SIZE)
+                ov.ReadFile(self.file_no, _READ_CHUNK_SIZE)
             except OSError:
                 break
 
@@ -76,3 +76,9 @@ class ReadViaThreadWindows(ReadViaThread):  # pragma: win32 cover
             if not data:
                 break
             self.handler(data)
+
+
+__all__ = [
+    "ERROR_IO_INCOMPLETE",
+    "ReadViaThreadWindows",
+]

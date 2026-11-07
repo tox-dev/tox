@@ -19,6 +19,11 @@ class SyncWrite:
 
     Used to propagate executed commands output to the standard output/error streams visible to the user.
 
+    :param name:
+    :param target:
+    :param color:
+    :cvar REFRESH_RATE:
+    :ivar timer:
     """
 
     REFRESH_RATE = 0.1
@@ -42,40 +47,10 @@ class SyncWrite:
             self._start()
         return self
 
-    def __exit__(
-        self,
-        exc_type: type[BaseException] | None,
-        exc_val: BaseException | None,
-        exc_tb: TracebackType | None,
-    ) -> None:
-        if self._target_enabled:
-            self._cancel()
-            self._write(len(self._content))
-
-    def handler(self, content: bytes) -> int:
-        """A callback called whenever content is written."""
-        with self._content_lock:
-            self._content.extend(content)
-            if self._target_enabled is False:
-                return len(content)
-            at = content.rfind(b"\n")
-            if at != -1:  # pragma: no branch
-                at = len(self._content) - len(content) + at + 1
-        self._cancel()
-        try:
-            if at != -1:
-                self._write(at)
-        finally:
-            self._start()
-        return len(content)
-
     def _start(self) -> None:
         self.timer = Timer(self.REFRESH_RATE, self._trigger_timer)
         self.timer.name = f"{self.name}-sync-timer"
         self.timer.start()
-
-    def _cancel(self) -> None:
-        self.timer.cancel()
 
     def _trigger_timer(self) -> None:
         with self._content_lock:
@@ -104,6 +79,19 @@ class SyncWrite:
             finally:
                 self._target.write(str(Fore.RESET).encode("utf-8"))
 
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
+    ) -> None:
+        if self._target_enabled:
+            self._cancel()
+            self._write(len(self._content))
+
+    def _cancel(self) -> None:
+        self.timer.cancel()
+
     @property
     def text(self) -> str:
         with self._content_lock:
@@ -113,3 +101,29 @@ class SyncWrite:
     def content(self) -> bytearray:
         with self._content_lock:
             return self._content
+
+    def handler(self, content: bytes) -> int:
+        """A callback called whenever content is written.
+
+        :param content:
+        :returns:
+        """
+        with self._content_lock:
+            self._content.extend(content)
+            if self._target_enabled is False:
+                return len(content)
+            at = content.rfind(b"\n")
+            if at != -1:  # pragma: no branch
+                at = len(self._content) - len(content) + at + 1
+        self._cancel()
+        try:
+            if at != -1:
+                self._write(at)
+        finally:
+            self._start()
+        return len(content)
+
+
+__all__ = [
+    "SyncWrite",
+]

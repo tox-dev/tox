@@ -8,17 +8,15 @@ from typing import TYPE_CHECKING
 from tox.config.loader.ini.factor import open_minor_range
 
 if TYPE_CHECKING:
-    from tox.config.loader.toml._api import TomlTypes
+    from ._api import TomlTypes
 
 
 def expand_product(value: dict[str, TomlTypes]) -> list[str]:
-    """Expand a product dict into a flat list of environment names.
-
-    :param value: dict with ``product`` (list of factor groups) and optional ``exclude`` (list of env names to skip)
-
-    :returns: list of environment names from the cartesian product of all factor groups, joined with ``-``
-
-    """
+    # Expand a product dict into a flat list of environment names.
+    #
+    # :param value: dict with ``product`` (list of factor groups) and optional ``exclude`` (list of env names to skip)
+    #
+    # :returns: list of environment names from the cartesian product of all factor groups, joined with ``-``
     raw_groups = value["product"]
     if not isinstance(raw_groups, list):
         msg = f"product value must be a list of factor groups, got {type(raw_groups).__name__}"
@@ -32,9 +30,6 @@ def expand_product(value: dict[str, TomlTypes]) -> list[str]:
         raise TypeError(msg)
     exclude = set(exclude_raw)
     return [name for combo in product(*expanded) if (name := "-".join(combo)) not in exclude]
-
-
-_RESERVED_LABELS: frozenset[str] = frozenset({"env", "posargs", "tty", "glob", "factor"})
 
 
 def expand_factor_group(group: TomlTypes) -> list[str]:
@@ -60,6 +55,44 @@ def expand_factor_group(group: TomlTypes) -> list[str]:
     raise TypeError(msg)
 
 
+def _expand_range(range_dict: dict[str, TomlTypes]) -> list[str]:
+    prefix: str = str(range_dict["prefix"])
+    start = range_dict.get("start")
+    stop = range_dict.get("stop")
+    if start is None and stop is None:
+        msg = "range must have at least 'start' or 'stop'"
+        raise TypeError(msg)
+    if start is not None and type(start) is not int:  # bool subclasses int, so isinstance accepts true/false
+        msg = f"range 'start' must be an integer, got {type(start).__name__}"
+        raise TypeError(msg)
+    if stop is not None and type(stop) is not int:
+        msg = f"range 'stop' must be an integer, got {type(stop).__name__}"
+        raise TypeError(msg)
+    minors = open_minor_range(start, stop) if start is None or stop is None else range(start, stop + 1)
+    return [f"{prefix}{i}" for i in minors]
+
+
+def _expand_labeled(label: str, values: TomlTypes) -> list[str]:
+    if label in frozenset({"env", "posargs", "tty", "glob", "factor"}):
+        msg = f"'{label}' is reserved and cannot be used as a factor label"
+        raise TypeError(msg)
+    if isinstance(values, dict):
+        if "prefix" in values:
+            return _expand_range(values)
+        if (listed := values.get("values")) is not None:
+            if not isinstance(listed, list):
+                msg = f"labeled factor group '{label}' 'values' must be a list, got {type(listed).__name__}"
+                raise TypeError(msg)
+            return [str(v) for v in listed]
+        msg = f"labeled factor group '{label}' maps to a dict with neither a 'prefix' nor a 'values' key"
+        raise TypeError(msg)
+    if not isinstance(values, list):
+        msg = f"labeled factor group '{label}' must map to a list, a range dict, or a values dict, "
+        msg += f"got {type(values).__name__}"
+        raise TypeError(msg)
+    return [str(v) for v in values]
+
+
 def extract_default(group: TomlTypes, values: list[str]) -> str | None:
     if not isinstance(group, dict):
         return None
@@ -81,46 +114,7 @@ def extract_label(group: TomlTypes) -> str | None:
     return None
 
 
-def _expand_labeled(label: str, values: TomlTypes) -> list[str]:
-    if label in _RESERVED_LABELS:
-        msg = f"'{label}' is reserved and cannot be used as a factor label"
-        raise TypeError(msg)
-    if isinstance(values, dict):
-        if "prefix" in values:
-            return _expand_range(values)
-        if (listed := values.get("values")) is not None:
-            if not isinstance(listed, list):
-                msg = f"labeled factor group '{label}' 'values' must be a list, got {type(listed).__name__}"
-                raise TypeError(msg)
-            return [str(v) for v in listed]
-        msg = f"labeled factor group '{label}' maps to a dict with neither a 'prefix' nor a 'values' key"
-        raise TypeError(msg)
-    if not isinstance(values, list):
-        msg = f"labeled factor group '{label}' must map to a list, a range dict, or a values dict, "
-        msg += f"got {type(values).__name__}"
-        raise TypeError(msg)
-    return [str(v) for v in values]
-
-
-def _expand_range(range_dict: dict[str, TomlTypes]) -> list[str]:
-    prefix: str = str(range_dict["prefix"])
-    start = range_dict.get("start")
-    stop = range_dict.get("stop")
-    if start is None and stop is None:
-        msg = "range must have at least 'start' or 'stop'"
-        raise TypeError(msg)
-    if start is not None and type(start) is not int:  # bool subclasses int, so isinstance accepts true/false
-        msg = f"range 'start' must be an integer, got {type(start).__name__}"
-        raise TypeError(msg)
-    if stop is not None and type(stop) is not int:
-        msg = f"range 'stop' must be an integer, got {type(stop).__name__}"
-        raise TypeError(msg)
-    minors = open_minor_range(start, stop) if start is None or stop is None else range(start, stop + 1)
-    return [f"{prefix}{i}" for i in minors]
-
-
 __all__ = [
-    "_RESERVED_LABELS",
     "expand_factor_group",
     "expand_product",
     "extract_default",

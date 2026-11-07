@@ -53,8 +53,7 @@ def test_version_with_inline_plugin(tox_project: ToxProjectCreator) -> None:
     def plugin() -> None:  # pragma: no cover
         pass
 
-    project = tox_project({"tox.ini": "", "toxfile.py": plugin})
-    outcome = project.run("--version")
+    outcome = tox_project({"tox.ini": "", "toxfile.py": plugin}).run("--version")
     outcome.assert_success()
     assert __version__ in outcome.out
     assert "inline plugin:" in outcome.out
@@ -67,8 +66,7 @@ def test_version_with_inline_plugin_append_version_info(tox_project: ToxProjectC
         def tox_append_version_info() -> str:
             return "custom-info-v1"
 
-    project = tox_project({"tox.ini": "", "toxfile.py": plugin})
-    outcome = project.run("--version")
+    outcome = tox_project({"tox.ini": "", "toxfile.py": plugin}).run("--version")
     outcome.assert_success()
     assert "inline plugin:" in outcome.out
     assert "custom-info-v1" in outcome.out

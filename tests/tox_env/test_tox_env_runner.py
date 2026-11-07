@@ -36,8 +36,7 @@ recreate_commands = [["python", "-c", "raise SystemExit(1)"]]
 commands = [["python", "-c", "print('MAIN')"]]
 """,
     })
-    first = proj.run("r")
-    first.assert_success()
+    proj.run("r").assert_success()
 
     second = proj.run("r", "-r")
     second.assert_success()
@@ -53,8 +52,7 @@ recreate_commands = [["python", "-c", "print('RECREATE_CLEANUP')"]]
 commands = [["python", "-c", "print('MAIN')"]]
 """,
     })
-    first = proj.run("r")
-    first.assert_success()
+    proj.run("r").assert_success()
 
     second = proj.run("r")
     second.assert_success()
@@ -74,8 +72,7 @@ recreate_commands = [
 commands = [["python", "-c", "print('MAIN')"]]
 """,
     })
-    first = proj.run("r")
-    first.assert_success()
+    proj.run("r").assert_success()
 
     second = proj.run("r", "-r")
     second.assert_success()
@@ -93,8 +90,7 @@ recreate_commands = [["python", "-c", "print('RECREATE_CLEANUP')"]]
 commands = [["python", "-c", "print('MAIN')"]]
 """,
     })
-    first = proj.run("r")
-    first.assert_success()
+    proj.run("r").assert_success()
 
     second = proj.run("r", "-r")
     second.assert_success()
@@ -114,9 +110,9 @@ def test_package_only(
         base=demo_pkg_inline,
     )
     execute_calls = proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
-    result = proj.run("r", "--sdistonly")
-    result.assert_success()
+    proj.run("r", "--sdistonly").assert_success()
 
+    found_calls = [(i[0][0].conf.name, i[0][3].run_id) for i in execute_calls.call_args_list]
     expected_calls = [
         (".pkg", "_optional_hooks"),
         (".pkg", "get_requires_for_build_sdist"),
@@ -125,5 +121,4 @@ def test_package_only(
         (".pkg", "build_sdist"),
         (".pkg", "_exit"),
     ]
-    found_calls = [(i[0][0].conf.name, i[0][3].run_id) for i in execute_calls.call_args_list]
     assert found_calls == expected_calls
