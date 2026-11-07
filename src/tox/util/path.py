@@ -6,11 +6,9 @@ import sys
 from contextlib import suppress
 from pathlib import Path
 from shutil import rmtree
-from typing import TYPE_CHECKING, Final
+from typing import TYPE_CHECKING, Final, Protocol
 
 if TYPE_CHECKING:
-    from collections.abc import Callable
-
     from _typeshed import ExcInfo
 
 
@@ -96,7 +94,11 @@ def _empty_dir_path(path: Path, except_filename: str | None) -> None:
             _unlink(sub_path)
 
 
-def _retry_unlink(func: Callable[..., object], path: str, _exc: BaseException | ExcInfo) -> None:
+class _FailedCall(Protocol):
+    def __call__(self, target: str | int, /) -> None: ...
+
+
+def _retry_unlink(func: _FailedCall, path: str, _exc: BaseException | ExcInfo) -> None:
     # rmtree also reports failed os.open, os.scandir and os.close calls; retrying those cannot help, so they stay behind
     if func is os.unlink:
         with suppress(OSError):

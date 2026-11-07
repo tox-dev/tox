@@ -21,15 +21,17 @@ def test_help_does_not_default_cmd(capsys: CaptureFixture) -> None:
     assert "subcommands:" in out
 
 
+@pytest.mark.parametrize("name", ["distlib.util", "filelock"])
+def test_verbosity_guess_disables_library_logger(name: str) -> None:
+    get_options("-rv")
+    assert logging.getLogger(name).disabled
+
+
 def test_verbosity_guess_miss_match(capsys: CaptureFixture) -> None:
     result = get_options("-rv")
     assert result.parsed.verbosity == 3
 
     assert logging.getLogger().level == logging.INFO
-
-    for name in ("distlib.util", "filelock"):
-        logger = logging.getLogger(name)
-        assert logger.disabled
     logging.error("E")
     logging.warning("W")
     logging.info("I")

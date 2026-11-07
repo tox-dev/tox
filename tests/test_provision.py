@@ -11,7 +11,7 @@ from pathlib import Path
 from shutil import which
 from subprocess import check_call
 from textwrap import dedent
-from typing import TYPE_CHECKING, Final
+from typing import TYPE_CHECKING, Final, Protocol
 from unittest import mock
 from zipfile import ZipFile
 
@@ -32,6 +32,10 @@ if TYPE_CHECKING:
 
 
 ROOT: Final[Path] = Path(__file__).parents[1]
+
+
+class _Lstat(Protocol):
+    def __call__(self, path: Path, *, dir_fd: int | None = None) -> os.stat_result: ...
 
 
 @pytest.fixture(scope="session")
@@ -740,7 +744,7 @@ def test_provision_reports_entry_owned_by_other_account(tox_project: ToxProjectC
     planted: Final[Path] = work_dir / "planted"
     planted.write_bytes(b"planted")
     work_dir.chmod(0o777)
-    original_lstat: Final[Callable[..., os.stat_result]] = os.lstat
+    original_lstat: Final[_Lstat] = os.lstat
 
     def lstat_as_other_account(path: Path, *, dir_fd: int | None = None) -> os.stat_result:
         values: Final[list[int | float]] = list(original_lstat(path, dir_fd=dir_fd))
@@ -812,8 +816,12 @@ def test_provision_default_arguments_exists(tox_project: ToxProjectCreator, subc
     project = tox_project({"tox.ini": ini})
     project.patch_execute(lambda request: 0 if "install" in request.run_id else None)
     outcome = project.run(subcommand)
-    for argument in ["result_json", "hash_seed", "discover", "list_dependencies"]:
-        assert hasattr(outcome.state.conf.options, argument)
+    missing = [
+        argument
+        for argument in ("result_json", "hash_seed", "discover", "list_dependencies")
+        if not hasattr(outcome.state.conf.options, argument)
+    ]
+    assert missing == []
 
 
 @pytest.mark.integration

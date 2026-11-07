@@ -5,7 +5,7 @@ import os
 import stat
 import sys
 from pathlib import Path
-from typing import TYPE_CHECKING, Final
+from typing import TYPE_CHECKING, Final, Protocol
 
 import pytest
 
@@ -17,6 +17,10 @@ if TYPE_CHECKING:
     from pytest_mock import MockerFixture
 
     from tox.pytest import LogCaptureFixture, MonkeyPatch
+
+
+class _Lstat(Protocol):
+    def __call__(self, path: Path, *, dir_fd: int | None = None) -> os.stat_result: ...
 
 
 @pytest.fixture
@@ -230,7 +234,7 @@ def test_repair_staging_path_rejects_entry_owned_by_other_account(tmp_path: Path
     planted.write_bytes(b"planted")
     work_dir.chmod(0o777)
     tmp_path.chmod(0o755)
-    original_lstat: Final[Callable[..., os.stat_result]] = os.lstat
+    original_lstat: Final[_Lstat] = os.lstat
 
     def lstat_as_other_account(path: Path, *, dir_fd: int | None = None) -> os.stat_result:
         values: Final[list[int | float]] = list(original_lstat(path, dir_fd=dir_fd))
