@@ -666,8 +666,7 @@ class ToxParser(ArgumentParserWithEnvAndConfig):
 
 
 class _RecordingArgumentGroup(argparse._ArgumentGroup):  # ruff:ignore[private-member-access]  # internal access
-    """Argument group that records its exclusive sub-groups so they replay onto later added sub-parsers."""
-
+    # Argument group that records its exclusive sub-groups so they replay onto later added sub-parsers.
     def __init__(
         self, container: ToxParser, *args: Any, excl: list[tuple[dict[str, Any], list[ArgumentArgs]]], **kwargs: Any
     ) -> None:
@@ -686,8 +685,7 @@ class _RecordingArgumentGroup(argparse._ArgumentGroup):  # ruff:ignore[private-m
 class _RecordingMutuallyExclusiveGroup(  # internal access
     argparse._MutuallyExclusiveGroup  # ruff:ignore[private-member-access]  # internal access
 ):
-    """Exclusive group that records added arguments so they replay onto later added sub-parsers."""
-
+    # Exclusive group that records added arguments so they replay onto later added sub-parsers.
     def __init__(self, container: _RecordingArgumentGroup, *, recorded: list[ArgumentArgs], **kwargs: Any) -> None:
         super().__init__(container, **kwargs)
         self._recorded = recorded
