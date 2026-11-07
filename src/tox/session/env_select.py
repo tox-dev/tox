@@ -109,7 +109,9 @@ class CliEnv:  # ruff:ignore[eq-without-hash]  # mutable value type
 def register_env_select_flags(
     parser: ArgumentParser,
     default: CliEnv | None,
+    # keeps the existing signature
     multiple: bool = True,  # ruff:ignore[boolean-type-hint-positional-argument, boolean-default-value-positional-argument]
+    # keeps the existing signature
     group_only: bool = False,  # ruff:ignore[boolean-type-hint-positional-argument, boolean-default-value-positional-argument]
 ) -> argparse._ActionsContainer:
     """Register environment selection flags.
@@ -575,6 +577,7 @@ class EnvSelector:
             env = self._defined_envs_[name].env
             if isinstance(env, PackageToxEnv):
                 if env.id() != packager:  # pragma: no branch # same env name is used by different packaging
+                    # conflicting packagers, not reached in tests
                     msg = f"{name} is already defined as a {env.id()}, cannot be {packager} too"  # pragma: no cover
                     raise HandledError(msg)  # pragma: no cover  # untested error path
                 return env

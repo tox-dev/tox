@@ -198,6 +198,7 @@ class Config:
     def get_env(
         self,
         item: str,
+        # keeps the existing signature
         package: bool = False,  # ruff:ignore[boolean-type-hint-positional-argument, boolean-default-value-positional-argument]
         loaders: Sequence[Loader[Any]] | None = None,
     ) -> EnvConfigSet:

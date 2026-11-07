@@ -273,6 +273,7 @@ class RequirementsFile:
                 elif not _SCHEME_RE.search(req_path):  # original file and nested file are paths
                     req_path = str(Path(filename).parent / req_path)  # do a join so relative paths work
                 if recurse:
+                    # internal access within the requirements parser
                     yield from self._req_parser._parse_and_recurse(req_path, nested_constraint, recurse)  # ruff:ignore[private-member-access]
                 else:
                     line.filename = req_path
@@ -564,6 +565,7 @@ class RequirementsFile:
             self._as_root_args = result
         return self._as_root_args
 
+    # one dispatch over all pip option groups
     def _option_groups(self, opt: Namespace) -> Iterator[tuple[str, ...]]:  # ruff:ignore[complex-structure, too-many-branches, no-self-use]
         for req in getattr(opt, "requirements", []):
             yield "-r", req

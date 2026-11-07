@@ -82,6 +82,7 @@ class VirtualEnv(Python, ABC):
         self.conf.add_config(
             keys=["system_site_packages", "sitepackages"],
             of_type=bool,
+            # add_config fixes the default callback signature
             default=lambda conf, name: StrConvert().to_bool(  # ruff:ignore[unused-lambda-argument]
                 self.environment_variables.get("VIRTUALENV_SYSTEM_SITE_PACKAGES", "False"),
             ),
@@ -90,6 +91,7 @@ class VirtualEnv(Python, ABC):
         self.conf.add_config(
             keys=["always_copy", "alwayscopy"],
             of_type=bool,
+            # add_config fixes the default callback signature
             default=lambda conf, name: StrConvert().to_bool(  # ruff:ignore[unused-lambda-argument]
                 self.environment_variables.get(
                     "VIRTUALENV_COPIES",
@@ -101,6 +103,7 @@ class VirtualEnv(Python, ABC):
         self.conf.add_config(
             keys=["download"],
             of_type=bool,
+            # add_config fixes the default callback signature
             default=lambda conf, name: StrConvert().to_bool(  # ruff:ignore[unused-lambda-argument]
                 self.environment_variables.get("VIRTUALENV_DOWNLOAD", "False"),
             ),
@@ -198,6 +201,7 @@ class VirtualEnv(Python, ABC):
         return env
 
     def _create_subprocess_session(self, spec: str, env: dict[str, str]) -> SubprocessSession:
+        # deferred import
         from .subprocess_adapter import ensure_bootstrap, probe_python  # ruff:ignore[import-outside-top-level]
 
         try_first_with = getattr(self.options, "discover", None)
@@ -318,7 +322,7 @@ class VirtualEnv(Python, ABC):
         :raises RuntimeError: when virtualenv cannot inspect the interpreter
 
         """
-        from virtualenv.discovery import cached_py_info  # ruff:ignore[import-outside-top-level]
+        from virtualenv.discovery import cached_py_info  # ruff:ignore[import-outside-top-level]  # deferred import
         from virtualenv.discovery.py_info import (  # ruff:ignore[import-outside-top-level]  # avoids an import cycle
             PythonInfo as VirtualenvPythonInfo,
         )

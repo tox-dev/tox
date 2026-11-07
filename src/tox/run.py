@@ -46,6 +46,7 @@ def main(args: Sequence[str]) -> int:
 
     if (result := provision(state)) is not False:
         return result
+    # internal access
     handler = state._options.cmd_handlers[state.conf.options.command]  # ruff:ignore[private-member-access]
     return handler(state)
 
@@ -63,6 +64,7 @@ def setup_state(args: Sequence[str]) -> State:
     options = get_options(*args)
     options.parsed.start = start
     if options.parsed.exit_and_dump_after:
+        # debug option that ends the process, not reached in tests
         faulthandler.dump_traceback_later(timeout=options.parsed.exit_and_dump_after, exit=True)  # pragma: no cover
     # build tox environment config objects
     return State(options, args)

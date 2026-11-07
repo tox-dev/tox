@@ -18,6 +18,7 @@ def add_change_dir_conf(config: EnvConfigSet, core: CoreConfigSet) -> None:
     config.add_config(
         keys=["change_dir", "changedir"],
         of_type=Path,
+        # add_config fixes the default callback signature
         default=lambda conf, name: conf.core.get("tox_root", Path),  # ruff:ignore[unused-lambda-argument]
         desc="change to this working directory when executing the test command",
         post_process=_post_process_change_dir,

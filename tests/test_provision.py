@@ -69,6 +69,7 @@ def _make_tox_wheel(
             version = f"{version_tuple[0]}.{version_tuple[1]}.{int(patch_version) + 1}"
 
         with mock.patch.dict(os.environ, {"SETUPTOOLS_SCM_PRETEND_VERSION": version}):
+            # not reached in tests
             return pkg_builder(into, Path(__file__).parents[1], ["wheel"], False)  # pragma: no cover
 
 

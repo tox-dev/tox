@@ -75,6 +75,7 @@ def _disable_root_tox_py(request: SubRequest, mocker: MockerFixture) -> Iterator
 
         mocker.patch.object(manager, "_load_inline", _load_inline)
         yield
+        # other outcome untested
         if module is not None and manager.MANAGER.manager.is_registered(module):  # pragma: no branch
             manager.MANAGER.manager.unregister(module)
     else:  # do not allow loading inline plugins
@@ -163,6 +164,7 @@ class ToxProject:
                 value = textwrap.dedent(  # ruff:ignore[redefined-loop-name]  # loop rebinding intended
                     "\n".join(inspect.getsourcelines(value)[0][1:])
                 )
+                # loop rebinding intended
                 value = f"from __future__ import annotations\n{value}"  # ruff:ignore[redefined-loop-name]
             if isinstance(value, dict):
                 at_path.mkdir(exist_ok=True)
@@ -172,6 +174,7 @@ class ToxProject:
             elif value is None:
                 at_path.mkdir()
             else:
+                # unsupported content type, not reached in tests
                 msg = f"could not handle {at_path / key} with content {value!r}"  # pragma: no cover
                 raise TypeError(msg)  # pragma: no cover  # untested error path
 

@@ -169,6 +169,7 @@ class SetEnv:
 
     def _parse_line(self, line: str, *, substituted: bool) -> tuple[str, str, str] | None:
         """Split a ``KEY=VALUE`` line, or return ``None`` once it is queued to be split after substitution."""
+        # deferred import
         from .loader.replacer import MatchExpression, find_replace_expr  # ruff:ignore[import-outside-top-level]
 
         try:

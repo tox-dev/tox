@@ -172,6 +172,7 @@ class Execute(ABC):
                 stderr_color = Fore.RED
             if sys.platform == "win32" and show:
                 try:
+                    # Windows-only import
                     from colorama.winterm import enable_vt_processing  # ruff:ignore[import-outside-top-level]
 
                     for stream in out_err:

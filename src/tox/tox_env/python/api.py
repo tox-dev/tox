@@ -496,6 +496,7 @@ class Python(ToxEnv, ABC):
     @staticmethod
     def _diff_msg(conf: dict[str, Any], old: dict[str, Any]) -> str:
         result: list[str] = []
+        # other outcome untested
         if added := [f"{k}={v!r}" for k, v in conf.items() if k not in old]:  # pragma: no branch
             result.append(f"added {' | '.join(added)}")
         if removed := [f"{k}={v!r}" for k, v in old.items() if k not in conf]:
@@ -545,6 +546,7 @@ def add_skip_missing_interpreters_to_core(core: CoreConfigSet, options: Parsed) 
     )
 
 
+# option parser fixes the callback signature
 def _skip_missing_interpreters_post_process(options: Parsed, value: bool) -> bool:  # ruff:ignore[boolean-type-hint-positional-argument]
     if getattr(options, "skip_missing_interpreters", "config") != "config":
         return StrConvert().to_bool(str(options.skip_missing_interpreters))

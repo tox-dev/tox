@@ -127,6 +127,7 @@ class ToxEnv(ABC):  # ruff:ignore[too-many-public-methods]  # public facade
         self.conf.add_config(
             keys=["env_dir", "envdir"],
             of_type=Path,
+            # add_config fixes the default callback signature
             default=lambda conf, name: conf.core.get("work_dir", Path) / self.name,  # ruff:ignore[unused-lambda-argument]
             post_process=self._relative_to_tox_root,
             desc="directory assigned to the tox environment",
@@ -134,6 +135,7 @@ class ToxEnv(ABC):  # ruff:ignore[too-many-public-methods]  # public facade
         self.conf.add_config(
             keys=["env_tmp_dir", "envtmpdir"],
             of_type=Path,
+            # add_config fixes the default callback signature
             default=lambda conf, name: conf.core.get("work_dir", Path) / self.name / "tmp",  # ruff:ignore[unused-lambda-argument]
             post_process=self._relative_to_tox_root,
             desc="a folder that is always reset at the start of the run",
@@ -141,6 +143,7 @@ class ToxEnv(ABC):  # ruff:ignore[too-many-public-methods]  # public facade
         self.conf.add_config(
             keys=["env_log_dir", "envlogdir"],
             of_type=Path,
+            # add_config fixes the default callback signature
             default=lambda conf, name: conf.core.get("work_dir", Path) / self.name / "log",  # ruff:ignore[unused-lambda-argument]
             post_process=self._relative_to_tox_root,
             desc="a folder for logging where tox will put logs of tool invocation",
@@ -318,6 +321,7 @@ class ToxEnv(ABC):  # ruff:ignore[too-many-public-methods]  # public facade
     def runs_on_platform(self) -> str:
         raise NotImplementedError
 
+    # base signature shared by subclasses
     def _clean(self, transitive: bool = False) -> None:  # ruff:ignore[unused-method-argument, boolean-type-hint-positional-argument, boolean-default-value-positional-argument]
         if self._run_state["clean"]:  # pragma: no branch  # other outcome untested
             return  # pragma: no cover  # untested error path
@@ -397,6 +401,7 @@ class ToxEnv(ABC):  # ruff:ignore[too-many-public-methods]  # public facade
             try:
                 self._teardown()
             finally:
+                # avoids an import cycle
                 from tox.plugin.manager import MANAGER  # ruff:ignore[import-outside-top-level]
 
                 MANAGER.tox_env_teardown(self)
@@ -627,6 +632,7 @@ class ToxEnv(ABC):  # ruff:ignore[too-many-public-methods]  # public facade
             status.interrupt()
 
     @contextmanager
+    # keeps the existing signature
     def allow_post_commands_after_interrupt(self, enabled: bool) -> Generator[None, None, None]:  # ruff:ignore[boolean-type-hint-positional-argument]
         """Context manager to allow commands_post execution after interrupt when enabled.
 

@@ -92,8 +92,10 @@ def test_manpage_header_shows_tox(manpage_rendered: str) -> None:
 
 
 def test_manpage_documents_all_commands() -> None:
+    # private names under test
     from argparse import _SubParsersAction  # ruff:ignore[import-outside-top-level, import-private-name]
 
+    # private names under test
     from tox.config.cli.parse import _get_parser_doc  # ruff:ignore[import-outside-top-level, import-private-name]
 
     parser = _get_parser_doc()
@@ -112,8 +114,10 @@ def test_manpage_documents_all_commands() -> None:
 
 
 def test_manpage_documents_all_options() -> None:
+    # private names under test
     from argparse import SUPPRESS, _SubParsersAction  # ruff:ignore[import-outside-top-level, import-private-name]
 
+    # private names under test
     from tox.config.cli.parse import _get_parser_doc  # ruff:ignore[import-outside-top-level, import-private-name]
 
     parser = _get_parser_doc()

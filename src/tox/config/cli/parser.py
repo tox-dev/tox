@@ -84,6 +84,7 @@ class ArgumentParserWithEnvAndConfig(ArgumentParser):
                     of_type = cast("type[Any]", GenericAlias(list, (GenericAlias(list, (action.type or str,)),)))
                 else:
                     of_type = cast("type[Any]", GenericAlias(list, (action.type or str,)))
+            # argparse has no public action class
             elif isinstance(action, argparse._StoreAction) and action.choices:  # ruff:ignore[private-member-access]
                 of_type = cast("type[Any]", Literal[tuple(action.choices)])  # ty: ignore[invalid-type-form] # pyrefly: ignore[invalid-literal] # choices are only known at runtime and no checker can express a Literal built from them
                 if many:
@@ -92,6 +93,7 @@ class ArgumentParserWithEnvAndConfig(ArgumentParser):
                 of_type = cast("type[Any]", GenericAlias(list, (action.type or str,)))
             elif action.default is not None:
                 of_type = type(action.default)
+            # argparse has no public action class
             elif isinstance(action, argparse._StoreConstAction) and action.const is not None:  # ruff:ignore[private-member-access]
                 of_type = type(action.const)
             else:
@@ -310,6 +312,7 @@ class ToxParser(ArgumentParserWithEnvAndConfig):
         if (hashseed := os.environ.get("PYTHONHASHSEED", "")) not in {"", "random"}:
             hashseed_default = int(hashseed)
         else:
+            # hash seed needs no cryptographic randomness
             hashseed_default = random.randint(1, 1024 if sys.platform == "win32" else 4294967295)  # ruff:ignore[suspicious-non-cryptographic-random-usage]
 
         if ENV not in sub_parser.inherit:

@@ -7,7 +7,10 @@ from unittest.mock import MagicMock
 import pytest
 
 from tox.report import HandledError
-from tox.session.env_select import _env_completer, register_env_select_flags  # ruff:ignore[import-private-name]
+from tox.session.env_select import (
+    _env_completer,  # ruff:ignore[import-private-name]  # private names under test
+    register_env_select_flags,
+)
 
 if TYPE_CHECKING:
     from pathlib import Path

@@ -99,6 +99,7 @@ def _load_exact_source(config_file: Path) -> Source:
     if not config_file.exists():
         msg = f"config file {config_file} does not exist"
         raise HandledError(msg)
+    # not reached in tests
     exact_match = [s for s in SOURCE_TYPES if config_file.name == s.FILENAME]  # pragma: no cover
     for src_type in exact_match or SOURCE_TYPES:  # pragma: no branch  # other outcome untested
         try:

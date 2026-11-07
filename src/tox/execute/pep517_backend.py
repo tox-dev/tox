@@ -81,6 +81,7 @@ class LocalSubProcessPep517Executor(Execute):
                     self.is_alive = True
                     break
                 if b"failed to start backend" in status.err or process_exited:
+                    # avoids an import cycle
                     from tox.tox_env.python.virtual_env.package.pyproject import (  # ruff:ignore[import-outside-top-level]
                         ToxBackendFailed,
                     )
@@ -108,6 +109,7 @@ class LocalSubProcessPep517Executor(Execute):
     def close(self) -> None:
         if self._local_execute is not None:  # pragma: no branch  # other outcome untested
             execute, _status = self._local_execute
+            # not reached in tests
             if execute.process is not None and execute.process.returncode is None:  # pragma: no cover
                 try:  # pragma: no cover  # setup not built by tests
                     execute.process.wait(timeout=0.1)  # pragma: no cover  # setup not built by tests

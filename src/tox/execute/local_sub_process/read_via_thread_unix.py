@@ -90,6 +90,7 @@ class ReadViaThreadUnix(ReadViaThread):  # pragma: win32 no cover
                 try:
                     ready = selector.select(timeout=0)
                 except (InterruptedError, OSError) as exception:
+                    # not reached in tests
                     if isinstance(exception, OSError) and exception.errno != errno.EINTR:  # pragma: no cover
                         raise  # pragma: no cover  # untested error path
                     continue

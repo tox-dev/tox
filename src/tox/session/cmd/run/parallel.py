@@ -57,6 +57,7 @@ def run_parallel(state: State) -> int:
 def parallel_flags(
     our: ArgumentParser,
     default_parallel: int | str,
+    # keeps the existing signature
     no_args: bool = False,  # ruff:ignore[boolean-type-hint-positional-argument, boolean-default-value-positional-argument]
 ) -> None:
     our.add_argument(

@@ -58,8 +58,10 @@ class Spinner:
 
     def __init__(
         self,
+        # keeps the existing signature
         enabled: bool = True,  # ruff:ignore[boolean-type-hint-positional-argument, boolean-default-value-positional-argument]
         refresh_rate: float = 0.1,
+        # keeps the existing signature
         colored: bool = True,  # ruff:ignore[boolean-type-hint-positional-argument, boolean-default-value-positional-argument]
         stream: IO[str] | None = None,
         total: int | None = None,

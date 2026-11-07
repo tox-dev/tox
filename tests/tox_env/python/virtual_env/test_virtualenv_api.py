@@ -35,6 +35,7 @@ def virtualenv_opt(monkeypatch: MonkeyPatch, mocker: MockerFixture) -> VirtualEn
     mocker.patch(
         "tox.tox_env.python.virtual_env.api.session_via_cli",
         autospec=True,
+        # side_effect signature fixed by session_via_cli
         side_effect=lambda args, options, setup_logging, env: session_via_cli(  # ruff:ignore[unused-lambda-argument]
             args,
             opts,

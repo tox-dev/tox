@@ -308,6 +308,7 @@ def _queue_and_wait(  # ruff:ignore[too-many-arguments]  # public signature
             done.set()
 
 
+# one scheduling loop, splitting it hides the flow
 def _do_queue_and_wait(  # ruff:ignore[complex-structure, too-many-arguments, too-many-statements, too-many-branches]
     state: State,
     to_run_list: list[str],
@@ -472,6 +473,7 @@ def _handle_one_run_done(
                 pkg_out_err_list.append(pkg_out_err)
         if not success or tox_env.conf["parallel_show_output"] or state.conf.options.list_dependencies:
             for pkg_out_err in pkg_out_err_list:
+                # internal access, not reached in tests
                 state._options.log_handler.write_out_err(pkg_out_err)  # pragma: no cover  # ruff:ignore[private-member-access]
             if out_err is not None:  # pragma: no branch # first show package build
                 state._options.log_handler.write_out_err(  # ruff:ignore[private-member-access]  # internal access
@@ -525,7 +527,7 @@ def _installs_develop(env: ToxEnv) -> bool:
 
 
 def _warn_unused_config(state: State) -> None:
-    from tox.config.cli.parser import DEFAULT_VERBOSITY  # ruff:ignore[import-outside-top-level]
+    from tox.config.cli.parser import DEFAULT_VERBOSITY  # ruff:ignore[import-outside-top-level]  # deferred import
 
     if state.conf.options.verbosity <= DEFAULT_VERBOSITY:
         return
@@ -559,6 +561,7 @@ def report(start: float, runs: list[ToxEnvRunResult], *, is_colored: bool, verbo
     for run in runs:
         successful.append(run.code == Outcome.OK or run.ignore_outcome or run.unavailable)
         skipped.append(run.skipped)
+        # durations are shown from verbosity 2
         duration_individual = [o.elapsed for o in run.outcomes] if verbosity >= 2 else []  # ruff:ignore[magic-value-comparison]
         extra = f"+cmd[{','.join(f'{i:.2f}' for i in duration_individual)}]" if duration_individual else ""
         setup = run.duration - sum(duration_individual)

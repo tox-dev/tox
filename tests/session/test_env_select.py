@@ -9,7 +9,11 @@ from typing import TYPE_CHECKING, Final
 import pytest
 
 from tox.config.cli.parse import get_options
-from tox.session.env_select import _DYNAMIC_ENV_FACTORS, CliEnv, EnvSelector  # ruff:ignore[import-private-name]
+from tox.session.env_select import (
+    _DYNAMIC_ENV_FACTORS,  # ruff:ignore[import-private-name]  # private names under test
+    CliEnv,
+    EnvSelector,
+)
 from tox.session.state import State
 from tox.tox_env.python.virtual_env.package.pyproject import Pep517VenvPackager
 

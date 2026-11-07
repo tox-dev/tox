@@ -195,6 +195,7 @@ class TomlLoader(Loader[TomlTypes]):
     @staticmethod
     @override
     def to_env_list(value: TomlTypes) -> EnvList:
+        # deferred import
         from ._product import expand_factor_group, expand_product  # ruff:ignore[import-outside-top-level]
 
         if not isinstance(value, list):

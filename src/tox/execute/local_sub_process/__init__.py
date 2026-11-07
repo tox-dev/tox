@@ -70,6 +70,7 @@ class LocalSubProcessExecuteInstance(ExecuteInstance):
         options: ExecuteOptions,
         out: SyncWrite,
         err: SyncWrite,
+        # keeps the existing signature
         on_exit_drain: bool = True,  # ruff:ignore[boolean-type-hint-positional-argument, boolean-default-value-positional-argument]
     ) -> None:
         super().__init__(request, options, out, err)
@@ -206,6 +207,7 @@ class LocalSubProcessExecuteInstance(ExecuteInstance):
                     try:
                         stream.close()
                     except OSError as exc:  # pragma: no cover  # untested error path
+                        # same untested error path
                         logging.warning("error while trying to close %r with %r", stream, exc)  # pragma: no cover
         # release any file descriptors the stream generators still own (e.g. a pty master fd, which is not
         # exposed as a process stream and would otherwise leak); the read threads above have already stopped

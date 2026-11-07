@@ -888,6 +888,7 @@ def test_validate_base_python_debug_matches(env: str, spec: str, mocker: MockerF
         VirtualEnv, "python_spec_for_path", autospec=True, return_value=PythonSpec.from_string_spec(spec)
     )
     base_python = [str(Path("/opt/python3.13").absolute())]
+    # private method under test
     assert VirtualEnv._validate_base_python(env, base_python, False) == base_python  # ruff:ignore[private-member-access]
 
 

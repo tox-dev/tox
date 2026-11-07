@@ -38,6 +38,7 @@ if TYPE_CHECKING:
 
 
 class PythonInstallerListDependencies(Installer[Python], ABC):
+    # keeps the existing signature
     def __init__(self, tox_env: Python, with_list_deps: bool = True) -> None:  # ruff:ignore[boolean-type-hint-positional-argument, boolean-default-value-positional-argument]
         self._with_list_deps = with_list_deps
         super().__init__(tox_env)
@@ -111,6 +112,7 @@ class Pip(PythonInstallerListDependencies):
         conf: Config,  # ruff:ignore[unused-method-argument]  # override signature
         env_name: str | None,  # ruff:ignore[unused-method-argument]  # override signature
     ) -> Command:
+        # Python 2 spells isolation as -E
         isolated_flag = "-E" if self._env.base_python.version_info.major == 2 else "-I"  # ruff:ignore[magic-value-comparison]
         return Command(["python", isolated_flag, "-m", "pip", "install", "{opts}", "{packages}"])
 
@@ -364,6 +366,7 @@ class Pip(PythonInstallerListDependencies):
                 ):  # no way yet to know what to uninstall here (transitive dependencies?)
                     msg = f"dependencies removed: {', '.join(str(i) for i in miss)}"
                     raise Recreate(msg)  # pragma: no branch  # other outcome untested
+                # other outcome untested
                 if new_deps := sorted(set(groups["req"]) - set(old_req)) or list(groups["req"]):  # pragma: no branch
                     new_deps.extend(self.constraints.as_root_args)
                     self._execute_installer(new_deps, req_of_type)

@@ -166,6 +166,7 @@ class Pep517VenvPackager(PythonPackageToxEnv, ABC):
         self.conf.add_config(
             keys=["meta_dir"],
             of_type=Path,
+            # add_config fixes the default callback signature
             default=lambda conf, name: self.env_dir / ".meta",  # ruff:ignore[unused-lambda-argument]
             post_process=self._relative_to_tox_root,
             desc="directory where to put the project metadata files",
@@ -173,6 +174,7 @@ class Pep517VenvPackager(PythonPackageToxEnv, ABC):
         self.conf.add_config(
             keys=["pkg_dir"],
             of_type=Path,
+            # add_config fixes the default callback signature
             default=lambda conf, name: self.env_dir / "dist",  # ruff:ignore[unused-lambda-argument]
             post_process=self._relative_to_tox_root,
             desc="directory where to put project packages",
@@ -359,6 +361,7 @@ class Pep517VenvPackager(PythonPackageToxEnv, ABC):
             if self._package_dependencies is None:  # pragma: no branch  # other outcome untested
                 self._ensure_meta_present(for_env)
                 requires: list[str] = cast("PathDistribution", self._distribution_meta).requires or []
+                # comprehension branch untested
                 self._package_dependencies = [Requirement(i) for i in requires]  # pragma: no branch
         return self._package_dependencies
 

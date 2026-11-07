@@ -118,6 +118,7 @@ def _extract_extra_markers(req: Requirement) -> tuple[Requirement, set[str | Non
 def _get_extra(
     _marker: MarkerList | tuple[Variable | Value, Op, Variable | Value] | Sequence[MarkerAtom] | Literal["and", "or"],
 ) -> str | None:
+    # the marker tuple is (lhs, op, rhs)
     if not isinstance(_marker, tuple) or len(_marker) != 3:  # ruff:ignore[magic-value-comparison]
         return None
     left, op, right = cast("tuple[Variable | Value, Op, Variable | Value]", _marker)

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+# internal access for the manpage generator
 from argparse import SUPPRESS, Action, ArgumentParser, _SubParsersAction  # ruff:ignore[import-private-name]
 from pathlib import Path
 
