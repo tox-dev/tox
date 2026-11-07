@@ -154,8 +154,12 @@ def _get_extra(
     if not isinstance(_marker, tuple) or len(_marker) != 3:  # ruff:ignore[magic-value-comparison]
         return None
     left, op, right = cast("tuple[Variable | Value, Op, Variable | Value]", _marker)
-    if hasattr(left, "value") and left.value == "extra" and hasattr(op, "value") and op.value == "==":
-        return right.value if hasattr(right, "value") else None
+    if op.value == "==":
+        # Variables serialize without quotes, unlike string literals with the same value.
+        if left.serialize() == "extra":
+            return right.value
+        if right.serialize() == "extra":
+            return left.value
     return None
 
 
