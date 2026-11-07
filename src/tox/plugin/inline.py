@@ -12,6 +12,12 @@ if TYPE_CHECKING:
 def load_inline(path: Path) -> ModuleType | None:
     # nox uses here the importlib.machinery.SourceFileLoader but I consider this similarly good, and we can keep any
     # name for the tox file, its content will always be loaded in this module from a system point of view
+    """Load the ``toxfile.py`` or ``☣.py`` module next to the project configuration.
+
+    :param path: the path of the project configuration file
+
+    :returns: the loaded module, or ``None`` when there is no such file
+    """
     for name in ("toxfile", "☣"):
         candidate = path.parent / f"{name}.py"
         if candidate.exists():
