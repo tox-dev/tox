@@ -5,10 +5,12 @@ import sysconfig
 from pathlib import Path
 from types import SimpleNamespace
 from typing import TYPE_CHECKING, Final
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
+from virtualenv.create.creator import Creator
 from virtualenv.discovery.py_spec import PythonSpec
+from virtualenv.run.session import Session
 
 from tox.tox_env.errors import Fail
 from tox.tox_env.python.api import Python
@@ -122,16 +124,17 @@ def test_build_wheel_in_non_base_pkg_env(
     demo_pkg_inline: Path,
     mocker: MockerFixture,
 ) -> None:
-    def _fake_session(env_dir: list[str], **_: object) -> MagicMock:
+    def _fake_session(env_dir: list[str], **_: object) -> Session:
         bin_dir = Path(env_dir[0]) / "bin"
         bin_dir.mkdir(parents=True, exist_ok=True)
         (bin_dir / "python").symlink_to(sys.executable)
-        mock = MagicMock()
-        mock.creator.bin_dir = bin_dir
-        mock.creator.script_dir = bin_dir
-        return mock
+        return mocker.create_autospec(
+            Session,
+            instance=True,
+            creator=mocker.create_autospec(Creator, instance=True, bin_dir=bin_dir, script_dir=bin_dir),
+        )
 
-    mocker.patch("tox.tox_env.python.virtual_env.api.session_via_cli", side_effect=_fake_session)
+    mocker.patch("tox.tox_env.python.virtual_env.api.session_via_cli", autospec=True, side_effect=_fake_session)
     prev_ver, impl, _ = patch_prev_py(True)
     prj = tox_project({"tox.ini": f"[tox]\nenv_list= {f'py{prev_ver}'}\n[testenv]\npackage=wheel"})
     execute_calls = prj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
@@ -153,16 +156,17 @@ def test_build_wheel_in_free_threaded_pkg_env(
     demo_pkg_inline: Path,
     mocker: MockerFixture,
 ) -> None:
-    def _fake_session(env_dir: list[str], **_: object) -> MagicMock:
+    def _fake_session(env_dir: list[str], **_: object) -> Session:
         bin_dir = Path(env_dir[0]) / "bin"
         bin_dir.mkdir(parents=True, exist_ok=True)
         (bin_dir / "python").symlink_to(sys.executable)
-        mock = MagicMock()
-        mock.creator.bin_dir = bin_dir
-        mock.creator.script_dir = bin_dir
-        return mock
+        return mocker.create_autospec(
+            Session,
+            instance=True,
+            creator=mocker.create_autospec(Creator, instance=True, bin_dir=bin_dir, script_dir=bin_dir),
+        )
 
-    mocker.patch("tox.tox_env.python.virtual_env.api.session_via_cli", side_effect=_fake_session)
+    mocker.patch("tox.tox_env.python.virtual_env.api.session_via_cli", autospec=True, side_effect=_fake_session)
     prev_ver, impl, _ = patch_prev_py(True, free_threaded=True)
     prj = tox_project({"tox.ini": f"[tox]\nenv_list= {f'py{prev_ver}'}\n[testenv]\npackage=wheel"})
     execute_calls = prj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
@@ -184,16 +188,17 @@ def test_build_wheel_in_debug_pkg_env(
     demo_pkg_inline: Path,
     mocker: MockerFixture,
 ) -> None:
-    def _fake_session(env_dir: list[str], **_: object) -> MagicMock:
+    def _fake_session(env_dir: list[str], **_: object) -> Session:
         bin_dir = Path(env_dir[0]) / "bin"
         bin_dir.mkdir(parents=True, exist_ok=True)
         (bin_dir / "python").symlink_to(sys.executable)
-        mock = MagicMock()
-        mock.creator.bin_dir = bin_dir
-        mock.creator.script_dir = bin_dir
-        return mock
+        return mocker.create_autospec(
+            Session,
+            instance=True,
+            creator=mocker.create_autospec(Creator, instance=True, bin_dir=bin_dir, script_dir=bin_dir),
+        )
 
-    mocker.patch("tox.tox_env.python.virtual_env.api.session_via_cli", side_effect=_fake_session)
+    mocker.patch("tox.tox_env.python.virtual_env.api.session_via_cli", autospec=True, side_effect=_fake_session)
     prev_ver, impl, _ = patch_prev_py(True, debug=True)
     prj = tox_project({"tox.ini": f"[tox]\nenv_list= {f'py{prev_ver}'}\n[testenv]\npackage=wheel"})
     execute_calls = prj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
@@ -416,6 +421,7 @@ def test_base_python_path_implementation_case(
     mocker.patch.object(
         VirtualEnv,
         "python_spec_for_path",
+        autospec=True,
         return_value=PythonSpec("discovered", implementation, 3, 9, None, 64, None, free_threaded=False),
     )
     project = tox_project({
@@ -590,7 +596,7 @@ def test_python_hash_seed_from_env_and_disable(tox_project: ToxProjectCreator) -
 def test_list_installed_deps(
     in_ci: bool, pip_listed: bool, tox_project: ToxProjectCreator, mocker: MockerFixture
 ) -> None:
-    mocker.patch("tox.config.cli.parser.is_ci", return_value=in_ci)
+    mocker.patch("tox.config.cli.parser.is_ci", autospec=True, return_value=in_ci)
     result = tox_project({"tox.ini": "[testenv]\nskip_install = true"}).run("r", "-e", "py")
     assert ("pip==" in result.out) is pip_listed
 
@@ -610,7 +616,7 @@ def test_list_installed_deps_explicit_cli(
     tox_project: ToxProjectCreator,
     mocker: MockerFixture,
 ) -> None:
-    mocker.patch("tox.config.cli.parser.is_ci", return_value=in_ci)
+    mocker.patch("tox.config.cli.parser.is_ci", autospec=True, return_value=in_ci)
     result = tox_project({"tox.ini": "[testenv]\nskip_install = true"}).run(list_deps, "r", "-e", "py")
     assert ("pip==" in result.out) is pip_listed
 
@@ -814,7 +820,7 @@ def test_python_spec_for_sys_executable(
     mocker.patch.object(sys, "implementation", implementation)
     mocker.patch.object(sys, "maxsize", 2**arch // 2 - 1)
     mocker.patch.object(sysconfig, "get_config_var", get_config_var)
-    mocker.patch.object(sysconfig, "get_platform", return_value=platform_str)
+    mocker.patch.object(sysconfig, "get_platform", autospec=True, return_value=platform_str)
     spec = Python._python_spec_for_sys_executable()  # ruff:ignore[private-member-access]  # internal state
     assert spec.implementation == impl
     assert spec.major == major
@@ -859,7 +865,7 @@ def test_python_spec_for_path(
         debug_build=debug_build,
         machine=machine,
     )
-    mocker.patch.object(VirtualEnv, "get_virtualenv_py_info", return_value=info)
+    mocker.patch.object(VirtualEnv, "get_virtualenv_py_info", autospec=True, return_value=info)
     spec = VirtualEnv.python_spec_for_path(Path("/does/not/matter"))
     assert spec.implementation == impl
     assert spec.major == major

@@ -728,7 +728,7 @@ def test_req_over_http_slow_drip_hits_deadline(tmp_path: Path, mocker: MockerFix
         response: Final[HTTPResponse] = HTTPResponse(reader)
         response.begin()
         mocker.patch("tox.tox_env.python.pip.req.file.urlopen", autospec=True, return_value=response)
-        mocker.patch("tox.tox_env.python.pip.req.file.monotonic", side_effect=[0, 121])
+        mocker.patch("tox.tox_env.python.pip.req.file.monotonic", autospec=True, side_effect=[0, 121])
         with pytest.raises(ValueError, match=r"https://example\.com/c\.txt took longer than 120 seconds") as exc:
             _ = RequirementsFile(requirements_txt, constraint=False).requirements
         assert "hunter2" not in str(exc.value)

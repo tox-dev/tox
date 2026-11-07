@@ -5,11 +5,12 @@ import sys
 import sysconfig
 from pathlib import Path
 from typing import TYPE_CHECKING
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, create_autospec
 
 import pytest
 from packaging.requirements import Requirement
 
+from tox.config.sets import EnvConfigSet
 from tox.journal import EnvJournal
 from tox.tox_env.errors import Fail
 from tox.tox_env.package import PathPackage
@@ -17,6 +18,7 @@ from tox.tox_env.python.dependency_groups import resolve
 from tox.tox_env.python.extras import resolve_extras_static
 from tox.tox_env.python.runner import PythonRun
 from tox.tox_env.python.virtual_env.package.cmd_builder import VenvCmdBuilder
+from tox.tox_env.python.virtual_env.package.pyproject import Pep517VirtualEnvPackager
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -857,10 +859,10 @@ def test_resolve_extras_static_cannot_resolve(tmp_path: Path, pyproject: str, ex
 # fails only this test across the whole suite, nothing end-to-end covers the sdist-metadata delegation
 def test_cmd_builder_load_deps_for_env() -> None:
     builder = MagicMock(spec=VenvCmdBuilder)
-    mock_meta_env = MagicMock()
+    mock_meta_env = create_autospec(Pep517VirtualEnvPackager, instance=True)
     mock_meta_env.load_deps_for_env.return_value = [Requirement("requests>=2")]
     builder._sdist_meta_tox_env = mock_meta_env  # ruff:ignore[private-member-access]  # internal state
-    mock_conf = MagicMock()
+    mock_conf = create_autospec(EnvConfigSet, instance=True)
 
     result = VenvCmdBuilder.load_deps_for_env(builder, mock_conf)
 
