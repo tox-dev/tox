@@ -15,6 +15,8 @@ if TYPE_CHECKING:
 
 
 class StdinSource(Enum):
+    """Where the standard input of a command comes from."""
+
     OFF = 0  #: input disabled
     USER = 1  #: input via the standard input
     API = 2  #: input via programmatic access
@@ -92,6 +94,12 @@ class ExecuteRequest:
 
 
 def shell_cmd(cmd: Sequence[str]) -> str:
+    """Convert a command to the string a shell runs.
+
+    :param cmd: the command and its arguments
+
+    :returns: the command as a single string
+    """
     if sys.platform == "win32":  # pragma: win32 cover
         from subprocess import list2cmdline  # ruff:ignore[import-outside-top-level]  # avoids an import cycle
 

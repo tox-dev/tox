@@ -19,11 +19,22 @@ if TYPE_CHECKING:
     from collections.abc import Callable
 
 READ_CHUNK_SIZE: Final[int] = 32768  # pragma: win32 cover
+"""Maximum number of bytes read from a pipe at once."""
 POLL_INTERVAL: Final[float] = 0.05  # pragma: win32 cover
+"""Seconds to wait between two checks of a pipe for new output."""
 ERROR_IO_INCOMPLETE: Final[int] = 996  # pragma: win32 cover
+"""Windows error code of a read that has not received any data yet."""
 
 
 class ReadViaThreadWindows(ReadViaThread):  # pragma: win32 cover
+    """Read a pipe in a thread on Windows, polling it for output.
+
+    :param file_no: the file descriptor to read from
+    :param handler: the callback that receives what is read
+    :param name: the name of the stream, used to name the thread
+    :param drain: whether to read the remaining content when the reader is exited
+    """
+
     def __init__(  # keeps the signature
         self,
         file_no: int,

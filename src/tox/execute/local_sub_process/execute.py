@@ -49,9 +49,12 @@ else:  # pragma: win32 no cover
 
 
 IS_WIN: Final[bool] = sys.platform == "win32"
+"""Whether tox runs on Windows."""
 
 
 class LocalSubProcessExecutor(Execute):
+    """Run commands as subprocesses of the local machine."""
+
     @override
     def build_instance(
         self,
@@ -64,6 +67,16 @@ class LocalSubProcessExecutor(Execute):
 
 
 class LocalSubProcessExecuteInstance(ExecuteInstance):
+    """Run a command as a subprocess of the local machine.
+
+    :param request: the request to run
+    :param options: the options of the execution
+    :param out: the stream the standard output is written to
+    :param err: the stream the standard error is written to
+    :param on_exit_drain: whether to read the remaining output of the streams when the subprocess exits
+    :ivar process: the subprocess, ``None`` until it is started
+    """
+
     def __init__(
         self,
         request: ExecuteRequest,
@@ -134,6 +147,12 @@ class LocalSubProcessExecuteInstance(ExecuteInstance):
 
     @staticmethod
     def get_stream_file_no(key: str) -> Generator[int, Popen[bytes], None]:
+        """Hand out the file descriptor the subprocess uses for a stream, a pseudo terminal when one can be allocated.
+
+        :param key: the name of the stream, ``stdout`` or ``stderr``
+
+        :yields: the file descriptor the subprocess writes the stream to
+        """
         if (allocated_pty := _pty(key)) is not None:
             main_fd, child_fd = allocated_pty
             child_fd_open = True
@@ -216,6 +235,13 @@ class LocalSubProcessExecuteInstance(ExecuteInstance):
         self._file_no_generators = []
 
     def set_out_err(self, out: SyncWrite, err: SyncWrite) -> tuple[SyncWrite, SyncWrite]:
+        """Replace the streams the output of the subprocess is written to.
+
+        :param out: the new standard output stream
+        :param err: the new standard error stream
+
+        :returns: the previous standard output and standard error streams
+        """
         prev = self._out, self._err
         if self._read_stdout is not None:  # pragma: no branch  # other outcome untested
             self._read_stdout.handler = out.handler
@@ -245,6 +271,14 @@ class LocalSubprocessExecuteFailedStatus(FinishedExecuteStatus):
 
 
 class LocalSubprocessExecuteStatus(ExecuteStatus):
+    """The state of a command run as a local subprocess.
+
+    :param options: the options of the execution
+    :param out: the stream the standard output is written to
+    :param err: the stream the standard error is written to
+    :param process: the subprocess that runs the command
+    """
+
     def __init__(self, options: ExecuteOptions, out: SyncWrite, err: SyncWrite, process: Popen[bytes]) -> None:
         self._process: Popen[bytes] = process
         super().__init__(options, out, err)

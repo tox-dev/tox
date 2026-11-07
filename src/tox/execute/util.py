@@ -44,10 +44,25 @@ def shebang(exe: str) -> list[str] | None:
 
 def is_batch_file(exe: str) -> bool:
     # Windows ignores trailing dots and spaces in file names.
+    """Check whether an executable is a Windows batch file.
+
+    :param exe: the name of the executable
+
+    :returns: whether the name ends with ``.bat`` or ``.cmd``
+    """
     return exe.rstrip(". ").lower().endswith((".bat", ".cmd"))
 
 
 def batch_file_command_line(script: str, args: Sequence[str]) -> str:
+    """Build the command line that runs a batch file.
+
+    :param script: the batch file
+    :param args: the arguments of the batch file
+
+    :returns: the command line
+
+    :raises Fail: when the batch file name or an argument contains a character that cannot be quoted
+    """
     if any(char in script for char in '"\r\n\0'):
         msg = f"cannot run batch file {script!r}, its name cannot be quoted"
         raise Fail(msg)

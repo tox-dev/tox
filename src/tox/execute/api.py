@@ -25,32 +25,46 @@ if TYPE_CHECKING:
     from tox.util.json_types import JsonValue
 
 ContentHandler = Callable[[bytes], int]
+"""Callback that receives a chunk of the output of a command, and returns the number of bytes it handled."""
 Executor = Callable[[ExecuteRequest, ContentHandler, ContentHandler], int]
 LOGGER: Final[logging.Logger] = logging.getLogger(__name__)
 
 
 class ExecuteOptions:
+    """The options that control how a command execution is stopped and whether its output is captured.
+
+    :param env: the environment the command runs in
+    """
+
     def __init__(self, env: ToxEnv) -> None:
         self._env = env
 
     @property
     def suicide_timeout(self) -> float:
+        """Seconds to wait for the process to exit on its own before sending SIGINT."""
         return cast("float", self._env.conf["suicide_timeout"])
 
     @property
     def interrupt_timeout(self) -> float:
+        """Seconds to wait after SIGINT before sending SIGTERM."""
         return cast("float", self._env.conf["interrupt_timeout"])
 
     @property
     def terminate_timeout(self) -> float:
+        """Seconds to wait after SIGTERM before sending SIGKILL."""
         return cast("float", self._env.conf["terminate_timeout"])
 
     @property
     def no_capture(self) -> bool:
+        """Whether the output is shown as it is produced, instead of only being captured."""
         return cast("bool", getattr(self._env.options, "no_capture", False))
 
     @classmethod
     def register_conf(cls, env: ToxEnv) -> None:
+        """Register the configuration keys that control how the execution is stopped.
+
+        :param env: the environment to register the keys in
+        """
         env.conf.add_config(
             keys=["suicide_timeout"],
             desc="timeout to allow process to exit before sending SIGINT",
@@ -72,6 +86,14 @@ class ExecuteOptions:
 
 
 class ExecuteStatus(ABC):
+    """The state of a command execution while it runs, and its outcome once it is done.
+
+    :param options: the options of the execution
+    :param out: the stream the standard output is written to
+    :param err: the stream the standard error is written to
+    :ivar outcome: the outcome of the execution, ``None`` until it is done
+    """
+
     def __init__(self, options: ExecuteOptions, out: SyncWrite, err: SyncWrite) -> None:
         self.outcome: Outcome | None = None
         self.options = options
@@ -81,6 +103,7 @@ class ExecuteStatus(ABC):
     @property
     @abstractmethod
     def exit_code(self) -> int | None:
+        """The exit code of the command, ``None`` while it runs."""
         raise NotImplementedError
 
     @property
@@ -90,31 +113,52 @@ class ExecuteStatus(ABC):
 
     @abstractmethod
     def wait(self, timeout: float | None = None) -> int | None:
+        """Wait for the command to finish.
+
+        :param timeout: the seconds to wait, wait without a limit when ``None``
+
+        :returns: the exit code, or ``None`` when the command did not finish in time
+        """
         raise NotImplementedError
 
     @abstractmethod
     def write_stdin(self, content: str) -> None:
+        """Write content to the standard input of the command.
+
+        :param content: the content to write
+        """
         raise NotImplementedError
 
     @abstractmethod
     def interrupt(self) -> None:
+        """Interrupt the command."""
         raise NotImplementedError
 
     def set_out_err(self, out: SyncWrite, err: SyncWrite) -> tuple[SyncWrite, SyncWrite]:
+        """Replace the streams the output of the command is written to.
+
+        :param out: the new standard output stream
+        :param err: the new standard error stream
+
+        :returns: the previous standard output and standard error streams
+        """
         res = self._out, self._err
         self._out, self._err = out, err
         return res
 
     @property
     def out(self) -> bytearray:
+        """The standard output collected so far."""
         return self._out.content
 
     @property
     def err(self) -> bytearray:
+        """The standard error collected so far."""
         return self._err.content
 
     @property
     def metadata(self) -> dict[str, JsonValue]:
+        """Metadata about the execution, empty unless the executor provides some."""
         return {}
 
 
@@ -177,6 +221,15 @@ class Execute(ABC):
         out_err: OutErr,
         env: ToxEnv,
     ) -> Generator[ExecuteStatus, None, None]:
+        """Run a request, and yield the status of the execution while it runs.
+
+        :param request: the request to run
+        :param show: whether to show the output while the request runs
+        :param out_err: the standard output and standard error streams to write to
+        :param env: the environment the request runs in
+
+        :yields: the status of the execution
+        """
         start = time.monotonic()
         stderr_color = None
         if self._colored:
@@ -229,10 +282,23 @@ class Execute(ABC):
         out: SyncWrite,
         err: SyncWrite,
     ) -> ExecuteInstance:
+        """Build the instance that runs a request.
+
+        :param request: the request to run
+        :param options: the options of the execution
+        :param out: the stream the standard output is written to
+        :param err: the stream the standard error is written to
+
+        :returns: the instance that runs the request
+        """
         raise NotImplementedError
 
     @classmethod
     def register_conf(cls, env: ToxEnv) -> None:
+        """Register the configuration keys of the execution options.
+
+        :param env: the environment to register the keys in
+        """
         cls._option_class.register_conf(env)
 
 
@@ -254,10 +320,12 @@ class ExecuteInstance(ABC):
 
     @property
     def out_handler(self) -> ContentHandler:
+        """The callback that receives the standard output of the command."""
         return self._out.handler
 
     @property
     def err_handler(self) -> ContentHandler:
+        """The callback that receives the standard error of the command."""
         return self._err.handler
 
     @abstractmethod
@@ -276,6 +344,7 @@ class ExecuteInstance(ABC):
     @property
     @abstractmethod
     def cmd(self) -> Sequence[str]:
+        """The command line to run."""
         raise NotImplementedError
 
 

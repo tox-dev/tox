@@ -16,10 +16,20 @@ if TYPE_CHECKING:
     from collections.abc import Callable
 
 TIMEOUT_FOR_INTERRUPT: Final[float] = 0.05  # pragma: win32 no cover
+"""Seconds to wait for output before checking whether the reader should stop."""
 READ_CHUNK_SIZE: Final[int] = 32768  # pragma: win32 no cover
+"""Maximum number of bytes read from a stream at once."""
 
 
 class ReadViaThreadUnix(ReadViaThread):  # pragma: win32 no cover
+    """Read a file descriptor in a thread on Unix, waiting for it with a selector.
+
+    :param file_no: the file descriptor to read from
+    :param handler: the callback that receives what is read
+    :param name: the name of the stream, used to name the thread
+    :param drain: whether to read the remaining content when the reader is exited
+    """
+
     def __init__(  # keeps the signature
         self,
         file_no: int,

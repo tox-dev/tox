@@ -78,6 +78,10 @@ class SyncWrite:
 
     @contextmanager
     def colored(self) -> Generator[None, None, None]:
+        """Wrap the content written inside the block in the color of the stream, when a color is set.
+
+        :yields: ``None``, the block runs with the color applied
+        """
         if self._color is None or self._target is None:
             yield
         else:
@@ -102,11 +106,13 @@ class SyncWrite:
 
     @property
     def text(self) -> str:
+        """The collected content decoded as UTF-8, keeping the bytes that are not valid UTF-8."""
         with self._content_lock:
             return self._content.decode("utf-8", errors="surrogateescape")
 
     @property
     def content(self) -> bytearray:
+        """The collected content, as raw bytes."""
         with self._content_lock:
             return self._content
 

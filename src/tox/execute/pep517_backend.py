@@ -61,6 +61,12 @@ class LocalSubProcessPep517Executor(Execute):
         return LocalSubProcessPep517ExecuteInstance(request, options, out, err, self.local_execute(options))
 
     def local_execute(self, options: ExecuteOptions) -> tuple[LocalSubProcessExecuteInstance, ExecuteStatus]:
+        """Start the backend process, or return the one already started.
+
+        :param options: the options of the execution
+
+        :returns: the instance and the status of the backend process
+        """
         if self._exc is not None:
             raise self._exc
         if self._local_execute is None:
@@ -107,6 +113,7 @@ class LocalSubProcessPep517Executor(Execute):
         into.extend(content)  # pragma: no cover  # setup not built by tests
 
     def close(self) -> None:
+        """Stop the backend process, if it is still running."""
         if self._local_execute is not None:  # pragma: no branch  # other outcome untested
             execute, _status = self._local_execute
             # not reached in tests
@@ -121,13 +128,15 @@ class LocalSubProcessPep517Executor(Execute):
 
 
 class LocalSubProcessPep517ExecuteInstance(ExecuteInstance):
-    # A backend invocation.
-    #
-    # :param request:
-    # :param options:
-    # :param out:
-    # :param err:
-    # :param instance_status:
+    """Run a command through the backend process, which is started once and reused.
+
+    :param request: the request to run
+    :param options: the options of the execution
+    :param out: the stream the standard output is written to
+    :param err: the stream the standard error is written to
+    :param instance_status: the instance and the status of the backend process
+    """
+
     def __init__(
         self,
         request: ExecuteRequest,

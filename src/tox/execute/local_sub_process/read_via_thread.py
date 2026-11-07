@@ -13,9 +13,20 @@ if TYPE_CHECKING:
 
 
 WAIT_GENERAL: Final[float] = 0.05
+"""Seconds to wait for a reader thread to finish before checking again."""
 
 
 class ReadViaThread(ABC):
+    """Read a file descriptor in a thread, and pass what is read to a handler.
+
+    :param file_no: the file descriptor to read from
+    :param handler: the callback that receives what is read
+    :param name: the name of the stream, used to name the thread
+    :param drain: whether to read the remaining content when the reader is exited
+    :ivar stop: the event that asks the reader thread to stop
+    :ivar thread: the thread that reads the file descriptor
+    """
+
     def __init__(  # keeps the signature
         self,
         file_no: int,
