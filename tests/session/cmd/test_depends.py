@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 import sys
 from textwrap import dedent
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Final
 
 import pytest
 
@@ -96,138 +96,142 @@ def test_depends_sdist(tox_project: ToxProjectCreator, patch_prev_py: PatchPrevP
     assert outcome.out == dedent(expected).lstrip()
 
 
-def _depends_glob_conf(fmt: str, env_list: list[str], depends: list[str]) -> str:
-    if fmt == "toml":
-        return f"""
-        env_list = {json.dumps(env_list)}
-        [env_run_base]
-        package = "skip"
-        [env.cov]
-        depends = {json.dumps(depends)}
-        """
-    return f"""
-        [tox]
-        env_list = {",".join(env_list)}
-        [testenv]
-        skip_install = true
-        [testenv:cov]
-        depends = {",".join(depends)}
-        """
+_GLOB_CASES: Final[list[pytest.ParameterSet]] = [
+    pytest.param(
+        ["3.12", "3.13", "3.14", "lint", "cov"],
+        ["3.*"],
+        """\
+        Execution order: 3.12, 3.13, 3.14, lint, cov
+        ALL
+           3.12
+           3.13
+           3.14
+           lint
+           cov
+              3.12
+              3.13
+              3.14
+        """,
+        id="star",
+    ),
+    pytest.param(
+        ["a1", "a2", "ab", "cov"],
+        ["a?"],
+        """\
+        Execution order: a1, a2, ab, cov
+        ALL
+           a1
+           a2
+           ab
+           cov
+              a1
+              a2
+              ab
+        """,
+        id="question_mark",
+    ),
+    pytest.param(
+        ["lint-a", "lint-b", "lint-c", "cov"],
+        ["lint-[ab]"],
+        """\
+        Execution order: lint-a, lint-b, lint-c, cov
+        ALL
+           lint-a
+           lint-b
+           lint-c
+           cov
+              lint-a
+              lint-b
+        """,
+        id="char_set",
+    ),
+    pytest.param(
+        ["lint-a", "lint-b", "lint-c", "cov"],
+        ["lint-[!ab]"],
+        """\
+        Execution order: lint-a, lint-b, lint-c, cov
+        ALL
+           lint-a
+           lint-b
+           lint-c
+           cov
+              lint-c
+        """,
+        id="negated_char_set",
+    ),
+    pytest.param(
+        ["lint", "cov"],
+        ["py*"],
+        """\
+        Execution order: lint, cov
+        ALL
+           lint
+           cov
+        """,
+        id="no_match",
+    ),
+    pytest.param(
+        ["3.13", "3.14", "lint", "cov"],
+        ["lint", "3.*"],
+        """\
+        Execution order: 3.13, 3.14, lint, cov
+        ALL
+           3.13
+           3.14
+           lint
+           cov
+              3.13
+              3.14
+              lint
+        """,
+        id="mixed",
+    ),
+    pytest.param(
+        ["a", "b", "cov"],
+        ["*"],
+        """\
+        Execution order: a, b, cov
+        ALL
+           a
+           b
+           cov
+              a
+              b
+        """,
+        id="excludes_self",
+    ),
+]
 
 
-@pytest.mark.parametrize("fmt", ["toml", "ini"])
-@pytest.mark.parametrize(
-    ("env_list", "depends", "expected"),
-    [
-        pytest.param(
-            ["3.12", "3.13", "3.14", "lint", "cov"],
-            ["3.*"],
-            """\
-            Execution order: 3.12, 3.13, 3.14, lint, cov
-            ALL
-               3.12
-               3.13
-               3.14
-               lint
-               cov
-                  3.12
-                  3.13
-                  3.14
-            """,
-            id="star",
-        ),
-        pytest.param(
-            ["a1", "a2", "ab", "cov"],
-            ["a?"],
-            """\
-            Execution order: a1, a2, ab, cov
-            ALL
-               a1
-               a2
-               ab
-               cov
-                  a1
-                  a2
-                  ab
-            """,
-            id="question_mark",
-        ),
-        pytest.param(
-            ["lint-a", "lint-b", "lint-c", "cov"],
-            ["lint-[ab]"],
-            """\
-            Execution order: lint-a, lint-b, lint-c, cov
-            ALL
-               lint-a
-               lint-b
-               lint-c
-               cov
-                  lint-a
-                  lint-b
-            """,
-            id="char_set",
-        ),
-        pytest.param(
-            ["lint-a", "lint-b", "lint-c", "cov"],
-            ["lint-[!ab]"],
-            """\
-            Execution order: lint-a, lint-b, lint-c, cov
-            ALL
-               lint-a
-               lint-b
-               lint-c
-               cov
-                  lint-c
-            """,
-            id="negated_char_set",
-        ),
-        pytest.param(
-            ["lint", "cov"],
-            ["py*"],
-            """\
-            Execution order: lint, cov
-            ALL
-               lint
-               cov
-            """,
-            id="no_match",
-        ),
-        pytest.param(
-            ["3.13", "3.14", "lint", "cov"],
-            ["lint", "3.*"],
-            """\
-            Execution order: 3.13, 3.14, lint, cov
-            ALL
-               3.13
-               3.14
-               lint
-               cov
-                  3.13
-                  3.14
-                  lint
-            """,
-            id="mixed",
-        ),
-        pytest.param(
-            ["a", "b", "cov"],
-            ["*"],
-            """\
-            Execution order: a, b, cov
-            ALL
-               a
-               b
-               cov
-                  a
-                  b
-            """,
-            id="excludes_self",
-        ),
-    ],
-)
-def test_depends_glob(
-    tox_project: ToxProjectCreator, fmt: str, env_list: list[str], depends: list[str], expected: str
+@pytest.mark.parametrize(("env_list", "depends", "expected"), _GLOB_CASES)
+def test_depends_glob_toml(
+    tox_project: ToxProjectCreator, env_list: list[str], depends: list[str], expected: str
 ) -> None:
-    outcome = tox_project({f"tox.{fmt}": _depends_glob_conf(fmt, env_list, depends)}).run("de")
+    conf = f"""
+    env_list = {json.dumps(env_list)}
+    [env_run_base]
+    package = "skip"
+    [env.cov]
+    depends = {json.dumps(depends)}
+    """
+    outcome = tox_project({"tox.toml": conf}).run("de")
+    outcome.assert_success()
+    assert outcome.out == dedent(expected)
+
+
+@pytest.mark.parametrize(("env_list", "depends", "expected"), _GLOB_CASES)
+def test_depends_glob_ini(
+    tox_project: ToxProjectCreator, env_list: list[str], depends: list[str], expected: str
+) -> None:
+    conf = f"""
+    [tox]
+    env_list = {",".join(env_list)}
+    [testenv]
+    skip_install = true
+    [testenv:cov]
+    depends = {",".join(depends)}
+    """
+    outcome = tox_project({"tox.ini": conf}).run("de")
     outcome.assert_success()
     assert outcome.out == dedent(expected)
 
