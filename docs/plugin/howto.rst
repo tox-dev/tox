@@ -339,7 +339,7 @@ Complete example
     :members:
     :exclude-members: impl
 
-.. autodata:: tox.plugin.impl
+.. autodata:: tox.plugin.marker.impl
     :no-value:
 
 .. automodule:: tox.plugin.spec
