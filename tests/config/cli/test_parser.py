@@ -102,7 +102,7 @@ def test_parser_color(
 ) -> None:
     color_vars = {"NO_COLOR", "TOX_COLORED", "FORCE_COLOR", "TTY_COMPATIBLE", "TERM"}
     monkeypatch.setattr(os, "environ", {k: v for k, v in os.environ.items() if k not in color_vars} | env)
-    mocker.patch("tox.config.cli.parser.sys.stdout").isatty.return_value = is_atty
+    mocker.patch("tox.config.cli.parser.sys.stdout", autospec=True).isatty.return_value = is_atty
 
     is_colored = ToxParser.base().parse_args([], Parsed()).is_colored
     assert is_colored is expected

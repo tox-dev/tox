@@ -25,5 +25,5 @@ if TYPE_CHECKING:
 def test_replace_env_set(
     replace_one: ReplaceOne, mocker: MockFixture, template: str, is_atty: bool, expected: str
 ) -> None:
-    mocker.patch.object(sys.stdout, "isatty", return_value=is_atty)
+    mocker.patch.object(sys.stdout, "isatty", autospec=True, return_value=is_atty)
     assert replace_one(template) == expected

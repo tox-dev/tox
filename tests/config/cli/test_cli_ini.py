@@ -14,7 +14,7 @@ from tox.config.cli.parse import get_options
 from tox.config.cli.parser import Parsed
 from tox.config.loader.api import Override
 from tox.config.main import Config
-from tox.config.source import discover_source
+from tox.config.source import Source, discover_source
 from tox.session.env_select import CliEnv
 from tox.util.ci import is_ci
 
@@ -78,7 +78,11 @@ def test_ini_empty(
     to = tmp_path / "tox.ini"
     monkeypatch.setenv("TOX_USER_CONFIG_FILE", str(to))
     to.write_text(content)
-    mocker.patch("tox.config.cli.parse.discover_source", return_value=mocker.MagicMock(path=Path()))
+    mocker.patch(
+        "tox.config.cli.parse.discover_source",
+        autospec=True,
+        return_value=mocker.create_autospec(Source, instance=True, path=Path()),
+    )
     options = get_options("r")
     assert vars(options.parsed) == default_options
     assert options.parsed.verbosity == 2
@@ -113,7 +117,11 @@ def test_bad_cli_ini(
     mocker: MockerFixture,
     error: str,
 ) -> None:
-    mocker.patch("tox.config.cli.parse.discover_source", return_value=mocker.MagicMock(path=Path()))
+    mocker.patch(
+        "tox.config.cli.parse.discover_source",
+        autospec=True,
+        return_value=mocker.create_autospec(Source, instance=True, path=Path()),
+    )
     caplog.set_level(logging.WARNING)
     monkeypatch.setenv("TOX_USER_CONFIG_FILE", str(tmp_path))
     options = get_options("r")

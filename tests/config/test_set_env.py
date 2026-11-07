@@ -176,14 +176,15 @@ def test_set_env_delayed_eval(eval_set_env: EvalSetEnv, monkeypatch: MonkeyPatch
 
 
 def test_set_env_tty_on(eval_set_env: EvalSetEnv, mocker: MockerFixture) -> None:
-    mocker.patch("sys.stdout.isatty", return_value=True)
+    mocker.patch("sys.stdout.isatty", autospec=True, return_value=True)
     set_env = eval_set_env("[testenv]\npackage=skip\nset_env={tty:A=1:B=1}")
     assert set_env.load("A") == "1"
     assert "B" not in set_env
 
 
 def test_set_env_tty_off(eval_set_env: EvalSetEnv, mocker: MockerFixture) -> None:
-    mocker.patch("sys.stdout.isatty", return_value=False)
+    mocker.patch("sys.stdout.isatty", autospec=True, return_value=False)
+
     set_env = eval_set_env("[testenv]\npackage=skip\nset_env={tty:A=1:B=1}")
     assert set_env.load("B") == "1"
     assert "A" not in set_env

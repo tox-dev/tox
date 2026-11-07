@@ -17,7 +17,7 @@ if TYPE_CHECKING:
 
 
 def test_argcomplete_autocomplete_called(mocker: MockerFixture) -> None:
-    mock_autocomplete = mocker.patch.object(argcomplete, "autocomplete")
+    mock_autocomplete = mocker.patch.object(argcomplete, "autocomplete", autospec=True)
     get_options("r")
     mock_autocomplete.assert_called_once()
 
@@ -73,7 +73,7 @@ def test_argcomplete_project_from_typed_line(
     monkeypatch.setenv("_ARGCOMPLETE", str(skip))
     monkeypatch.setenv("COMP_LINE", f"{typed_line}ignored-as-after-cursor")
     monkeypatch.setenv("COMP_POINT", str(len(typed_line)))
-    mocker.patch.object(argcomplete, "autocomplete", side_effect=SystemExit(0))
+    mocker.patch.object(argcomplete, "autocomplete", autospec=True, side_effect=SystemExit(0))
 
     with pytest.raises(SystemExit):
         get_options()
@@ -119,7 +119,7 @@ def test_argcomplete_environment_candidates_from_typed_config(
     def complete(parser: ArgumentParser) -> None:
         argcomplete.CompletionFinder()(parser, exit_method=sys.exit, output_stream=output)
 
-    mocker.patch.object(argcomplete, "autocomplete", side_effect=complete)
+    mocker.patch.object(argcomplete, "autocomplete", autospec=True, side_effect=complete)
 
     with pytest.raises(SystemExit) as outcome:
         get_options()
