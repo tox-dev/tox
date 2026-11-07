@@ -547,64 +547,56 @@ def test_set_env_environment_with_file_and_expanded_substitution(
 
 
 @pytest.mark.parametrize(
-    ("of_type", "config", "expected_present", "expected_value"),
+    ("of_type", "config", "expected"),
     [
         pytest.param(
             "ini",
             f"[testenv]\npackage=skip\nset_env=CONDITIONAL=value; sys_platform == '{sys.platform}'",
-            True,
-            "value",
+            {"CONDITIONAL": "value"},
             id="ini-marker-true",
         ),
         pytest.param(
             "ini",
             "[testenv]\npackage=skip\nset_env=CONDITIONAL=value; sys_platform == 'nonexistent'",
-            False,
-            None,
+            {},
             id="ini-marker-false",
         ),
         pytest.param(
             "ini",
             f"[testenv]\npackage=skip\nset_env=CONDITIONAL=can't; sys_platform == '{sys.platform}'",
-            True,
-            "can't",
+            {"CONDITIONAL": "can't"},
             id="ini-marker-true-apostrophe-value",
         ),
         pytest.param(
             "ini",
             "[testenv]\npackage=skip\nset_env=CONDITIONAL=can't; sys_platform == 'nonexistent'",
-            False,
-            None,
+            {},
             id="ini-marker-false-apostrophe-value",
         ),
         pytest.param(
             "toml",
             f'[env_run_base]\npackage="skip"\nset_env.CONDITIONAL = {{ value = "value", '
             f"marker = \"sys_platform == '{sys.platform}'\" }}",
-            True,
-            "value",
+            {"CONDITIONAL": "value"},
             id="toml-marker-true",
         ),
         pytest.param(
             "toml",
             '[env_run_base]\npackage="skip"\n'
             'set_env.CONDITIONAL = { value = "value", marker = "sys_platform == \'nonexistent\'" }',
-            False,
-            None,
+            {},
             id="toml-marker-false",
         ),
         pytest.param(
             "ini",
             "[testenv]\npackage=skip\nset_env=UNCONDITIONAL=value",
-            True,
-            "value",
+            {"UNCONDITIONAL": "value"},
             id="ini-no-marker",
         ),
         pytest.param(
             "ini",
             f"[testenv]\npackage=skip\nset_env=OS_CHECK=yes; os_name == '{os.name}'",
-            True,
-            "yes",
+            {"OS_CHECK": "yes"},
             id="ini-os-name-marker",
         ),
     ],
@@ -613,27 +605,23 @@ def test_set_env_marker(
     eval_set_env: EvalSetEnv,
     of_type: ConfigFileFormat,
     config: str,
-    expected_present: bool,
-    expected_value: str | None,
+    expected: dict[str, str],
 ) -> None:
     set_env = eval_set_env(config, of_type=of_type)
-    if expected_present:
-        assert "CONDITIONAL" in set_env or "UNCONDITIONAL" in set_env or "OS_CHECK" in set_env
-        key = next(k for k in ("CONDITIONAL", "UNCONDITIONAL", "OS_CHECK") if k in set_env)
-        assert set_env.load(key) == expected_value
-    else:
-        assert "CONDITIONAL" not in set_env
+    assert {
+        key: set_env.load(key) for key in set_env if key in {"CONDITIONAL", "UNCONDITIONAL", "OS_CHECK"}
+    } == expected
 
 
 @pytest.mark.parametrize(
-    ("marker", "expected_present"),
+    ("marker", "expected"),
     [
-        pytest.param(f"sys_platform == '{sys.platform}'", True, id="marker-true"),
-        pytest.param("sys_platform == 'nonexistent'", False, id="marker-false"),
+        pytest.param(f"sys_platform == '{sys.platform}'", {"CONDITIONAL": "from_env"}, id="marker-true"),
+        pytest.param("sys_platform == 'nonexistent'", {}, id="marker-false"),
     ],
 )
 def test_set_env_marker_with_replace_toml(
-    eval_set_env: EvalSetEnv, monkeypatch: MonkeyPatch, marker: str, expected_present: bool
+    eval_set_env: EvalSetEnv, monkeypatch: MonkeyPatch, marker: str, expected: dict[str, str]
 ) -> None:
     monkeypatch.setenv("MY_VAR", "from_env")
     config = (
@@ -641,11 +629,7 @@ def test_set_env_marker_with_replace_toml(
         f'set_env.CONDITIONAL = {{ replace = "env", name = "MY_VAR", default = "default", marker = "{marker}" }}'
     )
     set_env = eval_set_env(config, of_type="toml")
-    if expected_present:
-        assert "CONDITIONAL" in set_env
-        assert set_env.load("CONDITIONAL") == "from_env"
-    else:
-        assert "CONDITIONAL" not in set_env
+    assert {key: set_env.load(key) for key in set_env if key == "CONDITIONAL"} == expected
 
 
 @pytest.mark.parametrize(
@@ -1482,7 +1466,13 @@ def test_set_env_shows_what_commands_get(tox_project: ToxProjectCreator, ini: st
     assert {key: shown.load(key) for key in shown if key in _EXPORTED} == {key: used[key] for key in _EXPORTED}
 
 
-@pytest.mark.parametrize("materialize", [pytest.param(False, id="raw"), pytest.param(True, id="cached")])
+@pytest.mark.parametrize(
+    ("materialized", "expected_loaded"),
+    [
+        pytest.param([], {}, id="raw"),
+        pytest.param(["A"], {"A": "base"}, id="cached"),
+    ],
+)
 @pytest.mark.parametrize(
     ("original", "appended", "expected"),
     [
@@ -1492,11 +1482,14 @@ def test_set_env_shows_what_commands_get(tox_project: ToxProjectCreator, ini: st
     ],
 )
 def test_set_env_extend_replaces_cached_values_and_markers(
-    original: str, appended: str, expected: dict[str, str], materialize: bool
+    original: str,
+    appended: str,
+    expected: dict[str, str],
+    materialized: list[str],
+    expected_loaded: dict[str, str],
 ) -> None:
     values = SetEnv(original, "py", "py", Path())
-    if materialize:
-        assert values.load("A") == "base"
+    assert {key: values.load(key) for key in materialized} == expected_loaded
     values.extend(SetEnv(appended, "py", "py", Path()))
     assert {key: values.load(key) for key in values} == expected
 
@@ -1507,10 +1500,15 @@ def test_set_env_export_callback_can_read_another_export() -> None:
     assert {key: values.load(key) for key in values} == {"FIRST": "value", "SECOND": "value"}
 
 
-@pytest.mark.parametrize("materialize", [pytest.param(False, id="raw"), pytest.param(True, id="cached")])
-def test_set_env_export_clears_configured_marker(materialize: bool) -> None:
+@pytest.mark.parametrize(
+    ("materialized", "expected_loaded"),
+    [
+        pytest.param([], {}, id="raw"),
+        pytest.param(["TOX_ENV_NAME"], {"TOX_ENV_NAME": "py"}, id="cached"),
+    ],
+)
+def test_set_env_export_clears_configured_marker(materialized: list[str], expected_loaded: dict[str, str]) -> None:
     values = SetEnv("TOX_ENV_NAME=wrong; sys_platform == 'nope'", "py", "py", Path())
     values.export({"TOX_ENV_NAME": lambda: "py"})
-    if materialize:
-        assert values.load("TOX_ENV_NAME") == "py"
+    assert {key: values.load(key) for key in materialized} == expected_loaded
     assert {key: values.load(key) for key in values} == {"TOX_ENV_NAME": "py"}

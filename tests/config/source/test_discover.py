@@ -10,6 +10,7 @@ from tox.config.source.discover import discover_source
 from tox.report import HandledError
 
 if TYPE_CHECKING:
+    from collections.abc import Generator
     from pathlib import Path
 
     from tox.pytest import ToxProjectCreator
@@ -62,9 +63,18 @@ def test_bad_src_content(tox_project: ToxProjectCreator, tmp_path: Path) -> None
     assert outcome.out == f"ROOT: HandledError| config file {tmp_path / 'setup.cfg'} does not exist\n"
 
 
+@pytest.fixture
+def unreadable_config(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Generator[Path, None, None]:
+    config = tmp_path / "tox.ini"
+    config.write_text("[tox]\nenv_list = py\n")
+    config.chmod(0o000)
+    monkeypatch.chdir(tmp_path)
+    yield config
+    config.chmod(0o644)
+
+
 @_UNREADABLE_FILES_POSSIBLE
-@pytest.mark.parametrize("named", [True, False], ids=["explicit-path", "discovery"])
-def test_unreadable_config_raises_handled_error(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, named: bool) -> None:
+def test_unreadable_config_raises_handled_error_explicit_path(unreadable_config: Path) -> None:
     """Reading the file raises an OSError subclass, not ValueError.
 
     Without handling it, discovery lets PermissionError escape and the CLI prints a traceback instead of the one-line
@@ -74,16 +84,15 @@ def test_unreadable_config_raises_handled_error(tmp_path: Path, monkeypatch: pyt
     the two cases apart.
 
     """
-    config = tmp_path / "tox.ini"
-    config.write_text("[tox]\nenv_list = py\n")
-    config.chmod(0o000)
-    monkeypatch.chdir(tmp_path)
+    with pytest.raises(HandledError, match="failed loading"):
+        discover_source(unreadable_config, None)
 
-    try:
-        with pytest.raises(HandledError, match="failed loading"):
-            discover_source(config if named else None, None)
-    finally:
-        config.chmod(0o644)
+
+@_UNREADABLE_FILES_POSSIBLE
+@pytest.mark.usefixtures("unreadable_config")
+def test_unreadable_config_raises_handled_error_discovered() -> None:
+    with pytest.raises(HandledError, match="failed loading"):
+        discover_source(None, None)
 
 
 def test_malformed_config_does_not_prevent_help(tox_project: ToxProjectCreator) -> None:

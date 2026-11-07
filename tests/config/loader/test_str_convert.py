@@ -254,11 +254,6 @@ _INI_CONFIG_NEWLINE_ARGS = [
 ]
 _WINDOWS_PATH_ARGS = [
     pytest.param(
-        r"SPECIAL:\foo\bar --quuz='baz atan'",
-        [r"SPECIAL:\foo\bar", "--quuz=baz atan"],
-        id="special-colon-backslash-foo-backslash-bar-space-dash-dash-quuz-equal-quote-baz-space-atan-quote-special-colon-backslash-foo-backslash-bar-dash-dash-quuz-equal-baz-space-atan",
-    ),
-    pytest.param(
         r"X:\\foo\\bar --quuz='baz atan'",
         [r"X:\foo\bar", "--quuz=baz atan"],
         id="x-colon-backslash-backslash-foo-backslash-backslash-bar-space-dash-dash-quuz-equal-quote-baz-space-atan-quote-x-colon-backslash-foo-backslash-bar-dash-dash-quuz-equal-baz-space-atan",
@@ -330,16 +325,6 @@ _WINDOWS_TRAILING_SEP_ARGS = [
 _WACKY_SLASH_ARGS = [
     pytest.param("\\\\\\", ["\\\\\\"], id="backslash-backslash-backslash-backslash-backslash-backslash"),
     pytest.param(
-        " \\'\\'\\ '",
-        [" \\'\\'\\ '"],
-        id="space-backslash-quote-backslash-quote-backslash-space-quote-space-backslash-quote-backslash-quote-backslash-space-quote",
-    ),
-    pytest.param("\\'\\'\\ ", ["'' "], id="backslash-quote-backslash-quote-backslash-space-quote-quote-space"),
-    pytest.param(
-        "\\'\\ \\\\", ["' \\"], id="backslash-quote-backslash-space-backslash-backslash-quote-space-backslash"
-    ),
-    pytest.param("\\'\\ ", ["' "], id="backslash-quote-backslash-space-quote-space"),
-    pytest.param(
         '''"\\'\\"''',
         ['"\\\'\\"'],
         id="dquote-backslash-quote-backslash-dquote-dquote-backslash-quote-backslash-dquote",
@@ -350,6 +335,71 @@ _WACKY_SLASH_ARGS = [
         ["\\", "\\"],
         id="dquote-backslash-backslash-dquote-space-backslash-backslash-backslash-backslash",
     ),
+]
+
+_SPECIAL_WIN32_ARGS = [
+    pytest.param(
+        r"SPECIAL:\foo\bar --quuz='baz atan'",
+        [r"SPECIAL:\foo\bar", "--quuz=baz atan"],
+        id="special-colon-backslash-foo-backslash-bar-space-dash-dash-quuz-equal-quote-baz-space-atan-quote-special-colon-backslash-foo-backslash-bar-dash-dash-quuz-equal-baz-space-atan",
+    ),
+]
+
+
+_SPECIAL_POSIX_ARGS = [
+    pytest.param(
+        r"SPECIAL:\foo\bar --quuz='baz atan'",
+        ["SPECIAL:foobar", "--quuz=baz atan"],
+        id="special-colon-backslash-foo-backslash-bar-space-dash-dash-quuz-equal-quote-baz-space-atan-quote-special-colon-backslash-foo-backslash-bar-dash-dash-quuz-equal-baz-space-atan",
+    ),
+]
+
+
+_WACKY_POSIX_ARGS = [
+    pytest.param(
+        " \\'\\'\\ '",
+        [" \\'\\'\\ '"],
+        id="space-backslash-quote-backslash-quote-backslash-space-quote-space-backslash-quote-backslash-quote-backslash-space-quote",
+    ),
+    pytest.param("\\'\\'\\ ", ["'' "], id="backslash-quote-backslash-quote-backslash-space-quote-quote-space"),
+    pytest.param(
+        "\\'\\ \\\\", ["' \\"], id="backslash-quote-backslash-space-backslash-backslash-quote-space-backslash"
+    ),
+    pytest.param("\\'\\ ", ["' "], id="backslash-quote-backslash-space-quote-space"),
+]
+
+
+_WACKY_WIN32_ARGS = [
+    pytest.param(
+        " \\'\\'\\ '",
+        ["''\\", "'"],
+        id="space-backslash-quote-backslash-quote-backslash-space-quote-space-backslash-quote-backslash-quote-backslash-space-quote",
+    ),
+    pytest.param("\\'\\'\\ ", ["''\\"], id="backslash-quote-backslash-quote-backslash-space-quote-quote-space"),
+    pytest.param(
+        "\\'\\ \\\\",
+        ["'\\", "\\"],
+        id="backslash-quote-backslash-space-backslash-backslash-quote-space-backslash",
+    ),
+    pytest.param("\\'\\ ", ["'\\"], id="backslash-quote-backslash-space-quote-space"),
+]
+
+
+_UNC_PATH_ARGS = [
+    pytest.param(r"xcopy \\server\share\file.txt .", ["xcopy", r"\\server\share\file.txt", "."], id="unc-argument"),
+    pytest.param(r"\\server\share", [r"\\server\share"], id="unc-command"),
+    pytest.param(r'copy "\\server\share\file name" .', ["copy", r"\\server\share\file name", "."], id="double-quoted"),
+    pytest.param(r"copy '\\server\share\file name' .", ["copy", r"\\server\share\file name", "."], id="single-quoted"),
+    pytest.param(r'copy --source="\\server\share"', ["copy", r"--source=\\server\share"], id="quoted-option"),
+    pytest.param(r"copy --source=\\server\share", ["copy", r"--source=\\server\share"], id="unquoted-option"),
+    pytest.param(r"copy \\?\C:\file .", ["copy", r"\\?\C:\file", "."], id="extended-drive"),
+    pytest.param(r"copy \\?\UNC\server\share .", ["copy", r"\\?\UNC\server\share", "."], id="extended-unc"),
+    pytest.param(r"copy \\.\pipe\name .", ["copy", r"\\.\pipe\name", "."], id="device"),
+    pytest.param(r"copy \\\\server\share .", ["copy", r"\\server\share", "."], id="escaped-prefix"),
+    pytest.param("copy\t\\\\server\\share", ["copy", r"\\server\share"], id="tab-separator"),
+    pytest.param(r'copy "\\" \\', ["copy", "\\", "\\"], id="bare-pairs"),
+    pytest.param(r'copy "text \\server"', ["copy", r"text \server"], id="quoted-interior"),
+    pytest.param(r"copy path\\part", ["copy", r"path\part"], id="interior-pair"),
 ]
 
 
@@ -368,87 +418,57 @@ def sys_platform(request: SubRequest, mocker: MockerFixture) -> str:
         *_WACKY_SLASH_ARGS,
     ],
 )
-def test_shlex_platform_specific(sys_platform: str, value: str, expected: list[str]) -> None:
-    if sys_platform != "win32" and value.startswith("SPECIAL:"):
-        # on non-windows platform, backslash is always an escape, not path separator
-        expected = [exp.replace("\\", "") for exp in expected]
-    wacky_slash_args_win32 = {
-        " \\'\\'\\ '": ["''\\", "'"],
-        "\\'\\'\\ ": ["''\\"],
-        "\\'\\ \\\\": ["'\\", "\\"],
-        "\\'\\ ": ["'\\"],
-    }
-    if sys_platform == "win32" and value in wacky_slash_args_win32:
-        expected = wacky_slash_args_win32[value]
+@pytest.mark.usefixtures("sys_platform")
+def test_shlex_platform_specific(value: str, expected: list[str]) -> None:
     result = StrConvert().to_command(value)
     assert result is not None
     assert result.args == expected
 
 
-@pytest.mark.parametrize(("value", "expected"), _WINDOWS_TRAILING_SEP_ARGS)
-def test_shlex_win32_trailing_sep(sys_platform: str, value: str, expected: list[str]) -> None:
-    if sys_platform != "win32":
-        pytest.skip("trailing path separator only relevant on Windows")
-    result = StrConvert().to_command(value)
-    assert result is not None
-    assert result.args == expected
-
-
-@pytest.mark.parametrize(
-    ("value", "expected"),
-    [
-        pytest.param(r"xcopy \\server\share\file.txt .", ["xcopy", r"\\server\share\file.txt", "."], id="unc-argument"),
-        pytest.param(r"\\server\share", [r"\\server\share"], id="unc-command"),
-        pytest.param(
-            r'copy "\\server\share\file name" .', ["copy", r"\\server\share\file name", "."], id="double-quoted"
-        ),
-        pytest.param(
-            r"copy '\\server\share\file name' .", ["copy", r"\\server\share\file name", "."], id="single-quoted"
-        ),
-        pytest.param(r'copy --source="\\server\share"', ["copy", r"--source=\\server\share"], id="quoted-option"),
-        pytest.param(r"copy --source=\\server\share", ["copy", r"--source=\\server\share"], id="unquoted-option"),
-        pytest.param(r"copy \\?\C:\file .", ["copy", r"\\?\C:\file", "."], id="extended-drive"),
-        pytest.param(r"copy \\?\UNC\server\share .", ["copy", r"\\?\UNC\server\share", "."], id="extended-unc"),
-        pytest.param(r"copy \\.\pipe\name .", ["copy", r"\\.\pipe\name", "."], id="device"),
-        pytest.param(r"copy \\\\server\share .", ["copy", r"\\server\share", "."], id="escaped-prefix"),
-        pytest.param("copy\t\\\\server\\share", ["copy", r"\\server\share"], id="tab-separator"),
-        pytest.param(r'copy "\\" \\', ["copy", "\\", "\\"], id="bare-pairs"),
-        pytest.param(r'copy "text \\server"', ["copy", r"text \server"], id="quoted-interior"),
-        pytest.param(r"copy path\\part", ["copy", r"path\part"], id="interior-pair"),
-    ],
-)
 @pytest.mark.parametrize("sys_platform", [pytest.param("win32", id="win32")], indirect=True)
 @pytest.mark.usefixtures("sys_platform")
-@pytest.mark.parametrize("via_config", [pytest.param(False, id="direct"), pytest.param(True, id="ini")])
-def test_shlex_win32_unc_path(
-    tox_project: ToxProjectCreator, value: str, expected: list[str], via_config: bool
-) -> None:
-    if via_config:
-        outcome: Final = tox_project({"tox.ini": f"[testenv]\ncommands = {value}"}).run("c", "-k", "commands")
-        outcome.assert_success()
-        assert outcome.env_conf("py")["commands"] == [Command(args=expected)]
-    else:
-        assert StrConvert().to_command(value).args == expected
+@pytest.mark.parametrize(("value", "expected"), [*_SPECIAL_WIN32_ARGS, *_WACKY_WIN32_ARGS])
+def test_shlex_win32_platform_specific(value: str, expected: list[str]) -> None:
+    result = StrConvert().to_command(value)
+    assert result is not None
+    assert result.args == expected
 
 
-@pytest.mark.parametrize(
-    ("value", "expected"),
-    [
-        *_SIMPLE_ARGS,
-        *_INI_CONFIG_NEWLINE_ARGS,
-        *_WINDOWS_PATH_ARGS,
-        #        *WACKY_SLASH_ARGS,
-    ],
-)
-def test_shlex_platform_specific_ini(
-    tox_project: ToxProjectCreator,
-    sys_platform: str,
-    value: str,
-    expected: list[str],
-) -> None:
-    if sys_platform != "win32" and value.startswith("SPECIAL:"):
-        # on non-windows platform, backslash is always an escape, not path separator
-        expected = [exp.replace("\\", "") for exp in expected]
+@pytest.mark.parametrize("sys_platform", [pytest.param("linux2", id="linux2")], indirect=True)
+@pytest.mark.usefixtures("sys_platform")
+@pytest.mark.parametrize(("value", "expected"), [*_SPECIAL_POSIX_ARGS, *_WACKY_POSIX_ARGS])
+def test_shlex_posix_platform_specific(value: str, expected: list[str]) -> None:
+    result = StrConvert().to_command(value)
+    assert result is not None
+    assert result.args == expected
+
+
+@pytest.mark.parametrize("sys_platform", [pytest.param("win32", id="win32")], indirect=True)
+@pytest.mark.usefixtures("sys_platform")
+@pytest.mark.parametrize(("value", "expected"), _WINDOWS_TRAILING_SEP_ARGS)
+def test_shlex_win32_trailing_sep(value: str, expected: list[str]) -> None:
+    result = StrConvert().to_command(value)
+    assert result is not None
+    assert result.args == expected
+
+
+@pytest.mark.parametrize("sys_platform", [pytest.param("win32", id="win32")], indirect=True)
+@pytest.mark.usefixtures("sys_platform")
+@pytest.mark.parametrize(("value", "expected"), _UNC_PATH_ARGS)
+def test_shlex_win32_unc_path(value: str, expected: list[str]) -> None:
+    assert StrConvert().to_command(value).args == expected
+
+
+@pytest.mark.parametrize("sys_platform", [pytest.param("win32", id="win32")], indirect=True)
+@pytest.mark.usefixtures("sys_platform")
+@pytest.mark.parametrize(("value", "expected"), _UNC_PATH_ARGS)
+def test_shlex_win32_unc_path_from_ini(tox_project: ToxProjectCreator, value: str, expected: list[str]) -> None:
+    outcome: Final = tox_project({"tox.ini": f"[testenv]\ncommands = {value}"}).run("c", "-k", "commands")
+    outcome.assert_success()
+    assert outcome.env_conf("py")["commands"] == [Command(args=expected)]
+
+
+def _ini_commands(tox_project: ToxProjectCreator, value: str) -> list[Command]:
     project = tox_project(
         {
             "tox.ini": dedent(
@@ -462,17 +482,40 @@ def test_shlex_platform_specific_ini(
     )
     outcome = project.run("c")
     outcome.assert_success()
-    result = outcome.env_conf("py")["commands"]
-    assert result == [Command(args=expected)]
+    return outcome.env_conf("py")["commands"]
 
 
-def test_trailing_path_sep_does_not_merge_args(
-    tox_project: ToxProjectCreator,
-    sys_platform: str,
-    monkeypatch: MonkeyPatch,
-) -> None:
-    if sys_platform != "win32":
-        pytest.skip("trailing path separator only relevant on Windows")
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    [
+        *_SIMPLE_ARGS,
+        *_INI_CONFIG_NEWLINE_ARGS,
+        *_WINDOWS_PATH_ARGS,
+        #        *WACKY_SLASH_ARGS,
+    ],
+)
+@pytest.mark.usefixtures("sys_platform")
+def test_shlex_platform_specific_ini(tox_project: ToxProjectCreator, value: str, expected: list[str]) -> None:
+    assert _ini_commands(tox_project, value) == [Command(args=expected)]
+
+
+@pytest.mark.parametrize("sys_platform", [pytest.param("win32", id="win32")], indirect=True)
+@pytest.mark.usefixtures("sys_platform")
+@pytest.mark.parametrize(("value", "expected"), _SPECIAL_WIN32_ARGS)
+def test_shlex_win32_platform_specific_ini(tox_project: ToxProjectCreator, value: str, expected: list[str]) -> None:
+    assert _ini_commands(tox_project, value) == [Command(args=expected)]
+
+
+@pytest.mark.parametrize("sys_platform", [pytest.param("linux2", id="linux2")], indirect=True)
+@pytest.mark.usefixtures("sys_platform")
+@pytest.mark.parametrize(("value", "expected"), _SPECIAL_POSIX_ARGS)
+def test_shlex_posix_platform_specific_ini(tox_project: ToxProjectCreator, value: str, expected: list[str]) -> None:
+    assert _ini_commands(tox_project, value) == [Command(args=expected)]
+
+
+@pytest.mark.parametrize("sys_platform", [pytest.param("win32", id="win32")], indirect=True)
+@pytest.mark.usefixtures("sys_platform")
+def test_trailing_path_sep_does_not_merge_args(tox_project: ToxProjectCreator, monkeypatch: MonkeyPatch) -> None:
     monkeypatch.setattr("os.sep", "\\")
     project = tox_project({
         "tox.ini": "[testenv]\ncommands = command path{/}to{/}sep{/} -b foo",

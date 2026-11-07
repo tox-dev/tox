@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Final
 
 import pytest
 
@@ -39,7 +39,7 @@ def test_set_env_override_preserves_exports(
     ] == expected
 
 
-@pytest.mark.parametrize(
+_PROPAGATES_FILES: Final = pytest.mark.parametrize(
     ("filename", "config", "namespace"),
     [
         pytest.param(
@@ -57,7 +57,7 @@ def test_set_env_override_preserves_exports(
         ),
     ],
 )
-@pytest.mark.parametrize(
+_PROPAGATES_OVERRIDES: Final = pytest.mark.parametrize(
     ("overrides", "expected"),
     [
         pytest.param(["set_env+={env:BLOCK}"], ["MAGIC=a", "NEW=a"], id="append-block"),
@@ -74,9 +74,12 @@ def test_set_env_override_preserves_exports(
         pytest.param(["set_env+=file|{env_name}.env"], ["MAGIC=café;literal", "NEW=café;literal"], id="env-file"),
     ],
 )
-@pytest.mark.parametrize("channel", [pytest.param("cli", id="cli"), pytest.param("env", id="tox-override")])
+
+
+@_PROPAGATES_FILES
+@_PROPAGATES_OVERRIDES
 @pytest.mark.parametrize("key", [pytest.param("set_env", id="canonical"), pytest.param("setenv", id="alias")])
-def test_set_env_override_propagates_through_reference(
+def test_set_env_override_propagates_through_reference_cli(
     tox_project: ToxProjectCreator,
     monkeypatch: pytest.MonkeyPatch,
     filename: str,
@@ -84,7 +87,6 @@ def test_set_env_override_propagates_through_reference(
     namespace: str,
     overrides: list[str],
     expected: list[str],
-    channel: str,
     key: str,
 ) -> None:
     monkeypatch.setenv("MAGIC", "from-shell")
@@ -92,11 +94,38 @@ def test_set_env_override_propagates_through_reference(
     monkeypatch.setenv("DISABLED", "MAGIC=disabled; sys_platform == 'nope'\nNEW={env:MAGIC}")
     monkeypatch.setenv("ENABLED", r"MAGIC=enabled\;literal; sys_platform != 'nope'" + "\nNEW={env:MAGIC}")
     values = [f"{namespace}.{value.replace('set_env', key, 1)}" for value in overrides]
-    if channel == "env":
-        monkeypatch.setenv("TOX_OVERRIDE", ";".join(values))
-    flags = [item for value in values for item in ("-x", value)] if channel == "cli" else []
     result = tox_project({filename: config, "a.env": "MAGIC=café;literal\nNEW={env:MAGIC}"}).run(
-        "c", "-e", "a", "-k", "set_env", *flags
+        "c", "-e", "a", "-k", "set_env", *[item for value in values for item in ("-x", value)]
+    )
+    result.assert_success()
+    assert [line.strip() for line in result.out.splitlines() if line.strip().startswith(("MAGIC=", "NEW="))] == expected
+
+
+@_PROPAGATES_FILES
+@_PROPAGATES_OVERRIDES
+@pytest.mark.parametrize("key", [pytest.param("set_env", id="canonical"), pytest.param("setenv", id="alias")])
+def test_set_env_override_propagates_through_reference_tox_override(
+    tox_project: ToxProjectCreator,
+    monkeypatch: pytest.MonkeyPatch,
+    filename: str,
+    config: str,
+    namespace: str,
+    overrides: list[str],
+    expected: list[str],
+    key: str,
+) -> None:
+    monkeypatch.setenv("MAGIC", "from-shell")
+    monkeypatch.setenv("BLOCK", "MAGIC={env_name}\nNEW={env:MAGIC}")
+    monkeypatch.setenv("DISABLED", "MAGIC=disabled; sys_platform == 'nope'\nNEW={env:MAGIC}")
+    monkeypatch.setenv("ENABLED", r"MAGIC=enabled\;literal; sys_platform != 'nope'" + "\nNEW={env:MAGIC}")
+    values = [f"{namespace}.{value.replace('set_env', key, 1)}" for value in overrides]
+    monkeypatch.setenv("TOX_OVERRIDE", ";".join(values))
+    result = tox_project({filename: config, "a.env": "MAGIC=café;literal\nNEW={env:MAGIC}"}).run(
+        "c",
+        "-e",
+        "a",
+        "-k",
+        "set_env",
     )
     result.assert_success()
     assert [line.strip() for line in result.out.splitlines() if line.strip().startswith(("MAGIC=", "NEW="))] == expected
@@ -122,41 +151,50 @@ def test_set_env_override_reference_cycle_fails(
     assert "circular set_env reference" in result.out
 
 
+_CHILD_KEYS_INI: Final = "[testenv]\nset_env=MAGIC=base\n[testenv:py]\nset_env=\n {[testenv]set_env}\n MAGIC=child\n"
+_CHILD_KEYS_TOML: Final = (
+    '[env_run_base]\nset_env.MAGIC="base"\n[env.py]\n'
+    'set_env=[{replace="ref", of=["env_run_base", "set_env"]}, {MAGIC="child"}]\n'
+)
+
+
 @pytest.mark.parametrize(
-    ("filename", "config", "namespace"),
+    ("filename", "config", "namespace", "flags", "value"),
     [
+        pytest.param("tox.ini", _CHILD_KEYS_INI, "testenv", [], "child", id="ini"),
+        pytest.param("tox.toml", _CHILD_KEYS_TOML, "env_run_base", [], "child", id="toml"),
         pytest.param(
             "tox.ini",
-            "[testenv]\nset_env=MAGIC=base\n[testenv:py]\nset_env=\n {[testenv]set_env}\n MAGIC=child\n",
+            _CHILD_KEYS_INI,
             "testenv",
-            id="ini",
+            ["-x", "testenv:py.set_env+=MAGIC=cli"],
+            "cli",
+            id="ini-child-override",
         ),
         pytest.param(
             "tox.toml",
-            '[env_run_base]\nset_env.MAGIC="base"\n[env.py]\n'
-            'set_env=[{replace="ref", of=["env_run_base", "set_env"]}, {MAGIC="child"}]\n',
+            _CHILD_KEYS_TOML,
             "env_run_base",
-            id="toml",
+            ["-x", "env.py.set_env+=MAGIC=cli"],
+            "cli",
+            id="toml-child-override",
         ),
     ],
 )
-@pytest.mark.parametrize("child_override", [pytest.param(False, id="config"), pytest.param(True, id="override")])
 def test_set_env_override_reference_preserves_child_keys(
     tox_project: ToxProjectCreator,
     monkeypatch: pytest.MonkeyPatch,
     filename: str,
     config: str,
     namespace: str,
-    child_override: bool,
+    flags: list[str],
+    value: str,
 ) -> None:
     monkeypatch.setenv("BLOCK", "MAGIC=override; sys_platform == 'nope'\nNEW={env:MAGIC}")
-    child_namespace = "testenv:py" if filename == "tox.ini" else "env.py"
-    flags = ["-x", f"{child_namespace}.set_env+=MAGIC=cli"] if child_override else []
     result = tox_project({filename: config}).run(
         "c", "-e", "py", "-k", "set_env", "-x", f"{namespace}.set_env+={{env:BLOCK}}", *flags
     )
     result.assert_success()
-    value = "cli" if child_override else "child"
     assert [line.strip() for line in result.out.splitlines() if line.strip().startswith(("MAGIC=", "NEW="))] == [
         f"MAGIC={value}",
         f"NEW={value}",

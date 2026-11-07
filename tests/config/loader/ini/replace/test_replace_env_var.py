@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import threading
 from typing import TYPE_CHECKING, Final
 
@@ -167,21 +168,22 @@ def test_replace_env_var_circular_flip_flop_5(
     assert "circular chain between set env MAGIC, TRAGIC, RABBIT, HAT, TRICK" in caplog.messages
 
 
-@pytest.mark.parametrize("fallback", [True, False])
-def test_replace_env_var_chase(replace_one: ReplaceOne, monkeypatch: MonkeyPatch, fallback: bool) -> None:
+@pytest.mark.parametrize(
+    ("this_env", "expected"),
+    [
+        pytest.param({}, "or that one", id="fallback"),
+        pytest.param({"THIS": "path"}, "path", id="set"),
+    ],
+)
+def test_replace_env_var_chase(
+    replace_one: ReplaceOne, monkeypatch: MonkeyPatch, this_env: dict[str, str], expected: str
+) -> None:
     # Resolve variable to be replaced and default value via indirection.
     monkeypatch.setenv("WALK", "THIS")
-    def_val = "or that one"
-    monkeypatch.setenv("DEF", def_val)
-    if fallback:
-        monkeypatch.delenv("THIS", raising=False)
-        exp_result = def_val
-    else:
-        this_val = "path"
-        monkeypatch.setenv("THIS", this_val)
-        exp_result = this_val
+    monkeypatch.setenv("DEF", "or that one")
+    monkeypatch.setattr(os, "environ", {k: v for k, v in os.environ.items() if k != "THIS"} | this_env)
     result = replace_one("{env:{env:WALK}:{env:DEF}}")
-    assert result == exp_result
+    assert result == expected
 
 
 def test_replace_env_default_with_colon(replace_one: ReplaceOne, monkeypatch: MonkeyPatch) -> None:

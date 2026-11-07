@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import shlex
 import sys
 import sysconfig
@@ -12,6 +13,8 @@ from python_discovery import normalize_isa
 
 from tox.config.loader.replacer import MatchError
 from tox.config.types import Command, EnvList
+
+_MACHINE_ISA: Final[str] = normalize_isa(sysconfig.get_platform().rsplit("-", 1)[-1])
 
 if TYPE_CHECKING:
     from tox.pytest import ToxProject, ToxProjectCreator, ToxRunOutcome
@@ -734,16 +737,16 @@ def test_config_in_toml_replace_if_extend(tox_project: ToxProjectCreator, monkey
 
 
 @pytest.mark.parametrize(
-    ("set_q", "expected_arg"),
+    ("q_env", "expected_arg"),
     [
-        pytest.param(True, "-v", id="then_string_selected"),
-        pytest.param(False, "-q", id="else_string_selected"),
+        pytest.param({"Q": "1"}, "-v", id="then_string_selected"),
+        pytest.param({}, "-q", id="else_string_selected"),
     ],
 )
 def test_config_in_toml_replace_if_extend_scalar_string(
     tox_project: ToxProjectCreator,
     monkeypatch: pytest.MonkeyPatch,
-    set_q: bool,
+    q_env: dict[str, str],
     expected_arg: str,
 ) -> None:
     # Scalar-string then/else with extend=true must append as one item, not characters.
@@ -751,12 +754,7 @@ def test_config_in_toml_replace_if_extend_scalar_string(
     # Regression for a bug where ``commands = [["echo", { replace = "if", condition = "env.Q", then = "-v", else = "-q",
     # extend = true }]]`` produced ``commands = echo - v`` because ``list.extend(string)`` iterates over the string's
     # characters.
-    monkeypatch.delenv("V", raising=False)
-    monkeypatch.delenv("Q", raising=False)
-    if set_q:
-        # Condition is env.Q; setting it flips the condition true (then branch).
-        monkeypatch.setenv("Q", "1")
-    # else: env.Q is unset, so the condition is false and the else branch ("-q") runs.
+    monkeypatch.setattr(os, "environ", {k: v for k, v in os.environ.items() if k not in {"V", "Q"}} | q_env)
     toml = """\
     [tool.tox.env.A]
     commands = [["echo", { replace = "if", condition = "env.Q", then = "-v", else = "-q", extend = true }]]
@@ -917,7 +915,22 @@ def test_config_in_toml_replace_if_factor_platform(tox_project: ToxProjectCreato
     outcome.assert_out_err("[testenv:task]\ndescription = correct platform\n", "")
 
 
-def test_config_in_toml_replace_if_factor_not(tox_project: ToxProjectCreator) -> None:
+@pytest.mark.parametrize(
+    "expected",
+    [
+        pytest.param(
+            "not windows",
+            marks=pytest.mark.skipif(sys.platform == "win32", reason="windows takes the else branch"),
+            id="not-windows",
+        ),
+        pytest.param(
+            "windows",
+            marks=pytest.mark.skipif(sys.platform != "win32", reason="only windows takes the else branch"),
+            id="windows",
+        ),
+    ],
+)
+def test_config_in_toml_replace_if_factor_not(tox_project: ToxProjectCreator, expected: str) -> None:
     project = tox_project({
         "pyproject.toml": dedent("""
         [tool.tox.env."3.13"]
@@ -926,7 +939,6 @@ def test_config_in_toml_replace_if_factor_not(tox_project: ToxProjectCreator) ->
     })
     outcome = project.run("c", "-e", "3.13", "-k", "description")
     outcome.assert_success()
-    expected = "windows" if sys.platform == "win32" else "not windows"
     outcome.assert_out_err(f"[testenv:3.13]\ndescription = {expected}\n", "")
 
 
@@ -1431,19 +1443,28 @@ def test_override_propagates_through_replace_ref_of(
     outcome.assert_out_err(expected, "")
 
 
-def test_toml_machine_isa_does_not_override_explicit_env_factor(tox_project: ToxProjectCreator) -> None:
+@pytest.mark.parametrize(
+    "other_isa",
+    [
+        pytest.param(
+            "x86_64",
+            marks=pytest.mark.skipif(_MACHINE_ISA == "x86_64", reason="machine is x86_64"),
+            id="x86_64",
+        ),
+        pytest.param(
+            "arm64",
+            marks=pytest.mark.skipif(_MACHINE_ISA == "arm64", reason="machine is arm64"),
+            id="arm64",
+        ),
+    ],
+)
+def test_toml_machine_isa_does_not_override_explicit_env_factor(tox_project: ToxProjectCreator, other_isa: str) -> None:
     # Regression test for #3903: explicit ISA in env name takes precedence over machine ISA in TOML.
-    parts = sysconfig.get_platform().rsplit("-", 1)
-    if len(parts) < 2:
-        pytest.skip("sysconfig.get_platform() has no machine component")
-    machine = normalize_isa(parts[-1])
-    other_isa = "x86_64" if machine != "x86_64" else "arm64"
-
     project = tox_project({
         "pyproject.toml": dedent(f"""
         [tool.tox.env_run_base]
         package = "skip"
-        description = {{ replace = "if", condition = "factor.{machine}", then = "{machine}_val", \
+        description = {{ replace = "if", condition = "factor.{_MACHINE_ISA}", then = "{_MACHINE_ISA}_val", \
 else = {{ replace = "if", condition = "factor.{other_isa}", then = "{other_isa}_val", else = "unknown" }} }}
 
         [tool.tox.env.py39-{other_isa}]
@@ -1453,21 +1474,16 @@ else = {{ replace = "if", condition = "factor.{other_isa}", then = "{other_isa}_
     outcome = project.run("c", "-e", f"py39-{other_isa}", "-k", "description")
     outcome.assert_success()
     assert f"{other_isa}_val" in outcome.out
-    assert f"{machine}_val" not in outcome.out
+    assert f"{_MACHINE_ISA}_val" not in outcome.out
 
 
 def test_toml_machine_isa_implicit_when_no_env_isa(tox_project: ToxProjectCreator) -> None:
     # Machine ISA is added implicitly to TOML factors when no ISA factor is in the env name.
-    parts = sysconfig.get_platform().rsplit("-", 1)
-    if len(parts) < 2:
-        pytest.skip("sysconfig.get_platform() has no machine component")
-    machine = normalize_isa(parts[-1])
-
     project = tox_project({
         "pyproject.toml": dedent(f"""
         [tool.tox.env_run_base]
         package = "skip"
-        description = {{ replace = "if", condition = "factor.{machine}", then = "matched", else = "no-match" }}
+        description = {{ replace = "if", condition = "factor.{_MACHINE_ISA}", then = "matched", else = "no-match" }}
 
         [tool.tox.env.py39]
         """),

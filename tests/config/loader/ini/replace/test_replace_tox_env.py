@@ -419,17 +419,19 @@ def test_replace_within_env_list_entry_accepts_value(
 
 
 @pytest.mark.parametrize(
-    "depth",
+    ("depth", "expected", "messages"),
     [
-        pytest.param(5, id="5"),
-        pytest.param(99, id="99"),
-        pytest.param(100, id="100"),
-        pytest.param(101, id="101"),
-        pytest.param(150, id="150"),
-        pytest.param(256, id="256"),
+        pytest.param(5, "1", [], id="5"),
+        pytest.param(99, "1", [], id="99"),
+        pytest.param(100, "1", [], id="100"),
+        pytest.param(101, "{[vars]a0}", ["Could not expand {[vars]a0} after recursing 101 frames"], id="101"),
+        pytest.param(150, "{[vars]a49}", ["Could not expand {[vars]a49} after recursing 101 frames"], id="150"),
+        pytest.param(256, "{[vars]a155}", ["Could not expand {[vars]a155} after recursing 101 frames"], id="256"),
     ],
 )
-def test_replace_within_section_chain_deep(caplog: LogCaptureFixture, tox_ini_conf: ToxIniCreator, depth: int) -> None:
+def test_replace_within_section_chain_deep(
+    caplog: LogCaptureFixture, tox_ini_conf: ToxIniCreator, depth: int, expected: str, messages: list[str]
+) -> None:
     config = tox_ini_conf(
         "\n".join(
             [
@@ -443,13 +445,8 @@ def test_replace_within_section_chain_deep(caplog: LogCaptureFixture, tox_ini_co
     )
     env_config = config.get_env("a")
     env_config.add_config(keys="b", of_type=str, default="b", desc="b")
-    result = env_config["b"]
-    if depth > MAX_REPLACE_DEPTH:
-        exp_stopped_at = "{[vars]a%s}" % (depth - MAX_REPLACE_DEPTH - 1)
-        assert result == exp_stopped_at
-        assert f"Could not expand {exp_stopped_at} after recursing {MAX_REPLACE_DEPTH + 1} frames" in caplog.messages
-    else:
-        assert result == "1"
+    assert env_config["b"] == expected
+    assert caplog.messages == messages
 
 
 def test_replace_command_section_chain_stops_at_depth(caplog: LogCaptureFixture, tox_ini_conf: ToxIniCreator) -> None:

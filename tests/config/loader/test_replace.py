@@ -131,12 +131,21 @@ def test_match_expr(value: str, exp_output: list[str | MatchExpression]) -> None
 
 
 @pytest.mark.parametrize(
+    "value",
+    [
+        pytest.param("py-{foo,bar}", id="py-dash-open-foo-comma-bar-close-none"),
+        pytest.param("py37-{base,i18n},b", id="py37-dash-open-base-comma-i18n-close-comma-b-none"),
+        pytest.param("py37-{i18n,base},b", id="py37-dash-open-i18n-comma-base-close-comma-b-none"),
+        pytest.param("{toxinidir,}", id="open-toxinidir-comma-close-none"),
+    ],
+)
+def test_dont_replace(replace_one: ReplaceOne, value: str) -> None:
+    assert replace_one(value) == value
+
+
+@pytest.mark.parametrize(
     ("value", "exp_exception"),
     [
-        pytest.param("py-{foo,bar}", None, id="py-dash-open-foo-comma-bar-close-none"),
-        pytest.param("py37-{base,i18n},b", None, id="py37-dash-open-base-comma-i18n-close-comma-b-none"),
-        pytest.param("py37-{i18n,base},b", None, id="py37-dash-open-i18n-comma-base-close-comma-b-none"),
-        pytest.param("{toxinidir,}", None, id="open-toxinidir-comma-close-none"),
         pytest.param(
             "{env}",
             r"MatchError\('No variable name was supplied in {env} substitution'\)",
@@ -149,13 +158,9 @@ def test_match_expr(value: str, exp_output: list[str | MatchExpression]) -> None
         ),
     ],
 )
-def test_dont_replace(replace_one: ReplaceOne, value: str, exp_exception: str | None) -> None:
-    # Test that invalid expressions are not replaced.
-    if exp_exception:
-        with pytest.raises(HandledError, match=exp_exception):
-            replace_one(value)
-    else:
-        assert replace_one(value) == value
+def test_dont_replace_raises(replace_one: ReplaceOne, value: str, exp_exception: str) -> None:
+    with pytest.raises(HandledError, match=exp_exception):
+        replace_one(value)
 
 
 def test_replace_factor_ini_uses_fallback(replace_one: ReplaceOne) -> None:
