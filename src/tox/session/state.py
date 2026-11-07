@@ -18,6 +18,11 @@ if TYPE_CHECKING:
     from tox.config.cli.parser import ToxParser
 
 
+__all__ = [
+    "State",
+]
+
+
 class State:
     """
     Runtime state holder.

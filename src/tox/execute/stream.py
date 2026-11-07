@@ -14,6 +14,11 @@ if TYPE_CHECKING:
     from typing import Self
 
 
+__all__ = [
+    "SyncWrite",
+]
+
+
 class SyncWrite:
     """Make sure data collected is synced in-memory and to the target stream on every newline and time period.
 

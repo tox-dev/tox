@@ -16,6 +16,11 @@ if TYPE_CHECKING:
     from tox.config.main import Config
 
 
+__all__ = [
+    "MemoryLoader",
+]
+
+
 class MemoryLoader(Loader[object]):
     """Loads configuration directly from data in memory.
 

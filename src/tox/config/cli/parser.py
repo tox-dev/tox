@@ -752,6 +752,7 @@ __all__ = [
     "CORE",
     "DEFAULT_VERBOSITY",
     "ENV",
+    "ArgumentParserWithEnvAndConfig",
     "HelpFormatter",
     "Parsed",
     "ToxParser",

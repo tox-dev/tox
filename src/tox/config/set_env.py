@@ -456,6 +456,7 @@ class SetEnv:
 
 
 __all__ = [
+    "Replacer",
     "SetEnv",
     "SetEnvEntry",
     "SetEnvRaw",
