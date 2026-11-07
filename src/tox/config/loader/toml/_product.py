@@ -32,9 +32,6 @@ def expand_product(value: dict[str, TomlTypes]) -> list[str]:
     return [name for combo in product(*expanded) if (name := "-".join(combo)) not in exclude]
 
 
-_RESERVED_LABELS: frozenset[str] = frozenset({"env", "posargs", "tty", "glob", "factor"})
-
-
 def expand_factor_group(group: TomlTypes) -> list[str]:
     if isinstance(group, list):
         result: list[str] = []
@@ -94,6 +91,9 @@ def _expand_labeled(label: str, values: TomlTypes) -> list[str]:
         msg += f"got {type(values).__name__}"
         raise TypeError(msg)
     return [str(v) for v in values]
+
+
+_RESERVED_LABELS: frozenset[str] = frozenset({"env", "posargs", "tty", "glob", "factor"})
 
 
 def extract_default(group: TomlTypes, values: list[str]) -> str | None:

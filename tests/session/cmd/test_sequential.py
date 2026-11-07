@@ -736,13 +736,12 @@ def test_interrupt_post_commands_runs_after_sigint(tox_project: ToxProjectCreato
     marker_main = tmp_path / "main"
     marker_post = tmp_path / "post"
     main_cmd = f"from pathlib import Path; Path('{marker_main}').write_text(''); import time; time.sleep(100)"
-    post_cmd = f"from pathlib import Path; Path('{marker_post}').write_text('done')"
     toml = f"""
     [env_run_base]
     package = "skip"
     interrupt_post_commands = true
     commands = [["python", "-c", "{main_cmd}"]]
-    commands_post = [["python", "-c", "{post_cmd}"]]
+    commands_post = [["python", "-c", "from pathlib import Path; Path('{marker_post}').write_text('done')"]]
     """
     cmd = ["-c", str(tox_project({"tox.toml": toml}).path / "tox.toml"), "r", "-e", "py"]
     process = Popen([sys.executable, "-m", "tox", *cmd], stdout=PIPE, stderr=PIPE, universal_newlines=True)
@@ -762,12 +761,11 @@ def test_interrupt_post_commands_not_run_by_default(tox_project: ToxProjectCreat
     marker_main = tmp_path / "main"
     marker_post = tmp_path / "post"
     main_cmd = f"from pathlib import Path; Path('{marker_main}').write_text(''); import time; time.sleep(100)"
-    post_cmd = f"from pathlib import Path; Path('{marker_post}').write_text('done')"
     toml = f"""
     [env_run_base]
     package = "skip"
     commands = [["python", "-c", "{main_cmd}"]]
-    commands_post = [["python", "-c", "{post_cmd}"]]
+    commands_post = [["python", "-c", "from pathlib import Path; Path('{marker_post}').write_text('done')"]]
     """
     cmd = ["-c", str(tox_project({"tox.toml": toml}).path / "tox.toml"), "r", "-e", "py"]
     process = Popen([sys.executable, "-m", "tox", *cmd], stdout=PIPE, stderr=PIPE, universal_newlines=True)

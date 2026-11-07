@@ -184,8 +184,7 @@ def test_env_log_cleared_without_commands(tox_project: ToxProjectCreator) -> Non
 
 
 def test_env_log_redacts_secret_argv(tox_project: ToxProjectCreator) -> None:
-    cmd = "commands=python -c 'pass' --token=hunter2 --cov=tox"
-    prj = tox_project({"tox.ini": f"[testenv]\npackage=skip\n{cmd}"})
+    prj = tox_project({"tox.ini": "[testenv]\npackage=skip\ncommands=python -c 'pass' --token=hunter2 --cov=tox"})
     result = prj.run("r")
     result.assert_success()
     content = ((prj.path / ".tox" / "py" / "log") / "1-commands[0].log").read_text()
@@ -393,12 +392,11 @@ def test_env_dir_absolute_is_kept(tox_project: ToxProjectCreator, tmp_path: Path
 
 
 def test_setenv_path_not_overwritten(tox_project: ToxProjectCreator) -> None:
-    cmd = "import os; print(os.environ['PATH'])"
-    toml = f"""
+    toml = """
     [env_run_base]
     package = "skip"
-    set_env.PATH = "{{env:PATH}}:/custom/test/path"
-    commands = [["python", "-c", "{cmd}"]]
+    set_env.PATH = "{env:PATH}:/custom/test/path"
+    commands = [["python", "-c", "import os; print(os.environ['PATH'])"]]
     """
     result = tox_project({"tox.toml": toml}).run("r")
     result.assert_success()
@@ -407,12 +405,11 @@ def test_setenv_path_not_overwritten(tox_project: ToxProjectCreator) -> None:
 
 
 def test_setenv_path_venv_paths_first(tox_project: ToxProjectCreator) -> None:
-    cmd = "import os; print(os.environ['PATH'])"
-    toml = f"""
+    toml = """
     [env_run_base]
     package = "skip"
-    set_env.PATH = "{{env:PATH}}:/trailing/path"
-    commands = [["python", "-c", "{cmd}"]]
+    set_env.PATH = "{env:PATH}:/trailing/path"
+    commands = [["python", "-c", "import os; print(os.environ['PATH'])"]]
     """
     result = tox_project({"tox.toml": toml}).run("r")
     result.assert_success()

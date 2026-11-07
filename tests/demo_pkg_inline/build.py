@@ -82,6 +82,20 @@ metadata_files = {
 }
 
 
+def get_requires_for_build_wheel(config_settings: dict[str, str] | None = None) -> list[str]:  # ruff:ignore[unused-function-argument]
+    return []  # pragma: no cover # only executed in non-host pythons
+
+
+if os.environ.get("BACKEND_HAS_EDITABLE"):
+
+    def build_editable(
+        wheel_directory: str,
+        config_settings: dict[str, str] | None = None,
+        metadata_directory: str | None = None,
+    ) -> str:
+        return build_wheel(wheel_directory, config_settings, metadata_directory)
+
+
 def build_wheel(
     wheel_directory: str,
     config_settings: dict[str, str] | None = None,  # ruff:ignore[unused-function-argument]
@@ -104,20 +118,6 @@ def build_wheel(
                 zip_file_handler.writestr(arc_name, dedent(data).strip())
     print(f"created wheel {path}")  # ruff:ignore[print]
     return base_name
-
-
-def get_requires_for_build_wheel(config_settings: dict[str, str] | None = None) -> list[str]:  # ruff:ignore[unused-function-argument]
-    return []  # pragma: no cover # only executed in non-host pythons
-
-
-if os.environ.get("BACKEND_HAS_EDITABLE"):
-
-    def build_editable(
-        wheel_directory: str,
-        config_settings: dict[str, str] | None = None,
-        metadata_directory: str | None = None,
-    ) -> str:
-        return build_wheel(wheel_directory, config_settings, metadata_directory)
 
 
 def build_sdist(sdist_directory: str, config_settings: dict[str, str] | None = None) -> str:  # ruff:ignore[unused-function-argument]

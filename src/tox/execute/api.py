@@ -33,6 +33,22 @@ class ExecuteOptions:
     def __init__(self, env: ToxEnv) -> None:
         self._env = env
 
+    @property
+    def suicide_timeout(self) -> float:
+        return cast("float", self._env.conf["suicide_timeout"])
+
+    @property
+    def interrupt_timeout(self) -> float:
+        return cast("float", self._env.conf["interrupt_timeout"])
+
+    @property
+    def terminate_timeout(self) -> float:
+        return cast("float", self._env.conf["terminate_timeout"])
+
+    @property
+    def no_capture(self) -> bool:
+        return cast("bool", getattr(self._env.options, "no_capture", False))
+
     @classmethod
     def register_conf(cls, env: ToxEnv) -> None:
         env.conf.add_config(
@@ -53,22 +69,6 @@ class ExecuteOptions:
             of_type=float,
             default=0.2,
         )
-
-    @property
-    def suicide_timeout(self) -> float:
-        return cast("float", self._env.conf["suicide_timeout"])
-
-    @property
-    def interrupt_timeout(self) -> float:
-        return cast("float", self._env.conf["interrupt_timeout"])
-
-    @property
-    def terminate_timeout(self) -> float:
-        return cast("float", self._env.conf["terminate_timeout"])
-
-    @property
-    def no_capture(self) -> bool:
-        return cast("bool", getattr(self._env.options, "no_capture", False))
 
 
 class ExecuteStatus(ABC):
@@ -307,15 +307,14 @@ class Outcome:
             f" for {self.request.shell_cmd_redacted}"
         )
 
+    @property
+    def elapsed(self) -> float:
+        """:returns: time the execution took in seconds"""
+        return self.end - self.start
+
     def assert_success(self) -> None:
         """Assert that the execution succeeded."""
         if self.start_error is not None or self.exit_code not in {None, self.OK}:
-            self._assert_fail(self.exit_code or self.FAILED)
-        self.log_run_done(logging.INFO)
-
-    def assert_failure(self) -> None:
-        """Assert that the execution failed."""
-        if self.start_error is not None or self.exit_code == self.OK:  # never started, so nothing to invert
             self._assert_fail(self.exit_code or self.FAILED)
         self.log_run_done(logging.INFO)
 
@@ -354,10 +353,11 @@ class Outcome:
             metadata,
         )
 
-    @property
-    def elapsed(self) -> float:
-        """:returns: time the execution took in seconds"""
-        return self.end - self.start
+    def assert_failure(self) -> None:
+        """Assert that the execution failed."""
+        if self.start_error is not None or self.exit_code == self.OK:  # never started, so nothing to invert
+            self._assert_fail(self.exit_code or self.FAILED)
+        self.log_run_done(logging.INFO)
 
     def out_err(self) -> tuple[str, str]:
         """:returns: a tuple of the standard output and standard error"""

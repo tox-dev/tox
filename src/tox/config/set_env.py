@@ -9,10 +9,10 @@ from typing import TYPE_CHECKING, NotRequired, Protocol, TypedDict, final
 
 from packaging.markers import InvalidMarker, Marker
 
-from tox.config.loader.api import ConfigLoadArgs
 from tox.report import HandledError
 from tox.tox_env.errors import Fail
 
+from .loader.api import ConfigLoadArgs
 from .loader.replacer import MatchError, MatchExpression
 from .set_env_line import format_line, split_line, split_value_marker
 
@@ -99,51 +99,6 @@ class SetEnv:
         msg = f"set_env value {value!r} needs a configuration loader to resolve"
         raise TypeError(msg)
 
-    def _parse_str(self, raw: str, *, substituted: bool) -> None:
-        keys_after_file: set[str] = set()
-        for line in raw.splitlines():
-            if not line.strip():
-                continue
-            if self._is_file_line(line):
-                self._env_files.append((self._parse_file_line(line), keys_after_file := set()))
-            elif (entry := self._parse_line(line, substituted=substituted)) is not None:
-                key, value, marker = entry
-                self._define(key, value, marker, keys_after_file)
-
-    def _parse_line(self, line: str, *, substituted: bool) -> tuple[str, str, str] | None:
-        """Split a ``KEY=VALUE`` line, or return ``None`` once it is queued to be split after substitution."""
-        from .loader.replacer import MatchExpression, find_replace_expr  # ruff:ignore[import-outside-top-level]
-
-        try:
-            key, value, marker = split_line(line)
-            # in substituted text a brace that opens no expression is part of the key, as before
-            if "{" in key and (
-                not substituted or any(isinstance(expr, MatchExpression) for expr in find_replace_expr(line))
-            ):
-                msg = f"invalid line {line!r} in set_env"
-                raise ValueError(msg)  # ruff:ignore[raise-within-try]
-        except ValueError:
-            if any(isinstance(expr, MatchExpression) for expr in find_replace_expr(line)):
-                self._needs_replacement.append(line)
-                return None
-            raise
-        return key, value, marker
-
-    def _define(self, key: str, value: SetEnvValue, marker: str | None, keys_after_file: set[str]) -> None:
-        self._raw[key] = value
-        self._defined_keys.add(key)
-        keys_after_file.add(key)
-        if marker:
-            try:
-                self._markers[key] = Marker(marker)
-            except InvalidMarker as exception:
-                msg = f"invalid marker for set_env key {key!r}: {exception}"
-                if self.shape == "string":
-                    msg = f"{msg}\nescape a literal ';' in the value as '\\;'"
-                raise ValueError(msg) from exception
-        else:  # an unconditional redefinition drops the marker an earlier entry set, as the INI form does
-            self._markers.pop(key, None)
-
     def _parse_list(self, raw: list[dict[str, SetEnvValue | SetEnvEntry] | SetEnvReference]) -> None:
         entries = (
             entry.config.raw(entry.args, resolve=False) if isinstance(entry, SetEnvReference) else entry
@@ -172,6 +127,32 @@ class SetEnv:
             else:
                 self._define(key, value, None, keys_after_file)
 
+    def _define(self, key: str, value: SetEnvValue, marker: str | None, keys_after_file: set[str]) -> None:
+        self._raw[key] = value
+        self._defined_keys.add(key)
+        keys_after_file.add(key)
+        if marker:
+            try:
+                self._markers[key] = Marker(marker)
+            except InvalidMarker as exception:
+                msg = f"invalid marker for set_env key {key!r}: {exception}"
+                if self.shape == "string":
+                    msg = f"{msg}\nescape a literal ';' in the value as '\\;'"
+                raise ValueError(msg) from exception
+        else:  # an unconditional redefinition drops the marker an earlier entry set, as the INI form does
+            self._markers.pop(key, None)
+
+    def _parse_str(self, raw: str, *, substituted: bool) -> None:
+        keys_after_file: set[str] = set()
+        for line in raw.splitlines():
+            if not line.strip():
+                continue
+            if self._is_file_line(line):
+                self._env_files.append((self._parse_file_line(line), keys_after_file := set()))
+            elif (entry := self._parse_line(line, substituted=substituted)) is not None:
+                key, value, marker = entry
+                self._define(key, value, marker, keys_after_file)
+
     @staticmethod
     def _is_file_line(line: str) -> bool:
         return line.startswith("file|")
@@ -180,29 +161,24 @@ class SetEnv:
     def _parse_file_line(line: str) -> str:
         return line[len("file|") :]
 
-    def _marker_matches(self, key: str) -> bool:
-        if key not in self._markers:
-            return True
-        return self._markers[key].evaluate()
+    def _parse_line(self, line: str, *, substituted: bool) -> tuple[str, str, str] | None:
+        """Split a ``KEY=VALUE`` line, or return ``None`` once it is queued to be split after substitution."""
+        from .loader.replacer import MatchExpression, find_replace_expr  # ruff:ignore[import-outside-top-level]
 
-    def use_replacer(self, value: Replacer, args: ConfigLoadArgs) -> None:
-        self._replacer, self._args = value, args.copy()
-
-    def load(self, item: str, args: ConfigLoadArgs | None = None) -> str:
-        self._resolve_replacements()
-        if item in self._materialized:
-            return self._materialized[item]
-        if item in self._exported:
-            self._materialized[item] = self._exported[item]()
-            return self._materialized[item]
-        raw = self._raw[item]
-        args = ConfigLoadArgs([], self._name, self._env_name) if args is None else args
-        if args.chain[-1:] != [f"env:{item}"]:  # an {env:...} lookup already recorded the key it resolves
-            args.chain.append(f"env:{item}")
-        result = self._replacer(raw, args)  # apply any replace options
-        self._materialized[item] = result
-        self._raw.pop(item, None)  # if the replace requires the env we may be called again, so allow pop to fail
-        return result
+        try:
+            key, value, marker = split_line(line)
+            # in substituted text a brace that opens no expression is part of the key, as before
+            if "{" in key and (
+                not substituted or any(isinstance(expr, MatchExpression) for expr in find_replace_expr(line))
+            ):
+                msg = f"invalid line {line!r} in set_env"
+                raise ValueError(msg)  # ruff:ignore[raise-within-try]
+        except ValueError:
+            if any(isinstance(expr, MatchExpression) for expr in find_replace_expr(line)):
+                self._needs_replacement.append(line)
+                return None
+            raise
+        return key, value, marker
 
     def __contains__(self, item: object) -> bool:
         return isinstance(item, str) and item in iter(self)
@@ -278,18 +254,6 @@ class SetEnv:
         self._reference_entries.clear()
         self._merge_entries(entries)
         self.changed = True  # loading while iterating can cause these values to be missed
-
-    def _merge_entries(self, entries: Mapping[str, tuple[SetEnvValue, Marker | None]]) -> None:
-        sub_raw: dict[str, SetEnvValue] = {}
-        for key, (value, marker) in entries.items():
-            if key not in self._exported:
-                sub_raw[key] = value
-                if marker is None:
-                    self._markers.pop(key, None)
-                else:
-                    self._markers[key] = marker
-        self._materialized = {k: v for k, v in self._materialized.items() if k not in sub_raw}
-        self._raw.update(sub_raw)
 
     def _resolve_files(self, args: ConfigLoadArgs) -> None:
         for filename, keys_after in self._env_files:
@@ -367,6 +331,48 @@ class SetEnv:
             return line[: end - 1], "=", line[end:]
         return line, "", ""
 
+    def _merge_entries(self, entries: Mapping[str, tuple[SetEnvValue, Marker | None]]) -> None:
+        sub_raw: dict[str, SetEnvValue] = {}
+        for key, (value, marker) in entries.items():
+            if key not in self._exported:
+                sub_raw[key] = value
+                if marker is None:
+                    self._markers.pop(key, None)
+                else:
+                    self._markers[key] = marker
+        self._materialized = {k: v for k, v in self._materialized.items() if k not in sub_raw}
+        self._raw.update(sub_raw)
+
+    def _marker_matches(self, key: str) -> bool:
+        if key not in self._markers:
+            return True
+        return self._markers[key].evaluate()
+
+    def use_replacer(self, value: Replacer, args: ConfigLoadArgs) -> None:
+        self._replacer, self._args = value, args.copy()
+
+    def load(self, item: str, args: ConfigLoadArgs | None = None) -> str:
+        self._resolve_replacements()
+        if item in self._materialized:
+            return self._materialized[item]
+        if item in self._exported:
+            self._materialized[item] = self._exported[item]()
+            return self._materialized[item]
+        raw = self._raw[item]
+        args = ConfigLoadArgs([], self._name, self._env_name) if args is None else args
+        if args.chain[-1:] != [f"env:{item}"]:  # an {env:...} lookup already recorded the key it resolves
+            args.chain.append(f"env:{item}")
+        result = self._replacer(raw, args)  # apply any replace options
+        self._materialized[item] = result
+        self._raw.pop(item, None)  # if the replace requires the env we may be called again, so allow pop to fail
+        return result
+
+    def lines(self) -> str:
+        return "\n".join(
+            format_line(name, str(entry["value"]), entry.get("marker"))
+            for name, entry in self.raw(self._args.copy()).items()
+        )
+
     def raw(self, args: ConfigLoadArgs, *, resolve: bool = True) -> dict[str, SetEnvEntry]:
         """Preserve lazy values and markers when another section includes this configuration."""
         if resolve:
@@ -377,12 +383,6 @@ class SetEnv:
             if marker := self._markers.get(key):
                 result[key]["marker"] = str(marker)
         return result
-
-    def lines(self) -> str:
-        return "\n".join(
-            format_line(name, str(entry["value"]), entry.get("marker"))
-            for name, entry in self.raw(self._args.copy()).items()
-        )
 
     def export(self, values: Mapping[str, Callable[[], str]]) -> None:
         """Set tox's own variables over the configured ones, resolved on first read.
@@ -418,8 +418,7 @@ class SetEnv:
         for key in param:
             # do not override something already set explicitly
             if override or (key not in self._raw and key not in self._materialized):
-                value = param.load(key) if isinstance(param, SetEnv) else param[key]
-                self._materialized[key] = value
+                self._materialized[key] = param.load(key) if isinstance(param, SetEnv) else param[key]
                 self.changed = True
 
 
