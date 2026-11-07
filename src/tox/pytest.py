@@ -275,14 +275,14 @@ class ToxProject:
                 state = previous_setup_state(value)
                 return state
 
-            with self.monkeypatch.context() as m:
-                m.setattr(tox_env_api, "_CWD", self.path)
-                m.setattr(tox.run, "setup_state", our_setup_state)
-                m.setattr(sys, "argv", [sys.executable, "-m", "tox", *list(args)])
-                m.setenv("VIRTUALENV_SYMLINK_APP_DATA", "1")
-                m.setenv("VIRTUALENV_SYMLINKS", "1")
-                m.setenv("VIRTUALENV_PIP", "embed")
-                m.setenv("VIRTUALENV_SETUPTOOLS", "embed")
+            with self.monkeypatch.context() as patcher:
+                patcher.setattr(tox_env_api, "_CWD", self.path)
+                patcher.setattr(tox.run, "setup_state", our_setup_state)
+                patcher.setattr(sys, "argv", [sys.executable, "-m", "tox", *list(args)])
+                patcher.setenv("VIRTUALENV_SYMLINK_APP_DATA", "1")
+                patcher.setenv("VIRTUALENV_SYMLINKS", "1")
+                patcher.setenv("VIRTUALENV_PIP", "embed")
+                patcher.setenv("VIRTUALENV_SETUPTOOLS", "embed")
                 try:
                     tox_run(args)
                 except SystemExit as exception:
