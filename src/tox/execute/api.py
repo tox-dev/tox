@@ -463,7 +463,7 @@ class Outcome:
         return self.out, self.err
 
 
-__all__ = (
+__all__ = [
     "ContentHandler",
     "Execute",
     "ExecuteInstance",
@@ -472,4 +472,4 @@ __all__ = (
     "FinishedExecuteStatus",
     "Outcome",
     "StdinSource",
-)
+]

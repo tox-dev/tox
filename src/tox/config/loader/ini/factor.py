@@ -259,7 +259,7 @@ _FACTOR_RE: Final[re.Pattern[str]] = re.compile(
 )
 
 
-__all__ = (
+__all__ = [
     "LATEST_PYTHON_MINOR_MAX",
     "LATEST_PYTHON_MINOR_MIN",
     "active_factors",
@@ -269,4 +269,4 @@ __all__ = (
     "filter_for_env",
     "find_envs",
     "open_minor_range",
-)
+]

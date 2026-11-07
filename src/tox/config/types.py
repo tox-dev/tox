@@ -110,8 +110,8 @@ class FactorGroup:
     default: str | None = None
 
 
-__all__ = (
+__all__ = [
     "Command",
     "EnvList",
     "FactorGroup",
-)
+]
