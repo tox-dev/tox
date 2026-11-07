@@ -203,7 +203,7 @@ def test_legacy_cli_flags(tox_project: ToxProjectCreator, mocker: MockerFixture)
     )
     proj = tox_project({"tox.ini": "[testenv]\ndeps = p>6\n c\n -rr.txt\npackage=skip\nset_env = PIP_PRE = 0"})
     (proj.path / "r.txt").write_text("d")
-    execute_calls = proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
+    execute_calls = proj.patch_execute(lambda request: 0 if "install" in request.run_id else None)
     args = ["--pre", "--force-dep", "p<1", "--force-dep", "b>2", "--sitepackages", "--alwayscopy"]
     proj.run("le", "-e", "py", *args).assert_success()
 
@@ -217,7 +217,7 @@ def test_legacy_cli_flags(tox_project: ToxProjectCreator, mocker: MockerFixture)
 
 def test_legacy_force_dep_matches_normalized_name(tox_project: ToxProjectCreator) -> None:
     proj = tox_project({"tox.ini": "[testenv]\ndeps = Typing_Extensions>=4\npackage=skip"})
-    execute_calls = proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
+    execute_calls = proj.patch_execute(lambda request: 0 if "install" in request.run_id else None)
     proj.run("le", "-e", "py", "--force-dep", "typing-extensions<4.10").assert_success()
 
     install = next(i[0][3].cmd for i in execute_calls.call_args_list if i[0][3].run_id == "install_deps")

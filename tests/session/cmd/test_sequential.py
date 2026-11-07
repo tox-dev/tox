@@ -243,7 +243,7 @@ def test_package_deps_change(tox_project: ToxProjectCreator, demo_pkg_inline: Pa
     toml = (demo_pkg_inline / "pyproject.toml").read_text()
     build = (demo_pkg_inline / "build.py").read_text()
     proj = tox_project({"tox.ini": "[testenv]\npackage=wheel", "pyproject.toml": toml, "build.py": build})
-    proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
+    proj.patch_execute(lambda request: 0 if "install" in request.run_id else None)
 
     result_first = proj.run("r")
     result_first.assert_success()
@@ -408,7 +408,7 @@ def test_skip_env_install_no_install_calls(tox_project: ToxProjectCreator, demo_
             deps = ["setuptools"]
         """,
     })
-    execute_calls = proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
+    execute_calls = proj.patch_execute(lambda request: 0 if "install" in request.run_id else None)
     result = proj.run("--root", str(demo_pkg_inline), "--workdir", str(proj.path / ".tox"), "--skip-env-install")
     result.assert_success()
     calls = [(i[0][0].conf.name, i[0][3].run_id) for i in execute_calls.call_args_list]
@@ -417,7 +417,7 @@ def test_skip_env_install_no_install_calls(tox_project: ToxProjectCreator, demo_
 
 def test_skip_develop_mode(tox_project: ToxProjectCreator, demo_pkg_setuptools: Path) -> None:
     proj = tox_project({"tox.ini": "[testenv]\npackage=wheel\n"})
-    execute_calls = proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
+    execute_calls = proj.patch_execute(lambda request: 0 if "install" in request.run_id else None)
     proj.run("--root", str(demo_pkg_setuptools), "--develop", "--workdir", str(proj.path / ".tox")).assert_success()
     calls = [(i[0][0].conf.name, i[0][3].run_id) for i in execute_calls.call_args_list]
     expected = [
@@ -527,8 +527,8 @@ def test_machine_factor_run_env(tox_project: ToxProjectCreator) -> None:
 
     # verify the created virtualenv reports the correct machine in the journal
     proj.run("r", "-e", f"py-{machine}", "--result-json", str(proj.path / "out.json")).assert_success()
-    with (proj.path / "out.json").open() as f:
-        report = json.load(f)
+    with (proj.path / "out.json").open() as report_file:
+        report = json.load(report_file)
     py_journal = report["testenvs"][f"py-{machine}"]["python"]
     py_info = PythonInfo.current_system()
     assert py_journal["machine"] == py_info.machine
@@ -707,14 +707,14 @@ def test_no_capture_short_flag_with_result_json_fails(tox_project: ToxProjectCre
 
 def test_no_capture_flag_parsed(tox_project: ToxProjectCreator) -> None:
     project = tox_project({"tox.ini": "[testenv]\npackage=skip\ncommands=python -c 'print(\"hello\")'"})
-    execute_calls = project.patch_execute(lambda r: 0)  # ruff:ignore[unused-lambda-argument]  # callback signature
+    execute_calls = project.patch_execute(lambda request: 0)  # ruff:ignore[unused-lambda-argument]  # callback signature
     project.run("r", "-e", "py", "--no-capture").assert_success()
     assert execute_calls.call_count > 0
 
 
 def test_no_capture_short_flag_parsed(tox_project: ToxProjectCreator) -> None:
     project = tox_project({"tox.ini": "[testenv]\npackage=skip\ncommands=python -c 'print(\"hello\")'"})
-    execute_calls = project.patch_execute(lambda r: 0)  # ruff:ignore[unused-lambda-argument]  # callback signature
+    execute_calls = project.patch_execute(lambda request: 0)  # ruff:ignore[unused-lambda-argument]  # callback signature
     project.run("r", "-e", "py", "-i").assert_success()
     assert execute_calls.call_count > 0
 
