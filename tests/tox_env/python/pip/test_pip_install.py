@@ -4,7 +4,6 @@ import json
 import os
 from textwrap import dedent
 from typing import TYPE_CHECKING, Any, Final, TypedDict
-from unittest.mock import Mock
 from zipfile import ZipFile
 
 import pytest
@@ -61,7 +60,7 @@ def test_pip_install_empty_list(tox_project: ToxProjectCreator) -> None:
     result.assert_success()
 
     pip = result.state.envs["py"].installer
-    execute_calls = proj.patch_execute(Mock())
+    execute_calls = proj.patch_execute(lambda request: None)
     pip.install([], "section", "type")
     assert execute_calls.call_count == 0
 
