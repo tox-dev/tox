@@ -868,9 +868,28 @@ def test_pkg_env_skip_from_plugin_hook(tox_project: ToxProjectCreator) -> None:
             "from_pkgenv",
             id="ini",
         ),
-        pytest.param(
-            {
-                "tox.toml": dedent("""\
+    ],
+)
+def test_pkg_env_redefined_uses_pkg_base(
+    tox_project: ToxProjectCreator,
+    files: dict[str, str],
+    expected_base: list[str],
+    expected_marker: str,
+) -> None:
+    # An env first built as a run env and then redefined as a package env must load the package base chain.
+
+    outcome = tox_project(files).run("c", "-e", "mypkg,py", "-k", "set_env", "base")
+
+    outcome.assert_success()
+    pkg_conf = outcome.state.conf.get_env("mypkg")
+    assert pkg_conf["base"] == expected_base
+    assert pkg_conf["set_env"].load("MARKER") == expected_marker
+
+
+def test_pkg_env_redefined_toml_uses_pkg_base(tox_project: ToxProjectCreator) -> None:
+    # An env first built as a run env and then redefined as a package env must load the package base chain.
+    files = {
+        "tox.toml": dedent("""\
                     [env_run_base]
                     package = "wheel"
                     package_env = "mypkg"
@@ -880,29 +899,12 @@ def test_pkg_env_skip_from_plugin_hook(tox_project: ToxProjectCreator) -> None:
                     [env_pkg_base]
                     set_env = { MARKER = "from_pkg_base" }
                 """),
-                "pyproject.toml": "",
-            },
-            None,
-            "from_pkg_base",
-            id="toml",
-        ),
-    ],
-)
-def test_pkg_env_redefined_uses_pkg_base(
-    tox_project: ToxProjectCreator,
-    files: dict[str, str],
-    expected_base: list[str] | None,
-    expected_marker: str,
-) -> None:
-    # An env first built as a run env and then redefined as a package env must load the package base chain.
-
+        "pyproject.toml": "",
+    }
     outcome = tox_project(files).run("c", "-e", "mypkg,py", "-k", "set_env", "base")
-
     outcome.assert_success()
     pkg_conf = outcome.state.conf.get_env("mypkg")
-    if expected_base is not None:
-        assert pkg_conf["base"] == expected_base
-    assert pkg_conf["set_env"].load("MARKER") == expected_marker
+    assert pkg_conf["set_env"].load("MARKER") == "from_pkg_base"
 
 
 @pytest.mark.parametrize(

@@ -22,9 +22,22 @@ if TYPE_CHECKING:
     from tox.pytest import MonkeyPatch, ToxProject, ToxProjectCreator, ToxRunOutcome
 
 
-def test_show_config_default_run_env(tox_project: ToxProjectCreator, monkeypatch: MonkeyPatch) -> None:
-    py_ver = sys.version_info[0:2]
-    name = f"py{py_ver[0]}{py_ver[1]}" if platform.python_implementation() == "CPython" else "pypy3"
+@pytest.mark.parametrize(
+    "name",
+    [
+        pytest.param(
+            f"py{sys.version_info[0]}{sys.version_info[1]}",
+            marks=pytest.mark.skipif(platform.python_implementation() != "CPython", reason="cpython default env"),
+            id="cpython",
+        ),
+        pytest.param(
+            "pypy3",
+            marks=pytest.mark.skipif(platform.python_implementation() == "CPython", reason="pypy default env"),
+            id="pypy",
+        ),
+    ],
+)
+def test_show_config_default_run_env(tox_project: ToxProjectCreator, monkeypatch: MonkeyPatch, name: str) -> None:
     project = tox_project({"tox.ini": f"[tox]\nenv_list = {name}\n[testenv:{name}]\ncommands={{posargs}}"})
     result = project.run("c", "-e", name, "--core", "--", "magic")
     state = result.state
@@ -227,40 +240,111 @@ def test_show_config_valid_env_exit_code_zero(tox_project: ToxProjectCreator) ->
     project.run("c", "-e", "a").assert_success()
 
 
-@pytest.mark.parametrize("stdout_is_atty", [True, False])
-def test_pass_env_config_default(tox_project: ToxProjectCreator, stdout_is_atty: bool, mocker: MockerFixture) -> None:
+@pytest.mark.parametrize(
+    ("stdout_is_atty", "tty_vars"),
+    [
+        pytest.param(True, ["TERM", "TERMINFO"], id="atty"),
+        pytest.param(False, [], id="no-atty"),
+    ],
+)
+@pytest.mark.skipif(sys.platform == "win32", reason="posix default pass env")
+def test_pass_env_config_default_posix(
+    tox_project: ToxProjectCreator, stdout_is_atty: bool, tty_vars: list[str], mocker: MockerFixture
+) -> None:
     mocker.patch("sys.stdout.isatty", return_value=stdout_is_atty)
     pass_env = tox_project({"tox.ini": ""}).run("c", "-e", "py", "-k", "pass_env").env_conf("py")["pass_env"]
-    is_win = sys.platform == "win32"
-    expected = (
-        []
-        + (["APPDATA"] if is_win else [])
-        + ["CC", "CCSHARED", "CFLAGS"]
-        + (["COMSPEC"] if is_win else [])
-        + ["CPPFLAGS", "CURL_CA_BUNDLE", "CXX", "FORCE_COLOR", "HOME", "LANG"]
-        + ["LANGUAGE", "LDFLAGS", "LD_LIBRARY_PATH"]
-        + (["LOCALAPPDATA"] if is_win else [])
-        + (["MSYSTEM"] if is_win else [])
-        + ["NETRC"]
-        + (["NIX_LD", "NIX_LD_LIBRARY_PATH"] if not is_win else [])
-        + ["NO_COLOR"]
-        + (["NUMBER_OF_PROCESSORS", "PATHEXT"] if is_win else [])
-        + ["PIP_*", "PKG_CONFIG", "PKG_CONFIG_PATH", "PKG_CONFIG_SYSROOT_DIR"]
-        + (["PROCESSOR_ARCHITECTURE"] if is_win else [])
-        + (["PROGRAMDATA"] if is_win else [])
-        + (["PROGRAMFILES"] if is_win else [])
-        + (["PROGRAMFILES(x86)"] if is_win else [])
-        + ["PYTHON_GIL", "REQUESTS_CA_BUNDLE"]
-        + (["SSH_AGENT_PID", "SSH_AUTH_SOCK"] if not is_win else [])
-        + ["SSL_CERT_FILE"]
-        + (["SYSTEMDRIVE", "SYSTEMROOT", "TEMP"] if is_win else [])
-        + (["TERM", "TERMINFO"] if stdout_is_atty else [])
-        + (["TMP", "USERPROFILE"] if is_win else ["TMPDIR"])
-        + ["VIRTUALENV_*"]
-        + (["WINDIR"] if is_win else [])
-        + ["http_proxy", "https_proxy", "no_proxy"]
-    )
-    assert pass_env == expected
+    assert pass_env == sorted([
+        "CC",
+        "CCSHARED",
+        "CFLAGS",
+        "CPPFLAGS",
+        "CURL_CA_BUNDLE",
+        "CXX",
+        "FORCE_COLOR",
+        "HOME",
+        "LANG",
+        "LANGUAGE",
+        "LDFLAGS",
+        "LD_LIBRARY_PATH",
+        "NETRC",
+        "NIX_LD",
+        "NIX_LD_LIBRARY_PATH",
+        "NO_COLOR",
+        "PIP_*",
+        "PKG_CONFIG",
+        "PKG_CONFIG_PATH",
+        "PKG_CONFIG_SYSROOT_DIR",
+        "PYTHON_GIL",
+        "REQUESTS_CA_BUNDLE",
+        "SSH_AGENT_PID",
+        "SSH_AUTH_SOCK",
+        "SSL_CERT_FILE",
+        "TMPDIR",
+        "VIRTUALENV_*",
+        "http_proxy",
+        "https_proxy",
+        "no_proxy",
+        *tty_vars,
+    ])
+
+
+@pytest.mark.parametrize(
+    ("stdout_is_atty", "tty_vars"),
+    [
+        pytest.param(True, ["TERM", "TERMINFO"], id="atty"),
+        pytest.param(False, [], id="no-atty"),
+    ],
+)
+@pytest.mark.skipif(sys.platform != "win32", reason="windows default pass env")
+def test_pass_env_config_default_windows(
+    tox_project: ToxProjectCreator, stdout_is_atty: bool, tty_vars: list[str], mocker: MockerFixture
+) -> None:
+    mocker.patch("sys.stdout.isatty", return_value=stdout_is_atty)
+    pass_env = tox_project({"tox.ini": ""}).run("c", "-e", "py", "-k", "pass_env").env_conf("py")["pass_env"]
+    assert pass_env == sorted([
+        "APPDATA",
+        "CC",
+        "CCSHARED",
+        "CFLAGS",
+        "COMSPEC",
+        "CPPFLAGS",
+        "CURL_CA_BUNDLE",
+        "CXX",
+        "FORCE_COLOR",
+        "HOME",
+        "LANG",
+        "LANGUAGE",
+        "LDFLAGS",
+        "LD_LIBRARY_PATH",
+        "LOCALAPPDATA",
+        "MSYSTEM",
+        "NETRC",
+        "NO_COLOR",
+        "NUMBER_OF_PROCESSORS",
+        "PATHEXT",
+        "PIP_*",
+        "PKG_CONFIG",
+        "PKG_CONFIG_PATH",
+        "PKG_CONFIG_SYSROOT_DIR",
+        "PROCESSOR_ARCHITECTURE",
+        "PROGRAMDATA",
+        "PROGRAMFILES",
+        "PROGRAMFILES(x86)",
+        "PYTHON_GIL",
+        "REQUESTS_CA_BUNDLE",
+        "SSL_CERT_FILE",
+        "SYSTEMDRIVE",
+        "SYSTEMROOT",
+        "TEMP",
+        "TMP",
+        "USERPROFILE",
+        "VIRTUALENV_*",
+        "WINDIR",
+        "http_proxy",
+        "https_proxy",
+        "no_proxy",
+        *tty_vars,
+    ])
 
 
 def test_show_config_pkg_env_once(

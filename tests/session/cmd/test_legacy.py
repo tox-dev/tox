@@ -190,9 +190,7 @@ def test_legacy_cli_flags(tox_project: ToxProjectCreator, mocker: MockerFixture)
 
     calls = [(i[0][0].conf.name, i[0][3].run_id, i[0][3].cmd[5:]) for i in execute_calls.call_args_list]
     assert calls[0] == ("py", "install_deps", ["c", "p<1", "-r", "r.txt", "b>2"])
-    for call in execute_calls.call_args_list:
-        if call[0][0].name == "py":
-            assert call[0][3].env["PIP_PRE"] == "1"
+    assert {call[0][3].env["PIP_PRE"] for call in execute_calls.call_args_list if call[0][0].name == "py"} == {"1"}
     assert len(virtualenv_session.call_args_list) == 1
     v_env = virtualenv_session.call_args_list[0][1]["env"]
     assert (v_env["VIRTUALENV_SYSTEM_SITE_PACKAGES"], v_env["VIRTUALENV_COPIES"]) == ("True", "True")

@@ -89,24 +89,22 @@ def test_parallel_general(tox_project: ToxProjectCreator, monkeypatch: MonkeyPat
     outcome.assert_failed()
 
     out = outcome.out
-    oks, skips, fails = {"a", "b", "c"}, {"d"}, {"e", "f"}
-    missing = set()
-    for env in "a", "b", "c", "d", "e", "f":
-        if env in {"c", "e"}:
-            assert "run c" in out, out
-        elif env == "f":
-            assert "f: failed with something bad happened" in out, out
-        else:
-            assert f"run {env}" not in out, out
-        of_type = "OK" if env in oks else ("SKIP" if env in skips else "FAIL")
-        env_done = f"{env}: {of_type} {('✔' if env in oks else '⚠' if env in skips else '✖')}"
-        is_missing = env_done not in out
-        if is_missing:
-            missing.add(env_done)
-        env_report = f"  {env}: {of_type} {'code 1 ' if env in fails else ''}("
-        assert env_report in out, out
-        if not is_missing:
-            assert out.index(env_done) < out.index(env_report), out
+    assert "run c" in out, out
+    assert "f: failed with something bad happened" in out, out
+    assert all(f"run {env}" not in out for env in "abd"), out
+    summary = {
+        "a": ("OK", "✔", ""),
+        "b": ("OK", "✔", ""),
+        "c": ("OK", "✔", ""),
+        "d": ("SKIP", "⚠", ""),
+        "e": ("FAIL", "✖", "code 1 "),
+        "f": ("FAIL", "✖", "code 1 "),
+    }
+    dones = {env: f"{env}: {of_type} {symbol}" for env, (of_type, symbol, _) in summary.items()}
+    reports = {env: f"  {env}: {of_type} {code}(" for env, (of_type, _, code) in summary.items()}
+    missing = {done for done in dones.values() if done not in out}
+    assert all(report in out for report in reports.values()), out
+    assert all(out.index(dones[env]) < out.index(reports[env]) for env in summary if dones[env] not in missing), out
     assert len(missing) == 1, out
 
 

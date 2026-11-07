@@ -98,8 +98,13 @@ def test_venv_redirect_off(tox_project: ToxProjectCreator) -> None:
     assert not (project.path / ".venv").exists()
 
 
-@pytest.mark.parametrize("recreate", [pytest.param(True, id="recreate"), pytest.param(False, id="reuse")])
-def test_venv_redirect_retracted_while_recreated(tox_project: ToxProjectCreator, recreate: bool) -> None:
+@pytest.mark.parametrize(
+    ("args", "recreated"),
+    [pytest.param(["-r"], True, id="recreate"), pytest.param([], False, id="reuse")],
+)
+def test_venv_redirect_retracted_while_recreated(
+    tox_project: ToxProjectCreator, args: list[str], recreated: bool
+) -> None:
     project = tox_project({
         "tox.toml": 'env_list = [ "dev" ]\nno_package = true\n[env_run_base]\ncommands = [ [ "python", "show.py" ] ]\n',
         "show.py": """
@@ -111,10 +116,10 @@ def test_venv_redirect_retracted_while_recreated(tox_project: ToxProjectCreator,
     })
     project.run("r").assert_success()
 
-    outcome = project.run("r", *(["-r"] if recreate else []))
+    outcome = project.run("r", *args)
 
     outcome.assert_success()
-    assert ("redirect: .tox/dev" in outcome.out) is not recreate
+    assert ("redirect: .tox/dev" in outcome.out) is not recreated
     assert _redirect(project) == ".tox/dev\n"
 
 

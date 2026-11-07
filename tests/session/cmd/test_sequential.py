@@ -21,6 +21,8 @@ from tox.tox_env.api import ToxEnv
 from tox.tox_env.errors import Fail
 from tox.tox_env.info import Info
 
+_INTERRUPT_SIGNAL: Final = signal.CTRL_C_EVENT if sys.platform == "win32" else signal.SIGINT
+
 if TYPE_CHECKING:
     from pytest_mock import MockerFixture
 
@@ -157,10 +159,7 @@ def test_result_json_sequential(
     py_test = get_cmd_exit_run_id(log_report, "py", "test")
     assert py_test == [(1, "commands[0]"), (0, "commands[1]")]
     packaging_installed = log_report["testenvs"]["py"].pop("installed_packages")
-    expected_pkg = {"pip", "setuptools", "a"}
-    if sys.version_info[0:2] == (3, 8):
-        expected_pkg.add("wheel")
-    assert {i[: i.find("==")] if "@" not in i else "a" for i in packaging_installed} == expected_pkg
+    assert {i[: i.find("==")] if "@" not in i else "a" for i in packaging_installed} == {"pip", "setuptools", "a"}
     install_package = log_report["testenvs"]["py"].pop("installpkg")
     assert re.match(r"^[a-fA-F0-9]{64}$", install_package.pop("sha256"))
     assert install_package == {"basename": "a-1.0-py3-none-any.whl", "type": "file"}
@@ -519,10 +518,7 @@ def test_platform_invalid_regex_run_env(tox_project: ToxProjectCreator) -> None:
 
 
 def test_machine_factor_run_env(tox_project: ToxProjectCreator) -> None:
-    parts = sysconfig.get_platform().rsplit("-", 1)
-    if len(parts) < 2:
-        pytest.skip("sysconfig.get_platform() has no machine component")
-    machine = parts[-1]
+    machine = sysconfig.get_platform().rsplit("-", 1)[-1]
     ini = f"[testenv]\npackage=skip\ncommands=\n    {machine}: python -c 'print(\"{machine}\")'"
     proj = tox_project({"tox.ini": ini})
     result = proj.run("r", "-e", f"py-{machine}")
@@ -747,7 +743,7 @@ def test_interrupt_post_commands_runs_after_sigint(tox_project: ToxProjectCreato
     process = Popen([sys.executable, "-m", "tox", *cmd], stdout=PIPE, stderr=PIPE, universal_newlines=True)
     while not marker_main.exists() and (process.poll() is None):
         sleep(0.05)
-    process.send_signal(signal.CTRL_C_EVENT if sys.platform == "win32" else signal.SIGINT)
+    process.send_signal(_INTERRUPT_SIGNAL)
     _out, err = process.communicate()
     assert process.returncode != 0
     assert "KeyboardInterrupt" in err
@@ -771,7 +767,7 @@ def test_interrupt_post_commands_not_run_by_default(tox_project: ToxProjectCreat
     process = Popen([sys.executable, "-m", "tox", *cmd], stdout=PIPE, stderr=PIPE, universal_newlines=True)
     while not marker_main.exists() and (process.poll() is None):
         sleep(0.05)
-    process.send_signal(signal.CTRL_C_EVENT if sys.platform == "win32" else signal.SIGINT)
+    process.send_signal(_INTERRUPT_SIGNAL)
     _out, err = process.communicate()
     assert process.returncode != 0
     assert "KeyboardInterrupt" in err
@@ -802,11 +798,10 @@ def test_second_interrupt_stops_post_commands(tox_project: ToxProjectCreator, tm
     process = Popen([sys.executable, "-m", "tox", *cmd], stdout=PIPE, stderr=PIPE, universal_newlines=True)
     while not marker_main.exists() and (process.poll() is None):
         sleep(0.05)
-    sig = signal.CTRL_C_EVENT if sys.platform == "win32" else signal.SIGINT
-    process.send_signal(sig)
+    process.send_signal(_INTERRUPT_SIGNAL)
     while not marker_post_start.exists() and (process.poll() is None):
         sleep(0.05)
-    process.send_signal(sig)
+    process.send_signal(_INTERRUPT_SIGNAL)
     out, _err = process.communicate()
     assert process.returncode != 0
     assert marker_post_start.exists(), "commands_post should have started"

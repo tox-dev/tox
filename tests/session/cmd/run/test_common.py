@@ -17,11 +17,18 @@ if TYPE_CHECKING:
     from tox.pytest import ToxProjectCreator
 
 
-@pytest.mark.parametrize("values", ["config", None, "true", "false"])
-def test_skip_missing_interpreter_action_ok(values: str | None) -> None:
+@pytest.mark.parametrize(
+    ("values", "expected"),
+    [
+        pytest.param("config", "config", id="config"),
+        pytest.param(None, "true", id="none"),
+        pytest.param("true", "true", id="true"),
+        pytest.param("false", "false", id="false"),
+    ],
+)
+def test_skip_missing_interpreter_action_ok(values: str | None, expected: str) -> None:
     args_namespace = Namespace()
     SkipMissingInterpreterAction(option_strings=["-i"], dest="into")(ArgumentParser(), args_namespace, values)
-    expected = "true" if values is None else values
     assert args_namespace.into == expected
 
 
@@ -50,15 +57,25 @@ def test_install_pkg_file_uri(tmp_path: Path) -> None:
     assert namespace.into == path
 
 
-def test_install_pkg_file_uri_percent_encoded(tmp_path: Path) -> None:
+@pytest.mark.skipif(sys.platform == "win32", reason="posix file uri")
+def test_install_pkg_file_uri_percent_encoded_posix(tmp_path: Path) -> None:
     argument_parser = ArgumentParser()
     path = tmp_path / "pkg+extra-1.0.whl"
     path.write_text("")
     # Build a file: URI with percent-encoded '+' in the filename
-    if sys.platform == "win32":
-        uri = "file:///" + quote(str(path).replace("\\", "/"), safe=":/")
-    else:
-        uri = "file://" + quote(str(path), safe="/")
+    uri = "file://" + quote(str(path), safe="/")
+    namespace = Namespace()
+    InstallPackageAction(option_strings=["--install-pkg"], dest="into")(argument_parser, namespace, uri)
+    assert namespace.into == path
+
+
+@pytest.mark.skipif(sys.platform != "win32", reason="windows file uri")
+def test_install_pkg_file_uri_percent_encoded_windows(tmp_path: Path) -> None:
+    argument_parser = ArgumentParser()
+    path = tmp_path / "pkg+extra-1.0.whl"
+    path.write_text("")
+    # Build a file: URI with percent-encoded '+' in the filename
+    uri = "file:///" + quote(str(path).replace("\\", "/"), safe=":/")
     namespace = Namespace()
     InstallPackageAction(option_strings=["--install-pkg"], dest="into")(argument_parser, namespace, uri)
     assert namespace.into == path

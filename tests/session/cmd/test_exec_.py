@@ -34,10 +34,7 @@ def test_exec(tox_project: ToxProjectCreator, exit_code: int) -> None:
     prj = tox_project({"tox.ini": "[testenv]\npackage=skip"})
     py_cmd = f"import sys; print(sys.version); raise SystemExit({exit_code})"
     outcome = prj.run("e", "-e", "py", "--", "python", "-c", py_cmd)
-    if exit_code:
-        outcome.assert_failed()
-    else:
-        outcome.assert_success()
+    assert outcome.code == exit_code
     assert sys.version in outcome.out
 
 

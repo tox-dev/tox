@@ -145,17 +145,23 @@ def test_schema_freshness(
     )
 
 
+def _undeclared_required(pointer: str, schema: Mapping[str, JsonValue]) -> list[str]:
+    required = schema.get("required")
+    if not isinstance(required, Sequence) or isinstance(required, str):
+        return []
+    properties = schema.get("properties")
+    declared = set(properties) if isinstance(properties, Mapping) else set()
+    return [f"{pointer} requires {name!r}" for name in required if name not in declared]
+
+
 def test_schema_required_properties_are_declared(committed_schema: Mapping[str, JsonValue]) -> None:
     # ajv strict mode, which SchemaStore runs, rejects a required property the schema never declares; catching that
     # here beats hearing it from a release sync (tox-dev/tox#4051)
-    undeclared: list[str] = []
-    for pointer, schema in _subschemas(committed_schema):
-        required = schema.get("required")
-        if not isinstance(required, Sequence) or isinstance(required, str):
-            continue
-        properties = schema.get("properties")
-        declared = set(properties) if isinstance(properties, Mapping) else set()
-        undeclared += [f"{pointer} requires {name!r}" for name in required if name not in declared]
+    undeclared = [
+        message
+        for pointer, schema in _subschemas(committed_schema)
+        for message in _undeclared_required(pointer, schema)
+    ]
     assert undeclared == []
 
 

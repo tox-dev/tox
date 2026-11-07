@@ -96,6 +96,25 @@ def test_depends_sdist(tox_project: ToxProjectCreator, patch_prev_py: PatchPrevP
     assert outcome.out == dedent(expected).lstrip()
 
 
+def _depends_glob_conf(fmt: str, env_list: list[str], depends: list[str]) -> str:
+    if fmt == "toml":
+        return f"""
+        env_list = {json.dumps(env_list)}
+        [env_run_base]
+        package = "skip"
+        [env.cov]
+        depends = {json.dumps(depends)}
+        """
+    return f"""
+        [tox]
+        env_list = {",".join(env_list)}
+        [testenv]
+        skip_install = true
+        [testenv:cov]
+        depends = {",".join(depends)}
+        """
+
+
 @pytest.mark.parametrize("fmt", ["toml", "ini"])
 @pytest.mark.parametrize(
     ("env_list", "depends", "expected"),
@@ -208,24 +227,7 @@ def test_depends_sdist(tox_project: ToxProjectCreator, patch_prev_py: PatchPrevP
 def test_depends_glob(
     tox_project: ToxProjectCreator, fmt: str, env_list: list[str], depends: list[str], expected: str
 ) -> None:
-    if fmt == "toml":
-        conf = f"""
-        env_list = {json.dumps(env_list)}
-        [env_run_base]
-        package = "skip"
-        [env.cov]
-        depends = {json.dumps(depends)}
-        """
-    else:
-        conf = f"""
-        [tox]
-        env_list = {",".join(env_list)}
-        [testenv]
-        skip_install = true
-        [testenv:cov]
-        depends = {",".join(depends)}
-        """
-    outcome = tox_project({f"tox.{fmt}": conf}).run("de")
+    outcome = tox_project({f"tox.{fmt}": _depends_glob_conf(fmt, env_list, depends)}).run("de")
     outcome.assert_success()
     assert outcome.out == dedent(expected)
 
