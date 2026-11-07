@@ -72,7 +72,18 @@ def test_external_runner_cli_choice(tox_project: ToxProjectCreator) -> None:
         project.run("r", "--runner", "external", "--notest").assert_success()
 
 
-def test_plugin_hooks_and_order(tox_project: ToxProjectCreator, mocker: MockerFixture) -> None:
+@pytest.mark.parametrize(
+    "cmd",
+    [
+        pytest.param(
+            "'print(1)'", id="posix", marks=pytest.mark.skipif(sys.platform == "win32", reason="posix quoting")
+        ),
+        pytest.param(
+            "print(1)", id="windows", marks=pytest.mark.skipif(sys.platform != "win32", reason="windows quoting")
+        ),
+    ],
+)
+def test_plugin_hooks_and_order(tox_project: ToxProjectCreator, mocker: MockerFixture, cmd: str) -> None:
     @impl
     def tox_register_tox_env(register: ToxEnvRegister) -> None:
         assert isinstance(register, ToxEnvRegister)
@@ -136,7 +147,6 @@ def test_plugin_hooks_and_order(tox_project: ToxProjectCreator, mocker: MockerFi
     project = tox_project({"tox.ini": tox_ini})
     result = project.run("r", "-e", "a,b")
     result.assert_success()
-    cmd = "print(1)" if sys.platform == "win32" else "'print(1)'"
     expected = [
         "ROOT: tox_register_tox_env",
         "ROOT: tox_add_option",

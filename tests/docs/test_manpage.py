@@ -99,13 +99,16 @@ def test_manpage_documents_all_commands() -> None:
     parser = _get_parser_doc()
     rst = _RST_PATH.read_text(encoding="utf-8")
     assert parser._subparsers is not None  # ruff:ignore[private-member-access]  # internal state
-    for action in parser._subparsers._actions:  # ruff:ignore[private-member-access]  # internal state
-        if isinstance(action, _SubParsersAction):
-            for choice_action in action._choices_actions:  # ruff:ignore[private-member-access]  # internal state
-                assert choice_action.dest in rst, (
-                    f"command {choice_action.dest!r} missing from manpage, regenerate with: "
-                    f"python tools/generate_manpage.py"
-                )
+    choice_actions = [
+        choice_action
+        for action in parser._subparsers._actions  # ruff:ignore[private-member-access]  # internal state
+        if isinstance(action, _SubParsersAction)
+        for choice_action in action._choices_actions  # ruff:ignore[private-member-access]  # internal state
+    ]
+    for choice_action in choice_actions:
+        assert choice_action.dest in rst, (
+            f"command {choice_action.dest!r} missing from manpage, regenerate with: python tools/generate_manpage.py"
+        )
 
 
 def test_manpage_documents_all_options() -> None:
@@ -115,13 +118,12 @@ def test_manpage_documents_all_options() -> None:
 
     parser = _get_parser_doc()
     rst = _RST_PATH.read_text(encoding="utf-8")
-    seen: set[int] = set()
-    for action in parser._actions:  # ruff:ignore[private-member-access]  # internal state
-        if id(action) in seen or action.help == SUPPRESS or isinstance(action, _SubParsersAction):
-            continue
-        seen.add(id(action))
-        if not action.option_strings:
-            continue
+    actions = [
+        action
+        for action in {id(a): a for a in parser._actions}.values()  # ruff:ignore[private-member-access]  # internal state
+        if action.help != SUPPRESS and not isinstance(action, _SubParsersAction) and action.option_strings
+    ]
+    for action in actions:
         long_opt = next((o for o in action.option_strings if o.startswith("--")), action.option_strings[0])
         assert long_opt in rst, (
             f"option {long_opt!r} missing from manpage, regenerate with: python tools/generate_manpage.py"

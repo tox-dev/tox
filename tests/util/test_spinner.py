@@ -61,17 +61,28 @@ def test_spinner_progress(capfd: CaptureFixture, monkeypatch: MonkeyPatch) -> No
     assert len({i.strip() for i in out.split("[0]")}) > len(spin.frames) / 2
 
 
+@pytest.mark.parametrize(
+    ("hide_cursor", "show_cursor"),
+    [
+        pytest.param(
+            "\x1b[?25l",
+            "\x1b[?25h",
+            id="posix",
+            marks=pytest.mark.skipif(os.name != "posix", reason="posix cursor escape codes"),
+        ),
+        pytest.param("", "", id="windows", marks=pytest.mark.skipif(os.name == "posix", reason="no cursor escapes")),
+    ],
+)
 @time_machine.travel("2012-01-14", tick=False)
-def test_spinner_atty(capfd: CaptureFixture, monkeypatch: MonkeyPatch) -> None:
+def test_spinner_atty(capfd: CaptureFixture, monkeypatch: MonkeyPatch, hide_cursor: str, show_cursor: str) -> None:
     monkeypatch.setattr(sys.stdout, "isatty", lambda: True)
     with spinner.Spinner(refresh_rate=100) as spin:
         spin.stream.write("\n")
     out, _err = capfd.readouterr()
     lines = out.split("\n")
-    posix = os.name == "posix"
     expected = [
-        "{}\r{}\r{} [0]".format("\x1b[?25l" if posix else "", spin.CLEAR_LINE, spin.frames[0]),
-        "\r\x1b[K{}".format("\x1b[?25h" if posix else ""),
+        f"{hide_cursor}\r{spin.CLEAR_LINE}\r{spin.frames[0]} [0]",
+        f"\r\x1b[K{show_cursor}",
     ]
     assert lines == expected
 

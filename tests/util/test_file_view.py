@@ -282,7 +282,10 @@ def test_repair_staging_path_leaves_exposed_intermediate_directory(tmp_path: Pat
 
 
 @pytest.mark.skipif(sys.platform == "win32", reason="POSIX directory permissions")
-@pytest.mark.parametrize("owned", [pytest.param("build", id="intermediate"), pytest.param(".tox", id="work-dir")])
+@pytest.mark.parametrize(
+    "owned",
+    [pytest.param("build", id="intermediate"), pytest.param("build/.tox", id="work-dir")],
+)
 def test_repair_staging_path_skips_directory_owned_by_other_account(
     tmp_path: Path, mocker: MockerFixture, owned: str
 ) -> None:
@@ -292,7 +295,7 @@ def test_repair_staging_path_skips_directory_owned_by_other_account(
     staging.mkdir(parents=True)
     work_dir.chmod(0o777)
     tmp_path.chmod(0o755)
-    foreign_inode: Final[int] = (build if owned == "build" else work_dir).stat().st_ino
+    foreign_inode: Final[int] = (tmp_path / owned).stat().st_ino
     original_fstat: Final[Callable[[int], os.stat_result]] = os.fstat
 
     def fstat_as_other_account(descriptor: int) -> os.stat_result:

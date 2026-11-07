@@ -20,13 +20,12 @@ def pytest_generate_tests(metafunc: pytest.Metafunc) -> None:
                 continue
             filename, classified_content = _classify(lang, content)
             env_names = _find_env_names(filename, classified_content)
+            commands = [("l",)] if env_names == ["__env_base__"] else [("c", "-e", env) for env in env_names]
             marks: list[pytest.MarkDecorator] = []
             if skip_reason := _should_skip(classified_content):
                 marks.append(pytest.mark.skip(reason=skip_reason))
-            params.append(
-                pytest.param(filename, classified_content, env_names, id=f"{rel_file}:{line_no}", marks=marks)
-            )
-        metafunc.parametrize(("filename", "content", "env_names"), params)
+            params.append(pytest.param(filename, classified_content, commands, id=f"{rel_file}:{line_no}", marks=marks))
+        metafunc.parametrize(("filename", "content", "commands"), params)
 
 
 def _extract_config_blocks() -> list[tuple[str, int, str, str]]:
@@ -254,7 +253,7 @@ def test_doc_config_valid(
     monkeypatch: pytest.MonkeyPatch,
     filename: str,
     content: str,
-    env_names: list[str],
+    commands: list[tuple[str, ...]],
 ) -> None:
     for key, value in {
         "CI": "1",
@@ -269,11 +268,7 @@ def test_doc_config_valid(
     }.items():
         monkeypatch.setenv(key, value)
     project = tox_project({filename: content})
-    if env_names == ["__env_base__"]:
-        outcome = project.run("l")
+    for command in commands:
+        outcome = project.run(*command)
         outcome.assert_success()
-        return
-    for env in env_names:
-        outcome = project.run("c", "-e", env)
-        outcome.assert_success()
-        assert "# Exception:" not in outcome.out, f"Exception in {env}:\n{outcome.out}"
+        assert "# Exception:" not in outcome.out, f"Exception in {command}:\n{outcome.out}"

@@ -22,41 +22,25 @@ if TYPE_CHECKING:
 def test_setup_report(mocker: MockerFixture, capsys: CaptureFixture, verbosity: int, color: bool) -> None:
     color_init = mocker.patch("tox.report.init")
 
-    setup_report(verbosity=verbosity, is_colored=color)
-    try:
-        _emit_test_log_messages()
-    finally:
-        deinit()
+    _emit_report(verbosity, color)
 
-    assert color_init.call_count == (1 if color else 0)
-
-    msg_count = min(verbosity + 1, 5)
-    is_debug_or_more = verbosity >= 4
-    if is_debug_or_more:
-        msg_count += 1  # we log at debug level setting up the logger
-
+    assert color_init.call_count == int(color)
     out, err = capsys.readouterr()
     assert not err
     assert out
     assert "filelock" not in out
     assert "distlib.util" not in out
-    lines = out.splitlines()
-    assert len(lines) == msg_count, out
+    msg_count = min(verbosity + 1, 5) + (verbosity >= 4)  # debug level also logs the logger setup
+    assert len(out.splitlines()) == msg_count, out
+    assert (Style.RESET_ALL in out) is color
 
-    if is_debug_or_more and lines:  # assert we start with relative created, contain path
-        line = lines[0]
-        int(line.split(" ")[1])  # first element is an int number
-        assert f"[tox{os.sep}report.py" in line  # relative file location
 
-    if color:
-        assert f"{Style.RESET_ALL}" in out
-        # check that our Warning line using special format was colored
-        expected_warning_text = "W\x1b[0m\x1b[36m warning\x1b[22mfoo\x1b[2m>\x1b[0m bar\x1b[0m\x1b[2m"
-    else:
-        assert f"{Style.RESET_ALL}" not in out
-        expected_warning_text = "warningfoo> bar"
-    if verbosity >= 4:  # where warnings are logged
-        assert expected_warning_text in lines[3]
+def _emit_report(verbosity: int, color: bool) -> None:
+    setup_report(verbosity=verbosity, is_colored=color)
+    try:
+        _emit_test_log_messages()
+    finally:
+        deinit()
 
 
 def _emit_test_log_messages() -> None:
@@ -72,6 +56,34 @@ def _emit_test_log_messages() -> None:
         logger.info("%s-info", name)
         logger.debug("%s-debug", name)
         logger.log(logging.NOTSET, "%s-notset", name)
+
+
+@pytest.mark.parametrize("verbosity", [4, 5, 6])
+def test_setup_report_debug_location(capsys: CaptureFixture, verbosity: int) -> None:
+    _emit_report(verbosity, color=False)
+
+    first_line = capsys.readouterr().out.splitlines()[0]
+    int(first_line.split(" ")[1])  # first element is an int number
+    assert f"[tox{os.sep}report.py" in first_line  # relative file location
+
+
+@pytest.mark.parametrize("verbosity", [4, 5, 6])
+@pytest.mark.parametrize(
+    ("color", "expected_warning_text"),
+    [
+        pytest.param(True, "W\x1b[0m\x1b[36m warning\x1b[22mfoo\x1b[2m>\x1b[0m bar\x1b[0m\x1b[2m", id="on"),
+        pytest.param(False, "warningfoo> bar", id="off"),
+    ],
+)
+def test_setup_report_warning_text(
+    mocker: MockerFixture, capsys: CaptureFixture, verbosity: int, color: bool, expected_warning_text: str
+) -> None:
+    mocker.patch("tox.report.init", autospec=True)
+
+    _emit_report(verbosity, color)
+
+    lines = capsys.readouterr().out.splitlines()
+    assert expected_warning_text in lines[3]
 
 
 def test_setup_report_degrades_logged_output(

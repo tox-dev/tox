@@ -684,11 +684,16 @@ def test_provision_plugin_runner_in_provision(tox_project: ToxProjectCreator, tm
 
 @pytest.mark.integration
 @pytest.mark.usefixtures("_pypi_index_self")
-@pytest.mark.parametrize("relative_path", [True, False], ids=["relative", "absolute"])
-def test_provision_conf_file(tox_project: ToxProjectCreator, tmp_path: Path, relative_path: bool) -> None:
+def test_provision_conf_file_relative(tox_project: ToxProjectCreator, tmp_path: Path) -> None:
     project = tox_project({"tox.ini": "[tox]\nrequires = demo-pkg-inline\nskipsdist=true\n"}, prj_path=tmp_path / "sub")
-    conf_path = str(Path(project.path.name) / "tox.ini") if relative_path else str(project.path / "tox.ini")
-    project.run("c", "--conf", conf_path, "-e", "py", from_cwd=tmp_path).assert_success()
+    project.run("c", "--conf", str(Path(project.path.name) / "tox.ini"), "-e", "py", from_cwd=tmp_path).assert_success()
+
+
+@pytest.mark.integration
+@pytest.mark.usefixtures("_pypi_index_self")
+def test_provision_conf_file_absolute(tox_project: ToxProjectCreator, tmp_path: Path) -> None:
+    project = tox_project({"tox.ini": "[tox]\nrequires = demo-pkg-inline\nskipsdist=true\n"}, prj_path=tmp_path / "sub")
+    project.run("c", "--conf", str(project.path / "tox.ini"), "-e", "py", from_cwd=tmp_path).assert_success()
 
 
 def test_provision_acquires_file_lock(tox_project: ToxProjectCreator) -> None:

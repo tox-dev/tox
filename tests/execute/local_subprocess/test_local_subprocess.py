@@ -41,27 +41,28 @@ if TYPE_CHECKING:
     from tox.pytest import CaptureFixture, LogCaptureFixture, MonkeyPatch, ToxProjectCreator
     from tox.tox_env.api import ToxEnv
 
+_EXE_SUFFIX: Final[str] = ".EXE" if sys.platform == "win32" else ""
 
-@pytest.mark.parametrize("color", [pytest.param(True, id="color"), pytest.param(False, id="no_color")])
+
 @pytest.mark.parametrize(("out", "err"), [pytest.param("out", "err", id="simple"), pytest.param("", "", id="nothing")])
-@pytest.mark.parametrize("show", [pytest.param(True, id="show"), pytest.param(False, id="no_show")])
-@pytest.mark.parametrize(
-    "stderr_color",
-    [
-        pytest.param("RED", id="stderr_color_default"),
-        pytest.param("YELLOW", id="stderr_color_yellow"),
-        pytest.param("RESET", id="stderr_color_reset"),
-    ],
-)
-def test_local_execute_basic_pass(
+def test_local_execute_basic_pass_hidden(caplog: LogCaptureFixture, os_env: dict[str, str], out: str, err: str) -> None:
+    out_got, err_got = _run_basic_pass(
+        caplog, os_env, out, err, show=False, color=False, stderr_color="RED"
+    ).read_out_err()
+    assert not out_got
+    assert not err_got
+
+
+def _run_basic_pass(
     caplog: LogCaptureFixture,
     os_env: dict[str, str],
     out: str,
     err: str,
+    *,
     show: bool,
     color: bool,
     stderr_color: str,
-) -> None:
+) -> FakeOutErr:
     caplog.set_level(logging.NOTSET)
     executor = LocalSubProcessExecutor(colored=color)
 
@@ -79,16 +80,8 @@ def test_local_execute_basic_pass(
     assert outcome is not None
     assert bool(outcome) is True, outcome
     assert (outcome.exit_code, outcome.err, outcome.out, outcome.request) == (Outcome.OK, err, out, request)
-
-    out_got, err_got = out_err.read_out_err()
-    if show:
-        assert out_got == out
-        expected = f"{getattr(Fore, stderr_color)}{err}{Fore.RESET}" if color and err else err
-        assert err_got == expected
-    else:
-        assert not out_got
-        assert not err_got
     assert not caplog.records
+    return out_err
 
 
 def _create_mock_env() -> MagicMock:
@@ -108,6 +101,39 @@ class FakeOutErr:
     def read_out_err(self) -> tuple[str, str]:
         out_got = self.out_err[0].buffer.getvalue().decode(self.out_err[0].encoding)
         return out_got, self.out_err[1].buffer.getvalue().decode(self.out_err[1].encoding)
+
+
+@pytest.mark.parametrize(("out", "err"), [pytest.param("out", "err", id="simple"), pytest.param("", "", id="nothing")])
+def test_local_execute_basic_pass_shown(caplog: LogCaptureFixture, os_env: dict[str, str], out: str, err: str) -> None:
+    out_got, err_got = _run_basic_pass(
+        caplog, os_env, out, err, show=True, color=False, stderr_color="RED"
+    ).read_out_err()
+    assert out_got == out
+    assert err_got == err
+
+
+@pytest.mark.parametrize(
+    "stderr_color",
+    [
+        pytest.param("RED", id="stderr_color_default"),
+        pytest.param("YELLOW", id="stderr_color_yellow"),
+        pytest.param("RESET", id="stderr_color_reset"),
+    ],
+)
+def test_local_execute_basic_pass_shown_colored(
+    caplog: LogCaptureFixture, os_env: dict[str, str], stderr_color: str
+) -> None:
+    out_got, err_got = _run_basic_pass(
+        caplog, os_env, "out", "err", show=True, color=True, stderr_color=stderr_color
+    ).read_out_err()
+    assert out_got == "out"
+    assert err_got == f"{getattr(Fore, stderr_color)}err{Fore.RESET}"
+
+
+def test_local_execute_basic_pass_shown_colored_empty_err(caplog: LogCaptureFixture, os_env: dict[str, str]) -> None:
+    out_got, err_got = _run_basic_pass(caplog, os_env, "", "", show=True, color=True, stderr_color="RED").read_out_err()
+    assert not out_got
+    assert not err_got
 
 
 @pytest.mark.parametrize(
@@ -560,10 +586,14 @@ def test_local_subprocess_tty(monkeypatch: MonkeyPatch, mocker: MockerFixture, t
     ],
 )
 def test_allow_list_external_ok(fake_exe_on_path: Path, mode: str) -> None:
-    exe = f"{fake_exe_on_path}{'.EXE' if sys.platform == 'win32' else ''}"
-    allow = exe if "full" in mode else fake_exe_on_path.stem
-    allow = f"{allow[:-2]}*" if "pattern" in mode else allow
-    allow = "*" if mode == "all" else allow
+    exe = f"{fake_exe_on_path}{_EXE_SUFFIX}"
+    allow = {
+        "stem": fake_exe_on_path.stem,
+        "full": exe,
+        "stem-pattern": f"{fake_exe_on_path.stem[:-2]}*",
+        "full-pattern": f"{exe[:-2]}*",
+        "all": "*",
+    }[mode]
 
     request = ExecuteRequest(
         cmd=[fake_exe_on_path.stem],
@@ -578,23 +608,27 @@ def test_allow_list_external_ok(fake_exe_on_path: Path, mode: str) -> None:
     assert inst.cmd == [exe]
 
 
-def test_shebang_limited_on(tmp_path: Path) -> None:
+@pytest.mark.skipif(sys.platform == "win32", reason="posix shebang handling")
+def test_shebang_limited_on_posix(tmp_path: Path) -> None:
     exe, script, instance = _create_shebang_test(tmp_path, env={"TOX_LIMITED_SHEBANG": "1"})
-    if sys.platform == "win32":  # pragma: win32 cover
-        assert instance.cmd == [str(script), "--magic"]
-    else:
-        assert instance.cmd == [exe, "-s", str(script), "--magic"]
+    assert instance.cmd == [exe, "-s", str(script), "--magic"]
 
 
 def _create_shebang_test(tmp_path: Path, env: dict[str, str]) -> tuple[str, Path, LocalSubProcessExecuteInstance]:
     exe: Final[str] = sys.executable
-    script = tmp_path / f"s{'.EXE' if sys.platform == 'win32' else ''}"
+    script = tmp_path / f"s{_EXE_SUFFIX}"
     script.write_text(f"#!{exe} -s")
     script.chmod(script.stat().st_mode | stat.S_IEXEC)  # mark it executable
     env["PATH"] = str(script.parent)
     request = create_autospec(ExecuteRequest, cmd=["s", "--magic"], cwd=tmp_path, env=env, allow=None)
     writer = create_autospec(SyncWrite)
     return exe, script, LocalSubProcessExecuteInstance(request, create_autospec(ExecuteOptions), writer, writer)
+
+
+@pytest.mark.skipif(sys.platform != "win32", reason="windows shebang handling")
+def test_shebang_limited_on_windows(tmp_path: Path) -> None:
+    _exe, script, instance = _create_shebang_test(tmp_path, env={"TOX_LIMITED_SHEBANG": "1"})
+    assert instance.cmd == [str(script), "--magic"]
 
 
 @pytest.mark.parametrize(
