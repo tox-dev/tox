@@ -138,6 +138,37 @@ def test_load_dependency_requirement_many_or_extras(extra: str) -> None:
     assert [str(r) for r in result] == ["filelock<4.0.0,>=3.9.0"]
 
 
+@pytest.mark.parametrize(
+    ("marker", "extras", "expected"),
+    [
+        ('"dev" == extra', {"dev"}, ["six"]),
+        ('"dev" == extra', set(), []),
+        ('"dev" == extra', {"other"}, []),
+        ('"my_extra" == extra', {"my-extra"}, ["six"]),
+        ('python_version < "4" and "dev" == extra', {"dev"}, ['six; python_version < "4"']),
+        ('"dev" == extra or "test" == extra', {"test"}, ["six"]),
+    ],
+)
+def test_reversed_extra_markers(marker: str, extras: set[str], expected: list[str]) -> None:
+    result = dependencies_with_extras([Requirement(f"six; {marker}")], extras, "name")
+    assert [str(requirement) for requirement in result] == expected
+
+
+def test_reversed_extra_marker_in_self_reference() -> None:
+    requires = [
+        Requirement('name[sub]; python_version < "4" and "dev" == extra'),
+        Requirement('six; "sub" == extra'),
+    ]
+    result = dependencies_with_extras(requires, {"dev"}, "name")
+    assert [str(requirement) for requirement in result] == ['six; python_version < "4"']
+
+
+@pytest.mark.parametrize("marker", ['os_name == "extra"', '"extra" == os_name'])
+def test_extra_literal_is_not_an_extra_marker(marker: str) -> None:
+    requirement = Requirement(f"six; {marker}")
+    assert dependencies_with_extras([requirement], set(), "name") == [requirement]
+
+
 def test_validate_extras_unknown() -> None:
     with pytest.raises(Fail, match=r"extras not found for package pkg: typo \(available: alpha, beta\)"):
         dependencies_with_extras([], {"typo"}, "pkg", available_extras={"alpha", "beta"})
