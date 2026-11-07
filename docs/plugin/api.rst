@@ -110,6 +110,8 @@ environments
 .. autoclass:: tox.tox_env.api.ToxEnv
     :members:
 
+.. autoclass:: tox.tox_env.api.ToxEnvCreateArgs
+
 .. autoclass:: tox.tox_env.runner.RunToxEnv
     :members:
 
@@ -180,6 +182,8 @@ installer
 =========
 
 .. autodata:: tox.tox_env.installer.InstallArguments
+
+.. autoclass:: tox.tox_env.python.pip.req.file.EnvironmentProvider
 
 .. autoclass:: tox.tox_env.python.pip.req.file.RequirementsFile
 

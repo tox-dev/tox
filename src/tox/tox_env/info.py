@@ -94,6 +94,7 @@ class Info:
             temporary_path.unlink(missing_ok=True)
 
     def reset(self) -> None:
+        """Forget the stored information, so it is written again on the next save."""
         self._content = {}
 
 

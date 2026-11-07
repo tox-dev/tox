@@ -29,6 +29,15 @@ if TYPE_CHECKING:
 
 
 class VersionInfo(NamedTuple):
+    """The version of a python interpreter, the same as ``sys.version_info``.
+
+    :param major: the major version
+    :param minor: the minor version
+    :param micro: the micro version
+    :param releaselevel: the release level, such as ``final``
+    :param serial: the serial of the release level
+    """
+
     major: int
     minor: int
     micro: int
@@ -38,6 +47,20 @@ class VersionInfo(NamedTuple):
 
 @dataclass(frozen=True, slots=True)
 class PythonInfo:
+    """The details of a python interpreter that tox uses to create an environment.
+
+    :param implementation: the name of the implementation, such as ``CPython``
+    :param version_info: the version of the interpreter
+    :param version: the full version string
+    :param is_64: whether the interpreter is a 64-bit build
+    :param platform: the platform the interpreter runs on
+    :param extra: the extra details that the interpreter reports
+    :param free_threaded: whether the interpreter is a free-threaded build
+    :param debug: whether the interpreter is a debug build
+    :param machine: the machine architecture
+    :param marker_environment: the environment markers of the interpreter, ``None`` when unknown
+    """
+
     implementation: str
     version_info: VersionInfo
     version: str
@@ -51,14 +74,17 @@ class PythonInfo:
 
     @property
     def version_no_dot(self) -> str:
+        """The major and minor version without a dot, such as ``313``."""
         return f"{self.version_info.major}{self.version_info.minor}"
 
     @property
     def impl_lower(self) -> str:
+        """The name of the implementation in lower case, such as ``cpython``."""
         return self.implementation.lower()
 
     @property
     def version_dot(self) -> str:
+        """The major and minor version with a dot, such as ``3.13``."""
         return f"{self.version_info.major}.{self.version_info.minor}"
 
 
@@ -88,6 +114,11 @@ PY_FACTORS_RE_EXPLICIT_VERSION: Final[re.Pattern[str]] = re.compile(
 
 
 class Python(ToxEnv, ABC):
+    """The base of the tox environments that use a python interpreter.
+
+    :param create_args: the arguments the environment is created with
+    """
+
     def __init__(self, create_args: ToxEnvCreateArgs) -> None:
         self._base_python: PythonInfo | None = None
         self._base_python_searched: bool = False
@@ -216,6 +247,14 @@ class Python(ToxEnv, ABC):
 
     @classmethod
     def extract_base_python(cls, env_name: str) -> str | None:
+        """Extract the python specification from an environment name, such as ``py313`` from ``py313-test``.
+
+        :param env_name: the name of the environment
+
+        :returns: the python specification, or ``None`` when the name does not contain one
+
+        :raises ValueError: when the name contains more than one python specification
+        """
         candidates: list[str] = []
         if match := PY_FACTORS_RE_EXPLICIT_VERSION.match(env_name):
             candidates.append(cls._explicit_version_spec(match.groupdict()))
@@ -383,6 +422,10 @@ class Python(ToxEnv, ABC):
         raise NotImplementedError
 
     def py_dot_ver(self) -> str:
+        """The major and minor version of the base python, with a dot.
+
+        :returns: the version, such as ``3.13``
+        """
         return self.base_python.version_dot
 
     @property
@@ -427,12 +470,24 @@ class Python(ToxEnv, ABC):
         }
 
     def py_impl(self) -> str:
+        """The implementation of the base python, in lower case.
+
+        :returns: the implementation, such as ``cpython``
+        """
         return self.base_python.impl_lower
 
     def py_free_threaded(self) -> bool:
+        """Whether the base python is a free-threaded build.
+
+        :returns: whether it is free-threaded
+        """
         return self.base_python.free_threaded
 
     def py_debug(self) -> bool:
+        """Whether the base python is a debug build.
+
+        :returns: whether it is a debug build
+        """
         return self.base_python.debug
 
     @override
@@ -477,6 +532,10 @@ class Python(ToxEnv, ABC):
         self._paths = self.prepend_env_var_path()  # now that the environment exist we can add them to the path
 
     def ensure_python_env(self) -> None:
+        """Create the python environment, or recreate it when the base python has changed.
+
+        :raises tox.tox_env.errors.Recreate: when the environment exists, but was created with another base python
+        """
         conf = self.python_cache()
         with self.cache.compare(conf, Python.__name__) as (eq, old):
             if old is None:  # does not exist -> create
@@ -485,12 +544,17 @@ class Python(ToxEnv, ABC):
                 raise Recreate(self._diff_msg(conf, old))
 
     def python_cache(self) -> dict[str, JsonValue]:
+        """Get the values that decide whether the python environment has to be recreated.
+
+        :returns: the values that identify the base python
+        """
         return {
             "version_info": list(self.base_python.version_info),
         }
 
     @abstractmethod
     def create_python_env(self) -> None:
+        """Create the python environment on disk."""
         raise NotImplementedError
 
     @staticmethod
@@ -507,6 +571,10 @@ class Python(ToxEnv, ABC):
 
     @abstractmethod
     def prepend_env_var_path(self) -> list[Path]:
+        """Get the directories to prepend to the ``PATH`` of the environment.
+
+        :returns: the directories, first one first
+        """
         raise NotImplementedError
 
     @override
@@ -537,6 +605,11 @@ class NoInterpreter(Fail):
 
 
 def add_skip_missing_interpreters_to_core(core: CoreConfigSet, options: Parsed) -> None:
+    """Add the ``skip_missing_interpreters`` setting to the core configuration.
+
+    :param core: the core configuration
+    :param options: the parsed command line options
+    """
     core.add_config(
         keys=["skip_missing_interpreters"],
         default=False,
@@ -554,6 +627,13 @@ def _skip_missing_interpreters_post_process(options: Parsed, value: bool) -> boo
 
 
 def add_skip_missing_interpreters_to_env(conf: EnvConfigSet, core: CoreConfigSet, options: Parsed) -> None:
+    """Add the ``skip_missing_interpreters`` setting to the configuration of an environment.
+
+    :param conf: the configuration of the environment
+    :param core: the core configuration
+    :param options: the parsed command line options
+    """
+
     def _default_skip_missing(  # interface signature
         conf: Config,  # ruff:ignore[unused-function-argument]  # interface signature
         env_name: str | None,  # ruff:ignore[unused-function-argument]  # interface signature

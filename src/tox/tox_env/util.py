@@ -10,6 +10,12 @@ if TYPE_CHECKING:
 
 
 def add_change_dir_conf(config: EnvConfigSet, core: CoreConfigSet) -> None:
+    """Add the ``change_dir`` setting to the configuration of an environment.
+
+    :param config: the configuration of the environment
+    :param core: the core configuration
+    """
+
     def _post_process_change_dir(value: Path) -> Path:
         if not value.is_absolute():
             value = (core.get("tox_root", Path) / value).resolve()
@@ -26,6 +32,10 @@ def add_change_dir_conf(config: EnvConfigSet, core: CoreConfigSet) -> None:
 
 
 def add_commands_conf(config: EnvConfigSet) -> None:
+    """Add the ``commands`` setting to the configuration of an environment.
+
+    :param config: the configuration of the environment
+    """
     config.add_config(
         keys=["commands"],
         of_type=list[Command],
@@ -35,6 +45,10 @@ def add_commands_conf(config: EnvConfigSet) -> None:
 
 
 def add_ignore_errors_conf(config: EnvConfigSet) -> None:
+    """Add the ``ignore_errors`` setting to the configuration of an environment.
+
+    :param config: the configuration of the environment
+    """
     config.add_config(
         keys=["ignore_errors"],
         of_type=bool,

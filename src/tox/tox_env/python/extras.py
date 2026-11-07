@@ -13,6 +13,13 @@ if TYPE_CHECKING:
 
 
 def resolve_extras_static(root: Path, extras: set[str]) -> list[Requirement] | None:
+    """Resolve the requirements of the extras of the project, when they are listed statically.
+
+    :param root: the directory with the ``pyproject.toml`` file
+    :param extras: the names of the extras
+
+    :returns: the requirements, or ``None`` when they cannot be read statically
+    """
     pyproject_file = root / "pyproject.toml"
     if not pyproject_file.exists():
         return None

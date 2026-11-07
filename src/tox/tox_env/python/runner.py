@@ -41,6 +41,11 @@ if TYPE_CHECKING:
 
 
 class PythonRun(Python, RunToxEnv, ABC):
+    """The base of the tox environments that run commands with a python interpreter.
+
+    :param create_args: the arguments the environment is created with
+    """
+
     def __init__(self, create_args: ToxEnvCreateArgs) -> None:
         super().__init__(create_args)
 
@@ -122,10 +127,15 @@ class PythonRun(Python, RunToxEnv, ABC):
 
     @property
     def default_pkg_type(self) -> str:
+        """The package type the environment uses when none is configured, ``sdist``."""
         return "sdist"
 
     @property
     def pkg_type(self) -> str:
+        """The package type the environment uses, from its configuration.
+
+        :raises tox.report.HandledError: when the configured package type is not one of the supported types
+        """
         pkg_type = self.conf.get("package", str)
         if pkg_type not in self._package_types:
             msg = f"invalid package config type {pkg_type} requested, must be one of {', '.join(self._package_types)}"
@@ -242,6 +252,10 @@ def _normalize_extras(values: set[str]) -> set[str]:
 
 
 def add_extras_to_env(conf: EnvConfigSet) -> None:
+    """Add the ``extras`` setting to the configuration of an environment.
+
+    :param conf: the configuration of the environment
+    """
     conf.add_config(
         keys=["extras"],
         of_type=set[str],

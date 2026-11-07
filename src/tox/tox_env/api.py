@@ -99,6 +99,10 @@ class ToxEnv(ABC):  # ruff:ignore[too-many-public-methods]  # public facade
     @staticmethod
     @abstractmethod
     def id() -> str:
+        """The identifier of the tox environment type, used to select it in the configuration.
+
+        :returns: the identifier
+        """
         raise NotImplementedError
 
     def _install(self, arguments: InstallArguments, section: str, of_type: str) -> None:
@@ -110,9 +114,11 @@ class ToxEnv(ABC):  # ruff:ignore[too-many-public-methods]  # public facade
     @property
     @abstractmethod
     def installer(self) -> Installer[ToxEnv]:
+        """The installer that installs the packages of the environment."""
         raise NotImplementedError
 
     def register_config(self) -> None:
+        """Register the configuration keys every tox environment has, such as its name and labels."""
         self.conf.add_constant(
             keys=["env_name", "envname"],
             desc="the name of the tox environment",
@@ -206,6 +212,7 @@ class ToxEnv(ABC):  # ruff:ignore[too-many-public-methods]  # public facade
 
     @property
     def name(self) -> str:
+        """The name of the tox environment, such as ``py313``."""
         return self.conf.get("env_name", str)
 
     def _relative_to_tox_root(self, value: Path) -> Path:
@@ -216,6 +223,7 @@ class ToxEnv(ABC):  # ruff:ignore[too-many-public-methods]  # public facade
     @property
     @abstractmethod
     def executor(self) -> Execute:
+        """The executor that runs the commands of the environment."""
         raise NotImplementedError
 
     def _default_set_env(self) -> dict[str, str]:  # ruff:ignore[no-self-use]  # override keeps self
@@ -319,6 +327,7 @@ class ToxEnv(ABC):  # ruff:ignore[too-many-public-methods]  # public facade
     @property
     @abstractmethod
     def runs_on_platform(self) -> str:
+        """The platform the environment runs on, such as ``unix`` or ``win32``."""
         raise NotImplementedError
 
     # base signature shared by subclasses
@@ -343,6 +352,7 @@ class ToxEnv(ABC):  # ruff:ignore[too-many-public-methods]  # public facade
 
     @property
     def cache(self) -> Info:
+        """The cache of the environment, which stores the state of its last setup."""
         return Info(self.env_dir)
 
     def _setup_env(self) -> None:
@@ -397,6 +407,7 @@ class ToxEnv(ABC):  # ruff:ignore[too-many-public-methods]  # public facade
         ...
 
     def teardown(self) -> None:
+        """Tear the environment down, once, and notify the plugins that it is torn down."""
         if not self._run_state["teardown"]:
             try:
                 self._teardown()
@@ -509,6 +520,7 @@ class ToxEnv(ABC):  # ruff:ignore[too-many-public-methods]  # public facade
 
     @property
     def environment_variables(self) -> dict[str, str]:
+        """The environment variables the commands of the environment run with."""
         if self._resolving_env_vars:
             # Re-entrant call: set_env resolution triggered a substitution (e.g. {env_site_packages_dir})
             # that requires the virtualenv session, which needs environment_variables to be built first.
@@ -653,6 +665,12 @@ class ToxEnv(ABC):  # ruff:ignore[too-many-public-methods]  # public facade
         self,
         suspend: bool,  # ruff:ignore[boolean-type-hint-positional-argument]  # keeps the signature
     ) -> Generator[None, None, None]:
+        """Context manager that suspends the display of the environment output, when asked to.
+
+        :param suspend: whether to suspend the display
+
+        :yields: ``None``, the block runs with the display in the requested state
+        """
         with self._log_context(), self.log_handler.suspend_out_err(suspend, self._suspended_out_err) as out_err:
             if suspend:  # only set if suspended
                 self._suspended_out_err = out_err
@@ -664,6 +682,10 @@ class ToxEnv(ABC):  # ruff:ignore[too-many-public-methods]  # public facade
             yield
 
     def close_and_read_out_err(self) -> tuple[bytes, bytes] | None:
+        """Close the suspended output and read what it captured.
+
+        :returns: the captured standard output and standard error, or ``None`` when nothing was suspended
+        """
         if self._suspended_out_err is None:  # pragma: no branch  # other outcome untested
             return None  # pragma: no cover  # untested error path
         (out, err), self._suspended_out_err = self._suspended_out_err, None

@@ -165,6 +165,12 @@ class Pep723Mixin(Python, RunToxEnv):
 
 @dataclass(frozen=True, slots=True, kw_only=True)
 class ScriptMetadata:
+    """The metadata of a script, from its inline ``script`` block as defined in PEP 723.
+
+    :param requires_python: the python version the script requires
+    :param dependencies: the dependencies the script requires
+    """
+
     requires_python: str | None = None
     dependencies: list[str] = field(default_factory=list)
 

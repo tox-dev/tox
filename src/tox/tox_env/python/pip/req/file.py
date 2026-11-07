@@ -87,12 +87,21 @@ _VERSION_SPECIFIER: Final[re.Pattern[str]] = re.compile(
     re.VERBOSE,
 )
 ReqFileLines = Iterator[tuple[int, str]]
+"""The lines of a requirements file, each with its line number."""
 
 DEFAULT_INDEX_URL: Final[str] = "https://pypi.org/simple"
 _HTTP_BODY_TIMEOUT: Final[int] = 120
 
 
 class ParsedRequirement:
+    """A requirement parsed from a requirements file.
+
+    :param req: the requirement text
+    :param options: the options the requirement was given with
+    :param from_file: the path of the file the requirement was read from
+    :param lineno: the line number the requirement was read from
+    """
+
     def __init__(self, req: str, options: dict[str, Any], from_file: str, lineno: int) -> None:
         req = req.encode("utf-8").decode("utf-8")
         try:
@@ -155,21 +164,29 @@ class ParsedRequirement:
 
     @property
     def options(self) -> dict[str, Any]:
+        """The options the requirement was given with."""
         return self._options
 
     @property
     def requirement(self) -> Requirement | Path | str:
+        """The requirement, as a packaging requirement."""
         return self._requirement
 
     @property
     def from_file(self) -> str:
+        """The path of the file the requirement was read from."""
         return self._from_file
 
     @property
     def lineno(self) -> int:
+        """The line number the requirement was read from."""
         return self._lineno
 
     def as_args(self) -> Iterator[str]:
+        """Get the requirement as the command line arguments pip takes.
+
+        :yields: the arguments
+        """
         if self.options.get("is_editable"):
             yield "-e"
         yield str(self._requirement)
@@ -202,6 +219,13 @@ class ParsedLine:
 
 
 class RequirementsFile:
+    """A requirements file, with the requirements, options and constraints it declares.
+
+    :param path: the path of the requirements file
+    :param constraint: whether the file lists constraints, rather than requirements
+    :param environment_provider: the provider of the environment variables the file can expand
+    """
+
     def __init__(
         self,
         path: Path,
@@ -223,14 +247,17 @@ class RequirementsFile:
 
     @property
     def is_constraint(self) -> bool:
+        """Whether the file lists constraints, rather than requirements."""
         return self._is_constraint
 
     @property
     def path(self) -> Path:
+        """The path of the requirements file."""
         return self._path
 
     @property
     def options(self) -> Namespace:
+        """The options the file sets."""
         self._ensure_requirements_parsed()
         return self._opt
 
@@ -551,11 +578,13 @@ class RequirementsFile:
 
     @property
     def requirements(self) -> list[ParsedRequirement]:
+        """The requirements the file declares, including those of the files it includes."""
         self._ensure_requirements_parsed()
         return cast("list[ParsedRequirement]", self._requirements)
 
     @property
     def as_root_args(self) -> list[str]:
+        """The command line arguments the requirements are installed with, from the root file."""
         if self._as_root_args is None:
             opt = Namespace()
             result: list[str] = []
@@ -598,6 +627,12 @@ class RequirementsFile:
                 yield f"--{name.replace('_', '-')}", ",".join(sorted(getattr(opt, name)))
 
     def redact(self, text: str) -> str:
+        """Replace the secret values in a text with a placeholder.
+
+        :param text: the text to redact
+
+        :returns: the redacted text
+        """
         secrets: Final = self._secrets | self._req_parser._secrets  # ruff:ignore[private-member-access]  # nested files
         for value in sorted(secrets, key=len, reverse=True):  # longest first, as a value may contain another one
             text = text.replace(value, secrets[value])
@@ -605,14 +640,33 @@ class RequirementsFile:
 
 
 class EnvironmentProvider(Protocol):
-    def __call__(self) -> Mapping[str, str]: ...
+    """Callable that provides the environment variables that requirements can expand."""
+
+    def __call__(self) -> Mapping[str, str]:
+        """Get the environment variables.
+
+        :returns: the environment variables by name
+        """
+        ...
 
 
 def protect_env_variables(text: str) -> str:
+    """Protect the environment variable references of a text from being expanded.
+
+    :param text: the text to protect
+
+    :returns: the protected text
+    """
     return text.replace("${", f"${_ENV_LITERAL_MARK}{{")
 
 
 def unprotect_env_variables(text: str) -> str:
+    """Restore the environment variable references protected with :func:`protect_env_variables`.
+
+    :param text: the protected text
+
+    :returns: the text with the references restored
+    """
     return text.replace(f"${_ENV_LITERAL_MARK}{{", "${")
 
 

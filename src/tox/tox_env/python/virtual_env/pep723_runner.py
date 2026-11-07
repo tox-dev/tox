@@ -22,6 +22,8 @@ def tox_register_tox_env(register: ToxEnvRegister) -> None:
 
 
 class Pep723Runner(Pep723Mixin, VirtualEnv, RunToxEnv):
+    """A run environment that runs a script, with the dependencies it declares in its inline metadata."""
+
     @property
     @override
     def _package_tox_env_type(self) -> str:

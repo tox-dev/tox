@@ -32,6 +32,10 @@ class _OurArgumentParser(ArgumentParser):
 
 
 def build_parser() -> ArgumentParser:
+    """Build the parser of the pip requirement file options.
+
+    :returns: the parser
+    """
     parser = _OurArgumentParser(add_help=False, prog="", allow_abbrev=False)
     _global_options(parser)
     _req_options(parser)
@@ -61,6 +65,8 @@ def _global_options(parser: ArgumentParser) -> None:
 
 
 class AddUniqueAction(Action):
+    """Add the values to the list of the option, without repeating a value."""
+
     @override
     def __call__(
         self,
@@ -79,6 +85,8 @@ class AddUniqueAction(Action):
 class BinaryAction(Action):
     # Every line parses into its own namespace, while pip lets a later line edit the sets of an earlier one, so record
     # the values in order for the merge to apply.
+    """Record the binary option, for each of the lines it appears in."""
+
     @override
     def __call__(
         self,
@@ -92,6 +100,8 @@ class BinaryAction(Action):
 
 
 class AddSortedUniqueAction(Action):
+    """Add the values to the sorted list of the option, without repeating a value."""
+
     @override
     def __call__(
         self,

@@ -46,6 +46,12 @@ class Installer(ABC, Generic[EnvT_co, ArgsT]):
 
     @abstractmethod
     def install(self, arguments: ArgsT, section: str, of_type: str) -> None:
+        """Install the given arguments in the environment.
+
+        :param arguments: the arguments to install
+        :param section: the configuration section the arguments come from
+        :param of_type: the type of the arguments, such as ``deps`` or ``requirements``
+        """
         raise NotImplementedError
 
 

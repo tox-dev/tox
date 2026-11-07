@@ -97,6 +97,16 @@ class _PythonRequirementsFile(RequirementsFile):
         raw: object,
         environment_provider: EnvironmentProvider | None = None,
     ) -> Self:
+        """Create the requirements file that matches the setting, from its value.
+
+        :param root: the directory the relative paths of the file are resolved against
+        :param raw: the value of the setting
+        :param environment_provider: the provider of the environment variables the file can expand
+
+        :returns: the requirements file
+
+        :raises TypeError: when the value is neither a string nor a list of strings or requirements
+        """
         if not cls._valid_raw(raw):
             raise TypeError(_factory_type_error(cls._FIELD, raw))
         return cls(raw, root, environment_provider)
@@ -147,6 +157,14 @@ class _PythonRequirementsFile(RequirementsFile):
 
     @classmethod
     def validate_requirement_options(cls, source: str, expanded: str, *, preprocessed: bool = False) -> None:
+        """Check that the options of a requirement line are allowed in this setting.
+
+        :param source: the source of the setting
+        :param expanded: the requirement line, expanded
+        :param preprocessed: whether the line was already preprocessed
+
+        :raises ValueError: when the line uses an option that is not allowed
+        """
         error_message: Final[str] = "a requirement substitution cannot change pip options"
         source_lines: Final[list[list[str]]] = cls._requirement_tokens(source, preprocessed=preprocessed)
         expanded_lines: Final[list[list[str]]] = cls._requirement_tokens(expanded, preprocessed=preprocessed)
@@ -179,6 +197,12 @@ class _PythonRequirementsFile(RequirementsFile):
 
     def lines(self, *, preserve_host_values: bool = False) -> list[str]:
         # as_root_args raises what tox run would raise, and when pip gets no arguments there is nothing to show
+        """Get the requirement lines of the file.
+
+        :param preserve_host_values: whether the values taken from the host are kept as they are
+
+        :returns: the lines
+        """
         if not self.as_root_args:
             return []
         # pip merges global options across lines, so they render from the merged state through the install-argument
@@ -223,6 +247,12 @@ class _PythonRequirementsFile(RequirementsFile):
         raise NotImplementedError
 
     def unroll(self) -> tuple[list[str], list[str]]:
+        """Split the requirement lines into the requirements, and the options of the file.
+
+        :returns: the requirement lines and the option lines
+
+        :raises ValueError: when a line uses an option that is not allowed in this setting
+        """
         if self._unroll is None:
             opts_dict = vars(self.options)
             if not self.requirements and opts_dict:
@@ -236,6 +266,8 @@ class _PythonRequirementsFile(RequirementsFile):
 
 
 class PythonDeps(_PythonRequirementsFile):
+    """The dependencies of a tox environment, as set by its ``deps`` setting."""
+
     _CONSTRAINT = False
     _FIELD = "deps"
 
@@ -270,6 +302,8 @@ class PythonDeps(_PythonRequirementsFile):
 
 
 class PythonConstraints(_PythonRequirementsFile):
+    """The constraints of a tox environment, as set by its ``constraints`` setting."""
+
     _CONSTRAINT = True
     _FIELD = "constraints"
 
@@ -320,6 +354,7 @@ ONE_ARG: Final[set[str]] = {
     "--no-binary",
     "--only-binary",
 }
+"""The options of a requirement file that take one argument."""
 ONE_ARG_ESCAPE: Final[set[str]] = {
     "-c",
     "--constraint",

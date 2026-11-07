@@ -43,6 +43,12 @@ __all__ = [
 
 
 class RunToxEnv(ToxEnv, ABC):
+    """The base of the tox environments that run commands.
+
+    :param create_args: the arguments the environment is created with
+    :ivar package_env: the packaging environment the run environment uses, ``None`` when it uses none
+    """
+
     def __init__(self, create_args: ToxEnvCreateArgs) -> None:
         self.package_env: PackageToxEnv | None = None
         self._packages: list[Package] = []
@@ -150,6 +156,7 @@ class RunToxEnv(ToxEnv, ABC):
 
     @property
     def package_envs(self) -> Iterable[PackageToxEnv]:
+        """The packaging environments the run environment uses, followed by the ones they depend on."""
         if self.package_env is not None:
             yield self.package_env
             yield from self.package_env.child_pkg_envs(self.conf)
@@ -162,6 +169,10 @@ class RunToxEnv(ToxEnv, ABC):
         self._call_pkg_envs("interrupt", suspend=False)
 
     def get_package_env_types(self) -> tuple[str, str] | None:
+        """Get the packaging environment types the run environment uses.
+
+        :returns: the names of the packaging environment type and its name, or ``None`` when there is none
+        """
         if not self._register_package_conf():
             return None
 
@@ -289,6 +300,7 @@ class RunToxEnv(ToxEnv, ABC):
             journal["installpkg"] = installed_meta[0] if len(installed_meta) == 1 else installed_meta
 
     def mark_active(self) -> None:
+        """Mark the run environment as active in its packaging environments."""
         for pkg_env in self.package_envs:
             pkg_env.mark_active_run_env(self)
 

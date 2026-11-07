@@ -18,6 +18,14 @@ if TYPE_CHECKING:
 
 @dataclass(frozen=True, kw_only=True, slots=True)
 class Pylock:
+    """A ``pylock.toml`` lock file, from which the requirements are installed.
+
+    :param path: the path of the lock file
+    :param extras: the extras to install from the lock file
+    :param groups: the dependency groups to install from the lock file
+    :param marker_env: the environment markers to resolve the lock file with
+    """
+
     path: Path
     extras: frozenset[str] = frozenset()
     groups: frozenset[str] = frozenset()

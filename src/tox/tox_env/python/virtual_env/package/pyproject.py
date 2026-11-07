@@ -57,6 +57,11 @@ ConfigSettings = dict[str, Any] | None
 
 
 class ToxBackendFailed(Fail, BackendFailed):
+    """The build backend of a project failed.
+
+    :param backend_failed: the failure reported by the build backend
+    """
+
     def __init__(self, backend_failed: BackendFailed) -> None:
         Fail.__init__(self)
         result: dict[str, Any] = {
@@ -140,6 +145,7 @@ class Pep517VenvPackager(PythonPackageToxEnv, ABC):
 
     @property
     def root(self) -> Path:
+        """The directory of the project to build, read from the ``package_root`` setting on first use."""
         if self._root is None:
             self._root = self.conf["package_root"]
         return self._root
@@ -357,6 +363,12 @@ class Pep517VenvPackager(PythonPackageToxEnv, ABC):
         return dependencies_with_extras(reqs, for_env.get("extras", set[str]), name, available_extras=available)
 
     def get_package_dependencies(self, for_env: EnvConfigSet) -> list[Requirement]:
+        """Get the dependencies of the package, for a run environment.
+
+        :param for_env: the configuration of the run environment
+
+        :returns: the dependencies
+        """
         with self._pkg_lock:
             if self._package_dependencies is None:  # pragma: no branch  # other outcome untested
                 self._ensure_meta_present(for_env)
@@ -386,6 +398,10 @@ class Pep517VenvPackager(PythonPackageToxEnv, ABC):
 
     @property
     def meta_folder(self) -> Path:
+        """The folder where the build metadata is written, from the ``meta_dir`` setting.
+
+        :raises tox.tox_env.errors.Fail: when the metadata folder is a link
+        """
         meta_folder = self.conf.get("meta_dir", Path)
         # the build frontend empties this folder before each metadata build, which would wipe a link's target
         if meta_folder.is_symlink() or (
@@ -406,6 +422,12 @@ class Pep517VenvPackager(PythonPackageToxEnv, ABC):
         )
 
     def get_package_name(self, for_env: EnvConfigSet) -> str:
+        """Get the name of the package, for a run environment.
+
+        :param for_env: the configuration of the run environment
+
+        :returns: the name of the package
+        """
         with self._pkg_lock:
             if self._package_name is None:  # pragma: no branch  # other outcome untested
                 self._ensure_meta_present(for_env)
@@ -413,6 +435,12 @@ class Pep517VenvPackager(PythonPackageToxEnv, ABC):
         return self._package_name
 
     def get_package_extras(self, for_env: EnvConfigSet) -> set[str]:
+        """Get the extras of the package, for a run environment.
+
+        :param for_env: the configuration of the run environment
+
+        :returns: the extras
+        """
         with self._pkg_lock:
             self._ensure_meta_present(for_env)
             return set(cast("PathDistribution", self._distribution_meta).metadata.get_all("Provides-Extra") or [])
@@ -440,6 +468,7 @@ class Pep517VenvPackager(PythonPackageToxEnv, ABC):
 
     @property
     def pkg_dir(self) -> Path:
+        """The directory the package is built in, from the ``pkg_dir`` setting."""
         return self.conf.get("pkg_dir", Path)
 
     @property
@@ -509,6 +538,12 @@ class Pep517VirtualEnvPackager(Pep517VenvPackager, VirtualEnv):
 
 
 class Pep517VirtualEnvFrontend(Frontend):
+    """The frontend that runs the PEP 517 build backend in a virtualenv.
+
+    :param root: the directory of the project to build
+    :param env: the packaging environment
+    """
+
     def __init__(self, root: Path, env: Pep517VenvPackager) -> None:
         super().__init__(*Frontend.create_args_from_folder(root))
         self._tox_env = env
@@ -571,10 +606,12 @@ class Pep517VirtualEnvFrontend(Frontend):
 
     @property
     def backend_cmd(self) -> Sequence[str]:
+        """The command that starts the build backend."""
         return ["python", *self.backend_args]
 
     @property
     def backend_executor(self) -> LocalSubProcessPep517Executor:
+        """The executor that runs the build backend."""
         if self._backend_executor_ is None:
             environment_variables = self._tox_env.environment_variables.copy()
             backend = os.pathsep.join(str(i) for i in self._backend_paths).strip()

@@ -36,6 +36,20 @@ class _VersionInfo:
 
 @dataclass(slots=True, kw_only=True)
 class SubprocessPythonInfo:
+    """The details of a python interpreter, probed by running it in a subprocess.
+
+    :param implementation: the name of the implementation
+    :param version_info: the version of the interpreter
+    :param version: the full version string
+    :param architecture: the number of bits of the interpreter
+    :param platform: the platform the interpreter runs on
+    :param system_executable: the path of the system executable of the interpreter
+    :param free_threaded: whether the interpreter is a free-threaded build
+    :param debug_build: whether the interpreter is a debug build
+    :param sysconfig_platform: the platform name from ``sysconfig``, ``None`` when unknown
+    :param marker_environment: the environment markers of the interpreter, ``None`` when unknown
+    """
+
     implementation: str
     version_info: _VersionInfo
     version: str
@@ -70,18 +84,22 @@ class SubprocessCreator:
 
     @property
     def script_dir(self) -> Path:
+        """The directory the scripts of the environment are placed in, the same as its bin directory."""
         return self.bin_dir
 
     @property
     def bin_dir(self) -> Path:
+        """The directory the executables of the environment are placed in."""
         return self._env_dir / ("Scripts" if self._is_win else "bin")
 
     @property
     def platlib(self) -> Path:
+        """The directory of the platform specific libraries of the environment, the same as its purelib directory."""
         return self.purelib
 
     @property
     def purelib(self) -> Path:
+        """The directory of the pure python libraries of the environment."""
         if self._is_win:
             return self._env_dir / "Lib" / "site-packages"
         vi = self.interpreter.version_info
@@ -89,6 +107,7 @@ class SubprocessCreator:
 
     @property
     def exe(self) -> Path:
+        """The python executable of the environment."""
         return self.bin_dir / ("python.exe" if self._is_win else "python")
 
 
@@ -117,6 +136,10 @@ class SubprocessSession:
         )
 
     def run(self) -> None:
+        """Run the create step of the environment in a subprocess.
+
+        :raises RuntimeError: when no bootstrap interpreter was found
+        """
         if self._bootstrap_python is None:
             msg = "no interpreter discovered"
             raise RuntimeError(msg)
@@ -143,6 +166,10 @@ class SubprocessSession:
 
     @property
     def creator(self) -> SubprocessCreator:
+        """The creator of the environment, which describes its paths.
+
+        :raises RuntimeError: when no interpreter was discovered
+        """
         if self._creator is None:
             msg = "no interpreter discovered"
             raise RuntimeError(msg)
@@ -150,6 +177,13 @@ class SubprocessSession:
 
 
 def probe_python(python_path: str, marker_environment: MarkerEnvironment | None = None) -> SubprocessPythonInfo | None:
+    """Probe a python interpreter for its details, by running it.
+
+    :param python_path: the path of the interpreter
+    :param marker_environment: the marker environment to compare the interpreter with, ``None`` to skip it
+
+    :returns: the details, or ``None`` when the interpreter cannot be probed
+    """
     probe_script: str = """\
 import json, struct, sys, sysconfig
 print(json.dumps({
@@ -189,6 +223,15 @@ print(json.dumps({
 
 
 def ensure_bootstrap(work_dir: Path, virtualenv_spec: str) -> Path:
+    """Make sure the virtualenv used to create environments is available.
+
+    :param work_dir: the directory the bootstrap is kept in
+    :param virtualenv_spec: the requirement of the virtualenv to bootstrap
+
+    :returns: the path of the bootstrap
+
+    :raises tox.tox_env.errors.Fail: when the cache directory of the bootstrap cannot be created
+    """
     _version_specifier(virtualenv_spec)
     base: Final[Path] = _bootstrap_path(work_dir, virtualenv_spec)
     if not base.parent.resolve().is_relative_to(work_dir.resolve()):

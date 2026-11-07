@@ -25,6 +25,15 @@ def dependencies_with_extras(
     *,
     available_extras: set[str] | None = None,
 ) -> list[Requirement]:
+    """Get the dependencies that apply to the requested extras of a package.
+
+    :param deps: the dependencies of the package
+    :param extras: the requested extras
+    :param package_name: the name of the package the dependencies belong to
+    :param available_extras: the extras the package provides, ``None`` when unknown
+
+    :returns: the dependencies that apply
+    """
     return dependencies_with_extras_from_markers(
         extract_extra_markers(deps), extras, package_name, available_extras=available_extras
     )
@@ -37,6 +46,17 @@ def dependencies_with_extras_from_markers(
     *,
     available_extras: set[str] | None = None,
 ) -> list[Requirement]:
+    """Get the dependencies that apply to the requested extras, from their markers.
+
+    :param deps_with_markers: the dependencies, each with the extras its marker selects
+    :param extras: the requested extras
+    :param package_name: the name of the package the dependencies belong to
+    :param available_extras: the extras the package provides, ``None`` when unknown
+
+    :returns: the dependencies that apply
+
+    :raises tox.tox_env.errors.Fail: when a requested extra is not provided by the package
+    """
     normalized_extras: Final[set[str]] = {canonicalize_name(extra) for extra in extras}
     if available_extras is not None and normalized_extras:
         normalized_available: Final[set[str]] = {canonicalize_name(extra) for extra in available_extras}
@@ -128,6 +148,13 @@ def _get_extra(
 
 
 def safe_extractall(tar: tarfile.TarFile, path: Path) -> None:
+    """Extract a tar archive, refusing members that would land outside the target directory.
+
+    :param tar: the archive to extract
+    :param path: the directory to extract into
+
+    :raises tox.tox_env.errors.Fail: when a member of the archive cannot be extracted safely
+    """
     if hasattr(tarfile, "data_filter"):
         try:
             tar.extractall(path=str(path), filter="data")

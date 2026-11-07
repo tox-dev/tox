@@ -40,6 +40,11 @@ from importlib.metadata import Distribution
 
 
 class VenvCmdBuilder(PythonPackageToxEnv, ABC):
+    """The base of the packaging environments that build with a command run in a virtualenv.
+
+    :param create_args: the arguments the environment is created with
+    """
+
     def __init__(self, create_args: ToxEnvCreateArgs) -> None:
         super().__init__(create_args)
         self._sdist_meta_tox_env: Pep517VirtualEnvPackager | None = None
@@ -108,6 +113,15 @@ class VenvCmdBuilder(PythonPackageToxEnv, ABC):
         return Path(found[0])
 
     def extract_install_info(self, for_env: EnvConfigSet, path: Path) -> list[Package]:
+        """Extract the packages that the built distribution provides.
+
+        :param for_env: the configuration of the run environment
+        :param path: the path of the built distribution
+
+        :returns: the packages
+
+        :raises tox.tox_env.errors.Fail: when the distribution cannot be read, or contains no package
+        """
         extras = for_env.get("extras", set[str])
         if path.suffix == ".whl":
             try:
@@ -166,6 +180,8 @@ class VenvCmdBuilder(PythonPackageToxEnv, ABC):
 
 
 class VirtualEnvCmdBuilder(VenvCmdBuilder, VirtualEnv):
+    """A packaging environment that builds with a command run in a virtualenv."""
+
     @staticmethod
     @override
     def id() -> str:

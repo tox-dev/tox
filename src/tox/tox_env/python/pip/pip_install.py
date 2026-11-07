@@ -39,6 +39,12 @@ if TYPE_CHECKING:
 
 class PythonInstallerListDependencies(Installer[Python], ABC):
     # keeps the existing signature
+    """An installer that can list the packages installed in the environment.
+
+    :param tox_env: the environment to install packages into
+    :param with_list_deps: whether to list the installed packages
+    """
+
     def __init__(self, tox_env: Python, with_list_deps: bool = True) -> None:  # ruff:ignore[boolean-type-hint-positional-argument, boolean-default-value-positional-argument]
         self._with_list_deps = with_list_deps
         super().__init__(tox_env)
@@ -55,6 +61,10 @@ class PythonInstallerListDependencies(Installer[Python], ABC):
 
     @abstractmethod
     def freeze_cmd(self) -> list[str]:
+        """Get the command that lists the installed packages.
+
+        :returns: the command
+        """
         raise NotImplementedError
 
     @override
@@ -113,10 +123,23 @@ class Pip(PythonInstallerListDependencies):
         env_name: str | None,  # ruff:ignore[unused-method-argument]  # override signature
     ) -> Command:
         # Python 2 spells isolation as -E
+        """Get the default command that installs packages with pip.
+
+        :param conf: the configuration of the environment
+        :param env_name: the name of the environment
+
+        :returns: the install command
+        """
         isolated_flag = "-E" if self._env.base_python.version_info.major == 2 else "-I"  # ruff:ignore[magic-value-comparison]
         return Command(["python", isolated_flag, "-m", "pip", "install", "{opts}", "{packages}"])
 
     def post_process_install_command(self, cmd: Command) -> Command:
+        """Add the options that the configuration asks for to the install command.
+
+        :param cmd: the install command
+
+        :returns: the install command with the options
+        """
         install_command = cmd.args
         pip_pre = self._env.conf.get("pip_pre", bool)
         try:
@@ -203,14 +226,17 @@ class Pip(PythonInstallerListDependencies):
 
     @property
     def constraints(self) -> PythonConstraints:
+        """The constraints the packages are installed with."""
         return self._env.conf.get("constraints", PythonConstraints)
 
     @property
     def constrain_package_deps(self) -> bool:
+        """Whether the dependencies of the package are constrained too."""
         return bool(self._env.conf["constrain_package_deps"])
 
     @property
     def use_frozen_constraints(self) -> bool:
+        """Whether the constraints are frozen from the installed packages."""
         return bool(self._env.conf["use_frozen_constraints"])
 
     def _install_env_vars(self) -> dict[str, str]:
@@ -260,9 +286,19 @@ class Pip(PythonInstallerListDependencies):
         return bool(self.constraints.as_root_args)
 
     def constraints_file(self) -> Path:
+        """The path of the file the constraints are written to.
+
+        :returns: the path of the constraints file
+        """
         return Path(self._env.env_dir) / "constraints.txt"
 
     def build_install_cmd(self, args: Sequence[str]) -> list[str]:
+        """Build the install command, placing the arguments where the ``{packages}`` placeholder is.
+
+        :param args: the arguments to install
+
+        :returns: the install command
+        """
         install_command = self._env.conf.get("install_command", Command).args
         try:
             opts_at = install_command.index("{packages}")

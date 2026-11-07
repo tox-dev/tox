@@ -176,6 +176,7 @@ class VirtualEnv(Python, ABC):
 
     @property
     def session(self) -> Session | SubprocessSession:
+        """The virtualenv session of the environment, the one of a subprocess when virtualenv cannot be imported."""
         if self._virtualenv_session_error is not None:
             raise self._virtualenv_session_error
         if self._virtualenv_session is None:
@@ -193,6 +194,10 @@ class VirtualEnv(Python, ABC):
         return self._virtualenv_session
 
     def virtualenv_env_vars(self) -> dict[str, str]:
+        """Get the environment variables the virtualenv is created with.
+
+        :returns: the environment variables
+        """
         env = self.environment_variables.copy()
         if "VIRTUALENV_NO_PERIODIC_UPDATE" not in env:
             env["VIRTUALENV_NO_PERIODIC_UPDATE"] = "True"
@@ -258,6 +263,7 @@ class VirtualEnv(Python, ABC):
 
     @property
     def creator(self) -> Creator | SubprocessCreator:
+        """The creator that creates the virtualenv, the one of a subprocess when virtualenv cannot be imported."""
         return self.session.creator
 
     @override

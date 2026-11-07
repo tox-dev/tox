@@ -25,10 +25,17 @@ if TYPE_CHECKING:
     from .pip.req_file import PythonDeps
 
 
-class PythonPackage(Package): ...
+class PythonPackage(Package):
+    """A package built from a python project."""
 
 
 class PythonPathPackageWithDeps(PathPackage):
+    """A package given by a path, together with the dependencies it declares.
+
+    :param path: the path of the package
+    :param deps: the dependencies the package declares
+    """
+
     def __init__(self, path: Path, deps: Sequence[Requirement]) -> None:
         super().__init__(path=path)
         self.deps: Sequence[Requirement] = deps
@@ -61,6 +68,11 @@ class EditablePackage(PythonPathPackageWithDeps):
 
 
 class PythonPackageToxEnv(Python, PackageToxEnv, ABC):
+    """The base of the tox environments that build a python package.
+
+    :param create_args: the arguments the environment is created with
+    """
+
     def __init__(self, create_args: ToxEnvCreateArgs) -> None:
         self._wheel_build_envs: dict[str, PythonPackageToxEnv] = {}
         super().__init__(create_args)
@@ -80,10 +92,20 @@ class PythonPackageToxEnv(Python, PackageToxEnv, ABC):
 
     @abstractmethod
     def requires(self) -> tuple[Requirement, ...] | PythonDeps:
+        """Get the build requirements of the package.
+
+        :returns: the build requirements
+        """
         raise NotImplementedError
 
     @abstractmethod
     def load_deps_for_env(self, for_env: EnvConfigSet) -> list[Requirement]:
+        """Load the dependencies of the package for a run environment.
+
+        :param for_env: the configuration of the run environment
+
+        :returns: the dependencies
+        """
         raise NotImplementedError
 
     @override
