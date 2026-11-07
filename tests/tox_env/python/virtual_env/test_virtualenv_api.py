@@ -5,12 +5,14 @@ import sys
 from pathlib import Path
 from textwrap import dedent
 from typing import TYPE_CHECKING
-from unittest.mock import MagicMock, PropertyMock
+from unittest.mock import MagicMock, PropertyMock, create_autospec
 
 import pytest
 from virtualenv import __version__ as virtualenv_version
 from virtualenv import session_via_cli
 from virtualenv.config.cli.parser import VirtualEnvOptions
+from virtualenv.create.creator import Creator
+from virtualenv.discovery.py_info import PythonInfo
 
 from tox.tox_env.python.virtual_env.api import VirtualEnv
 
@@ -32,6 +34,7 @@ def virtualenv_opt(monkeypatch: MonkeyPatch, mocker: MockerFixture) -> VirtualEn
     opts = VirtualEnvOptions()
     mocker.patch(
         "tox.tox_env.python.virtual_env.api.session_via_cli",
+        autospec=True,
         side_effect=lambda args, options, setup_logging, env: session_via_cli(  # ruff:ignore[unused-lambda-argument]
             args,
             opts,
@@ -93,7 +96,9 @@ def test_virtualenv_base_python_entries_whole_and_in_order(
     monkeypatch: MonkeyPatch,
 ) -> None:
     monkeypatch.setenv("VIRTUALENV_PYTHON", "from-env")
-    get_interpreter: Final = mocker.patch("virtualenv.discovery.builtin.get_interpreter", return_value=None)
+    get_interpreter: Final = mocker.patch(
+        "virtualenv.discovery.builtin.get_interpreter", autospec=True, return_value=None
+    )
     base_python: Final = [f"first{os.pathsep}a", "second,b", ">=3.99,<4"]
     proj: Final = tox_project({"tox.toml": f"[env_run_base]\npackage = 'skip'\nbase_python = {base_python}"})
 
@@ -320,7 +325,11 @@ def test_get_python_returns_none_when_system_executable_missing(
         VirtualEnv,
         "creator",
         new_callable=PropertyMock,
-        return_value=MagicMock(interpreter=MagicMock(system_executable=None)),
+        return_value=mocker.create_autospec(
+            Creator,
+            instance=True,
+            interpreter=mocker.create_autospec(PythonInfo, instance=True, system_executable=None),
+        ),
     )
     result = tox_project({"tox.ini": "[testenv]\npackage=skip\nbase_python=missing-interp"}).run("r")
     result.assert_failed()
@@ -328,7 +337,7 @@ def test_get_python_returns_none_when_system_executable_missing(
 
 
 def test_get_virtualenv_py_info_raises_on_none(mocker: MockerFixture) -> None:
-    mocker.patch("virtualenv.discovery.cached_py_info.from_exe", return_value=None)
+    mocker.patch("virtualenv.discovery.cached_py_info.from_exe", autospec=True, return_value=None)
     with pytest.raises(RuntimeError, match="could not query python information for"):
         VirtualEnv.get_virtualenv_py_info(Path("/no/such/python"))
 
@@ -344,10 +353,14 @@ def test_missing_interpreter_discovered_once(tox_project: ToxProjectCreator, moc
 def test_bootstrap_failure_allows_retry(tox_project: ToxProjectCreator, mocker: MockerFixture) -> None:
     mocker.patch(
         "tox.tox_env.python.virtual_env.api.get_interpreter",
-        return_value=MagicMock(system_executable=sys.executable),
+        autospec=True,
+        return_value=mocker.create_autospec(
+            PythonInfo, instance=True, system_executable=sys.executable, marker_environment={}
+        ),
     )
     mocker.patch(
         "tox.tox_env.python.virtual_env.subprocess_adapter.ensure_bootstrap",
+        autospec=True,
         side_effect=[RuntimeError("temporary bootstrap failure"), Path(sys.executable)],
     )
     project = tox_project({
@@ -424,20 +437,24 @@ def test_virtualenv_spec_auto(
     "resolved",
     [
         pytest.param(None, id="interpreter-unresolved"),
-        pytest.param(MagicMock(system_executable=sys.executable), id="resolved-but-probe-fails"),
+        pytest.param(
+            create_autospec(PythonInfo, instance=True, system_executable=sys.executable, marker_environment={}),
+            id="resolved-but-probe-fails",
+        ),
     ],
 )
 def test_virtualenv_spec_subprocess_missing_interpreter(
     tox_project: ToxProjectCreator,
     mocker: MockerFixture,
-    resolved: MagicMock | None,
+    resolved: PythonInfo | None,
 ) -> None:
     ensure_bootstrap = mocker.patch(
         "tox.tox_env.python.virtual_env.subprocess_adapter.ensure_bootstrap",
+        autospec=True,
         return_value=Path(sys.executable),
     )
-    mocker.patch("tox.tox_env.python.virtual_env.api.get_interpreter", return_value=resolved)
-    mocker.patch("tox.tox_env.python.virtual_env.subprocess_adapter.probe_python", return_value=None)
+    mocker.patch("tox.tox_env.python.virtual_env.api.get_interpreter", autospec=True, return_value=resolved)
+    mocker.patch("tox.tox_env.python.virtual_env.subprocess_adapter.probe_python", autospec=True, return_value=None)
     proj = tox_project({
         "tox.toml": dedent(
             """\

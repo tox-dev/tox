@@ -563,7 +563,7 @@ def test_pyproject_config_settings_wheel(
     proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
 
     write_stdin = mocker.spy(LocalSubprocessExecuteStatus, "write_stdin")
-    mocker.patch.object(Pep517VirtualEnvFrontend, "_can_skip_prepare", return_value=False)
+    mocker.patch.object(Pep517VirtualEnvFrontend, "_can_skip_prepare", autospec=True, return_value=False)
 
     proj.run("r", "--notest", from_cwd=proj.path).assert_success()
 
@@ -601,7 +601,7 @@ def test_pyproject_config_settings_editable(
     proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
 
     write_stdin = mocker.spy(LocalSubprocessExecuteStatus, "write_stdin")
-    mocker.patch.object(Pep517VirtualEnvFrontend, "_can_skip_prepare", return_value=False)
+    mocker.patch.object(Pep517VirtualEnvFrontend, "_can_skip_prepare", autospec=True, return_value=False)
 
     proj.run("r", "--notest", from_cwd=proj.path).assert_success()
 
@@ -639,7 +639,7 @@ def test_pyproject_config_settings_editable_legacy(
     proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
 
     write_stdin = mocker.spy(LocalSubprocessExecuteStatus, "write_stdin")
-    mocker.patch.object(Pep517VirtualEnvFrontend, "_can_skip_prepare", return_value=False)
+    mocker.patch.object(Pep517VirtualEnvFrontend, "_can_skip_prepare", autospec=True, return_value=False)
 
     proj.run("r", "--notest", from_cwd=proj.path).assert_success()
 
