@@ -48,12 +48,6 @@ def run_one(  # keeps the signature
     )
 
 
-class _Evaluation(NamedTuple):
-    skipped: bool
-    code: int
-    outcomes: list[Outcome]
-
-
 def _run_with_teardown(  # keeps the signature
     tox_env: RunToxEnv,
     no_test: bool,  # ruff:ignore[boolean-type-hint-positional-argument]  # keeps the signature
@@ -190,6 +184,12 @@ def _run_attempts(
         else:
             return None
     return None
+
+
+class _Evaluation(NamedTuple):
+    skipped: bool
+    code: int
+    outcomes: list[Outcome]
 
 
 class ToxEnvRunResult(NamedTuple):

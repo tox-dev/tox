@@ -62,12 +62,6 @@ def _completion_args(args: tuple[str, ...]) -> tuple[tuple[str, ...], str]:
     return tuple(typed), current
 
 
-class _BaseOptions(NamedTuple):
-    guess_verbosity: int
-    handler: ToxHandler
-    source: Source
-
-
 def _get_base(args: Sequence[str], completion_current: str | None) -> _BaseOptions:
     parsed: Final = Parsed()
     with (
@@ -119,6 +113,12 @@ def _ends_before_discovery(completion_current: str | None, last_option: str) -> 
     if completion_current and "=" in completion_current and completion_current.startswith("-"):
         return True
     return bool(completion_current and not completion_current.startswith("-") and last_option)
+
+
+class _BaseOptions(NamedTuple):
+    guess_verbosity: int
+    handler: ToxHandler
+    source: Source
 
 
 def _empty_source(config_file: Path | None) -> Source:

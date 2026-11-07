@@ -55,9 +55,7 @@ def test_manpage_has_title_header(manpage_troff: bytes) -> None:
         re.MULTILINE | re.VERBOSE,
     )
     assert match is not None, f".TH header not found in:\n{output[:500]}"
-    assert match["program"] == "tox"
-    assert match["section"] == "1"
-    assert match["manual"] == "User Commands"
+    assert (match["program"], match["section"], match["manual"]) == ("tox", "1", "User Commands")
 
 
 def test_manpage_has_name_section(manpage_troff: bytes) -> None:

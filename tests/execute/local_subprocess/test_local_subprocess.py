@@ -635,12 +635,6 @@ def test_shebang_limited_on_posix(tmp_path: Path, mocker: MockerFixture) -> None
     assert instance.cmd == [exe, "-s", str(script), "--magic"]
 
 
-class _ShebangTest(NamedTuple):
-    exe: str
-    script: Path
-    instance: LocalSubProcessExecuteInstance
-
-
 def _create_shebang_test(tmp_path: Path, env: dict[str, str], mocker: MockerFixture) -> _ShebangTest:
     exe: Final[str] = sys.executable
     script = tmp_path / f"s{_EXE_SUFFIX}"
@@ -652,6 +646,12 @@ def _create_shebang_test(tmp_path: Path, env: dict[str, str], mocker: MockerFixt
     return _ShebangTest(
         exe, script, LocalSubProcessExecuteInstance(request, mocker.create_autospec(ExecuteOptions), writer, writer)
     )
+
+
+class _ShebangTest(NamedTuple):
+    exe: str
+    script: Path
+    instance: LocalSubProcessExecuteInstance
 
 
 @pytest.mark.skipif(sys.platform != "win32", reason="windows shebang handling")

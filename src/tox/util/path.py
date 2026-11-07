@@ -94,10 +94,6 @@ def _empty_dir_path(path: Path, except_filename: str | None) -> None:
             _unlink(sub_path)
 
 
-class _FailedCall(Protocol):
-    def __call__(self, target: str | int, /) -> None: ...
-
-
 def _retry_unlink(func: _FailedCall, path: str, _exc: BaseException | ExcInfo) -> None:
     # rmtree also reports failed os.open, os.scandir and os.close calls; retrying those cannot help, so they stay behind
     if func is os.unlink:
@@ -114,6 +110,10 @@ def _unlink(path: Path) -> None:
             raise
         path.chmod(stat.S_IWRITE)
         path.unlink()
+
+
+class _FailedCall(Protocol):
+    def __call__(self, target: str | int, /) -> None: ...
 
 
 def ensure_gitignore(path: Path) -> None:
