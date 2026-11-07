@@ -728,7 +728,7 @@ commands = [["python", "-c", "print('ok')"]]
 
 
 @pytest.mark.parametrize(
-    ("impl", "major", "minor", "arch", "free_threaded", "debug", "platform_str", "expected_machine"),
+    ("impl", "major", "minor", "arch", "free_threaded", "debug", "platform_str", "expected_machine", "expected_debug"),
     [
         pytest.param(
             "cpython",
@@ -739,6 +739,7 @@ commands = [["python", "-c", "print('ok')"]]
             False,
             "linux-x86_64",
             "x86_64",
+            None,
             id="cpython-3-12-64-none-false-linux-dash-x86-underscore-64-x86-underscore-64",
         ),
         pytest.param(
@@ -750,6 +751,7 @@ commands = [["python", "-c", "print('ok')"]]
             True,
             "linux-aarch64",
             "arm64",
+            True,
             id="cpython-3-13-64-true-true-linux-dash-aarch64-arm64",
         ),
         pytest.param(
@@ -761,9 +763,10 @@ commands = [["python", "-c", "print('ok')"]]
             True,
             "win-amd64",
             "x86_64",
+            True,
             id="cpython-3-13-64-false-true-win-dash-amd64-x86-underscore-64",
         ),
-        pytest.param("pypy", 3, 9, 32, None, False, "win32", None, id="pypy-3-9-32-none-false-win32-none"),
+        pytest.param("pypy", 3, 9, 32, None, False, "win32", None, None, id="pypy-3-9-32-none-false-win32-none"),
         pytest.param(
             "cpython",
             3,
@@ -773,6 +776,7 @@ commands = [["python", "-c", "print('ok')"]]
             False,
             "macosx-14.0-arm64",
             "arm64",
+            None,
             id="cpython-3-12-64-none-false-macosx-dash-14-dot-0-dash-arm64-arm64",
         ),
     ],
@@ -786,6 +790,7 @@ def test_python_spec_for_sys_executable(
     debug: bool,
     platform_str: str,
     expected_machine: str,
+    expected_debug: bool | None,
     mocker: MockerFixture,
 ) -> None:
     get_config_var_ = sysconfig.get_config_var
@@ -816,17 +821,23 @@ def test_python_spec_for_sys_executable(
     assert spec.minor == minor
     assert spec.architecture == arch
     assert spec.free_threaded == bool(free_threaded)
-    assert spec.debug is (debug or None)
+    assert spec.debug is expected_debug
     assert spec.machine == expected_machine
 
 
 @pytest.mark.parametrize(
-    ("impl", "major", "minor", "arch", "free_threaded", "debug_build", "machine"),
+    ("impl", "major", "minor", "arch", "free_threaded", "debug_build", "machine", "expected_debug"),
     [
-        pytest.param("cpython", 3, 13, 64, True, False, "x86_64", id="cpython-3-13-64-true-false-x86-underscore-64"),
-        pytest.param("cpython", 3, 13, 64, False, True, "x86_64", id="cpython-3-13-64-false-true-x86-underscore-64"),
-        pytest.param("cpython", 3, 13, 64, True, True, "x86_64", id="cpython-3-13-64-true-true-x86-underscore-64"),
-        pytest.param("cpython", 3, 12, 64, None, False, None, id="cpython-3-12-64-none-false-none"),
+        pytest.param(
+            "cpython", 3, 13, 64, True, False, "x86_64", None, id="cpython-3-13-64-true-false-x86-underscore-64"
+        ),
+        pytest.param(
+            "cpython", 3, 13, 64, False, True, "x86_64", True, id="cpython-3-13-64-false-true-x86-underscore-64"
+        ),
+        pytest.param(
+            "cpython", 3, 13, 64, True, True, "x86_64", True, id="cpython-3-13-64-true-true-x86-underscore-64"
+        ),
+        pytest.param("cpython", 3, 12, 64, None, False, None, None, id="cpython-3-12-64-none-false-none"),
     ],
 )
 def test_python_spec_for_path(
@@ -837,6 +848,7 @@ def test_python_spec_for_path(
     free_threaded: bool | None,
     debug_build: bool,
     machine: str | None,
+    expected_debug: bool | None,
     mocker: MockerFixture,
 ) -> None:
     info = SimpleNamespace(
@@ -854,7 +866,7 @@ def test_python_spec_for_path(
     assert spec.minor == minor
     assert spec.architecture == arch
     assert spec.free_threaded == bool(free_threaded)
-    assert spec.debug is (debug_build or None)
+    assert spec.debug is expected_debug
     assert spec.machine == machine
 
 
