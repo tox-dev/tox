@@ -217,7 +217,6 @@ def test_editable_legacy_installs_pkg_env_package_root(package_root_project: Tox
 @pytest.mark.parametrize(
     ("conf", "extra", "deps"),
     [
-        pytest.param("[project]", "", [], id="no_deps"),
         pytest.param("[project]\ndependencies=['B', 'A']", "", ["A", "B"], id="deps"),
         pytest.param(
             "[project]\ndependencies=['A']\noptional-dependencies.alpha=['B']\noptional-dependencies.beta=['C']",
@@ -314,17 +313,35 @@ def test_pyproject_deps_from_static(
     execute_calls = proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
     proj.run("r", "--notest").assert_success()
 
-    expected_calls = [(".pkg", "_optional_hooks"), (".pkg", "get_requires_for_build_sdist"), (".pkg", "build_sdist")]
-    if deps:
-        expected_calls.append(("py", "install_package_deps"))
-    expected_calls.extend((("py", "install_package"), (".pkg", "_exit")))
     found_calls = [(i[0][0].conf.name, i[0][3].run_id) for i in execute_calls.call_args_list]
-    assert found_calls == expected_calls
+    assert found_calls == [
+        (".pkg", "_optional_hooks"),
+        (".pkg", "get_requires_for_build_sdist"),
+        (".pkg", "build_sdist"),
+        ("py", "install_package_deps"),
+        ("py", "install_package"),
+        (".pkg", "_exit"),
+    ]
 
-    if deps:
-        expected_args = ["python", "-I", "-m", "pip", "install", *deps]
-        args = execute_calls.call_args_list[-3][0][3].cmd
-        assert expected_args == args
+    expected_args = ["python", "-I", "-m", "pip", "install", *deps]
+    args = execute_calls.call_args_list[-3][0][3].cmd
+    assert expected_args == args
+
+
+def test_pyproject_no_deps_static(tox_project: ToxProjectCreator, demo_pkg_inline: Path) -> None:
+    toml = f"{(demo_pkg_inline / 'pyproject.toml').read_text()}[project]"
+    proj = tox_project({"tox.ini": "[testenv]\nextras=", "pyproject.toml": toml}, base=demo_pkg_inline)
+    execute_calls = proj.patch_execute(lambda request: 0 if "install" in request.run_id else None)
+    proj.run("r", "--notest").assert_success()
+
+    found_calls = [(i[0][0].conf.name, i[0][3].run_id) for i in execute_calls.call_args_list]
+    assert found_calls == [
+        (".pkg", "_optional_hooks"),
+        (".pkg", "get_requires_for_build_sdist"),
+        (".pkg", "build_sdist"),
+        ("py", "install_package"),
+        (".pkg", "_exit"),
+    ]
 
 
 def test_pyproject_invalid_extra_static(tox_project: ToxProjectCreator, demo_pkg_inline: Path) -> None:

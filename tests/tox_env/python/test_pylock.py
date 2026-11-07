@@ -343,7 +343,32 @@ def _render_pylock(header: str, packages: list[tuple[str, str, str, str | None]]
     return "\n".join(blocks)
 
 
-def test_pylock_filters_by_platform_marker(tox_project: ToxProjectCreator) -> None:
+@pytest.mark.parametrize(
+    ("present", "absent"),
+    [
+        pytest.param(
+            "winonly==1.0.0",
+            ("linuxonly",),
+            id="win32",
+            marks=pytest.mark.skipif(sys.platform != "win32", reason="windows marker"),
+        ),
+        pytest.param(
+            "linuxonly==1.0.0",
+            ("winonly",),
+            id="linux",
+            marks=pytest.mark.skipif(sys.platform != "linux", reason="linux marker"),
+        ),
+        pytest.param(
+            "alpha==1.0.0",
+            ("linuxonly", "winonly"),
+            id="other",
+            marks=pytest.mark.skipif(sys.platform in {"win32", "linux"}, reason="windows and linux markers"),
+        ),
+    ],
+)
+def test_pylock_filters_by_platform_marker(
+    tox_project: ToxProjectCreator, present: str, absent: tuple[str, ...]
+) -> None:
     project = tox_project(
         {
             "tox.toml": """
@@ -394,15 +419,9 @@ def test_pylock_filters_by_platform_marker(tox_project: ToxProjectCreator) -> No
     project.run("r", "-e", "py").assert_success()
     content = (project.path / ".tox" / "py" / "pylock.txt").read_text()
     assert "alpha==1.0.0" in content
-    if sys.platform == "win32":
-        assert "winonly==1.0.0" in content
-        assert "linuxonly" not in content
-    elif sys.platform == "linux":
-        assert "linuxonly==1.0.0" in content
-        assert "winonly" not in content
-    else:
-        assert "linuxonly" not in content
-        assert "winonly" not in content
+    assert present in content
+    for name in absent:
+        assert name not in content
 
 
 def test_pylock_requirements(tmp_path: Path) -> None:

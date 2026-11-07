@@ -181,7 +181,7 @@ def test_config_skip_missing_interpreters(
     py_ver = ".".join(str(i) for i in sys.version_info[0:2])
     project = tox_project({"tox.ini": f"[tox]\nenvlist=py4,py{py_ver}\nskip_missing_interpreters={config}"})
     result = project.run(f"--skip-missing-interpreters={cli}")
-    assert result.code == (0 if expected else 1)
+    assert (result.code == 0) is expected
 
 
 def test_skip_missing_interpreters_default_is_false(tox_project: ToxProjectCreator) -> None:
@@ -195,37 +195,34 @@ _SYS_PY_VER = "".join(str(i) for i in sys.version_info[0:2]) + (
 
 
 @pytest.mark.parametrize(
-    ("skip", "env", "retcode"),
+    ("skip", "env_args", "retcode"),
     [
         pytest.param(
             "true",
-            f"py{_SYS_PY_VER}",
+            ["-e", f"py{_SYS_PY_VER}"],
             0,
             id="true-f-quote-py-open-underscore-sys-underscore-py-underscore-ver-close-quote-0",
         ),
         pytest.param(
             "false",
-            f"py{_SYS_PY_VER}",
+            ["-e", f"py{_SYS_PY_VER}"],
             0,
             id="false-f-quote-py-open-underscore-sys-underscore-py-underscore-ver-close-quote-0",
         ),
-        pytest.param("true", "py31", 1, id="true-py31-1"),
-        pytest.param("false", "py31", 1, id="false-py31-1"),
-        pytest.param("true", None, 0, id="true-none-0"),
-        pytest.param("false", None, 1, id="false-none-1"),
+        pytest.param("true", ["-e", "py31"], 1, id="true-py31-1"),
+        pytest.param("false", ["-e", "py31"], 1, id="false-py31-1"),
+        pytest.param("true", [], 0, id="true-none-0"),
+        pytest.param("false", [], 1, id="false-none-1"),
     ],
 )
 def test_skip_missing_interpreters_specified_env(
     tox_project: ToxProjectCreator,
     skip: str,
-    env: str | None,
+    env_args: list[str],
     retcode: int,
 ) -> None:
     project = tox_project({"tox.ini": f"[tox]\nenvlist=py31,py{_SYS_PY_VER}\n[testenv]\nusedevelop=true"})
-    args = [f"--skip-missing-interpreters={skip}"]
-    if env:
-        args += ["-e", env]
-    result = project.run(*args)
+    result = project.run(f"--skip-missing-interpreters={skip}", *env_args)
     assert result.code == retcode
 
 

@@ -671,25 +671,25 @@ def test_parsed_requirement_repr_no_opt(tmp_path: Path) -> None:
 
 
 @pytest.mark.parametrize(
-    "flag",
+    ("flag", "is_constraint", "req_file_str", "found"),
     [
-        pytest.param("-r", id="dash-r"),
-        pytest.param("--requirement", id="dash-dash-requirement"),
-        pytest.param("-c", id="dash-c"),
-        pytest.param("--constraint", id="dash-dash-constraint"),
+        pytest.param("-r", False, "-r", "a", id="dash-r"),
+        pytest.param("--requirement", False, "-r", "a", id="dash-dash-requirement"),
+        pytest.param("-c", True, "-c", "-c a", id="dash-c"),
+        pytest.param("--constraint", True, "-c", "-c a", id="dash-dash-constraint"),
     ],
 )
-def test_req_over_http(tmp_path: Path, flag: str, mocker: MockerFixture) -> None:
-    is_constraint = flag in {"-c", "--constraint"}
+def test_req_over_http(
+    tmp_path: Path, flag: str, is_constraint: bool, req_file_str: str, found: str, mocker: MockerFixture
+) -> None:
     url_open = mocker.patch("tox.tox_env.python.pip.req.file.urlopen", autospec=True)
     url_open.return_value.__enter__.return_value = BytesIO(b"-i i\na")
     requirements_txt = tmp_path / "req.txt"
     requirements_txt.write_text(f"{flag} https://zopefoundation.github.io/Zope/releases/4.5.5/requirements-full.txt")
     req_file = RequirementsFile(requirements_txt, constraint=is_constraint)
-    assert str(req_file) == f"-{'c' if is_constraint else 'r'} {requirements_txt}"
+    assert str(req_file) == f"{req_file_str} {requirements_txt}"
     assert vars(req_file.options) == {"index_url": ["i"]}
-    found = [str(i) for i in req_file.requirements]
-    assert found == [f"{'-c ' if is_constraint else ''}a"]
+    assert [str(i) for i in req_file.requirements] == [found]
     # urlopen must be called with a timeout to avoid hanging on slow / unresponsive mirrors
     assert url_open.call_args.kwargs.get("timeout") is not None
 
@@ -761,15 +761,33 @@ def test_req_over_http_has_req(tmp_path: Path, mocker: MockerFixture) -> None:
 @pytest.mark.parametrize(
     "loc",
     [
-        pytest.param("file://", id="file-colon-slash-slash"),
-        pytest.param("file://localhost", id="file-colon-slash-slash-localhost"),
+        pytest.param(
+            "file://",
+            id="file-colon-slash-slash",
+            marks=pytest.mark.skipif(sys.platform == "win32", reason="posix file uri"),
+        ),
+        pytest.param(
+            "file:///",
+            id="file-colon-slash-slash-slash-windows",
+            marks=pytest.mark.skipif(sys.platform != "win32", reason="windows file uri"),
+        ),
+        pytest.param(
+            "file://localhost",
+            id="file-colon-slash-slash-localhost",
+            marks=pytest.mark.skipif(sys.platform == "win32", reason="posix file uri"),
+        ),
+        pytest.param(
+            "file://localhost/",
+            id="file-colon-slash-slash-localhost-windows",
+            marks=pytest.mark.skipif(sys.platform != "win32", reason="windows file uri"),
+        ),
     ],
 )
 def test_requirement_via_file_protocol(tmp_path: Path, loc: str) -> None:
     other_req = tmp_path / "other-requirements.txt"
     other_req.write_text("-i i\na")
     requirements_text = tmp_path / "req.txt"
-    requirements_text.write_text(f"-r {loc}{'/' if sys.platform == 'win32' else ''}{other_req}")
+    requirements_text.write_text(f"-r {loc}{other_req}")
 
     req_file = RequirementsFile(requirements_text, constraint=False)
 
@@ -778,11 +796,26 @@ def test_requirement_via_file_protocol(tmp_path: Path, loc: str) -> None:
     assert found == ["a"]
 
 
-def test_requirement_via_file_protocol_na(tmp_path: Path) -> None:
+@pytest.mark.parametrize(
+    "loc",
+    [
+        pytest.param(
+            "file://magic.com",
+            id="posix",
+            marks=pytest.mark.skipif(sys.platform == "win32", reason="posix file uri"),
+        ),
+        pytest.param(
+            "file://magic.com/",
+            id="windows",
+            marks=pytest.mark.skipif(sys.platform != "win32", reason="windows file uri"),
+        ),
+    ],
+)
+def test_requirement_via_file_protocol_na(tmp_path: Path, loc: str) -> None:
     other_req = tmp_path / "other-requirements.txt"
     other_req.write_text("-i i\na")
     requirements_text = tmp_path / "req.txt"
-    requirements_text.write_text(f"-r file://magic.com{'/' if sys.platform == 'win32' else ''}{other_req}")
+    requirements_text.write_text(f"-r {loc}{other_req}")
 
     req_file = RequirementsFile(requirements_text, constraint=False)
     pattern = r"non-local file URIs are not supported on this platform: 'file://magic\.com\.*"

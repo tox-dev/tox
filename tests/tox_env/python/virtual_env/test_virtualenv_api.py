@@ -55,9 +55,8 @@ def test_virtualenv_default_settings(tox_project: ToxProjectCreator, virtualenv_
     assert virtualenv_opt.clear is False
     assert virtualenv_opt.system_site is False
     assert virtualenv_opt.download is False
-    if hasattr(virtualenv_opt, "copies"):
-        assert virtualenv_opt.copies is False
     assert virtualenv_opt.no_periodic_update is True
+    assert getattr(virtualenv_opt, "copies", False) is False  # some virtualenv releases do not define the option
     # Older virtualenv parsers retain <0 and append candidates on each parsing pass.
     assert list(dict.fromkeys(spec for spec in virtualenv_opt.python if spec != "<0")) == ["py3"]
     assert list(dict.fromkeys(virtualenv_opt.try_first_with)) == [str(sys.executable), str(proj.path / "a")]
@@ -84,8 +83,7 @@ def test_virtualenv_flipped_settings(
     assert virtualenv_opt.clear is False
     assert virtualenv_opt.system_site is True
     assert virtualenv_opt.download is True
-    if hasattr(virtualenv_opt, "copies"):
-        assert virtualenv_opt.copies is True
+    assert getattr(virtualenv_opt, "copies", True) is True  # some virtualenv releases do not define the option
     assert list(dict.fromkeys(spec for spec in virtualenv_opt.python if spec != "<0")) == ["py3"]
 
 
@@ -143,8 +141,7 @@ def run_and_check_set(proj: ToxProject, virtualenv_opt: VirtualEnvOptions) -> No
     assert conf["download"] is True
     assert virtualenv_opt.system_site is True
     assert virtualenv_opt.download is True
-    if hasattr(virtualenv_opt, "copies"):
-        assert virtualenv_opt.copies is True
+    assert getattr(virtualenv_opt, "copies", True) is True  # some virtualenv releases do not define the option
 
 
 def test_virtualenv_env_used_if_not_set(
@@ -424,22 +421,21 @@ def test_virtualenv_spec_auto(
 
 
 @pytest.mark.parametrize(
-    "resolves",
+    "resolved",
     [
-        pytest.param(False, id="interpreter-unresolved"),
-        pytest.param(True, id="resolved-but-probe-fails"),
+        pytest.param(None, id="interpreter-unresolved"),
+        pytest.param(MagicMock(system_executable=sys.executable), id="resolved-but-probe-fails"),
     ],
 )
 def test_virtualenv_spec_subprocess_missing_interpreter(
     tox_project: ToxProjectCreator,
     mocker: MockerFixture,
-    resolves: bool,
+    resolved: MagicMock | None,
 ) -> None:
     ensure_bootstrap = mocker.patch(
         "tox.tox_env.python.virtual_env.subprocess_adapter.ensure_bootstrap",
         return_value=Path(sys.executable),
     )
-    resolved = MagicMock(system_executable=sys.executable) if resolves else None
     mocker.patch("tox.tox_env.python.virtual_env.api.get_interpreter", return_value=resolved)
     mocker.patch("tox.tox_env.python.virtual_env.subprocess_adapter.probe_python", return_value=None)
     proj = tox_project({

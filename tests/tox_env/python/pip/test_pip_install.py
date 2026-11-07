@@ -1268,16 +1268,24 @@ def test_pip_install_referenced_deps_use_target_env(
     assert cache["PythonRun"]["deps"]["requirements"] == [f"https://{expected}/a.whl"]
 
 
-@pytest.fixture(params=[True, False])
-def use_constraints_opt(request: SubRequest) -> bool:
-    return bool(request.param)
-
-
-def test_pip_install_constraint_file_create_change(tox_project: ToxProjectCreator, use_constraints_opt: bool) -> None:
-    if use_constraints_opt:
-        toxini = "[testenv]\ndeps=a\nconstraints=c.txt\nskip_install=true"
-    else:
-        toxini = "[testenv]\ndeps=-c c.txt\n a\nskip_install=true"
+@pytest.mark.parametrize(
+    ("toxini", "toxini_with_dep"),
+    [
+        pytest.param(
+            "[testenv]\ndeps=a\nconstraints=c.txt\nskip_install=true",
+            "[testenv]\ndeps=a\n d\nconstraints=c.txt\nskip_install=true",
+            id="constraints-option",
+        ),
+        pytest.param(
+            "[testenv]\ndeps=-c c.txt\n a\nskip_install=true",
+            "[testenv]\ndeps=-c c.txt\n a\n d\nskip_install=true",
+            id="constraint-in-deps",
+        ),
+    ],
+)
+def test_pip_install_constraint_file_create_change(
+    tox_project: ToxProjectCreator, toxini: str, toxini_with_dep: str
+) -> None:
     proj = tox_project({"tox.ini": toxini, "c.txt": "b"})
     execute_calls = proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
     proj.run("r").assert_success()
@@ -1285,11 +1293,7 @@ def test_pip_install_constraint_file_create_change(tox_project: ToxProjectCreato
     assert execute_calls.call_args[0][3].cmd == ["python", "-I", "-m", "pip", "install", "a", "-c", "c.txt"]
 
     # a new dependency triggers an install
-    if use_constraints_opt:
-        toxini = "[testenv]\ndeps=a\n d\nconstraints=c.txt\nskip_install=true"
-    else:
-        toxini = "[testenv]\ndeps=-c c.txt\n a\n d\nskip_install=true"
-    (proj.path / "tox.ini").write_text(toxini)
+    (proj.path / "tox.ini").write_text(toxini_with_dep)
     execute_calls.reset_mock()
     proj.run("r").assert_success()
     assert execute_calls.call_count == 1
@@ -1305,17 +1309,20 @@ def test_pip_install_constraint_file_create_change(tox_project: ToxProjectCreato
     assert execute_calls.call_args[0][3].cmd == ["python", "-I", "-m", "pip", "install", "a", "d", "-c", "c.txt"]
 
 
-def test_pip_install_constraint_file_new(tox_project: ToxProjectCreator, use_constraints_opt: bool) -> None:
+@pytest.mark.parametrize(
+    "toxini",
+    [
+        pytest.param("[testenv]\ndeps=a\nconstraints=c.txt\nskip_install=true", id="constraints-option"),
+        pytest.param("[testenv]\ndeps=a\n -c c.txt\nskip_install=true", id="constraint-in-deps"),
+    ],
+)
+def test_pip_install_constraint_file_new(tox_project: ToxProjectCreator, toxini: str) -> None:
     proj = tox_project({"tox.ini": "[testenv]\ndeps=a\nskip_install=true"})
     execute_calls = proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
     proj.run("r").assert_success()
     assert execute_calls.call_count == 1
     assert execute_calls.call_args[0][3].cmd == ["python", "-I", "-m", "pip", "install", "a"]
 
-    if use_constraints_opt:
-        toxini = "[testenv]\ndeps=a\nconstraints=c.txt\nskip_install=true"
-    else:
-        toxini = "[testenv]\ndeps=a\n -c c.txt\nskip_install=true"
     (proj.path / "c.txt").write_text("a")
     (proj.path / "tox.ini").write_text(toxini)
     execute_calls.reset_mock()
@@ -1324,16 +1331,6 @@ def test_pip_install_constraint_file_new(tox_project: ToxProjectCreator, use_con
     assert "py: recreate env because changed constraint(s) added a" in result_second.out, result_second.out
     assert execute_calls.call_count == 1
     assert execute_calls.call_args[0][3].cmd == ["python", "-I", "-m", "pip", "install", "a", "-c", "c.txt"]
-
-
-@pytest.fixture(params=[True, False])
-def constrain_package_deps(request: SubRequest) -> bool:
-    return bool(request.param)
-
-
-@pytest.fixture(params=[True, False])
-def use_frozen_constraints(request: SubRequest) -> bool:
-    return bool(request.param)
 
 
 @pytest.mark.parametrize(
@@ -1491,50 +1488,83 @@ def demo_pkg_with_deps(demo_pkg_inline: Path) -> dict[str, str]:
     }
 
 
-def test_constrain_package_deps(
-    constrained_mock_project: tuple[ToxProject, list[str]],
-    constrain_package_deps: bool,
-    use_frozen_constraints: bool,
-) -> None:
-    proj, exp_constraints = constrained_mock_project
-    execute_calls = proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
+@pytest.fixture
+def constrain_package_deps(request: SubRequest) -> bool:
+    return bool(request.param)
+
+
+@pytest.fixture
+def use_frozen_constraints(request: SubRequest) -> bool:
+    return bool(request.param)
+
+
+_PACKAGE_BUILD_RUN_IDS: Final[list[str]] = [
+    "install_requires",
+    "_optional_hooks",
+    "get_requires_for_build_wheel",
+    "build_wheel",
+    "install_package_deps",
+    "install_package",
+    "_exit",
+]
+
+
+@pytest.mark.parametrize(
+    ("constrain_package_deps", "use_frozen_constraints"),
+    [pytest.param(False, True, id="frozen"), pytest.param(False, False, id="unfrozen")],
+    indirect=True,
+)
+def test_constrain_package_deps_disabled(constrained_mock_project: tuple[ToxProject, list[str]]) -> None:
+    proj, _ = constrained_mock_project
+    execute_calls = proj.patch_execute(lambda request: 0 if "install" in request.run_id else None)
     proj.run("r").assert_success()
-    exp_run_ids = ["install_deps"]
-    if constrain_package_deps and use_frozen_constraints:
-        exp_run_ids.append("freeze")
-    exp_run_ids.extend(
-        [
-            "install_requires",
-            "_optional_hooks",
-            "get_requires_for_build_wheel",
-            "build_wheel",
-            "install_package_deps",
-            "install_package",
-            "_exit",
-        ],
-    )
     run_ids = [i[0][3].run_id for i in execute_calls.call_args_list]
-    assert run_ids == exp_run_ids
+    assert run_ids == ["install_deps", *_PACKAGE_BUILD_RUN_IDS]
+    assert not (proj.path / ".tox" / "py" / "constraints.txt").exists()
+
+
+@pytest.mark.parametrize(
+    ("constrain_package_deps", "use_frozen_constraints"),
+    [pytest.param(True, True, id="frozen")],
+    indirect=True,
+)
+def test_constrain_package_deps_frozen(constrained_mock_project: tuple[ToxProject, list[str]]) -> None:
+    proj, exp_constraints = constrained_mock_project
+    execute_calls = proj.patch_execute(lambda request: 0 if "install" in request.run_id else None)
+    proj.run("r").assert_success()
+    run_ids = [i[0][3].run_id for i in execute_calls.call_args_list]
+    assert run_ids == ["install_deps", "freeze", *_PACKAGE_BUILD_RUN_IDS]
     constraints_file = proj.path / ".tox" / "py" / "constraints.txt"
-    if constrain_package_deps:
-        constraints = constraints_file.read_text().splitlines()
-        for call in execute_calls.call_args_list:
-            if call[0][3].run_id == "install_package_deps":
-                assert f"-c{constraints_file}" in call[0][3].cmd
-        if use_frozen_constraints:
-            for c in exp_constraints:
-                # when using frozen constraints with this mock, the mock package does NOT
-                # actually end up in the constraints, so assert it's not there
-                assert c not in constraints
-            for c in constraints:
-                assert c.partition("==")[0] in {"pip", "setuptools", "wheel"}
-        else:
-            for c in constraints:
-                assert c in exp_constraints
-            for c in exp_constraints:
-                assert c in constraints
-    else:
-        assert not constraints_file.exists()
+    constraints = constraints_file.read_text().splitlines()
+    for cmd in [c[0][3].cmd for c in execute_calls.call_args_list if c[0][3].run_id == "install_package_deps"]:
+        assert f"-c{constraints_file}" in cmd
+    for constraint in exp_constraints:
+        # when using frozen constraints with this mock, the mock package does NOT
+        # actually end up in the constraints, so assert it's not there
+        assert constraint not in constraints
+    for constraint in constraints:
+        assert constraint.partition("==")[0] in {"pip", "setuptools", "wheel"}
+
+
+@pytest.mark.parametrize(
+    ("constrain_package_deps", "use_frozen_constraints"),
+    [pytest.param(True, False, id="unfrozen")],
+    indirect=True,
+)
+def test_constrain_package_deps_unfrozen(constrained_mock_project: tuple[ToxProject, list[str]]) -> None:
+    proj, exp_constraints = constrained_mock_project
+    execute_calls = proj.patch_execute(lambda request: 0 if "install" in request.run_id else None)
+    proj.run("r").assert_success()
+    run_ids = [i[0][3].run_id for i in execute_calls.call_args_list]
+    assert run_ids == ["install_deps", *_PACKAGE_BUILD_RUN_IDS]
+    constraints_file = proj.path / ".tox" / "py" / "constraints.txt"
+    constraints = constraints_file.read_text().splitlines()
+    for cmd in [c[0][3].cmd for c in execute_calls.call_args_list if c[0][3].run_id == "install_package_deps"]:
+        assert f"-c{constraints_file}" in cmd
+    for constraint in constraints:
+        assert constraint in exp_constraints
+    for constraint in exp_constraints:
+        assert constraint in constraints
 
 
 @pytest.mark.parametrize("use_frozen_constraints", [pytest.param(True, id="true"), pytest.param(False, id="false")])
@@ -1560,25 +1590,13 @@ def test_constraints_option_disables_constrain_package_deps(
     constraints_file = proj.path / ".tox" / "py" / "constraints.txt"
     assert not constraints_file.exists()
 
-    for call in execute_calls.call_args_list:
-        if call[0][3].run_id == "install_package_deps":
-            cmd = call[0][3].cmd
-            assert f"-c{constraints_file}" not in cmd
-            assert "-c" in cmd
-            assert "constraints.txt" in cmd
+    for cmd in [c[0][3].cmd for c in execute_calls.call_args_list if c[0][3].run_id == "install_package_deps"]:
+        assert f"-c{constraints_file}" not in cmd
+        assert "-c" in cmd
+        assert "constraints.txt" in cmd
 
-    exp_run_ids = ["install_deps"]
-    exp_run_ids.extend([
-        "install_requires",
-        "_optional_hooks",
-        "get_requires_for_build_wheel",
-        "build_wheel",
-        "install_package_deps",
-        "install_package",
-        "_exit",
-    ])
     run_ids = [i[0][3].run_id for i in execute_calls.call_args_list]
-    assert run_ids == exp_run_ids
+    assert run_ids == ["install_deps", *_PACKAGE_BUILD_RUN_IDS]
 
 
 def test_comment_only_constraints_keep_constrain_package_deps(

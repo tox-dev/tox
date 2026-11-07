@@ -31,6 +31,8 @@ if TYPE_CHECKING:
 
     from tox.pytest import ToxProjectCreator
 
+_EXECUTABLE_NAME: Final[str] = "python.exe" if sys.platform == "win32" else "python"
+
 
 def test_probe_python_current_interpreter() -> None:
     info: Final[SubprocessPythonInfo | None] = probe_python(sys.executable)
@@ -94,14 +96,27 @@ def test_subprocess_python_info_machine(sysconfig_platform: str | None, expected
     assert info.machine == expected_machine
 
 
-def test_probe_python_failing_script(tmp_path: Path) -> None:
-    if sys.platform == "win32":
-        bad_script = tmp_path / "bad_python.cmd"
-        bad_script.write_text("@exit /b 1\n")
-    else:
-        bad_script = tmp_path / "bad_python"
-        bad_script.write_text("#!/bin/sh\nexit 1\n")
-        bad_script.chmod(0o755)
+@pytest.mark.parametrize(
+    ("name", "content"),
+    [
+        pytest.param(
+            "bad_python",
+            "#!/bin/sh\nexit 1\n",
+            id="posix",
+            marks=pytest.mark.skipif(sys.platform == "win32", reason="posix shell script"),
+        ),
+        pytest.param(
+            "bad_python.cmd",
+            "@exit /b 1\n",
+            id="windows",
+            marks=pytest.mark.skipif(sys.platform != "win32", reason="windows batch script"),
+        ),
+    ],
+)
+def test_probe_python_failing_script(tmp_path: Path, name: str, content: str) -> None:
+    bad_script = tmp_path / name
+    bad_script.write_text(content)
+    bad_script.chmod(0o755)
     assert probe_python(str(bad_script)) is None
 
 
@@ -301,7 +316,7 @@ def test_ensure_bootstrap_creates_and_caches(tmp_path: Path, mocker: MockerFixtu
     )
 
     result = ensure_bootstrap(tmp_path, "virtualenv<20.22.0")
-    assert result.name == ("python.exe" if sys.platform == "win32" else "python")
+    assert result.name == _EXECUTABLE_NAME
     venv_create.assert_called_once()
     run_mock.assert_called_once()
 
@@ -353,7 +368,7 @@ def test_ensure_bootstrap_race_inside_lock(tmp_path: Path, mocker: MockerFixture
         side_effect=[False, True],
     )
     result = ensure_bootstrap(tmp_path, "virtualenv<20.22.0")
-    assert result.name == ("python.exe" if sys.platform == "win32" else "python")
+    assert result.name == _EXECUTABLE_NAME
 
 
 def test_ensure_bootstrap_removes_stale_base(tmp_path: Path, mocker: MockerFixture) -> None:

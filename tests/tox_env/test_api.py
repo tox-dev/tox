@@ -103,31 +103,27 @@ def test_setenv_section_substitution(tox_project: ToxProjectCreator) -> None:
 
 
 @pytest.mark.parametrize(
-    ("key", "do_redact"),
+    ("key", "expected"),
     [
-        pytest.param("SOME_KEY", True, id="key"),
-        pytest.param("API_FOO", True, id="api"),
-        pytest.param("AUTH", True, id="auth"),
-        pytest.param("CLIENT", True, id="client"),
-        pytest.param("DB_PASSWORD", True, id="password"),
-        pytest.param("FOO", False, id="foo"),
-        pytest.param("GITHUB_TOKEN", True, id="token"),
-        pytest.param("NORMAL_VAR", False, id="other"),
-        pytest.param("S_PASSWD", True, id="passwd"),
-        pytest.param("SECRET", True, id="secret"),
-        pytest.param("SOME_ACCESS", True, id="access"),
-        pytest.param("MY_CRED", True, id="cred"),
-        pytest.param("MY_PRIVATE", True, id="private"),
-        pytest.param("MY_PWD", True, id="pwd"),
+        pytest.param("SOME_KEY", "***", id="key"),
+        pytest.param("API_FOO", "***", id="api"),
+        pytest.param("AUTH", "***", id="auth"),
+        pytest.param("CLIENT", "***", id="client"),
+        pytest.param("DB_PASSWORD", "***", id="password"),
+        pytest.param("FOO", "foo", id="foo"),
+        pytest.param("GITHUB_TOKEN", "***", id="token"),
+        pytest.param("NORMAL_VAR", "foo", id="other"),
+        pytest.param("S_PASSWD", "***", id="passwd"),
+        pytest.param("SECRET", "***", id="secret"),
+        pytest.param("SOME_ACCESS", "***", id="access"),
+        pytest.param("MY_CRED", "***", id="cred"),
+        pytest.param("MY_PRIVATE", "***", id="private"),
+        pytest.param("MY_PWD", "***", id="pwd"),
     ],
 )
-def test_redact(key: str, do_redact: bool) -> None:
+def test_redact(key: str, expected: str) -> None:
     # Ensures that redact_value works as expected.
-    result = redact_value(key, "foo")
-    if do_redact:
-        assert result == "***"
-    else:
-        assert result == "foo"
+    assert redact_value(key, "foo") == expected
 
 
 def test_info_without_matching_python_section_rebuilds_env(tox_project: ToxProjectCreator) -> None:
