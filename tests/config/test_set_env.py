@@ -39,18 +39,18 @@ def test_set_env_explicit() -> None:
 
 
 def test_set_env_merge() -> None:
-    a = SetEnv("\nA=1\nB = 2\nC= 3\nD= 4", "py", "py", Path())
-    b = SetEnv("\nA=2\nE = 5", "py", "py", Path())
-    a.update(b, override=False)
+    first = SetEnv("\nA=1\nB = 2\nC= 3\nD= 4", "py", "py", Path())
+    second = SetEnv("\nA=2\nE = 5", "py", "py", Path())
+    first.update(second, override=False)
 
-    keys = list(a)
+    keys = list(first)
     assert keys == ["E", "A", "B", "C", "D"]
-    values = [a.load(k) for k in keys]
+    values = [first.load(k) for k in keys]
     assert values == ["5", "1", "2", "3", "4"]
 
-    a.update(b, override=True)
+    first.update(second, override=True)
 
-    values = [a.load(k) for k in keys]
+    values = [first.load(k) for k in keys]
     assert values == ["5", "2", "2", "3", "4"]
 
 

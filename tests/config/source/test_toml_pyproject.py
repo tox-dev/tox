@@ -669,10 +669,10 @@ def test_config_in_toml_replace_if(
     else_val: str,
     expected: str,
 ) -> None:
-    for k in ("TAG", "CI", "D", "L", "M"):
-        monkeypatch.delenv(k, raising=False)
-    for k, v in env_vars.items():
-        monkeypatch.setenv(k, v)
+    for key in ("TAG", "CI", "D", "L", "M"):
+        monkeypatch.delenv(key, raising=False)
+    for key, value in env_vars.items():
+        monkeypatch.setenv(key, value)
     project = tox_project({
         "pyproject.toml": dedent(f"""
         [tool.tox.env.A]

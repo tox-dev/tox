@@ -56,8 +56,8 @@ def test_path(tmp_path: Path) -> None:
 
 
 def test_list_of_paths(tmp_path: Path) -> None:
-    p = tmp_path / "a"
-    assert to_native([p]) == [str(p)]
+    path = tmp_path / "a"
+    assert to_native([path]) == [str(path)]
 
 
 @pytest.mark.parametrize(

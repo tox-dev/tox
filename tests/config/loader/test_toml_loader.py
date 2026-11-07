@@ -32,7 +32,7 @@ def test_toml_loader_found_keys() -> None:
     assert loader.found_keys() == {"a", "c"}
 
 
-V = TypeVar("V")
+TargetT = TypeVar("TargetT")
 
 
 _PREFIX: Final[str] = r"failed to load A\.k: "
@@ -56,13 +56,13 @@ def test_toml_loader_ok(value: TomlTypes, of_type: type[object] | UnionType, exp
     assert isinstance(result, type(expected))
 
 
-def perform_load(value: TomlTypes, of_type: type[V] | UnionType) -> V:
+def perform_load(value: TomlTypes, of_type: type[TargetT] | UnionType) -> TargetT:
     env_name, key = "A", "k"
     loader = TomlLoader(TomlPyProjectSection.from_key(f"tox.env.{env_name}"), [], {key: value}, {}, set())
     return loader.load(key, of_type, factory_na, None, ConfigLoadArgs(None, env_name, env_name))
 
 
-def factory_na(obj: object) -> V:
+def factory_na(obj: object) -> TargetT:
     raise NotImplementedError
 
 
