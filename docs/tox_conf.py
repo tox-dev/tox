@@ -81,9 +81,9 @@ class ToxConfig(SphinxDirective):
             ver = self.options["version_deprecated"]
             line += literal(ver, ver)
 
-        p = container("")
-        self.state.nested_parse(StringList(string2lines("\n".join(f"    {i}" for i in self.content))), 0, p)
-        line += p
+        block = container("")
+        self.state.nested_parse(StringList(string2lines("\n".join(f"    {i}" for i in self.content))), 0, block)
+        line += block
 
         return [line]
 
