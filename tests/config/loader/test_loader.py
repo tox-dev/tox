@@ -375,8 +375,7 @@ def test_override_set_env_block_precedence_tox_override(
     monkeypatch.setenv("SECOND_BLOCK", "MAGIC=second\nNEW={env:MAGIC}")
     project = tox_project({filename: content, "a.env": "MAGIC=file"})
     monkeypatch.setenv("DISABLED_BLOCK", "MAGIC=disabled; sys_platform == 'nope'\nNEW={env:MAGIC}")
-    values = [f"{namespace}.set_env+={value}" for value in overrides]
-    monkeypatch.setenv("TOX_OVERRIDE", ";".join(values))
+    monkeypatch.setenv("TOX_OVERRIDE", ";".join([f"{namespace}.set_env+={value}" for value in overrides]))
     outcome = project.run("c", "-e", "a", "-k", "set_env")
     outcome.assert_success()
     assert [
