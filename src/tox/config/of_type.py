@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, Final, Generic, TypeVar, cast
+from enum import Enum, auto
+from typing import TYPE_CHECKING, Generic, TypeVar, cast
 
 from tox.util.typing_compat import override
 
@@ -103,7 +104,8 @@ class ConfigConstantDefinition(ConfigDefinition[T]):  # ruff:ignore[eq-without-h
         self.value = value
 
 
-_PLACE_HOLDER: Final[object] = object()
+class _Missing(Enum):
+    MISSING = auto()
 
 
 class ConfigDynamicDefinition(ConfigDefinition[T]):  # ruff:ignore[eq-without-hash]  # mutable value type
@@ -132,7 +134,7 @@ class ConfigDynamicDefinition(ConfigDefinition[T]):  # ruff:ignore[eq-without-ha
         self.default = default
         self.post_process = post_process
         self.factory = factory
-        self._cache: object | T = _PLACE_HOLDER
+        self._cache: T | _Missing = _Missing.MISSING
 
     @override
     def __call__(
@@ -141,7 +143,7 @@ class ConfigDynamicDefinition(ConfigDefinition[T]):  # ruff:ignore[eq-without-ha
         loaders: list[Loader[T]],
         args: ConfigLoadArgs,
     ) -> T:
-        if self._cache is _PLACE_HOLDER:
+        if self._cache is _Missing.MISSING:
             primary_key, *alias_keys = self.keys
             for loader in loaders:
                 chain_key = f"{loader.section.key}.{primary_key}"
@@ -167,7 +169,7 @@ class ConfigDynamicDefinition(ConfigDefinition[T]):  # ruff:ignore[eq-without-ha
             if self.post_process is not None:
                 value = self.post_process(value)
             self._cache = value
-        return cast("T", self._cache)
+        return self._cache
 
     @override
     def __repr__(self) -> str:

@@ -4,14 +4,19 @@ import typing
 from abc import ABC, abstractmethod
 from collections import OrderedDict
 from collections.abc import Callable, Iterator
+from enum import Enum, auto
 from inspect import isclass
 from pathlib import Path
 from types import UnionType
-from typing import Any, Final, Generic, Literal, TypeVar, Union, cast, get_args, get_origin
+from typing import Any, Generic, Literal, TypeVar, Union, cast, get_args, get_origin
 
 from tox.config.types import Command, EnvList
 
-_NO_MAPPING: Final[object] = object()
+
+class _Missing(Enum):
+    MISSING = auto()
+
+
 T = TypeVar("T")
 V = TypeVar("V")
 
@@ -62,7 +67,7 @@ class Convert(ABC, Generic[T]):
         self, raw: T, of_type: type[V] | UnionType, factory: Factory[V]
     ) -> V:
         origin = get_origin(of_type) or of_type.__class__
-        result: Any = _NO_MAPPING
+        result: Any = _Missing.MISSING
         type_args = get_args(of_type)
         if origin in {list, list}:
             entry_type = type_args[0]
@@ -100,7 +105,7 @@ class Convert(ABC, Generic[T]):
                 msg = f"{raw} must be one of {choice}"
                 raise ValueError(msg)
             result = raw
-        if result is not _NO_MAPPING:
+        if result is not _Missing.MISSING:
             return cast("V", result)
         msg = f"{raw} cannot cast to {of_type!r}"
         raise TypeError(msg)
