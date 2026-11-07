@@ -71,8 +71,13 @@ intersphinx_mapping = {
     "packaging": ("https://packaging.pypa.io/en/latest", None),
 }
 nitpicky: Final[bool] = True
-# a private stdlib class we cannot document, the stdlib itself has no public name for it
-nitpick_ignore = [("py:class", "argparse._ArgumentGroup")]
+# private classes we cannot document, the stdlib and pytest themselves have no public name for them
+nitpick_ignore = [
+    ("py:class", "argparse._ArgumentGroup"),
+    ("py:class", "_pytest.capture.CaptureFixture"),
+    ("py:class", "_pytest.monkeypatch.MonkeyPatch"),
+    ("py:class", "pytest_mock.plugin.MockerFixture"),
+]
 linkcheck_workers: Final[int] = 10
 linkcheck_exclude_documents = [r"^index$"]
 linkcheck_ignore = [

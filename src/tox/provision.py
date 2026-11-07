@@ -74,6 +74,14 @@ def tox_add_option(parser: ArgumentParser) -> None:
 
 def provision(state: State) -> int | bool:
     # remove the dev and marker to allow local development of the package
+    """Provision a tox environment that hosts tox, when the running tox does not satisfy the requirements.
+
+    :param state: the state of the run
+
+    :returns: ``False`` when the running tox satisfies the requirements, else the outcome of the provisioned run
+
+    :raises tox.report.HandledError: when the package staging directory cannot be repaired
+    """
     state.conf.core.add_config(
         keys=["min_version", "minversion"],
         of_type=Version,

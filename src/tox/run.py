@@ -29,6 +29,12 @@ __all__ = [
 
 
 def run(args: Sequence[str] | None = None) -> None:
+    """Run tox with the command line arguments, and exit the process with its outcome.
+
+    :param args: the command line arguments, ``None`` to use those of the process
+
+    :raises SystemExit: always, with the exit code of the run
+    """
     try:
         with ToxHandler.patch_thread():
             result = main(sys.argv[1:] if args is None else args)
@@ -52,6 +58,12 @@ def run(args: Sequence[str] | None = None) -> None:
 
 
 def main(args: Sequence[str]) -> int:
+    """Run the command selected by the command line arguments.
+
+    :param args: the command line arguments
+
+    :returns: the exit code
+    """
     state = setup_state(args)
     from .provision import provision  # ruff:ignore[import-outside-top-level]  # avoids an import cycle
 

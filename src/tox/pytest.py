@@ -44,8 +44,10 @@ if TYPE_CHECKING:
     from .session.state import State
 
     CaptureFixture = pytest.CaptureFixture[str]
+    """The capture fixture of pytest."""
 else:
     CaptureFixture = pytest.CaptureFixture
+    """The capture fixture of pytest."""
 
 os.environ["PIP_DISABLE_PIP_VERSION_CHECK"] = "1"
 os.environ["PIP_NO_PYTHON_VERSION_WARNING"] = "1"
@@ -92,6 +94,10 @@ def check_os_environ_stable(monkeypatch: pytest.MonkeyPatch) -> Iterator[None]:
 
 @contextmanager
 def check_os_environ() -> Generator[None, None, None]:
+    """Check that a test leaves the process environment as it found it.
+
+    :yields: ``None``, the block runs with the environment checked
+    """
     old = os.environ.copy()
     to_clean = {
         k: os.environ.pop(k, None)
@@ -135,6 +141,16 @@ def no_color(  # interface signature
 
 
 class ToxProject:
+    """A tox project that is created on disk for a test, from the files it is given.
+
+    :param files: the files of the project, nested by directory
+    :param base: a directory to copy into the project first, ``None`` to copy nothing
+    :param path: the directory of the project
+    :param capfd: the capture fixture of the test
+    :param monkeypatch: the monkeypatch fixture of the test
+    :param mocker: the mocker fixture of the test
+    """
+
     def __init__(  # ruff:ignore[too-many-arguments]  # public signature
         self,
         files: dict[str, Any],
@@ -184,6 +200,7 @@ class ToxProject:
 
     @property
     def structure(self) -> dict[str, Any]:
+        """The files of the project, nested by directory, as they are on disk."""
         result: dict[str, Any] = {}
         for dir_name, _, files in os.walk(str(self.path)):
             dir_path = Path(dir_name)
@@ -195,6 +212,13 @@ class ToxProject:
         return result
 
     def patch_execute(self, handle: Callable[[ExecuteRequest], int | None] | None = None) -> MagicMock:
+        """Patch the execution of the environments, so requests are handled by a function.
+
+        :param handle: the function that handles a request and returns its exit code, ``None`` for the default
+
+        :returns: the mock of the execution
+        """
+
         class MockExecute(Execute):
             def __init__(  # keeps the signature
                 self,
@@ -264,6 +288,16 @@ class ToxProject:
         return self.mocker.patch.object(ToxEnv, "_execute_call", side_effect=_execute_call, autospec=True)
 
     def run(self, *args: str, from_cwd: Path | None = None, raise_on_config_fail: bool = True) -> ToxRunOutcome:
+        """Run tox in the project, with the given command line arguments.
+
+        :param args: the command line arguments
+        :param from_cwd: the directory to run from, the project directory when ``None``
+        :param raise_on_config_fail: whether to raise when showing the configuration fails
+
+        :returns: the outcome of the run
+
+        :raises RuntimeError: when the run did not set an exit code
+        """
         if raise_on_config_fail and args and args[0] in {"c", "config"}:
             self.monkeypatch.setenv("_TOX_SHOW_CONFIG_RAISE", "1")
 
@@ -298,6 +332,12 @@ class ToxProject:
 
     @contextmanager
     def chdir(self, to: Path | None = None) -> Generator[None, None, None]:
+        """Change the working directory for the duration of the block.
+
+        :param to: the directory to change to, the project directory when ``None``
+
+        :yields: ``None``, the block runs in the directory
+        """
         cur_dir = Path.cwd()
         os.chdir(to or self.path)
         try:
@@ -331,6 +371,16 @@ def enable_pep517_backend_coverage() -> Iterator[None]:
 
 
 class ToxRunOutcome:
+    """The outcome of running tox in a test project.
+
+    :param cmd: the command line arguments tox was run with
+    :param cwd: the directory tox was run in
+    :param code: the exit code of the run
+    :param out: the standard output of the run
+    :param err: the standard error of the run
+    :param state: the state of the run, ``None`` when it was not captured
+    """
+
     def __init__(  # ruff:ignore[too-many-arguments]  # public signature
         self,
         cmd: Sequence[str],
@@ -365,30 +415,54 @@ class ToxRunOutcome:
 
     @property
     def shell_cmd(self) -> str:
+        """The command line tox was run with, as a string a shell runs."""
         return shell_cmd(self.cmd)
 
     def env_conf(self, name: str) -> EnvConfigSet:
+        """Get the configuration of an environment of the run.
+
+        :param name: the name of the environment
+
+        :returns: the configuration of the environment
+        """
         return self.state.conf.get_env(name)
 
     @property
     def state(self) -> State:
+        """The state of the run, which is not available when it was not captured.
+
+        :raises RuntimeError: when the state was not captured
+        """
         if self._state is None:
             msg = "no state"
             raise RuntimeError(msg)
         return self._state
 
     def assert_success(self) -> None:
+        """Assert that the run succeeded."""
         assert self.success, repr(self)  # ruff:ignore[assert]  # invariant, narrows type
 
     @property
     def success(self) -> bool:
+        """Whether the run succeeded."""
         return self.code == Outcome.OK
 
     def assert_failed(self, code: int | None = None) -> None:
+        """Assert that the run failed.
+
+        :param code: the exit code the run is expected to fail with, any non-zero exit code when ``None``
+        """
         status_match = self.code != 0 if code is None else self.code == code
         assert status_match, f"should be {code}, got {self}"  # ruff:ignore[assert]  # invariant, narrows type
 
     def assert_out_err(self, out: str, err: str, *, dedent: bool = True, regex: bool = False) -> None:
+        """Assert the standard output and standard error of the run.
+
+        :param out: the expected standard output
+        :param err: the expected standard error
+        :param dedent: whether to remove the common indentation of the expected texts first
+        :param regex: whether the expected texts are regular expressions
+        """
         if dedent:
             out = textwrap.dedent(out).lstrip()
         if regex:
@@ -404,6 +478,12 @@ class ToxRunOutcome:
 
     @staticmethod
     def matches(pattern: str, text: str, flags: int = 0) -> None:
+        """Assert that a text matches a pattern.
+
+        :param pattern: the expected pattern
+        :param text: the text to check
+        :param flags: the regular expression flags to match with
+        """
         try:
             from re_assert import Matches  # ruff:ignore[import-outside-top-level]  # avoids an import cycle
         except ImportError:  # pragma: no cover # hard to test
@@ -416,6 +496,8 @@ class ToxRunOutcome:
 
 
 class ToxProjectCreator(Protocol):
+    """Callable that creates a tox project for a test, from its files."""
+
     def __call__(
         self,
         files: dict[str, Any],
@@ -522,6 +604,11 @@ def enable_pypi_server(monkeypatch: pytest.MonkeyPatch, url: str | None) -> None
 
 
 def register_inline_plugin(mocker: MockerFixture, *args: FunctionType) -> None:
+    """Register the given functions as the hooks of an inline plugin, for the duration of the test.
+
+    :param mocker: the mocker fixture of the test
+    :param args: the hook functions, named after the hooks they implement
+    """
     frame_info = inspect.stack()[1]
     caller_module = inspect.getmodule(frame_info[0])
     assert caller_module is not None  # ruff:ignore[assert]  # invariant, narrows type
@@ -533,8 +620,11 @@ def register_inline_plugin(mocker: MockerFixture, *args: FunctionType) -> None:
 
 
 LogCaptureFixture = pytest.LogCaptureFixture
+"""The log capture fixture of pytest."""
 TempPathFactory = pytest.TempPathFactory
+"""The factory of temporary paths of pytest."""
 MonkeyPatch = pytest.MonkeyPatch
+"""The monkeypatch fixture of pytest."""
 
 __all__ = [
     "CaptureFixture",

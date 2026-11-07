@@ -31,10 +31,13 @@ LEVELS: Final[dict[int, int]] = {
     4: logging.DEBUG,
     5: logging.NOTSET,
 }
+"""Map of the verbosity levels to the logging levels they select."""
 
 MAX_LEVEL: Final[int] = max(LEVELS.keys())
 LOGGER: Final[logging.Logger] = logging.getLogger()
+"""The root logger, which tox reports through."""
 OutErr = tuple[TextIOWrapper, TextIOWrapper]
+"""The standard output and standard error streams of an environment."""
 
 
 _THREAD_PARENT_IDENT: Final[MutableMapping[Thread, int | None]] = WeakKeyDictionary()
@@ -113,6 +116,11 @@ class _LogThreadLocal(local):
 
 
 class NamedBytesIO(BytesIO):
+    """A bytes buffer with a name, such as the name of the stream it stands for.
+
+    :param name: the name of the buffer
+    """
+
     def __init__(self, name: str) -> None:
         super().__init__()
         self.name: str = name
@@ -236,11 +244,22 @@ class ToxHandler(_STREAM_HANDLER_BASE):
         yes: bool,  # ruff:ignore[boolean-type-hint-positional-argument]  # keeps the signature
         out_err: OutErr | None = None,  # keeps the signature
     ) -> Generator[OutErr, None, None]:
+        """Suspend the output of the environment, or resume it, for the duration of the block.
+
+        :param yes: whether to suspend the output
+        :param out_err: the streams to use while the output is suspended, a new pair when ``None``
+
+        :yields: the streams the output is written to while suspended, or ``None`` when not suspended
+        """
         with self._local.suspend_out_err(yes, out_err) as out_err_res:
             yield out_err_res
 
     def write_out_err(self, out_err: tuple[bytes, bytes]) -> None:
         # read/write through the buffer as we collect bytes to print bytes (no transcoding needed)
+        """Write the captured output and error of an environment to the terminal.
+
+        :param out_err: the standard output and standard error to write
+        """
         self.stdout.buffer.write(out_err[0])
         self.stderr.buffer.write(out_err[1])
 
@@ -274,10 +293,18 @@ class ToxHandler(_STREAM_HANDLER_BASE):
     @staticmethod
     @contextmanager
     def patch_thread() -> Generator[None, None, None]:
+        """Make the log records of the current thread carry the name of the environment being run.
+
+        :yields: ``None``, the block runs with the thread patched
+        """
         with _LogThreadLocal.patch_thread():
             yield
 
     def update_verbosity(self, verbosity: int) -> None:
+        """Set the verbosity of the log output.
+
+        :param verbosity: the verbosity, the higher the more output
+        """
         level = _get_level(verbosity)
         LOGGER.setLevel(level)
         self._setup_level(self._is_colored, level)
@@ -287,6 +314,13 @@ def setup_report(  # keeps the signature
     verbosity: int,
     is_colored: bool,  # ruff:ignore[boolean-type-hint-positional-argument]  # keeps the signature
 ) -> ToxHandler:
+    """Set up the logging of tox.
+
+    :param verbosity: the verbosity of the log output
+    :param is_colored: whether the log output is colored
+
+    :returns: the handler that reports the output
+    """
     for std_stream in (sys.stdout, sys.stderr):
         if isinstance(std_stream, TextIOWrapper):
             # Redirected Windows streams may use code pages that cannot encode tox output.

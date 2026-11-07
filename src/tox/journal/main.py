@@ -44,6 +44,7 @@ class Journal:
 
     @property
     def content(self) -> dict[str, JsonValue]:
+        """The journal of the run, with the journal of each environment under its name."""
         test_env_journals: dict[str, JsonValue] = {}
         for name, value in self._env.items():
             test_env_journals[name] = value.content
