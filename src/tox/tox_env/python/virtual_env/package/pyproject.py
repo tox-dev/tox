@@ -279,8 +279,7 @@ class Pep517VenvPackager(PythonPackageToxEnv, ABC):
         except BuildEditableNotSupportedError:
             self._fallback_to_editable_legacy()
             deps = self._load_deps(for_env)
-        of_type = for_env.get("package", str)
-        if of_type == "editable-legacy":
+        if (of_type := for_env.get("package", str)) == "editable-legacy":
             self.setup()
             config_settings = self.conf.get_optional("config_settings_get_requires_for_build_sdist", dict[str, Any])
             sdist_requires = self._frontend.get_requires_for_build_sdist(config_settings=config_settings).requires
@@ -301,8 +300,7 @@ class Pep517VenvPackager(PythonPackageToxEnv, ABC):
             self._package_paths.add(wheel)
             package = WheelPackage(wheel, deps)
         elif of_type in {"wheel", "editable"}:
-            w_env = self._wheel_build_envs.get(for_env["wheel_build_env"])
-            if w_env is not None and w_env is not self:
+            if (w_env := self._wheel_build_envs.get(for_env["wheel_build_env"])) is not None and w_env is not self:
                 with w_env.display_context(self._has_display_suspended):
                     return w_env.perform_packaging(for_env)
             else:
@@ -346,16 +344,19 @@ class Pep517VenvPackager(PythonPackageToxEnv, ABC):
         reqs: list[Requirement] | None = None
         name = ""
         available: set[str] | None = None
-        if of_type in {"wheel", "editable"}:  # wheel packages - use wheel_build_env for metadata
-            w_env = self._wheel_build_envs.get(for_env["wheel_build_env"])
-            if w_env is not None and w_env is not self:
-                with w_env.display_context(self._has_display_suspended):
-                    if isinstance(w_env, Pep517VirtualEnvPackager):
-                        reqs = w_env.get_package_dependencies(for_env)
-                        name = w_env.get_package_name(for_env)
-                        available = w_env.get_package_extras(for_env)
-                    else:
-                        reqs = []
+        # wheel packages - use wheel_build_env for metadata
+        if (
+            of_type in {"wheel", "editable"}
+            and (w_env := self._wheel_build_envs.get(for_env["wheel_build_env"])) is not None
+            and w_env is not self
+        ):
+            with w_env.display_context(self._has_display_suspended):
+                if isinstance(w_env, Pep517VirtualEnvPackager):
+                    reqs = w_env.get_package_dependencies(for_env)
+                    name = w_env.get_package_name(for_env)
+                    available = w_env.get_package_extras(for_env)
+                else:
+                    reqs = []
         if reqs is None:
             reqs = self.get_package_dependencies(for_env)
             name = self.get_package_name(for_env)
@@ -614,8 +615,7 @@ class Pep517VirtualEnvFrontend(Frontend):
         """The executor that runs the build backend."""
         if self._backend_executor_ is None:
             environment_variables = self._tox_env.environment_variables.copy()
-            backend = os.pathsep.join(str(i) for i in self._backend_paths).strip()
-            if backend:
+            if backend := os.pathsep.join(str(i) for i in self._backend_paths).strip():
                 environment_variables["PYTHONPATH"] = backend
             self._backend_executor_ = LocalSubProcessPep517Executor(
                 colored=self._tox_env.options.is_colored,
