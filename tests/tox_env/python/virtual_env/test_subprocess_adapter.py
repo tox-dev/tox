@@ -37,9 +37,11 @@ _EXECUTABLE_NAME: Final[str] = "python.exe" if sys.platform == "win32" else "pyt
 def test_probe_python_current_interpreter() -> None:
     info: Final[SubprocessPythonInfo | None] = probe_python(sys.executable)
     assert info is not None
-    assert info.version_info.major == sys.version_info.major
-    assert info.version_info.minor == sys.version_info.minor
-    assert info.version_info.micro == sys.version_info.micro
+    assert (info.version_info.major, info.version_info.minor, info.version_info.micro) == (
+        sys.version_info.major,
+        sys.version_info.minor,
+        sys.version_info.micro,
+    )
     assert info.implementation == sys.implementation.name
     assert info.architecture in {32, 64}
     assert info.system_executable
@@ -133,11 +135,13 @@ def test_subprocess_creator_paths_unix(tmp_path: Path) -> None:
         free_threaded=False,
     )
     creator = SubprocessCreator(_env_dir=env_dir, interpreter=info, _is_win=False)
-    assert creator.bin_dir == env_dir / "bin"
-    assert creator.script_dir == env_dir / "bin"
-    assert creator.purelib == env_dir / "lib" / "python3.11" / "site-packages"
-    assert creator.platlib == env_dir / "lib" / "python3.11" / "site-packages"
-    assert creator.exe == env_dir / "bin" / "python"
+    assert (creator.bin_dir, creator.script_dir, creator.purelib, creator.platlib, creator.exe) == (
+        env_dir / "bin",
+        env_dir / "bin",
+        env_dir / "lib" / "python3.11" / "site-packages",
+        env_dir / "lib" / "python3.11" / "site-packages",
+        env_dir / "bin" / "python",
+    )
 
 
 def test_subprocess_creator_paths_windows(tmp_path: Path) -> None:
@@ -153,9 +157,11 @@ def test_subprocess_creator_paths_windows(tmp_path: Path) -> None:
         free_threaded=False,
     )
     creator = SubprocessCreator(_env_dir=env_dir, interpreter=info, _is_win=True)
-    assert creator.bin_dir == env_dir / "Scripts"
-    assert creator.purelib == env_dir / "Lib" / "site-packages"
-    assert creator.exe == env_dir / "Scripts" / "python.exe"
+    assert (creator.bin_dir, creator.purelib, creator.exe) == (
+        env_dir / "Scripts",
+        env_dir / "Lib" / "site-packages",
+        env_dir / "Scripts" / "python.exe",
+    )
 
 
 def test_subprocess_session_run_not_found(tmp_path: Path) -> None:

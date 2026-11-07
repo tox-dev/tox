@@ -71,12 +71,11 @@ def test_show_config_commands(tox_project: ToxProjectCreator) -> None:
     outcome = project.run("c")
     outcome.assert_success()
     env_config = outcome.env_conf("py")
-    assert env_config["commands_pre"] == [Command(args=["python", "-c", 'import sys; print("start", sys.executable)'])]
-    assert env_config["commands"] == [
-        Command(args=["pip", "config", "list"]),
-        Command(args=["pip", "list"]),
-    ]
-    assert env_config["commands_post"] == [Command(args=["python", "-c", 'import sys; print("end", sys.executable)'])]
+    assert (env_config["commands_pre"], env_config["commands"], env_config["commands_post"]) == (
+        [Command(args=["python", "-c", 'import sys; print("start", sys.executable)'])],
+        [Command(args=["pip", "config", "list"]), Command(args=["pip", "list"])],
+        [Command(args=["python", "-c", 'import sys; print("end", sys.executable)'])],
+    )
 
 
 def test_show_config_filter_keys(tox_project: ToxProjectCreator) -> None:

@@ -55,9 +55,11 @@ def test_custom_work_dir(tox_project: ToxProjectCreator, tmp_path: Path) -> None
 
     env_conf = outcome.state.conf.get_env("py")
 
-    assert env_conf["env_dir"] == expected_work_dir / "py"
-    assert env_conf["env_log_dir"] == expected_work_dir / "py" / "log"
-    assert env_conf["env_tmp_dir"] == expected_work_dir / "py" / "tmp"
+    assert (env_conf["env_dir"], env_conf["env_log_dir"], env_conf["env_tmp_dir"]) == (
+        expected_work_dir / "py",
+        expected_work_dir / "py" / "log",
+        expected_work_dir / "py" / "tmp",
+    )
 
 
 def test_custom_root_dir(tox_project: ToxProjectCreator, tmp_path: Path) -> None:
@@ -75,14 +77,18 @@ def test_custom_root_dir(tox_project: ToxProjectCreator, tmp_path: Path) -> None
 
     # values that depend on tox_root should also be updated
 
-    assert outcome.state.conf.core["work_dir"] == expected_work_dir
-    assert outcome.state.conf.core["temp_dir"] == expected_work_dir / ".tmp"
+    assert (outcome.state.conf.core["work_dir"], outcome.state.conf.core["temp_dir"]) == (
+        expected_work_dir,
+        expected_work_dir / ".tmp",
+    )
 
     env_conf = outcome.state.conf.get_env("py")
 
-    assert env_conf["env_dir"] == expected_work_dir / "py"
-    assert env_conf["env_log_dir"] == expected_work_dir / "py" / "log"
-    assert env_conf["env_tmp_dir"] == expected_work_dir / "py" / "tmp"
+    assert (env_conf["env_dir"], env_conf["env_log_dir"], env_conf["env_tmp_dir"]) == (
+        expected_work_dir / "py",
+        expected_work_dir / "py" / "log",
+        expected_work_dir / "py" / "tmp",
+    )
 
 
 def test_custom_root_dir_and_work_dir(tox_project: ToxProjectCreator, tmp_path: Path) -> None:
@@ -103,6 +109,8 @@ def test_custom_root_dir_and_work_dir(tox_project: ToxProjectCreator, tmp_path: 
 
     env_conf = outcome.state.conf.get_env("py")
 
-    assert env_conf["env_dir"] == expected_work_dir / "py"
-    assert env_conf["env_log_dir"] == expected_work_dir / "py" / "log"
-    assert env_conf["env_tmp_dir"] == expected_work_dir / "py" / "tmp"
+    assert (env_conf["env_dir"], env_conf["env_log_dir"], env_conf["env_tmp_dir"]) == (
+        expected_work_dir / "py",
+        expected_work_dir / "py" / "log",
+        expected_work_dir / "py" / "tmp",
+    )

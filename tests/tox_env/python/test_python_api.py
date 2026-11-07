@@ -822,11 +822,13 @@ def test_python_spec_for_sys_executable(
     mocker.patch.object(sysconfig, "get_config_var", get_config_var)
     mocker.patch.object(sysconfig, "get_platform", autospec=True, return_value=platform_str)
     spec = Python._python_spec_for_sys_executable()  # ruff:ignore[private-member-access]  # internal state
-    assert spec.implementation == impl
-    assert spec.major == major
-    assert spec.minor == minor
-    assert spec.architecture == arch
-    assert spec.free_threaded == bool(free_threaded)
+    assert (spec.implementation, spec.major, spec.minor, spec.architecture, spec.free_threaded) == (
+        impl,
+        major,
+        minor,
+        arch,
+        bool(free_threaded),
+    )
     assert spec.debug is expected_debug
     assert spec.machine == expected_machine
 
@@ -867,11 +869,13 @@ def test_python_spec_for_path(
     )
     mocker.patch.object(VirtualEnv, "get_virtualenv_py_info", autospec=True, return_value=info)
     spec = VirtualEnv.python_spec_for_path(Path("/does/not/matter"))
-    assert spec.implementation == impl
-    assert spec.major == major
-    assert spec.minor == minor
-    assert spec.architecture == arch
-    assert spec.free_threaded == bool(free_threaded)
+    assert (spec.implementation, spec.major, spec.minor, spec.architecture, spec.free_threaded) == (
+        impl,
+        major,
+        minor,
+        arch,
+        bool(free_threaded),
+    )
     assert spec.debug is expected_debug
     assert spec.machine == machine
 
