@@ -9,7 +9,7 @@ import pytest
 import time_machine
 from colorama import Fore
 
-from tox.util import spinner
+from tox.util.spinner import Spinner, td_human_readable
 
 if TYPE_CHECKING:
     from pytest_mock import MockerFixture
@@ -20,7 +20,7 @@ if TYPE_CHECKING:
 @time_machine.travel("2012-01-14", tick=False)
 def test_spinner(capfd: CaptureFixture, monkeypatch: MonkeyPatch) -> None:
     monkeypatch.setattr(sys.stdout, "isatty", lambda: False)
-    with spinner.Spinner(refresh_rate=100) as spin:
+    with Spinner(refresh_rate=100) as spin:
         for _ in range(len(spin.frames)):
             spin.stream.write("\n")
             spin.render_frame()
@@ -36,7 +36,7 @@ def test_spinner(capfd: CaptureFixture, monkeypatch: MonkeyPatch) -> None:
 
 @time_machine.travel("2012-01-14", tick=False)
 def test_spinner_disabled(capfd: CaptureFixture) -> None:
-    with spinner.Spinner(refresh_rate=100, enabled=False) as spin:
+    with Spinner(refresh_rate=100, enabled=False) as spin:
         spin.add("x")
         for _ in range(len(spin.frames)):
             spin.render_frame()
@@ -51,7 +51,7 @@ def test_spinner_disabled(capfd: CaptureFixture) -> None:
 @time_machine.travel("2012-01-14", tick=False)
 def test_spinner_progress(capfd: CaptureFixture, monkeypatch: MonkeyPatch) -> None:
     monkeypatch.setattr(sys.stdout, "isatty", lambda: False)
-    with spinner.Spinner() as spin:
+    with Spinner() as spin:
         for _ in range(len(spin.frames)):  # pragma: no branch  # other outcome untested
             spin.stream.write("\n")
             time.sleep(spin.refresh_rate)
@@ -76,7 +76,7 @@ def test_spinner_progress(capfd: CaptureFixture, monkeypatch: MonkeyPatch) -> No
 @time_machine.travel("2012-01-14", tick=False)
 def test_spinner_atty(capfd: CaptureFixture, monkeypatch: MonkeyPatch, hide_cursor: str, show_cursor: str) -> None:
     monkeypatch.setattr(sys.stdout, "isatty", lambda: True)
-    with spinner.Spinner(refresh_rate=100) as spin:
+    with Spinner(refresh_rate=100) as spin:
         spin.stream.write("\n")
     out, _err = capfd.readouterr()
     lines = out.split("\n")
@@ -91,7 +91,7 @@ def test_spinner_atty(capfd: CaptureFixture, monkeypatch: MonkeyPatch, hide_curs
 @pytest.mark.flaky(max_runs=3, min_passes=1)
 def test_spinner_report(capfd: CaptureFixture, monkeypatch: MonkeyPatch) -> None:
     monkeypatch.setattr(sys.stdout, "isatty", lambda: False)
-    with spinner.Spinner(refresh_rate=100) as spin:
+    with Spinner(refresh_rate=100) as spin:
         spin.stream.write(os.linesep)
         spin.add("ok")
         spin.add("fail")
@@ -114,7 +114,7 @@ def test_spinner_report(capfd: CaptureFixture, monkeypatch: MonkeyPatch) -> None
 
 def test_spinner_long_text(capfd: CaptureFixture, monkeypatch: MonkeyPatch) -> None:
     monkeypatch.setattr(sys.stdout, "isatty", lambda: False)
-    with spinner.Spinner(refresh_rate=100) as spin:
+    with Spinner(refresh_rate=100) as spin:
         spin.stream.write("\n")
         spin.add("a" * 60)
         spin.add("b" * 60)
@@ -134,7 +134,7 @@ def test_spinner_long_text(capfd: CaptureFixture, monkeypatch: MonkeyPatch) -> N
 def test_spinner_stdout_not_unicode(capfd: CaptureFixture, mocker: MockerFixture) -> None:
     stdout = mocker.patch("tox.util.spinner.sys.stdout", autospec=True)
     stdout.encoding = "ascii"
-    with spinner.Spinner(refresh_rate=100) as spin:
+    with Spinner(refresh_rate=100) as spin:
         for _ in range(len(spin.frames)):  # pragma: no branch  # other outcome untested
             spin.render_frame()
     out, err = capfd.readouterr()
@@ -169,4 +169,4 @@ def test_spinner_stdout_not_unicode(capfd: CaptureFixture, mocker: MockerFixture
     ],
 )
 def test_td_human_readable(seconds: float, expected: str) -> None:
-    assert spinner.td_human_readable(seconds) == expected
+    assert td_human_readable(seconds) == expected
