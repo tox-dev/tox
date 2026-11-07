@@ -48,8 +48,8 @@ def show_outcome(outcome: Outcome | None) -> None:
         print("done show outcome", file=sys.stderr)  # ruff:ignore[print]  # test output
 
 
-def handler(s: int, f: FrameType | None) -> None:
-    logging.info("signal %s at %s", s, f)
+def handler(signum: int, frame: FrameType | None) -> None:
+    logging.info("signal %s at %s", signum, frame)
     global _INTERRUPT_DONE  # ruff:ignore[global-statement]  # signal handler flag
     if _INTERRUPT_DONE is False:  # pragma: no branch  # other outcome untested
         _INTERRUPT_DONE = True

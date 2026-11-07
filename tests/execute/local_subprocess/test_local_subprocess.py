@@ -819,13 +819,13 @@ def test_read_via_thread_eintr_during_read(mocker: MockerFixture) -> None:
         data_received.append(data)
         return len(data)
 
-    def mock_read(fd: int, n: int) -> bytes:
+    def mock_read(fd: int, size: int) -> bytes:
         call_count[0] += 1
         if call_count[0] == 1:
             err = OSError("Interrupted")
             err.errno = errno.EINTR
             raise err
-        return original_read(fd, n)
+        return original_read(fd, size)
 
     mocker.patch("os.read", mock_read)
     read_fd, write_fd = os.pipe()
@@ -850,7 +850,7 @@ def test_read_via_thread_ebadf_during_read(mocker: MockerFixture) -> None:
         data_received.append(data)
         return len(data)
 
-    def mock_read(fd: int, n: int) -> NoReturn:  # ruff:ignore[unused-function-argument]  # interface signature
+    def mock_read(fd: int, size: int) -> NoReturn:  # ruff:ignore[unused-function-argument]  # interface signature
         err = OSError("Bad file descriptor")
         err.errno = errno.EBADF
         raise err

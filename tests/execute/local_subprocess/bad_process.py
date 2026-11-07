@@ -18,8 +18,8 @@ def handler(signum: int, _: FrameType | None) -> None:
     _p(f"how about no signal {signum!r}")
 
 
-def _p(m: str) -> None:
-    out.write(f"{m}{os.linesep}")
+def _p(message: str) -> None:
+    out.write(f"{message}{os.linesep}")
     out.flush()  # force output flush in case we get killed
 
 
