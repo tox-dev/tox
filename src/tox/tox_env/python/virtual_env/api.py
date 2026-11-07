@@ -299,7 +299,7 @@ class VirtualEnv(Python, ABC):
 
         """
         info = cls.get_virtualenv_py_info(path)
-        machine_suffix = f"-{m}" if (m := getattr(info, "machine", None)) else ""
+        machine_suffix = f"-{machine}" if (machine := getattr(info, "machine", None)) else ""
         threaded = "t" if getattr(info, "free_threaded", False) else ""
         debug = "d" if getattr(info, "debug_build", False) else ""
         return PythonSpec.from_string_spec(

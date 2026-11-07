@@ -15,7 +15,7 @@ _T_contra = TypeVar("_T_contra", contravariant=True)
 
 # stable
 class _SupportsWrite(Protocol[_T_contra]):
-    def write(self, s: _T_contra, /) -> object: ...
+    def write(self, text: _T_contra, /) -> object: ...
 
 
 class _OurArgumentParser(ArgumentParser):

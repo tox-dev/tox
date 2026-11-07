@@ -184,7 +184,7 @@ class Pip(PythonInstallerListDependencies):
                     if old.get("redaction_format") != redaction_format:
                         msg = "install cache format changed"
                         raise Recreate(msg)
-                    self._recreate_if_diff("install flag(s)", new_options, old["options"], lambda i: i)
+                    self._recreate_if_diff("install flag(s)", new_options, old["options"], lambda item: item)
                     self._recreate_if_diff(
                         "constraint(s)", new_constraints, old["constraints"], operator.itemgetter(slice(3, None))
                     )
