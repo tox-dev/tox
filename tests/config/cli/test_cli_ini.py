@@ -90,23 +90,34 @@ def test_ini_empty(
     assert vars(missing_options.parsed) == vars(options.parsed)
 
 
+@pytest.mark.parametrize(
+    "error",
+    [
+        pytest.param(
+            "PermissionError(13, 'Permission denied')",
+            marks=pytest.mark.skipif(sys.platform != "win32", reason="windows reports a permission error"),
+            id="windows",
+        ),
+        pytest.param(
+            "IsADirectoryError(21, 'Is a directory')",
+            marks=pytest.mark.skipif(sys.platform == "win32", reason="posix reports a directory error"),
+            id="posix",
+        ),
+    ],
+)
 def test_bad_cli_ini(
     tmp_path: Path,
     monkeypatch: MonkeyPatch,
     caplog: LogCaptureFixture,
     default_options: dict[str, Any],
     mocker: MockerFixture,
+    error: str,
 ) -> None:
     mocker.patch("tox.config.cli.parse.discover_source", return_value=mocker.MagicMock(path=Path()))
     caplog.set_level(logging.WARNING)
     monkeypatch.setenv("TOX_USER_CONFIG_FILE", str(tmp_path))
     options = get_options("r")
-    msg = (
-        "PermissionError(13, 'Permission denied')"
-        if sys.platform == "win32"
-        else "IsADirectoryError(21, 'Is a directory')"
-    )
-    assert caplog.messages == [f"failed to read config file {tmp_path} because {msg}"]
+    assert caplog.messages == [f"failed to read config file {tmp_path} because {error}"]
     assert vars(options.parsed) == default_options
 
 
@@ -178,8 +189,7 @@ def test_cli_ini_with_utf8_bom(tmp_path: Path, monkeypatch: MonkeyPatch) -> None
 def test_conf_arg(tmp_path: Path, conf_arg: str, filename: str, content: str) -> None:
     dest = tmp_path / "c"
     dest.mkdir()
-    if filename:
-        (dest / filename).write_bytes(content.encode(encoding="utf-8"))
+    (dest / filename).write_bytes(content.encode(encoding="utf-8"))
 
     config_file = dest / conf_arg
     source = discover_source(config_file, None)

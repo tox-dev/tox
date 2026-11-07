@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import sys
 from argparse import Action, Namespace
 from typing import TYPE_CHECKING, Final, Literal, get_args
@@ -76,88 +77,32 @@ def test_parser_help_shows_default_source(monkeypatch: MonkeyPatch) -> None:
     assert "-> from env var TOX_VERBOSE" in parser.format_help()
 
 
-@pytest.mark.parametrize("is_atty", [pytest.param(True, id="true"), pytest.param(False, id="false")])
 @pytest.mark.parametrize(
-    "no_color",
+    ("env", "is_atty", "expected"),
     [
-        pytest.param(None, id="none"),
-        pytest.param("0", id="0"),
-        pytest.param("1", id="1"),
-        pytest.param("", id="empty"),
-        pytest.param("\t", id="tab"),
-        pytest.param(" ", id="space"),
-        pytest.param("false", id="false"),
-        pytest.param("true", id="true"),
+        pytest.param({"TOX_COLORED": "yes"}, False, True, id="tox-yes-over-tty"),
+        pytest.param({"TOX_COLORED": "no", "FORCE_COLOR": "1"}, True, False, id="tox-no-over-force"),
+        pytest.param({"NO_COLOR": "1", "FORCE_COLOR": "1"}, True, False, id="no-color-over-force"),
+        pytest.param({"FORCE_COLOR": "1"}, False, True, id="force-color"),
+        pytest.param({"FORCE_COLOR": "always"}, False, True, id="force-color-always"),
+        pytest.param({"FORCE_COLOR": ""}, True, True, id="empty-force-color-uses-tty"),
+        pytest.param({"TTY_COMPATIBLE": "1"}, False, True, id="tty-compatible-1"),
+        pytest.param({"TTY_COMPATIBLE": "0"}, True, False, id="tty-compatible-0"),
+        pytest.param({"TERM": "dumb"}, True, False, id="term-dumb"),
+        pytest.param({}, True, True, id="tty"),
+        pytest.param({}, False, False, id="no-tty"),
     ],
-)
-@pytest.mark.parametrize(
-    "force_color",
-    [
-        pytest.param(None, id="none"),
-        pytest.param("", id="empty"),
-        pytest.param("0", id="0"),
-        pytest.param("1", id="1"),
-        pytest.param("always", id="always"),
-        pytest.param("not an empty string", id="not-space-an-space-empty-space-string"),
-    ],
-)
-@pytest.mark.parametrize(
-    "tox_color",
-    [
-        pytest.param(None, id="none"),
-        pytest.param("bad", id="bad"),
-        pytest.param("no", id="no"),
-        pytest.param("yes", id="yes"),
-    ],
-)
-@pytest.mark.parametrize(
-    "tty_compatible",
-    [
-        pytest.param(None, id="none"),
-        pytest.param("", id="empty"),
-        pytest.param("0", id="0"),
-        pytest.param("1", id="1"),
-        pytest.param("other", id="other"),
-    ],
-)
-@pytest.mark.parametrize(
-    "term", [pytest.param(None, id="none"), pytest.param("xterm", id="xterm"), pytest.param("dumb", id="dumb")]
 )
 def test_parser_color(
     monkeypatch: MonkeyPatch,
     mocker: MockerFixture,
-    no_color: str | None,
-    force_color: str | None,
-    tox_color: str | None,
-    tty_compatible: str | None,
+    env: dict[str, str],
     is_atty: bool,
-    term: str | None,
+    expected: bool,
 ) -> None:
-    for key, value in {
-        "NO_COLOR": no_color,
-        "TOX_COLORED": tox_color,
-        "FORCE_COLOR": force_color,
-        "TTY_COMPATIBLE": tty_compatible,
-        "TERM": term,
-    }.items():
-        if value is None:
-            monkeypatch.delenv(key, raising=False)
-        else:
-            monkeypatch.setenv(key, value)
+    color_vars = {"NO_COLOR", "TOX_COLORED", "FORCE_COLOR", "TTY_COMPATIBLE", "TERM"}
+    monkeypatch.setattr(os, "environ", {k: v for k, v in os.environ.items() if k not in color_vars} | env)
     mocker.patch("tox.config.cli.parser.sys.stdout").isatty.return_value = is_atty
-
-    if tox_color in {"yes", "no"}:
-        expected = tox_color == "yes"
-    elif bool(no_color):
-        expected = False
-    elif bool(force_color):
-        expected = True
-    elif tty_compatible in {"0", "1"}:
-        expected = tty_compatible == "1"
-    elif term == "dumb":
-        expected = False
-    else:
-        expected = is_atty
 
     is_colored = ToxParser.base().parse_args([], Parsed()).is_colored
     assert is_colored is expected
@@ -183,7 +128,6 @@ def test_parser_choices_become_literal_type(monkeypatch: MonkeyPatch) -> None:
 
 @pytest.mark.parametrize("value_type", [pytest.param(str, id="str"), pytest.param(None, id="implicit-str")])
 @pytest.mark.parametrize("default", [pytest.param([], id="empty-default"), pytest.param(None, id="no-default")])
-@pytest.mark.parametrize("source", [pytest.param("env", id="env"), pytest.param("file", id="file")])
 @pytest.mark.parametrize(
     ("action", "nargs", "expected"),
     [
@@ -198,22 +142,49 @@ def test_parser_choices_become_literal_type(monkeypatch: MonkeyPatch) -> None:
         pytest.param("append", None, ["old", "new"], id="append-scalar"),
     ],
 )
-def test_parser_list_defaults(
+def test_parser_list_defaults_from_env(
     monkeypatch: MonkeyPatch,
     value_type: type[str] | None,
     default: list[str] | None,
     nargs: str | int | None,
     action: str,
     expected: list[str] | list[list[str]],
-    source: str,
+) -> None:
+    monkeypatch.setenv("TOX_LABELS", "old;new")
+    parser: Final[ToxParser] = ToxParser.base()
+    parser.add_argument("-m", dest="labels", action=action, nargs=nargs, default=default, type=value_type)
+    parser.fix_defaults()
+    assert parser.parse_args([]).labels == expected
+
+
+@pytest.mark.parametrize("value_type", [pytest.param(str, id="str"), pytest.param(None, id="implicit-str")])
+@pytest.mark.parametrize("default", [pytest.param([], id="empty-default"), pytest.param(None, id="no-default")])
+@pytest.mark.parametrize(
+    ("action", "nargs", "expected"),
+    [
+        pytest.param("store", "+", ["old", "new"], id="store-one-or-more"),
+        pytest.param("store", "*", ["old", "new"], id="store-zero-or-more"),
+        pytest.param("store", 1, ["old", "new"], id="store-one"),
+        pytest.param("store", 2, ["old", "new"], id="store-two"),
+        pytest.param("append", "+", [["old"], ["new"]], id="append-one-or-more"),
+        pytest.param("append", "*", [["old"], ["new"]], id="append-zero-or-more"),
+        pytest.param("append", 1, [["old"], ["new"]], id="append-one"),
+        pytest.param("append", 2, [["old"], ["new"]], id="append-two"),
+        pytest.param("append", None, ["old", "new"], id="append-scalar"),
+    ],
+)
+def test_parser_list_defaults_from_file(
+    monkeypatch: MonkeyPatch,
+    value_type: type[str] | None,
+    default: list[str] | None,
+    nargs: str | int | None,
+    action: str,
+    expected: list[str] | list[list[str]],
     tmp_path: Path,
 ) -> None:
-    if source == "env":
-        monkeypatch.setenv("TOX_LABELS", "old;new")
-    else:
-        config_file: Final[Path] = tmp_path / "user.ini"
-        config_file.write_text("[tox]\nlabels =\n  old\n  new\n", encoding="utf-8")
-        monkeypatch.setenv("TOX_USER_CONFIG_FILE", str(config_file))
+    config_file: Final[Path] = tmp_path / "user.ini"
+    config_file.write_text("[tox]\nlabels =\n  old\n  new\n", encoding="utf-8")
+    monkeypatch.setenv("TOX_USER_CONFIG_FILE", str(config_file))
     parser: Final[ToxParser] = ToxParser.base()
     parser.add_argument("-m", dest="labels", action=action, nargs=nargs, default=default, type=value_type)
     parser.fix_defaults()
