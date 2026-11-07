@@ -218,11 +218,11 @@ class _ToxEnvInfo:
 
 _DYNAMIC_ENV_FACTORS: Final[re.Pattern[str]] = re.compile(
     r"""
-    ( pypy | py | cpython | jython | graalpy | rustpython | ironpython | )  # interpreter prefix (or empty)
-    (                                # version group
-        (
-            ( \d                     # major digit
-                ( \. \d+ ( \. \d+ )? )?  # optional minor.patch
+    (?: pypy | py | cpython | jython | graalpy | rustpython | ironpython | )  # interpreter prefix (or empty)
+    (?:                                # version group
+        (?:
+            (?: \d                     # major digit
+                (?: \. \d+ (?: \. \d+ )? )?  # optional minor.patch
             )
             | \d+                    # or just digits
         )
