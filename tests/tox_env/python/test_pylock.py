@@ -1044,7 +1044,7 @@ def test_pylock_pinned_virtualenv_uses_discovered_markers(
         return_value={**default_environment(), "platform_release": "target-release"},
     )
     mocker.patch(
-        "tox.tox_env.python.virtual_env.subprocess_adapter.ensure_bootstrap",
+        "tox.tox_env.python.virtual_env.api.ensure_bootstrap",
         autospec=True,
         return_value=Path(sys.executable),
     )

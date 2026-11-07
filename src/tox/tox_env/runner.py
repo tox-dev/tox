@@ -10,6 +10,7 @@ from typing import TYPE_CHECKING
 
 from tox.config.types import Command, EnvList
 from tox.execute import Outcome
+from tox.session.cmd.run.single import run_command_set
 from tox.util.typing_compat import override
 
 from .api import ToxEnv, ToxEnvCreateArgs
@@ -214,9 +215,6 @@ class RunToxEnv(ToxEnv, ABC):
                         pkg_env._clean()  # ruff:ignore[private-member-access]  # internal access
 
     def _run_recreate_commands(self) -> None:
-        # deferred import
-        from tox.session.cmd.run.single import run_command_set  # ruff:ignore[import-outside-top-level]
-
         if not self.conf.get("recreate_commands", list[Command]):
             return
         chdir = self.conf.get("change_dir", Path)

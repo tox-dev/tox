@@ -13,7 +13,7 @@ from tox.report import HandledError
 from tox.tox_env.errors import Fail
 
 from .loader.api import ConfigLoadArgs
-from .loader.replacer import MatchError, MatchExpression
+from .loader.replacer import MatchError, MatchExpression, find_replace_expr
 from .set_env_line import format_line, split_line, split_value_marker
 
 if TYPE_CHECKING:
@@ -187,9 +187,6 @@ class SetEnv:
         :param substituted: whether the line is text produced by a substitution
         :returns: the key, value and marker, or ``None`` when the line is deferred
         """
-        # deferred import
-        from .loader.replacer import MatchExpression, find_replace_expr  # ruff:ignore[import-outside-top-level]
-
         try:
             key, value, marker = split_line(line)
             # in substituted text a brace that opens no expression is part of the key, as before

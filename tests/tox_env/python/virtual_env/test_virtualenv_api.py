@@ -360,7 +360,7 @@ def test_bootstrap_failure_allows_retry(tox_project: ToxProjectCreator, mocker: 
         ),
     )
     mocker.patch(
-        "tox.tox_env.python.virtual_env.subprocess_adapter.ensure_bootstrap",
+        "tox.tox_env.python.virtual_env.api.ensure_bootstrap",
         autospec=True,
         side_effect=[RuntimeError("temporary bootstrap failure"), Path(sys.executable)],
     )
@@ -450,12 +450,12 @@ def test_virtualenv_spec_subprocess_missing_interpreter(
     resolved: PythonInfo | None,
 ) -> None:
     ensure_bootstrap = mocker.patch(
-        "tox.tox_env.python.virtual_env.subprocess_adapter.ensure_bootstrap",
+        "tox.tox_env.python.virtual_env.api.ensure_bootstrap",
         autospec=True,
         return_value=Path(sys.executable),
     )
     mocker.patch("tox.tox_env.python.virtual_env.api.get_interpreter", autospec=True, return_value=resolved)
-    mocker.patch("tox.tox_env.python.virtual_env.subprocess_adapter.probe_python", autospec=True, return_value=None)
+    mocker.patch("tox.tox_env.python.virtual_env.api.probe_python", autospec=True, return_value=None)
     proj = tox_project({
         "tox.toml": dedent(
             """\

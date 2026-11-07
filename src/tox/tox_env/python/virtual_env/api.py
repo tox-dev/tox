@@ -15,6 +15,7 @@ from packaging.version import Version
 from python_discovery import get_interpreter
 from virtualenv import __version__ as virtualenv_version
 from virtualenv import app_data, session_via_cli
+from virtualenv.discovery import cached_py_info
 from virtualenv.discovery.py_spec import PythonSpec
 
 from tox.config.loader.str_convert import StrConvert
@@ -25,7 +26,13 @@ from tox.tox_env.python.api import Python, PythonInfo, VersionInfo
 from tox.tox_env.python.pip.pip_install import Pip
 from tox.util.typing_compat import override
 
-from .subprocess_adapter import SubprocessCreator, SubprocessPythonInfo, SubprocessSession
+from .subprocess_adapter import (
+    SubprocessCreator,
+    SubprocessPythonInfo,
+    SubprocessSession,
+    ensure_bootstrap,
+    probe_python,
+)
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -201,9 +208,6 @@ class VirtualEnv(Python, ABC):
         return env
 
     def _create_subprocess_session(self, spec: str, env: dict[str, str]) -> SubprocessSession:
-        # deferred import
-        from .subprocess_adapter import ensure_bootstrap, probe_python  # ruff:ignore[import-outside-top-level]
-
         try_first_with = getattr(self.options, "discover", None)
         cache = _shared_app_data()
         interpreter: SubprocessPythonInfo | None = None
@@ -322,7 +326,6 @@ class VirtualEnv(Python, ABC):
         :raises RuntimeError: when virtualenv cannot inspect the interpreter
 
         """
-        from virtualenv.discovery import cached_py_info  # ruff:ignore[import-outside-top-level]  # deferred import
         from virtualenv.discovery.py_info import (  # ruff:ignore[import-outside-top-level]  # avoids an import cycle
             PythonInfo as VirtualenvPythonInfo,
         )

@@ -18,6 +18,7 @@ from urllib.request import url2pathname
 
 from colorama import Fore
 
+from tox.config.cli.parser import DEFAULT_VERBOSITY
 from tox.config.types import EnvList
 from tox.execute import Outcome
 from tox.journal import write_journal
@@ -527,8 +528,6 @@ def _installs_develop(env: ToxEnv) -> bool:
 
 
 def _warn_unused_config(state: State) -> None:
-    from tox.config.cli.parser import DEFAULT_VERBOSITY  # ruff:ignore[import-outside-top-level]  # deferred import
-
     if state.conf.options.verbosity <= DEFAULT_VERBOSITY:
         return
     is_colored = state.conf.options.is_colored

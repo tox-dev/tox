@@ -25,6 +25,7 @@ from tox.tox_env.python.pip.req_file import PythonConstraints, PythonDeps
 from tox.util.typing_compat import override
 
 from ._api import TomlTypes
+from ._product import expand_factor_group, expand_product
 from ._replace import TomlReplaceLoader, Unroll
 from ._validate import validate
 
@@ -195,9 +196,6 @@ class TomlLoader(Loader[TomlTypes]):
     @staticmethod
     @override
     def to_env_list(value: TomlTypes) -> EnvList:
-        # deferred import
-        from ._product import expand_factor_group, expand_product  # ruff:ignore[import-outside-top-level]
-
         if not isinstance(value, list):
             msg = f"env_list must be a list, got {type(value).__name__}"
             raise TypeError(msg)

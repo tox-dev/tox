@@ -687,12 +687,12 @@ def test_virtualenv_spec_config_shown(tox_project: ToxProjectCreator) -> None:
 
 def test_virtualenv_spec_cache_includes_spec(tox_project: ToxProjectCreator, mocker: MockerFixture) -> None:
     mocker.patch(
-        "tox.tox_env.python.virtual_env.subprocess_adapter.ensure_bootstrap",
+        "tox.tox_env.python.virtual_env.api.ensure_bootstrap",
         autospec=True,
         return_value=Path(sys.executable),
     )
     mocker.patch(
-        "tox.tox_env.python.virtual_env.subprocess_adapter.probe_python",
+        "tox.tox_env.python.virtual_env.api.probe_python",
         autospec=True,
         return_value=SubprocessPythonInfo(
             implementation=sys.implementation.name,
