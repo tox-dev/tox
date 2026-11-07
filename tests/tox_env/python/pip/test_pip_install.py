@@ -123,7 +123,7 @@ def test_pip_install_invalid_constraints_error(tox_project: ToxProjectCreator, c
 
 def test_pip_install_new_flag_recreates(tox_project: ToxProjectCreator) -> None:
     proj = tox_project({"tox.ini": "[testenv:py]\ndeps=a\nskip_install=true"})
-    proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
+    proj.patch_execute(lambda request: 0 if "install" in request.run_id else None)
 
     proj.run("r").assert_success()
 
@@ -138,7 +138,7 @@ def test_pip_install_no_binary_on_separate_lines(tox_project: ToxProjectCreator)
     proj = tox_project({
         "tox.ini": "[testenv:py]\ndeps=\n --no-binary six\n --no-binary packaging\n a\nskip_install=true"
     })
-    execute_calls = proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
+    execute_calls = proj.patch_execute(lambda request: 0 if "install" in request.run_id else None)
 
     proj.run("r").assert_success()
     assert execute_calls.call_count == 1
@@ -862,7 +862,7 @@ def test_pip_install_referenced_host_variable_keeps_requirement_variable_literal
 
 def test_pip_install_path(tox_project: ToxProjectCreator) -> None:
     proj = tox_project({"tox.ini": "[testenv:py]\ndeps=.{/}a\nskip_install=true"})
-    execute_calls = proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
+    execute_calls = proj.patch_execute(lambda request: 0 if "install" in request.run_id else None)
 
     proj.run("r").assert_success()
     assert execute_calls.call_args[0][3].cmd == ["python", "-I", "-m", "pip", "install", f".{os.sep}a"]
@@ -887,7 +887,7 @@ def test_pip_install_path(tox_project: ToxProjectCreator) -> None:
 )
 def test_pip_install_req_file_req_like(tox_project: ToxProjectCreator, content: str, args: list[str]) -> None:
     proj = tox_project({"tox.ini": f"[testenv:py]\ndeps={content}\nskip_install=true"})
-    execute_calls = proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
+    execute_calls = proj.patch_execute(lambda request: 0 if "install" in request.run_id else None)
 
     proj.run("r").assert_success()
 
@@ -905,7 +905,7 @@ def test_pip_install_req_file_req_like(tox_project: ToxProjectCreator, content: 
 
 def test_pip_req_path(tox_project: ToxProjectCreator) -> None:
     proj = tox_project({"tox.ini": "[testenv:py]\ndeps=.\nskip_install=true"})
-    execute_calls = proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
+    execute_calls = proj.patch_execute(lambda request: 0 if "install" in request.run_id else None)
 
     proj.run("r").assert_success()
 
@@ -936,7 +936,7 @@ def test_pkg_dep_remove_recreate(tox_project: ToxProjectCreator, demo_pkg_inline
             "build.py": build_with_dep,
         },
     )
-    execute_calls = proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
+    execute_calls = proj.patch_execute(lambda request: 0 if "install" in request.run_id else None)
 
     proj.run("r").assert_success()
     run_ids = [i[0][3].run_id for i in execute_calls.call_args_list]
@@ -978,7 +978,7 @@ def test_force_dep_applies_to_package_deps(
             "build.py": build_with_dep,
         },
     )
-    execute_calls = proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
+    execute_calls = proj.patch_execute(lambda request: 0 if "install" in request.run_id else None)
     proj.run("le", "-e", "py", "--force-dep", forced).assert_success()
 
     calls = [i[0][3].cmd[5:] for i in execute_calls.call_args_list if i[0][3].run_id == "install_package_deps"]
@@ -994,7 +994,7 @@ def test_pkg_env_dep_remove_recreate(tox_project: ToxProjectCreator, demo_pkg_in
             "build.py": (demo_pkg_inline / "build.py").read_text(),
         },
     )
-    execute_calls = proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
+    execute_calls = proj.patch_execute(lambda request: 0 if "install" in request.run_id else None)
     proj.run("r").assert_success()
     run_ids = [i[0][3].run_id for i in execute_calls.call_args_list]
     assert run_ids == [
@@ -1017,7 +1017,7 @@ def test_pkg_env_dep_remove_recreate(tox_project: ToxProjectCreator, demo_pkg_in
 
 def test_pip_install_requirements_file_deps(tox_project: ToxProjectCreator) -> None:
     proj = tox_project({"tox.ini": "[testenv]\ndeps=-r r.txt\nskip_install=true", "r.txt": "a"})
-    execute_calls = proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
+    execute_calls = proj.patch_execute(lambda request: 0 if "install" in request.run_id else None)
     proj.run("r").assert_success()
     assert execute_calls.call_count == 1
     assert execute_calls.call_args[0][3].cmd == ["python", "-I", "-m", "pip", "install", "-r", "r.txt"]
@@ -1286,7 +1286,7 @@ def test_pip_install_constraint_file_create_change(
     tox_project: ToxProjectCreator, toxini: str, toxini_with_dep: str
 ) -> None:
     proj = tox_project({"tox.ini": toxini, "c.txt": "b"})
-    execute_calls = proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
+    execute_calls = proj.patch_execute(lambda request: 0 if "install" in request.run_id else None)
     proj.run("r").assert_success()
     assert execute_calls.call_count == 1
     assert execute_calls.call_args[0][3].cmd == ["python", "-I", "-m", "pip", "install", "a", "-c", "c.txt"]
@@ -1317,7 +1317,7 @@ def test_pip_install_constraint_file_create_change(
 )
 def test_pip_install_constraint_file_new(tox_project: ToxProjectCreator, toxini: str) -> None:
     proj = tox_project({"tox.ini": "[testenv]\ndeps=a\nskip_install=true"})
-    execute_calls = proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
+    execute_calls = proj.patch_execute(lambda request: 0 if "install" in request.run_id else None)
     proj.run("r").assert_success()
     assert execute_calls.call_count == 1
     assert execute_calls.call_args[0][3].cmd == ["python", "-I", "-m", "pip", "install", "a"]
@@ -1583,7 +1583,7 @@ def test_constraints_option_disables_constrain_package_deps(
             "constraints = constraints.txt"
         ),
     })
-    execute_calls = proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
+    execute_calls = proj.patch_execute(lambda request: 0 if "install" in request.run_id else None)
     proj.run("r").assert_success()
 
     constraints_file = proj.path / ".tox" / "py" / "constraints.txt"
@@ -1611,7 +1611,7 @@ def test_comment_only_constraints_keep_constrain_package_deps(
         constraints = ["# pinned once the release lands"]
         """,
     })
-    execute_calls = proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
+    execute_calls = proj.patch_execute(lambda request: 0 if "install" in request.run_id else None)
     proj.run("r").assert_success()
     package_deps = next(c[0][3].cmd for c in execute_calls.call_args_list if c[0][3].run_id == "install_package_deps")
     assert f"-c{proj.path / '.tox' / 'py' / 'constraints.txt'}" in package_deps
@@ -1693,7 +1693,7 @@ def test_constrain_package_deps_constraint_lines(
         "tox.ini": f"[testenv]\npackage=wheel\nconstrain_package_deps = true\ndeps = {deps}",
         **extra_files,
     })
-    proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
+    proj.patch_execute(lambda request: 0 if "install" in request.run_id else None)
     proj.run("r").assert_success()
     assert (proj.path / ".tox" / "py" / "constraints.txt").read_text().splitlines() == expected
 
@@ -1706,7 +1706,7 @@ def test_pip_resolution_env_var_change_reinstalls(tox_project: ToxProjectCreator
                 skip_install = true
             """,
     })
-    execute_calls = proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
+    execute_calls = proj.patch_execute(lambda request: 0 if "install" in request.run_id else None)
 
     result = proj.run("r")
     result.assert_success()
@@ -1735,7 +1735,7 @@ def test_pip_non_resolution_env_var_change_no_reinstall(tox_project: ToxProjectC
                 setenv = PIP_TIMEOUT = 30
             """,
     })
-    execute_calls = proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
+    execute_calls = proj.patch_execute(lambda request: 0 if "install" in request.run_id else None)
 
     result = proj.run("r")
     result.assert_success()
@@ -1765,7 +1765,7 @@ def test_pip_non_resolution_env_var_change_no_reinstall(tox_project: ToxProjectC
 def test_change_constraint_options_recreates(tox_project: ToxProjectCreator, conf_key: str) -> None:
     tox_ini_content = "[testenv:py]\ndeps=a\nskip_install=true"
     proj = tox_project({"tox.ini": f"{tox_ini_content}\n{conf_key} = true"})
-    proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
+    proj.patch_execute(lambda request: 0 if "install" in request.run_id else None)
 
     proj.run("r").assert_success()
 
