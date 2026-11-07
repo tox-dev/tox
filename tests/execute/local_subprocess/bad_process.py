@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING, Final
 if TYPE_CHECKING:
     from types import FrameType
 
-out = sys.stdout
+OUT = sys.stdout
 
 
 def handler(signum: int, _: FrameType | None) -> None:
@@ -19,8 +19,8 @@ def handler(signum: int, _: FrameType | None) -> None:
 
 
 def _p(message: str) -> None:
-    out.write(f"{message}{os.linesep}")
-    out.flush()  # force output flush in case we get killed
+    OUT.write(f"{message}{os.linesep}")
+    OUT.flush()  # force output flush in case we get killed
 
 
 _p(f"start {__name__} with {sys.argv!r}")

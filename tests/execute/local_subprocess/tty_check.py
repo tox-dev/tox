@@ -5,11 +5,11 @@ import shutil
 import sys
 from typing import Final
 
-args = {
+ARGS = {
     "stdout": sys.stdout.isatty(),
     "stderr": sys.stderr.isatty(),
     "stdin": sys.stdin.isatty(),
     "terminal": shutil.get_terminal_size(fallback=(-1, -1)),
 }
-result: Final[str] = json.dumps(args)
-print(result)  # ruff:ignore[print]  # test output
+RESULT: Final[str] = json.dumps(ARGS)
+print(RESULT)  # ruff:ignore[print]  # test output
