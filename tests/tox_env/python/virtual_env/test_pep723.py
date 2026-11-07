@@ -26,7 +26,7 @@ def test_deps_installed(tox_project: ToxProjectCreator) -> None:
 
 def _run(project: ToxProjectCreator, files: dict[str, str], *extra_args: str) -> tuple[ToxRunOutcome, MagicMock]:
     proj = project(files)
-    execute_calls = proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
+    execute_calls = proj.patch_execute(lambda request: 0 if "install" in request.run_id else None)
     return proj.run("r", "-e", "check", "--discover", sys.executable, *extra_args), execute_calls
 
 
@@ -230,7 +230,7 @@ def test_script_path_traversal_via_dot_dot_rejected(tox_project: ToxProjectCreat
 
 def test_script_file_too_large_rejected(tox_project: ToxProjectCreator, mocker: MockerFixture) -> None:
     proj = tox_project({"tox.ini": _tox_ini(), "check.py": "# /// script\n# dependencies = []\n# ///\nprint('ok')\n"})
-    proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
+    proj.patch_execute(lambda request: 0 if "install" in request.run_id else None)
     mocker.patch("tox.tox_env.python.pep723._MAX_SCRIPT_BYTES", 1)
     result = proj.run("r", "-e", "check", "--discover", sys.executable)
     result.assert_failed()

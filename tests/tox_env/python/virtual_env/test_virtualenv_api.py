@@ -207,7 +207,7 @@ def test_pip_pre(tox_project: ToxProjectCreator, on: bool, options: list[str], i
 def test_install_command_no_packages(tox_project: ToxProjectCreator, disable_pip_pypi_access: tuple[str, str]) -> None:
     install_cmd = "python -m pip install -i {env:PIP_INDEX_URL}"
     proj = tox_project({"tox.ini": f"[testenv]\npackage=skip\ninstall_command={install_cmd}\npip_pre=true\ndeps=magic"})
-    execute_calls = proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
+    execute_calls = proj.patch_execute(lambda request: 0 if "install" in request.run_id else None)
     proj.run("r").assert_success()
     request: ExecuteRequest = execute_calls.call_args[0][3]
     found_cmd = request.cmd
@@ -217,7 +217,7 @@ def test_install_command_no_packages(tox_project: ToxProjectCreator, disable_pip
 @pytest.mark.slow
 def test_list_dependencies_command(tox_project: ToxProjectCreator) -> None:
     proj = tox_project({"tox.ini": f"[testenv]\npackage=skip\nlist_dependencies_command={'python -m pip freeze'}"})
-    execute_calls = proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
+    execute_calls = proj.patch_execute(lambda request: 0 if "install" in request.run_id else None)
     proj.run("r", "--result-json", str(proj.path / "out.json")).assert_success()
     request: ExecuteRequest = execute_calls.call_args[0][3]
     assert request.cmd == ["python", "-m", "pip", "freeze"]
