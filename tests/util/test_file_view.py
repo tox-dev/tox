@@ -138,6 +138,8 @@ def test_create_session_view_error_names_owner_and_mode(tmp_path: Path, package:
     work_dir: Final[Path] = tmp_path / ".tox"
     staging: Final[Path] = work_dir / ".tmp" / "package"
     staging.mkdir(parents=True)
+    for directory in (staging.parent, staging):
+        directory.chmod(0o755)
     work_dir.chmod(0o777)
 
     with pytest.raises(PermissionError) as error:
@@ -505,6 +507,8 @@ def test_create_session_view_accepts_sticky_staging(tmp_path: Path, package: Pat
     work_dir: Final[Path] = tmp_path / ".tox"
     staging: Final[Path] = work_dir / ".tmp" / "package"
     staging.mkdir(parents=True)
+    for directory in (staging.parent, staging):
+        directory.chmod(0o755)
     work_dir.chmod(0o1777)
     tmp_path.chmod(0o755)
 
