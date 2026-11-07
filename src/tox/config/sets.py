@@ -46,6 +46,7 @@ class ConfigSet(ABC):
 
     @abstractmethod
     def register_config(self) -> None:
+        """Register the configuration keys this set provides."""
         raise NotImplementedError
 
     def __getitem__(self, item: str) -> Any:
@@ -73,10 +74,12 @@ class ConfigSet(ABC):
 
     @property
     def name(self) -> str:
+        """The name of the section this set reads its configuration from."""
         return self._section.name
 
     @property
     def env_name(self) -> str | None:
+        """The name of the environment this set belongs to, ``None`` for the core configuration."""
         return self._env_name
 
     @override
@@ -108,6 +111,7 @@ class ConfigSet(ABC):
                 yield definition
 
     def mark_finalized(self) -> None:
+        """Mark the set as final, after which no further configuration can be added."""
         self._final = True
 
     @overload
@@ -246,6 +250,12 @@ class ConfigSet(ABC):
         return cast("ConfigConstantDefinition[V]", self._add_conf(keys_, ConfigConstantDefinition(keys_, desc, value)))
 
     def is_constant(self, item: str) -> bool:
+        """Check whether a configuration key is a constant.
+
+        :param item: the configuration key
+
+        :returns: whether the key holds a constant value
+        """
         return isinstance(self._defined[item], ConfigConstantDefinition)
 
     def get(self, item: str, of_type: type[V]) -> V:
@@ -475,6 +485,12 @@ class EnvConfigSet(ConfigSet):
 
     def set_env_lines(self, chain: list[str]) -> str:
         # load first: a {env:...} in an environment file name reads this set_env, and the chain would reject that load
+        """Get the ``set_env`` setting as lines, loading it first.
+
+        :param chain: the chain of configuration keys the load belongs to
+
+        :returns: the environment variables as ``KEY=VALUE`` lines
+        """
         self.load("set_env", chain)
         loaded: Final[ConfigDynamicDefinition[SetEnv]] = cast(
             "ConfigDynamicDefinition[SetEnv]", self._defined["set_env"]

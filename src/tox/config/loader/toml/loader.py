@@ -75,6 +75,14 @@ class TomlLoader(Loader[TomlTypes]):
         return self.content[key]
 
     def load_raw_from_root(self, path: str) -> TomlTypes:
+        """Get a raw value from the root of the TOML content, by its dotted path.
+
+        :param path: the dotted path of the value
+
+        :returns: the raw value found at that path
+
+        :raises KeyError: when a part of the path is missing or is not a table
+        """
         current = cast("TomlTypes", self._root_content)
         for key in path.split(self.section.SEP):
             if isinstance(current, dict):

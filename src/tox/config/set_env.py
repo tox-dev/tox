@@ -22,11 +22,14 @@ if TYPE_CHECKING:
 
 
 class Replacer(Protocol):
+    """Expand the replacements in the value of an environment variable."""
+
     def __call__(self, value: str | MatchExpression, args: ConfigLoadArgs, /, *, recursive: bool = ...) -> str: ...
 
 
 # a TOML table such as ``{ replace = "env" }`` arrives parsed and resolves when its key is read
 SetEnvValue = str | MatchExpression
+"""The value of a single ``set_env`` entry, plain text or a replacement expression."""
 
 
 class SetEnvEntry(TypedDict):
@@ -64,9 +67,21 @@ SetEnvRaw = (
     | SetEnvReference
     | list[dict[str, SetEnvValue | SetEnvEntry] | SetEnvReference]
 )
+"""The forms the ``set_env`` setting can take in the configuration, before it is loaded."""
 
 
 class SetEnv:
+    """The environment variables of a tox environment, as set by its ``set_env`` setting.
+
+    :param raw: the value of the ``set_env`` setting
+    :param name: the name of the setting the value comes from
+    :param env_name: the name of the environment the setting belongs to, ``None`` when unknown
+    :param root: the root directory of the project
+    :param substituted: whether the value is text produced by a substitution
+    :ivar changed: whether a variable was set or removed after the setting was loaded
+    :ivar shape: the form the setting was written in, a string, a table or an array
+    """
+
     def __init__(
         self, raw: SetEnvRaw, name: str, env_name: str | None, root: Path, *, substituted: bool = False
     ) -> None:
@@ -371,9 +386,21 @@ class SetEnv:
         return self._markers[key].evaluate()
 
     def use_replacer(self, value: Replacer, args: ConfigLoadArgs) -> None:
+        """Use a replacer to expand the values of the environment variables.
+
+        :param value: the replacer to use
+        :param args: the args of the configuration load
+        """
         self._replacer, self._args = value, args.copy()
 
     def load(self, item: str, args: ConfigLoadArgs | None = None) -> str:
+        """Get the value of an environment variable.
+
+        :param item: the name of the environment variable
+        :param args: the args of the configuration load, a new set is created when ``None``
+
+        :returns: the value of the environment variable
+        """
         self._resolve_replacements()
         if item in self._materialized:
             return self._materialized[item]
@@ -390,6 +417,10 @@ class SetEnv:
         return result
 
     def lines(self) -> str:
+        """Get the environment variables as ``KEY=VALUE`` lines, in the form they are written in the configuration.
+
+        :returns: the lines, separated by newlines
+        """
         return "\n".join(
             format_line(name, str(entry["value"]), entry.get("marker"))
             for name, entry in self.raw(self._args.copy()).items()
@@ -448,6 +479,11 @@ class SetEnv:
         self.changed = True
 
     def update(self, param: Mapping[str, str] | SetEnv, *, override: bool = True) -> None:
+        """Set environment variables from a mapping.
+
+        :param param: the variables to set, another set env is read through its loader
+        :param override: whether to replace the variables that are already set explicitly
+        """
         for key in param:
             # do not override something already set explicitly
             if override or (key not in self._raw and key not in self._materialized):

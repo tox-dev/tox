@@ -12,6 +12,14 @@ if TYPE_CHECKING:
 
 
 def split_line(line: str) -> tuple[str, str, str]:
+    """Split a ``KEY=VALUE`` line into its key, its value and its marker.
+
+    :param line: the line to split
+
+    :returns: the key, the value and the marker, the marker being empty when the line has none
+
+    :raises ValueError: when the line has no ``=``
+    """
     key, sep, rest = line.partition("=")
     if not sep:
         msg = f"invalid line {line!r} in set_env"
@@ -25,6 +33,12 @@ def split_line(line: str) -> tuple[str, str, str]:
 def split_value_marker(value: str) -> tuple[str, str]:
     # Quotes keep a ";" inside a quoted value from being read as the marker separator, but only when balanced -- a lone
     # quote (e.g. an apostrophe in the value) must not swallow the marker, so retry ignoring quotes if one is left open.
+    """Split a value from the marker that follows a ``;`` outside of quotes.
+
+    :param value: the value, possibly followed by a marker
+
+    :returns: the value and the marker, the marker being empty when there is none
+    """
     respect_quotes = True
     while True:  # the second pass ignores quotes, so it always ends balanced
         in_quotes = False
@@ -65,6 +79,14 @@ def _unescape_semicolons(value: str) -> str:
 
 
 def format_line(key: str, value: str, marker: str | None) -> str:
+    """Format a ``KEY=VALUE`` line, the inverse of splitting it.
+
+    :param key: the environment variable name
+    :param value: the value, with ``;`` escaped
+    :param marker: the marker to append, ``None`` for none
+
+    :returns: the formatted line
+    """
     escaped_semicolon: Final[str] = r"\;"  # Python 3.11 rejects a backslash inside an f-string expression
     line = f"{key}={value.replace(';', escaped_semicolon)}"
     return f"{line}; {marker}" if marker else line

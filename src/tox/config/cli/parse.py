@@ -20,6 +20,12 @@ if TYPE_CHECKING:
 
 
 def get_options(*args: str) -> Options:
+    """Parse the command line arguments, the config file and the environment variables.
+
+    :param args: the command line arguments
+
+    :returns: the parsed options
+    """
     completion_current: str | None = None
     if "_ARGCOMPLETE" in os.environ:
         args, completion_current = _completion_args(args)
@@ -163,6 +169,15 @@ def _get_parser() -> ToxParser:
 
 
 class Options(NamedTuple):
+    """The parsed command line options together with the state needed to run tox.
+
+    :param parsed: the parsed command line options
+    :param pos_args: the positional arguments passed after ``--``
+    :param source: the source the configuration is read from
+    :param cmd_handlers: the handlers of the sub-commands, keyed by command name
+    :param log_handler: the handler that reports the log output
+    """
+
     parsed: Parsed
     pos_args: Sequence[str] | None
     source: Source

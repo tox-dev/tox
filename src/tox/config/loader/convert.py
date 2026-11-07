@@ -21,6 +21,7 @@ T = TypeVar("T")
 V = TypeVar("V")
 
 Factory = Callable[[object], T] | None  # note the argument is anything, due e.g. memory loader can inject anything
+"""Callable that converts a raw value to the target type, or ``None`` when no conversion is needed."""
 
 
 class Convert(ABC, Generic[T]):

@@ -34,6 +34,7 @@ if TYPE_CHECKING:
     from tox.config.main import Config
 
 V = TypeVar("V")
+"""Type variable for the type of the values the ini loader converts."""
 _COMMENTS: Final[re.Pattern[str]] = re.compile(
     r"""
     ( \s )*     # optional leading whitespace
@@ -87,6 +88,16 @@ class IniLoader(StrConvert, Loader[str]):
     @staticmethod
     def process_raw(conf: Config | None, env_name: str | None, value: str) -> str:
         # strip comments
+        """Strip the comments and the lines of other factors from a raw value.
+
+        :param conf: the global config, ``None`` when loading the global tox config file
+        :param env_name: the environment name, ``None`` when unknown
+        :param value: the raw value
+
+        :returns: the value without comments and without the lines of other factors
+
+        :raises KeyError: when the value has content, but no line applies to the environment
+        """
         elements: list[str] = [
             _COMMENTS.sub("", line).replace("\\#", "#") for line in value.split("\n") if not line.startswith("#")
         ]
@@ -168,6 +179,12 @@ class IniLoader(StrConvert, Loader[str]):
 
     def get_section(self, name: str) -> SectionProxy | None:
         # needed for non tox environment replacements
+        """Get a section of the ini file.
+
+        :param name: the name of the section
+
+        :returns: the section, or ``None`` when the file has no such section
+        """
         if self._parser.has_section(name):
             return self._parser[name]
         return None

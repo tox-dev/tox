@@ -44,6 +44,7 @@ class Command:  # ruff:ignore[eq-without-hash]  # mutable value type
 
     @property
     def raw_args(self) -> list[str]:
+        """The arguments with the exit code prefix, ``-`` to ignore the exit code or ``!`` to invert it."""
         return (["-"] if self.ignore_exit_code else ["!"] if self.invert_exit_code else []) + self.args
 
     @override

@@ -13,6 +13,12 @@ if TYPE_CHECKING:
 
 
 def to_native(value: object) -> JsonValue:
+    """Convert a value to a type that can be serialized to JSON.
+
+    :param value: the value to convert
+
+    :returns: the value as a JSON compatible type
+    """
     if isinstance(value, bool):
         return value
     if isinstance(value, (int, float, str)):

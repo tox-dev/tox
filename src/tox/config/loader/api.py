@@ -120,6 +120,7 @@ class ConfigLoadArgs:
 
 
 OverrideMap = Mapping[str, list[Override]]
+"""Overrides grouped by the name of the configuration key they apply to."""
 
 T = TypeVar("T")
 V = TypeVar("V")
@@ -295,6 +296,17 @@ class Loader(Convert[T]):
         self, raw: T, overrides: list[Override], conf: Config, args: ConfigLoadArgs
     ) -> SetEnvReference:
         # SetEnv imports this module.
+        """Wrap a raw value in a reference that loads it as a ``set_env`` value.
+
+        :param raw: the value as written in the configuration, ``set_env`` table or string
+        :param overrides: the overrides to apply
+        :param conf: the global config
+        :param args: env args
+
+        :returns: the set env reference
+
+        :raises ValueError: when the reference is circular
+        """
         from tox.config.set_env import SetEnv, SetEnvReference  # ruff:ignore[import-outside-top-level]
 
         if args.chain[-1] in args.chain[:-1]:
@@ -369,6 +381,10 @@ def _apply_override_to_raw(value: T, override: Override) -> T:
 
 @impl
 def tox_add_option(parser: ToxParser) -> None:
+    """Add the ``--override`` command line option.
+
+    :param parser: the parser to add the option to
+    """
     override_short_option = "-x"
     parser.add_argument(
         override_short_option,

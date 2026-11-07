@@ -59,10 +59,17 @@ class ArgumentParserWithEnvAndConfig(ArgumentParser):
         super().__init__(*args, **kwargs)
 
     def fix_defaults(self) -> None:
+        """Apply the environment variable and config file defaults to all arguments, sub-parsers included."""
         for action in self._actions:
             self.fix_default(action)
 
     def fix_default(self, action: Action) -> None:
+        """Set the default of an argument from its environment variable or config file value, when one is set.
+
+        :param action: the argument to update
+
+        :raises RuntimeError: when a sub-parser was added without using the tox parser
+        """
         if hasattr(action, "default") and hasattr(action, "dest") and action.default != SUPPRESS:
             of_type = self.get_type(action)
             key = action.dest
@@ -83,6 +90,14 @@ class ArgumentParserWithEnvAndConfig(ArgumentParser):
 
     @staticmethod
     def get_type(action: Action) -> type | UnionType:
+        """Get the type the values of an argument are converted to.
+
+        :param action: the argument
+
+        :returns: the type of the argument values, a list type for arguments that accept many values
+
+        :raises TypeError: when the type of the argument cannot be determined
+        """
         of_type = _ACTION_OF_TYPE.get(action)
         if of_type is None:
             many: Final[bool] = action.nargs in {"+", "*"} or (isinstance(action.nargs, int) and action.nargs >= 1)
@@ -155,6 +170,11 @@ class HelpFormatter(ArgumentDefaultsHelpFormatter):
         return text
 
     def add_raw_text(self, text: str | None) -> None:
+        """Add help text that is printed as is, without wrapping.
+
+        :param text: the text to add, nothing is added when it is suppressed or ``None``
+        """
+
         def keep(content: str) -> str:
             return content
 
@@ -164,9 +184,12 @@ class HelpFormatter(ArgumentDefaultsHelpFormatter):
 
 ToxParserT = TypeVar("ToxParserT", bound="ToxParser")
 DEFAULT_VERBOSITY: Final[int] = 2
+"""Verbosity used when no verbosity flag is given, an index into the log levels."""
 
 CORE: Final[str] = "core"
+"""Name of the core option group, which every sub-command inherits."""
 ENV: Final[str] = "env"
+"""Name of the environment option group, which sub-commands that select environments inherit."""
 _INHERIT_ALL: Final[frozenset[str]] = frozenset({CORE, ENV})
 
 
@@ -366,6 +389,18 @@ class ToxParser(ArgumentParserWithEnvAndConfig):
         *,
         inherit: frozenset[str] = _INHERIT_ALL,
     ) -> ArgumentParser:
+        """Register a sub-command with its own parser and handler.
+
+        :param cmd: the name of the sub-command
+        :param aliases: other names the sub-command can be invoked with
+        :param help_msg: the help text of the sub-command
+        :param handler: the function that runs the sub-command
+        :param inherit: the option groups the sub-command inherits from the root parser
+
+        :returns: the parser of the sub-command
+
+        :raises RuntimeError: when this parser does not accept sub-commands
+        """
         if self._cmd is None:
             msg = "no sub-command group allowed"
             raise RuntimeError(msg)
@@ -541,10 +576,18 @@ class ToxParser(ArgumentParserWithEnvAndConfig):
 
     @classmethod
     def base(cls) -> Self:
+        """Create a root parser without the help option.
+
+        :returns: the root parser
+        """
         return cls(add_help=False, root=True)
 
     @classmethod
     def core(cls) -> Self:
+        """Create the root parser of the tox command, which accepts sub-commands.
+
+        :returns: the root parser
+        """
         return cls(
             prog=NAME,
             formatter_class=HelpFormatter,

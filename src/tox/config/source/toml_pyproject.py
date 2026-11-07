@@ -25,6 +25,16 @@ if TYPE_CHECKING:
 
 
 class TomlSection(Section):
+    """A section of the ``tool.tox`` table of a ``pyproject.toml`` file.
+
+    :ivar SEP: the separator of the parts of a dotted key
+    :ivar PREFIX: the parts of the key path the table lives under
+    :cvar ENV: the key of the table with the environment definitions
+    :cvar ENV_BASE: the key of the table with the base environment definitions
+    :cvar RUN_ENV_BASE: the key of the table with the base run environment definitions
+    :cvar PKG_ENV_BASE: the key of the table with the base packaging environment definitions
+    """
+
     SEP: str = "."
     PREFIX: tuple[str, ...]
     ENV: Final[str] = "env"
@@ -34,23 +44,44 @@ class TomlSection(Section):
 
     @classmethod
     def test_env(cls, name: str) -> TomlSection:
+        """Get the section of a tox environment.
+
+        :param name: the name of the environment
+
+        :returns: the section of the environment
+        """
         return cls(cls.env_prefix(), name)
 
     @classmethod
     def env_prefix(cls) -> str:
+        """Get the dotted prefix of the tox environment tables.
+
+        :returns: the prefix
+        """
         return cls.SEP.join((*cls.PREFIX, cls.ENV))
 
     @classmethod
     def env_base(cls, name: str) -> TomlSection:
+        """Get the section of a base environment definition.
+
+        :param name: the name of the base environment
+
+        :returns: the section of the base environment
+        """
         return cls(cls.env_base_prefix(), name)
 
     @classmethod
     def env_base_prefix(cls) -> str:
+        """Get the dotted prefix of the base environment tables.
+
+        :returns: the prefix
+        """
         return cls.SEP.join((*cls.PREFIX, cls.ENV_BASE))
 
     @property
     def keys(self) -> Iterable[str]:
         # Build keys from prefix + name directly, preserving dots in names (e.g. env "py3.11").
+        """The parts of the dotted key path of the section, relative to the global prefix."""
         prefix, name = self._prefix, self._name
         if prefix is None and not name:
             return []
@@ -63,18 +94,35 @@ class TomlSection(Section):
 
     @classmethod
     def core_prefix(cls) -> str:
+        """Get the dotted prefix of the core table.
+
+        :returns: the prefix
+        """
         return cls.SEP.join(cls.PREFIX)
 
     @classmethod
     def package_env_base(cls) -> str:
+        """Get the dotted key of the packaging environment base table.
+
+        :returns: the key
+        """
         return cls.SEP.join((*cls.PREFIX, cls.PKG_ENV_BASE))
 
     @classmethod
     def run_env_base(cls) -> str:
+        """Get the dotted key of the run environment base table.
+
+        :returns: the key
+        """
         return cls.SEP.join((*cls.PREFIX, cls.RUN_ENV_BASE))
 
 
 class TomlPyProjectSection(TomlSection):
+    """A section of the ``tool.tox`` table of a ``pyproject.toml`` file.
+
+    :cvar PREFIX: the parts of the key path the ``tool.tox`` table lives under
+    """
+
     PREFIX = ("tool", "tox")
 
 
@@ -119,6 +167,12 @@ class TomlPyProject(Source):
         return self._Section(prefix=None, name="")
 
     def factor_labels(self, env_name: str | None) -> dict[str, FactorGroup]:
+        """Get the factor labels defined for an environment.
+
+        :param env_name: the environment name, ``None`` for the core configuration
+
+        :returns: the factor labels
+        """
         if env_name in self._env_base_generated:
             return {**self._env_list_labels, **self._env_base_labels[self._env_base_generated[env_name]]}
         return self._factor_labels

@@ -36,6 +36,7 @@ REPLACE_START: Final[str] = "{"
 REPLACE_END: Final[str] = "}"
 BACKSLASH_ESCAPE_CHARS: Final[tuple[str, ...]] = (ARG_DELIMITER, REPLACE_START, REPLACE_END, "[", "]")
 MAX_REPLACE_DEPTH: Final[int] = 100
+"""Maximum depth of nested replacements, deeper ones are not expanded."""
 # Factor overrides can supply values absent from the configuration without renaming environments.
 _FACTOR_ENV_PREFIX: Final[str] = "TOX_FACTOR_"
 _REQUIREMENT_LINE_BREAKS: Final[str] = r"[\n\r\v\f\x1c-\x1e\x85\u2028\u2029]"
@@ -46,6 +47,13 @@ class MatchRecursionError(ValueError):
 
     @staticmethod
     def check(depth: int, value: Any) -> None:
+        """Raise an error when the replacement depth is beyond the maximum.
+
+        :param depth: the current replacement depth
+        :param value: the value being replaced
+
+        :raises MatchRecursionError: when the depth is beyond the maximum
+        """
         if depth > MAX_REPLACE_DEPTH:
             msg = f"Could not expand {value} after recursing {depth} frames"
             raise MatchRecursionError(msg)
@@ -56,10 +64,14 @@ class MatchError(Exception):
 
 
 class RawText(str):  # ruff:ignore[subclass-builtin] # keep the origin through the str replacement interface
+    """Text that is not subject to replacement, as it came from the configuration itself."""
+
     __slots__ = ()
 
 
 class ReplaceReference(ABC):
+    """A reference to a replacement, which knows how to resolve the names it is given."""
+
     @abstractmethod
     def __call__(self, value: str, conf_args: ConfigLoadArgs) -> str | ConfigDefault | None:
         """Perform a reference replacement.
@@ -74,6 +86,7 @@ class ReplaceReference(ABC):
 
 
 MatchArg = Sequence[Union[str, "MatchExpression"]]
+"""The arguments of a replacement, as plain text or as nested replacement expressions."""
 _OtherFragment = TypeVar("_OtherFragment")
 
 
@@ -109,6 +122,15 @@ def replace_command_lines(
 
 
 def replace_program(conf: Config, reference: ReplaceReference, value: str, args: ConfigLoadArgs) -> str:
+    """Replace the tokens of a value that names a program to run.
+
+    :param conf: the global config
+    :param reference: the reference the value comes from
+    :param value: the value to replace
+    :param args: env args
+
+    :returns: the value with its replacements resolved
+    """
     replacer: Final[Replacer] = Replacer(conf, reference, conf_args=args)
     replacer.program = True
     return replacer.expand(value)
@@ -122,12 +144,28 @@ def replace_requirement_lines(
     *,
     callbacks: RequirementLineCallbacks,
 ) -> str:
+    """Replace the tokens of a requirements value, line by line.
+
+    :param conf: the global config
+    :param reference: the reference the value comes from
+    :param value: the value to replace
+    :param args: env args
+    :param callbacks: the validation and protection callbacks for requirement lines
+
+    :returns: the value with its replacements resolved
+    """
     return RequirementLinesReplacer(conf, reference, conf_args=args, callbacks=callbacks).expand(value)
 
 
 def replace_for(
     of_type: type[object] | UnionType,
 ) -> Callable[[Config, ReplaceReference, str | MatchExpression, ConfigLoadArgs], str]:
+    """Get the replacement function for a value type.
+
+    :param of_type: the type of the value to replace
+
+    :returns: the function that replaces the tokens of a value of that type
+    """
     kinds: Final[set[type[object] | UnionType]] = {get_origin(kind) or kind for kind in (of_type, *get_args(of_type))}
     if of_type == list[Command]:
         return replace
@@ -165,6 +203,16 @@ def replace_entries(
     *,
     separators: str = ",\n",
 ) -> str:
+    """Replace the tokens of a value that holds a list of entries.
+
+    :param conf: the global config
+    :param reference: the reference the value comes from
+    :param value: the value to replace
+    :param args: env args
+    :param separators: the characters that separate the entries
+
+    :returns: the value with its replacements resolved
+    """
     return EntriesReplacer(conf, reference, conf_args=args, separators=separators).expand(value)
 
 
@@ -384,6 +432,12 @@ class Replacer:
         return self.join(value)
 
     def join(self, value: MatchArg) -> str:
+        """Join the parts of a replaced value into one value.
+
+        :param value: the parts to join
+
+        :returns: the joined value
+        """
         return HostText.from_parts(self(value))
 
     def _replace_args(self, flattened_args: list[str]) -> str | None:
@@ -435,6 +489,12 @@ class Replacer:
         return nested
 
     def expand(self, value: str | MatchExpression) -> str:
+        """Resolve the replacements of a value, up to the maximum depth.
+
+        :param value: the value to expand
+
+        :returns: the value with its replacements resolved
+        """
         if self.depth > MAX_REPLACE_DEPTH:
             self.root.depth_exhausted = True
         MatchRecursionError.check(self.depth, value)
@@ -446,6 +506,13 @@ class Replacer:
 
 @dataclasses.dataclass(frozen=True, slots=True, kw_only=True)
 class ConfigDefault:
+    """A default value of a replacement, with the span of the text it stands for.
+
+    :param text: the default text
+    :param start: the index where the text it stands for starts
+    :param stop: the index where the text it stands for ends, ``None`` when it is open ended
+    """
+
     text: str
     start: int
     stop: int | None = None
@@ -595,6 +662,8 @@ class CommandLinesReplacer(Replacer):
 
 
 class Arguments(str):  # ruff:ignore[subclass-builtin]  # keep argument values distinct from command text
+    """Text of replacement arguments, kept apart from the command text they are part of."""
+
     __slots__ = ()
 
 
@@ -691,6 +760,12 @@ class RequirementLinesReplacer(Replacer):
 
 
 class HostText(RawText):
+    """Text that keeps track of the spans that came from the configuration and of its literal spans.
+
+    :ivar spans: the spans of the text that came from the configuration
+    :ivar literal_spans: the spans of the text that is taken literally
+    """
+
     __slots__ = ("literal_spans", "spans")
     spans: tuple[tuple[int, int], ...]
     literal_spans: tuple[tuple[int, int], ...]
@@ -719,6 +794,13 @@ class HostText(RawText):
         return lines
 
     def fragment(self, start: int, end: int | None = None) -> str:
+        """Get a part of the text, keeping the spans that fall within it.
+
+        :param start: the start index of the part
+        :param end: the end index of the part, the end of the text when ``None``
+
+        :returns: the part of the text
+        """
         stop: Final[int] = len(self) if end is None else end
         spans: Final[tuple[tuple[int, int], ...]] = self._fragment_spans(self.spans, start, stop)
         value: Final[str] = super().__getitem__(slice(start, stop))
@@ -741,12 +823,30 @@ class HostText(RawText):
         return self.fragment(len(self) - len(super().lstrip(chars)), len(super().rstrip(chars)))
 
     def covers(self, end: int) -> bool:
+        """Check whether the first span covers the text up to an index.
+
+        :param end: the index to check up to
+
+        :returns: whether the first span covers the text up to that index
+        """
         return self.spans[0][0] == 0 and self.spans[0][1] >= end
 
     def covers_literal(self, end: int) -> bool:
+        """Check whether the first literal span covers the text up to an index.
+
+        :param end: the index to check up to
+
+        :returns: whether the first literal span covers the text up to that index
+        """
         return bool(self.literal_spans) and self.literal_spans[0][0] == 0 and self.literal_spans[0][1] >= end
 
     def protect(self, protector: _HostValueProtector) -> str:
+        """Protect the spans of the text that came from the configuration, so they are not replaced again.
+
+        :param protector: the protector that escapes the text
+
+        :returns: the protected text
+        """
         parts: Final[list[str]] = []
         offset = 0
         for start, end in self.spans:
@@ -762,6 +862,13 @@ class HostText(RawText):
 
     @classmethod
     def from_parts(cls, parts: Sequence[str], *, separator: str = "") -> str:
+        """Join parts into one text, keeping the spans of the parts that are host text.
+
+        :param parts: the parts to join
+        :param separator: the text placed between two parts
+
+        :returns: the joined text
+        """
         spans: list[tuple[int, int]] = []
         literal_spans: list[tuple[int, int]] = []
         offset = 0
@@ -789,6 +896,12 @@ class _HostValueProtector(Protocol):
 
 @dataclasses.dataclass(frozen=True, slots=True, kw_only=True)
 class RequirementLineCallbacks:
+    """Callbacks that validate the options of a requirement line and protect its host values.
+
+    :param validate_options: the callback that validates the options of a requirement line
+    :param protect_host_value: the callback that protects the text that came from the configuration
+    """
+
     validate_options: _RequirementOptionsValidator
     protect_host_value: _HostValueProtector
 
@@ -860,6 +973,12 @@ def replace_pos_args(
 
 def quote_args(args: Sequence[str]) -> str:
     # INI settings split lines before parsing quotes.
+    """Quote the arguments so they can be split back into the same arguments.
+
+    :param args: the arguments to quote
+
+    :returns: the arguments as a single command line
+    """
     normalized: Final[list[str]] = [" ".join(arg.splitlines()) for arg in args]
     if sys.platform != "win32":
         return shlex.join(normalized)
@@ -868,6 +987,14 @@ def quote_args(args: Sequence[str]) -> str:
 
 
 def load_posargs(conf: Config, conf_args: ConfigLoadArgs, *, program_first: bool) -> tuple[str, ...] | None:
+    """Get the positional arguments, with paths relative to the change directory when the environment expects paths.
+
+    :param conf: the global config
+    :param conf_args: env args
+    :param program_first: whether the program comes before the positional arguments
+
+    :returns: the positional arguments, or ``None`` when none were given
+    """
     to_path: Path | None = None
     if conf_args.env_name is not None:  # pragma: no branch  # other outcome untested
         env_conf = conf.get_env(conf_args.env_name)
@@ -885,6 +1012,14 @@ def _loading_change_dir(conf_args: ConfigLoadArgs) -> bool:
 
 
 def replace_env(conf: Config | None, args: list[str], conf_args: ConfigLoadArgs) -> str:
+    """Replace an environment variable reference with its value.
+
+    :param conf: the global config, ``None`` when unknown
+    :param args: the arguments of the reference, the variable name first and its default after
+    :param conf_args: env args
+
+    :returns: the value of the variable, or its default
+    """
     value: Final[str | ConfigDefault] = _replace_env(conf, args, conf_args)
     # Keep host-value provenance for inline requirement parsing.
     return value if isinstance(value, str) else str(value)
@@ -960,6 +1095,16 @@ def replace_glob(conf: Config | None, args: list[str]) -> str | ConfigDefault:
 
 
 def replace_factor(conf: Config, args: list[str], conf_args: ConfigLoadArgs) -> str:
+    """Replace a factor reference with the value of its factor label.
+
+    :param conf: the global config
+    :param args: the arguments of the reference, the label first and its default after
+    :param conf_args: env args
+
+    :returns: the value of the label for the environment, or its default
+
+    :raises MatchError: when no factor label was supplied
+    """
     if not args or not args[0]:
         msg = "No label was supplied in {factor} substitution"
         raise MatchError(msg)

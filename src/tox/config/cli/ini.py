@@ -18,9 +18,21 @@ if TYPE_CHECKING:
     from types import UnionType
 
 DEFAULT_CONFIG_FILE = Path(user_config_dir("tox")) / "config.ini"
+"""Path of the user-level tox config file, used when ``TOX_USER_CONFIG_FILE`` is not set."""
 
 
 class IniConfig:
+    """Read the user-level tox config file, which supplies defaults for the command line options.
+
+    :cvar TOX_CONFIG_FILE_ENV_VAR: the environment variable that overrides the path of the config file
+    :cvar STATE: the label of the config file state, keyed by whether the file was read
+    :ivar is_env_var: whether the path of the config file comes from the environment variable
+    :ivar config_file: the path of the config file
+    :ivar has_config_file: whether the config file exists, ``None`` when it failed to parse
+    :ivar has_tox_section: whether the config file has a core section
+    :ivar ini: the loader of the core section, ``None`` when there is none
+    """
+
     TOX_CONFIG_FILE_ENV_VAR = "TOX_USER_CONFIG_FILE"
     STATE: ClassVar[dict[bool | None, str]] = {None: "failed to parse", True: "active", False: "missing"}
 
@@ -56,12 +68,20 @@ class IniConfig:
     @property
     def epilog(self) -> str:
         # text to show within the parsers epilog
+        """Describe which config file is in use, for the end of the help output."""
         return (
             f"{os.linesep}config file {str(self.config_file)!r} {self.STATE[self.has_config_file]} "
             f"(change{'d' if self.is_env_var else ''} via env var {self.TOX_CONFIG_FILE_ENV_VAR})"
         )
 
     def get(self, key: str, of_type: type[Any] | UnionType) -> Any:
+        """Get a value from the core section of the config file.
+
+        :param key: the configuration key
+        :param of_type: the type to convert the value to
+
+        :returns: the converted value, or ``None`` when it is not set or cannot be read
+        """
         cache_key = key, of_type
         if cache_key in self._cache:
             result = self._cache[cache_key]

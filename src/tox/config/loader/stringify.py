@@ -15,6 +15,13 @@ if TYPE_CHECKING:
 
 
 def stringify_reference(value: object, *, constant: bool) -> str:
+    """Convert a value to the text a replacement expands to.
+
+    :param value: the value to convert
+    :param constant: whether the value is a constant of the configuration
+
+    :returns: the text of the value
+    """
     as_str: Final[str] = stringify(value)[0]
     if _is_command_argument_value(value) and (not isinstance(value, str) or constant):
         return Arguments(as_str)
@@ -22,6 +29,12 @@ def stringify_reference(value: object, *, constant: bool) -> str:
 
 
 def stringify(value: object) -> tuple[str, bool]:  # ruff:ignore[too-many-return-statements]  # distinct outcomes
+    """Convert a value to text.
+
+    :param value: the value to convert
+
+    :returns: the text of the value, and whether it is built from several entries
+    """
     if isinstance(value, str):
         return value, False
     if isinstance(value, (Path, float, int, bool)):

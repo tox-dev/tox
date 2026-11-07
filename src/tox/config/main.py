@@ -140,6 +140,7 @@ class Config:
 
     @property
     def options(self) -> Parsed:
+        """The parsed command line options."""
         return self._options
 
     @property
@@ -148,6 +149,13 @@ class Config:
         return self._overrides
 
     def pos_args(self, to_path: Path | None, *, program_first: bool = False) -> tuple[str, ...] | None:
+        """Get the positional arguments passed after ``--``, with path arguments made relative to a directory.
+
+        :param to_path: the directory the path arguments are made relative to, ``None`` to keep them as they are
+        :param program_first: whether the program comes before the positional arguments
+
+        :returns: the positional arguments, or ``None`` when none were passed
+        """
         if self._pos_args is not None and to_path is not None and Path.cwd() != to_path:
             args: Final[list[str]] = []
             # Windows resolves parent segments before following directory links.
@@ -196,9 +204,19 @@ class Config:
         return relative
 
     def sections(self) -> Iterator[Section]:
+        """Iterate over the sections of the configuration source.
+
+        :yields: the sections, in the order the source defines them
+        """
         yield from self._src.sections()
 
     def factor_labels(self, env_name: str | None) -> dict[str, FactorGroup]:
+        """Get the factor labels defined for an environment.
+
+        :param env_name: the environment name, ``None`` for the core configuration
+
+        :returns: the factor labels, empty when the source does not define factor labels
+        """
         return self._src.factor_labels(env_name) if isinstance(self._src, FactorLabelSource) else {}
 
     def get_env(
@@ -238,6 +256,16 @@ class Config:
         for_env: str | None,
         loaders: Sequence[Loader[Any]] | None = None,
     ) -> T:
+        """Get the configuration set of a section, creating and caching it on first use.
+
+        :param section: the section to load
+        :param base: the base sections the configuration inherits from
+        :param of_type: the configuration set type to create
+        :param for_env: the environment name, ``None`` for the core configuration
+        :param loaders: extra loaders to read values from, appended after the source loaders
+
+        :returns: the configuration set of the section
+        """
         key = section.key, for_env or "", "-".join(base or [])
         try:
             return cast("T", self._key_to_conf_set[key])
@@ -253,6 +281,10 @@ class Config:
             return conf_set
 
     def clear_env(self, name: str) -> None:
+        """Forget the configuration loaded for an environment, so it is loaded again when next used.
+
+        :param name: the name of the environment
+        """
         section, _, __ = self._src.get_tox_env_section(name)
         self._key_to_conf_set = {
             k: v for k, v in self._key_to_conf_set.items() if not (k[0] == section.key and k[1] == name)

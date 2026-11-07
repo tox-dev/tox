@@ -78,14 +78,34 @@ class Source(ABC):
 
     @abstractmethod
     def transform_section(self, section: Section) -> Section:
+        """Transform a section before it is used, for example to add a prefix.
+
+        :param section: the section to transform
+
+        :returns: the transformed section
+        """
         raise NotImplementedError
 
     @abstractmethod
     def get_loader(self, section: Section, override_map: OverrideMap) -> Loader[Any] | None:
+        """Get the loader that reads the values of a section.
+
+        :param section: the section to read
+        :param override_map: the overrides to apply when reading the section
+
+        :returns: the loader, or ``None`` when the source has no values for the section
+        """
         raise NotImplementedError
 
     @abstractmethod
     def get_base_sections(self, base: list[str], in_section: Section) -> Iterator[Section]:
+        """Get the base sections a section inherits from.
+
+        :param base: the names of the base sections
+        :param in_section: the section that inherits from them
+
+        :returns: the base sections
+        """
         raise NotImplementedError
 
     @abstractmethod
@@ -124,7 +144,16 @@ class Source(ABC):
 
 @runtime_checkable
 class FactorLabelSource(Protocol):
-    def factor_labels(self, env_name: str | None) -> dict[str, FactorGroup]: ...
+    """A configuration source that defines factor labels for each environment."""
+
+    def factor_labels(self, env_name: str | None) -> dict[str, FactorGroup]:
+        """Get the factor labels defined for an environment.
+
+        :param env_name: the environment name, ``None`` for the core configuration
+
+        :returns: the factor labels
+        """
+        ...
 
 
 __all__ = [

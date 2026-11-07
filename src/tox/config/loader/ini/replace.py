@@ -25,6 +25,12 @@ if TYPE_CHECKING:
 
 
 class ReplaceReferenceIni(ReplaceReference):
+    """Resolve the replacement references of an ini value against the ini file and the configuration.
+
+    :param conf: the global config
+    :param loader: the ini loader the value was read with
+    """
+
     def __init__(self, conf: Config, loader: IniLoader) -> None:
         self.conf = conf
         self.loader = loader

@@ -75,6 +75,8 @@ config
 .. autoclass:: tox.config.set_env.SetEnv
     :members:
 
+.. autoclass:: tox.config.set_env.Replacer
+
 .. autoclass:: tox.config.loader.replacer.MatchExpression
     :members:
 

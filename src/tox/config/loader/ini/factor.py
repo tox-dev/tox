@@ -14,10 +14,19 @@ if TYPE_CHECKING:
     from collections.abc import Iterator
 
 LATEST_PYTHON_MINOR_MIN: Final[int] = 11
+"""Lowest Python 3 minor version used when an open version range has no lower bound."""
 LATEST_PYTHON_MINOR_MAX: Final[int] = 15
+"""Highest Python 3 minor version used when an open version range has no upper bound."""
 
 
 def filter_for_env(value: str, name: str | None) -> str:
+    """Keep the lines that apply to an environment, and drop the lines of factors that do not match it.
+
+    :param value: the value with factor conditions
+    :param name: the environment name, ``None`` when unknown
+
+    :returns: the value with only the lines that apply to the environment
+    """
     current = active_factors(name)
     overall: list[str] = []
     active_continuation = False
@@ -123,6 +132,13 @@ def expand_ranges(value: str) -> str:
 
 
 def open_minor_range(start: int | None = None, stop: int | None = None) -> list[int]:
+    """Expand an open Python 3 minor version range into the minor versions it covers.
+
+    :param start: the first minor version, the lowest supported one when ``None``
+    :param stop: the last minor version, the highest supported one when ``None``
+
+    :returns: the minor versions in the range
+    """
     first = LATEST_PYTHON_MINOR_MIN if start is None else start
     last = LATEST_PYTHON_MINOR_MAX if stop is None else stop
     # an explicit bound outside the supported window still names a version, so keep it rather than expand to nothing
@@ -171,6 +187,12 @@ def is_negated(factor: str) -> bool:
 
 
 def expand_factors(value: str) -> Iterator[tuple[list[list[tuple[str, bool]]] | None, str]]:
+    """Split a value into its lines, each with the factor groups in front of its content.
+
+    :param value: the value to split
+
+    :yields: for each line, its factor groups (``None`` when the line has no factor prefix) and its content
+    """
     for line in value.split("\n"):
         factors: list[list[tuple[str, bool]]] | None = None
         marker_search = re.search(
@@ -193,6 +215,12 @@ def expand_factors(value: str) -> Iterator[tuple[list[list[tuple[str, bool]]] | 
 
 
 def find_envs(value: str) -> Iterator[str]:
+    """Find the distinct environment names declared through factors.
+
+    :param value: the value to search
+
+    :yields: each environment name once, in order of appearance
+    """
     seen = set()
     for factors, _ in expand_factors(value):
         if factors is not None:
@@ -207,6 +235,12 @@ def explode_factor(group: list[tuple[str, bool]]) -> str:
 
 
 def extend_factors(value: str) -> Iterator[str]:
+    """Expand the factor groups of a value into environment names.
+
+    :param value: the value with factor groups
+
+    :yields: the environment name of each factor group
+    """
     for group in find_factor_groups(value):
         yield explode_factor(group)
 
