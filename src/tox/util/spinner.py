@@ -39,16 +39,45 @@ def _file_support_encoding(chars: Sequence[str], file: IO[str]) -> bool:
 
 
 T = TypeVar("T", bound="Spinner")
+"""Type variable bound to the spinner class, for methods that return the spinner."""
 MISS_DURATION: Final[float] = 0.01
+"""Seconds an environment must run for its duration to be shown."""
 
 
 class Outcome(NamedTuple):
+    """The symbols shown for the outcome of each environment.
+
+    :param ok: the symbol of a successful environment
+    :param fail: the symbol of a failed environment
+    :param skip: the symbol of a skipped environment
+    """
+
     ok: str
     fail: str
     skip: str
 
 
 class Spinner:
+    """A spinner that shows the progress of the environments on a stream.
+
+    :param enabled: whether the spinner is shown
+    :param refresh_rate: the seconds between two frames
+    :param colored: whether the outcome symbols are colored
+    :param stream: the stream the spinner is written to, the standard output when ``None``
+    :param total: the number of environments that are expected to run, ``None`` when unknown
+
+    :cvar CLEAR_LINE: the escape sequence that clears the line
+    :cvar max_width: the maximum width of the text shown for an environment
+    :cvar UNICODE_FRAMES: the frames shown when the stream supports Unicode
+    :cvar ASCII_FRAMES: the frames shown when the stream does not support Unicode
+    :cvar UNICODE_OUTCOME: the outcome symbols shown when the stream supports Unicode
+    :cvar ASCII_OUTCOME: the outcome symbols shown when the stream does not support Unicode
+    :ivar is_colored: whether the outcome symbols are colored
+    :ivar frames: the frames the spinner cycles through
+    :ivar outcome: the outcome symbols in use
+    :ivar print_report: whether the report is printed when the spinner finishes
+    """
+
     CLEAR_LINE = "\033[K"
     max_width = 120
     UNICODE_FRAMES: ClassVar[list[str]] = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"]
@@ -92,6 +121,7 @@ class Spinner:
         return self
 
     def disable_cursor(self) -> None:
+        """Hide the cursor of the terminal, while the spinner is shown."""
         if self.stream.isatty():
             if sys.platform == "win32":  # pragma: win32 cover
                 ci = _CursorInfo()
@@ -103,16 +133,22 @@ class Spinner:
                 self.stream.write("\033[?25l")
 
     def render_frame(self) -> None:
+        """Render the current frame of the spinner on its stream."""
         if self.enabled:
             self.clear()
             self.stream.write(f"\r{self.frame()}")
 
     def clear(self) -> None:
+        """Clear the line the spinner is rendered on."""
         if self.enabled:
             self.stream.write("\r")
             self.stream.write(self.CLEAR_LINE)
 
     def frame(self) -> str:
+        """Get the next frame of the spinner, and advance to the frame after it.
+
+        :returns: the frame text, with the names of the environments that are still running
+        """
         frame = self.frames[self._frame_index]
         self._frame_index += 1
         self._frame_index %= len(self.frames)
@@ -122,6 +158,10 @@ class Spinner:
         return f"{frame} {text_frame}"
 
     def render(self) -> Spinner:
+        """Render the spinner frames until the spinner is stopped.
+
+        :returns: the spinner
+        """
         while True:
             self._stop_spinner.wait(self.refresh_rate)
             if self._stop_spinner.is_set():
@@ -146,6 +186,7 @@ class Spinner:
                 self.enable_cursor()
 
     def enable_cursor(self) -> None:
+        """Show the cursor of the terminal again, after the spinner is done."""
         if self.stream.isatty():
             if sys.platform == "win32":  # pragma: win32 cover
                 ci = _CursorInfo()
@@ -157,12 +198,26 @@ class Spinner:
                 self.stream.write("\033[?25h")
 
     def add(self, name: str) -> None:
+        """Register an environment that is running.
+
+        :param name: the name of the environment
+        """
         self._envs[name] = time.monotonic()
 
     def succeed(self, key: str) -> None:
+        """Mark an environment as successful.
+
+        :param key: the name of the environment
+        """
         self.finalize(key, f"OK {self.outcome.ok}", str(Fore.GREEN))
 
     def finalize(self, key: str, status: str, color: str) -> None:
+        """Mark an environment as done, with its status and duration.
+
+        :param key: the name of the environment
+        :param status: the status text to show
+        :param color: the color the status is shown in
+        """
         start_at = self._envs.pop(key, None)
         if self.enabled:
             self.clear()
@@ -175,13 +230,27 @@ class Spinner:
             self.stream.write(base)
 
     def fail(self, key: str) -> None:
+        """Mark an environment as failed.
+
+        :param key: the name of the environment
+        """
         self.finalize(key, f"FAIL {self.outcome.fail}", str(Fore.RED))
 
     def skip(self, key: str) -> None:
+        """Mark an environment as skipped.
+
+        :param key: the name of the environment
+        """
         self.finalize(key, f"SKIP {self.outcome.skip}", str(Fore.YELLOW))
 
 
 def td_human_readable(seconds: float) -> str:
+    """Format a duration in seconds for people to read, such as ``2 minutes, 3.5 seconds``.
+
+    :param seconds: the duration in seconds
+
+    :returns: the duration as text
+    """
     texts: list[str] = []
     periods = [
         ("day", 60 * 60 * 24),

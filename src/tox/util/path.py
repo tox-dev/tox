@@ -33,6 +33,10 @@ Signature: 8a477f597d28d172789f06886806bc55
 
 
 def ensure_private_dir(path: Path) -> None:
+    """Create a directory, and its parents, that only the current user can access.
+
+    :param path: the directory to create
+    """
     try:
         path.mkdir(mode=0o700, exist_ok=True)
     except FileNotFoundError:
@@ -41,6 +45,11 @@ def ensure_private_dir(path: Path) -> None:
 
 
 def ensure_empty_dir(path: Path, except_filename: str | None = None) -> None:
+    """Make sure a directory exists and is empty, removing its content.
+
+    :param path: the directory to make empty
+    :param except_filename: the name of a file to keep in the directory, ``None`` to keep none
+    """
     if path.is_symlink():
         path.unlink()
     if path.exists():

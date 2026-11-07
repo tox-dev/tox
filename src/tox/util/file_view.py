@@ -15,9 +15,18 @@ from typing import Final
 from .path import ensure_empty_dir, ensure_private_dir
 
 PACKAGE_STAGING_DIR: Final[str] = "package"
+"""Name of the directory that holds the staged copy of the package."""
 
 
 def create_session_view(package: Path, temp_path: Path, trust_root: Path) -> Path:
+    """Create the view of the package that a session installs from, which lives in the temporary path.
+
+    :param package: the package to view
+    :param temp_path: the temporary directory the view is created in
+    :param trust_root: the directory the view is restricted to
+
+    :returns: the path of the view
+    """
     if temp_path.is_symlink():
         temp_path.unlink()
     ensure_private_dir(temp_path)
@@ -79,6 +88,12 @@ def _exceeds_project_writers(metadata: os.stat_result, project: os.stat_result, 
 
 
 def repair_staging_path(temp_path: Path, trust_root: Path, work_dir: Path) -> None:
+    """Repair the staging path of a session view, when it was replaced by a link.
+
+    :param temp_path: the staging path
+    :param trust_root: the directory the view is restricted to
+    :param work_dir: the working directory of the run
+    """
     if sys.platform == "win32":  # pragma: win32 cover
         return
     try:

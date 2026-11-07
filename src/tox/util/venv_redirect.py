@@ -21,10 +21,22 @@ _FILE_NAME: Final[str] = ".venv"
 
 
 def venv_redirect_path(root: Path) -> Path:
+    """Get the path of the file that redirects a project to its virtual environment.
+
+    :param root: the project root
+
+    :returns: the path of the redirect file
+    """
     return root / _FILE_NAME
 
 
 def record_venv_redirect(root: Path, env: Path, is_ours: Callable[[Path], bool]) -> None:
+    """Record that a project root redirects to a virtual environment, unless another tool owns the redirect.
+
+    :param root: the project root
+    :param env: the virtual environment
+    :param is_ours: whether a path is a virtual environment that tox created
+    """
     file: Final[Path] = root / _FILE_NAME
     try:
         with _open_dir(root) as dir_fd:
@@ -252,6 +264,11 @@ if sys.platform == "win32":  # pragma: win32 cover
 
 
 def forget_venv_redirect(root: Path, env: Path) -> None:
+    """Remove the redirect of a project root to a virtual environment, when the redirect points to that environment.
+
+    :param root: the project root
+    :param env: the virtual environment
+    """
     file: Final[Path] = root / _FILE_NAME
     if sys.platform == "win32":  # pragma: win32 cover
         try:
@@ -325,6 +342,13 @@ if sys.platform == "win32":  # pragma: win32 cover
 
 
 def release_venv_redirect(path: Path, is_ours: Callable[[Path], bool]) -> bool:
+    """Remove the redirect of a virtual environment, when it is one that tox created.
+
+    :param path: the path of the virtual environment
+    :param is_ours: whether a path is a virtual environment that tox created
+
+    :returns: whether the redirect was removed
+    """
     try:
         if sys.platform == "win32":  # pragma: win32 cover
             with _pin_windows_directory(path.parent) as root_handle:

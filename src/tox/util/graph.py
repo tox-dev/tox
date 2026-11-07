@@ -8,6 +8,14 @@ from collections import OrderedDict, defaultdict
 def stable_topological_sort(  # ruff:ignore[complex-structure]  # follows the protocol
     graph: dict[str, set[str]],
 ) -> list[str]:
+    """Sort the nodes of a graph, so that each node comes after the nodes it depends on.
+
+    :param graph: the nodes, each mapped to the nodes it depends on
+
+    :returns: the nodes in order
+
+    :raises ValueError: when the graph has a cycle, with the cycle in the message
+    """
     to_order = set(graph.keys())  # keep a log of what  we need to order
 
     # normalize graph - fill missing nodes (assume no dependency)
@@ -52,6 +60,12 @@ def stable_topological_sort(  # ruff:ignore[complex-structure]  # follows the pr
 
 
 def identify_cycle(graph: dict[str, set[str]]) -> None:
+    """Find a cycle in a graph, to report it when sorting fails.
+
+    :param graph: the nodes, each mapped to the nodes it depends on
+
+    :raises ValueError: with the nodes of the cycle
+    """
     path: dict[str, None] = OrderedDict()
     visited = set()
 

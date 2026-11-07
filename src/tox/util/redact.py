@@ -52,6 +52,12 @@ def redact_value(name: str, value: str) -> str:
 
 
 def redact_argv(argv: Sequence[str]) -> list[str]:
+    """Redact the secrets in the command line arguments, such as the passwords in URLs.
+
+    :param argv: the command line arguments
+
+    :returns: the arguments with the secrets replaced
+    """
     result: list[str] = []
     for token in argv:
         redacted_token: str = _redact_url_userinfo(token)
