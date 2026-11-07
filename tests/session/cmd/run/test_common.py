@@ -63,7 +63,7 @@ def test_install_pkg_file_uri_percent_encoded_posix(tmp_path: Path) -> None:
     path = tmp_path / "pkg+extra-1.0.whl"
     path.write_text("")
     # Build a file: URI with percent-encoded '+' in the filename
-    uri = "file://" + quote(str(path), safe="/")
+    uri = f"file://{quote(str(path), safe='/')}"
     namespace = Namespace()
     InstallPackageAction(option_strings=["--install-pkg"], dest="into")(argument_parser, namespace, uri)
     assert namespace.into == path
@@ -75,7 +75,7 @@ def test_install_pkg_file_uri_percent_encoded_windows(tmp_path: Path) -> None:
     path = tmp_path / "pkg+extra-1.0.whl"
     path.write_text("")
     # Build a file: URI with percent-encoded '+' in the filename
-    uri = "file:///" + quote(str(path).replace("\\", "/"), safe=":/")
+    uri = f"file:///{quote(path.as_posix(), safe=':/')}"
     namespace = Namespace()
     InstallPackageAction(option_strings=["--install-pkg"], dest="into")(argument_parser, namespace, uri)
     assert namespace.into == path

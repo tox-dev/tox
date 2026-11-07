@@ -92,7 +92,7 @@ def test_set_env_override_propagates_through_reference_cli(
     monkeypatch.setenv("MAGIC", "from-shell")
     monkeypatch.setenv("BLOCK", "MAGIC={env_name}\nNEW={env:MAGIC}")
     monkeypatch.setenv("DISABLED", "MAGIC=disabled; sys_platform == 'nope'\nNEW={env:MAGIC}")
-    monkeypatch.setenv("ENABLED", r"MAGIC=enabled\;literal; sys_platform != 'nope'" + "\nNEW={env:MAGIC}")
+    monkeypatch.setenv("ENABLED", "MAGIC=enabled\\;literal; sys_platform != 'nope'\nNEW={env:MAGIC}")
     values = [f"{namespace}.{value.replace('set_env', key, 1)}" for value in overrides]
     result = tox_project({filename: config, "a.env": "MAGIC=café;literal\nNEW={env:MAGIC}"}).run(
         "c", "-e", "a", "-k", "set_env", *[item for value in values for item in ("-x", value)]
@@ -117,7 +117,7 @@ def test_set_env_override_propagates_through_reference_tox_override(
     monkeypatch.setenv("MAGIC", "from-shell")
     monkeypatch.setenv("BLOCK", "MAGIC={env_name}\nNEW={env:MAGIC}")
     monkeypatch.setenv("DISABLED", "MAGIC=disabled; sys_platform == 'nope'\nNEW={env:MAGIC}")
-    monkeypatch.setenv("ENABLED", r"MAGIC=enabled\;literal; sys_platform != 'nope'" + "\nNEW={env:MAGIC}")
+    monkeypatch.setenv("ENABLED", "MAGIC=enabled\\;literal; sys_platform != 'nope'\nNEW={env:MAGIC}")
     values = [f"{namespace}.{value.replace('set_env', key, 1)}" for value in overrides]
     monkeypatch.setenv("TOX_OVERRIDE", ";".join(values))
     result = tox_project({filename: config, "a.env": "MAGIC=café;literal\nNEW={env:MAGIC}"}).run(

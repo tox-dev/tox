@@ -193,9 +193,9 @@ def _wrap_tox_toml_in_pyproject(content: str) -> str:
             other_lines.append(line)
     result = "[tool.tox]\n"
     if tox_lines:
-        result += "\n".join(tox_lines) + "\n"
+        result += "\n".join([*tox_lines, ""])
     if other_lines:
-        result += "\n" + "\n".join(other_lines) + "\n"
+        result += "\n".join(["", *other_lines, ""])
     return result
 
 

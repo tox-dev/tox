@@ -34,7 +34,7 @@ def _tox_ini(extra: str = "") -> str:
     lines = ["[testenv:check]", "runner = virtualenv-pep-723", "script = check.py"]
     if extra:
         lines.append(extra)
-    return "\n".join(lines) + "\n"
+    return "\n".join([*lines, ""])
 
 
 def test_no_deps_when_only_requires_python(tox_project: ToxProjectCreator) -> None:
@@ -304,7 +304,7 @@ def test_invalid_requires_python_reports_metadata_error(tox_project: ToxProjectC
 
 def test_metadata_honored_with_bom(tox_project: ToxProjectCreator) -> None:
     # A UTF-8 BOM (common Windows editor artifact) must not silently disable the metadata block.
-    script = "\ufeff" + dedent("""\
+    script = dedent("""\
         # /// script
         # requires-python = ">=99.0"
         # ///
@@ -315,6 +315,6 @@ def test_metadata_honored_with_bom(tox_project: ToxProjectCreator) -> None:
         runner = "virtualenv-pep-723"
         script = "check.py"
     """)
-    result, _ = _run(tox_project, {"tox.toml": tox_toml, "check.py": script})
+    result, _ = _run(tox_project, {"tox.toml": tox_toml, "check.py": f"\ufeff{script}"})
     result.assert_failed()
     assert "does not satisfy requires-python" in result.out
