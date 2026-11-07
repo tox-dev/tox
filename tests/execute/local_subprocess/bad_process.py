@@ -6,12 +6,12 @@ import signal
 import sys
 import time
 from pathlib import Path
-from typing import TYPE_CHECKING, Final
+from typing import TYPE_CHECKING, Final, TextIO
 
 if TYPE_CHECKING:
     from types import FrameType
 
-OUT = sys.stdout
+OUT: Final[TextIO] = sys.stdout
 
 
 def handler(signum: int, _: FrameType | None) -> None:

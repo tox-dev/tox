@@ -3,9 +3,12 @@ from __future__ import annotations
 import json
 import shutil
 import sys
-from typing import Final
+from typing import TYPE_CHECKING, Final
 
-ARGS = {
+if TYPE_CHECKING:
+    import os
+
+ARGS: Final[dict[str, bool | os.terminal_size]] = {
     "stdout": sys.stdout.isatty(),
     "stderr": sys.stderr.isatty(),
     "stdin": sys.stdin.isatty(),

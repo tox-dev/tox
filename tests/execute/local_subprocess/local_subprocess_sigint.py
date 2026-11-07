@@ -25,14 +25,14 @@ logging.basicConfig(level=logging.DEBUG, format="%(relativeCreated)d\t%(levelnam
 BAD_PROCESS: Final[Path] = Path(__file__).parent / "bad_process.py"
 
 EXECUTOR: Final[LocalSubProcessExecutor] = LocalSubProcessExecutor(colored=False)
-REQUEST = ExecuteRequest(
+REQUEST: Final[ExecuteRequest] = ExecuteRequest(
     cmd=[sys.executable, BAD_PROCESS, sys.argv[1]],
     cwd=Path().absolute(),
     env=os.environ.copy(),
     stdin=StdinSource.API,
     run_id="",
 )
-OUT_ERR = (
+OUT_ERR: Final[tuple[TextIOWrapper, TextIOWrapper]] = (
     TextIOWrapper(NamedBytesIO("out"), encoding=locale.getpreferredencoding(False)),
     TextIOWrapper(NamedBytesIO("err"), encoding=locale.getpreferredencoding(False)),
 )
