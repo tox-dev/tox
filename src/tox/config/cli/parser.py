@@ -385,6 +385,28 @@ class ToxParser(ArgumentParserWithEnvAndConfig):
         add_core_arguments(self)
         self.fix_defaults()
 
+    @classmethod
+    def base(cls) -> Self:
+        """Create a root parser without the help option.
+
+        :returns: the root parser
+        """
+        return cls(add_help=False, root=True)
+
+    @classmethod
+    def core(cls) -> Self:
+        """Create the root parser of the tox command, which accepts sub-commands.
+
+        :returns: the root parser
+        """
+        return cls(
+            prog=NAME,
+            formatter_class=HelpFormatter,
+            add_cmd=True,
+            root=True,
+            description="create and set up environments to run command(s) in them",
+        )
+
     def add_command(
         self,
         cmd: str,
@@ -578,28 +600,6 @@ class ToxParser(ArgumentParserWithEnvAndConfig):
         if of_type is not None:
             _ACTION_OF_TYPE[result] = of_type
         return result
-
-    @classmethod
-    def base(cls) -> Self:
-        """Create a root parser without the help option.
-
-        :returns: the root parser
-        """
-        return cls(add_help=False, root=True)
-
-    @classmethod
-    def core(cls) -> Self:
-        """Create the root parser of the tox command, which accepts sub-commands.
-
-        :returns: the root parser
-        """
-        return cls(
-            prog=NAME,
-            formatter_class=HelpFormatter,
-            add_cmd=True,
-            root=True,
-            description="create and set up environments to run command(s) in them",
-        )
 
     @overload
     def parse_known_args(

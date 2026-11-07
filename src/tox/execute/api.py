@@ -111,6 +111,21 @@ class ExecuteStatus(ABC):
         """The error that kept the command from starting, ``None`` once it started."""
         return None
 
+    @property
+    def out(self) -> bytearray:
+        """The standard output collected so far."""
+        return self._out.content
+
+    @property
+    def err(self) -> bytearray:
+        """The standard error collected so far."""
+        return self._err.content
+
+    @property
+    def metadata(self) -> dict[str, JsonValue]:
+        """Metadata about the execution, empty unless the executor provides some."""
+        return {}
+
     @abstractmethod
     def wait(self, timeout: float | None = None) -> int | None:
         """Wait for the command to finish.
@@ -145,21 +160,6 @@ class ExecuteStatus(ABC):
         res = self._out, self._err
         self._out, self._err = out, err
         return res
-
-    @property
-    def out(self) -> bytearray:
-        """The standard output collected so far."""
-        return self._out.content
-
-    @property
-    def err(self) -> bytearray:
-        """The standard error collected so far."""
-        return self._err.content
-
-    @property
-    def metadata(self) -> dict[str, JsonValue]:
-        """Metadata about the execution, empty unless the executor provides some."""
-        return {}
 
 
 class FinishedExecuteStatus(ExecuteStatus):
@@ -318,16 +318,6 @@ class ExecuteInstance(ABC):
         self._out = out
         self._err = err
 
-    @property
-    def out_handler(self) -> ContentHandler:
-        """The callback that receives the standard output of the command."""
-        return self._out.handler
-
-    @property
-    def err_handler(self) -> ContentHandler:
-        """The callback that receives the standard error of the command."""
-        return self._err.handler
-
     @abstractmethod
     def __enter__(self) -> ExecuteStatus:
         raise NotImplementedError
@@ -340,6 +330,16 @@ class ExecuteInstance(ABC):
         exc_tb: TracebackType | None,
     ) -> None:
         raise NotImplementedError
+
+    @property
+    def out_handler(self) -> ContentHandler:
+        """The callback that receives the standard output of the command."""
+        return self._out.handler
+
+    @property
+    def err_handler(self) -> ContentHandler:
+        """The callback that receives the standard error of the command."""
+        return self._err.handler
 
     @property
     @abstractmethod
