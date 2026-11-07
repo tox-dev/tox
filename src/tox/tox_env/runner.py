@@ -25,7 +25,20 @@ if TYPE_CHECKING:
 
 
 __all__ = [
+    "Command",
+    "EnvList",
+    "Fail",
+    "Outcome",
+    "Package",
+    "PackageToxEnv",
+    "PathPackage",
     "RunToxEnv",
+    "ToxEnv",
+    "ToxEnvCreateArgs",
+    "add_change_dir_conf",
+    "add_commands_conf",
+    "add_ignore_errors_conf",
+    "override",
 ]
 
 

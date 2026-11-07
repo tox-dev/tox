@@ -19,7 +19,13 @@ if TYPE_CHECKING:
 
 
 __all__ = [
+    "MANAGER",
+    "Config",
+    "EnvSelector",
+    "Journal",
     "State",
+    "impl",
+    "tox_add_option",
 ]
 
 

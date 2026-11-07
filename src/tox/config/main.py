@@ -26,6 +26,7 @@ if TYPE_CHECKING:
 
 
 T = TypeVar("T", bound=ConfigSet)
+"""Type variable bound to the configuration set classes."""
 
 
 class Config:
@@ -261,4 +262,11 @@ class Config:
 
 __all__ = [
     "Config",
+    "ConfigSet",
+    "CoreConfigSet",
+    "EnvConfigSet",
+    "FactorLabelSource",
+    "T",
+    "override",
+    "redact_argv",
 ]

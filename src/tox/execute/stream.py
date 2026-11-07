@@ -16,6 +16,7 @@ if TYPE_CHECKING:
 
 __all__ = [
     "SyncWrite",
+    "override",
 ]
 
 

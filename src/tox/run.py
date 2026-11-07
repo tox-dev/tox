@@ -18,7 +18,13 @@ if TYPE_CHECKING:
 
 
 __all__ = [
+    "HandledError",
+    "State",
+    "ToxHandler",
+    "get_options",
+    "main",
     "run",
+    "setup_state",
 ]
 
 
