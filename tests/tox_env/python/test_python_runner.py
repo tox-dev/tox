@@ -818,7 +818,7 @@ def test_deps_only_unknown_extra(tox_project: ToxProjectCreator) -> None:
 
 def test_deps_only_fallback_no_project_table(tox_project: ToxProjectCreator, demo_pkg_inline: Path) -> None:
     project = tox_project({"tox.toml": '[env_run_base]\npackage = "deps-only"\n'})
-    execute_calls = project.patch_execute(lambda r: 0 if "install" in r.run_id else None)
+    execute_calls = project.patch_execute(lambda request: 0 if "install" in request.run_id else None)
     result = project.run("r", "-e", "py", "--root", str(demo_pkg_inline), "--workdir", str(project.path / ".tox"))
 
     result.assert_success()

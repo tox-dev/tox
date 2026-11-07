@@ -30,7 +30,7 @@ def test_requirements_txt(tox_project: ToxProjectCreator) -> None:
             "requirements.txt": "nose",
         },
     )
-    execute_calls = prj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
+    execute_calls = prj.patch_execute(lambda request: 0 if "install" in request.run_id else None)
     prj.run("r", "-e", "py").assert_success()
 
     assert execute_calls.call_count == 1
@@ -137,7 +137,7 @@ def test_build_wheel_in_non_base_pkg_env(
     mocker.patch("tox.tox_env.python.virtual_env.api.session_via_cli", autospec=True, side_effect=_fake_session)
     prev_ver, impl, _ = patch_prev_py(True)
     prj = tox_project({"tox.ini": f"[tox]\nenv_list= {f'py{prev_ver}'}\n[testenv]\npackage=wheel"})
-    execute_calls = prj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
+    execute_calls = prj.patch_execute(lambda request: 0 if "install" in request.run_id else None)
     prj.run("-r", "--root", str(demo_pkg_inline), "--workdir", str(prj.path / ".tox")).assert_success()
     calls = [(i[0][0].conf.name, i[0][3].run_id) for i in execute_calls.call_args_list]
     assert calls == [
@@ -169,7 +169,7 @@ def test_build_wheel_in_free_threaded_pkg_env(
     mocker.patch("tox.tox_env.python.virtual_env.api.session_via_cli", autospec=True, side_effect=_fake_session)
     prev_ver, impl, _ = patch_prev_py(True, free_threaded=True)
     prj = tox_project({"tox.ini": f"[tox]\nenv_list= {f'py{prev_ver}'}\n[testenv]\npackage=wheel"})
-    execute_calls = prj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
+    execute_calls = prj.patch_execute(lambda request: 0 if "install" in request.run_id else None)
     prj.run("-r", "--root", str(demo_pkg_inline), "--workdir", str(prj.path / ".tox")).assert_success()
     calls = [(i[0][0].conf.name, i[0][3].run_id) for i in execute_calls.call_args_list]
     assert calls == [
@@ -201,7 +201,7 @@ def test_build_wheel_in_debug_pkg_env(
     mocker.patch("tox.tox_env.python.virtual_env.api.session_via_cli", autospec=True, side_effect=_fake_session)
     prev_ver, impl, _ = patch_prev_py(True, debug=True)
     prj = tox_project({"tox.ini": f"[tox]\nenv_list= {f'py{prev_ver}'}\n[testenv]\npackage=wheel"})
-    execute_calls = prj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
+    execute_calls = prj.patch_execute(lambda request: 0 if "install" in request.run_id else None)
     prj.run("-r", "--root", str(demo_pkg_inline), "--workdir", str(prj.path / ".tox")).assert_success()
     calls = [(i[0][0].conf.name, i[0][3].run_id) for i in execute_calls.call_args_list]
     assert calls == [
