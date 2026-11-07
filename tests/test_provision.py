@@ -809,7 +809,7 @@ def test_provision_default_arguments_exists(tox_project: ToxProjectCreator, subc
     package = skip
     """
     project = tox_project({"tox.ini": ini})
-    project.patch_execute(lambda r: 0 if "install" in r.run_id else None)
+    project.patch_execute(lambda request: 0 if "install" in request.run_id else None)
     outcome = project.run(subcommand)
     for argument in ["result_json", "hash_seed", "discover", "list_dependencies"]:
         assert hasattr(outcome.state.conf.options, argument)
