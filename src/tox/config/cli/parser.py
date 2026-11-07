@@ -380,6 +380,11 @@ class ToxParser(ArgumentParserWithEnvAndConfig):
         else:
             self._cmd = None
 
+    def _add_base_options(self) -> None:
+        """Argument options that always make sense."""
+        add_core_arguments(self)
+        self.fix_defaults()
+
     def add_command(
         self,
         cmd: str,
@@ -431,6 +436,17 @@ class ToxParser(ArgumentParserWithEnvAndConfig):
                 sub_parser.add_argument(*args, of_type=of_type, **kwargs)
             else:
                 defaults[self._dest_from(args, kwargs)] = kwargs.get("default")
+
+    @staticmethod
+    def _dest_from(args: tuple[str, ...], kwargs: dict[str, Any]) -> str:
+        if dest := cast("str | None", kwargs.get("dest")):
+            return dest
+        args_list = list(args)
+        args_list.sort(key=len, reverse=True)
+        for arg in args_list:
+            if arg.startswith("--"):
+                return arg.lstrip("-").replace("-", "_")
+        return args[0].lstrip("-").replace("-", "_")
 
     def _copy_groups(self, sub_parser: ToxParser, defaults: dict[str, Any]) -> None:
         for args, kwargs, excl in self._groups:
@@ -538,17 +554,6 @@ class ToxParser(ArgumentParserWithEnvAndConfig):
             help="never list the dependencies installed during environment setup",
         )
 
-    @staticmethod
-    def _dest_from(args: tuple[str, ...], kwargs: dict[str, Any]) -> str:
-        if dest := cast("str | None", kwargs.get("dest")):
-            return dest
-        args_list = list(args)
-        args_list.sort(key=len, reverse=True)
-        for arg in args_list:
-            if arg.startswith("--"):
-                return arg.lstrip("-").replace("-", "_")
-        return args[0].lstrip("-").replace("-", "_")
-
     @override
     def add_argument_group(self, *args: Any, **kwargs: Any) -> argparse._ArgumentGroup:
         if self.of_cmd is not None or args in {("positional arguments",), ("optional arguments",)}:
@@ -595,11 +600,6 @@ class ToxParser(ArgumentParserWithEnvAndConfig):
             root=True,
             description="create and set up environments to run command(s) in them",
         )
-
-    def _add_base_options(self) -> None:
-        """Argument options that always make sense."""
-        add_core_arguments(self)
-        self.fix_defaults()
 
     @overload
     def parse_known_args(
