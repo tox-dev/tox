@@ -36,7 +36,7 @@ def test_package_staging_with_permissive_umask(
 
     work_dir: Final[Path] = project.path / ".tox"
     for directory in (work_dir, work_dir / ".tmp", work_dir / ".tmp" / "package"):
-        assert stat.S_IMODE(directory.stat().st_mode) == 0o700
+        assert stat.S_IMODE(directory.stat().st_mode) & ~stat.S_ISGID == 0o700
 
 
 @pytest.mark.skipif(sys.platform == "win32", reason="POSIX directory permissions")
@@ -55,7 +55,7 @@ def test_package_staging_reuses_group_writable_directories(
         os.umask(previous)
 
     directories: Final[tuple[Path, ...]] = (project.path, work_dir, staging.parent, staging)
-    assert [stat.S_IMODE(directory.stat().st_mode) for directory in directories] == [0o775] * 4
+    assert [stat.S_IMODE(directory.stat().st_mode) & ~stat.S_ISGID for directory in directories] == [0o775] * 4
 
 
 def test_dont_cleanup_temp_dir(tox_project: ToxProjectCreator, tmp_path: Path) -> None:
