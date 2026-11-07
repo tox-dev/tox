@@ -190,7 +190,7 @@ class Loader(Convert[T]):
         from tox.config.set_env import SetEnv  # ruff:ignore[import-outside-top-level]  # avoids an import cycle
 
         overrides = [o for alias in (key, *all_keys) for o in self.overrides.get(alias, [])]
-        converted: Any = None  # merged across loader/overrides, only the final cast can name the type
+        converted: V | None = None  # merged across loader/overrides, only the final cast can name the type
         for alias in (key, *all_keys):
             try:
                 raw = self.load_raw(alias, conf, args.env_name)
@@ -208,7 +208,7 @@ class Loader(Convert[T]):
                 converted_override = self._build_override(entry, of_type, factory, conf, args)
                 if entry.append and converted is not None:
                     if isinstance(converted, list) and isinstance(converted_override, list):
-                        converted += converted_override
+                        converted.extend(converted_override)
                     elif isinstance(converted, dict) and isinstance(converted_override, dict):
                         converted.update(converted_override)
                     elif isinstance(converted, SetEnv) and isinstance(converted_override, SetEnv):
@@ -347,7 +347,7 @@ def apply_overrides_to_raw(overrides: Iterable[Override], key: str, value: T) ->
 
 
 def _apply_override_to_raw(value: T, override: Override) -> T:
-    converted: Any
+    converted: T | list[str] | dict[str, str] | str
     if override.append:
         if isinstance(value, list):
             converted = [*value, *_STR_CONVERT.to_list(override.value, str)]

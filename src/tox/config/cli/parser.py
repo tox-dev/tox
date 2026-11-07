@@ -35,7 +35,7 @@ if TYPE_CHECKING:
 
 _N = TypeVar("_N")  # unbounded to match typeshed, argparse accepts any object as namespace
 
-_ACTION_OF_TYPE: Final[MutableMapping[Action, type[Any] | UnionType]] = WeakKeyDictionary()
+_ACTION_OF_TYPE: Final[MutableMapping[Action, type | UnionType]] = WeakKeyDictionary()
 """The value type an action's option was declared with (actions come from argparse, so no attribute can be added)."""
 
 _ACTION_DEFAULT_SOURCE: Final[MutableMapping[Action, str]] = WeakKeyDictionary()
@@ -75,7 +75,7 @@ class ArgumentParserWithEnvAndConfig(ArgumentParser):
                 values.fix_defaults()
 
     @staticmethod
-    def get_type(action: Action) -> type[Any] | UnionType:
+    def get_type(action: Action) -> type | UnionType:
         of_type = _ACTION_OF_TYPE.get(action)
         if of_type is None:
             many: Final[bool] = action.nargs in {"+", "*"} or (isinstance(action.nargs, int) and action.nargs >= 1)

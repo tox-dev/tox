@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from typing import Any
-
 import pytest
 
 from tox.config.loader.section import Section
@@ -61,5 +59,5 @@ def test_section_eq() -> None:
         ),
     ],
 )
-def test_section_not_eq(section: Section, other: Any) -> None:
+def test_section_not_eq(section: Section, other: Section) -> None:
     assert section != other

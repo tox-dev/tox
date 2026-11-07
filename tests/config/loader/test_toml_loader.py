@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Final, Literal, TypeVar
+from typing import TYPE_CHECKING, Final, Literal, TypeVar
 
 import pytest
 
@@ -13,6 +13,8 @@ from tox.report import HandledError
 
 if TYPE_CHECKING:
     from types import UnionType
+
+    from tox.config.loader.toml._api import TomlTypes
 
 
 def test_toml_loader_load_raw() -> None:
@@ -48,13 +50,13 @@ _PREFIX: Final[str] = r"failed to load A\.k: "
         pytest.param(["a", "b"], list[Literal["a", "b"]], ["a", "b"], id="list_literal"),
     ],
 )
-def test_toml_loader_ok(value: Any, of_type: type[Any] | UnionType, expected: object) -> None:
+def test_toml_loader_ok(value: TomlTypes, of_type: type[object] | UnionType, expected: object) -> None:
     result = perform_load(value, of_type)
     assert result == expected
     assert isinstance(result, type(expected))
 
 
-def perform_load(value: Any, of_type: type[V] | UnionType) -> V:
+def perform_load(value: TomlTypes, of_type: type[V] | UnionType) -> V:
     env_name, key = "A", "k"
     loader = TomlLoader(TomlPyProjectSection.from_key(f"tox.env.{env_name}"), [], {key: value}, {}, set())
     return loader.load(key, of_type, factory_na, None, ConfigLoadArgs(None, env_name, env_name))
@@ -82,7 +84,7 @@ def factory_na(obj: object) -> V:
         ),
     ],
 )
-def test_toml_loader_nok(value: Any, of_type: type[Any] | UnionType, msg: str) -> None:
+def test_toml_loader_nok(value: TomlTypes, of_type: type[object] | UnionType, msg: str) -> None:
     with pytest.raises(HandledError, match=_PREFIX + msg):
         perform_load(value, of_type)
 
@@ -149,7 +151,7 @@ def test_toml_loader_env_list_nok() -> None:
         ),
     ],
 )
-def test_toml_loader_env_list_shorthand(raw: list[Any], expected: list[str]) -> None:
+def test_toml_loader_env_list_shorthand(raw: list[TomlTypes], expected: list[str]) -> None:
     res = perform_load(raw, EnvList)
     assert isinstance(res, EnvList)
     assert list(res) == expected

@@ -119,7 +119,9 @@ def test_override_escaped_dot(raw: str, namespace: str, key: str, value: str, ap
         pytest.param("ns.k+=a=1", {"b": "2"}, {"b": "2", "a": "1"}, id="dict-append"),
     ],
 )
-def test_apply_overrides_to_raw(override: str, raw: object, expected: object) -> None:
+def test_apply_overrides_to_raw(
+    override: str, raw: list[str] | dict[str, str] | str, expected: list[str] | dict[str, str] | str
+) -> None:
     assert apply_overrides_to_raw([Override(override)], "k", raw) == expected
 
 

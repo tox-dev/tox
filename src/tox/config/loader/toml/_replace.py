@@ -251,7 +251,7 @@ def _parse_arg(value: TomlTypes) -> MatchArg:
     return find_replace_expr(value if isinstance(value, MatchExpression) else validate(value, str))
 
 
-def _replace_glob_toml(conf: Config | None, value: dict[str, Any]) -> list[TomlTypes] | str:
+def _replace_glob_toml(conf: Config | None, value: dict[str, TomlTypes]) -> list[TomlTypes] | str:
     pattern = validate(value.get("pattern"), str)
     if not pattern:
         msg = "No pattern was supplied in glob replacement"
@@ -269,7 +269,7 @@ def _replace_glob_toml(conf: Config | None, value: dict[str, Any]) -> list[TomlT
 
 
 def _replace_if_toml(
-    value: dict[str, Any], unroll: Unroll, depth: int, factors: set[str], *, skip_str: bool
+    value: dict[str, TomlTypes], unroll: Unroll, depth: int, factors: set[str], *, skip_str: bool
 ) -> TomlTypes:
     condition = value.get("condition")
     if not condition or not isinstance(condition, str):

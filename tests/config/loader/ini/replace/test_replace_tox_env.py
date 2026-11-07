@@ -343,7 +343,7 @@ def test_replace_within_list_entry_cannot_add_entries(
     ],
 )
 def test_replace_within_entry_cannot_add_entries_for_type(
-    example: EnvConfigCreator, monkeypatch: pytest.MonkeyPatch, of_type: type[object] | UnionType
+    example: EnvConfigCreator, monkeypatch: pytest.MonkeyPatch, of_type: type | UnionType
 ) -> None:
     monkeypatch.setenv("VALUE", "1,evil")
     env_config: Final[ConfigSet] = example("entries = a=={env:VALUE}")

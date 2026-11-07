@@ -4,7 +4,6 @@ from inspect import isclass
 from types import UnionType
 from typing import (
     TYPE_CHECKING,
-    Any,
     Literal,
     TypeVar,
     Union,
@@ -52,7 +51,7 @@ def validate(  # ruff:ignore[complex-structure, too-many-branches]  # follows th
         else:
             msg = f"{_describe(val)} is not dictionary"
     elif casting_to in {Union, UnionType}:
-        args: list[type[Any]] = list(type_args)
+        args: list[type] = list(type_args)
         for arg in args:
             try:
                 validate(val, arg)

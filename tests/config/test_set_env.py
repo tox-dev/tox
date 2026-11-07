@@ -127,7 +127,7 @@ def eval_set_env(tox_project: ToxProjectCreator) -> EvalSetEnv:
         config: str,
         *,
         of_type: ConfigFileFormat = "ini",
-        extra_files: dict[str, Any] | None = None,
+        extra_files: dict[str, str] | None = None,
         from_cwd: Path | None = None,
     ) -> SetEnv:
         prj = tox_project({f"tox.{of_type}": config, **(extra_files or {})})

@@ -3,7 +3,7 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 from textwrap import dedent
-from typing import TYPE_CHECKING, Any, Optional, TypeVar, Union
+from typing import TYPE_CHECKING, Optional, TypeVar, Union
 
 import pytest
 
@@ -64,7 +64,11 @@ from typing import Literal
         pytest.param("1", "1", Literal["1", "2"], id="str_1_to_literal_1_2"),
     ],
 )
-def test_str_convert_ok(raw: str, value: Any, of_type: type[Any]) -> None:
+def test_str_convert_ok(
+    raw: str,
+    value: bool | float | str | set[str] | list[int | str] | dict[str | int, int] | Path | Command | EnvList | None,
+    of_type: type,
+) -> None:
     result = StrConvert().to(raw, of_type, None)
     assert result == value
 
@@ -93,7 +97,7 @@ def test_str_convert_ok(raw: str, value: Any, of_type: type[Any]) -> None:
         pytest.param("  ", Path, ValueError, r"path value is empty", id="fail_blank_path"),
     ],
 )
-def test_str_convert_nok(raw: str, of_type: type[Any], msg: str, exc_type: type[Exception]) -> None:
+def test_str_convert_nok(raw: str, of_type: type, msg: str, exc_type: type[Exception]) -> None:
     with pytest.raises(exc_type, match=msg):
         StrConvert().to(raw, of_type, None)
 

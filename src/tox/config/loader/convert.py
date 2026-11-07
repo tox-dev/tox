@@ -77,7 +77,7 @@ class Convert(ABC, Generic[T]):
                 for k, v in self.to_dict(raw, (key_type, value_type))
             )
         elif origin in {Union, UnionType}:
-            args: list[type[Any]] = list(type_args)
+            args: list[type[object] | UnionType] = list(type_args)
             none = type(None)
             if len(args) == 2 and none in args:  # ruff:ignore[magic-value-comparison]  # fixed protocol value
                 if isinstance(raw, str):

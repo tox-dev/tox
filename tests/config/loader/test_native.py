@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import math
 from pathlib import Path, PurePosixPath
+from typing import TYPE_CHECKING
 
 import pytest
 
@@ -10,6 +11,9 @@ from tox.config.set_env import SetEnv
 from tox.config.types import Command, EnvList
 from tox.tox_env.python.pip.req_file import PythonDeps
 from tox.util.typing_compat import override
+
+if TYPE_CHECKING:
+    from tox.util.json_types import JsonValue
 
 
 class _Custom:
@@ -39,7 +43,9 @@ class _Custom:
         pytest.param(_Custom(), "custom-value", id="fallback_unknown_type"),
     ],
 )
-def test_to_native(value: object, expected: object) -> None:
+def test_to_native(
+    value: JsonValue | PurePosixPath | set[str] | EnvList | Command | _Custom, expected: JsonValue
+) -> None:
     result = to_native(value)
     assert result == expected
     assert isinstance(result, type(expected))
