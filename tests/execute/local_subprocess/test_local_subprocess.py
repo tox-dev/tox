@@ -528,14 +528,14 @@ def test_read_via_thread_windows_stops_while_read_pending(mocker: MockerFixture)
     # A never-completing overlapped read must not keep the reader thread alive after stop is set.
     pending = OSError()
     pending.winerror = read_via_thread_windows.ERROR_IO_INCOMPLETE
-    overlapped = mocker.MagicMock()
+    overlapped = mocker.create_autospec(read_via_thread_windows._overlapped.Overlapped, instance=True)
     overlapped.getresult.side_effect = pending  # the read never completes
-    mocker.patch.object(
-        read_via_thread_windows, "_overlapped", mocker.MagicMock(Overlapped=mocker.MagicMock(return_value=overlapped))
-    )
+    overlapped_module = mocker.create_autospec(read_via_thread_windows._overlapped)
+    overlapped_module.Overlapped.return_value = overlapped
+    mocker.patch.object(read_via_thread_windows, "_overlapped", overlapped_module)
 
     reader = read_via_thread_windows.ReadViaThreadWindows(
-        file_no=0, handler=mocker.MagicMock(return_value=0), name="pending", drain=False
+        file_no=0, handler=lambda _chunk: 0, name="pending", drain=False
     )
     reader.thread.start()
     deadline = time.monotonic() + 5
