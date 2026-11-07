@@ -91,14 +91,14 @@ def test_env_var(monkeypatch: MonkeyPatch, changes: list[tuple[str, ...]], exp: 
 
 def test_tox_run_does_not_return_exit_code(tox_project: ToxProjectCreator, mocker: MockerFixture) -> None:
     project = tox_project({"tox.ini": ""})
-    mocker.patch("tox.run.main", return_value=None)
+    mocker.patch("tox.run.main", autospec=True, return_value=None)
     with pytest.raises(RuntimeError, match="exit code not set"):
         project.run("c")
 
 
 def test_tox_run_fails_before_state_setup(tox_project: ToxProjectCreator, mocker: MockerFixture) -> None:
     project = tox_project({"tox.ini": ""})
-    mocker.patch("tox.run.main", side_effect=HandledError("something went bad"))
+    mocker.patch("tox.run.main", autospec=True, side_effect=HandledError("something went bad"))
     outcome = project.run("c")
     with pytest.raises(RuntimeError, match="no state"):
         assert outcome.state
@@ -129,5 +129,5 @@ def test_tox_run_assert_out_err_no_dedent(tox_project: ToxProjectCreator, mocker
         print(" goes on err", file=sys.stderr)  # ruff:ignore[print]  # test output
         return 0
 
-    mocker.patch("tox.run.main", side_effect=_main)
+    mocker.patch("tox.run.main", autospec=True, side_effect=_main)
     project.run("c").assert_out_err(" goes on out\n", " goes on err\n", dedent=False)
