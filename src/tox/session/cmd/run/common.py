@@ -170,7 +170,7 @@ class InstallPackageAction(Action):
         return self._resolve_path(value.as_posix())
 
 
-logger: Final[logging.Logger] = logging.getLogger(__name__)
+LOGGER: Final[logging.Logger] = logging.getLogger(__name__)
 
 
 def execute(  # keeps the signature
@@ -224,7 +224,7 @@ def execute(  # keeps the signature
         except KeyboardInterrupt:
             previous = signal(SIGINT, Handlers.SIG_IGN)
             spinner.print_report = False  # no need to print reports at this point, final report coming up
-            logger.error(  # ruff:ignore[error-instead-of-exception]  # expected error log
+            LOGGER.error(  # ruff:ignore[error-instead-of-exception]  # expected error log
                 "[%s] KeyboardInterrupt - teardown started", os.getpid()
             )
             interrupt.set()
@@ -556,7 +556,7 @@ def _tear_down(tox_env: ToxEnv) -> None:
     try:
         tox_env.teardown()
     except (Fail, OSError):  # one environment failing to clean up must not leak the others' resources
-        logger.warning("failed to tear down environment %s", tox_env.conf.name, exc_info=True)
+        LOGGER.warning("failed to tear down environment %s", tox_env.conf.name, exc_info=True)
 
 
 def _order_results(state: State, results: list[ToxEnvRunResult], to_run_list: list[str]) -> list[ToxEnvRunResult]:
@@ -586,7 +586,7 @@ def _record_venv_redirect(state: State) -> None:
 def _venv_redirect_target(state: State, env_dirs: dict[str, Path]) -> Path | None:
     # the pick depends on the configuration alone, so it stays the same whichever environments ran
     if (pinned := state.conf.core.get_optional("venv_redirect_env", str)) is not None and pinned not in env_dirs:
-        logger.warning("venv_redirect_env names %s, which is not a tox environment", pinned)
+        LOGGER.warning("venv_redirect_env names %s, which is not a tox environment", pinned)
         return None
     develop = next((name for name in env_dirs if _installs_develop(state.envs[name])), None)
     name = pinned or ("dev" if "dev" in env_dirs else develop)
