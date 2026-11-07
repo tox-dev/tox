@@ -77,8 +77,18 @@ class _PythonRequirementsFile(RequirementsFile):
         )
         if arg_match is not None:
             line = f"{arg_match} {line[len(arg_match) :]}"
+        one_arg_escape: set[str] = {
+            "-c",
+            "--constraint",
+            "-r",
+            "--requirement",
+            "-f",
+            "--find-links",
+            "-e",
+            "--editable",
+        }
         escape_match = next(
-            (e for e in ONE_ARG_ESCAPE if line.startswith(e) and len(line) > len(e) and line[len(e)].isspace()), None
+            (e for e in one_arg_escape if line.startswith(e) and len(line) > len(e) and line[len(e)].isspace()), None
         )
         # a quoted value already keeps its spaces, escaping inside the quotes would add literal backslashes
         if escape_match is not None and (value := line[len(escape_match) + 1 :]).lstrip()[:1] not in {"'", '"'}:
@@ -355,16 +365,6 @@ ONE_ARG: Final[set[str]] = {
     "--only-binary",
 }
 """The options of a requirement file that take one argument."""
-ONE_ARG_ESCAPE: Final[set[str]] = {
-    "-c",
-    "--constraint",
-    "-r",
-    "--requirement",
-    "-f",
-    "--find-links",
-    "-e",
-    "--editable",
-}
 
 
 def _render_options(options: dict[str, bool | str | list[str]]) -> list[str]:

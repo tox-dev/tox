@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from itertools import product
-from typing import TYPE_CHECKING, Final
+from typing import TYPE_CHECKING
 
 from tox.config.loader.ini.factor import open_minor_range
 
@@ -73,7 +73,8 @@ def _expand_range(range_dict: dict[str, TomlTypes]) -> list[str]:
 
 
 def _expand_labeled(label: str, values: TomlTypes) -> list[str]:
-    if label in _RESERVED_LABELS:
+    reserved_labels: frozenset[str] = frozenset({"env", "posargs", "tty", "glob", "factor"})
+    if label in reserved_labels:
         msg = f"'{label}' is reserved and cannot be used as a factor label"
         raise TypeError(msg)
     if isinstance(values, dict):
@@ -91,9 +92,6 @@ def _expand_labeled(label: str, values: TomlTypes) -> list[str]:
         msg += f"got {type(values).__name__}"
         raise TypeError(msg)
     return [str(v) for v in values]
-
-
-_RESERVED_LABELS: Final[frozenset[str]] = frozenset({"env", "posargs", "tty", "glob", "factor"})
 
 
 def extract_default(group: TomlTypes, values: list[str]) -> str | None:
