@@ -72,6 +72,7 @@ class Spinner:
     :cvar ASCII_FRAMES: the frames shown when the stream does not support Unicode
     :cvar UNICODE_OUTCOME: the outcome symbols shown when the stream supports Unicode
     :cvar ASCII_OUTCOME: the outcome symbols shown when the stream does not support Unicode
+
     :ivar is_colored: whether the outcome symbols are colored
     :ivar frames: the frames the spinner cycles through
     :ivar outcome: the outcome symbols in use

@@ -307,7 +307,7 @@ class Loader(Convert[T]):
 
         :raises ValueError: when the reference is circular
         """
-        from tox.config.set_env import SetEnv, SetEnvReference  # ruff:ignore[import-outside-top-level]
+        from tox.config.set_env import SetEnv, SetEnvReference  # ruff:ignore[import-outside-top-level]  # avoids an import cycle
 
         if args.chain[-1] in args.chain[:-1]:
             msg = f"circular set_env reference {' -> '.join(args.chain)}"

@@ -702,7 +702,13 @@ def test_virtualenv_spec_cache_includes_spec(tox_project: ToxProjectCreator, moc
         autospec=True,
         return_value=SubprocessPythonInfo(
             implementation=sys.implementation.name,
-            version_info=_VersionInfo(*sys.version_info[:5]),
+            version_info=_VersionInfo(
+                major=sys.version_info.major,
+                minor=sys.version_info.minor,
+                micro=sys.version_info.micro,
+                releaselevel=sys.version_info.releaselevel,
+                serial=sys.version_info.serial,
+            ),
             version=f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}",
             architecture=64,
             platform=sys.platform,

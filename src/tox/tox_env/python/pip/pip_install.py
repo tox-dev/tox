@@ -45,7 +45,7 @@ class PythonInstallerListDependencies(Installer[Python], ABC):
     :param with_list_deps: whether to list the installed packages
     """
 
-    def __init__(self, tox_env: Python, with_list_deps: bool = True) -> None:  # ruff:ignore[boolean-type-hint-positional-argument, boolean-default-value-positional-argument]
+    def __init__(self, tox_env: Python, with_list_deps: bool = True) -> None:  # ruff:ignore[boolean-type-hint-positional-argument, boolean-default-value-positional-argument]  # public signature
         self._with_list_deps = with_list_deps
         super().__init__(tox_env)
 
@@ -130,7 +130,7 @@ class Pip(PythonInstallerListDependencies):
 
         :returns: the install command
         """
-        isolated_flag = "-E" if self._env.base_python.version_info.major == 2 else "-I"  # ruff:ignore[magic-value-comparison]
+        isolated_flag = "-E" if self._env.base_python.version_info.major == 2 else "-I"  # ruff:ignore[magic-value-comparison]  # Python 2 only takes -E
         return Command(["python", isolated_flag, "-m", "pip", "install", "{opts}", "{packages}"])
 
     def post_process_install_command(self, cmd: Command) -> Command:

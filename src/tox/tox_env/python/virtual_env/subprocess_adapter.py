@@ -25,7 +25,7 @@ if TYPE_CHECKING:
     from python_discovery import MarkerEnvironment
 
 
-@dataclass(slots=True)
+@dataclass(slots=True, kw_only=True, frozen=True)
 class _VersionInfo:
     major: int
     minor: int

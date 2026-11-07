@@ -43,9 +43,11 @@ class CliEnv:  # ruff:ignore[eq-without-hash]  # mutable value type
     - A list of specific environments, instantiated with a string that is a comma-separated list of the environment
       names. (These may have spaces on either side of the commas which are removed.) As a sequence this will be a
       sequence of those names.
+
     - "ALL" which is all environments defined by the tox configuration. This is instantiated with ``ALL`` either alone
       or as any element of a comma-separated list; any other environment names are ignored. `is_all()` will be true and
       as a sequence it will be empty. This prints in string representation as ``ALL``.
+
     - The default environments as chosen by tox configuration. This is instantiated with `None` as the parameter,
       `is_default_list()` will be true, and as a sequence this will be empty. This prints in string representation as
       ``<env_list>``.
@@ -295,10 +297,11 @@ class EnvSelector:
         # find out which it is.  Intuitively, a run environment is any environment not used for packaging by another run
         # environment. To find out what are the packaging environments for a run environment, you have to first
         # construct it. This implies a two-phase solution: construct all environments and query their packaging
-        # environments. The run environments are the ones not marked as of packaging type. This requires being able to
-        # change tox environments types, if it was earlier discovered as a run environment and is marked as packaging,
-        # we need to redefine it. E.g., when it shows up in config as [testenv:.package] and afterward by a run env is
-        # marked as package_env.
+        # environments. The run environments are the ones not marked as of packaging type.
+        #
+        # This requires being able to change tox environments types, if it was earlier discovered as a run environment
+        # and is marked as packaging, we need to redefine it. E.g., when it shows up in config as [testenv:.package]
+        # and afterward by a run env is marked as package_env.
 
         if self._defined_envs_ is not None:
             return self._defined_envs_
