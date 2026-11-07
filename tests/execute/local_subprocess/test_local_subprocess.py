@@ -15,7 +15,7 @@ import time
 from io import TextIOWrapper
 from pathlib import Path
 from types import SimpleNamespace
-from typing import TYPE_CHECKING, Final, NoReturn
+from typing import TYPE_CHECKING, Final, NamedTuple, NoReturn
 
 import psutil
 import pytest
@@ -635,9 +635,13 @@ def test_shebang_limited_on_posix(tmp_path: Path, mocker: MockerFixture) -> None
     assert instance.cmd == [exe, "-s", str(script), "--magic"]
 
 
-def _create_shebang_test(
-    tmp_path: Path, env: dict[str, str], mocker: MockerFixture
-) -> tuple[str, Path, LocalSubProcessExecuteInstance]:
+class _ShebangTest(NamedTuple):
+    exe: str
+    script: Path
+    instance: LocalSubProcessExecuteInstance
+
+
+def _create_shebang_test(tmp_path: Path, env: dict[str, str], mocker: MockerFixture) -> _ShebangTest:
     exe: Final[str] = sys.executable
     script = tmp_path / f"s{_EXE_SUFFIX}"
     script.write_text(f"#!{exe} -s")
@@ -645,7 +649,9 @@ def _create_shebang_test(
     env["PATH"] = str(script.parent)
     request = mocker.create_autospec(ExecuteRequest, cmd=["s", "--magic"], cwd=tmp_path, env=env, allow=None)
     writer = mocker.create_autospec(SyncWrite)
-    return exe, script, LocalSubProcessExecuteInstance(request, mocker.create_autospec(ExecuteOptions), writer, writer)
+    return _ShebangTest(
+        exe, script, LocalSubProcessExecuteInstance(request, mocker.create_autospec(ExecuteOptions), writer, writer)
+    )
 
 
 @pytest.mark.skipif(sys.platform != "win32", reason="windows shebang handling")

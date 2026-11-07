@@ -5,7 +5,7 @@ from contextlib import suppress
 from dataclasses import dataclass
 from itertools import chain
 from pathlib import Path
-from typing import TYPE_CHECKING, NotRequired, Protocol, TypedDict, final
+from typing import TYPE_CHECKING, NamedTuple, NotRequired, Protocol, TypedDict, final
 
 from packaging.markers import InvalidMarker, Marker
 
@@ -30,6 +30,12 @@ class Replacer(Protocol):
 # a TOML table such as ``{ replace = "env" }`` arrives parsed and resolves when its key is read
 SetEnvValue = str | MatchExpression
 """The value of a single ``set_env`` entry, plain text or a replacement expression."""
+
+
+class _Assignment(NamedTuple):
+    key: str
+    value: str
+    marker: str
 
 
 class SetEnvEntry(TypedDict):
@@ -194,7 +200,7 @@ class SetEnv:
     def _parse_file_line(line: str) -> str:
         return line[len("file|") :]
 
-    def _parse_line(self, line: str, *, substituted: bool) -> tuple[str, str, str] | None:
+    def _parse_line(self, line: str, *, substituted: bool) -> _Assignment | None:
         """
         Split a ``KEY=VALUE`` line, or return ``None`` once it is queued to be split after substitution.
 
@@ -215,7 +221,7 @@ class SetEnv:
                 self._needs_replacement.append(line)
                 return None
             raise
-        return key, value, marker
+        return _Assignment(key, value, marker)
 
     def __contains__(self, item: object) -> bool:
         return isinstance(item, str) and item in iter(self)

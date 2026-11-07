@@ -9,7 +9,7 @@ from difflib import get_close_matches
 from importlib.util import find_spec
 from itertools import chain
 from pathlib import PurePath
-from typing import TYPE_CHECKING, Any, Final, cast
+from typing import TYPE_CHECKING, Any, Final, NamedTuple, cast
 
 from tox.config.cli.parser import Parsed
 from tox.config.loader.ini.factor import extend_factors
@@ -211,6 +211,12 @@ def _env_completer(
         return ["ALL", *conf]
 
 
+class _CombinableFactors(NamedTuple):
+    known_envs: set[str]
+    combinable: set[str]
+    all_factors: set[str]
+
+
 def _activate_by_labels(
     defined_envs: dict[str, _ToxEnvInfo], labels: set[str], label_envs: dict[str, list[str]]
 ) -> None:
@@ -409,7 +415,7 @@ class EnvSelector:
         if invalid_envs:
             self._raise_invalid_envs(invalid_envs)
 
-    def _combinable_factors(self) -> tuple[set[str], set[str], set[str]]:
+    def _combinable_factors(self) -> _CombinableFactors:
         known_envs = set(self._state.conf)
         env_list = set(self._state.conf.core.get("env_list", EnvList))
         # factors that can be freely combined: from env_list entries and known env names themselves
@@ -427,7 +433,7 @@ class EnvSelector:
         # broader pool for suggestions includes factors from all known env names
         all_factors = set(chain.from_iterable(env.split("-") for env in known_envs))
         all_factors.update(combinable)
-        return known_envs, combinable, all_factors
+        return _CombinableFactors(known_envs, combinable, all_factors)
 
     @staticmethod
     def _normalize_env_name(env_name: str) -> str:

@@ -62,7 +62,13 @@ def _completion_args(args: tuple[str, ...]) -> tuple[tuple[str, ...], str]:
     return tuple(typed), current
 
 
-def _get_base(args: Sequence[str], completion_current: str | None) -> tuple[int, ToxHandler, Source]:
+class _BaseOptions(NamedTuple):
+    guess_verbosity: int
+    handler: ToxHandler
+    source: Source
+
+
+def _get_base(args: Sequence[str], completion_current: str | None) -> _BaseOptions:
     parsed: Final = Parsed()
     with (
         suppress(SystemExit),
@@ -85,7 +91,7 @@ def _get_base(args: Sequence[str], completion_current: str | None) -> tuple[int,
     last_option: Final = args[-1] if completing and args and args[-1].startswith("-") else ""
     if _ends_before_discovery(completion_current, last_option):
         MANAGER.load_plugins(None)
-        return guess_verbosity, handler, _empty_source(None)
+        return _BaseOptions(guess_verbosity, handler, _empty_source(None))
     selection_args: Final = _selection_args(args, completion_current, last_option)
     try:
         with (
@@ -97,14 +103,14 @@ def _get_base(args: Sequence[str], completion_current: str | None) -> tuple[int,
             )[1]
     except SystemExit:
         MANAGER.load_plugins(None)
-        return guess_verbosity, handler, _empty_source(None)
+        return _BaseOptions(guess_verbosity, handler, _empty_source(None))
     if _config_flag_after_unknown(args, unknown):
         MANAGER.load_plugins(None)
-        return guess_verbosity, handler, _empty_source(None)
+        return _BaseOptions(guess_verbosity, handler, _empty_source(None))
 
     source, project_known = _discover_or_fallback(selected, args, completing=completing)
     MANAGER.load_plugins(source.path if project_known else None)
-    return guess_verbosity, handler, source
+    return _BaseOptions(guess_verbosity, handler, source)
 
 
 def _ends_before_discovery(completion_current: str | None, last_option: str) -> bool:

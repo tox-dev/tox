@@ -9,7 +9,7 @@ from functools import partial
 from pathlib import Path
 from shutil import rmtree
 from tempfile import mkdtemp
-from typing import TYPE_CHECKING, Final, Protocol
+from typing import TYPE_CHECKING, Final, NamedTuple, Protocol
 from uuid import uuid4
 
 import pytest
@@ -68,10 +68,14 @@ if sys.implementation.name == "pypy":
     collect_ignore.append("util/test_spinner.py")
 
 
+class _PrevPy(NamedTuple):
+    prev_ver: str
+    impl: str
+    free_threaded: bool
+
+
 class PatchPrevPy(Protocol):
-    def __call__(
-        self, has_prev: bool, free_threaded: bool | None = None, debug: bool | None = None
-    ) -> tuple[str, str, bool]: ...
+    def __call__(self, has_prev: bool, free_threaded: bool | None = None, debug: bool | None = None) -> _PrevPy: ...
 
 
 class ToxIniCreator(Protocol):
@@ -111,7 +115,7 @@ def demo_pkg_inline() -> Path:
 
 @pytest.fixture
 def patch_prev_py(mocker: MockerFixture) -> PatchPrevPy:
-    def _func(has_prev: bool, free_threaded: bool | None = None, debug: bool | None = None) -> tuple[str, str, bool]:
+    def _func(has_prev: bool, free_threaded: bool | None = None, debug: bool | None = None) -> _PrevPy:
         ver = sys.version_info[0:2]
         prev_ver = "".join(str(i) for i in (ver[0], ver[1] - 1))
         prev_py = f"py{prev_ver}"
@@ -142,7 +146,7 @@ def patch_prev_py(mocker: MockerFixture) -> PatchPrevPy:
             )
 
         mocker.patch.object(VirtualEnv, "_get_python", get_python)
-        return prev_ver, impl, is_free_threaded
+        return _PrevPy(prev_ver, impl, is_free_threaded)
 
     return _func
 

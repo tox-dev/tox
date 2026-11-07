@@ -45,20 +45,26 @@ def run_one(  # keeps the signature
     )
 
 
+class _Evaluation(NamedTuple):
+    skipped: bool
+    code: int
+    outcomes: list[Outcome]
+
+
 def _evaluate(  # keeps the signature
     tox_env: RunToxEnv,
     no_test: bool,  # ruff:ignore[boolean-type-hint-positional-argument]  # keeps the signature
-) -> tuple[bool, int, list[Outcome]]:
+) -> _Evaluation:
     try:
         return _run_with_teardown(tox_env, no_test)
     except SystemExit as exception:  # setup command fails (interrupted or via invocation)
-        return False, cast("int", exception.code), []
+        return _Evaluation(skipped=False, code=cast("int", exception.code), outcomes=[])
 
 
 def _run_with_teardown(  # keeps the signature
     tox_env: RunToxEnv,
     no_test: bool,  # ruff:ignore[boolean-type-hint-positional-argument]  # keeps the signature
-) -> tuple[bool, int, list[Outcome]]:
+) -> _Evaluation:
     skipped = False
     code: int = 0
     outcomes: list[Outcome] = []
@@ -83,7 +89,7 @@ def _run_with_teardown(  # keeps the signature
         code = 2  # pragma: no cover  # untested error path
     finally:
         tox_env.teardown()
-    return skipped, code, outcomes
+    return _Evaluation(skipped, code, outcomes)
 
 
 def run_commands(  # keeps the signature

@@ -8,7 +8,7 @@ import sysconfig
 from collections.abc import Mapping, Sequence
 from pathlib import Path
 from textwrap import dedent
-from typing import TYPE_CHECKING, Any, Final, Protocol
+from typing import TYPE_CHECKING, Any, Final, NamedTuple, Protocol
 
 import pytest
 
@@ -172,11 +172,17 @@ def test_schema_allows_deps_array(committed_schema: dict[str, Any]) -> None:
     assert {"type": "array", "items": {"$ref": "#/definitions/subs"}} in deps_schema["oneOf"]
 
 
+class _LintCase(NamedTuple):
+    filename: str
+    content: str
+    tombi_cfg: str
+
+
 @pytest.fixture
-def project_lint_case(request: pytest.FixtureRequest, repo_root: Path, default_tombi_cfg: str) -> tuple[str, str, str]:
+def project_lint_case(request: pytest.FixtureRequest, repo_root: Path, default_tombi_cfg: str) -> _LintCase:
     # Resolve a parametrized lint case (`filename`, `content`, `tombi_cfg`) by id.
     if request.param == "tox.toml":
-        return "tox.toml", (repo_root / "tox.toml").read_text(), default_tombi_cfg
+        return _LintCase("tox.toml", (repo_root / "tox.toml").read_text(), default_tombi_cfg)
     if request.param == "pyproject.toml":
         cfg = dedent("""\
             [schema.catalog]
@@ -200,7 +206,7 @@ def project_lint_case(request: pytest.FixtureRequest, repo_root: Path, default_t
             [tool.tox.env.lint]
             commands = [['ruff', 'check', '.']]
         """)
-        return "pyproject.toml", content, cfg
+        return _LintCase("pyproject.toml", content, cfg)
     raise ValueError(request.param)
 
 
@@ -209,7 +215,7 @@ def project_lint_case(request: pytest.FixtureRequest, repo_root: Path, default_t
     [pytest.param("tox.toml", id="tox.toml"), pytest.param("pyproject.toml", id="pyproject.toml")],
     indirect=True,
 )
-def test_schema_tombi_lint(lint_workspace: LintWorkspace, project_lint_case: tuple[str, str, str]) -> None:
+def test_schema_tombi_lint(lint_workspace: LintWorkspace, project_lint_case: _LintCase) -> None:
     filename, content, tombi_cfg = project_lint_case
     lint_workspace(filename, content, tombi_cfg)
 
