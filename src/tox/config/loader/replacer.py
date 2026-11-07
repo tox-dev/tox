@@ -1010,15 +1010,13 @@ def load_posargs(conf: Config, conf_args: ConfigLoadArgs, *, program_first: bool
         env_conf = conf.get_env(conf_args.env_name)
         try:
             # other outcome untested
-            if env_conf["args_are_paths"] and not _loading_change_dir(conf_args):  # pragma: no branch
+            if env_conf["args_are_paths"] and not any(
+                entry.endswith(".change_dir") for entry in conf_args.chain
+            ):  # pragma: no branch
                 to_path = env_conf.get("change_dir", Path)
         except KeyError:
             pass
     return conf.pos_args(to_path, program_first=program_first)
-
-
-def _loading_change_dir(conf_args: ConfigLoadArgs) -> bool:
-    return any(entry.endswith(".change_dir") for entry in conf_args.chain)
 
 
 def replace_env(conf: Config | None, args: list[str], conf_args: ConfigLoadArgs) -> str:

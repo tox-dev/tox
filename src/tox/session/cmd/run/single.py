@@ -38,7 +38,10 @@ def run_one(  # keeps the signature
     start_one = time.monotonic()
     name = tox_env.conf.name
     with tox_env.display_context(suspend_display):
-        skipped, code, outcomes = _evaluate(tox_env, no_test)
+        try:
+            skipped, code, outcomes = _run_with_teardown(tox_env, no_test)
+        except SystemExit as exception:  # setup command fails (interrupted or via invocation)
+            skipped, code, outcomes = False, cast("int", exception.code), []
     duration = time.monotonic() - start_one
     return ToxEnvRunResult(
         name, skipped, code, outcomes, duration, tox_env.conf["ignore_outcome"], tox_env.conf["fail_fast"]
@@ -49,16 +52,6 @@ class _Evaluation(NamedTuple):
     skipped: bool
     code: int
     outcomes: list[Outcome]
-
-
-def _evaluate(  # keeps the signature
-    tox_env: RunToxEnv,
-    no_test: bool,  # ruff:ignore[boolean-type-hint-positional-argument]  # keeps the signature
-) -> _Evaluation:
-    try:
-        return _run_with_teardown(tox_env, no_test)
-    except SystemExit as exception:  # setup command fails (interrupted or via invocation)
-        return _Evaluation(skipped=False, code=cast("int", exception.code), outcomes=[])
 
 
 def _run_with_teardown(  # keeps the signature

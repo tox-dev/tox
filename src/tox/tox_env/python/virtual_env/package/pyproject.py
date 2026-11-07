@@ -45,7 +45,7 @@ if TYPE_CHECKING:
     from collections.abc import Generator, Sequence
 
     from tox.config.sets import EnvConfigSet
-    from tox.execute.api import ExecuteStatus, Outcome
+    from tox.execute.api import ExecuteStatus
     from tox.tox_env.api import ToxEnvCreateArgs
     from tox.tox_env.package import Package, PackageToxEnv
     from tox.tox_env.register import ToxEnvRegister
@@ -600,7 +600,8 @@ class Pep517VirtualEnvFrontend(Frontend):
             ) as execute_status:
                 execute_status.write_stdin(f"{msg}{os.linesep}")
                 yield ToxCmdStatus(execute_status)
-            _assert_outcome(execute_status.outcome)
+            if execute_status.outcome is not None:  # pragma: no branch  # other outcome untested
+                execute_status.outcome.assert_success()
         finally:
             if self._tox_env.conf["fresh_subprocess"]:
                 self.backend_executor.close()
@@ -651,11 +652,6 @@ class Pep517VirtualEnvFrontend(Frontend):
 @impl
 def tox_register_tox_env(register: ToxEnvRegister) -> None:
     register.add_package_env(Pep517VirtualEnvPackager)
-
-
-def _assert_outcome(outcome: Outcome | None) -> None:
-    if outcome is not None:  # pragma: no branch  # other outcome untested
-        outcome.assert_success()
 
 
 __all__ = [

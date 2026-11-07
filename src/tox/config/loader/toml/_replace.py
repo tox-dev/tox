@@ -294,7 +294,9 @@ def _evaluate_condition(expr: str, factors: set[str], env_name: str | None) -> b
 
 def _eval_condition_node(node: ast.expr, expr: str, factors: set[str], env_name: str | None) -> str | bool:
     if isinstance(node, ast.BoolOp):
-        return _eval_bool_op(node, expr, factors, env_name)
+        if isinstance(node.op, ast.And):
+            return all(bool(_eval_condition_node(v, expr, factors, env_name)) for v in node.values)
+        return any(bool(_eval_condition_node(v, expr, factors, env_name)) for v in node.values)
     if isinstance(node, ast.UnaryOp) and isinstance(node.op, ast.Not):
         return not bool(_eval_condition_node(node.operand, expr, factors, env_name))
     if isinstance(node, ast.Compare):
@@ -305,12 +307,6 @@ def _eval_condition_node(node: ast.expr, expr: str, factors: set[str], env_name:
         return lookup_result
     msg = f"Unsupported expression in condition: {ast.dump(node)}"
     raise MatchError(msg)
-
-
-def _eval_bool_op(node: ast.BoolOp, expr: str, factors: set[str], env_name: str | None) -> bool:
-    if isinstance(node.op, ast.And):
-        return all(bool(_eval_condition_node(v, expr, factors, env_name)) for v in node.values)
-    return any(bool(_eval_condition_node(v, expr, factors, env_name)) for v in node.values)
 
 
 def _eval_compare(node: ast.Compare, expr: str, factors: set[str], env_name: str | None) -> bool:

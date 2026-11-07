@@ -237,7 +237,7 @@ def ensure_bootstrap(work_dir: Path, virtualenv_spec: str) -> Path:
     if not base.parent.resolve().is_relative_to(work_dir.resolve()):
         cache_parent_error: Final[str] = "bootstrap cache directory must stay within work directory"
         raise Fail(cache_parent_error)
-    python: Final[Path] = _bootstrap_python(base)
+    python: Final[Path] = _bin_dir(base) / ("python.exe" if sys.platform == "win32" else "python")
     if _has_correct_virtualenv(python, virtualenv_spec):
         return python
 
@@ -280,10 +280,6 @@ def _bootstrap_path(work_dir: Path, virtualenv_spec: str) -> Path:
     return work_dir / ".virtualenv-bootstrap" / hashlib.sha256(virtualenv_spec.encode()).hexdigest()[:16]
 
 
-def _bootstrap_python(base: Path) -> Path:
-    return _bin_dir(base) / ("python.exe" if sys.platform == "win32" else "python")
-
-
 def _bin_dir(base: Path) -> Path:
     return base / ("Scripts" if sys.platform == "win32" else "bin")
 
@@ -312,15 +308,14 @@ def _build_bootstrap(base: Path, virtualenv_spec: str) -> None:
     base.mkdir()
     venv.create(str(base), with_pip=True)
     result: Final[subprocess.CompletedProcess[str]] = subprocess.run(
-        [str(_bootstrap_pip(base)), "install", virtualenv_spec], capture_output=True, text=True, check=False
+        [str(_bin_dir(base) / ("pip.exe" if sys.platform == "win32" else "pip")), "install", virtualenv_spec],
+        capture_output=True,
+        text=True,
+        check=False,
     )
     if result.returncode != 0:
         msg: Final[str] = f"failed to install {virtualenv_spec} into bootstrap env: {result.stderr}"
         raise RuntimeError(msg)
-
-
-def _bootstrap_pip(base: Path) -> Path:
-    return _bin_dir(base) / ("pip.exe" if sys.platform == "win32" else "pip")
 
 
 def _remove_stale_bootstrap(base: Path) -> None:

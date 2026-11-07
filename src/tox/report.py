@@ -325,7 +325,8 @@ def setup_report(  # keeps the signature
         if isinstance(std_stream, TextIOWrapper):
             # Redirected Windows streams may use code pages that cannot encode tox output.
             std_stream.reconfigure(errors="backslashreplace")
-    _clean_handlers(LOGGER)
+    for log_handler in list(LOGGER.handlers):  # remove handlers of libraries
+        LOGGER.removeHandler(log_handler)
     level = _get_level(verbosity)
     LOGGER.setLevel(level)
     for name in ("distlib.util", "filelock"):
@@ -335,11 +336,6 @@ def setup_report(  # keeps the signature
     LOGGER.addHandler(handler)
     logging.debug("setup logging to %s on pid %s", logging.getLevelName(level), os.getpid())
     return handler
-
-
-def _clean_handlers(log: logging.Logger) -> None:
-    for log_handler in list(log.handlers):  # remove handlers of libraries
-        log.removeHandler(log_handler)
 
 
 def _get_level(verbosity: int) -> int:
