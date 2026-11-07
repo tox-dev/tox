@@ -426,7 +426,7 @@ def installed_pkg_info(tmp_path: Path, mocker: MockerFixture) -> Path:
     dist_info: Final[Path] = tmp_path / "pkg-1.0.dist-info"
     dist_info.mkdir()
     (dist_info / "METADATA").write_text("Metadata-Version: 2.1\nName: pkg\nVersion: 1.0\n")
-    mocker.patch("tox.provision.distribution", return_value=Distribution.at(dist_info))
+    mocker.patch("tox.provision.distribution", autospec=True, return_value=Distribution.at(dist_info))
     return dist_info
 
 

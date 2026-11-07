@@ -20,14 +20,14 @@ if TYPE_CHECKING:
     [pytest.param(HandledError, id="handlederror"), pytest.param(KeyboardInterrupt, id="keyboardinterrupt")],
 )
 def test_exit_code_minus_2_on_expected_exit(exception: Exception, mocker: MockerFixture) -> None:
-    mocker.patch("tox.run.main", side_effect=exception)
+    mocker.patch("tox.run.main", autospec=True, side_effect=exception)
     with pytest.raises(SystemExit) as system_exit:
         run()
     assert system_exit.value.code == -2
 
 
 def test_re_raises_on_unexpected_exit(mocker: MockerFixture) -> None:
-    mocker.patch("tox.run.main", side_effect=ValueError)
+    mocker.patch("tox.run.main", autospec=True, side_effect=ValueError)
     with pytest.raises(ValueError):  # ruff:ignore[pytest-raises-too-broad]  # only checks failure
         run()
 

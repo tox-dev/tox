@@ -20,7 +20,7 @@ if TYPE_CHECKING:
 @pytest.mark.parametrize("color", [True, False], ids=["on", "off"])
 @pytest.mark.parametrize("verbosity", range(7))
 def test_setup_report(mocker: MockerFixture, capsys: CaptureFixture, verbosity: int, color: bool) -> None:
-    color_init = mocker.patch("tox.report.init")
+    color_init = mocker.patch("tox.report.init", autospec=True)
 
     _emit_report(verbosity, color)
 
@@ -124,7 +124,7 @@ def test_suspended_output_degrades_unencodable_text(
 ) -> None:
     monkeypatch.setattr(sys, "stdout", redirected_cp1252_output)
     monkeypatch.setattr(sys, "stderr", redirected_cp1252_output)
-    mocker.patch("tox.report.locale.getpreferredencoding", return_value="cp1252")
+    mocker.patch("tox.report.locale.getpreferredencoding", autospec=True, return_value="cp1252")
     with setup_report(verbosity=3, is_colored=False).suspend_out_err(True) as (stdout, _):
         stdout.write("box \u2500")
         stdout.flush()

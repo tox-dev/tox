@@ -32,7 +32,7 @@ def test_version_with_plugin(tox_project: ToxProjectCreator, mocker: MockFixture
             SimpleNamespace(project_name="A", version="2.0"),
         ),
     ]
-    mocker.patch.object(MANAGER.manager, "list_plugin_distinfo", return_value=dist)
+    mocker.patch.object(MANAGER.manager, "list_plugin_distinfo", autospec=True, return_value=dist)
 
     outcome = tox_project({"tox.ini": ""}).run("--version")
 
