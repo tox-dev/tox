@@ -1,8 +1,12 @@
 from __future__ import annotations
 
+from types import SimpleNamespace
 from typing import TYPE_CHECKING
 
 import pytest
+from virtualenv.create.creator import Creator
+from virtualenv.discovery.py_info import PythonInfo
+from virtualenv.run.session import Session
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -14,7 +18,7 @@ if TYPE_CHECKING:
 
 def test_legacy_env_name_matches_command(tox_project: ToxProjectCreator, mocker: MockerFixture) -> None:
     # An env selected via -e whose name matches a subcommand must not be parsed as that command.
-    run_sequential = mocker.patch("tox.session.cmd.legacy.run_sequential", return_value=0)
+    run_sequential = mocker.patch("tox.session.cmd.legacy.run_sequential", autospec=True, return_value=0)
 
     outcome = tox_project({"tox.toml": 'env_list = ["list"]'}).run("-e", "list")
 
@@ -25,7 +29,7 @@ def test_legacy_env_name_matches_command(tox_project: ToxProjectCreator, mocker:
 
 
 def test_legacy_show_config(tox_project: ToxProjectCreator, mocker: MockerFixture) -> None:
-    show_config = mocker.patch("tox.session.cmd.legacy.show_config")
+    show_config = mocker.patch("tox.session.cmd.legacy.show_config", autospec=True)
 
     outcome = tox_project({"tox.ini": ""}).run("le", "--showconfig")
 
@@ -37,7 +41,7 @@ def test_legacy_show_config(tox_project: ToxProjectCreator, mocker: MockerFixtur
 
 
 def test_legacy_show_config_with_env(tox_project: ToxProjectCreator, mocker: MockerFixture) -> None:
-    show_config = mocker.patch("tox.session.cmd.legacy.show_config")
+    show_config = mocker.patch("tox.session.cmd.legacy.show_config", autospec=True)
 
     outcome = tox_project({"tox.ini": ""}).run("le", "--showconfig", "-e", "py")
 
@@ -50,7 +54,7 @@ def test_legacy_show_config_with_env(tox_project: ToxProjectCreator, mocker: Moc
 
 @pytest.mark.parametrize("verbose", range(3))
 def test_legacy_list_default(tox_project: ToxProjectCreator, mocker: MockerFixture, verbose: int) -> None:
-    list_env = mocker.patch("tox.session.cmd.legacy.list_env")
+    list_env = mocker.patch("tox.session.cmd.legacy.list_env", autospec=True)
 
     outcome = tox_project({"tox.ini": ""}).run("le", "-l", *(["-v"] * verbose))
 
@@ -91,7 +95,7 @@ def test_legacy_list_env_with_no_tox_file(tox_project: ToxProjectCreator) -> Non
 
 @pytest.mark.parametrize("verbose", range(3))
 def test_legacy_list_all(tox_project: ToxProjectCreator, mocker: MockerFixture, verbose: int) -> None:
-    list_env = mocker.patch("tox.session.cmd.legacy.list_env")
+    list_env = mocker.patch("tox.session.cmd.legacy.list_env", autospec=True)
 
     outcome = tox_project({"tox.ini": ""}).run("le", "-a", *(["-v"] * verbose))
 
@@ -114,7 +118,7 @@ def test_legacy_devenv(
     tmp_path: Path,
     args: tuple[str, ...],
 ) -> None:
-    run_sequential = mocker.patch("tox.session.cmd.devenv.run_sequential")
+    run_sequential = mocker.patch("tox.session.cmd.devenv.run_sequential", autospec=True)
     into = tmp_path / "b"
 
     outcome = tox_project({"tox.ini": ""}).run("le", "--devenv", str(into), *args)
@@ -125,7 +129,7 @@ def test_legacy_devenv(
 
 
 def test_legacy_run_parallel(tox_project: ToxProjectCreator, mocker: MockerFixture) -> None:
-    run_parallel = mocker.patch("tox.session.cmd.legacy.run_parallel")
+    run_parallel = mocker.patch("tox.session.cmd.legacy.run_parallel", autospec=True)
 
     tox_project({"tox.ini": ""}).run("le", "-p", "all", "-e", "py")
 
@@ -133,7 +137,7 @@ def test_legacy_run_parallel(tox_project: ToxProjectCreator, mocker: MockerFixtu
 
 
 def test_legacy_run_sequential(tox_project: ToxProjectCreator, mocker: MockerFixture) -> None:
-    run_sequential = mocker.patch("tox.session.cmd.legacy.run_sequential")
+    run_sequential = mocker.patch("tox.session.cmd.legacy.run_sequential", autospec=True)
 
     tox_project({"tox.ini": ""}).run("le", "-e", "py")
 
@@ -144,7 +148,7 @@ def test_legacy_run_sequential_ci(
     tox_project: ToxProjectCreator, mocker: MockerFixture, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     # Test legacy run sequential in CI by default.
-    run_sequential = mocker.patch("tox.session.cmd.legacy.run_sequential")
+    run_sequential = mocker.patch("tox.session.cmd.legacy.run_sequential", autospec=True)
     monkeypatch.setenv("CI", "1")
 
     tox_project({"tox.ini": ""}).run("le", "-e", "py")
@@ -167,7 +171,20 @@ def test_legacy_help(tox_project: ToxProjectCreator) -> None:
 
 
 def test_legacy_cli_flags(tox_project: ToxProjectCreator, mocker: MockerFixture) -> None:
-    session = mocker.MagicMock()
+    session = mocker.create_autospec(
+        Session,
+        instance=True,
+        creator=mocker.create_autospec(
+            Creator,
+            instance=True,
+            bin_dir="bin",
+            script_dir="bin",
+            interpreter=mocker.create_autospec(
+                PythonInfo, instance=True, version_info=SimpleNamespace(), marker_environment={}
+            ),
+        ),
+    )
+
     interpreter = session.creator.interpreter
     interpreter.system_executable = "I"
     interpreter.implementation = "CPython"
@@ -181,7 +198,9 @@ def test_legacy_cli_flags(tox_project: ToxProjectCreator, mocker: MockerFixture)
     interpreter.version_info.micro = 0
     interpreter.version_info.releaselevel = "final"
     interpreter.version_info.serial = 0
-    virtualenv_session = mocker.patch("tox.tox_env.python.virtual_env.api.session_via_cli", return_value=session)
+    virtualenv_session = mocker.patch(
+        "tox.tox_env.python.virtual_env.api.session_via_cli", autospec=True, return_value=session
+    )
     proj = tox_project({"tox.ini": "[testenv]\ndeps = p>6\n c\n -rr.txt\npackage=skip\nset_env = PIP_PRE = 0"})
     (proj.path / "r.txt").write_text("d")
     execute_calls = proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)

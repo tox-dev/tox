@@ -251,7 +251,7 @@ def test_show_config_valid_env_exit_code_zero(tox_project: ToxProjectCreator) ->
 def test_pass_env_config_default_posix(
     tox_project: ToxProjectCreator, stdout_is_atty: bool, tty_vars: list[str], mocker: MockerFixture
 ) -> None:
-    mocker.patch("sys.stdout.isatty", return_value=stdout_is_atty)
+    mocker.patch("sys.stdout.isatty", autospec=True, return_value=stdout_is_atty)
     pass_env = tox_project({"tox.ini": ""}).run("c", "-e", "py", "-k", "pass_env").env_conf("py")["pass_env"]
     assert pass_env == sorted([
         "CC",
@@ -299,7 +299,7 @@ def test_pass_env_config_default_posix(
 def test_pass_env_config_default_windows(
     tox_project: ToxProjectCreator, stdout_is_atty: bool, tty_vars: list[str], mocker: MockerFixture
 ) -> None:
-    mocker.patch("sys.stdout.isatty", return_value=stdout_is_atty)
+    mocker.patch("sys.stdout.isatty", autospec=True, return_value=stdout_is_atty)
     pass_env = tox_project({"tox.ini": ""}).run("c", "-e", "py", "-k", "pass_env").env_conf("py")["pass_env"]
     assert pass_env == sorted([
         "APPDATA",

@@ -59,7 +59,7 @@ def test_env_completer_no_config(
 
 
 def test_env_completer_handled_error(mocker: MockerFixture, completer_args: _CompleterArgs) -> None:
-    mocker.patch("tox.session.env_select.discover_source", side_effect=HandledError("bad config"))
+    mocker.patch("tox.session.env_select.discover_source", autospec=True, side_effect=HandledError("bad config"))
     result = _env_completer(**completer_args)
     assert result == []
 
@@ -69,7 +69,7 @@ def test_env_completer_includes_plugin_envs(
 ) -> None:
     (tmp_path / "tox.ini").write_text("[tox]\nenv_list = py311\n")
     monkeypatch.chdir(tmp_path)
-    mocker.patch("tox.plugin.manager.Plugin.tox_extend_envs", return_value=[["plugin-env"]])
+    mocker.patch("tox.plugin.manager.Plugin.tox_extend_envs", autospec=True, return_value=[["plugin-env"]])
     result = _env_completer(**completer_args)
     assert "ALL" in result
     assert "py311" in result
