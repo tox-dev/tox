@@ -182,7 +182,7 @@ def replace_once(conf: Config, reference: ReplaceReference, value: str | MatchEx
     return Replacer(conf, reference, conf_args=args, recursive=False).join(find_replace_expr(value))
 
 
-class MatchExpression:  # ruff:ignore[eq-without-hash]
+class MatchExpression:  # ruff:ignore[eq-without-hash]  # mutable value type
     """An expression that is handled specially by the Replacer.
 
     :param expr: the parsed parts of the expression
@@ -869,7 +869,7 @@ def quote_args(args: Sequence[str]) -> str:
 
 def load_posargs(conf: Config, conf_args: ConfigLoadArgs, *, program_first: bool) -> tuple[str, ...] | None:
     to_path: Path | None = None
-    if conf_args.env_name is not None:  # pragma: no branch
+    if conf_args.env_name is not None:  # pragma: no branch  # other outcome untested
         env_conf = conf.get_env(conf_args.env_name)
         try:
             if env_conf["args_are_paths"] and not _loading_change_dir(conf_args):  # pragma: no branch
@@ -906,7 +906,7 @@ def _replace_env(conf: Config | None, args: list[str], conf_args: ConfigLoadArgs
                 if not (
                     conf_args.chain[-1].endswith(".set_env")
                     and any(i.endswith(".set_env") for i in conf_args.chain[:-1])
-                ):  # pragma: no branch
+                ):  # pragma: no branch  # other outcome untested
                     raise
             else:
                 if key in set_env:
@@ -951,7 +951,7 @@ def replace_glob(conf: Config | None, args: list[str]) -> str | ConfigDefault:
         default_args = args[1:]
     if conf is not None and not Path(pattern).is_absolute():
         pattern = str(Path(glob.escape(str(conf.core["tox_root"]))) / pattern)
-    if matches := sorted(glob.glob(pattern, recursive=True)):  # ruff:ignore[glob]
+    if matches := sorted(glob.glob(pattern, recursive=True)):  # ruff:ignore[glob]  # matches user pattern
         return _GlobMatches(matches)
     return ConfigDefault(
         text=HostText.from_parts(default_args, separator=ARG_DELIMITER), start=3 if is_win_drive else 2

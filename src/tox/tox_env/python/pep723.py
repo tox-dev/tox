@@ -68,7 +68,10 @@ class Pep723Mixin(Python, RunToxEnv):
             desc="path to Python script with PEP 723 inline metadata (relative to tox_root)",
         )
 
-        def default_commands(conf: Config, env_name: str | None) -> list[Command]:  # ruff:ignore[unused-function-argument]
+        def default_commands(  # interface signature
+            conf: Config,
+            env_name: str | None,  # ruff:ignore[unused-function-argument]  # interface signature
+        ) -> list[Command]:
             if script := self.conf["script"]:
                 args = ["python", str(self.core.get("tox_root", Path) / script)]
                 if (pos_args := conf.pos_args(None)) is not None:
@@ -76,7 +79,10 @@ class Pep723Mixin(Python, RunToxEnv):
                 return [Command(args)]
             return []
 
-        commands_def = cast("ConfigDynamicDefinition[list[Command]]", self.conf._defined["commands"])  # ruff:ignore[private-member-access]
+        commands_def = cast(  # internal access
+            "ConfigDynamicDefinition[list[Command]]",
+            self.conf._defined["commands"],  # ruff:ignore[private-member-access]  # internal access
+        )
         commands_def.default = default_commands
         add_skip_missing_interpreters_to_core(self.core, self.options)
         add_skip_missing_interpreters_to_env(self.conf, self.core, self.options)

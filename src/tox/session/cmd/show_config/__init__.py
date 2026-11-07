@@ -53,9 +53,9 @@ def tox_add_option(parser: ToxParser) -> None:
 
 
 def show_config(state: State) -> int:
-    from .ini import show_config_ini  # ruff:ignore[import-outside-top-level]
-    from .json_format import show_config_json  # ruff:ignore[import-outside-top-level]
-    from .toml_format import show_config_toml  # ruff:ignore[import-outside-top-level]
+    from .ini import show_config_ini  # ruff:ignore[import-outside-top-level]  # avoids an import cycle
+    from .json_format import show_config_json  # ruff:ignore[import-outside-top-level]  # avoids an import cycle
+    from .toml_format import show_config_toml  # ruff:ignore[import-outside-top-level]  # avoids an import cycle
 
     fmt: ConfigFormat = state.conf.options.config_format
     if fmt == "json":

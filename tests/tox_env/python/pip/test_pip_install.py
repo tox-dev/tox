@@ -916,7 +916,7 @@ def test_pip_req_path(tox_project: ToxProjectCreator) -> None:
 
 def test_deps_remove_recreate(tox_project: ToxProjectCreator) -> None:
     proj = tox_project({"tox.ini": "[testenv]\npackage=skip\ndeps=wheel\n setuptools"})
-    execute_calls = proj.patch_execute(lambda request: 0)  # ruff:ignore[unused-lambda-argument]
+    execute_calls = proj.patch_execute(lambda request: 0)  # ruff:ignore[unused-lambda-argument]  # callback signature
     proj.run("r").assert_success()
     assert execute_calls.call_count == 1
 
@@ -1471,7 +1471,7 @@ def constrained_mock_project(
         files["requirements.txt"] = "-r foo.requirements.txt\n-c foo.constraints.txt"
         deps = "-rrequirements.txt"
         exp_constraints.extend([requirement, constraint])
-    else:  # pragma: no cover
+    else:  # pragma: no cover  # setup not built by tests
         pytest.fail(f"Missing case: {request.param}")
     files["tox.ini"] = (
         "[testenv]\npackage=wheel\n"

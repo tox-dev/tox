@@ -34,9 +34,14 @@ def tox_add_option(parser: ToxParser) -> None:
             values: str | Sequence[Any] | None,
             option_string: str | None = None,
         ) -> None:
-            formatter = cast("HelpFormatter", parser._get_formatter())  # ruff:ignore[private-member-access]
+            formatter = cast(  # internal access
+                "HelpFormatter",
+                parser._get_formatter(),  # ruff:ignore[private-member-access]  # internal access
+            )
             formatter.add_raw_text(get_version_info())
-            parser._print_message(formatter.format_help(), sys.stdout)  # ruff:ignore[private-member-access]
+            parser._print_message(  # ruff:ignore[private-member-access]  # internal access
+                formatter.format_help(), sys.stdout
+            )
             parser.exit()
 
     parser.add_argument("--version", action=_V)

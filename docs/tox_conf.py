@@ -31,7 +31,7 @@ class ToxConfig(SphinxDirective):
         "ref_suffix": unchanged,
     }
 
-    def __init__(  # ruff:ignore[too-many-arguments]
+    def __init__(  # ruff:ignore[too-many-arguments]  # public signature
         self,
         name: str,
         arguments: list[str],

@@ -76,7 +76,7 @@ def test_str_convert_ok(raw: str, value: Any, of_type: type[Any]) -> None:
         pytest.param("3", Literal["1", "2"], ValueError, r"3 must be one of \('1', '2'\)", id="fail_literal_1_2"),
         pytest.param(
             "3",
-            Union[str, int],  # ruff:ignore[non-pep604-annotation-union]
+            Union[str, int],  # ruff:ignore[non-pep604-annotation-union]  # tests Union spelling
             TypeError,
             r"3 cannot cast to (typing.Union\[str, int\]|str \| int)",
             id="fail_union_str_int",

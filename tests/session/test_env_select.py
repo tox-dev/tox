@@ -776,8 +776,8 @@ def test_pkg_env_register_run_env_once(tox_project: ToxProjectCreator) -> None:
 def test_pkg_env_skip_from_plugin_hook(tox_project: ToxProjectCreator) -> None:
     # A plugin raising Skip for a package env must mark the run env skipped, not crash.
     def plugin() -> None:  # pragma: no cover # the code is copied to a python file
-        from tox.plugin import impl  # ruff:ignore[import-outside-top-level]
-        from tox.tox_env.errors import Skip  # ruff:ignore[import-outside-top-level]
+        from tox.plugin import impl  # ruff:ignore[import-outside-top-level]  # deferred import
+        from tox.tox_env.errors import Skip  # ruff:ignore[import-outside-top-level]  # deferred import
 
         @impl
         def tox_add_env_config(env_conf: EnvConfigSet) -> None:

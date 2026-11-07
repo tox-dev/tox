@@ -86,8 +86,8 @@ class ToxCmdStatus(CmdStatus):
     def done(self) -> bool:
         # 1. process died
         status = self._execute_status
-        if status.exit_code is not None:  # pragma: no branch
-            return True  # pragma: no cover
+        if status.exit_code is not None:  # pragma: no branch  # other outcome untested
+            return True  # pragma: no cover  # untested error path
         # 2. the backend output reported back that our command is done
         return b"\n" in status.out.rpartition(b"Backend: Wrote response ")[0]
 
@@ -95,7 +95,7 @@ class ToxCmdStatus(CmdStatus):
     def out_err(self) -> tuple[str, str]:
         status = self._execute_status
         if status.outcome is None:  # interrupt before the outcome is set # pragma: no branch
-            return "", ""  # pragma: no cover
+            return "", ""  # pragma: no cover  # untested error path
         return status.outcome.out_err()
 
 
@@ -318,7 +318,7 @@ class Pep517VenvPackager(PythonPackageToxEnv, ABC):
                 package = (EditablePackage if of_type == "editable" else WheelPackage)(wheel, deps)
         else:  # pragma: no cover # for when we introduce new packaging types and don't implement
             msg = f"cannot handle package type {of_type}"
-            raise TypeError(msg)  # pragma: no cover
+            raise TypeError(msg)  # pragma: no cover  # untested error path
         return [package]
 
     def _load_deps(self, for_env: EnvConfigSet) -> list[Requirement]:
@@ -356,15 +356,15 @@ class Pep517VenvPackager(PythonPackageToxEnv, ABC):
 
     def get_package_dependencies(self, for_env: EnvConfigSet) -> list[Requirement]:
         with self._pkg_lock:
-            if self._package_dependencies is None:  # pragma: no branch
+            if self._package_dependencies is None:  # pragma: no branch  # other outcome untested
                 self._ensure_meta_present(for_env)
                 requires: list[str] = cast("PathDistribution", self._distribution_meta).requires or []
                 self._package_dependencies = [Requirement(i) for i in requires]  # pragma: no branch
         return self._package_dependencies
 
     def _ensure_meta_present(self, for_env: EnvConfigSet) -> None:
-        if self._distribution_meta is not None:  # pragma: no branch
-            return  # pragma: no cover
+        if self._distribution_meta is not None:  # pragma: no branch  # other outcome untested
+            return  # pragma: no cover  # untested error path
         # even if we don't build a wheel we need the requirements for it should we want to build its metadata
         target: Literal["editable", "wheel"] = "editable" if for_env["package"] == "editable" else "wheel"
         self.call_require_hooks.add(target)
@@ -404,7 +404,7 @@ class Pep517VenvPackager(PythonPackageToxEnv, ABC):
 
     def get_package_name(self, for_env: EnvConfigSet) -> str:
         with self._pkg_lock:
-            if self._package_name is None:  # pragma: no branch
+            if self._package_name is None:  # pragma: no branch  # other outcome untested
                 self._ensure_meta_present(for_env)
                 self._package_name = cast("PathDistribution", self._distribution_meta).metadata["Name"]
         return self._package_name
@@ -425,7 +425,9 @@ class Pep517VenvPackager(PythonPackageToxEnv, ABC):
             cast("Pep517VirtualEnvFrontend", self._frontend_).backend,
         )
         for env in targets:
-            env._defined["package"].overwrite("editable-legacy")  # ruff:ignore[private-member-access]
+            env._defined["package"].overwrite(  # ruff:ignore[private-member-access]  # internal access
+                "editable-legacy"
+            )
             self.builds["editable-legacy"].append(env)
         self._run_state["setup"] = False  # force setup again as we need to provision wheel to get dependencies
 
@@ -467,7 +469,7 @@ class Pep517VenvPackager(PythonPackageToxEnv, ABC):
 
                 # Step 4: Build the wheel
                 wheel_config = child_env.conf.get_optional("config_settings_build_wheel", dict[str, Any])
-                return child_env._frontend.build_wheel(  # ruff:ignore[private-member-access]
+                return child_env._frontend.build_wheel(  # ruff:ignore[private-member-access]  # internal access
                     wheel_directory=child_env.pkg_dir,
                     metadata_directory=None,
                     config_settings=wheel_config,
@@ -516,7 +518,11 @@ class Pep517VirtualEnvFrontend(Frontend):
             (f"build_{build_type}" for build_type in ["editable", "wheel", "sdist"]),
         ):  # wrap build methods in a cache wrapper
 
-            def key(*args: Any, bound_return: str = hook, **kwargs: Any) -> str:  # ruff:ignore[unused-function-argument]
+            def key(  # interface signature
+                *args: Any,  # ruff:ignore[unused-function-argument]  # interface signature
+                bound_return: str = hook,
+                **kwargs: Any,  # ruff:ignore[unused-function-argument]  # interface signature
+            ) -> str:
                 return bound_return
 
             setattr(self, hook, cached(into, key=key)(getattr(self, hook)))
@@ -608,7 +614,7 @@ def tox_register_tox_env(register: ToxEnvRegister) -> None:
 
 
 def _assert_outcome(outcome: Outcome | None) -> None:
-    if outcome is not None:  # pragma: no branch
+    if outcome is not None:  # pragma: no branch  # other outcome untested
         outcome.assert_success()
 
 

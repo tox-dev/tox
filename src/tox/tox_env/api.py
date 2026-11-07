@@ -59,7 +59,7 @@ class ToxEnvCreateArgs(NamedTuple):
     log_handler: ToxHandler
 
 
-class ToxEnv(ABC):  # ruff:ignore[too-many-public-methods]
+class ToxEnv(ABC):  # ruff:ignore[too-many-public-methods]  # public facade
     """A tox environment."""
 
     def __init__(self, create_args: ToxEnvCreateArgs) -> None:
@@ -102,7 +102,7 @@ class ToxEnv(ABC):  # ruff:ignore[too-many-public-methods]
         raise NotImplementedError
 
     def _install(self, arguments: InstallArguments, section: str, of_type: str) -> None:
-        from tox.plugin.manager import MANAGER  # ruff:ignore[import-outside-top-level]
+        from tox.plugin.manager import MANAGER  # ruff:ignore[import-outside-top-level]  # avoids an import cycle
 
         MANAGER.tox_on_install(self, arguments, section, of_type)
         self.installer.install(arguments, section, of_type)
@@ -215,7 +215,7 @@ class ToxEnv(ABC):  # ruff:ignore[too-many-public-methods]
     def executor(self) -> Execute:
         raise NotImplementedError
 
-    def _default_set_env(self) -> dict[str, str]:  # ruff:ignore[no-self-use]
+    def _default_set_env(self) -> dict[str, str]:  # ruff:ignore[no-self-use]  # override keeps self
         return {}
 
     def _exported_set_env(self) -> dict[str, Callable[[], str]]:
@@ -227,7 +227,7 @@ class ToxEnv(ABC):  # ruff:ignore[too-many-public-methods]
             "TOX_ENV_DIR": lambda: str(self.conf["env_dir"]),
         }
 
-    def _default_pass_env(self) -> list[str]:  # ruff:ignore[no-self-use]
+    def _default_pass_env(self) -> list[str]:  # ruff:ignore[no-self-use]  # override keeps self
         env = [
             "https_proxy",  # HTTP proxy configuration
             "http_proxy",  # HTTP proxy configuration
@@ -274,12 +274,16 @@ class ToxEnv(ABC):  # ruff:ignore[too-many-public-methods]
             )
         return env
 
-    def _recreate_default(self, conf: Config, value: str | None) -> bool:  # ruff:ignore[unused-method-argument]
+    def _recreate_default(  # override signature
+        self,
+        conf: Config,  # ruff:ignore[unused-method-argument]  # override signature
+        value: str | None,  # ruff:ignore[unused-method-argument]  # override signature
+    ) -> bool:
         return self.options.recreate
 
     def setup(self) -> None:
         """Setup the tox environment."""
-        if self._run_state["setup"] is False:  # pragma: no branch
+        if self._run_state["setup"] is False:  # pragma: no branch  # other outcome untested
             self._platform_check()
             recreate = self.conf.get("recreate", bool)
             if recreate:
@@ -288,7 +292,7 @@ class ToxEnv(ABC):  # ruff:ignore[too-many-public-methods]
                 self._setup_env()
                 self._setup_with_env()
             except Recreate as exception:  # once we might try over
-                if not recreate:  # pragma: no cover
+                if not recreate:  # pragma: no cover  # setup not built by tests
                     logging.warning("recreate env because %s", exception.args[0])
                     self._clean(transitive=False)
                     self._setup_env()
@@ -315,8 +319,8 @@ class ToxEnv(ABC):  # ruff:ignore[too-many-public-methods]
         raise NotImplementedError
 
     def _clean(self, transitive: bool = False) -> None:  # ruff:ignore[unused-method-argument, boolean-type-hint-positional-argument, boolean-default-value-positional-argument]
-        if self._run_state["clean"]:  # pragma: no branch
-            return  # pragma: no cover
+        if self._run_state["clean"]:  # pragma: no branch  # other outcome untested
+            return  # pragma: no cover  # untested error path
         env_dir: Final = self.env_dir
         if env_dir.exists() or env_dir.is_symlink():
             LOGGER.warning("remove tox env folder %s", env_dir)
@@ -401,11 +405,11 @@ class ToxEnv(ABC):  # ruff:ignore[too-many-public-methods]
     def _teardown(self) -> None:  # ruff:ignore[empty-method-without-abstract-decorator] # empty abstract base class
         pass
 
-    def execute(  # ruff:ignore[too-many-arguments]
+    def execute(  # ruff:ignore[too-many-arguments]  # public signature
         self,
         cmd: Sequence[Path | str],
         stdin: StdinSource,
-        show: bool | None = None,  # ruff:ignore[boolean-type-hint-positional-argument]
+        show: bool | None = None,  # ruff:ignore[boolean-type-hint-positional-argument]  # keeps the signature
         cwd: Path | None = None,
         run_id: str = "",
         executor: Execute | None = None,
@@ -431,17 +435,17 @@ class ToxEnv(ABC):  # ruff:ignore[too-many-public-methods]
         """
         with self.execute_async(cmd, stdin, show, cwd, run_id, executor, capture=capture) as status:
             while status.wait() is None:
-                pass  # pragma: no cover
+                pass  # pragma: no cover  # untested error path
         if status.outcome is None:  # pragma: no cover # this should not happen
-            raise RuntimeError  # pragma: no cover
+            raise RuntimeError  # pragma: no cover  # untested error path
         return status.outcome
 
     @contextmanager
-    def execute_async(  # ruff:ignore[too-many-arguments]
+    def execute_async(  # ruff:ignore[too-many-arguments]  # public signature
         self,
         cmd: Sequence[Path | str],
         stdin: StdinSource,
-        show: bool | None = None,  # ruff:ignore[boolean-type-hint-positional-argument]
+        show: bool | None = None,  # ruff:ignore[boolean-type-hint-positional-argument]  # keeps the signature
         cwd: Path | None = None,
         run_id: str = "",
         executor: Execute | None = None,
@@ -465,11 +469,11 @@ class ToxEnv(ABC):  # ruff:ignore[too-many-public-methods]
 
         """
         if self._fully_interrupted or (self._interrupted and not self._allow_interrupted_execution):
-            raise SystemExit(-2)  # pragma: no cover
+            raise SystemExit(-2)  # pragma: no cover  # untested error path
         if cwd is None:
             cwd = cast("Path", self.core["tox_root"])
         if show is None:
-            show = self.options.verbosity > 3  # ruff:ignore[magic-value-comparison]
+            show = self.options.verbosity > 3  # ruff:ignore[magic-value-comparison]  # fixed protocol value
         request = ExecuteRequest(
             cmd, cwd, self.environment_variables, stdin, run_id, allow=self._allow_externals, capture=capture
         )
@@ -571,7 +575,7 @@ class ToxEnv(ABC):  # ruff:ignore[too-many-public-methods]
         executor: Execute,
         out_err: OutErr,
         request: ExecuteRequest,
-        show: bool,  # ruff:ignore[boolean-type-hint-positional-argument]
+        show: bool,  # ruff:ignore[boolean-type-hint-positional-argument]  # keeps the signature
     ) -> Generator[ExecuteStatus, None, None]:
         with executor.call(
             request=request,
@@ -605,7 +609,7 @@ class ToxEnv(ABC):  # ruff:ignore[too-many-public-methods]
         with log_file.open("ab") as file_b:
             if status.out:
                 file_b.write(status.out)
-            if status.err:  # pragma: no branch
+            if status.err:  # pragma: no branch  # other outcome untested
                 file_b.write(os.linesep.encode())
                 file_b.write(b"standard error:")
                 file_b.write(os.linesep.encode())
@@ -639,7 +643,10 @@ class ToxEnv(ABC):  # ruff:ignore[too-many-public-methods]
             self._allow_interrupted_execution = False
 
     @contextmanager
-    def display_context(self, suspend: bool) -> Generator[None, None, None]:  # ruff:ignore[boolean-type-hint-positional-argument]
+    def display_context(  # keeps the signature
+        self,
+        suspend: bool,  # ruff:ignore[boolean-type-hint-positional-argument]  # keeps the signature
+    ) -> Generator[None, None, None]:
         with self._log_context(), self.log_handler.suspend_out_err(suspend, self._suspended_out_err) as out_err:
             if suspend:  # only set if suspended
                 self._suspended_out_err = out_err
@@ -651,8 +658,8 @@ class ToxEnv(ABC):  # ruff:ignore[too-many-public-methods]
             yield
 
     def close_and_read_out_err(self) -> tuple[bytes, bytes] | None:
-        if self._suspended_out_err is None:  # pragma: no branch
-            return None  # pragma: no cover
+        if self._suspended_out_err is None:  # pragma: no branch  # other outcome untested
+            return None  # pragma: no cover  # untested error path
         (out, err), self._suspended_out_err = self._suspended_out_err, None
         out_b, err_b = cast("BytesIO", out.buffer).getvalue(), cast("BytesIO", err.buffer).getvalue()
         out.close()

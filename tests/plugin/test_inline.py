@@ -16,9 +16,9 @@ if TYPE_CHECKING:
 
 def test_inline_tox_py(tox_project: ToxProjectCreator) -> None:
     def plugin() -> None:  # pragma: no cover # the code is copied to a python file
-        import logging  # ruff:ignore[import-outside-top-level]
+        import logging  # ruff:ignore[import-outside-top-level]  # deferred import
 
-        from tox.plugin import impl  # ruff:ignore[import-outside-top-level]
+        from tox.plugin import impl  # ruff:ignore[import-outside-top-level]  # deferred import
 
         @impl
         def tox_add_option(parser: ToxParser) -> None:
@@ -98,7 +98,7 @@ def test_inline_help_invalid_conf_loads_project_plugin(
     tox_project: ToxProjectCreator, tmp_path: Path, files: dict[str, str], conf: str
 ) -> None:
     def plugin() -> None:  # pragma: no cover - copied to a plugin module
-        from tox.plugin import impl  # ruff:ignore[import-outside-top-level]
+        from tox.plugin import impl  # ruff:ignore[import-outside-top-level]  # deferred import
 
         @impl
         def tox_add_option(parser: ToxParser) -> None:
@@ -115,8 +115,8 @@ def test_inline_help_invalid_conf_loads_project_plugin(
 
 
 def test_toxfile_unknown_hook_skipped(tox_project: ToxProjectCreator) -> None:
-    def plugin() -> None:  # pragma: no cover
-        from tox.plugin import impl  # ruff:ignore[import-outside-top-level]
+    def plugin() -> None:  # pragma: no cover  # setup not built by tests
+        from tox.plugin import impl  # ruff:ignore[import-outside-top-level]  # deferred import
 
         @impl
         def tox_nonexistent_hook() -> None: ...
@@ -129,8 +129,8 @@ def test_toxfile_unknown_hook_skipped(tox_project: ToxProjectCreator) -> None:
 def test_toxfile_py_w_ephemeral_envs(tox_project: ToxProjectCreator) -> None:
     # Ensure additional ephemeral tox envs can be plugin-injected.
     def plugin() -> None:  # pragma: no cover # the code is copied to a python file
-        from tox.config.loader.memory import MemoryLoader  # ruff:ignore[import-outside-top-level]
-        from tox.plugin import impl  # ruff:ignore[import-outside-top-level]
+        from tox.config.loader.memory import MemoryLoader  # ruff:ignore[import-outside-top-level]  # deferred import
+        from tox.plugin import impl  # ruff:ignore[import-outside-top-level]  # deferred import
 
         env_name = "sentinel-env-name"
 
@@ -139,7 +139,10 @@ def test_toxfile_py_w_ephemeral_envs(tox_project: ToxProjectCreator) -> None:
             return (env_name,)
 
         @impl
-        def tox_add_core_config(core_conf: ConfigSet, state: State) -> None:  # ruff:ignore[unused-function-argument]
+        def tox_add_core_config(  # interface signature
+            core_conf: ConfigSet,  # ruff:ignore[unused-function-argument]  # interface signature
+            state: State,  # interface signature
+        ) -> None:
             in_memory_config_loader = MemoryLoader(
                 base=["sentinel-base"],
                 commands_pre=["sentinel-cmd"],

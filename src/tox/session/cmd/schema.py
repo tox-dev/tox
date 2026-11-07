@@ -47,7 +47,7 @@ def gen_schema(state: State) -> int:
     # interface includes the internal storage tuple
     sections = {
         key: conf
-        for s, conf in state.conf._key_to_conf_set.items()  # ruff:ignore[private-member-access]
+        for s, conf in state.conf._key_to_conf_set.items()  # ruff:ignore[private-member-access]  # internal access
         if (key := s[0].split(".")[0]) not in {"env_run_base", "env_pkg_base", "env"}
     }
     for key, conf in sections.items():
@@ -268,7 +268,7 @@ def gen_schema(state: State) -> int:
             },
         },
     }
-    print(json.dumps(json_schema, indent=2))  # ruff:ignore[print]
+    print(json.dumps(json_schema, indent=2))  # ruff:ignore[print]  # terminal output
     return 0
 
 
@@ -282,7 +282,7 @@ def _get_schema(conf: ConfigSet, path: str) -> dict[str, dict[str, typing.Any]]:
         try:
             properties[name] = {**_process_type(of_type), "description": desc}
         except ValueError:
-            print(name, "has unrecoginsed type:", of_type, file=sys.stderr)  # ruff:ignore[print]
+            print(name, "has unrecoginsed type:", of_type, file=sys.stderr)  # ruff:ignore[print]  # terminal output
         for alias in aliases:
             properties[alias] = {
                 "$ref": f"{path}/{name}",

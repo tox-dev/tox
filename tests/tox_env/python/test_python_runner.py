@@ -44,7 +44,7 @@ def test_deps_config_path_req(tox_project: ToxProjectCreator) -> None:
 def test_journal_package_empty() -> None:
     journal = EnvJournal(enabled=True, name="a")
 
-    PythonRun._handle_journal_package(journal, [])  # ruff:ignore[private-member-access]
+    PythonRun._handle_journal_package(journal, [])  # ruff:ignore[private-member-access]  # internal state
 
     content = journal.content
     assert content == {}
@@ -55,7 +55,9 @@ def test_journal_one_wheel_file(tmp_path: Path) -> None:
     wheel.write_bytes(b"magical")
     journal = EnvJournal(enabled=True, name="a")
 
-    PythonRun._handle_journal_package(journal, [PathPackage(wheel)])  # ruff:ignore[private-member-access]
+    PythonRun._handle_journal_package(  # ruff:ignore[private-member-access]  # internal state
+        journal, [PathPackage(wheel)]
+    )
 
     content = journal.content
     assert content == {
@@ -74,7 +76,9 @@ def test_journal_multiple_wheel_file(tmp_path: Path) -> None:
     wheel_2.write_bytes(b"magic")
     journal = EnvJournal(enabled=True, name="a")
 
-    PythonRun._handle_journal_package(journal, [PathPackage(wheel_1), PathPackage(wheel_2)])  # ruff:ignore[private-member-access]
+    PythonRun._handle_journal_package(  # ruff:ignore[private-member-access]  # internal state
+        journal, [PathPackage(wheel_1), PathPackage(wheel_2)]
+    )
 
     content = journal.content
     assert content == {
@@ -96,7 +100,9 @@ def test_journal_multiple_wheel_file(tmp_path: Path) -> None:
 def test_journal_package_dir(tmp_path: Path) -> None:
     journal = EnvJournal(enabled=True, name="a")
 
-    PythonRun._handle_journal_package(journal, [PathPackage(tmp_path)])  # ruff:ignore[private-member-access]
+    PythonRun._handle_journal_package(  # ruff:ignore[private-member-access]  # internal state
+        journal, [PathPackage(tmp_path)]
+    )
 
     content = journal.content
     assert content == {
@@ -841,7 +847,7 @@ def test_cmd_builder_load_deps_for_env() -> None:
     builder = MagicMock(spec=VenvCmdBuilder)
     mock_meta_env = MagicMock()
     mock_meta_env.load_deps_for_env.return_value = [Requirement("requests>=2")]
-    builder._sdist_meta_tox_env = mock_meta_env  # ruff:ignore[private-member-access]
+    builder._sdist_meta_tox_env = mock_meta_env  # ruff:ignore[private-member-access]  # internal state
     mock_conf = MagicMock()
 
     result = VenvCmdBuilder.load_deps_for_env(builder, mock_conf)

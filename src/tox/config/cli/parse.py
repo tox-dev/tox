@@ -41,7 +41,7 @@ def get_options(*args: str) -> Options:
 
 def _completion_args(args: tuple[str, ...]) -> tuple[tuple[str, ...], str]:
     try:
-        from argcomplete import lexers  # ruff:ignore[import-outside-top-level]
+        from argcomplete import lexers  # ruff:ignore[import-outside-top-level]  # avoids an import cycle
     except ImportError:
         return args, ""
     if "COMP_LINE" not in os.environ or "COMP_POINT" not in os.environ:
@@ -66,7 +66,7 @@ def _get_base(args: Sequence[str], completion_current: str | None) -> tuple[int,
         ToxParser.base().parse_known_args(args, namespace=parsed)
     guess_verbosity: Final = parsed.verbosity
     handler: Final = setup_report(guess_verbosity, parsed.is_colored)
-    from tox.plugin.manager import MANAGER, Plugin  # ruff:ignore[import-outside-top-level]
+    from tox.plugin.manager import MANAGER, Plugin  # ruff:ignore[import-outside-top-level]  # avoids an import cycle
 
     # Built-in and installed plugins can register option values before tox selects an inline plugin.
     preliminary: Final = Plugin()
@@ -129,7 +129,7 @@ def _get_base(args: Sequence[str], completion_current: str | None) -> tuple[int,
 
 
 def _empty_source(config_file: Path | None) -> Source:
-    from tox.config.source.tox_ini import ToxIni  # ruff:ignore[import-outside-top-level]
+    from tox.config.source.tox_ini import ToxIni  # ruff:ignore[import-outside-top-level]  # avoids an import cycle
 
     # The placeholder path also selects the directory searched for toxfile.py.
     if config_file is None:
@@ -140,7 +140,7 @@ def _empty_source(config_file: Path | None) -> Source:
 def _get_all(args: Sequence[str]) -> tuple[Parsed, dict[str, Callable[[State], int]]]:
     tox_parser = _get_parser()
     try:
-        import argcomplete  # ruff:ignore[import-outside-top-level]
+        import argcomplete  # ruff:ignore[import-outside-top-level]  # avoids an import cycle
 
         argcomplete.autocomplete(tox_parser)
     except ImportError:
@@ -176,7 +176,7 @@ def _get_parser_doc() -> ToxParser:
 
     MANAGER.load_plugins(Path.cwd())
 
-    parser = _get_parser()  # pragma: no cover
+    parser = _get_parser()  # pragma: no cover  # setup not built by tests
     # Remove epilog message from help when formatting website docs
     parser.epilog = None
     return parser

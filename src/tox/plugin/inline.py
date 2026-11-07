@@ -26,7 +26,7 @@ def _load_plugin(path: Path) -> ModuleType:
     sys.path.insert(0, str(in_folder))
     try:
         if module_name in sys.modules:
-            del sys.modules[module_name]  # pragma: no cover
+            del sys.modules[module_name]  # pragma: no cover  # untested error path
         return importlib.import_module(module_name)
     finally:
         del sys.path[0]

@@ -63,13 +63,13 @@ def test_local_execute_basic_pass(
     executor = LocalSubProcessExecutor(colored=color)
 
     tox_env = _create_mock_env()
-    tox_env.conf._conf.options.stderr_color = stderr_color  # ruff:ignore[private-member-access]
+    tox_env.conf._conf.options.stderr_color = stderr_color  # ruff:ignore[private-member-access]  # internal state
     code = f"import sys; print({out!r}, end=''); print({err!r}, end='', file=sys.stderr)"
     request = ExecuteRequest(cmd=[sys.executable, "-c", code], cwd=Path(), env=os_env, stdin=StdinSource.OFF, run_id="")
     out_err = FakeOutErr()
 
     with executor.call(request, show=show, out_err=out_err.out_err, env=tox_env) as status:
-        while status.exit_code is None:  # pragma: no branch
+        while status.exit_code is None:  # pragma: no branch  # other outcome untested
             status.wait()
     assert (status.out, status.err) == (out.encode(), err.encode())
     outcome = status.outcome
@@ -155,7 +155,7 @@ def test_local_execute_basic_pass_show_on_standard_newline_flush(caplog: LogCapt
     )
     out_err = FakeOutErr()
     with executor.call(request, show=True, out_err=out_err.out_err, env=_create_mock_env()) as status:
-        while status.exit_code is None:  # pragma: no branch
+        while status.exit_code is None:  # pragma: no branch  # other outcome untested
             status.wait()
     outcome = status.outcome
     assert outcome is not None
@@ -206,7 +206,7 @@ def test_local_execute_write_a_lot(os_env: dict[str, str]) -> None:
         run_id="",
     )
     with executor.call(request, show=False, out_err=FakeOutErr().out_err, env=_create_mock_env()) as status:
-        while status.exit_code is None:  # pragma: no branch
+        while status.exit_code is None:  # pragma: no branch  # other outcome untested
             status.wait()
     outcome = status.outcome
     assert outcome is not None
@@ -230,7 +230,7 @@ def test_local_execute_terminal_size(os_env: dict[str, str], monkeypatch: Monkey
     with (
         pipe_out,
         monkeypatch.context() as monkey,
-        open(  # ruff:ignore[builtin-open]
+        open(  # ruff:ignore[builtin-open]  # reads what subprocess wrote
             child, "w", encoding=locale.getpreferredencoding(False)
         ) as stdout_mock,
     ):
@@ -248,7 +248,7 @@ def test_local_execute_terminal_size(os_env: dict[str, str], monkeypatch: Monkey
             run_id="",
         )
         with executor.call(request, show=False, out_err=FakeOutErr().out_err, env=_create_mock_env()) as status:
-            while status.exit_code is None:  # pragma: no branch
+            while status.exit_code is None:  # pragma: no branch  # other outcome untested
                 status.wait()
     outcome = status.outcome
     assert outcome is not None
@@ -273,7 +273,7 @@ def test_local_execute_basic_fail(capsys: CaptureFixture, caplog: LogCaptureFixt
     # run test
     out_err = FakeOutErr()
     with executor.call(request, show=False, out_err=out_err.out_err, env=_create_mock_env()) as status:
-        while status.exit_code is None:  # pragma: no branch
+        while status.exit_code is None:  # pragma: no branch  # other outcome untested
             status.wait()
     outcome = status.outcome
     assert outcome is not None
@@ -326,8 +326,8 @@ def test_command_does_not_exist(caplog: LogCaptureFixture, os_env: dict[str, str
         run_id="",
     )
     with executor.call(request, show=False, out_err=FakeOutErr().out_err, env=_create_mock_env()) as status:
-        while status.exit_code is None:  # pragma: no branch
-            status.wait()  # pragma: no cover
+        while status.exit_code is None:  # pragma: no branch  # other outcome untested
+            status.wait()  # pragma: no cover  # setup not built by tests
     outcome = status.outcome
     assert outcome is not None
 
@@ -395,14 +395,16 @@ def test_command_keyboard_interrupt(tmp_path: Path, monkeypatch: MonkeyPatch, ca
     try:
         child = next(iter(psutil.Process(pid=root).children())).pid
     except AccessDenied as exc:  # pragma: no cover # on termux for example
-        pytest.skip(str(exc))  # pragma: no cover
-        raise  # pragma: no cover
+        pytest.skip(str(exc))  # pragma: no cover  # setup not built by tests
+        raise  # pragma: no cover  # untested error path
 
-    print(f"test running in {os.getpid()} and sending CTRL+C to {process.pid}", file=sys.stderr)  # ruff:ignore[print]
+    print(  # ruff:ignore[print]  # test output
+        f"test running in {os.getpid()} and sending CTRL+C to {process.pid}", file=sys.stderr
+    )
     process.send_signal(SIG_INTERRUPT)
     try:
         process.communicate(timeout=3)
-    except subprocess.TimeoutExpired:  # pragma: no cover
+    except subprocess.TimeoutExpired:  # pragma: no cover  # untested error path
         process.kill()
         raise
 
@@ -431,7 +433,7 @@ def test_pty_closes_fds_when_termios_fails(mocker: MockerFixture) -> None:
     openpty_spy = mocker.spy(pty, "openpty")
     close_spy = mocker.spy(os, "close")
 
-    result = local_sub_process._pty("stdout")  # ruff:ignore[private-member-access]
+    result = local_sub_process._pty("stdout")  # ruff:ignore[private-member-access]  # internal state
 
     assert result is None
     main, child = openpty_spy.spy_return
@@ -454,7 +456,7 @@ def test_local_subprocess_tty_closes_master_fd(monkeypatch: MonkeyPatch, mocker:
     cmd = [sys.executable, str(Path(__file__).parent / "tty_check.py")]
     request = ExecuteRequest(cmd=cmd, stdin=StdinSource.API, cwd=Path.cwd(), env=dict(os.environ), run_id="")
     with executor.call(request, show=False, out_err=FakeOutErr().out_err, env=_create_mock_env()) as status:
-        while status.exit_code is None:  # pragma: no branch
+        while status.exit_code is None:  # pragma: no branch  # other outcome untested
             status.wait()
 
     master_fds = [result[0] for result in pty_spy.spy_return_list]
@@ -516,7 +518,7 @@ def test_local_subprocess_tty(monkeypatch: MonkeyPatch, mocker: MockerFixture, t
     mocker.patch("sys.stdout.isatty", return_value=tty)
     mocker.patch("sys.stderr.isatty", return_value=tty)
     try:
-        import termios  # ruff:ignore[unused-import, import-outside-top-level]
+        import termios  # ruff:ignore[unused-import, import-outside-top-level]  # re-exported and deferred import
     except ImportError:
         exp_tty = False  # platforms without tty support at all
     else:
@@ -529,7 +531,7 @@ def test_local_subprocess_tty(monkeypatch: MonkeyPatch, mocker: MockerFixture, t
     cmd: list[str] = [sys.executable, str(Path(__file__).parent / "tty_check.py")]
     request = ExecuteRequest(cmd=cmd, stdin=StdinSource.API, cwd=Path.cwd(), env=dict(os.environ), run_id="")
     with executor.call(request, show=False, out_err=FakeOutErr().out_err, env=_create_mock_env()) as status:
-        while status.exit_code is None:  # pragma: no branch
+        while status.exit_code is None:  # pragma: no branch  # other outcome untested
             status.wait()
     outcome = status.outcome
     assert outcome is not None
@@ -695,7 +697,7 @@ def test_local_execute_does_not_overwrite(key: str, mocker: MockerFixture) -> No
     cmd = [sys.executable, "-c", f"import os; print(os.environ['{key}'], end='')"]
     request = ExecuteRequest(cmd=cmd, stdin=StdinSource.API, cwd=Path.cwd(), env=env, run_id="")
     with executor.call(request, show=False, out_err=FakeOutErr().out_err, env=_create_mock_env()) as status:
-        while status.exit_code is None:  # pragma: no branch
+        while status.exit_code is None:  # pragma: no branch  # other outcome untested
             status.wait()
     outcome = status.outcome
 
@@ -781,7 +783,7 @@ def test_read_via_thread_ebadf_during_read(mocker: MockerFixture) -> None:
         data_received.append(data)
         return len(data)
 
-    def mock_read(fd: int, n: int) -> NoReturn:  # ruff:ignore[unused-function-argument]
+    def mock_read(fd: int, n: int) -> NoReturn:  # ruff:ignore[unused-function-argument]  # interface signature
         err = OSError("Bad file descriptor")
         err.errno = errno.EBADF
         raise err
@@ -812,7 +814,9 @@ def test_read_via_thread_drain_no_data() -> None:
     read_fd, write_fd = os.pipe()
     try:
         os.close(write_fd)
-        ReadViaThreadUnix(read_fd, handler, "test", drain=True)._drain_stream()  # ruff:ignore[private-member-access]
+        ReadViaThreadUnix(  # ruff:ignore[private-member-access]  # internal state
+            read_fd, handler, "test", drain=True
+        )._drain_stream()
     finally:
         with contextlib.suppress(OSError):
             os.close(read_fd)

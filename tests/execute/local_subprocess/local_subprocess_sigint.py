@@ -38,18 +38,18 @@ out_err = (
 
 
 def show_outcome(outcome: Outcome | None) -> None:
-    if outcome is not None:  # pragma: no branch
-        print(outcome.exit_code)  # ruff:ignore[print]
-        print(repr(outcome.out))  # ruff:ignore[print]
-        print(repr(outcome.err))  # ruff:ignore[print]
-        print(outcome.elapsed, end="")  # ruff:ignore[print]
-        print("done show outcome", file=sys.stderr)  # ruff:ignore[print]
+    if outcome is not None:  # pragma: no branch  # other outcome untested
+        print(outcome.exit_code)  # ruff:ignore[print]  # test output
+        print(repr(outcome.out))  # ruff:ignore[print]  # test output
+        print(repr(outcome.err))  # ruff:ignore[print]  # test output
+        print(outcome.elapsed, end="")  # ruff:ignore[print]  # test output
+        print("done show outcome", file=sys.stderr)  # ruff:ignore[print]  # test output
 
 
 def handler(s: int, f: FrameType | None) -> None:
     logging.info("signal %s at %s", s, f)
-    global _INTERRUPT_DONE  # ruff:ignore[global-statement]
-    if _INTERRUPT_DONE is False:  # pragma: no branch
+    global _INTERRUPT_DONE  # ruff:ignore[global-statement]  # signal handler flag
+    if _INTERRUPT_DONE is False:  # pragma: no branch  # other outcome untested
         _INTERRUPT_DONE = True
         logging.info("interrupt via %s", status)
         status.interrupt()
@@ -73,8 +73,8 @@ try:
     with executor.call(request, show=False, out_err=out_err, env=tox_env) as status:
         _wait_for_exit(status)
     _STATUS_OUTCOME = status.outcome
-except Exception as exception:  # pragma: no cover
-    logging.exception(exception)  # ruff:ignore[verbose-log-message] # pragma: no cover
+except Exception as exception:  # pragma: no cover  # untested error path
+    logging.exception(exception)  # ruff:ignore[verbose-log-message] # pragma: no cover  # untested error path
 finally:
     logging.info("done")
     logging.shutdown()

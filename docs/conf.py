@@ -21,7 +21,7 @@ if TYPE_CHECKING:
 company, name = "tox-dev", "tox"
 project = name
 release, version = __version__, ".".join(__version__.split(".")[:2])
-copyright: Final[str] = f"{company}"  # ruff:ignore[builtin-variable-shadowing]
+copyright: Final[str] = f"{company}"  # ruff:ignore[builtin-variable-shadowing]  # Sphinx setting name
 html_theme: Final[str] = "furo"
 html_theme_options = {
     "sidebar_hide_name": True,
@@ -138,14 +138,14 @@ def setup(app: Sphinx) -> None:
     inject_into_ssl()
 
 
-def process_signature(  # ruff:ignore[too-many-arguments]
-    app: Sphinx,  # ruff:ignore[unused-function-argument]
+def process_signature(  # ruff:ignore[too-many-arguments]  # public signature
+    app: Sphinx,  # ruff:ignore[unused-function-argument]  # interface signature
     objtype: str,
-    name: str,  # ruff:ignore[unused-function-argument]
-    obj: Any,  # ruff:ignore[unused-function-argument]
+    name: str,  # ruff:ignore[unused-function-argument]  # interface signature
+    obj: Any,  # ruff:ignore[unused-function-argument]  # interface signature
     options: Options,
-    args: str | None,  # ruff:ignore[unused-function-argument]
-    retann: str | None,  # ruff:ignore[unused-function-argument]
+    args: str | None,  # ruff:ignore[unused-function-argument]  # interface signature
+    retann: str | None,  # ruff:ignore[unused-function-argument]  # interface signature
 ) -> tuple[None, None] | None:
     # skip-member is not checked for class level docs, so disable via signature processing
     if objtype == "class" and (exclude := options.get("exclude-members")) and "__init__" in exclude:

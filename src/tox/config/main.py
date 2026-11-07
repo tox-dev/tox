@@ -146,7 +146,7 @@ class Config:
             args: Final[list[str]] = []
             # Windows resolves parent segments before following directory links.
             if sys.platform == "win32":
-                to_path_str = os.path.abspath(str(to_path))  # ruff:ignore[os-path-abspath]
+                to_path_str = os.path.abspath(str(to_path))  # ruff:ignore[os-path-abspath]  # path as written
             else:
                 to_path_str = os.path.realpath(to_path)
             for index, arg in enumerate(self._pos_args):

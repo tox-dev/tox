@@ -1,4 +1,4 @@
-# pragma: no cover
+# pragma: no cover  # setup not built by tests
 from __future__ import annotations
 
 import os

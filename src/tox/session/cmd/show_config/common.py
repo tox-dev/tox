@@ -45,12 +45,12 @@ def _collect_conf(conf: ConfigSet, keys: list[str]) -> tuple[dict[str, JsonValue
     for key in keys or conf:
         if key not in conf:
             continue
-        key = conf.primary_key(key)  # ruff:ignore[redefined-loop-name]
+        key = conf.primary_key(key)  # ruff:ignore[redefined-loop-name]  # loop rebinding intended
         try:
             data[key] = to_native(conf[key])
         except Exception as exception:
-            if os.environ.get("_TOX_SHOW_CONFIG_RAISE"):  # pragma: no branch
-                raise  # pragma: no cover
+            if os.environ.get("_TOX_SHOW_CONFIG_RAISE"):  # pragma: no branch  # other outcome untested
+                raise  # pragma: no cover  # untested error path
             data[key] = {"error": format_config_error(exception)}
             has_exception = True
     if (unused := conf.unused()) and not keys:
@@ -67,13 +67,13 @@ def format_config_error(exception: Exception) -> str:
 def write_output(
     output: str,
     output_file: Path | None,
-    is_colored: bool,  # ruff:ignore[boolean-type-hint-positional-argument]
+    is_colored: bool,  # ruff:ignore[boolean-type-hint-positional-argument]  # keeps the signature
     colorize: Callable[[str], str],
 ) -> None:
     if output_file is not None:
         write_output_file(Path(output_file), output)
     else:
-        print(colorize(output) if is_colored else output)  # ruff:ignore[print]
+        print(colorize(output) if is_colored else output)  # ruff:ignore[print]  # terminal output
 
 
 def write_output_file(output_file: Path, output: str) -> None:

@@ -116,7 +116,11 @@ class VirtualEnv(Python, ABC):
             "older virtualenv only when the installed one can no longer create the targeted Python version.",
         )
 
-    def _default_virtualenv_spec(self, conf: Config, name: str | None) -> str:  # ruff:ignore[unused-method-argument]
+    def _default_virtualenv_spec(  # override signature
+        self,
+        conf: Config,  # ruff:ignore[unused-method-argument]  # override signature
+        name: str | None,  # ruff:ignore[unused-method-argument]  # override signature
+    ) -> str:
         return _auto_virtualenv_spec(self.conf["base_python"], virtualenv_version)
 
     @override
@@ -235,7 +239,7 @@ class VirtualEnv(Python, ABC):
             implementation=interpreter.implementation,
             version_info=VersionInfo(vi.major, vi.minor, vi.micro, vi.releaselevel, vi.serial),
             version=interpreter.version,
-            is_64=(interpreter.architecture == 64),  # ruff:ignore[magic-value-comparison]
+            is_64=(interpreter.architecture == 64),  # ruff:ignore[magic-value-comparison]  # fixed protocol value
             platform=interpreter.platform,
             extra={"executable": Path(sys_exe).resolve()},
             free_threaded=interpreter.free_threaded,
@@ -315,7 +319,7 @@ class VirtualEnv(Python, ABC):
 
         """
         from virtualenv.discovery import cached_py_info  # ruff:ignore[import-outside-top-level]
-        from virtualenv.discovery.py_info import (  # ruff:ignore[import-outside-top-level]
+        from virtualenv.discovery.py_info import (  # ruff:ignore[import-outside-top-level]  # avoids an import cycle
             PythonInfo as VirtualenvPythonInfo,
         )
 

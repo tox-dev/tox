@@ -133,7 +133,7 @@ class Spinner:
         exc_val: BaseException | None,
         exc_tb: TracebackType | None,
     ) -> None:
-        if not self._stop_spinner.is_set():  # pragma: no branch
+        if not self._stop_spinner.is_set():  # pragma: no branch  # other outcome untested
             if self._spinner_thread:  # pragma: no branch # hard to test
                 self._stop_spinner.set()
                 self._spinner_thread.join()
@@ -189,7 +189,9 @@ def td_human_readable(seconds: float) -> str:
     ]
     for period_name, period_seconds in periods:
         period_str = None
-        if period_name == "second" and (seconds >= 0.01 or not texts):  # ruff:ignore[magic-value-comparison]
+        if period_name == "second" and (  # fixed protocol value
+            seconds >= 0.01 or not texts  # ruff:ignore[magic-value-comparison]  # fixed protocol value
+        ):
             period_str = f"{seconds:.2f}".rstrip("0").rstrip(".")
         elif seconds >= period_seconds:
             period_value, seconds = divmod(seconds, period_seconds)

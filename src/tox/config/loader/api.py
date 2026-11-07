@@ -30,7 +30,7 @@ if TYPE_CHECKING:
     from .section import Section
 
 
-class Override:  # ruff:ignore[eq-without-hash]
+class Override:  # ruff:ignore[eq-without-hash]  # mutable value type
     """An override for config definitions.
 
     :param value: the ``[namespace.]key[+]=value`` text of the override
@@ -163,7 +163,7 @@ class Loader(Convert[T]):
         """Return the section of the configuration from where the values are extracted."""
         return self._section
 
-    def load(  # ruff:ignore[too-many-arguments]
+    def load(  # ruff:ignore[too-many-arguments]  # public signature
         self,
         key: str,
         of_type: type[V] | UnionType,
@@ -187,7 +187,7 @@ class Loader(Convert[T]):
         :raises ValueError: when the value cannot be converted to the requested type
 
         """
-        from tox.config.set_env import SetEnv  # ruff:ignore[import-outside-top-level]
+        from tox.config.set_env import SetEnv  # ruff:ignore[import-outside-top-level]  # avoids an import cycle
 
         overrides = [o for alias in (key, *all_keys) for o in self.overrides.get(alias, [])]
         converted: Any = None  # merged across loader/overrides, only the final cast can name the type
@@ -236,14 +236,14 @@ class Loader(Convert[T]):
         """
         raise NotImplementedError
 
-    def build(  # ruff:ignore[too-many-arguments]
+    def build(  # ruff:ignore[too-many-arguments]  # public signature
         self,
-        key: str,  # ruff:ignore[unused-method-argument]
+        key: str,  # ruff:ignore[unused-method-argument]  # override signature
         of_type: type[V] | UnionType,
         factory: Factory[V],
-        conf: Config | None,  # ruff:ignore[unused-method-argument]
+        conf: Config | None,  # ruff:ignore[unused-method-argument]  # override signature
         raw: T,
-        args: ConfigLoadArgs,  # ruff:ignore[unused-method-argument]
+        args: ConfigLoadArgs,  # ruff:ignore[unused-method-argument]  # override signature
     ) -> V:
         """Materialize the raw configuration value from the loader.
 

@@ -21,7 +21,9 @@ Factory = Callable[[object], T] | None  # note the argument is anything, due e.g
 class Convert(ABC, Generic[T]):
     """A class that converts a raw type to a given tox (python) type."""
 
-    def to(self, raw: T, of_type: type[V] | UnionType, factory: Factory[V]) -> V:  # ruff:ignore[too-many-return-statements]
+    def to(  # ruff:ignore[too-many-return-statements]  # distinct outcomes
+        self, raw: T, of_type: type[V] | UnionType, factory: Factory[V]
+    ) -> V:
         """Convert given raw type to python type.
 
         :param raw: the raw type
@@ -56,7 +58,9 @@ class Convert(ABC, Generic[T]):
             return factory(raw)
         return cast("Callable[[T], V]", of_type)(raw)
 
-    def _to_typing(self, raw: T, of_type: type[V] | UnionType, factory: Factory[V]) -> V:  # ruff:ignore[complex-structure, too-many-branches]
+    def _to_typing(  # ruff:ignore[complex-structure, too-many-branches]  # follows the protocol
+        self, raw: T, of_type: type[V] | UnionType, factory: Factory[V]
+    ) -> V:
         origin = get_origin(of_type) or of_type.__class__
         result: Any = _NO_MAPPING
         type_args = get_args(of_type)
@@ -75,13 +79,13 @@ class Convert(ABC, Generic[T]):
         elif origin in {Union, UnionType}:
             args: list[type[Any]] = list(type_args)
             none = type(None)
-            if len(args) == 2 and none in args:  # ruff:ignore[magic-value-comparison]
+            if len(args) == 2 and none in args:  # ruff:ignore[magic-value-comparison]  # fixed protocol value
                 if isinstance(raw, str):
                     raw = cast("T", raw.strip())
                 if raw is None or (isinstance(raw, str) and not raw):
                     result = None
                 else:
-                    new_type = next(i for i in args if i != none)  # pragma: no cover
+                    new_type = next(i for i in args if i != none)  # pragma: no cover  # setup not built by tests
                     result = self.to(raw, new_type, factory)
             elif any(get_origin(arg) is not None for arg in args):
                 for arg in args:

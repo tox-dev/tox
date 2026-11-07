@@ -38,7 +38,7 @@ def test_deps_bare_flag_no_argument(tmp_path: Path, flag: str) -> None:
     # A one-argument flag with no argument reports a clean error, not an IndexError.
     python_deps = PythonDeps(raw=flag, root=tmp_path)
     with pytest.raises(ValueError, match="expected one argument"):
-        python_deps.requirements  # ruff:ignore[useless-expression]
+        python_deps.requirements  # ruff:ignore[useless-expression]  # documents type for checker
 
 
 def test_deps_with_hash(tmp_path: Path) -> None:
@@ -135,7 +135,7 @@ def test_req_with_no_deps(tmp_path: Path) -> None:
     (tmp_path / "r.txt").write_text("--no-deps")
     python_deps = PythonDeps(raw="-rr.txt", root=tmp_path)
     with pytest.raises(ValueError, match="unrecognized arguments: --no-deps"):
-        python_deps.requirements  # ruff:ignore[useless-expression]
+        python_deps.requirements  # ruff:ignore[useless-expression]  # documents type for checker
 
 
 def test_opt_only_req_file(tmp_path: Path) -> None:
@@ -154,7 +154,7 @@ def test_opt_only_req_file(tmp_path: Path) -> None:
 )
 def test_req_iadd_after_read(tmp_path: Path, first: str, shown: list[str], pip_args: list[str]) -> None:
     deps = PythonDeps(raw=first, root=tmp_path)
-    deps.as_root_args  # ruff:ignore[useless-expression]
+    deps.as_root_args  # ruff:ignore[useless-expression]  # documents type for checker
     deps += PythonDeps(raw="bar", root=tmp_path)
     assert (deps.lines(), deps.as_root_args) == (shown, pip_args)
 
@@ -402,7 +402,7 @@ def test_deps_reference_in_command_keeps_substituted_operand(
 )
 def test_deps_show_raises_like_install(tmp_path: Path, raw: str) -> None:
     with pytest.raises(ValueError, match=r".") as from_install:
-        PythonDeps(raw, tmp_path).as_root_args  # ruff:ignore[useless-expression]
+        PythonDeps(raw, tmp_path).as_root_args  # ruff:ignore[useless-expression]  # documents type for checker
     with pytest.raises(ValueError, match=rf"^{re.escape(str(from_install.value))}$"):
         PythonDeps(raw, tmp_path).lines()
 

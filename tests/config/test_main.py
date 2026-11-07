@@ -559,7 +559,7 @@ commands = [["python", "-c", "print('{env_tmp_dir}')"]]
 package_glob = "{env_tmp_dir}/dist/*.whl"
 """,
     })
-    execute_calls = project.patch_execute(lambda r: 0)  # ruff:ignore[unused-lambda-argument]
+    execute_calls = project.patch_execute(lambda r: 0)  # ruff:ignore[unused-lambda-argument]  # callback signature
     project.run("r", "-e", "a")
     calls = [(i[0][0].conf.name, i[0][3].cmd) for i in execute_calls.call_args_list]
     pkg_cmds = [cmd for name, cmd in calls if name == ".build-a"]

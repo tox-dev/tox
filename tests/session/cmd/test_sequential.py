@@ -99,7 +99,7 @@ def test_run_sequential_quiet(tox_project: ToxProjectCreator) -> None:
 @pytest.mark.integration
 def test_result_json_sequential(
     tox_project: ToxProjectCreator,
-    enable_pip_pypi_access: str | None,  # ruff:ignore[unused-function-argument]
+    enable_pip_pypi_access: str | None,  # ruff:ignore[unused-function-argument]  # interface signature
 ) -> None:
     cmd = [
         "- python -c 'import sys; print(\"magic fail\", file=sys.stderr); sys.exit(1)'",
@@ -711,14 +711,14 @@ def test_no_capture_short_flag_with_result_json_fails(tox_project: ToxProjectCre
 
 def test_no_capture_flag_parsed(tox_project: ToxProjectCreator) -> None:
     project = tox_project({"tox.ini": "[testenv]\npackage=skip\ncommands=python -c 'print(\"hello\")'"})
-    execute_calls = project.patch_execute(lambda r: 0)  # ruff:ignore[unused-lambda-argument]
+    execute_calls = project.patch_execute(lambda r: 0)  # ruff:ignore[unused-lambda-argument]  # callback signature
     project.run("r", "-e", "py", "--no-capture").assert_success()
     assert execute_calls.call_count > 0
 
 
 def test_no_capture_short_flag_parsed(tox_project: ToxProjectCreator) -> None:
     project = tox_project({"tox.ini": "[testenv]\npackage=skip\ncommands=python -c 'print(\"hello\")'"})
-    execute_calls = project.patch_execute(lambda r: 0)  # ruff:ignore[unused-lambda-argument]
+    execute_calls = project.patch_execute(lambda r: 0)  # ruff:ignore[unused-lambda-argument]  # callback signature
     project.run("r", "-e", "py", "-i").assert_success()
     assert execute_calls.call_count > 0
 

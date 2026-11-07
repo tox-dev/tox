@@ -35,7 +35,13 @@ class LocalSubProcessPep517Executor(Execute):
 
     """
 
-    def __init__(self, colored: bool, cmd: Sequence[str], env: dict[str, str], cwd: Path) -> None:  # ruff:ignore[boolean-type-hint-positional-argument]
+    def __init__(  # keeps the signature
+        self,
+        colored: bool,  # ruff:ignore[boolean-type-hint-positional-argument]  # keeps the signature
+        cmd: Sequence[str],
+        env: dict[str, str],
+        cwd: Path,  # keeps the signature
+    ) -> None:
         super().__init__(colored)
         self.cmd = cmd
         self.env = env
@@ -67,7 +73,7 @@ class LocalSubProcessPep517Executor(Execute):
                 err=SyncWrite(name="pep517-err", target=None, color=None),  # not enabled no need to enter/exit
                 on_exit_drain=False,
             )
-            status = instance.__enter__()  # ruff:ignore[unnecessary-dunder-call]
+            status = instance.__enter__()  # ruff:ignore[unnecessary-dunder-call]  # explicit dunder call
             self._local_execute = instance, status
             process_exited = instance.process is None  # Popen failed (e.g. ENOENT)
             while True:
@@ -97,15 +103,15 @@ class LocalSubProcessPep517Executor(Execute):
 
     @staticmethod
     def _handler(into: bytearray, content: bytes) -> None:
-        into.extend(content)  # pragma: no cover
+        into.extend(content)  # pragma: no cover  # setup not built by tests
 
     def close(self) -> None:
-        if self._local_execute is not None:  # pragma: no branch
+        if self._local_execute is not None:  # pragma: no branch  # other outcome untested
             execute, _status = self._local_execute
             if execute.process is not None and execute.process.returncode is None:  # pragma: no cover
-                try:  # pragma: no cover
-                    execute.process.wait(timeout=0.1)  # pragma: no cover
-                except TimeoutExpired:  # pragma: no cover
+                try:  # pragma: no cover  # setup not built by tests
+                    execute.process.wait(timeout=0.1)  # pragma: no cover  # setup not built by tests
+                except TimeoutExpired:  # pragma: no cover  # untested error path
                     execute.process.terminate()  # pragma: no cover  # if does not stop on its own kill it
             execute.__exit__(None, None, None)
             self._local_execute = None

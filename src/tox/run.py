@@ -23,24 +23,26 @@ def run(args: Sequence[str] | None = None) -> None:
             result = main(sys.argv[1:] if args is None else args)
     except Exception as exception:
         if isinstance(exception, HandledError):
-            logging.error("%s| %s", type(exception).__name__, exception)  # ruff:ignore[error-instead-of-exception]
+            logging.error(  # ruff:ignore[error-instead-of-exception]  # expected error log
+                "%s| %s", type(exception).__name__, exception
+            )
             result = -2
         else:
             raise
     except KeyboardInterrupt:
         result = -2
     finally:
-        if "_TOX_SHOW_THREAD" in os.environ:  # pragma: no cover
-            import threading  # pragma: no cover  # ruff:ignore[import-outside-top-level]
+        if "_TOX_SHOW_THREAD" in os.environ:  # pragma: no cover  # setup not built by tests
+            import threading  # pragma: no cover  # ruff:ignore[import-outside-top-level]  # avoids an import cycle
 
-            for thread in threading.enumerate():  # pragma: no cover
-                print(thread)  # pragma: no cover  # ruff:ignore[print]
+            for thread in threading.enumerate():  # pragma: no cover  # setup not built by tests
+                print(thread)  # pragma: no cover  # ruff:ignore[print]  # terminal output
     raise SystemExit(result)
 
 
 def main(args: Sequence[str]) -> int:
     state = setup_state(args)
-    from .provision import provision  # ruff:ignore[import-outside-top-level]
+    from .provision import provision  # ruff:ignore[import-outside-top-level]  # avoids an import cycle
 
     if (result := provision(state)) is not False:
         return result

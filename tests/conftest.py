@@ -120,7 +120,10 @@ def patch_prev_py(mocker: MockerFixture) -> PatchPrevPy:
         is_free_threaded = sysconfig.get_config_var("Py_GIL_DISABLED") == 1 if free_threaded is None else free_threaded
         is_debug = bool(sysconfig.get_config_var("Py_DEBUG")) if debug is None else debug
 
-        def get_python(self: VirtualEnv, base_python: list[str]) -> PythonInfo | None:  # ruff:ignore[unused-function-argument]
+        def get_python(  # interface signature
+            self: VirtualEnv,  # ruff:ignore[unused-function-argument]  # interface signature
+            base_python: list[str],  # interface signature
+        ) -> PythonInfo | None:
             if base_python[0] == "py31" or (base_python[0] == prev_py and not has_prev):
                 return None
             major, minor, micro, release_level, serial = sys.version_info
@@ -146,7 +149,7 @@ def patch_prev_py(mocker: MockerFixture) -> PatchPrevPy:
 
 
 def pytest_configure(config: pytest.Config) -> None:
-    if (worker_id := os.environ.get("PYTEST_XDIST_WORKER")) is not None:  # pragma: no cover
+    if (worker_id := os.environ.get("PYTEST_XDIST_WORKER")) is not None:  # pragma: no cover  # setup not built by tests
         # virtualenv locks its app data, so sharing one across xdist workers throws off test timings
         app_data = mkdtemp(prefix=f"virtualenv-app-{worker_id}-")
         os.environ["VIRTUALENV_APP_DATA"] = app_data
@@ -187,7 +190,7 @@ def demo_pkg_inline_wheel(tmp_path_factory: pytest.TempPathFactory, demo_pkg_inl
 
 
 def build_pkg(dist_dir: Path, of: Path, distributions: Sequence[DistributionType], isolation: bool = True) -> Path:
-    from build.__main__ import build_package  # ruff:ignore[import-outside-top-level]
+    from build.__main__ import build_package  # ruff:ignore[import-outside-top-level]  # deferred import
 
     build_package(str(of), str(dist_dir), distributions=distributions, isolation=isolation)
     return next(dist_dir.iterdir())

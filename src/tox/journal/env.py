@@ -19,7 +19,11 @@ class EnvJournal:
 
     """
 
-    def __init__(self, enabled: bool, name: str) -> None:  # ruff:ignore[boolean-type-hint-positional-argument]
+    def __init__(  # keeps the signature
+        self,
+        enabled: bool,  # ruff:ignore[boolean-type-hint-positional-argument]  # keeps the signature
+        name: str,  # keeps the signature
+    ) -> None:
         self._enabled = enabled
         self.name = name
         self._content: dict[str, JsonValue] = {}

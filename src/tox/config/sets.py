@@ -67,7 +67,9 @@ class ConfigSet(ABC):
         :returns: the configuration value
 
         """
-        return self._defined[item].__call__(self._conf, self.loaders, ConfigLoadArgs(chain, self.name, self.env_name))  # ruff:ignore[unnecessary-dunder-call]
+        return self._defined[item].__call__(  # ruff:ignore[unnecessary-dunder-call]  # explicit dunder call
+            self._conf, self.loaders, ConfigLoadArgs(chain, self.name, self.env_name)
+        )
 
     @property
     def name(self) -> str:
@@ -170,7 +172,7 @@ class ConfigSet(ABC):
         factory: Factory[Any] | None = None,
     ) -> ConfigDynamicDefinition[V]: ...
 
-    def add_config(  # ruff:ignore[too-many-arguments]
+    def add_config(  # ruff:ignore[too-many-arguments]  # public signature
         self,
         keys: str | Sequence[str],
         of_type: type[V] | UnionType,
@@ -381,13 +383,21 @@ class CoreConfigSet(ConfigSet):
             folder = self.get("tox_root", Path) / folder
         return folder
 
-    def _default_work_dir(self, conf: Config, env_name: str | None) -> Path:  # ruff:ignore[unused-method-argument]
+    def _default_work_dir(  # override signature
+        self,
+        conf: Config,  # ruff:ignore[unused-method-argument]  # override signature
+        env_name: str | None,  # ruff:ignore[unused-method-argument]  # override signature
+    ) -> Path:
         return self.get("tox_root", Path) / ".tox"
 
     def _work_dir_post_process(self, folder: Path) -> Path:
         return self._conf.work_dir if self._conf.options.work_dir else self._relative_to_tox_root(folder)
 
-    def _default_temp_dir(self, conf: Config, env_name: str | None) -> Path:  # ruff:ignore[unused-method-argument]
+    def _default_temp_dir(  # override signature
+        self,
+        conf: Config,  # ruff:ignore[unused-method-argument]  # override signature
+        env_name: str | None,  # ruff:ignore[unused-method-argument]  # override signature
+    ) -> Path:
         return self.get("work_dir", Path) / ".tmp"
 
     @override

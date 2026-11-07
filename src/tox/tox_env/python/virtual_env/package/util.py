@@ -109,7 +109,7 @@ def _extract_extra_markers(req: Requirement) -> tuple[Requirement, set[str | Non
             new_markers.append(marker)
             marker = markers.pop(0) if markers else None
     if new_markers:
-        cast("Marker", req.marker)._markers = new_markers  # ruff:ignore[private-member-access]
+        cast("Marker", req.marker)._markers = new_markers  # ruff:ignore[private-member-access]  # internal access
     else:
         req.marker = None
     return req, extra_markers or {None}

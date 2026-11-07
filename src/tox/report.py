@@ -84,14 +84,18 @@ class _LogThreadLocal(local):
             self.name = previous
 
     @contextmanager
-    def suspend_out_err(self, yes: bool, out_err: OutErr | None = None) -> Generator[OutErr, None, None]:  # ruff:ignore[boolean-type-hint-positional-argument]
+    def suspend_out_err(  # keeps the signature
+        self,
+        yes: bool,  # ruff:ignore[boolean-type-hint-positional-argument]  # keeps the signature
+        out_err: OutErr | None = None,  # keeps the signature
+    ) -> Generator[OutErr, None, None]:
         previous_out, previous_err = self.out_err
         if yes:
-            if out_err is None:  # pragma: no branch
+            if out_err is None:  # pragma: no branch  # other outcome untested
                 out = self._make(f"out-{self.name}", previous_out)
                 err = self._make(f"err-{self.name}", previous_err)
             else:
-                out, err = out_err  # pragma: no cover
+                out, err = out_err  # pragma: no cover  # setup not built by tests
             self.out_err = out, err
         try:
             yield self.out_err
@@ -129,7 +133,12 @@ class ToxHandler(_STREAM_HANDLER_BASE):
 
     """
 
-    def __init__(self, level: int, is_colored: bool, out_err: OutErr) -> None:  # ruff:ignore[boolean-type-hint-positional-argument]
+    def __init__(  # keeps the signature
+        self,
+        level: int,
+        is_colored: bool,  # ruff:ignore[boolean-type-hint-positional-argument]  # keeps the signature
+        out_err: OutErr,  # keeps the signature
+    ) -> None:
         self._local = _LogThreadLocal(out_err)
         super().__init__(stream=self.stdout)
         if is_colored:
@@ -142,14 +151,22 @@ class ToxHandler(_STREAM_HANDLER_BASE):
         """:returns: the current standard output"""
         return self._local.out_err[0]
 
-    def _setup_level(self, is_colored: bool, level: int) -> None:  # ruff:ignore[boolean-type-hint-positional-argument]
+    def _setup_level(  # keeps the signature
+        self,
+        is_colored: bool,  # ruff:ignore[boolean-type-hint-positional-argument]  # keeps the signature
+        level: int,  # keeps the signature
+    ) -> None:
         self.setLevel(level)
         self._error_formatter = self._get_formatter(logging.ERROR, level, is_colored)
         self._warning_formatter = self._get_formatter(logging.WARNING, level, is_colored)
         self._remaining_formatter = self._get_formatter(logging.INFO, level, is_colored)
 
     @staticmethod
-    def _get_formatter(level: int, enabled_level: int, is_colored: bool) -> logging.Formatter:  # ruff:ignore[boolean-type-hint-positional-argument]
+    def _get_formatter(  # keeps the signature
+        level: int,
+        enabled_level: int,
+        is_colored: bool,  # ruff:ignore[boolean-type-hint-positional-argument]  # keeps the signature
+    ) -> logging.Formatter:
         color = ""
         if is_colored:
             if level >= logging.ERROR:
@@ -175,7 +192,7 @@ class ToxHandler(_STREAM_HANDLER_BASE):
     @override
     def name(self) -> str:  # pyrefly: ignore[bad-override] # the value follows the active tox env so it must be a property, pyrefly rejects that over a typeshed attribute: https://github.com/facebook/pyrefly/issues/2771
         """:returns: the current tox environment name"""
-        return self._local.name  # pragma: no cover
+        return self._local.name  # pragma: no cover  # untested error path
 
     @name.setter
     @override
@@ -206,7 +223,11 @@ class ToxHandler(_STREAM_HANDLER_BASE):
             yield
 
     @contextmanager
-    def suspend_out_err(self, yes: bool, out_err: OutErr | None = None) -> Generator[OutErr, None, None]:  # ruff:ignore[boolean-type-hint-positional-argument]
+    def suspend_out_err(  # keeps the signature
+        self,
+        yes: bool,  # ruff:ignore[boolean-type-hint-positional-argument]  # keeps the signature
+        out_err: OutErr | None = None,  # keeps the signature
+    ) -> Generator[OutErr, None, None]:
         with self._local.suspend_out_err(yes, out_err) as out_err_res:
             yield out_err_res
 
@@ -254,7 +275,10 @@ class ToxHandler(_STREAM_HANDLER_BASE):
         self._setup_level(self._is_colored, level)
 
 
-def setup_report(verbosity: int, is_colored: bool) -> ToxHandler:  # ruff:ignore[boolean-type-hint-positional-argument]
+def setup_report(  # keeps the signature
+    verbosity: int,
+    is_colored: bool,  # ruff:ignore[boolean-type-hint-positional-argument]  # keeps the signature
+) -> ToxHandler:
     for std_stream in (sys.stdout, sys.stderr):
         if isinstance(std_stream, TextIOWrapper):
             # Redirected Windows streams may use code pages that cannot encode tox output.

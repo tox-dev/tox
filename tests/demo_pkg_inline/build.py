@@ -82,7 +82,9 @@ metadata_files = {
 }
 
 
-def get_requires_for_build_wheel(config_settings: dict[str, str] | None = None) -> list[str]:  # ruff:ignore[unused-function-argument]
+def get_requires_for_build_wheel(  # interface signature
+    config_settings: dict[str, str] | None = None,  # ruff:ignore[unused-function-argument]  # interface signature
+) -> list[str]:
     return []  # pragma: no cover # only executed in non-host pythons
 
 
@@ -98,13 +100,13 @@ if os.environ.get("BACKEND_HAS_EDITABLE"):
 
 def build_wheel(
     wheel_directory: str,
-    config_settings: dict[str, str] | None = None,  # ruff:ignore[unused-function-argument]
+    config_settings: dict[str, str] | None = None,  # ruff:ignore[unused-function-argument]  # interface signature
     metadata_directory: str | None = None,
 ) -> str:
     base_name = f"{name}-{version}-py{sys.version_info[0]}-none-any.whl"
     path = Path(wheel_directory) / base_name
     with ZipFile(str(path), "w") as zip_file_handler:
-        for arc_name, data in content.items():  # pragma: no branch
+        for arc_name, data in content.items():  # pragma: no branch  # other outcome untested
             zip_file_handler.writestr(arc_name, dedent(data).strip())
         if metadata_directory is not None:
             for sub_directory, _, filenames in os.walk(metadata_directory):
@@ -116,11 +118,14 @@ def build_wheel(
         else:
             for arc_name, data in metadata_files.items():
                 zip_file_handler.writestr(arc_name, dedent(data).strip())
-    print(f"created wheel {path}")  # ruff:ignore[print]
+    print(f"created wheel {path}")  # ruff:ignore[print]  # test output
     return base_name
 
 
-def build_sdist(sdist_directory: str, config_settings: dict[str, str] | None = None) -> str:  # ruff:ignore[unused-function-argument]
+def build_sdist(  # interface signature
+    sdist_directory: str,
+    config_settings: dict[str, str] | None = None,  # ruff:ignore[unused-function-argument]  # interface signature
+) -> str:
     result = f"{name}-{version}.tar.gz"  # pragma: win32 cover
     with tarfile.open(str(Path(sdist_directory) / result), "w:gz") as tar:  # pragma: win32 cover
         root = Path(__file__).parent  # pragma: win32 cover
@@ -129,5 +134,7 @@ def build_sdist(sdist_directory: str, config_settings: dict[str, str] | None = N
     return result  # pragma: win32 cover
 
 
-def get_requires_for_build_sdist(config_settings: dict[str, str] | None = None) -> list[str]:  # ruff:ignore[unused-function-argument]
+def get_requires_for_build_sdist(  # interface signature
+    config_settings: dict[str, str] | None = None,  # ruff:ignore[unused-function-argument]  # interface signature
+) -> list[str]:
     return []  # pragma: no cover # only executed in non-host pythons

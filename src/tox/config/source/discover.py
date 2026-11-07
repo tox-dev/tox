@@ -100,7 +100,7 @@ def _load_exact_source(config_file: Path) -> Source:
         msg = f"config file {config_file} does not exist"
         raise HandledError(msg)
     exact_match = [s for s in SOURCE_TYPES if config_file.name == s.FILENAME]  # pragma: no cover
-    for src_type in exact_match or SOURCE_TYPES:  # pragma: no branch
+    for src_type in exact_match or SOURCE_TYPES:  # pragma: no branch  # other outcome untested
         try:
             return src_type(config_file)
         except MissingRequiredConfigKeyError:

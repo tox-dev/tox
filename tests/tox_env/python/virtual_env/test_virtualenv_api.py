@@ -27,8 +27,8 @@ if TYPE_CHECKING:
 @pytest.fixture
 def virtualenv_opt(monkeypatch: MonkeyPatch, mocker: MockerFixture) -> VirtualEnvOptions:
     for key in os.environ:
-        if key.startswith("VIRTUALENV_"):  # pragma: no cover
-            monkeypatch.delenv(key)  # pragma: no cover
+        if key.startswith("VIRTUALENV_"):  # pragma: no cover  # setup not built by tests
+            monkeypatch.delenv(key)  # pragma: no cover  # setup not built by tests
     opts = VirtualEnvOptions()
     mocker.patch(
         "tox.tox_env.python.virtual_env.api.session_via_cli",
@@ -174,7 +174,7 @@ def test_recreate_when_virtualenv_changes(tox_project: ToxProjectCreator, mocker
     proj = tox_project({"tox.ini": "[testenv]\npackage=skip"})
     proj.run("r")
 
-    from tox.tox_env.python.virtual_env import api  # ruff:ignore[import-outside-top-level]
+    from tox.tox_env.python.virtual_env import api  # ruff:ignore[import-outside-top-level]  # deferred import
 
     mocker.patch.object(api, "virtualenv_version", "1.0")
     result = proj.run("r")

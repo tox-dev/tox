@@ -72,11 +72,11 @@ class Plugin:
         for plugin in self.manager.get_plugins():  # make sure we start with a clean state, repeated in memory run
             self.manager.unregister(plugin)
         self._register_plugins(None if path is None else _load_inline(path))
-        REGISTER._register_tox_env_types(self)  # ruff:ignore[private-member-access]
+        REGISTER._register_tox_env_types(self)  # ruff:ignore[private-member-access]  # internal access
 
     def _register_plugins(self, inline: ModuleType | None) -> None:
-        from tox.session import state  # ruff:ignore[import-outside-top-level]
-        from tox.session.cmd import (  # ruff:ignore[import-outside-top-level]
+        from tox.session import state  # ruff:ignore[import-outside-top-level]  # avoids an import cycle
+        from tox.session.cmd import (  # ruff:ignore[import-outside-top-level]  # avoids an import cycle
             depends,
             devenv,
             exec_,

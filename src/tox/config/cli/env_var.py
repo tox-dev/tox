@@ -35,7 +35,7 @@ def get_env_var(key: str, of_type: type[Any] | UnionType) -> tuple[Any, str] | N
                     result = [CONVERT.to(raw=v, of_type=entry_type, factory=None) for v in value.split(";") if v]
                 else:
                     result = CONVERT.to(raw=value, of_type=of_type, factory=None)
-            except Exception as exception:  # ruff:ignore[blind-except]
+            except Exception as exception:  # ruff:ignore[blind-except]  # failure must not stop run
                 redacted_value = redact_argv([value])[0]
                 logging.warning(
                     "env var %s=%r cannot be transformed to %r because %s",

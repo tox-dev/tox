@@ -20,7 +20,13 @@ READ_CHUNK_SIZE: Final[int] = 32768  # pragma: win32 no cover
 
 
 class ReadViaThreadUnix(ReadViaThread):  # pragma: win32 no cover
-    def __init__(self, file_no: int, handler: Callable[[bytes], int], name: str, drain: bool) -> None:  # ruff:ignore[boolean-type-hint-positional-argument]
+    def __init__(  # keeps the signature
+        self,
+        file_no: int,
+        handler: Callable[[bytes], int],
+        name: str,
+        drain: bool,  # ruff:ignore[boolean-type-hint-positional-argument]  # keeps the signature
+    ) -> None:
         super().__init__(file_no, handler, name, drain)
 
     @override
@@ -28,7 +34,7 @@ class ReadViaThreadUnix(ReadViaThread):  # pragma: win32 no cover
         selector = selectors.DefaultSelector()
         try:
             selector.register(self.file_no, selectors.EVENT_READ)
-        except (OSError, ValueError):  # pragma: no cover
+        except (OSError, ValueError):  # pragma: no cover  # untested error path
             return
 
         try:
@@ -57,8 +63,8 @@ class ReadViaThreadUnix(ReadViaThread):  # pragma: win32 no cover
         except OSError as exception:
             if exception.errno == errno.EINTR:
                 return
-            if exception.errno not in {errno.EBADF, errno.EIO}:  # pragma: no cover
-                raise  # pragma: no cover
+            if exception.errno not in {errno.EBADF, errno.EIO}:  # pragma: no cover  # setup not built by tests
+                raise  # pragma: no cover  # untested error path
             data = b""
 
         if data:
@@ -76,7 +82,7 @@ class ReadViaThreadUnix(ReadViaThread):  # pragma: win32 no cover
         selector = selectors.DefaultSelector()
         try:
             selector.register(self.file_no, selectors.EVENT_READ)
-        except (OSError, ValueError):  # pragma: no cover
+        except (OSError, ValueError):  # pragma: no cover  # untested error path
             return
 
         with contextlib.closing(selector):
@@ -85,7 +91,7 @@ class ReadViaThreadUnix(ReadViaThread):  # pragma: win32 no cover
                     ready = selector.select(timeout=0)
                 except (InterruptedError, OSError) as exception:
                     if isinstance(exception, OSError) and exception.errno != errno.EINTR:  # pragma: no cover
-                        raise  # pragma: no cover
+                        raise  # pragma: no cover  # untested error path
                     continue
 
                 if not ready:

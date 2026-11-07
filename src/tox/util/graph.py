@@ -5,7 +5,9 @@ from __future__ import annotations
 from collections import OrderedDict, defaultdict
 
 
-def stable_topological_sort(graph: dict[str, set[str]]) -> list[str]:  # ruff:ignore[complex-structure]
+def stable_topological_sort(  # ruff:ignore[complex-structure]  # follows the protocol
+    graph: dict[str, set[str]],
+) -> list[str]:
     to_order = set(graph.keys())  # keep a log of what  we need to order
 
     # normalize graph - fill missing nodes (assume no dependency)
@@ -44,8 +46,8 @@ def stable_topological_sort(graph: dict[str, set[str]]) -> list[str]:  # ruff:ig
 
     if len(result) < len(to_order):
         identify_cycle(graph)
-        msg = "could not order tox environments and failed to detect circle"  # pragma: no cover
-        raise ValueError(msg)  # pragma: no cover
+        msg = "could not order tox environments and failed to detect circle"  # pragma: no cover  # untested error path
+        raise ValueError(msg)  # pragma: no cover  # untested error path
     return result
 
 

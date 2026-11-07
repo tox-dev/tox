@@ -21,7 +21,7 @@ def stringify_reference(value: object, *, constant: bool) -> str:
     return as_str
 
 
-def stringify(value: object) -> tuple[str, bool]:  # ruff:ignore[too-many-return-statements]
+def stringify(value: object) -> tuple[str, bool]:  # ruff:ignore[too-many-return-statements]  # distinct outcomes
     if isinstance(value, str):
         return value, False
     if isinstance(value, (Path, float, int, bool)):

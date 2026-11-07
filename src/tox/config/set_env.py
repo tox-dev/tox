@@ -93,7 +93,13 @@ class SetEnv:
             self._parse_str(raw, substituted=substituted)
 
     @staticmethod
-    def _keep_text(value: SetEnvValue, _args: ConfigLoadArgs, /, *, recursive: bool = True) -> str:  # ruff:ignore[unused-static-method-argument]
+    def _keep_text(  # interface signature
+        value: SetEnvValue,
+        _args: ConfigLoadArgs,
+        /,
+        *,
+        recursive: bool = True,  # ruff:ignore[unused-static-method-argument]  # interface signature
+    ) -> str:
         if isinstance(value, str):  # without a loader there is nothing to substitute
             return value
         msg = f"set_env value {value!r} needs a configuration loader to resolve"
@@ -172,7 +178,7 @@ class SetEnv:
                 not substituted or any(isinstance(expr, MatchExpression) for expr in find_replace_expr(line))
             ):
                 msg = f"invalid line {line!r} in set_env"
-                raise ValueError(msg)  # ruff:ignore[raise-within-try]
+                raise ValueError(msg)  # ruff:ignore[raise-within-try]  # maps error in try
         except ValueError:
             if any(isinstance(expr, MatchExpression) for expr in find_replace_expr(line)):
                 self._needs_replacement.append(line)

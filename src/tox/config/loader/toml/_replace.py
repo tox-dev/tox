@@ -259,7 +259,7 @@ def _replace_glob_toml(conf: Config | None, value: dict[str, Any]) -> list[TomlT
     if conf is not None and not Path(pattern).is_absolute():
         pattern = str(Path(glob.escape(str(conf.core["tox_root"]))) / pattern)
     extending = value.get("extend", False)
-    if matches := sorted(glob.glob(pattern, recursive=True)):  # ruff:ignore[glob]
+    if matches := sorted(glob.glob(pattern, recursive=True)):  # ruff:ignore[glob]  # matches user pattern
         extended: list[TomlTypes] = list(matches)
         return extended if extending else " ".join(matches)
     default = value.get("default")
@@ -379,7 +379,7 @@ class TomlReplaceLoader(ReplaceReference):
                         return self._load_reference_value(src, settings["key"], conf_args)
                     except KeyError as exc:  # if fails, keep trying maybe another source can satisfy
                         exception = exc
-            except Exception as exc:  # ruff:ignore[blind-except]
+            except Exception as exc:  # ruff:ignore[blind-except]  # failure must not stop run
                 exception = exc
             if exception is not None:
                 if isinstance(exception, KeyError):  # if the lookup failed replace - else keep
@@ -391,7 +391,7 @@ class TomlReplaceLoader(ReplaceReference):
 
     def _config_value_sources(self, sec: str | None, current_env: str | None) -> Iterator[ConfigSet | RawLoader]:
         if sec is None:
-            if current_env is not None:  # pragma: no branch
+            if current_env is not None:  # pragma: no branch  # other outcome untested
                 yield self.conf.get_env(current_env)
             yield self.conf.core
             return
@@ -425,7 +425,11 @@ class RawLoader:
         self._loader = loader
         self._section = section
 
-    def load(self, item: str, chain: list[str] | None = None) -> Any:  # ruff:ignore[unused-method-argument]
+    def load(  # override signature
+        self,
+        item: str,
+        chain: list[str] | None = None,  # ruff:ignore[unused-method-argument]  # override signature
+    ) -> Any:
         return self._loader.load_raw_from_root(f"{self._section}{self._loader.section.SEP}{item}")
 
 

@@ -126,7 +126,7 @@ def test_replace_env_var_circular_fan_out_many(
 def reset_env_var_after_delay(monkeypatch: MonkeyPatch) -> Generator[threading.Thread, None, None]:
     timeout = 2
 
-    def avoid_infinite_loop() -> None:  # pragma: no cover
+    def avoid_infinite_loop() -> None:  # pragma: no cover  # setup not built by tests
         monkeypatch.setenv("TRAGIC", f"envvar forcibly reset after {timeout} sec")
 
     timer = threading.Timer(2, avoid_infinite_loop)

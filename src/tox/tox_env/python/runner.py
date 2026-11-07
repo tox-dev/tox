@@ -143,7 +143,7 @@ class PythonRun(Python, RunToxEnv, ABC):
         extras = self.conf.get("extras", set[str])
         if (deps := resolve_extras_static(self.core.get("package_root", Path), extras)) is None:
             package_env = self.package_env
-            assert package_env is not None  # ruff:ignore[assert]
+            assert package_env is not None  # ruff:ignore[assert]  # invariant, narrows type
             with package_env.display_context(self._has_display_suspended):
                 deps = package_env.load_deps_for_env(self.conf)
         if deps and not self.options.package_only:
@@ -225,7 +225,7 @@ class PythonRun(Python, RunToxEnv, ABC):
     @override
     def _build_packages(self) -> list[Package]:
         package_env = self.package_env
-        assert package_env is not None  # ruff:ignore[assert]
+        assert package_env is not None  # ruff:ignore[assert]  # invariant, narrows type
         with package_env.display_context(self._has_display_suspended):
             try:
                 packages = package_env.perform_packaging(self.conf)

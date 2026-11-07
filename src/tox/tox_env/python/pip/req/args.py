@@ -87,7 +87,7 @@ class BinaryAction(Action):
         values: str | Sequence[Any] | None,
         option_string: str | None = None,
     ) -> None:
-        assert values is not None  # ruff:ignore[assert]
+        assert values is not None  # ruff:ignore[assert]  # invariant, narrows type
         namespace.binary_options = [*(namespace.binary_options or []), (self.const, values[0])]
 
 

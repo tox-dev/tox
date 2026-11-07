@@ -50,7 +50,7 @@ def test_version_with_plugin(tox_project: ToxProjectCreator, mocker: MockFixture
 
 @pytest.mark.plugin_test
 def test_version_with_inline_plugin(tox_project: ToxProjectCreator) -> None:
-    def plugin() -> None:  # pragma: no cover
+    def plugin() -> None:  # pragma: no cover  # setup not built by tests
         pass
 
     outcome = tox_project({"tox.ini": "", "toxfile.py": plugin}).run("--version")
@@ -62,7 +62,7 @@ def test_version_with_inline_plugin(tox_project: ToxProjectCreator) -> None:
 
 @pytest.mark.plugin_test
 def test_version_with_inline_plugin_append_version_info(tox_project: ToxProjectCreator) -> None:
-    def plugin() -> None:  # pragma: no cover
+    def plugin() -> None:  # pragma: no cover  # setup not built by tests
         def tox_append_version_info() -> str:
             return "custom-info-v1"
 

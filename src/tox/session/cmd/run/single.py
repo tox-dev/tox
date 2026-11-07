@@ -20,7 +20,11 @@ if TYPE_CHECKING:
 LOGGER = logging.getLogger(__name__)
 
 
-def run_one(tox_env: RunToxEnv, no_test: bool, suspend_display: bool) -> ToxEnvRunResult:  # ruff:ignore[boolean-type-hint-positional-argument]
+def run_one(  # keeps the signature
+    tox_env: RunToxEnv,
+    no_test: bool,  # ruff:ignore[boolean-type-hint-positional-argument]  # keeps the signature
+    suspend_display: bool,  # ruff:ignore[boolean-type-hint-positional-argument]  # keeps the signature
+) -> ToxEnvRunResult:
     start_one = time.monotonic()
     name = tox_env.conf.name
     with tox_env.display_context(suspend_display):
@@ -31,14 +35,20 @@ def run_one(tox_env: RunToxEnv, no_test: bool, suspend_display: bool) -> ToxEnvR
     )
 
 
-def _evaluate(tox_env: RunToxEnv, no_test: bool) -> tuple[bool, int, list[Outcome]]:  # ruff:ignore[boolean-type-hint-positional-argument]
+def _evaluate(  # keeps the signature
+    tox_env: RunToxEnv,
+    no_test: bool,  # ruff:ignore[boolean-type-hint-positional-argument]  # keeps the signature
+) -> tuple[bool, int, list[Outcome]]:
     try:
         return _run_with_teardown(tox_env, no_test)
     except SystemExit as exception:  # setup command fails (interrupted or via invocation)
         return False, cast("int", exception.code), []
 
 
-def _run_with_teardown(tox_env: RunToxEnv, no_test: bool) -> tuple[bool, int, list[Outcome]]:  # ruff:ignore[boolean-type-hint-positional-argument]
+def _run_with_teardown(  # keeps the signature
+    tox_env: RunToxEnv,
+    no_test: bool,  # ruff:ignore[boolean-type-hint-positional-argument]  # keeps the signature
+) -> tuple[bool, int, list[Outcome]]:
     skipped = False
     code: int = 0
     outcomes: list[Outcome] = []
@@ -50,23 +60,26 @@ def _run_with_teardown(tox_env: RunToxEnv, no_test: bool) -> tuple[bool, int, li
         code = 0
         skipped = True
     except ToxBackendFailed as exception:
-        LOGGER.error("%s", exception)  # ruff:ignore[error-instead-of-exception]
-        raise SystemExit(exception.code)  # ruff:ignore[raise-without-from-inside-except]
+        LOGGER.error("%s", exception)  # ruff:ignore[error-instead-of-exception]  # expected error log
+        raise SystemExit(exception.code)  # ruff:ignore[raise-without-from-inside-except]  # original error not chained
     except Fail as exception:
-        LOGGER.error("failed with %s", exception)  # ruff:ignore[error-instead-of-exception]
+        LOGGER.error("failed with %s", exception)  # ruff:ignore[error-instead-of-exception]  # expected error log
         code = 1
     except HandledError as exception:
-        LOGGER.error("%s", exception)  # ruff:ignore[error-instead-of-exception]
+        LOGGER.error("%s", exception)  # ruff:ignore[error-instead-of-exception]  # expected error log
         code = 1
-    except Exception:  # pragma: no cover
-        LOGGER.exception("internal error")  # pragma: no cover
-        code = 2  # pragma: no cover
+    except Exception:  # pragma: no cover  # untested error path
+        LOGGER.exception("internal error")  # pragma: no cover  # untested error path
+        code = 2  # pragma: no cover  # untested error path
     finally:
         tox_env.teardown()
     return skipped, code, outcomes
 
 
-def run_commands(tox_env: RunToxEnv, no_test: bool) -> tuple[int, list[Outcome]]:  # ruff:ignore[boolean-type-hint-positional-argument]
+def run_commands(  # keeps the signature
+    tox_env: RunToxEnv,
+    no_test: bool,  # ruff:ignore[boolean-type-hint-positional-argument]  # keeps the signature
+) -> tuple[int, list[Outcome]]:
     outcomes: list[Outcome] = []
     if no_test:
         exit_code = Outcome.OK
@@ -95,11 +108,11 @@ def run_commands(tox_env: RunToxEnv, no_test: bool) -> tuple[int, list[Outcome]]
     return exit_code, outcomes
 
 
-def run_command_set(  # ruff:ignore[too-many-arguments]
+def run_command_set(  # ruff:ignore[too-many-arguments]  # public signature
     tox_env: ToxEnv,
     key: str,
     cwd: Path,
-    ignore_errors: bool,  # ruff:ignore[boolean-type-hint-positional-argument]
+    ignore_errors: bool,  # ruff:ignore[boolean-type-hint-positional-argument]  # keeps the signature
     outcomes: list[Outcome],
     retry_count: int = 0,
 ) -> int:

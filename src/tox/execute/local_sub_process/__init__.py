@@ -84,9 +84,9 @@ class LocalSubProcessExecuteInstance(ExecuteInstance):
     def __enter__(self) -> ExecuteStatus:
         # adjust sub-process terminal size
         columns, lines = shutil.get_terminal_size(fallback=(-1, -1))
-        if columns != -1:  # pragma: no branch
+        if columns != -1:  # pragma: no branch  # other outcome untested
             self.request.env.setdefault("COLUMNS", str(columns))
-        if lines != -1:  # pragma: no branch
+        if lines != -1:  # pragma: no branch  # other outcome untested
             self.request.env.setdefault("LINES", str(lines))
 
         stdout, stderr = self.get_stream_file_no("stdout"), self.get_stream_file_no("stderr")
@@ -117,7 +117,9 @@ class LocalSubProcessExecuteInstance(ExecuteInstance):
             error = str(exception)
             if isinstance(exception.filename, str):
                 error = error.replace(repr(exception.filename), repr(redact_argv([exception.filename])[0]))
-            logging.error("Exception running subprocess %s", error)  # ruff:ignore[error-instead-of-exception]
+            logging.error(  # ruff:ignore[error-instead-of-exception]  # expected error log
+                "Exception running subprocess %s", error
+            )
             return LocalSubprocessExecuteFailedStatus(self.options, self._out, self._err, exception)
 
         status = LocalSubprocessExecuteStatus(self.options, self._out, self._err, process)
@@ -203,7 +205,7 @@ class LocalSubProcessExecuteInstance(ExecuteInstance):
                 if stream is not None and not getattr(stream, "closed", False):
                     try:
                         stream.close()
-                    except OSError as exc:  # pragma: no cover
+                    except OSError as exc:  # pragma: no cover  # untested error path
                         logging.warning("error while trying to close %r with %r", stream, exc)  # pragma: no cover
         # release any file descriptors the stream generators still own (e.g. a pty master fd, which is not
         # exposed as a process stream and would otherwise leak); the read threads above have already stopped
@@ -213,9 +215,9 @@ class LocalSubProcessExecuteInstance(ExecuteInstance):
 
     def set_out_err(self, out: SyncWrite, err: SyncWrite) -> tuple[SyncWrite, SyncWrite]:
         prev = self._out, self._err
-        if self._read_stdout is not None:  # pragma: no branch
+        if self._read_stdout is not None:  # pragma: no branch  # other outcome untested
             self._read_stdout.handler = out.handler
-        if self._read_stderr is not None:  # pragma: no branch
+        if self._read_stderr is not None:  # pragma: no branch  # other outcome untested
             self._read_stderr.handler = err.handler
         return prev
 
@@ -300,14 +302,14 @@ class LocalSubprocessExecuteStatus(ExecuteStatus):
     @override
     def write_stdin(self, content: str) -> None:
         stdin = self._process.stdin
-        if stdin is None:  # pragma: no branch
-            return  # pragma: no cover
+        if stdin is None:  # pragma: no branch  # other outcome untested
+            return  # pragma: no cover  # untested error path
         try:
             self._write_stdin_bytes(stdin, content.encode())
-        except OSError:  # pragma: no cover
-            if self._interrupted:  # pragma: no cover
+        except OSError:  # pragma: no cover  # untested error path
+            if self._interrupted:  # pragma: no cover  # setup not built by tests
                 pass  # pragma: no cover  # if the process was asked to exit in the meantime ignore write errors
-            raise  # pragma: no cover
+            raise  # pragma: no cover  # untested error path
 
     @staticmethod
     def _write_stdin_bytes(stdin: Any, bytes_content: bytes) -> None:
@@ -348,17 +350,17 @@ def _pty(key: str) -> tuple[int, int] | None:
         return None
 
     try:
-        import fcntl  # ruff:ignore[import-outside-top-level]
-        import pty  # ruff:ignore[import-outside-top-level]
-        import struct  # ruff:ignore[import-outside-top-level]
-        import termios  # ruff:ignore[import-outside-top-level]
-    except ImportError:  # pragma: no cover
+        import fcntl  # ruff:ignore[import-outside-top-level]  # avoids an import cycle
+        import pty  # ruff:ignore[import-outside-top-level]  # avoids an import cycle
+        import struct  # ruff:ignore[import-outside-top-level]  # avoids an import cycle
+        import termios  # ruff:ignore[import-outside-top-level]  # avoids an import cycle
+    except ImportError:  # pragma: no cover  # untested error path
         return None  # cannot proceed on platforms without pty support
 
     try:
         main, child = pty.openpty()  # Unix-only
     except OSError:  # could not open a tty
-        return None  # pragma: no cover
+        return None  # pragma: no cover  # untested error path
 
     try:
         mode = termios.tcgetattr(stream)  # Unix-only

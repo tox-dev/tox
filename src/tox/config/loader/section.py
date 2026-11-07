@@ -8,7 +8,7 @@ if TYPE_CHECKING:
     from typing import Self
 
 
-class Section:  # ruff:ignore[eq-without-hash]
+class Section:  # ruff:ignore[eq-without-hash]  # mutable value type
     """tox configuration section.
 
     :param prefix: the prefix that groups the keys of the section

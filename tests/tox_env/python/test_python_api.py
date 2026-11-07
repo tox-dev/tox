@@ -102,13 +102,17 @@ def test_blank_base_python_entries_skipped(tox_project: ToxProjectCreator) -> No
 
 
 def test_validate_base_python_conflicting_factors_ignore() -> None:
-    result = Python._validate_base_python("unit-py3.10-2.16", ["python3"], ignore_base_python_conflict=True)  # ruff:ignore[private-member-access]
+    result = Python._validate_base_python(  # ruff:ignore[private-member-access]  # internal state
+        "unit-py3.10-2.16", ["python3"], ignore_base_python_conflict=True
+    )
     assert result == ["python3"]
 
 
 def test_validate_base_python_conflicting_factors_no_ignore() -> None:
     with pytest.raises(ValueError, match=r"conflicting factors py3\.10, 2\.16 in unit-py3\.10-2\.16"):
-        Python._validate_base_python("unit-py3.10-2.16", ["python3"], ignore_base_python_conflict=False)  # ruff:ignore[private-member-access]
+        Python._validate_base_python(  # ruff:ignore[private-member-access]  # internal state
+            "unit-py3.10-2.16", ["python3"], ignore_base_python_conflict=False
+        )
 
 
 @pytest.mark.skipif(sys.platform == "win32", reason="mocks a POSIX venv layout (bin/python symlink)")
@@ -208,11 +212,11 @@ def test_diff_msg_added_removed_changed() -> None:
     before = {"A": "1", "F": "8", "C": "3", "D": "4", "E": "6"}
     after = {"G": "9", "B": "2", "C": "3", "D": "5", "E": "7"}
     expected = "python added A='1' | F='8', removed G='9' | B='2', changed D='5'->'4' | E='7'->'6'"
-    assert Python._diff_msg(before, after) == expected  # ruff:ignore[private-member-access]
+    assert Python._diff_msg(before, after) == expected  # ruff:ignore[private-member-access]  # internal state
 
 
 def test_diff_msg_no_diff() -> None:
-    assert Python._diff_msg({}, {}) == "python "  # ruff:ignore[private-member-access]
+    assert Python._diff_msg({}, {}) == "python "  # ruff:ignore[private-member-access]  # internal state
 
 
 @pytest.mark.parametrize(
@@ -305,7 +309,9 @@ def test_extract_base_python(env: str, base_python: str | None) -> None:
     ids=lambda a: "|".join(a) if isinstance(a, list) else str(a),
 )
 def test_base_python_env_no_conflict(env: str, base_python: list[str], ignore_conflict: bool) -> None:
-    result = Python._validate_base_python(env, base_python, ignore_conflict)  # ruff:ignore[private-member-access]
+    result = Python._validate_base_python(  # ruff:ignore[private-member-access]  # internal state
+        env, base_python, ignore_conflict
+    )
     assert result is base_python
 
 
@@ -333,11 +339,15 @@ def test_base_python_env_conflict(
     ignore_conflict: bool,
 ) -> None:
     if ignore_conflict:
-        result = Python._validate_base_python(env, base_python, ignore_conflict)  # ruff:ignore[private-member-access]
+        result = Python._validate_base_python(  # ruff:ignore[private-member-access]  # internal state
+            env, base_python, ignore_conflict
+        )
         assert result == [expected]
     else:
         with pytest.raises(Fail, match=f"env name {env} conflicting with base python {conflict[0]}"):
-            Python._validate_base_python(env, base_python, ignore_conflict)  # ruff:ignore[private-member-access]
+            Python._validate_base_python(  # ruff:ignore[private-member-access]  # internal state
+                env, base_python, ignore_conflict
+            )
 
 
 @pytest.mark.parametrize(
@@ -727,7 +737,7 @@ def test_python_spec_for_sys_executable(
     mocker.patch.object(sys, "maxsize", 2**arch // 2 - 1)
     mocker.patch.object(sysconfig, "get_config_var", get_config_var)
     mocker.patch.object(sysconfig, "get_platform", return_value=platform_str)
-    spec = Python._python_spec_for_sys_executable()  # ruff:ignore[private-member-access]
+    spec = Python._python_spec_for_sys_executable()  # ruff:ignore[private-member-access]  # internal state
     assert spec.implementation == impl
     assert spec.major == major
     assert spec.minor == minor
@@ -789,7 +799,9 @@ def test_validate_base_python_debug(env: str, base_debug: bool, conflicts: bool,
     base_python = [str(Path("/opt/python3.13").absolute())]
     if conflicts:
         with pytest.raises(Fail, match=f"env name {env} conflicting with base python"):
-            VirtualEnv._validate_base_python(env, base_python, False)  # ruff:ignore[private-member-access]
+            VirtualEnv._validate_base_python(  # ruff:ignore[private-member-access]  # internal state
+                env, base_python, False
+            )
     else:
         assert VirtualEnv._validate_base_python(env, base_python, False) == base_python  # ruff:ignore[private-member-access]
 

@@ -16,7 +16,13 @@ WAIT_GENERAL = 0.05
 
 
 class ReadViaThread(ABC):
-    def __init__(self, file_no: int, handler: Callable[[bytes], int], name: str, drain: bool) -> None:  # ruff:ignore[boolean-type-hint-positional-argument]
+    def __init__(  # keeps the signature
+        self,
+        file_no: int,
+        handler: Callable[[bytes], int],
+        name: str,
+        drain: bool,  # ruff:ignore[boolean-type-hint-positional-argument]  # keeps the signature
+    ) -> None:
         self.file_no = file_no
         self.stop = Event()
         self.thread = Thread(target=self._read_stream, name=f"tox-r-{name}-{file_no}")

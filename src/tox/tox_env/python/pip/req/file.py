@@ -107,7 +107,7 @@ class ParsedRequirement:
                 extras: list[str] = []
                 if match := _EXTRA_PATH.fullmatch(Path(req).name):
                     for extra in match.group(2).split(","):
-                        extra = extra.strip()  # ruff:ignore[redefined-loop-name]
+                        extra = extra.strip()  # ruff:ignore[redefined-loop-name]  # loop rebinding intended
                         if not extra:
                             continue
                         if not _EXTRA_ELEMENT.fullmatch(extra):
@@ -182,7 +182,7 @@ class ParsedLine:
         lineno: int,
         args: str,
         opts: Namespace,
-        constraint: bool,  # ruff:ignore[boolean-type-hint-positional-argument]
+        constraint: bool,  # ruff:ignore[boolean-type-hint-positional-argument]  # keeps the signature
     ) -> None:
         self.filename = filename
         self.lineno = lineno
@@ -205,7 +205,7 @@ class RequirementsFile:
     def __init__(
         self,
         path: Path,
-        constraint: bool,  # ruff:ignore[boolean-type-hint-positional-argument]
+        constraint: bool,  # ruff:ignore[boolean-type-hint-positional-argument]  # keeps the signature
         environment_provider: EnvironmentProvider | None = None,
     ) -> None:
         self._path = path
@@ -238,7 +238,11 @@ class RequirementsFile:
         if self._requirements is None:
             self._requirements = self._parse_requirements(opt=self._opt, recurse=True)
 
-    def _parse_requirements(self, opt: Namespace, recurse: bool) -> list[ParsedRequirement]:  # ruff:ignore[boolean-type-hint-positional-argument]
+    def _parse_requirements(  # keeps the signature
+        self,
+        opt: Namespace,
+        recurse: bool,  # ruff:ignore[boolean-type-hint-positional-argument]  # keeps the signature
+    ) -> list[ParsedRequirement]:
         result: list[ParsedRequirement] = []
         found: set[str] = set()
         for parsed_line in self._parse_and_recurse(str(self._path), self.is_constraint, recurse):
@@ -255,8 +259,8 @@ class RequirementsFile:
     def _parse_and_recurse(
         self,
         filename: str,
-        constraint: bool,  # ruff:ignore[boolean-type-hint-positional-argument]
-        recurse: bool,  # ruff:ignore[boolean-type-hint-positional-argument]
+        constraint: bool,  # ruff:ignore[boolean-type-hint-positional-argument]  # keeps the signature
+        recurse: bool,  # ruff:ignore[boolean-type-hint-positional-argument]  # keeps the signature
     ) -> Iterator[ParsedLine]:
         for line in self._parse_file(filename, constraint):
             if not line.is_requirement and (line.opts.requirements or line.opts.constraints):
@@ -276,7 +280,11 @@ class RequirementsFile:
             else:
                 yield line
 
-    def _parse_file(self, url: str, constraint: bool) -> Iterator[ParsedLine]:  # ruff:ignore[boolean-type-hint-positional-argument]
+    def _parse_file(  # keeps the signature
+        self,
+        url: str,
+        constraint: bool,  # ruff:ignore[boolean-type-hint-positional-argument]  # keeps the signature
+    ) -> Iterator[ParsedLine]:
         for line_number, line in self._pre_process(self._get_file_content(url)):
             args_str, opts = self._parse_line(line)
             yield ParsedLine(url, line_number, args_str, opts, constraint)
@@ -303,18 +311,18 @@ class RequirementsFile:
                     line = f" {line}"  # ruff:ignore[redefined-loop-name] # this ensures comments are always matched later
                 if new_line:
                     new_line.append(line)
-                    assert primary_line_number is not None  # ruff:ignore[assert]
+                    assert primary_line_number is not None  # ruff:ignore[assert]  # invariant, narrows type
                     yield primary_line_number, "".join(new_line)
                     new_line = []
                 else:
                     yield line_number, line
             else:
-                if not new_line:  # pragma: no branch
+                if not new_line:  # pragma: no branch  # other outcome untested
                     primary_line_number = line_number
                 new_line.append(line.strip("\\"))
         # last line contains \
         if new_line:
-            assert primary_line_number is not None  # ruff:ignore[assert]
+            assert primary_line_number is not None  # ruff:ignore[assert]  # invariant, narrows type
             yield primary_line_number, "".join(new_line)
 
     @staticmethod
@@ -346,7 +354,7 @@ class RequirementsFile:
         #
         # :param url: file path or url
         if (scheme := get_url_scheme(url)) in {"http", "https"}:
-            with urlopen(url, timeout=30) as response:  # ruff:ignore[suspicious-url-open-usage]
+            with urlopen(url, timeout=30) as response:  # ruff:ignore[suspicious-url-open-usage]  # fixed trusted URL
                 return self._read_decode(response, self._strip_url_credentials(url), monotonic() + _HTTP_BODY_TIMEOUT)
         elif scheme == "file":
             url = url_to_path(url)
@@ -455,7 +463,7 @@ class RequirementsFile:
             req_options["config_settings"] = config_settings
         return ParsedRequirement(line.requirement, req_options, line.filename, line.lineno)
 
-    def _merge_option_line(  # ruff:ignore[complex-structure, too-many-branches]
+    def _merge_option_line(  # ruff:ignore[complex-structure, too-many-branches]  # follows the protocol
         self,
         base_opt: Namespace,
         opt: Namespace,
@@ -502,7 +510,7 @@ class RequirementsFile:
             value = opt.find_links[0]
             relative_to_reqs_file = Path(filename).absolute().parent / value
             if os.path.exists(str(relative_to_reqs_file)):  # ruff:ignore[os-path-exists] # Path.exists fails on win32 <=3.7 with URI
-                value = str(relative_to_reqs_file)  # pragma: no cover
+                value = str(relative_to_reqs_file)  # pragma: no cover  # setup not built by tests
             if value not in base_opt.find_links:
                 base_opt.find_links.append(value)
         if opt.pre:
@@ -529,7 +537,9 @@ class RequirementsFile:
             if not names:
                 delattr(base_opt, name)
 
-    def _key_func(self, line: ParsedRequirement) -> tuple[int, tuple[int, str, str]]:  # ruff:ignore[no-self-use]
+    def _key_func(  # ruff:ignore[no-self-use]  # override keeps self
+        self, line: ParsedRequirement
+    ) -> tuple[int, tuple[int, str, str]]:
         order: dict[type, int] = {Requirement: 0, Path: 1, str: 2}
         between = order[type(line.requirement)], str(line.requirement).lower(), str(line.options)
         if "is_constraint" in line.options:

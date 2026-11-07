@@ -148,14 +148,17 @@ class Execute(ABC):
 
     _option_class: type[ExecuteOptions] = ExecuteOptions
 
-    def __init__(self, colored: bool) -> None:  # ruff:ignore[boolean-type-hint-positional-argument]
+    def __init__(  # keeps the signature
+        self,
+        colored: bool,  # ruff:ignore[boolean-type-hint-positional-argument]  # keeps the signature
+    ) -> None:
         self._colored = colored
 
     @contextmanager
     def call(
         self,
         request: ExecuteRequest,
-        show: bool,  # ruff:ignore[boolean-type-hint-positional-argument]
+        show: bool,  # ruff:ignore[boolean-type-hint-positional-argument]  # keeps the signature
         out_err: OutErr,
         env: ToxEnv,
     ) -> Generator[ExecuteStatus, None, None]:
@@ -163,7 +166,7 @@ class Execute(ABC):
         stderr_color = None
         if self._colored:
             try:
-                cfg_color = env.conf._conf.options.stderr_color  # ruff:ignore[private-member-access]
+                cfg_color = env.conf._conf.options.stderr_color  # ruff:ignore[private-member-access]  # internal access
                 stderr_color = getattr(Fore, cfg_color)
             except (AttributeError, KeyError, TypeError):  # many tests have a mocked 'env'
                 stderr_color = Fore.RED
@@ -259,10 +262,10 @@ class Outcome:
     OK = 0
     FAILED = 1  #: exit code reported when a ``!`` command exits with :attr:`OK`
 
-    def __init__(  # ruff:ignore[too-many-arguments]
+    def __init__(  # ruff:ignore[too-many-arguments]  # public signature
         self,
         request: ExecuteRequest,
-        show_on_standard: bool,  # ruff:ignore[boolean-type-hint-positional-argument]
+        show_on_standard: bool,  # ruff:ignore[boolean-type-hint-positional-argument]  # keeps the signature
         exit_code: int | None,
         out: str,
         err: str,

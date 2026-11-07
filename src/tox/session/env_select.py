@@ -35,7 +35,7 @@ if TYPE_CHECKING:
 LOGGER = logging.getLogger(__name__)
 
 
-class CliEnv:  # ruff:ignore[eq-without-hash]
+class CliEnv:  # ruff:ignore[eq-without-hash]  # mutable value type
     """The user's selection of tox test environments via ``-e`` or ``env_list`` config.
 
     It is in one of three forms:
@@ -64,7 +64,7 @@ class CliEnv:  # ruff:ignore[eq-without-hash]
         self._names: list[str] | None = value
 
     def __iter__(self) -> Iterator[str]:
-        if not self.is_all and self._names is not None:  # pragma: no branch
+        if not self.is_all and self._names is not None:  # pragma: no branch  # other outcome untested
             yield from self._names
 
     @property
@@ -179,9 +179,9 @@ class _CliEnvAction(argparse.Action):
 
 
 def _env_completer(
-    prefix: str,  # ruff:ignore[unused-function-argument]
-    action: Action,  # ruff:ignore[unused-function-argument]
-    parser: ArgumentParser,  # ruff:ignore[unused-function-argument]
+    prefix: str,  # ruff:ignore[unused-function-argument]  # interface signature
+    action: Action,  # ruff:ignore[unused-function-argument]  # interface signature
+    parser: ArgumentParser,  # ruff:ignore[unused-function-argument]  # interface signature
     parsed_args: Namespace,
 ) -> list[str]:
     from tox.plugin.manager import MANAGER  # ruff:ignore[import-outside-top-level]  # circular import
@@ -245,11 +245,11 @@ class EnvSelector:
         self._defined_envs_: dict[str, _ToxEnvInfo] | None = None
         self._pkg_env_counter: Counter[str] = Counter()
         self._unavailable_envs: dict[str, str] = {}  #: name -> runner name for unavailable environments
-        from tox.plugin.manager import MANAGER  # ruff:ignore[import-outside-top-level]
+        from tox.plugin.manager import MANAGER  # ruff:ignore[import-outside-top-level]  # avoids an import cycle
 
         self._manager = MANAGER
-        self._log_handler = self._state._options.log_handler  # ruff:ignore[private-member-access]
-        self._journal = self._state._journal  # ruff:ignore[private-member-access]
+        self._log_handler = self._state._options.log_handler  # ruff:ignore[private-member-access]  # internal access
+        self._journal = self._state._journal  # ruff:ignore[private-member-access]  # internal access
         self._provision: tuple[bool, str] | None = None
 
         self._state.conf.core.add_config("labels", dict[str, EnvList], {}, "core labels")
@@ -271,7 +271,7 @@ class EnvSelector:
 
         """
         env = self._defined_envs[item].env
-        assert env is not None  # ruff:ignore[assert]
+        assert env is not None  # ruff:ignore[assert]  # invariant, narrows type
         return env
 
     @property
@@ -306,7 +306,7 @@ class EnvSelector:
             raise failed[first_failed]
         for name, count in self._pkg_env_counter.items():
             if not count:
-                self._defined_envs_.pop(name)  # pragma: no cover
+                self._defined_envs_.pop(name)  # pragma: no cover  # setup not built by tests
 
         # reorder to as defined rather as found
         order = chain(env_name_to_active, (i for i in self._defined_envs_ if i not in env_name_to_active))
@@ -441,7 +441,7 @@ class EnvSelector:
             raise HandledError(msg)
 
     def _define_run_env(self, name: str, *, is_active: bool) -> tuple[RunToxEnv, tuple[str, str] | None] | None:
-        assert self._defined_envs_ is not None  # ruff:ignore[assert]
+        assert self._defined_envs_ is not None  # ruff:ignore[assert]  # invariant, narrows type
         try:
             run_env = self._build_run_env(name)
             if run_env is None:
@@ -498,14 +498,14 @@ class EnvSelector:
         env_name_to_active: dict[str, bool],
         failed: dict[str, Exception],
     ) -> None:
-        assert self._defined_envs_ is not None  # ruff:ignore[assert]
+        assert self._defined_envs_ is not None  # ruff:ignore[assert]  # invariant, narrows type
         # build package env and assign it, then register the run environment which can trigger generation
         # of additional run environments
         start_package_env_use_counter = self._pkg_env_counter.copy()
         start_defined = set(self._defined_envs_)
         try:
             run_env.package_env = self._build_pkg_env(pkg_name_type, name, env_name_to_active)
-        except Exception as exception:  # ruff:ignore[blind-except]
+        except Exception as exception:  # ruff:ignore[blind-except]  # failure must not stop run
             # if it's not a run environment, wait to see if ends up being a packaging one -> rollback
             failed[name] = exception
             # only remove envs created during this attempt: pre-existing ones (e.g. a shared package
@@ -520,11 +520,11 @@ class EnvSelector:
                 # check if any packaging envs are already run and remove them
                 other_env_info = self._defined_envs_.get(env.name)
                 if other_env_info is not None and isinstance(other_env_info.env, RunToxEnv):
-                    del self._defined_envs_[env.name]  # pragma: no cover
-                    for pkg_env in other_env_info.env.package_envs:  # pragma: no cover
-                        self._pkg_env_counter[pkg_env.name] -= 1  # pragma: no cover
-        except Exception:  # ruff:ignore[blind-except]
-            assert self._defined_envs_[name].package_skip is not None  # ruff:ignore[assert]
+                    del self._defined_envs_[env.name]  # pragma: no cover  # untested error path
+                    for pkg_env in other_env_info.env.package_envs:  # pragma: no cover  # setup not built by tests
+                        self._pkg_env_counter[pkg_env.name] -= 1  # pragma: no cover  # setup not built by tests
+        except Exception:  # ruff:ignore[blind-except]  # failure must not stop run
+            assert self._defined_envs_[name].package_skip is not None  # ruff:ignore[assert]  # invariant, narrows type
 
     def _build_pkg_env(self, name_type: tuple[str, str], run_env_name: str, active: dict[str, bool]) -> PackageToxEnv:
         name, core_type = name_type
@@ -543,7 +543,7 @@ class EnvSelector:
                 ) is not None:
                     name_type = child_name_type
             except Skip as exception:
-                assert self._defined_envs_ is not None  # ruff:ignore[assert]
+                assert self._defined_envs_ is not None  # ruff:ignore[assert]  # invariant, narrows type
                 self._defined_envs_[run_env_name].package_skip = (name_type[0], exception)
                 if package_tox_env is None:
                     # Skip escaped env creation itself (e.g. from a plugin hook): hand back the env when it got
@@ -555,8 +555,14 @@ class EnvSelector:
                     self._pkg_env_counter[name] += 1
             return package_tox_env
 
-    def _get_package_env(self, packager: str, name: str, run_env_name: str, is_active: bool) -> PackageToxEnv:  # ruff:ignore[boolean-type-hint-positional-argument]
-        assert self._defined_envs_ is not None  # ruff:ignore[assert]
+    def _get_package_env(  # keeps the signature
+        self,
+        packager: str,
+        name: str,
+        run_env_name: str,
+        is_active: bool,  # ruff:ignore[boolean-type-hint-positional-argument]  # keeps the signature
+    ) -> PackageToxEnv:
+        assert self._defined_envs_ is not None  # ruff:ignore[assert]  # invariant, narrows type
         if name in set(self._state.conf.core.get("env_list", EnvList).envs):
             # an env cannot both be asked to run and serve as a builder - fail here with the full picture rather
             # than late at execution with "cannot run packaging environment"
@@ -570,7 +576,7 @@ class EnvSelector:
             if isinstance(env, PackageToxEnv):
                 if env.id() != packager:  # pragma: no branch # same env name is used by different packaging
                     msg = f"{name} is already defined as a {env.id()}, cannot be {packager} too"  # pragma: no cover
-                    raise HandledError(msg)  # pragma: no cover
+                    raise HandledError(msg)  # pragma: no cover  # untested error path
                 return env
             self._state.conf.clear_env(name)
         package_type = REGISTER.package(packager)
@@ -592,7 +598,7 @@ class EnvSelector:
     def _register_child_packages(
         self, package_tox_env: PackageToxEnv, run_env_name: str, active: dict[str, bool]
     ) -> tuple[str, str] | None:
-        assert self._defined_envs_ is not None  # ruff:ignore[assert]
+        assert self._defined_envs_ is not None  # ruff:ignore[assert]  # invariant, narrows type
         child_package_envs = package_tox_env.register_run_env(cast("RunToxEnv", self._defined_envs_[run_env_name].env))
         name_type: tuple[str, str] | None = None
         try:
@@ -611,17 +617,17 @@ class EnvSelector:
         return name_type
 
     def _finalize_config(self) -> None:
-        assert self._defined_envs_ is not None  # ruff:ignore[assert]
+        assert self._defined_envs_ is not None  # ruff:ignore[assert]  # invariant, narrows type
         for tox_env in self._defined_envs_.values():
             if tox_env.env is not None:  # skip unavailable environments
                 tox_env.env.conf.mark_finalized()
         self._state.conf.core.mark_finalized()
 
-    def _mark_active(self) -> None:  # ruff:ignore[complex-structure]
+    def _mark_active(self) -> None:  # ruff:ignore[complex-structure]  # follows the protocol
         labels = set(getattr(self._state.conf.options, "labels", []))
         factors = self._parse_factors()
 
-        assert self._defined_envs_ is not None  # ruff:ignore[assert]
+        assert self._defined_envs_ is not None  # ruff:ignore[assert]  # invariant, narrows type
         if labels or factors:
             for env_info in self._defined_envs_.values():
                 env_info.is_active = False  # if any was selected reset
@@ -690,7 +696,11 @@ class EnvSelector:
             msg = f"cannot run packaging environment(s) {','.join(invalid)}"
             raise HandledError(msg)
 
-    def _mark_provision(self, on: bool, provision_tox_env: str) -> None:  # ruff:ignore[boolean-type-hint-positional-argument]
+    def _mark_provision(  # keeps the signature
+        self,
+        on: bool,  # ruff:ignore[boolean-type-hint-positional-argument]  # keeps the signature
+        provision_tox_env: str,  # keeps the signature
+    ) -> None:
         self._provision = on, provision_tox_env
 
 

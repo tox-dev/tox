@@ -24,12 +24,18 @@ ERROR_IO_INCOMPLETE: Final[int] = 996  # pragma: win32 cover
 
 
 class ReadViaThreadWindows(ReadViaThread):  # pragma: win32 cover
-    def __init__(self, file_no: int, handler: Callable[[bytes], int], name: str, drain: bool) -> None:  # ruff:ignore[boolean-type-hint-positional-argument]
+    def __init__(  # keeps the signature
+        self,
+        file_no: int,
+        handler: Callable[[bytes], int],
+        name: str,
+        drain: bool,  # ruff:ignore[boolean-type-hint-positional-argument]  # keeps the signature
+    ) -> None:
         super().__init__(file_no, handler, name, drain)
 
     @override
     def _read_stream(self) -> None:
-        with contextlib.suppress(OSError):  # pragma: no cover
+        with contextlib.suppress(OSError):  # pragma: no cover  # setup not built by tests
             self._do_read_stream()
 
     def _do_read_stream(self) -> None:
@@ -42,7 +48,10 @@ class ReadViaThreadWindows(ReadViaThread):  # pragma: win32 cover
 
             while True:
                 try:
-                    data = cast("bytes", ov.getresult(False))  # ruff:ignore[boolean-positional-value-in-call]
+                    data = cast(  # mirrors signature
+                        "bytes",
+                        ov.getresult(False),  # ruff:ignore[boolean-positional-value-in-call]  # mirrors signature
+                    )
                     break
                 except OSError as exception:
                     if getattr(exception, "winerror", None) != ERROR_IO_INCOMPLETE:
@@ -57,7 +66,7 @@ class ReadViaThreadWindows(ReadViaThread):  # pragma: win32 cover
 
     @override
     def _drain_stream(self) -> None:
-        with contextlib.suppress(OSError):  # pragma: no cover
+        with contextlib.suppress(OSError):  # pragma: no cover  # setup not built by tests
             self._do_drain_stream()
 
     def _do_drain_stream(self) -> None:
@@ -69,7 +78,10 @@ class ReadViaThreadWindows(ReadViaThread):  # pragma: win32 cover
                 break
 
             try:
-                data = cast("bytes", ov.getresult(True))  # ruff:ignore[boolean-positional-value-in-call]
+                data = cast(  # mirrors signature
+                    "bytes",
+                    ov.getresult(True),  # ruff:ignore[boolean-positional-value-in-call]  # mirrors signature
+                )
             except OSError:
                 break
 

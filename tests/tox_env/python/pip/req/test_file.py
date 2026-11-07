@@ -693,13 +693,16 @@ def test_req_over_http_slow_drip_hits_deadline(tmp_path: Path, mocker: MockerFix
 
 def test_req_over_http_has_req(tmp_path: Path, mocker: MockerFixture) -> None:
     @contextmanager
-    def enter(url: str, timeout: float | None = None) -> Generator[IO[bytes], None, None]:  # ruff:ignore[unused-function-argument]
+    def enter(  # interface signature
+        url: str,
+        timeout: float | None = None,  # ruff:ignore[unused-function-argument]  # interface signature
+    ) -> Generator[IO[bytes], None, None]:
         if url == "https://root.org/a.txt":
             yield BytesIO(b"-r b.txt")
         elif url == "https://root.org/b.txt":
             yield BytesIO(b"-i i\na")
-        else:  # pragma: no cover
-            raise RuntimeError  # pragma: no cover
+        else:  # pragma: no cover  # setup not built by tests
+            raise RuntimeError  # pragma: no cover  # untested error path
 
     mocker.patch("tox.tox_env.python.pip.req.file.urlopen", autospec=True, side_effect=enter)
 

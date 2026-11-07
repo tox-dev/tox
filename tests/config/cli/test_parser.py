@@ -219,7 +219,7 @@ def test_sub_sub_command() -> None:
             "c",
             [],
             "help",
-            lambda s: 0,  # ruff:ignore[unused-lambda-argument]
+            lambda s: 0,  # ruff:ignore[unused-lambda-argument]  # callback signature
         )  # pragma: no cover - the lambda will never be run
 
 

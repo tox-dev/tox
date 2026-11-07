@@ -24,7 +24,9 @@ if TYPE_CHECKING:
 T = TypeVar("T")
 
 
-def validate(val: TomlTypes, of_type: type[T]) -> T:  # ruff:ignore[complex-structure, too-many-branches]
+def validate(  # ruff:ignore[complex-structure, too-many-branches]  # follows the protocol
+    val: TomlTypes, of_type: type[T]
+) -> T:
     casting_to = get_origin(of_type) or of_type.__class__
     type_args = get_args(of_type)
     msg = ""
@@ -70,7 +72,7 @@ def validate(val: TomlTypes, of_type: type[T]) -> T:  # ruff:ignore[complex-stru
             try:
                 cast("Callable[[TomlTypes], object]", of_type)(val)
                 fail = False
-            except Exception:  # ruff:ignore[blind-except]
+            except Exception:  # ruff:ignore[blind-except]  # failure must not stop run
                 fail = True
         if fail:
             msg = f"{_describe(val)} is not of type {of_type.__name__!r}"

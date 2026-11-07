@@ -79,6 +79,6 @@ def test_env_completer_includes_plugin_envs(
 def test_register_env_select_attaches_completer() -> None:
     parser = ArgumentParser()
     register_env_select_flags(parser, default=None, multiple=False)
-    action = next(a for a in parser._actions if a.dest == "env")  # ruff:ignore[private-member-access]
+    action = next(a for a in parser._actions if a.dest == "env")  # ruff:ignore[private-member-access]  # internal state
     assert hasattr(action, "completer")
     assert action.completer is _env_completer

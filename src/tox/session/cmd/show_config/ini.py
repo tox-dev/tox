@@ -74,12 +74,12 @@ def _emit_conf(emit: Callable[[str], None], conf: ConfigSet, keys: Sequence[str]
     for key in keys or conf:
         if key not in conf:
             continue
-        key = conf.primary_key(key)  # ruff:ignore[redefined-loop-name]
+        key = conf.primary_key(key)  # ruff:ignore[redefined-loop-name]  # loop rebinding intended
         try:
             as_str, multi_line = stringify(conf[key])
         except Exception as exception:  # because e.g. the interpreter cannot be found
-            if os.environ.get("_TOX_SHOW_CONFIG_RAISE"):  # pragma: no branch
-                raise  # pragma: no cover
+            if os.environ.get("_TOX_SHOW_CONFIG_RAISE"):  # pragma: no branch  # other outcome untested
+                raise  # pragma: no cover  # untested error path
             as_str = _colored(f"# Exception: {format_config_error(exception)}", Fore.LIGHTRED_EX, enabled=is_colored)
             multi_line = False
             has_exception = True

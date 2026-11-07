@@ -21,7 +21,10 @@ class Journal:
 
     """
 
-    def __init__(self, enabled: bool) -> None:  # ruff:ignore[boolean-type-hint-positional-argument]
+    def __init__(  # keeps the signature
+        self,
+        enabled: bool,  # ruff:ignore[boolean-type-hint-positional-argument]  # keeps the signature
+    ) -> None:
         self._enabled = enabled
         self._content: dict[str, JsonValue] = {}
         self._env: dict[str, EnvJournal] = {}

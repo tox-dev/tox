@@ -98,5 +98,5 @@ def test_replace_factor_ini_uses_fallback(replace_one: ReplaceOne) -> None:
     ],
 )
 def test_match_expression_repr(match_expression: MatchExpression, exp_repr: str) -> None:
-    print(match_expression)  # ruff:ignore[print]
+    print(match_expression)  # ruff:ignore[print]  # test output
     assert repr(match_expression) == exp_repr

@@ -157,7 +157,12 @@ class InstallPackageAction(Action):
 logger = logging.getLogger(__name__)
 
 
-def execute(state: State, max_workers: int | None, has_spinner: bool, live: bool) -> int:  # ruff:ignore[boolean-type-hint-positional-argument]
+def execute(  # keeps the signature
+    state: State,
+    max_workers: int | None,
+    has_spinner: bool,  # ruff:ignore[boolean-type-hint-positional-argument]  # keeps the signature
+    live: bool,  # ruff:ignore[boolean-type-hint-positional-argument]  # keeps the signature
+) -> int:
     interrupt, done = Event(), Event()
     results: list[ToxEnvRunResult] = []
     future_to_env: dict[Future[ToxEnvRunResult], ToxEnv] = {}
@@ -194,7 +199,9 @@ def execute(state: State, max_workers: int | None, has_spinner: bool, live: bool
         except KeyboardInterrupt:
             previous = signal(SIGINT, Handlers.SIG_IGN)
             spinner.print_report = False  # no need to print reports at this point, final report coming up
-            logger.error("[%s] KeyboardInterrupt - teardown started", os.getpid())  # ruff:ignore[error-instead-of-exception]
+            logger.error(  # ruff:ignore[error-instead-of-exception]  # expected error log
+                "[%s] KeyboardInterrupt - teardown started", os.getpid()
+            )
             interrupt.set()
             # cancel in reverse order to not allow submitting new jobs as we cancel running ones
             for future, tox_env in reversed(list(future_to_env.items())):
@@ -253,8 +260,13 @@ def _env_dirs(state: State) -> dict[str, Path]:
 
 
 class ToxSpinner(Spinner):
-    def __init__(self, enabled: bool, state: State, total: int) -> None:  # ruff:ignore[boolean-type-hint-positional-argument]
-        stream = state._options.log_handler.stdout  # ruff:ignore[private-member-access]
+    def __init__(  # keeps the signature
+        self,
+        enabled: bool,  # ruff:ignore[boolean-type-hint-positional-argument]  # keeps the signature
+        state: State,
+        total: int,  # keeps the signature
+    ) -> None:
+        stream = state._options.log_handler.stdout  # ruff:ignore[private-member-access]  # internal access
         super().__init__(
             # animation frames and erase sequences belong to an interactive terminal, never to redirected output
             enabled=enabled and stream.isatty(),
@@ -263,11 +275,15 @@ class ToxSpinner(Spinner):
             total=total,
         )
 
-    def update_spinner(self, result: ToxEnvRunResult, success: bool) -> None:  # ruff:ignore[boolean-type-hint-positional-argument]
+    def update_spinner(  # keeps the signature
+        self,
+        result: ToxEnvRunResult,
+        success: bool,  # ruff:ignore[boolean-type-hint-positional-argument]  # keeps the signature
+    ) -> None:
         ((self.skip if result.skipped else self.succeed) if success else self.fail)(result.name)
 
 
-def _queue_and_wait(  # ruff:ignore[too-many-arguments]
+def _queue_and_wait(  # ruff:ignore[too-many-arguments]  # public signature
     state: State,
     to_run_list: list[str],
     results: list[ToxEnvRunResult],
@@ -276,7 +292,7 @@ def _queue_and_wait(  # ruff:ignore[too-many-arguments]
     done: Event,
     max_workers: int | None,
     spinner: ToxSpinner,
-    live: bool,  # ruff:ignore[boolean-type-hint-positional-argument]
+    live: bool,  # ruff:ignore[boolean-type-hint-positional-argument]  # keeps the signature
     error: list[BaseException],
 ) -> None:
     try:
@@ -300,10 +316,10 @@ def _do_queue_and_wait(  # ruff:ignore[complex-structure, too-many-arguments, to
     interrupt: Event,
     max_workers: int | None,
     spinner: ToxSpinner,
-    live: bool,  # ruff:ignore[boolean-type-hint-positional-argument]
+    live: bool,  # ruff:ignore[boolean-type-hint-positional-argument]  # keeps the signature
 ) -> None:
-    options = state._options  # ruff:ignore[private-member-access]
-    with spinner:  # ruff:ignore[too-many-nested-blocks]
+    options = state._options  # ruff:ignore[private-member-access]  # internal access
+    with spinner:  # ruff:ignore[too-many-nested-blocks]  # follows the protocol
         # an unbounded pool (-p all) sizes to the selection; keep at least one worker so an empty
         # selection does not raise ValueError from ThreadPoolExecutor
         max_workers = max(1, len(to_run_list)) if max_workers is None else max_workers
@@ -435,7 +451,7 @@ def _handle_one_run_done(
     result: ToxEnvRunResult,
     spinner: ToxSpinner,
     state: State,
-    live: bool,  # ruff:ignore[boolean-type-hint-positional-argument]
+    live: bool,  # ruff:ignore[boolean-type-hint-positional-argument]  # keeps the signature
 ) -> None:
     success = result.code == Outcome.OK
     spinner.update_spinner(result, success)
@@ -452,13 +468,15 @@ def _handle_one_run_done(
         pkg_out_err_list = []
         for package_env in tox_env.package_envs:
             pkg_out_err = package_env.close_and_read_out_err()
-            if pkg_out_err is not None:  # pragma: no branch
+            if pkg_out_err is not None:  # pragma: no branch  # other outcome untested
                 pkg_out_err_list.append(pkg_out_err)
         if not success or tox_env.conf["parallel_show_output"] or state.conf.options.list_dependencies:
             for pkg_out_err in pkg_out_err_list:
                 state._options.log_handler.write_out_err(pkg_out_err)  # pragma: no cover  # ruff:ignore[private-member-access]
             if out_err is not None:  # pragma: no branch # first show package build
-                state._options.log_handler.write_out_err(out_err)  # ruff:ignore[private-member-access]
+                state._options.log_handler.write_out_err(  # ruff:ignore[private-member-access]  # internal access
+                    out_err
+                )
 
 
 def _tear_down(tox_env: ToxEnv) -> None:
@@ -519,15 +537,23 @@ def _warn_unused_config(state: State) -> None:
         _print_unused(is_colored, "[tox]", unused)
 
 
-def _print_unused(is_colored: bool, section: str, unused: list[str]) -> None:  # ruff:ignore[boolean-type-hint-positional-argument]
+def _print_unused(  # keeps the signature
+    is_colored: bool,  # ruff:ignore[boolean-type-hint-positional-argument]  # keeps the signature
+    section: str,
+    unused: list[str],  # keeps the signature
+) -> None:
     msg = f"  {section} unused config key(s): {', '.join(unused)}"
-    print(f"{Fore.YELLOW if is_colored else ''}{msg}{Fore.RESET if is_colored else ''}")  # ruff:ignore[print]
+    print(  # ruff:ignore[print]  # terminal output
+        f"{Fore.YELLOW if is_colored else ''}{msg}{Fore.RESET if is_colored else ''}"
+    )
 
 
 def report(start: float, runs: list[ToxEnvRunResult], *, is_colored: bool, verbosity: int, fail_fast: bool) -> int:
     def _print(color_: str, message: str) -> None:
         if verbosity:
-            print(f"{color_ if is_colored else ''}{message}{Fore.RESET if is_colored else ''}")  # ruff:ignore[print]
+            print(  # ruff:ignore[print]  # terminal output
+                f"{color_ if is_colored else ''}{message}{Fore.RESET if is_colored else ''}"
+            )
 
     successful, skipped = [], []
     for run in runs:

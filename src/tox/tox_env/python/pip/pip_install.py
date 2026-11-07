@@ -44,7 +44,7 @@ class PythonInstallerListDependencies(Installer[Python], ABC):
 
     @override
     def _register_config(self) -> None:
-        if self._with_list_deps:  # pragma: no branch
+        if self._with_list_deps:  # pragma: no branch  # other outcome untested
             self._env.conf.add_config(
                 keys=["list_dependencies_command"],
                 of_type=Command,
@@ -106,7 +106,11 @@ class Pip(PythonInstallerListDependencies):
             desc="Use the exact versions of installed deps as constraints, otherwise use the listed deps.",
         )
 
-    def default_install_command(self, conf: Config, env_name: str | None) -> Command:  # ruff:ignore[unused-method-argument]
+    def default_install_command(  # override signature
+        self,
+        conf: Config,  # ruff:ignore[unused-method-argument]  # override signature
+        env_name: str | None,  # ruff:ignore[unused-method-argument]  # override signature
+    ) -> Command:
         isolated_flag = "-E" if self._env.base_python.version_info.major == 2 else "-I"  # ruff:ignore[magic-value-comparison]
         return Command(["python", isolated_flag, "-m", "pip", "install", "{opts}", "{packages}"])
 
@@ -175,7 +179,7 @@ class Pip(PythonInstallerListDependencies):
         }
         # if option or constraint change in any way recreate, if the requirements change only if some are removed
         with self._env.cache.compare(new, section, of_type) as (eq, old):
-            if not eq:  # pragma: no branch
+            if not eq:  # pragma: no branch  # other outcome untested
                 if old is not None:
                     if old.get("redaction_format") != redaction_format:
                         msg = "install cache format changed"
@@ -190,7 +194,7 @@ class Pip(PythonInstallerListDependencies):
                     if (old_constraint_options := old.get("constraint_options")) != constraint_options:
                         msg = f"constraint options changed: old={old_constraint_options} new={constraint_options}"
                         raise Recreate(msg)
-                if args := arguments.as_root_args:  # pragma: no branch
+                if args := arguments.as_root_args:  # pragma: no branch  # other outcome untested
                     args.extend(self.constraints.as_root_args)
                     self._execute_installer(args, of_type)
                     self._write_combined_constraints(arguments)
@@ -326,7 +330,7 @@ class Pip(PythonInstallerListDependencies):
                     req_file.write_text("\n".join(new_deps))
                     self._execute_installer(["--no-deps", "-r", str(req_file)], of_type)
 
-    def _install_list_of_deps(  # ruff:ignore[complex-structure, too-many-branches]
+    def _install_list_of_deps(  # ruff:ignore[complex-structure, too-many-branches]  # follows the protocol
         self,
         arguments: Sequence[Requirement | Package],
         section: str,
@@ -353,13 +357,13 @@ class Pip(PythonInstallerListDependencies):
             value.sort()
         cache_value = {"req": groups["req"], "env": self._install_env_vars()}
         with self._env.cache.compare(cache_value, section, req_of_type) as (eq, old):
-            if not eq:  # pragma: no branch
+            if not eq:  # pragma: no branch  # other outcome untested
                 old_req: list[str] = old["req"] if isinstance(old, dict) else (old or [])
                 if miss := sorted(
                     set(old_req) - set(groups["req"])
                 ):  # no way yet to know what to uninstall here (transitive dependencies?)
                     msg = f"dependencies removed: {', '.join(str(i) for i in miss)}"
-                    raise Recreate(msg)  # pragma: no branch
+                    raise Recreate(msg)  # pragma: no branch  # other outcome untested
                 if new_deps := sorted(set(groups["req"]) - set(old_req)) or list(groups["req"]):  # pragma: no branch
                     new_deps.extend(self.constraints.as_root_args)
                     self._execute_installer(new_deps, req_of_type)

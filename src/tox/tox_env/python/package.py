@@ -104,7 +104,10 @@ class PythonPackageToxEnv(Python, PackageToxEnv, ABC):
         ):
             return
 
-        def default_wheel_tag(conf: Config, env_name: str | None) -> str:  # ruff:ignore[unused-function-argument]
+        def default_wheel_tag(  # interface signature
+            conf: Config,  # ruff:ignore[unused-function-argument]  # interface signature
+            env_name: str | None,  # ruff:ignore[unused-function-argument]  # interface signature
+        ) -> str:
             # https://www.python.org/dev/peps/pep-0427/#file-name-convention
             # when building wheels we need to ensure that the built package is compatible with the target env
             # compatibility is documented within https://www.python.org/dev/peps/pep-0427/#file-name-convention

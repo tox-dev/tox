@@ -78,7 +78,7 @@ class VenvCmdBuilder(PythonPackageToxEnv, ABC):
 
     @override
     def load_deps_for_env(self, for_env: EnvConfigSet) -> list[Requirement]:
-        assert self._sdist_meta_tox_env is not None  # ruff:ignore[assert]
+        assert self._sdist_meta_tox_env is not None  # ruff:ignore[assert]  # invariant, narrows type
         return self._sdist_meta_tox_env.load_deps_for_env(for_env)
 
     @override
@@ -98,7 +98,7 @@ class VenvCmdBuilder(PythonPackageToxEnv, ABC):
             msg = "stopping as failed to build package"
             raise Fail(msg)
         package_glob = self.conf["package_glob"]
-        found = glob.glob(package_glob)  # ruff:ignore[glob]
+        found = glob.glob(package_glob)  # ruff:ignore[glob]  # matches user pattern
         if not found:
             msg = f"no package found in {package_glob}"
             raise Fail(msg)
@@ -116,7 +116,7 @@ class VenvCmdBuilder(PythonPackageToxEnv, ABC):
                 wheel_error: Final[str] = f"could not read the metadata of {path}: {exc}"
                 raise Fail(wheel_error) from exc
         work_dir = self.env_tmp_dir / "sdist-extract"
-        if not work_dir.exists():  # pragma: no branch
+        if not work_dir.exists():  # pragma: no branch  # other outcome untested
             work_dir.mkdir()
         try:
             with tarfile.open(str(path), "r:gz") as tar:
@@ -161,7 +161,7 @@ class VenvCmdBuilder(PythonPackageToxEnv, ABC):
 
     @override
     def child_pkg_envs(self, run_conf: EnvConfigSet) -> Iterator[PackageToxEnv]:
-        if self._sdist_meta_tox_env is not None:  # pragma: no branch
+        if self._sdist_meta_tox_env is not None:  # pragma: no branch  # other outcome untested
             yield self._sdist_meta_tox_env
 
 

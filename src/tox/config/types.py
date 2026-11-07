@@ -23,7 +23,7 @@ class MissingRequiredConfigKeyError(ValueError):
     """
 
 
-class Command:  # ruff:ignore[eq-without-hash]
+class Command:  # ruff:ignore[eq-without-hash]  # mutable value type
     """A command to execute."""
 
     def __init__(self, args: list[str]) -> None:
@@ -66,7 +66,7 @@ class Command:  # ruff:ignore[eq-without-hash]
         return shell_cmd(self.args)
 
 
-class EnvList:  # ruff:ignore[eq-without-hash]
+class EnvList:  # ruff:ignore[eq-without-hash]  # mutable value type
     """A tox environment list."""
 
     def __init__(self, envs: Sequence[str]) -> None:

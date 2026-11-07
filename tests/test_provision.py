@@ -41,12 +41,12 @@ def tox_wheel(
     pkg_builder: Callable[[Path, Path, list[str], bool], Path],
 ) -> Path:
     if worker_id == "master":  # if not running under xdist we can just return
-        return _make_tox_wheel(tmp_path_factory, pkg_builder)  # pragma: no cover
+        return _make_tox_wheel(tmp_path_factory, pkg_builder)  # pragma: no cover  # untested error path
     # otherwise we need to ensure only one worker creates the wheel, and the rest reuses
     cache_file = tmp_path_factory.getbasetemp().parent / "tox_wheel.json"
     with FileLock(f"{cache_file}.lock"):
         if cache_file.is_file():
-            data = Path(json.loads(cache_file.read_text()))  # pragma: no cover
+            data = Path(json.loads(cache_file.read_text()))  # pragma: no cover  # setup not built by tests
         else:
             data = _make_tox_wheel(tmp_path_factory, pkg_builder)
             cache_file.write_text(json.dumps(str(data)))
@@ -58,8 +58,8 @@ def _make_tox_wheel(
     pkg_builder: Callable[[Path, Path, list[str], bool], Path],
 ) -> Path:
     with elapsed("acquire current tox wheel"):  # takes around 3.2s on build
-        into = tmp_path_factory.mktemp("dist")  # pragma: no cover
-        from tox.version import version_tuple  # ruff:ignore[import-outside-top-level]
+        into = tmp_path_factory.mktemp("dist")  # pragma: no cover  # setup not built by tests
+        from tox.version import version_tuple  # ruff:ignore[import-outside-top-level]  # deferred import
 
         patch_version = version_tuple[2]
         if isinstance(patch_version, str) and patch_version[:3] == "dev":
@@ -78,7 +78,7 @@ def elapsed(msg: str) -> Generator[None, None, None]:
     try:
         yield
     finally:
-        print(f"done in {time.monotonic() - start}s {msg}")  # ruff:ignore[print]
+        print(f"done in {time.monotonic() - start}s {msg}")  # ruff:ignore[print]  # test output
 
 
 @pytest.fixture(scope="session")
@@ -89,7 +89,7 @@ def tox_wheels(tox_wheel: Path, tmp_path_factory: TempPathFactory) -> list[Path]
         with ZipFile(str(tox_wheel), "r") as zip_file:
             zip_file.extractall(path=info)
         dist_info = next((i for i in info.iterdir() if i.suffix == ".dist-info"), None)
-        if dist_info is None:  # pragma: no cover
+        if dist_info is None:  # pragma: no cover  # setup not built by tests
             msg = f"no tox.dist-info inside {tox_wheel}"
             raise RuntimeError(msg)
         distribution = Distribution.at(dist_info)

@@ -172,7 +172,7 @@ class Python(ToxEnv, ABC):
         cls,
         env_name: str,
         base_pythons: list[str],
-        ignore_base_python_conflict: bool,  # ruff:ignore[boolean-type-hint-positional-argument]
+        ignore_base_python_conflict: bool,  # ruff:ignore[boolean-type-hint-positional-argument]  # keeps the signature
     ) -> list[str]:
         try:
             env_base_python = cls.extract_base_python(env_name)
@@ -260,7 +260,11 @@ class Python(ToxEnv, ABC):
         """
         raise NotImplementedError
 
-    def _base_python_default(self, conf: Config, env_name: str | None) -> list[str]:  # ruff:ignore[unused-method-argument]
+    def _base_python_default(  # override signature
+        self,
+        conf: Config,  # ruff:ignore[unused-method-argument]  # override signature
+        env_name: str | None,  # override signature
+    ) -> list[str]:
         self._base_python_explicitly_set = False
         try:
             base_python = None if env_name is None else self.extract_base_python(env_name)
@@ -548,7 +552,10 @@ def _skip_missing_interpreters_post_process(options: Parsed, value: bool) -> boo
 
 
 def add_skip_missing_interpreters_to_env(conf: EnvConfigSet, core: CoreConfigSet, options: Parsed) -> None:
-    def _default_skip_missing(conf: Config, env_name: str | None) -> bool:  # ruff:ignore[unused-function-argument]
+    def _default_skip_missing(  # interface signature
+        conf: Config,  # ruff:ignore[unused-function-argument]  # interface signature
+        env_name: str | None,  # ruff:ignore[unused-function-argument]  # interface signature
+    ) -> bool:
         return core.get("skip_missing_interpreters", bool)
 
     conf.add_config(

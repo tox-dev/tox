@@ -150,7 +150,7 @@ class StrConvert(Convert[str]):
     @staticmethod
     @override
     def to_env_list(value: str) -> EnvList:
-        from .ini.factor import extend_factors  # ruff:ignore[import-outside-top-level]
+        from .ini.factor import extend_factors  # ruff:ignore[import-outside-top-level]  # avoids an import cycle
 
         return EnvList(list(chain.from_iterable(extend_factors(expr) for expr in value.split("\n"))))
 

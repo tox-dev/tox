@@ -15,14 +15,14 @@ if TYPE_CHECKING:
     from types import UnionType
 
     from .loader.convert import Factory
-    from .main import Config  # pragma: no cover
+    from .main import Config  # pragma: no cover  # setup not built by tests
 
 
 T = TypeVar("T")
 V = TypeVar("V")
 
 
-class ConfigDefinition(ABC, Generic[T]):  # ruff:ignore[eq-without-hash]
+class ConfigDefinition(ABC, Generic[T]):  # ruff:ignore[eq-without-hash]  # mutable value type
     """Abstract base class for configuration definitions.
 
     :param keys: the configuration keys, the first one is the name, the others are aliases
@@ -58,7 +58,7 @@ class ConfigDefinition(ABC, Generic[T]):  # ruff:ignore[eq-without-hash]
         raise NotImplementedError
 
 
-class ConfigConstantDefinition(ConfigDefinition[T]):  # ruff:ignore[eq-without-hash]
+class ConfigConstantDefinition(ConfigDefinition[T]):  # ruff:ignore[eq-without-hash]  # mutable value type
     """A configuration definition whose value is defined upfront (such as the tox environment name).
 
     :param keys: the configuration keys, the first one is the name, the others are aliases
@@ -106,7 +106,7 @@ class ConfigConstantDefinition(ConfigDefinition[T]):  # ruff:ignore[eq-without-h
 _PLACE_HOLDER = object()
 
 
-class ConfigDynamicDefinition(ConfigDefinition[T]):  # ruff:ignore[eq-without-hash]
+class ConfigDynamicDefinition(ConfigDefinition[T]):  # ruff:ignore[eq-without-hash]  # mutable value type
     """A configuration definition that comes from a source (such as in memory, an ini file, a toml file, etc.).
 
     :param keys: the configuration keys, the first one is the name, the others are aliases
@@ -118,7 +118,7 @@ class ConfigDynamicDefinition(ConfigDefinition[T]):  # ruff:ignore[eq-without-ha
 
     """
 
-    def __init__(  # ruff:ignore[too-many-arguments]
+    def __init__(  # ruff:ignore[too-many-arguments]  # public signature
         self,
         keys: Iterable[str],
         desc: str,

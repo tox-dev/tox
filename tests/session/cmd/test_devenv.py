@@ -17,7 +17,10 @@ def test_devenv_fail_multiple_target(tox_project: ToxProjectCreator) -> None:
 
 @pytest.mark.slow
 @pytest.mark.integration
-def test_devenv_ok(tox_project: ToxProjectCreator, enable_pip_pypi_access: str | None) -> None:  # ruff:ignore[unused-function-argument]
+def test_devenv_ok(  # interface signature
+    tox_project: ToxProjectCreator,
+    enable_pip_pypi_access: str | None,  # ruff:ignore[unused-function-argument]  # interface signature
+) -> None:
     content = {
         "setup.py": "from setuptools import setup\nsetup(name='demo', version='1.0')",
         "tox.ini": "[tox]\nenv_list = py\n[testenv]\nusedevelop = True",

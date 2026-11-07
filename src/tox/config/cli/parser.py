@@ -67,11 +67,11 @@ class ArgumentParserWithEnvAndConfig(ArgumentParser):
                 if action.default is not None and callable(normalize := getattr(action, "normalize_default", None)):
                     action.default = normalize(action.default)
                 _ACTION_DEFAULT_SOURCE[action] = default_value
-        if isinstance(action, argparse._SubParsersAction):  # ruff:ignore[private-member-access]
+        if isinstance(action, argparse._SubParsersAction):  # ruff:ignore[private-member-access]  # internal access
             for values in action.choices.values():
-                if not isinstance(values, ToxParser):  # pragma: no cover
+                if not isinstance(values, ToxParser):  # pragma: no cover  # setup not built by tests
                     msg = "detected sub-parser added without using our own add command"
-                    raise RuntimeError(msg)  # ruff:ignore[type-check-without-type-error]
+                    raise RuntimeError(msg)  # ruff:ignore[type-check-without-type-error]  # documented contract
                 values.fix_defaults()
 
     @staticmethod
@@ -79,7 +79,7 @@ class ArgumentParserWithEnvAndConfig(ArgumentParser):
         of_type = _ACTION_OF_TYPE.get(action)
         if of_type is None:
             many: Final[bool] = action.nargs in {"+", "*"} or (isinstance(action.nargs, int) and action.nargs >= 1)
-            if isinstance(action, argparse._AppendAction):  # ruff:ignore[private-member-access]
+            if isinstance(action, argparse._AppendAction):  # ruff:ignore[private-member-access]  # internal access
                 if many:
                     of_type = cast("type[Any]", GenericAlias(list, (GenericAlias(list, (action.type or str,)),)))
                 else:
@@ -135,7 +135,7 @@ class HelpFormatter(ArgumentDefaultsHelpFormatter):
         text: str = super()._get_help_string(action) or ""
         if (source := _ACTION_DEFAULT_SOURCE.get(action)) is not None:
             default = " (default: %(default)s)"
-            if text.endswith(default):  # pragma: no branch
+            if text.endswith(default):  # pragma: no branch  # other outcome untested
                 # escape % as the result goes through one more %-formatting pass with the action variables
                 text = f"{text[: -len(default)]} (default: %(default)s -> from {source.replace('%', '%%')})"
         return text
@@ -303,7 +303,9 @@ class ToxParser(ArgumentParserWithEnvAndConfig):
                     for a_args, _, a_kwargs in arguments:
                         defaults[self._dest_from(a_args, a_kwargs)] = a_kwargs.get("default")
 
-    def _add_env_arguments(self, sub_parser: ToxParser, defaults: dict[str, Any]) -> None:  # ruff:ignore[no-self-use]
+    def _add_env_arguments(  # ruff:ignore[no-self-use]  # override keeps self
+        self, sub_parser: ToxParser, defaults: dict[str, Any]
+    ) -> None:
         # Python treats an empty PYTHONHASHSEED as unset
         if (hashseed := os.environ.get("PYTHONHASHSEED", "")) not in {"", "random"}:
             hashseed_default = int(hashseed)
@@ -355,7 +357,7 @@ class ToxParser(ArgumentParserWithEnvAndConfig):
                         result = int(cast("str", values))
                         if result <= 0:
                             msg = "must be greater than zero"
-                            raise ValueError(msg)  # ruff:ignore[raise-within-try]
+                            raise ValueError(msg)  # ruff:ignore[raise-within-try]  # maps error in try
                     except ValueError as exc:
                         raise ArgumentError(self, str(exc)) from exc
                 setattr(namespace, self.dest, result)
@@ -512,7 +514,7 @@ class ToxParser(ArgumentParserWithEnvAndConfig):
         return None
 
 
-class _RecordingArgumentGroup(argparse._ArgumentGroup):  # ruff:ignore[private-member-access]
+class _RecordingArgumentGroup(argparse._ArgumentGroup):  # ruff:ignore[private-member-access]  # internal access
     """Argument group that records its exclusive sub-groups so they replay onto later added sub-parsers."""
 
     def __init__(
@@ -530,7 +532,9 @@ class _RecordingArgumentGroup(argparse._ArgumentGroup):  # ruff:ignore[private-m
         return group
 
 
-class _RecordingMutuallyExclusiveGroup(argparse._MutuallyExclusiveGroup):  # ruff:ignore[private-member-access]
+class _RecordingMutuallyExclusiveGroup(  # internal access
+    argparse._MutuallyExclusiveGroup  # ruff:ignore[private-member-access]  # internal access
+):
     """Exclusive group that records added arguments so they replay onto later added sub-parsers."""
 
     def __init__(self, container: _RecordingArgumentGroup, *, recorded: list[ArgumentArgs], **kwargs: Any) -> None:
@@ -605,7 +609,7 @@ def add_color_flags(parser: ArgumentParser) -> None:
 
 
 def add_verbosity_flags(parser: ArgumentParser) -> None:
-    from tox.report import LEVELS  # ruff:ignore[import-outside-top-level]
+    from tox.report import LEVELS  # ruff:ignore[import-outside-top-level]  # avoids an import cycle
 
     level_map = "|".join(f"{c}={logging.getLevelName(level)}" for c, level in sorted(LEVELS.items()))
     verbosity_group = parser.add_argument_group("verbosity")
