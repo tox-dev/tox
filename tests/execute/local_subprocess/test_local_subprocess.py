@@ -24,12 +24,12 @@ from colorama import Fore
 from psutil import AccessDenied
 
 from tox.config.sets import EnvConfigSet
-from tox.execute import local_sub_process
 from tox.execute.api import ExecuteOptions, FinishedExecuteStatus, Outcome
 from tox.execute.local_sub_process import (
     SIG_INTERRUPT,
     LocalSubProcessExecuteInstance,
     LocalSubProcessExecutor,
+    execute,
     read_via_thread_windows,
 )
 from tox.execute.local_sub_process.read_via_thread_unix import ReadViaThreadUnix
@@ -467,7 +467,7 @@ def test_pty_closes_fds_when_termios_fails(mocker: MockerFixture) -> None:
     openpty_spy = mocker.spy(pty, "openpty")
     close_spy = mocker.spy(os, "close")
 
-    result = local_sub_process._pty("stdout")  # ruff:ignore[private-member-access]  # internal state
+    result = execute._pty("stdout")  # ruff:ignore[private-member-access]  # internal state
 
     assert result is None
     main, child = openpty_spy.spy_return
@@ -484,7 +484,7 @@ def test_local_subprocess_tty_closes_master_fd(monkeypatch: MonkeyPatch, mocker:
     mocker.patch("sys.stderr.isatty", autospec=True, return_value=True)
     mocker.patch("termios.tcgetattr", autospec=True)
     mocker.patch("termios.tcsetattr", autospec=True)
-    pty_spy = mocker.spy(local_sub_process, "_pty")
+    pty_spy = mocker.spy(execute, "_pty")
 
     executor = LocalSubProcessExecutor(colored=False)
     cmd = [sys.executable, str(Path(__file__).parent / "tty_check.py")]
@@ -507,7 +507,7 @@ def test_get_stream_file_no_closes_each_pty_fd_once(mocker: MockerFixture) -> No
     # The child fd is closed once the child has inherited it; closing it a second time on generator teardown can race a
     # parallel run that has reused the freed fd number, corrupting the sibling's fd (see #3975).
     main_fd, child_fd = 11, 22
-    mocker.patch.object(local_sub_process, "_pty", autospec=True, return_value=(main_fd, child_fd))
+    mocker.patch.object(execute, "_pty", autospec=True, return_value=(main_fd, child_fd))
     close_spy = mocker.patch.object(os, "close", autospec=True)
 
     gen = LocalSubProcessExecuteInstance.get_stream_file_no("stdout")
@@ -663,9 +663,9 @@ def test_shebang_failed_to_parse(tmp_path: Path) -> None:
 def test_windows_batch_file_started_via_cmd_exe(
     tmp_path: Path, mocker: MockerFixture, monkeypatch: MonkeyPatch, name: str
 ) -> None:
-    mocker.patch.object(local_sub_process, "sys", mocker.create_autospec(sys, platform="win32"))
+    mocker.patch.object(execute, "sys", mocker.create_autospec(sys, platform="win32"))
     popen: Final[MagicMock] = mocker.patch.object(
-        local_sub_process, "Popen", autospec=True, side_effect=OSError(errno.ENOENT, "not started")
+        execute, "Popen", autospec=True, side_effect=OSError(errno.ENOENT, "not started")
     )
     monkeypatch.setenv("SYSTEMROOT", str(tmp_path))
     script: Final[Path] = tmp_path / name
