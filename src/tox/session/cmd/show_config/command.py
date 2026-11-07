@@ -20,10 +20,15 @@ __all__ = [
 ]
 
 ConfigFormat = Literal["ini", "json", "toml"]
+"""The formats the configuration can be shown in."""
 
 
 @impl
 def tox_add_option(parser: ToxParser) -> None:
+    """Add the ``config`` sub-command to the command line parser.
+
+    :param parser: the parser to add the sub-command to
+    """
     our = parser.add_command("config", ["c"], "show tox configuration", show_config)
     our.add_argument(
         "-k",
@@ -59,6 +64,12 @@ def tox_add_option(parser: ToxParser) -> None:
 
 
 def show_config(state: State) -> int:
+    """Show the configuration in the format selected on the command line.
+
+    :param state: the state of the run
+
+    :returns: the exit code
+    """
     from .ini import show_config_ini  # ruff:ignore[import-outside-top-level]  # avoids an import cycle
     from .json_format import show_config_json  # ruff:ignore[import-outside-top-level]  # avoids an import cycle
     from .toml_format import show_config_toml  # ruff:ignore[import-outside-top-level]  # avoids an import cycle

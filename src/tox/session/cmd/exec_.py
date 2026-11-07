@@ -21,6 +21,10 @@ if TYPE_CHECKING:
 
 @impl
 def tox_add_option(parser: ToxParser) -> None:
+    """Add the ``exec`` sub-command to the command line parser.
+
+    :param parser: the parser to add the sub-command to
+    """
     our = parser.add_command("exec", ["e"], "execute an arbitrary command within a tox environment", exec_)
     our.epilog = "For example: tox exec -e py39 -- python --version"
     register_env_select_flags(our, default=CliEnv("py"), multiple=False)
@@ -28,6 +32,14 @@ def tox_add_option(parser: ToxParser) -> None:
 
 
 def exec_(state: State) -> int:
+    """Run a command in the selected environment, without output capture.
+
+    :param state: the state of the run
+
+    :returns: the exit code
+
+    :raises tox.report.HandledError: when not exactly one environment is selected
+    """
     state.conf.options.skip_pkg_install = True  # avoid package install
     state.conf.options.no_capture = True  # always run interactively without output capture
     envs = list(state.envs.iter())

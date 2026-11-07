@@ -26,6 +26,10 @@ if TYPE_CHECKING:
 
 @impl
 def tox_add_option(parser: ToxParser) -> None:
+    """Add the ``schema`` sub-command to the command line parser.
+
+    :param parser: the parser to add the sub-command to
+    """
     our = parser.add_command(
         "schema", [], "Generate schema for tox configuration", gen_schema, inherit=frozenset({CORE})
     )
@@ -33,6 +37,12 @@ def tox_add_option(parser: ToxParser) -> None:
 
 
 def gen_schema(state: State) -> int:
+    """Print the JSON schema of the tox configuration.
+
+    :param state: the state of the run
+
+    :returns: the exit code
+    """
     core = state.conf.core
     strict = state.conf.options.strict
 

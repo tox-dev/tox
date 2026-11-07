@@ -21,6 +21,11 @@ if TYPE_CHECKING:
 
 @impl
 def tox_add_option(parser: ToxParser) -> None:
+    """Add the ``--version`` flag to the command line parser.
+
+    :param parser: the parser to add the flag to
+    """
+
     class _V(Action):
         def __init__(self, option_strings: Sequence[str], dest: str = SUPPRESS) -> None:
             help_msg = "show program's and plugins version number and exit"
@@ -48,6 +53,10 @@ def tox_add_option(parser: ToxParser) -> None:
 
 
 def get_version_info() -> str:
+    """Get the version of tox, with the plugins and the inline plugin module that are registered.
+
+    :returns: the version information, one entry per line
+    """
     out = [f"{version} from {Path(tox.__file__).absolute()}"]
     if plugin_info := MANAGER.manager.list_plugin_distinfo():
         out.append("registered plugins:")

@@ -15,6 +15,10 @@ if TYPE_CHECKING:
 
 @impl
 def tox_add_option(parser: ToxParser) -> None:
+    """Add the ``depends`` sub-command to the command line parser.
+
+    :param parser: the parser to add the sub-command to
+    """
     our = parser.add_command(
         "depends",
         ["de"],
@@ -26,6 +30,12 @@ def tox_add_option(parser: ToxParser) -> None:
 
 
 def depends(state: State) -> int:
+    """Show the environments and the environments they depend on, in the order they run.
+
+    :param state: the state of the run
+
+    :returns: the exit code
+    """
     to_run_list = list(state.envs.iter(only_active=False))
     order, todo = run_order(state, to_run_list)
     print(f"Execution order: {', '.join(order)}")  # ruff:ignore[print]  # terminal output

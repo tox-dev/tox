@@ -25,6 +25,14 @@ def run_one(  # keeps the signature
     no_test: bool,  # ruff:ignore[boolean-type-hint-positional-argument]  # keeps the signature
     suspend_display: bool,  # ruff:ignore[boolean-type-hint-positional-argument]  # keeps the signature
 ) -> ToxEnvRunResult:
+    """Run a single environment, and report its result.
+
+    :param tox_env: the environment to run
+    :param no_test: whether to only set up the environment, without running its commands
+    :param suspend_display: whether to suspend the display of the environment while it runs
+
+    :returns: the result of the run
+    """
     start_one = time.monotonic()
     name = tox_env.conf.name
     with tox_env.display_context(suspend_display):
@@ -116,6 +124,17 @@ def run_command_set(  # ruff:ignore[too-many-arguments]  # public signature
     outcomes: list[Outcome],
     retry_count: int = 0,
 ) -> int:
+    """Run a set of commands of an environment, retrying them when they fail.
+
+    :param tox_env: the environment the commands run in
+    :param key: the configuration key of the commands
+    :param cwd: the directory the commands run in
+    :param ignore_errors: whether a failing command does not fail the run
+    :param outcomes: the list the outcome of each command is added to
+    :param retry_count: how many times the commands are retried when they fail
+
+    :returns: the exit code
+    """
     exit_code = Outcome.OK
     for at, cmd in enumerate(tox_env.conf.get(key, list[Command])):
         max_attempts = 1 if cmd.ignore_exit_code else retry_count + 1
@@ -156,6 +175,18 @@ def run_command_set(  # ruff:ignore[too-many-arguments]  # public signature
 
 
 class ToxEnvRunResult(NamedTuple):
+    """The result of running an environment.
+
+    :param name: the name of the environment
+    :param skipped: whether the environment was skipped
+    :param code: the exit code of the run
+    :param outcomes: the outcome of each command that ran
+    :param duration: the seconds the run took
+    :param ignore_outcome: whether a failure of the environment is ignored
+    :param fail_fast: whether the run stops when the environment fails
+    :param unavailable: whether the environment is unavailable
+    """
+
     name: str
     skipped: bool
     code: int

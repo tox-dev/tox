@@ -21,6 +21,12 @@ if TYPE_CHECKING:
 
 
 def show_config_ini(state: State) -> int:
+    """Show the configuration in the ini format.
+
+    :param state: the state of the run
+
+    :returns: the exit code
+    """
     output_file = state.conf.options.output_file
     # color belongs to the terminal only - a file must hold plain text
     is_colored = state.conf.options.is_colored and output_file is None

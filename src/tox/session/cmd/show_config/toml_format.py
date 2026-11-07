@@ -29,6 +29,12 @@ _KEY_RE: Final[re.Pattern[str]] = re.compile(
 
 
 def show_config_toml(state: State) -> int:
+    """Show the configuration in the TOML format.
+
+    :param state: the state of the run
+
+    :returns: the exit code
+    """
     result, has_exception = build_structured_result(state)
     output = tomli_w.dumps(result).removesuffix("\n")
     write_output(output, state.conf.options.output_file, state.conf.options.is_colored, colorize)
@@ -36,5 +42,11 @@ def show_config_toml(state: State) -> int:
 
 
 def colorize(text: str) -> str:
+    """Add the color to the headers and keys of a TOML output.
+
+    :param text: the TOML text
+
+    :returns: the colored text
+    """
     text = _HEADER_RE.sub(lambda match: f"{Fore.YELLOW}{match.group()}{Fore.RESET}", text)
     return _KEY_RE.sub(rf"{Fore.GREEN}\1{Fore.RESET} =", text)

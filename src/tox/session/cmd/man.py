@@ -15,12 +15,22 @@ if TYPE_CHECKING:
 
 @impl
 def tox_add_option(parser: ToxParser) -> None:
+    """Add the ``man`` sub-command to the command line parser.
+
+    :param parser: the parser to add the sub-command to
+    """
     from tox.config.cli.parser import CORE  # ruff:ignore[import-outside-top-level]  # avoids an import cycle
 
     parser.add_command("man", [], "Set up tox man page for current shell", setup_man, inherit=frozenset({CORE}))
 
 
 def setup_man(state: State) -> int:  # ruff:ignore[unused-function-argument]  # interface signature
+    """Show where the tox man page is, and how to install it for the current shell.
+
+    :param state: the state of the run
+
+    :returns: the exit code
+    """
     print("tox man page setup")  # ruff:ignore[print]  # terminal output
     print("=" * 50)  # ruff:ignore[print]  # terminal output
     print()  # ruff:ignore[print]  # terminal output

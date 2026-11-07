@@ -144,6 +144,8 @@ report
     :members:
     :exclude-members: stream, format, patch_thread, write_out_err, suspend_out_err
 
+.. autoclass:: tox.report.HandledError
+
 execute
 =======
 

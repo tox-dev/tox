@@ -15,6 +15,12 @@ if TYPE_CHECKING:
 
 
 def build_structured_result(state: State) -> tuple[dict[str, JsonValue], bool]:
+    """Build the configuration of the selected environments as nested dictionaries.
+
+    :param state: the state of the run
+
+    :returns: the configuration, and whether any value failed to load
+    """
     keys: list[str] = state.conf.options.list_keys_only
     show_everything = state.conf.options.env.is_all
     has_exception = False
@@ -59,6 +65,12 @@ def _collect_conf(conf: ConfigSet, keys: list[str]) -> tuple[dict[str, JsonValue
 
 
 def format_config_error(exception: Exception) -> str:
+    """Describe an error raised while loading a configuration value.
+
+    :param exception: the error
+
+    :returns: the description of the error
+    """
     if isinstance(exception, UnicodeDecodeError):
         return f"UnicodeDecodeError at byte {exception.start}"
     return repr(exception)
@@ -70,6 +82,13 @@ def write_output(
     is_colored: bool,  # ruff:ignore[boolean-type-hint-positional-argument]  # keeps the signature
     colorize: Callable[[str], str],
 ) -> None:
+    """Write the output to a file, or print it to the terminal.
+
+    :param output: the text to write
+    :param output_file: the file to write to, ``None`` to print instead
+    :param is_colored: whether the output is printed in color
+    :param colorize: the function that adds the color to the text
+    """
     if output_file is not None:
         write_output_file(Path(output_file), output)
     else:
@@ -77,6 +96,11 @@ def write_output(
 
 
 def write_output_file(output_file: Path, output: str) -> None:
+    """Write the output to a file, creating its directory when needed.
+
+    :param output_file: the file to write to
+    :param output: the text to write
+    """
     output_file.parent.mkdir(parents=True, exist_ok=True)
     output_file.write_text(f"{output}\n", encoding="utf-8")
 

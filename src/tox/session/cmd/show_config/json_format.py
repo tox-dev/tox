@@ -22,10 +22,22 @@ _KEY_RE: Final[re.Pattern[str]] = re.compile(
 
 
 def show_config_json(state: State) -> int:
+    """Show the configuration in the JSON format.
+
+    :param state: the state of the run
+
+    :returns: the exit code
+    """
     result, has_exception = build_structured_result(state)
     write_output(json.dumps(result, indent=2), state.conf.options.output_file, state.conf.options.is_colored, colorize)
     return -1 if has_exception else 0
 
 
 def colorize(text: str) -> str:
+    """Add the color to the keys of a JSON output.
+
+    :param text: the JSON text
+
+    :returns: the colored text
+    """
     return _KEY_RE.sub(rf"\1{Fore.GREEN}\2{Fore.RESET}:", text)

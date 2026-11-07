@@ -43,6 +43,11 @@ if TYPE_CHECKING:
 def env_run_create_flags(
     parser: ArgumentParser, mode: Literal["run", "run-parallel", "legacy", "devenv", "config", "depends", "exec"]
 ) -> None:
+    """Add the flags that control how the environments of a run are created.
+
+    :param parser: the parser to add the flags to
+    :param mode: the command the flags are added for
+    """
     if mode not in {"devenv", "depends"}:
         parser.add_argument(
             "-s",
@@ -114,6 +119,8 @@ def env_run_create_flags(
 
 
 class SkipMissingInterpreterAction(Action):
+    """Set how missing interpreters are handled, from the value given to ``--skip-missing-interpreters``."""
+
     @override
     def __call__(
         self,
@@ -129,6 +136,8 @@ class SkipMissingInterpreterAction(Action):
 
 
 class InstallPackageAction(Action):
+    """Store the path of a package file given on the command line, after checking that it is a file."""
+
     @override
     def __call__(
         self,
@@ -152,6 +161,12 @@ class InstallPackageAction(Action):
         return (Path(url2pathname(urlparse(raw).path)) if raw.startswith("file:") else Path(raw)).absolute()
 
     def normalize_default(self, value: Path) -> Path:
+        """Resolve the default value the same way as a value given on the command line.
+
+        :param value: the default value
+
+        :returns: the resolved path
+        """
         return self._resolve_path(value.as_posix())
 
 
@@ -164,6 +179,15 @@ def execute(  # keeps the signature
     has_spinner: bool,  # ruff:ignore[boolean-type-hint-positional-argument]  # keeps the signature
     live: bool,  # ruff:ignore[boolean-type-hint-positional-argument]  # keeps the signature
 ) -> int:
+    """Run the selected environments, with a limit on how many run at the same time.
+
+    :param state: the state of the run
+    :param max_workers: the maximum number of environments that run at the same time, ``None`` for no limit
+    :param has_spinner: whether to show a spinner while the environments run
+    :param live: whether to show the output of the environments as it is produced
+
+    :returns: the exit code
+    """
     interrupt, done = Event(), Event()
     results: list[ToxEnvRunResult] = []
     future_to_env: dict[Future[ToxEnvRunResult], ToxEnv] = {}
@@ -424,6 +448,15 @@ def ready_to_run_envs(state: State, to_run: list[str], completed: set[str]) -> I
 
 
 def run_order(state: State, to_run: list[str]) -> tuple[list[str], dict[str, set[str]]]:
+    """Compute the order in which the environments run, so that the environments they depend on run first.
+
+    :param state: the state of the run
+    :param to_run: the names of the environments to run
+
+    :returns: the order of the environments, and the environments each one depends on
+
+    :raises tox.report.HandledError: when the environments depend on each other in a cycle
+    """
     to_run_set = set(to_run)
     todo: dict[str, set[str]] = {}
     for env in to_run:

@@ -26,6 +26,10 @@ if TYPE_CHECKING:
 
 @impl
 def tox_add_option(parser: ToxParser) -> None:
+    """Add the ``legacy`` sub-command, with the options of the older command line, to the command line parser.
+
+    :param parser: the parser to add the sub-command to
+    """
     our = parser.add_command("legacy", ["le"], "legacy entry-point command", legacy)
     our.add_argument("--help-ini", "--hi", action="store_true", help="show live configuration", dest="show_config")
     our.add_argument(
@@ -90,6 +94,12 @@ def tox_add_option(parser: ToxParser) -> None:
 
 
 def legacy(state: State) -> int:
+    """Run the command that the legacy options select, such as showing the configuration or listing the environments.
+
+    :param state: the state of the run
+
+    :returns: the exit code
+    """
     option = state.conf.options
     if option.show_config:
         option.list_keys_only = []

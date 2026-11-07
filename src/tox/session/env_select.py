@@ -69,6 +69,7 @@ class CliEnv:  # ruff:ignore[eq-without-hash]  # mutable value type
 
     @property
     def is_all(self) -> bool:
+        """Whether all environments were requested with ``ALL``."""
         return self._names is not None and "ALL" in self._names
 
     def __bool__(self) -> bool:
@@ -85,6 +86,7 @@ class CliEnv:  # ruff:ignore[eq-without-hash]  # mutable value type
 
     @property
     def is_default_list(self) -> bool:
+        """Whether no environments were requested, so the default list applies."""
         return not (self._names or [])
 
     @override
@@ -241,6 +243,12 @@ _PY_PRE_RELEASE_FACTOR: Final[re.Pattern[str]] = re.compile(
 
 
 class EnvSelector:
+    """Select the environments of a run from the command line, the configuration and the environment.
+
+    :param state: the state of the run
+    :ivar on_empty_fallback_py: whether to fall back to the ``py`` environment when none is selected
+    """
+
     def __init__(self, state: State) -> None:
         # needs core to load the default tox environment list
         # to load the package environments of a run environments we need the run environment builder
@@ -698,6 +706,10 @@ class EnvSelector:
         return self._unavailable_envs.copy()
 
     def ensure_only_run_env_is_active(self) -> None:
+        """Ensure that no packaging environment is selected to run.
+
+        :raises tox.report.HandledError: when a packaging environment is selected
+        """
         envs, active = self._defined_envs, self._env_name_to_active()
         if invalid := [n for n, a in active.items() if a and isinstance(envs[n].env, PackageToxEnv)]:
             msg = f"cannot run packaging environment(s) {','.join(invalid)}"

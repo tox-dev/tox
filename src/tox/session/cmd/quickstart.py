@@ -17,6 +17,10 @@ if TYPE_CHECKING:
 
 @impl
 def tox_add_option(parser: ToxParser) -> None:
+    """Add the ``quickstart`` sub-command to the command line parser.
+
+    :param parser: the parser to add the sub-command to
+    """
     from tox.config.cli.parser import CORE  # ruff:ignore[import-outside-top-level]  # avoids an import cycle
 
     our = parser.add_command(
@@ -37,6 +41,12 @@ def tox_add_option(parser: ToxParser) -> None:
 
 
 def quickstart(state: State) -> int:
+    """Create a tox config file for a Python project.
+
+    :param state: the state of the run
+
+    :returns: the exit code
+    """
     root = state.conf.options.quickstart_root.absolute()
     tox_ini = root / "tox.ini"
     if tox_ini.exists():

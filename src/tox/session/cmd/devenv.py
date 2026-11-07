@@ -20,6 +20,10 @@ if TYPE_CHECKING:
 
 @impl
 def tox_add_option(parser: ToxParser) -> None:
+    """Add the ``devenv`` sub-command to the command line parser.
+
+    :param parser: the parser to add the sub-command to
+    """
     help_msg = "sets up a development environment at ENVDIR based on the tox configuration specified "
     our = parser.add_command("devenv", ["d"], help_msg, devenv)
     our.add_argument("devenv_path", metavar="path", default=Path("venv"), nargs="?", type=Path)
@@ -28,6 +32,14 @@ def tox_add_option(parser: ToxParser) -> None:
 
 
 def devenv(state: State) -> int:
+    """Set up a development environment of the selected environment, at the path given on the command line.
+
+    :param state: the state of the run
+
+    :returns: the exit code
+
+    :raises tox.report.HandledError: when not exactly one target environment is selected
+    """
     opt = state.conf.options
     opt.devenv_path = opt.devenv_path.absolute()
     opt.skip_missing_interpreters = False  # the target python must exist
