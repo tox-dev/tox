@@ -105,7 +105,7 @@ class Config:
 
     @property
     def core(self) -> CoreConfigSet:
-        """:returns: the core configuration"""
+        """The core configuration, loaded on first access."""
         if self._core_set is not None:
             return self._core_set
         core_section = self._src.get_core_section()
@@ -116,7 +116,7 @@ class Config:
 
     @property
     def src_path(self) -> Path:
-        """:returns: the location of the tox configuration source"""
+        """The location of the tox configuration source."""
         return self._src.path
 
     @override
@@ -124,12 +124,17 @@ class Config:
         return f"{type(self).__name__}(config_source={self._src!r})"
 
     def __contains__(self, item: str) -> bool:
-        """:returns: check if an environment already exists"""
+        """
+        Check if an environment already exists.
+
+        :param item: the name of the environment to look for
+        :returns: whether an environment with that name is defined
+        """
         return any(name == item for name in self)
 
     @property
     def work_dir(self) -> Path:
-        """:returns: working directory for this project"""
+        """The working directory for this project."""
         return self._work_dir
 
     @property
@@ -138,7 +143,7 @@ class Config:
 
     @property
     def overrides(self) -> OverrideMap:
-        """:returns: the configuration overrides keyed by their target namespace"""
+        """The configuration overrides keyed by their target namespace."""
         return self._overrides
 
     def pos_args(self, to_path: Path | None, *, program_first: bool = False) -> tuple[str, ...] | None:

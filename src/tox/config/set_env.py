@@ -30,7 +30,11 @@ SetEnvValue = str | MatchExpression
 
 
 class SetEnvEntry(TypedDict):
-    """A single ``set_env`` value in structured (TOML) form."""
+    """
+    A single ``set_env`` value in structured (TOML) form.
+
+    :ivar marker: the environment marker that decides whether the value applies
+    """
 
     value: SetEnvValue
     marker: NotRequired[str]
@@ -39,7 +43,12 @@ class SetEnvEntry(TypedDict):
 @dataclass(frozen=True)
 @final
 class SetEnvReference:
-    """Keep overrides pending until the consuming environment has registered its keys."""
+    """
+    Keep overrides pending until the consuming environment has registered its keys.
+
+    :param args: the load arguments the value is resolved with
+    :param shape: the form the value was written in, a string, a table or an array
+    """
 
     config: SetEnv
     args: ConfigLoadArgs
@@ -381,7 +390,13 @@ class SetEnv:
         )
 
     def raw(self, args: ConfigLoadArgs, *, resolve: bool = True) -> dict[str, SetEnvEntry]:
-        """Preserve lazy values and markers when another section includes this configuration."""
+        """
+        Preserve lazy values and markers when another section includes this configuration.
+
+        :param args: the load arguments the values are resolved with
+        :param resolve: whether pending replacements are resolved first
+        :returns: the entries keyed by name, each holding its value and optional marker
+        """
         if resolve:
             self._resolve_replacements(args)
         result: dict[str, SetEnvEntry] = {}
@@ -396,6 +411,7 @@ class SetEnv:
 
         They come from settings that may read ``set_env`` through ``{env:...}``, so reading them here would recurse.
 
+        :param values: the tox variables to export, each mapped to a callable producing its value
         """
         for key, value in values.items():
             self._raw.pop(key, None)
@@ -405,7 +421,11 @@ class SetEnv:
         self.changed = True
 
     def extend(self, other: SetEnv) -> None:
-        """Appended blocks override base keys; explicit keys in the same override win."""
+        """
+        Appended blocks override base keys; explicit keys in the same override win.
+
+        :param other: the configuration whose blocks are appended to this one
+        """
         for _, protected in self._overrides:
             protected.update(other._raw)
         self._override_keys.update(other._raw)

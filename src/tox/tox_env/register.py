@@ -23,12 +23,12 @@ class ToxEnvRegister:
 
     @property
     def env_runners(self) -> Iterable[str]:
-        """:returns: run environment types currently defined"""
+        """The run environment types currently defined."""
         return self._run_envs.keys()
 
     @property
     def default_env_runner(self) -> str:
-        """:returns: the default run environment type"""
+        """The default run environment type."""
         if not self._default_run_env and self._run_envs:
             self._default_run_env = next(iter(self._run_envs.keys()))
         return self._default_run_env
@@ -38,6 +38,7 @@ class ToxEnvRegister:
         """Change the default run environment type.
 
         :param value: the new run environment type by name
+        :raises ValueError: when the run environment type is not registered
 
         """
         if value not in self._run_envs:

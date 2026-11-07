@@ -62,7 +62,7 @@ class Command:  # ruff:ignore[eq-without-hash]  # mutable value type
 
     @property
     def shell(self) -> str:
-        """:returns: a shell representation of the command (platform dependent)"""
+        """A shell representation of the command, platform dependent."""
         return shell_cmd(self.args)
 
 

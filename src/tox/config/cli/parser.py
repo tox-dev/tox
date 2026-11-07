@@ -43,7 +43,14 @@ _ACTION_DEFAULT_SOURCE: Final[MutableMapping[Action, str]] = WeakKeyDictionary()
 
 
 class ArgumentParserWithEnvAndConfig(ArgumentParser):
-    """Argument parser which updates its defaults by checking the configuration files and environmental variables."""
+    """
+    Argument parser which updates its defaults by checking the configuration files and environmental variables.
+
+    :param args: positional arguments passed to :class:`argparse.ArgumentParser`
+    :param kwargs: keyword arguments passed to :class:`argparse.ArgumentParser`, ``file_config`` selects the
+        configuration the defaults are read from
+    :ivar file_config: the configuration the defaults are read from
+    """
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         # sub-parsers also construct an instance of the parser, but they don't get their own file config, but inherit
@@ -127,7 +134,12 @@ class ArgumentParserWithEnvAndConfig(ArgumentParser):
 
 
 class HelpFormatter(ArgumentDefaultsHelpFormatter):
-    """A help formatter that provides the default value and the source it comes from."""
+    """
+    A help formatter that provides the default value and the source it comes from.
+
+    :param prog: the program name shown in the usage line
+    :param kwargs: keyword arguments passed to :class:`argparse.ArgumentDefaultsHelpFormatter`
+    """
 
     def __init__(self, prog: str, **kwargs: Any) -> None:
         super().__init__(prog, max_help_position=30, width=240, **kwargs)
@@ -159,11 +171,93 @@ _INHERIT_ALL: Final[frozenset[str]] = frozenset({CORE, ENV})
 
 
 class Parsed(Namespace):
-    """CLI options.
+    """
+    CLI options.
 
     The annotations below declare the type each option has once its command registered it; an option belonging to
     another command is absent at runtime, so shared code paths read it via ``getattr`` with a fallback.
 
+
+    :ivar verbose: the number of ``-v`` flags passed
+
+    :ivar quiet: the number of ``-q`` flags passed
+
+    :ivar colored: ``yes`` when the output is colored, ``no`` otherwise
+
+    :ivar stderr_color: the color used for stderr output
+
+    :ivar exit_and_dump_after: seconds after which tox dumps its threads and exits, ``0`` disables it
+
+    :ivar config_file: the configuration file or folder passed with ``-c``, if any
+
+    :ivar work_dir: the tox working directory, if one was given
+
+    :ivar root_dir: the project root directory, if one was given
+
+    :ivar override: the configuration overrides passed with ``--override``
+
+    :ivar command: the name of the sub-command to run
+
+    :ivar remainder: the arguments passed after ``--``
+
+
+    :ivar labels: the environment labels selected with ``-m``
+
+    :ivar factors: the environment factors selected with ``-f``
+
+    :ivar skip_env: the regular expression of environments to exclude
+
+    :ivar default_runner: the tox run engine used when an environment does not name one
+
+    :ivar result_json: the file the JSON result report is written to, if any
+
+    :ivar no_capture: whether output capture is disabled
+
+    :ivar hash_seed: the value of ``PYTHONHASHSEED`` for the commands, ``None`` when it is not set
+
+    :ivar discover: the Python executables to try first during discovery
+
+    :ivar list_dependencies: whether the dependencies installed during environment setup are listed
+
+    :ivar recreate: whether environments are recreated before use
+
+    :ivar no_test: whether the test commands are skipped
+
+    :ivar package_only: whether only the package is built
+
+    :ivar install_pkg: the package to install instead of building the project, if any
+
+    :ivar fail_fast: whether execution stops after the first environment failure
+
+    :ivar develop: whether the package is installed in development mode
+
+    :ivar no_recreate_pkg: whether packaging environments are kept when ``recreate`` is set
+
+    :ivar skip_pkg_install: whether the package installation is skipped
+
+    :ivar skip_env_install: whether dependency and package installation is skipped
+
+    :ivar skip_missing_interpreters: whether missing interpreters are skipped, ``config`` defers to the configuration
+
+    :ivar parallel: the number of environments run in parallel
+
+    :ivar parallel_live: whether the output of parallel environments is shown live
+
+    :ivar parallel_no_spinner: whether the spinner is disabled in parallel mode
+
+    :ivar no_provision: whether provisioning is skipped and fails instead, or the path its metadata is written to
+
+    :ivar no_recreate_provision: whether the provisioning environment is kept when ``recreate`` is set
+
+    :ivar devenv_path: the directory of the development environment
+
+    :ivar force_dep: the dependency requirements forced into the environments
+
+    :ivar site_packages: whether the environments can see the system site packages
+
+    :ivar always_copy: whether the environments copy files instead of linking them
+
+    :ivar pre: whether pre-release versions are installed
     """
 
     verbose: int
@@ -215,13 +309,13 @@ class Parsed(Namespace):
 
     @property
     def verbosity(self) -> int:
-        """:returns: reporting verbosity"""
+        """The reporting verbosity: the ``-v`` count minus the ``-q`` count, never below zero."""
         result: int = max(self.verbose - self.quiet, 0)
         return result
 
     @property
     def is_colored(self) -> bool:
-        """:returns: flag indicating if the output is colored or not"""
+        """``True`` when the output is colored."""
         return self.colored == "yes"
 
 
@@ -229,7 +323,17 @@ ArgumentArgs = tuple[tuple[str, ...], type[Any] | UnionType | None, dict[str, An
 
 
 class ToxParser(ArgumentParserWithEnvAndConfig):
-    """Argument parser for tox."""
+    """
+    Argument parser for tox.
+
+    :param args: positional arguments passed to :class:`ArgumentParserWithEnvAndConfig`
+    :param root: whether the base options are added, set for the top-level parser
+    :param add_cmd: whether a sub-command group is added to take the tox commands
+    :param kwargs: keyword arguments passed to :class:`ArgumentParserWithEnvAndConfig`
+    :ivar of_cmd: the command this parser was added for, ``None`` for the top-level parser
+    :ivar inherit: the option groups, ``core`` and ``env``, this parser takes from its parent
+    :ivar handlers: the command and alias names mapped to their sub-parser and handler
+    """
 
     def __init__(self, *args: Any, root: bool = False, add_cmd: bool = False, **kwargs: Any) -> None:
         self.of_cmd: str | None = None

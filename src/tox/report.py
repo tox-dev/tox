@@ -148,7 +148,7 @@ class ToxHandler(_STREAM_HANDLER_BASE):
 
     @property
     def stdout(self) -> TextIOWrapper:
-        """:returns: the current standard output"""
+        """The current standard output."""
         return self._local.out_err[0]
 
     def _setup_level(  # keeps the signature
@@ -191,24 +191,32 @@ class ToxHandler(_STREAM_HANDLER_BASE):
     @property
     @override
     def name(self) -> str:  # pyrefly: ignore[bad-override] # the value follows the active tox env so it must be a property, pyrefly rejects that over a typeshed attribute: https://github.com/facebook/pyrefly/issues/2771
-        """:returns: the current tox environment name"""
+        """The current tox environment name."""
         return self._local.name  # pragma: no cover  # untested error path
 
     @name.setter
     @override
     def name(self, value: str | None) -> None:
-        """Ignore anyone changing this, the name always reflects the active tox environment."""
+        """
+        Ignore anyone changing this, the name always reflects the active tox environment.
+
+        :param value: the ignored name
+        """
 
     @property
     @override
     def stream(self) -> TextIOWrapper:  # pyrefly: ignore[bad-override] # the value follows the active tox env so it must be a property, pyrefly rejects that over a typeshed attribute: https://github.com/facebook/pyrefly/issues/2771
-        """:returns: the current stream to write to (alias for the current standard output)"""
+        """The current stream to write to, an alias for the current standard output."""
         return self.stdout
 
     @stream.setter
     @override
     def stream(self, value: TextIOWrapper) -> None:
-        """Ignore anyone changing this."""
+        """
+        Ignore anyone changing this.
+
+        :param value: the ignored stream
+        """
 
     @contextmanager
     def with_context(self, name: str) -> Generator[None, None, None]:
@@ -238,7 +246,7 @@ class ToxHandler(_STREAM_HANDLER_BASE):
 
     @property
     def stderr(self) -> TextIOWrapper:
-        """:returns: the current standard error"""
+        """The current standard error."""
         return self._local.out_err[1]
 
     @override

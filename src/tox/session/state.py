@@ -19,7 +19,12 @@ if TYPE_CHECKING:
 
 
 class State:
-    """Runtime state holder."""
+    """
+    Runtime state holder.
+
+    :param args: the command line arguments tox was started with
+    :ivar conf: the configuration of this run
+    """
 
     def __init__(self, options: Options, args: Sequence[str]) -> None:
         (extended_envs,) = tee(chain.from_iterable(MANAGER.tox_extend_envs()), 1)
@@ -36,7 +41,7 @@ class State:
 
     @property
     def envs(self) -> EnvSelector:
-        """:returns: provides access to the tox environments"""
+        """Access to the tox environments, selected on first access."""
         if self._selector is None:
             self._selector = EnvSelector(self)
         return self._selector

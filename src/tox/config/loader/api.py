@@ -228,8 +228,8 @@ class Loader(Convert[T]):
         """Load the raw object from the config store.
 
         :param key: the key under what we want the configuration
-        :param env_name: load for env name
         :param conf: the global config object
+        :param env_name: load for env name
 
         :returns: the raw value of the key, before conversion
 
@@ -251,7 +251,7 @@ class Loader(Convert[T]):
         :param of_type: the config type
         :param factory: factory method to build the object
         :param conf: the global config
-        :param raw: the raw value
+        :param raw: the value as read from the store, before conversion to ``of_type``
         :param args: env args
 
         :returns: the object built from the raw value

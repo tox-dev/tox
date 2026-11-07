@@ -47,6 +47,8 @@ def tox_extend_envs() -> Iterable[str]:
     :class:`tox.config.loader.memory.MemoryLoader` early enough before tox starts caching configuration values sourced
     elsewhere.
 
+    :returns: the environment names to add
+
     """
     return ()
 

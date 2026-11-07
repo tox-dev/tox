@@ -43,7 +43,7 @@ class Section:  # ruff:ignore[eq-without-hash]  # mutable value type
 
     @property
     def key(self) -> str:
-        """:returns: the section key"""
+        """The section key: the prefix and the name joined by the separator, the prefix left out when unset."""
         return self.SEP.join(i for i in (self._prefix, self._name) if i is not None)
 
     @override
@@ -59,12 +59,12 @@ class Section:  # ruff:ignore[eq-without-hash]  # mutable value type
 
     @property
     def prefix(self) -> str | None:
-        """:returns: the prefix of the section"""
+        """The prefix of the section, ``None`` when it has none."""
         return self._prefix
 
     @property
     def name(self) -> str:
-        """:returns: the name of the section"""
+        """The name of the section."""
         return self._name
 
 

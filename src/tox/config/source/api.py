@@ -108,7 +108,12 @@ class Source(ABC):
 
     @abstractmethod
     def get_tox_env_section(self, item: str) -> tuple[Section, list[str], list[str]]:
-        """:returns: the section for a tox environment"""
+        """
+        Get the section of a tox environment.
+
+        :param item: the name of the tox environment
+        :returns: the section, followed by the base sections for test and for package environments
+        """
         raise NotImplementedError
 
     @abstractmethod

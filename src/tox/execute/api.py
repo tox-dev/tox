@@ -85,7 +85,7 @@ class ExecuteStatus(ABC):
 
     @property
     def start_error(self) -> BaseException | None:
-        """:returns: the error that kept the command from starting, ``None`` once it started"""
+        """The error that kept the command from starting, ``None`` once it started."""
         return None
 
     @abstractmethod
@@ -119,7 +119,13 @@ class ExecuteStatus(ABC):
 
 
 class FinishedExecuteStatus(ExecuteStatus):
-    """Report a fixed exit code for a command that finished or never started, without running a process."""
+    """
+    Report a fixed exit code for a command that finished or never started, without running a process.
+
+    :param out: the sink for the standard output
+    :param err: the sink for the standard error
+    :param exit_code: the exit code to report, ``None`` if there is none
+    """
 
     def __init__(self, options: ExecuteOptions, out: SyncWrite, err: SyncWrite, exit_code: int | None) -> None:
         super().__init__(options, out, err)
@@ -136,7 +142,11 @@ class FinishedExecuteStatus(ExecuteStatus):
 
     @override
     def write_stdin(self, content: str) -> None:
-        """Cannot write."""
+        """
+        Cannot write.
+
+        :param content: the text that would be written to the standard input
+        """
 
     @override
     def interrupt(self) -> None:
@@ -144,7 +154,11 @@ class FinishedExecuteStatus(ExecuteStatus):
 
 
 class Execute(ABC):
-    """Abstract API for execution of a tox environment."""
+    """
+    Abstract API for execution of a tox environment.
+
+    :param colored: whether the output is colored
+    """
 
     _option_class: type[ExecuteOptions] = ExecuteOptions
 
@@ -222,7 +236,13 @@ class Execute(ABC):
 
 
 class ExecuteInstance(ABC):
-    """An instance of a command execution."""
+    """
+    An instance of a command execution.
+
+    :param request: the command to execute
+    :param out: the sink for the standard output
+    :param err: the sink for the standard error
+    """
 
     def __init__(self, request: ExecuteRequest, options: ExecuteOptions, out: SyncWrite, err: SyncWrite) -> None:
         self.request = request
@@ -258,7 +278,11 @@ class ExecuteInstance(ABC):
 
 
 class Outcome:
-    """Result of a command execution."""
+    """
+    Result of a command execution.
+
+    :cvar OK: the exit code of a successful command
+    """
 
     OK = 0
     FAILED = 1  #: exit code reported when a ``!`` command exits with :attr:`OK`
@@ -313,7 +337,7 @@ class Outcome:
 
     @property
     def elapsed(self) -> float:
-        """:returns: time the execution took in seconds"""
+        """The time the execution took, in seconds."""
         return self.end - self.start
 
     def assert_success(self) -> None:

@@ -98,7 +98,11 @@ class ConfigSet(ABC):
         return item in self._alias
 
     def get_configs(self) -> Generator[ConfigDefinition[Any], None, None]:
-        """:returns: a mapping of config keys to their definitions"""
+        """
+        Iterate over the config definitions, one per config.
+
+        :yields: the definition of each config, keyed by its first key
+        """
         for key, definition in self._defined.items():
             if key == next(iter(definition.keys)):
                 yield definition

@@ -44,7 +44,7 @@ class EnvJournal:
 
     @property
     def content(self) -> dict[str, JsonValue]:
-        """:returns: the env journal content (merges explicit keys and execution commands)"""
+        """The env journal content, merging the explicit keys and the execution commands."""
         tests: list[JsonValue] = []
         setup: list[JsonValue] = []
         for run_id, outcome in self._executes:

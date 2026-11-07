@@ -338,7 +338,7 @@ class ToxEnv(ABC):  # ruff:ignore[too-many-public-methods]  # public facade
 
     @property
     def env_dir(self) -> Path:
-        """:returns: the tox environments environment folder"""
+        """The environment folder of the tox environment."""
         return self.conf.get("env_dir", Path)
 
     @property
@@ -374,7 +374,7 @@ class ToxEnv(ABC):  # ruff:ignore[too-many-public-methods]  # public facade
 
     @property
     def env_tmp_dir(self) -> Path:
-        """:returns: the tox environments temp folder"""
+        """The temp folder of the tox environment."""
         return self.conf.get("env_tmp_dir", Path)
 
     def _handle_core_tmp_dir(self) -> None:
@@ -387,7 +387,7 @@ class ToxEnv(ABC):  # ruff:ignore[too-many-public-methods]  # public facade
 
     @property
     def env_log_dir(self) -> Path:
-        """:returns: the tox environments log folder"""
+        """The log folder of the tox environment."""
         return self.conf.get("env_log_dir", Path)
 
     def _setup_with_env(self) -> None:  # ruff:ignore[empty-method-without-abstract-decorator] # empty abstract base class
