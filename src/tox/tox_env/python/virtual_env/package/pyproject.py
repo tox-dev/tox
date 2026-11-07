@@ -510,7 +510,7 @@ class Pep517VirtualEnvFrontend(Frontend):
         super().__init__(*Frontend.create_args_from_folder(root))
         self._tox_env = env
         self._backend_executor_: LocalSubProcessPep517Executor | None = None
-        into: dict[str, Any] = {}
+        into: dict[str, str | list[str]] = {}
 
         for hook in chain(
             (f"get_requires_for_build_{build_type}" for build_type in ["editable", "wheel", "sdist"]),
@@ -519,9 +519,9 @@ class Pep517VirtualEnvFrontend(Frontend):
         ):  # wrap build methods in a cache wrapper
 
             def key(  # interface signature
-                *args: Any,  # ruff:ignore[unused-function-argument]  # interface signature
+                *args: object,  # ruff:ignore[unused-function-argument]  # interface signature
                 bound_return: str = hook,
-                **kwargs: Any,  # ruff:ignore[unused-function-argument]  # interface signature
+                **kwargs: object,  # ruff:ignore[unused-function-argument]  # interface signature
             ) -> str:
                 return bound_return
 

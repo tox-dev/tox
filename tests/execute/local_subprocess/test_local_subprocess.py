@@ -14,7 +14,7 @@ import sys
 import time
 from io import TextIOWrapper
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Final, NoReturn
+from typing import TYPE_CHECKING, Final, NoReturn
 from unittest.mock import MagicMock, create_autospec
 
 import psutil
@@ -739,7 +739,9 @@ def test_read_via_thread_eintr_during_select(mocker: MockerFixture) -> None:
 
     original_select = selectors.DefaultSelector.select
 
-    def mock_select(self: Any, timeout: float | None = None) -> list[tuple[selectors.SelectorKey, int]]:
+    def mock_select(
+        self: selectors.DefaultSelector, timeout: float | None = None
+    ) -> list[tuple[selectors.SelectorKey, int]]:
         if not eintr_raised[0]:
             eintr_raised[0] = True
             err = OSError("Interrupted system call")

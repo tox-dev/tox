@@ -762,7 +762,7 @@ def test_python_spec_for_sys_executable(
 ) -> None:
     get_config_var_ = sysconfig.get_config_var
 
-    def get_config_var(name: str) -> object:
+    def get_config_var(name: str) -> bool | int | str | None:
         if name == "Py_GIL_DISABLED":
             return free_threaded
         if name == "Py_DEBUG":

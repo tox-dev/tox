@@ -451,7 +451,7 @@ class RequirementsFile:
     def _handle_requirement_line(line: ParsedLine) -> ParsedRequirement:
         # For editable requirements, we don't support per-requirement options, so just return the parsed requirement.
         # get the options that apply to requirements
-        req_options: dict[str, Any] = {}
+        req_options: dict[str, bool | list[str]] = {}
         if line.is_editable:
             req_options["is_editable"] = line.is_editable
         if line.constraint:

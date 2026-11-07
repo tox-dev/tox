@@ -11,7 +11,7 @@ from collections import defaultdict
 from collections.abc import Callable, Sequence
 from functools import partial
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Final
+from typing import TYPE_CHECKING, Final
 from urllib.error import URLError
 from urllib.parse import parse_qs, urlsplit
 
@@ -236,7 +236,7 @@ class Pip(PythonInstallerListDependencies):
         msg = f"changed {of_type}{removed}{added}"
         raise Recreate(msg)
 
-    def _execute_installer(self, deps: Sequence[Any], of_type: str) -> None:
+    def _execute_installer(self, deps: Sequence[str], of_type: str) -> None:
         if of_type == "package_deps" and self.constrain_package_deps and not self._has_constraints:
             constraints_file = self.constraints_file()
             if constraints_file.exists():

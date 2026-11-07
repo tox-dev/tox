@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 from argparse import ArgumentParser, ArgumentTypeError
-from typing import TYPE_CHECKING, Any, Final
+from typing import TYPE_CHECKING, Final
 
 from tox.plugin import impl
 from tox.session.env_select import CliEnv, register_env_select_flags
@@ -59,7 +59,6 @@ def parallel_flags(
     default_parallel: int | str,
     no_args: bool = False,  # ruff:ignore[boolean-type-hint-positional-argument, boolean-default-value-positional-argument]
 ) -> None:
-    extra: dict[str, Any] = {"nargs": "?"} if no_args else {}
     our.add_argument(
         "-p",
         "--parallel",
@@ -70,7 +69,7 @@ def parallel_flags(
         type=parse_num_processes,
         default=default_parallel,
         metavar="VAL",
-        **extra,
+        nargs="?" if no_args else None,
     )
     our.add_argument(
         "-o",

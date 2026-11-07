@@ -332,7 +332,7 @@ ONE_ARG_ESCAPE = {
 }
 
 
-def _render_options(options: dict[str, object]) -> list[str]:
+def _render_options(options: dict[str, bool | str | list[str]]) -> list[str]:
     # set-valued options (e.g. no_binary) render sorted so the value is stable across hash seeds - the install
     # cache compares these strings and an order change would force a spurious recreate
     return [

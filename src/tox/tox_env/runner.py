@@ -6,7 +6,7 @@ import re
 from abc import ABC, abstractmethod
 from hashlib import sha256
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 from tox.config.types import Command, EnvList
 from tox.execute import Outcome
@@ -122,7 +122,7 @@ class RunToxEnv(ToxEnv, ABC):
         super()._teardown()
         self._call_pkg_envs("teardown_env", self.conf)
 
-    def _call_pkg_envs(self, method_name: str, *args: Any, suspend: bool | None = None) -> None:
+    def _call_pkg_envs(self, method_name: str, *args: object, suspend: bool | None = None) -> None:
         if suspend is None:
             suspend = self._has_display_suspended
         for package_env in self.package_envs:
@@ -276,7 +276,7 @@ class RunToxEnv(ToxEnv, ABC):
             pkg_env.mark_active_run_env(self)
 
 
-def _call_guarded(package_env: PackageToxEnv, method_name: str, *args: Any) -> None:
+def _call_guarded(package_env: PackageToxEnv, method_name: str, *args: object) -> None:
     try:
         getattr(package_env, method_name)(*args)
     except (Fail, OSError):  # one package env failing must not leak the others' resources
