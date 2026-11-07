@@ -118,7 +118,6 @@ def extract_label(group: TomlTypes) -> str | None:
 
 
 __all__ = [
-    "_RESERVED_LABELS",
     "expand_factor_group",
     "expand_product",
     "extract_default",
