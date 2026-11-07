@@ -33,22 +33,6 @@ class ExecuteOptions:
     def __init__(self, env: ToxEnv) -> None:
         self._env = env
 
-    @property
-    def suicide_timeout(self) -> float:
-        return cast("float", self._env.conf["suicide_timeout"])
-
-    @property
-    def interrupt_timeout(self) -> float:
-        return cast("float", self._env.conf["interrupt_timeout"])
-
-    @property
-    def terminate_timeout(self) -> float:
-        return cast("float", self._env.conf["terminate_timeout"])
-
-    @property
-    def no_capture(self) -> bool:
-        return cast("bool", getattr(self._env.options, "no_capture", False))
-
     @classmethod
     def register_conf(cls, env: ToxEnv) -> None:
         env.conf.add_config(
@@ -70,6 +54,22 @@ class ExecuteOptions:
             default=0.2,
         )
 
+    @property
+    def suicide_timeout(self) -> float:
+        return cast("float", self._env.conf["suicide_timeout"])
+
+    @property
+    def interrupt_timeout(self) -> float:
+        return cast("float", self._env.conf["interrupt_timeout"])
+
+    @property
+    def terminate_timeout(self) -> float:
+        return cast("float", self._env.conf["terminate_timeout"])
+
+    @property
+    def no_capture(self) -> bool:
+        return cast("bool", getattr(self._env.options, "no_capture", False))
+
 
 class ExecuteStatus(ABC):
     def __init__(self, options: ExecuteOptions, out: SyncWrite, err: SyncWrite) -> None:
@@ -88,18 +88,6 @@ class ExecuteStatus(ABC):
         """:returns: the error that kept the command from starting, ``None`` once it started"""
         return None
 
-    @property
-    def out(self) -> bytearray:
-        return self._out.content
-
-    @property
-    def err(self) -> bytearray:
-        return self._err.content
-
-    @property
-    def metadata(self) -> dict[str, JsonValue]:
-        return {}
-
     @abstractmethod
     def wait(self, timeout: float | None = None) -> int | None:
         raise NotImplementedError
@@ -117,15 +105,21 @@ class ExecuteStatus(ABC):
         self._out, self._err = out, err
         return res
 
+    @property
+    def out(self) -> bytearray:
+        return self._out.content
+
+    @property
+    def err(self) -> bytearray:
+        return self._err.content
+
+    @property
+    def metadata(self) -> dict[str, JsonValue]:
+        return {}
+
 
 class FinishedExecuteStatus(ExecuteStatus):
-    """Report a fixed exit code for a command that finished or never started, without running a process.
-
-    :param options:
-    :param out:
-    :param err:
-    :param exit_code:
-    """
+    """Report a fixed exit code for a command that finished or never started, without running a process."""
 
     def __init__(self, options: ExecuteOptions, out: SyncWrite, err: SyncWrite, exit_code: int | None) -> None:
         super().__init__(options, out, err)
@@ -150,10 +144,7 @@ class FinishedExecuteStatus(ExecuteStatus):
 
 
 class Execute(ABC):
-    """Abstract API for execution of a tox environment.
-
-    :param colored:
-    """
+    """Abstract API for execution of a tox environment."""
 
     _option_class: type[ExecuteOptions] = ExecuteOptions
 
@@ -227,19 +218,21 @@ class Execute(ABC):
 
 
 class ExecuteInstance(ABC):
-    """An instance of a command execution.
-
-    :param request:
-    :param options:
-    :param out:
-    :param err:
-    """
+    """An instance of a command execution."""
 
     def __init__(self, request: ExecuteRequest, options: ExecuteOptions, out: SyncWrite, err: SyncWrite) -> None:
         self.request = request
         self.options = options
         self._out = out
         self._err = err
+
+    @property
+    def out_handler(self) -> ContentHandler:
+        return self._out.handler
+
+    @property
+    def err_handler(self) -> ContentHandler:
+        return self._err.handler
 
     @abstractmethod
     def __enter__(self) -> ExecuteStatus:
@@ -255,24 +248,13 @@ class ExecuteInstance(ABC):
         raise NotImplementedError
 
     @property
-    def out_handler(self) -> ContentHandler:
-        return self._out.handler
-
-    @property
-    def err_handler(self) -> ContentHandler:
-        return self._err.handler
-
-    @property
     @abstractmethod
     def cmd(self) -> Sequence[str]:
         raise NotImplementedError
 
 
 class Outcome:
-    """Result of a command execution.
-
-    :cvar OK:
-    """
+    """Result of a command execution."""
 
     OK = 0
     FAILED = 1  #: exit code reported when a ``!`` command exits with :attr:`OK`
@@ -325,14 +307,15 @@ class Outcome:
             f" for {self.request.shell_cmd_redacted}"
         )
 
-    @property
-    def elapsed(self) -> float:
-        """:returns: time the execution took in seconds"""
-        return self.end - self.start
-
     def assert_success(self) -> None:
         """Assert that the execution succeeded."""
         if self.start_error is not None or self.exit_code not in {None, self.OK}:
+            self._assert_fail(self.exit_code or self.FAILED)
+        self.log_run_done(logging.INFO)
+
+    def assert_failure(self) -> None:
+        """Assert that the execution failed."""
+        if self.start_error is not None or self.exit_code == self.OK:  # never started, so nothing to invert
             self._assert_fail(self.exit_code or self.FAILED)
         self.log_run_done(logging.INFO)
 
@@ -371,18 +354,17 @@ class Outcome:
             metadata,
         )
 
-    def assert_failure(self) -> None:
-        """Assert that the execution failed."""
-        if self.start_error is not None or self.exit_code == self.OK:  # never started, so nothing to invert
-            self._assert_fail(self.exit_code or self.FAILED)
-        self.log_run_done(logging.INFO)
+    @property
+    def elapsed(self) -> float:
+        """:returns: time the execution took in seconds"""
+        return self.end - self.start
 
     def out_err(self) -> tuple[str, str]:
         """:returns: a tuple of the standard output and standard error"""
         return self.out, self.err
 
 
-__all__ = [
+__all__ = (
     "ContentHandler",
     "Execute",
     "ExecuteInstance",
@@ -391,4 +373,4 @@ __all__ = [
     "FinishedExecuteStatus",
     "Outcome",
     "StdinSource",
-]
+)

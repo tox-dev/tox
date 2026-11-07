@@ -35,15 +35,16 @@ if TYPE_CHECKING:
 
 _N = TypeVar("_N")  # unbounded to match typeshed, argparse accepts any object as namespace
 
-_ACTION_OF_TYPE: Final[MutableMapping[Action, type[Any] | UnionType]] = WeakKeyDictionary()
+_ACTION_OF_TYPE: MutableMapping[Action, type[Any] | UnionType] = WeakKeyDictionary()
 """The value type an action's option was declared with (actions come from argparse, so no attribute can be added)."""
 
-_ACTION_DEFAULT_SOURCE: Final[MutableMapping[Action, str]] = WeakKeyDictionary()
+_ACTION_DEFAULT_SOURCE: MutableMapping[Action, str] = WeakKeyDictionary()
 """Where an action's default was overridden from (environment variable or user level configuration file)."""
 
 
 class ArgumentParserWithEnvAndConfig(ArgumentParser):
-    # Argument parser which updates its defaults by checking the configuration files and environmental variables.
+    """Argument parser which updates its defaults by checking the configuration files and environmental variables."""
+
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         # sub-parsers also construct an instance of the parser, but they don't get their own file config, but inherit
         self.file_config = kwargs.pop("file_config") if "file_config" in kwargs else IniConfig()
@@ -124,11 +125,7 @@ class ArgumentParserWithEnvAndConfig(ArgumentParser):
 
 
 class HelpFormatter(ArgumentDefaultsHelpFormatter):
-    """A help formatter that provides the default value and the source it comes from.
-
-    :param prog:
-    :param kwargs:
-    """
+    """A help formatter that provides the default value and the source it comes from."""
 
     def __init__(self, prog: str, **kwargs: Any) -> None:
         super().__init__(prog, max_help_position=30, width=240, **kwargs)
@@ -152,11 +149,11 @@ class HelpFormatter(ArgumentDefaultsHelpFormatter):
 
 
 ToxParserT = TypeVar("ToxParserT", bound="ToxParser")
-DEFAULT_VERBOSITY: Final[int] = 2
+DEFAULT_VERBOSITY = 2
 
-CORE: Final[str] = "core"
-_ENV: Final[str] = "env"
-_INHERIT_ALL: Final[frozenset[str]] = frozenset({CORE, _ENV})
+CORE = "core"
+ENV = "env"
+_INHERIT_ALL: frozenset[str] = frozenset({CORE, ENV})
 
 
 class Parsed(Namespace):
@@ -165,47 +162,6 @@ class Parsed(Namespace):
     The annotations below declare the type each option has once its command registered it; an option belonging to
     another command is absent at runtime, so shared code paths read it via ``getattr`` with a fallback.
 
-    :ivar verbose:
-    :ivar quiet:
-    :ivar colored:
-    :ivar stderr_color:
-    :ivar exit_and_dump_after:
-    :ivar config_file:
-    :ivar work_dir:
-    :ivar root_dir:
-    :ivar override:
-    :ivar command:
-    :ivar remainder:
-    :ivar env:
-    :ivar labels:
-    :ivar factors:
-    :ivar skip_env:
-    :ivar default_runner:
-    :ivar result_json:
-    :ivar no_capture:
-    :ivar hash_seed:
-    :ivar discover:
-    :ivar list_dependencies:
-    :ivar recreate:
-    :ivar no_test:
-    :ivar package_only:
-    :ivar install_pkg:
-    :ivar fail_fast:
-    :ivar develop:
-    :ivar no_recreate_pkg:
-    :ivar skip_pkg_install:
-    :ivar skip_env_install:
-    :ivar skip_missing_interpreters:
-    :ivar parallel:
-    :ivar parallel_live:
-    :ivar parallel_no_spinner:
-    :ivar no_provision:
-    :ivar no_recreate_provision:
-    :ivar devenv_path:
-    :ivar force_dep:
-    :ivar site_packages:
-    :ivar always_copy:
-    :ivar pre:
     """
 
     verbose: int
@@ -271,16 +227,7 @@ ArgumentArgs = tuple[tuple[str, ...], type[Any] | UnionType | None, dict[str, An
 
 
 class ToxParser(ArgumentParserWithEnvAndConfig):
-    """Argument parser for tox.
-
-    :param args:
-    :param root:
-    :param add_cmd:
-    :param kwargs:
-    :ivar of_cmd:
-    :ivar inherit:
-    :ivar handlers:
-    """
+    """Argument parser for tox."""
 
     def __init__(self, *args: Any, root: bool = False, add_cmd: bool = False, **kwargs: Any) -> None:
         self.of_cmd: str | None = None
@@ -302,25 +249,6 @@ class ToxParser(ArgumentParserWithEnvAndConfig):
             self._cmd.default = "legacy"
         else:
             self._cmd = None
-
-    def _add_base_options(self) -> None:
-        # Argument options that always make sense.
-        _add_core_arguments(self)
-        self.fix_defaults()
-
-    @classmethod
-    def base(cls) -> Self:
-        return cls(add_help=False, root=True)
-
-    @classmethod
-    def core(cls) -> Self:
-        return cls(
-            prog=NAME,
-            formatter_class=HelpFormatter,
-            add_cmd=True,
-            root=True,
-            description="create and set up environments to run command(s) in them",
-        )
 
     def add_command(
         self,
@@ -362,17 +290,6 @@ class ToxParser(ArgumentParserWithEnvAndConfig):
             else:
                 defaults[self._dest_from(args, kwargs)] = kwargs.get("default")
 
-    @staticmethod
-    def _dest_from(args: tuple[str, ...], kwargs: dict[str, Any]) -> str:
-        if dest := cast("str | None", kwargs.get("dest")):
-            return dest
-        args_list = list(args)
-        args_list.sort(key=len, reverse=True)
-        for arg in args_list:
-            if arg.startswith("--"):
-                return arg.lstrip("-").replace("-", "_")
-        return args[0].lstrip("-").replace("-", "_")
-
     def _copy_groups(self, sub_parser: ToxParser, defaults: dict[str, Any]) -> None:
         for args, kwargs, excl in self._groups:
             if CORE in sub_parser.inherit:
@@ -393,7 +310,7 @@ class ToxParser(ArgumentParserWithEnvAndConfig):
         else:
             hashseed_default = random.randint(1, 1024 if sys.platform == "win32" else 4294967295)  # ruff:ignore[suspicious-non-cryptographic-random-usage]
 
-        if _ENV not in sub_parser.inherit:
+        if ENV not in sub_parser.inherit:
             defaults.update(
                 result_json=None,
                 hash_seed=hashseed_default,
@@ -476,6 +393,17 @@ class ToxParser(ArgumentParserWithEnvAndConfig):
             help="never list the dependencies installed during environment setup",
         )
 
+    @staticmethod
+    def _dest_from(args: tuple[str, ...], kwargs: dict[str, Any]) -> str:
+        if dest := cast("str | None", kwargs.get("dest")):
+            return dest
+        args_list = list(args)
+        args_list.sort(key=len, reverse=True)
+        for arg in args_list:
+            if arg.startswith("--"):
+                return arg.lstrip("-").replace("-", "_")
+        return args[0].lstrip("-").replace("-", "_")
+
     @override
     def add_argument_group(self, *args: Any, **kwargs: Any) -> argparse._ArgumentGroup:
         if self.of_cmd is not None or args in {("positional arguments",), ("optional arguments",)}:
@@ -500,6 +428,25 @@ class ToxParser(ArgumentParserWithEnvAndConfig):
         if of_type is not None:
             _ACTION_OF_TYPE[result] = of_type
         return result
+
+    @classmethod
+    def base(cls) -> Self:
+        return cls(add_help=False, root=True)
+
+    @classmethod
+    def core(cls) -> Self:
+        return cls(
+            prog=NAME,
+            formatter_class=HelpFormatter,
+            add_cmd=True,
+            root=True,
+            description="create and set up environments to run command(s) in them",
+        )
+
+    def _add_base_options(self) -> None:
+        """Argument options that always make sense."""
+        add_core_arguments(self)
+        self.fix_defaults()
 
     @overload
     def parse_known_args(
@@ -566,7 +513,8 @@ class ToxParser(ArgumentParserWithEnvAndConfig):
 
 
 class _RecordingArgumentGroup(argparse._ArgumentGroup):  # ruff:ignore[private-member-access]
-    # Argument group that records its exclusive sub-groups so they replay onto later added sub-parsers.
+    """Argument group that records its exclusive sub-groups so they replay onto later added sub-parsers."""
+
     def __init__(
         self, container: ToxParser, *args: Any, excl: list[tuple[dict[str, Any], list[ArgumentArgs]]], **kwargs: Any
     ) -> None:
@@ -583,7 +531,8 @@ class _RecordingArgumentGroup(argparse._ArgumentGroup):  # ruff:ignore[private-m
 
 
 class _RecordingMutuallyExclusiveGroup(argparse._MutuallyExclusiveGroup):  # ruff:ignore[private-member-access]
-    # Exclusive group that records added arguments so they replay onto later added sub-parsers.
+    """Exclusive group that records added arguments so they replay onto later added sub-parsers."""
+
     def __init__(self, container: _RecordingArgumentGroup, *, recorded: list[ArgumentArgs], **kwargs: Any) -> None:
         super().__init__(container, **kwargs)
         self._recorded = recorded
@@ -595,10 +544,10 @@ class _RecordingMutuallyExclusiveGroup(argparse._MutuallyExclusiveGroup):  # ruf
         return action
 
 
-def _add_core_arguments(parser: ArgumentParser) -> None:
-    _add_color_flags(parser)
-    _add_verbosity_flags(parser)
-    _add_exit_and_dump_after(parser)
+def add_core_arguments(parser: ArgumentParser) -> None:
+    add_color_flags(parser)
+    add_verbosity_flags(parser)
+    add_exit_and_dump_after(parser)
     parser.add_argument(
         "-c",
         "--conf",
@@ -629,7 +578,7 @@ def _add_core_arguments(parser: ArgumentParser) -> None:
     )
 
 
-def _add_color_flags(parser: ArgumentParser) -> None:
+def add_color_flags(parser: ArgumentParser) -> None:
     if os.environ.get("NO_COLOR", ""):
         color = "no"
     elif os.environ.get("FORCE_COLOR", ""):
@@ -655,7 +604,7 @@ def _add_color_flags(parser: ArgumentParser) -> None:
     )
 
 
-def _add_verbosity_flags(parser: ArgumentParser) -> None:
+def add_verbosity_flags(parser: ArgumentParser) -> None:
     from tox.report import LEVELS  # ruff:ignore[import-outside-top-level]
 
     level_map = "|".join(f"{c}={logging.getLevelName(level)}" for c, level in sorted(LEVELS.items()))
@@ -676,7 +625,7 @@ def _add_verbosity_flags(parser: ArgumentParser) -> None:
     verbosity.add_argument("-q", "--quiet", action="count", dest="quiet", help="decrease verbosity", default=0)
 
 
-def _add_exit_and_dump_after(parser: ArgumentParser) -> None:
+def add_exit_and_dump_after(parser: ArgumentParser) -> None:
     parser.add_argument(
         "--exit-and-dump-after",
         dest="exit_and_dump_after",
@@ -690,7 +639,7 @@ def _add_exit_and_dump_after(parser: ArgumentParser) -> None:
 __all__ = [
     "CORE",
     "DEFAULT_VERBOSITY",
-    "ArgumentParserWithEnvAndConfig",
+    "ENV",
     "HelpFormatter",
     "Parsed",
     "ToxParser",

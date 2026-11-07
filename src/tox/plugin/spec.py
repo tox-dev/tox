@@ -17,10 +17,10 @@ if TYPE_CHECKING:
     from tox.tox_env.installer import InstallArguments
     from tox.tox_env.register import ToxEnvRegister
 
-_SPEC = pluggy.HookspecMarker(NAME)
+_spec = pluggy.HookspecMarker(NAME)
 
 
-@_SPEC
+@_spec
 def tox_register_tox_env(register: ToxEnvRegister) -> None:
     """Register new tox environment type. You can register:
 
@@ -32,7 +32,7 @@ def tox_register_tox_env(register: ToxEnvRegister) -> None:
     """
 
 
-@_SPEC
+@_spec
 def tox_extend_envs() -> Iterable[str]:
     """Declare additional environment names.
 
@@ -47,12 +47,11 @@ def tox_extend_envs() -> Iterable[str]:
     :class:`tox.config.loader.memory.MemoryLoader` early enough before tox starts caching configuration values sourced
     elsewhere.
 
-    :returns:
     """
     return ()
 
 
-@_SPEC
+@_spec
 def tox_add_option(parser: ToxParser) -> None:
     """Add a command line argument.
 
@@ -63,7 +62,7 @@ def tox_add_option(parser: ToxParser) -> None:
     """
 
 
-@_SPEC
+@_spec
 def tox_add_core_config(core_conf: ConfigSet, state: State) -> None:
     """Called when the core configuration is built for a tox environment.
 
@@ -73,7 +72,7 @@ def tox_add_core_config(core_conf: ConfigSet, state: State) -> None:
     """
 
 
-@_SPEC
+@_spec
 def tox_add_env_config(env_conf: EnvConfigSet, state: State) -> None:
     """Called when configuration is built for a tox environment.
 
@@ -83,7 +82,7 @@ def tox_add_env_config(env_conf: EnvConfigSet, state: State) -> None:
     """
 
 
-@_SPEC
+@_spec
 def tox_before_run_commands(tox_env: ToxEnv) -> None:
     """Called before the commands set is executed.
 
@@ -92,7 +91,7 @@ def tox_before_run_commands(tox_env: ToxEnv) -> None:
     """
 
 
-@_SPEC
+@_spec
 def tox_after_run_commands(tox_env: ToxEnv, exit_code: int, outcomes: list[Outcome]) -> None:
     """Called after the commands set is executed.
 
@@ -103,7 +102,7 @@ def tox_after_run_commands(tox_env: ToxEnv, exit_code: int, outcomes: list[Outco
     """
 
 
-@_SPEC
+@_spec
 def tox_on_install(tox_env: ToxEnv, arguments: InstallArguments, section: str, of_type: str) -> None:
     """Called before executing an installation command.
 
@@ -120,7 +119,7 @@ def tox_on_install(tox_env: ToxEnv, arguments: InstallArguments, section: str, o
     """
 
 
-@_SPEC
+@_spec
 def tox_env_teardown(tox_env: ToxEnv) -> None:
     """Called after a tox environment has been teared down.
 
@@ -129,4 +128,15 @@ def tox_env_teardown(tox_env: ToxEnv) -> None:
     """
 
 
-__all__ = []
+__all__ = [
+    "NAME",
+    "tox_add_core_config",
+    "tox_add_env_config",
+    "tox_add_option",
+    "tox_after_run_commands",
+    "tox_before_run_commands",
+    "tox_env_teardown",
+    "tox_extend_envs",
+    "tox_on_install",
+    "tox_register_tox_env",
+]
