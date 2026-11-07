@@ -224,12 +224,12 @@ def _build_env_base_map(
         all_labels[base_name] = base_labels
         if factors_raw and isinstance(factors_raw[0], list | dict):
             expanded: list[list[str]] = []
-            for idx, g in enumerate(factors_raw):
-                values = expand_factor_group(g)
+            for idx, raw_group in enumerate(factors_raw):
+                values = expand_factor_group(raw_group)
                 expanded.append(values)
-                group = FactorGroup(values=values, default=extract_default(g, values))
+                group = FactorGroup(values=values, default=extract_default(raw_group, values))
                 base_labels[str(idx)] = group
-                if (label := extract_label(g)) is not None:
+                if (label := extract_label(raw_group)) is not None:
                     base_labels[label] = group
             names = ["-".join(combo) for combo in product(*expanded)]
         else:
@@ -250,11 +250,11 @@ def _extract_env_list_labels(env_list_raw: TomlTypes) -> dict[str, FactorGroup]:
             raw_groups = item["product"]
             if not isinstance(raw_groups, list):
                 continue
-            for idx, g in enumerate(raw_groups):
-                values = expand_factor_group(g)
-                group = FactorGroup(values=values, default=extract_default(g, values))
+            for idx, raw_group in enumerate(raw_groups):
+                values = expand_factor_group(raw_group)
+                group = FactorGroup(values=values, default=extract_default(raw_group, values))
                 labels[str(idx)] = group
-                if (label := extract_label(g)) is not None:
+                if (label := extract_label(raw_group)) is not None:
                     labels[label] = group
         elif (label := extract_label(item)) is not None:
             values = expand_factor_group(item)

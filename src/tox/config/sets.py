@@ -99,9 +99,9 @@ class ConfigSet(ABC):
 
     def get_configs(self) -> Generator[ConfigDefinition[Any], None, None]:
         """:returns: a mapping of config keys to their definitions"""
-        for k, v in self._defined.items():
-            if k == next(iter(v.keys)):
-                yield v
+        for key, definition in self._defined.items():
+            if key == next(iter(definition.keys)):
+                yield definition
 
     def mark_finalized(self) -> None:
         self._final = True
@@ -434,11 +434,11 @@ class EnvConfigSet(ConfigSet):
             return values
 
         def set_env_factory(raw: object) -> SetEnv:
-            def is_valid_value(v: object) -> bool:
-                if isinstance(v, SetEnvValue):
+            def is_valid_value(value: object) -> bool:
+                if isinstance(value, SetEnvValue):
                     return True
-                if isinstance(v, dict):
-                    return "value" in v and isinstance(v.get("value"), SetEnvValue)
+                if isinstance(value, dict):
+                    return "value" in value and isinstance(value.get("value"), SetEnvValue)
                 return False
 
             if not (
