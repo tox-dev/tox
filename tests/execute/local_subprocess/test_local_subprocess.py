@@ -68,10 +68,7 @@ def _run_basic_pass(
     caplog.set_level(logging.NOTSET)
     executor = LocalSubProcessExecutor(colored=color)
 
-    tox_env = _create_mock_env()
-    tox_env.conf._conf = SimpleNamespace(  # ruff:ignore[private-member-access]  # internal state
-        options=SimpleNamespace(stderr_color=stderr_color),
-    )
+    tox_env = _create_mock_env(stderr_color)
 
     code = f"import sys; print({out!r}, end=''); print({err!r}, end='', file=sys.stderr)"
     request = ExecuteRequest(cmd=[sys.executable, "-c", code], cwd=Path(), env=os_env, stdin=StdinSource.OFF, run_id="")
@@ -89,14 +86,14 @@ def _run_basic_pass(
     return out_err
 
 
-def _create_mock_env() -> ToxEnv:
+def _create_mock_env(stderr_color: str | None = None) -> ToxEnv:
     # Create a mock tox environment with no_capture=False to prevent console inheritance.
-    return create_autospec(
-        ToxEnv,
-        instance=True,
-        conf=create_autospec(EnvConfigSet, instance=True),
-        options=SimpleNamespace(no_capture=False),
-    )
+    conf = create_autospec(EnvConfigSet, instance=True)
+    if stderr_color is not None:
+        conf._conf = SimpleNamespace(  # ruff:ignore[private-member-access]  # internal state
+            options=SimpleNamespace(stderr_color=stderr_color)
+        )
+    return create_autospec(ToxEnv, instance=True, conf=conf, options=SimpleNamespace(no_capture=False))
 
 
 class FakeOutErr:
@@ -612,7 +609,7 @@ def test_allow_list_external_ok(fake_exe_on_path: Path, mode: str) -> None:
         allow=[allow],
     )
     inst = LocalSubProcessExecuteInstance(
-        request, _create_mock_env(), out=SyncWrite("out", None), err=SyncWrite("err", None)
+        request, ExecuteOptions(_create_mock_env()), out=SyncWrite("out", None), err=SyncWrite("err", None)
     )
 
     assert inst.cmd == [exe]
