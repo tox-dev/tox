@@ -12,7 +12,6 @@ from shutil import which
 from subprocess import check_call
 from textwrap import dedent
 from typing import TYPE_CHECKING, Final, Protocol
-from unittest import mock
 from zipfile import ZipFile
 
 import pytest
@@ -72,7 +71,8 @@ def _make_tox_wheel(
         else:
             version = f"{version_tuple[0]}.{version_tuple[1]}.{int(patch_version) + 1}"
 
-        with mock.patch.dict(os.environ, {"SETUPTOOLS_SCM_PRETEND_VERSION": version}):
+        with pytest.MonkeyPatch.context() as monkeypatch:
+            monkeypatch.setenv("SETUPTOOLS_SCM_PRETEND_VERSION", version)
             # not reached in tests
             return pkg_builder(into, Path(__file__).parents[1], ["wheel"], False)  # pragma: no cover
 

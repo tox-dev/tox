@@ -742,7 +742,7 @@ def test_interrupt_post_commands_runs_after_sigint(tox_project: ToxProjectCreato
     cmd = ["-c", str(tox_project({"tox.toml": toml}).path / "tox.toml"), "r", "-e", "py"]
     process = Popen([sys.executable, "-m", "tox", *cmd], stdout=PIPE, stderr=PIPE, universal_newlines=True)
     while not marker_main.exists() and (process.poll() is None):
-        sleep(0.05)
+        sleep(0.05)  # simplint: ignore[SMP808]  # polls a marker the child process writes
     process.send_signal(_INTERRUPT_SIGNAL)
     _out, err = process.communicate()
     assert process.returncode != 0
@@ -766,7 +766,7 @@ def test_interrupt_post_commands_not_run_by_default(tox_project: ToxProjectCreat
     cmd = ["-c", str(tox_project({"tox.toml": toml}).path / "tox.toml"), "r", "-e", "py"]
     process = Popen([sys.executable, "-m", "tox", *cmd], stdout=PIPE, stderr=PIPE, universal_newlines=True)
     while not marker_main.exists() and (process.poll() is None):
-        sleep(0.05)
+        sleep(0.05)  # simplint: ignore[SMP808]  # polls a marker the child process writes
     process.send_signal(_INTERRUPT_SIGNAL)
     _out, err = process.communicate()
     assert process.returncode != 0
@@ -797,10 +797,10 @@ def test_second_interrupt_stops_post_commands(tox_project: ToxProjectCreator, tm
     cmd = ["-c", str(tox_project({"tox.toml": toml}).path / "tox.toml"), "r", "-e", "py"]
     process = Popen([sys.executable, "-m", "tox", *cmd], stdout=PIPE, stderr=PIPE, universal_newlines=True)
     while not marker_main.exists() and (process.poll() is None):
-        sleep(0.05)
+        sleep(0.05)  # simplint: ignore[SMP808]  # polls a marker the child process writes
     process.send_signal(_INTERRUPT_SIGNAL)
     while not marker_post_start.exists() and (process.poll() is None):
-        sleep(0.05)
+        sleep(0.05)  # simplint: ignore[SMP808]  # polls a marker the child process writes
     process.send_signal(_INTERRUPT_SIGNAL)
     out, _err = process.communicate()
     assert process.returncode != 0

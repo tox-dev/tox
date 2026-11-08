@@ -3,6 +3,7 @@ from __future__ import annotations
 import os
 import socket
 import sys
+from argparse import Namespace
 from contextlib import contextmanager
 from http.client import HTTPResponse
 from io import BytesIO
@@ -431,7 +432,7 @@ def test_req_file(
     req_file = RequirementsFile(requirements_txt, constraint=False)
     assert req_file.as_root_args == as_args
     assert str(req_file) == f"-r {requirements_txt}"
-    assert vars(req_file.options) == opts
+    assert req_file.options == Namespace(**opts)
     found = [str(i) for i in req_file.requirements]
     assert found == requirements
 
@@ -464,7 +465,7 @@ def test_requirements_env_var_present(monkeypatch: MonkeyPatch, tmp_path: Path) 
     requirements_file = tmp_path / "req.txt"
     requirements_file.write_text("${ENV_VAR} >= 1")
     req_file = RequirementsFile(requirements_file, constraint=False)
-    assert vars(req_file.options) == {}
+    assert req_file.options == Namespace()
     found = [str(i) for i in req_file.requirements]
     assert found == ["beta>=1"]
 
@@ -474,7 +475,7 @@ def test_requirements_env_var_missing(monkeypatch: MonkeyPatch, tmp_path: Path) 
     requirements_file = tmp_path / "req.txt"
     requirements_file.write_text("${ENV_VAR}")
     req_file = RequirementsFile(requirements_file, constraint=False)
-    assert vars(req_file.options) == {}
+    assert req_file.options == Namespace()
     found = [str(i) for i in req_file.requirements]
     assert found == [f".{os.sep}${{ENV_VAR}}"]
 
@@ -495,14 +496,13 @@ def test_requirements_env_var_from_environment_provider(monkeypatch: MonkeyPatch
     "flag", [pytest.param("-r", id="dash-r"), pytest.param("--requirement", id="dash-dash-requirement")]
 )
 def test_requirements_txt_transitive(tmp_path: Path, flag: str) -> None:
-    other_req = tmp_path / "other-requirements.txt"
-    other_req.write_text("magic\nmagical")
+    (tmp_path / "other-requirements.txt").write_text("magic\nmagical")
     requirements_file = tmp_path / "req.txt"
     requirements_file.write_text(f"{flag} other-requirements.txt\n{flag} other-requirements.txt")
     req_file = RequirementsFile(requirements_file, constraint=False)
     assert req_file.as_root_args == ["-r", "other-requirements.txt"]
     assert req_file.as_root_args is req_file.as_root_args  # check it's cached
-    assert vars(req_file.options) == {}
+    assert req_file.options == Namespace()
     found = [str(i) for i in req_file.requirements]
     assert found == ["magic", "magical"]
 
@@ -565,13 +565,12 @@ def test_requirements_file_missing(tmp_path: Path) -> None:
     "flag", [pytest.param("-c", id="dash-c"), pytest.param("--constraint", id="dash-dash-constraint")]
 )
 def test_constraint_txt_expanded(tmp_path: Path, flag: str) -> None:
-    other_req = tmp_path / "other.txt"
-    other_req.write_text("magic\nmagical\n-i a")
+    (tmp_path / "other.txt").write_text("magic\nmagical\n-i a")
     requirements_file = tmp_path / "req.txt"
     requirements_file.write_text(f"{flag} other.txt\n{flag} other.txt")
     req_file = RequirementsFile(requirements_file, constraint=True)
     assert req_file.as_root_args == ["-c", "other.txt"]
-    assert vars(req_file.options) == {"index_url": ["a"]}
+    assert req_file.options == Namespace(index_url=["a"])
     found = [str(i) for i in req_file.requirements]
     assert found == ["-c magic", "-c magical"]
 
@@ -587,7 +586,7 @@ def test_req_path_with_space_escape(tmp_path: Path) -> None:
     requirements_file.write_text(path)
     req_file = RequirementsFile(requirements_file, constraint=False)
 
-    assert vars(req_file.options) == {}
+    assert req_file.options == Namespace()
     found = [str(i) for i in req_file.requirements]
     assert found == ["c"]
 
@@ -600,10 +599,8 @@ def test_req_path_with_space_quoted(tmp_path: Path) -> None:
     requirements_file.write_text('-r "a b/base.txt"\n-c "a b/constraints.txt"\n--index-url "https://a/simple"')
     req_file: Final[RequirementsFile] = RequirementsFile(requirements_file, constraint=False)
 
-    assert (vars(req_file.options), [str(i) for i in req_file.requirements]) == (
-        {"index_url": ["https://a/simple"]},
-        ["c", "-c d<2"],
-    )
+    assert req_file.options == Namespace(index_url=["https://a/simple"])
+    assert [str(i) for i in req_file.requirements] == ["c", "-c d<2"]
 
 
 @pytest.mark.parametrize(
@@ -688,7 +685,7 @@ def test_req_over_http(
     requirements_txt.write_text(f"{flag} https://zopefoundation.github.io/Zope/releases/4.5.5/requirements-full.txt")
     req_file = RequirementsFile(requirements_txt, constraint=is_constraint)
     assert str(req_file) == f"{req_file_str} {requirements_txt}"
-    assert vars(req_file.options) == {"index_url": ["i"]}
+    assert req_file.options == Namespace(index_url=["i"])
     assert [str(i) for i in req_file.requirements] == [found]
     # urlopen must be called with a timeout to avoid hanging on slow / unresponsive mirrors
     assert url_open.call_args.kwargs.get("timeout") is not None
@@ -753,7 +750,7 @@ def test_req_over_http_has_req(tmp_path: Path, mocker: MockerFixture) -> None:
     requirements_txt.write_text("-r https://root.org/a.txt")
     req_file = RequirementsFile(requirements_txt, constraint=False)
 
-    assert vars(req_file.options) == {"index_url": ["i"]}
+    assert req_file.options == Namespace(index_url=["i"])
     found = [str(i) for i in req_file.requirements]
     assert found == ["a"]
 
@@ -791,7 +788,7 @@ def test_requirement_via_file_protocol(tmp_path: Path, loc: str) -> None:
 
     req_file = RequirementsFile(requirements_text, constraint=False)
 
-    assert vars(req_file.options) == {"index_url": ["i"]}
+    assert req_file.options == Namespace(index_url=["i"])
     found = [str(i) for i in req_file.requirements]
     assert found == ["a"]
 

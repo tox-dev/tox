@@ -54,7 +54,7 @@ def test_spinner_progress(capfd: CaptureFixture, monkeypatch: MonkeyPatch) -> No
     with Spinner() as spin:
         for _ in range(len(spin.frames)):  # pragma: no branch  # other outcome untested
             spin.stream.write("\n")
-            time.sleep(spin.refresh_rate)
+            time.sleep(spin.refresh_rate)  # simplint: ignore[SMP808]  # waits for a real frame change
 
     out, err = capfd.readouterr()
     assert not err

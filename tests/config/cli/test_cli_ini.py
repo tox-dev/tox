@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 import sys
 import textwrap
+from argparse import Namespace
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
@@ -83,14 +84,14 @@ def test_ini_empty(
         return_value=mocker.create_autospec(Source, instance=True, path=Path()),
     )
     options = get_options("r")
-    assert vars(options.parsed) == default_options
+    assert options.parsed == Namespace(**default_options)
     assert options.parsed.verbosity == 2
     assert options.cmd_handlers == core_handlers
 
     to.unlink()
     missing_options = get_options("r")
     missing_options.parsed.hash_seed = mocker.ANY
-    assert vars(missing_options.parsed) == vars(options.parsed)
+    assert missing_options.parsed == options.parsed
 
 
 @pytest.mark.parametrize(
@@ -125,7 +126,7 @@ def test_bad_cli_ini(
     monkeypatch.setenv("TOX_USER_CONFIG_FILE", str(tmp_path))
     options = get_options("r")
     assert caplog.messages == [f"failed to read config file {tmp_path} because {error}"]
-    assert vars(options.parsed) == default_options
+    assert options.parsed == Namespace(**default_options)
 
 
 def test_bad_option_cli_ini(
@@ -153,7 +154,7 @@ def test_bad_option_cli_ini(
             "HandledError(\"failed to load core.verbose: invalid literal for int() with base 10: 'what'\")",
         ),
     ]
-    assert vars(parsed) == default_options
+    assert parsed == Namespace(**default_options)
 
 
 def test_cli_ini_with_interpolated(tmp_path: Path, monkeypatch: MonkeyPatch) -> None:
@@ -241,44 +242,44 @@ def test_ini_exhaustive_parallel_values(
     core_handlers: dict[str, Callable[[State], int]], mocker: MockerFixture
 ) -> None:
     options = get_options("p")
-    assert vars(options.parsed) == {
-        "colored": "yes",
-        "stderr_color": "RED",
-        "command": "p",
-        "default_runner": "virtualenv",
-        "develop": False,
-        "discover": [],
-        "env": CliEnv(["py37", "py36"]),
-        "hash_seed": mocker.ANY,
-        "install_pkg": None,
-        "fail_fast": False,
-        "no_test": True,
-        "no_capture": False,
-        "override": [Override("a=b"), Override("c=d")],
-        "package_only": False,
-        "no_recreate_pkg": False,
-        "parallel": 3,
-        "parallel_live": True,
-        "parallel_no_spinner": False,
-        "quiet": 1,
-        "no_provision": False,
-        "recreate": True,
-        "no_recreate_provision": False,
-        "result_json": None,
-        "skip_missing_interpreters": "config",
-        "skip_pkg_install": False,
-        "skip_env_install": False,
-        "verbose": 5,
-        "work_dir": None,
-        "root_dir": None,
-        "config_file": None,
-        "factors": [],
-        "labels": [],
-        "exit_and_dump_after": 0,
-        "skip_env": "",
-        "list_dependencies": is_ci(),
-        "remainder": [],
-    }
+    assert options.parsed == Namespace(
+        colored="yes",
+        stderr_color="RED",
+        command="p",
+        default_runner="virtualenv",
+        develop=False,
+        discover=[],
+        env=CliEnv(["py37", "py36"]),
+        hash_seed=mocker.ANY,
+        install_pkg=None,
+        fail_fast=False,
+        no_test=True,
+        no_capture=False,
+        override=[Override("a=b"), Override("c=d")],
+        package_only=False,
+        no_recreate_pkg=False,
+        parallel=3,
+        parallel_live=True,
+        parallel_no_spinner=False,
+        quiet=1,
+        no_provision=False,
+        recreate=True,
+        no_recreate_provision=False,
+        result_json=None,
+        skip_missing_interpreters="config",
+        skip_pkg_install=False,
+        skip_env_install=False,
+        verbose=5,
+        work_dir=None,
+        root_dir=None,
+        config_file=None,
+        factors=[],
+        labels=[],
+        exit_and_dump_after=0,
+        skip_env="",
+        list_dependencies=is_ci(),
+        remainder=[],
+    )
     assert options.parsed.verbosity == 4
     assert options.cmd_handlers == core_handlers
 

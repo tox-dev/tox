@@ -539,9 +539,9 @@ def test_read_via_thread_windows_stops_while_read_pending(mocker: MockerFixture)
     # A never-completing overlapped read must not keep the reader thread alive after stop is set.
     pending = OSError()
     pending.winerror = read_via_thread_windows.ERROR_IO_INCOMPLETE
-    overlapped = mocker.create_autospec(read_via_thread_windows._overlapped.Overlapped, instance=True)
+    overlapped = mocker.create_autospec(read_via_thread_windows._overlapped.Overlapped, instance=True)  # ruff:ignore[private-member-access]  # the module under test binds it
     overlapped.getresult.side_effect = pending  # the read never completes
-    overlapped_module = mocker.create_autospec(read_via_thread_windows._overlapped)
+    overlapped_module = mocker.create_autospec(read_via_thread_windows._overlapped)  # ruff:ignore[private-member-access]  # the module under test binds it
     overlapped_module.Overlapped.return_value = overlapped
     mocker.patch.object(read_via_thread_windows, "_overlapped", overlapped_module)
 
@@ -551,7 +551,7 @@ def test_read_via_thread_windows_stops_while_read_pending(mocker: MockerFixture)
     reader.thread.start()
     deadline = time.monotonic() + 5
     while not overlapped.getresult.called and time.monotonic() < deadline:
-        time.sleep(0.01)
+        time.sleep(0.01)  # simplint: ignore[SMP808]  # polls a mock the reader calls; nothing to wait on
     reader.stop.set()
     reader.thread.join(timeout=5)
 

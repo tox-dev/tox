@@ -151,7 +151,7 @@ def _replace_python_versions(content: str) -> str:
     return re.sub(r"(?<=[\s\[\"',=\-])3\.\d+", current_version, content)
 
 
-def _classify_ini(content: str) -> tuple[str, str]:
+def _classify_ini(content: str) -> tuple[str, str]:  # simplint: ignore[SMP505]  # names the file kind it returns
     if re.search(r"^\[tox:tox\]", content, re.MULTILINE):
         return "setup.cfg", content
     return (
