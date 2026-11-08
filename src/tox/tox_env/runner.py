@@ -14,9 +14,9 @@ from tox.session.cmd.run.single import run_command_set
 from tox.util.typing_compat import override
 
 from .api import ToxEnv, ToxEnvCreateArgs
+from .env_conf import add_change_dir_conf, add_commands_conf, add_ignore_errors_conf
 from .errors import Fail
 from .package import Package, PackageToxEnv, PathPackage
-from .util import add_change_dir_conf, add_commands_conf, add_ignore_errors_conf
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
@@ -28,7 +28,9 @@ class RunToxEnv(ToxEnv, ABC):
     """The base of the tox environments that run commands.
 
     :param create_args: the arguments the environment is created with
-    :ivar package_env: the packaging environment the run environment uses, ``None`` when it uses none
+
+    :var package_env: the packaging environment the run environment uses, ``None`` when it uses none
+
     """
 
     def __init__(self, create_args: ToxEnvCreateArgs) -> None:
@@ -154,6 +156,7 @@ class RunToxEnv(ToxEnv, ABC):
         """Get the packaging environment types the run environment uses.
 
         :returns: the names of the packaging environment type and its name, or ``None`` when there is none
+
         """
         if not self._register_package_conf():
             return None

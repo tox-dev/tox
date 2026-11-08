@@ -1,4 +1,4 @@
-"""Common functionality shared across multiple type of runs."""
+"""Common functionality shared across multiple type of runs."""  # simplint: ignore[SMP104]  # shared by run commands
 
 from __future__ import annotations
 

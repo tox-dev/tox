@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING, Final
 
 import pytest
 
-from tox.execute.util import batch_file_command_line, is_batch_file, shebang
+from tox.execute.command_line import batch_file_command_line, is_batch_file, shebang
 from tox.tox_env.errors import Fail
 
 if TYPE_CHECKING:

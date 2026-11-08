@@ -13,8 +13,8 @@ from subprocess import DEVNULL, PIPE, TimeoutExpired
 from typing import TYPE_CHECKING, Any, Final
 
 from tox.execute.api import Execute, ExecuteInstance, ExecuteOptions, ExecuteStatus, FinishedExecuteStatus
+from tox.execute.command_line import batch_file_command_line, is_batch_file, shebang
 from tox.execute.request import ExecuteRequest, StdinSource
-from tox.execute.util import batch_file_command_line, is_batch_file, shebang
 from tox.tox_env.errors import Fail
 from tox.util.redact import redact_argv
 from tox.util.typing_compat import override
@@ -74,7 +74,9 @@ class LocalSubProcessExecuteInstance(ExecuteInstance):
     :param out: the stream the standard output is written to
     :param err: the stream the standard error is written to
     :param on_exit_drain: whether to read the remaining output of the streams when the subprocess exits
-    :ivar process: the subprocess, ``None`` until it is started
+
+    :var process: the subprocess, ``None`` until it is started
+
     """
 
     def __init__(
@@ -152,6 +154,7 @@ class LocalSubProcessExecuteInstance(ExecuteInstance):
         :param key: the name of the stream, ``stdout`` or ``stderr``
 
         :yields: the file descriptor the subprocess writes the stream to
+
         """
         if (allocated_pty := _pty(key)) is not None:
             main_fd, child_fd = allocated_pty
@@ -252,6 +255,7 @@ class LocalSubProcessExecuteInstance(ExecuteInstance):
         :param err: the new standard error stream
 
         :returns: the previous standard output and standard error streams
+
         """
         prev = self._out, self._err
         if self._read_stdout is not None:  # pragma: no branch  # other outcome untested
@@ -288,6 +292,7 @@ class LocalSubprocessExecuteStatus(ExecuteStatus):
     :param out: the stream the standard output is written to
     :param err: the stream the standard error is written to
     :param process: the subprocess that runs the command
+
     """
 
     def __init__(self, options: ExecuteOptions, out: SyncWrite, err: SyncWrite, process: Popen[bytes]) -> None:

@@ -10,7 +10,7 @@ from colorama import Fore
 
 from tox.config.loader.stringify import stringify
 
-from .common import format_config_error, write_output_file
+from .output import format_config_error, write_output_file
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Sequence
@@ -26,6 +26,7 @@ def show_config_ini(state: State) -> int:
     :param state: the state of the run
 
     :returns: the exit code
+
     """
     output_file = state.conf.options.output_file
     # color belongs to the terminal only - a file must hold plain text

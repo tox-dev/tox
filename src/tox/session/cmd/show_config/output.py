@@ -20,6 +20,7 @@ def build_structured_result(state: State) -> tuple[dict[str, JsonValue], bool]:
     :param state: the state of the run
 
     :returns: the configuration, and whether any value failed to load
+
     """
     keys: list[str] = state.conf.options.list_keys_only
     show_everything = state.conf.options.env.is_all
@@ -70,6 +71,7 @@ def format_config_error(exception: Exception) -> str:
     :param exception: the error
 
     :returns: the description of the error
+
     """
     if isinstance(exception, UnicodeDecodeError):
         return f"UnicodeDecodeError at byte {exception.start}"
@@ -88,6 +90,7 @@ def write_output(
     :param output_file: the file to write to, ``None`` to print instead
     :param is_colored: whether the output is printed in color
     :param colorize: the function that adds the color to the text
+
     """
     if output_file is not None:
         write_output_file(Path(output_file), output)
@@ -100,6 +103,7 @@ def write_output_file(output_file: Path, output: str) -> None:
 
     :param output_file: the file to write to
     :param output: the text to write
+
     """
     output_file.parent.mkdir(parents=True, exist_ok=True)
     output_file.write_text(f"{output}\n", encoding="utf-8")

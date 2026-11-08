@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Final
 
 from colorama import Fore
 
-from .common import build_structured_result, write_output
+from .output import build_structured_result, write_output
 
 if TYPE_CHECKING:
     from tox.session.state import State

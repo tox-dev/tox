@@ -14,11 +14,11 @@ from packaging.requirements import InvalidRequirement, Requirement
 from tox.execute import Outcome
 from tox.plugin import impl
 from tox.session.cmd.run.single import run_command_set
+from tox.tox_env.env_conf import add_change_dir_conf, add_commands_conf, add_ignore_errors_conf
 from tox.tox_env.errors import Fail
 from tox.tox_env.python.package import PythonPackageToxEnv, SdistPackage, WheelPackage
 from tox.tox_env.python.pip.req_file import PythonDeps
 from tox.tox_env.python.virtual_env.api import VirtualEnv
-from tox.tox_env.util import add_change_dir_conf, add_commands_conf, add_ignore_errors_conf
 from tox.util.typing_compat import override
 
 from .pyproject import Pep517VirtualEnvPackager

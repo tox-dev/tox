@@ -1,4 +1,4 @@
-from __future__ import annotations
+from __future__ import annotations  # simplint: ignore[SMP104]  # extras resolution and sdist extraction for the builder
 
 import tarfile
 from copy import deepcopy
@@ -166,24 +166,20 @@ def safe_extractall(tar: tarfile.TarFile, path: Path) -> None:
             msg = f"cannot extract tar member {exc.tarinfo.name!r} into {path}: {exc}"
             raise Fail(msg) from exc
     else:
-        _checked_extractall(tar, path)
+        # extract one member at a time so each check resolves links created by earlier members
+        dest: Final[Path] = path.resolve()
 
-
-def _checked_extractall(tar: tarfile.TarFile, path: Path) -> None:
-    # extract one member at a time so each check resolves links created by earlier members
-    dest: Final[Path] = path.resolve()
-
-    for member in tar.getmembers():
-        target: Path = dest / member.name
-        inside_dest: bool = target.resolve().is_relative_to(dest)
-        if inside_dest and (member.issym() or member.islnk()):
-            link: PurePath = PurePath(member.linkname)
-            base: Path = target.parent if member.issym() else dest
-            inside_dest = not link.anchor and (base / link).resolve().is_relative_to(dest)
-        if not inside_dest:
-            msg = f"cannot extract tar member {member.name!r} into {path}: path escapes destination"
-            raise Fail(msg)
-        tar.extract(member, path=str(dest))
+        for member in tar.getmembers():
+            target: Path = dest / member.name
+            inside_dest: bool = target.resolve().is_relative_to(dest)
+            if inside_dest and (member.issym() or member.islnk()):
+                link: PurePath = PurePath(member.linkname)
+                base: Path = target.parent if member.issym() else dest
+                inside_dest = not link.anchor and (base / link).resolve().is_relative_to(dest)
+            if not inside_dest:
+                msg = f"cannot extract tar member {member.name!r} into {path}: path escapes destination"
+                raise Fail(msg)
+            tar.extract(member, path=str(dest))
 
 
 __all__ = [

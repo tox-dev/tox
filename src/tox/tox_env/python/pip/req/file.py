@@ -23,7 +23,7 @@ from tox.util.redact import redact_argv, redact_value
 from tox.util.typing_compat import override
 
 from .args import build_parser
-from .util import VCS, get_url_scheme, handle_binary_option, is_url, url_to_path
+from .urls import VCS, get_url_scheme, handle_binary_option, is_url, url_to_path
 
 if TYPE_CHECKING:
     from io import BufferedIOBase
@@ -95,7 +95,19 @@ _HTTP_BODY_TIMEOUT: Final[int] = 120
 
 def _local_requirement(req: str, from_file: str) -> str:
     root = Path(from_file).parent
-    extras, path = _extras_and_path(req, root)
+    extras: list[str] = []
+    path = root / req
+    if match := _EXTRA_PATH.fullmatch(Path(req).name):
+        for extra in match["extras"].split(","):
+            extra = extra.strip()  # ruff:ignore[redefined-loop-name]  # loop rebinding intended
+            if not extra:
+                continue
+            if not _EXTRA_ELEMENT.fullmatch(extra):
+                extras = []
+                break
+            extras.append(extra)
+        else:
+            path = root / Path(req).parent / match["path"]
     extra_part = f"[{','.join(sorted(extras))}]" if extras else ""
     try:
         rel_path = str(path.resolve().relative_to(root))
@@ -104,20 +116,6 @@ def _local_requirement(req: str, from_file: str) -> str:
     except ValueError:
         rel_path = str(path.resolve())
     return f"{rel_path}{extra_part}"
-
-
-def _extras_and_path(req: str, root: Path) -> tuple[list[str], Path]:
-    if match := _EXTRA_PATH.fullmatch(Path(req).name):
-        extras: list[str] = []
-        for extra in match["extras"].split(","):
-            extra = extra.strip()  # ruff:ignore[redefined-loop-name]  # loop rebinding intended
-            if not extra:
-                continue
-            if not _EXTRA_ELEMENT.fullmatch(extra):
-                return [], root / req
-            extras.append(extra)
-        return extras, root / Path(req).parent / match["path"]
-    return [], root / req
 
 
 def _merge_requirement_files(base_opt: Namespace, opt: Namespace) -> None:
@@ -592,9 +590,10 @@ class RequirementsFile:
     @staticmethod
     def _merge_binary_options(base_opt: Namespace, binary_options: list[tuple[str, str]]) -> None:
         # pip keeps one set per option across all lines, and a later value can clear names an earlier one added
-        sets: dict[str, set[str]] = {
-            name: vars(base_opt).setdefault(name, set()) for name in ("no_binary", "only_binary")
-        }
+        for name in ("no_binary", "only_binary"):
+            if not hasattr(base_opt, name):
+                setattr(base_opt, name, set())
+        sets: dict[str, set[str]] = {name: getattr(base_opt, name) for name in ("no_binary", "only_binary")}
         for name, value in binary_options:
             handle_binary_option(value, sets[name], sets["only_binary" if name == "no_binary" else "no_binary"])
         for name, names in sets.items():

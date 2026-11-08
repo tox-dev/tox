@@ -60,6 +60,7 @@ def is_batch_file(exe: str) -> bool:
     :param exe: the name of the executable
 
     :returns: whether the name ends with ``.bat`` or ``.cmd``
+
     """
     return exe.rstrip(". ").lower().endswith((".bat", ".cmd"))
 
@@ -73,6 +74,7 @@ def batch_file_command_line(script: str, args: Sequence[str]) -> str:
     :returns: the command line
 
     :raises Fail: when the batch file name or an argument contains a character that cannot be quoted
+
     """
     if any(char in script for char in '"\r\n\0'):
         msg = f"cannot run batch file {script!r}, its name cannot be quoted"
