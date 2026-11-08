@@ -18,6 +18,7 @@ def tox_add_option(parser: ToxParser) -> None:
     """Add the ``depends`` sub-command to the command line parser.
 
     :param parser: the parser to add the sub-command to
+
     """
     our = parser.add_command(
         "depends",
@@ -35,6 +36,7 @@ def depends(state: State) -> int:
     :param state: the state of the run
 
     :returns: the exit code
+
     """
     to_run_list = list(state.envs.iter(only_active=False))
     order, todo = run_order(state, to_run_list)
@@ -65,3 +67,8 @@ def depends(state: State) -> int:
 
     _handle(0, "ALL")
     return 0
+
+
+__all__ = [
+    "depends",
+]

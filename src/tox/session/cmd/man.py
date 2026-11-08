@@ -18,6 +18,7 @@ def tox_add_option(parser: ToxParser) -> None:
     """Add the ``man`` sub-command to the command line parser.
 
     :param parser: the parser to add the sub-command to
+
     """
     from tox.config.cli.parser import CORE  # ruff:ignore[import-outside-top-level]  # avoids an import cycle
 
@@ -30,6 +31,7 @@ def setup_man(state: State) -> int:  # ruff:ignore[unused-function-argument]  # 
     :param state: the state of the run
 
     :returns: the exit code
+
     """
     print("tox man page setup")  # ruff:ignore[print]  # terminal output
     print("=" * 50)  # ruff:ignore[print]  # terminal output
@@ -133,3 +135,8 @@ def _print_manpath_instructions() -> None:
         f"To complete setup, add this to {rc_file}:\n\n  {export_line}\n\n"
         f"Then restart your shell or run:\n  {reload} {rc_file}\n\nAfter that, you can use: man tox\n"
     )
+
+
+__all__ = [
+    "setup_man",
+]

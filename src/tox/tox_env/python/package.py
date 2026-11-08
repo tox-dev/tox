@@ -25,7 +25,7 @@ if TYPE_CHECKING:
     from .pip.req_file import PythonDeps
 
 
-class PythonPackage(Package):
+class _PythonPackage(Package):
     """A package built from a python project."""
 
 
@@ -34,6 +34,7 @@ class PythonPathPackageWithDeps(PathPackage):
 
     :param path: the path of the package
     :param deps: the dependencies the package declares
+
     """
 
     def __init__(self, path: Path, deps: Sequence[Requirement]) -> None:
@@ -71,6 +72,7 @@ class PythonPackageToxEnv(Python, PackageToxEnv, ABC):
     """The base of the tox environments that build a python package.
 
     :param create_args: the arguments the environment is created with
+
     """
 
     def __init__(self, create_args: ToxEnvCreateArgs) -> None:
@@ -95,6 +97,7 @@ class PythonPackageToxEnv(Python, PackageToxEnv, ABC):
         """Get the build requirements of the package.
 
         :returns: the build requirements
+
         """
         raise NotImplementedError
 
@@ -105,6 +108,7 @@ class PythonPackageToxEnv(Python, PackageToxEnv, ABC):
         :param for_env: the configuration of the run environment
 
         :returns: the dependencies
+
         """
         raise NotImplementedError
 
@@ -187,3 +191,13 @@ class PythonPackageToxEnv(Python, PackageToxEnv, ABC):
                 with env.display_context(self._has_display_suspended):
                     env.teardown()
         super()._teardown()
+
+
+__all__ = [
+    "EditableLegacyPackage",
+    "EditablePackage",
+    "PythonPackageToxEnv",
+    "PythonPathPackageWithDeps",
+    "SdistPackage",
+    "WheelPackage",
+]

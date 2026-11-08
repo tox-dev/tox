@@ -47,6 +47,7 @@ def env_run_create_flags(
 
     :param parser: the parser to add the flags to
     :param mode: the command the flags are added for
+
     """
     if mode not in {"devenv", "depends"}:
         parser.add_argument(
@@ -166,11 +167,12 @@ class InstallPackageAction(Action):
         :param value: the default value
 
         :returns: the resolved path
+
         """
         return self._resolve_path(value.as_posix())
 
 
-LOGGER: Final[logging.Logger] = logging.getLogger(__name__)
+_LOGGER: Final[logging.Logger] = logging.getLogger(__name__)
 
 
 def execute(  # keeps the signature
@@ -187,6 +189,7 @@ def execute(  # keeps the signature
     :param live: whether to show the output of the environments as it is produced
 
     :returns: the exit code
+
     """
     interrupt, done = Event(), Event()
     results: list[ToxEnvRunResult] = []
@@ -200,7 +203,7 @@ def execute(  # keeps the signature
     scheduler_error: list[BaseException] = []
 
     def _run_thread() -> tuple[Callable[[int, FrameType | None], Any] | int | Handlers | None, bool]:
-        spinner = ToxSpinner(has_spinner, state, len(to_run_list))
+        spinner = _ToxSpinner(has_spinner, state, len(to_run_list))
         thread = Thread(
             target=_queue_and_wait,
             name="tox-interrupt",
@@ -224,7 +227,7 @@ def execute(  # keeps the signature
         except KeyboardInterrupt:
             previous = signal(SIGINT, Handlers.SIG_IGN)
             spinner.print_report = False  # no need to print reports at this point, final report coming up
-            LOGGER.error(  # ruff:ignore[error-instead-of-exception]  # expected error log
+            _LOGGER.error(  # ruff:ignore[error-instead-of-exception]  # expected error log
                 "[%s] KeyboardInterrupt - teardown started", os.getpid()
             )
             interrupt.set()
@@ -253,7 +256,7 @@ def execute(  # keeps the signature
         # warn about unused config keys
         _warn_unused_config(state)
         # report the outcome
-        exit_code = report(
+        exit_code = _report(
             state.conf.options.start,
             ordered_results,
             is_colored=state.conf.options.is_colored,
@@ -284,7 +287,7 @@ def _env_dirs(state: State) -> dict[str, Path]:
     return {name: state.envs[name].env_dir for name in state.envs.iter(only_active=False)}
 
 
-class ToxSpinner(Spinner):
+class _ToxSpinner(Spinner):
     def __init__(  # keeps the signature
         self,
         enabled: bool,  # ruff:ignore[boolean-type-hint-positional-argument]  # keeps the signature
@@ -316,7 +319,7 @@ def _queue_and_wait(  # ruff:ignore[too-many-arguments]  # public signature
     interrupt: Event,
     done: Event,
     max_workers: int | None,
-    spinner: ToxSpinner,
+    spinner: _ToxSpinner,
     live: bool,  # ruff:ignore[boolean-type-hint-positional-argument]  # keeps the signature
     error: list[BaseException],
 ) -> None:
@@ -340,7 +343,7 @@ def _do_queue_and_wait(  # ruff:ignore[too-many-arguments]  # public signature
     future_to_env: dict[Future[ToxEnvRunResult], ToxEnv],
     interrupt: Event,
     max_workers: int | None,
-    spinner: ToxSpinner,
+    spinner: _ToxSpinner,
     live: bool,  # ruff:ignore[boolean-type-hint-positional-argument]  # keeps the signature
 ) -> None:
     options = state._options  # ruff:ignore[private-member-access]  # internal access
@@ -349,7 +352,7 @@ def _do_queue_and_wait(  # ruff:ignore[too-many-arguments]  # public signature
         # selection does not raise ValueError from ThreadPoolExecutor
         max_workers = max(1, len(to_run_list)) if max_workers is None else max_workers
         completed: set[str] = set()
-        envs_to_run_generator = ready_to_run_envs(state, to_run_list, completed)
+        envs_to_run_generator = _ready_to_run_envs(state, to_run_list, completed)
 
         def _run(tox_env: RunToxEnv) -> ToxEnvRunResult:
             spinner.add(tox_env.conf.name)
@@ -403,7 +406,7 @@ def _do_queue_and_wait(  # ruff:ignore[too-many-arguments]  # public signature
                     break
 
 
-def ready_to_run_envs(state: State, to_run: list[str], completed: set[str]) -> Iterator[list[str]]:
+def _ready_to_run_envs(state: State, to_run: list[str], completed: set[str]) -> Iterator[list[str]]:
     # Generate tox environments ready to run.
     order, todo = run_order(state, to_run)
     while order:
@@ -427,6 +430,7 @@ def run_order(state: State, to_run: list[str]) -> tuple[list[str], dict[str, set
     :returns: the order of the environments, and the environments each one depends on
 
     :raises tox.report.HandledError: when the environments depend on each other in a cycle
+
     """
     to_run_set = set(to_run)
     todo: dict[str, set[str]] = {}
@@ -521,7 +525,7 @@ def _cancel_pending(future_to_env: dict[Future[ToxEnvRunResult], ToxEnv]) -> Non
 
 def _handle_one_run_done(
     result: ToxEnvRunResult,
-    spinner: ToxSpinner,
+    spinner: _ToxSpinner,
     state: State,
     live: bool,  # ruff:ignore[boolean-type-hint-positional-argument]  # keeps the signature
 ) -> None:
@@ -556,7 +560,7 @@ def _tear_down(tox_env: ToxEnv) -> None:
     try:
         tox_env.teardown()
     except (Fail, OSError):  # one environment failing to clean up must not leak the others' resources
-        LOGGER.warning("failed to tear down environment %s", tox_env.conf.name, exc_info=True)
+        _LOGGER.warning("failed to tear down environment %s", tox_env.conf.name, exc_info=True)
 
 
 def _order_results(state: State, results: list[ToxEnvRunResult], to_run_list: list[str]) -> list[ToxEnvRunResult]:
@@ -586,7 +590,7 @@ def _record_venv_redirect(state: State) -> None:
 def _venv_redirect_target(state: State, env_dirs: dict[str, Path]) -> Path | None:
     # the pick depends on the configuration alone, so it stays the same whichever environments ran
     if (pinned := state.conf.core.get_optional("venv_redirect_env", str)) is not None and pinned not in env_dirs:
-        LOGGER.warning("venv_redirect_env names %s, which is not a tox environment", pinned)
+        _LOGGER.warning("venv_redirect_env names %s, which is not a tox environment", pinned)
         return None
     develop = next((name for name in env_dirs if _installs_develop(state.envs[name])), None)
     name = pinned or ("dev" if "dev" in env_dirs else develop)
@@ -619,7 +623,7 @@ def _print_unused(  # keeps the signature
     )
 
 
-def report(start: float, runs: list[ToxEnvRunResult], *, is_colored: bool, verbosity: int, fail_fast: bool) -> int:
+def _report(start: float, runs: list[ToxEnvRunResult], *, is_colored: bool, verbosity: int, fail_fast: bool) -> int:
     def _print(color_: str, message: str) -> None:
         if verbosity:
             print(  # ruff:ignore[print]  # terminal output

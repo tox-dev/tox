@@ -33,9 +33,10 @@ def dependencies_with_extras(
     :param available_extras: the extras the package provides, ``None`` when unknown
 
     :returns: the dependencies that apply
+
     """
     return dependencies_with_extras_from_markers(
-        extract_extra_markers(deps), extras, package_name, available_extras=available_extras
+        [_extract_extra_markers(dep) for dep in deps], extras, package_name, available_extras=available_extras
     )
 
 
@@ -56,6 +57,7 @@ def dependencies_with_extras_from_markers(
     :returns: the dependencies that apply
 
     :raises tox.tox_env.errors.Fail: when a requested extra is not provided by the package
+
     """
     normalized_extras = _check_available_extras(extras, available_extras, package_name)
     result: Final[list[Requirement]] = []
@@ -109,15 +111,6 @@ def _add_dependency(req: Requirement, via: frozenset[Marker], result: list[Requi
         result.append(dep)
 
 
-def extract_extra_markers(deps: list[Requirement]) -> list[tuple[Requirement, set[str | None]]]:
-    # Extract extra markers from dependencies.
-    #
-    # :param deps: the dependencies
-    #
-    # :returns: a list of requirement, extras set
-    return [_extract_extra_markers(d) for d in deps]
-
-
 def _extract_extra_markers(req: Requirement) -> tuple[Requirement, set[str | None]]:
     req = deepcopy(req)
     markers: MarkerList = getattr(req.marker, "_markers", []) or []
@@ -164,6 +157,7 @@ def safe_extractall(tar: tarfile.TarFile, path: Path) -> None:
     :param path: the directory to extract into
 
     :raises tox.tox_env.errors.Fail: when a member of the archive cannot be extracted safely
+
     """
     if hasattr(tarfile, "data_filter"):
         try:

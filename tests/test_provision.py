@@ -31,7 +31,7 @@ if TYPE_CHECKING:
     from tox.tox_env.api import ToxEnv
 
 
-ROOT: Final[Path] = Path(__file__).parents[1]
+_ROOT: Final[Path] = Path(__file__).parents[1]
 
 
 class _Lstat(Protocol):
@@ -98,7 +98,7 @@ def tox_wheels(tox_wheel: Path, tmp_path_factory: TempPathFactory) -> list[Path]
             msg = f"no tox.dist-info inside {tox_wheel}"
             raise RuntimeError(msg)
         distribution = Distribution.at(dist_info)
-        wheel_cache = ROOT / ".wheel_cache" / f"{sys.version_info.major}.{sys.version_info.minor}"
+        wheel_cache = _ROOT / ".wheel_cache" / f"{sys.version_info.major}.{sys.version_info.minor}"
         wheel_cache.mkdir(parents=True, exist_ok=True)
         cmd = [sys.executable, "-m", "pip", "download", "-d", str(wheel_cache)]
         assert distribution.requires is not None

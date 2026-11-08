@@ -15,7 +15,7 @@ if TYPE_CHECKING:
     from docutils.parsers.rst.states import RSTState, RSTStateMachine
     from sphinx.domains.std import StandardDomain
 
-LOGGER: Final[SphinxLoggerAdapter] = getLogger(__name__)
+_LOGGER: Final[SphinxLoggerAdapter] = getLogger(__name__)
 
 
 class ToxConfig(SphinxDirective):
@@ -100,7 +100,7 @@ class ToxConfig(SphinxDirective):
     def _register_ref(self, ref_name: str, ref_title: str, node: Element) -> None:
         of_name, doc_name = fully_normalize_name(ref_name), self.env.docname
         if of_name in self._std_domain.labels:
-            LOGGER.warning(
+            _LOGGER.warning(
                 __("duplicate label %s, other instance in %s"),
                 of_name,
                 self.env.doc2path(self._std_domain.labels[of_name][0]),

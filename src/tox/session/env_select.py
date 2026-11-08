@@ -32,7 +32,7 @@ if TYPE_CHECKING:
     from .state import State
 
 
-LOGGER: Final[logging.Logger] = logging.getLogger(__name__)
+_LOGGER: Final[logging.Logger] = logging.getLogger(__name__)
 
 
 class CliEnv:  # ruff:ignore[eq-without-hash]  # mutable value type
@@ -43,11 +43,9 @@ class CliEnv:  # ruff:ignore[eq-without-hash]  # mutable value type
     - A list of specific environments, instantiated with a string that is a comma-separated list of the environment
       names. (These may have spaces on either side of the commas which are removed.) As a sequence this will be a
       sequence of those names.
-
     - "ALL" which is all environments defined by the tox configuration. This is instantiated with ``ALL`` either alone
       or as any element of a comma-separated list; any other environment names are ignored. `is_all()` will be true and
       as a sequence it will be empty. This prints in string representation as ``ALL``.
-
     - The default environments as chosen by tox configuration. This is instantiated with `None` as the parameter,
       `is_default_list()` will be true, and as a sequence this will be empty. This prints in string representation as
       ``<env_list>``.
@@ -75,10 +73,10 @@ class CliEnv:  # ruff:ignore[eq-without-hash]  # mutable value type
         return self._names is not None and "ALL" in self._names
 
     def __bool__(self) -> bool:
-        """
-        A `CliEnv` is `True` if it's not the default set of environments.
+        """A `CliEnv` is `True` if it's not the default set of environments.
 
         :returns: whether the selection names environments other than the defaults
+
         """
         return bool(self._names)
 
@@ -273,7 +271,9 @@ class EnvSelector:
     """Select the environments of a run from the command line, the configuration and the environment.
 
     :param state: the state of the run
-    :ivar on_empty_fallback_py: whether to fall back to the ``py`` environment when none is selected
+
+    :var on_empty_fallback_py: whether to fall back to the ``py`` environment when none is selected
+
     """
 
     def __init__(self, state: State) -> None:
@@ -497,7 +497,7 @@ class EnvSelector:
             self._defined_envs_[name] = _ToxEnvInfo(env=run_env, is_active=is_active)
             pkg_name_type = run_env.get_package_env_types()
         except RunnerUnavailable as exc:
-            LOGGER.warning(
+            _LOGGER.warning(
                 "environment %s marked as unavailable, runner %r is not available",
                 name,
                 str(exc),
@@ -717,7 +717,7 @@ class EnvSelector:
             if self._filter_re is not None and self._filter_re.match(name):
                 if name not in self._warned_about:
                     self._warned_about.add(name)
-                    LOGGER.warning("skip environment %s, matches filter %r", name, self._filter_re.pattern)
+                    _LOGGER.warning("skip environment %s, matches filter %r", name, self._filter_re.pattern)
                 continue
             yield name
 
@@ -734,6 +734,7 @@ class EnvSelector:
         """Ensure that no packaging environment is selected to run.
 
         :raises tox.report.HandledError: when a packaging environment is selected
+
         """
         envs, active = self._defined_envs, self._env_name_to_active()
         if invalid := [n for n, a in active.items() if a and isinstance(envs[n].env, PackageToxEnv)]:

@@ -60,6 +60,7 @@ class ToxBackendFailed(Fail, BackendFailed):
     """The build backend of a project failed.
 
     :param backend_failed: the failure reported by the build backend
+
     """
 
     def __init__(self, backend_failed: BackendFailed) -> None:
@@ -77,12 +78,12 @@ class ToxBackendFailed(Fail, BackendFailed):
         )
 
 
-class BuildEditableNotSupportedError(RuntimeError):
+class _BuildEditableNotSupportedError(RuntimeError):
     # raised when build editable is not supported.
     ...
 
 
-class ToxCmdStatus(CmdStatus):
+class _ToxCmdStatus(CmdStatus):
     def __init__(self, execute_status: ExecuteStatus) -> None:
         self._execute_status = execute_status
 
@@ -244,7 +245,7 @@ class Pep517VenvPackager(PythonPackageToxEnv, ABC):
             self._setup_build_requires("wheel")
         if "editable" in self.call_require_hooks:
             if not self._frontend.optional_hooks["build_editable"]:
-                raise BuildEditableNotSupportedError
+                raise _BuildEditableNotSupportedError
             self._setup_build_requires("editable")
 
     def _setup_build_requires(self, of_type: str) -> None:
@@ -276,7 +277,7 @@ class Pep517VenvPackager(PythonPackageToxEnv, ABC):
         """Build the package to install."""
         try:
             deps = self._load_deps(for_env)
-        except BuildEditableNotSupportedError:
+        except _BuildEditableNotSupportedError:
             self._fallback_to_editable_legacy()
             deps = self._load_deps(for_env)
         if (of_type := for_env.get("package", str)) == "editable-legacy":
@@ -306,7 +307,7 @@ class Pep517VenvPackager(PythonPackageToxEnv, ABC):
             else:
                 try:
                     self.setup()
-                except BuildEditableNotSupportedError:
+                except _BuildEditableNotSupportedError:
                     # deps resolved without the backend (e.g. static metadata), so the missing PEP-660 support
                     # surfaces only at setup - fall back and re-dispatch as editable-legacy
                     self._fallback_to_editable_legacy()
@@ -369,6 +370,7 @@ class Pep517VenvPackager(PythonPackageToxEnv, ABC):
         :param for_env: the configuration of the run environment
 
         :returns: the dependencies
+
         """
         with self._pkg_lock:
             if self._package_dependencies is None:  # pragma: no branch  # other outcome untested
@@ -402,6 +404,7 @@ class Pep517VenvPackager(PythonPackageToxEnv, ABC):
         """The folder where the build metadata is written, from the ``meta_dir`` setting.
 
         :raises tox.tox_env.errors.Fail: when the metadata folder is a link
+
         """
         meta_folder = self.conf.get("meta_dir", Path)
         # the build frontend empties this folder before each metadata build, which would wipe a link's target
@@ -428,6 +431,7 @@ class Pep517VenvPackager(PythonPackageToxEnv, ABC):
         :param for_env: the configuration of the run environment
 
         :returns: the name of the package
+
         """
         with self._pkg_lock:
             if self._package_name is None:  # pragma: no branch  # other outcome untested
@@ -441,6 +445,7 @@ class Pep517VenvPackager(PythonPackageToxEnv, ABC):
         :param for_env: the configuration of the run environment
 
         :returns: the extras
+
         """
         with self._pkg_lock:
             self._ensure_meta_present(for_env)
@@ -543,6 +548,7 @@ class Pep517VirtualEnvFrontend(Frontend):
 
     :param root: the directory of the project to build
     :param env: the packaging environment
+
     """
 
     def __init__(self, root: Path, env: Pep517VenvPackager) -> None:
@@ -588,7 +594,7 @@ class Pep517VirtualEnvFrontend(Frontend):
         cmd: str,
         result_file: Path,
         msg: str,
-    ) -> Generator[ToxCmdStatus]:
+    ) -> Generator[_ToxCmdStatus]:
         try:
             with self._tox_env.execute_async(
                 cmd=self.backend_cmd,
@@ -599,7 +605,7 @@ class Pep517VirtualEnvFrontend(Frontend):
                 executor=self.backend_executor,
             ) as execute_status:
                 execute_status.write_stdin(f"{msg}{os.linesep}")
-                yield ToxCmdStatus(execute_status)
+                yield _ToxCmdStatus(execute_status)
             if execute_status.outcome is not None:  # pragma: no branch  # other outcome untested
                 execute_status.outcome.assert_success()
         finally:

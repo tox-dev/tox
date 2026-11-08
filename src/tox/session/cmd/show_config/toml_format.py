@@ -34,6 +34,7 @@ def show_config_toml(state: State) -> int:
     :param state: the state of the run
 
     :returns: the exit code
+
     """
     result, has_exception = build_structured_result(state)
     output = tomli_w.dumps(result).removesuffix("\n")
@@ -47,6 +48,13 @@ def colorize(text: str) -> str:
     :param text: the TOML text
 
     :returns: the colored text
+
     """
     text = _HEADER_RE.sub(lambda match: f"{Fore.YELLOW}{match.group()}{Fore.RESET}", text)
     return _KEY_RE.sub(rf"{Fore.GREEN}\1{Fore.RESET} =", text)
+
+
+__all__ = [
+    "colorize",
+    "show_config_toml",
+]

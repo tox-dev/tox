@@ -38,6 +38,7 @@ class VersionInfo(NamedTuple):
     :param micro: the micro version
     :param releaselevel: the release level, such as ``final``
     :param serial: the serial of the release level
+
     """
 
     major: int
@@ -61,6 +62,7 @@ class PythonInfo:
     :param debug: whether the interpreter is a debug build
     :param machine: the machine architecture
     :param marker_environment: the environment markers of the interpreter, ``None`` when unknown
+
     """
 
     implementation: str
@@ -90,7 +92,7 @@ class PythonInfo:
         return f"{self.version_info.major}.{self.version_info.minor}"
 
 
-PY_FACTORS_RE: Final[re.Pattern[str]] = re.compile(
+_PY_FACTORS_RE: Final[re.Pattern[str]] = re.compile(
     r"""
     ^(?!py$)                                               # don't match 'py' as it doesn't provide any info
     (?P<impl>py|pypy|cpython|jython|graalpy|rustpython|ironpython) # the interpreter; most users will simply use 'py'
@@ -102,7 +104,7 @@ PY_FACTORS_RE: Final[re.Pattern[str]] = re.compile(
     """,
     re.VERBOSE,
 )
-PY_FACTORS_RE_EXPLICIT_VERSION: Final[re.Pattern[str]] = re.compile(
+_PY_FACTORS_RE_EXPLICIT_VERSION: Final[re.Pattern[str]] = re.compile(
     r"""
     ^
     ( (?P<impl> cpython | pypy ) - )?   # optional interpreter prefix with dash
@@ -119,6 +121,7 @@ class Python(ToxEnv, ABC):
     """The base of the tox environments that use a python interpreter.
 
     :param create_args: the arguments the environment is created with
+
     """
 
     def __init__(self, create_args: ToxEnvCreateArgs) -> None:
@@ -233,15 +236,16 @@ class Python(ToxEnv, ABC):
         :returns: the python specification, or ``None`` when the name does not contain one
 
         :raises ValueError: when the name contains more than one python specification
+
         """
         candidates: list[str] = []
-        if match := PY_FACTORS_RE_EXPLICIT_VERSION.match(env_name):
+        if match := _PY_FACTORS_RE_EXPLICIT_VERSION.match(env_name):
             candidates.append(cls._explicit_version_spec(match.groupdict()))
         else:
             for factor in env_name.split("-"):
-                if match := PY_FACTORS_RE.match(factor):
+                if match := _PY_FACTORS_RE.match(factor):
                     candidates.append(factor)
-                elif match := PY_FACTORS_RE_EXPLICIT_VERSION.match(factor):
+                elif match := _PY_FACTORS_RE_EXPLICIT_VERSION.match(factor):
                     candidates.append(cls._explicit_version_spec(match.groupdict()))
         if candidates:
             if len(candidates) > 1:
@@ -436,6 +440,7 @@ class Python(ToxEnv, ABC):
         """The major and minor version of the base python, with a dot.
 
         :returns: the version, such as ``3.13``
+
         """
         return self.base_python.version_dot
 
@@ -484,6 +489,7 @@ class Python(ToxEnv, ABC):
         """The implementation of the base python, in lower case.
 
         :returns: the implementation, such as ``cpython``
+
         """
         return self.base_python.impl_lower
 
@@ -491,6 +497,7 @@ class Python(ToxEnv, ABC):
         """Whether the base python is a free-threaded build.
 
         :returns: whether it is free-threaded
+
         """
         return self.base_python.free_threaded
 
@@ -498,6 +505,7 @@ class Python(ToxEnv, ABC):
         """Whether the base python is a debug build.
 
         :returns: whether it is a debug build
+
         """
         return self.base_python.debug
 
@@ -546,6 +554,7 @@ class Python(ToxEnv, ABC):
         """Create the python environment, or recreate it when the base python has changed.
 
         :raises tox.tox_env.errors.Recreate: when the environment exists, but was created with another base python
+
         """
         conf = self.python_cache()
         with self.cache.compare(conf, Python.__name__) as (eq, old):
@@ -558,6 +567,7 @@ class Python(ToxEnv, ABC):
         """Get the values that decide whether the python environment has to be recreated.
 
         :returns: the values that identify the base python
+
         """
         return {
             "version_info": list(self.base_python.version_info),
@@ -585,6 +595,7 @@ class Python(ToxEnv, ABC):
         """Get the directories to prepend to the ``PATH`` of the environment.
 
         :returns: the directories, first one first
+
         """
         raise NotImplementedError
 
@@ -620,6 +631,7 @@ def add_skip_missing_interpreters_to_core(core: CoreConfigSet, options: Parsed) 
 
     :param core: the core configuration
     :param options: the parsed command line options
+
     """
     core.add_config(
         keys=["skip_missing_interpreters"],
@@ -643,6 +655,7 @@ def add_skip_missing_interpreters_to_env(conf: EnvConfigSet, core: CoreConfigSet
     :param conf: the configuration of the environment
     :param core: the core configuration
     :param options: the parsed command line options
+
     """
 
     def _default_skip_missing(  # interface signature

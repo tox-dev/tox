@@ -24,13 +24,14 @@ DEFAULT_CONFIG_FILE = Path(user_config_dir("tox")) / "config.ini"
 class IniConfig:
     """Read the user-level tox config file, which supplies defaults for the command line options.
 
-    :cvar TOX_CONFIG_FILE_ENV_VAR: the environment variable that overrides the path of the config file
-    :cvar STATE: the label of the config file state, keyed by whether the file was read
-    :ivar is_env_var: whether the path of the config file comes from the environment variable
-    :ivar config_file: the path of the config file
-    :ivar has_config_file: whether the config file exists, ``None`` when it failed to parse
-    :ivar has_tox_section: whether the config file has a core section
-    :ivar ini: the loader of the core section, ``None`` when there is none
+    :var TOX_CONFIG_FILE_ENV_VAR: the environment variable that overrides the path of the config file
+    :var STATE: the label of the config file state, keyed by whether the file was read
+    :var is_env_var: whether the path of the config file comes from the environment variable
+    :var config_file: the path of the config file
+    :var has_config_file: whether the config file exists, ``None`` when it failed to parse
+    :var has_tox_section: whether the config file has a core section
+    :var ini: the loader of the core section, ``None`` when there is none
+
     """
 
     TOX_CONFIG_FILE_ENV_VAR = "TOX_USER_CONFIG_FILE"
@@ -81,6 +82,7 @@ class IniConfig:
         :param of_type: the type to convert the value to
 
         :returns: the converted value, or ``None`` when it is not set or cannot be read
+
         """
         cache_key = key, of_type
         if cache_key in self._cache:
@@ -101,3 +103,8 @@ class IniConfig:
             return None
         args = ConfigLoadArgs(chain=[key], name=CORE.prefix, env_name=None)
         return self.ini.load(key, of_type=of_type, conf=None, factory=None, args=args), "file"
+
+
+__all__ = [
+    "IniConfig",
+]

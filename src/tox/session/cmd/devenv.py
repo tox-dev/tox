@@ -23,6 +23,7 @@ def tox_add_option(parser: ToxParser) -> None:
     """Add the ``devenv`` sub-command to the command line parser.
 
     :param parser: the parser to add the sub-command to
+
     """
     help_msg = "sets up a development environment at ENVDIR based on the tox configuration specified "
     our = parser.add_command("devenv", ["d"], help_msg, devenv)
@@ -39,6 +40,7 @@ def devenv(state: State) -> int:
     :returns: the exit code
 
     :raises tox.report.HandledError: when not exactly one target environment is selected
+
     """
     opt = state.conf.options
     opt.devenv_path = opt.devenv_path.absolute()
@@ -69,3 +71,8 @@ def devenv(state: State) -> int:
             # asking for a development environment is the explicit consent PEP 832 wants before replacing a redirect
             record_venv_redirect(state.conf.core.get("tox_root", Path), opt.devenv_path, lambda _: True)
     return result
+
+
+__all__ = [
+    "devenv",
+]

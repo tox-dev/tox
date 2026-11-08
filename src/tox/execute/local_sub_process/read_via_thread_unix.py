@@ -17,9 +17,9 @@ if TYPE_CHECKING:
 
     from _typeshed import FileDescriptorLike
 
-TIMEOUT_FOR_INTERRUPT: Final[float] = 0.05  # pragma: win32 no cover
+_TIMEOUT_FOR_INTERRUPT: Final[float] = 0.05  # pragma: win32 no cover
 """Seconds to wait for output before checking whether the reader should stop."""
-READ_CHUNK_SIZE: Final[int] = 32768  # pragma: win32 no cover
+_READ_CHUNK_SIZE: Final[int] = 32768  # pragma: win32 no cover
 """Maximum number of bytes read from a stream at once."""
 
 
@@ -30,6 +30,7 @@ class ReadViaThreadUnix(ReadViaThread):  # pragma: win32 no cover
     :param handler: the callback that receives what is read
     :param name: the name of the stream, used to name the thread
     :param drain: whether to read the remaining content when the reader is exited
+
     """
 
     def __init__(  # keeps the signature
@@ -57,7 +58,7 @@ class ReadViaThreadUnix(ReadViaThread):  # pragma: win32 no cover
     def _read_until_eof(self, selector: selectors.DefaultSelector) -> None:
         while selector.get_map() and not self.stop.is_set():
             try:
-                ready = selector.select(timeout=TIMEOUT_FOR_INTERRUPT)
+                ready = selector.select(timeout=_TIMEOUT_FOR_INTERRUPT)
             except (InterruptedError, OSError) as exception:
                 if isinstance(exception, OSError) and exception.errno != errno.EINTR:
                     raise
@@ -71,7 +72,7 @@ class ReadViaThreadUnix(ReadViaThread):  # pragma: win32 no cover
 
     def _read_chunk(self, selector: selectors.DefaultSelector, key: selectors.SelectorKey) -> None:
         try:
-            data = os.read(key.fd, READ_CHUNK_SIZE)
+            data = os.read(key.fd, _READ_CHUNK_SIZE)
         except OSError as exception:
             if exception.errno == errno.EINTR:
                 return
@@ -112,3 +113,8 @@ class ReadViaThreadUnix(ReadViaThread):  # pragma: win32 no cover
 
                 for key, _ in ready:
                     self._read_chunk(selector, key)
+
+
+__all__ = [
+    "ReadViaThreadUnix",
+]

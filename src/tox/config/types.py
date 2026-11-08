@@ -111,7 +111,9 @@ class FactorGroup:
 
 
 __all__ = [
+    "CircularChainError",
     "Command",
     "EnvList",
     "FactorGroup",
+    "MissingRequiredConfigKeyError",
 ]

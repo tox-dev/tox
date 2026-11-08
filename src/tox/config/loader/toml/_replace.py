@@ -387,7 +387,7 @@ class TomlReplaceLoader(ReplaceReference):
             raise error
         return None
 
-    def _config_value_sources(self, sec: str | None, current_env: str | None) -> Iterator[ConfigSet | RawLoader]:
+    def _config_value_sources(self, sec: str | None, current_env: str | None) -> Iterator[ConfigSet | _RawLoader]:
         if sec is None:
             if current_env is not None:  # pragma: no branch  # other outcome untested
                 yield self.conf.get_env(current_env)
@@ -402,13 +402,13 @@ class TomlReplaceLoader(ReplaceReference):
         if sec.startswith(env_prefix) and sec not in {run_env_base, pkg_env_base}:
             yield self.conf.get_env(sec[len(env_prefix) + len(section.SEP) :])
         else:
-            yield RawLoader(self.loader, sec)
+            yield _RawLoader(self.loader, sec)
         if sec == core_prefix:
             yield self.conf.core  # try via registered configs
 
     @staticmethod
-    def _load_reference_value(src: ConfigSet | RawLoader, key: str, conf_args: ConfigLoadArgs) -> str:
-        if isinstance(src, RawLoader):
+    def _load_reference_value(src: ConfigSet | _RawLoader, key: str, conf_args: ConfigLoadArgs) -> str:
+        if isinstance(src, _RawLoader):
             return RawText(stringify(src.load(key, conf_args.chain))[0])
         return stringify_reference(
             src.set_env_lines(conf_args.chain)
@@ -418,7 +418,7 @@ class TomlReplaceLoader(ReplaceReference):
         )
 
 
-class RawLoader:
+class _RawLoader:
     def __init__(self, loader: TomlLoader, section: str) -> None:
         self._loader = loader
         self._section = section

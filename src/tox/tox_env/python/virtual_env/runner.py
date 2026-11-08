@@ -20,6 +20,7 @@ def tox_register_tox_env(register: ToxEnvRegister) -> None:
     """Register the virtualenv run environment with tox.
 
     :param register: the registry of environment types
+
     """
     register.add_run_env(VirtualEnvRunner)
 
@@ -49,3 +50,8 @@ class VirtualEnvRunner(VirtualEnv, PythonRun):
     @override
     def id() -> str:
         return "virtualenv"
+
+
+__all__ = [
+    "VirtualEnvRunner",
+]

@@ -35,6 +35,7 @@ def build_parser() -> ArgumentParser:
     """Build the parser of the pip requirement file options.
 
     :returns: the parser
+
     """
     parser = _OurArgumentParser(add_help=False, prog="", allow_abbrev=False)
     _global_options(parser)
@@ -44,27 +45,27 @@ def build_parser() -> ArgumentParser:
 
 def _global_options(parser: ArgumentParser) -> None:
     parser.add_argument("-i", "--index-url", "--pypi-url", dest="index_url", default=None)
-    parser.add_argument("--extra-index-url", action=AddUniqueAction)
+    parser.add_argument("--extra-index-url", action=_AddUniqueAction)
     parser.add_argument("--no-index", action="store_true", default=False)
-    parser.add_argument("-c", "--constraint", action=AddUniqueAction, dest="constraints")
-    parser.add_argument("-r", "--requirement", action=AddUniqueAction, dest="requirements")
-    parser.add_argument("-e", "--editable", action=AddUniqueAction, dest="editables")
-    parser.add_argument("-f", "--find-links", action=AddUniqueAction)
-    parser.add_argument("--no-binary", action=BinaryAction, nargs="+", dest="binary_options", const="no_binary")
-    parser.add_argument("--only-binary", action=BinaryAction, nargs="+", dest="binary_options", const="only_binary")
+    parser.add_argument("-c", "--constraint", action=_AddUniqueAction, dest="constraints")
+    parser.add_argument("-r", "--requirement", action=_AddUniqueAction, dest="requirements")
+    parser.add_argument("-e", "--editable", action=_AddUniqueAction, dest="editables")
+    parser.add_argument("-f", "--find-links", action=_AddUniqueAction)
+    parser.add_argument("--no-binary", action=_BinaryAction, nargs="+", dest="binary_options", const="no_binary")
+    parser.add_argument("--only-binary", action=_BinaryAction, nargs="+", dest="binary_options", const="only_binary")
     parser.add_argument("--prefer-binary", action="store_true", default=False)
     parser.add_argument("--require-hashes", action="store_true", default=False)
     parser.add_argument("--pre", action="store_true", default=False)
-    parser.add_argument("--trusted-host", action=AddSortedUniqueAction)
+    parser.add_argument("--trusted-host", action=_AddSortedUniqueAction)
     parser.add_argument(
         "--use-feature",
         choices=["2020-resolver", "fast-deps"],
-        action=AddSortedUniqueAction,
+        action=_AddSortedUniqueAction,
         dest="features_enabled",
     )
 
 
-class AddUniqueAction(Action):
+class _AddUniqueAction(Action):
     """Add the values to the list of the option, without repeating a value."""
 
     @override
@@ -82,7 +83,7 @@ class AddUniqueAction(Action):
             current.append(values)
 
 
-class BinaryAction(Action):
+class _BinaryAction(Action):
     # Every line parses into its own namespace, while pip lets a later line edit the sets of an earlier one, so record
     # the values in order for the merge to apply.
     """Record the binary option, for each of the lines it appears in."""
@@ -99,7 +100,7 @@ class BinaryAction(Action):
         namespace.binary_options = [*(namespace.binary_options or []), (self.const, values[0])]
 
 
-class AddSortedUniqueAction(Action):
+class _AddSortedUniqueAction(Action):
     """Add the values to the sorted list of the option, without repeating a value."""
 
     @override
@@ -118,9 +119,9 @@ class AddSortedUniqueAction(Action):
 
 
 def _req_options(parser: ArgumentParser) -> None:
-    parser.add_argument("--install-option", action=AddSortedUniqueAction)
-    parser.add_argument("--global-option", action=AddSortedUniqueAction)
-    parser.add_argument("--hash", action=AddSortedUniqueAction, type=_validate_hash)
+    parser.add_argument("--install-option", action=_AddSortedUniqueAction)
+    parser.add_argument("--global-option", action=_AddSortedUniqueAction)
+    parser.add_argument("--hash", action=_AddSortedUniqueAction, type=_validate_hash)
     parser.add_argument("-C", "--config-settings", action="append", dest="config_settings")
 
 
@@ -141,3 +142,8 @@ _HASH: Final[re.Pattern[str]] = re.compile(
     """,
     re.VERBOSE,
 )
+
+
+__all__ = [
+    "build_parser",
+]

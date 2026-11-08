@@ -11,8 +11,8 @@ import pytest
 if sys.platform == "win32":
     pytest.skip("man command not available on Windows", allow_module_level=True)
 
-ROOT: Final[Path] = Path(__file__).parents[2]
-_RST_PATH: Final[Path] = ROOT / "docs" / "man" / "tox.1.rst"
+_ROOT: Final[Path] = Path(__file__).parents[2]
+_RST_PATH: Final[Path] = _ROOT / "docs" / "man" / "tox.1.rst"
 
 
 @pytest.fixture

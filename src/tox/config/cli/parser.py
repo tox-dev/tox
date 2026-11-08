@@ -43,13 +43,14 @@ _ACTION_DEFAULT_SOURCE: Final[MutableMapping[Action, str]] = WeakKeyDictionary()
 
 
 class ArgumentParserWithEnvAndConfig(ArgumentParser):
-    """
-    Argument parser which updates its defaults by checking the configuration files and environmental variables.
+    """Argument parser which updates its defaults by checking the configuration files and environmental variables.
 
     :param args: positional arguments passed to :class:`argparse.ArgumentParser`
     :param kwargs: keyword arguments passed to :class:`argparse.ArgumentParser`, ``file_config`` selects the
         configuration the defaults are read from
-    :ivar file_config: the configuration the defaults are read from
+
+    :var file_config: the configuration the defaults are read from
+
     """
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
@@ -69,6 +70,7 @@ class ArgumentParserWithEnvAndConfig(ArgumentParser):
         :param action: the argument to update
 
         :raises RuntimeError: when a sub-parser was added without using the tox parser
+
         """
         if hasattr(action, "default") and hasattr(action, "dest") and action.default != SUPPRESS:
             of_type = self.get_type(action)
@@ -97,6 +99,7 @@ class ArgumentParserWithEnvAndConfig(ArgumentParser):
         :returns: the type of the argument values, a list type for arguments that accept many values
 
         :raises TypeError: when the type of the argument cannot be determined
+
         """
         of_type = _ACTION_OF_TYPE.get(action)
         if of_type is None:
@@ -130,11 +133,11 @@ class ArgumentParserWithEnvAndConfig(ArgumentParser):
 
 
 class HelpFormatter(ArgumentDefaultsHelpFormatter):
-    """
-    A help formatter that provides the default value and the source it comes from.
+    """A help formatter that provides the default value and the source it comes from.
 
     :param prog: the program name shown in the usage line
     :param kwargs: keyword arguments passed to :class:`argparse.ArgumentDefaultsHelpFormatter`
+
     """
 
     def __init__(self, prog: str, **kwargs: Any) -> None:
@@ -154,6 +157,7 @@ class HelpFormatter(ArgumentDefaultsHelpFormatter):
         """Add help text that is printed as is, without wrapping.
 
         :param text: the text to add, nothing is added when it is suppressed or ``None``
+
         """
 
         def keep(content: str) -> str:
@@ -175,94 +179,53 @@ _INHERIT_ALL: Final[frozenset[str]] = frozenset({CORE, ENV})
 
 
 class Parsed(Namespace):
-    """
-    CLI options.
+    """CLI options.
 
     The annotations below declare the type each option has once its command registered it; an option belonging to
     another command is absent at runtime, so shared code paths read it via ``getattr`` with a fallback.
 
+    :var verbose: the number of ``-v`` flags passed
+    :var quiet: the number of ``-q`` flags passed
+    :var colored: ``yes`` when the output is colored, ``no`` otherwise
+    :var stderr_color: the color used for stderr output
+    :var exit_and_dump_after: seconds after which tox dumps its threads and exits, ``0`` disables it
+    :var config_file: the configuration file or folder passed with ``-c``, if any
+    :var work_dir: the tox working directory, if one was given
+    :var root_dir: the project root directory, if one was given
+    :var override: the configuration overrides passed with ``--override``
+    :var command: the name of the sub-command to run
+    :var remainder: the arguments passed after ``--``
+    :var env: the environments selected with ``-e``
+    :var labels: the environment labels selected with ``-m``
+    :var factors: the environment factors selected with ``-f``
+    :var skip_env: the regular expression of environments to exclude
+    :var default_runner: the tox run engine used when an environment does not name one
+    :var result_json: the file the JSON result report is written to, if any
+    :var no_capture: whether output capture is disabled
+    :var hash_seed: the value of ``PYTHONHASHSEED`` for the commands, ``None`` when it is not set
+    :var discover: the Python executables to try first during discovery
+    :var list_dependencies: whether the dependencies installed during environment setup are listed
+    :var recreate: whether environments are recreated before use
+    :var no_test: whether the test commands are skipped
+    :var package_only: whether only the package is built
+    :var install_pkg: the package to install instead of building the project, if any
+    :var fail_fast: whether execution stops after the first environment failure
+    :var develop: whether the package is installed in development mode
+    :var no_recreate_pkg: whether packaging environments are kept when ``recreate`` is set
+    :var skip_pkg_install: whether the package installation is skipped
+    :var skip_env_install: whether dependency and package installation is skipped
+    :var skip_missing_interpreters: whether missing interpreters are skipped, ``config`` defers to the configuration
+    :var parallel: the number of environments run in parallel
+    :var parallel_live: whether the output of parallel environments is shown live
+    :var parallel_no_spinner: whether the spinner is disabled in parallel mode
+    :var no_provision: whether provisioning is skipped and fails instead, or the path its metadata is written to
+    :var no_recreate_provision: whether the provisioning environment is kept when ``recreate`` is set
+    :var devenv_path: the directory of the development environment
+    :var force_dep: the dependency requirements forced into the environments
+    :var site_packages: whether the environments can see the system site packages
+    :var always_copy: whether the environments copy files instead of linking them
+    :var pre: whether pre-release versions are installed
 
-    :ivar verbose: the number of ``-v`` flags passed
-
-    :ivar quiet: the number of ``-q`` flags passed
-
-    :ivar colored: ``yes`` when the output is colored, ``no`` otherwise
-
-    :ivar stderr_color: the color used for stderr output
-
-    :ivar exit_and_dump_after: seconds after which tox dumps its threads and exits, ``0`` disables it
-
-    :ivar config_file: the configuration file or folder passed with ``-c``, if any
-
-    :ivar work_dir: the tox working directory, if one was given
-
-    :ivar root_dir: the project root directory, if one was given
-
-    :ivar override: the configuration overrides passed with ``--override``
-
-    :ivar command: the name of the sub-command to run
-
-    :ivar remainder: the arguments passed after ``--``
-
-    :ivar env: the environments selected with ``-e``
-
-    :ivar labels: the environment labels selected with ``-m``
-
-    :ivar factors: the environment factors selected with ``-f``
-
-    :ivar skip_env: the regular expression of environments to exclude
-
-    :ivar default_runner: the tox run engine used when an environment does not name one
-
-    :ivar result_json: the file the JSON result report is written to, if any
-
-    :ivar no_capture: whether output capture is disabled
-
-    :ivar hash_seed: the value of ``PYTHONHASHSEED`` for the commands, ``None`` when it is not set
-
-    :ivar discover: the Python executables to try first during discovery
-
-    :ivar list_dependencies: whether the dependencies installed during environment setup are listed
-
-    :ivar recreate: whether environments are recreated before use
-
-    :ivar no_test: whether the test commands are skipped
-
-    :ivar package_only: whether only the package is built
-
-    :ivar install_pkg: the package to install instead of building the project, if any
-
-    :ivar fail_fast: whether execution stops after the first environment failure
-
-    :ivar develop: whether the package is installed in development mode
-
-    :ivar no_recreate_pkg: whether packaging environments are kept when ``recreate`` is set
-
-    :ivar skip_pkg_install: whether the package installation is skipped
-
-    :ivar skip_env_install: whether dependency and package installation is skipped
-
-    :ivar skip_missing_interpreters: whether missing interpreters are skipped, ``config`` defers to the configuration
-
-    :ivar parallel: the number of environments run in parallel
-
-    :ivar parallel_live: whether the output of parallel environments is shown live
-
-    :ivar parallel_no_spinner: whether the spinner is disabled in parallel mode
-
-    :ivar no_provision: whether provisioning is skipped and fails instead, or the path its metadata is written to
-
-    :ivar no_recreate_provision: whether the provisioning environment is kept when ``recreate`` is set
-
-    :ivar devenv_path: the directory of the development environment
-
-    :ivar force_dep: the dependency requirements forced into the environments
-
-    :ivar site_packages: whether the environments can see the system site packages
-
-    :ivar always_copy: whether the environments copy files instead of linking them
-
-    :ivar pre: whether pre-release versions are installed
     """
 
     verbose: int
@@ -362,16 +325,17 @@ def _option_takes_command_as_value(action: Action, index: int, args_list: list[s
 
 
 class ToxParser(ArgumentParserWithEnvAndConfig):
-    """
-    Argument parser for tox.
+    """Argument parser for tox.
 
     :param args: positional arguments passed to :class:`ArgumentParserWithEnvAndConfig`
     :param root: whether the base options are added, set for the top-level parser
     :param add_cmd: whether a sub-command group is added to take the tox commands
     :param kwargs: keyword arguments passed to :class:`ArgumentParserWithEnvAndConfig`
-    :ivar of_cmd: the command this parser was added for, ``None`` for the top-level parser
-    :ivar inherit: the option groups, ``core`` and ``env``, this parser takes from its parent
-    :ivar handlers: the command and alias names mapped to their sub-parser and handler
+
+    :var of_cmd: the command this parser was added for, ``None`` for the top-level parser
+    :var inherit: the option groups, ``core`` and ``env``, this parser takes from its parent
+    :var handlers: the command and alias names mapped to their sub-parser and handler
+
     """
 
     def __init__(self, *args: Any, root: bool = False, add_cmd: bool = False, **kwargs: Any) -> None:
@@ -397,7 +361,7 @@ class ToxParser(ArgumentParserWithEnvAndConfig):
 
     def _add_base_options(self) -> None:
         """Argument options that always make sense."""
-        add_core_arguments(self)
+        _add_core_arguments(self)
         self.fix_defaults()
 
     @classmethod
@@ -405,6 +369,7 @@ class ToxParser(ArgumentParserWithEnvAndConfig):
         """Create a root parser without the help option.
 
         :returns: the root parser
+
         """
         return cls(add_help=False, root=True)
 
@@ -413,6 +378,7 @@ class ToxParser(ArgumentParserWithEnvAndConfig):
         """Create the root parser of the tox command, which accepts sub-commands.
 
         :returns: the root parser
+
         """
         return cls(
             prog=NAME,
@@ -442,6 +408,7 @@ class ToxParser(ArgumentParserWithEnvAndConfig):
         :returns: the parser of the sub-command
 
         :raises RuntimeError: when this parser does not accept sub-commands
+
         """
         if self._cmd is None:
             msg = "no sub-command group allowed"
@@ -705,10 +672,10 @@ class _RecordingMutuallyExclusiveGroup(  # internal access
         return action
 
 
-def add_core_arguments(parser: ArgumentParser) -> None:
-    add_color_flags(parser)
-    add_verbosity_flags(parser)
-    add_exit_and_dump_after(parser)
+def _add_core_arguments(parser: ArgumentParser) -> None:
+    _add_color_flags(parser)
+    _add_verbosity_flags(parser)
+    _add_exit_and_dump_after(parser)
     parser.add_argument(
         "-c",
         "--conf",
@@ -739,7 +706,7 @@ def add_core_arguments(parser: ArgumentParser) -> None:
     )
 
 
-def add_color_flags(parser: ArgumentParser) -> None:
+def _add_color_flags(parser: ArgumentParser) -> None:
     if os.environ.get("NO_COLOR", ""):
         color = "no"
     elif os.environ.get("FORCE_COLOR", ""):
@@ -765,7 +732,7 @@ def add_color_flags(parser: ArgumentParser) -> None:
     )
 
 
-def add_verbosity_flags(parser: ArgumentParser) -> None:
+def _add_verbosity_flags(parser: ArgumentParser) -> None:
     from tox.report import LEVELS  # ruff:ignore[import-outside-top-level]  # avoids an import cycle
 
     level_map = "|".join(f"{c}={logging.getLevelName(level)}" for c, level in sorted(LEVELS.items()))
@@ -786,7 +753,7 @@ def add_verbosity_flags(parser: ArgumentParser) -> None:
     verbosity.add_argument("-q", "--quiet", action="count", dest="quiet", help="decrease verbosity", default=0)
 
 
-def add_exit_and_dump_after(parser: ArgumentParser) -> None:
+def _add_exit_and_dump_after(parser: ArgumentParser) -> None:
     parser.add_argument(
         "--exit-and-dump-after",
         dest="exit_and_dump_after",

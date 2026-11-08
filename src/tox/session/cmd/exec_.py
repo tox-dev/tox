@@ -24,6 +24,7 @@ def tox_add_option(parser: ToxParser) -> None:
     """Add the ``exec`` sub-command to the command line parser.
 
     :param parser: the parser to add the sub-command to
+
     """
     our = parser.add_command("exec", ["e"], "execute an arbitrary command within a tox environment", exec_)
     our.epilog = "For example: tox exec -e py39 -- python --version"
@@ -39,6 +40,7 @@ def exec_(state: State) -> int:
     :returns: the exit code
 
     :raises tox.report.HandledError: when not exactly one environment is selected
+
     """
     state.conf.options.skip_pkg_install = True  # avoid package install
     state.conf.options.no_capture = True  # always run interactively without output capture
@@ -59,3 +61,8 @@ def exec_(state: State) -> int:
         raise HandledError(msg)
     loader.raw["commands"] = [Command(list(pos_args))]
     return run_sequential(state)
+
+
+__all__ = [
+    "exec_",
+]

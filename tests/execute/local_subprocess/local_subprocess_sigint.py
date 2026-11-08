@@ -22,17 +22,17 @@ if TYPE_CHECKING:
     from tox.tox_env.api import ToxEnv
 
 logging.basicConfig(level=logging.DEBUG, format="%(relativeCreated)d\t%(levelname).1s\t%(message)s")
-BAD_PROCESS: Final[Path] = Path(__file__).parent / "bad_process.py"
+_BAD_PROCESS: Final[Path] = Path(__file__).parent / "bad_process.py"
 
-EXECUTOR: Final[LocalSubProcessExecutor] = LocalSubProcessExecutor(colored=False)
-REQUEST: Final[ExecuteRequest] = ExecuteRequest(
-    cmd=[sys.executable, BAD_PROCESS, sys.argv[1]],
+_EXECUTOR: Final[LocalSubProcessExecutor] = LocalSubProcessExecutor(colored=False)
+_REQUEST: Final[ExecuteRequest] = ExecuteRequest(
+    cmd=[sys.executable, _BAD_PROCESS, sys.argv[1]],
     cwd=Path().absolute(),
     env=os.environ.copy(),
     stdin=StdinSource.API,
     run_id="",
 )
-OUT_ERR: Final[tuple[TextIOWrapper, TextIOWrapper]] = (
+_OUT_ERR: Final[tuple[TextIOWrapper, TextIOWrapper]] = (
     TextIOWrapper(NamedBytesIO("out"), encoding=locale.getpreferredencoding(False)),
     TextIOWrapper(NamedBytesIO("err"), encoding=locale.getpreferredencoding(False)),
 )
@@ -66,8 +66,8 @@ def _wait_for_exit(status: ExecuteStatus) -> None:
 
 _INTERRUPT_DONE = False
 signal.signal(signal.SIGINT, handler)
-logging.info("PID %d start %r", os.getpid(), REQUEST)
-TOX_ENV: Final[ToxEnv] = cast(
+logging.info("PID %d start %r", os.getpid(), _REQUEST)
+_TOX_ENV: Final[ToxEnv] = cast(
     "ToxEnv",
     SimpleNamespace(
         conf={"suicide_timeout": 0.01, "interrupt_timeout": 0.05, "terminate_timeout": 0.07},
@@ -77,7 +77,7 @@ TOX_ENV: Final[ToxEnv] = cast(
 
 _STATUS_OUTCOME: Outcome | None = None
 try:
-    with EXECUTOR.call(REQUEST, show=False, out_err=OUT_ERR, env=TOX_ENV) as status:
+    with _EXECUTOR.call(_REQUEST, show=False, out_err=_OUT_ERR, env=_TOX_ENV) as status:
         _wait_for_exit(status)
     _STATUS_OUTCOME = status.outcome
 except Exception as exception:  # pragma: no cover  # untested error path

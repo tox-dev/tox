@@ -27,6 +27,7 @@ def show_config_json(state: State) -> int:
     :param state: the state of the run
 
     :returns: the exit code
+
     """
     result, has_exception = build_structured_result(state)
     write_output(json.dumps(result, indent=2), state.conf.options.output_file, state.conf.options.is_colored, colorize)
@@ -39,5 +40,12 @@ def colorize(text: str) -> str:
     :param text: the JSON text
 
     :returns: the colored text
+
     """
     return _KEY_RE.sub(rf"\g<indent>{Fore.GREEN}\g<key>{Fore.RESET}:", text)
+
+
+__all__ = [
+    "colorize",
+    "show_config_json",
+]

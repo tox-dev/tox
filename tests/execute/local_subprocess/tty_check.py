@@ -8,11 +8,11 @@ from typing import TYPE_CHECKING, Final
 if TYPE_CHECKING:
     import os
 
-ARGS: Final[dict[str, bool | os.terminal_size]] = {
+_ARGS: Final[dict[str, bool | os.terminal_size]] = {
     "stdout": sys.stdout.isatty(),
     "stderr": sys.stderr.isatty(),
     "stdin": sys.stdin.isatty(),
     "terminal": shutil.get_terminal_size(fallback=(-1, -1)),
 }
-RESULT: Final[str] = json.dumps(ARGS)
-print(RESULT)  # ruff:ignore[print]  # test output
+_RESULT: Final[str] = json.dumps(_ARGS)
+print(_RESULT)  # ruff:ignore[print]  # test output

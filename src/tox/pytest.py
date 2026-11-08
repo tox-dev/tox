@@ -97,6 +97,7 @@ def check_os_environ() -> Generator[None, None, None]:
     """Check that a test leaves the process environment as it found it.
 
     :yields: ``None``, the block runs with the environment checked
+
     """
     old = os.environ.copy()
     to_clean = {
@@ -152,6 +153,7 @@ class ToxProject:
     :param capfd: the capture fixture of the test
     :param monkeypatch: the monkeypatch fixture of the test
     :param mocker: the mocker fixture of the test
+
     """
 
     def __init__(  # ruff:ignore[too-many-arguments]  # public signature
@@ -220,6 +222,7 @@ class ToxProject:
         :param handle: the function that handles a request and returns its exit code, ``None`` for the default
 
         :returns: the mock of the execution
+
         """
 
         class MockExecute(Execute):
@@ -300,6 +303,7 @@ class ToxProject:
         :returns: the outcome of the run
 
         :raises RuntimeError: when the run did not set an exit code
+
         """
         if raise_on_config_fail and args and args[0] in {"c", "config"}:
             self.monkeypatch.setenv("_TOX_SHOW_CONFIG_RAISE", "1")
@@ -340,6 +344,7 @@ class ToxProject:
         :param to: the directory to change to, the project directory when ``None``
 
         :yields: ``None``, the block runs in the directory
+
         """
         cur_dir = Path.cwd()
         os.chdir(to or self.path)
@@ -382,6 +387,7 @@ class ToxRunOutcome:
     :param out: the standard output of the run
     :param err: the standard error of the run
     :param state: the state of the run, ``None`` when it was not captured
+
     """
 
     def __init__(  # ruff:ignore[too-many-arguments]  # public signature
@@ -427,6 +433,7 @@ class ToxRunOutcome:
         :param name: the name of the environment
 
         :returns: the configuration of the environment
+
         """
         return self.state.conf.get_env(name)
 
@@ -435,6 +442,7 @@ class ToxRunOutcome:
         """The state of the run, which is not available when it was not captured.
 
         :raises RuntimeError: when the state was not captured
+
         """
         if self._state is None:
             msg = "no state"
@@ -454,6 +462,7 @@ class ToxRunOutcome:
         """Assert that the run failed.
 
         :param code: the exit code the run is expected to fail with, any non-zero exit code when ``None``
+
         """
         status_match = self.code != 0 if code is None else self.code == code
         assert status_match, f"should be {code}, got {self}"  # ruff:ignore[assert]  # invariant, narrows type
@@ -465,6 +474,7 @@ class ToxRunOutcome:
         :param err: the expected standard error
         :param dedent: whether to remove the common indentation of the expected texts first
         :param regex: whether the expected texts are regular expressions
+
         """
         if dedent:
             out = textwrap.dedent(out).lstrip()
@@ -486,6 +496,7 @@ class ToxRunOutcome:
         :param pattern: the expected pattern
         :param text: the text to check
         :param flags: the regular expression flags to match with
+
         """
         try:
             from re_assert import Matches  # ruff:ignore[import-outside-top-level]  # avoids an import cycle
@@ -593,11 +604,11 @@ def enable_pip_pypi_access_fixture(
 ) -> str | None:
     # Set a fake pip index url, tests that want to use a pypi server should create and overwrite this.
     _, previous_url = disable_pip_pypi_access
-    enable_pypi_server(monkeypatch, previous_url)
+    _enable_pypi_server(monkeypatch, previous_url)
     return previous_url
 
 
-def enable_pypi_server(monkeypatch: pytest.MonkeyPatch, url: str | None) -> None:
+def _enable_pypi_server(monkeypatch: pytest.MonkeyPatch, url: str | None) -> None:
     if url is None:  # pragma: no cover # only one of the branches can be hit depending on env
         monkeypatch.delenv("PIP_INDEX_URL", raising=False)
     else:  # pragma: no cover  # setup not built by tests
@@ -611,6 +622,7 @@ def register_inline_plugin(mocker: MockerFixture, *args: FunctionType) -> None:
 
     :param mocker: the mocker fixture of the test
     :param args: the hook functions, named after the hooks they implement
+
     """
     frame_info = inspect.stack()[1]
     caller_module = inspect.getmodule(frame_info[0])

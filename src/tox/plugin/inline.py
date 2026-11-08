@@ -17,6 +17,7 @@ def load_inline(path: Path) -> ModuleType | None:
     :param path: the path of the project configuration file
 
     :returns: the loaded module, or ``None`` when there is no such file
+
     """
     for name in ("toxfile", "☣"):
         candidate = path.parent / f"{name}.py"
@@ -36,3 +37,8 @@ def _load_plugin(path: Path) -> ModuleType:
         return importlib.import_module(module_name)
     finally:
         del sys.path[0]
+
+
+__all__ = [
+    "load_inline",
+]

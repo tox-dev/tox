@@ -38,18 +38,19 @@ def _file_support_encoding(chars: Sequence[str], file: IO[str]) -> bool:
     return False
 
 
-T = TypeVar("T", bound="Spinner")
+SpinnerT = TypeVar("SpinnerT", bound="Spinner")
 """Type variable bound to the spinner class, for methods that return the spinner."""
 MISS_DURATION: Final[float] = 0.01
 """Seconds an environment must run for its duration to be shown."""
 
 
-class Outcome(NamedTuple):
+class _Outcome(NamedTuple):
     """The symbols shown for the outcome of each environment.
 
     :param ok: the symbol of a successful environment
     :param fail: the symbol of a failed environment
     :param skip: the symbol of a skipped environment
+
     """
 
     ok: str
@@ -66,25 +67,25 @@ class Spinner:
     :param stream: the stream the spinner is written to, the standard output when ``None``
     :param total: the number of environments that are expected to run, ``None`` when unknown
 
-    :cvar CLEAR_LINE: the escape sequence that clears the line
-    :cvar max_width: the maximum width of the text shown for an environment
-    :cvar UNICODE_FRAMES: the frames shown when the stream supports Unicode
-    :cvar ASCII_FRAMES: the frames shown when the stream does not support Unicode
-    :cvar UNICODE_OUTCOME: the outcome symbols shown when the stream supports Unicode
-    :cvar ASCII_OUTCOME: the outcome symbols shown when the stream does not support Unicode
+    :var CLEAR_LINE: the escape sequence that clears the line
+    :var max_width: the maximum width of the text shown for an environment
+    :var UNICODE_FRAMES: the frames shown when the stream supports Unicode
+    :var ASCII_FRAMES: the frames shown when the stream does not support Unicode
+    :var UNICODE_OUTCOME: the outcome symbols shown when the stream supports Unicode
+    :var ASCII_OUTCOME: the outcome symbols shown when the stream does not support Unicode
+    :var is_colored: whether the outcome symbols are colored
+    :var frames: the frames the spinner cycles through
+    :var outcome: the outcome symbols in use
+    :var print_report: whether the report is printed when the spinner finishes
 
-    :ivar is_colored: whether the outcome symbols are colored
-    :ivar frames: the frames the spinner cycles through
-    :ivar outcome: the outcome symbols in use
-    :ivar print_report: whether the report is printed when the spinner finishes
     """
 
     CLEAR_LINE = "\033[K"
     max_width = 120
     UNICODE_FRAMES: ClassVar[list[str]] = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"]
     ASCII_FRAMES: ClassVar[list[str]] = ["|", "-", "+", "x", "*"]
-    UNICODE_OUTCOME = Outcome(ok="✔", fail="✖", skip="⚠")
-    ASCII_OUTCOME = Outcome(ok="+", fail="!", skip="?")
+    UNICODE_OUTCOME = _Outcome(ok="✔", fail="✖", skip="⚠")
+    ASCII_OUTCOME = _Outcome(ok="+", fail="!", skip="?")
 
     def __init__(
         self,
@@ -149,6 +150,7 @@ class Spinner:
         """Get the next frame of the spinner, and advance to the frame after it.
 
         :returns: the frame text, with the names of the environments that are still running
+
         """
         frame = self.frames[self._frame_index]
         self._frame_index += 1
@@ -162,6 +164,7 @@ class Spinner:
         """Render the spinner frames until the spinner is stopped.
 
         :returns: the spinner
+
         """
         while True:
             self._stop_spinner.wait(self.refresh_rate)
@@ -202,6 +205,7 @@ class Spinner:
         """Register an environment that is running.
 
         :param name: the name of the environment
+
         """
         self._envs[name] = time.monotonic()
 
@@ -209,6 +213,7 @@ class Spinner:
         """Mark an environment as successful.
 
         :param key: the name of the environment
+
         """
         self.finalize(key, f"OK {self.outcome.ok}", str(Fore.GREEN))
 
@@ -218,6 +223,7 @@ class Spinner:
         :param key: the name of the environment
         :param status: the status text to show
         :param color: the color the status is shown in
+
         """
         start_at = self._envs.pop(key, None)
         if self.enabled:
@@ -234,6 +240,7 @@ class Spinner:
         """Mark an environment as failed.
 
         :param key: the name of the environment
+
         """
         self.finalize(key, f"FAIL {self.outcome.fail}", str(Fore.RED))
 
@@ -241,6 +248,7 @@ class Spinner:
         """Mark an environment as skipped.
 
         :param key: the name of the environment
+
         """
         self.finalize(key, f"SKIP {self.outcome.skip}", str(Fore.YELLOW))
 
@@ -251,6 +259,7 @@ def td_human_readable(seconds: float) -> str:
     :param seconds: the duration in seconds
 
     :returns: the duration as text
+
     """
     texts: list[str] = []
     periods = [
@@ -271,3 +280,10 @@ def td_human_readable(seconds: float) -> str:
         if period_str is not None:
             texts.append(f"{period_str} {period_name}{'' if period_str == '1' else 's'}")
     return " ".join(texts)
+
+
+__all__ = [
+    "MISS_DURATION",
+    "Spinner",
+    "td_human_readable",
+]

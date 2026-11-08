@@ -12,7 +12,7 @@ if TYPE_CHECKING:
     from typing import Self
 
 
-WAIT_GENERAL: Final[float] = 0.05
+_WAIT_GENERAL: Final[float] = 0.05
 """Seconds to wait for a reader thread to finish before checking again."""
 
 
@@ -23,8 +23,10 @@ class ReadViaThread(ABC):
     :param handler: the callback that receives what is read
     :param name: the name of the stream, used to name the thread
     :param drain: whether to read the remaining content when the reader is exited
-    :ivar stop: the event that asks the reader thread to stop
-    :ivar thread: the thread that reads the file descriptor
+
+    :var stop: the event that asks the reader thread to stop
+    :var thread: the thread that reads the file descriptor
+
     """
 
     def __init__(  # keeps the signature
@@ -56,10 +58,15 @@ class ReadViaThread(ABC):
     ) -> None:
         self.stop.set()
         while self.thread.is_alive():
-            self.thread.join(WAIT_GENERAL)
+            self.thread.join(_WAIT_GENERAL)
         if self._on_exit_drain:
             self._drain_stream()
 
     @abstractmethod
     def _drain_stream(self) -> None:
         raise NotImplementedError
+
+
+__all__ = [
+    "ReadViaThread",
+]

@@ -17,14 +17,14 @@ if TYPE_CHECKING:
     from tox.config.cli.parser import ToxParser
     from tox.session.state import State
 
-LOGGER: Final[logging.Logger] = logging.getLogger(__name__)
+_LOGGER: Final[logging.Logger] = logging.getLogger(__name__)
 """Logger of the parallel run."""
 
 ENV_VAR_KEY: Final[str] = "TOX_PARALLEL_ENV"
 """Environment variable that tells a parallel sub-process which environment it runs."""
 OFF_VALUE: Final[int] = 0
 """Value of the parallel option that turns parallel runs off."""
-DEFAULT_PARALLEL: Final[str] = "auto"
+_DEFAULT_PARALLEL: Final[str] = "auto"
 """Default value of the parallel option, ``auto`` for one process per CPU."""
 
 
@@ -33,11 +33,12 @@ def tox_add_option(parser: ToxParser) -> None:
     """Add the ``run-parallel`` sub-command to the command line parser.
 
     :param parser: the parser to add the sub-command to
+
     """
     our = parser.add_command("run-parallel", ["p"], "run environments in parallel", run_parallel)
     register_env_select_flags(our, default=CliEnv())
     env_run_create_flags(our, mode="run-parallel")
-    parallel_flags(our, default_parallel=DEFAULT_PARALLEL)
+    parallel_flags(our, default_parallel=_DEFAULT_PARALLEL)
 
 
 def run_parallel(state: State) -> int:
@@ -73,6 +74,7 @@ def parallel_flags(
     :param our: the parser to add the flags to
     :param default_parallel: the number of parallel processes when the flag is not given
     :param no_args: whether the parallel flag can be given without a value
+
     """
     our.add_argument(
         "-p",
@@ -110,6 +112,7 @@ def parse_num_processes(str_value: str) -> int | None:
     :returns: the number of processes, ``None`` for no limit
 
     :raises ArgumentTypeError: when the value is neither of those, or is negative
+
     """
     if str_value == "all":
         return None
@@ -124,3 +127,12 @@ def parse_num_processes(str_value: str) -> int | None:
         msg = f"value must be positive, is {value!r}"
         raise ArgumentTypeError(msg)
     return value
+
+
+__all__ = [
+    "ENV_VAR_KEY",
+    "OFF_VALUE",
+    "parallel_flags",
+    "parse_num_processes",
+    "run_parallel",
+]

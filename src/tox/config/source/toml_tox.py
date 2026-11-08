@@ -5,7 +5,7 @@ from __future__ import annotations
 from .toml_pyproject import TomlPyProject, TomlSection
 
 
-class TomlToxSection(TomlSection):
+class _TomlToxSection(TomlSection):
     PREFIX = ()
 
 
@@ -17,7 +17,7 @@ class TomlTox(TomlPyProject):
     """
 
     FILENAME = "tox.toml"
-    _Section = TomlToxSection
+    _Section = _TomlToxSection
 
 
 __all__ = [

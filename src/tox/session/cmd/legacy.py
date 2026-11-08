@@ -30,6 +30,7 @@ def tox_add_option(parser: ToxParser) -> None:
     """Add the ``legacy`` sub-command, with the options of the older command line, to the command line parser.
 
     :param parser: the parser to add the sub-command to
+
     """
     our = parser.add_command("legacy", ["le"], "legacy entry-point command", legacy)
     our.add_argument("--help-ini", "--hi", action="store_true", help="show live configuration", dest="show_config")
@@ -100,6 +101,7 @@ def legacy(state: State) -> int:
     :param state: the state of the run
 
     :returns: the exit code
+
     """
     option = state.conf.options
     if option.show_config:
@@ -161,3 +163,8 @@ def _force_root_deps(env_conf: EnvConfigSet, forced: dict[NormalizedName, Requir
         if (name := canonicalize_name(req.name)) in to_force:
             as_root_args[at] = str(to_force.pop(name))
     as_root_args.extend(str(v) for v in to_force.values())
+
+
+__all__ = [
+    "legacy",
+]

@@ -17,7 +17,7 @@ from .tox_ini import ToxIni
 if TYPE_CHECKING:
     from .api import Source
 
-SOURCE_TYPES: Final[tuple[type[Source], ...]] = (
+_SOURCE_TYPES: Final[tuple[type[Source], ...]] = (
     ToxIni,
     SetupCfg,
     TomlPyProject,
@@ -43,7 +43,7 @@ def discover_source(config_file: Path | None, root_dir: Path | None) -> Source:
             src = _create_default_source(root_dir)
     elif config_file.is_dir():
         src = None
-        for src_type in SOURCE_TYPES:
+        for src_type in _SOURCE_TYPES:
             candidate: Path = config_file / src_type.FILENAME
             if not candidate.exists():
                 continue
@@ -66,7 +66,7 @@ def discover_source(config_file: Path | None, root_dir: Path | None) -> Source:
 def _locate_source() -> Source | None:
     folder = Path.cwd()
     for base in chain([folder], folder.parents):
-        for src_type in SOURCE_TYPES:
+        for src_type in _SOURCE_TYPES:
             candidate: Path = base / src_type.FILENAME
             if candidate.exists():
                 try:
@@ -89,7 +89,7 @@ def _create_default_source(root_dir: Path | None) -> Source:
                 break
     else:  # if not set use where we find pyproject.toml in the tree or cwd
         empty = root_dir
-    names = " or ".join({i.FILENAME: None for i in SOURCE_TYPES})
+    names = " or ".join({i.FILENAME: None for i in _SOURCE_TYPES})
     logging.warning("No loadable %s found, assuming empty tox.ini at %s", names, empty)
     return ToxIni(empty / "tox.ini", content="")
 
@@ -100,8 +100,8 @@ def _load_exact_source(config_file: Path) -> Source:
         msg = f"config file {config_file} does not exist"
         raise HandledError(msg)
     # not reached in tests
-    exact_match = [s for s in SOURCE_TYPES if config_file.name == s.FILENAME]  # pragma: no cover
-    for src_type in exact_match or SOURCE_TYPES:  # pragma: no branch  # other outcome untested
+    exact_match = [s for s in _SOURCE_TYPES if config_file.name == s.FILENAME]  # pragma: no cover
+    for src_type in exact_match or _SOURCE_TYPES:  # pragma: no branch  # other outcome untested
         try:
             return src_type(config_file)
         except MissingRequiredConfigKeyError:

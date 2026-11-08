@@ -30,6 +30,7 @@ def tox_add_option(parser: ToxParser) -> None:
     """Add the ``schema`` sub-command to the command line parser.
 
     :param parser: the parser to add the sub-command to
+
     """
     our = parser.add_command(
         "schema", [], "Generate schema for tox configuration", gen_schema, inherit=frozenset({CORE})
@@ -43,6 +44,7 @@ def gen_schema(state: State) -> int:
     :param state: the state of the run
 
     :returns: the exit code
+
     """
     core = state.conf.core
     strict = state.conf.options.strict
@@ -364,3 +366,8 @@ def _process_type(of_type: typing.Any) -> dict[str, typing.Any]:  # ruff:ignore[
         }
     msg = f"Unknown type: {of_type}"
     raise ValueError(msg)
+
+
+__all__ = [
+    "gen_schema",
+]

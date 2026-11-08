@@ -10,7 +10,7 @@ from packaging.utils import canonicalize_name
 
 VCS: Final[list[str]] = ["ftp", "ssh", "git", "hg", "bzr", "sftp", "svn"]
 """The names of the version control systems pip accepts in a requirement URL."""
-VALID_SCHEMAS: Final[list[str]] = ["http", "https", "file", *VCS]
+_VALID_SCHEMAS: Final[list[str]] = ["http", "https", "file", *VCS]
 """The URL schemes a requirement can be given with."""
 
 
@@ -20,8 +20,9 @@ def is_url(name: str) -> bool:
     :param name: the requirement name
 
     :returns: whether it is a URL
+
     """
-    return get_url_scheme(name) in VALID_SCHEMAS
+    return get_url_scheme(name) in _VALID_SCHEMAS
 
 
 def get_url_scheme(url: str) -> str | None:
@@ -30,6 +31,7 @@ def get_url_scheme(url: str) -> str | None:
     :param url: the requirement text to take the scheme from
 
     :returns: the scheme, or ``None`` when there is none
+
     """
     if ":" not in url:
         return None
@@ -44,6 +46,7 @@ def url_to_path(url: str) -> str:
     :returns: the path
 
     :raises ValueError: when the URL names a host other than the local machine
+
     """
     _, netloc, path, _, _ = urlsplit(url)
     if not netloc or netloc == "localhost":  # According to RFC 8089, same as empty authority.
@@ -60,6 +63,7 @@ def handle_binary_option(value: str, target: set[str], other: set[str]) -> None:
     :param value: the comma separated names, where ``:all:`` selects every package and ``:none:`` clears the selection
     :param target: the set the named packages are added to
     :param other: the set the named packages are removed from
+
     """
     new = value.split(",")
     while ":all:" in new:
@@ -76,3 +80,12 @@ def handle_binary_option(value: str, target: set[str], other: set[str]) -> None:
         normalized_name = canonicalize_name(name)
         other.discard(normalized_name)
         target.add(normalized_name)
+
+
+__all__ = [
+    "VCS",
+    "get_url_scheme",
+    "handle_binary_option",
+    "is_url",
+    "url_to_path",
+]

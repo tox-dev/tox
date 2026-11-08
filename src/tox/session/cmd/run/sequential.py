@@ -19,6 +19,7 @@ def tox_add_option(parser: ToxParser) -> None:
     """Add the ``run`` sub-command to the command line parser.
 
     :param parser: the parser to add the sub-command to
+
     """
     our = parser.add_command("run", ["r"], "run environments", run_sequential)
     register_env_select_flags(our, default=CliEnv())
@@ -31,5 +32,11 @@ def run_sequential(state: State) -> int:
     :param state: the state of the run
 
     :returns: the exit code
+
     """
     return execute(state, max_workers=1, has_spinner=False, live=True)
+
+
+__all__ = [
+    "run_sequential",
+]

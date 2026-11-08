@@ -43,6 +43,7 @@ class VenvCmdBuilder(PythonPackageToxEnv, ABC):
     """The base of the packaging environments that build with a command run in a virtualenv.
 
     :param create_args: the arguments the environment is created with
+
     """
 
     def __init__(self, create_args: ToxEnvCreateArgs) -> None:
@@ -121,6 +122,7 @@ class VenvCmdBuilder(PythonPackageToxEnv, ABC):
         :returns: the packages
 
         :raises tox.tox_env.errors.Fail: when the distribution cannot be read, or contains no package
+
         """
         extras = for_env.get("extras", set[str])
         if path.suffix == ".whl":
@@ -153,7 +155,7 @@ class VenvCmdBuilder(PythonPackageToxEnv, ABC):
 
     @staticmethod
     def _wheel_package(path: Path, extras: set[str]) -> WheelPackage:
-        wheel_dist: Final[WheelDistribution] = WheelDistribution(path)
+        wheel_dist: Final[_WheelDistribution] = _WheelDistribution(path)
         metadata: Final[PackageMetadata] = wheel_dist.metadata
         if "Name" not in metadata:
             missing_name_error: Final[str] = f"no Name in the metadata of {path}"
@@ -188,7 +190,7 @@ class VirtualEnvCmdBuilder(VenvCmdBuilder, VirtualEnv):
         return "virtualenv-cmd-builder"
 
 
-class WheelDistribution(Distribution):  # cannot subclass has type Any
+class _WheelDistribution(Distribution):  # cannot subclass has type Any
     def __init__(self, wheel: Path) -> None:
         self._wheel = wheel
         self._dist_name: str | None = None

@@ -19,6 +19,7 @@ def tox_add_option(parser: ToxParser) -> None:
     """Add the ``list`` sub-command to the command line parser.
 
     :param parser: the parser to add the sub-command to
+
     """
     our = parser.add_command("list", ["l"], "list environments", list_env, inherit=frozenset({CORE}))
     our.add_argument("--no-desc", action="store_true", help="do not show description", dest="list_no_description")
@@ -32,6 +33,7 @@ def list_env(state: State) -> int:
     :param state: the state of the run
 
     :returns: the exit code
+
     """
     option = state.conf.options
     has_group_select = bool(option.factors or option.labels)
@@ -66,3 +68,8 @@ def list_env(state: State) -> int:
         for env in inactive:
             report_env(env)
     return 0
+
+
+__all__ = [
+    "list_env",
+]

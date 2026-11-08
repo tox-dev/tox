@@ -27,13 +27,14 @@ if TYPE_CHECKING:
 ContentHandler = Callable[[bytes], int]
 """Callback that receives a chunk of the output of a command, and returns the number of bytes it handled."""
 Executor = Callable[[ExecuteRequest, ContentHandler, ContentHandler], int]
-LOGGER: Final[logging.Logger] = logging.getLogger(__name__)
+_LOGGER: Final[logging.Logger] = logging.getLogger(__name__)
 
 
 class ExecuteOptions:
     """The options that control how a command execution is stopped and whether its output is captured.
 
     :param env: the environment the command runs in
+
     """
 
     def __init__(self, env: ToxEnv) -> None:
@@ -64,6 +65,7 @@ class ExecuteOptions:
         """Register the configuration keys that control how the execution is stopped.
 
         :param env: the environment to register the keys in
+
         """
         env.conf.add_config(
             keys=["suicide_timeout"],
@@ -91,7 +93,9 @@ class ExecuteStatus(ABC):
     :param options: the options of the execution
     :param out: the stream the standard output is written to
     :param err: the stream the standard error is written to
-    :ivar outcome: the outcome of the execution, ``None`` until it is done
+
+    :var outcome: the outcome of the execution, ``None`` until it is done
+
     """
 
     def __init__(self, options: ExecuteOptions, out: SyncWrite, err: SyncWrite) -> None:
@@ -133,6 +137,7 @@ class ExecuteStatus(ABC):
         :param timeout: the seconds to wait, wait without a limit when ``None``
 
         :returns: the exit code, or ``None`` when the command did not finish in time
+
         """
         raise NotImplementedError
 
@@ -141,6 +146,7 @@ class ExecuteStatus(ABC):
         """Write content to the standard input of the command.
 
         :param content: the content to write
+
         """
         raise NotImplementedError
 
@@ -156,6 +162,7 @@ class ExecuteStatus(ABC):
         :param err: the new standard error stream
 
         :returns: the previous standard output and standard error streams
+
         """
         res = self._out, self._err
         self._out, self._err = out, err
@@ -163,13 +170,13 @@ class ExecuteStatus(ABC):
 
 
 class FinishedExecuteStatus(ExecuteStatus):
-    """
-    Report a fixed exit code for a command that finished or never started, without running a process.
+    """Report a fixed exit code for a command that finished or never started, without running a process.
 
     :param options: the execution options of the command
     :param out: the sink for the standard output
     :param err: the sink for the standard error
     :param exit_code: the exit code to report, ``None`` if there is none
+
     """
 
     def __init__(self, options: ExecuteOptions, out: SyncWrite, err: SyncWrite, exit_code: int | None) -> None:
@@ -187,10 +194,10 @@ class FinishedExecuteStatus(ExecuteStatus):
 
     @override
     def write_stdin(self, content: str) -> None:
-        """
-        Cannot write.
+        """Cannot write.
 
         :param content: the text that would be written to the standard input
+
         """
 
     @override
@@ -199,10 +206,10 @@ class FinishedExecuteStatus(ExecuteStatus):
 
 
 class Execute(ABC):
-    """
-    Abstract API for execution of a tox environment.
+    """Abstract API for execution of a tox environment.
 
     :param colored: whether the output is colored
+
     """
 
     _option_class: type[ExecuteOptions] = ExecuteOptions
@@ -229,6 +236,7 @@ class Execute(ABC):
         :param env: the environment the request runs in
 
         :yields: the status of the execution
+
         """
         start = time.monotonic()
         stderr_color = None
@@ -290,6 +298,7 @@ class Execute(ABC):
         :param err: the stream the standard error is written to
 
         :returns: the instance that runs the request
+
         """
         raise NotImplementedError
 
@@ -298,18 +307,19 @@ class Execute(ABC):
         """Register the configuration keys of the execution options.
 
         :param env: the environment to register the keys in
+
         """
         cls._option_class.register_conf(env)
 
 
 class ExecuteInstance(ABC):
-    """
-    An instance of a command execution.
+    """An instance of a command execution.
 
     :param request: the command to execute
     :param options: the execution options of the command
     :param out: the sink for the standard output
     :param err: the sink for the standard error
+
     """
 
     def __init__(self, request: ExecuteRequest, options: ExecuteOptions, out: SyncWrite, err: SyncWrite) -> None:
@@ -349,10 +359,10 @@ class ExecuteInstance(ABC):
 
 
 class Outcome:
-    """
-    Result of a command execution.
+    """Result of a command execution.
 
-    :cvar OK: the exit code of a successful command
+    :var OK: the exit code of a successful command
+
     """
 
     OK = 0
@@ -442,7 +452,7 @@ class Outcome:
         metadata = ""
         if self.metadata:
             metadata = f" {', '.join(f'{k}={v}' for k, v in self.metadata.items())}"
-        LOGGER.log(
+        _LOGGER.log(
             lvl,
             "exit %s (%.2f seconds) %s> %s%s",
             self.exit_code,

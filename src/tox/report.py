@@ -33,7 +33,7 @@ LEVELS: Final[dict[int, int]] = {
 }
 """Map of the verbosity levels to the logging levels they select."""
 
-MAX_LEVEL: Final[int] = max(LEVELS.keys())
+_MAX_LEVEL: Final[int] = max(LEVELS.keys())
 LOGGER: Final[logging.Logger] = logging.getLogger()
 """The root logger, which tox reports through."""
 OutErr = tuple[TextIOWrapper, TextIOWrapper]
@@ -119,6 +119,7 @@ class NamedBytesIO(BytesIO):
     """A bytes buffer with a name, such as the name of the stream it stands for.
 
     :param name: the name of the buffer
+
     """
 
     def __init__(self, name: str) -> None:
@@ -205,10 +206,10 @@ class ToxHandler(_STREAM_HANDLER_BASE):
     @name.setter
     @override
     def name(self, value: str | None) -> None:
-        """
-        Ignore anyone changing this, the name always reflects the active tox environment.
+        """Ignore anyone changing this, the name always reflects the active tox environment.
 
         :param value: the ignored name
+
         """
 
     @property
@@ -220,10 +221,10 @@ class ToxHandler(_STREAM_HANDLER_BASE):
     @stream.setter
     @override
     def stream(self, value: TextIOWrapper) -> None:
-        """
-        Ignore anyone changing this.
+        """Ignore anyone changing this.
 
         :param value: the ignored stream
+
         """
 
     @contextmanager
@@ -250,6 +251,7 @@ class ToxHandler(_STREAM_HANDLER_BASE):
         :param out_err: the streams to use while the output is suspended, a new pair when ``None``
 
         :yields: the streams the output is written to while suspended, or ``None`` when not suspended
+
         """
         with self._local.suspend_out_err(yes, out_err) as out_err_res:
             yield out_err_res
@@ -259,6 +261,7 @@ class ToxHandler(_STREAM_HANDLER_BASE):
         """Write the captured output and error of an environment to the terminal.
 
         :param out_err: the standard output and standard error to write
+
         """
         self.stdout.buffer.write(out_err[0])
         self.stderr.buffer.write(out_err[1])
@@ -296,6 +299,7 @@ class ToxHandler(_STREAM_HANDLER_BASE):
         """Make the log records of the current thread carry the name of the environment being run.
 
         :yields: ``None``, the block runs with the thread patched
+
         """
         with _LogThreadLocal.patch_thread():
             yield
@@ -304,6 +308,7 @@ class ToxHandler(_STREAM_HANDLER_BASE):
         """Set the verbosity of the log output.
 
         :param verbosity: the verbosity, the higher the more output
+
         """
         level = _get_level(verbosity)
         LOGGER.setLevel(level)
@@ -320,6 +325,7 @@ def setup_report(  # keeps the signature
     :param is_colored: whether the log output is colored
 
     :returns: the handler that reports the output
+
     """
     for std_stream in (sys.stdout, sys.stderr):
         if isinstance(std_stream, TextIOWrapper):
@@ -339,7 +345,7 @@ def setup_report(  # keeps the signature
 
 
 def _get_level(verbosity: int) -> int:
-    return LEVELS[min(verbosity, MAX_LEVEL)]
+    return LEVELS[min(verbosity, _MAX_LEVEL)]
 
 
 class HandledError(RuntimeError):

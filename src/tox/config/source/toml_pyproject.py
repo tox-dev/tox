@@ -27,12 +27,13 @@ if TYPE_CHECKING:
 class TomlSection(Section):
     """A section of the ``tool.tox`` table of a ``pyproject.toml`` file.
 
-    :ivar SEP: the separator of the parts of a dotted key
-    :ivar PREFIX: the parts of the key path the table lives under
-    :cvar ENV: the key of the table with the environment definitions
-    :cvar ENV_BASE: the key of the table with the base environment definitions
-    :cvar RUN_ENV_BASE: the key of the table with the base run environment definitions
-    :cvar PKG_ENV_BASE: the key of the table with the base packaging environment definitions
+    :var SEP: the separator of the parts of a dotted key
+    :var PREFIX: the parts of the key path the table lives under
+    :var ENV: the key of the table with the environment definitions
+    :var ENV_BASE: the key of the table with the base environment definitions
+    :var RUN_ENV_BASE: the key of the table with the base run environment definitions
+    :var PKG_ENV_BASE: the key of the table with the base packaging environment definitions
+
     """
 
     SEP: str = "."
@@ -49,6 +50,7 @@ class TomlSection(Section):
         :param name: the name of the environment
 
         :returns: the section of the environment
+
         """
         return cls(cls.env_prefix(), name)
 
@@ -57,6 +59,7 @@ class TomlSection(Section):
         """Get the dotted prefix of the tox environment tables.
 
         :returns: the prefix
+
         """
         return cls.SEP.join((*cls.PREFIX, cls.ENV))
 
@@ -67,6 +70,7 @@ class TomlSection(Section):
         :param name: the name of the base environment
 
         :returns: the section of the base environment
+
         """
         return cls(cls.env_base_prefix(), name)
 
@@ -75,6 +79,7 @@ class TomlSection(Section):
         """Get the dotted prefix of the base environment tables.
 
         :returns: the prefix
+
         """
         return cls.SEP.join((*cls.PREFIX, cls.ENV_BASE))
 
@@ -97,6 +102,7 @@ class TomlSection(Section):
         """Get the dotted prefix of the core table.
 
         :returns: the prefix
+
         """
         return cls.SEP.join(cls.PREFIX)
 
@@ -105,6 +111,7 @@ class TomlSection(Section):
         """Get the dotted key of the packaging environment base table.
 
         :returns: the key
+
         """
         return cls.SEP.join((*cls.PREFIX, cls.PKG_ENV_BASE))
 
@@ -113,6 +120,7 @@ class TomlSection(Section):
         """Get the dotted key of the run environment base table.
 
         :returns: the key
+
         """
         return cls.SEP.join((*cls.PREFIX, cls.RUN_ENV_BASE))
 
@@ -120,7 +128,8 @@ class TomlSection(Section):
 class TomlPyProjectSection(TomlSection):
     """A section of the ``tool.tox`` table of a ``pyproject.toml`` file.
 
-    :cvar PREFIX: the parts of the key path the ``tool.tox`` table lives under
+    :var PREFIX: the parts of the key path the ``tool.tox`` table lives under
+
     """
 
     PREFIX = ("tool", "tox")
@@ -172,6 +181,7 @@ class TomlPyProject(Source):
         :param env_name: the environment name, ``None`` for the core configuration
 
         :returns: the factor labels
+
         """
         if env_name in self._env_base_generated:
             return {**self._env_list_labels, **self._env_base_labels[self._env_base_generated[env_name]]}
@@ -318,4 +328,6 @@ def _extract_env_list_labels(env_list_raw: TomlTypes) -> dict[str, FactorGroup]:
 
 __all__ = [
     "TomlPyProject",
+    "TomlPyProjectSection",
+    "TomlSection",
 ]

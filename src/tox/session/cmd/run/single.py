@@ -19,7 +19,7 @@ if TYPE_CHECKING:
     from tox.tox_env.api import ToxEnv
     from tox.tox_env.runner import RunToxEnv
 
-LOGGER: Final[logging.Logger] = logging.getLogger(__name__)
+_LOGGER: Final[logging.Logger] = logging.getLogger(__name__)
 
 
 def run_one(  # keeps the signature
@@ -34,6 +34,7 @@ def run_one(  # keeps the signature
     :param suspend_display: whether to suspend the display of the environment while it runs
 
     :returns: the result of the run
+
     """
     start_one = time.monotonic()
     name = tox_env.conf.name
@@ -57,29 +58,29 @@ def _run_with_teardown(  # keeps the signature
     outcomes: list[Outcome] = []
     try:
         tox_env.setup()
-        code, outcomes = run_commands(tox_env, no_test)
+        code, outcomes = _run_commands(tox_env, no_test)
     except Skip as exception:
-        LOGGER.warning("skipped because %s", exception)
+        _LOGGER.warning("skipped because %s", exception)
         code = 0
         skipped = True
     except ToxBackendFailed as exception:
-        LOGGER.error("%s", exception)  # ruff:ignore[error-instead-of-exception]  # expected error log
+        _LOGGER.error("%s", exception)  # ruff:ignore[error-instead-of-exception]  # expected error log
         raise SystemExit(exception.code)  # ruff:ignore[raise-without-from-inside-except]  # original error not chained
     except Fail as exception:
-        LOGGER.error("failed with %s", exception)  # ruff:ignore[error-instead-of-exception]  # expected error log
+        _LOGGER.error("failed with %s", exception)  # ruff:ignore[error-instead-of-exception]  # expected error log
         code = 1
     except HandledError as exception:
-        LOGGER.error("%s", exception)  # ruff:ignore[error-instead-of-exception]  # expected error log
+        _LOGGER.error("%s", exception)  # ruff:ignore[error-instead-of-exception]  # expected error log
         code = 1
     except Exception:  # pragma: no cover  # untested error path
-        LOGGER.exception("internal error")  # pragma: no cover  # untested error path
+        _LOGGER.exception("internal error")  # pragma: no cover  # untested error path
         code = 2  # pragma: no cover  # untested error path
     finally:
         tox_env.teardown()
     return _Evaluation(skipped, code, outcomes)
 
 
-def run_commands(  # keeps the signature
+def _run_commands(  # keeps the signature
     tox_env: RunToxEnv,
     no_test: bool,  # ruff:ignore[boolean-type-hint-positional-argument]  # keeps the signature
 ) -> tuple[int, list[Outcome]]:
@@ -129,6 +130,7 @@ def run_command_set(  # ruff:ignore[too-many-arguments]  # public signature
     :param retry_count: how many times the commands are retried when they fail
 
     :returns: the exit code
+
     """
 
     def _execute(cmd: Command, run_id: str) -> Outcome:
@@ -203,6 +205,7 @@ class ToxEnvRunResult(NamedTuple):
     :param ignore_outcome: whether a failure of the environment is ignored
     :param fail_fast: whether the run stops when the environment fails
     :param unavailable: whether the environment is unavailable
+
     """
 
     name: str
