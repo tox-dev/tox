@@ -634,7 +634,12 @@ def _print_unused(  # keeps the signature
 
 
 def report(  # simplint: ignore[SMP403]  # imported by tox plugins
-    start: float, runs: list[ToxEnvRunResult], *, is_colored: bool, verbosity: int, fail_fast: bool
+    start: float,
+    runs: list[ToxEnvRunResult],
+    *,
+    is_colored: bool,
+    verbosity: int,
+    fail_fast: bool = False,  # simplint: ignore[SMP506]  # plugins may omit it, as the upstream signature allows
 ) -> int:
     def _print(color_: str, message: str) -> None:
         if verbosity:
