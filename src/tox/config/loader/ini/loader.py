@@ -33,7 +33,7 @@ if TYPE_CHECKING:
     from tox.config.loader.section import Section
     from tox.config.main import Config
 
-V = TypeVar("V")
+V = TypeVar("V")  # simplint: ignore[SMP101]  # exported from tox.config.loader.ini, renaming breaks importers
 """Type variable for the type of the values the ini loader converts."""
 _COMMENTS: Final[re.Pattern[str]] = re.compile(
     r"""
@@ -91,6 +91,7 @@ class IniLoader(StrConvert, Loader[str]):
         :returns: the value without comments and without the lines of other factors
 
         :raises KeyError: when the value has content, but no line applies to the environment
+
         """
         elements: list[str] = [
             _COMMENTS.sub("", line).replace("\\#", "#") for line in value.split("\n") if not line.startswith("#")
@@ -178,6 +179,7 @@ class IniLoader(StrConvert, Loader[str]):
         :param name: the name of the section
 
         :returns: the section, or ``None`` when the file has no such section
+
         """
         if self._parser.has_section(name):
             return self._parser[name]

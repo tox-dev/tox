@@ -25,7 +25,7 @@ if TYPE_CHECKING:
     from .types import FactorGroup
 
 
-T = TypeVar("T", bound=ConfigSet)
+T = TypeVar("T", bound=ConfigSet)  # simplint: ignore[SMP101]  # exported, renaming breaks importers
 """Type variable bound to the configuration set classes."""
 
 
@@ -125,11 +125,12 @@ class Config:
         return f"{type(self).__name__}(config_source={self._src!r})"
 
     def __contains__(self, item: str) -> bool:
-        """
-        Check if an environment already exists.
+        """Check if an environment already exists.
 
         :param item: the name of the environment to look for
+
         :returns: whether an environment with that name is defined
+
         """
         return any(name == item for name in self)
 
@@ -155,6 +156,7 @@ class Config:
         :param program_first: whether the program comes before the positional arguments
 
         :returns: the positional arguments, or ``None`` when none were passed
+
         """
         if self._pos_args is not None and to_path is not None and Path.cwd() != to_path:
             # Windows resolves parent segments before following directory links.
@@ -212,6 +214,7 @@ class Config:
         """Iterate over the sections of the configuration source.
 
         :yields: the sections, in the order the source defines them
+
         """
         yield from self._src.sections()
 
@@ -221,6 +224,7 @@ class Config:
         :param env_name: the environment name, ``None`` for the core configuration
 
         :returns: the factor labels, empty when the source does not define factor labels
+
         """
         return self._src.factor_labels(env_name) if isinstance(self._src, FactorLabelSource) else {}
 
@@ -270,6 +274,7 @@ class Config:
         :param loaders: extra loaders to read values from, appended after the source loaders
 
         :returns: the configuration set of the section
+
         """
         key = section.key, for_env or "", "-".join(base or [])
         try:
@@ -289,6 +294,7 @@ class Config:
         """Forget the configuration loaded for an environment, so it is loaded again when next used.
 
         :param name: the name of the environment
+
         """
         section, _, __ = self._src.get_tox_env_section(name)
         self._key_to_conf_set = {

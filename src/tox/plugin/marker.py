@@ -6,7 +6,8 @@ import pluggy
 
 NAME: Final[str] = "tox"  #: the name of the tox hook
 
-impl: Final[pluggy.HookimplMarker] = pluggy.HookimplMarker(NAME)  #: decorator to mark tox plugin hooks
+#: decorator to mark tox plugin hooks
+impl: Final[pluggy.HookimplMarker] = pluggy.HookimplMarker(NAME)  # simplint: ignore[SMP102]  # plugin API name
 
 
 __all__ = [

@@ -21,7 +21,7 @@ if TYPE_CHECKING:
     from .loader.section import Section
     from .main import Config
 
-V = TypeVar("V")
+ValueT = TypeVar("ValueT")
 
 
 class ConfigSet(ABC):
@@ -101,10 +101,10 @@ class ConfigSet(ABC):
         return item in self._alias
 
     def get_configs(self) -> Generator[ConfigDefinition[Any], None, None]:
-        """
-        Iterate over the config definitions, one per config.
+        """Iterate over the config definitions, one per config.
 
         :yields: the definition of each config, keyed by its first key
+
         """
         for key, definition in self._defined.items():
             if key == next(iter(definition.keys)):
@@ -118,77 +118,77 @@ class ConfigSet(ABC):
     def add_config(
         self,
         keys: str | Sequence[str],
-        of_type: type[V],
-        default: Callable[[Config, str | None], V],
+        of_type: type[ValueT],
+        default: Callable[[Config, str | None], ValueT],
         desc: str,
-        post_process: Callable[[V], V] | None = None,
+        post_process: Callable[[ValueT], ValueT] | None = None,
         factory: Factory[Any] | None = None,
-    ) -> ConfigDynamicDefinition[V]: ...
+    ) -> ConfigDynamicDefinition[ValueT]: ...
 
     @overload
     def add_config(
         self,
         keys: str | Sequence[str],
-        of_type: type[V],
+        of_type: type[ValueT],
         default: None,
         desc: str,
-        post_process: Callable[[V | None], V | None] | None = None,
+        post_process: Callable[[ValueT | None], ValueT | None] | None = None,
         factory: Factory[Any] | None = None,
-    ) -> ConfigDynamicDefinition[V | None]: ...
+    ) -> ConfigDynamicDefinition[ValueT | None]: ...
 
     @overload
     def add_config(
         self,
         keys: str | Sequence[str],
-        of_type: type[V],
-        default: V,
+        of_type: type[ValueT],
+        default: ValueT,
         desc: str,
-        post_process: Callable[[V], V] | None = None,
+        post_process: Callable[[ValueT], ValueT] | None = None,
         factory: Factory[Any] | None = None,
-    ) -> ConfigDynamicDefinition[V]: ...
-
-    @overload
-    def add_config(
-        self,
-        keys: str | Sequence[str],
-        of_type: UnionType,
-        default: Callable[[Config, str | None], V],
-        desc: str,
-        post_process: Callable[[V], V] | None = None,
-        factory: Factory[Any] | None = None,
-    ) -> ConfigDynamicDefinition[V]: ...
+    ) -> ConfigDynamicDefinition[ValueT]: ...
 
     @overload
     def add_config(
         self,
         keys: str | Sequence[str],
         of_type: UnionType,
-        default: Callable[[Config, str | None], V | None] | V | None,
+        default: Callable[[Config, str | None], ValueT],
         desc: str,
-        post_process: Callable[[V | None], V | None] | None = None,
+        post_process: Callable[[ValueT], ValueT] | None = None,
         factory: Factory[Any] | None = None,
-    ) -> ConfigDynamicDefinition[V | None]: ...
+    ) -> ConfigDynamicDefinition[ValueT]: ...
 
     @overload
     def add_config(
         self,
         keys: str | Sequence[str],
         of_type: UnionType,
-        default: Callable[[Config, str | None], V] | V,
+        default: Callable[[Config, str | None], ValueT | None] | ValueT | None,
         desc: str,
-        post_process: Callable[[V], V] | None = None,
+        post_process: Callable[[ValueT | None], ValueT | None] | None = None,
         factory: Factory[Any] | None = None,
-    ) -> ConfigDynamicDefinition[V]: ...
+    ) -> ConfigDynamicDefinition[ValueT | None]: ...
+
+    @overload
+    def add_config(
+        self,
+        keys: str | Sequence[str],
+        of_type: UnionType,
+        default: Callable[[Config, str | None], ValueT] | ValueT,
+        desc: str,
+        post_process: Callable[[ValueT], ValueT] | None = None,
+        factory: Factory[Any] | None = None,
+    ) -> ConfigDynamicDefinition[ValueT]: ...
 
     def add_config(  # ruff:ignore[too-many-arguments]  # public signature
         self,
         keys: str | Sequence[str],
-        of_type: type[V] | UnionType,
-        default: Callable[[Config, str | None], V] | V | None,
+        of_type: type[ValueT] | UnionType,
+        default: Callable[[Config, str | None], ValueT] | ValueT | None,
         desc: str,
-        post_process: Callable[[V], V] | None = None,
+        post_process: Callable[[ValueT], ValueT] | None = None,
         factory: Factory[Any] | None = None,
-    ) -> ConfigDynamicDefinition[V]:
+    ) -> ConfigDynamicDefinition[ValueT]:
         """Add configuration value.
 
         :param keys: the keys under what to register the config (first is primary key)
@@ -209,13 +209,13 @@ class ConfigSet(ABC):
             raise RuntimeError(msg)
         keys_ = self._make_keys(keys)
         result = self._add_conf(keys_, ConfigDynamicDefinition(keys_, desc, of_type, default, post_process, factory))
-        return cast("ConfigDynamicDefinition[V]", result)
+        return cast("ConfigDynamicDefinition[ValueT]", result)
 
     @staticmethod
     def _make_keys(keys: str | Sequence[str]) -> Sequence[str]:
         return (keys,) if isinstance(keys, str) else keys
 
-    def _add_conf(self, keys: Sequence[str], definition: ConfigDefinition[V]) -> ConfigDefinition[V]:
+    def _add_conf(self, keys: Sequence[str], definition: ConfigDefinition[ValueT]) -> ConfigDefinition[ValueT]:
         key = keys[0]
         if key in self._defined:
             self._on_duplicate_conf(key, definition)
@@ -227,11 +227,11 @@ class ConfigSet(ABC):
             self._defined[key] = definition
         return definition
 
-    def _on_duplicate_conf(self, key: str, definition: ConfigDefinition[V]) -> None:
+    def _on_duplicate_conf(self, key: str, definition: ConfigDefinition[ValueT]) -> None:
         msg = f"duplicate configuration definition for {self.name}:\nhas: {self._defined[key]}\nnew: {definition}"
         raise ValueError(msg)
 
-    def add_constant(self, keys: str | Sequence[str], desc: str, value: V) -> ConfigConstantDefinition[V]:
+    def add_constant(self, keys: str | Sequence[str], desc: str, value: ValueT) -> ConfigConstantDefinition[ValueT]:
         """Add a constant value.
 
         :param keys: the keys under what to register the config (first is primary key)
@@ -247,7 +247,10 @@ class ConfigSet(ABC):
             msg = "config set has been marked final and cannot be extended"
             raise RuntimeError(msg)
         keys_ = self._make_keys(keys)
-        return cast("ConfigConstantDefinition[V]", self._add_conf(keys_, ConfigConstantDefinition(keys_, desc, value)))
+        return cast(
+            "ConfigConstantDefinition[ValueT]",
+            self._add_conf(keys_, ConfigConstantDefinition(keys_, desc, value)),
+        )
 
     def is_constant(self, item: str) -> bool:
         """Check whether a configuration key is a constant.
@@ -255,10 +258,11 @@ class ConfigSet(ABC):
         :param item: the configuration key
 
         :returns: whether the key holds a constant value
+
         """
         return isinstance(self._defined[item], ConfigConstantDefinition)
 
-    def get(self, item: str, of_type: type[V]) -> V:
+    def get(self, item: str, of_type: type[ValueT]) -> ValueT:
         """Get the config value for a given key, verified to be of the declared type.
 
         Unlike :meth:`load` and ``[]`` — which return ``Any`` — the value is checked against ``of_type`` at runtime
@@ -276,11 +280,11 @@ class ConfigSet(ABC):
         """
         value = self.load(item)
         if isinstance(value, get_origin(of_type) or of_type):
-            return cast("V", value)
+            return cast("ValueT", value)
         msg = f"{item} is {type(value).__name__}, expected {of_type!r}"
         raise TypeError(msg)
 
-    def get_optional(self, item: str, of_type: type[V]) -> V | None:
+    def get_optional(self, item: str, of_type: type[ValueT]) -> ValueT | None:
         """Get the config value for a key that may be unset, verified to be of the declared type or ``None``.
 
         Use this over :meth:`get` for keys registered with a ``None`` default, such as ``min_version``.
@@ -297,7 +301,7 @@ class ConfigSet(ABC):
         """
         value = self.load(item)
         if value is None or isinstance(value, get_origin(of_type) or of_type):
-            return cast("V | None", value)
+            return cast("ValueT | None", value)
         msg = f"{item} is {type(value).__name__}, expected {of_type!r} or None"
         raise TypeError(msg)
 
@@ -415,7 +419,7 @@ class CoreConfigSet(ConfigSet):
         return self.get("work_dir", Path) / ".tmp"
 
     @override
-    def _on_duplicate_conf(self, key: str, definition: ConfigDefinition[V]) -> None:
+    def _on_duplicate_conf(self, key: str, definition: ConfigDefinition[ValueT]) -> None:
         pass  # core definitions may be defined multiple times as long as all their options match, first defined wins
 
 
@@ -490,6 +494,7 @@ class EnvConfigSet(ConfigSet):
         :param chain: the chain of configuration keys the load belongs to
 
         :returns: the environment variables as ``KEY=VALUE`` lines
+
         """
         self.load("set_env", chain)
         loaded: Final[ConfigDynamicDefinition[SetEnv]] = cast(

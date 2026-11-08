@@ -20,10 +20,10 @@ if TYPE_CHECKING:
     from ._api import TomlTypes
 
 
-T = TypeVar("T")
+ValueT = TypeVar("ValueT")
 
 
-def validate(val: TomlTypes, of_type: type[T]) -> T:
+def validate(val: TomlTypes, of_type: type[ValueT]) -> ValueT:
     casting_to = get_origin(of_type) or of_type.__class__
     type_args = get_args(of_type)
     msg = ""
@@ -44,7 +44,7 @@ def validate(val: TomlTypes, of_type: type[T]) -> T:
         msg = _validate_instance(val, of_type)
     if msg:
         raise TypeError(msg)
-    return cast("T", val)
+    return cast("ValueT", val)
 
 
 def _validate_list(val: TomlTypes, entry_type: type) -> str:
@@ -90,7 +90,7 @@ def _validate_literal(val: TomlTypes, choice: tuple[TomlTypes, ...]) -> str:
     return f"{_describe(val)} is not one of literal {','.join(repr(i) for i in choice)}"
 
 
-def _validate_instance(val: TomlTypes, of_type: type[T]) -> str:
+def _validate_instance(val: TomlTypes, of_type: type[ValueT]) -> str:
     if issubclass(of_type, (bool, str, int)):
         fail = True  # the enclosing branch established the value is not an instance already
     else:
