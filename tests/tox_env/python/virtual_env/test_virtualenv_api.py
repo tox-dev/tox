@@ -467,10 +467,7 @@ def test_get_python_tolerates_interpreter_without_marker_environment(
     tox_project: ToxProjectCreator,
     mocker: MockerFixture,
 ) -> None:
-    """python-discovery builds older than the ``marker_environment`` field
-    hand back interpreters without the attribute (issue #4399) - tox must
-    fall back to re-deriving it instead of crashing with an internal
-    error."""
+    """python-discovery builds older than the ``marker_environment`` field hand back interpreters without the attribute (issue #4399) - tox must fall back to re-deriving it instead of crashing with an internal error."""
     # the attribute must be MISSING, not just None - a spec'd mock raises
     # AttributeError on access, exactly like the older python-discovery builds
     interpreter = MagicMock(
