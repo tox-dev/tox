@@ -13,6 +13,7 @@ from virtualenv import session_via_cli
 from virtualenv.config.cli.parser import VirtualEnvOptions
 
 from tox.tox_env.python.virtual_env.api import VirtualEnv
+from python_discovery import PythonInfo as DiscoveredPythonInfo
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -461,3 +462,39 @@ def test_virtualenv_spec_subprocess_missing_interpreter(
     result.assert_failed()
     assert "could not find python interpreter" in result.out
     ensure_bootstrap.assert_not_called()  # a missing interpreter must skip without bootstrapping
+
+
+def test_get_python_tolerates_interpreter_without_marker_environment(
+    tox_project: ToxProjectCreator,
+    mocker: MockerFixture,
+) -> None:
+    """python-discovery builds older than the ``marker_environment`` field
+    hand back interpreters without the attribute (issue #4399) - tox must
+    fall back to re-deriving it instead of crashing with an internal
+    error."""
+    interpreter = MagicMock(spec=["implementation", "version_info", "version", "architecture", "platform", "free_threaded", "debug_build", "system_executable"])  # noqa: FURB171 - the attribute must be MISSING, not just None
+    interpreter.implementation = "CPython"
+    interpreter.version_info = sys.version_info
+    interpreter.version = sys.version
+    interpreter.architecture = 64
+    interpreter.platform = sys.platform
+    interpreter.free_threaded = False
+    interpreter.debug_build = False
+    interpreter.system_executable = sys.executable
+    mocker.patch.object(
+        VirtualEnv,
+        "creator",
+        new_callable=PropertyMock,
+        return_value=MagicMock(interpreter=interpreter),
+    )
+    proj = tox_project(
+        {
+            "tox.ini": """[testenv]
+package = skip
+commands = [["python", "-c", "print('ok')"]]
+""",
+        },
+    )
+    result = proj.run("r")
+    result.assert_success()
+    assert "AttributeError" not in result.out

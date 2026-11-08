@@ -195,7 +195,7 @@ class PythonRun(Python, RunToxEnv, ABC):
             if interpreter is None:
                 msg = f"failed to determine the marker environment of {python}"
                 raise Fail(msg)
-            discovered = interpreter.marker_environment
+            discovered = getattr(interpreter, "marker_environment", None)  # older python-discovery builds lack it (#4399)
         if not self._is_marker_environment(discovered):
             msg = f"failed to determine the marker environment of {self.env_python()}: incomplete or invalid data"
             raise Fail(msg)

@@ -235,7 +235,9 @@ class VirtualEnv(Python, ABC):
             free_threaded=interpreter.free_threaded,
             debug=interpreter.debug_build,
             machine=getattr(interpreter, "machine", None),
-            marker_environment=interpreter.marker_environment,
+            # older virtualenv builds hand back an interpreter without the
+            # attribute; None sends the lookup to python_discovery later (issue #4399)
+            marker_environment=getattr(interpreter, "marker_environment", None),
         )
 
     @override
