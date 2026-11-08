@@ -42,6 +42,6 @@ def test_auto_detect_cpus_returns_one_when_count_is_unknown(
     monkeypatch: pytest.MonkeyPatch, mocker: MockerFixture
 ) -> None:
     monkeypatch.delattr(os, "sched_getaffinity", raising=False)
-    mocker.patch.object(os, "process_cpu_count", autospec=True, create=True, return_value=None)
+    monkeypatch.setattr(os, "process_cpu_count", lambda: None, raising=False)
     mocker.patch.object(os, "cpu_count", autospec=True, return_value=None)
     assert auto_detect_cpus() == 1
