@@ -129,16 +129,6 @@ class LocalSubProcessPep517Executor(Execute):
 
 
 class _LocalSubProcessPep517ExecuteInstance(ExecuteInstance):
-    """Run a command through the backend process, which is started once and reused.
-
-    :param request: the request to run
-    :param options: the options of the execution
-    :param out: the stream the standard output is written to
-    :param err: the stream the standard error is written to
-    :param instance_status: the instance and the status of the backend process
-
-    """
-
     def __init__(
         self,
         request: ExecuteRequest,

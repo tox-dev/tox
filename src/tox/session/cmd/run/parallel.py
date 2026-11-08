@@ -24,8 +24,6 @@ ENV_VAR_KEY: Final[str] = "TOX_PARALLEL_ENV"
 """Environment variable that tells a parallel sub-process which environment it runs."""
 OFF_VALUE: Final[int] = 0
 """Value of the parallel option that turns parallel runs off."""
-_DEFAULT_PARALLEL: Final[str] = "auto"
-"""Default value of the parallel option, ``auto`` for one process per CPU."""
 
 
 @impl
@@ -38,7 +36,7 @@ def tox_add_option(parser: ToxParser) -> None:
     our = parser.add_command("run-parallel", ["p"], "run environments in parallel", run_parallel)
     register_env_select_flags(our, default=CliEnv())
     env_run_create_flags(our, mode="run-parallel")
-    parallel_flags(our, default_parallel=_DEFAULT_PARALLEL)
+    parallel_flags(our, default_parallel="auto")
 
 
 def run_parallel(state: State) -> int:

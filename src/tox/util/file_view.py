@@ -26,6 +26,7 @@ def create_session_view(package: Path, temp_path: Path, trust_root: Path) -> Pat
     :param trust_root: the directory the view is restricted to
 
     :returns: the path of the view
+
     """
     if temp_path.is_symlink():
         temp_path.unlink()
@@ -93,6 +94,7 @@ def repair_staging_path(temp_path: Path, trust_root: Path, work_dir: Path) -> No
     :param temp_path: the staging path
     :param trust_root: the directory the view is restricted to
     :param work_dir: the working directory of the run
+
     """
     if sys.platform == "win32":  # pragma: win32 cover
         return
@@ -180,7 +182,9 @@ def _exposed_index(
     )
 
 
-def _lock_exposed_directories(directories: list[_StagingDirectory], exposed: int, work_index: int) -> None:
+def _lock_exposed_directories(
+    directories: list[_StagingDirectory], exposed: int, work_index: int
+) -> None:  # simplint: ignore[SMP505]  # the staging steps are reviewed by name
     for index, entry in enumerate(directories[exposed:], start=exposed):
         mode: int = stat.S_IMODE(entry.metadata.st_mode)
         # a fresh work dir is owner-only, which also hides group-writable environments left inside it
@@ -189,7 +193,9 @@ def _lock_exposed_directories(directories: list[_StagingDirectory], exposed: int
     _verify_unchanged_staging_path(directories)
 
 
-def _verify_unchanged_staging_path(directories: list[_StagingDirectory]) -> None:
+def _verify_unchanged_staging_path(
+    directories: list[_StagingDirectory],
+) -> None:  # simplint: ignore[SMP505]  # the staging steps are reviewed by name
     for entry in directories:
         msg: str = f"package staging path {entry.path} can be changed by another account"
         try:
@@ -222,7 +228,9 @@ def _empty_exposed_directory(path: Path, owners: frozenset[int], trust_root: Pat
     )
 
 
-def _kept_entry(directory: Path) -> str | None:
+def _kept_entry(
+    directory: Path,
+) -> str | None:  # simplint: ignore[SMP505]  # names the environment that survives the cleanup
     # the running environment may live in the work dir; keep it so the provisioned tox can finish
     try:
         relative: Final[Path] = Path(sys.prefix).resolve().relative_to(directory.resolve())

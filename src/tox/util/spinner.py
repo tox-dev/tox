@@ -45,14 +45,6 @@ MISS_DURATION: Final[float] = 0.01
 
 
 class _Outcome(NamedTuple):
-    """The symbols shown for the outcome of each environment.
-
-    :param ok: the symbol of a successful environment
-    :param fail: the symbol of a failed environment
-    :param skip: the symbol of a skipped environment
-
-    """
-
     ok: str
     fail: str
     skip: str

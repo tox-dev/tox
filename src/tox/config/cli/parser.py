@@ -675,7 +675,14 @@ class _RecordingMutuallyExclusiveGroup(  # internal access
 def _add_core_arguments(parser: ArgumentParser) -> None:
     _add_color_flags(parser)
     _add_verbosity_flags(parser)
-    _add_exit_and_dump_after(parser)
+    parser.add_argument(
+        "--exit-and-dump-after",
+        dest="exit_and_dump_after",
+        metavar="seconds",
+        default=0,
+        type=int,
+        help="dump tox threads after n seconds and exit the app - useful to debug when tox hangs, 0 means disabled",
+    )
     parser.add_argument(
         "-c",
         "--conf",
@@ -751,17 +758,6 @@ def _add_verbosity_flags(parser: ArgumentParser) -> None:
         default=DEFAULT_VERBOSITY,
     )
     verbosity.add_argument("-q", "--quiet", action="count", dest="quiet", help="decrease verbosity", default=0)
-
-
-def _add_exit_and_dump_after(parser: ArgumentParser) -> None:
-    parser.add_argument(
-        "--exit-and-dump-after",
-        dest="exit_and_dump_after",
-        metavar="seconds",
-        default=0,
-        type=int,
-        help="dump tox threads after n seconds and exit the app - useful to debug when tox hangs, 0 means disabled",
-    )
 
 
 __all__ = [

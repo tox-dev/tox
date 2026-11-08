@@ -151,10 +151,12 @@ class TomlPyProject(Source):
         if path.name != self.FILENAME or not path.exists():
             raise ValueError
         self._content = tomllib.loads(path.read_text(encoding="utf-8-sig"))
-        try:
-            self._our_content = _table_at(self._content, self._Section.PREFIX)
-        except KeyError as exc:
-            raise MissingRequiredConfigKeyError(path) from exc
+        self._our_content = self._content
+        for key in self._Section.PREFIX:
+            step = self._our_content.get(key)
+            if not isinstance(step, dict):  # a missing key or a scalar where a table is required: not for us
+                raise MissingRequiredConfigKeyError(path)
+            self._our_content = step
         if set(self._our_content.keys()) <= {"legacy_tox_ini"}:  # an empty stub or a legacy pointer holds no config
             raise MissingRequiredConfigKeyError(path)
         env_base = self._our_content.get(self._Section.ENV_BASE, {})
@@ -257,15 +259,6 @@ class TomlPyProject(Source):
                 [self._Section.package_env_base()],
             )
         return self._Section.test_env(item), [self._Section.run_env_base()], [self._Section.package_env_base()]
-
-
-def _table_at(content: dict[str, TomlTypes], keys: tuple[str, ...]) -> dict[str, TomlTypes]:
-    for key in keys:
-        step = content[key]
-        if not isinstance(step, dict):
-            raise KeyError(key)  # a scalar where a table is required means the config is not for us
-        content = step
-    return content
 
 
 def _build_env_base_map(

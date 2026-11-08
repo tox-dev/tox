@@ -180,12 +180,8 @@ def _expand_env_with_negation(value: str) -> Iterator[str]:
 
 
 def _name_with_negate(factor: str) -> tuple[str, bool]:
-    negated = _is_negated(factor)
+    negated = factor.startswith("!")
     return (factor[1:] if negated else factor), negated
-
-
-def _is_negated(factor: str) -> bool:
-    return factor.startswith("!")
 
 
 def expand_factors(value: str) -> Iterator[tuple[list[list[tuple[str, bool]]] | None, str]]:

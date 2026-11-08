@@ -39,7 +39,8 @@ def validate(val: TomlTypes, of_type: type[ValueT]) -> ValueT:
     elif casting_to in {Union, UnionType}:
         msg = _validate_union(val, type_args)
     elif casting_to in {Literal, type(Literal)}:
-        msg = _validate_literal(val, type_args)
+        if val not in type_args:
+            msg = f"{_describe(val)} is not one of literal {','.join(repr(i) for i in type_args)}"
     elif not isinstance(val, of_type):
         msg = _validate_instance(val, of_type)
     if msg:
@@ -82,12 +83,6 @@ def _validate_union(val: TomlTypes, args: tuple[type, ...]) -> str:
             continue
         return ""
     return f"{_describe(val)} is not union of {', '.join(a.__name__ for a in args)}"
-
-
-def _validate_literal(val: TomlTypes, choice: tuple[TomlTypes, ...]) -> str:
-    if val in choice:
-        return ""
-    return f"{_describe(val)} is not one of literal {','.join(repr(i) for i in choice)}"
 
 
 def _validate_instance(val: TomlTypes, of_type: type[ValueT]) -> str:

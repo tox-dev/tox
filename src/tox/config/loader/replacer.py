@@ -392,6 +392,20 @@ def _flatten_string_fragments(fragments: Sequence[str | _OtherFragment]) -> list
 
 
 class Replacer:
+    """Expand the replacement expressions of a value against the configuration.
+
+    :param conf: the configuration the replacements read from
+    :param reference: the reference used to resolve the replacement names
+    :param conf_args: the arguments of the configuration load
+    :param depth: how many replacements deep this replacer runs
+    :param recursive: whether the replacements of replacements are expanded
+
+    :var program: whether the value is a command line, where positional arguments resolve first
+    :var root: the replacer the nested replacers report to
+    :var depth_exhausted: whether a replacement hit the maximum depth
+
+    """
+
     # Recursively expand MatchExpression against the config and loader.
     def __init__(
         self,
@@ -516,6 +530,13 @@ class Replacer:
         return self.join_value(find_replace_expr(value))
 
     def join_value(self, value: MatchArg) -> str:
+        """Join the parts of a matched value into one string.
+
+        :param value: the matched value to join
+
+        :returns: the joined string
+
+        """
         return self.join(value)
 
 

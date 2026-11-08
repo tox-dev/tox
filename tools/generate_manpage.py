@@ -102,7 +102,7 @@ def _format_option(action: Action) -> str:
     return opts if action.help else ""
 
 
-def _static_sections() -> list[str]:
+def _static_sections() -> list[str]:  # simplint: ignore[SMP505]  # the static sections are listed apart from the parser
     return [
         "FILES",
         "-----",

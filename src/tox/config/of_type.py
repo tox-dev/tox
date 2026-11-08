@@ -95,7 +95,7 @@ class ConfigConstantDefinition(ConfigDefinition[ValueT]):  # ruff:ignore[eq-with
 
     @override
     def __repr__(self) -> str:
-        values = ((k, v) for k, v in vars(self).items() if v is not None)
+        values = ((k, v) for k, v in self.__dict__.items() if v is not None)
         return f"{type(self).__name__}({', '.join(f'{k}={v}' for k, v in values)})"
 
     @override
@@ -173,7 +173,7 @@ class ConfigDynamicDefinition(ConfigDefinition[ValueT]):  # ruff:ignore[eq-witho
 
     @override
     def __repr__(self) -> str:
-        values = ((k, v) for k, v in vars(self).items() if k not in {"post_process", "_cache"} and v is not None)
+        values = ((k, v) for k, v in self.__dict__.items() if k not in {"post_process", "_cache"} and v is not None)
         return f"{type(self).__name__}({', '.join(f'{k}={v}' for k, v in values)})"
 
     @override

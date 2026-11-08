@@ -116,6 +116,7 @@ class _PythonRequirementsFile(RequirementsFile):
         :returns: the requirements file
 
         :raises TypeError: when the value is neither a string nor a list of strings or requirements
+
         """
         if not cls._valid_raw(raw):
             raise TypeError(_factory_type_error(cls._FIELD, raw))
@@ -174,6 +175,7 @@ class _PythonRequirementsFile(RequirementsFile):
         :param preprocessed: whether the line was already preprocessed
 
         :raises ValueError: when the line uses an option that is not allowed
+
         """
         error_message: Final[str] = "a requirement substitution cannot change pip options"
         source_lines: Final[list[list[str]]] = cls._requirement_tokens(source, preprocessed=preprocessed)
@@ -212,6 +214,7 @@ class _PythonRequirementsFile(RequirementsFile):
         :param preserve_host_values: whether the values taken from the host are kept as they are
 
         :returns: the lines
+
         """
         if not self.as_root_args:
             return []
@@ -262,9 +265,10 @@ class _PythonRequirementsFile(RequirementsFile):
         :returns: the requirement lines and the option lines
 
         :raises ValueError: when a line uses an option that is not allowed in this setting
+
         """
         if self._unroll is None:
-            opts_dict = vars(self.options)
+            opts_dict = self.options.__dict__
             if not self.requirements and opts_dict:
                 msg = "no dependencies"
                 raise ValueError(msg)

@@ -278,18 +278,13 @@ def _replace_if_toml(
     if "then" not in value:
         msg = "No 'then' value was supplied in if replacement"
         raise MatchError(msg)
-    matched = _evaluate_condition(condition, factors, unroll.args.env_name)
-    return unroll(value["then"] if matched else value.get("else", ""), depth, skip_str=skip_str)
-
-
-def _evaluate_condition(expr: str, factors: set[str], env_name: str | None) -> bool:
-    # Evaluate a condition expression supporting env.VAR, factor.NAME lookups, comparisons, and boolean logic.
     try:
-        tree = ast.parse(expr, mode="eval")
+        tree = ast.parse(condition, mode="eval")
     except SyntaxError:
-        msg = f"Invalid condition expression: {expr}"
+        msg = f"Invalid condition expression: {condition}"
         raise MatchError(msg) from None
-    return bool(_eval_condition_node(tree.body, expr, factors, env_name))
+    matched = bool(_eval_condition_node(tree.body, condition, factors, unroll.args.env_name))
+    return unroll(value["then"] if matched else value.get("else", ""), depth, skip_str=skip_str)
 
 
 def _eval_condition_node(node: ast.expr, expr: str, factors: set[str], env_name: str | None) -> str | bool:

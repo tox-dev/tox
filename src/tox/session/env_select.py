@@ -234,7 +234,7 @@ def _activate_by_factors(defined_envs: dict[str, _ToxEnvInfo], factors: tuple[se
                 break
 
 
-@dataclass(slots=True, kw_only=True)
+@dataclass(slots=True, kw_only=True)  # simplint: ignore[SMP701]  # fields change as environments are defined
 class _ToxEnvInfo:
     env: PackageToxEnv | RunToxEnv | None  #: the tox environment (None if runner unavailable)
     is_active: bool  #: a flag indicating if the environment is marked as active in the current run

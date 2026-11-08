@@ -4,16 +4,12 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from threading import Event, Thread
-from typing import TYPE_CHECKING, Final
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from collections.abc import Callable
     from types import TracebackType
     from typing import Self
-
-
-_WAIT_GENERAL: Final[float] = 0.05
-"""Seconds to wait for a reader thread to finish before checking again."""
 
 
 class ReadViaThread(ABC):
@@ -58,7 +54,7 @@ class ReadViaThread(ABC):
     ) -> None:
         self.stop.set()
         while self.thread.is_alive():
-            self.thread.join(_WAIT_GENERAL)
+            self.thread.join(0.05)
         if self._on_exit_drain:
             self._drain_stream()
 

@@ -66,8 +66,6 @@ def _global_options(parser: ArgumentParser) -> None:
 
 
 class _AddUniqueAction(Action):
-    """Add the values to the list of the option, without repeating a value."""
-
     @override
     def __call__(
         self,
@@ -101,8 +99,6 @@ class _BinaryAction(Action):
 
 
 class _AddSortedUniqueAction(Action):
-    """Add the values to the sorted list of the option, without repeating a value."""
-
     @override
     def __call__(
         self,

@@ -67,13 +67,6 @@ def _next_ready(need_to_visit: Iterable[str], ready_to_visit: set[str]) -> str |
 
 
 def _identify_cycle(graph: dict[str, set[str]]) -> None:
-    """Find a cycle in a graph, to report it when sorting fails.
-
-    :param graph: the nodes, each mapped to the nodes it depends on
-
-    :raises ValueError: with the nodes of the cycle
-
-    """
     path: dict[str, None] = OrderedDict()
     visited = set()
 
