@@ -64,11 +64,11 @@ class Convert(ABC, Generic[T]):
             return factory(raw)
         return cast("Callable[[T], V]", of_type)(raw)
 
-    def _to_typing(  # ruff:ignore[complex-structure, too-many-branches]  # follows the protocol
+    def _to_typing(  # follows the protocol
         self, raw: T, of_type: type[V] | UnionType, factory: Factory[V]
     ) -> V:
         origin = get_origin(of_type) or of_type.__class__
-        result: Any = _Missing.MISSING
+        result: Any = _Missing.MISSING  # simplint: ignore[SMP602]  # the converted value has the type of the option
         type_args = get_args(of_type)
         if origin in {list, list}:
             entry_type = type_args[0]
@@ -83,23 +83,7 @@ class Convert(ABC, Generic[T]):
                 for k, v in self.to_dict(raw, (key_type, value_type))
             )
         elif origin in {Union, UnionType}:
-            args: list[type | UnionType] = list(type_args)
-            none = type(None)
-            if len(args) == 2 and none in args:  # ruff:ignore[magic-value-comparison]  # fixed protocol value
-                if isinstance(raw, str):
-                    raw = cast("T", raw.strip())
-                if raw is None or (isinstance(raw, str) and not raw):
-                    result = None
-                else:
-                    new_type = next(i for i in args if i != none)  # pragma: no cover  # setup not built by tests
-                    result = self.to(raw, new_type, factory)
-            elif any(get_origin(arg) is not None for arg in args):
-                for arg in args:
-                    try:
-                        result = self.to(raw, arg, factory)
-                        break
-                    except (TypeError, ValueError):
-                        pass
+            result = self._to_union(raw, list(type_args), factory)
         elif origin in {Literal, type(Literal)}:
             choice = type_args
             if raw not in choice:
@@ -149,6 +133,23 @@ class Convert(ABC, Generic[T]):
 
         """
         raise NotImplementedError
+
+    def _to_union(self, raw: T, args: list[type | UnionType], factory: Factory[V]) -> V | _Missing | None:
+        none = type(None)
+        if len(args) == 2 and none in args:  # ruff:ignore[magic-value-comparison]  # fixed protocol value
+            if isinstance(raw, str):
+                raw = cast("T", raw.strip())
+            if raw is None or (isinstance(raw, str) and not raw):
+                return None
+            new_type = next(i for i in args if i != none)  # pragma: no cover  # setup not built by tests
+            return cast("V", self.to(raw, new_type, factory))
+        if any(get_origin(arg) is not None for arg in args):
+            for arg in args:
+                try:
+                    return cast("V", self.to(raw, arg, factory))
+                except (TypeError, ValueError):
+                    pass
+        return _Missing.MISSING
 
     @staticmethod
     @abstractmethod
