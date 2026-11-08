@@ -15,7 +15,9 @@ class LegacyToml(IniSource):
     """Configuration read from the ``tool.tox`` legacy ini table of a ``pyproject.toml`` file.
 
     :param path: the path of the ``pyproject.toml`` file
-    :cvar FILENAME: the name of the file, ``pyproject.toml``
+
+    :var FILENAME: the name of the file, ``pyproject.toml``
+
     """
 
     FILENAME = "pyproject.toml"

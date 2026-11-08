@@ -13,8 +13,8 @@ from subprocess import DEVNULL, PIPE, TimeoutExpired
 from typing import TYPE_CHECKING, Any, Final
 
 from tox.execute.api import Execute, ExecuteInstance, ExecuteOptions, ExecuteStatus, FinishedExecuteStatus
-from tox.execute.command_line import batch_file_command_line, is_batch_file, shebang
 from tox.execute.request import ExecuteRequest, StdinSource
+from tox.execute.util import batch_file_command_line, is_batch_file, shebang
 from tox.tox_env.errors import Fail
 from tox.util.redact import redact_argv
 from tox.util.typing_compat import override

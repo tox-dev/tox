@@ -14,11 +14,11 @@ from packaging.requirements import InvalidRequirement, Requirement
 from tox.execute import Outcome
 from tox.plugin import impl
 from tox.session.cmd.run.single import run_command_set
-from tox.tox_env.env_conf import add_change_dir_conf, add_commands_conf, add_ignore_errors_conf
 from tox.tox_env.errors import Fail
 from tox.tox_env.python.package import PythonPackageToxEnv, SdistPackage, WheelPackage
 from tox.tox_env.python.pip.req_file import PythonDeps
 from tox.tox_env.python.virtual_env.api import VirtualEnv
+from tox.tox_env.util import add_change_dir_conf, add_commands_conf, add_ignore_errors_conf
 from tox.util.typing_compat import override
 
 from .pyproject import Pep517VirtualEnvPackager
@@ -155,7 +155,7 @@ class VenvCmdBuilder(PythonPackageToxEnv, ABC):
 
     @staticmethod
     def _wheel_package(path: Path, extras: set[str]) -> WheelPackage:
-        wheel_dist: Final[_WheelDistribution] = _WheelDistribution(path)
+        wheel_dist: Final[WheelDistribution] = WheelDistribution(path)
         metadata: Final[PackageMetadata] = wheel_dist.metadata
         if "Name" not in metadata:
             missing_name_error: Final[str] = f"no Name in the metadata of {path}"
@@ -190,7 +190,7 @@ class VirtualEnvCmdBuilder(VenvCmdBuilder, VirtualEnv):
         return "virtualenv-cmd-builder"
 
 
-class _WheelDistribution(Distribution):  # cannot subclass has type Any
+class WheelDistribution(Distribution):  # cannot subclass has type Any
     def __init__(self, wheel: Path) -> None:
         self._wheel = wheel
         self._dist_name: str | None = None

@@ -10,7 +10,7 @@ from colorama import Fore
 
 from tox.config.loader.stringify import stringify
 
-from .output import format_config_error, write_output_file
+from .common import format_config_error, write_output_file
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Sequence

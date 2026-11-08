@@ -28,13 +28,13 @@ if TYPE_CHECKING:
     from .api import ConfigLoadArgs
 
 
-_LOGGER: Final[logging.Logger] = logging.getLogger(__name__)
+LOGGER: Final[logging.Logger] = logging.getLogger(__name__)  # simplint: ignore[SMP404]  # imported by tox plugins
 
 # split alongside :, unless it is preceded by a single capital letter (Windows drive letters in paths)
-_ARG_DELIMITER: Final[str] = ":"
-_REPLACE_START: Final[str] = "{"
-_REPLACE_END: Final[str] = "}"
-_BACKSLASH_ESCAPE_CHARS: Final[tuple[str, ...]] = (_ARG_DELIMITER, _REPLACE_START, _REPLACE_END, "[", "]")
+ARG_DELIMITER: Final[str] = ":"
+REPLACE_START: Final[str] = "{"
+REPLACE_END: Final[str] = "}"
+BACKSLASH_ESCAPE_CHARS: Final[tuple[str, ...]] = (ARG_DELIMITER, REPLACE_START, REPLACE_END, "[", "]")
 MAX_REPLACE_DEPTH: Final[int] = 100
 """Maximum depth of nested replacements, deeper ones are not expanded."""
 # Factor overrides can supply values absent from the configuration without renaming environments.
@@ -117,7 +117,7 @@ def replace_command_lines(
     :returns: the value with every active token replaced
 
     """
-    replacer: Final[_CommandLinesReplacer] = _CommandLinesReplacer(conf, reference, conf_args=args)
+    replacer: Final[CommandLinesReplacer] = CommandLinesReplacer(conf, reference, conf_args=args)
     replacer.program = True
     return replacer.expand(value)
 
@@ -157,7 +157,7 @@ def replace_requirement_lines(
     :returns: the value with its replacements resolved
 
     """
-    return _RequirementLinesReplacer(conf, reference, conf_args=args, callbacks=callbacks).expand(value)
+    return RequirementLinesReplacer(conf, reference, conf_args=args, callbacks=callbacks).expand(value)
 
 
 def replace_for(
@@ -199,7 +199,7 @@ def replace(
     return Replacer(conf, reference, conf_args=args, depth=depth).expand(value)
 
 
-def replace_entries(
+def replace_entries(  # simplint: ignore[SMP403]  # imported by tox plugins
     conf: Config,
     reference: ReplaceReference,
     value: str | MatchExpression,
@@ -218,7 +218,7 @@ def replace_entries(
     :returns: the value with its replacements resolved
 
     """
-    return _EntriesReplacer(conf, reference, conf_args=args, separators=separators).expand(value)
+    return EntriesReplacer(conf, reference, conf_args=args, separators=separators).expand(value)
 
 
 def replace_once(conf: Config, reference: ReplaceReference, value: str | MatchExpression, args: ConfigLoadArgs) -> str:
@@ -269,14 +269,14 @@ class MatchExpression:  # ruff:ignore[eq-without-hash]  # mutable value type
         if value.startswith("[]"):
             # `[]` is shorthand for `{posargs}`
             return MatchExpression(expr=[["posargs"]], term_pos=1)
-        if not value.startswith(_REPLACE_START):
+        if not value.startswith(REPLACE_START):
             return None
         try:
             # recursively handle inner expression
             rec_expr, term_pos = cls.parse_and_split_to_terminator(
                 cls._fragment(value, 1),
-                terminator=_REPLACE_END,
-                split=_ARG_DELIMITER,
+                terminator=REPLACE_END,
+                split=ARG_DELIMITER,
             )
         except MatchError:
             # didn't find the expected terminator character, so treat `{` as if escaped.
@@ -332,7 +332,7 @@ class MatchExpression:  # ruff:ignore[eq-without-hash]  # mutable value type
                 last_arg = []
                 pos += len(split)
                 continue
-            if (value[pos] == _REPLACE_START or value.startswith("[]", pos)) and (
+            if (value[pos] == REPLACE_START or value.startswith("[]", pos)) and (
                 expr := cls._next_replace_expression(cls._fragment(value, pos))
             ) is not None:
                 pos += (expr.term_pos or 0) + 1
@@ -351,7 +351,7 @@ class MatchExpression:  # ruff:ignore[eq-without-hash]  # mutable value type
     @classmethod
     def _escaped_fragment(cls, value: str, pos: int) -> str | None:
         if len(value) > pos + 1 and value[pos] == "\\":
-            if value[pos + 1] in _BACKSLASH_ESCAPE_CHARS:
+            if value[pos + 1] in BACKSLASH_ESCAPE_CHARS:
                 return cls._fragment(value, pos + 1, pos + 2)
             if value[pos + 1] == "\\":
                 # Keep both backslashes for the later shlex pass.
@@ -364,7 +364,7 @@ class MatchExpression:  # ruff:ignore[eq-without-hash]  # mutable value type
         return min(
             (
                 at
-                for char in ("\\", _REPLACE_START, "[", terminator, split)
+                for char in ("\\", REPLACE_START, "[", terminator, split)
                 if char and (at := value.find(char, pos + 1)) >= 0
             ),
             default=len(value),
@@ -444,7 +444,7 @@ class Replacer:
             "".join(cls._literal_match(part) if isinstance(part, MatchExpression) else part for part in arg)
             for arg in value.expr
         )
-        return f"{{{_ARG_DELIMITER.join(args)}}}"
+        return f"{{{ARG_DELIMITER.join(args)}}}"
 
     def _replace_match(self, value: MatchExpression) -> tuple[str, bool]:
         flattened_args: Final[list[str]] = [self._flatten_arg(arg) for arg in value.expr]
@@ -452,7 +452,7 @@ class Replacer:
         if replace_value is not None:
             return replace_value if isinstance(replace_value, str) else replace_value.text, True
         # Preserve unmatched braces for factor expressions such as {py39,py38}-{,dep}.
-        literal: Final[str] = f"{_REPLACE_START}{_ARG_DELIMITER.join(flattened_args)}{_REPLACE_END}"
+        literal: Final[str] = f"{REPLACE_START}{ARG_DELIMITER.join(flattened_args)}{REPLACE_END}"
         return HostText(literal) if value.host else literal, False
 
     def _flatten_arg(self, value: MatchArg) -> str:
@@ -485,7 +485,7 @@ class Replacer:
             try:
                 return self._nested(conf_args).expand(replace_value)
             except MatchRecursionError as error:
-                _LOGGER.warning(str(error))
+                LOGGER.warning(str(error))
         return replace_value.text if isinstance(replace_value, ConfigDefault) else replace_value
 
     def _resolve_replace(
@@ -497,9 +497,9 @@ class Replacer:
             return os.pathsep
         dispatch: dict[str, Callable[[], str | ConfigDefault | None]] = {
             "env": lambda: _replace_env(self.conf, args, conf_args),
-            "tty": lambda: _replace_tty(args),
-            "posargs": lambda: _replace_pos_args(self.conf, args, conf_args, program_first=self.program),
-            "glob": lambda: _replace_glob(self.conf, args),
+            "tty": lambda: replace_tty(args),
+            "posargs": lambda: replace_pos_args(self.conf, args, conf_args, program_first=self.program),
+            "glob": lambda: replace_glob(self.conf, args),
             "factor": lambda: (
                 ConfigDefault(text=replace_factor(self.conf, args, conf_args), start=2)
                 if not self.conf.factor_labels(conf_args.env_name)
@@ -508,7 +508,7 @@ class Replacer:
         }
         if handler := dispatch.get(of_type):
             return handler()
-        return self.reference(HostText.from_parts(flattened_args, separator=_ARG_DELIMITER), conf_args)
+        return self.reference(HostText.from_parts(flattened_args, separator=ARG_DELIMITER), conf_args)
 
     def _nested(self, conf_args: ConfigLoadArgs) -> Self:
         nested: Final[Self] = type(self)(self.conf, self.reference, conf_args, self.depth + 1)
@@ -559,7 +559,7 @@ class ConfigDefault:
         return self.text
 
 
-class _CommandLinesReplacer(Replacer):
+class CommandLinesReplacer(Replacer):  # simplint: ignore[SMP403]  # imported by tox plugins
     @override
     def join_value(self, value: MatchArg) -> str:
         parts: Final[Sequence[str | _Replaced]] = _flatten_string_fragments(list(self._split_replaced(value)))
@@ -596,7 +596,7 @@ class _CommandLinesReplacer(Replacer):
             default_parts: Final[list[str | _Replaced]] = []
             for at, arg in enumerate(args[replaced.start : replaced.stop]):
                 if at:
-                    default_parts.append(_ARG_DELIMITER)
+                    default_parts.append(ARG_DELIMITER)
                 default_parts.extend(arg)
             return default_parts
         if (expanded := self._expand_raw(replaced, conf_args)) is not None:
@@ -609,12 +609,12 @@ class _CommandLinesReplacer(Replacer):
                 else None
             )
             return [_Replaced(text=replaced, quoted_text=quoted_text)]
-        unresolved_parts: Final[list[str | _Replaced]] = [_REPLACE_START]
+        unresolved_parts: Final[list[str | _Replaced]] = [REPLACE_START]
         for at, arg in enumerate(args):
             if at:
-                unresolved_parts.append(_ARG_DELIMITER)
+                unresolved_parts.append(ARG_DELIMITER)
             unresolved_parts.extend(arg)
-        unresolved_parts.append(_REPLACE_END)
+        unresolved_parts.append(REPLACE_END)
         return unresolved_parts
 
     def _expand_raw(self, replaced: str | None, conf_args: ConfigLoadArgs) -> _Replaced | None:
@@ -624,13 +624,13 @@ class _CommandLinesReplacer(Replacer):
             and any(isinstance(match, MatchExpression) and not match.literal for match in find_replace_expr(replaced))
         ):
             return None
-        nested: Final[_CommandLinesReplacer] = self._nested(conf_args)
+        nested: Final[CommandLinesReplacer] = self._nested(conf_args)
         if nested.depth > MAX_REPLACE_DEPTH:
             self.root.depth_exhausted = True
         try:
             MatchRecursionError.check(nested.depth, replaced)
         except MatchRecursionError as error:
-            _LOGGER.warning(str(error))
+            LOGGER.warning(str(error))
             return None
         nested_parts: Final[Sequence[str | _Replaced]] = _flatten_string_fragments(
             list(nested._split_replaced(find_replace_expr(replaced)))  # ruff:ignore[private-member-access]  # own class
@@ -726,7 +726,7 @@ class _Replaced:
         return self.text
 
 
-class _RequirementLinesReplacer(Replacer):
+class RequirementLinesReplacer(Replacer):  # simplint: ignore[SMP403]  # imported by tox plugins
     def __init__(
         self,
         conf: Config,
@@ -952,7 +952,7 @@ class RequirementLineCallbacks:
     protect_host_value: _HostValueProtector
 
 
-class _EntriesReplacer(Replacer):
+class EntriesReplacer(Replacer):  # simplint: ignore[SMP403]  # imported by tox plugins
     def __init__(
         self,
         conf: Config,
@@ -1006,12 +1006,12 @@ class _EntriesReplacer(Replacer):
         return nested
 
 
-def _replace_pos_args(
+def replace_pos_args(  # simplint: ignore[SMP403]  # imported by tox plugins
     conf: Config, args: list[str], conf_args: ConfigLoadArgs, *, program_first: bool
 ) -> str | ConfigDefault:
     pos_args = load_posargs(conf, conf_args, program_first=program_first)
     return (
-        ConfigDefault(text=HostText.from_parts(args, separator=_ARG_DELIMITER), start=1)
+        ConfigDefault(text=HostText.from_parts(args, separator=ARG_DELIMITER), start=1)
         if pos_args is None
         else quote_args(pos_args)
     )
@@ -1091,7 +1091,7 @@ def _replace_env(conf: Config | None, args: list[str], conf_args: ConfigLoadArgs
     if key in os.environ:
         return HostText(os.environ[key])  # a host variable has always been allowed to hold tokens of its own
 
-    return ConfigDefault(text=HostText.from_parts(args[1:], separator=_ARG_DELIMITER), start=2)
+    return ConfigDefault(text=HostText.from_parts(args[1:], separator=ARG_DELIMITER), start=2)
 
 
 def _load_set_env(conf: Config, env_name: str, conf_args: ConfigLoadArgs, key: str) -> str | None:
@@ -1110,7 +1110,7 @@ def _load_set_env(conf: Config, env_name: str, conf_args: ConfigLoadArgs, key: s
     return None
 
 
-def _replace_tty(args: list[str]) -> ConfigDefault:
+def replace_tty(args: list[str]) -> ConfigDefault:  # simplint: ignore[SMP403]  # imported by tox plugins
     selected: Final[int] = 0 if sys.stdout.isatty() else 1
     return ConfigDefault(
         text=args[selected] if len(args) > selected else "",
@@ -1119,7 +1119,7 @@ def _replace_tty(args: list[str]) -> ConfigDefault:
     )
 
 
-def _replace_glob(conf: Config | None, args: list[str]) -> str | ConfigDefault:
+def replace_glob(conf: Config | None, args: list[str]) -> str | ConfigDefault:
     if not args or not args[0]:
         msg = "No pattern was supplied in glob substitution"
         raise MatchError(msg)
@@ -1142,7 +1142,7 @@ def _replace_glob(conf: Config | None, args: list[str]) -> str | ConfigDefault:
     if matches := sorted(glob.glob(pattern, recursive=True)):  # ruff:ignore[glob]  # matches user pattern
         return _GlobMatches(matches)
     return ConfigDefault(
-        text=HostText.from_parts(default_args, separator=_ARG_DELIMITER), start=3 if is_win_drive else 2
+        text=HostText.from_parts(default_args, separator=ARG_DELIMITER), start=3 if is_win_drive else 2
     )
 
 
@@ -1162,7 +1162,7 @@ def replace_factor(conf: Config, args: list[str], conf_args: ConfigLoadArgs) -> 
         msg = "No label was supplied in {factor} substitution"
         raise MatchError(msg)
     label = args[0]
-    default = HostText.from_parts(args[1:], separator=_ARG_DELIMITER) if len(args) > 1 else None
+    default = HostText.from_parts(args[1:], separator=ARG_DELIMITER) if len(args) > 1 else None
     group = conf.factor_labels(conf_args.env_name).get(label)
     if group is None or conf_args.env_name is None:
         return default or ""

@@ -77,18 +77,8 @@ class _PythonRequirementsFile(RequirementsFile):
         )
         if arg_match is not None:
             line = f"{arg_match} {line[len(arg_match) :]}"
-        one_arg_escape: set[str] = {
-            "-c",
-            "--constraint",
-            "-r",
-            "--requirement",
-            "-f",
-            "--find-links",
-            "-e",
-            "--editable",
-        }
         escape_match = next(
-            (e for e in one_arg_escape if line.startswith(e) and len(line) > len(e) and line[len(e)].isspace()), None
+            (e for e in ONE_ARG_ESCAPE if line.startswith(e) and len(line) > len(e) and line[len(e)].isspace()), None
         )
         # a quoted value already keeps its spaces, escaping inside the quotes would add literal backslashes
         if escape_match is not None and (value := line[len(escape_match) + 1 :]).lstrip()[:1] not in {"'", '"'}:
@@ -351,6 +341,16 @@ def _factory_type_error(field: str, raw: object) -> str:
     return f"{field} expected {expected}, got {type(raw).__name__}: {raw!r}"
 
 
+ONE_ARG_ESCAPE: Final[set[str]] = {  # simplint: ignore[SMP202, SMP404]  # imported by tox plugins
+    "-c",
+    "--constraint",
+    "-r",
+    "--requirement",
+    "-f",
+    "--find-links",
+    "-e",
+    "--editable",
+}
 ONE_ARG: Final[set[str]] = {
     "-i",
     "--index-url",

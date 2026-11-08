@@ -23,7 +23,7 @@ from tox.util.redact import redact_argv, redact_value
 from tox.util.typing_compat import override
 
 from .args import build_parser
-from .urls import VCS, get_url_scheme, handle_binary_option, is_url, url_to_path
+from .util import VCS, get_url_scheme, handle_binary_option, is_url, url_to_path
 
 if TYPE_CHECKING:
     from io import BufferedIOBase
@@ -89,7 +89,7 @@ _VERSION_SPECIFIER: Final[re.Pattern[str]] = re.compile(
 ReqFileLines = Iterator[tuple[int, str]]
 """The lines of a requirements file, each with its line number."""
 
-_DEFAULT_INDEX_URL: Final[str] = "https://pypi.org/simple"
+DEFAULT_INDEX_URL: Final[str] = "https://pypi.org/simple"  # simplint: ignore[SMP404]  # imported by tox plugins
 _HTTP_BODY_TIMEOUT: Final[int] = 120
 
 
@@ -154,7 +154,7 @@ def _merge_index_urls(base_opt: Namespace, opt: Namespace) -> None:
             base_opt.index_url = [opt.index_url]
     if opt.extra_index_url and getattr(base_opt, "index_url", None) != []:
         if not getattr(base_opt, "index_url", []):
-            base_opt.index_url = [_DEFAULT_INDEX_URL]
+            base_opt.index_url = [DEFAULT_INDEX_URL]
         for url in opt.extra_index_url:
             if url not in base_opt.index_url:
                 base_opt.index_url.append(url)
@@ -176,7 +176,7 @@ def _merge_find_links(base_opt: Namespace, opt: Namespace, filename: str) -> Non
 def _index_option_groups(opt: Namespace) -> Iterator[tuple[str, ...]]:
     if (index_url := getattr(opt, "index_url", None)) is not None:
         if index_url:
-            if index_url[0] != _DEFAULT_INDEX_URL:
+            if index_url[0] != DEFAULT_INDEX_URL:
                 yield "-i", index_url[0]
             for url in index_url[1:]:
                 yield "--extra-index-url", url
@@ -269,7 +269,7 @@ class ParsedRequirement:
         yield str(self._requirement)
 
 
-class _ParsedLine:
+class ParsedLine:  # simplint: ignore[SMP403]  # imported by tox plugins
     def __init__(
         self,
         filename: str,
@@ -366,7 +366,7 @@ class RequirementsFile:
         filename: str,
         constraint: bool,  # ruff:ignore[boolean-type-hint-positional-argument]  # keeps the signature
         recurse: bool,  # ruff:ignore[boolean-type-hint-positional-argument]  # keeps the signature
-    ) -> Iterator[_ParsedLine]:
+    ) -> Iterator[ParsedLine]:
         for line in self._parse_file(filename, constraint):
             if not line.is_requirement and (line.opts.requirements or line.opts.constraints):
                 if line.opts.requirements:  # parse a nested requirements file
@@ -390,10 +390,10 @@ class RequirementsFile:
         self,
         url: str,
         constraint: bool,  # ruff:ignore[boolean-type-hint-positional-argument]  # keeps the signature
-    ) -> Iterator[_ParsedLine]:
+    ) -> Iterator[ParsedLine]:
         for line_number, line in self._pre_process(self._get_file_content(url)):
             args_str, opts = self._parse_line(line)
-            yield _ParsedLine(url, line_number, args_str, opts, constraint)
+            yield ParsedLine(url, line_number, args_str, opts, constraint)
 
     def _pre_process(self, content: str) -> ReqFileLines:
         # Split, filter, and join lines, and return a line iterator.
@@ -554,7 +554,7 @@ class RequirementsFile:
         return self
 
     @staticmethod
-    def _handle_requirement_line(line: _ParsedLine) -> ParsedRequirement:
+    def _handle_requirement_line(line: ParsedLine) -> ParsedRequirement:
         # For editable requirements, we don't support per-requirement options, so just return the parsed requirement.
         # get the options that apply to requirements
         req_options: dict[str, bool | list[str]] = {}

@@ -361,7 +361,7 @@ class ToxParser(ArgumentParserWithEnvAndConfig):
 
     def _add_base_options(self) -> None:
         """Argument options that always make sense."""
-        _add_core_arguments(self)
+        add_core_arguments(self)
         self.fix_defaults()
 
     @classmethod
@@ -672,17 +672,10 @@ class _RecordingMutuallyExclusiveGroup(  # internal access
         return action
 
 
-def _add_core_arguments(parser: ArgumentParser) -> None:
-    _add_color_flags(parser)
-    _add_verbosity_flags(parser)
-    parser.add_argument(
-        "--exit-and-dump-after",
-        dest="exit_and_dump_after",
-        metavar="seconds",
-        default=0,
-        type=int,
-        help="dump tox threads after n seconds and exit the app - useful to debug when tox hangs, 0 means disabled",
-    )
+def add_core_arguments(parser: ArgumentParser) -> None:  # simplint: ignore[SMP403]  # imported by tox plugins
+    add_color_flags(parser)
+    add_verbosity_flags(parser)
+    add_exit_and_dump_after(parser)
     parser.add_argument(
         "-c",
         "--conf",
@@ -713,7 +706,7 @@ def _add_core_arguments(parser: ArgumentParser) -> None:
     )
 
 
-def _add_color_flags(parser: ArgumentParser) -> None:
+def add_color_flags(parser: ArgumentParser) -> None:  # simplint: ignore[SMP403]  # imported by tox plugins
     if os.environ.get("NO_COLOR", ""):
         color = "no"
     elif os.environ.get("FORCE_COLOR", ""):
@@ -739,7 +732,7 @@ def _add_color_flags(parser: ArgumentParser) -> None:
     )
 
 
-def _add_verbosity_flags(parser: ArgumentParser) -> None:
+def add_verbosity_flags(parser: ArgumentParser) -> None:  # simplint: ignore[SMP403]  # imported by tox plugins
     from tox.report import LEVELS  # ruff:ignore[import-outside-top-level]  # avoids an import cycle
 
     level_map = "|".join(f"{c}={logging.getLevelName(level)}" for c, level in sorted(LEVELS.items()))
@@ -758,6 +751,17 @@ def _add_verbosity_flags(parser: ArgumentParser) -> None:
         default=DEFAULT_VERBOSITY,
     )
     verbosity.add_argument("-q", "--quiet", action="count", dest="quiet", help="decrease verbosity", default=0)
+
+
+def add_exit_and_dump_after(parser: ArgumentParser) -> None:  # simplint: ignore[SMP403]  # imported by tox plugins
+    parser.add_argument(
+        "--exit-and-dump-after",
+        dest="exit_and_dump_after",
+        metavar="seconds",
+        default=0,
+        type=int,
+        help="dump tox threads after n seconds and exit the app - useful to debug when tox hangs, 0 means disabled",
+    )
 
 
 __all__ = [

@@ -78,12 +78,12 @@ class ToxBackendFailed(Fail, BackendFailed):
         )
 
 
-class _BuildEditableNotSupportedError(RuntimeError):
+class BuildEditableNotSupportedError(RuntimeError):  # simplint: ignore[SMP403]  # imported by tox plugins
     # raised when build editable is not supported.
     ...
 
 
-class _ToxCmdStatus(CmdStatus):
+class ToxCmdStatus(CmdStatus):  # simplint: ignore[SMP403]  # imported by tox plugins
     def __init__(self, execute_status: ExecuteStatus) -> None:
         self._execute_status = execute_status
 
@@ -245,7 +245,7 @@ class Pep517VenvPackager(PythonPackageToxEnv, ABC):
             self._setup_build_requires("wheel")
         if "editable" in self.call_require_hooks:
             if not self._frontend.optional_hooks["build_editable"]:
-                raise _BuildEditableNotSupportedError
+                raise BuildEditableNotSupportedError
             self._setup_build_requires("editable")
 
     def _setup_build_requires(self, of_type: str) -> None:
@@ -277,7 +277,7 @@ class Pep517VenvPackager(PythonPackageToxEnv, ABC):
         """Build the package to install."""
         try:
             deps = self._load_deps(for_env)
-        except _BuildEditableNotSupportedError:
+        except BuildEditableNotSupportedError:
             self._fallback_to_editable_legacy()
             deps = self._load_deps(for_env)
         if (of_type := for_env.get("package", str)) == "editable-legacy":
@@ -307,7 +307,7 @@ class Pep517VenvPackager(PythonPackageToxEnv, ABC):
             else:
                 try:
                     self.setup()
-                except _BuildEditableNotSupportedError:
+                except BuildEditableNotSupportedError:
                     # deps resolved without the backend (e.g. static metadata), so the missing PEP-660 support
                     # surfaces only at setup - fall back and re-dispatch as editable-legacy
                     self._fallback_to_editable_legacy()
@@ -594,7 +594,7 @@ class Pep517VirtualEnvFrontend(Frontend):
         cmd: str,
         result_file: Path,
         msg: str,
-    ) -> Generator[_ToxCmdStatus]:
+    ) -> Generator[ToxCmdStatus]:
         try:
             with self._tox_env.execute_async(
                 cmd=self.backend_cmd,
@@ -605,7 +605,7 @@ class Pep517VirtualEnvFrontend(Frontend):
                 executor=self.backend_executor,
             ) as execute_status:
                 execute_status.write_stdin(f"{msg}{os.linesep}")
-                yield _ToxCmdStatus(execute_status)
+                yield ToxCmdStatus(execute_status)
             if execute_status.outcome is not None:  # pragma: no branch  # other outcome untested
                 execute_status.outcome.assert_success()
         finally:

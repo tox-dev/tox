@@ -59,7 +59,7 @@ def test_pip_install_empty_list(tox_project: ToxProjectCreator) -> None:
     result.assert_success()
 
     pip = result.state.envs["py"].installer
-    execute_calls = proj.patch_execute(lambda request: None)
+    execute_calls = proj.patch_execute(lambda _request: None)
     pip.install([], "section", "type")
     assert execute_calls.call_count == 0
 

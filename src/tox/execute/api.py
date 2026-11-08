@@ -27,7 +27,7 @@ if TYPE_CHECKING:
 ContentHandler = Callable[[bytes], int]
 """Callback that receives a chunk of the output of a command, and returns the number of bytes it handled."""
 Executor = Callable[[ExecuteRequest, ContentHandler, ContentHandler], int]
-_LOGGER: Final[logging.Logger] = logging.getLogger(__name__)
+LOGGER: Final[logging.Logger] = logging.getLogger(__name__)  # simplint: ignore[SMP404]  # imported by tox plugins
 
 
 class ExecuteOptions:
@@ -452,7 +452,7 @@ class Outcome:
         metadata = ""
         if self.metadata:
             metadata = f" {', '.join(f'{k}={v}' for k, v in self.metadata.items())}"
-        _LOGGER.log(
+        LOGGER.log(
             lvl,
             "exit %s (%.2f seconds) %s> %s%s",
             self.exit_code,

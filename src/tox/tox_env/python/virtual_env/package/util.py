@@ -36,11 +36,11 @@ def dependencies_with_extras(
 
     """
     return dependencies_with_extras_from_markers(
-        [_extract_extra_markers(dep) for dep in deps], extras, package_name, available_extras=available_extras
+        [extract_extra_markers(dep) for dep in deps], extras, package_name, available_extras=available_extras
     )
 
 
-def dependencies_with_extras_from_markers(
+def dependencies_with_extras_from_markers(  # simplint: ignore[SMP403]  # imported by tox plugins
     deps_with_markers: list[tuple[Requirement, set[str | None]]],
     extras: set[str],
     package_name: str,
@@ -111,7 +111,7 @@ def _add_dependency(req: Requirement, via: frozenset[Marker], result: list[Requi
         result.append(dep)
 
 
-def _extract_extra_markers(req: Requirement) -> tuple[Requirement, set[str | None]]:
+def extract_extra_markers(req: Requirement) -> tuple[Requirement, set[str | None]]:
     req = deepcopy(req)
     markers: MarkerList = getattr(req.marker, "_markers", []) or []
     new_markers, extra_markers = _split_extra_markers(markers)

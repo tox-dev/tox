@@ -1,4 +1,4 @@
-from __future__ import annotations
+from __future__ import annotations  # simplint: ignore[SMP104]  # imported by tox plugins
 
 from pathlib import Path
 from typing import TYPE_CHECKING

@@ -92,7 +92,7 @@ class PythonInfo:
         return f"{self.version_info.major}.{self.version_info.minor}"
 
 
-_PY_FACTORS_RE: Final[re.Pattern[str]] = re.compile(
+PY_FACTORS_RE: Final[re.Pattern[str]] = re.compile(  # simplint: ignore[SMP404]  # imported by tox plugins
     r"""
     ^(?!py$)                                               # don't match 'py' as it doesn't provide any info
     (?P<impl>py|pypy|cpython|jython|graalpy|rustpython|ironpython) # the interpreter; most users will simply use 'py'
@@ -104,7 +104,7 @@ _PY_FACTORS_RE: Final[re.Pattern[str]] = re.compile(
     """,
     re.VERBOSE,
 )
-_PY_FACTORS_RE_EXPLICIT_VERSION: Final[re.Pattern[str]] = re.compile(
+PY_FACTORS_RE_EXPLICIT_VERSION: Final[re.Pattern[str]] = re.compile(
     r"""
     ^
     ( (?P<impl> cpython | pypy ) - )?   # optional interpreter prefix with dash
@@ -239,13 +239,13 @@ class Python(ToxEnv, ABC):
 
         """
         candidates: list[str] = []
-        if match := _PY_FACTORS_RE_EXPLICIT_VERSION.match(env_name):
+        if match := PY_FACTORS_RE_EXPLICIT_VERSION.match(env_name):
             candidates.append(cls._explicit_version_spec(match.groupdict()))
         else:
             for factor in env_name.split("-"):
-                if match := _PY_FACTORS_RE.match(factor):
+                if match := PY_FACTORS_RE.match(factor):
                     candidates.append(factor)
-                elif match := _PY_FACTORS_RE_EXPLICIT_VERSION.match(factor):
+                elif match := PY_FACTORS_RE_EXPLICIT_VERSION.match(factor):
                     candidates.append(cls._explicit_version_spec(match.groupdict()))
         if candidates:
             if len(candidates) > 1:

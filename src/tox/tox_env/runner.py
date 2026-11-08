@@ -14,9 +14,9 @@ from tox.session.cmd.run.single import run_command_set
 from tox.util.typing_compat import override
 
 from .api import ToxEnv, ToxEnvCreateArgs
-from .env_conf import add_change_dir_conf, add_commands_conf, add_ignore_errors_conf
 from .errors import Fail
 from .package import Package, PackageToxEnv, PathPackage
+from .util import add_change_dir_conf, add_commands_conf, add_ignore_errors_conf
 
 if TYPE_CHECKING:
     from collections.abc import Iterable

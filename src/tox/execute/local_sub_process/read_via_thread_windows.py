@@ -18,9 +18,9 @@ from .read_via_thread import ReadViaThread  # pragma: win32 cover
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-_READ_CHUNK_SIZE: Final[int] = 32768  # pragma: win32 cover
+READ_CHUNK_SIZE: Final[int] = 32768  # pragma: win32 cover  # simplint: ignore[SMP404]  # imported by tox plugins
 """Maximum number of bytes read from a pipe at once."""
-_POLL_INTERVAL: Final[float] = 0.05  # pragma: win32 cover
+POLL_INTERVAL: Final[float] = 0.05  # pragma: win32 cover  # simplint: ignore[SMP404]  # imported by tox plugins
 """Seconds to wait between two checks of a pipe for new output."""
 ERROR_IO_INCOMPLETE: Final[int] = 996  # pragma: win32 cover
 """Windows error code of a read that has not received any data yet."""
@@ -54,7 +54,7 @@ class ReadViaThreadWindows(ReadViaThread):  # pragma: win32 cover
         while not self.stop.is_set():
             ov = _overlapped.Overlapped(0)
             try:
-                ov.ReadFile(self.file_no, _READ_CHUNK_SIZE)
+                ov.ReadFile(self.file_no, READ_CHUNK_SIZE)
             except OSError:
                 break
 
@@ -70,7 +70,7 @@ class ReadViaThreadWindows(ReadViaThread):  # pragma: win32 cover
                         return
                     if self.stop.is_set():  # stop requested while the read is still pending; abandon it
                         return
-                    time.sleep(_POLL_INTERVAL)
+                    time.sleep(POLL_INTERVAL)
 
             if not data:
                 break
@@ -85,7 +85,7 @@ class ReadViaThreadWindows(ReadViaThread):  # pragma: win32 cover
         while True:
             ov = _overlapped.Overlapped(0)
             try:
-                ov.ReadFile(self.file_no, _READ_CHUNK_SIZE)
+                ov.ReadFile(self.file_no, READ_CHUNK_SIZE)
             except OSError:
                 break
 

@@ -39,12 +39,11 @@ class _Assignment(NamedTuple):
 
 
 class SetEnvEntry(TypedDict):
-    """
-    A single ``set_env`` value in structured (TOML) form.
+    """A single ``set_env`` value in structured (TOML) form.
 
-    :ivar value: the value, a string or a ``replace`` table, the marker applies to
+    :var value: the value, a string or a ``replace`` table, the marker applies to
+    :var marker: the environment marker that decides whether the value applies
 
-    :ivar marker: the environment marker that decides whether the value applies
     """
 
     value: SetEnvValue
@@ -54,8 +53,7 @@ class SetEnvEntry(TypedDict):
 @dataclass(frozen=True)
 @final
 class SetEnvReference:
-    """
-    Keep overrides pending until the consuming environment has registered its keys.
+    """Keep overrides pending until the consuming environment has registered its keys.
 
     :param config: the ``set_env`` the value is written to
     :param args: the load arguments the value is resolved with
@@ -84,8 +82,10 @@ class SetEnv:
     :param env_name: the name of the environment the setting belongs to, ``None`` when unknown
     :param root: the root directory of the project
     :param substituted: whether the value is text produced by a substitution
-    :ivar changed: whether a variable was set or removed after the setting was loaded
-    :ivar shape: the form the setting was written in, a string, a table or an array
+
+    :var changed: whether a variable was set or removed after the setting was loaded
+    :var shape: the form the setting was written in, a string, a table or an array
+
     """
 
     def __init__(
@@ -201,8 +201,7 @@ class SetEnv:
         return line[len("file|") :]
 
     def _parse_line(self, line: str, *, substituted: bool) -> _Assignment | None:
-        """
-        Split a ``KEY=VALUE`` line, or return ``None`` once it is queued to be split after substitution.
+        """Split a ``KEY=VALUE`` line, or return ``None`` once it is queued to be split after substitution.
 
         :param line: the line to split
         :param substituted: whether the line is text produced by a substitution
@@ -433,8 +432,7 @@ class SetEnv:
         )
 
     def raw(self, args: ConfigLoadArgs, *, resolve: bool = True) -> dict[str, SetEnvEntry]:
-        """
-        Preserve lazy values and markers when another section includes this configuration.
+        """Preserve lazy values and markers when another section includes this configuration.
 
         :param args: the load arguments the values are resolved with
         :param resolve: whether pending replacements are resolved first
@@ -464,8 +462,7 @@ class SetEnv:
         self.changed = True
 
     def extend(self, other: SetEnv) -> None:
-        """
-        Appended blocks override base keys; explicit keys in the same override win.
+        """Appended blocks override base keys; explicit keys in the same override win.
 
         :param other: the configuration whose blocks are appended to this one
         """

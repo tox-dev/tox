@@ -19,12 +19,13 @@ if TYPE_CHECKING:
 
 
 class State:
-    """
-    Runtime state holder.
+    """Runtime state holder.
 
     :param options: the parsed command line options and the command handlers
     :param args: the command line arguments tox was started with
-    :ivar conf: the configuration of this run
+
+    :var conf: the configuration of this run
+
     """
 
     def __init__(self, options: Options, args: Sequence[str]) -> None:

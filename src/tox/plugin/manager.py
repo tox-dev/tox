@@ -35,8 +35,9 @@ if TYPE_CHECKING:
 class Plugin:
     """The plugin manager of tox, which discovers the plugins and calls their hooks.
 
-    :ivar manager: the pluggy manager the plugins are registered with
-    :ivar inline_module: the inline ``toxfile.py`` module, ``None`` when there is none
+    :var manager: the pluggy manager the plugins are registered with
+    :var inline_module: the inline ``toxfile.py`` module, ``None`` when there is none
+
     """
 
     def __init__(self) -> None:

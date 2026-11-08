@@ -20,10 +20,10 @@ if TYPE_CHECKING:
     from ._api import TomlTypes
 
 
-ValueT = TypeVar("ValueT")
+T = TypeVar("T")  # simplint: ignore[SMP101, SMP404]  # exported, renaming breaks importers
 
 
-def validate(val: TomlTypes, of_type: type[ValueT]) -> ValueT:
+def validate(val: TomlTypes, of_type: type[T]) -> T:
     casting_to = get_origin(of_type) or of_type.__class__
     type_args = get_args(of_type)
     msg = ""
@@ -45,7 +45,7 @@ def validate(val: TomlTypes, of_type: type[ValueT]) -> ValueT:
         msg = _validate_instance(val, of_type)
     if msg:
         raise TypeError(msg)
-    return cast("ValueT", val)
+    return cast("T", val)
 
 
 def _validate_list(val: TomlTypes, entry_type: type) -> str:
@@ -85,7 +85,7 @@ def _validate_union(val: TomlTypes, args: tuple[type, ...]) -> str:
     return f"{_describe(val)} is not union of {', '.join(a.__name__ for a in args)}"
 
 
-def _validate_instance(val: TomlTypes, of_type: type[ValueT]) -> str:
+def _validate_instance(val: TomlTypes, of_type: type[T]) -> str:
     if issubclass(of_type, (bool, str, int)):
         fail = True  # the enclosing branch established the value is not an instance already
     else:

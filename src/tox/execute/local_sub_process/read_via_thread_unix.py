@@ -17,9 +17,9 @@ if TYPE_CHECKING:
 
     from _typeshed import FileDescriptorLike
 
-_TIMEOUT_FOR_INTERRUPT: Final[float] = 0.05  # pragma: win32 no cover
+TIMEOUT_FOR_INTERRUPT: Final[float] = 0.05  # pragma: win32 no cover
 """Seconds to wait for output before checking whether the reader should stop."""
-_READ_CHUNK_SIZE: Final[int] = 32768  # pragma: win32 no cover
+READ_CHUNK_SIZE: Final[int] = 32768  # pragma: win32 no cover  # simplint: ignore[SMP404]  # imported by tox plugins
 """Maximum number of bytes read from a stream at once."""
 
 
@@ -58,7 +58,7 @@ class ReadViaThreadUnix(ReadViaThread):  # pragma: win32 no cover
     def _read_until_eof(self, selector: selectors.DefaultSelector) -> None:
         while selector.get_map() and not self.stop.is_set():
             try:
-                ready = selector.select(timeout=_TIMEOUT_FOR_INTERRUPT)
+                ready = selector.select(timeout=TIMEOUT_FOR_INTERRUPT)
             except (InterruptedError, OSError) as exception:
                 if isinstance(exception, OSError) and exception.errno != errno.EINTR:
                     raise
@@ -72,7 +72,7 @@ class ReadViaThreadUnix(ReadViaThread):  # pragma: win32 no cover
 
     def _read_chunk(self, selector: selectors.DefaultSelector, key: selectors.SelectorKey) -> None:
         try:
-            data = os.read(key.fd, _READ_CHUNK_SIZE)
+            data = os.read(key.fd, READ_CHUNK_SIZE)
         except OSError as exception:
             if exception.errno == errno.EINTR:
                 return

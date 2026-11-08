@@ -21,7 +21,7 @@ if TYPE_CHECKING:
     from .loader.section import Section
     from .main import Config
 
-ValueT = TypeVar("ValueT")
+V = TypeVar("V")  # simplint: ignore[SMP101, SMP404]  # exported, renaming breaks importers
 
 
 class ConfigSet(ABC):
@@ -118,77 +118,77 @@ class ConfigSet(ABC):
     def add_config(
         self,
         keys: str | Sequence[str],
-        of_type: type[ValueT],
-        default: Callable[[Config, str | None], ValueT],
+        of_type: type[V],
+        default: Callable[[Config, str | None], V],
         desc: str,
-        post_process: Callable[[ValueT], ValueT] | None = None,
+        post_process: Callable[[V], V] | None = None,
         factory: Factory[Any] | None = None,
-    ) -> ConfigDynamicDefinition[ValueT]: ...
+    ) -> ConfigDynamicDefinition[V]: ...
 
     @overload
     def add_config(
         self,
         keys: str | Sequence[str],
-        of_type: type[ValueT],
+        of_type: type[V],
         default: None,
         desc: str,
-        post_process: Callable[[ValueT | None], ValueT | None] | None = None,
+        post_process: Callable[[V | None], V | None] | None = None,
         factory: Factory[Any] | None = None,
-    ) -> ConfigDynamicDefinition[ValueT | None]: ...
+    ) -> ConfigDynamicDefinition[V | None]: ...
 
     @overload
     def add_config(
         self,
         keys: str | Sequence[str],
-        of_type: type[ValueT],
-        default: ValueT,
+        of_type: type[V],
+        default: V,
         desc: str,
-        post_process: Callable[[ValueT], ValueT] | None = None,
+        post_process: Callable[[V], V] | None = None,
         factory: Factory[Any] | None = None,
-    ) -> ConfigDynamicDefinition[ValueT]: ...
-
-    @overload
-    def add_config(
-        self,
-        keys: str | Sequence[str],
-        of_type: UnionType,
-        default: Callable[[Config, str | None], ValueT],
-        desc: str,
-        post_process: Callable[[ValueT], ValueT] | None = None,
-        factory: Factory[Any] | None = None,
-    ) -> ConfigDynamicDefinition[ValueT]: ...
+    ) -> ConfigDynamicDefinition[V]: ...
 
     @overload
     def add_config(
         self,
         keys: str | Sequence[str],
         of_type: UnionType,
-        default: Callable[[Config, str | None], ValueT | None] | ValueT | None,
+        default: Callable[[Config, str | None], V],
         desc: str,
-        post_process: Callable[[ValueT | None], ValueT | None] | None = None,
+        post_process: Callable[[V], V] | None = None,
         factory: Factory[Any] | None = None,
-    ) -> ConfigDynamicDefinition[ValueT | None]: ...
+    ) -> ConfigDynamicDefinition[V]: ...
 
     @overload
     def add_config(
         self,
         keys: str | Sequence[str],
         of_type: UnionType,
-        default: Callable[[Config, str | None], ValueT] | ValueT,
+        default: Callable[[Config, str | None], V | None] | V | None,
         desc: str,
-        post_process: Callable[[ValueT], ValueT] | None = None,
+        post_process: Callable[[V | None], V | None] | None = None,
         factory: Factory[Any] | None = None,
-    ) -> ConfigDynamicDefinition[ValueT]: ...
+    ) -> ConfigDynamicDefinition[V | None]: ...
+
+    @overload
+    def add_config(
+        self,
+        keys: str | Sequence[str],
+        of_type: UnionType,
+        default: Callable[[Config, str | None], V] | V,
+        desc: str,
+        post_process: Callable[[V], V] | None = None,
+        factory: Factory[Any] | None = None,
+    ) -> ConfigDynamicDefinition[V]: ...
 
     def add_config(  # ruff:ignore[too-many-arguments]  # public signature
         self,
         keys: str | Sequence[str],
-        of_type: type[ValueT] | UnionType,
-        default: Callable[[Config, str | None], ValueT] | ValueT | None,
+        of_type: type[V] | UnionType,
+        default: Callable[[Config, str | None], V] | V | None,
         desc: str,
-        post_process: Callable[[ValueT], ValueT] | None = None,
+        post_process: Callable[[V], V] | None = None,
         factory: Factory[Any] | None = None,
-    ) -> ConfigDynamicDefinition[ValueT]:
+    ) -> ConfigDynamicDefinition[V]:
         """Add configuration value.
 
         :param keys: the keys under what to register the config (first is primary key)
@@ -209,13 +209,13 @@ class ConfigSet(ABC):
             raise RuntimeError(msg)
         keys_ = self._make_keys(keys)
         result = self._add_conf(keys_, ConfigDynamicDefinition(keys_, desc, of_type, default, post_process, factory))
-        return cast("ConfigDynamicDefinition[ValueT]", result)
+        return cast("ConfigDynamicDefinition[V]", result)
 
     @staticmethod
     def _make_keys(keys: str | Sequence[str]) -> Sequence[str]:
         return (keys,) if isinstance(keys, str) else keys
 
-    def _add_conf(self, keys: Sequence[str], definition: ConfigDefinition[ValueT]) -> ConfigDefinition[ValueT]:
+    def _add_conf(self, keys: Sequence[str], definition: ConfigDefinition[V]) -> ConfigDefinition[V]:
         key = keys[0]
         if key in self._defined:
             self._on_duplicate_conf(key, definition)
@@ -227,11 +227,11 @@ class ConfigSet(ABC):
             self._defined[key] = definition
         return definition
 
-    def _on_duplicate_conf(self, key: str, definition: ConfigDefinition[ValueT]) -> None:
+    def _on_duplicate_conf(self, key: str, definition: ConfigDefinition[V]) -> None:
         msg = f"duplicate configuration definition for {self.name}:\nhas: {self._defined[key]}\nnew: {definition}"
         raise ValueError(msg)
 
-    def add_constant(self, keys: str | Sequence[str], desc: str, value: ValueT) -> ConfigConstantDefinition[ValueT]:
+    def add_constant(self, keys: str | Sequence[str], desc: str, value: V) -> ConfigConstantDefinition[V]:
         """Add a constant value.
 
         :param keys: the keys under what to register the config (first is primary key)
@@ -248,7 +248,7 @@ class ConfigSet(ABC):
             raise RuntimeError(msg)
         keys_ = self._make_keys(keys)
         return cast(
-            "ConfigConstantDefinition[ValueT]",
+            "ConfigConstantDefinition[V]",
             self._add_conf(keys_, ConfigConstantDefinition(keys_, desc, value)),
         )
 
@@ -262,7 +262,7 @@ class ConfigSet(ABC):
         """
         return isinstance(self._defined[item], ConfigConstantDefinition)
 
-    def get(self, item: str, of_type: type[ValueT]) -> ValueT:
+    def get(self, item: str, of_type: type[V]) -> V:
         """Get the config value for a given key, verified to be of the declared type.
 
         Unlike :meth:`load` and ``[]`` — which return ``Any`` — the value is checked against ``of_type`` at runtime
@@ -280,11 +280,11 @@ class ConfigSet(ABC):
         """
         value = self.load(item)
         if isinstance(value, get_origin(of_type) or of_type):
-            return cast("ValueT", value)
+            return cast("V", value)
         msg = f"{item} is {type(value).__name__}, expected {of_type!r}"
         raise TypeError(msg)
 
-    def get_optional(self, item: str, of_type: type[ValueT]) -> ValueT | None:
+    def get_optional(self, item: str, of_type: type[V]) -> V | None:
         """Get the config value for a key that may be unset, verified to be of the declared type or ``None``.
 
         Use this over :meth:`get` for keys registered with a ``None`` default, such as ``min_version``.
@@ -301,7 +301,7 @@ class ConfigSet(ABC):
         """
         value = self.load(item)
         if value is None or isinstance(value, get_origin(of_type) or of_type):
-            return cast("ValueT | None", value)
+            return cast("V | None", value)
         msg = f"{item} is {type(value).__name__}, expected {of_type!r} or None"
         raise TypeError(msg)
 
@@ -419,7 +419,7 @@ class CoreConfigSet(ConfigSet):
         return self.get("work_dir", Path) / ".tmp"
 
     @override
-    def _on_duplicate_conf(self, key: str, definition: ConfigDefinition[ValueT]) -> None:
+    def _on_duplicate_conf(self, key: str, definition: ConfigDefinition[V]) -> None:
         pass  # core definitions may be defined multiple times as long as all their options match, first defined wins
 
 

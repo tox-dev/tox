@@ -17,19 +17,19 @@ class _Missing(Enum):
     MISSING = auto()
 
 
-RawT = TypeVar("RawT")
-ValueT = TypeVar("ValueT")
+T = TypeVar("T")  # simplint: ignore[SMP101, SMP404]  # exported, renaming breaks importers
+V = TypeVar("V")  # simplint: ignore[SMP101, SMP404]  # exported, renaming breaks importers
 
-Factory = Callable[[object], RawT] | None  # note the argument is anything, due e.g. memory loader can inject anything
+Factory = Callable[[object], T] | None  # note the argument is anything, due e.g. memory loader can inject anything
 """Callable that converts a raw value to the target type, or ``None`` when no conversion is needed."""
 
 
-class Convert(ABC, Generic[RawT]):
+class Convert(ABC, Generic[T]):
     """A class that converts a raw type to a given tox (python) type."""
 
     def to(  # ruff:ignore[too-many-return-statements]  # distinct outcomes
-        self, raw: RawT, of_type: type[ValueT] | UnionType, factory: Factory[ValueT]
-    ) -> ValueT:
+        self, raw: T, of_type: type[V] | UnionType, factory: Factory[V]
+    ) -> V:
         """Convert given raw type to python type.
 
         :param raw: the raw type
@@ -48,25 +48,25 @@ class Convert(ABC, Generic[RawT]):
             return self._to_typing(raw, of_type, factory)
         if isclass(of_type):
             if issubclass(of_type, Path):
-                return cast("ValueT", self.to_path(raw))
+                return cast("V", self.to_path(raw))
             if issubclass(of_type, bool):
-                return cast("ValueT", self.to_bool(raw))
+                return cast("V", self.to_bool(raw))
             if issubclass(of_type, Command):
-                return cast("ValueT", self.to_command(raw))
+                return cast("V", self.to_command(raw))
             if issubclass(of_type, EnvList):
-                return cast("ValueT", self.to_env_list(raw))
+                return cast("V", self.to_env_list(raw))
             if issubclass(of_type, str):
-                return cast("ValueT", self.to_str(raw))
-        if isinstance(raw, cast("type[ValueT]", of_type)):  # already target type no need to transform it
+                return cast("V", self.to_str(raw))
+        if isinstance(raw, cast("type[V]", of_type)):  # already target type no need to transform it
             # do it this late to allow normalization - e.g. string strip
             return raw
         if factory:
             return factory(raw)
-        return cast("Callable[[RawT], ValueT]", of_type)(raw)
+        return cast("Callable[[T], V]", of_type)(raw)
 
     def _to_typing(  # ruff:ignore[complex-structure, too-many-branches]  # follows the protocol
-        self, raw: RawT, of_type: type[ValueT] | UnionType, factory: Factory[ValueT]
-    ) -> ValueT:
+        self, raw: T, of_type: type[V] | UnionType, factory: Factory[V]
+    ) -> V:
         origin = get_origin(of_type) or of_type.__class__
         result: Any = _Missing.MISSING
         type_args = get_args(of_type)
@@ -87,7 +87,7 @@ class Convert(ABC, Generic[RawT]):
             none = type(None)
             if len(args) == 2 and none in args:  # ruff:ignore[magic-value-comparison]  # fixed protocol value
                 if isinstance(raw, str):
-                    raw = cast("RawT", raw.strip())
+                    raw = cast("T", raw.strip())
                 if raw is None or (isinstance(raw, str) and not raw):
                     result = None
                 else:
@@ -107,13 +107,13 @@ class Convert(ABC, Generic[RawT]):
                 raise ValueError(msg)
             result = raw
         if result is not _Missing.MISSING:
-            return cast("ValueT", result)
+            return cast("V", result)
         msg = f"{raw} cannot cast to {of_type!r}"
         raise TypeError(msg)
 
     @staticmethod
     @abstractmethod
-    def to_list(value: RawT, of_type: type) -> Iterator[RawT]:
+    def to_list(value: T, of_type: type) -> Iterator[T]:
         """Convert to list.
 
         :param value: the value to convert
@@ -126,7 +126,7 @@ class Convert(ABC, Generic[RawT]):
 
     @staticmethod
     @abstractmethod
-    def to_set(value: RawT, of_type: type) -> Iterator[RawT]:
+    def to_set(value: T, of_type: type) -> Iterator[T]:
         """Convert to set.
 
         :param value: the value to convert
@@ -139,7 +139,7 @@ class Convert(ABC, Generic[RawT]):
 
     @staticmethod
     @abstractmethod
-    def to_dict(value: RawT, of_type: tuple[type, type]) -> Iterator[tuple[RawT, RawT]]:
+    def to_dict(value: T, of_type: tuple[type, type]) -> Iterator[tuple[T, T]]:
         """Convert to dictionary.
 
         :param value: the value to convert
@@ -152,7 +152,7 @@ class Convert(ABC, Generic[RawT]):
 
     @staticmethod
     @abstractmethod
-    def to_path(value: RawT) -> Path:
+    def to_path(value: T) -> Path:
         """Convert to path.
 
         :param value: the value to convert
@@ -164,7 +164,7 @@ class Convert(ABC, Generic[RawT]):
 
     @staticmethod
     @abstractmethod
-    def to_bool(value: RawT) -> bool:
+    def to_bool(value: T) -> bool:
         """Convert to boolean.
 
         :param value: the value to convert
@@ -176,7 +176,7 @@ class Convert(ABC, Generic[RawT]):
 
     @staticmethod
     @abstractmethod
-    def to_command(value: RawT) -> Command:
+    def to_command(value: T) -> Command:
         """Convert to a command to execute.
 
         :param value: the value to convert
@@ -188,7 +188,7 @@ class Convert(ABC, Generic[RawT]):
 
     @staticmethod
     @abstractmethod
-    def to_env_list(value: RawT) -> EnvList:
+    def to_env_list(value: T) -> EnvList:
         """Convert to a tox EnvList.
 
         :param value: the value to convert
@@ -200,7 +200,7 @@ class Convert(ABC, Generic[RawT]):
 
     @staticmethod
     @abstractmethod
-    def to_str(value: RawT) -> str:
+    def to_str(value: T) -> str:
         """Convert to string.
 
         :param value: the value to convert

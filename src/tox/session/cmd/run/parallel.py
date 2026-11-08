@@ -17,13 +17,15 @@ if TYPE_CHECKING:
     from tox.config.cli.parser import ToxParser
     from tox.session.state import State
 
-_LOGGER: Final[logging.Logger] = logging.getLogger(__name__)
+logger: Final[logging.Logger] = logging.getLogger(__name__)
 """Logger of the parallel run."""
 
 ENV_VAR_KEY: Final[str] = "TOX_PARALLEL_ENV"
 """Environment variable that tells a parallel sub-process which environment it runs."""
 OFF_VALUE: Final[int] = 0
 """Value of the parallel option that turns parallel runs off."""
+DEFAULT_PARALLEL: Final[str] = "auto"  # simplint: ignore[SMP202, SMP404]  # imported by tox plugins
+"""Default value of the parallel option, ``auto`` for one process per CPU."""
 
 
 @impl
@@ -36,7 +38,7 @@ def tox_add_option(parser: ToxParser) -> None:
     our = parser.add_command("run-parallel", ["p"], "run environments in parallel", run_parallel)
     register_env_select_flags(our, default=CliEnv())
     env_run_create_flags(our, mode="run-parallel")
-    parallel_flags(our, default_parallel="auto")
+    parallel_flags(our, default_parallel=DEFAULT_PARALLEL)
 
 
 def run_parallel(state: State) -> int:

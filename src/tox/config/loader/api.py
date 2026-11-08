@@ -122,11 +122,11 @@ class ConfigLoadArgs:
 OverrideMap = Mapping[str, list[Override]]
 """Overrides grouped by the name of the configuration key they apply to."""
 
-RawT = TypeVar("RawT")
-ValueT = TypeVar("ValueT")
+T = TypeVar("T")  # simplint: ignore[SMP101, SMP404]  # exported, renaming breaks importers
+V = TypeVar("V")  # simplint: ignore[SMP101, SMP404]  # exported, renaming breaks importers
 
 
-class Loader(Convert[RawT]):
+class Loader(Convert[T]):
     """Loader loads configuration values and converts it.
 
     :param section: the section the values are read from
@@ -167,12 +167,12 @@ class Loader(Convert[RawT]):
     def load(  # ruff:ignore[too-many-arguments]  # public signature
         self,
         key: str,
-        of_type: type[ValueT] | UnionType,
-        factory: Factory[ValueT],
+        of_type: type[V] | UnionType,
+        factory: Factory[V],
         conf: Config | None,
         args: ConfigLoadArgs,
         all_keys: Iterable[str] = (),
-    ) -> ValueT:
+    ) -> V:
         """Load a value (raw and then convert).
 
         :param key: the key under it lives
@@ -189,7 +189,7 @@ class Loader(Convert[RawT]):
 
         """
         overrides = [o for alias in (key, *all_keys) for o in self.overrides.get(alias, [])]
-        converted: ValueT | None = None  # merged across loader/overrides, only the final cast can name the type
+        converted: V | None = None  # merged across loader/overrides, only the final cast can name the type
         for alias in (key, *all_keys):
             try:
                 raw = self.load_raw(alias, conf, args.env_name)
@@ -210,10 +210,10 @@ class Loader(Convert[RawT]):
                 else:
                     converted = converted_override
 
-        return cast("ValueT", converted)  # guaranteed non-None: either build() succeeded or overrides set it
+        return cast("V", converted)  # guaranteed non-None: either build() succeeded or overrides set it
 
     @abstractmethod
-    def load_raw(self, key: str, conf: Config | None, env_name: str | None) -> RawT:
+    def load_raw(self, key: str, conf: Config | None, env_name: str | None) -> T:
         """Load the raw object from the config store.
 
         :param key: the key under what we want the configuration
@@ -228,12 +228,12 @@ class Loader(Convert[RawT]):
     def build(  # ruff:ignore[too-many-arguments]  # public signature
         self,
         key: str,  # ruff:ignore[unused-method-argument]  # override signature
-        of_type: type[ValueT] | UnionType,
-        factory: Factory[ValueT],
+        of_type: type[V] | UnionType,
+        factory: Factory[V],
         conf: Config | None,  # ruff:ignore[unused-method-argument]  # override signature
-        raw: RawT,
+        raw: T,
         args: ConfigLoadArgs,  # ruff:ignore[unused-method-argument]  # override signature
-    ) -> ValueT:
+    ) -> V:
         """Materialize the raw configuration value from the loader.
 
         :param key: the config key
@@ -251,23 +251,23 @@ class Loader(Convert[RawT]):
     def _build_override(
         self,
         entry: Override,
-        of_type: type[ValueT] | UnionType,
-        factory: Factory[ValueT],
+        of_type: type[V] | UnionType,
+        factory: Factory[V],
         conf: Config | None,
         args: ConfigLoadArgs,
-    ) -> ValueT:
+    ) -> V:
         from tox.config.set_env import SetEnv  # ruff:ignore[import-outside-top-level]  # SetEnv imports this module.
 
         if conf is not None and inspect.isclass(of_type) and issubclass(of_type, SetEnv):
             # The loader attaches the replacer; set_env values must see the merged keys when read.
             return self.build(
-                entry.key, cast("type[ValueT] | UnionType", of_type), factory, conf, cast("RawT", entry.value), args
+                entry.key, cast("type[V] | UnionType", of_type), factory, conf, cast("T", entry.value), args
             )
         return _STR_CONVERT.to(
             entry.value if conf is None else self.substitute(entry.value, conf, args, of_type=of_type), of_type, factory
         )
 
-    def substitute(self, value: str, conf: Config, args: ConfigLoadArgs, *, of_type: type[ValueT] | UnionType) -> str:
+    def substitute(self, value: str, conf: Config, args: ConfigLoadArgs, *, of_type: type[V] | UnionType) -> str:
         """Apply this loader's replacements to a raw string.
 
         :param value: the raw string
@@ -281,7 +281,7 @@ class Loader(Convert[RawT]):
         raise NotImplementedError
 
     def set_env_reference(
-        self, raw: RawT, overrides: list[Override], conf: Config, args: ConfigLoadArgs
+        self, raw: T, overrides: list[Override], conf: Config, args: ConfigLoadArgs
     ) -> SetEnvReference:
         # SetEnv imports this module.
         """Wrap a raw value in a reference that loads it as a ``set_env`` value.
@@ -327,7 +327,7 @@ def _handle_bad_value(key: str, args: ConfigLoadArgs) -> Generator[None]:
         raise HandledError(msg) from exception
 
 
-def _append_override(converted: ValueT, override: ValueT) -> ValueT:
+def _append_override(converted: V, override: V) -> V:
     from tox.config.set_env import SetEnv  # ruff:ignore[import-outside-top-level]  # avoids an import cycle
 
     if isinstance(converted, list) and isinstance(override, list):
@@ -344,7 +344,7 @@ def _append_override(converted: ValueT, override: ValueT) -> ValueT:
     return converted
 
 
-def apply_overrides_to_raw(overrides: Iterable[Override], key: str, value: RawT) -> RawT:
+def apply_overrides_to_raw(overrides: Iterable[Override], key: str, value: T) -> T:
     """Fold the overrides targeting ``key`` onto a raw (pre-conversion) value.
 
     Reference resolution reads values straight from the parsed config, sidestepping :meth:`Loader.load` where overrides
@@ -364,8 +364,8 @@ def apply_overrides_to_raw(overrides: Iterable[Override], key: str, value: RawT)
     return value
 
 
-def _apply_override_to_raw(value: RawT, override: Override) -> RawT:
-    converted: RawT | list[str] | dict[str, str] | str
+def _apply_override_to_raw(value: T, override: Override) -> T:
+    converted: T | list[str] | dict[str, str] | str
     if override.append:
         if isinstance(value, list):
             converted = [*value, *_STR_CONVERT.to_list(override.value, str)]
@@ -382,7 +382,7 @@ def _apply_override_to_raw(value: RawT, override: Override) -> RawT:
         converted = dict(_STR_CONVERT.to_dict(override.value, (str, str)))
     else:
         converted = override.value
-    return cast("RawT", converted)
+    return cast("T", converted)
 
 
 @impl

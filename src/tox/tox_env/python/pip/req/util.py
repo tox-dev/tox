@@ -1,4 +1,4 @@
-"""Borrowed from the pip code base."""
+"""Borrowed from the pip code base."""  # simplint: ignore[SMP104]  # imported by tox plugins
 
 from __future__ import annotations
 
@@ -10,7 +10,7 @@ from packaging.utils import canonicalize_name
 
 VCS: Final[list[str]] = ["ftp", "ssh", "git", "hg", "bzr", "sftp", "svn"]
 """The names of the version control systems pip accepts in a requirement URL."""
-_VALID_SCHEMAS: Final[list[str]] = ["http", "https", "file", *VCS]
+VALID_SCHEMAS: Final[list[str]] = ["http", "https", "file", *VCS]  # simplint: ignore[SMP404]  # imported by tox plugins
 """The URL schemes a requirement can be given with."""
 
 
@@ -22,7 +22,7 @@ def is_url(name: str) -> bool:
     :returns: whether it is a URL
 
     """
-    return get_url_scheme(name) in _VALID_SCHEMAS
+    return get_url_scheme(name) in VALID_SCHEMAS
 
 
 def get_url_scheme(url: str) -> str | None:

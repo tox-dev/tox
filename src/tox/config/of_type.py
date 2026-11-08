@@ -19,10 +19,11 @@ if TYPE_CHECKING:
     from .main import Config  # pragma: no cover  # setup not built by tests
 
 
-ValueT = TypeVar("ValueT")
+T = TypeVar("T")  # simplint: ignore[SMP101, SMP404]  # exported, renaming breaks importers
+V = TypeVar("V")  # simplint: ignore[SMP101, SMP404]  # exported, renaming breaks importers
 
 
-class ConfigDefinition(ABC, Generic[ValueT]):  # ruff:ignore[eq-without-hash]  # mutable value type
+class ConfigDefinition(ABC, Generic[T]):  # ruff:ignore[eq-without-hash]  # mutable value type
     """Abstract base class for configuration definitions.
 
     :param keys: the configuration keys, the first one is the name, the others are aliases
@@ -35,7 +36,7 @@ class ConfigDefinition(ABC, Generic[ValueT]):  # ruff:ignore[eq-without-hash]  #
         self.desc = desc
 
     @abstractmethod
-    def __call__(self, conf: Config, loaders: list[Loader[ValueT]], args: ConfigLoadArgs) -> ValueT:
+    def __call__(self, conf: Config, loaders: list[Loader[T]], args: ConfigLoadArgs) -> T:
         raise NotImplementedError
 
     @override
@@ -49,7 +50,7 @@ class ConfigDefinition(ABC, Generic[ValueT]):  # ruff:ignore[eq-without-hash]  #
         return not (self == o)
 
     @abstractmethod
-    def overwrite(self, value: ValueT) -> None:
+    def overwrite(self, value: T) -> None:
         """Force the configuration to the given value, replacing any constant or already loaded one.
 
         :param value: the new value
@@ -58,7 +59,7 @@ class ConfigDefinition(ABC, Generic[ValueT]):  # ruff:ignore[eq-without-hash]  #
         raise NotImplementedError
 
 
-class ConfigConstantDefinition(ConfigDefinition[ValueT]):  # ruff:ignore[eq-without-hash]  # mutable value type
+class ConfigConstantDefinition(ConfigDefinition[T]):  # ruff:ignore[eq-without-hash]  # mutable value type
     """A configuration definition whose value is defined upfront (such as the tox environment name).
 
     :param keys: the configuration keys, the first one is the name, the others are aliases
@@ -71,7 +72,7 @@ class ConfigConstantDefinition(ConfigDefinition[ValueT]):  # ruff:ignore[eq-with
         self,
         keys: Iterable[str],
         desc: str,
-        value: Callable[[], ValueT] | ValueT,
+        value: Callable[[], T] | T,
     ) -> None:
         super().__init__(keys, desc)
         self.value = value
@@ -80,11 +81,11 @@ class ConfigConstantDefinition(ConfigDefinition[ValueT]):  # ruff:ignore[eq-with
     def __call__(
         self,
         conf: Config,
-        loaders: list[Loader[ValueT]],
+        loaders: list[Loader[T]],
         args: ConfigLoadArgs,
-    ) -> ValueT:
+    ) -> T:
         if callable(self.value):
-            return cast("Callable[[], ValueT]", self.value)()
+            return cast("Callable[[], T]", self.value)()
         return self.value
 
     @override
@@ -99,7 +100,7 @@ class ConfigConstantDefinition(ConfigDefinition[ValueT]):  # ruff:ignore[eq-with
         return f"{type(self).__name__}({', '.join(f'{k}={v}' for k, v in values)})"
 
     @override
-    def overwrite(self, value: ValueT) -> None:
+    def overwrite(self, value: T) -> None:
         self.value = value
 
 
@@ -107,7 +108,7 @@ class _Missing(Enum):
     MISSING = auto()
 
 
-class ConfigDynamicDefinition(ConfigDefinition[ValueT]):  # ruff:ignore[eq-without-hash]  # mutable value type
+class ConfigDynamicDefinition(ConfigDefinition[T]):  # ruff:ignore[eq-without-hash]  # mutable value type
     """A configuration definition that comes from a source (such as in memory, an ini file, a toml file, etc.).
 
     :param keys: the configuration keys, the first one is the name, the others are aliases
@@ -123,25 +124,25 @@ class ConfigDynamicDefinition(ConfigDefinition[ValueT]):  # ruff:ignore[eq-witho
         self,
         keys: Iterable[str],
         desc: str,
-        of_type: type[ValueT] | UnionType,
-        default: Callable[[Config, str | None], ValueT] | ValueT | None,
-        post_process: Callable[[ValueT], ValueT] | None = None,
-        factory: Factory[ValueT] | None = None,
+        of_type: type[T] | UnionType,
+        default: Callable[[Config, str | None], T] | T | None,
+        post_process: Callable[[T], T] | None = None,
+        factory: Factory[T] | None = None,
     ) -> None:
         super().__init__(keys, desc)
         self.of_type = of_type
         self.default = default
         self.post_process = post_process
         self.factory = factory
-        self._cache: ValueT | _Missing = _Missing.MISSING
+        self._cache: T | _Missing = _Missing.MISSING
 
     @override
     def __call__(
         self,
         conf: Config,
-        loaders: list[Loader[ValueT]],
+        loaders: list[Loader[T]],
         args: ConfigLoadArgs,
-    ) -> ValueT:
+    ) -> T:
         if self._cache is _Missing.MISSING:
             primary_key, *alias_keys = self.keys
             for loader in loaders:
@@ -162,10 +163,10 @@ class ConfigDynamicDefinition(ConfigDefinition[ValueT]):  # ruff:ignore[eq-witho
                     del args.chain[-1]
             else:
                 if callable(self.default):
-                    value = cast("Callable[[Config, str | None], ValueT]", self.default)(conf, args.env_name)
+                    value = cast("Callable[[Config, str | None], T]", self.default)(conf, args.env_name)
                 else:
-                    # when the default is None the overloads guarantee ValueT includes None
-                    value = cast("ValueT", self.default)
+                    # when the default is None the overloads guarantee T includes None
+                    value = cast("T", self.default)
             if self.post_process is not None:
                 value = self.post_process(value)
             self._cache = value
@@ -187,7 +188,7 @@ class ConfigDynamicDefinition(ConfigDefinition[ValueT]):  # ruff:ignore[eq-witho
         )
 
     @override
-    def overwrite(self, value: ValueT) -> None:
+    def overwrite(self, value: T) -> None:
         self._cache = value
 
 
