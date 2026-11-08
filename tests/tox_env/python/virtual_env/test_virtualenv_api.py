@@ -13,7 +13,6 @@ from virtualenv import session_via_cli
 from virtualenv.config.cli.parser import VirtualEnvOptions
 
 from tox.tox_env.python.virtual_env.api import VirtualEnv
-from python_discovery import PythonInfo as DiscoveredPythonInfo
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -472,7 +471,20 @@ def test_get_python_tolerates_interpreter_without_marker_environment(
     hand back interpreters without the attribute (issue #4399) - tox must
     fall back to re-deriving it instead of crashing with an internal
     error."""
-    interpreter = MagicMock(spec=["implementation", "version_info", "version", "architecture", "platform", "free_threaded", "debug_build", "system_executable"])  # noqa: FURB171 - the attribute must be MISSING, not just None
+    # the attribute must be MISSING, not just None - a spec'd mock raises
+    # AttributeError on access, exactly like the older python-discovery builds
+    interpreter = MagicMock(
+        spec=[
+            "implementation",
+            "version_info",
+            "version",
+            "architecture",
+            "platform",
+            "free_threaded",
+            "debug_build",
+            "system_executable",
+        ],
+    )
     interpreter.implementation = "CPython"
     interpreter.version_info = sys.version_info
     interpreter.version = sys.version
@@ -491,7 +503,8 @@ def test_get_python_tolerates_interpreter_without_marker_environment(
         {
             "tox.ini": """[testenv]
 package = skip
-commands = [["python", "-c", "print('ok')"]]
+allowlist_externals = python
+commands = python -c "print('ok')"
 """,
         },
     )
