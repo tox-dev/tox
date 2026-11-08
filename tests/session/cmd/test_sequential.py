@@ -178,7 +178,11 @@ def test_result_json_sequential(
     assert log_report == expected
 
 
-def get_cmd_exit_run_id(report: dict[str, Any], name: str, group: str) -> list[tuple[int | None, str]]:
+def get_cmd_exit_run_id(  # simplint: ignore[SMP602]  # the report has any JSON shape
+    report: dict[str, Any],  # simplint: ignore[SMP602]  # the report has any JSON shape
+    name: str,
+    group: str,  # simplint: ignore[SMP602]  # the report has any JSON shape
+) -> list[tuple[int | None, str]]:
     return [(i["retcode"], i["run_id"]) for i in report["testenvs"][name].pop(group)]
 
 

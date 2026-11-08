@@ -31,9 +31,11 @@ _BACKSLASH_ESCAPE: Final[pytest.MarkDecorator] = pytest.mark.skipif(
 def test_legacy_requirement_file(tmp_path: Path, legacy_flag: str, expected: str) -> None:
     python_deps = PythonDeps(f"{legacy_flag}a.txt", tmp_path)
     (tmp_path / "a.txt").write_text("b")
-    assert python_deps.as_root_args == [legacy_flag, "a.txt"]
-    assert python_deps.options == Namespace()
-    assert [str(i) for i in python_deps.requirements] == [expected]
+    assert (python_deps.as_root_args, python_deps.options, [str(i) for i in python_deps.requirements]) == (
+        [legacy_flag, "a.txt"],
+        Namespace(),
+        [expected],
+    )
 
 
 @pytest.mark.parametrize("flag", ["-c", "-r", "-f", "-e"])

@@ -569,10 +569,11 @@ def test_constraint_txt_expanded(tmp_path: Path, flag: str) -> None:
     requirements_file = tmp_path / "req.txt"
     requirements_file.write_text(f"{flag} other.txt\n{flag} other.txt")
     req_file = RequirementsFile(requirements_file, constraint=True)
-    assert req_file.as_root_args == ["-c", "other.txt"]
-    assert req_file.options == Namespace(index_url=["a"])
-    found = [str(i) for i in req_file.requirements]
-    assert found == ["-c magic", "-c magical"]
+    assert (req_file.as_root_args, req_file.options, [str(i) for i in req_file.requirements]) == (
+        ["-c", "other.txt"],
+        Namespace(index_url=["a"]),
+        ["-c magic", "-c magical"],
+    )
 
 
 @pytest.mark.skipif(sys.platform == "win32", reason=r"on windows the escaped \ is overloaded by path separator")

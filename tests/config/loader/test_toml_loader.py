@@ -50,7 +50,11 @@ _PREFIX: Final[str] = r"failed to load A\.k: "
         pytest.param(["a", "b"], list[Literal["a", "b"]], ["a", "b"], id="list_literal"),
     ],
 )
-def test_toml_loader_ok(value: TomlTypes, of_type: type | UnionType, expected: object) -> None:
+def test_toml_loader_ok(  # simplint: ignore[SMP602]  # test values have any type
+    value: TomlTypes,
+    of_type: type | UnionType,
+    expected: object,  # simplint: ignore[SMP602]  # test values have any type
+) -> None:
     result = perform_load(value, of_type)
     assert result == expected
     assert isinstance(result, type(expected))
@@ -62,7 +66,7 @@ def perform_load(value: TomlTypes, of_type: type[TargetT] | UnionType) -> Target
     return loader.load(key, of_type, factory_na, None, ConfigLoadArgs(None, env_name, env_name))
 
 
-def factory_na(obj: object) -> TargetT:
+def factory_na(obj: object) -> TargetT:  # simplint: ignore[SMP602]  # test values have any type
     raise NotImplementedError
 
 

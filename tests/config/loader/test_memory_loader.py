@@ -64,7 +64,11 @@ def test_memory_loader_override() -> None:
         pytest.param("1", int | None, 1, id="int_or_none_from_str_1"),
     ],
 )
-def test_memory_loader(value: object, of_type: type, outcome: object) -> None:
+def test_memory_loader(  # simplint: ignore[SMP602]  # test values have any type
+    value: object,  # simplint: ignore[SMP602]  # test values have any type
+    of_type: type,
+    outcome: object,  # simplint: ignore[SMP602]  # test values have any type
+) -> None:
     loader = MemoryLoader(a=value, kwargs={})
     loaded = loader.load("a", of_type=of_type, conf=None, factory=None, args=ConfigLoadArgs([], "name", None))
     assert loaded == outcome
@@ -83,7 +87,11 @@ def test_memory_loader(value: object, of_type: type, outcome: object) -> None:
         pytest.param(1, EnvList, "1", id="env-list"),
     ],
 )
-def test_memory_loader_fails_invalid(value: object, of_type: type, msg: str) -> None:
+def test_memory_loader_fails_invalid(  # simplint: ignore[SMP602]  # test values have any type
+    value: object,  # simplint: ignore[SMP602]  # test values have any type
+    of_type: type,
+    msg: str,  # simplint: ignore[SMP602]  # test values have any type
+) -> None:
     loader = MemoryLoader(a=value, kwargs={})
     args = ConfigLoadArgs([], "name", None)
     with pytest.raises(HandledError, match=rf"failed to load core\.a: .*{msg}"):
