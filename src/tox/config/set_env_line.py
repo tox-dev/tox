@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import re
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, NamedTuple
 
 from .loader.replacer import HostText
 
@@ -11,7 +11,7 @@ if TYPE_CHECKING:
     from typing import Final
 
 
-def split_line(line: str) -> tuple[str, str, str]:
+def split_line(line: str) -> SplitLine:
     """Split a ``KEY=VALUE`` line into its key, its value and its marker.
 
     :param line: the line to split
@@ -28,7 +28,7 @@ def split_line(line: str) -> tuple[str, str, str]:
     if isinstance(line, HostText):
         rest = line.fragment(len(key) + 1)
     value, marker = split_value_marker(rest.strip())
-    return key.strip(), value, marker
+    return SplitLine(key.strip(), value, marker)
 
 
 def split_value_marker(value: str) -> tuple[str, str]:
@@ -87,6 +87,20 @@ def _unescape_semicolons(value: str) -> str:
     return HostText.from_parts(parts)
 
 
+class SplitLine(NamedTuple):
+    """A ``KEY=VALUE; marker`` line split into its parts.
+
+    :param key: the key, without surrounding whitespace
+    :param value: the value, without the marker
+    :param marker: the marker, empty when the line has none
+
+    """
+
+    key: str
+    value: str
+    marker: str
+
+
 def format_line(key: str, value: str, marker: str | None) -> str:
     """Format a ``KEY=VALUE`` line, the inverse of splitting it.
 
@@ -103,6 +117,7 @@ def format_line(key: str, value: str, marker: str | None) -> str:
 
 
 __all__ = [
+    "SplitLine",
     "format_line",
     "split_line",
     "split_value_marker",
