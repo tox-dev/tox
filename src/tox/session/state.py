@@ -54,6 +54,7 @@ def tox_add_option(parser: ToxParser) -> None:
     """Add the ``--runner`` option to the command line parser.
 
     :param parser: the parser to add the option to
+
     """
     from tox.tox_env.register import REGISTER  # ruff:ignore[import-outside-top-level]  # avoids an import cycle
 

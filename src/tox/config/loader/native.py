@@ -18,6 +18,7 @@ def to_native(value: object) -> JsonValue:
     :param value: the value to convert
 
     :returns: the value as a JSON compatible type
+
     """
     if isinstance(value, bool):
         return value

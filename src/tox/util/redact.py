@@ -65,6 +65,7 @@ def redact_argv(argv: Sequence[str]) -> list[str]:
     :param argv: the command line arguments
 
     :returns: the arguments with the secrets replaced
+
     """
     result: list[str] = []
     for token in argv:

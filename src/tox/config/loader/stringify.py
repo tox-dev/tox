@@ -21,6 +21,7 @@ def stringify_reference(value: object, *, constant: bool) -> str:
     :param constant: whether the value is a constant of the configuration
 
     :returns: the text of the value
+
     """
     as_str: Final[str] = stringify(value)[0]
     if _is_command_argument_value(value) and (not isinstance(value, str) or constant):
@@ -34,6 +35,7 @@ def stringify(value: object) -> tuple[str, bool]:  # ruff:ignore[too-many-return
     :param value: the value to convert
 
     :returns: the text of the value, and whether it is built from several entries
+
     """
     if isinstance(value, str):
         return value, False

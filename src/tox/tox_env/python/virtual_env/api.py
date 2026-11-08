@@ -197,6 +197,7 @@ class VirtualEnv(Python, ABC):
         """Get the environment variables the virtualenv is created with.
 
         :returns: the environment variables
+
         """
         env = self.environment_variables.copy()
         if "VIRTUALENV_NO_PERIODIC_UPDATE" not in env:

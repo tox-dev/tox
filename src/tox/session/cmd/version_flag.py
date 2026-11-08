@@ -24,6 +24,7 @@ def tox_add_option(parser: ToxParser) -> None:
     """Add the ``--version`` flag to the command line parser.
 
     :param parser: the parser to add the flag to
+
     """
 
     class _V(Action):
@@ -56,6 +57,7 @@ def get_version_info() -> str:
     """Get the version of tox, with the plugins and the inline plugin module that are registered.
 
     :returns: the version information, one entry per line
+
     """
     out = [f"{version} from {Path(tox.__file__).absolute()}"]
     if plugin_info := MANAGER.manager.list_plugin_distinfo():

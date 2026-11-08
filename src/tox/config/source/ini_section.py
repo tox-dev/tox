@@ -16,6 +16,7 @@ class IniSection(Section):
         :param name: the name of the environment
 
         :returns: the section of the environment
+
         """
         return cls(TEST_ENV_PREFIX, name)
 

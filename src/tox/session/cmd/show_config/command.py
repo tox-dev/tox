@@ -22,6 +22,7 @@ def tox_add_option(parser: ToxParser) -> None:
     """Add the ``config`` sub-command to the command line parser.
 
     :param parser: the parser to add the sub-command to
+
     """
     our = parser.add_command("config", ["c"], "show tox configuration", show_config)
     our.add_argument(
@@ -63,6 +64,7 @@ def show_config(state: State) -> int:
     :param state: the state of the run
 
     :returns: the exit code
+
     """
     from .ini import show_config_ini  # ruff:ignore[import-outside-top-level]  # avoids an import cycle
     from .json_format import show_config_json  # ruff:ignore[import-outside-top-level]  # avoids an import cycle

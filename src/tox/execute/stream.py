@@ -75,6 +75,7 @@ class SyncWrite:
         """Wrap the content written inside the block in the color of the stream, when a color is set.
 
         :yields: ``None``, the block runs with the color applied
+
         """
         if self._color is None or self._target is None:
             yield

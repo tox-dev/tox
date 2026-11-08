@@ -83,6 +83,7 @@ class Source(ABC):
         :param section: the section to transform
 
         :returns: the transformed section
+
         """
         raise NotImplementedError
 
@@ -94,6 +95,7 @@ class Source(ABC):
         :param override_map: the overrides to apply when reading the section
 
         :returns: the loader, or ``None`` when the source has no values for the section
+
         """
         raise NotImplementedError
 
@@ -105,6 +107,7 @@ class Source(ABC):
         :param in_section: the section that inherits from them
 
         :returns: the base sections
+
         """
         raise NotImplementedError
 
@@ -131,7 +134,9 @@ class Source(ABC):
         """Get the section of a tox environment.
 
         :param item: the name of the tox environment
+
         :returns: the section, followed by the base sections for test and for package environments
+
         """
         raise NotImplementedError
 
@@ -151,6 +156,7 @@ class FactorLabelSource(Protocol):
         :param env_name: the environment name, ``None`` for the core configuration
 
         :returns: the factor labels
+
         """
         ...
 

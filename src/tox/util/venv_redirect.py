@@ -26,6 +26,7 @@ def venv_redirect_path(root: Path) -> Path:
     :param root: the project root
 
     :returns: the path of the redirect file
+
     """
     return root / _FILE_NAME
 
@@ -36,6 +37,7 @@ def record_venv_redirect(root: Path, env: Path, is_ours: Callable[[Path], bool])
     :param root: the project root
     :param env: the virtual environment
     :param is_ours: whether a path is a virtual environment that tox created
+
     """
     file: Final[Path] = root / _FILE_NAME
     try:
@@ -268,6 +270,7 @@ def forget_venv_redirect(root: Path, env: Path) -> None:
 
     :param root: the project root
     :param env: the virtual environment
+
     """
     file: Final[Path] = root / _FILE_NAME
     if sys.platform == "win32":  # pragma: win32 cover
@@ -348,6 +351,7 @@ def release_venv_redirect(path: Path, is_ours: Callable[[Path], bool]) -> bool:
     :param is_ours: whether a path is a virtual environment that tox created
 
     :returns: whether the redirect was removed
+
     """
     try:
         if sys.platform == "win32":  # pragma: win32 cover

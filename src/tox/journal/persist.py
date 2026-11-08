@@ -15,6 +15,7 @@ def write_journal(path: Path | None, journal: Journal) -> None:
 
     :param path: the file to write to, nothing is written when ``None``
     :param journal: the journal to write
+
     """
     if path is None:
         return

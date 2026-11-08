@@ -19,6 +19,7 @@ def split_line(line: str) -> tuple[str, str, str]:
     :returns: the key, the value and the marker, the marker being empty when the line has none
 
     :raises ValueError: when the line has no ``=``
+
     """
     key, sep, rest = line.partition("=")
     if not sep:
@@ -38,6 +39,7 @@ def split_value_marker(value: str) -> tuple[str, str]:
     :param value: the value, possibly followed by a marker
 
     :returns: the value and the marker, the marker being empty when there is none
+
     """
     respect_quotes = True
     while True:  # the second pass ignores quotes, so it always ends balanced
@@ -93,6 +95,7 @@ def format_line(key: str, value: str, marker: str | None) -> str:
     :param marker: the marker to append, ``None`` for none
 
     :returns: the formatted line
+
     """
     escaped_semicolon: Final[str] = r"\;"  # Python 3.11 rejects a backslash inside an f-string expression
     line = f"{key}={value.replace(';', escaped_semicolon)}"

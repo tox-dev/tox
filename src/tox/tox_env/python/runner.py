@@ -44,6 +44,7 @@ class PythonRun(Python, RunToxEnv, ABC):
     """The base of the tox environments that run commands with a python interpreter.
 
     :param create_args: the arguments the environment is created with
+
     """
 
     def __init__(self, create_args: ToxEnvCreateArgs) -> None:
@@ -135,6 +136,7 @@ class PythonRun(Python, RunToxEnv, ABC):
         """The package type the environment uses, from its configuration.
 
         :raises tox.report.HandledError: when the configured package type is not one of the supported types
+
         """
         pkg_type = self.conf.get("package", str)
         if pkg_type not in self._package_types:
@@ -255,6 +257,7 @@ def add_extras_to_env(conf: EnvConfigSet) -> None:
     """Add the ``extras`` setting to the configuration of an environment.
 
     :param conf: the configuration of the environment
+
     """
     conf.add_config(
         keys=["extras"],

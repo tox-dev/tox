@@ -169,6 +169,7 @@ class ScriptMetadata:
 
     :param requires_python: the python version the script requires
     :param dependencies: the dependencies the script requires
+
     """
 
     requires_python: str | None = None

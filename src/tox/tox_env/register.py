@@ -38,6 +38,7 @@ class ToxEnvRegister:
         """Change the default run environment type.
 
         :param value: the new run environment type by name
+
         :raises ValueError: when the run environment type is not registered
 
         """

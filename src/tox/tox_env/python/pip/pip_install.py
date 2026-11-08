@@ -43,6 +43,7 @@ class PythonInstallerListDependencies(Installer[Python], ABC):
 
     :param tox_env: the environment to install packages into
     :param with_list_deps: whether to list the installed packages
+
     """
 
     def __init__(self, tox_env: Python, with_list_deps: bool = True) -> None:  # ruff:ignore[boolean-type-hint-positional-argument, boolean-default-value-positional-argument]  # public signature
@@ -64,6 +65,7 @@ class PythonInstallerListDependencies(Installer[Python], ABC):
         """Get the command that lists the installed packages.
 
         :returns: the command
+
         """
         raise NotImplementedError
 
@@ -129,6 +131,7 @@ class Pip(PythonInstallerListDependencies):
         :param env_name: the name of the environment
 
         :returns: the install command
+
         """
         isolated_flag = "-E" if self._env.base_python.version_info.major == 2 else "-I"  # ruff:ignore[magic-value-comparison]  # Python 2 only takes -E
         return Command(["python", isolated_flag, "-m", "pip", "install", "{opts}", "{packages}"])
@@ -139,6 +142,7 @@ class Pip(PythonInstallerListDependencies):
         :param cmd: the install command
 
         :returns: the install command with the options
+
         """
         install_command = cmd.args
         pip_pre = self._env.conf.get("pip_pre", bool)
@@ -289,6 +293,7 @@ class Pip(PythonInstallerListDependencies):
         """The path of the file the constraints are written to.
 
         :returns: the path of the constraints file
+
         """
         return Path(self._env.env_dir) / "constraints.txt"
 
@@ -298,6 +303,7 @@ class Pip(PythonInstallerListDependencies):
         :param args: the arguments to install
 
         :returns: the install command
+
         """
         install_command = self._env.conf.get("install_command", Command).args
         try:

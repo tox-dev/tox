@@ -82,6 +82,7 @@ class TomlLoader(Loader[TomlTypes]):
         :returns: the raw value found at that path
 
         :raises KeyError: when a part of the path is missing or is not a table
+
         """
         current = cast("TomlTypes", self._root_content)
         for key in path.split(self.section.SEP):

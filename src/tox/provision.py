@@ -81,6 +81,7 @@ def provision(state: State) -> int | bool:
     :returns: ``False`` when the running tox satisfies the requirements, else the outcome of the provisioned run
 
     :raises tox.report.HandledError: when the package staging directory cannot be repaired
+
     """
     state.conf.core.add_config(
         keys=["min_version", "minversion"],

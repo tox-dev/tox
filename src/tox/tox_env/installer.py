@@ -51,6 +51,7 @@ class Installer(ABC, Generic[EnvT_co, ArgsT]):
         :param arguments: the arguments to install
         :param section: the configuration section the arguments come from
         :param of_type: the type of the arguments, such as ``deps`` or ``requirements``
+
         """
         raise NotImplementedError
 

@@ -58,6 +58,7 @@ class SetEnvReference:
     :param config: the ``set_env`` the value is written to
     :param args: the load arguments the value is resolved with
     :param shape: the form the value was written in, a string, a table or an array
+
     """
 
     config: SetEnv
@@ -205,7 +206,9 @@ class SetEnv:
 
         :param line: the line to split
         :param substituted: whether the line is text produced by a substitution
+
         :returns: the key, value and marker, or ``None`` when the line is deferred
+
         """
         try:
             key, value, marker = split_line(line)
@@ -395,6 +398,7 @@ class SetEnv:
 
         :param value: the replacer to use
         :param args: the args of the configuration load
+
         """
         self._replacer, self._args = value, args.copy()
 
@@ -405,6 +409,7 @@ class SetEnv:
         :param args: the args of the configuration load, a new set is created when ``None``
 
         :returns: the value of the environment variable
+
         """
         self._resolve_replacements()
         if item in self._materialized:
@@ -425,6 +430,7 @@ class SetEnv:
         """Get the environment variables as ``KEY=VALUE`` lines, in the form they are written in the configuration.
 
         :returns: the lines, separated by newlines
+
         """
         return "\n".join(
             format_line(name, str(entry["value"]), entry.get("marker"))
@@ -436,7 +442,9 @@ class SetEnv:
 
         :param args: the load arguments the values are resolved with
         :param resolve: whether pending replacements are resolved first
+
         :returns: the entries keyed by name, each holding its value and optional marker
+
         """
         if resolve:
             self._resolve_replacements(args)
@@ -453,6 +461,7 @@ class SetEnv:
         They come from settings that may read ``set_env`` through ``{env:...}``, so reading them here would recurse.
 
         :param values: the tox variables to export, each mapped to a callable producing its value
+
         """
         for key, value in values.items():
             self._raw.pop(key, None)
@@ -465,6 +474,7 @@ class SetEnv:
         """Appended blocks override base keys; explicit keys in the same override win.
 
         :param other: the configuration whose blocks are appended to this one
+
         """
         for _, protected in self._overrides:
             protected.update(other._raw)
@@ -486,6 +496,7 @@ class SetEnv:
 
         :param param: the variables to set, another set env is read through its loader
         :param override: whether to replace the variables that are already set explicitly
+
         """
         for key in param:
             # do not override something already set explicitly

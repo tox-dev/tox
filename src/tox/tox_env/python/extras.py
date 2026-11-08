@@ -19,6 +19,7 @@ def resolve_extras_static(root: Path, extras: set[str]) -> list[Requirement] | N
     :param extras: the names of the extras
 
     :returns: the requirements, or ``None`` when they cannot be read statically
+
     """
     pyproject_file = root / "pyproject.toml"
     if not pyproject_file.exists():

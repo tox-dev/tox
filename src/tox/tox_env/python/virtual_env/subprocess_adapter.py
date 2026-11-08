@@ -48,6 +48,7 @@ class SubprocessPythonInfo:
     :param debug_build: whether the interpreter is a debug build
     :param sysconfig_platform: the platform name from ``sysconfig``, ``None`` when unknown
     :param marker_environment: the environment markers of the interpreter, ``None`` when unknown
+
     """
 
     implementation: str
@@ -139,6 +140,7 @@ class SubprocessSession:
         """Run the create step of the environment in a subprocess.
 
         :raises RuntimeError: when no bootstrap interpreter was found
+
         """
         if self._bootstrap_python is None:
             msg = "no interpreter discovered"
@@ -169,6 +171,7 @@ class SubprocessSession:
         """The creator of the environment, which describes its paths.
 
         :raises RuntimeError: when no interpreter was discovered
+
         """
         if self._creator is None:
             msg = "no interpreter discovered"
@@ -183,6 +186,7 @@ def probe_python(python_path: str, marker_environment: MarkerEnvironment | None 
     :param marker_environment: the marker environment to compare the interpreter with, ``None`` to skip it
 
     :returns: the details, or ``None`` when the interpreter cannot be probed
+
     """
     probe_script: str = """\
 import json, struct, sys, sysconfig
@@ -231,6 +235,7 @@ def ensure_bootstrap(work_dir: Path, virtualenv_spec: str) -> Path:
     :returns: the path of the bootstrap
 
     :raises tox.tox_env.errors.Fail: when the cache directory of the bootstrap cannot be created
+
     """
     _version_specifier(virtualenv_spec)
     base: Final[Path] = _bootstrap_path(work_dir, virtualenv_spec)

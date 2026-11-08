@@ -29,6 +29,7 @@ class ReplaceReferenceIni(ReplaceReference):
 
     :param conf: the global config
     :param loader: the ini loader the value was read with
+
     """
 
     def __init__(self, conf: Config, loader: IniLoader) -> None:

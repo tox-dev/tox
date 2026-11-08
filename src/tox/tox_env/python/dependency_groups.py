@@ -29,6 +29,7 @@ def resolve(root: Path, groups: set[str]) -> set[Requirement]:
     :returns: the requirements of the groups
 
     :raises Fail: when the file or a group does not exist
+
     """
     pyproject_file = root / "pyproject.toml"
     if not pyproject_file.exists():

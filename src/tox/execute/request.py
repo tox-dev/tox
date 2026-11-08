@@ -99,6 +99,7 @@ def shell_cmd(cmd: Sequence[str]) -> str:
     :param cmd: the command and its arguments
 
     :returns: the command as a single string
+
     """
     if sys.platform == "win32":  # pragma: win32 cover
         from subprocess import list2cmdline  # ruff:ignore[import-outside-top-level]  # avoids an import cycle

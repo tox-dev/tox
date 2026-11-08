@@ -24,6 +24,7 @@ class Pylock:
     :param extras: the extras to install from the lock file
     :param groups: the dependency groups to install from the lock file
     :param marker_env: the environment markers to resolve the lock file with
+
     """
 
     path: Path

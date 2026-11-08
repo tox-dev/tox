@@ -49,6 +49,7 @@ class Plugin:
         """Call the ``tox_extend_envs`` hook, which adds environment names to the environment list.
 
         :returns: the environment names the plugins add
+
         """
         additional_env_names_hook_value = self.manager.hook.tox_extend_envs()
         # NOTE: S101 is suppressed below to allow for type narrowing in MyPy
@@ -59,6 +60,7 @@ class Plugin:
         """Call the ``tox_add_option`` hook, which adds command line options.
 
         :param parser: the parser to add the options to
+
         """
         self.manager.hook.tox_add_option(parser=parser)
 
@@ -67,6 +69,7 @@ class Plugin:
 
         :param core_conf: the core configuration
         :param state: the state of the run
+
         """
         self.manager.hook.tox_add_core_config(core_conf=core_conf, state=state)
 
@@ -75,6 +78,7 @@ class Plugin:
 
         :param env_conf: the configuration of the environment
         :param state: the state of the run
+
         """
         self.manager.hook.tox_add_env_config(env_conf=env_conf, state=state)
 
@@ -82,6 +86,7 @@ class Plugin:
         """Call the ``tox_register_tox_env`` hook, which registers environment types.
 
         :param register: the registry of environment types
+
         """
         self.manager.hook.tox_register_tox_env(register=register)
 
@@ -89,6 +94,7 @@ class Plugin:
         """Call the ``tox_before_run_commands`` hook, before the commands of an environment run.
 
         :param tox_env: the environment whose commands are about to run
+
         """
         self.manager.hook.tox_before_run_commands(tox_env=tox_env)
 
@@ -98,6 +104,7 @@ class Plugin:
         :param tox_env: the environment whose commands ran
         :param exit_code: the exit code of the commands
         :param outcomes: the outcome of each command
+
         """
         self.manager.hook.tox_after_run_commands(tox_env=tox_env, exit_code=exit_code, outcomes=outcomes)
 
@@ -108,6 +115,7 @@ class Plugin:
         :param arguments: the arguments the packages are installed with
         :param section: the configuration section the arguments come from
         :param of_type: the type of the arguments
+
         """
         self.manager.hook.tox_on_install(tox_env=tox_env, arguments=arguments, section=section, of_type=of_type)
 
@@ -115,6 +123,7 @@ class Plugin:
         """Call the ``tox_env_teardown`` hook, when an environment is torn down.
 
         :param tox_env: the environment that is torn down
+
         """
         self.manager.hook.tox_env_teardown(tox_env=tox_env)
 
@@ -122,6 +131,7 @@ class Plugin:
         """Load the plugins, the inline ``toxfile.py`` of the project included, and register the environment types.
 
         :param path: the path of the project configuration file, ``None`` to load no inline plugin
+
         """
         for plugin in self.manager.get_plugins():  # make sure we start with a clean state, repeated in memory run
             self.manager.unregister(plugin)

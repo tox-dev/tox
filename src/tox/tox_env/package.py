@@ -36,6 +36,7 @@ class PathPackage(Package):
     """A package given by a path on the local file system.
 
     :param path: the path of the package
+
     """
 
     def __init__(self, path: Path) -> None:
@@ -51,6 +52,7 @@ class PackageToxEnv(ToxEnv, ABC):
     """The base of the tox environments that build a package to install into the run environments.
 
     :param create_args: the arguments the environment is created with
+
     """
 
     def __init__(self, create_args: ToxEnvCreateArgs) -> None:
@@ -109,6 +111,7 @@ class PackageToxEnv(ToxEnv, ABC):
         :param for_env: the configuration of the run environment the packages are for
 
         :returns: the packages that were built
+
         """
         raise NotImplementedError
 
@@ -119,6 +122,7 @@ class PackageToxEnv(ToxEnv, ABC):
         :param run_env: the run environment
 
         :yields: the package types and the names of the run environment settings the packages are read from
+
         """
         return  # empty generator by default
         yield ("", "")  # unreachable, exists to establish yield type
@@ -127,6 +131,7 @@ class PackageToxEnv(ToxEnv, ABC):
         """Mark a run environment as active, so the packages are kept until it is torn down.
 
         :param run_env: the run environment
+
         """
         self._envs.add(run_env.conf.name)
 
@@ -134,6 +139,7 @@ class PackageToxEnv(ToxEnv, ABC):
         """Tear the packaging environment down, once no run environment uses it.
 
         :param conf: the configuration of the run environment that is torn down
+
         """
         if conf.name in self._envs:
             # conf.name (".tox") may be missing in self._envs in the case of an automatically provisioned environment
@@ -148,6 +154,7 @@ class PackageToxEnv(ToxEnv, ABC):
         :param run_conf: the configuration of the run environment
 
         :returns: the packaging environments
+
         """
         raise NotImplementedError
 

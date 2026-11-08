@@ -25,6 +25,7 @@ def get_options(*args: str) -> Options:
     :param args: the command line arguments
 
     :returns: the parsed options
+
     """
     completion_current: str | None = None
     if "_ARGCOMPLETE" in os.environ:
@@ -192,6 +193,7 @@ class Options(NamedTuple):
     :param source: the source the configuration is read from
     :param cmd_handlers: the handlers of the sub-commands, keyed by command name
     :param log_handler: the handler that reports the log output
+
     """
 
     parsed: Parsed
