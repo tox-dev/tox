@@ -5,11 +5,11 @@ import sys
 import sysconfig
 from pathlib import Path
 from typing import TYPE_CHECKING
-from unittest.mock import MagicMock
 
 import pytest
 from packaging.requirements import Requirement
 
+from tox.config.sets import EnvConfigSet
 from tox.journal import EnvJournal
 from tox.tox_env.errors import Fail
 from tox.tox_env.package import PathPackage
@@ -17,10 +17,13 @@ from tox.tox_env.python.dependency_groups import resolve
 from tox.tox_env.python.extras import resolve_extras_static
 from tox.tox_env.python.runner import PythonRun
 from tox.tox_env.python.virtual_env.package.cmd_builder import VenvCmdBuilder
+from tox.tox_env.python.virtual_env.package.pyproject import Pep517VirtualEnvPackager
 
 if TYPE_CHECKING:
     from collections.abc import Callable
     from typing import Final
+
+    from pytest_mock import MockerFixture
 
     from tox.pytest import ToxProjectCreator
 
@@ -44,7 +47,7 @@ def test_deps_config_path_req(tox_project: ToxProjectCreator) -> None:
 def test_journal_package_empty() -> None:
     journal = EnvJournal(enabled=True, name="a")
 
-    PythonRun._handle_journal_package(journal, [])  # ruff:ignore[private-member-access]
+    PythonRun._handle_journal_package(journal, [])  # ruff:ignore[private-member-access]  # internal state
 
     content = journal.content
     assert content == {}
@@ -55,7 +58,9 @@ def test_journal_one_wheel_file(tmp_path: Path) -> None:
     wheel.write_bytes(b"magical")
     journal = EnvJournal(enabled=True, name="a")
 
-    PythonRun._handle_journal_package(journal, [PathPackage(wheel)])  # ruff:ignore[private-member-access]
+    PythonRun._handle_journal_package(  # ruff:ignore[private-member-access]  # internal state
+        journal, [PathPackage(wheel)]
+    )
 
     content = journal.content
     assert content == {
@@ -74,7 +79,9 @@ def test_journal_multiple_wheel_file(tmp_path: Path) -> None:
     wheel_2.write_bytes(b"magic")
     journal = EnvJournal(enabled=True, name="a")
 
-    PythonRun._handle_journal_package(journal, [PathPackage(wheel_1), PathPackage(wheel_2)])  # ruff:ignore[private-member-access]
+    PythonRun._handle_journal_package(  # ruff:ignore[private-member-access]  # internal state
+        journal, [PathPackage(wheel_1), PathPackage(wheel_2)]
+    )
 
     content = journal.content
     assert content == {
@@ -96,7 +103,9 @@ def test_journal_multiple_wheel_file(tmp_path: Path) -> None:
 def test_journal_package_dir(tmp_path: Path) -> None:
     journal = EnvJournal(enabled=True, name="a")
 
-    PythonRun._handle_journal_package(journal, [PathPackage(tmp_path)])  # ruff:ignore[private-member-access]
+    PythonRun._handle_journal_package(  # ruff:ignore[private-member-access]  # internal state
+        journal, [PathPackage(tmp_path)]
+    )
 
     content = journal.content
     assert content == {
@@ -130,9 +139,9 @@ def test_package_temp_dir_view(tox_project: ToxProjectCreator, demo_pkg_inline: 
 @pytest.mark.parametrize(
     ("extra", "used_extra"),
     [
-        ("d_oc", "d-oc"),
-        ("d-oc", "d-oc"),
-        ("d.oc", "d-oc"),
+        pytest.param("d_oc", "d-oc", id="d-underscore-oc-d-dash-oc"),
+        pytest.param("d-oc", "d-oc", id="d-dash-oc-d-dash-oc"),
+        pytest.param("d.oc", "d-oc", id="d-dot-oc-d-dash-oc"),
     ],
 )
 def test_extras_are_normalized(
@@ -159,7 +168,12 @@ def test_extras_are_normalized(
 
 @pytest.mark.parametrize(
     ("config", "cli", "expected"),
-    [("false", "true", True), ("true", "false", False), ("false", "config", False), ("true", "config", True)],
+    [
+        pytest.param("false", "true", True, id="false-true-true"),
+        pytest.param("true", "false", False, id="true-false-false"),
+        pytest.param("false", "config", False, id="false-config-false"),
+        pytest.param("true", "config", True, id="true-config-true"),
+    ],
 )
 def test_config_skip_missing_interpreters(
     tox_project: ToxProjectCreator,
@@ -170,42 +184,48 @@ def test_config_skip_missing_interpreters(
     py_ver = ".".join(str(i) for i in sys.version_info[0:2])
     project = tox_project({"tox.ini": f"[tox]\nenvlist=py4,py{py_ver}\nskip_missing_interpreters={config}"})
     result = project.run(f"--skip-missing-interpreters={cli}")
-    assert result.code == (0 if expected else 1)
+    assert (result.code == 0) is expected
 
 
 def test_skip_missing_interpreters_default_is_false(tox_project: ToxProjectCreator) -> None:
-    project = tox_project({"tox.toml": 'env_list = ["py4"]'})
-    result = project.run()
+    result = tox_project({"tox.toml": 'env_list = ["py4"]'}).run()
     assert result.code == 1
 
 
-SYS_PY_VER = "".join(str(i) for i in sys.version_info[0:2]) + (
+_SYS_PY_VER: Final[str] = "".join(str(i) for i in sys.version_info[0:2]) + (
     "t" if sysconfig.get_config_var("Py_GIL_DISABLED") == 1 else ""
 )
 
 
 @pytest.mark.parametrize(
-    ("skip", "env", "retcode"),
+    ("skip", "env_args", "retcode"),
     [
-        ("true", f"py{SYS_PY_VER}", 0),
-        ("false", f"py{SYS_PY_VER}", 0),
-        ("true", "py31", 1),
-        ("false", "py31", 1),
-        ("true", None, 0),
-        ("false", None, 1),
+        pytest.param(
+            "true",
+            ["-e", f"py{_SYS_PY_VER}"],
+            0,
+            id="true-f-quote-py-open-underscore-sys-underscore-py-underscore-ver-close-quote-0",
+        ),
+        pytest.param(
+            "false",
+            ["-e", f"py{_SYS_PY_VER}"],
+            0,
+            id="false-f-quote-py-open-underscore-sys-underscore-py-underscore-ver-close-quote-0",
+        ),
+        pytest.param("true", ["-e", "py31"], 1, id="true-py31-1"),
+        pytest.param("false", ["-e", "py31"], 1, id="false-py31-1"),
+        pytest.param("true", [], 0, id="true-none-0"),
+        pytest.param("false", [], 1, id="false-none-1"),
     ],
 )
 def test_skip_missing_interpreters_specified_env(
     tox_project: ToxProjectCreator,
     skip: str,
-    env: str | None,
+    env_args: list[str],
     retcode: int,
 ) -> None:
-    project = tox_project({"tox.ini": f"[tox]\nenvlist=py31,py{SYS_PY_VER}\n[testenv]\nusedevelop=true"})
-    args = [f"--skip-missing-interpreters={skip}"]
-    if env:
-        args += ["-e", env]
-    result = project.run(*args)
+    project = tox_project({"tox.ini": f"[tox]\nenvlist=py31,py{_SYS_PY_VER}\n[testenv]\nusedevelop=true"})
+    result = project.run(f"--skip-missing-interpreters={skip}", *env_args)
     assert result.code == retcode
 
 
@@ -799,7 +819,7 @@ def test_deps_only_unknown_extra(tox_project: ToxProjectCreator) -> None:
 
 def test_deps_only_fallback_no_project_table(tox_project: ToxProjectCreator, demo_pkg_inline: Path) -> None:
     project = tox_project({"tox.toml": '[env_run_base]\npackage = "deps-only"\n'})
-    execute_calls = project.patch_execute(lambda r: 0 if "install" in r.run_id else None)
+    execute_calls = project.patch_execute(lambda request: 0 if "install" in request.run_id else None)
     result = project.run("r", "-e", "py", "--root", str(demo_pkg_inline), "--workdir", str(project.path / ".tox"))
 
     result.assert_success()
@@ -838,12 +858,12 @@ def test_resolve_extras_static_cannot_resolve(tmp_path: Path, pyproject: str, ex
 
 # kept after test-pruning defense (do not re-nominate): making VenvCmdBuilder.load_deps_for_env return []
 # fails only this test across the whole suite, nothing end-to-end covers the sdist-metadata delegation
-def test_cmd_builder_load_deps_for_env() -> None:
-    builder = MagicMock(spec=VenvCmdBuilder)
-    mock_meta_env = MagicMock()
+def test_cmd_builder_load_deps_for_env(mocker: MockerFixture) -> None:
+    builder = mocker.MagicMock(spec=VenvCmdBuilder)
+    mock_meta_env = mocker.create_autospec(Pep517VirtualEnvPackager, instance=True)
     mock_meta_env.load_deps_for_env.return_value = [Requirement("requests>=2")]
-    builder._sdist_meta_tox_env = mock_meta_env  # ruff:ignore[private-member-access]
-    mock_conf = MagicMock()
+    builder._sdist_meta_tox_env = mock_meta_env  # ruff:ignore[private-member-access]  # internal state
+    mock_conf = mocker.create_autospec(EnvConfigSet, instance=True)
 
     result = VenvCmdBuilder.load_deps_for_env(builder, mock_conf)
 

@@ -17,14 +17,22 @@ if TYPE_CHECKING:
 
 
 class MemoryLoader(Loader[object]):
-    """Loads configuration directly from data in memory."""
+    """Loads configuration directly from data in memory.
+
+    :param kwargs: the configuration values, keyed by name
+
+    :var raw: the configuration values as set in memory
+
+    """
 
     def __init__(self, **kwargs: Any) -> None:
         super().__init__(Section(prefix="<memory>", name=str(id(self))), [])
-        self.raw: dict[str, Any] = {**kwargs}
+        self.raw: dict[str, Any] = {**kwargs}  # simplint: ignore[SMP602]  # callers store any value in memory
 
     @override
-    def load_raw(self, key: str, conf: Config | None, env_name: str | None) -> object:
+    def load_raw(
+        self, key: str, conf: Config | None, env_name: str | None
+    ) -> object:  # simplint: ignore[SMP602]  # callers store any value in memory
         return self.raw[key]
 
     @override
@@ -33,37 +41,46 @@ class MemoryLoader(Loader[object]):
 
     @staticmethod
     @override
-    def to_bool(value: Any) -> bool:
+    def to_bool(value: Any) -> bool:  # simplint: ignore[SMP602]  # callers store any value in memory
         return bool(value)
 
     @staticmethod
     @override
-    def to_str(value: Any) -> str:
+    def to_str(value: Any) -> str:  # simplint: ignore[SMP602]  # callers store any value in memory
         return str(value)
 
     @staticmethod
     @override
-    def to_list(value: Any, of_type: type[Any]) -> Iterator[Any]:
+    def to_list(
+        value: Any,  # simplint: ignore[SMP602]  # callers store any value in memory
+        of_type: type[Any],  # simplint: ignore[SMP602]  # callers store any value in memory
+    ) -> Iterator[Any]:  # simplint: ignore[SMP602]  # callers store any value in memory
         return iter(value)
 
     @staticmethod
     @override
-    def to_set(value: Any, of_type: type[Any]) -> Iterator[Any]:
+    def to_set(
+        value: Any,  # simplint: ignore[SMP602]  # callers store any value in memory
+        of_type: type[Any],  # simplint: ignore[SMP602]  # callers store any value in memory
+    ) -> Iterator[Any]:  # simplint: ignore[SMP602]  # callers store any value in memory
         return iter(value)
 
     @staticmethod
     @override
-    def to_dict(value: Any, of_type: tuple[type[Any], type[Any]]) -> Iterator[tuple[Any, Any]]:
+    def to_dict(
+        value: Any,  # simplint: ignore[SMP602]  # callers store any value in memory
+        of_type: tuple[type[Any], type[Any]],  # simplint: ignore[SMP602]  # callers store any value in memory
+    ) -> Iterator[tuple[Any, Any]]:  # simplint: ignore[SMP602]  # callers store any value in memory
         return iter(value.items())
 
     @staticmethod
     @override
-    def to_path(value: Any) -> Path:
+    def to_path(value: Any) -> Path:  # simplint: ignore[SMP602]  # callers store any value in memory
         return Path(value)
 
     @staticmethod
     @override
-    def to_command(value: Any) -> Command:
+    def to_command(value: Any) -> Command:  # simplint: ignore[SMP602]  # callers store any value in memory
         if isinstance(value, Command):
             return value
         if isinstance(value, str):
@@ -73,10 +90,21 @@ class MemoryLoader(Loader[object]):
 
     @staticmethod
     @override
-    def to_env_list(value: Any) -> EnvList:
+    def to_env_list(value: Any) -> EnvList:  # simplint: ignore[SMP602]  # callers store any value in memory
         if isinstance(value, EnvList):
             return value
         if isinstance(value, str):
             return StrConvert.to_env_list(value)
         msg = f"env_list expected EnvList or str, got {type(value).__name__}: {value!r}"
         raise TypeError(msg)
+
+
+__all__ = [
+    "Command",
+    "EnvList",
+    "Loader",
+    "MemoryLoader",
+    "Section",
+    "StrConvert",
+    "override",
+]

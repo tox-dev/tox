@@ -22,10 +22,16 @@ if TYPE_CHECKING:
     from tox.config.cli.parser import ToxParser
     from tox.config.sets import ConfigSet
     from tox.session.state import State
+    from tox.util.json_types import JsonValue
 
 
 @impl
 def tox_add_option(parser: ToxParser) -> None:
+    """Add the ``schema`` sub-command to the command line parser.
+
+    :param parser: the parser to add the sub-command to
+
+    """
     our = parser.add_command(
         "schema", [], "Generate schema for tox configuration", gen_schema, inherit=frozenset({CORE})
     )
@@ -33,6 +39,13 @@ def tox_add_option(parser: ToxParser) -> None:
 
 
 def gen_schema(state: State) -> int:
+    """Print the JSON schema of the tox configuration.
+
+    :param state: the state of the run
+
+    :returns: the exit code
+
+    """
     core = state.conf.core
     strict = state.conf.options.strict
 
@@ -47,7 +60,7 @@ def gen_schema(state: State) -> int:
     # interface includes the internal storage tuple
     sections = {
         key: conf
-        for s, conf in state.conf._key_to_conf_set.items()  # ruff:ignore[private-member-access]
+        for s, conf in state.conf._key_to_conf_set.items()  # ruff:ignore[private-member-access]  # internal access
         if (key := s[0].split(".")[0]) not in {"env_run_base", "env_pkg_base", "env"}
     }
     for key, conf in sections.items():
@@ -268,21 +281,21 @@ def gen_schema(state: State) -> int:
             },
         },
     }
-    print(json.dumps(json_schema, indent=2))  # ruff:ignore[print]
+    print(json.dumps(json_schema, indent=2))  # ruff:ignore[print]  # terminal output
     return 0
 
 
-def _get_schema(conf: ConfigSet, path: str) -> dict[str, dict[str, typing.Any]]:
-    properties: dict[str, dict[str, typing.Any]] = {}
-    for x in conf.get_configs():
-        name, *aliases = x.keys
-        if (of_type := getattr(x, "of_type", None)) is None:
+def _get_schema(conf: ConfigSet, path: str) -> dict[str, dict[str, JsonValue]]:
+    properties: dict[str, dict[str, JsonValue]] = {}
+    for definition in conf.get_configs():
+        name, *aliases = definition.keys
+        if (of_type := getattr(definition, "of_type", None)) is None:
             continue
-        desc = getattr(x, "desc", None)
+        desc = getattr(definition, "desc", None)
         try:
             properties[name] = {**_process_type(of_type), "description": desc}
         except ValueError:
-            print(name, "has unrecoginsed type:", of_type, file=sys.stderr)  # ruff:ignore[print]
+            print(name, "has unrecoginsed type:", of_type, file=sys.stderr)  # ruff:ignore[print]  # terminal output
         for alias in aliases:
             properties[alias] = {
                 "$ref": f"{path}/{name}",
@@ -292,7 +305,8 @@ def _get_schema(conf: ConfigSet, path: str) -> dict[str, dict[str, typing.Any]]:
     return properties
 
 
-def _process_type(of_type: typing.Any) -> dict[str, typing.Any]:  # ruff:ignore[complex-structure, too-many-return-statements, too-many-branches]
+# one dispatch over all schema types
+def _process_type(of_type: typing.Any) -> dict[str, typing.Any]:  # ruff:ignore[complex-structure, too-many-return-statements, too-many-branches]  # simplint: ignore[SMP602]  # walks any typing construct
     if of_type is tox.tox_env.python.pip.req_file.PythonDeps:
         return {
             "oneOf": [
@@ -352,3 +366,8 @@ def _process_type(of_type: typing.Any) -> dict[str, typing.Any]:  # ruff:ignore[
         }
     msg = f"Unknown type: {of_type}"
     raise ValueError(msg)
+
+
+__all__ = [
+    "gen_schema",
+]

@@ -21,6 +21,13 @@ if TYPE_CHECKING:
 
 
 def show_config_ini(state: State) -> int:
+    """Show the configuration in the ini format.
+
+    :param state: the state of the run
+
+    :returns: the exit code
+
+    """
     output_file = state.conf.options.output_file
     # color belongs to the terminal only - a file must hold plain text
     is_colored = state.conf.options.is_colored and output_file is None
@@ -56,31 +63,11 @@ def show_config_ini(state: State) -> int:
 
 
 def _write_line(line: str) -> None:
-    sys.stdout.write(line + "\n")
+    sys.stdout.write(f"{line}\n")
 
 
-def _emit_conf(emit: Callable[[str], None], conf: ConfigSet, keys: Sequence[str], *, is_colored: bool) -> bool:
-    has_exception = False
-    for key in keys or conf:
-        if key not in conf:
-            continue
-        key = conf.primary_key(key)  # ruff:ignore[redefined-loop-name]
-        try:
-            value = conf[key]
-            as_str, multi_line = stringify(value)
-        except Exception as exception:  # because e.g. the interpreter cannot be found
-            if os.environ.get("_TOX_SHOW_CONFIG_RAISE"):  # pragma: no branch
-                raise  # pragma: no cover
-            as_str = _colored(f"# Exception: {format_config_error(exception)}", Fore.LIGHTRED_EX, enabled=is_colored)
-            multi_line = False
-            has_exception = True
-        if multi_line and "\n" not in as_str:
-            multi_line = False
-        emit(_key_value(key, as_str, is_colored=is_colored, multi_line=multi_line))
-    unused = conf.unused()
-    if unused and not keys:
-        emit(_colored(f"# !!! unused: {', '.join(unused)}", Fore.CYAN, enabled=is_colored))
-    return has_exception
+def _colored(msg: str, color: str, *, enabled: bool) -> str:
+    return f"{color}{msg}{Fore.RESET}" if enabled else msg
 
 
 def _key_value(key: str, value: str, *, is_colored: bool, multi_line: bool = False) -> str:
@@ -89,8 +76,26 @@ def _key_value(key: str, value: str, *, is_colored: bool, multi_line: bool = Fal
     return f"{_colored(key, Fore.GREEN, enabled=is_colored)} = {value}"
 
 
-def _colored(msg: str, color: str, *, enabled: bool) -> str:
-    return f"{color}{msg}{Fore.RESET}" if enabled else msg
+def _emit_conf(emit: Callable[[str], None], conf: ConfigSet, keys: Sequence[str], *, is_colored: bool) -> bool:
+    has_exception = False
+    for key in keys or conf:
+        if key not in conf:
+            continue
+        key = conf.primary_key(key)  # ruff:ignore[redefined-loop-name]  # loop rebinding intended
+        try:
+            as_str, multi_line = stringify(conf[key])
+        except Exception as exception:  # because e.g. the interpreter cannot be found
+            if os.environ.get("_TOX_SHOW_CONFIG_RAISE"):  # pragma: no branch  # other outcome untested
+                raise  # pragma: no cover  # untested error path
+            as_str = _colored(f"# Exception: {format_config_error(exception)}", Fore.LIGHTRED_EX, enabled=is_colored)
+            multi_line = False
+            has_exception = True
+        if multi_line and "\n" not in as_str:
+            multi_line = False
+        emit(_key_value(key, as_str, is_colored=is_colored, multi_line=multi_line))
+    if (unused := conf.unused()) and not keys:
+        emit(_colored(f"# !!! unused: {', '.join(unused)}", Fore.CYAN, enabled=is_colored))
+    return has_exception
 
 
 __all__ = [

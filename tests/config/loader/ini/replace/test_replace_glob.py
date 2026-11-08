@@ -26,8 +26,7 @@ def test_replace_glob_sorted(replace_one: ReplaceOne, tmp_path: Path) -> None:
     (tmp_path / "c.txt").touch()
     (tmp_path / "a.txt").touch()
     (tmp_path / "b.txt").touch()
-    result = replace_one(f"{{glob:{tmp_path}/*.txt}}")
-    paths = result.split()
+    paths = replace_one(f"{{glob:{tmp_path}/*.txt}}").split()
     assert paths == sorted(paths)
 
 
@@ -52,8 +51,7 @@ def test_replace_glob_recursive(replace_one: ReplaceOne, tmp_path: Path) -> None
     sub = tmp_path / "src" / "pkg"
     sub.mkdir(parents=True)
     (sub / "mod.py").touch()
-    pattern = tmp_path / "src" / "**" / "*.py"
-    result = replace_one(f"{{glob:{pattern}}}")
+    result = replace_one(f"{{glob:{(tmp_path / 'src' / '**' / '*.py')}}}")
     assert str(sub / "mod.py") in result
 
 

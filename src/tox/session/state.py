@@ -19,7 +19,14 @@ if TYPE_CHECKING:
 
 
 class State:
-    """Runtime state holder."""
+    """Runtime state holder.
+
+    :param options: the parsed command line options and the command handlers
+    :param args: the command line arguments tox was started with
+
+    :var conf: the configuration of this run
+
+    """
 
     def __init__(self, options: Options, args: Sequence[str]) -> None:
         (extended_envs,) = tee(chain.from_iterable(MANAGER.tox_extend_envs()), 1)
@@ -36,7 +43,7 @@ class State:
 
     @property
     def envs(self) -> EnvSelector:
-        """:returns: provides access to the tox environments"""
+        """Access to the tox environments, selected on first access."""
         if self._selector is None:
             self._selector = EnvSelector(self)
         return self._selector
@@ -44,7 +51,12 @@ class State:
 
 @impl
 def tox_add_option(parser: ToxParser) -> None:
-    from tox.tox_env.register import REGISTER  # ruff:ignore[import-outside-top-level]
+    """Add the ``--runner`` option to the command line parser.
+
+    :param parser: the parser to add the option to
+
+    """
+    from tox.tox_env.register import REGISTER  # ruff:ignore[import-outside-top-level]  # avoids an import cycle
 
     parser.add_argument(
         "--runner",
@@ -53,3 +65,14 @@ def tox_add_option(parser: ToxParser) -> None:
         default=REGISTER.default_env_runner,
         choices=list(REGISTER.env_runners),
     )
+
+
+__all__ = [
+    "MANAGER",
+    "Config",
+    "EnvSelector",
+    "Journal",
+    "State",
+    "impl",
+    "tox_add_option",
+]

@@ -8,7 +8,7 @@ import time
 from abc import ABC, abstractmethod
 from collections.abc import Callable, Generator, Sequence
 from contextlib import contextmanager, suppress
-from typing import IO, TYPE_CHECKING, NoReturn, cast
+from typing import IO, TYPE_CHECKING, Final, NoReturn, cast
 
 from colorama import Fore
 
@@ -25,16 +25,48 @@ if TYPE_CHECKING:
     from tox.util.json_types import JsonValue
 
 ContentHandler = Callable[[bytes], int]
+"""Callback that receives a chunk of the output of a command, and returns the number of bytes it handled."""
 Executor = Callable[[ExecuteRequest, ContentHandler, ContentHandler], int]
-LOGGER = logging.getLogger(__name__)
+LOGGER: Final[logging.Logger] = logging.getLogger(__name__)  # simplint: ignore[SMP404]  # imported by tox plugins
 
 
 class ExecuteOptions:
+    """The options that control how a command execution is stopped and whether its output is captured.
+
+    :param env: the environment the command runs in
+
+    """
+
     def __init__(self, env: ToxEnv) -> None:
         self._env = env
 
+    @property
+    def suicide_timeout(self) -> float:
+        """Seconds to wait for the process to exit on its own before sending SIGINT."""
+        return cast("float", self._env.conf["suicide_timeout"])
+
+    @property
+    def interrupt_timeout(self) -> float:
+        """Seconds to wait after SIGINT before sending SIGTERM."""
+        return cast("float", self._env.conf["interrupt_timeout"])
+
+    @property
+    def terminate_timeout(self) -> float:
+        """Seconds to wait after SIGTERM before sending SIGKILL."""
+        return cast("float", self._env.conf["terminate_timeout"])
+
+    @property
+    def no_capture(self) -> bool:
+        """Whether the output is shown as it is produced, instead of only being captured."""
+        return cast("bool", getattr(self._env.options, "no_capture", False))
+
     @classmethod
     def register_conf(cls, env: ToxEnv) -> None:
+        """Register the configuration keys that control how the execution is stopped.
+
+        :param env: the environment to register the keys in
+
+        """
         env.conf.add_config(
             keys=["suicide_timeout"],
             desc="timeout to allow process to exit before sending SIGINT",
@@ -54,24 +86,18 @@ class ExecuteOptions:
             default=0.2,
         )
 
-    @property
-    def suicide_timeout(self) -> float:
-        return cast("float", self._env.conf["suicide_timeout"])
-
-    @property
-    def interrupt_timeout(self) -> float:
-        return cast("float", self._env.conf["interrupt_timeout"])
-
-    @property
-    def terminate_timeout(self) -> float:
-        return cast("float", self._env.conf["terminate_timeout"])
-
-    @property
-    def no_capture(self) -> bool:
-        return cast("bool", getattr(self._env.options, "no_capture", False))
-
 
 class ExecuteStatus(ABC):
+    """The state of a command execution while it runs, and its outcome once it is done.
+
+    :param options: the options of the execution
+    :param out: the stream the standard output is written to
+    :param err: the stream the standard error is written to
+
+    :var outcome: the outcome of the execution, ``None`` until it is done
+
+    """
+
     def __init__(self, options: ExecuteOptions, out: SyncWrite, err: SyncWrite) -> None:
         self.outcome: Outcome | None = None
         self.options = options
@@ -81,45 +107,77 @@ class ExecuteStatus(ABC):
     @property
     @abstractmethod
     def exit_code(self) -> int | None:
+        """The exit code of the command, ``None`` while it runs."""
         raise NotImplementedError
 
     @property
     def start_error(self) -> BaseException | None:
-        """:returns: the error that kept the command from starting, ``None`` once it started"""
+        """The error that kept the command from starting, ``None`` once it started."""
         return None
-
-    @abstractmethod
-    def wait(self, timeout: float | None = None) -> int | None:
-        raise NotImplementedError
-
-    @abstractmethod
-    def write_stdin(self, content: str) -> None:
-        raise NotImplementedError
-
-    @abstractmethod
-    def interrupt(self) -> None:
-        raise NotImplementedError
-
-    def set_out_err(self, out: SyncWrite, err: SyncWrite) -> tuple[SyncWrite, SyncWrite]:
-        res = self._out, self._err
-        self._out, self._err = out, err
-        return res
 
     @property
     def out(self) -> bytearray:
+        """The standard output collected so far."""
         return self._out.content
 
     @property
     def err(self) -> bytearray:
+        """The standard error collected so far."""
         return self._err.content
 
     @property
     def metadata(self) -> dict[str, JsonValue]:
+        """Metadata about the execution, empty unless the executor provides some."""
         return {}
+
+    @abstractmethod
+    def wait(self, timeout: float | None = None) -> int | None:
+        """Wait for the command to finish.
+
+        :param timeout: the seconds to wait, wait without a limit when ``None``
+
+        :returns: the exit code, or ``None`` when the command did not finish in time
+
+        """
+        raise NotImplementedError
+
+    @abstractmethod
+    def write_stdin(self, content: str) -> None:
+        """Write content to the standard input of the command.
+
+        :param content: the content to write
+
+        """
+        raise NotImplementedError
+
+    @abstractmethod
+    def interrupt(self) -> None:
+        """Interrupt the command."""
+        raise NotImplementedError
+
+    def set_out_err(self, out: SyncWrite, err: SyncWrite) -> tuple[SyncWrite, SyncWrite]:
+        """Replace the streams the output of the command is written to.
+
+        :param out: the new standard output stream
+        :param err: the new standard error stream
+
+        :returns: the previous standard output and standard error streams
+
+        """
+        res = self._out, self._err
+        self._out, self._err = out, err
+        return res
 
 
 class FinishedExecuteStatus(ExecuteStatus):
-    """Report a fixed exit code for a command that finished or never started, without running a process."""
+    """Report a fixed exit code for a command that finished or never started, without running a process.
+
+    :param options: the execution options of the command
+    :param out: the sink for the standard output
+    :param err: the sink for the standard error
+    :param exit_code: the exit code to report, ``None`` if there is none
+
+    """
 
     def __init__(self, options: ExecuteOptions, out: SyncWrite, err: SyncWrite, exit_code: int | None) -> None:
         super().__init__(options, out, err)
@@ -136,7 +194,11 @@ class FinishedExecuteStatus(ExecuteStatus):
 
     @override
     def write_stdin(self, content: str) -> None:
-        """Cannot write."""
+        """Cannot write.
+
+        :param content: the text that would be written to the standard input
+
+        """
 
     @override
     def interrupt(self) -> None:
@@ -144,31 +206,49 @@ class FinishedExecuteStatus(ExecuteStatus):
 
 
 class Execute(ABC):
-    """Abstract API for execution of a tox environment."""
+    """Abstract API for execution of a tox environment.
+
+    :param colored: whether the output is colored
+
+    """
 
     _option_class: type[ExecuteOptions] = ExecuteOptions
 
-    def __init__(self, colored: bool) -> None:  # ruff:ignore[boolean-type-hint-positional-argument]
+    def __init__(  # keeps the signature
+        self,
+        colored: bool,  # ruff:ignore[boolean-type-hint-positional-argument]  # keeps the signature
+    ) -> None:
         self._colored = colored
 
     @contextmanager
     def call(
         self,
         request: ExecuteRequest,
-        show: bool,  # ruff:ignore[boolean-type-hint-positional-argument]
+        show: bool,  # ruff:ignore[boolean-type-hint-positional-argument]  # keeps the signature
         out_err: OutErr,
         env: ToxEnv,
     ) -> Generator[ExecuteStatus, None, None]:
+        """Run a request, and yield the status of the execution while it runs.
+
+        :param request: the request to run
+        :param show: whether to show the output while the request runs
+        :param out_err: the standard output and standard error streams to write to
+        :param env: the environment the request runs in
+
+        :yields: the status of the execution
+
+        """
         start = time.monotonic()
         stderr_color = None
         if self._colored:
             try:
-                cfg_color = env.conf._conf.options.stderr_color  # ruff:ignore[private-member-access]
+                cfg_color = env.conf._conf.options.stderr_color  # ruff:ignore[private-member-access]  # internal access
                 stderr_color = getattr(Fore, cfg_color)
             except (AttributeError, KeyError, TypeError):  # many tests have a mocked 'env'
                 stderr_color = Fore.RED
             if sys.platform == "win32" and show:
                 try:
+                    # Windows-only import
                     from colorama.winterm import enable_vt_processing  # ruff:ignore[import-outside-top-level]
 
                     for stream in out_err:
@@ -210,29 +290,43 @@ class Execute(ABC):
         out: SyncWrite,
         err: SyncWrite,
     ) -> ExecuteInstance:
+        """Build the instance that runs a request.
+
+        :param request: the request to run
+        :param options: the options of the execution
+        :param out: the stream the standard output is written to
+        :param err: the stream the standard error is written to
+
+        :returns: the instance that runs the request
+
+        """
         raise NotImplementedError
 
     @classmethod
     def register_conf(cls, env: ToxEnv) -> None:
+        """Register the configuration keys of the execution options.
+
+        :param env: the environment to register the keys in
+
+        """
         cls._option_class.register_conf(env)
 
 
 class ExecuteInstance(ABC):
-    """An instance of a command execution."""
+    """An instance of a command execution.
+
+    :param request: the command to execute
+    :param options: the execution options of the command
+    :param out: the sink for the standard output
+    :param err: the sink for the standard error
+
+    """
 
     def __init__(self, request: ExecuteRequest, options: ExecuteOptions, out: SyncWrite, err: SyncWrite) -> None:
         self.request = request
         self.options = options
         self._out = out
         self._err = err
-
-    @property
-    def out_handler(self) -> ContentHandler:
-        return self._out.handler
-
-    @property
-    def err_handler(self) -> ContentHandler:
-        return self._err.handler
 
     @abstractmethod
     def __enter__(self) -> ExecuteStatus:
@@ -248,21 +342,36 @@ class ExecuteInstance(ABC):
         raise NotImplementedError
 
     @property
+    def out_handler(self) -> ContentHandler:
+        """The callback that receives the standard output of the command."""
+        return self._out.handler
+
+    @property
+    def err_handler(self) -> ContentHandler:
+        """The callback that receives the standard error of the command."""
+        return self._err.handler
+
+    @property
     @abstractmethod
     def cmd(self) -> Sequence[str]:
+        """The command line to run."""
         raise NotImplementedError
 
 
 class Outcome:
-    """Result of a command execution."""
+    """Result of a command execution.
+
+    :var OK: the exit code of a successful command
+
+    """
 
     OK = 0
     FAILED = 1  #: exit code reported when a ``!`` command exits with :attr:`OK`
 
-    def __init__(  # ruff:ignore[too-many-arguments]
+    def __init__(  # ruff:ignore[too-many-arguments]  # public signature
         self,
         request: ExecuteRequest,
-        show_on_standard: bool,  # ruff:ignore[boolean-type-hint-positional-argument]
+        show_on_standard: bool,  # ruff:ignore[boolean-type-hint-positional-argument]  # keeps the signature
         exit_code: int | None,
         out: str,
         err: str,
@@ -307,15 +416,14 @@ class Outcome:
             f" for {self.request.shell_cmd_redacted}"
         )
 
+    @property
+    def elapsed(self) -> float:
+        """The time the execution took, in seconds."""
+        return self.end - self.start
+
     def assert_success(self) -> None:
         """Assert that the execution succeeded."""
         if self.start_error is not None or self.exit_code not in {None, self.OK}:
-            self._assert_fail(self.exit_code or self.FAILED)
-        self.log_run_done(logging.INFO)
-
-    def assert_failure(self) -> None:
-        """Assert that the execution failed."""
-        if self.start_error is not None or self.exit_code == self.OK:  # never started, so nothing to invert
             self._assert_fail(self.exit_code or self.FAILED)
         self.log_run_done(logging.INFO)
 
@@ -354,17 +462,18 @@ class Outcome:
             metadata,
         )
 
-    @property
-    def elapsed(self) -> float:
-        """:returns: time the execution took in seconds"""
-        return self.end - self.start
+    def assert_failure(self) -> None:
+        """Assert that the execution failed."""
+        if self.start_error is not None or self.exit_code == self.OK:  # never started, so nothing to invert
+            self._assert_fail(self.exit_code or self.FAILED)
+        self.log_run_done(logging.INFO)
 
     def out_err(self) -> tuple[str, str]:
         """:returns: a tuple of the standard output and standard error"""
         return self.out, self.err
 
 
-__all__ = (
+__all__ = [
     "ContentHandler",
     "Execute",
     "ExecuteInstance",
@@ -373,4 +482,4 @@ __all__ = (
     "FinishedExecuteStatus",
     "Outcome",
     "StdinSource",
-)
+]

@@ -9,8 +9,7 @@ from functools import partial
 from pathlib import Path
 from shutil import rmtree
 from tempfile import mkdtemp
-from typing import TYPE_CHECKING, Protocol
-from unittest.mock import patch
+from typing import TYPE_CHECKING, Final, NamedTuple, Protocol
 from uuid import uuid4
 
 import pytest
@@ -31,8 +30,8 @@ if TYPE_CHECKING:
 
     from tox.config.loader.api import Override
 
-pytest_plugins = "tox.pytest"
-HERE = Path(__file__).absolute().parent
+pytest_plugins: Final[str] = "tox.pytest"
+_HERE: Final[Path] = Path(__file__).absolute().parent
 
 
 def _strip_broken_namespace_pth_files() -> None:
@@ -63,16 +62,20 @@ def value_error() -> Callable[[str], str]:
     return _fmt
 
 
-collect_ignore = []
+collect_ignore: Final[list[str]] = []
 if sys.implementation.name == "pypy":
     # time-machine causes segfaults on PyPy
     collect_ignore.append("util/test_spinner.py")
 
 
+class _PrevPy(NamedTuple):
+    prev_ver: str
+    impl: str
+    free_threaded: bool
+
+
 class PatchPrevPy(Protocol):
-    def __call__(
-        self, has_prev: bool, free_threaded: bool | None = None, debug: bool | None = None
-    ) -> tuple[str, str, bool]: ...
+    def __call__(self, has_prev: bool, free_threaded: bool | None = None, debug: bool | None = None) -> _PrevPy: ...
 
 
 class ToxIniCreator(Protocol):
@@ -102,17 +105,17 @@ def tox_ini_conf(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> ToxIniCreat
 
 @pytest.fixture(scope="session")
 def demo_pkg_setuptools() -> Path:
-    return HERE / "demo_pkg_setuptools"
+    return _HERE / "demo_pkg_setuptools"
 
 
 @pytest.fixture(scope="session")
 def demo_pkg_inline() -> Path:
-    return HERE / "demo_pkg_inline"
+    return _HERE / "demo_pkg_inline"
 
 
 @pytest.fixture
 def patch_prev_py(mocker: MockerFixture) -> PatchPrevPy:
-    def _func(has_prev: bool, free_threaded: bool | None = None, debug: bool | None = None) -> tuple[str, str, bool]:
+    def _func(has_prev: bool, free_threaded: bool | None = None, debug: bool | None = None) -> _PrevPy:
         ver = sys.version_info[0:2]
         prev_ver = "".join(str(i) for i in (ver[0], ver[1] - 1))
         prev_py = f"py{prev_ver}"
@@ -120,7 +123,10 @@ def patch_prev_py(mocker: MockerFixture) -> PatchPrevPy:
         is_free_threaded = sysconfig.get_config_var("Py_GIL_DISABLED") == 1 if free_threaded is None else free_threaded
         is_debug = bool(sysconfig.get_config_var("Py_DEBUG")) if debug is None else debug
 
-        def get_python(self: VirtualEnv, base_python: list[str]) -> PythonInfo | None:  # ruff:ignore[unused-function-argument]
+        def get_python(  # interface signature
+            self: VirtualEnv,  # ruff:ignore[unused-function-argument]  # interface signature
+            base_python: list[str],  # interface signature
+        ) -> PythonInfo | None:
             if base_python[0] == "py31" or (base_python[0] == prev_py and not has_prev):
                 return None
             major, minor, micro, release_level, serial = sys.version_info
@@ -140,13 +146,13 @@ def patch_prev_py(mocker: MockerFixture) -> PatchPrevPy:
             )
 
         mocker.patch.object(VirtualEnv, "_get_python", get_python)
-        return prev_ver, impl, is_free_threaded
+        return _PrevPy(prev_ver, impl, is_free_threaded)
 
     return _func
 
 
 def pytest_configure(config: pytest.Config) -> None:
-    if (worker_id := os.environ.get("PYTEST_XDIST_WORKER")) is not None:  # pragma: no cover
+    if (worker_id := os.environ.get("PYTEST_XDIST_WORKER")) is not None:  # pragma: no cover  # setup not built by tests
         # virtualenv locks its app data, so sharing one across xdist workers throws off test timings
         app_data = mkdtemp(prefix=f"virtualenv-app-{worker_id}-")
         os.environ["VIRTUALENV_APP_DATA"] = app_data
@@ -170,15 +176,15 @@ def pytest_collection_modifyitems(items: list[pytest.Item]) -> None:
 
 
 @pytest.fixture(scope="session")
-def fake_exe_on_path(tmp_path_factory: pytest.TempPathFactory) -> Iterator[Path]:
+def fake_exe_on_path(tmp_path_factory: pytest.TempPathFactory, session_mocker: MockerFixture) -> Path:
     tmp_path = Path(tmp_path_factory.mktemp("a"))
     cmd_name = uuid4().hex
     maker = ScriptMaker(None, str(tmp_path))
     maker.set_mode = True
     maker.variants = {""}
     maker.make(f"{cmd_name} = b:c")
-    with patch.dict(os.environ, {"PATH": f"{tmp_path}{os.pathsep}{os.environ['PATH']}"}):
-        yield tmp_path / cmd_name
+    session_mocker.patch.dict(os.environ, {"PATH": f"{tmp_path}{os.pathsep}{os.environ['PATH']}"})
+    return tmp_path / cmd_name
 
 
 @pytest.fixture(scope="session")
@@ -187,7 +193,7 @@ def demo_pkg_inline_wheel(tmp_path_factory: pytest.TempPathFactory, demo_pkg_inl
 
 
 def build_pkg(dist_dir: Path, of: Path, distributions: Sequence[DistributionType], isolation: bool = True) -> Path:
-    from build.__main__ import build_package  # ruff:ignore[import-outside-top-level]
+    from build.__main__ import build_package  # ruff:ignore[import-outside-top-level]  # deferred import
 
     build_package(str(of), str(dist_dir), distributions=distributions, isolation=isolation)
     return next(dist_dir.iterdir())
@@ -201,7 +207,7 @@ def pkg_builder() -> Callable[[Path, Path, Sequence[DistributionType], bool], Pa
 @pytest.fixture(autouse=True)
 def _ensure_demo_pkg_clean() -> Iterator[None]:
     yield
-    for path in HERE.iterdir():
+    for path in _HERE.iterdir():
         if path.is_dir() and path.name.startswith("demo_pkg_") and (tox_dir := path / ".tox").exists():
             msg = f"test left behind {tox_dir}, fix the test to not pollute the source tree"
             raise AssertionError(msg)
@@ -209,5 +215,4 @@ def _ensure_demo_pkg_clean() -> Iterator[None]:
 
 @pytest.fixture(scope="session", autouse=True)
 def no_default_config_ini(session_mocker: MockerFixture) -> None:
-    filename = str(uuid4())
-    session_mocker.patch("tox.config.cli.ini.DEFAULT_CONFIG_FILE", Path(filename))
+    session_mocker.patch("tox.config.cli.ini.DEFAULT_CONFIG_FILE", Path(str(uuid4())))

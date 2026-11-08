@@ -20,14 +20,13 @@ from tox.tox_env.python.pylock import Pylock
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
-    from unittest.mock import MagicMock
 
     from packaging.markers import Environment
-    from pytest_mock import MockerFixture
+    from pytest_mock import MockerFixture, MockType
 
     from tox.pytest import ToxProject, ToxProjectCreator, ToxRunOutcome
 
-PYLOCK_TOML = dedent("""\
+_PYLOCK_TOML: Final[str] = dedent("""\
     lock-version = "1.0"
     created-by = "test-tool"
 
@@ -59,14 +58,14 @@ PYLOCK_TOML = dedent("""\
         pytest.param(
             {
                 "tox.toml": '[env_run_base]\nskip_install = true\npylock = "pylock.toml"',
-                "pylock.toml": PYLOCK_TOML,
+                "pylock.toml": _PYLOCK_TOML,
             },
             id="tox-root",
         ),
         pytest.param(
             {
                 "tox.toml": 'package_root = "sub"\n[env_run_base]\nskip_install = true\npylock = "pylock.toml"',
-                "sub": {"pylock.toml": PYLOCK_TOML},
+                "sub": {"pylock.toml": _PYLOCK_TOML},
             },
             id="package-root",
         ),
@@ -74,7 +73,7 @@ PYLOCK_TOML = dedent("""\
 )
 def test_pylock_install(tox_project: ToxProjectCreator, files: dict[str, str | dict[str, str]]) -> None:
     project: Final[ToxProject] = tox_project(files)
-    execute_calls: Final[MagicMock] = project.patch_execute()
+    execute_calls: Final[MockType] = project.patch_execute()
     project.run("r", "-e", "py").assert_success()
 
     req_file: Final[str] = str(project.path / ".tox" / "py" / "pylock.txt")
@@ -102,7 +101,7 @@ def test_dependency_groups_use_package_root_without_package_env(tox_project: Tox
             "sub": {"pyproject.toml": '[dependency-groups]\ndev = ["six"]\n'},
         },
     )
-    execute_calls: Final[MagicMock] = project.patch_execute()
+    execute_calls: Final[MockType] = project.patch_execute()
     project.run("r", "-e", "py").assert_success()
 
     found_calls: Final[list[tuple[str, str]]] = [
@@ -122,9 +121,8 @@ def test_pylock_empty(tox_project: ToxProjectCreator) -> None:
         },
     )
     execute_calls = project.patch_execute()
-    result = project.run("r", "-e", "py")
 
-    result.assert_success()
+    project.run("r", "-e", "py").assert_success()
     assert not execute_calls.call_args_list
 
 
@@ -174,7 +172,7 @@ def test_pylock_mutually_exclusive_with_deps(tox_project: ToxProjectCreator) -> 
             deps = ["pytest"]
             pylock = "pylock.toml"
             """,
-            "pylock.toml": PYLOCK_TOML,
+            "pylock.toml": _PYLOCK_TOML,
         },
     )
     result = project.run("r", "-e", "py")
@@ -196,7 +194,7 @@ def test_pylock_allows_deps_that_install_nothing(tox_project: ToxProjectCreator,
             deps = [{deps}]
             pylock = "pylock.toml"
             """,
-            "pylock.toml": PYLOCK_TOML,
+            "pylock.toml": _PYLOCK_TOML,
         },
     )
     result = project.run("c", "-e", "py", "-k", "pylock")
@@ -213,12 +211,11 @@ def test_pylock_recreate_on_change(tox_project: ToxProjectCreator) -> None:
             skip_install = true
             pylock = "pylock.toml"
             """,
-            "pylock.toml": PYLOCK_TOML,
+            "pylock.toml": _PYLOCK_TOML,
         },
     )
     execute_calls = project.patch_execute()
-    result = project.run("r", "-e", "py")
-    result.assert_success()
+    project.run("r", "-e", "py").assert_success()
 
     (project.path / "pylock.toml").write_text(
         dedent("""\
@@ -250,17 +247,15 @@ def test_pylock_no_reinstall_on_rerun(tox_project: ToxProjectCreator) -> None:
             skip_install = true
             pylock = "pylock.toml"
             """,
-            "pylock.toml": PYLOCK_TOML,
+            "pylock.toml": _PYLOCK_TOML,
         },
     )
     execute_calls = project.patch_execute()
-    result = project.run("r", "-e", "py")
-    result.assert_success()
+    project.run("r", "-e", "py").assert_success()
     assert len(execute_calls.call_args_list) == 1
 
     execute_calls.reset_mock()
-    result_second = project.run("r", "-e", "py")
-    result_second.assert_success()
+    project.run("r", "-e", "py").assert_success()
     assert not execute_calls.call_args_list
 
 
@@ -330,9 +325,8 @@ def test_pylock_filters_by_selected_group(
         },
     )
     project.patch_execute()
-    result = project.run("r", "-e", "py")
 
-    result.assert_success()
+    project.run("r", "-e", "py").assert_success()
     assert (project.path / ".tox" / "py" / "pylock.txt").read_text() == expected
 
 
@@ -348,7 +342,32 @@ def _render_pylock(header: str, packages: list[tuple[str, str, str, str | None]]
     return "\n".join(blocks)
 
 
-def test_pylock_filters_by_platform_marker(tox_project: ToxProjectCreator) -> None:
+@pytest.mark.parametrize(
+    ("present", "absent"),
+    [
+        pytest.param(
+            "winonly==1.0.0",
+            ("linuxonly",),
+            id="win32",
+            marks=pytest.mark.skipif(sys.platform != "win32", reason="windows marker"),
+        ),
+        pytest.param(
+            "linuxonly==1.0.0",
+            ("winonly",),
+            id="linux",
+            marks=pytest.mark.skipif(sys.platform != "linux", reason="linux marker"),
+        ),
+        pytest.param(
+            "alpha==1.0.0",
+            ("linuxonly", "winonly"),
+            id="other",
+            marks=pytest.mark.skipif(sys.platform in {"win32", "linux"}, reason="windows and linux markers"),
+        ),
+    ],
+)
+def test_pylock_filters_by_platform_marker(
+    tox_project: ToxProjectCreator, present: str, absent: tuple[str, ...]
+) -> None:
     project = tox_project(
         {
             "tox.toml": """
@@ -395,25 +414,18 @@ def test_pylock_filters_by_platform_marker(tox_project: ToxProjectCreator) -> No
         },
     )
     project.patch_execute()
-    result = project.run("r", "-e", "py")
 
-    result.assert_success()
+    project.run("r", "-e", "py").assert_success()
     content = (project.path / ".tox" / "py" / "pylock.txt").read_text()
     assert "alpha==1.0.0" in content
-    if sys.platform == "win32":
-        assert "winonly==1.0.0" in content
-        assert "linuxonly" not in content
-    elif sys.platform == "linux":
-        assert "linuxonly==1.0.0" in content
-        assert "winonly" not in content
-    else:
-        assert "linuxonly" not in content
-        assert "winonly" not in content
+    assert present in content
+    for name in absent:
+        assert name not in content
 
 
 def test_pylock_requirements(tmp_path: Path) -> None:
     lock_file = tmp_path / "pylock.toml"
-    lock_file.write_text(PYLOCK_TOML)
+    lock_file.write_text(_PYLOCK_TOML)
     pylock = Pylock(path=lock_file)
 
     assert pylock.install_lines() == ["alpha==1.0.0 --hash=sha256:abc123", "beta==2.0.0 --hash=sha256:def456"]
@@ -494,7 +506,7 @@ def test_pylock_requirements_invalid_file(
 
 def test_pylock_requirements_with_utf8_bom(tmp_path: Path) -> None:
     lock_file: Final[Path] = tmp_path / "pylock.toml"
-    lock_file.write_bytes(b"\xef\xbb\xbf" + PYLOCK_TOML.encode())
+    lock_file.write_bytes(b"\xef\xbb\xbf" + _PYLOCK_TOML.encode())
 
     assert Pylock(path=lock_file).install_lines() == [
         "alpha==1.0.0 --hash=sha256:abc123",
@@ -711,26 +723,24 @@ def test_pylock_locked_sources_install_as_locked(
 
 
 def test_pylock_reinstall_on_resolution_env_change(tox_project: ToxProjectCreator, pylock_run_base: str) -> None:
-    """Changing a pip resolution environment variable invalidates the pylock install cache."""
-    project = tox_project({"tox.toml": pylock_run_base, "pylock.toml": PYLOCK_TOML})
+    # Changing a pip resolution environment variable invalidates the pylock install cache.
+    project = tox_project({"tox.toml": pylock_run_base, "pylock.toml": _PYLOCK_TOML})
     execute_calls = project.patch_execute()
-    result = project.run("r", "-e", "py")
-    result.assert_success()
+    project.run("r", "-e", "py").assert_success()
     assert len(execute_calls.call_args_list) == 1
 
     (project.path / "tox.toml").write_text(
         f'{pylock_run_base}set_env = {{ PIP_INDEX_URL = "https://mirror.invalid/simple" }}\n'
     )
     execute_calls.reset_mock()
-    result_second = project.run("r", "-e", "py")
 
-    result_second.assert_success()
+    project.run("r", "-e", "py").assert_success()
     assert len(execute_calls.call_args_list) == 1
 
 
 def test_pylock_install_lines_utf8_bom(tmp_path: Path) -> None:
     pylock = tmp_path / "pylock.toml"
-    pylock.write_bytes(b"\xef\xbb\xbf" + PYLOCK_TOML.encode("utf-8"))
+    pylock.write_bytes(b"\xef\xbb\xbf" + _PYLOCK_TOML.encode("utf-8"))
 
     lines = Pylock(path=pylock).install_lines()
 
@@ -842,7 +852,7 @@ def _pylock_txt(project: ToxProject) -> str:
 
 
 def test_pylock_uses_discovery_without_marker_probe(pylock_install_project: ToxProject, mocker: MockerFixture) -> None:
-    discovery: Final[MagicMock] = mocker.patch("tox.tox_env.python.runner.DiscoveredPythonInfo", autospec=True)
+    discovery: Final[MockType] = mocker.patch("tox.tox_env.python.runner.DiscoveredPythonInfo", autospec=True)
     discovery.from_exe.side_effect = AssertionError("extra probe")
 
     pylock_install_project.run("r", "-e", "py").assert_success()
@@ -851,7 +861,7 @@ def test_pylock_uses_discovery_without_marker_probe(pylock_install_project: ToxP
 
 @pytest.fixture
 def pylock_install_project(tox_project: ToxProjectCreator, pylock_run_base: str) -> ToxProject:
-    project: Final[ToxProject] = tox_project({"tox.toml": pylock_run_base, "pylock.toml": PYLOCK_TOML})
+    project: Final[ToxProject] = tox_project({"tox.toml": pylock_run_base, "pylock.toml": _PYLOCK_TOML})
     project.patch_execute()
     return project
 
@@ -945,12 +955,12 @@ def test_pylock_discovery_fallback_uses_real_interpreter(
             if sys.prefix != sys.base_prefix:
                 platform.release = lambda: "target-release"
         """),
-        "pylock.toml": PYLOCK_TOML.replace(
+        "pylock.toml": _PYLOCK_TOML.replace(
             'version = "1.0.0"', 'version = "1.0.0"\nmarker = "platform_release == \'target-release\'"'
         ),
     })
     project.patch_execute()
-    discovery: Final[MagicMock] = mocker.patch(
+    discovery: Final[MockType] = mocker.patch(
         "tox.tox_env.python.runner.DiscoveredPythonInfo", spec=PythonInfo, wraps=PythonInfo
     )
     project.run("r", "-e", "py").assert_success()
@@ -972,7 +982,7 @@ def test_pylock_discovery_fallback_uses_target_interpreter(
         "implementation_version": "0.0.1",
         "platform_release": "target-release",
     }
-    discovery: Final[MagicMock] = mocker.patch("tox.tox_env.python.runner.DiscoveredPythonInfo", autospec=True)
+    discovery: Final[MockType] = mocker.patch("tox.tox_env.python.runner.DiscoveredPythonInfo", autospec=True)
     discovery.from_exe.return_value = interpreter
 
     pylock_target_project.run("r", "-e", "py").assert_success()
@@ -989,7 +999,7 @@ def without_discovery_markers(mocker: MockerFixture) -> None:
 
 @pytest.mark.usefixtures("without_discovery_markers")
 def test_pylock_discovery_fallback_failure(pylock_install_project: ToxProject, mocker: MockerFixture) -> None:
-    discovery: Final[MagicMock] = mocker.patch("tox.tox_env.python.runner.DiscoveredPythonInfo", autospec=True)
+    discovery: Final[MockType] = mocker.patch("tox.tox_env.python.runner.DiscoveredPythonInfo", autospec=True)
     discovery.from_exe.return_value = None
 
     result: Final[ToxRunOutcome] = pylock_install_project.run("r", "-e", "py")
@@ -1013,7 +1023,7 @@ def test_pylock_discovery_fallback_invalid(
     interpreter: Final[PythonInfo | None] = copy(PythonInfo.from_exe(sys.executable))
     assert interpreter is not None
     mocker.patch.object(interpreter, "marker_environment", values)
-    discovery: Final[MagicMock] = mocker.patch("tox.tox_env.python.runner.DiscoveredPythonInfo", autospec=True)
+    discovery: Final[MockType] = mocker.patch("tox.tox_env.python.runner.DiscoveredPythonInfo", autospec=True)
     discovery.from_exe.return_value = interpreter
 
     result: Final[ToxRunOutcome] = pylock_install_project.run("r", "-e", "py")
@@ -1033,7 +1043,7 @@ def test_pylock_pinned_virtualenv_uses_discovered_markers(
         return_value={**default_environment(), "platform_release": "target-release"},
     )
     mocker.patch(
-        "tox.tox_env.python.virtual_env.subprocess_adapter.ensure_bootstrap",
+        "tox.tox_env.python.virtual_env.api.ensure_bootstrap",
         autospec=True,
         return_value=Path(sys.executable),
     )

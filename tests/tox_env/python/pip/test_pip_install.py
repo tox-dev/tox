@@ -4,7 +4,6 @@ import json
 import os
 from textwrap import dedent
 from typing import TYPE_CHECKING, Any, Final, TypedDict
-from unittest.mock import Mock
 from zipfile import ZipFile
 
 import pytest
@@ -15,9 +14,8 @@ from tox.report import HandledError
 if TYPE_CHECKING:
     from collections.abc import Callable
     from pathlib import Path
-    from unittest.mock import MagicMock
 
-    from pytest_mock import MockerFixture
+    from pytest_mock import MockerFixture, MockType
     from typing_extensions import TypeIs
 
     from tox.pytest import CaptureFixture, SubRequest, ToxProject, ToxProjectCreator, ToxRunOutcome
@@ -42,10 +40,13 @@ _PYLOCK_ENV_TOML: Final[str] = dedent("""\
 """)
 
 
-@pytest.mark.parametrize("arg", [object, [object]])
-def test_pip_install_bad_type(tox_project: ToxProjectCreator, capfd: CaptureFixture, arg: Any) -> None:
-    proj = tox_project({"tox.ini": ""})
-    result = proj.run("l")
+@pytest.mark.parametrize("arg", [pytest.param(object, id="object"), pytest.param([object], id="object-2")])
+def test_pip_install_bad_type(  # simplint: ignore[SMP602]  # test values have any type
+    tox_project: ToxProjectCreator,
+    capfd: CaptureFixture,
+    arg: Any,  # simplint: ignore[SMP602]  # test values have any type
+) -> None:
+    result = tox_project({"tox.ini": ""}).run("l")
     result.assert_success()
     pip = result.state.envs["py"].installer
 
@@ -62,15 +63,13 @@ def test_pip_install_empty_list(tox_project: ToxProjectCreator) -> None:
     result.assert_success()
 
     pip = result.state.envs["py"].installer
-    execute_calls = proj.patch_execute(Mock())
+    execute_calls = proj.patch_execute(lambda _request: None)
     pip.install([], "section", "type")
     assert execute_calls.call_count == 0
 
 
 def test_pip_install_empty_command_error(tox_project: ToxProjectCreator) -> None:
-    proj = tox_project({"tox.ini": "[testenv]\ninstall_command="})
-    result = proj.run("l")
-    pip = result.state.envs["py"].installer
+    pip = tox_project({"tox.ini": "[testenv]\ninstall_command="}).run("l").state.envs["py"].installer
 
     with pytest.raises(
         HandledError, match=r"failed to load py\.install_command: attempting to parse '' into a command"
@@ -89,17 +88,19 @@ def test_pip_install_empty_command_error(tox_project: ToxProjectCreator) -> None
         pytest.param("list_dependencies_command", lambda pip: pip.installed(), id="list_dependencies_command"),
     ],
 )
-def test_pip_toml_empty_command_error(tox_project: ToxProjectCreator, key: str, use: Callable[[Any], object]) -> None:
-    proj = tox_project({"tox.toml": f"[env.py]\n{key} = []"})
-    pip = proj.run("l").state.envs["py"].installer
+def test_pip_toml_empty_command_error(  # simplint: ignore[SMP602]  # test values have any type
+    tox_project: ToxProjectCreator,
+    key: str,
+    use: Callable[[Any], object],  # simplint: ignore[SMP602]  # test values have any type
+) -> None:
+    pip = tox_project({"tox.toml": f"[env.py]\n{key} = []"}).run("l").state.envs["py"].installer
 
     with pytest.raises(HandledError, match=rf"failed to load py\.{key}: attempting to parse \[\] into a command"):
         use(pip)
 
 
 def test_pip_install_flags_only_error(tox_project: ToxProjectCreator) -> None:
-    proj = tox_project({"tox.ini": "[testenv:py]\ndeps=-i a"})
-    result = proj.run("r")
+    result = tox_project({"tox.ini": "[testenv:py]\ndeps=-i a"}).run("r")
     result.assert_failed()
     assert "no dependencies for tox env py within deps" in result.out
 
@@ -121,19 +122,17 @@ def test_pip_install_flags_only_error(tox_project: ToxProjectCreator) -> None:
     ],
 )
 def test_pip_install_invalid_constraints_error(tox_project: ToxProjectCreator, content: str, error: str) -> None:
-    proj = tox_project({"tox.ini": f"[testenv:py]\nconstraints={content}\nskip_install=true"})
 
-    result = proj.run("r")
+    result = tox_project({"tox.ini": f"[testenv:py]\nconstraints={content}\nskip_install=true"}).run("r")
     result.assert_failed()
     assert error in result.out
 
 
 def test_pip_install_new_flag_recreates(tox_project: ToxProjectCreator) -> None:
     proj = tox_project({"tox.ini": "[testenv:py]\ndeps=a\nskip_install=true"})
-    proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
+    proj.patch_execute(lambda request: 0 if "install" in request.run_id else None)
 
-    result = proj.run("r")
-    result.assert_success()
+    proj.run("r").assert_success()
 
     (proj.path / "tox.ini").write_text("[testenv:py]\ndeps=a\n -i i\nskip_install=true")
     result_second = proj.run("r")
@@ -146,11 +145,9 @@ def test_pip_install_no_binary_on_separate_lines(tox_project: ToxProjectCreator)
     proj = tox_project({
         "tox.ini": "[testenv:py]\ndeps=\n --no-binary six\n --no-binary packaging\n a\nskip_install=true"
     })
-    execute_calls = proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
+    execute_calls = proj.patch_execute(lambda request: 0 if "install" in request.run_id else None)
 
-    result = proj.run("r")
-
-    result.assert_success()
+    proj.run("r").assert_success()
     assert execute_calls.call_count == 1
     assert execute_calls.call_args[0][3].cmd == [
         "python",
@@ -247,7 +244,7 @@ def test_pip_install_deps_substitution_cannot_add_option(
 ) -> None:
     monkeypatch.setenv("PART", "value --index-url=https://other/simple")
     project: Final[ToxProject] = tox_project(files)
-    execute_calls: Final[MagicMock] = project.patch_execute(lambda request: 0 if "install" in request.run_id else None)
+    execute_calls: Final[MockType] = project.patch_execute(lambda request: 0 if "install" in request.run_id else None)
 
     result: Final[ToxRunOutcome] = project.run("r", "-e", "py")
 
@@ -776,7 +773,7 @@ def test_pip_install_whole_host_entry_reaches_pip_literally(
         "tox.toml": '[env_run_base]\npackage="skip"\npass_env=["DEPLOY_TOKEN"]\n'
         'deps=[{replace="env",name="DEMO",default="a==1"}]'
     })
-    execute_calls: Final[MagicMock] = project.patch_execute(lambda request: 0 if "install" in request.run_id else None)
+    execute_calls: Final[MockType] = project.patch_execute(lambda request: 0 if "install" in request.run_id else None)
     result: Final[ToxRunOutcome] = project.run("r", "-e", "py")
     result.assert_success()
     assert execute_calls.call_args[0][3].cmd == ["python", "-I", "-m", "pip", "install", "a==${DEPLOY_TOKEN}"]
@@ -872,10 +869,9 @@ def test_pip_install_referenced_host_variable_keeps_requirement_variable_literal
 
 def test_pip_install_path(tox_project: ToxProjectCreator) -> None:
     proj = tox_project({"tox.ini": "[testenv:py]\ndeps=.{/}a\nskip_install=true"})
-    execute_calls = proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
+    execute_calls = proj.patch_execute(lambda request: 0 if "install" in request.run_id else None)
 
-    result = proj.run("r")
-    result.assert_success()
+    proj.run("r").assert_success()
     assert execute_calls.call_args[0][3].cmd == ["python", "-I", "-m", "pip", "install", f".{os.sep}a"]
 
 
@@ -898,10 +894,9 @@ def test_pip_install_path(tox_project: ToxProjectCreator) -> None:
 )
 def test_pip_install_req_file_req_like(tox_project: ToxProjectCreator, content: str, args: list[str]) -> None:
     proj = tox_project({"tox.ini": f"[testenv:py]\ndeps={content}\nskip_install=true"})
-    execute_calls = proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
+    execute_calls = proj.patch_execute(lambda request: 0 if "install" in request.run_id else None)
 
-    result = proj.run("r")
-    result.assert_success()
+    proj.run("r").assert_success()
 
     assert execute_calls.call_count == 1
     assert execute_calls.call_args[0][3].cmd == ["python", "-I", "-m", "pip", "install", *args]
@@ -910,18 +905,16 @@ def test_pip_install_req_file_req_like(tox_project: ToxProjectCreator, content: 
     (proj.path / "tox.ini").write_text(f"[testenv:py]\ndeps={content}\n a\nskip_install=true")
     execute_calls.reset_mock()
 
-    result_second = proj.run("r")
-    result_second.assert_success()
+    proj.run("r").assert_success()
     assert execute_calls.call_count == 1
     assert execute_calls.call_args[0][3].cmd == ["python", "-I", "-m", "pip", "install", "a", *args]
 
 
 def test_pip_req_path(tox_project: ToxProjectCreator) -> None:
     proj = tox_project({"tox.ini": "[testenv:py]\ndeps=.\nskip_install=true"})
-    execute_calls = proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
+    execute_calls = proj.patch_execute(lambda request: 0 if "install" in request.run_id else None)
 
-    result = proj.run("r")
-    result.assert_success()
+    proj.run("r").assert_success()
 
     assert execute_calls.call_count == 1
     assert execute_calls.call_args[0][3].cmd == ["python", "-I", "-m", "pip", "install", "."]
@@ -929,9 +922,8 @@ def test_pip_req_path(tox_project: ToxProjectCreator) -> None:
 
 def test_deps_remove_recreate(tox_project: ToxProjectCreator) -> None:
     proj = tox_project({"tox.ini": "[testenv]\npackage=skip\ndeps=wheel\n setuptools"})
-    execute_calls = proj.patch_execute(lambda request: 0)  # ruff:ignore[unused-lambda-argument]
-    result_first = proj.run("r")
-    result_first.assert_success()
+    execute_calls = proj.patch_execute(lambda request: 0)  # ruff:ignore[unused-lambda-argument]  # callback signature
+    proj.run("r").assert_success()
     assert execute_calls.call_count == 1
 
     (proj.path / "tox.ini").write_text("[testenv]\npackage=skip\ndeps=setuptools\n")
@@ -951,10 +943,9 @@ def test_pkg_dep_remove_recreate(tox_project: ToxProjectCreator, demo_pkg_inline
             "build.py": build_with_dep,
         },
     )
-    execute_calls = proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
+    execute_calls = proj.patch_execute(lambda request: 0 if "install" in request.run_id else None)
 
-    result_first = proj.run("r")
-    result_first.assert_success()
+    proj.run("r").assert_success()
     run_ids = [i[0][3].run_id for i in execute_calls.call_args_list]
     assert run_ids == [
         "_optional_hooks",
@@ -994,7 +985,7 @@ def test_force_dep_applies_to_package_deps(
             "build.py": build_with_dep,
         },
     )
-    execute_calls = proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
+    execute_calls = proj.patch_execute(lambda request: 0 if "install" in request.run_id else None)
     proj.run("le", "-e", "py", "--force-dep", forced).assert_success()
 
     calls = [i[0][3].cmd[5:] for i in execute_calls.call_args_list if i[0][3].run_id == "install_package_deps"]
@@ -1010,9 +1001,8 @@ def test_pkg_env_dep_remove_recreate(tox_project: ToxProjectCreator, demo_pkg_in
             "build.py": (demo_pkg_inline / "build.py").read_text(),
         },
     )
-    execute_calls = proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
-    result_first = proj.run("r")
-    result_first.assert_success()
+    execute_calls = proj.patch_execute(lambda request: 0 if "install" in request.run_id else None)
+    proj.run("r").assert_success()
     run_ids = [i[0][3].run_id for i in execute_calls.call_args_list]
     assert run_ids == [
         "install_requires",
@@ -1034,17 +1024,15 @@ def test_pkg_env_dep_remove_recreate(tox_project: ToxProjectCreator, demo_pkg_in
 
 def test_pip_install_requirements_file_deps(tox_project: ToxProjectCreator) -> None:
     proj = tox_project({"tox.ini": "[testenv]\ndeps=-r r.txt\nskip_install=true", "r.txt": "a"})
-    execute_calls = proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
-    result = proj.run("r")
-    result.assert_success()
+    execute_calls = proj.patch_execute(lambda request: 0 if "install" in request.run_id else None)
+    proj.run("r").assert_success()
     assert execute_calls.call_count == 1
     assert execute_calls.call_args[0][3].cmd == ["python", "-I", "-m", "pip", "install", "-r", "r.txt"]
 
     # check that adding a new dependency correctly finds the previous one
     (proj.path / "tox.ini").write_text("[testenv]\ndeps=-r r.txt\n b\nskip_install=true")
     execute_calls.reset_mock()
-    result_second = proj.run("r")
-    result_second.assert_success()
+    proj.run("r").assert_success()
     assert execute_calls.call_count == 1
     assert execute_calls.call_args[0][3].cmd == ["python", "-I", "-m", "pip", "install", "b", "-r", "r.txt"]
 
@@ -1286,32 +1274,34 @@ def test_pip_install_referenced_deps_use_target_env(
     assert cache["PythonRun"]["deps"]["requirements"] == [f"https://{expected}/a.whl"]
 
 
-@pytest.fixture(params=[True, False])
-def use_constraints_opt(request: SubRequest) -> bool:
-    return bool(request.param)
-
-
-def test_pip_install_constraint_file_create_change(tox_project: ToxProjectCreator, use_constraints_opt: bool) -> None:
-    if use_constraints_opt:
-        toxini = "[testenv]\ndeps=a\nconstraints=c.txt\nskip_install=true"
-    else:
-        toxini = "[testenv]\ndeps=-c c.txt\n a\nskip_install=true"
+@pytest.mark.parametrize(
+    ("toxini", "toxini_with_dep"),
+    [
+        pytest.param(
+            "[testenv]\ndeps=a\nconstraints=c.txt\nskip_install=true",
+            "[testenv]\ndeps=a\n d\nconstraints=c.txt\nskip_install=true",
+            id="constraints-option",
+        ),
+        pytest.param(
+            "[testenv]\ndeps=-c c.txt\n a\nskip_install=true",
+            "[testenv]\ndeps=-c c.txt\n a\n d\nskip_install=true",
+            id="constraint-in-deps",
+        ),
+    ],
+)
+def test_pip_install_constraint_file_create_change(
+    tox_project: ToxProjectCreator, toxini: str, toxini_with_dep: str
+) -> None:
     proj = tox_project({"tox.ini": toxini, "c.txt": "b"})
-    execute_calls = proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
-    result = proj.run("r")
-    result.assert_success()
+    execute_calls = proj.patch_execute(lambda request: 0 if "install" in request.run_id else None)
+    proj.run("r").assert_success()
     assert execute_calls.call_count == 1
     assert execute_calls.call_args[0][3].cmd == ["python", "-I", "-m", "pip", "install", "a", "-c", "c.txt"]
 
     # a new dependency triggers an install
-    if use_constraints_opt:
-        toxini = "[testenv]\ndeps=a\n d\nconstraints=c.txt\nskip_install=true"
-    else:
-        toxini = "[testenv]\ndeps=-c c.txt\n a\n d\nskip_install=true"
-    (proj.path / "tox.ini").write_text(toxini)
+    (proj.path / "tox.ini").write_text(toxini_with_dep)
     execute_calls.reset_mock()
-    result_second = proj.run("r")
-    result_second.assert_success()
+    proj.run("r").assert_success()
     assert execute_calls.call_count == 1
     assert execute_calls.call_args[0][3].cmd == ["python", "-I", "-m", "pip", "install", "a", "d", "-c", "c.txt"]
 
@@ -1325,18 +1315,20 @@ def test_pip_install_constraint_file_create_change(tox_project: ToxProjectCreato
     assert execute_calls.call_args[0][3].cmd == ["python", "-I", "-m", "pip", "install", "a", "d", "-c", "c.txt"]
 
 
-def test_pip_install_constraint_file_new(tox_project: ToxProjectCreator, use_constraints_opt: bool) -> None:
+@pytest.mark.parametrize(
+    "toxini",
+    [
+        pytest.param("[testenv]\ndeps=a\nconstraints=c.txt\nskip_install=true", id="constraints-option"),
+        pytest.param("[testenv]\ndeps=a\n -c c.txt\nskip_install=true", id="constraint-in-deps"),
+    ],
+)
+def test_pip_install_constraint_file_new(tox_project: ToxProjectCreator, toxini: str) -> None:
     proj = tox_project({"tox.ini": "[testenv]\ndeps=a\nskip_install=true"})
-    execute_calls = proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
-    result = proj.run("r")
-    result.assert_success()
+    execute_calls = proj.patch_execute(lambda request: 0 if "install" in request.run_id else None)
+    proj.run("r").assert_success()
     assert execute_calls.call_count == 1
     assert execute_calls.call_args[0][3].cmd == ["python", "-I", "-m", "pip", "install", "a"]
 
-    if use_constraints_opt:
-        toxini = "[testenv]\ndeps=a\nconstraints=c.txt\nskip_install=true"
-    else:
-        toxini = "[testenv]\ndeps=a\n -c c.txt\nskip_install=true"
     (proj.path / "c.txt").write_text("a")
     (proj.path / "tox.ini").write_text(toxini)
     execute_calls.reset_mock()
@@ -1345,16 +1337,6 @@ def test_pip_install_constraint_file_new(tox_project: ToxProjectCreator, use_con
     assert "py: recreate env because changed constraint(s) added a" in result_second.out, result_second.out
     assert execute_calls.call_count == 1
     assert execute_calls.call_args[0][3].cmd == ["python", "-I", "-m", "pip", "install", "a", "-c", "c.txt"]
-
-
-@pytest.fixture(params=[True, False])
-def constrain_package_deps(request: SubRequest) -> bool:
-    return bool(request.param)
-
-
-@pytest.fixture(params=[True, False])
-def use_frozen_constraints(request: SubRequest) -> bool:
-    return bool(request.param)
 
 
 @pytest.mark.parametrize(
@@ -1492,7 +1474,7 @@ def constrained_mock_project(
         files["requirements.txt"] = "-r foo.requirements.txt\n-c foo.constraints.txt"
         deps = "-rrequirements.txt"
         exp_constraints.extend([requirement, constraint])
-    else:  # pragma: no cover
+    else:  # pragma: no cover  # setup not built by tests
         pytest.fail(f"Missing case: {request.param}")
     files["tox.ini"] = (
         "[testenv]\npackage=wheel\n"
@@ -1512,54 +1494,86 @@ def demo_pkg_with_deps(demo_pkg_inline: Path) -> dict[str, str]:
     }
 
 
-def test_constrain_package_deps(
-    constrained_mock_project: tuple[ToxProject, list[str]],
-    constrain_package_deps: bool,
-    use_frozen_constraints: bool,
-) -> None:
-    proj, exp_constraints = constrained_mock_project
-    execute_calls = proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
-    result_first = proj.run("r")
-    result_first.assert_success()
-    exp_run_ids = ["install_deps"]
-    if constrain_package_deps and use_frozen_constraints:
-        exp_run_ids.append("freeze")
-    exp_run_ids.extend(
-        [
-            "install_requires",
-            "_optional_hooks",
-            "get_requires_for_build_wheel",
-            "build_wheel",
-            "install_package_deps",
-            "install_package",
-            "_exit",
-        ],
-    )
+@pytest.fixture
+def constrain_package_deps(request: SubRequest) -> bool:
+    return bool(request.param)
+
+
+@pytest.fixture
+def use_frozen_constraints(request: SubRequest) -> bool:
+    return bool(request.param)
+
+
+_PACKAGE_BUILD_RUN_IDS: Final[list[str]] = [
+    "install_requires",
+    "_optional_hooks",
+    "get_requires_for_build_wheel",
+    "build_wheel",
+    "install_package_deps",
+    "install_package",
+    "_exit",
+]
+
+
+@pytest.mark.parametrize(
+    ("constrain_package_deps", "use_frozen_constraints"),
+    [pytest.param(False, True, id="frozen"), pytest.param(False, False, id="unfrozen")],
+    indirect=True,
+)
+def test_constrain_package_deps_disabled(constrained_mock_project: tuple[ToxProject, list[str]]) -> None:
+    proj, _ = constrained_mock_project
+    execute_calls = proj.patch_execute(lambda request: 0 if "install" in request.run_id else None)
+    proj.run("r").assert_success()
     run_ids = [i[0][3].run_id for i in execute_calls.call_args_list]
-    assert run_ids == exp_run_ids
+    assert run_ids == ["install_deps", *_PACKAGE_BUILD_RUN_IDS]
+    assert not (proj.path / ".tox" / "py" / "constraints.txt").exists()
+
+
+@pytest.mark.parametrize(
+    ("constrain_package_deps", "use_frozen_constraints"),
+    [pytest.param(True, True, id="frozen")],
+    indirect=True,
+)
+def test_constrain_package_deps_frozen(constrained_mock_project: tuple[ToxProject, list[str]]) -> None:
+    proj, exp_constraints = constrained_mock_project
+    execute_calls = proj.patch_execute(lambda request: 0 if "install" in request.run_id else None)
+    proj.run("r").assert_success()
+    run_ids = [i[0][3].run_id for i in execute_calls.call_args_list]
+    assert run_ids == ["install_deps", "freeze", *_PACKAGE_BUILD_RUN_IDS]
     constraints_file = proj.path / ".tox" / "py" / "constraints.txt"
-    if constrain_package_deps:
-        constraints = constraints_file.read_text().splitlines()
-        for call in execute_calls.call_args_list:
-            if call[0][3].run_id == "install_package_deps":
-                assert f"-c{constraints_file}" in call[0][3].cmd
-        if use_frozen_constraints:
-            for c in exp_constraints:
-                # when using frozen constraints with this mock, the mock package does NOT
-                # actually end up in the constraints, so assert it's not there
-                assert c not in constraints
-            for c in constraints:
-                assert c.partition("==")[0] in {"pip", "setuptools", "wheel"}
-        else:
-            for c in constraints:
-                assert c in exp_constraints
-            for c in exp_constraints:
-                assert c in constraints
-    else:
-        assert not constraints_file.exists()
+    constraints = constraints_file.read_text().splitlines()
+    for cmd in [c[0][3].cmd for c in execute_calls.call_args_list if c[0][3].run_id == "install_package_deps"]:
+        assert f"-c{constraints_file}" in cmd
+    for constraint in exp_constraints:
+        # when using frozen constraints with this mock, the mock package does NOT
+        # actually end up in the constraints, so assert it's not there
+        assert constraint not in constraints
+    for constraint in constraints:
+        assert constraint.partition("==")[0] in {"pip", "setuptools", "wheel"}
 
 
-@pytest.mark.parametrize("use_frozen_constraints", [True, False])
+@pytest.mark.parametrize(
+    ("constrain_package_deps", "use_frozen_constraints"),
+    [pytest.param(True, False, id="unfrozen")],
+    indirect=True,
+)
+def test_constrain_package_deps_unfrozen(constrained_mock_project: tuple[ToxProject, list[str]]) -> None:
+    proj, exp_constraints = constrained_mock_project
+    execute_calls = proj.patch_execute(lambda request: 0 if "install" in request.run_id else None)
+    proj.run("r").assert_success()
+    run_ids = [i[0][3].run_id for i in execute_calls.call_args_list]
+    assert run_ids == ["install_deps", *_PACKAGE_BUILD_RUN_IDS]
+    constraints_file = proj.path / ".tox" / "py" / "constraints.txt"
+    constraints = constraints_file.read_text().splitlines()
+    for cmd in [c[0][3].cmd for c in execute_calls.call_args_list if c[0][3].run_id == "install_package_deps"]:
+        assert f"-c{constraints_file}" in cmd
+    for constraint in constraints:
+        assert constraint in exp_constraints
+    for constraint in exp_constraints:
+        assert constraint in constraints
+
+
+@pytest.mark.parametrize("use_frozen_constraints", [pytest.param(True, id="true"), pytest.param(False, id="false")])
 def test_constraints_option_disables_constrain_package_deps(
     tox_project: ToxProjectCreator,
     demo_pkg_with_deps: dict[str, str],
@@ -1576,32 +1590,19 @@ def test_constraints_option_disables_constrain_package_deps(
             "constraints = constraints.txt"
         ),
     })
-    execute_calls = proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
-    result = proj.run("r")
-    result.assert_success()
+    execute_calls = proj.patch_execute(lambda request: 0 if "install" in request.run_id else None)
+    proj.run("r").assert_success()
 
     constraints_file = proj.path / ".tox" / "py" / "constraints.txt"
     assert not constraints_file.exists()
 
-    for call in execute_calls.call_args_list:
-        if call[0][3].run_id == "install_package_deps":
-            cmd = call[0][3].cmd
-            assert f"-c{constraints_file}" not in cmd
-            assert "-c" in cmd
-            assert "constraints.txt" in cmd
+    for cmd in [c[0][3].cmd for c in execute_calls.call_args_list if c[0][3].run_id == "install_package_deps"]:
+        assert f"-c{constraints_file}" not in cmd
+        assert "-c" in cmd
+        assert "constraints.txt" in cmd
 
-    exp_run_ids = ["install_deps"]
-    exp_run_ids.extend([
-        "install_requires",
-        "_optional_hooks",
-        "get_requires_for_build_wheel",
-        "build_wheel",
-        "install_package_deps",
-        "install_package",
-        "_exit",
-    ])
     run_ids = [i[0][3].run_id for i in execute_calls.call_args_list]
-    assert run_ids == exp_run_ids
+    assert run_ids == ["install_deps", *_PACKAGE_BUILD_RUN_IDS]
 
 
 def test_comment_only_constraints_keep_constrain_package_deps(
@@ -1617,9 +1618,8 @@ def test_comment_only_constraints_keep_constrain_package_deps(
         constraints = ["# pinned once the release lands"]
         """,
     })
-    execute_calls = proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
-    result = proj.run("r")
-    result.assert_success()
+    execute_calls = proj.patch_execute(lambda request: 0 if "install" in request.run_id else None)
+    proj.run("r").assert_success()
     package_deps = next(c[0][3].cmd for c in execute_calls.call_args_list if c[0][3].run_id == "install_package_deps")
     assert f"-c{proj.path / '.tox' / 'py' / 'constraints.txt'}" in package_deps
 
@@ -1700,9 +1700,8 @@ def test_constrain_package_deps_constraint_lines(
         "tox.ini": f"[testenv]\npackage=wheel\nconstrain_package_deps = true\ndeps = {deps}",
         **extra_files,
     })
-    proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
-    result = proj.run("r")
-    result.assert_success()
+    proj.patch_execute(lambda request: 0 if "install" in request.run_id else None)
+    proj.run("r").assert_success()
     assert (proj.path / ".tox" / "py" / "constraints.txt").read_text().splitlines() == expected
 
 
@@ -1714,7 +1713,7 @@ def test_pip_resolution_env_var_change_reinstalls(tox_project: ToxProjectCreator
                 skip_install = true
             """,
     })
-    execute_calls = proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
+    execute_calls = proj.patch_execute(lambda request: 0 if "install" in request.run_id else None)
 
     result = proj.run("r")
     result.assert_success()
@@ -1743,7 +1742,7 @@ def test_pip_non_resolution_env_var_change_no_reinstall(tox_project: ToxProjectC
                 setenv = PIP_TIMEOUT = 30
             """,
     })
-    execute_calls = proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
+    execute_calls = proj.patch_execute(lambda request: 0 if "install" in request.run_id else None)
 
     result = proj.run("r")
     result.assert_success()
@@ -1763,14 +1762,19 @@ def test_pip_non_resolution_env_var_change_no_reinstall(tox_project: ToxProjectC
     assert execute_calls.call_count == 0
 
 
-@pytest.mark.parametrize("conf_key", ["constrain_package_deps", "use_frozen_constraints"])
+@pytest.mark.parametrize(
+    "conf_key",
+    [
+        pytest.param("constrain_package_deps", id="constrain-underscore-package-underscore-deps"),
+        pytest.param("use_frozen_constraints", id="use-underscore-frozen-underscore-constraints"),
+    ],
+)
 def test_change_constraint_options_recreates(tox_project: ToxProjectCreator, conf_key: str) -> None:
     tox_ini_content = "[testenv:py]\ndeps=a\nskip_install=true"
     proj = tox_project({"tox.ini": f"{tox_ini_content}\n{conf_key} = true"})
-    proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
+    proj.patch_execute(lambda request: 0 if "install" in request.run_id else None)
 
-    result = proj.run("r")
-    result.assert_success()
+    proj.run("r").assert_success()
 
     (proj.path / "tox.ini").write_text(f"{tox_ini_content}\n{conf_key} = false")
     result_second = proj.run("r")
@@ -1791,7 +1795,7 @@ def test_pip_pylock_rejects_injected_environment_option(tox_project: ToxProjectC
         "tox.toml": f"{_PYLOCK_ENV_CONFIG}set_env = {{ LOCK_URL = {json.dumps(url)} }}\n",
         "pylock.toml": _PYLOCK_ENV_TOML,
     })
-    execute_calls: Final[MagicMock] = project.patch_execute()
+    execute_calls: Final[MockType] = project.patch_execute()
 
     result: Final[ToxRunOutcome] = project.run("r", "-e", "py")
 
@@ -1824,7 +1828,7 @@ def test_pip_pylock_rejects_windows_case_variant_environment_name(
         ),
         "pylock.toml": _PYLOCK_ENV_TOML,
     })
-    execute_calls: Final[MagicMock] = project.patch_execute()
+    execute_calls: Final[MockType] = project.patch_execute()
 
     result: Final[ToxRunOutcome] = project.run("r", "-e", "py")
 
@@ -1838,7 +1842,7 @@ def test_pip_pylock_reinstalls_when_referenced_environment_changes(tox_project: 
         "tox.toml": f'{_PYLOCK_ENV_CONFIG}set_env = {{ LOCK_URL = "https://example.invalid/first.tar.gz" }}\n',
         "pylock.toml": _PYLOCK_ENV_TOML,
     })
-    execute_calls: Final[MagicMock] = project.patch_execute()
+    execute_calls: Final[MockType] = project.patch_execute()
     project.run("r", "-e", "py").assert_success()
     execute_calls.reset_mock()
     (project.path / "tox.toml").write_text(

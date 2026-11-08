@@ -22,9 +22,22 @@ if TYPE_CHECKING:
     from tox.pytest import MonkeyPatch, ToxProject, ToxProjectCreator, ToxRunOutcome
 
 
-def test_show_config_default_run_env(tox_project: ToxProjectCreator, monkeypatch: MonkeyPatch) -> None:
-    py_ver = sys.version_info[0:2]
-    name = f"py{py_ver[0]}{py_ver[1]}" if platform.python_implementation() == "CPython" else "pypy3"
+@pytest.mark.parametrize(
+    "name",
+    [
+        pytest.param(
+            f"py{sys.version_info[0]}{sys.version_info[1]}",
+            marks=pytest.mark.skipif(platform.python_implementation() != "CPython", reason="cpython default env"),
+            id="cpython",
+        ),
+        pytest.param(
+            "pypy3",
+            marks=pytest.mark.skipif(platform.python_implementation() == "CPython", reason="pypy default env"),
+            id="pypy",
+        ),
+    ],
+)
+def test_show_config_default_run_env(tox_project: ToxProjectCreator, monkeypatch: MonkeyPatch, name: str) -> None:
     project = tox_project({"tox.ini": f"[tox]\nenv_list = {name}\n[testenv:{name}]\ncommands={{posargs}}"})
     result = project.run("c", "-e", name, "--core", "--", "magic")
     state = result.state
@@ -58,12 +71,11 @@ def test_show_config_commands(tox_project: ToxProjectCreator) -> None:
     outcome = project.run("c")
     outcome.assert_success()
     env_config = outcome.env_conf("py")
-    assert env_config["commands_pre"] == [Command(args=["python", "-c", 'import sys; print("start", sys.executable)'])]
-    assert env_config["commands"] == [
-        Command(args=["pip", "config", "list"]),
-        Command(args=["pip", "list"]),
-    ]
-    assert env_config["commands_post"] == [Command(args=["python", "-c", 'import sys; print("end", sys.executable)'])]
+    assert (env_config["commands_pre"], env_config["commands"], env_config["commands_post"]) == (
+        [Command(args=["python", "-c", 'import sys; print("start", sys.executable)'])],
+        [Command(args=["pip", "config", "list"]), Command(args=["pip", "list"])],
+        [Command(args=["python", "-c", 'import sys; print("end", sys.executable)'])],
+    )
 
 
 def test_show_config_filter_keys(tox_project: ToxProjectCreator) -> None:
@@ -93,8 +105,7 @@ def test_show_config_filter_keys_env_var(
 
 
 def test_show_config_unused(tox_project: ToxProjectCreator) -> None:
-    tox_ini = "[testenv]\nok=false\n[testenv:py]\nmagical=yes\nmagic=yes"
-    outcome = tox_project({"tox.ini": tox_ini}).run("c", "-e", "py")
+    outcome = tox_project({"tox.ini": "[testenv]\nok=false\n[testenv:py]\nmagical=yes\nmagic=yes"}).run("c", "-e", "py")
     outcome.assert_success()
     assert "\n# !!! unused: magic, magical\n" in outcome.out
 
@@ -225,46 +236,114 @@ def test_show_config_valid_env_exit_code_zero(tox_project: ToxProjectCreator) ->
         """,
         },
     )
-    outcome = project.run("c", "-e", "a")
-    outcome.assert_success()
+    project.run("c", "-e", "a").assert_success()
 
 
-@pytest.mark.parametrize("stdout_is_atty", [True, False])
-def test_pass_env_config_default(tox_project: ToxProjectCreator, stdout_is_atty: bool, mocker: MockerFixture) -> None:
-    mocker.patch("sys.stdout.isatty", return_value=stdout_is_atty)
-    project = tox_project({"tox.ini": ""})
-    outcome = project.run("c", "-e", "py", "-k", "pass_env")
-    pass_env = outcome.env_conf("py")["pass_env"]
-    is_win = sys.platform == "win32"
-    expected = (
-        []
-        + (["APPDATA"] if is_win else [])
-        + ["CC", "CCSHARED", "CFLAGS"]
-        + (["COMSPEC"] if is_win else [])
-        + ["CPPFLAGS", "CURL_CA_BUNDLE", "CXX", "FORCE_COLOR", "HOME", "LANG"]
-        + ["LANGUAGE", "LDFLAGS", "LD_LIBRARY_PATH"]
-        + (["LOCALAPPDATA"] if is_win else [])
-        + (["MSYSTEM"] if is_win else [])
-        + ["NETRC"]
-        + (["NIX_LD", "NIX_LD_LIBRARY_PATH"] if not is_win else [])
-        + ["NO_COLOR"]
-        + (["NUMBER_OF_PROCESSORS", "PATHEXT"] if is_win else [])
-        + ["PIP_*", "PKG_CONFIG", "PKG_CONFIG_PATH", "PKG_CONFIG_SYSROOT_DIR"]
-        + (["PROCESSOR_ARCHITECTURE"] if is_win else [])
-        + (["PROGRAMDATA"] if is_win else [])
-        + (["PROGRAMFILES"] if is_win else [])
-        + (["PROGRAMFILES(x86)"] if is_win else [])
-        + ["PYTHON_GIL", "REQUESTS_CA_BUNDLE"]
-        + (["SSH_AGENT_PID", "SSH_AUTH_SOCK"] if not is_win else [])
-        + ["SSL_CERT_FILE"]
-        + (["SYSTEMDRIVE", "SYSTEMROOT", "TEMP"] if is_win else [])
-        + (["TERM", "TERMINFO"] if stdout_is_atty else [])
-        + (["TMP", "USERPROFILE"] if is_win else ["TMPDIR"])
-        + ["VIRTUALENV_*"]
-        + (["WINDIR"] if is_win else [])
-        + ["http_proxy", "https_proxy", "no_proxy"]
-    )
-    assert pass_env == expected
+@pytest.mark.parametrize(
+    ("stdout_is_atty", "tty_vars"),
+    [
+        pytest.param(True, ["TERM", "TERMINFO"], id="atty"),
+        pytest.param(False, [], id="no-atty"),
+    ],
+)
+@pytest.mark.skipif(sys.platform == "win32", reason="posix default pass env")
+def test_pass_env_config_default_posix(
+    tox_project: ToxProjectCreator, stdout_is_atty: bool, tty_vars: list[str], mocker: MockerFixture
+) -> None:
+    mocker.patch("sys.stdout.isatty", autospec=True, return_value=stdout_is_atty)
+    pass_env = tox_project({"tox.ini": ""}).run("c", "-e", "py", "-k", "pass_env").env_conf("py")["pass_env"]
+    assert pass_env == sorted([
+        "CC",
+        "CCSHARED",
+        "CFLAGS",
+        "CPPFLAGS",
+        "CURL_CA_BUNDLE",
+        "CXX",
+        "FORCE_COLOR",
+        "HOME",
+        "LANG",
+        "LANGUAGE",
+        "LDFLAGS",
+        "LD_LIBRARY_PATH",
+        "NETRC",
+        "NIX_LD",
+        "NIX_LD_LIBRARY_PATH",
+        "NO_COLOR",
+        "PIP_*",
+        "PKG_CONFIG",
+        "PKG_CONFIG_PATH",
+        "PKG_CONFIG_SYSROOT_DIR",
+        "PYTHON_GIL",
+        "REQUESTS_CA_BUNDLE",
+        "SSH_AGENT_PID",
+        "SSH_AUTH_SOCK",
+        "SSL_CERT_FILE",
+        "TMPDIR",
+        "VIRTUALENV_*",
+        "http_proxy",
+        "https_proxy",
+        "no_proxy",
+        *tty_vars,
+    ])
+
+
+@pytest.mark.parametrize(
+    ("stdout_is_atty", "tty_vars"),
+    [
+        pytest.param(True, ["TERM", "TERMINFO"], id="atty"),
+        pytest.param(False, [], id="no-atty"),
+    ],
+)
+@pytest.mark.skipif(sys.platform != "win32", reason="windows default pass env")
+def test_pass_env_config_default_windows(
+    tox_project: ToxProjectCreator, stdout_is_atty: bool, tty_vars: list[str], mocker: MockerFixture
+) -> None:
+    mocker.patch("sys.stdout.isatty", autospec=True, return_value=stdout_is_atty)
+    pass_env = tox_project({"tox.ini": ""}).run("c", "-e", "py", "-k", "pass_env").env_conf("py")["pass_env"]
+    assert pass_env == sorted([
+        "APPDATA",
+        "CC",
+        "CCSHARED",
+        "CFLAGS",
+        "COMSPEC",
+        "CPPFLAGS",
+        "CURL_CA_BUNDLE",
+        "CXX",
+        "FORCE_COLOR",
+        "HOME",
+        "LANG",
+        "LANGUAGE",
+        "LDFLAGS",
+        "LD_LIBRARY_PATH",
+        "LOCALAPPDATA",
+        "MSYSTEM",
+        "NETRC",
+        "NO_COLOR",
+        "NUMBER_OF_PROCESSORS",
+        "PATHEXT",
+        "PIP_*",
+        "PKG_CONFIG",
+        "PKG_CONFIG_PATH",
+        "PKG_CONFIG_SYSROOT_DIR",
+        "PROCESSOR_ARCHITECTURE",
+        "PROGRAMDATA",
+        "PROGRAMFILES",
+        "PROGRAMFILES(x86)",
+        "PYTHON_GIL",
+        "REQUESTS_CA_BUNDLE",
+        "SSL_CERT_FILE",
+        "SYSTEMDRIVE",
+        "SYSTEMROOT",
+        "TEMP",
+        "TMP",
+        "USERPROFILE",
+        "VIRTUALENV_*",
+        "WINDIR",
+        "http_proxy",
+        "https_proxy",
+        "no_proxy",
+        *tty_vars,
+    ])
 
 
 def test_show_config_pkg_env_once(
@@ -273,8 +352,7 @@ def test_show_config_pkg_env_once(
 ) -> None:
     prev_ver, impl, _ = patch_prev_py(True)
     ini = f"[tox]\nenv_list=py{prev_ver},py\n[testenv]\npackage=wheel"
-    project = tox_project({"tox.ini": ini, "pyproject.toml": ""})
-    result = project.run("c", "-e", "ALL", raise_on_config_fail=False)
+    result = tox_project({"tox.ini": ini, "pyproject.toml": ""}).run("c", "-e", "ALL", raise_on_config_fail=False)
     parser = ConfigParser(interpolation=None)
     parser.read_string(result.out)
     sections = set(parser.sections())
@@ -287,8 +365,7 @@ def test_show_config_pkg_env_skip(
 ) -> None:
     prev_ver, _impl, _ = patch_prev_py(False)
     ini = f"[tox]\nenv_list=py{prev_ver},py\n[testenv]\npackage=wheel"
-    project = tox_project({"tox.ini": ini, "pyproject.toml": ""})
-    result = project.run("c", "-e", "ALL", raise_on_config_fail=False)
+    result = tox_project({"tox.ini": ini, "pyproject.toml": ""}).run("c", "-e", "ALL", raise_on_config_fail=False)
     parser = ConfigParser(interpolation=None)
     parser.read_string(result.out)
     sections = set(parser.sections())
@@ -296,8 +373,7 @@ def test_show_config_pkg_env_skip(
 
 
 def test_show_config_select_only(tox_project: ToxProjectCreator) -> None:
-    project = tox_project({"tox.ini": "[tox]\nenv_list=\n a\n b", "pyproject.toml": ""})
-    result = project.run("c", "-e", ".pkg,b,.pkg")
+    result = tox_project({"tox.ini": "[tox]\nenv_list=\n a\n b", "pyproject.toml": ""}).run("c", "-e", ".pkg,b,.pkg")
     result.assert_success()
     parser = ConfigParser(interpolation=None)
     parser.read_string(result.out)
@@ -333,8 +409,7 @@ def test_show_config_ini_comment_path(tox_project: ToxProjectCreator, tmp_path: 
         {[testenv]set_env}
         B = {tox_root} # just some comment
     """
-    project = tox_project({"tox.ini": dedent(ini)}, prj_path=prj_path)
-    result = project.run("r", "-e", "py")
+    result = tox_project({"tox.ini": dedent(ini)}, prj_path=prj_path).run("r", "-e", "py")
     result.assert_success()
     a_line = next(i for i in result.out.splitlines() if i.startswith("A="))  # pragma: no branch  # not found raises
     assert a_line == "A=1"
@@ -425,13 +500,11 @@ def test_show_config_timeout_custom(tox_project: ToxProjectCreator) -> None:
 
 
 def test_show_config_help(tox_project: ToxProjectCreator) -> None:
-    outcome = tox_project({"tox.ini": ""}).run("c", "-h")
-    outcome.assert_success()
+    tox_project({"tox.ini": ""}).run("c", "-h").assert_success()
 
 
 def test_show_config_core_host_python(tox_project: ToxProjectCreator) -> None:
-    project = tox_project({"tox.ini": ""})
-    outcome = project.run("c", "--core", "-e", "py", "-k", "host_python")
+    outcome = tox_project({"tox.ini": ""}).run("c", "--core", "-e", "py", "-k", "host_python")
     outcome.assert_success()
     assert f"host_python = {sys.executable}" in outcome.out
 
@@ -443,8 +516,7 @@ def test_show_config_matching_env_section(tox_project: ToxProjectCreator) -> Non
     deps = c>=1
     [testenv:b]
     deps = {[testenv:a]deps}"""
-    project = tox_project({"tox.ini": ini})
-    outcome = project.run("c", "-e", "a,b", "-k", "deps")
+    outcome = tox_project({"tox.ini": ini}).run("c", "-e", "a,b", "-k", "deps")
     outcome.assert_success()
     assert outcome.out.count("c>=1") == 2, outcome.out
 
@@ -519,12 +591,10 @@ def test_factor_conditional_falls_back_to_default(tox_project: ToxProjectCreator
 
 
 def test_cross_section_factor_conditional_resolves_to_empty(tox_project: ToxProjectCreator) -> None:
-    """Cross-section substitution resolves to empty when no factors match.
-
-    Regression test for gh-3809: {[section]key} where key contains factor-conditional values should resolve to empty
-    string when no factors match, not remain unresolved.
-
-    """
+    # Cross-section substitution resolves to empty when no factors match.
+    #
+    # Regression test for gh-3809: {[section]key} where key contains factor-conditional values should resolve to empty
+    # string when no factors match, not remain unresolved.
     ini = """
     [tox]
     env_list=py39{,-keyfs_sqlite,-hash_hl}
@@ -545,14 +615,13 @@ def test_cross_section_factor_conditional_resolves_to_empty(tox_project: ToxProj
 
 
 def test_core_on_platform(tox_project: ToxProjectCreator) -> None:
-    project = tox_project({"tox.ini": "[tox]\nno_package = true"})
-    result = project.run("c", "-e", "py", "--core", "-k", "on_platform")
+    result = tox_project({"tox.ini": "[tox]\nno_package = true"}).run("c", "-e", "py", "--core", "-k", "on_platform")
     result.assert_success()
     assert result.out == f"[testenv:py]\n\n[tox]\non_platform = {sys.platform}\n"
 
 
 def test_show_config_ini_output_file(tox_project: ToxProjectCreator) -> None:
-    """The default format honors -o like the json and toml formats do."""
+    # The default format honors -o like the json and toml formats do.
     project = tox_project({"tox.toml": '[env_run_base]\npackage = "skip"\n'})
 
     outcome = project.run("c", "-e", "py", "-k", "env_name", "-o", "out.txt")

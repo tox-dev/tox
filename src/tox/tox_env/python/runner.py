@@ -17,14 +17,14 @@ from tox.execute import Outcome
 from tox.report import HandledError
 from tox.session.cmd.run.single import run_command_set
 from tox.tox_env.errors import Fail, Skip
-from tox.tox_env.python.pip.req_file import PythonDeps
-from tox.tox_env.python.pylock import Pylock
 from tox.tox_env.runner import RunToxEnv
 from tox.util.typing_compat import override
 
 from .api import Python, add_skip_missing_interpreters_to_core, add_skip_missing_interpreters_to_env
 from .dependency_groups import resolve as resolve_dependency_groups
 from .extras import resolve_extras_static
+from .pip.req_file import PythonDeps
+from .pylock import Pylock
 
 PackageType: TypeAlias = Literal[
     "wheel", "sdist", "sdist-wheel", "editable", "editable-legacy", "deps-only", "skip", "external"
@@ -41,6 +41,12 @@ if TYPE_CHECKING:
 
 
 class PythonRun(Python, RunToxEnv, ABC):
+    """The base of the tox environments that run commands with a python interpreter.
+
+    :param create_args: the arguments the environment is created with
+
+    """
+
     def __init__(self, create_args: ToxEnvCreateArgs) -> None:
         super().__init__(create_args)
 
@@ -92,11 +98,6 @@ class PythonRun(Python, RunToxEnv, ABC):
         add_skip_missing_interpreters_to_core(self.core, self.options)
         add_skip_missing_interpreters_to_env(self.conf, self.core, self.options)
 
-    @property
-    def _package_types(self) -> tuple[str, ...]:
-        # tuple[str, ...] rather than tuple[PackageType, ...] so subclasses can add their own package types
-        return get_args(PackageType)
-
     @override
     def _register_package_conf(self) -> bool:
         # provision package type
@@ -113,8 +114,7 @@ class PythonRun(Python, RunToxEnv, ABC):
                 default=False,
                 of_type=bool,
             )
-            develop_mode = self.conf["use_develop"] or getattr(self.options, "develop", False)
-            if develop_mode:
+            if self.conf["use_develop"] or getattr(self.options, "develop", False):
                 self.conf.add_constant(["package"], desc, "editable")
             else:
                 self.conf.add_config(keys="package", of_type=str, default=self.default_pkg_type, desc=desc)
@@ -122,15 +122,25 @@ class PythonRun(Python, RunToxEnv, ABC):
         return self.pkg_type != "skip"
 
     @property
+    def _package_types(self) -> tuple[str, ...]:
+        # tuple[str, ...] rather than tuple[PackageType, ...] so subclasses can add their own package types
+        return get_args(PackageType)
+
+    @property
     def default_pkg_type(self) -> str:
+        """The package type the environment uses when none is configured, ``sdist``."""
         return "sdist"
 
     @property
     def pkg_type(self) -> str:
+        """The package type the environment uses, from its configuration.
+
+        :raises tox.report.HandledError: when the configured package type is not one of the supported types
+
+        """
         pkg_type = self.conf.get("package", str)
         if pkg_type not in self._package_types:
-            values = ", ".join(self._package_types)
-            msg = f"invalid package config type {pkg_type} requested, must be one of {values}"
+            msg = f"invalid package config type {pkg_type} requested, must be one of {', '.join(self._package_types)}"
             raise HandledError(msg)
         return pkg_type
 
@@ -143,10 +153,9 @@ class PythonRun(Python, RunToxEnv, ABC):
 
     def _install_package_deps_only(self) -> None:
         extras = self.conf.get("extras", set[str])
-        root = self.core.get("package_root", Path)
-        if (deps := resolve_extras_static(root, extras)) is None:
+        if (deps := resolve_extras_static(self.core.get("package_root", Path), extras)) is None:
             package_env = self.package_env
-            assert package_env is not None  # ruff:ignore[assert]
+            assert package_env is not None  # ruff:ignore[assert]  # invariant, narrows type
             with package_env.display_context(self._has_display_suspended):
                 deps = package_env.load_deps_for_env(self.conf)
         if deps and not self.options.package_only:
@@ -163,17 +172,6 @@ class PythonRun(Python, RunToxEnv, ABC):
         else:
             self._install_deps()
             self._install_dependency_groups()
-
-    def _install_deps(self) -> None:
-        requirements_file = self.conf.get("deps", PythonDeps)
-        self._install(requirements_file, PythonRun.__name__, "deps")
-
-    def _install_dependency_groups(self) -> None:
-        groups = self.conf.get("dependency_groups", set[str])
-        if not groups:
-            return
-        requirements = resolve_dependency_groups(self.core.get("package_root", Path), groups)
-        self._install(list(requirements), PythonRun.__name__, "dependency-groups")
 
     def _install_pylock(self) -> None:
         pylock_path = self.conf.get("pylock", str)
@@ -209,14 +207,23 @@ class PythonRun(Python, RunToxEnv, ABC):
             and all(isinstance(item, str) for item in value.values())
         )
 
+    def _install_deps(self) -> None:
+        self._install(self.conf.get("deps", PythonDeps), PythonRun.__name__, "deps")
+
+    def _install_dependency_groups(self) -> None:
+        groups = self.conf.get("dependency_groups", set[str])
+        if not groups:
+            return
+        requirements = resolve_dependency_groups(self.core.get("package_root", Path), groups)
+        self._install(list(requirements), PythonRun.__name__, "dependency-groups")
+
     @override
     def _setup_with_env(self) -> None:
         super()._setup_with_env()
         self._run_extra_setup_commands()
 
     def _run_extra_setup_commands(self) -> None:
-        command_set = self.conf.get("extra_setup_commands", list[Command])
-        if not command_set:
+        if not self.conf.get("extra_setup_commands", list[Command]):
             return
         chdir = self.conf.get("change_dir", Path)
         chdir.mkdir(exist_ok=True, parents=True)
@@ -230,7 +237,7 @@ class PythonRun(Python, RunToxEnv, ABC):
     @override
     def _build_packages(self) -> list[Package]:
         package_env = self.package_env
-        assert package_env is not None  # ruff:ignore[assert]
+        assert package_env is not None  # ruff:ignore[assert]  # invariant, narrows type
         with package_env.display_context(self._has_display_suspended):
             try:
                 packages = package_env.perform_packaging(self.conf)
@@ -240,7 +247,18 @@ class PythonRun(Python, RunToxEnv, ABC):
         return packages
 
 
+def _normalize_extras(values: set[str]) -> set[str]:
+    # although _ and . is allowed this will be normalized during packaging to -
+    # https://packaging.python.org/en/latest/specifications/dependency-specifiers/#grammar
+    return {canonicalize_name(v) for v in values}
+
+
 def add_extras_to_env(conf: EnvConfigSet) -> None:
+    """Add the ``extras`` setting to the configuration of an environment.
+
+    :param conf: the configuration of the environment
+
+    """
     conf.add_config(
         keys=["extras"],
         of_type=set[str],
@@ -248,12 +266,6 @@ def add_extras_to_env(conf: EnvConfigSet) -> None:
         desc="extras to install of the target package",
         post_process=_normalize_extras,
     )
-
-
-def _normalize_extras(values: set[str]) -> set[str]:
-    # although _ and . is allowed this will be normalized during packaging to -
-    # https://packaging.python.org/en/latest/specifications/dependency-specifiers/#grammar
-    return {canonicalize_name(v) for v in values}
 
 
 __all__ = [

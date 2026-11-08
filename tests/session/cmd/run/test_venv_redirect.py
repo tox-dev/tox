@@ -10,10 +10,6 @@ if TYPE_CHECKING:
     from tox.pytest import ToxProject, ToxProjectCreator
 
 
-def _redirect(project: ToxProject) -> str:
-    return (project.path / ".venv").read_text(encoding="utf-8")
-
-
 @pytest.mark.parametrize(
     ("config", "expected"),
     [
@@ -27,6 +23,10 @@ def test_venv_redirect_default_pick(tox_project: ToxProjectCreator, config: str,
     project.run("r", "--notest").assert_success()
 
     assert _redirect(project) == expected
+
+
+def _redirect(project: ToxProject) -> str:
+    return (project.path / ".venv").read_text(encoding="utf-8")
 
 
 def test_venv_redirect_prefers_editable(tox_project: ToxProjectCreator, demo_pkg_inline: Path) -> None:
@@ -98,8 +98,13 @@ def test_venv_redirect_off(tox_project: ToxProjectCreator) -> None:
     assert not (project.path / ".venv").exists()
 
 
-@pytest.mark.parametrize("recreate", [pytest.param(True, id="recreate"), pytest.param(False, id="reuse")])
-def test_venv_redirect_retracted_while_recreated(tox_project: ToxProjectCreator, recreate: bool) -> None:
+@pytest.mark.parametrize(
+    ("args", "recreated"),
+    [pytest.param(["-r"], True, id="recreate"), pytest.param([], False, id="reuse")],
+)
+def test_venv_redirect_retracted_while_recreated(
+    tox_project: ToxProjectCreator, args: list[str], recreated: bool
+) -> None:
     project = tox_project({
         "tox.toml": 'env_list = [ "dev" ]\nno_package = true\n[env_run_base]\ncommands = [ [ "python", "show.py" ] ]\n',
         "show.py": """
@@ -111,10 +116,10 @@ def test_venv_redirect_retracted_while_recreated(tox_project: ToxProjectCreator,
     })
     project.run("r").assert_success()
 
-    outcome = project.run("r", *(["-r"] if recreate else []))
+    outcome = project.run("r", *args)
 
     outcome.assert_success()
-    assert ("redirect: .tox/dev" in outcome.out) is not recreate
+    assert ("redirect: .tox/dev" in outcome.out) is not recreated
     assert _redirect(project) == ".tox/dev\n"
 
 

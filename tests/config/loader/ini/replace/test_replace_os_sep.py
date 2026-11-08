@@ -15,16 +15,16 @@ def test_replace_os_sep(replace_one: ReplaceOne) -> None:
     assert result == os.sep
 
 
-@pytest.mark.parametrize("sep", ["/", "\\"])
+@pytest.mark.parametrize("sep", [pytest.param("/", id="slash"), pytest.param("\\", id="backslash")])
 def test_replace_os_sep_before_curly(monkeypatch: MonkeyPatch, replace_one: ReplaceOne, sep: str) -> None:
-    """Explicit test case for issue #2732 (windows only)."""
+    # Explicit test case for issue #2732 (windows only).
     monkeypatch.setattr(os, "sep", sep)
     monkeypatch.delenv("_", raising=False)
     result = replace_one("{/}{env:_:foo}")
-    assert result == os.sep + "foo"
+    assert result == f"{os.sep}foo"
 
 
-@pytest.mark.parametrize("sep", ["/", "\\"])
+@pytest.mark.parametrize("sep", [pytest.param("/", id="slash"), pytest.param("\\", id="backslash")])
 def test_replace_os_sep_sub_exp_regression(monkeypatch: MonkeyPatch, replace_one: ReplaceOne, sep: str) -> None:
     monkeypatch.setattr(os, "sep", sep)
     monkeypatch.delenv("_", raising=False)

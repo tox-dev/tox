@@ -3,9 +3,9 @@ from __future__ import annotations
 import logging
 import sys
 import textwrap
+from argparse import Namespace
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
-from unittest.mock import ANY
 
 import pytest
 
@@ -14,7 +14,7 @@ from tox.config.cli.parse import get_options
 from tox.config.cli.parser import Parsed
 from tox.config.loader.api import Override
 from tox.config.main import Config
-from tox.config.source import discover_source
+from tox.config.source import Source, discover_source
 from tox.session.env_select import CliEnv
 from tox.util.ci import is_ci
 
@@ -28,7 +28,9 @@ if TYPE_CHECKING:
 
 
 @pytest.fixture
-def default_options() -> dict[str, Any]:
+def default_options(  # simplint: ignore[SMP602]  # test options hold values of any type
+    mocker: MockerFixture,
+) -> dict[str, Any]:  # simplint: ignore[SMP602]  # test options hold values of any type
     return {
         "colored": "no",
         "stderr_color": "RED",
@@ -37,7 +39,7 @@ def default_options() -> dict[str, Any]:
         "develop": False,
         "discover": [],
         "env": CliEnv(),
-        "hash_seed": ANY,
+        "hash_seed": mocker.ANY,
         "install_pkg": None,
         "fail_fast": False,
         "no_test": False,
@@ -70,7 +72,7 @@ def default_options() -> dict[str, Any]:
 def test_ini_empty(
     tmp_path: Path,
     core_handlers: dict[str, Callable[[State], int]],
-    default_options: dict[str, Any],
+    default_options: dict[str, Any],  # simplint: ignore[SMP602]  # test options hold values of any type
     mocker: MockerFixture,
     monkeypatch: MonkeyPatch,
     content: str,
@@ -78,43 +80,62 @@ def test_ini_empty(
     to = tmp_path / "tox.ini"
     monkeypatch.setenv("TOX_USER_CONFIG_FILE", str(to))
     to.write_text(content)
-    mocker.patch("tox.config.cli.parse.discover_source", return_value=mocker.MagicMock(path=Path()))
+    mocker.patch(
+        "tox.config.cli.parse.discover_source",
+        autospec=True,
+        return_value=mocker.create_autospec(Source, instance=True, path=Path()),
+    )
     options = get_options("r")
-    assert vars(options.parsed) == default_options
+    assert options.parsed == Namespace(**default_options)
     assert options.parsed.verbosity == 2
     assert options.cmd_handlers == core_handlers
 
     to.unlink()
     missing_options = get_options("r")
-    missing_options.parsed.hash_seed = ANY
-    assert vars(missing_options.parsed) == vars(options.parsed)
+    missing_options.parsed.hash_seed = mocker.ANY
+    assert missing_options.parsed == options.parsed
 
 
+@pytest.mark.parametrize(
+    "error",
+    [
+        pytest.param(
+            "PermissionError(13, 'Permission denied')",
+            marks=pytest.mark.skipif(sys.platform != "win32", reason="windows reports a permission error"),
+            id="windows",
+        ),
+        pytest.param(
+            "IsADirectoryError(21, 'Is a directory')",
+            marks=pytest.mark.skipif(sys.platform == "win32", reason="posix reports a directory error"),
+            id="posix",
+        ),
+    ],
+)
 def test_bad_cli_ini(
     tmp_path: Path,
     monkeypatch: MonkeyPatch,
     caplog: LogCaptureFixture,
-    default_options: dict[str, Any],
+    default_options: dict[str, Any],  # simplint: ignore[SMP602]  # test options hold values of any type
     mocker: MockerFixture,
+    error: str,
 ) -> None:
-    mocker.patch("tox.config.cli.parse.discover_source", return_value=mocker.MagicMock(path=Path()))
+    mocker.patch(
+        "tox.config.cli.parse.discover_source",
+        autospec=True,
+        return_value=mocker.create_autospec(Source, instance=True, path=Path()),
+    )
     caplog.set_level(logging.WARNING)
     monkeypatch.setenv("TOX_USER_CONFIG_FILE", str(tmp_path))
     options = get_options("r")
-    msg = (
-        "PermissionError(13, 'Permission denied')"
-        if sys.platform == "win32"
-        else "IsADirectoryError(21, 'Is a directory')"
-    )
-    assert caplog.messages == [f"failed to read config file {tmp_path} because {msg}"]
-    assert vars(options.parsed) == default_options
+    assert caplog.messages == [f"failed to read config file {tmp_path} because {error}"]
+    assert options.parsed == Namespace(**default_options)
 
 
 def test_bad_option_cli_ini(
     tmp_path: Path,
     monkeypatch: MonkeyPatch,
     caplog: LogCaptureFixture,
-    default_options: dict[str, Any],
+    default_options: dict[str, Any],  # simplint: ignore[SMP602]  # test options hold values of any type
 ) -> None:
     caplog.set_level(logging.WARNING)
     to = tmp_path / "tox.ini"
@@ -135,7 +156,7 @@ def test_bad_option_cli_ini(
             "HandledError(\"failed to load core.verbose: invalid literal for int() with base 10: 'what'\")",
         ),
     ]
-    assert vars(parsed) == default_options
+    assert parsed == Namespace(**default_options)
 
 
 def test_cli_ini_with_interpolated(tmp_path: Path, monkeypatch: MonkeyPatch) -> None:
@@ -178,9 +199,7 @@ def test_cli_ini_with_utf8_bom(tmp_path: Path, monkeypatch: MonkeyPatch) -> None
 def test_conf_arg(tmp_path: Path, conf_arg: str, filename: str, content: str) -> None:
     dest = tmp_path / "c"
     dest.mkdir()
-    if filename:
-        cfg = dest / filename
-        cfg.write_bytes(content.encode(encoding="utf-8"))
+    (dest / filename).write_bytes(content.encode(encoding="utf-8"))
 
     config_file = dest / conf_arg
     source = discover_source(config_file, None)
@@ -221,46 +240,48 @@ def exhaustive_ini(tmp_path: Path, monkeypatch: MonkeyPatch) -> Path:
 
 
 @pytest.mark.usefixtures("exhaustive_ini")
-def test_ini_exhaustive_parallel_values(core_handlers: dict[str, Callable[[State], int]]) -> None:
+def test_ini_exhaustive_parallel_values(
+    core_handlers: dict[str, Callable[[State], int]], mocker: MockerFixture
+) -> None:
     options = get_options("p")
-    assert vars(options.parsed) == {
-        "colored": "yes",
-        "stderr_color": "RED",
-        "command": "p",
-        "default_runner": "virtualenv",
-        "develop": False,
-        "discover": [],
-        "env": CliEnv(["py37", "py36"]),
-        "hash_seed": ANY,
-        "install_pkg": None,
-        "fail_fast": False,
-        "no_test": True,
-        "no_capture": False,
-        "override": [Override("a=b"), Override("c=d")],
-        "package_only": False,
-        "no_recreate_pkg": False,
-        "parallel": 3,
-        "parallel_live": True,
-        "parallel_no_spinner": False,
-        "quiet": 1,
-        "no_provision": False,
-        "recreate": True,
-        "no_recreate_provision": False,
-        "result_json": None,
-        "skip_missing_interpreters": "config",
-        "skip_pkg_install": False,
-        "skip_env_install": False,
-        "verbose": 5,
-        "work_dir": None,
-        "root_dir": None,
-        "config_file": None,
-        "factors": [],
-        "labels": [],
-        "exit_and_dump_after": 0,
-        "skip_env": "",
-        "list_dependencies": is_ci(),
-        "remainder": [],
-    }
+    assert options.parsed == Namespace(
+        colored="yes",
+        stderr_color="RED",
+        command="p",
+        default_runner="virtualenv",
+        develop=False,
+        discover=[],
+        env=CliEnv(["py37", "py36"]),
+        hash_seed=mocker.ANY,
+        install_pkg=None,
+        fail_fast=False,
+        no_test=True,
+        no_capture=False,
+        override=[Override("a=b"), Override("c=d")],
+        package_only=False,
+        no_recreate_pkg=False,
+        parallel=3,
+        parallel_live=True,
+        parallel_no_spinner=False,
+        quiet=1,
+        no_provision=False,
+        recreate=True,
+        no_recreate_provision=False,
+        result_json=None,
+        skip_missing_interpreters="config",
+        skip_pkg_install=False,
+        skip_env_install=False,
+        verbose=5,
+        work_dir=None,
+        root_dir=None,
+        config_file=None,
+        factors=[],
+        labels=[],
+        exit_and_dump_after=0,
+        skip_env="",
+        list_dependencies=is_ci(),
+        remainder=[],
+    )
     assert options.parsed.verbosity == 4
     assert options.cmd_handlers == core_handlers
 

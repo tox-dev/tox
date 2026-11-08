@@ -88,8 +88,7 @@ class _TomlProjectCreator(Protocol):
 
 
 def test_config_in_toml_replace_default(toml_project: _TomlProjectCreator) -> None:
-    project = toml_project('[${prefix}env_run_base]\ndescription = "{missing:miss}"')
-    outcome = project.run("c", "-k", "description")
+    outcome = toml_project('[${prefix}env_run_base]\ndescription = "{missing:miss}"').run("c", "-k", "description")
     outcome.assert_success()
     outcome.assert_out_err("[testenv:py]\ndescription = miss\n", "")
 
@@ -199,10 +198,10 @@ def test_config_in_toml_replace_from_section_absolute(toml_project: _TomlProject
 def test_config_in_toml_env_list_bare_factor(
     tox_project: ToxProjectCreator, filename: str, factor: str, env_name: str, expected: str
 ) -> None:
-    prefix: Final = "tool.tox." if filename == "pyproject.toml" else ""
+    prefix, header = {"pyproject.toml": ("tool.tox.", "[tool.tox]"), "tox.toml": ("", "")}[filename]
     project: Final = tox_project({
         filename: f"""
-            {"[tool.tox]" if prefix else ""}
+            {header}
             env_list = [{factor}]
             [{prefix}env_run_base]
             description = "{{factor:ecosystem}}"

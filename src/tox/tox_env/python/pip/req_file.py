@@ -12,7 +12,7 @@ from tox.util.typing_compat import override
 
 from .req.file import ParsedRequirement, ReqFileLines, RequirementsFile, unprotect_env_variables
 
-_UNESCAPED_SPACE_RE = re.compile(
+_UNESCAPED_SPACE_RE: Final[re.Pattern[str]] = re.compile(
     r"""
     (?<! \\ )   # not preceded by backslash
     ( \s )      # capture whitespace
@@ -49,10 +49,75 @@ class _PythonRequirementsFile(RequirementsFile):
                     if entry != "".join(entry.splitlines()) or any(line.endswith("\\") for line in entry.splitlines()):
                         msg = "a requirement entry cannot contain a line break or end in a backslash"
                         raise ValueError(msg)
-        got = raw if isinstance(raw, str) else "\n".join(str(i) for i in raw)
-        self._raw = self._normalize_raw(got)
+        self._raw = self._normalize_raw(raw if isinstance(raw, str) else "\n".join(str(i) for i in raw))
         self._unroll: tuple[list[str], list[str]] | None = None
         self._req_parser_: RequirementsFile | None = None
+
+    @classmethod
+    def _normalize_raw(cls, raw: str) -> str:
+        # a line ending in an unescaped \ is treated as a line continuation and the newline following it is effectively
+        # ignored
+        raw = "".join(raw.replace("\r", "").split("\\\n"))
+        # for tox<4 supporting requirement/constraint files via -rreq.txt/-creq.txt
+        lines: list[str] = [cls._normalize_line(line) for line in raw.splitlines()]
+        adjusted = "\n".join(cls._adjust_lines(lines))
+        return f"{adjusted}\n" if raw.endswith("\\\n") else adjusted
+
+    @classmethod
+    def _normalize_line(cls, line: str) -> str:
+        arg_match = next(
+            (
+                arg
+                for arg in ONE_ARG
+                if line.startswith(arg)
+                and len(line) > len(arg)
+                and not (line[len(arg)].isspace() or line[len(arg)] == "=")
+            ),
+            None,
+        )
+        if arg_match is not None:
+            line = f"{arg_match} {line[len(arg_match) :]}"
+        escape_match = next(
+            (e for e in ONE_ARG_ESCAPE if line.startswith(e) and len(line) > len(e) and line[len(e)].isspace()), None
+        )
+        # a quoted value already keeps its spaces, escaping inside the quotes would add literal backslashes
+        if escape_match is not None and (value := line[len(escape_match) + 1 :]).lstrip()[:1] not in {"'", '"'}:
+            escaped = _UNESCAPED_SPACE_RE.sub(r"\\\1", value)
+            line = f"{line[: len(escape_match)]} {escaped}"
+        return line
+
+    @classmethod
+    def _adjust_lines(cls, lines: list[str]) -> list[str]:
+        return lines
+
+    @classmethod
+    def factory(
+        cls,
+        root: Path,
+        raw: object,  # simplint: ignore[SMP602]  # raw requirement values can be of any type
+        environment_provider: EnvironmentProvider | None = None,
+    ) -> Self:
+        """Create the requirements file that matches the setting, from its value.
+
+        :param root: the directory the relative paths of the file are resolved against
+        :param raw: the value of the setting
+        :param environment_provider: the provider of the environment variables the file can expand
+
+        :returns: the requirements file
+
+        :raises TypeError: when the value is neither a string nor a list of strings or requirements
+
+        """
+        if not cls._valid_raw(raw):
+            raise TypeError(_factory_type_error(cls._FIELD, raw))
+        return cls(raw, root, environment_provider)
+
+    @staticmethod
+    def _valid_raw(raw: object) -> TypeIs[str | list[str] | list[Requirement]]:
+        return isinstance(raw, str) or (
+            isinstance(raw, list)
+            and (all(isinstance(item, str) for item in raw) or all(isinstance(item, Requirement) for item in raw))
+        )
 
     @property
     @override
@@ -93,6 +158,15 @@ class _PythonRequirementsFile(RequirementsFile):
 
     @classmethod
     def validate_requirement_options(cls, source: str, expanded: str, *, preprocessed: bool = False) -> None:
+        """Check that the options of a requirement line are allowed in this setting.
+
+        :param source: the source of the setting
+        :param expanded: the requirement line, expanded
+        :param preprocessed: whether the line was already preprocessed
+
+        :raises ValueError: when the line uses an option that is not allowed
+
+        """
         error_message: Final[str] = "a requirement substitution cannot change pip options"
         source_lines: Final[list[list[str]]] = cls._requirement_tokens(source, preprocessed=preprocessed)
         expanded_lines: Final[list[list[str]]] = cls._requirement_tokens(expanded, preprocessed=preprocessed)
@@ -125,6 +199,13 @@ class _PythonRequirementsFile(RequirementsFile):
 
     def lines(self, *, preserve_host_values: bool = False) -> list[str]:
         # as_root_args raises what tox run would raise, and when pip gets no arguments there is nothing to show
+        """Get the requirement lines of the file.
+
+        :param preserve_host_values: whether the values taken from the host are kept as they are
+
+        :returns: the lines
+
+        """
         if not self.as_root_args:
             return []
         # pip merges global options across lines, so they render from the merged state through the install-argument
@@ -141,14 +222,6 @@ class _PythonRequirementsFile(RequirementsFile):
             lines[at:at] = [" ".join(self._escape(arg) for arg in group) for group in self._option_groups(merged)]
         return lines
 
-    @staticmethod
-    def _escape(arg: str) -> str:
-        # The rendered option must keep its argument boundary when parsed again. On Windows a backslash is a path
-        # separator, so quote instead of escaping.
-        if sys.platform == "win32":  # pragma: win32 cover
-            return shlex.quote(arg)
-        return re.sub(r"""[\s\\'"]""", r"\\\g<0>", arg) or "''"
-
     def _global_options(self, line: str) -> Namespace | None:
         for _, content in self._ignore_comments(enumerate([line])):
             args, opts = self._parse_line(content)
@@ -156,42 +229,13 @@ class _PythonRequirementsFile(RequirementsFile):
                 return opts
         return None
 
-    @classmethod
-    def _normalize_raw(cls, raw: str) -> str:
-        # a line ending in an unescaped \ is treated as a line continuation and the newline following it is effectively
-        # ignored
-        raw = "".join(raw.replace("\r", "").split("\\\n"))
-        # for tox<4 supporting requirement/constraint files via -rreq.txt/-creq.txt
-        lines: list[str] = [cls._normalize_line(line) for line in raw.splitlines()]
-        adjusted = "\n".join(cls._adjust_lines(lines))
-        return f"{adjusted}\n" if raw.endswith("\\\n") else adjusted
-
-    @classmethod
-    def _adjust_lines(cls, lines: list[str]) -> list[str]:
-        return lines
-
-    @classmethod
-    def _normalize_line(cls, line: str) -> str:
-        arg_match = next(
-            (
-                arg
-                for arg in ONE_ARG
-                if line.startswith(arg)
-                and len(line) > len(arg)
-                and not (line[len(arg)].isspace() or line[len(arg)] == "=")
-            ),
-            None,
-        )
-        if arg_match is not None:
-            line = f"{arg_match} {line[len(arg_match) :]}"
-        escape_match = next(
-            (e for e in ONE_ARG_ESCAPE if line.startswith(e) and len(line) > len(e) and line[len(e)].isspace()), None
-        )
-        # a quoted value already keeps its spaces, escaping inside the quotes would add literal backslashes
-        if escape_match is not None and (value := line[len(escape_match) + 1 :]).lstrip()[:1] not in {"'", '"'}:
-            escaped = _UNESCAPED_SPACE_RE.sub(r"\\\1", value)
-            line = f"{line[: len(escape_match)]} {escaped}"
-        return line
+    @staticmethod
+    def _escape(arg: str) -> str:
+        # The rendered option must keep its argument boundary when parsed again. On Windows a backslash is a path
+        # separator, so quote instead of escaping.
+        if sys.platform == "win32":  # pragma: win32 cover
+            return shlex.quote(arg)
+        return re.sub(r"""[\s\\'"]""", r"\\\g<0>", arg) or "''"
 
     @override
     def _parse_requirements(self, opt: Namespace, recurse: bool) -> list[ParsedRequirement]:
@@ -206,8 +250,15 @@ class _PythonRequirementsFile(RequirementsFile):
         raise NotImplementedError
 
     def unroll(self) -> tuple[list[str], list[str]]:
+        """Split the requirement lines into the requirements, and the options of the file.
+
+        :returns: the requirement lines and the option lines
+
+        :raises ValueError: when a line uses an option that is not allowed in this setting
+
+        """
         if self._unroll is None:
-            opts_dict = vars(self.options)
+            opts_dict = self.options.__dict__
             if not self.requirements and opts_dict:
                 msg = "no dependencies"
                 raise ValueError(msg)
@@ -217,28 +268,16 @@ class _PythonRequirementsFile(RequirementsFile):
             )
         return self._unroll
 
-    @classmethod
-    def factory(
-        cls,
-        root: Path,
-        raw: object,
-        environment_provider: EnvironmentProvider | None = None,
-    ) -> Self:
-        if not cls._valid_raw(raw):
-            raise TypeError(_factory_type_error(cls._FIELD, raw))
-        return cls(raw, root, environment_provider)
-
-    @staticmethod
-    def _valid_raw(raw: object) -> TypeIs[str | list[str] | list[Requirement]]:
-        return isinstance(raw, str) or (
-            isinstance(raw, list)
-            and (all(isinstance(item, str) for item in raw) or all(isinstance(item, Requirement) for item in raw))
-        )
-
 
 class PythonDeps(_PythonRequirementsFile):
+    """The dependencies of a tox environment, as set by its ``deps`` setting."""
+
     _CONSTRAINT = False
     _FIELD = "deps"
+
+    def __add__(self, other: PythonDeps) -> Self:
+        # a new instance, so nothing parsed from the earlier text outlives it
+        return type(self)(f"{self._raw}\n{other._raw}", self._path.parent, self._environment_provider)
 
     @override
     def _extend_parser(self, parser: ArgumentParser) -> None:
@@ -265,12 +304,10 @@ class PythonDeps(_PythonRequirementsFile):
                 msg = f"Cannot use --{option} in deps list, it must be in requirements file. ({req})"
                 raise ValueError(msg)
 
-    def __add__(self, other: PythonDeps) -> Self:
-        # a new instance, so nothing parsed from the earlier text outlives it
-        return type(self)(f"{self._raw}\n{other._raw}", self._path.parent, self._environment_provider)
-
 
 class PythonConstraints(_PythonRequirementsFile):
+    """The constraints of a tox environment, as set by its ``constraints`` setting."""
+
     _CONSTRAINT = True
     _FIELD = "constraints"
 
@@ -294,7 +331,10 @@ class PythonConstraints(_PythonRequirementsFile):
             raise ValueError(msg)
 
 
-def _factory_type_error(field: str, raw: object) -> str:
+def _factory_type_error(  # simplint: ignore[SMP602]  # raw requirement values can be of any type
+    field: str,
+    raw: object,  # simplint: ignore[SMP602]  # raw requirement values can be of any type
+) -> str:
     expected = "str, list[str], or list[Requirement]"
     if isinstance(raw, list):
         bad_items = ", ".join(
@@ -304,7 +344,17 @@ def _factory_type_error(field: str, raw: object) -> str:
     return f"{field} expected {expected}, got {type(raw).__name__}: {raw!r}"
 
 
-ONE_ARG = {
+ONE_ARG_ESCAPE: Final[set[str]] = {  # simplint: ignore[SMP202, SMP404]  # imported by tox plugins
+    "-c",
+    "--constraint",
+    "-r",
+    "--requirement",
+    "-f",
+    "--find-links",
+    "-e",
+    "--editable",
+}
+ONE_ARG: Final[set[str]] = {
     "-i",
     "--index-url",
     "--extra-index-url",
@@ -321,19 +371,10 @@ ONE_ARG = {
     "--no-binary",
     "--only-binary",
 }
-ONE_ARG_ESCAPE = {
-    "-c",
-    "--constraint",
-    "-r",
-    "--requirement",
-    "-f",
-    "--find-links",
-    "-e",
-    "--editable",
-}
+"""The options of a requirement file that take one argument."""
 
 
-def _render_options(options: dict[str, object]) -> list[str]:
+def _render_options(options: dict[str, bool | str | list[str]]) -> list[str]:
     # set-valued options (e.g. no_binary) render sorted so the value is stable across hash seeds - the install
     # cache compares these strings and an order change would force a spurious recreate
     return [

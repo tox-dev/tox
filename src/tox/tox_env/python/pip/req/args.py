@@ -3,7 +3,7 @@ from __future__ import annotations
 import bisect
 import re
 from argparse import Action, ArgumentParser, ArgumentTypeError, Namespace
-from typing import TYPE_CHECKING, Any, NoReturn, Protocol, TypeVar, cast
+from typing import TYPE_CHECKING, Any, Final, NoReturn, Protocol, TypeVar, cast
 
 from tox.util.typing_compat import override
 
@@ -15,7 +15,9 @@ _T_contra = TypeVar("_T_contra", contravariant=True)
 
 # stable
 class _SupportsWrite(Protocol[_T_contra]):
-    def write(self, s: _T_contra, /) -> object: ...
+    def write(  # simplint: ignore[SMP602]  # matches the typing protocol of the file-like object
+        self, text: _T_contra, /
+    ) -> object: ...  # simplint: ignore[SMP602]  # matches the typing protocol of the file-like object
 
 
 class _OurArgumentParser(ArgumentParser):
@@ -32,6 +34,11 @@ class _OurArgumentParser(ArgumentParser):
 
 
 def build_parser() -> ArgumentParser:
+    """Build the parser of the pip requirement file options.
+
+    :returns: the parser
+
+    """
     parser = _OurArgumentParser(add_help=False, prog="", allow_abbrev=False)
     _global_options(parser)
     _req_options(parser)
@@ -60,49 +67,7 @@ def _global_options(parser: ArgumentParser) -> None:
     )
 
 
-def _req_options(parser: ArgumentParser) -> None:
-    parser.add_argument("--install-option", action=AddSortedUniqueAction)
-    parser.add_argument("--global-option", action=AddSortedUniqueAction)
-    parser.add_argument("--hash", action=AddSortedUniqueAction, type=_validate_hash)
-    parser.add_argument("-C", "--config-settings", action="append", dest="config_settings")
-
-
-_HASH = re.compile(
-    r"""
-    sha
-    (
-        256 : [a-f0-9]{64}      # SHA-256 hash
-        | 384 : [a-f0-9]{96}    # SHA-384 hash
-        | 512 : [a-f0-9]{128}   # SHA-512 hash
-    )
-    """,
-    re.VERBOSE,
-)
-
-
-def _validate_hash(value: str) -> str:
-    if not _HASH.fullmatch(value):
-        raise ArgumentTypeError(value)
-    return value
-
-
-class AddSortedUniqueAction(Action):
-    @override
-    def __call__(
-        self,
-        parser: ArgumentParser,
-        namespace: Namespace,
-        values: str | Sequence[Any] | None,
-        option_string: str | None = None,
-    ) -> None:
-        if getattr(namespace, self.dest, None) is None:
-            setattr(namespace, self.dest, [])
-        current = getattr(namespace, self.dest)
-        if values is not None and values not in current:
-            bisect.insort(current, cast("str", values))
-
-
-class AddUniqueAction(Action):
+class AddUniqueAction(Action):  # simplint: ignore[SMP403]  # imported by tox plugins
     @override
     def __call__(
         self,
@@ -118,7 +83,7 @@ class AddUniqueAction(Action):
             current.append(values)
 
 
-class BinaryAction(Action):
+class BinaryAction(Action):  # simplint: ignore[SMP403]  # imported by tox plugins
     # Every line parses into its own namespace, while pip lets a later line edit the sets of an earlier one, so record
     # the values in order for the merge to apply.
     @override
@@ -129,5 +94,52 @@ class BinaryAction(Action):
         values: str | Sequence[Any] | None,
         option_string: str | None = None,
     ) -> None:
-        assert values is not None  # ruff:ignore[assert]
+        assert values is not None  # ruff:ignore[assert]  # invariant, narrows type
         namespace.binary_options = [*(namespace.binary_options or []), (self.const, values[0])]
+
+
+class AddSortedUniqueAction(Action):  # simplint: ignore[SMP403]  # imported by tox plugins
+    @override
+    def __call__(
+        self,
+        parser: ArgumentParser,
+        namespace: Namespace,
+        values: str | Sequence[Any] | None,
+        option_string: str | None = None,
+    ) -> None:
+        if getattr(namespace, self.dest, None) is None:
+            setattr(namespace, self.dest, [])
+        current = getattr(namespace, self.dest)
+        if values is not None and values not in current:
+            bisect.insort(current, cast("str", values))
+
+
+def _req_options(parser: ArgumentParser) -> None:
+    parser.add_argument("--install-option", action=AddSortedUniqueAction)
+    parser.add_argument("--global-option", action=AddSortedUniqueAction)
+    parser.add_argument("--hash", action=AddSortedUniqueAction, type=_validate_hash)
+    parser.add_argument("-C", "--config-settings", action="append", dest="config_settings")
+
+
+def _validate_hash(value: str) -> str:
+    if not _HASH.fullmatch(value):
+        raise ArgumentTypeError(value)
+    return value
+
+
+_HASH: Final[re.Pattern[str]] = re.compile(
+    r"""
+    sha
+    (
+        256 : [a-f0-9]{64}      # SHA-256 hash
+        | 384 : [a-f0-9]{96}    # SHA-384 hash
+        | 512 : [a-f0-9]{128}   # SHA-512 hash
+    )
+    """,
+    re.VERBOSE,
+)
+
+
+__all__ = [
+    "build_parser",
+]

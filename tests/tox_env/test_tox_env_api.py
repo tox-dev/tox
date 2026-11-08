@@ -4,7 +4,6 @@ import os
 from shutil import rmtree
 from textwrap import dedent
 from typing import TYPE_CHECKING, Final
-from unittest.mock import patch
 
 import pytest
 
@@ -18,8 +17,7 @@ if TYPE_CHECKING:
 
 def test_recreate(tox_project: ToxProjectCreator) -> None:
     prj = tox_project({"tox.ini": "[testenv]\npackage=skip\nrecreate=True"})
-    result_first = prj.run("r")
-    result_first.assert_success()
+    prj.run("r").assert_success()
 
     result_second = prj.run("r")
     result_second.assert_success()
@@ -113,7 +111,7 @@ def test_env_child_symlink_replaced_without_touching_target(
 
 def test_allow_list_external_fail(tox_project: ToxProjectCreator, fake_exe_on_path: Path) -> None:
     prj = tox_project({"tox.ini": f"[testenv]\npackage=skip\ncommands={fake_exe_on_path.stem}"})
-    execute_calls = prj.patch_execute(lambda r: 0 if "cmd" in r.run_id else None)
+    execute_calls = prj.patch_execute(lambda request: 0 if "cmd" in request.run_id else None)
 
     result = prj.run("r")
 
@@ -136,8 +134,7 @@ def test_allow_env_executable_with_brackets_in_work_dir(tox_project: ToxProjectC
 
 def test_env_log(tox_project: ToxProjectCreator) -> None:
     cmd = "commands=python -c 'import sys; print(1); print(2); print(3, file=sys.stderr); print(4, file=sys.stderr)'"
-    env_vars = "    UNPREDICTABLE = 🪟"
-    prj = tox_project({"tox.ini": f"[testenv]\npackage=skip\nset_env =\n{env_vars}\n{cmd}"})
+    prj = tox_project({"tox.ini": f"[testenv]\npackage=skip\nset_env =\n{'    UNPREDICTABLE = 🪟'}\n{cmd}"})
     result_first = prj.run("r")
     result_first.assert_success()
 
@@ -173,25 +170,23 @@ def test_env_log(tox_project: ToxProjectCreator) -> None:
 
 def test_env_log_cleared_without_commands(tox_project: ToxProjectCreator) -> None:
     config = '[env_run_base]\npackage = "skip"\n'
-    prj = tox_project({"tox.toml": config + 'commands = [["python", "-c", "pass"]]\n'})
+    prj = tox_project({"tox.toml": f'{config}commands = [["python", "-c", "pass"]]\n'})
     prj.run("r").assert_success()
 
     log_dir = prj.path / ".tox" / "py" / "log"
     assert {path.name for path in log_dir.iterdir()} == {"1-commands[0].log"}
 
-    (prj.path / "tox.toml").write_text(config + "commands = []\n")
+    (prj.path / "tox.toml").write_text(f"{config}commands = []\n")
     prj.run("r").assert_success()
 
     assert not list(log_dir.iterdir())
 
 
 def test_env_log_redacts_secret_argv(tox_project: ToxProjectCreator) -> None:
-    cmd = "commands=python -c 'pass' --token=hunter2 --cov=tox"
-    prj = tox_project({"tox.ini": f"[testenv]\npackage=skip\n{cmd}"})
+    prj = tox_project({"tox.ini": "[testenv]\npackage=skip\ncommands=python -c 'pass' --token=hunter2 --cov=tox"})
     result = prj.run("r")
     result.assert_success()
-    log_dir = prj.path / ".tox" / "py" / "log"
-    content = (log_dir / "1-commands[0].log").read_text()
+    content = ((prj.path / ".tox" / "py" / "log") / "1-commands[0].log").read_text()
     cmd_line = next(line for line in content.splitlines() if line.startswith("cmd:"))
     assert "hunter2" not in cmd_line
     assert "--token=*******" in cmd_line
@@ -216,15 +211,15 @@ def test_env_log_redacts_secret_argv_after_open_quote(
     assert "--token=*******" in result.out
 
 
-def test_tox_env_pass_env_literal_exist() -> None:
-    with patch("os.environ", {"A": "1"}):
-        env = ToxEnv._load_pass_env(["A"])  # ruff:ignore[private-member-access]
+def test_tox_env_pass_env_literal_exist(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(os, "environ", {"A": "1"})
+    env = ToxEnv._load_pass_env(["A"])  # ruff:ignore[private-member-access]  # internal state
     assert env == {"A": "1"}
 
 
-def test_tox_env_pass_env_literal_miss() -> None:
-    with patch("os.environ", {}):
-        env = ToxEnv._load_pass_env(["A"])  # ruff:ignore[private-member-access]
+def test_tox_env_pass_env_literal_miss(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(os, "environ", {})
+    env = ToxEnv._load_pass_env(["A"])  # ruff:ignore[private-member-access]  # internal state
     assert not env
 
 
@@ -250,13 +245,13 @@ def test_tox_env_pass_env_fails_on_whitespace(tox_project: ToxProjectCreator) ->
 
 @pytest.mark.parametrize("glob", ["*", "?"])
 @pytest.mark.parametrize("char", ["a", "A"])
-def test_tox_env_pass_env_match_ignore_case(char: str, glob: str) -> None:
-    with patch("os.environ", {"A1": "1", "a2": "2", "A2": "3", "B": "4"}):
-        env = ToxEnv._load_pass_env([f"{char}{glob}"])  # ruff:ignore[private-member-access]
+def test_tox_env_pass_env_match_ignore_case(char: str, glob: str, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(os, "environ", {"A1": "1", "a2": "2", "A2": "3", "B": "4"})
+    env = ToxEnv._load_pass_env([f"{char}{glob}"])  # ruff:ignore[private-member-access]  # internal state
     assert env == {"A1": "1", "a2": "2", "A2": "3"}
 
 
-def test_disallow_pass_env(tox_project: ToxProjectCreator) -> None:
+def test_disallow_pass_env(tox_project: ToxProjectCreator, monkeypatch: pytest.MonkeyPatch) -> None:
     cmd = "import os; print(os.environ.get('FOO_BAR', '')); print(os.environ.get('FOO_SECRET', ''))"
     toml = f"""
     [env_run_base]
@@ -266,14 +261,15 @@ def test_disallow_pass_env(tox_project: ToxProjectCreator) -> None:
     commands = [["python", "-c", "{cmd}"]]
     """
     project = tox_project({"tox.toml": toml})
-    with patch.dict("os.environ", {"FOO_BAR": "visible", "FOO_SECRET": "hidden"}):
-        result = project.run("r")
+    monkeypatch.setenv("FOO_BAR", "visible")
+    monkeypatch.setenv("FOO_SECRET", "hidden")
+    result = project.run("r")
     result.assert_success()
     assert "visible" in result.out
     assert "hidden" not in result.out
 
 
-def test_disallow_pass_env_glob(tox_project: ToxProjectCreator) -> None:
+def test_disallow_pass_env_glob(tox_project: ToxProjectCreator, monkeypatch: pytest.MonkeyPatch) -> None:
     cmd = "import os; print(os.environ.get('APP_NAME', '')); print(os.environ.get('APP_SECRET_KEY', ''))"
     toml = f"""
     [env_run_base]
@@ -283,14 +279,15 @@ def test_disallow_pass_env_glob(tox_project: ToxProjectCreator) -> None:
     commands = [["python", "-c", "{cmd}"]]
     """
     project = tox_project({"tox.toml": toml})
-    with patch.dict("os.environ", {"APP_NAME": "myapp", "APP_SECRET_KEY": "s3cret"}):
-        result = project.run("r")
+    monkeypatch.setenv("APP_NAME", "myapp")
+    monkeypatch.setenv("APP_SECRET_KEY", "s3cret")
+    result = project.run("r")
     result.assert_success()
     assert "myapp" in result.out
     assert "s3cret" not in result.out
 
 
-def test_disallow_pass_env_empty(tox_project: ToxProjectCreator) -> None:
+def test_disallow_pass_env_empty(tox_project: ToxProjectCreator, monkeypatch: pytest.MonkeyPatch) -> None:
     toml = """
     [env_run_base]
     package = "skip"
@@ -298,8 +295,8 @@ def test_disallow_pass_env_empty(tox_project: ToxProjectCreator) -> None:
     commands = [["python", "-c", "import os; print(os.environ.get('FOO', ''))"]]
     """
     project = tox_project({"tox.toml": toml})
-    with patch.dict("os.environ", {"FOO": "bar"}):
-        result = project.run("r")
+    monkeypatch.setenv("FOO", "bar")
+    result = project.run("r")
     result.assert_success()
     assert "bar" in result.out
 
@@ -342,8 +339,7 @@ commands = [["python", "{posargs}"]]
 
 def test_change_dir_is_created_if_not_exist(tox_project: ToxProjectCreator) -> None:
     prj = tox_project({"tox.ini": "[testenv]\npackage=skip\nchange_dir=a{/}b\ncommands=python --version"})
-    result_first = prj.run("r")
-    result_first.assert_success()
+    prj.run("r").assert_success()
     assert (prj.path / "a" / "b").exists()
 
 
@@ -397,30 +393,26 @@ def test_env_dir_absolute_is_kept(tox_project: ToxProjectCreator, tmp_path: Path
 
 
 def test_setenv_path_not_overwritten(tox_project: ToxProjectCreator) -> None:
-    cmd = "import os; print(os.environ['PATH'])"
-    toml = f"""
+    toml = """
     [env_run_base]
     package = "skip"
-    set_env.PATH = "{{env:PATH}}:/custom/test/path"
-    commands = [["python", "-c", "{cmd}"]]
+    set_env.PATH = "{env:PATH}:/custom/test/path"
+    commands = [["python", "-c", "import os; print(os.environ['PATH'])"]]
     """
-    project = tox_project({"tox.toml": toml})
-    result = project.run("r")
+    result = tox_project({"tox.toml": toml}).run("r")
     result.assert_success()
     # The custom path from set_env must survive — not be overwritten
     assert "/custom/test/path" in result.out
 
 
 def test_setenv_path_venv_paths_first(tox_project: ToxProjectCreator) -> None:
-    cmd = "import os; print(os.environ['PATH'])"
-    toml = f"""
+    toml = """
     [env_run_base]
     package = "skip"
-    set_env.PATH = "{{env:PATH}}:/trailing/path"
-    commands = [["python", "-c", "{cmd}"]]
+    set_env.PATH = "{env:PATH}:/trailing/path"
+    commands = [["python", "-c", "import os; print(os.environ['PATH'])"]]
     """
-    project = tox_project({"tox.toml": toml})
-    result = project.run("r")
+    result = tox_project({"tox.toml": toml}).run("r")
     result.assert_success()
     path_line = next(line for line in result.out.splitlines() if "/trailing/path" in line)
     path_entries = path_line.split(":")
@@ -433,8 +425,7 @@ def test_setenv_path_venv_paths_first(tox_project: ToxProjectCreator) -> None:
 
 def test_cachedir_tag_created(tox_project: ToxProjectCreator) -> None:
     prj = tox_project({"tox.ini": "[testenv]\npackage=skip"})
-    result = prj.run("r")
-    result.assert_success()
+    prj.run("r").assert_success()
 
     tag = prj.path / ".tox" / "CACHEDIR.TAG"
     assert tag.is_file()
@@ -444,8 +435,7 @@ def test_cachedir_tag_created(tox_project: ToxProjectCreator) -> None:
 
 def test_gitignore_created_in_work_dir(tox_project: ToxProjectCreator) -> None:
     prj = tox_project({"tox.ini": "[testenv]\npackage=skip\ncommands=python -c 'print(1)'"})
-    result = prj.run("r")
-    result.assert_success()
+    prj.run("r").assert_success()
     gitignore = prj.path / ".tox" / ".gitignore"
     assert gitignore.exists()
     assert gitignore.read_text(encoding="utf-8") == "*\n"

@@ -1,13 +1,13 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, ClassVar, cast
+from typing import TYPE_CHECKING, ClassVar, Final, cast
 
 from docutils.nodes import Element, Node, Text, container, fully_normalize_name, literal, paragraph, reference, strong
 from docutils.parsers.rst.directives import flag, unchanged, unchanged_required
 from docutils.statemachine import StringList, string2lines
 from sphinx.locale import __
 from sphinx.util.docutils import SphinxDirective
-from sphinx.util.logging import getLogger
+from sphinx.util.logging import SphinxLoggerAdapter, getLogger
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -15,7 +15,7 @@ if TYPE_CHECKING:
     from docutils.parsers.rst.states import RSTState, RSTStateMachine
     from sphinx.domains.std import StandardDomain
 
-LOGGER = getLogger(__name__)
+_LOGGER: Final[SphinxLoggerAdapter] = getLogger(__name__)
 
 
 class ToxConfig(SphinxDirective):
@@ -31,7 +31,7 @@ class ToxConfig(SphinxDirective):
         "ref_suffix": unchanged,
     }
 
-    def __init__(  # ruff:ignore[too-many-arguments]
+    def __init__(  # ruff:ignore[too-many-arguments]  # public signature
         self,
         name: str,
         arguments: list[str],
@@ -81,9 +81,9 @@ class ToxConfig(SphinxDirective):
             ver = self.options["version_deprecated"]
             line += literal(ver, ver)
 
-        p = container("")
-        self.state.nested_parse(StringList(string2lines("\n".join(f"    {i}" for i in self.content))), 0, p)
-        line += p
+        block = container("")
+        self.state.nested_parse(StringList(string2lines("\n".join(f"    {i}" for i in self.content))), 0, block)
+        line += block
 
         return [line]
 
@@ -100,7 +100,7 @@ class ToxConfig(SphinxDirective):
     def _register_ref(self, ref_name: str, ref_title: str, node: Element) -> None:
         of_name, doc_name = fully_normalize_name(ref_name), self.env.docname
         if of_name in self._std_domain.labels:
-            LOGGER.warning(
+            _LOGGER.warning(
                 __("duplicate label %s, other instance in %s"),
                 of_name,
                 self.env.doc2path(self._std_domain.labels[of_name][0]),

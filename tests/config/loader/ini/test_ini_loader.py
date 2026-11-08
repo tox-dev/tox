@@ -45,7 +45,7 @@ def test_ini_loader_raw(mk_ini_conf: Callable[[str], ConfigParser]) -> None:
     assert result == "b"
 
 
-@pytest.mark.parametrize("sep", ["\n", "\r\n"])
+@pytest.mark.parametrize("sep", [pytest.param("\n", id="newline"), pytest.param("\r\n", id="ud-newline")])
 def test_ini_loader_raw_strip_escaped_newline(mk_ini_conf: Callable[[str], ConfigParser], sep: str) -> None:
     core = IniSection(None, "tox")
     args = ConfigLoadArgs([], "name", None)
@@ -57,13 +57,15 @@ def test_ini_loader_raw_strip_escaped_newline(mk_ini_conf: Callable[[str], Confi
 @pytest.mark.parametrize(
     ("case", "result"),
     [
-        ("# a", ""),
-        ("#", ""),
-        ("a # w", "a"),
-        ("a\t# w", "a"),
-        ("a# w", "a"),
-        ("a\\# w", "a# w"),
-        ("#a\n b # w\n w", "b\nw"),
+        pytest.param("# a", "", id="hash-space-a-empty"),
+        pytest.param("#", "", id="hash-empty"),
+        pytest.param("a # w", "a", id="a-space-hash-space-w-a"),
+        pytest.param("a\t# w", "a", id="a-tab-hash-space-w-a"),
+        pytest.param("a# w", "a", id="a-hash-space-w-a"),
+        pytest.param("a\\# w", "a# w", id="a-backslash-hash-space-w-a-hash-space-w"),
+        pytest.param(
+            "#a\n b # w\n w", "b\nw", id="hash-a-newline-space-b-space-hash-space-w-newline-space-w-b-newline-w"
+        ),
     ],
 )
 def test_ini_loader_strip_comments(mk_ini_conf: Callable[[str], ConfigParser], case: str, result: str) -> None:

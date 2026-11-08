@@ -12,9 +12,18 @@ if TYPE_CHECKING:
 
 
 class EnvJournal:
-    """Report the status of a tox environment."""
+    """Report the status of a tox environment.
 
-    def __init__(self, enabled: bool, name: str) -> None:  # ruff:ignore[boolean-type-hint-positional-argument]
+    :param enabled: whether the journal records anything
+    :param name: the name of the tox environment
+
+    """
+
+    def __init__(  # keeps the signature
+        self,
+        enabled: bool,  # ruff:ignore[boolean-type-hint-positional-argument]  # keeps the signature
+        name: str,  # keeps the signature
+    ) -> None:
         self._enabled = enabled
         self.name = name
         self._content: dict[str, JsonValue] = {}
@@ -33,18 +42,9 @@ class EnvJournal:
         """:returns: a flag indicating if the event journal is on or not"""
         return self._enabled
 
-    def add_execute(self, outcome: Outcome, run_id: str) -> None:
-        """Add a command execution to the journal.
-
-        :param outcome: the execution outcome
-        :param run_id: the execution id
-
-        """
-        self._executes.append((run_id, outcome))
-
     @property
     def content(self) -> dict[str, JsonValue]:
-        """:returns: the env journal content (merges explicit keys and execution commands)"""
+        """The env journal content, merging the explicit keys and the execution commands."""
         tests: list[JsonValue] = []
         setup: list[JsonValue] = []
         for run_id, outcome in self._executes:
@@ -69,5 +69,16 @@ class EnvJournal:
             self["setup"] = setup
         return self._content
 
+    def add_execute(self, outcome: Outcome, run_id: str) -> None:
+        """Add a command execution to the journal.
 
-__all__ = ("EnvJournal",)
+        :param outcome: the execution outcome
+        :param run_id: the execution id
+
+        """
+        self._executes.append((run_id, outcome))
+
+
+__all__ = [
+    "EnvJournal",
+]

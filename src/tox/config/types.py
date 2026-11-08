@@ -23,7 +23,7 @@ class MissingRequiredConfigKeyError(ValueError):
     """
 
 
-class Command:  # ruff:ignore[eq-without-hash]
+class Command:  # ruff:ignore[eq-without-hash]  # mutable value type
     """A command to execute."""
 
     def __init__(self, args: list[str]) -> None:
@@ -44,6 +44,7 @@ class Command:  # ruff:ignore[eq-without-hash]
 
     @property
     def raw_args(self) -> list[str]:
+        """The arguments with the exit code prefix, ``-`` to ignore the exit code or ``!`` to invert it."""
         return (["-"] if self.ignore_exit_code else ["!"] if self.invert_exit_code else []) + self.args
 
     @override
@@ -62,11 +63,11 @@ class Command:  # ruff:ignore[eq-without-hash]
 
     @property
     def shell(self) -> str:
-        """:returns: a shell representation of the command (platform dependent)"""
+        """A shell representation of the command, platform dependent."""
         return shell_cmd(self.args)
 
 
-class EnvList:  # ruff:ignore[eq-without-hash]
+class EnvList:  # ruff:ignore[eq-without-hash]  # mutable value type
     """A tox environment list."""
 
     def __init__(self, envs: Sequence[str]) -> None:
@@ -96,16 +97,23 @@ class EnvList:  # ruff:ignore[eq-without-hash]
         return iter(self.envs)
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True, kw_only=True)
 class FactorGroup:
-    """``default`` stands in wherever an environment name carries none of ``values``."""
+    """``default`` stands in wherever an environment name carries none of ``values``.
+
+    :param values: the factor values of the group
+    :param default: the value used when no factor is active
+
+    """
 
     values: list[str]
     default: str | None = None
 
 
-__all__ = (
+__all__ = [
+    "CircularChainError",
     "Command",
     "EnvList",
     "FactorGroup",
-)
+    "MissingRequiredConfigKeyError",
+]

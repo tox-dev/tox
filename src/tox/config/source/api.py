@@ -18,7 +18,13 @@ if TYPE_CHECKING:
 
 
 class Source(ABC):
-    """Source is able to return a configuration value (for either the core or per environment source)."""
+    """Source is able to return a configuration value (for either the core or per environment source).
+
+    :param path: the path of the configuration file
+
+    :var FILENAME: the name of the configuration file
+
+    """
 
     FILENAME = ""
 
@@ -29,13 +35,13 @@ class Source(ABC):
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}(path={self.path})"
 
-    def get_loaders(
+    def get_loaders(  # simplint: ignore[SMP602]  # loaders read raw values of any type
         self,
         section: Section,
         base: list[str] | None,
         override_map: OverrideMap,
         conf: ConfigSet,
-    ) -> Iterator[Loader[Any]]:
+    ) -> Iterator[Loader[Any]]:  # simplint: ignore[SMP602]  # loaders read raw values of any type
         """Return a loader that loads settings from a given section name.
 
         :param section: the section to load
@@ -43,13 +49,15 @@ class Source(ABC):
         :param override_map: a list of overrides to apply
         :param conf: the config set to use
 
-        :returns: the loaders to use
+        :yields: the loaders to use
 
         """
         # loaders are built fresh per config set: their parent chain depends on the base sections, and a section can
         # be redefined with another base (a run env re-created as a package env); the config set is what gets cached
         section = self.transform_section(section)
-        loader: Loader[Any] | None = self.get_loader(section, override_map)
+        loader: Loader[Any] | None = self.get_loader(  # simplint: ignore[SMP602]  # loaders read raw values of any type
+            section, override_map
+        )  # simplint: ignore[SMP602]  # loaders read raw values of any type
         if loader is not None:
             yield loader
 
@@ -72,14 +80,39 @@ class Source(ABC):
 
     @abstractmethod
     def transform_section(self, section: Section) -> Section:
+        """Transform a section before it is used, for example to add a prefix.
+
+        :param section: the section to transform
+
+        :returns: the transformed section
+
+        """
         raise NotImplementedError
 
     @abstractmethod
-    def get_loader(self, section: Section, override_map: OverrideMap) -> Loader[Any] | None:
+    def get_loader(  # simplint: ignore[SMP602]  # loaders read raw values of any type
+        self, section: Section, override_map: OverrideMap
+    ) -> Loader[Any] | None:  # simplint: ignore[SMP602]  # loaders read raw values of any type
+        """Get the loader that reads the values of a section.
+
+        :param section: the section to read
+        :param override_map: the overrides to apply when reading the section
+
+        :returns: the loader, or ``None`` when the source has no values for the section
+
+        """
         raise NotImplementedError
 
     @abstractmethod
     def get_base_sections(self, base: list[str], in_section: Section) -> Iterator[Section]:
+        """Get the base sections a section inherits from.
+
+        :param base: the names of the base sections
+        :param in_section: the section that inherits from them
+
+        :returns: the base sections
+
+        """
         raise NotImplementedError
 
     @abstractmethod
@@ -102,7 +135,13 @@ class Source(ABC):
 
     @abstractmethod
     def get_tox_env_section(self, item: str) -> tuple[Section, list[str], list[str]]:
-        """:returns: the section for a tox environment"""
+        """Get the section of a tox environment.
+
+        :param item: the name of the tox environment
+
+        :returns: the section, followed by the base sections for test and for package environments
+
+        """
         raise NotImplementedError
 
     @abstractmethod
@@ -113,7 +152,17 @@ class Source(ABC):
 
 @runtime_checkable
 class FactorLabelSource(Protocol):
-    def factor_labels(self, env_name: str | None) -> dict[str, FactorGroup]: ...
+    """A configuration source that defines factor labels for each environment."""
+
+    def factor_labels(self, env_name: str | None) -> dict[str, FactorGroup]:
+        """Get the factor labels defined for an environment.
+
+        :param env_name: the environment name, ``None`` for the core configuration
+
+        :returns: the factor labels
+
+        """
+        ...
 
 
 __all__ = [

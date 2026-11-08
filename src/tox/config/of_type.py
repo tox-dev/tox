@@ -3,26 +3,33 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from enum import Enum, auto
 from typing import TYPE_CHECKING, Generic, TypeVar, cast
 
-from tox.config.loader.api import ConfigLoadArgs, Loader
-from tox.config.types import CircularChainError
 from tox.util.typing_compat import override
+
+from .loader.api import ConfigLoadArgs, Loader
+from .types import CircularChainError
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterable
     from types import UnionType
 
-    from tox.config.loader.convert import Factory
-    from tox.config.main import Config  # pragma: no cover
+    from .loader.convert import Factory
+    from .main import Config  # pragma: no cover  # setup not built by tests
 
 
-T = TypeVar("T")
-V = TypeVar("V")
+T = TypeVar("T")  # simplint: ignore[SMP101, SMP404]  # exported, renaming breaks importers
+V = TypeVar("V")  # simplint: ignore[SMP101, SMP404]  # exported, renaming breaks importers
 
 
-class ConfigDefinition(ABC, Generic[T]):  # ruff:ignore[eq-without-hash]
-    """Abstract base class for configuration definitions."""
+class ConfigDefinition(ABC, Generic[T]):  # ruff:ignore[eq-without-hash]  # mutable value type
+    """Abstract base class for configuration definitions.
+
+    :param keys: the configuration keys, the first one is the name, the others are aliases
+    :param desc: the help text describing the configuration
+
+    """
 
     def __init__(self, keys: Iterable[str], desc: str) -> None:
         self.keys = keys
@@ -30,11 +37,6 @@ class ConfigDefinition(ABC, Generic[T]):  # ruff:ignore[eq-without-hash]
 
     @abstractmethod
     def __call__(self, conf: Config, loaders: list[Loader[T]], args: ConfigLoadArgs) -> T:
-        raise NotImplementedError
-
-    @abstractmethod
-    def overwrite(self, value: T) -> None:
-        """Force the configuration to the given value, replacing any constant or already loaded one."""
         raise NotImplementedError
 
     @override
@@ -47,9 +49,24 @@ class ConfigDefinition(ABC, Generic[T]):  # ruff:ignore[eq-without-hash]
     def __ne__(self, o: object) -> bool:
         return not (self == o)
 
+    @abstractmethod
+    def overwrite(self, value: T) -> None:
+        """Force the configuration to the given value, replacing any constant or already loaded one.
 
-class ConfigConstantDefinition(ConfigDefinition[T]):  # ruff:ignore[eq-without-hash]
-    """A configuration definition whose value is defined upfront (such as the tox environment name)."""
+        :param value: the new value
+
+        """
+        raise NotImplementedError
+
+
+class ConfigConstantDefinition(ConfigDefinition[T]):  # ruff:ignore[eq-without-hash]  # mutable value type
+    """A configuration definition whose value is defined upfront (such as the tox environment name).
+
+    :param keys: the configuration keys, the first one is the name, the others are aliases
+    :param desc: the help text describing the configuration
+    :param value: the value the configuration is fixed to
+
+    """
 
     def __init__(
         self,
@@ -72,10 +89,6 @@ class ConfigConstantDefinition(ConfigDefinition[T]):  # ruff:ignore[eq-without-h
         return self.value
 
     @override
-    def overwrite(self, value: T) -> None:
-        self.value = value
-
-    @override
     def __eq__(self, o: object) -> bool:
         if not isinstance(o, ConfigConstantDefinition):
             return False
@@ -83,17 +96,31 @@ class ConfigConstantDefinition(ConfigDefinition[T]):  # ruff:ignore[eq-without-h
 
     @override
     def __repr__(self) -> str:
-        values = ((k, v) for k, v in vars(self).items() if v is not None)
+        values = ((k, v) for k, v in self.__dict__.items() if v is not None)
         return f"{type(self).__name__}({', '.join(f'{k}={v}' for k, v in values)})"
 
+    @override
+    def overwrite(self, value: T) -> None:
+        self.value = value
 
-_PLACE_HOLDER = object()
+
+class _Missing(Enum):
+    MISSING = auto()
 
 
-class ConfigDynamicDefinition(ConfigDefinition[T]):  # ruff:ignore[eq-without-hash]
-    """A configuration definition that comes from a source (such as in memory, an ini file, a toml file, etc.)."""
+class ConfigDynamicDefinition(ConfigDefinition[T]):  # ruff:ignore[eq-without-hash]  # mutable value type
+    """A configuration definition that comes from a source (such as in memory, an ini file, a toml file, etc.).
 
-    def __init__(  # ruff:ignore[too-many-arguments]
+    :param keys: the configuration keys, the first one is the name, the others are aliases
+    :param desc: the help text describing the configuration
+    :param of_type: the type the loaded value is converted to
+    :param default: the value, or a callable computing it, used when the configuration is not set
+    :param post_process: a callable applied to the converted value
+    :param factory: the callable that builds the objects of the type, for container and custom types
+
+    """
+
+    def __init__(  # ruff:ignore[too-many-arguments]  # public signature
         self,
         keys: Iterable[str],
         desc: str,
@@ -107,7 +134,7 @@ class ConfigDynamicDefinition(ConfigDefinition[T]):  # ruff:ignore[eq-without-ha
         self.default = default
         self.post_process = post_process
         self.factory = factory
-        self._cache: object | T = _PLACE_HOLDER
+        self._cache: T | _Missing = _Missing.MISSING
 
     @override
     def __call__(
@@ -116,14 +143,13 @@ class ConfigDynamicDefinition(ConfigDefinition[T]):  # ruff:ignore[eq-without-ha
         loaders: list[Loader[T]],
         args: ConfigLoadArgs,
     ) -> T:
-        if self._cache is _PLACE_HOLDER:
+        if self._cache is _Missing.MISSING:
             primary_key, *alias_keys = self.keys
             for loader in loaders:
                 chain_key = f"{loader.section.key}.{primary_key}"
                 try:
                     if chain_key in args.chain:
-                        values = args.chain[args.chain.index(chain_key) :]
-                        msg = f"circular chain detected {', '.join(values)}"
+                        msg = f"circular chain detected {', '.join(args.chain[args.chain.index(chain_key) :])}"
                         raise CircularChainError(msg)
                 finally:
                     args.chain.append(chain_key)
@@ -139,19 +165,16 @@ class ConfigDynamicDefinition(ConfigDefinition[T]):  # ruff:ignore[eq-without-ha
                 if callable(self.default):
                     value = cast("Callable[[Config, str | None], T]", self.default)(conf, args.env_name)
                 else:
-                    value = cast("T", self.default)  # when the default is None the overloads guarantee T includes None
+                    # when the default is None the overloads guarantee T includes None
+                    value = cast("T", self.default)
             if self.post_process is not None:
                 value = self.post_process(value)
             self._cache = value
-        return cast("T", self._cache)
-
-    @override
-    def overwrite(self, value: T) -> None:
-        self._cache = value
+        return self._cache
 
     @override
     def __repr__(self) -> str:
-        values = ((k, v) for k, v in vars(self).items() if k not in {"post_process", "_cache"} and v is not None)
+        values = ((k, v) for k, v in self.__dict__.items() if k not in {"post_process", "_cache"} and v is not None)
         return f"{type(self).__name__}({', '.join(f'{k}={v}' for k, v in values)})"
 
     @override
@@ -163,6 +186,10 @@ class ConfigDynamicDefinition(ConfigDefinition[T]):  # ruff:ignore[eq-without-ha
             o.default,
             o.post_process,
         )
+
+    @override
+    def overwrite(self, value: T) -> None:
+        self._cache = value
 
 
 __all__ = [

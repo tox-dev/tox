@@ -15,9 +15,16 @@ if TYPE_CHECKING:
 
 
 class Journal:
-    """The result of a tox session."""
+    """The result of a tox session.
 
-    def __init__(self, enabled: bool) -> None:  # ruff:ignore[boolean-type-hint-positional-argument]
+    :param enabled: whether the journal records anything
+
+    """
+
+    def __init__(  # keeps the signature
+        self,
+        enabled: bool,  # ruff:ignore[boolean-type-hint-positional-argument]  # keeps the signature
+    ) -> None:
         self._enabled = enabled
         self._content: dict[str, JsonValue] = {}
         self._env: dict[str, EnvJournal] = {}
@@ -32,15 +39,12 @@ class Journal:
                 },
             )
 
-    def get_env_journal(self, name: str) -> EnvJournal:
-        """Return the env log of an environment (create on first call)."""
-        if name not in self._env:
-            env = EnvJournal(self._enabled, name)
-            self._env[name] = env
-        return self._env[name]
+    def __bool__(self) -> bool:
+        return self._enabled
 
     @property
     def content(self) -> dict[str, JsonValue]:
+        """The journal of the run, with the journal of each environment under its name."""
         test_env_journals: dict[str, JsonValue] = {}
         for name, value in self._env.items():
             test_env_journals[name] = value.content
@@ -48,8 +52,19 @@ class Journal:
             self._content["testenvs"] = test_env_journals
         return self._content
 
-    def __bool__(self) -> bool:
-        return self._enabled
+    def get_env_journal(self, name: str) -> EnvJournal:
+        """Return the env log of an environment (create on first call).
+
+        :param name: the name of the tox environment
+
+        :returns: the journal of the environment
+
+        """
+        if name not in self._env:
+            self._env[name] = EnvJournal(self._enabled, name)
+        return self._env[name]
 
 
-__all__ = ("Journal",)
+__all__ = [
+    "Journal",
+]

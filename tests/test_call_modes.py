@@ -9,9 +9,11 @@ if TYPE_CHECKING:
     from tox.pytest import ToxProject
 
 
-def test_call_as_module(empty_project: ToxProject) -> None:  # ruff:ignore[unused-function-argument]
+def test_call_as_module(  # interface signature
+    empty_project: ToxProject,  # ruff:ignore[unused-function-argument]  # interface signature
+) -> None:
     subprocess.check_output([sys.executable, "-m", "tox", "-h"])
 
 
-def test_call_as_exe(empty_project: ToxProject) -> None:  # ruff:ignore[unused-function-argument]
+def test_call_as_exe(empty_project: ToxProject) -> None:  # ruff:ignore[unused-function-argument]  # interface signature
     subprocess.check_output([str(Path(sys.executable).parent / "tox"), "-h"])

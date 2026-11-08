@@ -7,6 +7,11 @@ import sys
 
 
 def auto_detect_cpus() -> int:
+    """Get the number of CPUs the process can use.
+
+    :returns: the number of CPUs
+
+    """
     if sys.version_info >= (3, 13):  # pragma: >=3.13 cover
         count = os.process_cpu_count()
     elif hasattr(os, "sched_getaffinity"):  # pragma: <3.13 cover
@@ -16,4 +21,6 @@ def auto_detect_cpus() -> int:
     return count or 1
 
 
-__all__ = ("auto_detect_cpus",)
+__all__ = [
+    "auto_detect_cpus",
+]

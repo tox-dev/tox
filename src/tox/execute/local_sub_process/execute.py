@@ -1,0 +1,444 @@
+"""Execute that runs on local file system via subprocess-es."""
+
+from __future__ import annotations
+
+import fnmatch
+import logging
+import os
+import shutil
+import sys
+from contextlib import suppress
+from pathlib import Path
+from subprocess import DEVNULL, PIPE, TimeoutExpired
+from typing import TYPE_CHECKING, Any, Final
+
+from tox.execute.api import Execute, ExecuteInstance, ExecuteOptions, ExecuteStatus, FinishedExecuteStatus
+from tox.execute.request import ExecuteRequest, StdinSource
+from tox.execute.util import batch_file_command_line, is_batch_file, shebang
+from tox.tox_env.errors import Fail
+from tox.util.redact import redact_argv
+from tox.util.typing_compat import override
+
+if TYPE_CHECKING:
+    import io
+    from collections.abc import Generator, Sequence
+    from types import TracebackType
+
+    from tox.execute.stream import SyncWrite
+    from tox.util.json_types import JsonValue
+
+# mypy: warn-unused-ignores=false
+
+if sys.platform == "win32":  # explicit check for mypy # pragma: win32 cover
+    # needs stdin/stdout handlers backed by overlapped IO
+    if TYPE_CHECKING:  # the typeshed libraries don't contain this, so replace it with normal one
+        from subprocess import Popen
+    else:
+        from asyncio.windows_utils import Popen
+    from signal import CTRL_C_EVENT as SIG_INTERRUPT
+    from signal import SIGTERM
+
+    from .read_via_thread_windows import ReadViaThreadWindows as ReadViaThread
+
+else:  # pragma: win32 no cover
+    from signal import SIGINT as SIG_INTERRUPT
+    from signal import SIGKILL, SIGTERM
+    from subprocess import Popen
+
+    from .read_via_thread_unix import ReadViaThreadUnix as ReadViaThread
+
+
+IS_WIN: Final[bool] = sys.platform == "win32"
+"""Whether tox runs on Windows."""
+
+
+class LocalSubProcessExecutor(Execute):
+    """Run commands as subprocesses of the local machine."""
+
+    @override
+    def build_instance(
+        self,
+        request: ExecuteRequest,
+        options: ExecuteOptions,
+        out: SyncWrite,
+        err: SyncWrite,
+    ) -> ExecuteInstance:
+        return LocalSubProcessExecuteInstance(request, options, out, err)
+
+
+class LocalSubProcessExecuteInstance(ExecuteInstance):
+    """Run a command as a subprocess of the local machine.
+
+    :param request: the request to run
+    :param options: the options of the execution
+    :param out: the stream the standard output is written to
+    :param err: the stream the standard error is written to
+    :param on_exit_drain: whether to read the remaining output of the streams when the subprocess exits
+
+    :var process: the subprocess, ``None`` until it is started
+
+    """
+
+    def __init__(
+        self,
+        request: ExecuteRequest,
+        options: ExecuteOptions,
+        out: SyncWrite,
+        err: SyncWrite,
+        # keeps the existing signature
+        on_exit_drain: bool = True,  # ruff:ignore[boolean-type-hint-positional-argument, boolean-default-value-positional-argument]
+    ) -> None:
+        super().__init__(request, options, out, err)
+        self.process: Popen[bytes] | None = None
+        self._cmd: list[str] | None = None
+        self._read_stderr: ReadViaThread | None = None
+        self._read_stdout: ReadViaThread | None = None
+        self._file_no_generators: list[Generator[int, Popen[bytes], None]] = []
+        self._on_exit_drain = on_exit_drain
+
+    @override
+    def __enter__(self) -> ExecuteStatus:
+        # adjust sub-process terminal size
+        columns, lines = shutil.get_terminal_size(fallback=(-1, -1))
+        if columns != -1:  # pragma: no branch  # other outcome untested
+            self.request.env.setdefault("COLUMNS", str(columns))
+        if lines != -1:  # pragma: no branch  # other outcome untested
+            self.request.env.setdefault("LINES", str(lines))
+
+        stdout, stderr = self.get_stream_file_no("stdout"), self.get_stream_file_no("stderr")
+        self._file_no_generators = [stdout, stderr]
+        # API replies and internal commands must return their output to tox.
+        inherit_console: Final[bool] = (
+            self.options.no_capture and not self.request.capture and self.request.stdin is not StdinSource.API
+        )
+        resolved_cmd: Final[Sequence[str]] = self.cmd
+        cmd: Sequence[str] | str = resolved_cmd
+        executable: str | None = None
+        if sys.platform == "win32" and is_batch_file(resolved_cmd[0]):
+            cmd = batch_file_command_line(resolved_cmd[0], resolved_cmd[1:])
+            executable = str(Path(os.environ.get("SYSTEMROOT", r"C:\Windows")) / "System32" / "cmd.exe")
+        try:
+            self.process = process = Popen(
+                cmd,
+                executable=executable,
+                stdout=None if inherit_console else next(stdout),
+                stderr=None if inherit_console else next(stderr),
+                stdin={StdinSource.USER: None, StdinSource.OFF: DEVNULL, StdinSource.API: PIPE}[self.request.stdin],
+                cwd=str(self.request.cwd),
+                env=self.request.env,
+            )
+        except OSError as exception:
+            # We log a nice error message to avout returning opaque error codes,
+            # like exit code 2 (filenotfound).
+            error = str(exception)
+            if isinstance(exception.filename, str):
+                error = error.replace(repr(exception.filename), repr(redact_argv([exception.filename])[0]))
+            logging.error(  # ruff:ignore[error-instead-of-exception]  # expected error log
+                "Exception running subprocess %s", error
+            )
+            return LocalSubprocessExecuteFailedStatus(self.options, self._out, self._err, exception)
+
+        status = LocalSubprocessExecuteStatus(self.options, self._out, self._err, process)
+        if not inherit_console:
+            drain, pid = self._on_exit_drain, self.process.pid
+            self._read_stderr = ReadViaThread(stderr.send(process), self.err_handler, name=f"err-{pid}", drain=drain)
+            self._read_stderr.__enter__()
+            self._read_stdout = ReadViaThread(stdout.send(process), self.out_handler, name=f"out-{pid}", drain=drain)
+            self._read_stdout.__enter__()
+        return status
+
+    @staticmethod
+    def get_stream_file_no(key: str) -> Generator[int, Popen[bytes], None]:
+        """Hand out the file descriptor the subprocess uses for a stream, a pseudo terminal when one can be allocated.
+
+        :param key: the name of the stream, ``stdout`` or ``stderr``
+
+        :yields: the file descriptor the subprocess writes the stream to
+
+        """
+        if (allocated_pty := _pty(key)) is not None:
+            main_fd, child_fd = allocated_pty
+            child_fd_open = True
+            try:
+                yield child_fd
+                os.close(child_fd)  # close the child process pipe once the child inherited it
+                child_fd_open = False
+                yield main_fd
+            finally:
+                # close on generator teardown; the master fd is not a process stream so nobody else closes it.
+                # Skip the child fd if it was already closed above: re-closing a freed fd number can race with a
+                # parallel run that has since reused it, corrupting the sibling's fd (see #3975).
+                for fd in (child_fd, main_fd) if child_fd_open else (main_fd,):
+                    with suppress(OSError):
+                        os.close(fd)
+        else:
+            process = yield PIPE
+            stream = getattr(process, key)
+            if sys.platform == "win32":  # explicit check for mypy # pragma: win32 cover
+                yield stream.handle
+            else:
+                yield stream.name
+
+    @property
+    @override
+    def cmd(self) -> Sequence[str]:
+        if self._cmd is None:
+            base = self.request.cmd[0]
+            lookup, path = self._search_target(base)
+            if (executable := shutil.which(lookup, path=path)) is None:
+                cmd = self.request.cmd  # if failed to find leave as it is
+            else:
+                self._check_allowed(base, executable)
+                cmd = self._executable_cmd(executable)
+            self._cmd = cmd
+        return self._cmd
+
+    def _search_target(self, base: str) -> tuple[str, str]:
+        lookup, path = base, self.request.env["PATH"]
+        if sys.platform != "win32":
+            # The allowlist and shebang checks must inspect the file the child runs.
+            cwd = self.request.cwd.absolute()
+            if os.sep in base:
+                lookup = str(cwd / base)
+            path = os.pathsep.join(str(cwd / entry) for entry in path.split(os.pathsep))
+        return lookup, path
+
+    def _check_allowed(self, base: str, executable: str) -> None:
+        if self.request.allow is None:
+            return
+        for allow in self.request.allow:
+            # 1. allow matches just the original name of the executable
+            # 2. allow matches the entire resolved path
+            if fnmatch.fnmatch(self.request.cmd[0], allow) or fnmatch.fnmatch(executable, allow):
+                return
+        msg = f"{base} (resolves to {executable})" if base == executable else base
+        msg = f"{msg} is not allowed, use allowlist_externals to allow it"
+        raise Fail(msg)
+
+    def _executable_cmd(self, executable: str) -> list[str]:
+        cmd = [executable]
+        if sys.platform != "win32" and self.request.env.get("TOX_LIMITED_SHEBANG", "").strip():
+            if shebang_line := shebang(executable):
+                cmd = [*shebang_line, executable]
+        cmd.extend(self.request.cmd[1:])
+        return cmd
+
+    @override
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
+    ) -> None:
+        if self._read_stderr is not None:
+            self._read_stderr.__exit__(exc_type, exc_val, exc_tb)
+        if self._read_stdout is not None:
+            self._read_stdout.__exit__(exc_type, exc_val, exc_tb)
+        if self.process is not None:  # cleanup the file handlers
+            for stream in (self.process.stdout, self.process.stderr, self.process.stdin):
+                if stream is not None and not getattr(stream, "closed", False):
+                    try:
+                        stream.close()
+                    except OSError as exc:  # pragma: no cover  # untested error path
+                        # same untested error path
+                        logging.warning("error while trying to close %r with %r", stream, exc)  # pragma: no cover
+        # release any file descriptors the stream generators still own (e.g. a pty master fd, which is not
+        # exposed as a process stream and would otherwise leak); the read threads above have already stopped
+        for generator in self._file_no_generators:
+            generator.close()
+        self._file_no_generators = []
+
+    def set_out_err(self, out: SyncWrite, err: SyncWrite) -> tuple[SyncWrite, SyncWrite]:
+        """Replace the streams the output of the subprocess is written to.
+
+        :param out: the new standard output stream
+        :param err: the new standard error stream
+
+        :returns: the previous standard output and standard error streams
+
+        """
+        prev = self._out, self._err
+        if self._read_stdout is not None:  # pragma: no branch  # other outcome untested
+            self._read_stdout.handler = out.handler
+        if self._read_stderr is not None:  # pragma: no branch  # other outcome untested
+            self._read_stderr.handler = err.handler
+        return prev
+
+
+class LocalSubprocessExecuteFailedStatus(FinishedExecuteStatus):
+    """The status of a command that could not be started.
+
+    :param options: the options the command runs with
+    :param out: the stream that collects the standard output
+    :param err: the stream that collects the standard error
+    :param start_error: the error raised when the command could not be started
+
+    """
+
+    def __init__(self, options: ExecuteOptions, out: SyncWrite, err: SyncWrite, start_error: OSError) -> None:
+        super().__init__(options, out, err, start_error.errno)
+        self._start_error = start_error
+
+    @property
+    @override
+    def start_error(self) -> OSError:
+        return self._start_error
+
+
+class LocalSubprocessExecuteStatus(ExecuteStatus):
+    """The state of a command run as a local subprocess.
+
+    :param options: the options of the execution
+    :param out: the stream the standard output is written to
+    :param err: the stream the standard error is written to
+    :param process: the subprocess that runs the command
+
+    """
+
+    def __init__(self, options: ExecuteOptions, out: SyncWrite, err: SyncWrite, process: Popen[bytes]) -> None:
+        self._process: Popen[bytes] = process
+        super().__init__(options, out, err)
+        self._interrupted = False
+
+    @override
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}(pid={self._process.pid}, returncode={self._process.returncode!r})"
+
+    @property
+    @override
+    def exit_code(self) -> int | None:
+        # need to poll here, to make sure the returncode we get is current
+        self._process.poll()
+        return self._process.returncode
+
+    @property
+    @override
+    def metadata(self) -> dict[str, JsonValue]:
+        return {"pid": self._process.pid} if self._process.pid else {}
+
+    @override
+    def interrupt(self) -> None:
+        self._interrupted = True
+        # A three level stop mechanism for children - INT -> TERM -> KILL
+        # communicate will wait for the app to stop, and then drain the standard streams and close them
+        to_pid, host_pid = self._process.pid, os.getpid()
+        msg = "requested interrupt of %d from %d, activate in %.2f"
+        logging.warning(msg, to_pid, host_pid, self.options.suicide_timeout)
+        if self.wait(self.options.suicide_timeout) is None:  # still alive -> INT
+            # on Windows everyone in the same process group, so they got the message
+            if sys.platform != "win32":  # pragma: win32 cover
+                msg = "send signal %s to %d from %d with timeout %.2f"
+                logging.warning(msg, f"SIGINT({SIG_INTERRUPT})", to_pid, host_pid, self.options.interrupt_timeout)
+                self._process.send_signal(SIG_INTERRUPT)
+            if self.wait(self.options.interrupt_timeout) is None:  # still alive -> TERM # pragma: no branch
+                terminate_output = self.options.terminate_timeout
+                msg = "send signal %s to %d from %d with timeout %.2f"
+                logging.warning(msg, f"SIGTERM({SIGTERM})", to_pid, host_pid, terminate_output)
+                self._process.terminate()
+                # Windows terminate is UNIX kill
+                if sys.platform != "win32" and self.wait(terminate_output) is None:  # pragma: no branch
+                    logging.warning(msg[:-18], f"SIGKILL({SIGKILL})", to_pid, host_pid)
+                    self._process.kill()  # still alive -> KILL
+                self.wait()  # unconditional wait as kill should soon bring down the process
+            logging.warning("interrupt finished with success")
+        else:  # pragma: no cover # difficult to test, process must die just as it's being interrupted
+            logging.warning("process already dead with %s within %s", self._process.returncode, host_pid)
+
+    @override
+    def wait(self, timeout: float | None = None) -> int | None:
+        try:  # note wait in general might deadlock if output large, but we drain in background threads so not an issue
+            return self._process.wait(timeout=timeout)
+        except TimeoutExpired:
+            return None
+
+    @override
+    def write_stdin(self, content: str) -> None:
+        stdin = self._process.stdin
+        if stdin is None:  # pragma: no branch  # other outcome untested
+            return  # pragma: no cover  # untested error path
+        try:
+            self._write_stdin_bytes(stdin, content.encode())
+        except OSError:  # pragma: no cover  # untested error path
+            if self._interrupted:  # pragma: no cover  # setup not built by tests
+                pass  # pragma: no cover  # if the process was asked to exit in the meantime ignore write errors
+            raise  # pragma: no cover  # untested error path
+
+    @staticmethod
+    def _write_stdin_bytes(  # simplint: ignore[SMP602]  # stdin is any file-like object
+        stdin: Any,  # simplint: ignore[SMP602]  # stdin is any file-like object
+        bytes_content: bytes,  # simplint: ignore[SMP602]  # stdin is any file-like object
+    ) -> None:
+        if sys.platform == "win32":  # explicit check for mypy  # pragma: win32 cover
+            # on Windows we have a PipeHandle object here rather than a file stream
+            import _overlapped  # ruff:ignore[import-outside-top-level, import-private-name]
+
+            ov = _overlapped.Overlapped(0)
+            ov.WriteFile(stdin.handle, bytes_content)
+            result = ov.getresult(10)  # wait up to 10ms to perform the operation
+            if result != len(bytes_content):
+                msg = f"failed to write to {stdin!r}"
+                raise RuntimeError(msg)
+        else:
+            stdin.write(bytes_content)
+            stdin.flush()
+
+
+def _pty(key: str) -> tuple[int, int] | None:
+    # Allocate a virtual terminal (pty) for a subprocess.
+    #
+    # A virtual terminal allows a process to perform syscalls that fetch attributes related to the tty, for example to
+    # determine whether to use colored output or enter interactive mode.
+    #
+    # The termios attributes of the controlling terminal stream will be copied to the allocated pty.
+    #
+    # :param key: The stream to copy attributes from. Either "stdout" or "stderr".
+    #
+    # :returns: (main_fd, child_fd) of an allocated pty; or None on error or if unsupported (win32).
+    if sys.platform == "win32":  # explicit check for mypy # pragma: win32 cover
+        return None
+
+    stream: io.TextIOWrapper = getattr(sys, key)
+
+    # when our current stream is a tty, emulate pty for the child
+    #   to allow host streams traits to be inherited
+    if not stream.isatty():
+        return None
+
+    try:
+        import fcntl  # ruff:ignore[import-outside-top-level]  # avoids an import cycle
+        import pty  # ruff:ignore[import-outside-top-level]  # avoids an import cycle
+        import struct  # ruff:ignore[import-outside-top-level]  # avoids an import cycle
+        import termios  # ruff:ignore[import-outside-top-level]  # avoids an import cycle
+    except ImportError:  # pragma: no cover  # untested error path
+        return None  # cannot proceed on platforms without pty support
+
+    try:
+        main, child = pty.openpty()  # Unix-only
+    except OSError:  # could not open a tty
+        return None  # pragma: no cover  # untested error path
+
+    try:
+        mode = termios.tcgetattr(stream)  # Unix-only
+        termios.tcsetattr(child, termios.TCSANOW, mode)  # Unix-only
+    except (termios.error, OSError):  # could not inherit traits
+        os.close(main)
+        os.close(child)
+        return None
+
+    # adjust sub-process terminal size
+    columns, lines = shutil.get_terminal_size(fallback=(-1, -1))
+    if columns != -1 and lines != -1:
+        fcntl.ioctl(child, termios.TIOCSWINSZ, struct.pack("HHHH", lines, columns, 0, 0))  # Unix-only
+
+    return main, child
+
+
+__all__ = [
+    "IS_WIN",
+    "SIG_INTERRUPT",
+    "LocalSubProcessExecuteInstance",
+    "LocalSubProcessExecutor",
+    "LocalSubprocessExecuteFailedStatus",
+    "LocalSubprocessExecuteStatus",
+    "ReadViaThread",
+]

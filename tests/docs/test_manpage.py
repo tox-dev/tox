@@ -4,23 +4,24 @@ import re
 import subprocess
 import sys
 from pathlib import Path
+from typing import Final
 
 import pytest
 
 if sys.platform == "win32":
     pytest.skip("man command not available on Windows", allow_module_level=True)
 
-ROOT = Path(__file__).parents[2]
-RST_PATH = ROOT / "docs" / "man" / "tox.1.rst"
+_ROOT: Final[Path] = Path(__file__).parents[2]
+_RST_PATH: Final[Path] = _ROOT / "docs" / "man" / "tox.1.rst"
 
 
 @pytest.fixture
 def manpage_troff() -> bytes:
-    from docutils.core import publish_string  # ruff:ignore[import-outside-top-level]
-    from docutils.writers import get_writer_class  # ruff:ignore[import-outside-top-level]
+    from docutils.core import publish_string  # ruff:ignore[import-outside-top-level]  # deferred import
+    from docutils.writers import get_writer_class  # ruff:ignore[import-outside-top-level]  # deferred import
 
     content = "\n".join(
-        line for line in RST_PATH.read_text(encoding="utf-8").splitlines() if line.strip() != ":orphan:"
+        line for line in _RST_PATH.read_text(encoding="utf-8").splitlines() if line.strip() != ":orphan:"
     )
     return publish_string(content, writer=get_writer_class("manpage")(), settings_overrides={"report_level": 5})
 
@@ -30,7 +31,7 @@ def manpage_rendered(manpage_troff: bytes, tmp_path: Path) -> str:
     man_file = tmp_path / "tox.1"
     man_file.write_bytes(manpage_troff)
     result = subprocess.run(
-        ["man", str(man_file)],  # ruff:ignore[start-process-with-partial-path]
+        ["man", str(man_file)],  # ruff:ignore[start-process-with-partial-path]  # resolved via PATH
         capture_output=True,
         text=True,
         env={"COLUMNS": "200", "LANG": "en_US.UTF-8", "PATH": "/usr/bin:/bin", "MANPAGER": "cat", "PAGER": "cat"},
@@ -41,24 +42,31 @@ def manpage_rendered(manpage_troff: bytes, tmp_path: Path) -> str:
 
 def test_manpage_has_title_header(manpage_troff: bytes) -> None:
     output = manpage_troff.decode()
-    match = re.search(r'^\.TH "([^"]*)" "([^"]*)" "([^"]*)" "([^"]*)" "([^"]*)"', output, re.MULTILINE)
+    match = re.search(
+        r"""
+        ^ \.TH [ ]                    # the title header macro
+        " (?P<program> [^"]* ) "      # the program name
+        [ ] " (?P<section> [^"]* ) "  # the manual section
+        [ ] " (?P<date> [^"]* ) "     # the date
+        [ ] " (?P<source> [^"]* ) "   # the source of the page
+        [ ] " (?P<manual> [^"]* ) "   # the manual title
+        """,
+        output,
+        re.MULTILINE | re.VERBOSE,
+    )
     assert match is not None, f".TH header not found in:\n{output[:500]}"
-    assert match.group(1) == "tox"
-    assert match.group(2) == "1"
-    assert match.group(5) == "User Commands"
+    assert (match["program"], match["section"], match["manual"]) == ("tox", "1", "User Commands")
 
 
 def test_manpage_has_name_section(manpage_troff: bytes) -> None:
-    output = manpage_troff.decode()
-    match = re.search(r"\.SH Name\n(.+)", output)
+    match = re.search(r"\.SH Name\n(?P<body>.+)", manpage_troff.decode())
     assert match is not None, "Name section not found"
-    assert "tox" in match.group(1)
-    assert "virtualenv-based automation of test activities" in match.group(1)
+    assert "tox" in match["body"]
+    assert "virtualenv-based automation of test activities" in match["body"]
 
 
 def test_manpage_has_all_sections(manpage_troff: bytes) -> None:
-    output = manpage_troff.decode()
-    sections = re.findall(r"^\.SH (.+)$", output, re.MULTILINE)
+    sections = re.findall(r"^\.SH (.+)$", manpage_troff.decode(), re.MULTILINE)
     expected = [
         "Name",
         "SYNOPSIS",
@@ -94,36 +102,42 @@ def test_manpage_header_shows_tox(manpage_rendered: str) -> None:
 
 
 def test_manpage_documents_all_commands() -> None:
+    # private names under test
     from argparse import _SubParsersAction  # ruff:ignore[import-outside-top-level, import-private-name]
 
+    # private names under test
     from tox.config.cli.parse import _get_parser_doc  # ruff:ignore[import-outside-top-level, import-private-name]
 
     parser = _get_parser_doc()
-    rst = RST_PATH.read_text(encoding="utf-8")
-    assert parser._subparsers is not None  # ruff:ignore[private-member-access]
-    for action in parser._subparsers._actions:  # ruff:ignore[private-member-access]
-        if isinstance(action, _SubParsersAction):
-            for choice_action in action._choices_actions:  # ruff:ignore[private-member-access]
-                assert choice_action.dest in rst, (
-                    f"command {choice_action.dest!r} missing from manpage, regenerate with: "
-                    f"python tools/generate_manpage.py"
-                )
+    rst = _RST_PATH.read_text(encoding="utf-8")
+    assert parser._subparsers is not None  # ruff:ignore[private-member-access]  # internal state
+    choice_actions = [
+        choice_action
+        for action in parser._subparsers._actions  # ruff:ignore[private-member-access]  # internal state
+        if isinstance(action, _SubParsersAction)
+        for choice_action in action._choices_actions  # ruff:ignore[private-member-access]  # internal state
+    ]
+    for choice_action in choice_actions:
+        assert choice_action.dest in rst, (
+            f"command {choice_action.dest!r} missing from manpage, regenerate with: python tools/generate_manpage.py"
+        )
 
 
 def test_manpage_documents_all_options() -> None:
+    # private names under test
     from argparse import SUPPRESS, _SubParsersAction  # ruff:ignore[import-outside-top-level, import-private-name]
 
+    # private names under test
     from tox.config.cli.parse import _get_parser_doc  # ruff:ignore[import-outside-top-level, import-private-name]
 
     parser = _get_parser_doc()
-    rst = RST_PATH.read_text(encoding="utf-8")
-    seen: set[int] = set()
-    for action in parser._actions:  # ruff:ignore[private-member-access]
-        if id(action) in seen or action.help == SUPPRESS or isinstance(action, _SubParsersAction):
-            continue
-        seen.add(id(action))
-        if not action.option_strings:
-            continue
+    rst = _RST_PATH.read_text(encoding="utf-8")
+    actions = [
+        action
+        for action in {id(a): a for a in parser._actions}.values()  # ruff:ignore[private-member-access]  # internal state
+        if action.help != SUPPRESS and not isinstance(action, _SubParsersAction) and action.option_strings
+    ]
+    for action in actions:
         long_opt = next((o for o in action.option_strings if o.startswith("--")), action.option_strings[0])
         assert long_opt in rst, (
             f"option {long_opt!r} missing from manpage, regenerate with: python tools/generate_manpage.py"

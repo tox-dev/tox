@@ -11,7 +11,7 @@ def test_config_constant_eq() -> None:
 
 def test_config_dynamic_eq() -> None:
     def func(name: str) -> str:
-        return name  # pragma: no cover
+        return name  # pragma: no cover  # untested error path
 
     val_1 = ConfigDynamicDefinition(("key",), "description", str, "default", post_process=func)
     val_2 = ConfigDynamicDefinition(("key",), "description", str, "default", post_process=func)

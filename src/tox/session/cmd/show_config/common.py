@@ -1,4 +1,4 @@
-from __future__ import annotations
+from __future__ import annotations  # simplint: ignore[SMP104]  # imported by tox plugins
 
 import os
 from pathlib import Path
@@ -15,6 +15,13 @@ if TYPE_CHECKING:
 
 
 def build_structured_result(state: State) -> tuple[dict[str, JsonValue], bool]:
+    """Build the configuration of the selected environments as nested dictionaries.
+
+    :param state: the state of the run
+
+    :returns: the configuration, and whether any value failed to load
+
+    """
     keys: list[str] = state.conf.options.list_keys_only
     show_everything = state.conf.options.env.is_all
     has_exception = False
@@ -39,35 +46,18 @@ def build_structured_result(state: State) -> tuple[dict[str, JsonValue], bool]:
     return result, has_exception
 
 
-def write_output(
-    output: str,
-    output_file: Path | None,
-    is_colored: bool,  # ruff:ignore[boolean-type-hint-positional-argument]
-    colorize: Callable[[str], str],
-) -> None:
-    if output_file is not None:
-        write_output_file(Path(output_file), output)
-    else:
-        print(colorize(output) if is_colored else output)  # ruff:ignore[print]
-
-
-def write_output_file(output_file: Path, output: str) -> None:
-    output_file.parent.mkdir(parents=True, exist_ok=True)
-    output_file.write_text(f"{output}\n", encoding="utf-8")
-
-
 def _collect_conf(conf: ConfigSet, keys: list[str]) -> tuple[dict[str, JsonValue], bool]:
     data: dict[str, JsonValue] = {}
     has_exception = False
     for key in keys or conf:
         if key not in conf:
             continue
-        key = conf.primary_key(key)  # ruff:ignore[redefined-loop-name]
+        key = conf.primary_key(key)  # ruff:ignore[redefined-loop-name]  # loop rebinding intended
         try:
             data[key] = to_native(conf[key])
         except Exception as exception:
-            if os.environ.get("_TOX_SHOW_CONFIG_RAISE"):  # pragma: no branch
-                raise  # pragma: no cover
+            if os.environ.get("_TOX_SHOW_CONFIG_RAISE"):  # pragma: no branch  # other outcome untested
+                raise  # pragma: no cover  # untested error path
             data[key] = {"error": format_config_error(exception)}
             has_exception = True
     if (unused := conf.unused()) and not keys:
@@ -76,9 +66,47 @@ def _collect_conf(conf: ConfigSet, keys: list[str]) -> tuple[dict[str, JsonValue
 
 
 def format_config_error(exception: Exception) -> str:
+    """Describe an error raised while loading a configuration value.
+
+    :param exception: the error
+
+    :returns: the description of the error
+
+    """
     if isinstance(exception, UnicodeDecodeError):
         return f"UnicodeDecodeError at byte {exception.start}"
     return repr(exception)
+
+
+def write_output(
+    output: str,
+    output_file: Path | None,
+    is_colored: bool,  # ruff:ignore[boolean-type-hint-positional-argument]  # keeps the signature
+    colorize: Callable[[str], str],
+) -> None:
+    """Write the output to a file, or print it to the terminal.
+
+    :param output: the text to write
+    :param output_file: the file to write to, ``None`` to print instead
+    :param is_colored: whether the output is printed in color
+    :param colorize: the function that adds the color to the text
+
+    """
+    if output_file is not None:
+        write_output_file(Path(output_file), output)
+    else:
+        print(colorize(output) if is_colored else output)  # ruff:ignore[print]  # terminal output
+
+
+def write_output_file(output_file: Path, output: str) -> None:
+    """Write the output to a file, creating its directory when needed.
+
+    :param output_file: the file to write to
+    :param output: the text to write
+
+    """
+    output_file.parent.mkdir(parents=True, exist_ok=True)
+    output_file.write_text(f"{output}\n", encoding="utf-8")
 
 
 __all__ = [

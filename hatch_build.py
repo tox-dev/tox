@@ -9,7 +9,11 @@ from hatchling.builders.hooks.plugin.interface import BuildHookInterface
 
 
 class CustomBuildHook(BuildHookInterface):
-    def initialize(self, version: str, build_data: dict[str, Any]) -> None:  # ruff:ignore[unused-method-argument]
+    def initialize(  # override signature
+        self,
+        version: str,  # ruff:ignore[unused-method-argument]  # override signature
+        build_data: dict[str, Any],  # ruff:ignore[unused-method-argument]  # override signature  # simplint: ignore[SMP602]  # hatchling passes build data of any shape
+    ) -> None:
         if self.target_name == "wheel":
             root = Path(self.root)
             (output := root / "build" / "man").mkdir(parents=True, exist_ok=True)

@@ -15,58 +15,79 @@ if TYPE_CHECKING:
 
 @impl
 def tox_add_option(parser: ToxParser) -> None:
-    from tox.config.cli.parser import CORE  # ruff:ignore[import-outside-top-level]
+    """Add the ``man`` sub-command to the command line parser.
+
+    :param parser: the parser to add the sub-command to
+
+    """
+    from tox.config.cli.parser import CORE  # ruff:ignore[import-outside-top-level]  # avoids an import cycle
 
     parser.add_command("man", [], "Set up tox man page for current shell", setup_man, inherit=frozenset({CORE}))
 
 
-def setup_man(state: State) -> int:  # ruff:ignore[unused-function-argument]
-    print("tox man page setup")  # ruff:ignore[print]
-    print("=" * 50)  # ruff:ignore[print]
-    print()  # ruff:ignore[print]
+def setup_man(state: State) -> int:  # ruff:ignore[unused-function-argument]  # interface signature
+    """Show where the tox man page is, and how to install it for the current shell.
+
+    :param state: the state of the run
+
+    :returns: the exit code
+
+    """
+    print("tox man page setup")  # ruff:ignore[print]  # terminal output
+    print("=" * 50)  # ruff:ignore[print]  # terminal output
+    print()  # ruff:ignore[print]  # terminal output
 
     man_in_wheel = Path(sys.prefix) / "share" / "man" / "man1" / "tox.1"
-    print(f"Looking for man page at: {man_in_wheel}")  # ruff:ignore[print]
-    print()  # ruff:ignore[print]
+    print(f"Looking for man page at: {man_in_wheel}")  # ruff:ignore[print]  # terminal output
+    print()  # ruff:ignore[print]  # terminal output
 
     if not man_in_wheel.exists():
-        print("✗ Man page not found")  # ruff:ignore[print]
-        print("  The man page should be included in the wheel when tox is installed.")  # ruff:ignore[print]
-        print("  If you installed from source or in development mode, the man page")  # ruff:ignore[print]
-        print("  may not be present. Try installing from PyPI or use 'tox --help'.")  # ruff:ignore[print]
+        print("✗ Man page not found")  # ruff:ignore[print]  # terminal output
+        print(  # ruff:ignore[print]  # terminal output
+            "  The man page should be included in the wheel when tox is installed."
+        )
+        print(  # ruff:ignore[print]  # terminal output
+            "  If you installed from source or in development mode, the man page"
+        )
+        print(  # ruff:ignore[print]  # terminal output
+            "  may not be present. Try installing from PyPI or use 'tox --help'."
+        )
         return 1
 
-    print("✓ Man page found")  # ruff:ignore[print]
-    print()  # ruff:ignore[print]
+    print("✓ Man page found")  # ruff:ignore[print]  # terminal output
+    print()  # ruff:ignore[print]  # terminal output
 
     if _check_man_accessible():
-        print("✓ 'man tox' already works!")  # ruff:ignore[print]
-        print("  No setup needed.")  # ruff:ignore[print]
+        print("✓ 'man tox' already works!")  # ruff:ignore[print]  # terminal output
+        print("  No setup needed.")  # ruff:ignore[print]  # terminal output
         return 0
 
     if (exit_code := _create_symlink(man_in_wheel)) != 0:
         return exit_code
 
-    print()  # ruff:ignore[print]
+    print()  # ruff:ignore[print]  # terminal output
 
-    manpath = os.environ.get("MANPATH", "")
-    user_man_base = str(Path.home() / ".local" / "share" / "man")
-
-    if user_man_base in manpath:
-        print("✓ MANPATH already includes ~/.local/share/man")  # ruff:ignore[print]
-        print("  Try running: man tox")  # ruff:ignore[print]
+    if str(Path.home() / ".local" / "share" / "man") in os.environ.get("MANPATH", ""):
+        print("✓ MANPATH already includes ~/.local/share/man")  # ruff:ignore[print]  # terminal output
+        print("  Try running: man tox")  # ruff:ignore[print]  # terminal output
         return 0
 
-    print("⚠ MANPATH does not include ~/.local/share/man")  # ruff:ignore[print]
-    print()  # ruff:ignore[print]
+    print("⚠ MANPATH does not include ~/.local/share/man")  # ruff:ignore[print]  # terminal output
+    print()  # ruff:ignore[print]  # terminal output
     _print_manpath_instructions()
 
     return 0
 
 
-def _check_man_accessible() -> bool:
+def _check_man_accessible() -> bool:  # simplint: ignore[SMP505]  # separates the man lookup from the instructions
     try:
-        result = subprocess.run(["man", "tox"], capture_output=True, text=True, timeout=2, check=False)  # ruff:ignore[start-process-with-partial-path]
+        result = subprocess.run(  # resolved via PATH
+            ["man", "tox"],  # ruff:ignore[start-process-with-partial-path]  # resolved via PATH
+            capture_output=True,
+            text=True,
+            timeout=2,
+            check=False,  # resolved via PATH
+        )
     except (subprocess.TimeoutExpired, FileNotFoundError):
         return False
     else:
@@ -81,18 +102,20 @@ def _create_symlink(man_in_wheel: Path) -> int:
 
     if user_man_file.exists() or user_man_file.is_symlink():
         if user_man_file.is_symlink() and user_man_file.resolve() == man_in_wheel:
-            print(f"✓ Symlink already exists: {user_man_file} → {man_in_wheel}")  # ruff:ignore[print]
+            print(  # ruff:ignore[print]  # terminal output
+                f"✓ Symlink already exists: {user_man_file} → {man_in_wheel}"
+            )
             return 0
-        print(f"✗ File already exists: {user_man_file}")  # ruff:ignore[print]
-        print("  Remove it manually if you want to replace it.")  # ruff:ignore[print]
+        print(f"✗ File already exists: {user_man_file}")  # ruff:ignore[print]  # terminal output
+        print("  Remove it manually if you want to replace it.")  # ruff:ignore[print]  # terminal output
         return 1
 
     user_man_file.symlink_to(man_in_wheel)
-    print(f"✓ Created symlink: {user_man_file} → {man_in_wheel}")  # ruff:ignore[print]
+    print(f"✓ Created symlink: {user_man_file} → {man_in_wheel}")  # ruff:ignore[print]  # terminal output
     return 0
 
 
-def _print_manpath_instructions() -> None:
+def _print_manpath_instructions() -> None:  # simplint: ignore[SMP505]  # per-shell text, read apart from setup
     # each export line keeps a trailing ":" when MANPATH is unset, so man still searches its default path
     if "fish" in (shell := PurePath(os.environ.get("SHELL", "")).name):
         rc_file = "~/.config/fish/config.fish"
@@ -112,3 +135,8 @@ def _print_manpath_instructions() -> None:
         f"To complete setup, add this to {rc_file}:\n\n  {export_line}\n\n"
         f"Then restart your shell or run:\n  {reload} {rc_file}\n\nAfter that, you can use: man tox\n"
     )
+
+
+__all__ = [
+    "setup_man",
+]

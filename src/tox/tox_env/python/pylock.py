@@ -16,15 +16,30 @@ if TYPE_CHECKING:
     from packaging.pylock import PackageArchive, PackageVcs
 
 
-@dataclass(frozen=True, kw_only=True)
+@dataclass(frozen=True, kw_only=True, slots=True)
 class Pylock:
+    """A ``pylock.toml`` lock file, from which the requirements are installed.
+
+    :param path: the path of the lock file
+    :param extras: the extras to install from the lock file
+    :param groups: the dependency groups to install from the lock file
+    :param marker_env: the environment markers to resolve the lock file with
+
+    """
+
     path: Path
     extras: frozenset[str] = frozenset()
     groups: frozenset[str] = frozenset()
     marker_env: dict[str, str] = field(default_factory=dict)
 
     def install_lines(self) -> list[str]:
-        """Return pip requirement lines for the packages this environment locks."""
+        """Return pip requirement lines for the packages this environment locks.
+
+        :returns: the requirement lines of the locked packages
+
+        :raises Fail: when the lock file cannot be parsed
+
+        """
         try:
             parsed: Final[PackagingPylock] = PackagingPylock.from_dict(
                 tomllib.loads(self.path.read_text(encoding="utf-8-sig"))
@@ -42,19 +57,6 @@ class Pylock:
             # a hash, otherwise fall back to unverified installs (directory/VCS sources cannot be hashed)
             return [f"{line} {' '.join(f'--hash={h}' for h in hashes)}" for line, hashes in entries]
         return [line for line, _ in entries]
-
-    def _is_active(self, pkg: Package, groups: frozenset[str]) -> bool:
-        env: dict[str, str | frozenset[str]] = {**self.marker_env}
-        if self.extras:
-            env["extras"] = self.extras
-        if groups:
-            env["dependency_groups"] = groups
-        if pkg.marker is not None and not pkg.marker.evaluate(env, context="lock_file"):
-            return False
-        full_version = self.marker_env.get("python_full_version")
-        if pkg.requires_python is not None and full_version is not None:
-            return pkg.requires_python.contains(full_version, prereleases=True)
-        return True
 
     def _to_entry(self, pkg: Package) -> tuple[str, list[str]]:
         if pkg.directory is not None:
@@ -116,6 +118,19 @@ class Pylock:
             self._check_tokens(pkg, {"hash algorithm": algorithm, f"{algorithm} hash": value})
             options.append(f"{algorithm}:{value}")
         return options
+
+    def _is_active(self, pkg: Package, groups: frozenset[str]) -> bool:
+        env: dict[str, str | frozenset[str]] = {**self.marker_env}
+        if self.extras:
+            env["extras"] = self.extras
+        if groups:
+            env["dependency_groups"] = groups
+        if pkg.marker is not None and not pkg.marker.evaluate(env, context="lock_file"):
+            return False
+        full_version = self.marker_env.get("python_full_version")
+        if pkg.requires_python is not None and full_version is not None:
+            return pkg.requires_python.contains(full_version, prereleases=True)
+        return True
 
 
 __all__ = [

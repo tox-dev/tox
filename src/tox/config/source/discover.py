@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 from itertools import chain
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Final
 
 from tox.config.types import MissingRequiredConfigKeyError
 from tox.report import HandledError
@@ -17,7 +17,7 @@ from .tox_ini import ToxIni
 if TYPE_CHECKING:
     from .api import Source
 
-SOURCE_TYPES: tuple[type[Source], ...] = (
+SOURCE_TYPES: Final[tuple[type[Source], ...]] = (  # simplint: ignore[SMP404]  # imported by tox plugins
     ToxIni,
     SetupCfg,
     TomlPyProject,
@@ -33,6 +33,8 @@ def discover_source(config_file: Path | None, root_dir: Path | None) -> Source:
     :param root_dir: the root directory as set by the user (None means not set)
 
     :returns: the source of the config
+
+    :raises HandledError: when a configuration file exists but cannot be loaded, or none is found
 
     """
     if config_file is None:
@@ -78,24 +80,6 @@ def _locate_source() -> Source | None:
     return None
 
 
-def _load_exact_source(config_file: Path) -> Source:
-    # if the filename matches to the letter some config file name do not fallback to other source types
-    if not config_file.exists():
-        msg = f"config file {config_file} does not exist"
-        raise HandledError(msg)
-    exact_match = [s for s in SOURCE_TYPES if config_file.name == s.FILENAME]  # pragma: no cover
-    for src_type in exact_match or SOURCE_TYPES:  # pragma: no branch
-        try:
-            return src_type(config_file)
-        except MissingRequiredConfigKeyError:
-            pass
-        except (ValueError, OSError) as exc:
-            msg = f"{src_type.__name__} failed loading {config_file.resolve()} due to {exc}"
-            raise HandledError(msg) from exc
-    msg = f"could not recognize config file {config_file}"
-    raise HandledError(msg)
-
-
 def _create_default_source(root_dir: Path | None) -> Source:
     if root_dir is None:  # if set use that
         empty = Path.cwd()
@@ -110,4 +94,25 @@ def _create_default_source(root_dir: Path | None) -> Source:
     return ToxIni(empty / "tox.ini", content="")
 
 
-__all__ = ("discover_source",)
+def _load_exact_source(config_file: Path) -> Source:
+    # if the filename matches to the letter some config file name do not fallback to other source types
+    if not config_file.exists():
+        msg = f"config file {config_file} does not exist"
+        raise HandledError(msg)
+    # not reached in tests
+    exact_match = [s for s in SOURCE_TYPES if config_file.name == s.FILENAME]  # pragma: no cover
+    for src_type in exact_match or SOURCE_TYPES:  # pragma: no branch  # other outcome untested
+        try:
+            return src_type(config_file)
+        except MissingRequiredConfigKeyError:
+            pass
+        except (ValueError, OSError) as exc:
+            msg = f"{src_type.__name__} failed loading {config_file.resolve()} due to {exc}"
+            raise HandledError(msg) from exc
+    msg = f"could not recognize config file {config_file}"
+    raise HandledError(msg)
+
+
+__all__ = [
+    "discover_source",
+]

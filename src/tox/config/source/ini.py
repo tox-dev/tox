@@ -26,7 +26,14 @@ if TYPE_CHECKING:
 
 
 class IniSource(Source):
-    """Configuration sourced from a ini file (such as tox.ini)."""
+    """Configuration sourced from a ini file (such as tox.ini).
+
+    :param path: the path of the configuration file
+    :param content: the parsed content of the file
+
+    :var CORE_SECTION: the section that holds the tox settings
+
+    """
 
     CORE_SECTION = CORE
 
@@ -50,11 +57,6 @@ class IniSource(Source):
     @override
     def transform_section(self, section: Section) -> Section:
         return IniSection(section.prefix, section.name)
-
-    @override
-    def sections(self) -> Iterator[IniSection]:
-        for section in self._parser.sections():
-            yield IniSection.from_key(section)
 
     @override
     def get_loader(self, section: Section, override_map: OverrideMap) -> IniLoader | None:
@@ -89,7 +91,11 @@ class IniSource(Source):
 
     @override
     def get_tox_env_section(self, item: str) -> tuple[Section, list[str], list[str]]:
-        return IniSection.test_env(item), [TEST_ENV_PREFIX], [PKG_ENV_PREFIX]
+        return (  # simplint: ignore[SMP528]  # plugin overrides return plain tuples too
+            IniSection.test_env(item),
+            [TEST_ENV_PREFIX],
+            [PKG_ENV_PREFIX],
+        )
 
     @override
     def envs(self, core_conf: CoreConfigSet) -> Iterator[str]:
@@ -119,6 +125,11 @@ class IniSource(Source):
         for section in self.sections():
             if self._is_tox_section(section):
                 yield from self._discover_from_section(section, known_factors)
+
+    @override
+    def sections(self) -> Iterator[IniSection]:
+        for section in self._parser.sections():
+            yield IniSection.from_key(section)
 
     def _is_tox_section(self, section: IniSection) -> bool:
         if section.is_test_env or section == self.CORE_SECTION:

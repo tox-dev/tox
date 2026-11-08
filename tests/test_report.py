@@ -17,6 +17,32 @@ if TYPE_CHECKING:
     from tox.pytest import CaptureFixture
 
 
+@pytest.mark.parametrize("color", [True, False], ids=["on", "off"])
+@pytest.mark.parametrize("verbosity", range(7))
+def test_setup_report(mocker: MockerFixture, capsys: CaptureFixture, verbosity: int, color: bool) -> None:
+    color_init = mocker.patch("tox.report.init", autospec=True)
+
+    _emit_report(verbosity, color)
+
+    assert color_init.call_count == int(color)
+    out, err = capsys.readouterr()
+    assert not err
+    assert out
+    assert "filelock" not in out
+    assert "distlib.util" not in out
+    msg_count = min(verbosity + 1, 5) + (verbosity >= 4)  # debug level also logs the logger setup
+    assert len(out.splitlines()) == msg_count, out
+    assert (Style.RESET_ALL in out) is color
+
+
+def _emit_report(verbosity: int, color: bool) -> None:
+    setup_report(verbosity=verbosity, is_colored=color)
+    try:
+        _emit_test_log_messages()
+    finally:
+        deinit()
+
+
 def _emit_test_log_messages() -> None:
     logging.critical("critical")
     logging.error("error")
@@ -32,46 +58,32 @@ def _emit_test_log_messages() -> None:
         logger.log(logging.NOTSET, "%s-notset", name)
 
 
-@pytest.mark.parametrize("color", [True, False], ids=["on", "off"])
-@pytest.mark.parametrize("verbosity", range(7))
-def test_setup_report(mocker: MockerFixture, capsys: CaptureFixture, verbosity: int, color: bool) -> None:
-    color_init = mocker.patch("tox.report.init")
+@pytest.mark.parametrize("verbosity", [4, 5, 6])
+def test_setup_report_debug_location(capsys: CaptureFixture, verbosity: int) -> None:
+    _emit_report(verbosity, color=False)
 
-    setup_report(verbosity=verbosity, is_colored=color)
-    try:
-        _emit_test_log_messages()
-    finally:
-        deinit()
+    first_line = capsys.readouterr().out.splitlines()[0]
+    int(first_line.split(" ")[1])  # first element is an int number
+    assert f"[tox{os.sep}report.py" in first_line  # relative file location
 
-    assert color_init.call_count == (1 if color else 0)
 
-    msg_count = min(verbosity + 1, 5)
-    is_debug_or_more = verbosity >= 4
-    if is_debug_or_more:
-        msg_count += 1  # we log at debug level setting up the logger
+@pytest.mark.parametrize("verbosity", [4, 5, 6])
+@pytest.mark.parametrize(
+    ("color", "expected_warning_text"),
+    [
+        pytest.param(True, "W\x1b[0m\x1b[36m warning\x1b[22mfoo\x1b[2m>\x1b[0m bar\x1b[0m\x1b[2m", id="on"),
+        pytest.param(False, "warningfoo> bar", id="off"),
+    ],
+)
+def test_setup_report_warning_text(
+    mocker: MockerFixture, capsys: CaptureFixture, verbosity: int, color: bool, expected_warning_text: str
+) -> None:
+    mocker.patch("tox.report.init", autospec=True)
 
-    out, err = capsys.readouterr()
-    assert not err
-    assert out
-    assert "filelock" not in out
-    assert "distlib.util" not in out
-    lines = out.splitlines()
-    assert len(lines) == msg_count, out
+    _emit_report(verbosity, color)
 
-    if is_debug_or_more and lines:  # assert we start with relative created, contain path
-        line = lines[0]
-        int(line.split(" ")[1])  # first element is an int number
-        assert f"[tox{os.sep}report.py" in line  # relative file location
-
-    if color:
-        assert f"{Style.RESET_ALL}" in out
-        # check that our Warning line using special format was colored
-        expected_warning_text = "W\x1b[0m\x1b[36m warning\x1b[22mfoo\x1b[2m>\x1b[0m bar\x1b[0m\x1b[2m"
-    else:
-        assert f"{Style.RESET_ALL}" not in out
-        expected_warning_text = "warningfoo> bar"
-    if verbosity >= 4:  # where warnings are logged
-        assert expected_warning_text in lines[3]
+    lines = capsys.readouterr().out.splitlines()
+    assert expected_warning_text in lines[3]
 
 
 def test_setup_report_degrades_logged_output(
@@ -112,7 +124,7 @@ def test_suspended_output_degrades_unencodable_text(
 ) -> None:
     monkeypatch.setattr(sys, "stdout", redirected_cp1252_output)
     monkeypatch.setattr(sys, "stderr", redirected_cp1252_output)
-    mocker.patch("tox.report.locale.getpreferredencoding", return_value="cp1252")
+    mocker.patch("tox.report.locale.getpreferredencoding", autospec=True, return_value="cp1252")
     with setup_report(verbosity=3, is_colored=False).suspend_out_err(True) as (stdout, _):
         stdout.write("box \u2500")
         stdout.flush()

@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import os
 import sys
-from itertools import chain, combinations
 from textwrap import dedent
 from typing import TYPE_CHECKING
 
@@ -41,55 +40,65 @@ def test_tox_project_base(tmp_path: Path, tox_project: ToxProjectCreator) -> Non
     assert project.structure
 
 
-COMB = list(chain.from_iterable(combinations(["DIFF", "MISS", "EXTRA"], i) for i in range(4)))
-
-
-@pytest.mark.parametrize("ops", COMB, ids=["-".join(i) for i in COMB])
-def test_env_var(monkeypatch: MonkeyPatch, ops: list[str]) -> None:
-    with monkeypatch.context() as m:
-        if "DIFF" in ops:
-            m.setenv("DIFF", "B")
-        if "MISS" in ops:
-            m.setenv("MISS", "1")
-        m.setenv("NO_CHANGE", "yes")
-        m.setenv("PYTHONPATH", "yes")  # values to clean before run
+@pytest.mark.parametrize(
+    ("changes", "exp"),
+    [
+        pytest.param([("setenv", "EXTRA", "A")], "test changed environ extra {'EXTRA': 'A'}", id="extra"),
+        pytest.param([("delenv", "MISS")], "test changed environ miss {'MISS': '1'}", id="miss"),
+        pytest.param([("setenv", "DIFF", "D")], "test changed environ diff {'DIFF = B vs D'}", id="diff"),
+        pytest.param(
+            [("setenv", "EXTRA", "A"), ("delenv", "MISS")],
+            "test changed environ extra {'EXTRA': 'A'} miss {'MISS': '1'}",
+            id="extra-miss",
+        ),
+        pytest.param(
+            [("setenv", "EXTRA", "A"), ("setenv", "DIFF", "D")],
+            "test changed environ extra {'EXTRA': 'A'} diff {'DIFF = B vs D'}",
+            id="extra-diff",
+        ),
+        pytest.param(
+            [("delenv", "MISS"), ("setenv", "DIFF", "D")],
+            "test changed environ miss {'MISS': '1'} diff {'DIFF = B vs D'}",
+            id="miss-diff",
+        ),
+        pytest.param(
+            [("setenv", "EXTRA", "A"), ("delenv", "MISS"), ("setenv", "DIFF", "D")],
+            "test changed environ extra {'EXTRA': 'A'} miss {'MISS': '1'} diff {'DIFF = B vs D'}",
+            id="extra-miss-diff",
+        ),
+    ],
+)
+def test_env_var(monkeypatch: MonkeyPatch, changes: list[tuple[str, ...]], exp: str) -> None:
+    with monkeypatch.context() as patcher:
+        patcher.setenv("DIFF", "B")
+        patcher.setenv("MISS", "1")
+        patcher.setenv("NO_CHANGE", "yes")
+        patcher.setenv("PYTHONPATH", "yes")  # values to clean before run
 
         with check_os_environ():
             assert "PYTHONPATH" not in os.environ
-            if "EXTRA" in ops:
-                m.setenv("EXTRA", "A")
-            if "DIFF" in ops:
-                m.setenv("DIFF", "D")
-            if "MISS" in ops:
-                m.delenv("MISS")
+            for method, *args in changes:
+                getattr(patcher, method)(*args)
 
-            from tox.pytest import pytest as tox_pytest  # ruff:ignore[import-outside-top-level]
-
-            exp = "test changed environ"
-            if "EXTRA" in ops:
-                exp += " extra {'EXTRA': 'A'}"
-            if "MISS" in ops:
-                exp += " miss {'MISS': '1'}"
-            if "DIFF" in ops:
-                exp += " diff {'DIFF = B vs D'}"
+            from tox.pytest import pytest as tox_pytest  # ruff:ignore[import-outside-top-level]  # deferred import
 
             def fail(msg: str) -> None:
                 assert msg == exp
 
-            m.setattr(tox_pytest, "fail", fail)
+            patcher.setattr(tox_pytest, "fail", fail)
         assert "PYTHONPATH" in os.environ
 
 
 def test_tox_run_does_not_return_exit_code(tox_project: ToxProjectCreator, mocker: MockerFixture) -> None:
     project = tox_project({"tox.ini": ""})
-    mocker.patch("tox.run.main", return_value=None)
+    mocker.patch("tox.run.main", autospec=True, return_value=None)
     with pytest.raises(RuntimeError, match="exit code not set"):
         project.run("c")
 
 
 def test_tox_run_fails_before_state_setup(tox_project: ToxProjectCreator, mocker: MockerFixture) -> None:
     project = tox_project({"tox.ini": ""})
-    mocker.patch("tox.run.main", side_effect=HandledError("something went bad"))
+    mocker.patch("tox.run.main", autospec=True, side_effect=HandledError("something went bad"))
     outcome = project.run("c")
     with pytest.raises(RuntimeError, match="no state"):
         assert outcome.state
@@ -115,11 +124,10 @@ def test_tox_run_outcome_repr(tox_project: ToxProjectCreator) -> None:
 def test_tox_run_assert_out_err_no_dedent(tox_project: ToxProjectCreator, mocker: MockerFixture) -> None:
     project = tox_project({"tox.ini": ""})
 
-    def _main(args: Sequence[str]) -> int:  # ruff:ignore[unused-function-argument]
-        print(" goes on out", file=sys.stdout)  # ruff:ignore[print]
-        print(" goes on err", file=sys.stderr)  # ruff:ignore[print]
+    def _main(args: Sequence[str]) -> int:  # ruff:ignore[unused-function-argument]  # interface signature
+        print(" goes on out", file=sys.stdout)  # ruff:ignore[print]  # test output
+        print(" goes on err", file=sys.stderr)  # ruff:ignore[print]  # test output
         return 0
 
-    mocker.patch("tox.run.main", side_effect=_main)
-    outcome = project.run("c")
-    outcome.assert_out_err(" goes on out\n", " goes on err\n", dedent=False)
+    mocker.patch("tox.run.main", autospec=True, side_effect=_main)
+    project.run("c").assert_out_err(" goes on out\n", " goes on err\n", dedent=False)

@@ -12,12 +12,22 @@ from os.path import commonpath
 from pathlib import Path
 from typing import Final
 
-from tox.util.path import ensure_empty_dir, ensure_private_dir
+from .path import ensure_empty_dir, ensure_private_dir
 
 PACKAGE_STAGING_DIR: Final[str] = "package"
+"""Name of the directory that holds the staged copy of the package."""
 
 
 def create_session_view(package: Path, temp_path: Path, trust_root: Path) -> Path:
+    """Create the view of the package that a session installs from, which lives in the temporary path.
+
+    :param package: the package to view
+    :param temp_path: the temporary directory the view is created in
+    :param trust_root: the directory the view is restricted to
+
+    :returns: the path of the view
+
+    """
     if temp_path.is_symlink():
         temp_path.unlink()
     ensure_private_dir(temp_path)
@@ -79,6 +89,13 @@ def _exceeds_project_writers(metadata: os.stat_result, project: os.stat_result, 
 
 
 def repair_staging_path(temp_path: Path, trust_root: Path, work_dir: Path) -> None:
+    """Repair the staging path of a session view, when it was replaced by a link.
+
+    :param temp_path: the staging path
+    :param trust_root: the directory the view is restricted to
+    :param work_dir: the working directory of the run
+
+    """
     if sys.platform == "win32":  # pragma: win32 cover
         return
     try:
@@ -106,15 +123,6 @@ def repair_staging_path(temp_path: Path, trust_root: Path, work_dir: Path) -> No
             return
         _lock_exposed_directories(directories, exposed, work_index)
         _empty_exposed_directory(directories[exposed].path, owners, trust_root)
-
-
-@dataclass(frozen=True, slots=True, kw_only=True)
-class _StagingDirectory:
-    parent_descriptor: int
-    name: str
-    descriptor: int
-    path: Path
-    metadata: os.stat_result
 
 
 def _open_staging_chain(
@@ -145,6 +153,15 @@ def _open_staging_chain(
     return directories
 
 
+@dataclass(frozen=True, slots=True, kw_only=True)
+class _StagingDirectory:
+    parent_descriptor: int
+    name: str
+    descriptor: int
+    path: Path
+    metadata: os.stat_result
+
+
 def _exposed_index(
     directories: list[_StagingDirectory], work_index: int, project: os.stat_result, owners: frozenset[int]
 ) -> int | None:
@@ -165,7 +182,9 @@ def _exposed_index(
     )
 
 
-def _lock_exposed_directories(directories: list[_StagingDirectory], exposed: int, work_index: int) -> None:
+def _lock_exposed_directories(  # simplint: ignore[SMP505]  # the staging steps are reviewed by name
+    directories: list[_StagingDirectory], exposed: int, work_index: int
+) -> None:
     for index, entry in enumerate(directories[exposed:], start=exposed):
         mode: int = stat.S_IMODE(entry.metadata.st_mode)
         # a fresh work dir is owner-only, which also hides group-writable environments left inside it
@@ -174,7 +193,9 @@ def _lock_exposed_directories(directories: list[_StagingDirectory], exposed: int
     _verify_unchanged_staging_path(directories)
 
 
-def _verify_unchanged_staging_path(directories: list[_StagingDirectory]) -> None:
+def _verify_unchanged_staging_path(  # simplint: ignore[SMP505]  # the staging steps are reviewed by name
+    directories: list[_StagingDirectory],
+) -> None:
     for entry in directories:
         msg: str = f"package staging path {entry.path} can be changed by another account"
         try:
@@ -207,7 +228,9 @@ def _empty_exposed_directory(path: Path, owners: frozenset[int], trust_root: Pat
     )
 
 
-def _kept_entry(directory: Path) -> str | None:
+def _kept_entry(  # simplint: ignore[SMP505]  # names the environment that survives the cleanup
+    directory: Path,
+) -> str | None:
     # the running environment may live in the work dir; keep it so the provisioned tox can finish
     try:
         relative: Final[Path] = Path(sys.prefix).resolve().relative_to(directory.resolve())

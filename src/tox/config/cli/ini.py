@@ -18,9 +18,22 @@ if TYPE_CHECKING:
     from types import UnionType
 
 DEFAULT_CONFIG_FILE = Path(user_config_dir("tox")) / "config.ini"
+"""Path of the user-level tox config file, used when ``TOX_USER_CONFIG_FILE`` is not set."""
 
 
 class IniConfig:
+    """Read the user-level tox config file, which supplies defaults for the command line options.
+
+    :var TOX_CONFIG_FILE_ENV_VAR: the environment variable that overrides the path of the config file
+    :var STATE: the label of the config file state, keyed by whether the file was read
+    :var is_env_var: whether the path of the config file comes from the environment variable
+    :var config_file: the path of the config file
+    :var has_config_file: whether the config file exists, ``None`` when it failed to parse
+    :var has_tox_section: whether the config file has a core section
+    :var ini: the loader of the core section, ``None`` when there is none
+
+    """
+
     TOX_CONFIG_FILE_ENV_VAR = "TOX_USER_CONFIG_FILE"
     STATE: ClassVar[dict[bool | None, str]] = {None: "failed to parse", True: "active", False: "missing"}
 
@@ -28,7 +41,14 @@ class IniConfig:
         config_file = os.environ.get(self.TOX_CONFIG_FILE_ENV_VAR, None)
         self.is_env_var = config_file is not None
         self.config_file = Path(config_file if config_file is not None else DEFAULT_CONFIG_FILE)
-        self._cache: dict[tuple[str, type[Any] | UnionType], Any] = {}
+        self._cache: dict[
+            tuple[
+                str,
+                type[Any]  # simplint: ignore[SMP602]  # cached and looked-up values have the type of each option
+                | UnionType,  # simplint: ignore[SMP602]  # cached and looked-up values have the type of each option
+            ],  # simplint: ignore[SMP602]  # cached and looked-up values have the type of each option
+            Any,  # simplint: ignore[SMP602]  # cached and looked-up values have the type of each option
+        ] = {}  # simplint: ignore[SMP602]  # cached and looked-up values have the type of each option
         self.has_config_file: bool | None = self.config_file.exists()
         self.ini: IniLoader | None = None
 
@@ -36,8 +56,10 @@ class IniConfig:
             self.config_file = self.config_file.absolute()
             try:
                 self._parse_config_file()
-            except Exception as exception:  # ruff:ignore[blind-except]
-                logging.error("failed to read config file %s because %r", self.config_file, exception)  # ruff:ignore[error-instead-of-exception]
+            except Exception as exception:  # ruff:ignore[blind-except]  # failure must not stop run
+                logging.error(  # ruff:ignore[error-instead-of-exception]  # expected error log
+                    "failed to read config file %s because %r", self.config_file, exception
+                )
                 self.has_config_file = None
 
     def _parse_config_file(self) -> None:
@@ -48,7 +70,32 @@ class IniConfig:
         if self.has_tox_section:
             self.ini = IniLoader(CORE, parser, overrides=[], core_section=CORE)
 
-    def get(self, key: str, of_type: type[Any] | UnionType) -> Any:
+    def __bool__(self) -> bool:
+        return bool(self.has_config_file) and bool(self.has_tox_section)
+
+    @property
+    def epilog(self) -> str:
+        # text to show within the parsers epilog
+        """Describe which config file is in use, for the end of the help output."""
+        return (
+            f"{os.linesep}config file {str(self.config_file)!r} {self.STATE[self.has_config_file]} "
+            f"(change{'d' if self.is_env_var else ''} via env var {self.TOX_CONFIG_FILE_ENV_VAR})"
+        )
+
+    def get(  # simplint: ignore[SMP602]  # cached and looked-up values have the type of each option
+        self,
+        key: str,
+        of_type: type[Any]  # simplint: ignore[SMP602]  # cached and looked-up values have the type of each option
+        | UnionType,  # simplint: ignore[SMP602]  # cached and looked-up values have the type of each option
+    ) -> Any:  # simplint: ignore[SMP602]  # cached and looked-up values have the type of each option
+        """Get a value from the core section of the config file.
+
+        :param key: the configuration key
+        :param of_type: the type to convert the value to
+
+        :returns: the converted value, or ``None`` when it is not set or cannot be read
+
+        """
         cache_key = key, of_type
         if cache_key in self._cache:
             result = self._cache[cache_key]
@@ -57,26 +104,24 @@ class IniConfig:
                 result = self._load_key(key, of_type)
             except KeyError:  # just not found
                 result = None
-            except Exception as exception:  # ruff:ignore[blind-except]
+            except Exception as exception:  # ruff:ignore[blind-except]  # failure must not stop run
                 logging.warning("%s key %s as type %r failed with %r", self.config_file, key, of_type, exception)
                 result = None
         self._cache[cache_key] = result
         return result
 
-    def _load_key(self, key: str, of_type: type[Any] | UnionType) -> Any:
+    def _load_key(  # simplint: ignore[SMP602]  # cached and looked-up values have the type of each option
+        self,
+        key: str,
+        of_type: type[Any]  # simplint: ignore[SMP602]  # cached and looked-up values have the type of each option
+        | UnionType,  # simplint: ignore[SMP602]  # cached and looked-up values have the type of each option
+    ) -> Any:  # simplint: ignore[SMP602]  # cached and looked-up values have the type of each option
         if self.ini is None:  # pragma: no cover # this can only happen if we don't call __bool__ first
             return None
         args = ConfigLoadArgs(chain=[key], name=CORE.prefix, env_name=None)
-        value = self.ini.load(key, of_type=of_type, conf=None, factory=None, args=args)
-        return value, "file"
+        return self.ini.load(key, of_type=of_type, conf=None, factory=None, args=args), "file"
 
-    def __bool__(self) -> bool:
-        return bool(self.has_config_file) and bool(self.has_tox_section)
 
-    @property
-    def epilog(self) -> str:
-        # text to show within the parsers epilog
-        return (
-            f"{os.linesep}config file {str(self.config_file)!r} {self.STATE[self.has_config_file]} "
-            f"(change{'d' if self.is_env_var else ''} via env var {self.TOX_CONFIG_FILE_ENV_VAR})"
-        )
+__all__ = [
+    "IniConfig",
+]

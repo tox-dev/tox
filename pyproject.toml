@@ -360,3 +360,6 @@ packages.release-creator.uploaded-prior-to = 2026-11-02T21:45:00Z
 # python-discovery 1.9.0 is newer than the seven-day cutoff of the committed lock.
 # expires 2026-11-13
 packages.python-discovery.uploaded-prior-to = 2026-10-30T23:24:25Z
+
+[tool.simplint]
+docstring-style = "rst"

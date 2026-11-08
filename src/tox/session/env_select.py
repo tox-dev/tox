@@ -9,7 +9,7 @@ from difflib import get_close_matches
 from importlib.util import find_spec
 from itertools import chain
 from pathlib import PurePath
-from typing import TYPE_CHECKING, Any, Final, cast
+from typing import TYPE_CHECKING, Any, Final, NamedTuple, cast
 
 from tox.config.cli.parser import Parsed
 from tox.config.loader.ini.factor import extend_factors
@@ -29,13 +29,13 @@ if TYPE_CHECKING:
     from collections.abc import Callable, Iterable, Iterator
     from typing import Self
 
-    from tox.session.state import State
+    from .state import State
 
 
-LOGGER = logging.getLogger(__name__)
+LOGGER: Final[logging.Logger] = logging.getLogger(__name__)  # simplint: ignore[SMP404]  # imported by tox plugins
 
 
-class CliEnv:  # ruff:ignore[eq-without-hash]
+class CliEnv:  # ruff:ignore[eq-without-hash]  # mutable value type
     """The user's selection of tox test environments via ``-e`` or ``env_list`` config.
 
     It is in one of three forms:
@@ -43,12 +43,17 @@ class CliEnv:  # ruff:ignore[eq-without-hash]
     - A list of specific environments, instantiated with a string that is a comma-separated list of the environment
       names. (These may have spaces on either side of the commas which are removed.) As a sequence this will be a
       sequence of those names.
+
+    The other two forms are:
+
     - "ALL" which is all environments defined by the tox configuration. This is instantiated with ``ALL`` either alone
       or as any element of a comma-separated list; any other environment names are ignored. `is_all()` will be true and
       as a sequence it will be empty. This prints in string representation as ``ALL``.
     - The default environments as chosen by tox configuration. This is instantiated with `None` as the parameter,
       `is_default_list()` will be true, and as a sequence this will be empty. This prints in string representation as
       ``<env_list>``.
+
+    :param value: the selection as given on the command line or in the configuration
 
     """
 
@@ -62,16 +67,30 @@ class CliEnv:  # ruff:ignore[eq-without-hash]
         self._names: list[str] | None = value
 
     def __iter__(self) -> Iterator[str]:
-        if not self.is_all and self._names is not None:  # pragma: no branch
+        if not self.is_all and self._names is not None:  # pragma: no branch  # other outcome untested
             yield from self._names
 
+    @property
+    def is_all(self) -> bool:
+        """Whether all environments were requested with ``ALL``."""
+        return self._names is not None and "ALL" in self._names
+
     def __bool__(self) -> bool:
-        """A `CliEnv` is `True` if it's not the default set of environments."""
+        """A `CliEnv` is `True` if it's not the default set of environments.
+
+        :returns: whether the selection names environments other than the defaults
+
+        """
         return bool(self._names)
 
     @override
     def __str__(self) -> str:
         return "ALL" if self.is_all else ("<env_list>" if self.is_default_list else ",".join(self))
+
+    @property
+    def is_default_list(self) -> bool:
+        """Whether no environments were requested, so the default list applies."""
+        return not (self._names or [])
 
     @override
     def __repr__(self) -> str:
@@ -95,38 +114,13 @@ class CliEnv:  # ruff:ignore[eq-without-hash]
                 self._names.extend(other._names)
         return self
 
-    @property
-    def is_all(self) -> bool:
-        return self._names is not None and "ALL" in self._names
-
-    @property
-    def is_default_list(self) -> bool:
-        return not (self._names or [])
-
-
-class _CliEnvAction(argparse.Action):
-    completer: Callable[[str, Action, ArgumentParser, Namespace], list[str]]
-
-    @override
-    def __call__(
-        self,
-        parser: argparse.ArgumentParser,
-        namespace: argparse.Namespace,
-        values: Any,
-        option_string: str | None = None,
-    ) -> None:
-        new = CliEnv(values)
-        existing = getattr(namespace, self.dest, None)
-        if existing is not None and isinstance(existing, CliEnv) and existing is not self.default:
-            existing += new
-        else:
-            setattr(namespace, self.dest, new)
-
 
 def register_env_select_flags(
     parser: ArgumentParser,
     default: CliEnv | None,
+    # keeps the existing signature
     multiple: bool = True,  # ruff:ignore[boolean-type-hint-positional-argument, boolean-default-value-positional-argument]
+    # keeps the existing signature
     group_only: bool = False,  # ruff:ignore[boolean-type-hint-positional-argument, boolean-default-value-positional-argument]
 ) -> argparse._ActionsContainer:
     """Register environment selection flags.
@@ -135,6 +129,8 @@ def register_env_select_flags(
     :param default: the default value for env selection
     :param multiple: allow selecting multiple environments
     :param group_only: only register group selection flags
+
+    :returns: the argument group the flags are registered on
 
     """
     option_group: argparse._ActionsContainer
@@ -174,10 +170,29 @@ def register_env_select_flags(
     return add_to
 
 
+class _CliEnvAction(argparse.Action):
+    completer: Callable[[str, Action, ArgumentParser, Namespace], list[str]]
+
+    @override
+    def __call__(
+        self,
+        parser: argparse.ArgumentParser,
+        namespace: argparse.Namespace,
+        values: Any,
+        option_string: str | None = None,
+    ) -> None:
+        new = CliEnv(values)
+        existing = getattr(namespace, self.dest, None)
+        if existing is not None and isinstance(existing, CliEnv) and existing is not self.default:
+            existing += new
+        else:
+            setattr(namespace, self.dest, new)
+
+
 def _env_completer(
-    prefix: str,  # ruff:ignore[unused-function-argument]
-    action: Action,  # ruff:ignore[unused-function-argument]
-    parser: ArgumentParser,  # ruff:ignore[unused-function-argument]
+    prefix: str,  # ruff:ignore[unused-function-argument]  # interface signature
+    action: Action,  # ruff:ignore[unused-function-argument]  # interface signature
+    parser: ArgumentParser,  # ruff:ignore[unused-function-argument]  # interface signature
     parsed_args: Namespace,
 ) -> list[str]:
     from tox.plugin.manager import MANAGER  # ruff:ignore[import-outside-top-level]  # circular import
@@ -197,22 +212,45 @@ def _env_completer(
         return ["ALL", *conf]
 
 
-@dataclass
-class _ToxEnvInfo:
-    """tox environment information."""
+class _CombinableFactors(NamedTuple):
+    known_envs: set[str]
+    combinable: set[str]
+    all_factors: set[str]
 
+
+def _activate_by_labels(
+    defined_envs: dict[str, _ToxEnvInfo], labels: set[str], label_envs: dict[str, list[str]]
+) -> None:
+    for label in labels:
+        for env_name in label_envs.get(label, []):
+            defined_envs[env_name].is_active = True
+    for env_info in defined_envs.values():
+        if env_info.env is not None and labels.intersection(env_info.env.conf["labels"]):
+            env_info.is_active = True
+
+
+def _activate_by_factors(defined_envs: dict[str, _ToxEnvInfo], factors: tuple[set[str], ...]) -> None:
+    for name, env_info in defined_envs.items():
+        for factor_set in factors:
+            if factor_set.issubset(set(name.split("-"))):
+                env_info.is_active = True
+                break
+
+
+@dataclass(slots=True, kw_only=True)  # simplint: ignore[SMP701]  # fields change as environments are defined
+class _ToxEnvInfo:
     env: PackageToxEnv | RunToxEnv | None  #: the tox environment (None if runner unavailable)
     is_active: bool  #: a flag indicating if the environment is marked as active in the current run
     package_skip: tuple[str, Skip] | None = None  #: if set the creation of the packaging environment failed
 
 
-_DYNAMIC_ENV_FACTORS = re.compile(
+_DYNAMIC_ENV_FACTORS: Final[re.Pattern[str]] = re.compile(
     r"""
-    ( pypy | py | cpython | jython | graalpy | rustpython | ironpython | )  # interpreter prefix (or empty)
-    (                                # version group
-        (
-            ( \d                     # major digit
-                ( \. \d+ ( \. \d+ )? )?  # optional minor.patch
+    (?: pypy | py | cpython | jython | graalpy | rustpython | ironpython | )  # interpreter prefix (or empty)
+    (?:                                # version group
+        (?:
+            (?: \d                     # major digit
+                (?: \. \d+ (?: \. \d+ )? )?  # optional minor.patch
             )
             | \d+                    # or just digits
         )
@@ -222,7 +260,7 @@ _DYNAMIC_ENV_FACTORS = re.compile(
     """,
     re.VERBOSE,
 )
-_PY_PRE_RELEASE_FACTOR = re.compile(
+_PY_PRE_RELEASE_FACTOR: Final[re.Pattern[str]] = re.compile(
     r"""
     alpha       # alpha release
     | beta      # beta release
@@ -233,6 +271,14 @@ _PY_PRE_RELEASE_FACTOR = re.compile(
 
 
 class EnvSelector:
+    """Select the environments of a run from the command line, the configuration and the environment.
+
+    :param state: the state of the run
+
+    :var on_empty_fallback_py: whether to fall back to the ``py`` environment when none is selected
+
+    """
+
     def __init__(self, state: State) -> None:
         # needs core to load the default tox environment list
         # to load the package environments of a run environments we need the run environment builder
@@ -243,11 +289,11 @@ class EnvSelector:
         self._defined_envs_: dict[str, _ToxEnvInfo] | None = None
         self._pkg_env_counter: Counter[str] = Counter()
         self._unavailable_envs: dict[str, str] = {}  #: name -> runner name for unavailable environments
-        from tox.plugin.manager import MANAGER  # ruff:ignore[import-outside-top-level]
+        from tox.plugin.manager import MANAGER  # ruff:ignore[import-outside-top-level]  # avoids an import cycle
 
         self._manager = MANAGER
-        self._log_handler = self._state._options.log_handler  # ruff:ignore[private-member-access]
-        self._journal = self._state._journal  # ruff:ignore[private-member-access]
+        self._log_handler = self._state._options.log_handler  # ruff:ignore[private-member-access]  # internal access
+        self._journal = self._state._journal  # ruff:ignore[private-member-access]  # internal access
         self._provision: tuple[bool, str] | None = None
 
         self._state.conf.core.add_config("labels", dict[str, EnvList], {}, "core labels")
@@ -262,12 +308,77 @@ class EnvSelector:
             msg = f"invalid environment skip filter {pattern!r}: {exc}"
             raise HandledError(msg) from exc
 
+    def __getitem__(self, item: str) -> RunToxEnv | PackageToxEnv:
+        """:param item: the name of the environment
+
+        :returns: the tox environment
+
+        """
+        env = self._defined_envs[item].env
+        assert env is not None  # ruff:ignore[assert]  # invariant, narrows type
+        return env
+
     @property
-    def _cli_envs(self) -> CliEnv | None:
-        return getattr(self._state.conf.options, "env", None)
+    def _defined_envs(self) -> dict[str, _ToxEnvInfo]:
+        # The problem of classifying run/package environments:
+        # There can be two type of tox environments: run or package. Given a tox environment name there's no easy way to
+        # find out which it is.  Intuitively, a run environment is any environment not used for packaging by another run
+        # environment. To find out what are the packaging environments for a run environment, you have to first
+        # construct it. This implies a two-phase solution: construct all environments and query their packaging
+        # environments. The run environments are the ones not marked as of packaging type.
+        #
+        # This requires being able to change tox environments types, if it was earlier discovered as a run environment
+        # and is marked as packaging, we need to redefine it. E.g., when it shows up in config as [testenv:.package]
+        # and afterward by a run env is marked as package_env.
+
+        if self._defined_envs_ is not None:
+            return self._defined_envs_
+        self._defined_envs_ = {}
+        failed: dict[str, Exception] = {}
+        env_name_to_active = self._env_name_to_active()
+        for name, is_active in env_name_to_active.items():
+            if name in self._pkg_env_counter:  # already marked as packaging, nothing to do here
+                continue
+            with self._log_handler.with_context(name):
+                defined = self._define_run_env(name, is_active=is_active)
+            if defined is None:
+                continue
+            run_env, pkg_name_type = defined
+            if pkg_name_type is not None:
+                self._define_pkg_env(run_env, name, pkg_name_type, env_name_to_active, failed)
+        # report the first failure in definition order - later ones may be fallout from it
+        if (first_failed := next((name for name in failed if name not in self._defined_envs_), None)) is not None:
+            raise failed[first_failed]
+        for name, count in self._pkg_env_counter.items():
+            if not count:
+                self._defined_envs_.pop(name)  # pragma: no cover  # setup not built by tests
+
+        # reorder to as defined rather as found
+        order = chain(env_name_to_active, (i for i in self._defined_envs_ if i not in env_name_to_active))
+        self._defined_envs_ = {name: self._defined_envs_[name] for name in order if name in self._defined_envs_}
+        self._finalize_config()
+        self._mark_active()
+        return self._defined_envs_
+
+    def _env_name_to_active(self) -> dict[str, bool]:
+        env_name_to_active_map = {}
+        for a_collection, is_active in self._collect_names():
+            for name in a_collection:
+                self._ensure_env_name_is_path_safe(name)
+                if name not in env_name_to_active_map:
+                    env_name_to_active_map[name] = is_active
+        # for factor/label selection update the active flag
+        if (
+            not (getattr(self._state.conf.options, "labels", []) or getattr(self._state.conf.options, "factors", []))
+            # if no active environment is defined fallback to py
+            and self.on_empty_fallback_py
+            and not any(env_name_to_active_map.values())
+        ):
+            env_name_to_active_map["py"] = True
+        return env_name_to_active_map
 
     def _collect_names(self) -> Iterator[tuple[Iterable[str], bool]]:
-        """:returns: sources of tox environments defined with name and if is marked as target to run"""
+        # :returns: sources of tox environments defined with name and if is marked as target to run
         if self._provision is not None:  # pragma: no branch
             yield (self._provision[1],), False
             if self._provision[0]:
@@ -288,7 +399,26 @@ class EnvSelector:
         if label_envs:
             yield label_envs.keys(), False
 
-    def _combinable_factors(self) -> tuple[set[str], set[str], set[str]]:
+    @property
+    def _cli_envs(self) -> CliEnv | None:
+        return getattr(self._state.conf.options, "env", None)
+
+    def _ensure_envs_valid(self) -> None:
+        known_envs, combinable, all_factors = self._combinable_factors()
+        invalid_envs: dict[str, str | None] = {}
+        for env in self._cli_envs or []:
+            if env.startswith(".pkg_external") or env in known_envs:
+                continue
+            if (normalized_env := self._normalize_env_name(env)) != env and normalized_env in known_envs:
+                invalid_envs[env] = normalized_env
+                continue
+            is_invalid, suggestion = self._invalid_env_suggestion(env, combinable, all_factors)
+            if is_invalid:
+                invalid_envs[env] = suggestion
+        if invalid_envs:
+            self._raise_invalid_envs(invalid_envs)
+
+    def _combinable_factors(self) -> _CombinableFactors:
         known_envs = set(self._state.conf)
         env_list = set(self._state.conf.core.get("env_list", EnvList))
         # factors that can be freely combined: from env_list entries and known env names themselves
@@ -306,39 +436,7 @@ class EnvSelector:
         # broader pool for suggestions includes factors from all known env names
         all_factors = set(chain.from_iterable(env.split("-") for env in known_envs))
         all_factors.update(combinable)
-        return known_envs, combinable, all_factors
-
-    def _ensure_envs_valid(self) -> None:
-        known_envs, combinable, all_factors = self._combinable_factors()
-        invalid_envs: dict[str, str | None] = {}
-        for env in self._cli_envs or []:
-            if env.startswith(".pkg_external") or env in known_envs:
-                continue
-            normalized_env = self._normalize_env_name(env)
-            if normalized_env != env and normalized_env in known_envs:
-                invalid_envs[env] = normalized_env
-                continue
-            factors: dict[str, str | None] = dict.fromkeys(env.split("-"), None)
-            found_factors: set[str] = set()
-            for factor in factors:
-                if (
-                    _DYNAMIC_ENV_FACTORS.fullmatch(factor)
-                    or _PY_PRE_RELEASE_FACTOR.fullmatch(factor)
-                    or factor in combinable
-                ):
-                    found_factors.add(factor)
-                else:
-                    closest = get_close_matches(factor, all_factors, n=1)
-                    suggestion = closest[0] if closest else None
-                    factors[factor] = None if suggestion == factor else suggestion
-            if set(factors) - found_factors:
-                invalid_envs[env] = (
-                    None
-                    if any(i is None for i in factors.values())
-                    else "-".join(cast("Iterable[str]", factors.values()))
-                )
-        if invalid_envs:
-            self._raise_invalid_envs(invalid_envs)
+        return _CombinableFactors(known_envs, combinable, all_factors)
 
     @staticmethod
     def _normalize_env_name(env_name: str) -> str:
@@ -350,6 +448,28 @@ class EnvSelector:
             else:
                 normalized_factors.append(factor)
         return "-".join(normalized_factors)
+
+    @staticmethod
+    def _invalid_env_suggestion(env: str, combinable: set[str], all_factors: set[str]) -> tuple[bool, str | None]:
+        factors: dict[str, str | None] = dict.fromkeys(env.split("-"), None)
+        found_factors: set[str] = set()
+        for factor in factors:
+            if (
+                _DYNAMIC_ENV_FACTORS.fullmatch(factor)
+                or _PY_PRE_RELEASE_FACTOR.fullmatch(factor)
+                or factor in combinable
+            ):
+                found_factors.add(factor)
+            else:
+                closest = get_close_matches(factor, all_factors, n=1)
+                suggestion = closest[0] if closest else None
+                factors[factor] = None if suggestion == factor else suggestion
+        if not set(factors) - found_factors:
+            return False, None
+        suggested = (
+            None if any(i is None for i in factors.values()) else "-".join(cast("Iterable[str]", factors.values()))
+        )
+        return True, suggested
 
     @staticmethod
     def _raise_invalid_envs(invalid_envs: dict[str, str | None]) -> None:
@@ -364,23 +484,6 @@ class EnvSelector:
                 msg += f" - did you mean {suggestion}?"
         raise HandledError(msg)
 
-    def _env_name_to_active(self) -> dict[str, bool]:
-        env_name_to_active_map = {}
-        for a_collection, is_active in self._collect_names():
-            for name in a_collection:
-                self._ensure_env_name_is_path_safe(name)
-                if name not in env_name_to_active_map:
-                    env_name_to_active_map[name] = is_active
-        # for factor/label selection update the active flag
-        if (
-            not (getattr(self._state.conf.options, "labels", []) or getattr(self._state.conf.options, "factors", []))
-            # if no active environment is defined fallback to py
-            and self.on_empty_fallback_py
-            and not any(env_name_to_active_map.values())
-        ):
-            env_name_to_active_map["py"] = True
-        return env_name_to_active_map
-
     @staticmethod
     def _ensure_env_name_is_path_safe(name: str) -> None:
         # A traversal name can make recreation remove paths outside work_dir.
@@ -388,55 +491,13 @@ class EnvSelector:
             msg = f"environment name {name!r} is not a valid single path component"
             raise HandledError(msg)
 
-    @property
-    def _defined_envs(self) -> dict[str, _ToxEnvInfo]:
-        # The problem of classifying run/package environments:
-        # There can be two type of tox environments: run or package. Given a tox environment name there's no easy way to
-        # find out which it is.  Intuitively, a run environment is any environment not used for packaging by another run
-        # environment. To find out what are the packaging environments for a run environment, you have to first
-        # construct it. This implies a two-phase solution: construct all environments and query their packaging
-        # environments. The run environments are the ones not marked as of packaging type. This requires being able to
-        # change tox environments types, if it was earlier discovered as a run environment and is marked as packaging,
-        # we need to redefine it. E.g., when it shows up in config as [testenv:.package] and afterward by a run env is
-        # marked as package_env.
-
-        if self._defined_envs_ is not None:
-            return self._defined_envs_
-        self._defined_envs_ = {}
-        failed: dict[str, Exception] = {}
-        env_name_to_active = self._env_name_to_active()
-        for name, is_active in env_name_to_active.items():
-            if name in self._pkg_env_counter:  # already marked as packaging, nothing to do here
-                continue
-            with self._log_handler.with_context(name):
-                defined = self._define_run_env(name, is_active=is_active)
-            if defined is None:
-                continue
-            run_env, pkg_name_type = defined
-            if pkg_name_type is not None:
-                self._define_pkg_env(run_env, name, pkg_name_type, env_name_to_active, failed)
-        # report the first failure in definition order - later ones may be fallout from it
-        first_failed = next((name for name in failed if name not in self._defined_envs_), None)
-        if first_failed is not None:
-            raise failed[first_failed]
-        for name, count in self._pkg_env_counter.items():
-            if not count:
-                self._defined_envs_.pop(name)  # pragma: no cover
-
-        # reorder to as defined rather as found
-        order = chain(env_name_to_active, (i for i in self._defined_envs_ if i not in env_name_to_active))
-        self._defined_envs_ = {name: self._defined_envs_[name] for name in order if name in self._defined_envs_}
-        self._finalize_config()
-        self._mark_active()
-        return self._defined_envs_
-
     def _define_run_env(self, name: str, *, is_active: bool) -> tuple[RunToxEnv, tuple[str, str] | None] | None:
-        assert self._defined_envs_ is not None  # ruff:ignore[assert]
+        assert self._defined_envs_ is not None  # ruff:ignore[assert]  # invariant, narrows type
         try:
             run_env = self._build_run_env(name)
             if run_env is None:
                 return None
-            self._defined_envs_[name] = _ToxEnvInfo(run_env, is_active)
+            self._defined_envs_[name] = _ToxEnvInfo(env=run_env, is_active=is_active)
             pkg_name_type = run_env.get_package_env_types()
         except RunnerUnavailable as exc:
             LOGGER.warning(
@@ -448,49 +509,6 @@ class EnvSelector:
             self._defined_envs_[name] = _ToxEnvInfo(env=None, is_active=is_active)
             return None
         return run_env, pkg_name_type
-
-    def _define_pkg_env(
-        self,
-        run_env: RunToxEnv,
-        name: str,
-        pkg_name_type: tuple[str, str],
-        env_name_to_active: dict[str, bool],
-        failed: dict[str, Exception],
-    ) -> None:
-        assert self._defined_envs_ is not None  # ruff:ignore[assert]
-        # build package env and assign it, then register the run environment which can trigger generation
-        # of additional run environments
-        start_package_env_use_counter = self._pkg_env_counter.copy()
-        start_defined = set(self._defined_envs_)
-        try:
-            run_env.package_env = self._build_pkg_env(pkg_name_type, name, env_name_to_active)
-        except Exception as exception:  # ruff:ignore[blind-except]
-            # if it's not a run environment, wait to see if ends up being a packaging one -> rollback
-            failed[name] = exception
-            # only remove envs created during this attempt: pre-existing ones (e.g. a shared package
-            # env) are still referenced by earlier run environments and must survive
-            for key in (set(self._defined_envs_) - start_defined) | {name}:
-                del self._defined_envs_[key]
-                self._state.conf.clear_env(key)
-            self._pkg_env_counter = start_package_env_use_counter
-            return
-        try:
-            for env in run_env.package_envs:
-                # check if any packaging envs are already run and remove them
-                other_env_info = self._defined_envs_.get(env.name)
-                if other_env_info is not None and isinstance(other_env_info.env, RunToxEnv):
-                    del self._defined_envs_[env.name]  # pragma: no cover
-                    for pkg_env in other_env_info.env.package_envs:  # pragma: no cover
-                        self._pkg_env_counter[pkg_env.name] -= 1  # pragma: no cover
-        except Exception:  # ruff:ignore[blind-except]
-            assert self._defined_envs_[name].package_skip is not None  # ruff:ignore[assert]
-
-    def _finalize_config(self) -> None:
-        assert self._defined_envs_ is not None  # ruff:ignore[assert]
-        for tox_env in self._defined_envs_.values():
-            if tox_env.env is not None:  # skip unavailable environments
-                tox_env.env.conf.mark_finalized()
-        self._state.conf.core.mark_finalized()
 
     def _build_run_env(self, name: str) -> RunToxEnv | None:
         if self._provision is not None and self._provision[0] is False and name == self._provision[1]:
@@ -523,6 +541,42 @@ class EnvSelector:
         self._manager.tox_add_env_config(env_conf, self._state)
         return run_env
 
+    def _define_pkg_env(
+        self,
+        run_env: RunToxEnv,
+        name: str,
+        pkg_name_type: tuple[str, str],
+        env_name_to_active: dict[str, bool],
+        failed: dict[str, Exception],
+    ) -> None:
+        assert self._defined_envs_ is not None  # ruff:ignore[assert]  # invariant, narrows type
+        # build package env and assign it, then register the run environment which can trigger generation
+        # of additional run environments
+        start_package_env_use_counter = self._pkg_env_counter.copy()
+        start_defined = set(self._defined_envs_)
+        try:
+            run_env.package_env = self._build_pkg_env(pkg_name_type, name, env_name_to_active)
+        except Exception as exception:  # ruff:ignore[blind-except]  # failure must not stop run
+            # if it's not a run environment, wait to see if ends up being a packaging one -> rollback
+            failed[name] = exception
+            # only remove envs created during this attempt: pre-existing ones (e.g. a shared package
+            # env) are still referenced by earlier run environments and must survive
+            for key in (set(self._defined_envs_) - start_defined) | {name}:
+                del self._defined_envs_[key]
+                self._state.conf.clear_env(key)
+            self._pkg_env_counter = start_package_env_use_counter
+            return
+        try:
+            for env in run_env.package_envs:
+                # check if any packaging envs are already run and remove them
+                other_env_info = self._defined_envs_.get(env.name)
+                if other_env_info is not None and isinstance(other_env_info.env, RunToxEnv):
+                    del self._defined_envs_[env.name]  # pragma: no cover  # untested error path
+                    for pkg_env in other_env_info.env.package_envs:  # pragma: no cover  # setup not built by tests
+                        self._pkg_env_counter[pkg_env.name] -= 1  # pragma: no cover  # setup not built by tests
+        except Exception:  # ruff:ignore[blind-except]  # failure must not stop run
+            assert self._defined_envs_[name].package_skip is not None  # ruff:ignore[assert]  # invariant, narrows type
+
     def _build_pkg_env(self, name_type: tuple[str, str], run_env_name: str, active: dict[str, bool]) -> PackageToxEnv:
         name, core_type = name_type
         with self._log_handler.with_context(name):
@@ -540,7 +594,7 @@ class EnvSelector:
                 ) is not None:
                     name_type = child_name_type
             except Skip as exception:
-                assert self._defined_envs_ is not None  # ruff:ignore[assert]
+                assert self._defined_envs_ is not None  # ruff:ignore[assert]  # invariant, narrows type
                 self._defined_envs_[run_env_name].package_skip = (name_type[0], exception)
                 if package_tox_env is None:
                     # Skip escaped env creation itself (e.g. from a plugin hook): hand back the env when it got
@@ -552,12 +606,52 @@ class EnvSelector:
                     self._pkg_env_counter[name] += 1
             return package_tox_env
 
+    def _get_package_env(  # keeps the signature
+        self,
+        packager: str,
+        name: str,
+        run_env_name: str,
+        is_active: bool,  # ruff:ignore[boolean-type-hint-positional-argument]  # keeps the signature
+    ) -> PackageToxEnv:
+        assert self._defined_envs_ is not None  # ruff:ignore[assert]  # invariant, narrows type
+        if name in set(self._state.conf.core.get("env_list", EnvList).envs):
+            # an env cannot both be asked to run and serve as a builder - fail here with the full picture rather
+            # than late at execution with "cannot run packaging environment"
+            msg = (
+                f"{name} is listed in env_list but is used as a package environment by {run_env_name}; "
+                f"remove it from env_list or rename the package environment"
+            )
+            raise HandledError(msg)
+        if name in self._defined_envs_:
+            env = self._defined_envs_[name].env
+            if isinstance(env, PackageToxEnv):
+                if env.id() != packager:  # pragma: no branch # same env name is used by different packaging
+                    # conflicting packagers, not reached in tests
+                    msg = f"{name} is already defined as a {env.id()}, cannot be {packager} too"  # pragma: no cover
+                    raise HandledError(msg)  # pragma: no cover  # untested error path
+                return env
+            self._state.conf.clear_env(name)
+        package_type = REGISTER.package(packager)
+        pkg_conf = self._state.conf.get_env(name, package=True)
+        journal = self._journal.get_env_journal(name)
+        args = ToxEnvCreateArgs(pkg_conf, self._state.conf.core, self._state.conf.options, journal, self._log_handler)
+        try:
+            pkg_env: PackageToxEnv = package_type(args)
+            pkg_env.register_config()
+        except Exception:
+            # drop the partially registered config set so the next run env needing this package env starts clean,
+            # instead of hitting a duplicate-configuration error that masks this failure (#3987)
+            self._state.conf.clear_env(name)
+            raise
+        self._defined_envs_[name] = _ToxEnvInfo(env=pkg_env, is_active=is_active)
+        self._manager.tox_add_env_config(pkg_conf, self._state)
+        return pkg_env
+
     def _register_child_packages(
         self, package_tox_env: PackageToxEnv, run_env_name: str, active: dict[str, bool]
     ) -> tuple[str, str] | None:
-        assert self._defined_envs_ is not None  # ruff:ignore[assert]
-        run_env = cast("RunToxEnv", self._defined_envs_[run_env_name].env)
-        child_package_envs = package_tox_env.register_run_env(run_env)
+        assert self._defined_envs_ is not None  # ruff:ignore[assert]  # invariant, narrows type
+        child_package_envs = package_tox_env.register_run_env(cast("RunToxEnv", self._defined_envs_[run_env_name].env))
         name_type: tuple[str, str] | None = None
         try:
             name_type = next(child_package_envs)
@@ -574,39 +668,26 @@ class EnvSelector:
             pass
         return name_type
 
-    def _get_package_env(self, packager: str, name: str, run_env_name: str, is_active: bool) -> PackageToxEnv:  # ruff:ignore[boolean-type-hint-positional-argument]
-        assert self._defined_envs_ is not None  # ruff:ignore[assert]
-        if name in set(self._state.conf.core.get("env_list", EnvList).envs):
-            # an env cannot both be asked to run and serve as a builder - fail here with the full picture rather
-            # than late at execution with "cannot run packaging environment"
-            msg = (
-                f"{name} is listed in env_list but is used as a package environment by {run_env_name}; "
-                f"remove it from env_list or rename the package environment"
-            )
-            raise HandledError(msg)
-        if name in self._defined_envs_:
-            env = self._defined_envs_[name].env
-            if isinstance(env, PackageToxEnv):
-                if env.id() != packager:  # pragma: no branch # same env name is used by different packaging
-                    msg = f"{name} is already defined as a {env.id()}, cannot be {packager} too"  # pragma: no cover
-                    raise HandledError(msg)  # pragma: no cover
-                return env
-            self._state.conf.clear_env(name)
-        package_type = REGISTER.package(packager)
-        pkg_conf = self._state.conf.get_env(name, package=True)
-        journal = self._journal.get_env_journal(name)
-        args = ToxEnvCreateArgs(pkg_conf, self._state.conf.core, self._state.conf.options, journal, self._log_handler)
-        try:
-            pkg_env: PackageToxEnv = package_type(args)
-            pkg_env.register_config()
-        except Exception:
-            # drop the partially registered config set so the next run env needing this package env starts clean,
-            # instead of hitting a duplicate-configuration error that masks this failure (#3987)
-            self._state.conf.clear_env(name)
-            raise
-        self._defined_envs_[name] = _ToxEnvInfo(pkg_env, is_active)
-        self._manager.tox_add_env_config(pkg_conf, self._state)
-        return pkg_env
+    def _finalize_config(self) -> None:
+        assert self._defined_envs_ is not None  # ruff:ignore[assert]  # invariant, narrows type
+        for tox_env in self._defined_envs_.values():
+            if tox_env.env is not None:  # skip unavailable environments
+                tox_env.env.conf.mark_finalized()
+        self._state.conf.core.mark_finalized()
+
+    def _mark_active(self) -> None:
+        labels = set(getattr(self._state.conf.options, "labels", []))
+        factors = self._parse_factors()
+
+        assert self._defined_envs_ is not None  # ruff:ignore[assert]  # invariant, narrows type
+        if labels or factors:
+            for env_info in self._defined_envs_.values():
+                env_info.is_active = False  # if any was selected reset
+            # ignore labels when provisioning will occur
+            if labels and (self._provision is None or not self._provision[0]):
+                _activate_by_labels(self._defined_envs_, labels, self._state.conf.core["labels"])
+            if factors:  # if matches mark it active
+                _activate_by_factors(self._defined_envs_, factors)
 
     def _parse_factors(self) -> tuple[set[str], ...]:
         # factors is a list of lists, from the combination of nargs="+" and action="append"
@@ -614,39 +695,6 @@ class EnvSelector:
         # so that `-f foo-bar` and `-f foo bar` are treated equivalently
         raw_factors = getattr(self._state.conf.options, "factors", [])
         return tuple({f for factor in factor_list for f in factor.split("-")} for factor_list in raw_factors)
-
-    def _mark_active(self) -> None:  # ruff:ignore[complex-structure]
-        labels = set(getattr(self._state.conf.options, "labels", []))
-        factors = self._parse_factors()
-
-        assert self._defined_envs_ is not None  # ruff:ignore[assert]
-        if labels or factors:
-            for env_info in self._defined_envs_.values():
-                env_info.is_active = False  # if any was selected reset
-            # ignore labels when provisioning will occur
-            if labels and (self._provision is None or not self._provision[0]):
-                for label in labels:
-                    for env_name in self._state.conf.core["labels"].get(label, []):
-                        self._defined_envs_[env_name].is_active = True
-                for env_info in self._defined_envs_.values():
-                    if env_info.env is not None and labels.intersection(env_info.env.conf["labels"]):
-                        env_info.is_active = True
-            if factors:  # if matches mark it active
-                for name, env_info in self._defined_envs_.items():
-                    for factor_set in factors:
-                        if factor_set.issubset(set(name.split("-"))):
-                            env_info.is_active = True
-                            break
-
-    def __getitem__(self, item: str) -> RunToxEnv | PackageToxEnv:
-        """:param item: the name of the environment
-
-        :returns: the tox environment
-
-        """
-        env = self._defined_envs[item].env
-        assert env is not None  # ruff:ignore[assert]
-        return env
 
     def iter(
         self,
@@ -659,7 +707,7 @@ class EnvSelector:
         :param only_active: active environments are marked to be executed in the current target
         :param package: return package environments
 
-        :returns: an iteration of tox environments
+        :yields: an iteration of tox environments
 
         """
         for name, env_info in self._defined_envs.items():
@@ -686,13 +734,21 @@ class EnvSelector:
         return self._unavailable_envs.copy()
 
     def ensure_only_run_env_is_active(self) -> None:
+        """Ensure that no packaging environment is selected to run.
+
+        :raises tox.report.HandledError: when a packaging environment is selected
+
+        """
         envs, active = self._defined_envs, self._env_name_to_active()
-        invalid = [n for n, a in active.items() if a and isinstance(envs[n].env, PackageToxEnv)]
-        if invalid:
+        if invalid := [n for n, a in active.items() if a and isinstance(envs[n].env, PackageToxEnv)]:
             msg = f"cannot run packaging environment(s) {','.join(invalid)}"
             raise HandledError(msg)
 
-    def _mark_provision(self, on: bool, provision_tox_env: str) -> None:  # ruff:ignore[boolean-type-hint-positional-argument]
+    def _mark_provision(  # keeps the signature
+        self,
+        on: bool,  # ruff:ignore[boolean-type-hint-positional-argument]  # keeps the signature
+        provision_tox_env: str,  # keeps the signature
+    ) -> None:
         self._provision = on, provision_tox_env
 
 

@@ -6,10 +6,11 @@ import re
 from abc import ABC, abstractmethod
 from hashlib import sha256
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 from tox.config.types import Command, EnvList
 from tox.execute import Outcome
+from tox.session.cmd.run.single import run_command_set
 from tox.util.typing_compat import override
 
 from .api import ToxEnv, ToxEnvCreateArgs
@@ -24,11 +25,28 @@ if TYPE_CHECKING:
 
 
 class RunToxEnv(ToxEnv, ABC):
+    """The base of the tox environments that run commands.
+
+    :param create_args: the arguments the environment is created with
+
+    :var package_env: the packaging environment the run environment uses, ``None`` when it uses none
+
+    """
+
     def __init__(self, create_args: ToxEnvCreateArgs) -> None:
         self.package_env: PackageToxEnv | None = None
         self._packages: list[Package] = []
         super().__init__(create_args)
         self._package_envs: list[PackageToxEnv | Exception] | None = None
+
+    @property
+    @override
+    def environment_variables(self) -> dict[str, str]:
+        environment_variables = super().environment_variables
+        if self.package_env is not None and self._packages:
+            # if package(s) have been built insert them as environment variable
+            environment_variables["TOX_PACKAGE"] = os.pathsep.join(str(i) for i in self._packages)
+        return environment_variables
 
     @override
     def register_config(self) -> None:
@@ -113,6 +131,20 @@ class RunToxEnv(ToxEnv, ABC):
         super()._teardown()
         self._call_pkg_envs("teardown_env", self.conf)
 
+    def _call_pkg_envs(self, method_name: str, *args: object, suspend: bool | None = None) -> None:
+        if suspend is None:
+            suspend = self._has_display_suspended
+        for package_env in self.package_envs:
+            with package_env.display_context(suspend=suspend):
+                _call_guarded(package_env, method_name, *args)
+
+    @property
+    def package_envs(self) -> Iterable[PackageToxEnv]:
+        """The packaging environments the run environment uses, followed by the ones they depend on."""
+        if self.package_env is not None:
+            yield self.package_env
+            yield from self.package_env.child_pkg_envs(self.conf)
+
     @override
     def interrupt(self) -> None:
         super().interrupt()
@@ -121,6 +153,11 @@ class RunToxEnv(ToxEnv, ABC):
         self._call_pkg_envs("interrupt", suspend=False)
 
     def get_package_env_types(self) -> tuple[str, str] | None:
+        """Get the packaging environment types the run environment uses.
+
+        :returns: the names of the packaging environment type and its name, or ``None`` when there is none
+
+        """
         if not self._register_package_conf():
             return None
 
@@ -145,12 +182,37 @@ class RunToxEnv(ToxEnv, ABC):
         )
         return self.conf.get("package_env", str), self.conf.get("package_tox_env_type", str)
 
-    def _call_pkg_envs(self, method_name: str, *args: Any, suspend: bool | None = None) -> None:
-        if suspend is None:
-            suspend = self._has_display_suspended
-        for package_env in self.package_envs:
-            with package_env.display_context(suspend=suspend):
-                _call_guarded(package_env, method_name, *args)
+    def _register_package_conf(self) -> bool:
+        # If this returns True package_env and package_tox_env_type configurations must be defined.
+        self.core.add_config(
+            keys=["no_package", "skipsdist"],
+            of_type=bool,
+            default=False,
+            desc="is there any packaging involved in this project",
+        )
+        if self.core.get("no_package", bool) is True:
+            return False
+        self.conf.add_config(
+            keys="skip_install",
+            of_type=bool,
+            default=False,
+            desc="skip installation",
+        )
+        return not self.conf.get("skip_install", bool)
+
+    @property
+    def _default_package_env(self) -> str:
+        return ".pkg"
+
+    @property
+    @abstractmethod
+    def _external_pkg_tox_env_type(self) -> str:
+        raise NotImplementedError
+
+    @property
+    @abstractmethod
+    def _package_tox_env_type(self) -> str:
+        raise NotImplementedError
 
     @override
     def _clean(self, transitive: bool = False) -> None:
@@ -164,13 +226,10 @@ class RunToxEnv(ToxEnv, ABC):
             for pkg_env in self.package_envs:
                 if pkg_env.conf.get("recreate", bool):
                     with pkg_env.display_context(suspend=self._has_display_suspended):
-                        pkg_env._clean()  # ruff:ignore[private-member-access]
+                        pkg_env._clean()  # ruff:ignore[private-member-access]  # internal access
 
     def _run_recreate_commands(self) -> None:
-        from tox.session.cmd.run.single import run_command_set  # ruff:ignore[import-outside-top-level]
-
-        command_set = self.conf.get("recreate_commands", list[Command])
-        if not command_set:
+        if not self.conf.get("recreate_commands", list[Command]):
             return
         chdir = self.conf.get("change_dir", Path)
         chdir.mkdir(exist_ok=True, parents=True)
@@ -185,20 +244,6 @@ class RunToxEnv(ToxEnv, ABC):
         finally:
             self._paths_private = old_paths
 
-    @property
-    def _default_package_env(self) -> str:
-        return ".pkg"
-
-    @property
-    @abstractmethod
-    def _package_tox_env_type(self) -> str:
-        raise NotImplementedError
-
-    @property
-    @abstractmethod
-    def _external_pkg_tox_env_type(self) -> str:
-        raise NotImplementedError
-
     @override
     def _setup_with_env(self) -> None:
         if self.package_env is not None:
@@ -210,31 +255,16 @@ class RunToxEnv(ToxEnv, ABC):
             else:
                 self._setup_pkg()
 
-    def _register_package_conf(self) -> bool:
-        """If this returns True package_env and package_tox_env_type configurations must be defined."""
-        self.core.add_config(
-            keys=["no_package", "skipsdist"],
-            of_type=bool,
-            default=False,
-            desc="is there any packaging involved in this project",
-        )
-        core_no_package = self.core.get("no_package", bool)
-        if core_no_package is True:
-            return False
-        self.conf.add_config(
-            keys="skip_install",
-            of_type=bool,
-            default=False,
-            desc="skip installation",
-        )
-        skip_install = self.conf.get("skip_install", bool)
-        return not skip_install
-
     def _setup_pkg(self) -> None:
         self._packages = self._build_packages()
         if not self.options.package_only:
             self._install(self._packages, RunToxEnv.__name__, "package")
         self._handle_journal_package(self.journal, self._packages)
+
+    @abstractmethod
+    def _build_packages(self) -> list[Package]:
+        # :returns: a list of packages installed in the environment
+        raise NotImplementedError
 
     @staticmethod
     def _handle_journal_package(journal: EnvJournal, packages: list[Package]) -> None:
@@ -254,33 +284,32 @@ class RunToxEnv(ToxEnv, ABC):
         if installed_meta:
             journal["installpkg"] = installed_meta[0] if len(installed_meta) == 1 else installed_meta
 
-    @property
-    @override
-    def environment_variables(self) -> dict[str, str]:
-        environment_variables = super().environment_variables
-        if self.package_env is not None and self._packages:
-            # if package(s) have been built insert them as environment variable
-            environment_variables["TOX_PACKAGE"] = os.pathsep.join(str(i) for i in self._packages)
-        return environment_variables
-
-    @abstractmethod
-    def _build_packages(self) -> list[Package]:
-        """:returns: a list of packages installed in the environment"""
-        raise NotImplementedError
-
-    @property
-    def package_envs(self) -> Iterable[PackageToxEnv]:
-        if self.package_env is not None:
-            yield self.package_env
-            yield from self.package_env.child_pkg_envs(self.conf)
-
     def mark_active(self) -> None:
+        """Mark the run environment as active in its packaging environments."""
         for pkg_env in self.package_envs:
             pkg_env.mark_active_run_env(self)
 
 
-def _call_guarded(package_env: PackageToxEnv, method_name: str, *args: Any) -> None:
+def _call_guarded(package_env: PackageToxEnv, method_name: str, *args: object) -> None:
     try:
         getattr(package_env, method_name)(*args)
     except (Fail, OSError):  # one package env failing must not leak the others' resources
         logging.warning("failed to %s package environment %s", method_name, package_env.name, exc_info=True)
+
+
+__all__ = [
+    "Command",
+    "EnvList",
+    "Fail",
+    "Outcome",
+    "Package",
+    "PackageToxEnv",
+    "PathPackage",
+    "RunToxEnv",
+    "ToxEnv",
+    "ToxEnvCreateArgs",
+    "add_change_dir_conf",
+    "add_commands_conf",
+    "add_ignore_errors_conf",
+    "override",
+]

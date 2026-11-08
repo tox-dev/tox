@@ -40,6 +40,12 @@ from importlib.metadata import Distribution
 
 
 class VenvCmdBuilder(PythonPackageToxEnv, ABC):
+    """The base of the packaging environments that build with a command run in a virtualenv.
+
+    :param create_args: the arguments the environment is created with
+
+    """
+
     def __init__(self, create_args: ToxEnvCreateArgs) -> None:
         super().__init__(create_args)
         self._sdist_meta_tox_env: Pep517VirtualEnvPackager | None = None
@@ -78,7 +84,7 @@ class VenvCmdBuilder(PythonPackageToxEnv, ABC):
 
     @override
     def load_deps_for_env(self, for_env: EnvConfigSet) -> list[Requirement]:
-        assert self._sdist_meta_tox_env is not None  # ruff:ignore[assert]
+        assert self._sdist_meta_tox_env is not None  # ruff:ignore[assert]  # invariant, narrows type
         return self._sdist_meta_tox_env.load_deps_for_env(for_env)
 
     @override
@@ -94,12 +100,11 @@ class VenvCmdBuilder(PythonPackageToxEnv, ABC):
             return Path(path)
         chdir = self.conf.get("change_dir", Path)
         chdir.mkdir(exist_ok=True, parents=True)
-        ignore_errors = self.conf.get("ignore_errors", bool)
-        if run_command_set(self, "commands", chdir, ignore_errors, []) != Outcome.OK:
+        if run_command_set(self, "commands", chdir, self.conf.get("ignore_errors", bool), []) != Outcome.OK:
             msg = "stopping as failed to build package"
             raise Fail(msg)
         package_glob = self.conf["package_glob"]
-        found = glob.glob(package_glob)  # ruff:ignore[glob]
+        found = glob.glob(package_glob)  # ruff:ignore[glob]  # matches user pattern
         if not found:
             msg = f"no package found in {package_glob}"
             raise Fail(msg)
@@ -109,6 +114,16 @@ class VenvCmdBuilder(PythonPackageToxEnv, ABC):
         return Path(found[0])
 
     def extract_install_info(self, for_env: EnvConfigSet, path: Path) -> list[Package]:
+        """Extract the packages that the built distribution provides.
+
+        :param for_env: the configuration of the run environment
+        :param path: the path of the built distribution
+
+        :returns: the packages
+
+        :raises tox.tox_env.errors.Fail: when the distribution cannot be read, or contains no package
+
+        """
         extras = for_env.get("extras", set[str])
         if path.suffix == ".whl":
             try:
@@ -117,7 +132,7 @@ class VenvCmdBuilder(PythonPackageToxEnv, ABC):
                 wheel_error: Final[str] = f"could not read the metadata of {path}: {exc}"
                 raise Fail(wheel_error) from exc
         work_dir = self.env_tmp_dir / "sdist-extract"
-        if not work_dir.exists():  # pragma: no branch
+        if not work_dir.exists():  # pragma: no branch  # other outcome untested
             work_dir.mkdir()
         try:
             with tarfile.open(str(path), "r:gz") as tar:
@@ -162,35 +177,25 @@ class VenvCmdBuilder(PythonPackageToxEnv, ABC):
 
     @override
     def child_pkg_envs(self, run_conf: EnvConfigSet) -> Iterator[PackageToxEnv]:
-        if self._sdist_meta_tox_env is not None:  # pragma: no branch
+        if self._sdist_meta_tox_env is not None:  # pragma: no branch  # other outcome untested
             yield self._sdist_meta_tox_env
 
 
 class VirtualEnvCmdBuilder(VenvCmdBuilder, VirtualEnv):
+    """A packaging environment that builds with a command run in a virtualenv."""
+
     @staticmethod
     @override
     def id() -> str:
         return "virtualenv-cmd-builder"
 
 
-class WheelDistribution(Distribution):  # cannot subclass has type Any
+class WheelDistribution(  # simplint: ignore[SMP403]  # imported by tox plugins
+    Distribution
+):  # cannot subclass has type Any  # simplint: ignore[SMP403]  # imported by tox plugins
     def __init__(self, wheel: Path) -> None:
         self._wheel = wheel
         self._dist_name: str | None = None
-
-    @property
-    def dist_name(self) -> str:
-        if self._dist_name is None:
-            with ZipFile(self._wheel) as zip_file:
-                for name in zip_file.namelist():
-                    root = name.split("/")[0]
-                    if root.endswith(".dist-info"):
-                        self._dist_name = root
-                        break
-                else:
-                    msg = f"no .dist-info inside {self._wheel}"
-                    raise Fail(msg)
-        return self._dist_name
 
     @cached_property
     @override
@@ -213,6 +218,20 @@ class WheelDistribution(Distribution):  # cannot subclass has type Any
                 raise Fail(msg)
             with TextIOWrapper(zip_file.open(info), encoding="utf-8") as file_handler:
                 return file_handler.read()
+
+    @property
+    def dist_name(self) -> str:
+        if self._dist_name is None:
+            with ZipFile(self._wheel) as zip_file:
+                for name in zip_file.namelist():
+                    root = name.split("/")[0]
+                    if root.endswith(".dist-info"):
+                        self._dist_name = root
+                        break
+                else:
+                    msg = f"no .dist-info inside {self._wheel}"
+                    raise Fail(msg)
+        return self._dist_name
 
     @override
     def locate_file(self, path: str | PathLike[str]) -> Path:

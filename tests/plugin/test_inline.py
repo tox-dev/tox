@@ -16,17 +16,16 @@ if TYPE_CHECKING:
 
 def test_inline_tox_py(tox_project: ToxProjectCreator) -> None:
     def plugin() -> None:  # pragma: no cover # the code is copied to a python file
-        import logging  # ruff:ignore[import-outside-top-level]
+        import logging  # ruff:ignore[import-outside-top-level]  # deferred import
 
-        from tox.plugin import impl  # ruff:ignore[import-outside-top-level]
+        from tox.plugin import impl  # ruff:ignore[import-outside-top-level]  # deferred import
 
         @impl
         def tox_add_option(parser: ToxParser) -> None:
             logging.warning("Add magic")
             parser.add_argument("--magic", action="store_true")
 
-    project = tox_project({"toxfile.py": plugin})
-    result = project.run("-h")
+    result = tox_project({"toxfile.py": plugin}).run("-h")
     result.assert_success()
     assert "--magic" in result.out
 
@@ -99,7 +98,7 @@ def test_inline_help_invalid_conf_loads_project_plugin(
     tox_project: ToxProjectCreator, tmp_path: Path, files: dict[str, str], conf: str
 ) -> None:
     def plugin() -> None:  # pragma: no cover - copied to a plugin module
-        from tox.plugin import impl  # ruff:ignore[import-outside-top-level]
+        from tox.plugin import impl  # ruff:ignore[import-outside-top-level]  # deferred import
 
         @impl
         def tox_add_option(parser: ToxParser) -> None:
@@ -116,24 +115,37 @@ def test_inline_help_invalid_conf_loads_project_plugin(
 
 
 def test_toxfile_unknown_hook_skipped(tox_project: ToxProjectCreator) -> None:
-    def plugin() -> None:  # pragma: no cover
-        from tox.plugin import impl  # ruff:ignore[import-outside-top-level]
+    def plugin() -> None:  # pragma: no cover  # setup not built by tests
+        from tox.plugin import impl  # ruff:ignore[import-outside-top-level]  # deferred import
 
         @impl
         def tox_nonexistent_hook() -> None: ...
 
-    project = tox_project({"toxfile.py": plugin, "tox.toml": ""})
-    result = project.run("l")
+    result = tox_project({"toxfile.py": plugin, "tox.toml": ""}).run("l")
     result.assert_success()
     assert "skipping inline plugin" in result.out
 
 
-def test_toxfile_py_w_ephemeral_envs(tox_project: ToxProjectCreator) -> None:
-    """Ensure additional ephemeral tox envs can be plugin-injected."""
-
+@pytest.mark.parametrize(
+    "underlying_expected_oserror_msg",
+    [
+        pytest.param(
+            "[WinError 2] The system cannot find the file specified",
+            id="windows",
+            marks=pytest.mark.skipif(sys.platform != "win32", reason="windows missing executable message"),
+        ),
+        pytest.param(
+            "[Errno 2] No such file or directory: 'sentinel-cmd'",
+            id="posix",
+            marks=pytest.mark.skipif(sys.platform == "win32", reason="posix missing executable message"),
+        ),
+    ],
+)
+def test_toxfile_py_w_ephemeral_envs(tox_project: ToxProjectCreator, underlying_expected_oserror_msg: str) -> None:
+    # Ensure additional ephemeral tox envs can be plugin-injected.
     def plugin() -> None:  # pragma: no cover # the code is copied to a python file
-        from tox.config.loader.memory import MemoryLoader  # ruff:ignore[import-outside-top-level]
-        from tox.plugin import impl  # ruff:ignore[import-outside-top-level]
+        from tox.config.loader.memory import MemoryLoader  # ruff:ignore[import-outside-top-level]  # deferred import
+        from tox.plugin import impl  # ruff:ignore[import-outside-top-level]  # deferred import
 
         env_name = "sentinel-env-name"
 
@@ -142,7 +154,10 @@ def test_toxfile_py_w_ephemeral_envs(tox_project: ToxProjectCreator) -> None:
             return (env_name,)
 
         @impl
-        def tox_add_core_config(core_conf: ConfigSet, state: State) -> None:  # ruff:ignore[unused-function-argument]
+        def tox_add_core_config(  # interface signature
+            core_conf: ConfigSet,  # ruff:ignore[unused-function-argument]  # interface signature
+            state: State,  # interface signature
+        ) -> None:
             in_memory_config_loader = MemoryLoader(
                 base=["sentinel-base"],
                 commands_pre=["sentinel-cmd"],
@@ -165,11 +180,6 @@ def test_toxfile_py_w_ephemeral_envs(tox_project: ToxProjectCreator) -> None:
 
     tox_run_result = project.run("run", "-e", "sentinel-env-name", "-q")
     tox_run_result.assert_failed()
-    underlying_expected_oserror_msg = (
-        "[WinError 2] The system cannot find the file specified"
-        if sys.platform == "win32"
-        else "[Errno 2] No such file or directory: 'sentinel-cmd'"
-    )
     expected_cmd_lookup_error_txt = (
         f"sentinel-env-name: Exception running subprocess {underlying_expected_oserror_msg!s}\n"
     )

@@ -6,7 +6,7 @@ import contextlib  # pragma: win32 no cover
 import errno  # pragma: win32 no cover
 import os  # pragma: win32 no cover
 import selectors  # pragma: win32 no cover
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Final
 
 from tox.util.typing_compat import override
 
@@ -15,12 +15,33 @@ from .read_via_thread import ReadViaThread  # pragma: win32 no cover
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-TIMEOUT_FOR_INTERRUPT = 0.05  # pragma: win32 no cover
-READ_CHUNK_SIZE = 32768  # pragma: win32 no cover
+    from _typeshed import FileDescriptorLike
+
+TIMEOUT_FOR_INTERRUPT: Final[float] = (  # simplint: ignore[SMP404]  # imported by tox plugins
+    0.05  # pragma: win32 no cover  # simplint: ignore[SMP404]  # imported by tox plugins
+)
+"""Seconds to wait for output before checking whether the reader should stop."""
+READ_CHUNK_SIZE: Final[int] = 32768  # pragma: win32 no cover  # simplint: ignore[SMP404]  # imported by tox plugins
+"""Maximum number of bytes read from a stream at once."""
 
 
 class ReadViaThreadUnix(ReadViaThread):  # pragma: win32 no cover
-    def __init__(self, file_no: int, handler: Callable[[bytes], int], name: str, drain: bool) -> None:  # ruff:ignore[boolean-type-hint-positional-argument]
+    """Read a file descriptor in a thread on Unix, waiting for it with a selector.
+
+    :param file_no: the file descriptor to read from
+    :param handler: the callback that receives what is read
+    :param name: the name of the stream, used to name the thread
+    :param drain: whether to read the remaining content when the reader is exited
+
+    """
+
+    def __init__(  # keeps the signature
+        self,
+        file_no: int,
+        handler: Callable[[bytes], int],
+        name: str,
+        drain: bool,  # ruff:ignore[boolean-type-hint-positional-argument]  # keeps the signature
+    ) -> None:
         super().__init__(file_no, handler, name, drain)
 
     @override
@@ -28,7 +49,7 @@ class ReadViaThreadUnix(ReadViaThread):  # pragma: win32 no cover
         selector = selectors.DefaultSelector()
         try:
             selector.register(self.file_no, selectors.EVENT_READ)
-        except (OSError, ValueError):  # pragma: no cover
+        except (OSError, ValueError):  # pragma: no cover  # untested error path
             return
 
         try:
@@ -51,37 +72,14 @@ class ReadViaThreadUnix(ReadViaThread):  # pragma: win32 no cover
             for key, _ in ready:
                 self._read_chunk(selector, key)
 
-    @override
-    def _drain_stream(self) -> None:
-        selector = selectors.DefaultSelector()
-        try:
-            selector.register(self.file_no, selectors.EVENT_READ)
-        except (OSError, ValueError):  # pragma: no cover
-            return
-
-        with contextlib.closing(selector):
-            while selector.get_map():
-                try:
-                    ready = selector.select(timeout=0)
-                except (InterruptedError, OSError) as exception:
-                    if isinstance(exception, OSError) and exception.errno != errno.EINTR:  # pragma: no cover
-                        raise  # pragma: no cover
-                    continue
-
-                if not ready:
-                    break
-
-                for key, _ in ready:
-                    self._read_chunk(selector, key)
-
     def _read_chunk(self, selector: selectors.DefaultSelector, key: selectors.SelectorKey) -> None:
         try:
             data = os.read(key.fd, READ_CHUNK_SIZE)
         except OSError as exception:
             if exception.errno == errno.EINTR:
                 return
-            if exception.errno not in {errno.EBADF, errno.EIO}:  # pragma: no cover
-                raise  # pragma: no cover
+            if exception.errno not in {errno.EBADF, errno.EIO}:  # pragma: no cover  # setup not built by tests
+                raise  # pragma: no cover  # untested error path
             data = b""
 
         if data:
@@ -90,6 +88,35 @@ class ReadViaThreadUnix(ReadViaThread):  # pragma: win32 no cover
             self._safe_unregister(selector, key.fileobj)
 
     @staticmethod
-    def _safe_unregister(selector: selectors.DefaultSelector, fileobj: Any) -> None:
+    def _safe_unregister(selector: selectors.DefaultSelector, fileobj: FileDescriptorLike) -> None:
         with contextlib.suppress(KeyError, ValueError):
             selector.unregister(fileobj)
+
+    @override
+    def _drain_stream(self) -> None:
+        selector = selectors.DefaultSelector()
+        try:
+            selector.register(self.file_no, selectors.EVENT_READ)
+        except (OSError, ValueError):  # pragma: no cover  # untested error path
+            return
+
+        with contextlib.closing(selector):
+            while selector.get_map():
+                try:
+                    ready = selector.select(timeout=0)
+                except (InterruptedError, OSError) as exception:
+                    # not reached in tests
+                    if isinstance(exception, OSError) and exception.errno != errno.EINTR:  # pragma: no cover
+                        raise  # pragma: no cover  # untested error path
+                    continue
+
+                if not ready:
+                    break
+
+                for key, _ in ready:
+                    self._read_chunk(selector, key)
+
+
+__all__ = [
+    "ReadViaThreadUnix",
+]

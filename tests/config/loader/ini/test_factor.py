@@ -3,7 +3,7 @@ from __future__ import annotations
 import sys
 import sysconfig
 from textwrap import dedent
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Final
 
 import pytest
 from python_discovery import normalize_isa
@@ -24,6 +24,8 @@ if TYPE_CHECKING:
 
     from tests.conftest import ToxIniCreator
     from tox.config.main import Config
+
+_MACHINE_ISA: Final[str] = normalize_isa(sysconfig.get_platform().rsplit("-", 1)[-1])
 
 
 def test_factor_env_discover_empty() -> None:
@@ -71,48 +73,53 @@ def test_factor_env_discover(complex_example: str) -> None:
 
 
 @pytest.mark.parametrize(
-    "env",
+    ("env", "expected"),
     [
-        "py",
-        "py-a",
-        "py-a-dev",
-        "py-b",
-        "py-b-dev",
-        "pi-a",
-        "pi-a-dev",
-        "pi-b",
-        "pi-b-dev",
-        "c",
-        "extra",
-        "trailingcolon",
-        "tab",
+        pytest.param("py", ["default", "lines", "py only", "space", "more-default", "no:space"], id="py"),
+        pytest.param(
+            "py-a",
+            ["default", "lines", "py only", "complex", "space", "more-default", "no:space"],
+            id="py-dash-a",
+        ),
+        pytest.param(
+            "py-a-dev",
+            ["default", "lines", "py only", "complex", "space", "more-default", "no:space"],
+            id="py-dash-a-dash-dev",
+        ),
+        pytest.param(
+            "py-b",
+            ["default", "lines", "py only", "complex", "space", "more-default", "no:space"],
+            id="py-dash-b",
+        ),
+        pytest.param(
+            "py-b-dev",
+            ["default", "lines", "py only", "complex", "space", "more-default", "no:space"],
+            id="py-dash-b-dash-dev",
+        ),
+        pytest.param("pi-a", ["default", "lines", "not py", "more-default", "no:space"], id="pi-dash-a"),
+        pytest.param("pi-a-dev", ["default", "lines", "not py", "more-default", "no:space"], id="pi-dash-a-dash-dev"),
+        pytest.param("pi-b", ["default", "lines", "not py", "more-default", "no:space"], id="pi-dash-b"),
+        pytest.param("pi-b-dev", ["default", "lines", "not py", "more-default", "no:space"], id="pi-dash-b-dash-dev"),
+        pytest.param(
+            "c",
+            ["default", "lines", "not py", "complex", "more-default", "no:space"],
+            id="c",
+        ),
+        pytest.param(
+            "extra",
+            ["default", "lines", "not py", "extra", "more-default", "no:space"],
+            id="extra",
+        ),
+        pytest.param("trailingcolon", ["default", "lines", "not py", "more-default", "no:space"], id="trailingcolon"),
+        pytest.param("tab", ["default", "lines", "not py", "more-default", "no:space", "tab"], id="tab"),
     ],
 )
-def test_factor_env_filter(env: str, complex_example: str) -> None:
-    result = filter_for_env(complex_example, name=env)
-    assert "default" in result
-    assert "lines" in result
-    assert "more-default" in result
-    assert "no:space" in result
-    if "py" in env:
-        assert "py only" in result
-        assert "not py" not in result
-    else:
-        assert "py only" not in result
-        assert "not py" in result
-    if env == "extra":
-        assert "extra" in result
-    else:
-        assert "extra" not in result
-    if env in {"py-a", "py-a-dev", "py-b", "py-b-dev", "c"}:
-        assert "complex" in result
-    else:
-        assert "complex" not in result
+def test_factor_env_filter(env: str, expected: list[str], complex_example: str) -> None:
+    assert filter_for_env(complex_example, name=env).splitlines() == expected
 
 
 def test_factor_env_list(tox_ini_conf: ToxIniCreator) -> None:
-    config = tox_ini_conf("[tox]\nenv_list = {py27,py36}-django{ 15, 16 }{,-dev}, docs, flake")
-    result = list(config)
+    result = list(tox_ini_conf("[tox]\nenv_list = {py27,py36}-django{ 15, 16 }{,-dev}, docs, flake"))
     assert result == [
         "py27-django15",
         "py27-django15-dev",
@@ -132,8 +139,9 @@ def test_simple_env_list(tox_ini_conf: ToxIniCreator) -> None:
     assert list(config) == ["docs", "flake8"]
 
 
-def test_factor_config(tox_ini_conf: ToxIniCreator) -> None:
-    config = tox_ini_conf(
+@pytest.fixture
+def factor_config(tox_ini_conf: ToxIniCreator) -> Config:
+    return tox_ini_conf(
         """
         [tox]
         env_list = {py36,py37}-{django15,django16}
@@ -147,22 +155,33 @@ def test_factor_config(tox_ini_conf: ToxIniCreator) -> None:
             !py37-!django16: negation-and
         """,
     )
-    assert list(config) == ["py36-django15", "py36-django16", "py37-django15", "py37-django16"]
-    for env in config.core["env_list"]:
-        env_config = config.get_env(env)
-        env_config.add_config(keys="deps-x", of_type=list[str], default=[], desc="deps")
-        deps = env_config["deps-x"]
-        assert "pytest" in deps
-        if "py36" in env:
-            assert "unittest2" in deps
-            assert "negation-or" in deps
-        if "django15" in env:
-            assert "Django>=1.5,<1.6" in deps
-            assert "negation-or" in deps
-        if "django16" in env:
-            assert "Django>=1.6,<1.7" in deps
-        if env_config.name == "py36-django15":
-            assert "negation-and" in deps
+
+
+def test_factor_config_env_list(factor_config: Config) -> None:
+    assert list(factor_config) == ["py36-django15", "py36-django16", "py37-django15", "py37-django16"]
+
+
+@pytest.mark.parametrize(
+    ("env", "expected"),
+    [
+        pytest.param(
+            "py36-django15",
+            ["pytest", "Django>=1.5,<1.6", "unittest2", "negation-or", "negation-and"],
+            id="py36-django15",
+        ),
+        pytest.param(
+            "py36-django16",
+            ["pytest", "Django>=1.6,<1.7", "unittest2", "negation-or"],
+            id="py36-django16",
+        ),
+        pytest.param("py37-django15", ["pytest", "Django>=1.5,<1.6", "negation-or"], id="py37-django15"),
+        pytest.param("py37-django16", ["pytest", "Django>=1.6,<1.7"], id="py37-django16"),
+    ],
+)
+def test_factor_config_deps(factor_config: Config, env: str, expected: list[str]) -> None:
+    env_config = factor_config.get_env(env)
+    env_config.add_config(keys="deps-x", of_type=list[str], default=[], desc="deps")
+    assert env_config["deps-x"] == expected
 
 
 def test_factor_config_do_not_replace_unescaped_comma(tox_ini_conf: ToxIniCreator) -> None:
@@ -171,7 +190,7 @@ def test_factor_config_do_not_replace_unescaped_comma(tox_ini_conf: ToxIniCreato
 
 
 def test_factor_config_no_env_list_creates_env(tox_ini_conf: ToxIniCreator) -> None:
-    """If we have a factor that is not specified within the core env-list then that's also an environment"""
+    # If we have a factor that is not specified within the core env-list then that's also an environment
     config = tox_ini_conf(
         """
         [tox]
@@ -376,8 +395,16 @@ def test_env_list_expands_ranges(env_list: str, expected_envs: list[str], tox_in
 @pytest.mark.parametrize(
     ("env", "result"),
     [
-        ("py35", "python -m coverage html -d cov"),
-        ("py36", "python -m coverage html -d cov\n--show-contexts"),
+        pytest.param(
+            "py35",
+            "python -m coverage html -d cov",
+            id="py35-python-space-dash-m-space-coverage-space-html-space-dash-d-space-cov",
+        ),
+        pytest.param(
+            "py36",
+            "python -m coverage html -d cov\n--show-contexts",
+            id="py36-python-space-dash-m-space-coverage-space-html-space-dash-d-space-cov-newline-dash-dash-show-dash-contexts",
+        ),
     ],
 )
 def test_ini_loader_raw_with_factors(
@@ -400,8 +427,16 @@ def test_ini_loader_raw_with_factors(
 @pytest.mark.parametrize(
     ("env", "result"),
     [
-        ("foo", "python -c \"print('foo')\"\npython -c \"print('bar')\""),
-        ("bar", "python -c \"print('bar')\""),
+        pytest.param(
+            "foo",
+            "python -c \"print('foo')\"\npython -c \"print('bar')\"",
+            id="foo-python-space-dash-c-space-dquote-print-lparen-quote-foo-quote-rparen-dquote-newline-python-space-dash-c-space-dquote-print-lparen-quote-bar-quote-rparen-dquote",
+        ),
+        pytest.param(
+            "bar",
+            "python -c \"print('bar')\"",
+            id="bar-python-space-dash-c-space-dquote-print-lparen-quote-bar-quote-rparen-dquote",
+        ),
     ],
 )
 def test_ini_loader_factor_multiline_command(
@@ -424,8 +459,8 @@ def test_ini_loader_factor_multiline_command(
 @pytest.mark.parametrize(
     ("env", "result"),
     [
-        ("py-cov", "coverage run somefile.py"),
-        ("py-no_cov", "python somefile.py"),
+        pytest.param("py-cov", "coverage run somefile.py", id="py-dash-cov-coverage-space-run-space-somefile-dot-py"),
+        pytest.param("py-no_cov", "python somefile.py", id="py-dash-no-underscore-cov-python-space-somefile-dot-py"),
     ],
 )
 def test_ini_loader_factor_conditional_continuation(
@@ -448,8 +483,16 @@ def test_ini_loader_factor_conditional_continuation(
 @pytest.mark.parametrize(
     ("env", "result"),
     [
-        ("py312", "pytest --remote-data --durations=10"),
-        ("py312-coverage", "coverage run -m pytest --remote-data --durations=10"),
+        pytest.param(
+            "py312",
+            "pytest --remote-data --durations=10",
+            id="py312-pytest-space-dash-dash-remote-dash-data-space-dash-dash-durations-equal-10",
+        ),
+        pytest.param(
+            "py312-coverage",
+            "coverage run -m pytest --remote-data --durations=10",
+            id="py312-dash-coverage-coverage-space-run-space-dash-m-space-pytest-space-dash-dash-remote-dash-data-space-dash-dash-durations-equal-10",
+        ),
     ],
 )
 def test_ini_loader_factor_mixed_continuation(
@@ -550,14 +593,33 @@ def test_generative_section_name(tox_ini_conf: ToxIniCreator) -> None:
 
 
 def test_multiple_factor_match(tox_ini_conf: ToxIniCreator) -> None:
-    config = tox_ini_conf("[testenv]\nconf = a{,-b}: x")
-    env_config = config.get_env("a-b")
+    env_config = tox_ini_conf("[testenv]\nconf = a{,-b}: x").get_env("a-b")
     env_config.add_config(keys="conf", of_type=str, default="", desc="conf")
     deps = env_config["conf"]
     assert deps == "x"
 
 
-def test_platform_factor_filter_for_env() -> None:
+@pytest.mark.parametrize(
+    "platform_line",
+    [
+        pytest.param(
+            "Linux command",
+            marks=pytest.mark.skipif(sys.platform != "linux", reason="linux only"),
+            id="linux",
+        ),
+        pytest.param(
+            "Darwin command",
+            marks=pytest.mark.skipif(sys.platform != "darwin", reason="darwin only"),
+            id="darwin",
+        ),
+        pytest.param(
+            "Windows command",
+            marks=pytest.mark.skipif(sys.platform != "win32", reason="windows only"),
+            id="win32",
+        ),
+    ],
+)
+def test_platform_factor_filter_for_env(platform_line: str) -> None:
     value = dedent(
         """
         linux: Linux command
@@ -567,24 +629,12 @@ def test_platform_factor_filter_for_env() -> None:
         """,
     )
 
-    result = filter_for_env(value, name="task")
-    assert "default command" in result
-    if sys.platform == "linux":
-        assert "Linux command" in result
-        assert "Darwin command" not in result
-        assert "Windows command" not in result
-    elif sys.platform == "darwin":
-        assert "Darwin command" in result
-        assert "Linux command" not in result
-        assert "Windows command" not in result
-    elif sys.platform == "win32":
-        assert "Windows command" in result
-        assert "Linux command" not in result
-        assert "Darwin command" not in result
+    assert filter_for_env(value, name="task").splitlines() == [platform_line, "default command"]
 
 
-def test_platform_factor(tox_ini_conf: ToxIniCreator) -> None:
-    config = tox_ini_conf(
+@pytest.fixture
+def platform_commands_config(tox_ini_conf: ToxIniCreator) -> Config:
+    return tox_ini_conf(
         """
         [testenv:task]
         commands =
@@ -594,50 +644,63 @@ def test_platform_factor(tox_ini_conf: ToxIniCreator) -> None:
             default command
         """,
     )
-    env_config = config.get_env("task")
+
+
+@pytest.mark.parametrize(
+    "platform_command",
+    [
+        pytest.param(
+            "python -c 'print(\"Linux\")'",
+            marks=pytest.mark.skipif(sys.platform != "linux", reason="linux only"),
+            id="linux",
+        ),
+        pytest.param(
+            "python -c 'print(\"Darwin\")'",
+            marks=pytest.mark.skipif(sys.platform != "darwin", reason="darwin only"),
+            id="darwin",
+        ),
+        pytest.param(
+            "python -c 'print(\"Windows\")'",
+            marks=pytest.mark.skipif(sys.platform != "win32", reason="windows only"),
+            id="win32",
+        ),
+    ],
+)
+def test_platform_factor(platform_commands_config: Config, platform_command: str) -> None:
+    env_config = platform_commands_config.get_env("task")
     env_config.add_config(keys="commands", of_type=list[str], default=[], desc="commands")
-    commands = env_config["commands"]
-
-    assert "default command" in str(commands)
-    if sys.platform == "linux":
-        assert 'print("Linux")' in str(commands)
-        assert 'print("Darwin")' not in str(commands)
-        assert 'print("Windows")' not in str(commands)
-    elif sys.platform == "darwin":
-        assert 'print("Darwin")' in str(commands)
-        assert 'print("Linux")' not in str(commands)
-        assert 'print("Windows")' not in str(commands)
-    elif sys.platform == "win32":
-        assert 'print("Windows")' in str(commands)
-        assert 'print("Linux")' not in str(commands)
-        assert 'print("Darwin")' not in str(commands)
+    assert env_config["commands"] == [platform_command, "default command"]
 
 
-def test_machine_isa_does_not_override_explicit_env_factor() -> None:
-    """Regression test for #3903: explicit ISA in env name takes precedence over machine ISA."""
-    parts = sysconfig.get_platform().rsplit("-", 1)
-    if len(parts) < 2:
-        pytest.skip("sysconfig.get_platform() has no machine component")
-    machine = normalize_isa(parts[-1])
-    other_isa = "x86_64" if machine != "x86_64" else "arm64"
-
-    value = f"{other_isa}: {other_isa}_value\n{machine}: {machine}_value"
+@pytest.mark.parametrize(
+    "other_isa",
+    [
+        pytest.param(
+            "x86_64",
+            marks=pytest.mark.skipif(_MACHINE_ISA == "x86_64", reason="machine is x86_64"),
+            id="x86_64",
+        ),
+        pytest.param(
+            "arm64",
+            marks=pytest.mark.skipif(_MACHINE_ISA == "arm64", reason="machine is arm64"),
+            id="arm64",
+        ),
+    ],
+)
+def test_machine_isa_does_not_override_explicit_env_factor(other_isa: str) -> None:
+    # Regression test for #3903: explicit ISA in env name takes precedence over machine ISA.
+    value = f"{other_isa}: {other_isa}_value\n{_MACHINE_ISA}: {_MACHINE_ISA}_value"
     # When the env name explicitly contains an ISA factor different from the machine,
     # only the env factor's condition should match, not the machine ISA.
     result = filter_for_env(value, name=f"py39-{other_isa}")
     assert f"{other_isa}_value" in result
-    assert f"{machine}_value" not in result
+    assert f"{_MACHINE_ISA}_value" not in result
 
 
 def test_machine_isa_implicit_when_no_env_isa() -> None:
-    """Machine ISA is added implicitly when no ISA factor is in the env name."""
-    parts = sysconfig.get_platform().rsplit("-", 1)
-    if len(parts) < 2:
-        pytest.skip("sysconfig.get_platform() has no machine component")
-    machine = normalize_isa(parts[-1])
-
-    value = f"{machine}: {machine}_value\nother: other_value"
+    # Machine ISA is added implicitly when no ISA factor is in the env name.
+    value = f"{_MACHINE_ISA}: {_MACHINE_ISA}_value\nother: other_value"
     # No ISA in the env name, so machine ISA should be added implicitly.
     result = filter_for_env(value, name="py39")
-    assert f"{machine}_value" in result
+    assert f"{_MACHINE_ISA}_value" in result
     assert "other_value" not in result

@@ -25,24 +25,23 @@ def test_source_ini_with_interpolated(tmp_path: Path) -> None:
 
 
 def test_source_ini_ignore_non_testenv_sections(tmp_path: Path, mocker: MockerFixture) -> None:
-    core = mocker.create_autospec(CoreConfigSet, instance=True)
-    core.__getitem__ = lambda _self, key: [] if key == "env_list" else None
-    loader = IniSource(tmp_path, content="[mypy-rest_framework.compat.*]")
-    res = list(loader.envs(core))
+    core = mocker.create_autospec(
+        CoreConfigSet, instance=True, __getitem__=lambda _self, key: [] if key == "env_list" else None
+    )
+    res = list(IniSource(tmp_path, content="[mypy-rest_framework.compat.*]").envs(core))
     assert not res
 
 
 def test_source_ini_ignore_invalid_factor_filters(tmp_path: Path, mocker: MockerFixture) -> None:
-    core = mocker.create_autospec(CoreConfigSet, instance=True)
-    core.__getitem__ = lambda _self, key: [] if key == "env_list" else None
-    loader = IniSource(tmp_path, content="[a]\nb= if c: d")
-    res = list(loader.envs(core))
+    core = mocker.create_autospec(
+        CoreConfigSet, instance=True, __getitem__=lambda _self, key: [] if key == "env_list" else None
+    )
+    res = list(IniSource(tmp_path, content="[a]\nb= if c: d").envs(core))
     assert not res
 
 
 def test_source_ini_custom_non_testenv_sections(tox_ini_conf: ToxIniCreator) -> None:
-    """Validate that a plugin can load section with custom prefix overlapping testenv name."""
-
+    # Validate that a plugin can load section with custom prefix overlapping testenv name.
     class CustomConfigSet(ConfigSet):
         @override
         def register_config(self) -> None:
@@ -54,7 +53,7 @@ def test_source_ini_custom_non_testenv_sections(tox_ini_conf: ToxIniCreator) -> 
             )
 
     config = tox_ini_conf("[testenv:foo]\n[custom:foo]\na = b")
-    known_envs = list(config._src.envs(config.core))  # ruff:ignore[private-member-access]
+    known_envs = list(config._src.envs(config.core))  # ruff:ignore[private-member-access]  # internal state
     assert known_envs
     custom_section = config.get_section_config(
         section=Section("custom", "foo"),
@@ -66,7 +65,7 @@ def test_source_ini_custom_non_testenv_sections(tox_ini_conf: ToxIniCreator) -> 
 
 
 def test_source_ini_unicode_characters(tmp_path: Path) -> None:
-    """Test that INI files with unicode characters are read correctly."""
+    # Test that INI files with unicode characters are read correctly.
     ini_file = tmp_path / "tox.ini"
     content = """
         [tox]

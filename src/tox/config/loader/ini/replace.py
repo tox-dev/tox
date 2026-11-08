@@ -18,21 +18,27 @@ if TYPE_CHECKING:
     from collections.abc import Iterator
 
     from tox.config.loader.api import ConfigLoadArgs
-    from tox.config.loader.ini import IniLoader
     from tox.config.main import Config
     from tox.config.sets import ConfigSet
 
+    from . import IniLoader
+
 
 class ReplaceReferenceIni(ReplaceReference):
+    """Resolve the replacement references of an ini value against the ini file and the configuration.
+
+    :param conf: the global config
+    :param loader: the ini loader the value was read with
+
+    """
+
     def __init__(self, conf: Config, loader: IniLoader) -> None:
         self.conf = conf
         self.loader = loader
 
     @override
     def __call__(self, value: str, conf_args: ConfigLoadArgs) -> str | ConfigDefault | None:
-        pattern = _replace_ref(self.loader.section.prefix or self.loader.section.name)
-        match = pattern.match(value)
-        if match:
+        if match := _replace_ref(self.loader.section.prefix or self.loader.section.name).match(value):
             settings = match.groupdict()
 
             key = settings["key"]
@@ -63,23 +69,6 @@ class ReplaceReferenceIni(ReplaceReference):
                 pass
         raise KeyError(key)
 
-    def _resolve_section_proxy(self, src: SectionProxy, key: str, args: ConfigLoadArgs) -> str:
-        """Resolve a key from a SectionProxy, returning empty string when factor filtering empties the value."""
-        keys = {"set_env", "setenv"} if key in {"set_env", "setenv"} else {key}
-        overrides = [entry for entry in self.conf.overrides.get(src.name, []) if entry.key in keys]
-        set_env_override = key in {"set_env", "setenv"} and bool(overrides)
-        raw = src[key] if set_env_override else apply_overrides_to_raw(overrides, key, src[key])
-        try:
-            processed = self.loader.process_raw(self.conf, args.env_name, raw)
-        except KeyError:
-            # Factor filtering can empty an existing section value.
-            processed = ""
-        if not set_env_override:
-            return processed
-        args = args.copy()
-        args.chain.append(f"{src.name}.{key}")
-        return self.loader.set_env_reference(processed, overrides, self.conf, args).config.lines()
-
     def _config_value_sources(
         self, env: str | None, section: str | None, current_env: str | None
     ) -> Iterator[SectionProxy | ConfigSet]:
@@ -103,6 +92,23 @@ class ReplaceReferenceIni(ReplaceReference):
         # fallback to the env's ConfigSet for registered-only keys
         if env is not None and env in self.conf:
             yield self.conf.get_env(env)
+
+    def _resolve_section_proxy(self, src: SectionProxy, key: str, args: ConfigLoadArgs) -> str:
+        # Resolve a key from a SectionProxy, returning empty string when factor filtering empties the value.
+        keys = {"set_env", "setenv"} if key in {"set_env", "setenv"} else {key}
+        overrides = [entry for entry in self.conf.overrides.get(src.name, []) if entry.key in keys]
+        set_env_override = key in {"set_env", "setenv"} and bool(overrides)
+        raw = src[key] if set_env_override else apply_overrides_to_raw(overrides, key, src[key])
+        try:
+            processed = self.loader.process_raw(self.conf, args.env_name, raw)
+        except KeyError:
+            # Factor filtering can empty an existing section value.
+            processed = ""
+        if not set_env_override:
+            return processed
+        args = args.copy()
+        args.chain.append(f"{src.name}.{key}")
+        return self.loader.set_env_reference(processed, overrides, self.conf, args).config.lines()
 
 
 @cache

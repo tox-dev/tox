@@ -27,6 +27,10 @@ def test_record_creates_redirect(root: Path) -> None:
     assert (root / ".venv").read_text(encoding="utf-8") == ".tox/dev\n"
 
 
+def _is_ours(root: Path) -> Callable[[Path], bool]:
+    return lambda path: path.is_relative_to(root / ".tox")
+
+
 @pytest.mark.skipif(sys.platform != "win32", reason="Windows directory handles")
 def test_record_windows_empty_root(tmp_path: Path) -> None:
     root: Final[Path] = tmp_path / "project"
@@ -52,10 +56,6 @@ def test_record_creates_private_redirect(root: Path) -> None:
 def root(tmp_path: Path) -> Path:
     (tmp_path / ".tox").mkdir()
     return tmp_path
-
-
-def _is_ours(root: Path) -> Callable[[Path], bool]:
-    return lambda path: path.is_relative_to(root / ".tox")
 
 
 def test_record_env_outside_root_is_absolute(root: Path, tmp_path_factory: pytest.TempPathFactory) -> None:
@@ -233,8 +233,8 @@ def test_record_windows_warns_if_directory_info_fails(
 ) -> None:
     redirect: Final[Path] = root / ".venv"
     redirect.write_text(".tox/old\n", encoding="utf-8")
-    mocker.patch.object(windows_kernel32, "GetFileInformationByHandleEx", return_value=0)
-    mocker.patch.object(ctypes, "get_last_error", return_value=5)
+    mocker.patch.object(windows_kernel32, "GetFileInformationByHandleEx", autospec=True, return_value=0)
+    mocker.patch.object(ctypes, "get_last_error", autospec=True, return_value=5)
 
     record_venv_redirect(root, root / ".tox" / "dev", _is_ours(root))
 
@@ -255,8 +255,8 @@ def test_record_windows_warns_if_directory_close_fails(
         assert close_handle(handle)
         return 0
 
-    mocker.patch.object(windows_kernel32, "CloseHandle", side_effect=report_failed_close)
-    mocker.patch.object(ctypes, "get_last_error", return_value=5)
+    mocker.patch.object(windows_kernel32, "CloseHandle", autospec=True, side_effect=report_failed_close)
+    mocker.patch.object(ctypes, "get_last_error", autospec=True, return_value=5)
 
     record_venv_redirect(root, root / ".tox" / "dev", _is_ours(root))
 
@@ -274,7 +274,7 @@ def windows_kernel32(mocker: MockerFixture) -> ctypes.CDLL:
     def load_library(name: str, **_options: bool) -> ctypes.CDLL:
         return libraries[name]
 
-    mocker.patch("tox.util.venv_redirect.ctypes.WinDLL", side_effect=load_library)
+    mocker.patch("tox.util.venv_redirect.ctypes.WinDLL", autospec=True, side_effect=load_library)
     return kernel32
 
 
@@ -478,20 +478,10 @@ def test_record_rejects_in_place_junction(junction_directory: Path, mocker: Mock
         assert (_set_windows_junction(junction_directory, target), junction_directory.resolve()) == (True, target)
         return "0" * 32
 
-    mocker.patch("tox.util.venv_redirect.secrets.token_hex", side_effect=set_junction)
+    mocker.patch("tox.util.venv_redirect.secrets.token_hex", autospec=True, side_effect=set_junction)
     record_venv_redirect(junction_directory, junction_directory / ".tox" / "dev", lambda _target: True)
 
     assert (target / ".venv").read_text(encoding="utf-8") == "keep\n"
-
-
-@pytest.fixture
-def junction_directory(tmp_path: Path) -> Path:
-    directory: Final[Path] = tmp_path / "project"
-    directory.mkdir()
-    target: Final[Path] = directory.with_name("other")
-    target.mkdir()
-    (target / ".venv").write_text("keep\n", encoding="utf-8")
-    return directory
 
 
 def _set_windows_junction(directory: Path, target: Path) -> bool:
@@ -540,6 +530,16 @@ def _set_windows_junction(directory: Path, target: Path) -> bool:
         )
     finally:
         assert kernel32.CloseHandle(writer)
+
+
+@pytest.fixture
+def junction_directory(tmp_path: Path) -> Path:
+    directory: Final[Path] = tmp_path / "project"
+    directory.mkdir()
+    target: Final[Path] = directory.with_name("other")
+    target.mkdir()
+    (target / ".venv").write_text("keep\n", encoding="utf-8")
+    return directory
 
 
 @pytest.mark.skipif(sys.platform != "win32", reason="Windows reparse points")

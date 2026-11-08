@@ -7,8 +7,8 @@ import signal
 import sys
 from io import TextIOWrapper
 from pathlib import Path
-from typing import TYPE_CHECKING
-from unittest.mock import MagicMock
+from types import SimpleNamespace
+from typing import TYPE_CHECKING, Final, cast
 
 from tox.execute.local_sub_process import LocalSubProcessExecutor
 from tox.execute.request import ExecuteRequest, StdinSource
@@ -19,38 +19,39 @@ if TYPE_CHECKING:
 
     from tox.execute import Outcome
     from tox.execute.api import ExecuteStatus
+    from tox.tox_env.api import ToxEnv
 
 logging.basicConfig(level=logging.DEBUG, format="%(relativeCreated)d\t%(levelname).1s\t%(message)s")
-bad_process = Path(__file__).parent / "bad_process.py"
+_BAD_PROCESS: Final[Path] = Path(__file__).parent / "bad_process.py"
 
-executor = LocalSubProcessExecutor(colored=False)
-request = ExecuteRequest(
-    cmd=[sys.executable, bad_process, sys.argv[1]],
+_EXECUTOR: Final[LocalSubProcessExecutor] = LocalSubProcessExecutor(colored=False)
+_REQUEST: Final[ExecuteRequest] = ExecuteRequest(
+    cmd=[sys.executable, _BAD_PROCESS, sys.argv[1]],
     cwd=Path().absolute(),
     env=os.environ.copy(),
     stdin=StdinSource.API,
     run_id="",
 )
-out_err = (
+_OUT_ERR: Final[tuple[TextIOWrapper, TextIOWrapper]] = (
     TextIOWrapper(NamedBytesIO("out"), encoding=locale.getpreferredencoding(False)),
     TextIOWrapper(NamedBytesIO("err"), encoding=locale.getpreferredencoding(False)),
 )
 
 
 def show_outcome(outcome: Outcome | None) -> None:
-    if outcome is not None:  # pragma: no branch
-        print(outcome.exit_code)  # ruff:ignore[print]
-        print(repr(outcome.out))  # ruff:ignore[print]
-        print(repr(outcome.err))  # ruff:ignore[print]
-        print(outcome.elapsed, end="")  # ruff:ignore[print]
-        print("done show outcome", file=sys.stderr)  # ruff:ignore[print]
+    if outcome is not None:  # pragma: no branch  # other outcome untested
+        print(outcome.exit_code)  # ruff:ignore[print]  # test output
+        print(repr(outcome.out))  # ruff:ignore[print]  # test output
+        print(repr(outcome.err))  # ruff:ignore[print]  # test output
+        print(outcome.elapsed, end="")  # ruff:ignore[print]  # test output
+        print("done show outcome", file=sys.stderr)  # ruff:ignore[print]  # test output
 
 
-def handler(s: int, f: FrameType | None) -> None:
-    logging.info("signal %s at %s", s, f)
-    global interrupt_done  # ruff:ignore[global-statement]
-    if interrupt_done is False:  # pragma: no branch
-        interrupt_done = True
+def handler(signum: int, frame: FrameType | None) -> None:
+    logging.info("signal %s at %s", signum, frame)
+    global _INTERRUPT_DONE  # ruff:ignore[global-statement]  # signal handler flag
+    if _INTERRUPT_DONE is False:  # pragma: no branch  # other outcome untested
+        _INTERRUPT_DONE = True
         logging.info("interrupt via %s", status)
         status.interrupt()
         logging.info("interrupt finished via %s", status)
@@ -63,19 +64,25 @@ def _wait_for_exit(status: ExecuteStatus) -> None:
     logging.info("wait over on %r", status)
 
 
-interrupt_done = False
+_INTERRUPT_DONE = False
 signal.signal(signal.SIGINT, handler)
-logging.info("PID %d start %r", os.getpid(), request)
-tox_env = MagicMock(conf={"suicide_timeout": 0.01, "interrupt_timeout": 0.05, "terminate_timeout": 0.07})
-tox_env.options.no_capture = False
-status_outcome: Outcome | None = None
+logging.info("PID %d start %r", os.getpid(), _REQUEST)
+_TOX_ENV: Final[ToxEnv] = cast(
+    "ToxEnv",
+    SimpleNamespace(
+        conf={"suicide_timeout": 0.01, "interrupt_timeout": 0.05, "terminate_timeout": 0.07},
+        options=SimpleNamespace(no_capture=False),
+    ),
+)
+
+_STATUS_OUTCOME: Outcome | None = None
 try:
-    with executor.call(request, show=False, out_err=out_err, env=tox_env) as status:
+    with _EXECUTOR.call(_REQUEST, show=False, out_err=_OUT_ERR, env=_TOX_ENV) as status:
         _wait_for_exit(status)
-    status_outcome = status.outcome
-except Exception as exception:  # pragma: no cover
-    logging.exception(exception)  # ruff:ignore[verbose-log-message] # pragma: no cover
+    _STATUS_OUTCOME = status.outcome
+except Exception as exception:  # pragma: no cover  # untested error path
+    logging.exception(exception)  # ruff:ignore[verbose-log-message] # pragma: no cover  # untested error path
 finally:
     logging.info("done")
     logging.shutdown()
-show_outcome(status_outcome)
+show_outcome(_STATUS_OUTCOME)

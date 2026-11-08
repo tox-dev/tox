@@ -6,30 +6,36 @@ import sys
 from contextlib import suppress
 from pathlib import Path
 from shutil import rmtree
-from typing import TYPE_CHECKING, Final
+from typing import TYPE_CHECKING, Final, Protocol
 
 if TYPE_CHECKING:
-    from collections.abc import Callable
-
     from _typeshed import ExcInfo
 
-_CACHEDIR_TAG = """\
+
+def ensure_cachedir_tag(work_dir: Path) -> None:
+    """Ensure a ``CACHEDIR.TAG`` file exists in *work_dir* per https://bford.info/cachedir/spec.html.
+
+    :param work_dir: the directory to create the tag in
+
+    """
+    tag_path = work_dir / "CACHEDIR.TAG"
+    cachedir_tag = """\
 Signature: 8a477f597d28d172789f06886806bc55
 # This file is a cache directory tag created by tox.
 # For information about cache directory tags, see:
 #	https://bford.info/cachedir/spec.html
 """
-
-
-def ensure_cachedir_tag(work_dir: Path) -> None:
-    """Ensure a ``CACHEDIR.TAG`` file exists in *work_dir* per https://bford.info/cachedir/spec.html."""
-    tag_path = work_dir / "CACHEDIR.TAG"
     if not tag_path.exists():
         ensure_private_dir(work_dir)
-        tag_path.write_text(_CACHEDIR_TAG, encoding="utf-8")
+        tag_path.write_text(cachedir_tag, encoding="utf-8")
 
 
 def ensure_private_dir(path: Path) -> None:
+    """Create a directory, and its parents, that only the current user can access.
+
+    :param path: the directory to create
+
+    """
     try:
         path.mkdir(mode=0o700, exist_ok=True)
     except FileNotFoundError:
@@ -38,6 +44,12 @@ def ensure_private_dir(path: Path) -> None:
 
 
 def ensure_empty_dir(path: Path, except_filename: str | None = None) -> None:
+    """Make sure a directory exists and is empty, removing its content.
+
+    :param path: the directory to make empty
+    :param except_filename: the name of a file to keep in the directory, ``None`` to keep none
+
+    """
     if path.is_symlink():
         path.unlink()
     if path.exists():
@@ -84,7 +96,7 @@ def _empty_dir_path(path: Path, except_filename: str | None) -> None:
             _unlink(sub_path)
 
 
-def _retry_unlink(func: Callable[..., object], path: str, _exc: BaseException | ExcInfo) -> None:
+def _retry_unlink(func: _FailedCall, path: str, _exc: BaseException | ExcInfo) -> None:
     # rmtree also reports failed os.open, os.scandir and os.close calls; retrying those cannot help, so they stay behind
     if func is os.unlink:
         with suppress(OSError):
@@ -100,6 +112,10 @@ def _unlink(path: Path) -> None:
             raise
         path.chmod(stat.S_IWRITE)
         path.unlink()
+
+
+class _FailedCall(Protocol):
+    def __call__(self, target: str | int, /) -> None: ...
 
 
 def ensure_gitignore(path: Path) -> None:

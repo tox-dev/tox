@@ -33,6 +33,12 @@ class Package:
 
 
 class PathPackage(Package):
+    """A package given by a path on the local file system.
+
+    :param path: the path of the package
+
+    """
+
     def __init__(self, path: Path) -> None:
         super().__init__()
         self.path = path
@@ -43,6 +49,12 @@ class PathPackage(Package):
 
 
 class PackageToxEnv(ToxEnv, ABC):
+    """The base of the tox environments that build a package to install into the run environments.
+
+    :param create_args: the arguments the environment is created with
+
+    """
+
     def __init__(self, create_args: ToxEnvCreateArgs) -> None:
         self._thread_lock = RLock()
         self._file_lock: BaseFileLock | None = None
@@ -50,7 +62,7 @@ class PackageToxEnv(ToxEnv, ABC):
         self._envs: set[str] = set()
 
     @override
-    def __getattribute__(self, name: str) -> Any:
+    def __getattribute__(self, name: str) -> Any:  # simplint: ignore[SMP602]  # attribute lookup returns any attribute
         # the packaging class might be used by multiple environments in parallel, hold a lock for operations on it
         obj = object.__getattribute__(self, name)
         if isinstance(obj, MethodType):
@@ -94,16 +106,41 @@ class PackageToxEnv(ToxEnv, ABC):
 
     @abstractmethod
     def perform_packaging(self, for_env: EnvConfigSet) -> list[Package]:
+        """Build the packages of the environment.
+
+        :param for_env: the configuration of the run environment the packages are for
+
+        :returns: the packages that were built
+
+        """
         raise NotImplementedError
 
+    # base hook, subclasses override it
     def register_run_env(self, run_env: RunToxEnv) -> Generator[tuple[str, str], PackageToxEnv, None]:  # ruff:ignore[unused-method-argument, no-self-use]
+        """Register a run environment that uses the packages of this environment.
+
+        :param run_env: the run environment
+
+        :yields: the package types and the names of the run environment settings the packages are read from
+
+        """
         return  # empty generator by default
         yield ("", "")  # unreachable, exists to establish yield type
 
     def mark_active_run_env(self, run_env: RunToxEnv) -> None:
+        """Mark a run environment as active, so the packages are kept until it is torn down.
+
+        :param run_env: the run environment
+
+        """
         self._envs.add(run_env.conf.name)
 
     def teardown_env(self, conf: EnvConfigSet) -> None:
+        """Tear the packaging environment down, once no run environment uses it.
+
+        :param conf: the configuration of the run environment that is torn down
+
+        """
         if conf.name in self._envs:
             # conf.name (".tox") may be missing in self._envs in the case of an automatically provisioned environment
             self._envs.remove(conf.name)
@@ -112,6 +149,13 @@ class PackageToxEnv(ToxEnv, ABC):
 
     @abstractmethod
     def child_pkg_envs(self, run_conf: EnvConfigSet) -> Iterator[PackageToxEnv]:
+        """Get the packaging environments the packaging environment of a run environment depends on.
+
+        :param run_conf: the configuration of the run environment
+
+        :returns: the packaging environments
+
+        """
         raise NotImplementedError
 
 

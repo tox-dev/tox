@@ -29,7 +29,7 @@ if TYPE_CHECKING:
     from io import BufferedIOBase
 
 # Restrict ``${NAME}`` to uppercase letters, digits, and ``_`` to avoid partial expansion and platform differences.
-_ENV_VAR_RE = re.compile(
+_ENV_VAR_RE: Final[re.Pattern[str]] = re.compile(
     r"""
     (?P<var>
         \$ \{               # dollar sign and opening brace
@@ -39,7 +39,7 @@ _ENV_VAR_RE = re.compile(
     """,
     re.VERBOSE,
 )
-_SCHEME_RE = re.compile(
+_SCHEME_RE: Final[re.Pattern[str]] = re.compile(
     r"""
     ^                       # start of string
     ( http | https | file ) # URL scheme
@@ -47,7 +47,7 @@ _SCHEME_RE = re.compile(
     """,
     re.VERBOSE | re.IGNORECASE,
 )
-_BOMS: tuple[tuple[bytes, str], ...] = (
+_BOMS: Final[tuple[tuple[bytes, str], ...]] = (
     (codecs.BOM_UTF8, "utf-8"),
     (codecs.BOM_UTF32_BE, "utf-32-be"),
     (codecs.BOM_UTF32_LE, "utf-32-le"),
@@ -62,23 +62,23 @@ _COMMENT_RE: Final[re.Pattern[str]] = re.compile(
     """,
     re.VERBOSE,
 )
-_EXTRA_PATH = re.compile(
+_EXTRA_PATH: Final[re.Pattern[str]] = re.compile(
     r"""
-    ( .* )                          # path portion
+    (?P<path> .* )                  # path portion
     \[                              # opening bracket
-    ( [-._,\s a-zA-Z0-9]* )        # extras list
+    (?P<extras> [-._,\s a-zA-Z0-9]* )  # extras list
     ]                               # closing bracket
     """,
     re.VERBOSE,
 )
-_EXTRA_ELEMENT = re.compile(
+_EXTRA_ELEMENT: Final[re.Pattern[str]] = re.compile(
     r"""
     [a-zA-Z0-9]*       # optional leading alphanumeric
     [-._a-zA-Z0-9]     # at least one valid extra char
     """,
     re.VERBOSE,
 )
-_VERSION_SPECIFIER = re.compile(
+_VERSION_SPECIFIER: Final[re.Pattern[str]] = re.compile(
     r"""
     [><=!~] =   # two-char operators: >=, <=, ==, !=, ~=
     | ===?      # === or ==
@@ -87,12 +87,121 @@ _VERSION_SPECIFIER = re.compile(
     re.VERBOSE,
 )
 ReqFileLines = Iterator[tuple[int, str]]
+"""The lines of a requirements file, each with its line number."""
 
-DEFAULT_INDEX_URL = "https://pypi.org/simple"
+DEFAULT_INDEX_URL: Final[str] = "https://pypi.org/simple"  # simplint: ignore[SMP404]  # imported by tox plugins
 _HTTP_BODY_TIMEOUT: Final[int] = 120
 
 
+def _local_requirement(req: str, from_file: str) -> str:
+    root = Path(from_file).parent
+    extras: list[str] = []
+    path = root / req
+    if match := _EXTRA_PATH.fullmatch(Path(req).name):
+        for extra in match["extras"].split(","):
+            extra = extra.strip()  # ruff:ignore[redefined-loop-name]  # loop rebinding intended
+            if not extra:
+                continue
+            if not _EXTRA_ELEMENT.fullmatch(extra):
+                extras = []
+                break
+            extras.append(extra)
+        else:
+            path = root / Path(req).parent / match["path"]
+    extra_part = f"[{','.join(sorted(extras))}]" if extras else ""
+    try:
+        rel_path = str(path.resolve().relative_to(root))
+        if rel_path != "." and (os.sep not in rel_path or rel_path.startswith("-")):
+            rel_path = f".{os.sep}{rel_path}"
+    except ValueError:
+        rel_path = str(path.resolve())
+    return f"{rel_path}{extra_part}"
+
+
+def _merge_requirement_files(base_opt: Namespace, opt: Namespace) -> None:
+    if opt.requirements:
+        if not hasattr(base_opt, "requirements"):
+            base_opt.requirements = []
+        if opt.requirements[0] not in base_opt.requirements:
+            base_opt.requirements.append(opt.requirements[0])
+    if opt.constraints:
+        if not hasattr(base_opt, "constraints"):
+            base_opt.constraints = []
+        if opt.constraints[0] not in base_opt.constraints:
+            base_opt.constraints.append(opt.constraints[0])
+
+
+def _merge_hashes_and_features(base_opt: Namespace, opt: Namespace) -> None:
+    if opt.require_hashes:
+        base_opt.require_hashes = True
+    if opt.features_enabled:
+        if not hasattr(base_opt, "features_enabled"):
+            base_opt.features_enabled = []
+        for feature in opt.features_enabled:
+            if feature not in base_opt.features_enabled:
+                base_opt.features_enabled.append(feature)
+        base_opt.features_enabled.sort()
+
+
+def _merge_index_urls(base_opt: Namespace, opt: Namespace) -> None:
+    # pip ignores every index once --no-index is given, wherever the index options appear
+    if opt.no_index is True or getattr(base_opt, "index_url", None) == []:
+        base_opt.index_url = []
+    elif opt.index_url:
+        if getattr(base_opt, "index_url", []):
+            base_opt.index_url[0] = opt.index_url
+        else:
+            base_opt.index_url = [opt.index_url]
+    if opt.extra_index_url and getattr(base_opt, "index_url", None) != []:
+        if not getattr(base_opt, "index_url", []):
+            base_opt.index_url = [DEFAULT_INDEX_URL]
+        for url in opt.extra_index_url:
+            if url not in base_opt.index_url:
+                base_opt.index_url.append(url)
+
+
+def _merge_find_links(base_opt: Namespace, opt: Namespace, filename: str) -> None:
+    if opt.find_links:
+        # relative to a requirements file.
+        if not hasattr(base_opt, "find_links"):
+            base_opt.find_links = []
+        value = opt.find_links[0]
+        relative_to_reqs_file = Path(filename).absolute().parent / value
+        if os.path.exists(str(relative_to_reqs_file)):  # ruff:ignore[os-path-exists] # Path.exists fails on win32 <=3.7 with URI
+            value = str(relative_to_reqs_file)  # pragma: no cover  # setup not built by tests
+        if value not in base_opt.find_links:
+            base_opt.find_links.append(value)
+
+
+def _index_option_groups(opt: Namespace) -> Iterator[tuple[str, ...]]:
+    if (index_url := getattr(opt, "index_url", None)) is not None:
+        if index_url:
+            if index_url[0] != DEFAULT_INDEX_URL:
+                yield "-i", index_url[0]
+            for url in index_url[1:]:
+                yield "--extra-index-url", url
+        else:
+            yield ("--no-index",)
+
+
+def _binary_option_groups(opt: Namespace) -> Iterator[tuple[str, ...]]:
+    # pip drops the --no-binary names it read before an --only-binary :all:, so that one goes first
+    only_binary_first = ":all:" in getattr(opt, "only_binary", ())
+    for name in ("only_binary", "no_binary") if only_binary_first else ("no_binary", "only_binary"):
+        if hasattr(opt, name):
+            yield f"--{name.replace('_', '-')}", ",".join(sorted(getattr(opt, name)))
+
+
 class ParsedRequirement:
+    """A requirement parsed from a requirements file.
+
+    :param req: the requirement text
+    :param options: the options the requirement was given with
+    :param from_file: the path of the file the requirement was read from
+    :param lineno: the line number the requirement was read from
+
+    """
+
     def __init__(self, req: str, options: dict[str, Any], from_file: str, lineno: int) -> None:
         req = req.encode("utf-8").decode("utf-8")
         try:
@@ -103,51 +212,10 @@ class ParsedRequirement:
             elif _VERSION_SPECIFIER.search(req):
                 self._requirement = req  # invalid requirement with version specifier — let pip report the error
             else:
-                root = Path(from_file).parent
-                extras: list[str] = []
-                match = _EXTRA_PATH.fullmatch(Path(req).name)
-                if match:
-                    for extra in match.group(2).split(","):
-                        extra = extra.strip()  # ruff:ignore[redefined-loop-name]
-                        if not extra:
-                            continue
-                        if not _EXTRA_ELEMENT.fullmatch(extra):
-                            extras = []
-                            path = root / req
-                            break
-                        extras.append(extra)
-                    else:
-                        path = root / Path(req).parent / match.group(1)
-                else:
-                    path = root / req
-                extra_part = f"[{','.join(sorted(extras))}]" if extras else ""
-                try:
-                    rel_path = str(path.resolve().relative_to(root))
-                    if rel_path != "." and (os.sep not in rel_path or rel_path.startswith("-")):
-                        rel_path = f".{os.sep}{rel_path}"
-                except ValueError:
-                    rel_path = str(path.resolve())
-
-                self._requirement = f"{rel_path}{extra_part}"
+                self._requirement = _local_requirement(req, from_file)
         self._options = options
         self._from_file = from_file
         self._lineno = lineno
-
-    @property
-    def requirement(self) -> Requirement | Path | str:
-        return self._requirement
-
-    @property
-    def from_file(self) -> str:
-        return self._from_file
-
-    @property
-    def lineno(self) -> int:
-        return self._lineno
-
-    @property
-    def options(self) -> dict[str, Any]:
-        return self._options
 
     @override
     def __repr__(self) -> str:
@@ -170,20 +238,45 @@ class ParsedRequirement:
             result.extend(("--config-settings", setting))
         return " ".join(result)
 
+    @property
+    def options(self) -> dict[str, Any]:  # simplint: ignore[SMP602]  # pip options hold values of any type
+        """The options the requirement was given with."""
+        return self._options
+
+    @property
+    def requirement(self) -> Requirement | Path | str:
+        """The requirement, as a packaging requirement."""
+        return self._requirement
+
+    @property
+    def from_file(self) -> str:
+        """The path of the file the requirement was read from."""
+        return self._from_file
+
+    @property
+    def lineno(self) -> int:
+        """The line number the requirement was read from."""
+        return self._lineno
+
     def as_args(self) -> Iterator[str]:
+        """Get the requirement as the command line arguments pip takes.
+
+        :yields: the arguments
+
+        """
         if self.options.get("is_editable"):
             yield "-e"
         yield str(self._requirement)
 
 
-class ParsedLine:
+class ParsedLine:  # simplint: ignore[SMP403]  # imported by tox plugins
     def __init__(
         self,
         filename: str,
         lineno: int,
         args: str,
         opts: Namespace,
-        constraint: bool,  # ruff:ignore[boolean-type-hint-positional-argument]
+        constraint: bool,  # ruff:ignore[boolean-type-hint-positional-argument]  # keeps the signature
     ) -> None:
         self.filename = filename
         self.lineno = lineno
@@ -203,10 +296,18 @@ class ParsedLine:
 
 
 class RequirementsFile:
+    """A requirements file, with the requirements, options and constraints it declares.
+
+    :param path: the path of the requirements file
+    :param constraint: whether the file lists constraints, rather than requirements
+    :param environment_provider: the provider of the environment variables the file can expand
+
+    """
+
     def __init__(
         self,
         path: Path,
-        constraint: bool,  # ruff:ignore[boolean-type-hint-positional-argument]
+        constraint: bool,  # ruff:ignore[boolean-type-hint-positional-argument]  # keeps the signature
         environment_provider: EnvironmentProvider | None = None,
     ) -> None:
         self._path = path
@@ -218,53 +319,41 @@ class RequirementsFile:
         self._parser_private: ArgumentParser | None = None
         self._secrets: Final[dict[str, str]] = {}
 
-    @property
-    def _req_parser(self) -> RequirementsFile:
-        return self
-
     @override
     def __str__(self) -> str:
         return f"{'-c' if self.is_constraint else '-r'} {self.path}"
 
     @property
-    def path(self) -> Path:
-        return self._path
-
-    @property
     def is_constraint(self) -> bool:
+        """Whether the file lists constraints, rather than requirements."""
         return self._is_constraint
 
     @property
+    def path(self) -> Path:
+        """The path of the requirements file."""
+        return self._path
+
+    @property
     def options(self) -> Namespace:
+        """The options the file sets."""
         self._ensure_requirements_parsed()
         return self._opt
-
-    @property
-    def requirements(self) -> list[ParsedRequirement]:
-        self._ensure_requirements_parsed()
-        return cast("list[ParsedRequirement]", self._requirements)
-
-    @property
-    def _parser(self) -> ArgumentParser:
-        if self._parser_private is None:
-            self._parser_private = build_parser()
-            self._extend_parser(self._parser_private)
-        return self._parser_private
-
-    def _extend_parser(self, parser: ArgumentParser) -> None: ...
 
     def _ensure_requirements_parsed(self) -> None:
         if self._requirements is None:
             self._requirements = self._parse_requirements(opt=self._opt, recurse=True)
 
-    def _parse_requirements(self, opt: Namespace, recurse: bool) -> list[ParsedRequirement]:  # ruff:ignore[boolean-type-hint-positional-argument]
+    def _parse_requirements(  # keeps the signature
+        self,
+        opt: Namespace,
+        recurse: bool,  # ruff:ignore[boolean-type-hint-positional-argument]  # keeps the signature
+    ) -> list[ParsedRequirement]:
         result: list[ParsedRequirement] = []
         found: set[str] = set()
         for parsed_line in self._parse_and_recurse(str(self._path), self.is_constraint, recurse):
             if parsed_line.is_requirement:
                 parsed_req = self._handle_requirement_line(parsed_line)
-                key = str(parsed_req)
-                if key not in found:
+                if (key := str(parsed_req)) not in found:
                     found.add(key)
                     result.append(parsed_req)
             else:
@@ -272,21 +361,11 @@ class RequirementsFile:
         result.sort(key=self._key_func)
         return result
 
-    def _key_func(self, line: ParsedRequirement) -> tuple[int, tuple[int, str, str]]:  # ruff:ignore[no-self-use]
-        order: dict[type, int] = {Requirement: 0, Path: 1, str: 2}
-        of_type = order[type(line.requirement)]
-        between = of_type, str(line.requirement).lower(), str(line.options)
-        if "is_constraint" in line.options:
-            return 2, between
-        if "is_editable" in line.options:
-            return 1, between
-        return 0, between
-
     def _parse_and_recurse(
         self,
         filename: str,
-        constraint: bool,  # ruff:ignore[boolean-type-hint-positional-argument]
-        recurse: bool,  # ruff:ignore[boolean-type-hint-positional-argument]
+        constraint: bool,  # ruff:ignore[boolean-type-hint-positional-argument]  # keeps the signature
+        recurse: bool,  # ruff:ignore[boolean-type-hint-positional-argument]  # keeps the signature
     ) -> Iterator[ParsedLine]:
         for line in self._parse_file(filename, constraint):
             if not line.is_requirement and (line.opts.requirements or line.opts.constraints):
@@ -299,6 +378,7 @@ class RequirementsFile:
                 elif not _SCHEME_RE.search(req_path):  # original file and nested file are paths
                     req_path = str(Path(filename).parent / req_path)  # do a join so relative paths work
                 if recurse:
+                    # internal access within the requirements parser
                     yield from self._req_parser._parse_and_recurse(req_path, nested_constraint, recurse)  # ruff:ignore[private-member-access]
                 else:
                     line.filename = req_path
@@ -306,23 +386,81 @@ class RequirementsFile:
             else:
                 yield line
 
-    def _parse_file(self, url: str, constraint: bool) -> Iterator[ParsedLine]:  # ruff:ignore[boolean-type-hint-positional-argument]
-        content = self._get_file_content(url)
-        for line_number, line in self._pre_process(content):
+    def _parse_file(  # keeps the signature
+        self,
+        url: str,
+        constraint: bool,  # ruff:ignore[boolean-type-hint-positional-argument]  # keeps the signature
+    ) -> Iterator[ParsedLine]:
+        for line_number, line in self._pre_process(self._get_file_content(url)):
             args_str, opts = self._parse_line(line)
             yield ParsedLine(url, line_number, args_str, opts, constraint)
 
+    def _pre_process(self, content: str) -> ReqFileLines:
+        # Split, filter, and join lines, and return a line iterator.
+        #
+        # :param content: the content of the requirements file
+        lines_enum: ReqFileLines = enumerate(content.splitlines(), start=1)
+        lines_enum = self._join_lines(lines_enum)
+        lines_enum = self._ignore_comments(lines_enum)
+        return self._expand_env_variables(lines_enum)
+
+    @staticmethod
+    def _join_lines(lines_enum: ReqFileLines) -> ReqFileLines:
+        # Join a line ending in ``\\`` with the previous line (except when following comments).
+        #
+        # The joined line takes on the index of the first line.
+        new_line: list[str] = []
+        primary_line_number = None
+        for line_number, line in lines_enum:
+            if not line.endswith("\\") or _COMMENT_RE.match(line):
+                if _COMMENT_RE.match(line):
+                    line = f" {line}"  # ruff:ignore[redefined-loop-name] # this ensures comments are always matched later
+                if new_line:
+                    new_line.append(line)
+                    assert primary_line_number is not None  # ruff:ignore[assert]  # invariant, narrows type
+                    yield primary_line_number, "".join(new_line)
+                    new_line = []
+                else:
+                    yield line_number, line
+            else:
+                if not new_line:  # pragma: no branch  # other outcome untested
+                    primary_line_number = line_number
+                new_line.append(line.strip("\\"))
+        # last line contains \
+        if new_line:
+            assert primary_line_number is not None  # ruff:ignore[assert]  # invariant, narrows type
+            yield primary_line_number, "".join(new_line)
+
+    @staticmethod
+    def _ignore_comments(lines_enum: ReqFileLines) -> ReqFileLines:
+        # Strips comments and filter empty lines.
+        for line_number, line in lines_enum:
+            if processed_line := _COMMENT_RE.sub("", line).strip():
+                yield line_number, processed_line
+
+    def _expand_env_variables(self, lines_enum: ReqFileLines) -> ReqFileLines:
+        environment: Mapping[str, str] | None = None
+        for line_number, line in lines_enum:
+            expanded_line = line
+            for env_var, var_name in _ENV_VAR_RE.findall(expanded_line):
+                if environment is None:
+                    environment = os.environ if self._environment_provider is None else self._environment_provider()
+                value = environment.get(var_name)
+                if not value:
+                    continue
+                expanded_line = expanded_line.replace(env_var, value)
+                if (redacted := redact_value(var_name, value)) != value:
+                    self._secrets[value] = redacted
+            yield line_number, unprotect_env_variables(expanded_line)
+
     def _get_file_content(self, url: str) -> str:
-        """Get the content of a file; it may be a filename, file: URL, or http: URL.
-
-        Content is unicode. Respects ``# -*- coding:`` declarations on the retrieved files.
-
-        :param url: file path or url
-
-        """
-        scheme = get_url_scheme(url)
-        if scheme in {"http", "https"}:
-            with urlopen(url, timeout=30) as response:  # ruff:ignore[suspicious-url-open-usage]
+        # Get the content of a file; it may be a filename, file: URL, or http: URL.
+        #
+        # Content is unicode. Respects ``# -*- coding:`` declarations on the retrieved files.
+        #
+        # :param url: file path or url
+        if (scheme := get_url_scheme(url)) in {"http", "https"}:
+            with urlopen(url, timeout=30) as response:  # ruff:ignore[suspicious-url-open-usage]  # fixed trusted URL
                 return self._read_decode(response, self._strip_url_credentials(url), monotonic() + _HTTP_BODY_TIMEOUT)
         elif scheme == "file":
             url = url_to_path(url)
@@ -371,25 +509,38 @@ class RequirementsFile:
             return url
         return urllib.parse.urlunsplit(parts._replace(netloc=parts.netloc.rpartition("@")[2]))
 
-    def _pre_process(self, content: str) -> ReqFileLines:
-        """Split, filter, and join lines, and return a line iterator.
-
-        :param content: the content of the requirements file
-
-        """
-        lines_enum: ReqFileLines = enumerate(content.splitlines(), start=1)
-        lines_enum = self._join_lines(lines_enum)
-        lines_enum = self._ignore_comments(lines_enum)
-        return self._expand_env_variables(lines_enum)
-
     def _parse_line(self, line: str) -> tuple[str, Namespace]:
         args_str, options_str = self._break_args_options(line)
-        args = self._split_options(options_str)
-        opts, unknown = self._parser.parse_known_args(args)
+        opts, unknown = self._parser.parse_known_args(self._split_options(options_str))
         if unknown:
             msg = f"unrecognized arguments: {' '.join(redact_argv(unknown))}"
             raise ValueError(msg)
         return args_str, opts
+
+    @staticmethod
+    def _break_args_options(line: str) -> tuple[str, str]:
+        # Break up the line into an args and options string.
+        #
+        # We only want to shlex (and then optparse) the options, not the args. args can contain markers which are
+        # corrupted by shlex.
+        tokens = line.split(" ")
+        options = tokens[:]
+        args = []
+        for token in tokens:
+            if token.startswith("-"):  # both `-` and `--` accepted
+                break
+            args.append(token)
+            options.pop(0)
+        return " ".join(args).strip(), " ".join(options)
+
+    @property
+    def _parser(self) -> ArgumentParser:
+        if self._parser_private is None:
+            self._parser_private = build_parser()
+            self._extend_parser(self._parser_private)
+        return self._parser_private
+
+    def _extend_parser(self, parser: ArgumentParser) -> None: ...
 
     @staticmethod
     def _split_options(options: str) -> list[str]:
@@ -398,74 +549,32 @@ class RequirementsFile:
             options = StrConvert.protect_windows_path_backslashes(options)
         return shlex.split(options)
 
+    @property
+    def _req_parser(self) -> RequirementsFile:
+        return self
+
     @staticmethod
     def _handle_requirement_line(line: ParsedLine) -> ParsedRequirement:
         # For editable requirements, we don't support per-requirement options, so just return the parsed requirement.
         # get the options that apply to requirements
-        req_options: dict[str, Any] = {}
+        req_options: dict[str, bool | list[str]] = {}
         if line.is_editable:
             req_options["is_editable"] = line.is_editable
         if line.constraint:
             req_options["is_constraint"] = line.constraint
-        hash_values = getattr(line.opts, "hash", [])
-        if hash_values:
+        if hash_values := getattr(line.opts, "hash", []):
             req_options["hash"] = hash_values
         config_settings: Final[list[str]] = getattr(line.opts, "config_settings", [])
         if config_settings:
             req_options["config_settings"] = config_settings
         return ParsedRequirement(line.requirement, req_options, line.filename, line.lineno)
 
-    def _merge_option_line(  # ruff:ignore[complex-structure, too-many-branches]
-        self,
-        base_opt: Namespace,
-        opt: Namespace,
-        filename: str,
-    ) -> None:
+    def _merge_option_line(self, base_opt: Namespace, opt: Namespace, filename: str) -> None:
         # percolate options upward
-        if opt.requirements:
-            if not hasattr(base_opt, "requirements"):
-                base_opt.requirements = []
-            if opt.requirements[0] not in base_opt.requirements:
-                base_opt.requirements.append(opt.requirements[0])
-        if opt.constraints:
-            if not hasattr(base_opt, "constraints"):
-                base_opt.constraints = []
-            if opt.constraints[0] not in base_opt.constraints:
-                base_opt.constraints.append(opt.constraints[0])
-        if opt.require_hashes:
-            base_opt.require_hashes = True
-        if opt.features_enabled:
-            if not hasattr(base_opt, "features_enabled"):
-                base_opt.features_enabled = []
-            for feature in opt.features_enabled:
-                if feature not in base_opt.features_enabled:
-                    base_opt.features_enabled.append(feature)
-            base_opt.features_enabled.sort()
-        # pip ignores every index once --no-index is given, wherever the index options appear
-        if opt.no_index is True or getattr(base_opt, "index_url", None) == []:
-            base_opt.index_url = []
-        elif opt.index_url:
-            if getattr(base_opt, "index_url", []):
-                base_opt.index_url[0] = opt.index_url
-            else:
-                base_opt.index_url = [opt.index_url]
-        if opt.extra_index_url and getattr(base_opt, "index_url", None) != []:
-            if not getattr(base_opt, "index_url", []):
-                base_opt.index_url = [DEFAULT_INDEX_URL]
-            for url in opt.extra_index_url:
-                if url not in base_opt.index_url:
-                    base_opt.index_url.append(url)
-        if opt.find_links:
-            # relative to a requirements file.
-            if not hasattr(base_opt, "find_links"):
-                base_opt.find_links = []
-            value = opt.find_links[0]
-            req_dir = Path(filename).absolute().parent
-            relative_to_reqs_file = req_dir / value
-            if os.path.exists(str(relative_to_reqs_file)):  # ruff:ignore[os-path-exists] # Path.exists fails on win32 <=3.7 with URI
-                value = str(relative_to_reqs_file)  # pragma: no cover
-            if value not in base_opt.find_links:
-                base_opt.find_links.append(value)
+        _merge_requirement_files(base_opt, opt)
+        _merge_hashes_and_features(base_opt, opt)
+        _merge_index_urls(base_opt, opt)
+        _merge_find_links(base_opt, opt, filename)
         if opt.pre:
             base_opt.pre = True
         if opt.prefer_binary:
@@ -481,93 +590,36 @@ class RequirementsFile:
     @staticmethod
     def _merge_binary_options(base_opt: Namespace, binary_options: list[tuple[str, str]]) -> None:
         # pip keeps one set per option across all lines, and a later value can clear names an earlier one added
-        sets: dict[str, set[str]] = {
-            name: vars(base_opt).setdefault(name, set()) for name in ("no_binary", "only_binary")
-        }
+        for name in ("no_binary", "only_binary"):
+            if not hasattr(base_opt, name):
+                setattr(base_opt, name, set())
+        sets: dict[str, set[str]] = {name: getattr(base_opt, name) for name in ("no_binary", "only_binary")}
         for name, value in binary_options:
             handle_binary_option(value, sets[name], sets["only_binary" if name == "no_binary" else "no_binary"])
         for name, names in sets.items():
             if not names:
                 delattr(base_opt, name)
 
-    @staticmethod
-    def _break_args_options(line: str) -> tuple[str, str]:
-        """Break up the line into an args and options string.
+    def _key_func(  # ruff:ignore[no-self-use]  # override keeps self
+        self, line: ParsedRequirement
+    ) -> tuple[int, tuple[int, str, str]]:
+        order: dict[type, int] = {Requirement: 0, Path: 1, str: 2}
+        between = order[type(line.requirement)], str(line.requirement).lower(), str(line.options)
+        if "is_constraint" in line.options:
+            return 2, between
+        if "is_editable" in line.options:
+            return 1, between
+        return 0, between
 
-        We only want to shlex (and then optparse) the options, not the args. args can contain markers which are
-        corrupted by shlex.
-
-        """
-        tokens = line.split(" ")
-        args = []
-        options = tokens[:]
-        for token in tokens:
-            if token.startswith("-"):  # both `-` and `--` accepted
-                break
-            args.append(token)
-            options.pop(0)
-        return " ".join(args).strip(), " ".join(options)
-
-    @staticmethod
-    def _join_lines(lines_enum: ReqFileLines) -> ReqFileLines:
-        """Join a line ending in ``\\`` with the previous line (except when following comments).
-
-        The joined line takes on the index of the first line.
-
-        """
-        primary_line_number = None
-        new_line: list[str] = []
-        for line_number, line in lines_enum:
-            if not line.endswith("\\") or _COMMENT_RE.match(line):
-                if _COMMENT_RE.match(line):
-                    line = f" {line}"  # ruff:ignore[redefined-loop-name] # this ensures comments are always matched later
-                if new_line:
-                    new_line.append(line)
-                    assert primary_line_number is not None  # ruff:ignore[assert]
-                    yield primary_line_number, "".join(new_line)
-                    new_line = []
-                else:
-                    yield line_number, line
-            else:
-                if not new_line:  # pragma: no branch
-                    primary_line_number = line_number
-                new_line.append(line.strip("\\"))
-        # last line contains \
-        if new_line:
-            assert primary_line_number is not None  # ruff:ignore[assert]
-            yield primary_line_number, "".join(new_line)
-
-    @staticmethod
-    def _ignore_comments(lines_enum: ReqFileLines) -> ReqFileLines:
-        """Strips comments and filter empty lines."""
-        for line_number, line in lines_enum:
-            processed_line = _COMMENT_RE.sub("", line).strip()
-            if processed_line:
-                yield line_number, processed_line
-
-    def _expand_env_variables(self, lines_enum: ReqFileLines) -> ReqFileLines:
-        environment: Mapping[str, str] | None = None
-        for line_number, line in lines_enum:
-            expanded_line = line
-            for env_var, var_name in _ENV_VAR_RE.findall(expanded_line):
-                if environment is None:
-                    environment = os.environ if self._environment_provider is None else self._environment_provider()
-                value = environment.get(var_name)
-                if not value:
-                    continue
-                expanded_line = expanded_line.replace(env_var, value)
-                if (redacted := redact_value(var_name, value)) != value:
-                    self._secrets[value] = redacted
-            yield line_number, unprotect_env_variables(expanded_line)
-
-    def redact(self, text: str) -> str:
-        secrets: Final = self._secrets | self._req_parser._secrets  # ruff:ignore[private-member-access]  # nested files
-        for value in sorted(secrets, key=len, reverse=True):  # longest first, as a value may contain another one
-            text = text.replace(value, secrets[value])
-        return text
+    @property
+    def requirements(self) -> list[ParsedRequirement]:
+        """The requirements the file declares, including those of the files it includes."""
+        self._ensure_requirements_parsed()
+        return cast("list[ParsedRequirement]", self._requirements)
 
     @property
     def as_root_args(self) -> list[str]:
+        """The command line arguments the requirements are installed with, from the root file."""
         if self._as_root_args is None:
             opt = Namespace()
             result: list[str] = []
@@ -577,20 +629,13 @@ class RequirementsFile:
             self._as_root_args = result
         return self._as_root_args
 
-    def _option_groups(self, opt: Namespace) -> Iterator[tuple[str, ...]]:  # ruff:ignore[complex-structure, too-many-branches, no-self-use]
+    # one dispatch over all pip option groups
+    def _option_groups(self, opt: Namespace) -> Iterator[tuple[str, ...]]:  # ruff:ignore[no-self-use]  # override keeps self
         for req in getattr(opt, "requirements", []):
             yield "-r", req
         for req in getattr(opt, "constraints", []):
             yield "-c", req
-        index_url = getattr(opt, "index_url", None)
-        if index_url is not None:
-            if index_url:
-                if index_url[0] != DEFAULT_INDEX_URL:
-                    yield "-i", index_url[0]
-                for url in index_url[1:]:
-                    yield "--extra-index-url", url
-            else:
-                yield ("--no-index",)
+        yield from _index_option_groups(opt)
         for link in getattr(opt, "find_links", []):
             yield "-f", link
         if hasattr(opt, "pre"):
@@ -603,22 +648,53 @@ class RequirementsFile:
             yield ("--require-hashes",)
         for feature in getattr(opt, "features_enabled", []):
             yield "--use-feature", feature
-        # pip drops the --no-binary names it read before an --only-binary :all:, so that one goes first
-        only_binary_first = ":all:" in getattr(opt, "only_binary", ())
-        for name in ("only_binary", "no_binary") if only_binary_first else ("no_binary", "only_binary"):
-            if hasattr(opt, name):
-                yield f"--{name.replace('_', '-')}", ",".join(sorted(getattr(opt, name)))
+        yield from _binary_option_groups(opt)
+
+    def redact(self, text: str) -> str:
+        """Replace the secret values in a text with a placeholder.
+
+        :param text: the text to redact
+
+        :returns: the redacted text
+
+        """
+        secrets: Final = self._secrets | self._req_parser._secrets  # ruff:ignore[private-member-access]  # nested files
+        for value in sorted(secrets, key=len, reverse=True):  # longest first, as a value may contain another one
+            text = text.replace(value, secrets[value])
+        return text
 
 
 class EnvironmentProvider(Protocol):
-    def __call__(self) -> Mapping[str, str]: ...
+    """Callable that provides the environment variables that requirements can expand."""
+
+    def __call__(self) -> Mapping[str, str]:
+        """Get the environment variables.
+
+        :returns: the environment variables by name
+
+        """
+        ...
 
 
 def protect_env_variables(text: str) -> str:
+    """Protect the environment variable references of a text from being expanded.
+
+    :param text: the text to protect
+
+    :returns: the protected text
+
+    """
     return text.replace("${", f"${_ENV_LITERAL_MARK}{{")
 
 
 def unprotect_env_variables(text: str) -> str:
+    """Restore the environment variable references protected with :func:`protect_env_variables`.
+
+    :param text: the protected text
+
+    :returns: the text with the references restored
+
+    """
     return text.replace(f"${_ENV_LITERAL_MARK}{{", "${")
 
 

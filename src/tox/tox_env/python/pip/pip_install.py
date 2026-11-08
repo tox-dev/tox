@@ -11,7 +11,7 @@ from collections import defaultdict
 from collections.abc import Callable, Sequence
 from functools import partial
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Final
+from typing import TYPE_CHECKING, Final
 from urllib.error import URLError
 from urllib.parse import parse_qs, urlsplit
 
@@ -24,27 +24,35 @@ from tox.tox_env.errors import Fail, Recreate
 from tox.tox_env.installer import InstallArguments, Installer
 from tox.tox_env.python.api import Python
 from tox.tox_env.python.package import EditableLegacyPackage, EditablePackage, SdistPackage, WheelPackage
-from tox.tox_env.python.pip.req_file import PythonConstraints, PythonDeps
 from tox.tox_env.python.pylock import Pylock
 from tox.util.typing_compat import override
+
+from .req_file import PythonConstraints, PythonDeps
 
 if TYPE_CHECKING:
     from tox.config.main import Config
     from tox.tox_env.package import Package
-    from tox.tox_env.python.pip.req.file import ParsedRequirement
     from tox.util.json_types import JsonValue
 
-_REDACTION_FORMAT: Final[int] = 1
+    from .req.file import ParsedRequirement
 
 
 class PythonInstallerListDependencies(Installer[Python], ABC):
-    def __init__(self, tox_env: Python, with_list_deps: bool = True) -> None:  # ruff:ignore[boolean-type-hint-positional-argument, boolean-default-value-positional-argument]
+    # keeps the existing signature
+    """An installer that can list the packages installed in the environment.
+
+    :param tox_env: the environment to install packages into
+    :param with_list_deps: whether to list the installed packages
+
+    """
+
+    def __init__(self, tox_env: Python, with_list_deps: bool = True) -> None:  # ruff:ignore[boolean-type-hint-positional-argument, boolean-default-value-positional-argument]  # public signature
         self._with_list_deps = with_list_deps
         super().__init__(tox_env)
 
     @override
     def _register_config(self) -> None:
-        if self._with_list_deps:  # pragma: no branch
+        if self._with_list_deps:  # pragma: no branch  # other outcome untested
             self._env.conf.add_config(
                 keys=["list_dependencies_command"],
                 of_type=Command,
@@ -54,6 +62,11 @@ class PythonInstallerListDependencies(Installer[Python], ABC):
 
     @abstractmethod
     def freeze_cmd(self) -> list[str]:
+        """Get the command that lists the installed packages.
+
+        :returns: the command
+
+        """
         raise NotImplementedError
 
     @override
@@ -62,18 +75,6 @@ class PythonInstallerListDependencies(Installer[Python], ABC):
         result = self._env.execute(cmd=cmd.args, stdin=StdinSource.OFF, run_id="freeze", show=False, capture=True)
         result.assert_success()
         return result.out.splitlines()
-
-
-_PIP_RESOLUTION_ENV_VARS: frozenset[str] = frozenset({
-    "PIP_CONSTRAINT",
-    "PIP_EXTRA_INDEX_URL",
-    "PIP_FIND_LINKS",
-    "PIP_INDEX_URL",
-    "PIP_NO_INDEX",
-    "PIP_PRE",
-    "PIP_REQUIRE_HASHES",
-    "PIP_TRUSTED_HOST",
-})
 
 
 class Pip(PythonInstallerListDependencies):
@@ -118,15 +119,31 @@ class Pip(PythonInstallerListDependencies):
             desc="Use the exact versions of installed deps as constraints, otherwise use the listed deps.",
         )
 
-    @override
-    def freeze_cmd(self) -> list[str]:
-        return ["python", "-m", "pip", "freeze", "--all"]
+    def default_install_command(  # override signature
+        self,
+        conf: Config,  # ruff:ignore[unused-method-argument]  # override signature
+        env_name: str | None,  # ruff:ignore[unused-method-argument]  # override signature
+    ) -> Command:
+        # Python 2 spells isolation as -E
+        """Get the default command that installs packages with pip.
 
-    def default_install_command(self, conf: Config, env_name: str | None) -> Command:  # ruff:ignore[unused-method-argument]
-        isolated_flag = "-E" if self._env.base_python.version_info.major == 2 else "-I"  # ruff:ignore[magic-value-comparison]
+        :param conf: the configuration of the environment
+        :param env_name: the name of the environment
+
+        :returns: the install command
+
+        """
+        isolated_flag = "-E" if self._env.base_python.version_info.major == 2 else "-I"  # ruff:ignore[magic-value-comparison]  # Python 2 only takes -E
         return Command(["python", isolated_flag, "-m", "pip", "install", "{opts}", "{packages}"])
 
     def post_process_install_command(self, cmd: Command) -> Command:
+        """Add the options that the configuration asks for to the install command.
+
+        :param cmd: the install command
+
+        :returns: the install command with the options
+
+        """
         install_command = cmd.args
         pip_pre = self._env.conf.get("pip_pre", bool)
         try:
@@ -142,6 +159,10 @@ class Pip(PythonInstallerListDependencies):
         return cmd
 
     @override
+    def freeze_cmd(self) -> list[str]:
+        return ["python", "-m", "pip", "freeze", "--all"]
+
+    @override
     def install(self, arguments: InstallArguments, section: str, of_type: str) -> None:
         if isinstance(arguments, PythonDeps):
             self._install_requirement_file(arguments, section, of_type)
@@ -152,21 +173,6 @@ class Pip(PythonInstallerListDependencies):
         else:
             logging.warning("pip cannot install %r", arguments)
             raise SystemExit(1)
-
-    @property
-    def constraints(self) -> PythonConstraints:
-        return self._env.conf.get("constraints", PythonConstraints)
-
-    def constraints_file(self) -> Path:
-        return Path(self._env.env_dir) / "constraints.txt"
-
-    @property
-    def constrain_package_deps(self) -> bool:
-        return bool(self._env.conf["constrain_package_deps"])
-
-    @property
-    def use_frozen_constraints(self) -> bool:
-        return bool(self._env.conf["use_frozen_constraints"])
 
     def _install_requirement_file(self, arguments: PythonDeps, section: str, of_type: str) -> None:
         new_requirements: list[str] = []
@@ -191,8 +197,9 @@ class Pip(PythonInstallerListDependencies):
             "constrain_package_deps": self.constrain_package_deps,
             "use_frozen_constraints": self.use_frozen_constraints,
         }
+        redaction_format: int = 1
         new: Final = {
-            "redaction_format": _REDACTION_FORMAT,
+            "redaction_format": redaction_format,
             "options": new_options,
             "requirements": new_requirements,
             "constraints": new_constraints,
@@ -201,39 +208,54 @@ class Pip(PythonInstallerListDependencies):
         }
         # if option or constraint change in any way recreate, if the requirements change only if some are removed
         with self._env.cache.compare(new, section, of_type) as (eq, old):
-            if not eq:  # pragma: no branch
+            if not eq:  # pragma: no branch  # other outcome untested
                 if old is not None:
-                    if old.get("redaction_format") != _REDACTION_FORMAT:
+                    if old.get("redaction_format") != redaction_format:
                         msg = "install cache format changed"
                         raise Recreate(msg)
-                    self._recreate_if_diff("install flag(s)", new_options, old["options"], lambda i: i)
+                    self._recreate_if_diff("install flag(s)", new_options, old["options"], lambda item: item)
                     self._recreate_if_diff(
                         "constraint(s)", new_constraints, old["constraints"], operator.itemgetter(slice(3, None))
                     )
-                    missing_requirement = set(old["requirements"]) - set(new_requirements)
-                    if missing_requirement:
+                    if missing_requirement := set(old["requirements"]) - set(new_requirements):
                         msg = f"requirements removed: {' '.join(missing_requirement)}"
                         raise Recreate(msg)
-                    old_constraint_options = old.get("constraint_options")
-                    if old_constraint_options != constraint_options:
+                    if (old_constraint_options := old.get("constraint_options")) != constraint_options:
                         msg = f"constraint options changed: old={old_constraint_options} new={constraint_options}"
                         raise Recreate(msg)
-                args = arguments.as_root_args
-                if args:  # pragma: no branch
+                if args := arguments.as_root_args:  # pragma: no branch  # other outcome untested
                     args.extend(self.constraints.as_root_args)
                     self._execute_installer(args, of_type)
                     self._write_combined_constraints(arguments)
 
-    def _write_combined_constraints(self, arguments: PythonDeps) -> None:
-        if self.constrain_package_deps and not self.use_frozen_constraints and not self._has_constraints:
-            combined_constraints: Final = [
-                line for req in arguments.requirements if (line := self._as_constraint(req)) is not None
-            ]
-            combined_constraints.extend(
-                str(req).removeprefix("-c ") for req in arguments.requirements if req.options.get("is_constraint")
-            )
-            combined_constraints.extend(str(req).removeprefix("-c ") for req in self.constraints.requirements)
-            self.constraints_file().write_text("\n".join(combined_constraints))
+    @property
+    def constraints(self) -> PythonConstraints:
+        """The constraints the packages are installed with."""
+        return self._env.conf.get("constraints", PythonConstraints)
+
+    @property
+    def constrain_package_deps(self) -> bool:
+        """Whether the dependencies of the package are constrained too."""
+        return bool(self._env.conf["constrain_package_deps"])
+
+    @property
+    def use_frozen_constraints(self) -> bool:
+        """Whether the constraints are frozen from the installed packages."""
+        return bool(self._env.conf["use_frozen_constraints"])
+
+    def _install_env_vars(self) -> dict[str, str]:
+        # Return env vars that affect pip resolution and should be part of the install cache key.
+        pip_resolution_env_vars: frozenset[str] = frozenset({
+            "PIP_CONSTRAINT",
+            "PIP_EXTRA_INDEX_URL",
+            "PIP_FIND_LINKS",
+            "PIP_INDEX_URL",
+            "PIP_NO_INDEX",
+            "PIP_PRE",
+            "PIP_REQUIRE_HASHES",
+            "PIP_TRUSTED_HOST",
+        })
+        return {k: v for k, v in self._env.environment_variables.items() if k in pip_resolution_env_vars}
 
     @staticmethod
     def _recreate_if_diff(of_type: str, new_opts: list[str], old_opts: list[str], fmt: Callable[[str], str]) -> None:
@@ -245,6 +267,61 @@ class Pip(PythonInstallerListDependencies):
         added = f" added {', '.join(sorted(fmt(i) for i in added_opts))}" if added_opts else ""
         msg = f"changed {of_type}{removed}{added}"
         raise Recreate(msg)
+
+    def _execute_installer(self, deps: Sequence[str], of_type: str) -> None:
+        if of_type == "package_deps" and self.constrain_package_deps and not self._has_constraints:
+            constraints_file = self.constraints_file()
+            if constraints_file.exists():
+                deps = [*deps, f"-c{constraints_file}"]
+
+        outcome = self._env.execute(self.build_install_cmd(deps), stdin=StdinSource.OFF, run_id=f"install_{of_type}")
+        outcome.assert_success()
+
+        if (
+            of_type == "deps"
+            and self.constrain_package_deps
+            and self.use_frozen_constraints
+            and not self._has_constraints
+        ):
+            self.constraints_file().write_text("\n".join(self.installed()))
+
+    @property
+    def _has_constraints(self) -> bool:
+        return bool(self.constraints.as_root_args)
+
+    def constraints_file(self) -> Path:
+        """The path of the file the constraints are written to.
+
+        :returns: the path of the constraints file
+
+        """
+        return Path(self._env.env_dir) / "constraints.txt"
+
+    def build_install_cmd(self, args: Sequence[str]) -> list[str]:
+        """Build the install command, placing the arguments where the ``{packages}`` placeholder is.
+
+        :param args: the arguments to install
+
+        :returns: the install command
+
+        """
+        install_command = self._env.conf.get("install_command", Command).args
+        try:
+            opts_at = install_command.index("{packages}")
+        except ValueError:
+            opts_at = len(install_command)
+        return install_command[:opts_at] + list(args) + install_command[opts_at + 1 :]
+
+    def _write_combined_constraints(self, arguments: PythonDeps) -> None:
+        if self.constrain_package_deps and not self.use_frozen_constraints and not self._has_constraints:
+            combined_constraints: Final = [
+                line for req in arguments.requirements if (line := self._as_constraint(req)) is not None
+            ]
+            combined_constraints.extend(
+                str(req).removeprefix("-c ") for req in arguments.requirements if req.options.get("is_constraint")
+            )
+            combined_constraints.extend(str(req).removeprefix("-c ") for req in self.constraints.requirements)
+            self.constraints_file().write_text("\n".join(combined_constraints))
 
     @staticmethod
     def _as_constraint(req: ParsedRequirement) -> str | None:
@@ -297,12 +374,26 @@ class Pip(PythonInstallerListDependencies):
                     req_file.write_text("\n".join(new_deps))
                     self._execute_installer(["--no-deps", "-r", str(req_file)], of_type)
 
-    def _install_list_of_deps(  # ruff:ignore[complex-structure, too-many-branches]
+    def _install_list_of_deps(
         self,
         arguments: Sequence[Requirement | Package],
         section: str,
         of_type: str,
     ) -> None:
+        groups, config_settings = self._group_arguments(arguments)
+        req_of_type = f"{of_type}_deps" if groups["pkg"] or groups["dev_pkg"] else of_type
+        for value in groups.values():
+            value.sort()
+        cache_value = {"req": groups["req"], "env": self._install_env_vars()}
+        with self._env.cache.compare(cache_value, section, req_of_type) as (eq, old):
+            if not eq:  # pragma: no branch  # other outcome untested
+                old_req: list[str] = old["req"] if isinstance(old, dict) else (old or [])
+                self._install_new_deps(groups["req"], old_req, req_of_type)
+        self._install_packages(groups, config_settings, of_type)
+
+    def _group_arguments(
+        self, arguments: Sequence[Requirement | Package]
+    ) -> tuple[dict[str, list[str]], dict[str, str]]:
         groups: dict[str, list[str]] = defaultdict(list)
         config_settings: dict[str, str] = {}
         for arg in arguments:
@@ -319,23 +410,28 @@ class Pip(PythonInstallerListDependencies):
             else:
                 logging.warning("pip cannot install %r", arg)
                 raise SystemExit(1)
-        req_of_type = f"{of_type}_deps" if groups["pkg"] or groups["dev_pkg"] else of_type
-        for value in groups.values():
-            value.sort()
-        cache_value = {"req": groups["req"], "env": self._install_env_vars()}
-        with self._env.cache.compare(cache_value, section, req_of_type) as (eq, old):
-            if not eq:  # pragma: no branch
-                old_req: list[str] = old["req"] if isinstance(old, dict) else (old or [])
-                miss = sorted(set(old_req) - set(groups["req"]))
-                if miss:  # no way yet to know what to uninstall here (transitive dependencies?)
-                    msg = f"dependencies removed: {', '.join(str(i) for i in miss)}"
-                    raise Recreate(msg)  # pragma: no branch
-                new_deps = sorted(set(groups["req"]) - set(old_req)) or list(groups["req"])
-                if new_deps:  # pragma: no branch
-                    new_deps.extend(self.constraints.as_root_args)
-                    self._execute_installer(new_deps, req_of_type)
-        install_args = ["--force-reinstall", "--no-deps"]
+        return groups, config_settings
+
+    def _apply_force_deps(self, deps: Sequence[Requirement]) -> list[str]:
+        forced: dict[NormalizedName, Requirement] = {
+            canonicalize_name(r.name): r for r in getattr(self._env.options, "force_dep", [])
+        }
+        return [str(forced.get(canonicalize_name(dep.name), dep)) for dep in deps]
+
+    def _install_new_deps(self, req: list[str], old_req: list[str], req_of_type: str) -> None:
+        if miss := sorted(
+            set(old_req) - set(req)
+        ):  # no way yet to know what to uninstall here (transitive dependencies?)
+            msg = f"dependencies removed: {', '.join(str(i) for i in miss)}"
+            raise Recreate(msg)  # pragma: no branch  # other outcome untested
+        # other outcome untested
+        if new_deps := sorted(set(req) - set(old_req)) or list(req):  # pragma: no branch
+            new_deps.extend(self.constraints.as_root_args)
+            self._execute_installer(new_deps, req_of_type)
+
+    def _install_packages(self, groups: dict[str, list[str]], config_settings: dict[str, str], of_type: str) -> None:
         cs_args = [f"--config-settings={k}={v}" for k, v in config_settings.items()]
+        install_args = ["--force-reinstall", "--no-deps"]
         if groups["pkg"]:
             # we intentionally ignore constraints when installing the package itself
             # https://github.com/tox-dev/tox/issues/3550
@@ -346,46 +442,6 @@ class Pip(PythonInstallerListDependencies):
             # we intentionally ignore constraints when installing the package itself
             # https://github.com/tox-dev/tox/issues/3550
             self._execute_installer(install_args, of_type)
-
-    def _install_env_vars(self) -> dict[str, str]:
-        """Return env vars that affect pip resolution and should be part of the install cache key."""
-        return {k: v for k, v in self._env.environment_variables.items() if k in _PIP_RESOLUTION_ENV_VARS}
-
-    def _apply_force_deps(self, deps: Sequence[Requirement]) -> list[str]:
-        forced: dict[NormalizedName, Requirement] = {
-            canonicalize_name(r.name): r for r in getattr(self._env.options, "force_dep", [])
-        }
-        return [str(forced.get(canonicalize_name(dep.name), dep)) for dep in deps]
-
-    @property
-    def _has_constraints(self) -> bool:
-        return bool(self.constraints.as_root_args)
-
-    def _execute_installer(self, deps: Sequence[Any], of_type: str) -> None:
-        if of_type == "package_deps" and self.constrain_package_deps and not self._has_constraints:
-            constraints_file = self.constraints_file()
-            if constraints_file.exists():
-                deps = [*deps, f"-c{constraints_file}"]
-
-        cmd = self.build_install_cmd(deps)
-        outcome = self._env.execute(cmd, stdin=StdinSource.OFF, run_id=f"install_{of_type}")
-        outcome.assert_success()
-
-        if (
-            of_type == "deps"
-            and self.constrain_package_deps
-            and self.use_frozen_constraints
-            and not self._has_constraints
-        ):
-            self.constraints_file().write_text("\n".join(self.installed()))
-
-    def build_install_cmd(self, args: Sequence[str]) -> list[str]:
-        install_command = self._env.conf.get("install_command", Command).args
-        try:
-            opts_at = install_command.index("{packages}")
-        except ValueError:
-            opts_at = len(install_command)
-        return install_command[:opts_at] + list(args) + install_command[opts_at + 1 :]
 
 
 __all__ = [

@@ -4,6 +4,7 @@ import typing
 from abc import ABC, abstractmethod
 from collections import OrderedDict
 from collections.abc import Callable, Iterator
+from enum import Enum, auto
 from inspect import isclass
 from pathlib import Path
 from types import UnionType
@@ -11,17 +12,24 @@ from typing import Any, Generic, Literal, TypeVar, Union, cast, get_args, get_or
 
 from tox.config.types import Command, EnvList
 
-_NO_MAPPING = object()
-T = TypeVar("T")
-V = TypeVar("V")
+
+class _Missing(Enum):
+    MISSING = auto()
+
+
+T = TypeVar("T")  # simplint: ignore[SMP101, SMP404]  # exported, renaming breaks importers
+V = TypeVar("V")  # simplint: ignore[SMP101, SMP404]  # exported, renaming breaks importers
 
 Factory = Callable[[object], T] | None  # note the argument is anything, due e.g. memory loader can inject anything
+"""Callable that converts a raw value to the target type, or ``None`` when no conversion is needed."""
 
 
 class Convert(ABC, Generic[T]):
     """A class that converts a raw type to a given tox (python) type."""
 
-    def to(self, raw: T, of_type: type[V] | UnionType, factory: Factory[V]) -> V:  # ruff:ignore[too-many-return-statements]
+    def to(  # ruff:ignore[too-many-return-statements]  # distinct outcomes
+        self, raw: T, of_type: type[V] | UnionType, factory: Factory[V]
+    ) -> V:
         """Convert given raw type to python type.
 
         :param raw: the raw type
@@ -56,9 +64,11 @@ class Convert(ABC, Generic[T]):
             return factory(raw)
         return cast("Callable[[T], V]", of_type)(raw)
 
-    def _to_typing(self, raw: T, of_type: type[V] | UnionType, factory: Factory[V]) -> V:  # ruff:ignore[complex-structure, too-many-branches]
+    def _to_typing(  # follows the protocol
+        self, raw: T, of_type: type[V] | UnionType, factory: Factory[V]
+    ) -> V:
         origin = get_origin(of_type) or of_type.__class__
-        result: Any = _NO_MAPPING
+        result: Any = _Missing.MISSING  # simplint: ignore[SMP602]  # the converted value has the type of the option
         type_args = get_args(of_type)
         if origin in {list, list}:
             entry_type = type_args[0]
@@ -73,61 +83,21 @@ class Convert(ABC, Generic[T]):
                 for k, v in self.to_dict(raw, (key_type, value_type))
             )
         elif origin in {Union, UnionType}:
-            args: list[type[Any]] = list(type_args)
-            none = type(None)
-            if len(args) == 2 and none in args:  # ruff:ignore[magic-value-comparison]
-                if isinstance(raw, str):
-                    raw = cast("T", raw.strip())
-                if raw is None or (isinstance(raw, str) and not raw):
-                    result = None
-                else:
-                    new_type = next(i for i in args if i != none)  # pragma: no cover
-                    result = self.to(raw, new_type, factory)
-            elif any(get_origin(arg) is not None for arg in args):
-                for arg in args:
-                    try:
-                        result = self.to(raw, arg, factory)
-                        break
-                    except (TypeError, ValueError):
-                        pass
+            result = self._to_union(raw, list(type_args), factory)
         elif origin in {Literal, type(Literal)}:
             choice = type_args
             if raw not in choice:
                 msg = f"{raw} must be one of {choice}"
                 raise ValueError(msg)
             result = raw
-        if result is not _NO_MAPPING:
+        if result is not _Missing.MISSING:
             return cast("V", result)
         msg = f"{raw} cannot cast to {of_type!r}"
         raise TypeError(msg)
 
     @staticmethod
     @abstractmethod
-    def to_str(value: T) -> str:
-        """Convert to string.
-
-        :param value: the value to convert
-
-        :returns: a string representation of the value
-
-        """
-        raise NotImplementedError
-
-    @staticmethod
-    @abstractmethod
-    def to_bool(value: T) -> bool:
-        """Convert to boolean.
-
-        :param value: the value to convert
-
-        :returns: a boolean representation of the value
-
-        """
-        raise NotImplementedError
-
-    @staticmethod
-    @abstractmethod
-    def to_list(value: T, of_type: type[Any]) -> Iterator[T]:
+    def to_list(value: T, of_type: type) -> Iterator[T]:
         """Convert to list.
 
         :param value: the value to convert
@@ -140,7 +110,7 @@ class Convert(ABC, Generic[T]):
 
     @staticmethod
     @abstractmethod
-    def to_set(value: T, of_type: type[Any]) -> Iterator[T]:
+    def to_set(value: T, of_type: type) -> Iterator[T]:
         """Convert to set.
 
         :param value: the value to convert
@@ -153,7 +123,7 @@ class Convert(ABC, Generic[T]):
 
     @staticmethod
     @abstractmethod
-    def to_dict(value: T, of_type: tuple[type[Any], type[Any]]) -> Iterator[tuple[T, T]]:
+    def to_dict(value: T, of_type: tuple[type, type]) -> Iterator[tuple[T, T]]:
         """Convert to dictionary.
 
         :param value: the value to convert
@@ -164,6 +134,23 @@ class Convert(ABC, Generic[T]):
         """
         raise NotImplementedError
 
+    def _to_union(self, raw: T, args: list[type | UnionType], factory: Factory[V]) -> V | _Missing | None:
+        none = type(None)
+        if len(args) == 2 and none in args:  # ruff:ignore[magic-value-comparison]  # fixed protocol value
+            if isinstance(raw, str):
+                raw = cast("T", raw.strip())
+            if raw is None or (isinstance(raw, str) and not raw):
+                return None
+            new_type = next(i for i in args if i != none)  # pragma: no cover  # setup not built by tests
+            return cast("V", self.to(raw, new_type, factory))
+        if any(get_origin(arg) is not None for arg in args):
+            for arg in args:
+                try:
+                    return cast("V", self.to(raw, arg, factory))
+                except (TypeError, ValueError):
+                    pass
+        return _Missing.MISSING
+
     @staticmethod
     @abstractmethod
     def to_path(value: T) -> Path:
@@ -172,6 +159,18 @@ class Convert(ABC, Generic[T]):
         :param value: the value to convert
 
         :returns: path representation of the value
+
+        """
+        raise NotImplementedError
+
+    @staticmethod
+    @abstractmethod
+    def to_bool(value: T) -> bool:
+        """Convert to boolean.
+
+        :param value: the value to convert
+
+        :returns: a boolean representation of the value
 
         """
         raise NotImplementedError
@@ -196,6 +195,18 @@ class Convert(ABC, Generic[T]):
         :param value: the value to convert
 
         :returns: a list of tox environments from the value
+
+        """
+        raise NotImplementedError
+
+    @staticmethod
+    @abstractmethod
+    def to_str(value: T) -> str:
+        """Convert to string.
+
+        :param value: the value to convert
+
+        :returns: a string representation of the value
 
         """
         raise NotImplementedError

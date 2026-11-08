@@ -1,14 +1,16 @@
 from __future__ import annotations
 
+import os
 import sys
 import sysconfig
 from pathlib import Path
 from types import SimpleNamespace
 from typing import TYPE_CHECKING, Final
-from unittest.mock import MagicMock, patch
 
 import pytest
+from virtualenv.create.creator import Creator
 from virtualenv.discovery.py_spec import PythonSpec
+from virtualenv.run.session import Session
 
 from tox.tox_env.errors import Fail
 from tox.tox_env.python.api import Python
@@ -28,14 +30,13 @@ def test_requirements_txt(tox_project: ToxProjectCreator) -> None:
             "requirements.txt": "nose",
         },
     )
-    execute_calls = prj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
-    result = prj.run("r", "-e", "py")
-    result.assert_success()
+    execute_calls = prj.patch_execute(lambda request: 0 if "install" in request.run_id else None)
+    prj.run("r", "-e", "py").assert_success()
 
     assert execute_calls.call_count == 1
-    exp = ["python", "-I", "-m", "pip", "install", "-r", "requirements.txt"]
     got_cmd = execute_calls.call_args[0][3].cmd
 
+    exp = ["python", "-I", "-m", "pip", "install", "-r", "requirements.txt"]
     assert got_cmd == exp
 
 
@@ -58,16 +59,12 @@ def test_conflicting_base_python_factor_mixed_style() -> None:
 
 def test_conflicting_base_python_factor_ignore(tox_project: ToxProjectCreator) -> None:
     ini = "[tox]\nenv_list=unit-py3.10-2.16\nignore_base_python_conflict=true\n[testenv]\npackage=skip\n"
-    project = tox_project({"tox.ini": ini})
-    result = project.run("c", "-e", "unit-py3.10-2.16", "-k", "base_python")
-    result.assert_success()
+    tox_project({"tox.ini": ini}).run("c", "-e", "unit-py3.10-2.16", "-k", "base_python").assert_success()
 
 
 def test_conflicting_base_python_factor_no_ignore(tox_project: ToxProjectCreator) -> None:
-    ini = "[tox]\nenv_list=unit-py3.10-2.16\n[testenv]\npackage=skip\n"
-    project = tox_project({"tox.ini": ini})
-    result = project.run("c", "-e", "unit-py3.10-2.16", "-k", "base_python", raise_on_config_fail=False)
-    result.assert_failed(code=-1)
+    project = tox_project({"tox.ini": "[tox]\nenv_list=unit-py3.10-2.16\n[testenv]\npackage=skip\n"})
+    project.run("c", "-e", "unit-py3.10-2.16", "-k", "base_python", raise_on_config_fail=False).assert_failed(code=-1)
 
 
 @pytest.mark.parametrize(
@@ -107,13 +104,17 @@ def test_blank_base_python_entries_skipped(tox_project: ToxProjectCreator) -> No
 
 
 def test_validate_base_python_conflicting_factors_ignore() -> None:
-    result = Python._validate_base_python("unit-py3.10-2.16", ["python3"], ignore_base_python_conflict=True)  # ruff:ignore[private-member-access]
+    result = Python._validate_base_python(  # ruff:ignore[private-member-access]  # internal state
+        "unit-py3.10-2.16", ["python3"], ignore_base_python_conflict=True
+    )
     assert result == ["python3"]
 
 
 def test_validate_base_python_conflicting_factors_no_ignore() -> None:
     with pytest.raises(ValueError, match=r"conflicting factors py3\.10, 2\.16 in unit-py3\.10-2\.16"):
-        Python._validate_base_python("unit-py3.10-2.16", ["python3"], ignore_base_python_conflict=False)  # ruff:ignore[private-member-access]
+        Python._validate_base_python(  # ruff:ignore[private-member-access]  # internal state
+            "unit-py3.10-2.16", ["python3"], ignore_base_python_conflict=False
+        )
 
 
 @pytest.mark.skipif(sys.platform == "win32", reason="mocks a POSIX venv layout (bin/python symlink)")
@@ -123,22 +124,21 @@ def test_build_wheel_in_non_base_pkg_env(
     demo_pkg_inline: Path,
     mocker: MockerFixture,
 ) -> None:
-    def _fake_session(env_dir: list[str], **_: object) -> MagicMock:
+    def _fake_session(env_dir: list[str], **_: object) -> Session:
         bin_dir = Path(env_dir[0]) / "bin"
         bin_dir.mkdir(parents=True, exist_ok=True)
         (bin_dir / "python").symlink_to(sys.executable)
-        mock = MagicMock()
-        mock.creator.bin_dir = bin_dir
-        mock.creator.script_dir = bin_dir
-        return mock
+        return mocker.create_autospec(
+            Session,
+            instance=True,
+            creator=mocker.create_autospec(Creator, instance=True, bin_dir=bin_dir, script_dir=bin_dir),
+        )
 
-    mocker.patch("tox.tox_env.python.virtual_env.api.session_via_cli", side_effect=_fake_session)
+    mocker.patch("tox.tox_env.python.virtual_env.api.session_via_cli", autospec=True, side_effect=_fake_session)
     prev_ver, impl, _ = patch_prev_py(True)
-    prev_py = f"py{prev_ver}"
-    prj = tox_project({"tox.ini": f"[tox]\nenv_list= {prev_py}\n[testenv]\npackage=wheel"})
-    execute_calls = prj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
-    result = prj.run("-r", "--root", str(demo_pkg_inline), "--workdir", str(prj.path / ".tox"))
-    result.assert_success()
+    prj = tox_project({"tox.ini": f"[tox]\nenv_list= {f'py{prev_ver}'}\n[testenv]\npackage=wheel"})
+    execute_calls = prj.patch_execute(lambda request: 0 if "install" in request.run_id else None)
+    prj.run("-r", "--root", str(demo_pkg_inline), "--workdir", str(prj.path / ".tox")).assert_success()
     calls = [(i[0][0].conf.name, i[0][3].run_id) for i in execute_calls.call_args_list]
     assert calls == [
         (f".pkg-{impl}{prev_ver}", "_optional_hooks"),
@@ -156,22 +156,21 @@ def test_build_wheel_in_free_threaded_pkg_env(
     demo_pkg_inline: Path,
     mocker: MockerFixture,
 ) -> None:
-    def _fake_session(env_dir: list[str], **_: object) -> MagicMock:
+    def _fake_session(env_dir: list[str], **_: object) -> Session:
         bin_dir = Path(env_dir[0]) / "bin"
         bin_dir.mkdir(parents=True, exist_ok=True)
         (bin_dir / "python").symlink_to(sys.executable)
-        mock = MagicMock()
-        mock.creator.bin_dir = bin_dir
-        mock.creator.script_dir = bin_dir
-        return mock
+        return mocker.create_autospec(
+            Session,
+            instance=True,
+            creator=mocker.create_autospec(Creator, instance=True, bin_dir=bin_dir, script_dir=bin_dir),
+        )
 
-    mocker.patch("tox.tox_env.python.virtual_env.api.session_via_cli", side_effect=_fake_session)
+    mocker.patch("tox.tox_env.python.virtual_env.api.session_via_cli", autospec=True, side_effect=_fake_session)
     prev_ver, impl, _ = patch_prev_py(True, free_threaded=True)
-    prev_py = f"py{prev_ver}"
-    prj = tox_project({"tox.ini": f"[tox]\nenv_list= {prev_py}\n[testenv]\npackage=wheel"})
-    execute_calls = prj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
-    result = prj.run("-r", "--root", str(demo_pkg_inline), "--workdir", str(prj.path / ".tox"))
-    result.assert_success()
+    prj = tox_project({"tox.ini": f"[tox]\nenv_list= {f'py{prev_ver}'}\n[testenv]\npackage=wheel"})
+    execute_calls = prj.patch_execute(lambda request: 0 if "install" in request.run_id else None)
+    prj.run("-r", "--root", str(demo_pkg_inline), "--workdir", str(prj.path / ".tox")).assert_success()
     calls = [(i[0][0].conf.name, i[0][3].run_id) for i in execute_calls.call_args_list]
     assert calls == [
         (f".pkg-{impl}{prev_ver}t", "_optional_hooks"),
@@ -189,22 +188,21 @@ def test_build_wheel_in_debug_pkg_env(
     demo_pkg_inline: Path,
     mocker: MockerFixture,
 ) -> None:
-    def _fake_session(env_dir: list[str], **_: object) -> MagicMock:
+    def _fake_session(env_dir: list[str], **_: object) -> Session:
         bin_dir = Path(env_dir[0]) / "bin"
         bin_dir.mkdir(parents=True, exist_ok=True)
         (bin_dir / "python").symlink_to(sys.executable)
-        mock = MagicMock()
-        mock.creator.bin_dir = bin_dir
-        mock.creator.script_dir = bin_dir
-        return mock
+        return mocker.create_autospec(
+            Session,
+            instance=True,
+            creator=mocker.create_autospec(Creator, instance=True, bin_dir=bin_dir, script_dir=bin_dir),
+        )
 
-    mocker.patch("tox.tox_env.python.virtual_env.api.session_via_cli", side_effect=_fake_session)
+    mocker.patch("tox.tox_env.python.virtual_env.api.session_via_cli", autospec=True, side_effect=_fake_session)
     prev_ver, impl, _ = patch_prev_py(True, debug=True)
-    prev_py = f"py{prev_ver}"
-    prj = tox_project({"tox.ini": f"[tox]\nenv_list= {prev_py}\n[testenv]\npackage=wheel"})
-    execute_calls = prj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
-    result = prj.run("-r", "--root", str(demo_pkg_inline), "--workdir", str(prj.path / ".tox"))
-    result.assert_success()
+    prj = tox_project({"tox.ini": f"[tox]\nenv_list= {f'py{prev_ver}'}\n[testenv]\npackage=wheel"})
+    execute_calls = prj.patch_execute(lambda request: 0 if "install" in request.run_id else None)
+    prj.run("-r", "--root", str(demo_pkg_inline), "--workdir", str(prj.path / ".tox")).assert_success()
     calls = [(i[0][0].conf.name, i[0][3].run_id) for i in execute_calls.call_args_list]
     assert calls == [
         (f".pkg-{impl}{prev_ver}d", "_optional_hooks"),
@@ -219,137 +217,147 @@ def test_diff_msg_added_removed_changed() -> None:
     before = {"A": "1", "F": "8", "C": "3", "D": "4", "E": "6"}
     after = {"G": "9", "B": "2", "C": "3", "D": "5", "E": "7"}
     expected = "python added A='1' | F='8', removed G='9' | B='2', changed D='5'->'4' | E='7'->'6'"
-    assert Python._diff_msg(before, after) == expected  # ruff:ignore[private-member-access]
+    assert Python._diff_msg(before, after) == expected  # ruff:ignore[private-member-access]  # internal state
 
 
 def test_diff_msg_no_diff() -> None:
-    assert Python._diff_msg({}, {}) == "python "  # ruff:ignore[private-member-access]
+    assert Python._diff_msg({}, {}) == "python "  # ruff:ignore[private-member-access]  # internal state
 
 
 @pytest.mark.parametrize(
     ("env", "base_python"),
     [
-        ("py3", "py3"),
-        ("py3t", "py3t"),
-        ("py311", "py311"),
-        ("py311t", "py311t"),
-        ("py3.12", "py3.12"),
-        ("py3.12t", "py3.12t"),
-        ("pypy2", "pypy2"),
-        ("pypy2t", "pypy2t"),
-        ("rustpython3", "rustpython3"),
-        ("rustpython3t", "rustpython3t"),
-        ("graalpy", "graalpy"),
-        ("graalpyt", None),
-        ("jython", "jython"),
-        ("jythont", None),
-        ("cpython3.8", "cpython3.8"),
-        ("cpython3.8t", "cpython3.8t"),
-        ("ironpython2.7", "ironpython2.7"),
-        ("ironpython2.7t", "ironpython2.7t"),
-        ("functional-py310", "py310"),
-        ("functional-py310t", "py310t"),
-        ("bar-pypy2-foo", "pypy2"),
-        ("bar-foo2t-py2", "py2"),
-        ("bar-pypy2t-foo", "pypy2t"),
-        ("py", None),
-        ("pyt", None),
-        ("django-32", None),
-        ("django-32t", None),
-        ("eslint-8.3", None),
-        ("eslint-8.3t", None),
-        ("py-310", None),
-        ("py-310t", None),
-        ("py3000", None),
-        ("py3000t", None),
-        ("4.foo", None),
-        ("4.foot", None),
-        ("310", None),
-        ("310t", None),
-        ("5", None),
-        ("5t", None),
-        ("2000", None),
-        ("2000t", None),
-        ("4000", None),
-        ("4000t", None),
-        ("3.10", "3.10"),
-        ("3.10t", "3.10t"),
-        ("3.9", "3.9"),
-        ("3.9t", "3.9t"),
-        ("2.7", "2.7"),
-        ("2.7t", "2.7t"),
-        ("pypy-3.10", "pypy3.10"),
-        ("pypy-3.10t", "pypy3.10t"),
-        ("3.10-tests", "3.10"),
-        ("3.10t-tests", "3.10t"),
-        ("tests-3.10", "3.10"),
-        ("tests-3.10t", "3.10t"),
-        ("foo-3.14-bar", "3.14"),
-        ("py311d", "py311d"),
-        ("py311td", "py311td"),
-        ("py3.12d", "py3.12d"),
-        ("cpython3.8d", "cpython3.8d"),
-        ("functional-py310d", "py310d"),
-        ("bar-pypy2d-foo", "pypy2d"),
-        ("3.10d", "3.10d"),
-        ("3.10td", "3.10td"),
-        ("pypy-3.10d", "pypy3.10d"),
-        ("3.10d-tests", "3.10d"),
-        ("pyd", None),
-        ("graalpyd", None),
-        ("django-32d", None),
+        pytest.param("py3", "py3", id="py3-py3"),
+        pytest.param("py3t", "py3t", id="py3t-py3t"),
+        pytest.param("py311", "py311", id="py311-py311"),
+        pytest.param("py311t", "py311t", id="py311t-py311t"),
+        pytest.param("py3.12", "py3.12", id="py3-dot-12-py3-dot-12"),
+        pytest.param("py3.12t", "py3.12t", id="py3-dot-12t-py3-dot-12t"),
+        pytest.param("pypy2", "pypy2", id="pypy2-pypy2"),
+        pytest.param("pypy2t", "pypy2t", id="pypy2t-pypy2t"),
+        pytest.param("rustpython3", "rustpython3", id="rustpython3-rustpython3"),
+        pytest.param("rustpython3t", "rustpython3t", id="rustpython3t-rustpython3t"),
+        pytest.param("graalpy", "graalpy", id="graalpy-graalpy"),
+        pytest.param("graalpyt", None, id="graalpyt-none"),
+        pytest.param("jython", "jython", id="jython-jython"),
+        pytest.param("jythont", None, id="jythont-none"),
+        pytest.param("cpython3.8", "cpython3.8", id="cpython3-dot-8-cpython3-dot-8"),
+        pytest.param("cpython3.8t", "cpython3.8t", id="cpython3-dot-8t-cpython3-dot-8t"),
+        pytest.param("ironpython2.7", "ironpython2.7", id="ironpython2-dot-7-ironpython2-dot-7"),
+        pytest.param("ironpython2.7t", "ironpython2.7t", id="ironpython2-dot-7t-ironpython2-dot-7t"),
+        pytest.param("functional-py310", "py310", id="functional-dash-py310-py310"),
+        pytest.param("functional-py310t", "py310t", id="functional-dash-py310t-py310t"),
+        pytest.param("bar-pypy2-foo", "pypy2", id="bar-dash-pypy2-dash-foo-pypy2"),
+        pytest.param("bar-foo2t-py2", "py2", id="bar-dash-foo2t-dash-py2-py2"),
+        pytest.param("bar-pypy2t-foo", "pypy2t", id="bar-dash-pypy2t-dash-foo-pypy2t"),
+        pytest.param("py", None, id="py-none"),
+        pytest.param("pyt", None, id="pyt-none"),
+        pytest.param("django-32", None, id="django-dash-32-none"),
+        pytest.param("django-32t", None, id="django-dash-32t-none"),
+        pytest.param("eslint-8.3", None, id="eslint-dash-8-dot-3-none"),
+        pytest.param("eslint-8.3t", None, id="eslint-dash-8-dot-3t-none"),
+        pytest.param("py-310", None, id="py-dash-310-none"),
+        pytest.param("py-310t", None, id="py-dash-310t-none"),
+        pytest.param("py3000", None, id="py3000-none"),
+        pytest.param("py3000t", None, id="py3000t-none"),
+        pytest.param("4.foo", None, id="4-dot-foo-none"),
+        pytest.param("4.foot", None, id="4-dot-foot-none"),
+        pytest.param("310", None, id="310-none"),
+        pytest.param("310t", None, id="310t-none"),
+        pytest.param("5", None, id="5-none"),
+        pytest.param("5t", None, id="5t-none"),
+        pytest.param("2000", None, id="2000-none"),
+        pytest.param("2000t", None, id="2000t-none"),
+        pytest.param("4000", None, id="4000-none"),
+        pytest.param("4000t", None, id="4000t-none"),
+        pytest.param("3.10", "3.10", id="3-dot-10-3-dot-10"),
+        pytest.param("3.10t", "3.10t", id="3-dot-10t-3-dot-10t"),
+        pytest.param("3.9", "3.9", id="3-dot-9-3-dot-9"),
+        pytest.param("3.9t", "3.9t", id="3-dot-9t-3-dot-9t"),
+        pytest.param("2.7", "2.7", id="2-dot-7-2-dot-7"),
+        pytest.param("2.7t", "2.7t", id="2-dot-7t-2-dot-7t"),
+        pytest.param("pypy-3.10", "pypy3.10", id="pypy-dash-3-dot-10-pypy3-dot-10"),
+        pytest.param("pypy-3.10t", "pypy3.10t", id="pypy-dash-3-dot-10t-pypy3-dot-10t"),
+        pytest.param("3.10-tests", "3.10", id="3-dot-10-dash-tests-3-dot-10"),
+        pytest.param("3.10t-tests", "3.10t", id="3-dot-10t-dash-tests-3-dot-10t"),
+        pytest.param("tests-3.10", "3.10", id="tests-dash-3-dot-10-3-dot-10"),
+        pytest.param("tests-3.10t", "3.10t", id="tests-dash-3-dot-10t-3-dot-10t"),
+        pytest.param("foo-3.14-bar", "3.14", id="foo-dash-3-dot-14-dash-bar-3-dot-14"),
+        pytest.param("py311d", "py311d", id="py311d-py311d"),
+        pytest.param("py311td", "py311td", id="py311td-py311td"),
+        pytest.param("py3.12d", "py3.12d", id="py3-dot-12d-py3-dot-12d"),
+        pytest.param("cpython3.8d", "cpython3.8d", id="cpython3-dot-8d-cpython3-dot-8d"),
+        pytest.param("functional-py310d", "py310d", id="functional-dash-py310d-py310d"),
+        pytest.param("bar-pypy2d-foo", "pypy2d", id="bar-dash-pypy2d-dash-foo-pypy2d"),
+        pytest.param("3.10d", "3.10d", id="3-dot-10d-3-dot-10d"),
+        pytest.param("3.10td", "3.10td", id="3-dot-10td-3-dot-10td"),
+        pytest.param("pypy-3.10d", "pypy3.10d", id="pypy-dash-3-dot-10d-pypy3-dot-10d"),
+        pytest.param("3.10d-tests", "3.10d", id="3-dot-10d-dash-tests-3-dot-10d"),
+        pytest.param("pyd", None, id="pyd-none"),
+        pytest.param("graalpyd", None, id="graalpyd-none"),
+        pytest.param("django-32d", None, id="django-dash-32d-none"),
     ],
-    ids=lambda a: "|".join(a) if isinstance(a, list) else str(a),
 )
 def test_extract_base_python(env: str, base_python: str | None) -> None:
     result = Python.extract_base_python(env)
     assert result == base_python
 
 
-@pytest.mark.parametrize("ignore_conflict", [True, False])
+@pytest.mark.parametrize("ignore_conflict", [pytest.param(True, id="true"), pytest.param(False, id="false")])
 @pytest.mark.parametrize(
     ("env", "base_python"),
     [
-        ("magic", ["pypy"]),
-        ("magic", ["py39"]),
+        pytest.param("magic", ["pypy"], id="magic-pypy"),
+        pytest.param("magic", ["py39"], id="magic-py39"),
     ],
-    ids=lambda a: "|".join(a) if isinstance(a, list) else str(a),
 )
 def test_base_python_env_no_conflict(env: str, base_python: list[str], ignore_conflict: bool) -> None:
-    result = Python._validate_base_python(env, base_python, ignore_conflict)  # ruff:ignore[private-member-access]
+    result = Python._validate_base_python(  # ruff:ignore[private-member-access]  # internal state
+        env, base_python, ignore_conflict
+    )
     assert result is base_python
 
 
-@pytest.mark.parametrize("ignore_conflict", [True, False])
 @pytest.mark.parametrize(
-    ("env", "base_python", "expected", "conflict"),
+    ("env", "base_python", "expected"),
     [
-        ("pypy", ["cpython"], "pypy", ["cpython"]),
-        ("pypy2", ["pypy3"], "pypy2", ["pypy3"]),
-        ("py3", ["py2"], "py3", ["py2"]),
-        ("py38", ["py39"], "py38", ["py39"]),
-        ("py38", ["py38", "py39"], "py38", ["py39"]),
-        ("py38", ["python3"], "py38", ["python3"]),
-        ("py310", ["py38", "py39"], "py310", ["py38", "py39"]),
-        ("py3.11", ["py310"], "py3.11", ["py310"]),
-        ("py310-magic", ["py39"], "py310", ["py39"]),
+        pytest.param("pypy", ["cpython"], "pypy", id="pypy-cpython-pypy"),
+        pytest.param("pypy2", ["pypy3"], "pypy2", id="pypy2-pypy3-pypy2"),
+        pytest.param("py3", ["py2"], "py3", id="py3-py2-py3"),
+        pytest.param("py38", ["py39"], "py38", id="py38-py39-py38"),
+        pytest.param("py38", ["py38", "py39"], "py38", id="py38-py38-py39-py38"),
+        pytest.param("py38", ["python3"], "py38", id="py38-python3-py38"),
+        pytest.param("py310", ["py38", "py39"], "py310", id="py310-py38-py39-py310"),
+        pytest.param("py3.11", ["py310"], "py3.11", id="py3-dot-11-py310-py3-dot-11"),
+        pytest.param("py310-magic", ["py39"], "py310", id="py310-dash-magic-py39-py310"),
     ],
-    ids=lambda a: "|".join(a) if isinstance(a, list) else str(a),
 )
-def test_base_python_env_conflict(
-    env: str,
-    base_python: list[str],
-    expected: str,
-    conflict: list[str],
-    ignore_conflict: bool,
-) -> None:
-    if ignore_conflict:
-        result = Python._validate_base_python(env, base_python, ignore_conflict)  # ruff:ignore[private-member-access]
-        assert result == [expected]
-    else:
-        msg = f"env name {env} conflicting with base python {conflict[0]}"
-        with pytest.raises(Fail, match=msg):
-            Python._validate_base_python(env, base_python, ignore_conflict)  # ruff:ignore[private-member-access]
+def test_base_python_env_conflict_ignored(env: str, base_python: list[str], expected: str) -> None:
+    result = Python._validate_base_python(  # ruff:ignore[private-member-access]  # internal state
+        env, base_python, True
+    )
+    assert result == [expected]
+
+
+@pytest.mark.parametrize(
+    ("env", "base_python", "conflict"),
+    [
+        pytest.param("pypy", ["cpython"], ["cpython"], id="pypy-cpython-cpython"),
+        pytest.param("pypy2", ["pypy3"], ["pypy3"], id="pypy2-pypy3-pypy3"),
+        pytest.param("py3", ["py2"], ["py2"], id="py3-py2-py2"),
+        pytest.param("py38", ["py39"], ["py39"], id="py38-py39-py39"),
+        pytest.param("py38", ["py38", "py39"], ["py39"], id="py38-py38-py39-py39"),
+        pytest.param("py38", ["python3"], ["python3"], id="py38-python3-python3"),
+        pytest.param("py310", ["py38", "py39"], ["py38", "py39"], id="py310-py38-py39-py38-py39"),
+        pytest.param("py3.11", ["py310"], ["py310"], id="py3-dot-11-py310-py310"),
+        pytest.param("py310-magic", ["py39"], ["py39"], id="py310-dash-magic-py39"),
+    ],
+)
+def test_base_python_env_conflict_raises(env: str, base_python: list[str], conflict: list[str]) -> None:
+    with pytest.raises(Fail, match=f"env name {env} conflicting with base python {conflict[0]}"):
+        Python._validate_base_python(  # ruff:ignore[private-member-access]  # internal state
+            env, base_python, False
+        )
 
 
 @pytest.mark.parametrize(
@@ -413,6 +421,7 @@ def test_base_python_path_implementation_case(
     mocker.patch.object(
         VirtualEnv,
         "python_spec_for_path",
+        autospec=True,
         return_value=PythonSpec("discovered", implementation, 3, 9, None, 64, None, free_threaded=False),
     )
     project = tox_project({
@@ -432,34 +441,40 @@ def test_base_python_path_implementation_case(
     )
 
 
-@pytest.mark.parametrize("ignore_conflict", [True, False, None])
-def test_base_python_env_conflict_show_conf(tox_project: ToxProjectCreator, ignore_conflict: bool | None) -> None:
+@pytest.mark.parametrize(
+    "ignore_line",
+    [
+        pytest.param("", id="unset"),
+        pytest.param("\n[tox]\nignore_base_python_conflict=False", id="false"),
+    ],
+)
+def test_base_python_env_conflict_show_conf(tox_project: ToxProjectCreator, ignore_line: str) -> None:
     py_ver = "".join(str(i) for i in sys.version_info[0:2])
     py_ver_next = "".join(str(i) for i in (sys.version_info[0], sys.version_info[1] + 2))
-    ini = f"[testenv]\npackage=skip\nbase_python=py{py_ver_next}"
-    if ignore_conflict is not None:
-        ini += f"\n[tox]\nignore_base_python_conflict={ignore_conflict}"
-    project = tox_project({"tox.ini": ini})
+    project = tox_project({"tox.ini": f"[testenv]\npackage=skip\nbase_python=py{py_ver_next}{ignore_line}"})
     result = project.run("c", "-e", f"py{py_ver}", "-k", "base_python", raise_on_config_fail=False)
-    if ignore_conflict:
-        result.assert_success()
-    else:
-        result.assert_failed(code=-1)
-    if ignore_conflict:
-        out = f"[testenv:py{py_ver}]\nbase_python = py{py_ver}\n"
-    else:
-        comma_in_exc = sys.version_info[0:2] <= (3, 6)
-        out = (
-            f"[testenv:py{py_ver}]\nbase_python = # Exception: Fail('env name py{py_ver} conflicting with"
-            f" base python py{py_ver_next}'{',' if comma_in_exc else ''})\n"
-        )
+    result.assert_failed(code=-1)
+    out = (
+        f"[testenv:py{py_ver}]\nbase_python = # Exception: Fail('env name py{py_ver} conflicting with"
+        f" base python py{py_ver_next}')\n"
+    )
     result.assert_out_err(out, "")
+
+
+def test_base_python_env_conflict_ignored_show_conf(tox_project: ToxProjectCreator) -> None:
+    py_ver = "".join(str(i) for i in sys.version_info[0:2])
+    py_ver_next = "".join(str(i) for i in (sys.version_info[0], sys.version_info[1] + 2))
+    project = tox_project({
+        "tox.ini": f"[testenv]\npackage=skip\nbase_python=py{py_ver_next}\n[tox]\nignore_base_python_conflict=True"
+    })
+    result = project.run("c", "-e", f"py{py_ver}", "-k", "base_python", raise_on_config_fail=False)
+    result.assert_success()
+    result.assert_out_err(f"[testenv:py{py_ver}]\nbase_python = py{py_ver}\n", "")
 
 
 def test_python_set_hash_seed(tox_project: ToxProjectCreator) -> None:
     ini = "[testenv]\npackage=skip\ncommands=python -c 'import os; print(os.environ[\"PYTHONHASHSEED\"])'"
-    prj = tox_project({"tox.ini": ini})
-    result = prj.run("r", "-e", "py", "--hashseed", "10")
+    result = tox_project({"tox.ini": ini}).run("r", "-e", "py", "--hashseed", "10")
     result.assert_success()
     assert result.out.splitlines()[1] == "10"
 
@@ -471,15 +486,33 @@ def test_python_set_hash_seed(tox_project: ToxProjectCreator) -> None:
         pytest.param({"PYTHONHASHSEED": ""}, id="empty"),
     ],
 )
+@pytest.mark.parametrize(
+    "max_seed",
+    [
+        pytest.param(
+            1024,
+            id="windows",
+            marks=pytest.mark.skipif(sys.platform != "win32", reason="windows seed limit"),
+        ),
+        pytest.param(
+            4294967295,
+            id="posix",
+            marks=pytest.mark.skipif(sys.platform == "win32", reason="posix seed limit"),
+        ),
+    ],
+)
 def test_python_generate_hash_seed(
-    tox_project: ToxProjectCreator, monkeypatch: pytest.MonkeyPatch, host_env: dict[str, str]
+    tox_project: ToxProjectCreator,
+    monkeypatch: pytest.MonkeyPatch,
+    host_env: dict[str, str],
+    max_seed: int,
 ) -> None:
     monkeypatch.delenv("PYTHONHASHSEED", raising=False)
     ini = "[testenv]\npackage=skip\ncommands=python -c 'import os; print(os.environ[\"PYTHONHASHSEED\"])'"
-    with patch.dict("os.environ", host_env):
-        result = tox_project({"tox.ini": ini}).run("r", "-e", "py")
+    monkeypatch.setattr(os, "environ", {**os.environ, **host_env})
+    result = tox_project({"tox.ini": ini}).run("r", "-e", "py")
     result.assert_success()
-    assert 1 <= int(result.out.splitlines()[1]) <= (1024 if sys.platform == "win32" else 4294967295)
+    assert 1 <= int(result.out.splitlines()[1]) <= max_seed
 
 
 def test_python_keep_hash_seed(tox_project: ToxProjectCreator) -> None:
@@ -510,8 +543,7 @@ def test_python_hash_seed_via_section_substitution(tox_project: ToxProjectCreato
 
 def test_python_disable_hash_seed(tox_project: ToxProjectCreator) -> None:
     ini = "[testenv]\npackage=skip\ncommands=python -c 'import os; print(os.environ.get(\"PYTHONHASHSEED\"))'"
-    prj = tox_project({"tox.ini": ini})
-    result = prj.run("r", "-e", "py", "--hashseed", "notset")
+    result = tox_project({"tox.ini": ini}).run("r", "-e", "py", "--hashseed", "notset")
     result.assert_success()
     assert result.out.splitlines()[1] == "None"
 
@@ -528,68 +560,75 @@ def test_python_set_hash_seed_incorrect(tox_project: ToxProjectCreator) -> None:
     assert "tox run: error: argument --hashseed: invalid literal for int() with base 10: 'ok'" in result.err
 
 
-def test_python_use_hash_seed_from_env(tox_project: ToxProjectCreator) -> None:
+def test_python_use_hash_seed_from_env(tox_project: ToxProjectCreator, monkeypatch: pytest.MonkeyPatch) -> None:
     ini = "[testenv]\npackage=skip"
-    with patch.dict("os.environ", {"PYTHONHASHSEED": "13"}):
-        result = tox_project({"tox.ini": ini}).run("c", "-e", "py", "-k", "setenv")
-        result.assert_success()
-        assert "PYTHONHASHSEED=13" in result.out
+    monkeypatch.setenv("PYTHONHASHSEED", "13")
+    result = tox_project({"tox.ini": ini}).run("c", "-e", "py", "-k", "setenv")
+    result.assert_success()
+    assert "PYTHONHASHSEED=13" in result.out
 
 
-def test_python_hash_seed_from_env_random(tox_project: ToxProjectCreator) -> None:
+def test_python_hash_seed_from_env_random(tox_project: ToxProjectCreator, monkeypatch: pytest.MonkeyPatch) -> None:
     ini = "[testenv]\npackage=skip"
-    with patch.dict("os.environ", {"PYTHONHASHSEED": "random"}):
-        result = tox_project({"tox.ini": ini}).run("c", "-e", "py", "-k", "setenv")
-        result.assert_success()
-        assert "PYTHONHASHSEED=" in result.out
+    monkeypatch.setenv("PYTHONHASHSEED", "random")
+    result = tox_project({"tox.ini": ini}).run("c", "-e", "py", "-k", "setenv")
+    result.assert_success()
+    assert "PYTHONHASHSEED=" in result.out
 
 
-def test_python_hash_seed_from_env_and_override(tox_project: ToxProjectCreator) -> None:
+def test_python_hash_seed_from_env_and_override(
+    tox_project: ToxProjectCreator, monkeypatch: pytest.MonkeyPatch
+) -> None:
     ini = "[testenv]\npackage=skip\ncommands=python -c 'import os; print(os.environ.get(\"PYTHONHASHSEED\"))'"
-    with patch.dict("os.environ", {"PYTHONHASHSEED": "14"}):
-        result = tox_project({"tox.ini": ini}).run("r", "-e", "py", "--hashseed", "15")
-        result.assert_success()
-        assert result.out.splitlines()[1] == "15"
+    monkeypatch.setenv("PYTHONHASHSEED", "14")
+    result = tox_project({"tox.ini": ini}).run("r", "-e", "py", "--hashseed", "15")
+    result.assert_success()
+    assert result.out.splitlines()[1] == "15"
 
 
-def test_python_hash_seed_from_env_and_disable(tox_project: ToxProjectCreator) -> None:
+def test_python_hash_seed_from_env_and_disable(tox_project: ToxProjectCreator, monkeypatch: pytest.MonkeyPatch) -> None:
     ini = "[testenv]\npackage=skip\ncommands=python -c 'import os; print(os.environ.get(\"PYTHONHASHSEED\"))'"
-    with patch.dict("os.environ", {"PYTHONHASHSEED": "16"}):
-        result = tox_project({"tox.ini": ini}).run("r", "-e", "py", "--hashseed", "notset")
-        result.assert_success()
-        assert result.out.splitlines()[1] == "None"
+    monkeypatch.setenv("PYTHONHASHSEED", "16")
+    result = tox_project({"tox.ini": ini}).run("r", "-e", "py", "--hashseed", "notset")
+    result.assert_success()
+    assert result.out.splitlines()[1] == "None"
 
 
-@pytest.mark.parametrize("in_ci", [True, False])
-def test_list_installed_deps(in_ci: bool, tox_project: ToxProjectCreator, mocker: MockerFixture) -> None:
-    mocker.patch("tox.config.cli.parser.is_ci", return_value=in_ci)
+@pytest.mark.parametrize(
+    ("in_ci", "pip_listed"),
+    [pytest.param(True, True, id="true"), pytest.param(False, False, id="false")],
+)
+def test_list_installed_deps(
+    in_ci: bool, pip_listed: bool, tox_project: ToxProjectCreator, mocker: MockerFixture
+) -> None:
+    mocker.patch("tox.config.cli.parser.is_ci", autospec=True, return_value=in_ci)
     result = tox_project({"tox.ini": "[testenv]\nskip_install = true"}).run("r", "-e", "py")
-    if in_ci:
-        assert "pip==" in result.out
-    else:
-        assert "pip==" not in result.out
+    assert ("pip==" in result.out) is pip_listed
 
 
-@pytest.mark.parametrize("list_deps", ["--list-dependencies", "--no-list-dependencies"])
-@pytest.mark.parametrize("in_ci", [True, False])
+@pytest.mark.parametrize(
+    ("list_deps", "pip_listed"),
+    [
+        pytest.param("--list-dependencies", True, id="dash-dash-list-dash-dependencies"),
+        pytest.param("--no-list-dependencies", False, id="dash-dash-no-dash-list-dash-dependencies"),
+    ],
+)
+@pytest.mark.parametrize("in_ci", [pytest.param(True, id="true"), pytest.param(False, id="false")])
 def test_list_installed_deps_explicit_cli(
     list_deps: str,
+    pip_listed: bool,
     in_ci: bool,
     tox_project: ToxProjectCreator,
     mocker: MockerFixture,
 ) -> None:
-    mocker.patch("tox.config.cli.parser.is_ci", return_value=in_ci)
+    mocker.patch("tox.config.cli.parser.is_ci", autospec=True, return_value=in_ci)
     result = tox_project({"tox.ini": "[testenv]\nskip_install = true"}).run(list_deps, "r", "-e", "py")
-    if list_deps == "--list-dependencies":
-        assert "pip==" in result.out
-    else:
-        assert "pip==" not in result.out
+    assert ("pip==" in result.out) is pip_listed
 
 
 def test_usedevelop_with_nonexistent_basepython(tox_project: ToxProjectCreator) -> None:
     ini = "[testenv]\nusedevelop = true\n[testenv:unused]\nbasepython = /nonexistent/bin/python"
-    project = tox_project({"tox.ini": ini})
-    result = project.run()
+    result = tox_project({"tox.ini": ini}).run()
     assert result.code == 0
 
 
@@ -700,13 +739,57 @@ commands = [["python", "-c", "print('ok')"]]
 
 
 @pytest.mark.parametrize(
-    ("impl", "major", "minor", "arch", "free_threaded", "debug", "platform_str", "expected_machine"),
+    ("impl", "major", "minor", "arch", "free_threaded", "debug", "platform_str", "expected_machine", "expected_debug"),
     [
-        ("cpython", 3, 12, 64, None, False, "linux-x86_64", "x86_64"),
-        ("cpython", 3, 13, 64, True, True, "linux-aarch64", "arm64"),
-        ("cpython", 3, 13, 64, False, True, "win-amd64", "x86_64"),
-        ("pypy", 3, 9, 32, None, False, "win32", None),
-        ("cpython", 3, 12, 64, None, False, "macosx-14.0-arm64", "arm64"),
+        pytest.param(
+            "cpython",
+            3,
+            12,
+            64,
+            None,
+            False,
+            "linux-x86_64",
+            "x86_64",
+            None,
+            id="cpython-3-12-64-none-false-linux-dash-x86-underscore-64-x86-underscore-64",
+        ),
+        pytest.param(
+            "cpython",
+            3,
+            13,
+            64,
+            True,
+            True,
+            "linux-aarch64",
+            "arm64",
+            True,
+            id="cpython-3-13-64-true-true-linux-dash-aarch64-arm64",
+        ),
+        pytest.param(
+            "cpython",
+            3,
+            13,
+            64,
+            False,
+            True,
+            "win-amd64",
+            "x86_64",
+            True,
+            id="cpython-3-13-64-false-true-win-dash-amd64-x86-underscore-64",
+        ),
+        pytest.param("pypy", 3, 9, 32, None, False, "win32", None, None, id="pypy-3-9-32-none-false-win32-none"),
+        pytest.param(
+            "cpython",
+            3,
+            12,
+            64,
+            None,
+            False,
+            "macosx-14.0-arm64",
+            "arm64",
+            None,
+            id="cpython-3-12-64-none-false-macosx-dash-14-dot-0-dash-arm64-arm64",
+        ),
     ],
 )
 def test_python_spec_for_sys_executable(
@@ -718,11 +801,12 @@ def test_python_spec_for_sys_executable(
     debug: bool,
     platform_str: str,
     expected_machine: str,
+    expected_debug: bool | None,
     mocker: MockerFixture,
 ) -> None:
     get_config_var_ = sysconfig.get_config_var
 
-    def get_config_var(name: str) -> object:
+    def get_config_var(name: str) -> bool | int | str | None:
         if name == "Py_GIL_DISABLED":
             return free_threaded
         if name == "Py_DEBUG":
@@ -741,24 +825,32 @@ def test_python_spec_for_sys_executable(
     mocker.patch.object(sys, "implementation", implementation)
     mocker.patch.object(sys, "maxsize", 2**arch // 2 - 1)
     mocker.patch.object(sysconfig, "get_config_var", get_config_var)
-    mocker.patch.object(sysconfig, "get_platform", return_value=platform_str)
-    spec = Python._python_spec_for_sys_executable()  # ruff:ignore[private-member-access]
-    assert spec.implementation == impl
-    assert spec.major == major
-    assert spec.minor == minor
-    assert spec.architecture == arch
-    assert spec.free_threaded == bool(free_threaded)
-    assert spec.debug is (True if debug else None)
+    mocker.patch.object(sysconfig, "get_platform", autospec=True, return_value=platform_str)
+    spec = Python._python_spec_for_sys_executable()  # ruff:ignore[private-member-access]  # internal state
+    assert (spec.implementation, spec.major, spec.minor, spec.architecture, spec.free_threaded) == (
+        impl,
+        major,
+        minor,
+        arch,
+        bool(free_threaded),
+    )
+    assert spec.debug is expected_debug
     assert spec.machine == expected_machine
 
 
 @pytest.mark.parametrize(
-    ("impl", "major", "minor", "arch", "free_threaded", "debug_build", "machine"),
+    ("impl", "major", "minor", "arch", "free_threaded", "debug_build", "machine", "expected_debug"),
     [
-        ("cpython", 3, 13, 64, True, False, "x86_64"),
-        ("cpython", 3, 13, 64, False, True, "x86_64"),
-        ("cpython", 3, 13, 64, True, True, "x86_64"),
-        ("cpython", 3, 12, 64, None, False, None),
+        pytest.param(
+            "cpython", 3, 13, 64, True, False, "x86_64", None, id="cpython-3-13-64-true-false-x86-underscore-64"
+        ),
+        pytest.param(
+            "cpython", 3, 13, 64, False, True, "x86_64", True, id="cpython-3-13-64-false-true-x86-underscore-64"
+        ),
+        pytest.param(
+            "cpython", 3, 13, 64, True, True, "x86_64", True, id="cpython-3-13-64-true-true-x86-underscore-64"
+        ),
+        pytest.param("cpython", 3, 12, 64, None, False, None, None, id="cpython-3-12-64-none-false-none"),
     ],
 )
 def test_python_spec_for_path(
@@ -769,6 +861,7 @@ def test_python_spec_for_path(
     free_threaded: bool | None,
     debug_build: bool,
     machine: str | None,
+    expected_debug: bool | None,
     mocker: MockerFixture,
 ) -> None:
     info = SimpleNamespace(
@@ -779,38 +872,51 @@ def test_python_spec_for_path(
         debug_build=debug_build,
         machine=machine,
     )
-    mocker.patch.object(VirtualEnv, "get_virtualenv_py_info", return_value=info)
+    mocker.patch.object(VirtualEnv, "get_virtualenv_py_info", autospec=True, return_value=info)
     spec = VirtualEnv.python_spec_for_path(Path("/does/not/matter"))
-    assert spec.implementation == impl
-    assert spec.major == major
-    assert spec.minor == minor
-    assert spec.architecture == arch
-    assert spec.free_threaded == bool(free_threaded)
-    assert spec.debug is (True if debug_build else None)
+    assert (spec.implementation, spec.major, spec.minor, spec.architecture, spec.free_threaded) == (
+        impl,
+        major,
+        minor,
+        arch,
+        bool(free_threaded),
+    )
+    assert spec.debug is expected_debug
     assert spec.machine == machine
 
 
 @pytest.mark.parametrize(
-    ("env", "base_debug", "conflicts"),
+    ("env", "spec"),
     [
-        ("py313d", True, False),
-        ("py313d", False, True),
-        ("py313", True, False),
+        pytest.param("py313d", "cpython313d-64-x86_64", id="py313d-env-debug-base"),
+        pytest.param("py313", "cpython313d-64-x86_64", id="py313-env-debug-base"),
     ],
 )
-def test_validate_base_python_debug(env: str, base_debug: bool, conflicts: bool, mocker: MockerFixture) -> None:
-    spec = PythonSpec.from_string_spec(f"cpython313{'d' if base_debug else ''}-64-x86_64")
-    mocker.patch.object(VirtualEnv, "python_spec_for_path", return_value=spec)
+def test_validate_base_python_debug_matches(env: str, spec: str, mocker: MockerFixture) -> None:
+    mocker.patch.object(
+        VirtualEnv, "python_spec_for_path", autospec=True, return_value=PythonSpec.from_string_spec(spec)
+    )
     base_python = [str(Path("/opt/python3.13").absolute())]
-    if conflicts:
-        with pytest.raises(Fail, match=f"env name {env} conflicting with base python"):
-            VirtualEnv._validate_base_python(env, base_python, False)  # ruff:ignore[private-member-access]
-    else:
-        assert VirtualEnv._validate_base_python(env, base_python, False) == base_python  # ruff:ignore[private-member-access]
+    # private method under test
+    assert VirtualEnv._validate_base_python(env, base_python, False) == base_python  # ruff:ignore[private-member-access]
 
 
-_PY_VER = f"{sys.version_info[0]}.{sys.version_info[1]}"
-_PY_VER_NODOT = f"{sys.version_info[0]}{sys.version_info[1]}"
+def test_validate_base_python_debug_conflicts(mocker: MockerFixture) -> None:
+    mocker.patch.object(
+        VirtualEnv,
+        "python_spec_for_path",
+        autospec=True,
+        return_value=PythonSpec.from_string_spec("cpython313-64-x86_64"),
+    )
+    base_python = [str(Path("/opt/python3.13").absolute())]
+    with pytest.raises(Fail, match="env name py313d conflicting with base python"):
+        VirtualEnv._validate_base_python(  # ruff:ignore[private-member-access]  # internal state
+            "py313d", base_python, False
+        )
+
+
+_PY_VER: Final[str] = f"{sys.version_info[0]}.{sys.version_info[1]}"
+_PY_VER_NODOT: Final[str] = f"{sys.version_info[0]}{sys.version_info[1]}"
 
 
 @pytest.mark.parametrize(
@@ -971,7 +1077,7 @@ def test_base_python_file_accepts_version_spec(tox_project: ToxProjectCreator, v
 
 
 def test_base_python_file_conflict(tox_project: ToxProjectCreator) -> None:
-    """Setting both base_python and base_python_file is an error."""
+    # Setting both base_python and base_python_file is an error.
     ini = f"[testenv:mypy]\npackage=skip\nbase_python=python{_PY_VER}\nbase_python_file=.python-version\n"
     project = tox_project({"tox.ini": ini, ".python-version": f"{_PY_VER}\n"})
     result = project.run("c", "-e", "mypy", "-k", "base_python", raise_on_config_fail=False)
@@ -980,7 +1086,7 @@ def test_base_python_file_conflict(tox_project: ToxProjectCreator) -> None:
 
 
 def test_base_python_file_global_testenv(tox_project: ToxProjectCreator) -> None:
-    """base_python_file set in [testenv] applies to all non-factor envs."""
+    # base_python_file set in [testenv] applies to all non-factor envs.
     ini = f"[tox]\nenv_list=mypy,py{_PY_VER_NODOT}\n[testenv]\npackage=skip\nbase_python_file=.python-version\n"
     project = tox_project({"tox.ini": ini, ".python-version": f"{_PY_VER}\n"})
     result = project.run("c", "-e", "mypy", "-k", "base_python")

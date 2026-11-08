@@ -28,6 +28,8 @@ config
 .. autoclass:: tox.config.cli.parser.Parsed
     :members:
 
+.. autoclass:: tox.config.cli.parse.Options
+
 .. autoclass:: tox.config.main.Config
     :members:
     :exclude-members: __init__, make
@@ -70,6 +72,16 @@ config
 
 .. autoclass:: tox.config.set_env.SetEnvEntry
 
+.. autoclass:: tox.config.set_env.SetEnv
+    :members:
+
+.. autoclass:: tox.config.set_env.Replacer
+
+.. autoclass:: tox.config.loader.replacer.MatchExpression
+    :members:
+
+.. autoclass:: tox.config.loader.replacer.MatchError
+
 .. autoclass:: tox.config.loader.api.Loader
     :members:
 
@@ -97,6 +109,8 @@ environments
 
 .. autoclass:: tox.tox_env.api.ToxEnv
     :members:
+
+.. autoclass:: tox.tox_env.api.ToxEnvCreateArgs
 
 .. autoclass:: tox.tox_env.runner.RunToxEnv
     :members:
@@ -132,6 +146,8 @@ report
     :members:
     :exclude-members: stream, format, patch_thread, write_out_err, suspend_out_err
 
+.. autoclass:: tox.report.HandledError
+
 execute
 =======
 
@@ -142,6 +158,9 @@ execute
     :members:
 
 .. autoclass:: tox.execute.api.Outcome
+    :members:
+
+.. autoclass:: tox.execute.api.ExecuteOptions
     :members:
 
 .. autoclass:: tox.execute.api.Execute
@@ -164,6 +183,8 @@ installer
 
 .. autodata:: tox.tox_env.installer.InstallArguments
 
+.. autoclass:: tox.tox_env.python.pip.req.file.EnvironmentProvider
+
 .. autoclass:: tox.tox_env.python.pip.req.file.RequirementsFile
 
 .. autoclass:: tox.tox_env.python.pip.req_file.PythonDeps
@@ -178,6 +199,9 @@ session
 =======
 
 .. autoclass:: tox.session.state.State
+    :members:
+
+.. autoclass:: tox.session.env_select.CliEnv
     :members:
 
 .. autoclass:: tox.session.env_select.EnvSelector

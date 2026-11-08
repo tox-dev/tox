@@ -4,28 +4,34 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 from packaging.requirements import InvalidRequirement, Requirement
-from packaging.utils import canonicalize_name
+from packaging.utils import NormalizedName, canonicalize_name
 
 from tox.config.cli.parser import DEFAULT_VERBOSITY, Parsed, ToxParser
 from tox.config.loader.memory import MemoryLoader
 from tox.config.set_env import SetEnv
 from tox.plugin import impl
-from tox.session.cmd.run.common import env_run_create_flags
-from tox.session.cmd.run.parallel import OFF_VALUE, parallel_flags, run_parallel
-from tox.session.cmd.run.sequential import run_sequential
 from tox.session.env_select import CliEnv, EnvSelector, register_env_select_flags
 from tox.tox_env.python.pip.req_file import PythonDeps
 
 from .devenv import devenv
 from .list_env import list_env
+from .run.common import env_run_create_flags
+from .run.parallel import OFF_VALUE, parallel_flags, run_parallel
+from .run.sequential import run_sequential
 from .show_config import show_config
 
 if TYPE_CHECKING:
+    from tox.config.sets import EnvConfigSet
     from tox.session.state import State
 
 
 @impl
 def tox_add_option(parser: ToxParser) -> None:
+    """Add the ``legacy`` sub-command, with the options of the older command line, to the command line parser.
+
+    :param parser: the parser to add the sub-command to
+
+    """
     our = parser.add_command("legacy", ["le"], "legacy entry-point command", legacy)
     our.add_argument("--help-ini", "--hi", action="store_true", help="show live configuration", dest="show_config")
     our.add_argument(
@@ -90,6 +96,13 @@ def tox_add_option(parser: ToxParser) -> None:
 
 
 def legacy(state: State) -> int:
+    """Run the command that the legacy options select, such as showing the configuration or listing the environments.
+
+    :param state: the state of the run
+
+    :returns: the exit code
+
+    """
     option = state.conf.options
     if option.show_config:
         option.list_keys_only = []
@@ -118,7 +131,7 @@ def legacy(state: State) -> int:
     return run_sequential(state)
 
 
-def _handle_legacy_only_flags(option: Parsed, envs: EnvSelector) -> None:  # ruff:ignore[complex-structure]
+def _handle_legacy_only_flags(option: Parsed, envs: EnvSelector) -> None:
     override = {}
     if getattr(option, "site_packages", False):
         override["system_site_packages"] = True
@@ -136,14 +149,22 @@ def _handle_legacy_only_flags(option: Parsed, envs: EnvSelector) -> None:  # ruf
             if set_env:
                 env_conf.get("set_env", SetEnv).update(set_env, override=True)
             if forced:
-                to_force = forced.copy()
-                deps = env_conf.get("deps", PythonDeps)
-                as_root_args = deps.as_root_args
-                for at, entry in enumerate(as_root_args):
-                    try:
-                        req = Requirement(entry)
-                    except InvalidRequirement:
-                        continue
-                    if (name := canonicalize_name(req.name)) in to_force:
-                        as_root_args[at] = str(to_force.pop(name))
-                as_root_args.extend(str(v) for v in to_force.values())
+                _force_root_deps(env_conf, forced)
+
+
+def _force_root_deps(env_conf: EnvConfigSet, forced: dict[NormalizedName, Requirement]) -> None:
+    to_force = forced.copy()
+    as_root_args = env_conf.get("deps", PythonDeps).as_root_args
+    for at, entry in enumerate(as_root_args):
+        try:
+            req = Requirement(entry)
+        except InvalidRequirement:
+            continue
+        if (name := canonicalize_name(req.name)) in to_force:
+            as_root_args[at] = str(to_force.pop(name))
+    as_root_args.extend(str(v) for v in to_force.values())
+
+
+__all__ = [
+    "legacy",
+]

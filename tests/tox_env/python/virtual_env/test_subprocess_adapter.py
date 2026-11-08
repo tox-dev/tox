@@ -16,9 +16,9 @@ from tox.tox_env.python.virtual_env.subprocess_adapter import (
     SubprocessCreator,
     SubprocessPythonInfo,
     SubprocessSession,
-    _bootstrap_path,  # ruff:ignore[import-private-name]
-    _has_correct_virtualenv,  # ruff:ignore[import-private-name]
-    _VersionInfo,  # ruff:ignore[import-private-name]
+    _bootstrap_path,  # ruff:ignore[import-private-name]  # sibling module internal
+    _has_correct_virtualenv,  # ruff:ignore[import-private-name]  # sibling module internal
+    _VersionInfo,  # ruff:ignore[import-private-name]  # sibling module internal
     ensure_bootstrap,
     probe_python,
 )
@@ -31,13 +31,17 @@ if TYPE_CHECKING:
 
     from tox.pytest import ToxProjectCreator
 
+_EXECUTABLE_NAME: Final[str] = "python.exe" if sys.platform == "win32" else "python"
+
 
 def test_probe_python_current_interpreter() -> None:
     info: Final[SubprocessPythonInfo | None] = probe_python(sys.executable)
     assert info is not None
-    assert info.version_info.major == sys.version_info.major
-    assert info.version_info.minor == sys.version_info.minor
-    assert info.version_info.micro == sys.version_info.micro
+    assert (info.version_info.major, info.version_info.minor, info.version_info.micro) == (
+        sys.version_info.major,
+        sys.version_info.minor,
+        sys.version_info.micro,
+    )
     assert info.implementation == sys.implementation.name
     assert info.architecture in {32, 64}
     assert info.system_executable
@@ -50,15 +54,15 @@ def test_subprocess_python_info_positional_constructor() -> None:
     probed: Final[SubprocessPythonInfo | None] = probe_python(sys.executable)
     assert probed is not None
     info: Final[SubprocessPythonInfo] = SubprocessPythonInfo(
-        "cpython",
-        probed.version_info,
-        "3.11.0",
-        64,
-        "linux",
-        "/usr/bin/python3",
-        False,
-        True,
-        "linux-x86_64",
+        implementation="cpython",
+        version_info=probed.version_info,
+        version="3.11.0",
+        architecture=64,
+        platform="linux",
+        system_executable="/usr/bin/python3",
+        free_threaded=False,
+        debug_build=True,
+        sysconfig_platform="linux-x86_64",
     )
 
     assert (info.debug_build, info.sysconfig_platform, info.marker_environment) == (True, "linux-x86_64", None)
@@ -71,12 +75,12 @@ def test_probe_python_nonexistent() -> None:
 @pytest.mark.parametrize(
     ("sysconfig_platform", "expected_machine"),
     [
-        ("linux-x86_64", "x86_64"),
-        ("linux-aarch64", "aarch64"),
-        ("win-amd64", "amd64"),
-        ("macosx-14.0-arm64", "arm64"),
-        ("win32", ""),
-        (None, ""),
+        pytest.param("linux-x86_64", "x86_64", id="linux-dash-x86-underscore-64-x86-underscore-64"),
+        pytest.param("linux-aarch64", "aarch64", id="linux-dash-aarch64-aarch64"),
+        pytest.param("win-amd64", "amd64", id="win-dash-amd64-amd64"),
+        pytest.param("macosx-14.0-arm64", "arm64", id="macosx-dash-14-dot-0-dash-arm64-arm64"),
+        pytest.param("win32", "", id="win32-empty"),
+        pytest.param(None, "", id="none-empty"),
     ],
 )
 def test_subprocess_python_info_machine(sysconfig_platform: str | None, expected_machine: str) -> None:
@@ -94,14 +98,27 @@ def test_subprocess_python_info_machine(sysconfig_platform: str | None, expected
     assert info.machine == expected_machine
 
 
-def test_probe_python_failing_script(tmp_path: Path) -> None:
-    if sys.platform == "win32":
-        bad_script = tmp_path / "bad_python.cmd"
-        bad_script.write_text("@exit /b 1\n")
-    else:
-        bad_script = tmp_path / "bad_python"
-        bad_script.write_text("#!/bin/sh\nexit 1\n")
-        bad_script.chmod(0o755)
+@pytest.mark.parametrize(
+    ("name", "content"),
+    [
+        pytest.param(
+            "bad_python",
+            "#!/bin/sh\nexit 1\n",
+            id="posix",
+            marks=pytest.mark.skipif(sys.platform == "win32", reason="posix shell script"),
+        ),
+        pytest.param(
+            "bad_python.cmd",
+            "@exit /b 1\n",
+            id="windows",
+            marks=pytest.mark.skipif(sys.platform != "win32", reason="windows batch script"),
+        ),
+    ],
+)
+def test_probe_python_failing_script(tmp_path: Path, name: str, content: str) -> None:
+    bad_script = tmp_path / name
+    bad_script.write_text(content)
+    bad_script.chmod(0o755)
     assert probe_python(str(bad_script)) is None
 
 
@@ -118,11 +135,13 @@ def test_subprocess_creator_paths_unix(tmp_path: Path) -> None:
         free_threaded=False,
     )
     creator = SubprocessCreator(_env_dir=env_dir, interpreter=info, _is_win=False)
-    assert creator.bin_dir == env_dir / "bin"
-    assert creator.script_dir == env_dir / "bin"
-    assert creator.purelib == env_dir / "lib" / "python3.11" / "site-packages"
-    assert creator.platlib == env_dir / "lib" / "python3.11" / "site-packages"
-    assert creator.exe == env_dir / "bin" / "python"
+    assert (creator.bin_dir, creator.script_dir, creator.purelib, creator.platlib, creator.exe) == (
+        env_dir / "bin",
+        env_dir / "bin",
+        env_dir / "lib" / "python3.11" / "site-packages",
+        env_dir / "lib" / "python3.11" / "site-packages",
+        env_dir / "bin" / "python",
+    )
 
 
 def test_subprocess_creator_paths_windows(tmp_path: Path) -> None:
@@ -138,9 +157,11 @@ def test_subprocess_creator_paths_windows(tmp_path: Path) -> None:
         free_threaded=False,
     )
     creator = SubprocessCreator(_env_dir=env_dir, interpreter=info, _is_win=True)
-    assert creator.bin_dir == env_dir / "Scripts"
-    assert creator.purelib == env_dir / "Lib" / "site-packages"
-    assert creator.exe == env_dir / "Scripts" / "python.exe"
+    assert (creator.bin_dir, creator.purelib, creator.exe) == (
+        env_dir / "Scripts",
+        env_dir / "Lib" / "site-packages",
+        env_dir / "Scripts" / "python.exe",
+    )
 
 
 def test_subprocess_session_run_not_found(tmp_path: Path) -> None:
@@ -183,7 +204,8 @@ def test_subprocess_session_run_nonzero_exit(tmp_path: Path, mocker: MockerFixtu
     )
     mocker.patch(
         "tox.tox_env.python.virtual_env.subprocess_adapter.subprocess.run",
-        return_value=mocker.MagicMock(returncode=1, stderr="error"),
+        autospec=True,
+        return_value=mocker.create_autospec(subprocess.CompletedProcess, instance=True, returncode=1, stderr="error"),
     )
     with pytest.raises(RuntimeError, match="virtualenv subprocess failed \\(exit 1\\)"):
         session.run()
@@ -201,7 +223,8 @@ def test_subprocess_session_run_passes_interpreter(tmp_path: Path, mocker: Mocke
     )
     run_mock: Final = mocker.patch(
         "tox.tox_env.python.virtual_env.subprocess_adapter.subprocess.run",
-        return_value=mocker.MagicMock(returncode=0),
+        autospec=True,
+        return_value=mocker.create_autospec(subprocess.CompletedProcess, instance=True, returncode=0),
     )
     SubprocessSession(
         env_dir=tmp_path / "env",
@@ -245,24 +268,31 @@ def test_has_correct_virtualenv_nonexistent(tmp_path: Path) -> None:
 def test_has_correct_virtualenv_matching(tmp_path: Path, mocker: MockerFixture) -> None:
     python = tmp_path / "python"
     python.touch()
-    run_mock = mocker.patch("tox.tox_env.python.virtual_env.subprocess_adapter.subprocess.run")
-    run_mock.return_value = mocker.MagicMock(returncode=0, stdout="20.21.1\n")
+    run_mock = mocker.patch("tox.tox_env.python.virtual_env.subprocess_adapter.subprocess.run", autospec=True)
+    run_mock.return_value = mocker.create_autospec(
+        subprocess.CompletedProcess, instance=True, returncode=0, stdout="20.21.1\n"
+    )
     assert _has_correct_virtualenv(python, "virtualenv<20.22.0") is True
 
 
 def test_has_correct_virtualenv_bare_spec(tmp_path: Path, mocker: MockerFixture) -> None:
     python = tmp_path / "python"
     python.touch()
-    run_mock = mocker.patch("tox.tox_env.python.virtual_env.subprocess_adapter.subprocess.run")
-    run_mock.return_value = mocker.MagicMock(returncode=0, stdout="20.21.1\n")
+    run_mock = mocker.patch("tox.tox_env.python.virtual_env.subprocess_adapter.subprocess.run", autospec=True)
+    run_mock.return_value = mocker.create_autospec(
+        subprocess.CompletedProcess, instance=True, returncode=0, stdout="20.21.1\n"
+    )
     assert _has_correct_virtualenv(python, "virtualenv") is True
 
 
 def test_ensure_bootstrap_reuses_normalized_name(tmp_path: Path, mocker: MockerFixture) -> None:
-    create = mocker.patch("tox.tox_env.python.virtual_env.subprocess_adapter.venv.create")
+    create = mocker.patch("tox.tox_env.python.virtual_env.subprocess_adapter.venv.create", autospec=True)
     mocker.patch(
         "tox.tox_env.python.virtual_env.subprocess_adapter.subprocess.run",
-        return_value=mocker.MagicMock(returncode=0, stdout="20.21.1\n"),
+        autospec=True,
+        return_value=mocker.create_autospec(
+            subprocess.CompletedProcess, instance=True, returncode=0, stdout="20.21.1\n"
+        ),
     )
     python = ensure_bootstrap(tmp_path, "Virtualenv <22")
     python.parent.mkdir(parents=True)
@@ -275,8 +305,8 @@ def test_ensure_bootstrap_reuses_normalized_name(tmp_path: Path, mocker: MockerF
 def test_has_correct_virtualenv_subprocess_fails(tmp_path: Path, mocker: MockerFixture) -> None:
     python = tmp_path / "python"
     python.touch()
-    run_mock = mocker.patch("tox.tox_env.python.virtual_env.subprocess_adapter.subprocess.run")
-    run_mock.return_value = mocker.MagicMock(returncode=1)
+    run_mock = mocker.patch("tox.tox_env.python.virtual_env.subprocess_adapter.subprocess.run", autospec=True)
+    run_mock.return_value = mocker.create_autospec(subprocess.CompletedProcess, instance=True, returncode=1)
     assert _has_correct_virtualenv(python, "virtualenv<20.22.0") is False
 
 
@@ -285,23 +315,27 @@ def test_has_correct_virtualenv_subprocess_error(tmp_path: Path, mocker: MockerF
     python.touch()
     mocker.patch(
         "tox.tox_env.python.virtual_env.subprocess_adapter.subprocess.run",
+        autospec=True,
         side_effect=OSError("boom"),
     )
     assert _has_correct_virtualenv(python, "virtualenv<20.22.0") is False
 
 
 def test_ensure_bootstrap_creates_and_caches(tmp_path: Path, mocker: MockerFixture) -> None:
-    venv_create = mocker.patch("tox.tox_env.python.virtual_env.subprocess_adapter.venv.create")
-    run_mock = mocker.patch("tox.tox_env.python.virtual_env.subprocess_adapter.subprocess.run")
-    run_mock.return_value = mocker.MagicMock(returncode=0, stdout="20.21.1\n")
+    venv_create = mocker.patch("tox.tox_env.python.virtual_env.subprocess_adapter.venv.create", autospec=True)
+    run_mock = mocker.patch("tox.tox_env.python.virtual_env.subprocess_adapter.subprocess.run", autospec=True)
+    run_mock.return_value = mocker.create_autospec(
+        subprocess.CompletedProcess, instance=True, returncode=0, stdout="20.21.1\n"
+    )
 
     has_correct = mocker.patch(
         "tox.tox_env.python.virtual_env.subprocess_adapter._has_correct_virtualenv",
+        autospec=True,
         side_effect=[False, False, True],
     )
 
     result = ensure_bootstrap(tmp_path, "virtualenv<20.22.0")
-    assert result.name == ("python.exe" if sys.platform == "win32" else "python")
+    assert result.name == _EXECUTABLE_NAME
     venv_create.assert_called_once()
     run_mock.assert_called_once()
 
@@ -350,10 +384,11 @@ def bootstrap_without_pip(mocker: MockerFixture) -> None:
 def test_ensure_bootstrap_race_inside_lock(tmp_path: Path, mocker: MockerFixture) -> None:
     mocker.patch(
         "tox.tox_env.python.virtual_env.subprocess_adapter._has_correct_virtualenv",
+        autospec=True,
         side_effect=[False, True],
     )
     result = ensure_bootstrap(tmp_path, "virtualenv<20.22.0")
-    assert result.name == ("python.exe" if sys.platform == "win32" else "python")
+    assert result.name == _EXECUTABLE_NAME
 
 
 def test_ensure_bootstrap_removes_stale_base(tmp_path: Path, mocker: MockerFixture) -> None:
@@ -361,11 +396,14 @@ def test_ensure_bootstrap_removes_stale_base(tmp_path: Path, mocker: MockerFixtu
     base.mkdir(parents=True)
     (base / "stale_file").touch()
 
-    mocker.patch("tox.tox_env.python.virtual_env.subprocess_adapter.venv.create")
-    run_mock = mocker.patch("tox.tox_env.python.virtual_env.subprocess_adapter.subprocess.run")
-    run_mock.return_value = mocker.MagicMock(returncode=1, stderr="fail")
+    mocker.patch("tox.tox_env.python.virtual_env.subprocess_adapter.venv.create", autospec=True)
+    run_mock = mocker.patch("tox.tox_env.python.virtual_env.subprocess_adapter.subprocess.run", autospec=True)
+    run_mock.return_value = mocker.create_autospec(
+        subprocess.CompletedProcess, instance=True, returncode=1, stderr="fail"
+    )
     mocker.patch(
         "tox.tox_env.python.virtual_env.subprocess_adapter._has_correct_virtualenv",
+        autospec=True,
         return_value=False,
     )
 
@@ -489,7 +527,7 @@ def test_ensure_bootstrap_link_swapped_after_removal_fails(tmp_path: Path, victi
     mocker.patch(
         "tox.tox_env.python.virtual_env.subprocess_adapter.subprocess.run",
         autospec=True,
-        return_value=mocker.MagicMock(returncode=0),
+        return_value=mocker.create_autospec(subprocess.CompletedProcess, instance=True, returncode=0),
     )
     base: Final[Path] = ensure_bootstrap(tmp_path, "virtualenv<20.22.0").parent.parent
     (base / "stale").write_text("stale")
@@ -565,7 +603,7 @@ def test_ensure_bootstrap_replaces_non_directory_stale_entry(
     mocker.patch(
         "tox.tox_env.python.virtual_env.subprocess_adapter.subprocess.run",
         autospec=True,
-        return_value=mocker.MagicMock(returncode=0),
+        return_value=mocker.create_autospec(subprocess.CompletedProcess, instance=True, returncode=0),
     )
     base: Final[Path] = ensure_bootstrap(tmp_path, "virtualenv<20.22.0").parent.parent
     rmtree(base)
@@ -581,13 +619,16 @@ class _StaleEntryMaker(Protocol):
 
 
 def test_ensure_bootstrap_install_failure(tmp_path: Path, mocker: MockerFixture) -> None:
-    mocker.patch("tox.tox_env.python.virtual_env.subprocess_adapter.venv.create")
+    mocker.patch("tox.tox_env.python.virtual_env.subprocess_adapter.venv.create", autospec=True)
     mocker.patch(
         "tox.tox_env.python.virtual_env.subprocess_adapter._has_correct_virtualenv",
+        autospec=True,
         return_value=False,
     )
-    run_mock = mocker.patch("tox.tox_env.python.virtual_env.subprocess_adapter.subprocess.run")
-    run_mock.return_value = mocker.MagicMock(returncode=1, stderr="no matching distribution")
+    run_mock = mocker.patch("tox.tox_env.python.virtual_env.subprocess_adapter.subprocess.run", autospec=True)
+    run_mock.return_value = mocker.create_autospec(
+        subprocess.CompletedProcess, instance=True, returncode=1, stderr="no matching distribution"
+    )
 
     with pytest.raises(RuntimeError, match="failed to install"):
         ensure_bootstrap(tmp_path, "virtualenv==999.999.999")
@@ -607,8 +648,8 @@ def test_ensure_bootstrap_install_failure(tmp_path: Path, mocker: MockerFixture)
 def test_ensure_bootstrap_rejects_non_version_requirement(
     tmp_path: Path, mocker: MockerFixture, virtualenv_spec: str
 ) -> None:
-    create = mocker.patch("tox.tox_env.python.virtual_env.subprocess_adapter.venv.create")
-    install = mocker.patch("tox.tox_env.python.virtual_env.subprocess_adapter.subprocess.run")
+    create = mocker.patch("tox.tox_env.python.virtual_env.subprocess_adapter.venv.create", autospec=True)
+    install = mocker.patch("tox.tox_env.python.virtual_env.subprocess_adapter.subprocess.run", autospec=True)
 
     with pytest.raises(Fail, match="virtualenv_spec must name virtualenv"):
         ensure_bootstrap(tmp_path, virtualenv_spec)
@@ -652,14 +693,22 @@ def test_virtualenv_spec_config_shown(tox_project: ToxProjectCreator) -> None:
 
 def test_virtualenv_spec_cache_includes_spec(tox_project: ToxProjectCreator, mocker: MockerFixture) -> None:
     mocker.patch(
-        "tox.tox_env.python.virtual_env.subprocess_adapter.ensure_bootstrap",
+        "tox.tox_env.python.virtual_env.api.ensure_bootstrap",
+        autospec=True,
         return_value=Path(sys.executable),
     )
     mocker.patch(
-        "tox.tox_env.python.virtual_env.subprocess_adapter.probe_python",
+        "tox.tox_env.python.virtual_env.api.probe_python",
+        autospec=True,
         return_value=SubprocessPythonInfo(
             implementation=sys.implementation.name,
-            version_info=_VersionInfo(*sys.version_info[:5]),
+            version_info=_VersionInfo(
+                major=sys.version_info.major,
+                minor=sys.version_info.minor,
+                micro=sys.version_info.micro,
+                releaselevel=sys.version_info.releaselevel,
+                serial=sys.version_info.serial,
+            ),
             version=f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}",
             architecture=64,
             platform=sys.platform,
@@ -676,8 +725,7 @@ def test_virtualenv_spec_cache_includes_spec(tox_project: ToxProjectCreator, moc
             commands = [["python", "-c", "print('ok')"]]
         """),
     })
-    result = proj.run("r", "-e", "py")
-    result.assert_success()
+    proj.run("r", "-e", "py").assert_success()
 
 
 def test_virtualenv_spec_empty_uses_imported(tox_project: ToxProjectCreator) -> None:

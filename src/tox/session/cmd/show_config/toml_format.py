@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import re
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Final
 
 import tomli_w
 from colorama import Fore
@@ -11,13 +11,13 @@ from .common import build_structured_result, write_output
 if TYPE_CHECKING:
     from tox.session.state import State
 
-_HEADER_RE = re.compile(
+_HEADER_RE: Final[re.Pattern[str]] = re.compile(
     r"""
     ^ \[ .* ] $     # section header like [env.py]
     """,
     re.MULTILINE | re.VERBOSE,
 )
-_KEY_RE = re.compile(
+_KEY_RE: Final[re.Pattern[str]] = re.compile(
     r"""
     ^ ( [a-zA-Z_]       # key starts with letter or underscore
         [a-zA-Z0-9_-]*  # followed by alphanumerics, underscores, or hyphens
@@ -29,6 +29,13 @@ _KEY_RE = re.compile(
 
 
 def show_config_toml(state: State) -> int:
+    """Show the configuration in the TOML format.
+
+    :param state: the state of the run
+
+    :returns: the exit code
+
+    """
     result, has_exception = build_structured_result(state)
     output = tomli_w.dumps(result).removesuffix("\n")
     write_output(output, state.conf.options.output_file, state.conf.options.is_colored, colorize)
@@ -36,5 +43,18 @@ def show_config_toml(state: State) -> int:
 
 
 def colorize(text: str) -> str:
-    text = _HEADER_RE.sub(lambda m: f"{Fore.YELLOW}{m.group()}{Fore.RESET}", text)
+    """Add the color to the headers and keys of a TOML output.
+
+    :param text: the TOML text
+
+    :returns: the colored text
+
+    """
+    text = _HEADER_RE.sub(lambda match: f"{Fore.YELLOW}{match.group()}{Fore.RESET}", text)
     return _KEY_RE.sub(rf"{Fore.GREEN}\1{Fore.RESET} =", text)
+
+
+__all__ = [
+    "colorize",
+    "show_config_toml",
+]

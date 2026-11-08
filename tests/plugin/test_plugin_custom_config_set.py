@@ -28,7 +28,10 @@ def _custom_config_set(mocker: MockerFixture) -> None:
 
     @impl
     def tox_add_env_config(env_conf: EnvConfigSet, state: State) -> None:
-        def factory(for_env: str, raw: object) -> DockerConfigSet:
+        def factory(  # simplint: ignore[SMP602]  # test values have any type
+            for_env: str,
+            raw: object,  # simplint: ignore[SMP602]  # test values have any type
+        ) -> DockerConfigSet:
             assert isinstance(raw, str)
             section = Section("docker", raw)
             return state.conf.get_section_config(section, base=["docker"], of_type=DockerConfigSet, for_env=for_env)
@@ -51,36 +54,31 @@ def _custom_config_set(mocker: MockerFixture) -> None:
 
 
 def test_define_custom_config_set(tox_project: ToxProjectCreator) -> None:
-    project = tox_project({"tox.ini": "[testenv]\npackage=skip\ndocker=a\n[docker:a]\nA=2"})
-    result = project.run()
+    result = tox_project({"tox.ini": "[testenv]\npackage=skip\ndocker=a\n[docker:a]\nA=2"}).run()
     result.assert_success()
     assert "py: Name=a env=py A=2" in result.out
 
 
 def test_define_custom_config_base(tox_project: ToxProjectCreator) -> None:
-    project = tox_project({"tox.ini": "[testenv]\npackage=skip\ndocker=a\n[docker]\nA=2"})
-    result = project.run()
+    result = tox_project({"tox.ini": "[testenv]\npackage=skip\ndocker=a\n[docker]\nA=2"}).run()
     result.assert_success()
     assert "py: Name=a env=py A=2" in result.out
 
 
 def test_define_custom_config_override_base(tox_project: ToxProjectCreator) -> None:
-    project = tox_project({"tox.ini": "[testenv]\npackage=skip\ndocker=a\n[M]\nA=2\n[docker:a]\nbase=M"})
-    result = project.run()
+    result = tox_project({"tox.ini": "[testenv]\npackage=skip\ndocker=a\n[M]\nA=2\n[docker:a]\nbase=M"}).run()
     result.assert_success()
     assert "py: Name=a env=py A=2" in result.out
 
 
 def test_define_custom_config_override_base_implicit(tox_project: ToxProjectCreator) -> None:
-    project = tox_project({"tox.ini": "[testenv]\npackage=skip\ndocker=a\n[docker:M]\nA=2\n[docker:a]\nbase=M"})
-    result = project.run()
+    result = tox_project({"tox.ini": "[testenv]\npackage=skip\ndocker=a\n[docker:M]\nA=2\n[docker:a]\nbase=M"}).run()
     result.assert_success()
     assert "py: Name=a env=py A=2" in result.out
 
 
 def test_define_custom_config_replace(tox_project: ToxProjectCreator) -> None:
-    project = tox_project({"tox.ini": "[testenv]\npackage=skip\ndocker=a\n[docker]\nA={[docker]B}\nB=2"})
-    result = project.run()
+    result = tox_project({"tox.ini": "[testenv]\npackage=skip\ndocker=a\n[docker]\nA={[docker]B}\nB=2"}).run()
     result.assert_success()
     assert "py: Name=a env=py A=2" in result.out
 
@@ -98,8 +96,7 @@ def test_define_custom_config_factor_filter(tox_project: ToxProjectCreator) -> N
     A =
         a: 1
         b: 2"""
-    project = tox_project({"tox.ini": ini})
-    result = project.run("r", "-e", "a,b")
+    result = tox_project({"tox.ini": ini}).run("r", "-e", "a,b")
     result.assert_success()
     assert "a: Name=db env=a A=1" in result.out
     assert "b: Name=db env=b A=2" in result.out

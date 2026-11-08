@@ -2,15 +2,15 @@
 
 from __future__ import annotations
 
+# internal access for the manpage generator
 from argparse import SUPPRESS, Action, ArgumentParser, _SubParsersAction  # ruff:ignore[import-private-name]
 from pathlib import Path
 
-from tox.config.cli.parse import _get_parser_doc  # ruff:ignore[import-private-name]
+from tox.config.cli.parse import _get_parser_doc  # ruff:ignore[import-private-name]  # sibling module internal
 
 
 def main() -> None:
-    parser = _get_parser_doc()
-    rst = generate_manpage_rst(parser)
+    rst = generate_manpage_rst(_get_parser_doc())
     output = Path(__file__).parents[1] / "docs" / "man" / "tox.1.rst"
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(rst, encoding="utf-8")
@@ -57,21 +57,21 @@ def generate_manpage_rst(parser: ArgumentParser) -> str:
 
 
 def _get_subcommands(parser: ArgumentParser) -> list[str]:
-    if parser._subparsers is None:  # ruff:ignore[private-member-access]
+    if parser._subparsers is None:  # ruff:ignore[private-member-access]  # internal access
         return []
-    for action in parser._subparsers._actions:  # ruff:ignore[private-member-access]
+    for action in parser._subparsers._actions:  # ruff:ignore[private-member-access]  # internal access
         if isinstance(action, _SubParsersAction):
-            return [ca.dest for ca in action._choices_actions]  # ruff:ignore[private-member-access]
+            return [ca.dest for ca in action._choices_actions]  # ruff:ignore[private-member-access]  # internal access
     return []
 
 
 def _commands_section(parser: ArgumentParser) -> list[str]:
     lines = ["COMMANDS", "--------", ""]
-    if parser._subparsers is None:  # ruff:ignore[private-member-access]
+    if parser._subparsers is None:  # ruff:ignore[private-member-access]  # internal access
         return lines
-    for action in parser._subparsers._actions:  # ruff:ignore[private-member-access]
+    for action in parser._subparsers._actions:  # ruff:ignore[private-member-access]  # internal access
         if isinstance(action, _SubParsersAction):
-            for choice_action in action._choices_actions:  # ruff:ignore[private-member-access]
+            for choice_action in action._choices_actions:  # ruff:ignore[private-member-access]  # internal access
                 name = choice_action.dest
                 subparser = action.choices[name]
                 aliases = [a for a, s in action.choices.items() if s is subparser and a != name]
@@ -83,9 +83,9 @@ def _commands_section(parser: ArgumentParser) -> list[str]:
 
 
 def _global_options_section(parser: ArgumentParser) -> list[str]:
-    lines = ["OPTIONS", "-------", ""]
     seen: set[int] = set()
-    for action in parser._actions:  # ruff:ignore[private-member-access]
+    lines = ["OPTIONS", "-------", ""]
+    for action in parser._actions:  # ruff:ignore[private-member-access]  # internal access
         if id(action) in seen or action.help == SUPPRESS or isinstance(action, _SubParsersAction):
             continue
         seen.add(id(action))
@@ -98,12 +98,11 @@ def _global_options_section(parser: ArgumentParser) -> list[str]:
 def _format_option(action: Action) -> str:
     opts = ", ".join(f"**{o}**" for o in action.option_strings) if action.option_strings else ""
     if action.metavar:
-        metavar = action.metavar if isinstance(action.metavar, str) else action.metavar[0]
-        opts += f" *{metavar}*"
+        opts += f" *{(action.metavar if isinstance(action.metavar, str) else action.metavar[0])}*"
     return opts if action.help else ""
 
 
-def _static_sections() -> list[str]:
+def _static_sections() -> list[str]:  # simplint: ignore[SMP505]  # the static sections are listed apart from the parser
     return [
         "FILES",
         "-----",

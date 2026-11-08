@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 import socket
 import sys
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 import pytest
 
@@ -18,7 +18,7 @@ if TYPE_CHECKING:
 
 
 @pytest.fixture(scope="session")
-def base_info() -> dict[str, Any]:
+def base_info() -> dict[str, str | dict[str, dict[str, int]]]:
     return {
         "reportversion": "1",
         "toxversion": __version__,
@@ -27,7 +27,7 @@ def base_info() -> dict[str, Any]:
     }
 
 
-def test_journal_enabled_default(base_info: dict[str, Any]) -> None:
+def test_journal_enabled_default(base_info: dict[str, str | dict[str, dict[str, int]]]) -> None:
     journal = Journal(enabled=True)
     assert bool(journal) is True
     assert journal.content == base_info
@@ -39,7 +39,7 @@ def test_journal_disabled_default() -> None:
     assert journal.content == {}
 
 
-def test_env_journal_enabled(base_info: dict[str, Any]) -> None:
+def test_env_journal_enabled(base_info: dict[str, str | dict[str, dict[str, int]]]) -> None:
     journal = Journal(enabled=True)
     env = journal.get_env_journal("a")
     assert journal.get_env_journal("a") is env

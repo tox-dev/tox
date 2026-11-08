@@ -30,8 +30,7 @@ EnvConfigCreator = Callable[[str], ConfigSet]
 @pytest.fixture
 def example(tox_ini_conf: ToxIniCreator) -> EnvConfigCreator:
     def func(conf: str) -> ConfigSet:
-        config = tox_ini_conf(f"""[tox]\nenv_list = a\n[testenv]\n{conf}\n""")
-        return config.get_env("a")
+        return tox_ini_conf(f"""[tox]\nenv_list = a\n[testenv]\n{conf}\n""").get_env("a")
 
     return func
 
@@ -334,9 +333,17 @@ def test_replace_within_list_entry_cannot_add_entries(
         load_list(entries, value)
 
 
-@pytest.mark.parametrize("of_type", [set[str], list[Requirement], list[str] | str, list[str] | None])
+@pytest.mark.parametrize(
+    "of_type",
+    [
+        pytest.param(set[str], id="set-lbracket-str-rbracket"),
+        pytest.param(list[Requirement], id="list-lbracket-requirement-rbracket"),
+        pytest.param(list[str] | str, id="list-lbracket-str-rbracket-space-pipe-space-str"),
+        pytest.param(list[str] | None, id="list-lbracket-str-rbracket-space-pipe-space-none"),
+    ],
+)
 def test_replace_within_entry_cannot_add_entries_for_type(
-    example: EnvConfigCreator, monkeypatch: pytest.MonkeyPatch, of_type: type[object] | UnionType
+    example: EnvConfigCreator, monkeypatch: pytest.MonkeyPatch, of_type: type | UnionType
 ) -> None:
     monkeypatch.setenv("VALUE", "1,evil")
     env_config: Final[ConfigSet] = example("entries = a=={env:VALUE}")
@@ -411,8 +418,20 @@ def test_replace_within_env_list_entry_accepts_value(
     ])
 
 
-@pytest.mark.parametrize("depth", [5, 99, 100, 101, 150, 256])
-def test_replace_within_section_chain_deep(caplog: LogCaptureFixture, tox_ini_conf: ToxIniCreator, depth: int) -> None:
+@pytest.mark.parametrize(
+    ("depth", "expected", "messages"),
+    [
+        pytest.param(5, "1", [], id="5"),
+        pytest.param(99, "1", [], id="99"),
+        pytest.param(100, "1", [], id="100"),
+        pytest.param(101, "{[vars]a0}", ["Could not expand {[vars]a0} after recursing 101 frames"], id="101"),
+        pytest.param(150, "{[vars]a49}", ["Could not expand {[vars]a49} after recursing 101 frames"], id="150"),
+        pytest.param(256, "{[vars]a155}", ["Could not expand {[vars]a155} after recursing 101 frames"], id="256"),
+    ],
+)
+def test_replace_within_section_chain_deep(
+    caplog: LogCaptureFixture, tox_ini_conf: ToxIniCreator, depth: int, expected: str, messages: list[str]
+) -> None:
     config = tox_ini_conf(
         "\n".join(
             [
@@ -426,13 +445,8 @@ def test_replace_within_section_chain_deep(caplog: LogCaptureFixture, tox_ini_co
     )
     env_config = config.get_env("a")
     env_config.add_config(keys="b", of_type=str, default="b", desc="b")
-    result = env_config["b"]
-    if depth > MAX_REPLACE_DEPTH:
-        exp_stopped_at = "{[vars]a%s}" % (depth - MAX_REPLACE_DEPTH - 1)
-        assert result == exp_stopped_at
-        assert f"Could not expand {exp_stopped_at} after recursing {MAX_REPLACE_DEPTH + 1} frames" in caplog.messages
-    else:
-        assert result == "1"
+    assert env_config["b"] == expected
+    assert caplog.messages == messages
 
 
 def test_replace_command_section_chain_stops_at_depth(caplog: LogCaptureFixture, tox_ini_conf: ToxIniCreator) -> None:
@@ -497,8 +511,7 @@ def test_replace_ref_raw_value(tox_ini_conf: ToxIniCreator) -> None:
             if value != "magic":
                 raise ValueError(value)
 
-    conf_b = config.get_env("b")
-    conf_b.add_config(keys="v", of_type=BadType, default=BadType("magic"), desc="p")
+    config.get_env("b").add_config(keys="v", of_type=BadType, default=BadType("magic"), desc="p")
 
     conf_a = config.get_env("a")
     conf_a.add_config(keys="x", of_type=str, default="o", desc="o")
@@ -509,24 +522,28 @@ def test_replace_ref_raw_value(tox_ini_conf: ToxIniCreator) -> None:
 @pytest.mark.parametrize(
     ("start", "end"),
     [
-        ("0", "0"),
-        ("0}", "0}"),
-        ("{0", "{0"),
-        ("{0}", "{0}"),
-        ("{}{0}", "{}{0}"),
-        ("{0}{}", "{0}{}"),
-        ("\\{0}", "{0}"),
-        ("{0\\}", "{0}"),
-        ("\\{0\\}", "{0}"),
-        ("f\\{0\\}", "f{0}"),
-        ("\\{0\\}f", "{0}f"),
-        ("\\{\\{0", "{{0"),
-        ("0\\}\\}", "0}}"),
-        ("\\{\\{0\\}\\}", "{{0}}"),
+        pytest.param("0", "0", id="0-0"),
+        pytest.param("0}", "0}", id="0-close-0-close"),
+        pytest.param("{0", "{0", id="open-0-open-0"),
+        pytest.param("{0}", "{0}", id="open-0-close-open-0-close"),
+        pytest.param("{}{0}", "{}{0}", id="open-close-open-0-close-open-close-open-0-close"),
+        pytest.param("{0}{}", "{0}{}", id="open-0-close-open-close-open-0-close-open-close"),
+        pytest.param("\\{0}", "{0}", id="backslash-open-0-close-open-0-close"),
+        pytest.param("{0\\}", "{0}", id="open-0-backslash-close-open-0-close"),
+        pytest.param("\\{0\\}", "{0}", id="backslash-open-0-backslash-close-open-0-close"),
+        pytest.param("f\\{0\\}", "f{0}", id="f-backslash-open-0-backslash-close-f-open-0-close"),
+        pytest.param("\\{0\\}f", "{0}f", id="backslash-open-0-backslash-close-f-open-0-close-f"),
+        pytest.param("\\{\\{0", "{{0", id="backslash-open-backslash-open-0-open-open-0"),
+        pytest.param("0\\}\\}", "0}}", id="0-backslash-close-backslash-close-0-close-close"),
+        pytest.param(
+            "\\{\\{0\\}\\}",
+            "{{0}}",
+            id="backslash-open-backslash-open-0-backslash-close-backslash-close-open-open-0-close-close",
+        ),
     ],
 )
 def test_do_not_replace(replace_one: ReplaceOne, start: str, end: str) -> None:
-    """If we have a factor that is not specified within the core env-list then that's also an environment"""
+    # If we have a factor that is not specified within the core env-list then that's also an environment
     value = replace_one(start)
     assert value == end
 
@@ -586,10 +603,10 @@ def test_replace_from_tox_other_tox_section_same_name(tox_ini_conf: ToxIniCreato
 @pytest.mark.parametrize(
     ("env_name", "exp"),
     [
-        ("testenv:foobar", "1"),
-        ("testenv:foo-bar", "1"),
-        ("foo-bar", "1"),
-        ("foobar", "1"),
+        pytest.param("testenv:foobar", "1", id="testenv-colon-foobar-1"),
+        pytest.param("testenv:foo-bar", "1", id="testenv-colon-foo-dash-bar-1"),
+        pytest.param("foo-bar", "1", id="foo-dash-bar-1"),
+        pytest.param("foobar", "1", id="foobar-1"),
     ],
 )
 def test_replace_valid_section_names(tox_ini_conf: ToxIniCreator, env_name: str, exp: str) -> None:
@@ -606,7 +623,7 @@ def test_replace_valid_section_names(tox_ini_conf: ToxIniCreator, env_name: str,
     ],
 )
 def test_override_propagates_through_section_ref(tox_ini_conf: ToxIniCreator, override: str, expected: str) -> None:
-    """An override on a base section propagates through a ``{[section]key}`` reference (#3950)."""
+    # An override on a base section propagates through a ``{[section]key}`` reference (#3950).
     config = tox_ini_conf(
         dedent("""
             [testenv]

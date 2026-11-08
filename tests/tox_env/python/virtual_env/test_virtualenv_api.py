@@ -5,12 +5,13 @@ import sys
 from pathlib import Path
 from textwrap import dedent
 from typing import TYPE_CHECKING
-from unittest.mock import MagicMock, PropertyMock
 
 import pytest
 from virtualenv import __version__ as virtualenv_version
 from virtualenv import session_via_cli
 from virtualenv.config.cli.parser import VirtualEnvOptions
+from virtualenv.create.creator import Creator
+from virtualenv.discovery.py_info import PythonInfo
 
 from tox.tox_env.python.virtual_env.api import VirtualEnv
 
@@ -18,7 +19,7 @@ if TYPE_CHECKING:
     from collections.abc import Callable
     from typing import Final
 
-    from pytest_mock import MockerFixture
+    from pytest_mock import MockerFixture, MockType
 
     from tox.execute import ExecuteRequest
     from tox.pytest import MonkeyPatch, ToxProject, ToxProjectCreator
@@ -27,11 +28,13 @@ if TYPE_CHECKING:
 @pytest.fixture
 def virtualenv_opt(monkeypatch: MonkeyPatch, mocker: MockerFixture) -> VirtualEnvOptions:
     for key in os.environ:
-        if key.startswith("VIRTUALENV_"):  # pragma: no cover
-            monkeypatch.delenv(key)  # pragma: no cover
+        if key.startswith("VIRTUALENV_"):  # pragma: no cover  # setup not built by tests
+            monkeypatch.delenv(key)  # pragma: no cover  # setup not built by tests
     opts = VirtualEnvOptions()
     mocker.patch(
         "tox.tox_env.python.virtual_env.api.session_via_cli",
+        autospec=True,
+        # side_effect signature fixed by session_via_cli
         side_effect=lambda args, options, setup_logging, env: session_via_cli(  # ruff:ignore[unused-lambda-argument]
             args,
             opts,
@@ -55,9 +58,8 @@ def test_virtualenv_default_settings(tox_project: ToxProjectCreator, virtualenv_
     assert virtualenv_opt.clear is False
     assert virtualenv_opt.system_site is False
     assert virtualenv_opt.download is False
-    if hasattr(virtualenv_opt, "copies"):
-        assert virtualenv_opt.copies is False
     assert virtualenv_opt.no_periodic_update is True
+    assert virtualenv_opt.copies is False
     # Older virtualenv parsers retain <0 and append candidates on each parsing pass.
     assert list(dict.fromkeys(spec for spec in virtualenv_opt.python if spec != "<0")) == ["py3"]
     assert list(dict.fromkeys(virtualenv_opt.try_first_with)) == [str(sys.executable), str(proj.path / "a")]
@@ -84,8 +86,7 @@ def test_virtualenv_flipped_settings(
     assert virtualenv_opt.clear is False
     assert virtualenv_opt.system_site is True
     assert virtualenv_opt.download is True
-    if hasattr(virtualenv_opt, "copies"):
-        assert virtualenv_opt.copies is True
+    assert virtualenv_opt.copies is True
     assert list(dict.fromkeys(spec for spec in virtualenv_opt.python if spec != "<0")) == ["py3"]
 
 
@@ -95,7 +96,9 @@ def test_virtualenv_base_python_entries_whole_and_in_order(
     monkeypatch: MonkeyPatch,
 ) -> None:
     monkeypatch.setenv("VIRTUALENV_PYTHON", "from-env")
-    get_interpreter: Final = mocker.patch("virtualenv.discovery.builtin.get_interpreter", return_value=None)
+    get_interpreter: Final = mocker.patch(
+        "virtualenv.discovery.builtin.get_interpreter", autospec=True, return_value=None
+    )
     base_python: Final = [f"first{os.pathsep}a", "second,b", ">=3.99,<4"]
     proj: Final = tox_project({"tox.toml": f"[env_run_base]\npackage = 'skip'\nbase_python = {base_python}"})
 
@@ -134,6 +137,18 @@ def test_virtualenv_env_ignored_if_set(
     run_and_check_set(proj, virtualenv_opt)
 
 
+def run_and_check_set(proj: ToxProject, virtualenv_opt: VirtualEnvOptions) -> None:
+    result = proj.run("r", "-e", "py")
+    result.assert_success()
+    conf = result.env_conf("py")
+    assert conf["system_site_packages"] is True
+    assert conf["always_copy"] is True
+    assert conf["download"] is True
+    assert virtualenv_opt.system_site is True
+    assert virtualenv_opt.download is True
+    assert virtualenv_opt.copies is True
+
+
 def test_virtualenv_env_used_if_not_set(
     tox_project: ToxProjectCreator,
     virtualenv_opt: VirtualEnvOptions,
@@ -146,27 +161,12 @@ def test_virtualenv_env_used_if_not_set(
     run_and_check_set(proj, virtualenv_opt)
 
 
-def run_and_check_set(proj: ToxProject, virtualenv_opt: VirtualEnvOptions) -> None:
-    result = proj.run("r", "-e", "py")
-    result.assert_success()
-    conf = result.env_conf("py")
-    assert conf["system_site_packages"] is True
-    assert conf["always_copy"] is True
-    assert conf["download"] is True
-    assert virtualenv_opt.system_site is True
-    assert virtualenv_opt.download is True
-    if hasattr(virtualenv_opt, "copies"):
-        assert virtualenv_opt.copies is True
-
-
 def test_honor_set_env_for_clear_periodic_update(
     tox_project: ToxProjectCreator,
     virtualenv_opt: VirtualEnvOptions,
 ) -> None:
     ini = "[testenv]\npackage=skip\nset_env=\n  VIRTUALENV_CLEAR=0\n  VIRTUALENV_NO_PERIODIC_UPDATE=0"
-    proj = tox_project({"tox.ini": ini})
-    result = proj.run("r", "-e", "py")
-    result.assert_success()
+    tox_project({"tox.ini": ini}).run("r", "-e", "py").assert_success()
 
     assert virtualenv_opt.clear is False
     assert virtualenv_opt.no_periodic_update is False
@@ -176,7 +176,7 @@ def test_recreate_when_virtualenv_changes(tox_project: ToxProjectCreator, mocker
     proj = tox_project({"tox.ini": "[testenv]\npackage=skip"})
     proj.run("r")
 
-    from tox.tox_env.python.virtual_env import api  # ruff:ignore[import-outside-top-level]
+    from tox.tox_env.python.virtual_env import api  # ruff:ignore[import-outside-top-level]  # deferred import
 
     mocker.patch.object(api, "virtualenv_version", "1.0")
     result = proj.run("r")
@@ -199,7 +199,7 @@ def test_pip_pre(tox_project: ToxProjectCreator, on: bool, options: list[str], i
     proj: Final[ToxProject] = tox_project({
         "tox.ini": f"[testenv]\npackage=skip\npip_pre={on}\ndeps=magic\n{install_command}",
     })
-    execute_calls: Final[MagicMock] = proj.patch_execute(lambda request: 0 if "install" in request.run_id else None)
+    execute_calls: Final[MockType] = proj.patch_execute(lambda request: 0 if "install" in request.run_id else None)
     proj.run("r", "-e", "py").assert_success()
     assert execute_calls.call_args[0][3].cmd == ["python", "-I", "-m", "pip", "install", *options, "magic"]
 
@@ -207,9 +207,8 @@ def test_pip_pre(tox_project: ToxProjectCreator, on: bool, options: list[str], i
 def test_install_command_no_packages(tox_project: ToxProjectCreator, disable_pip_pypi_access: tuple[str, str]) -> None:
     install_cmd = "python -m pip install -i {env:PIP_INDEX_URL}"
     proj = tox_project({"tox.ini": f"[testenv]\npackage=skip\ninstall_command={install_cmd}\npip_pre=true\ndeps=magic"})
-    execute_calls = proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
-    result = proj.run("r")
-    result.assert_success()
+    execute_calls = proj.patch_execute(lambda request: 0 if "install" in request.run_id else None)
+    proj.run("r").assert_success()
     request: ExecuteRequest = execute_calls.call_args[0][3]
     found_cmd = request.cmd
     assert found_cmd == ["python", "-m", "pip", "install", "-i", disable_pip_pypi_access[0], "--pre", "magic"]
@@ -217,11 +216,9 @@ def test_install_command_no_packages(tox_project: ToxProjectCreator, disable_pip
 
 @pytest.mark.slow
 def test_list_dependencies_command(tox_project: ToxProjectCreator) -> None:
-    install_cmd = "python -m pip freeze"
-    proj = tox_project({"tox.ini": f"[testenv]\npackage=skip\nlist_dependencies_command={install_cmd}"})
-    execute_calls = proj.patch_execute(lambda r: 0 if "install" in r.run_id else None)
-    result = proj.run("r", "--result-json", str(proj.path / "out.json"))
-    result.assert_success()
+    proj = tox_project({"tox.ini": f"[testenv]\npackage=skip\nlist_dependencies_command={'python -m pip freeze'}"})
+    execute_calls = proj.patch_execute(lambda request: 0 if "install" in request.run_id else None)
+    proj.run("r", "--result-json", str(proj.path / "out.json")).assert_success()
     request: ExecuteRequest = execute_calls.call_args[0][3]
     assert request.cmd == ["python", "-m", "pip", "freeze"]
 
@@ -327,17 +324,20 @@ def test_get_python_returns_none_when_system_executable_missing(
     mocker.patch.object(
         VirtualEnv,
         "creator",
-        new_callable=PropertyMock,
-        return_value=MagicMock(interpreter=MagicMock(system_executable=None)),
+        new_callable=mocker.PropertyMock,
+        return_value=mocker.create_autospec(
+            Creator,
+            instance=True,
+            interpreter=mocker.create_autospec(PythonInfo, instance=True, system_executable=None),
+        ),
     )
-    proj = tox_project({"tox.ini": "[testenv]\npackage=skip\nbase_python=missing-interp"})
-    result = proj.run("r")
+    result = tox_project({"tox.ini": "[testenv]\npackage=skip\nbase_python=missing-interp"}).run("r")
     result.assert_failed()
     assert "could not find python interpreter" in result.out
 
 
 def test_get_virtualenv_py_info_raises_on_none(mocker: MockerFixture) -> None:
-    mocker.patch("virtualenv.discovery.cached_py_info.from_exe", return_value=None)
+    mocker.patch("virtualenv.discovery.cached_py_info.from_exe", autospec=True, return_value=None)
     with pytest.raises(RuntimeError, match="could not query python information for"):
         VirtualEnv.get_virtualenv_py_info(Path("/no/such/python"))
 
@@ -353,10 +353,14 @@ def test_missing_interpreter_discovered_once(tox_project: ToxProjectCreator, moc
 def test_bootstrap_failure_allows_retry(tox_project: ToxProjectCreator, mocker: MockerFixture) -> None:
     mocker.patch(
         "tox.tox_env.python.virtual_env.api.get_interpreter",
-        return_value=MagicMock(system_executable=sys.executable),
+        autospec=True,
+        return_value=mocker.create_autospec(
+            PythonInfo, instance=True, system_executable=sys.executable, marker_environment={}
+        ),
     )
     mocker.patch(
-        "tox.tox_env.python.virtual_env.subprocess_adapter.ensure_bootstrap",
+        "tox.tox_env.python.virtual_env.api.ensure_bootstrap",
+        autospec=True,
         side_effect=[RuntimeError("temporary bootstrap failure"), Path(sys.executable)],
     )
     project = tox_project({
@@ -430,24 +434,28 @@ def test_virtualenv_spec_auto(
 
 
 @pytest.mark.parametrize(
-    "resolves",
+    "resolved",
     [
-        pytest.param(False, id="interpreter-unresolved"),
-        pytest.param(True, id="resolved-but-probe-fails"),
+        pytest.param(None, id="interpreter-unresolved"),
+        pytest.param("probe-fails", id="resolved-but-probe-fails"),
     ],
 )
 def test_virtualenv_spec_subprocess_missing_interpreter(
     tox_project: ToxProjectCreator,
     mocker: MockerFixture,
-    resolves: bool,
+    resolved: str | None,
 ) -> None:
     ensure_bootstrap = mocker.patch(
-        "tox.tox_env.python.virtual_env.subprocess_adapter.ensure_bootstrap",
+        "tox.tox_env.python.virtual_env.api.ensure_bootstrap",
+        autospec=True,
         return_value=Path(sys.executable),
     )
-    resolved = MagicMock(system_executable=sys.executable) if resolves else None
-    mocker.patch("tox.tox_env.python.virtual_env.api.get_interpreter", return_value=resolved)
-    mocker.patch("tox.tox_env.python.virtual_env.subprocess_adapter.probe_python", return_value=None)
+    probe_fails = mocker.create_autospec(
+        PythonInfo, instance=True, system_executable=sys.executable, marker_environment={}
+    )
+    interpreter = {"probe-fails": probe_fails}.get(resolved)
+    mocker.patch("tox.tox_env.python.virtual_env.api.get_interpreter", autospec=True, return_value=interpreter)
+    mocker.patch("tox.tox_env.python.virtual_env.api.probe_python", autospec=True, return_value=None)
     proj = tox_project({
         "tox.toml": dedent(
             """\

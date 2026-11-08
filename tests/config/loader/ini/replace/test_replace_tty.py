@@ -11,15 +11,19 @@ if TYPE_CHECKING:
     from tests.config.loader.conftest import ReplaceOne
 
 
-@pytest.mark.parametrize("is_atty", [True, False])
-def test_replace_env_set(replace_one: ReplaceOne, mocker: MockFixture, is_atty: bool) -> None:
-    mocker.patch.object(sys.stdout, "isatty", return_value=is_atty)
-
-    result = replace_one("1 {tty} 2")
-    assert result == "1  2"
-
-    result = replace_one("1 {tty:a} 2")
-    assert result == f"1 {'a' if is_atty else ''} 2"
-
-    result = replace_one("1 {tty:a:b} 2")
-    assert result == f"1 {'a' if is_atty else 'b'} 2"
+@pytest.mark.parametrize(
+    ("template", "is_atty", "expected"),
+    [
+        pytest.param("1 {tty} 2", True, "1  2", id="plain-atty"),
+        pytest.param("1 {tty} 2", False, "1  2", id="plain-no-atty"),
+        pytest.param("1 {tty:a} 2", True, "1 a 2", id="one-arg-atty"),
+        pytest.param("1 {tty:a} 2", False, "1  2", id="one-arg-no-atty"),
+        pytest.param("1 {tty:a:b} 2", True, "1 a 2", id="two-args-atty"),
+        pytest.param("1 {tty:a:b} 2", False, "1 b 2", id="two-args-no-atty"),
+    ],
+)
+def test_replace_env_set(
+    replace_one: ReplaceOne, mocker: MockFixture, template: str, is_atty: bool, expected: str
+) -> None:
+    mocker.patch.object(sys.stdout, "isatty", autospec=True, return_value=is_atty)
+    assert replace_one(template) == expected

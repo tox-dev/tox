@@ -24,23 +24,8 @@ if TYPE_CHECKING:
     from packaging.specifiers import SpecifierSet
     from python_discovery import MarkerEnvironment
 
-_PROBE_SCRIPT: Final[str] = """\
-import json, struct, sys, sysconfig
-print(json.dumps({
-    "implementation": sys.implementation.name,
-    "version_info": list(sys.version_info[:5]),
-    "version": sys.version.split()[0],
-    "architecture": struct.calcsize("P") * 8,
-    "platform": sys.platform,
-    "system_executable": sys.executable,
-    "free_threaded": sysconfig.get_config_var("Py_GIL_DISABLED") == 1,
-    "debug_build": bool(sysconfig.get_config_var("Py_DEBUG")),
-    "sysconfig_platform": sysconfig.get_platform(),
-}))
-"""
 
-
-@dataclass
+@dataclass(slots=True, kw_only=True, frozen=True)
 class _VersionInfo:
     major: int
     minor: int
@@ -49,8 +34,23 @@ class _VersionInfo:
     serial: int
 
 
-@dataclass
+@dataclass(slots=True, kw_only=True)
 class SubprocessPythonInfo:
+    """The details of a python interpreter, probed by running it in a subprocess.
+
+    :param implementation: the name of the implementation
+    :param version_info: the version of the interpreter
+    :param version: the full version string
+    :param architecture: the number of bits of the interpreter
+    :param platform: the platform the interpreter runs on
+    :param system_executable: the path of the system executable of the interpreter
+    :param free_threaded: whether the interpreter is a free-threaded build
+    :param debug_build: whether the interpreter is a debug build
+    :param sysconfig_platform: the platform name from ``sysconfig``, ``None`` when unknown
+    :param marker_environment: the environment markers of the interpreter, ``None`` when unknown
+
+    """
+
     implementation: str
     version_info: _VersionInfo
     version: str
@@ -71,40 +71,56 @@ class SubprocessPythonInfo:
         return parts[-1] if len(parts) > 1 else ""
 
 
-@dataclass
+@dataclass(frozen=True, slots=True, kw_only=True)
 class SubprocessCreator:
-    """Mimics virtualenv Creator + Describe interface using known venv directory layout."""
+    """Mimics virtualenv Creator + Describe interface using known venv directory layout.
+
+    :param interpreter: the Python interpreter the virtual environment is created with
+
+    """
 
     _env_dir: Path
     interpreter: SubprocessPythonInfo
     _is_win: bool = field(default_factory=lambda: sys.platform == "win32")
 
     @property
-    def bin_dir(self) -> Path:
-        return self._env_dir / ("Scripts" if self._is_win else "bin")
-
-    @property
     def script_dir(self) -> Path:
+        """The directory the scripts of the environment are placed in, the same as its bin directory."""
         return self.bin_dir
 
     @property
+    def bin_dir(self) -> Path:
+        """The directory the executables of the environment are placed in."""
+        return self._env_dir / ("Scripts" if self._is_win else "bin")
+
+    @property
+    def platlib(self) -> Path:
+        """The directory of the platform specific libraries of the environment, the same as its purelib directory."""
+        return self.purelib
+
+    @property
     def purelib(self) -> Path:
+        """The directory of the pure python libraries of the environment."""
         if self._is_win:
             return self._env_dir / "Lib" / "site-packages"
         vi = self.interpreter.version_info
         return self._env_dir / "lib" / f"python{vi.major}.{vi.minor}" / "site-packages"
 
     @property
-    def platlib(self) -> Path:
-        return self.purelib
-
-    @property
     def exe(self) -> Path:
+        """The python executable of the environment."""
         return self.bin_dir / ("python.exe" if self._is_win else "python")
 
 
 class SubprocessSession:
-    """Mimics virtualenv Session interface, runs a bootstrapped virtualenv via subprocess."""
+    """Mimics virtualenv Session interface, runs a bootstrapped virtualenv via subprocess.
+
+    :param env_dir: the directory of the virtual environment
+    :param bootstrap_python: the Python used to bootstrap the environment, if any
+    :param env_vars: the environment variables of the subprocess
+    :param interpreter: the Python interpreter of the environment, if known
+
+    """
 
     def __init__(
         self,
@@ -116,9 +132,16 @@ class SubprocessSession:
         self._env_dir = env_dir
         self._bootstrap_python = bootstrap_python
         self._env_vars = env_vars
-        self._creator = SubprocessCreator(env_dir, interpreter) if interpreter is not None else None
+        self._creator = (
+            SubprocessCreator(_env_dir=env_dir, interpreter=interpreter) if interpreter is not None else None
+        )
 
     def run(self) -> None:
+        """Run the create step of the environment in a subprocess.
+
+        :raises RuntimeError: when no bootstrap interpreter was found
+
+        """
         if self._bootstrap_python is None:
             msg = "no interpreter discovered"
             raise RuntimeError(msg)
@@ -145,6 +168,11 @@ class SubprocessSession:
 
     @property
     def creator(self) -> SubprocessCreator:
+        """The creator of the environment, which describes its paths.
+
+        :raises RuntimeError: when no interpreter was discovered
+
+        """
         if self._creator is None:
             msg = "no interpreter discovered"
             raise RuntimeError(msg)
@@ -152,9 +180,31 @@ class SubprocessSession:
 
 
 def probe_python(python_path: str, marker_environment: MarkerEnvironment | None = None) -> SubprocessPythonInfo | None:
+    """Probe a python interpreter for its details, by running it.
+
+    :param python_path: the path of the interpreter
+    :param marker_environment: the marker environment to compare the interpreter with, ``None`` to skip it
+
+    :returns: the details, or ``None`` when the interpreter cannot be probed
+
+    """
+    probe_script: str = """\
+import json, struct, sys, sysconfig
+print(json.dumps({
+    "implementation": sys.implementation.name,
+    "version_info": list(sys.version_info[:5]),
+    "version": sys.version.split()[0],
+    "architecture": struct.calcsize("P") * 8,
+    "platform": sys.platform,
+    "system_executable": sys.executable,
+    "free_threaded": sysconfig.get_config_var("Py_GIL_DISABLED") == 1,
+    "debug_build": bool(sysconfig.get_config_var("Py_DEBUG")),
+    "sysconfig_platform": sysconfig.get_platform(),
+}))
+"""
     try:
         result = subprocess.run(
-            [python_path, "-c", _PROBE_SCRIPT], capture_output=True, text=True, timeout=30, check=False
+            [python_path, "-c", probe_script], capture_output=True, text=True, timeout=30, check=False
         )
         if result.returncode != 0:
             return None
@@ -176,49 +226,23 @@ def probe_python(python_path: str, marker_environment: MarkerEnvironment | None 
     )
 
 
-def _bootstrap_path(work_dir: Path, virtualenv_spec: str) -> Path:
-    digest = hashlib.sha256(virtualenv_spec.encode()).hexdigest()[:16]
-    return work_dir / ".virtualenv-bootstrap" / digest
-
-
-def _bin_dir(base: Path) -> Path:
-    return base / ("Scripts" if sys.platform == "win32" else "bin")
-
-
-def _bootstrap_python(base: Path) -> Path:
-    return _bin_dir(base) / ("python.exe" if sys.platform == "win32" else "python")
-
-
-def _bootstrap_pip(base: Path) -> Path:
-    return _bin_dir(base) / ("pip.exe" if sys.platform == "win32" else "pip")
-
-
-def _has_correct_virtualenv(python: Path, virtualenv_spec: str) -> bool:
-    if not python.exists():
-        return False
-    try:
-        result = subprocess.run(
-            [str(python), "-c", "from importlib.metadata import version; print(version('virtualenv'))"],
-            capture_output=True,
-            text=True,
-            timeout=30,
-            check=False,
-        )
-    except (subprocess.SubprocessError, FileNotFoundError, OSError):
-        return False
-    if result.returncode != 0:
-        return False
-    specifier = _version_specifier(virtualenv_spec)
-    return result.stdout.strip() in specifier if specifier else True
-
-
 def ensure_bootstrap(work_dir: Path, virtualenv_spec: str) -> Path:
+    """Make sure the virtualenv used to create environments is available.
+
+    :param work_dir: the directory the bootstrap is kept in
+    :param virtualenv_spec: the requirement of the virtualenv to bootstrap
+
+    :returns: the path of the bootstrap
+
+    :raises tox.tox_env.errors.Fail: when the cache directory of the bootstrap cannot be created
+
+    """
     _version_specifier(virtualenv_spec)
     base: Final[Path] = _bootstrap_path(work_dir, virtualenv_spec)
     if not base.parent.resolve().is_relative_to(work_dir.resolve()):
         cache_parent_error: Final[str] = "bootstrap cache directory must stay within work directory"
         raise Fail(cache_parent_error)
-    python: Final[Path] = _bootstrap_python(base)
+    python: Final[Path] = _bin_dir(base) / ("python.exe" if sys.platform == "win32" else "python")
     if _has_correct_virtualenv(python, virtualenv_spec):
         return python
 
@@ -240,25 +264,6 @@ def ensure_bootstrap(work_dir: Path, virtualenv_spec: str) -> Path:
         return python
 
 
-def _build_bootstrap(base: Path, virtualenv_spec: str) -> None:
-    # A planted link must fail creation; clear=True would erase its target.
-    base.mkdir()
-    venv.create(str(base), with_pip=True)
-    result: Final[subprocess.CompletedProcess[str]] = subprocess.run(
-        [str(_bootstrap_pip(base)), "install", virtualenv_spec], capture_output=True, text=True, check=False
-    )
-    if result.returncode != 0:
-        msg: Final[str] = f"failed to install {virtualenv_spec} into bootstrap env: {result.stderr}"
-        raise RuntimeError(msg)
-
-
-def _remove_stale_bootstrap(base: Path) -> None:
-    if base.is_symlink() or (base.exists() and not base.is_dir()):
-        base.unlink()
-    elif base.exists():
-        shutil.rmtree(base)
-
-
 def _version_specifier(virtualenv_spec: str) -> SpecifierSet:
     msg = "virtualenv_spec must name virtualenv with optional version specifiers"
     try:
@@ -274,6 +279,55 @@ def _version_specifier(virtualenv_spec: str) -> SpecifierSet:
     ):
         raise Fail(msg)
     return requirement.specifier
+
+
+def _bootstrap_path(work_dir: Path, virtualenv_spec: str) -> Path:
+    return work_dir / ".virtualenv-bootstrap" / hashlib.sha256(virtualenv_spec.encode()).hexdigest()[:16]
+
+
+def _bin_dir(base: Path) -> Path:
+    return base / ("Scripts" if sys.platform == "win32" else "bin")
+
+
+def _has_correct_virtualenv(python: Path, virtualenv_spec: str) -> bool:
+    if not python.exists():
+        return False
+    try:
+        result = subprocess.run(
+            [str(python), "-c", "from importlib.metadata import version; print(version('virtualenv'))"],
+            capture_output=True,
+            text=True,
+            timeout=30,
+            check=False,
+        )
+    except (subprocess.SubprocessError, FileNotFoundError, OSError):
+        return False
+    if result.returncode != 0:
+        return False
+    specifier = _version_specifier(virtualenv_spec)
+    return result.stdout.strip() in specifier if specifier else True
+
+
+def _build_bootstrap(base: Path, virtualenv_spec: str) -> None:
+    # A planted link must fail creation; clear=True would erase its target.
+    base.mkdir()
+    venv.create(str(base), with_pip=True)
+    result: Final[subprocess.CompletedProcess[str]] = subprocess.run(
+        [str(_bin_dir(base) / ("pip.exe" if sys.platform == "win32" else "pip")), "install", virtualenv_spec],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if result.returncode != 0:
+        msg: Final[str] = f"failed to install {virtualenv_spec} into bootstrap env: {result.stderr}"
+        raise RuntimeError(msg)
+
+
+def _remove_stale_bootstrap(base: Path) -> None:
+    if base.is_symlink() or (base.exists() and not base.is_dir()):
+        base.unlink()
+    elif base.exists():
+        shutil.rmtree(base)
 
 
 __all__ = [

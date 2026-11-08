@@ -14,11 +14,50 @@ if TYPE_CHECKING:
     from collections.abc import Iterator
 
 LATEST_PYTHON_MINOR_MIN: Final[int] = 11
-LATEST_PYTHON_MINOR_MAX: int = 15
+"""Lowest Python 3 minor version used when an open version range has no lower bound."""
+LATEST_PYTHON_MINOR_MAX: Final[int] = 15
+"""Highest Python 3 minor version used when an open version range has no upper bound."""
+
+
+def filter_for_env(value: str, name: str | None) -> str:
+    """Keep the lines that apply to an environment, and drop the lines of factors that do not match it.
+
+    :param value: the value with factor conditions
+    :param name: the environment name, ``None`` when unknown
+
+    :returns: the value with only the lines that apply to the environment
+
+    """
+    current = active_factors(name)
+    overall: list[str] = []
+    active_continuation = False
+    pending_skip = False
+    for factors, content in expand_factors(value):
+        if factors is None:
+            if pending_skip and not active_continuation and not content.endswith("\\"):
+                pending_skip = False
+                continue
+            if content:
+                overall.append(content)
+            active_continuation = content.endswith("\\") if content else active_continuation
+            pending_skip = False
+        elif any(all((a_name in current) ^ negate for a_name, negate in group) for group in factors):
+            overall.append(content)
+            active_continuation = content.endswith("\\")
+            pending_skip = False
+        else:
+            pending_skip = content.endswith("\\")
+    return "\n".join(overall)
 
 
 def active_factors(env_name: str | None) -> set[str]:
-    """Factors that hold for an environment: those in its name, the platform and the machine ISA."""
+    """Factors that hold for an environment: those in its name, the platform and the machine ISA.
+
+    :param env_name: the name of the environment, or ``None`` when it has no name
+
+    :returns: the factors that hold for the environment
+
+    """
     env_factors = (
         set(chain.from_iterable([(i for i, _ in a) for a in find_factor_groups(env_name)]))
         if env_name is not None
@@ -37,96 +76,81 @@ def active_factors(env_name: str | None) -> set[str]:
     return current
 
 
-def filter_for_env(value: str, name: str | None) -> str:
-    current = active_factors(name)
-    overall: list[str] = []
-    active_continuation = False
-    pending_skip = False
-    for factors, content in expand_factors(value):
-        if factors is None:
-            if pending_skip and not active_continuation and not content.endswith("\\"):
-                pending_skip = False
-                continue
-            if content:
-                overall.append(content)
-            active_continuation = content.endswith("\\") if content else active_continuation
-            pending_skip = False
-        else:
-            matched = any(all((a_name in current) ^ negate for a_name, negate in group) for group in factors)
-            if matched:
-                overall.append(content)
-                active_continuation = content.endswith("\\")
-                pending_skip = False
-            else:
-                pending_skip = content.endswith("\\")
-    return "\n".join(overall)
-
-
-def find_envs(value: str) -> Iterator[str]:
-    seen = set()
-    for factors, _ in expand_factors(value):
-        if factors is not None:
-            for group in factors:
-                env = explode_factor(group)
-                if env not in seen:
-                    yield env
-                    seen.add(env)
-
-
-def extend_factors(value: str) -> Iterator[str]:
-    for group in find_factor_groups(value):
-        yield explode_factor(group)
-
-
-def explode_factor(group: list[tuple[str, bool]]) -> str:
-    return "-".join([name for name, _ in group])
-
-
-def expand_factors(value: str) -> Iterator[tuple[list[list[tuple[str, bool]]] | None, str]]:
-    for line in value.split("\n"):
-        factors: list[list[tuple[str, bool]]] | None = None
-        marker_search = re.search(
-            r"""
-            :           # colon separator
-            ( \s | $ )  # followed by whitespace or end of string
-            """,
-            line,
-            re.VERBOSE,
-        )
-        marker_at, content = marker_search.start() if marker_search else -1, line
-        if marker_at != -1:
-            try:
-                factors = list(find_factor_groups(line[:marker_at].strip()))
-            except ValueError:
-                pass  # when cannot extract factors keep the entire line
-            else:
-                content = line[marker_at + 1 :].strip()
-        yield factors, content
-
-
-def find_factor_groups(value: str) -> Iterator[list[tuple[str, bool]]]:
-    """Transform '{py,!pi}-{a,b},c' to [{'py', 'a'}, {'py', 'b'}, {'pi', 'a'}, {'pi', 'b'}, {'c'}]."""
+def find_factor_groups(  # simplint: ignore[SMP403]  # imported by tox plugins
+    value: str,
+) -> Iterator[list[tuple[str, bool]]]:  # simplint: ignore[SMP403]  # imported by tox plugins
+    # Transform '{py,!pi}-{a,b},c' to [{'py', 'a'}, {'py', 'b'}, {'pi', 'a'}, {'pi', 'b'}, {'c'}].
     value = expand_ranges(value)
     for env in expand_env_with_negation(value):
         yield [name_with_negate(f) for f in env.split("-")]
 
 
-_FACTOR_RE: Final[re.Pattern[str]] = re.compile(
-    r"""
-    (?:
-        !?              # optional negation prefix
-        (?: \[!? | [\w.*?\]] )    # first char: word char, dot, or fnmatch glob (*, ?, [seq], [!seq])
-        (?: \[!? | [\w.*?\]-] )*  # remaining chars: the same, or hyphens
-    |
-        ^$              # or an empty string
+def expand_ranges(value: str) -> str:
+    """Expand ranges in env expressions.
+
+    Supports closed ranges ``{10-13}``, right-open ``{10-}`` (upper bound = :data:`LATEST_PYTHON_MINOR_MAX`), and
+    left-open ``{-13}`` (lower bound = :data:`LATEST_PYTHON_MINOR_MIN`).
+
+    :param value: the text with the ranges to expand
+
+    :returns: the text with the numeric ranges expanded
+
+    """
+
+    def _expand(match: re.Match[str]) -> str:
+        src, start_, end_, open_start, open_end = match.group("src", "start", "end", "open_start", "open_end")
+        delimiter = match.group()[-1]  # the ',' or '}' that terminated the match
+        if src and start_ and end_:
+            start, end = int(start_), int(end_)
+            direction = 1 if start < end else -1
+            expansion = ",".join(str(x) for x in range(start, end + direction, direction))
+        elif open_start:
+            expansion = ",".join(map(str, open_minor_range(start=int(open_start))))
+        elif open_end:
+            expansion = ",".join(map(str, open_minor_range(stop=int(open_end))))
+        else:  # a single number, leave untouched
+            return match.group()
+        return f"{expansion}{delimiter}"
+
+    return re.sub(
+        r"""
+        (?P<src>                # outer capture group
+            (?<! [\w.-] )       # only an env or brace item opens a range, so py-django-4-2 stays one name
+            (?:
+                (?P<start> \d+ ) - (?P<end> \d+ ) # closed range: start-end
+                |
+                (?P<open_start> \d+ ) -  # right-open range: start-
+            )
+            |
+            (?<= [{,] ) - (?P<open_end> \d+ )  # left-open range: -end (preceded by { or ,)
+            |
+            \d+                 # single number
+        )
+        (?: , | \} )            # followed by comma or closing brace
+        """,
+        _expand,
+        value,
+        flags=re.VERBOSE,
     )
-    """,
-    re.VERBOSE,
-)
 
 
-def expand_env_with_negation(value: str) -> Iterator[str]:
-    """Transform '{py,!pi}-{a,b},c' to ['py-a', 'py-b', '!pi-a', '!pi-b', 'c']."""
+def open_minor_range(start: int | None = None, stop: int | None = None) -> list[int]:
+    """Expand an open Python 3 minor version range into the minor versions it covers.
+
+    :param start: the first minor version, the lowest supported one when ``None``
+    :param stop: the last minor version, the highest supported one when ``None``
+
+    :returns: the minor versions in the range
+
+    """
+    first = LATEST_PYTHON_MINOR_MIN if start is None else start
+    last = LATEST_PYTHON_MINOR_MAX if stop is None else stop
+    # an explicit bound outside the supported window still names a version, so keep it rather than expand to nothing
+    return list(range(first, last + 1)) or [last if start is None else first]
+
+
+def expand_env_with_negation(value: str) -> Iterator[str]:  # simplint: ignore[SMP403]  # imported by tox plugins
+    # Transform '{py,!pi}-{a,b},c' to ['py-a', 'py-b', '!pi-a', '!pi-b', 'c'].
     for key, group in groupby(
         re.split(
             r"""
@@ -150,77 +174,99 @@ def expand_env_with_negation(value: str) -> Iterator[str]:
                 group_str,
                 flags=re.VERBOSE,
             )
-            parts = [[i.strip() for i in elem.split(",")] for elem in elements]
-            for variant in product(*parts):
+            for variant in product(*[[i.strip() for i in elem.split(",")] for elem in elements]):
                 variant_str = "".join(variant)
                 if not all(_FACTOR_RE.fullmatch(i) for i in variant_str.split("-")):
                     raise ValueError(variant_str)
                 yield variant_str
 
 
-def name_with_negate(factor: str) -> tuple[str, bool]:
+def name_with_negate(factor: str) -> tuple[str, bool]:  # simplint: ignore[SMP403]  # imported by tox plugins
     negated = is_negated(factor)
-    result = factor[1:] if negated else factor
-    return result, negated
+    return (factor[1:] if negated else factor), negated
 
 
-def is_negated(factor: str) -> bool:
+def is_negated(factor: str) -> bool:  # simplint: ignore[SMP403]  # imported by tox plugins
     return factor.startswith("!")
 
 
-def expand_ranges(value: str) -> str:
-    """Expand ranges in env expressions.
+def expand_factors(value: str) -> Iterator[tuple[list[list[tuple[str, bool]]] | None, str]]:
+    """Split a value into its lines, each with the factor groups in front of its content.
 
-    Supports closed ranges ``{10-13}``, right-open ``{10-}`` (upper bound = :data:`LATEST_PYTHON_MINOR_MAX`), and
-    left-open ``{-13}`` (lower bound = :data:`LATEST_PYTHON_MINOR_MIN`).
+    :param value: the value to split
+
+    :yields: for each line, its factor groups (``None`` when the line has no factor prefix) and its content
 
     """
-
-    def _expand(match: re.Match[str]) -> str:
-        src, start_, end_, open_start, open_end = match.groups()
-        delimiter = match.group()[-1]  # the ',' or '}' that terminated the match
-        if src and start_ and end_:
-            start, end = int(start_), int(end_)
-            direction = 1 if start < end else -1
-            expansion = ",".join(str(x) for x in range(start, end + direction, direction))
-        elif open_start:
-            expansion = ",".join(map(str, open_minor_range(start=int(open_start))))
-        elif open_end:
-            expansion = ",".join(map(str, open_minor_range(stop=int(open_end))))
-        else:  # a single number, leave untouched
-            return match.group()
-        return f"{expansion}{delimiter}"
-
-    return re.sub(
-        r"""
-        (                       # outer capture group
-            (?<! [\w.-] )       # only an env or brace item opens a range, so py-django-4-2 stays one name
-            (?:
-                ( \d+ ) - ( \d+ ) # closed range: start-end
-                |
-                ( \d+ ) -         # right-open range: start-
-            )
-            |
-            (?<= [{,] ) - ( \d+ )  # left-open range: -end (preceded by { or ,)
-            |
-            \d+                 # single number
+    for line in value.split("\n"):
+        factors: list[list[tuple[str, bool]]] | None = None
+        marker_search = re.search(
+            r"""
+            :           # colon separator
+            ( \s | $ )  # followed by whitespace or end of string
+            """,
+            line,
+            re.VERBOSE,
         )
-        (?: , | \} )            # followed by comma or closing brace
-        """,
-        _expand,
-        value,
-        flags=re.VERBOSE,
+        marker_at, content = marker_search.start() if marker_search else -1, line
+        if marker_at != -1:
+            try:
+                factors = list(find_factor_groups(line[:marker_at].strip()))
+            except ValueError:
+                pass  # when cannot extract factors keep the entire line
+            else:
+                content = line[marker_at + 1 :].strip()
+        yield factors, content
+
+
+def find_envs(value: str) -> Iterator[str]:
+    """Find the distinct environment names declared through factors.
+
+    :param value: the value to search
+
+    :yields: each environment name once, in order of appearance
+
+    """
+    seen = set()
+    for factors, _ in expand_factors(value):
+        if factors is not None:
+            for group in factors:
+                if (env := explode_factor(group)) not in seen:
+                    yield env
+                    seen.add(env)
+
+
+def explode_factor(group: list[tuple[str, bool]]) -> str:  # simplint: ignore[SMP403]  # imported by tox plugins
+    return "-".join([name for name, _ in group])
+
+
+def extend_factors(value: str) -> Iterator[str]:
+    """Expand the factor groups of a value into environment names.
+
+    :param value: the value with factor groups
+
+    :yields: the environment name of each factor group
+
+    """
+    for group in find_factor_groups(value):
+        yield explode_factor(group)
+
+
+_FACTOR_RE: Final[re.Pattern[str]] = re.compile(
+    r"""
+    (?:
+        !?              # optional negation prefix
+        (?: \[!? | [\w.*?\]] )    # first char: word char, dot, or fnmatch glob (*, ?, [seq], [!seq])
+        (?: \[!? | [\w.*?\]-] )*  # remaining chars: the same, or hyphens
+    |
+        ^$              # or an empty string
     )
+    """,
+    re.VERBOSE,
+)
 
 
-def open_minor_range(start: int | None = None, stop: int | None = None) -> list[int]:
-    first = LATEST_PYTHON_MINOR_MIN if start is None else start
-    last = LATEST_PYTHON_MINOR_MAX if stop is None else stop
-    # an explicit bound outside the supported window still names a version, so keep it rather than expand to nothing
-    return list(range(first, last + 1)) or [last if start is None else first]
-
-
-__all__ = (
+__all__ = [
     "LATEST_PYTHON_MINOR_MAX",
     "LATEST_PYTHON_MINOR_MIN",
     "active_factors",
@@ -230,4 +276,4 @@ __all__ = (
     "filter_for_env",
     "find_envs",
     "open_minor_range",
-)
+]

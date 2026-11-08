@@ -5,7 +5,7 @@ import os
 import stat
 import sys
 from pathlib import Path
-from typing import TYPE_CHECKING, Final
+from typing import TYPE_CHECKING, Final, Protocol
 
 import pytest
 
@@ -17,6 +17,10 @@ if TYPE_CHECKING:
     from pytest_mock import MockerFixture
 
     from tox.pytest import LogCaptureFixture, MonkeyPatch
+
+
+class _Lstat(Protocol):
+    def __call__(self, path: Path, *, dir_fd: int | None = None) -> os.stat_result: ...
 
 
 @pytest.fixture
@@ -230,7 +234,7 @@ def test_repair_staging_path_rejects_entry_owned_by_other_account(tmp_path: Path
     planted.write_bytes(b"planted")
     work_dir.chmod(0o777)
     tmp_path.chmod(0o755)
-    original_lstat: Final[Callable[..., os.stat_result]] = os.lstat
+    original_lstat: Final[_Lstat] = os.lstat
 
     def lstat_as_other_account(path: Path, *, dir_fd: int | None = None) -> os.stat_result:
         values: Final[list[int | float]] = list(original_lstat(path, dir_fd=dir_fd))
@@ -282,7 +286,10 @@ def test_repair_staging_path_leaves_exposed_intermediate_directory(tmp_path: Pat
 
 
 @pytest.mark.skipif(sys.platform == "win32", reason="POSIX directory permissions")
-@pytest.mark.parametrize("owned", [pytest.param("build", id="intermediate"), pytest.param(".tox", id="work-dir")])
+@pytest.mark.parametrize(
+    "owned",
+    [pytest.param("build", id="intermediate"), pytest.param("build/.tox", id="work-dir")],
+)
 def test_repair_staging_path_skips_directory_owned_by_other_account(
     tmp_path: Path, mocker: MockerFixture, owned: str
 ) -> None:
@@ -292,7 +299,7 @@ def test_repair_staging_path_skips_directory_owned_by_other_account(
     staging.mkdir(parents=True)
     work_dir.chmod(0o777)
     tmp_path.chmod(0o755)
-    foreign_inode: Final[int] = (build if owned == "build" else work_dir).stat().st_ino
+    foreign_inode: Final[int] = (tmp_path / owned).stat().st_ino
     original_fstat: Final[Callable[[int], os.stat_result]] = os.fstat
 
     def fstat_as_other_account(descriptor: int) -> os.stat_result:

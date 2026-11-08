@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import math
 from pathlib import Path, PurePosixPath
+from typing import TYPE_CHECKING
 
 import pytest
 
@@ -10,6 +11,9 @@ from tox.config.set_env import SetEnv
 from tox.config.types import Command, EnvList
 from tox.tox_env.python.pip.req_file import PythonDeps
 from tox.util.typing_compat import override
+
+if TYPE_CHECKING:
+    from tox.util.json_types import JsonValue
 
 
 class _Custom:
@@ -39,7 +43,9 @@ class _Custom:
         pytest.param(_Custom(), "custom-value", id="fallback_unknown_type"),
     ],
 )
-def test_to_native(value: object, expected: object) -> None:
+def test_to_native(
+    value: JsonValue | PurePosixPath | set[str] | EnvList | Command | _Custom, expected: JsonValue
+) -> None:
     result = to_native(value)
     assert result == expected
     assert isinstance(result, type(expected))
@@ -50,16 +56,16 @@ def test_path(tmp_path: Path) -> None:
 
 
 def test_list_of_paths(tmp_path: Path) -> None:
-    p = tmp_path / "a"
-    assert to_native([p]) == [str(p)]
+    path = tmp_path / "a"
+    assert to_native([path]) == [str(path)]
 
 
 @pytest.mark.parametrize(
     ("args", "expected_prefix"),
     [
-        (["pytest", "-v"], "pytest"),
-        (["-", "cmd"], "cmd"),
-        (["!", "cmd"], "cmd"),
+        pytest.param(["pytest", "-v"], "pytest", id="pytest-dash-v-pytest"),
+        pytest.param(["-", "cmd"], "cmd", id="dash-cmd-cmd"),
+        pytest.param(["!", "cmd"], "cmd", id="bang-cmd-cmd"),
     ],
 )
 def test_command_variants(args: list[str], expected_prefix: str) -> None:
@@ -69,14 +75,11 @@ def test_command_variants(args: list[str], expected_prefix: str) -> None:
 
 
 def test_set_env(tmp_path: Path) -> None:
-    raw = "A=1\nB=hello"
-    se = SetEnv(raw, "set_env", "py", tmp_path)
-    result = to_native(se)
+    result = to_native(SetEnv("A=1\nB=hello", "set_env", "py", tmp_path))
     assert result == {"A": "1", "B": "hello"}
 
 
 def test_python_deps(tmp_path: Path) -> None:
     (tmp_path / "tox.ini").touch()
-    deps = PythonDeps("pytest\nflask>=2.0", tmp_path)
-    result = to_native(deps)
+    result = to_native(PythonDeps("pytest\nflask>=2.0", tmp_path))
     assert result == ["pytest", "flask>=2.0"]

@@ -15,17 +15,20 @@ if TYPE_CHECKING:
     from tox.pytest import ToxProjectCreator
 
 
-@pytest.mark.parametrize("exception", [HandledError, KeyboardInterrupt])
+@pytest.mark.parametrize(
+    "exception",
+    [pytest.param(HandledError, id="handlederror"), pytest.param(KeyboardInterrupt, id="keyboardinterrupt")],
+)
 def test_exit_code_minus_2_on_expected_exit(exception: Exception, mocker: MockerFixture) -> None:
-    mocker.patch("tox.run.main", side_effect=exception)
+    mocker.patch("tox.run.main", autospec=True, side_effect=exception)
     with pytest.raises(SystemExit) as system_exit:
         run()
     assert system_exit.value.code == -2
 
 
 def test_re_raises_on_unexpected_exit(mocker: MockerFixture) -> None:
-    mocker.patch("tox.run.main", side_effect=ValueError)
-    with pytest.raises(ValueError):  # ruff:ignore[pytest-raises-too-broad]
+    mocker.patch("tox.run.main", autospec=True, side_effect=ValueError)
+    with pytest.raises(ValueError):  # ruff:ignore[pytest-raises-too-broad]  # only checks failure
         run()
 
 
@@ -52,9 +55,11 @@ def test_custom_work_dir(tox_project: ToxProjectCreator, tmp_path: Path) -> None
 
     env_conf = outcome.state.conf.get_env("py")
 
-    assert env_conf["env_dir"] == expected_work_dir / "py"
-    assert env_conf["env_log_dir"] == expected_work_dir / "py" / "log"
-    assert env_conf["env_tmp_dir"] == expected_work_dir / "py" / "tmp"
+    assert (env_conf["env_dir"], env_conf["env_log_dir"], env_conf["env_tmp_dir"]) == (
+        expected_work_dir / "py",
+        expected_work_dir / "py" / "log",
+        expected_work_dir / "py" / "tmp",
+    )
 
 
 def test_custom_root_dir(tox_project: ToxProjectCreator, tmp_path: Path) -> None:
@@ -72,14 +77,18 @@ def test_custom_root_dir(tox_project: ToxProjectCreator, tmp_path: Path) -> None
 
     # values that depend on tox_root should also be updated
 
-    assert outcome.state.conf.core["work_dir"] == expected_work_dir
-    assert outcome.state.conf.core["temp_dir"] == expected_work_dir / ".tmp"
+    assert (outcome.state.conf.core["work_dir"], outcome.state.conf.core["temp_dir"]) == (
+        expected_work_dir,
+        expected_work_dir / ".tmp",
+    )
 
     env_conf = outcome.state.conf.get_env("py")
 
-    assert env_conf["env_dir"] == expected_work_dir / "py"
-    assert env_conf["env_log_dir"] == expected_work_dir / "py" / "log"
-    assert env_conf["env_tmp_dir"] == expected_work_dir / "py" / "tmp"
+    assert (env_conf["env_dir"], env_conf["env_log_dir"], env_conf["env_tmp_dir"]) == (
+        expected_work_dir / "py",
+        expected_work_dir / "py" / "log",
+        expected_work_dir / "py" / "tmp",
+    )
 
 
 def test_custom_root_dir_and_work_dir(tox_project: ToxProjectCreator, tmp_path: Path) -> None:
@@ -100,6 +109,8 @@ def test_custom_root_dir_and_work_dir(tox_project: ToxProjectCreator, tmp_path: 
 
     env_conf = outcome.state.conf.get_env("py")
 
-    assert env_conf["env_dir"] == expected_work_dir / "py"
-    assert env_conf["env_log_dir"] == expected_work_dir / "py" / "log"
-    assert env_conf["env_tmp_dir"] == expected_work_dir / "py" / "tmp"
+    assert (env_conf["env_dir"], env_conf["env_log_dir"], env_conf["env_tmp_dir"]) == (
+        expected_work_dir / "py",
+        expected_work_dir / "py" / "log",
+        expected_work_dir / "py" / "tmp",
+    )

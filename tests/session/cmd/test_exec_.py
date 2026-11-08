@@ -9,7 +9,7 @@ import pytest
 from tox.execute.request import ExecuteRequest, StdinSource
 
 if TYPE_CHECKING:
-    from unittest.mock import MagicMock
+    from pytest_mock import MockType
 
     from tox.pytest import ToxProject, ToxProjectCreator, ToxRunOutcome
 
@@ -34,16 +34,13 @@ def test_exec(tox_project: ToxProjectCreator, exit_code: int) -> None:
     prj = tox_project({"tox.ini": "[testenv]\npackage=skip"})
     py_cmd = f"import sys; print(sys.version); raise SystemExit({exit_code})"
     outcome = prj.run("e", "-e", "py", "--", "python", "-c", py_cmd)
-    if exit_code:
-        outcome.assert_failed()
-    else:
-        outcome.assert_success()
+    assert outcome.code == exit_code
     assert sys.version in outcome.out
 
 
 def test_exec_keeps_program_name(tox_project: ToxProjectCreator) -> None:
     project: Final[ToxProject] = tox_project({"tox.ini": "[testenv]\npackage=skip", "w": {"python": "", "a.txt": ""}})
-    execute_calls: Final[MagicMock] = project.patch_execute(lambda _: 0)
+    execute_calls: Final[MockType] = project.patch_execute(lambda _: 0)
 
     result: Final[ToxRunOutcome] = project.run("e", "-e", "py", "--", "python", "a.txt", from_cwd=project.path / "w")
 
@@ -52,18 +49,15 @@ def test_exec_keeps_program_name(tox_project: ToxProjectCreator) -> None:
 
 
 def test_exec_help(tox_project: ToxProjectCreator) -> None:
-    outcome = tox_project({"tox.ini": ""}).run("e", "-h")
-    outcome.assert_success()
+    tox_project({"tox.ini": ""}).run("e", "-h").assert_success()
 
 
 def test_exec_always_no_capture(tox_project: ToxProjectCreator) -> None:
-    """Verify tox exec always runs with no_capture enabled for interactive mode."""
+    # Verify tox exec always runs with no_capture enabled for interactive mode.
     project = tox_project({"tox.ini": "[testenv]\npackage=skip"})
     execute_calls = project.patch_execute(lambda _: 0)
 
-    result = project.run("e", "-e", "py", "--", "python", "--version")
-
-    result.assert_success()
+    project.run("e", "-e", "py", "--", "python", "--version").assert_success()
     assert execute_calls.call_count > 0
     assert all(call[0][0].options.no_capture is True for call in execute_calls.call_args_list)
 
@@ -79,8 +73,7 @@ def test_exec_passes_stdin_through(tox_project: ToxProjectCreator, monkeypatch: 
         return 0
 
     project.patch_execute(capture_stdin)
-    result = project.run("e", "-e", "py", "--", "python", "--version")
-    result.assert_success()
+    project.run("e", "-e", "py", "--", "python", "--version").assert_success()
 
     assert stdin_sources
     assert all(source == StdinSource.USER for source in stdin_sources)

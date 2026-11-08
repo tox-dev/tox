@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Literal, TypeVar
+from typing import TYPE_CHECKING, Final, Literal, TypeVar
 
 import pytest
 
@@ -13,6 +13,8 @@ from tox.report import HandledError
 
 if TYPE_CHECKING:
     from types import UnionType
+
+    from tox.config.loader.toml._api import TomlTypes
 
 
 def test_toml_loader_load_raw() -> None:
@@ -30,21 +32,10 @@ def test_toml_loader_found_keys() -> None:
     assert loader.found_keys() == {"a", "c"}
 
 
-V = TypeVar("V")
+TargetT = TypeVar("TargetT")
 
 
-def factory_na(obj: object) -> V:
-    raise NotImplementedError
-
-
-def perform_load(value: Any, of_type: type[V] | UnionType) -> V:
-    env_name, key = "A", "k"
-    loader = TomlLoader(TomlPyProjectSection.from_key(f"tox.env.{env_name}"), [], {key: value}, {}, set())
-    args = ConfigLoadArgs(None, env_name, env_name)
-    return loader.load(key, of_type, factory_na, None, args)
-
-
-_PREFIX = r"failed to load A\.k: "
+_PREFIX: Final[str] = r"failed to load A\.k: "
 
 
 @pytest.mark.parametrize(
@@ -59,10 +50,24 @@ _PREFIX = r"failed to load A\.k: "
         pytest.param(["a", "b"], list[Literal["a", "b"]], ["a", "b"], id="list_literal"),
     ],
 )
-def test_toml_loader_ok(value: Any, of_type: type[Any] | UnionType, expected: object) -> None:
+def test_toml_loader_ok(  # simplint: ignore[SMP602]  # test values have any type
+    value: TomlTypes,
+    of_type: type | UnionType,
+    expected: object,  # simplint: ignore[SMP602]  # test values have any type
+) -> None:
     result = perform_load(value, of_type)
     assert result == expected
     assert isinstance(result, type(expected))
+
+
+def perform_load(value: TomlTypes, of_type: type[TargetT] | UnionType) -> TargetT:
+    env_name, key = "A", "k"
+    loader = TomlLoader(TomlPyProjectSection.from_key(f"tox.env.{env_name}"), [], {key: value}, {}, set())
+    return loader.load(key, of_type, factory_na, None, ConfigLoadArgs(None, env_name, env_name))
+
+
+def factory_na(obj: object) -> TargetT:  # simplint: ignore[SMP602]  # test values have any type
+    raise NotImplementedError
 
 
 @pytest.mark.parametrize(
@@ -83,7 +88,7 @@ def test_toml_loader_ok(value: Any, of_type: type[Any] | UnionType, expected: ob
         ),
     ],
 )
-def test_toml_loader_nok(value: Any, of_type: type[Any] | UnionType, msg: str) -> None:
+def test_toml_loader_nok(value: TomlTypes, of_type: type | UnionType, msg: str) -> None:
     with pytest.raises(HandledError, match=_PREFIX + msg):
         perform_load(value, of_type)
 
@@ -104,7 +109,7 @@ def test_toml_loader_command_list_drops_empty() -> None:
 
 
 def test_toml_loader_command_empty_nok() -> None:
-    with pytest.raises(HandledError, match=_PREFIX + r"attempting to parse \[\] into a command failed"):
+    with pytest.raises(HandledError, match=rf"{_PREFIX}attempting to parse \[\] into a command failed"):
         perform_load([], Command)
 
 
@@ -117,7 +122,7 @@ def test_toml_loader_env_list_ok() -> None:
 def test_toml_loader_env_list_nok() -> None:
     with pytest.raises(
         HandledError,
-        match=_PREFIX + r"env_list items must be strings, product dicts, range dicts, or labeled dicts, got int",
+        match=rf"{_PREFIX}env_list items must be strings, product dicts, range dicts, or labeled dicts, got int",
     ):
         perform_load(["a", 1], EnvList)
 
@@ -150,21 +155,21 @@ def test_toml_loader_env_list_nok() -> None:
         ),
     ],
 )
-def test_toml_loader_env_list_shorthand(raw: list[Any], expected: list[str]) -> None:
+def test_toml_loader_env_list_shorthand(raw: list[TomlTypes], expected: list[str]) -> None:
     res = perform_load(raw, EnvList)
     assert isinstance(res, EnvList)
     assert list(res) == expected
 
 
 def test_toml_loader_env_list_prefix_and_product_rejected() -> None:
-    with pytest.raises(HandledError, match=_PREFIX + r"env_list dict items cannot combine 'product' with 'prefix'"):
+    with pytest.raises(HandledError, match=rf"{_PREFIX}env_list dict items cannot combine 'product' with 'prefix'"):
         perform_load([{"prefix": "py3", "product": [["a"]]}], EnvList)
 
 
 def test_toml_loader_env_list_nested_dict_in_list_rejects_with_hint() -> None:
     with pytest.raises(
         HandledError,
-        match=_PREFIX + r"factor group list items must be strings, got dict.*sibling factor groups",
+        match=rf"{_PREFIX}factor group list items must be strings, got dict.*sibling factor groups",
     ):
         perform_load([{"product": [[{"prefix": "py3", "start": 9, "stop": 14}]]}], EnvList)
 
@@ -196,7 +201,7 @@ def test_toml_loader_dict_of_env_list_values_ok() -> None:
 def test_toml_loader_dict_of_env_list_values_nok() -> None:
     with pytest.raises(
         HandledError,
-        match=_PREFIX + r"env_list items must be strings, product dicts, range dicts, or labeled dicts, got int",
+        match=rf"{_PREFIX}env_list items must be strings, product dicts, range dicts, or labeled dicts, got int",
     ):
         perform_load({"x": ["a", 1]}, dict[str, EnvList])
 
@@ -218,5 +223,5 @@ def test_toml_loader_list_of_env_list_ok() -> None:
 
 
 def test_toml_loader_list_of_env_list_nok() -> None:
-    with pytest.raises(HandledError, match=_PREFIX + r"env_list must be a list, got str"):
+    with pytest.raises(HandledError, match=rf"{_PREFIX}env_list must be a list, got str"):
         perform_load(["a"], list[EnvList])

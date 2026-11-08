@@ -17,20 +17,31 @@ from .source.api import FactorLabelSource
 if TYPE_CHECKING:
     from collections.abc import Iterable, Iterator, Sequence
 
-    from tox.config.loader.api import Loader, OverrideMap
-    from tox.config.types import FactorGroup
-
     from .cli.parser import Parsed
+    from .loader.api import Loader, OverrideMap
     from .loader.memory import MemoryLoader
     from .loader.section import Section
     from .source import Source
+    from .types import FactorGroup
 
 
-T = TypeVar("T", bound=ConfigSet)
+T = TypeVar("T", bound=ConfigSet)  # simplint: ignore[SMP101]  # exported, renaming breaks importers
+"""Type variable bound to the configuration set classes."""
 
 
 class Config:
-    """Main configuration object for tox."""
+    """Main configuration object for tox.
+
+    :param config_source: the source the configuration is read from
+    :param options: the parsed command line options
+    :param root: the project root directory, where the configuration file is
+    :param pos_args: the positional arguments passed after ``--``
+    :param work_dir: the directory where tox keeps its own files
+    :param extra_envs: the environments to add to the configured ones
+
+    :var memory_seed_loaders: the in-memory loaders that seed the environments by name
+
+    """
 
     def __init__(  # ruff:ignore[too-many-arguments]  # <- no way around many args
         self,
@@ -57,86 +68,18 @@ class Config:
         self._core_set: CoreConfigSet | None = None
         self.memory_seed_loaders: defaultdict[str, list[MemoryLoader]] = defaultdict(list)
 
-    def pos_args(self, to_path: Path | None, *, program_first: bool = False) -> tuple[str, ...] | None:
-        if self._pos_args is not None and to_path is not None and Path.cwd() != to_path:
-            args: Final[list[str]] = []
-            # Windows resolves parent segments before following directory links.
-            if sys.platform == "win32":
-                to_path_str = os.path.abspath(str(to_path))  # ruff:ignore[os-path-abspath]
-            else:
-                to_path_str = os.path.realpath(to_path)
-            for index, arg in enumerate(self._pos_args):
-                if not arg:
-                    args.append(arg)
-                    continue
-                path_arg = Path(arg)
-                try:
-                    is_existing_path = path_arg.exists()
-                except OSError:
-                    logging.debug("could not check if %r is an existing path", redact_argv([arg])[0])
-                    is_existing_path = False
-                # A wrapper can run the first positional value as a program without tox knowing that it does.
-                bare_first_value: bool = is_existing_path and index == 0 and path_arg.name == arg
-                executable_file: bool = (
-                    bare_first_value
-                    and path_arg.is_file()
-                    and os.access(path_arg, os.X_OK)
-                    and (os.name != "nt" or path_arg.suffix.lower() in {".bat", ".cmd", ".com", ".exe"})
-                )
-                if bare_first_value and (program_first or executable_file):
-                    args.append(arg)
-                    continue
-                if is_existing_path and not path_arg.is_absolute():
-                    args.append(self._rewrite_relative_path(arg, to_path_str))
-                else:
-                    args.append(arg)
-            return tuple(args)
-        return self._pos_args
-
-    @staticmethod
-    def _rewrite_relative_path(arg: str, to_path_str: str) -> str:
-        # Preserve symlink spelling when normalizing parent segments.
-        path_arg_str: Final[str] = os.path.abspath(arg)  # ruff:ignore[os-path-abspath]
-        try:
-            relative: Final[str] = os.path.relpath(path_arg_str, to_path_str)
-        except ValueError:  # on Windows, relpath fails across drives (e.g. subst mounts)
-            return path_arg_str
-        if relative.startswith("-") and not arg.startswith("-"):
-            return f"{os.curdir}{os.sep}{relative}"
-        return relative
-
-    @property
-    def work_dir(self) -> Path:
-        """:returns: working directory for this project"""
-        return self._work_dir
-
-    @property
-    def src_path(self) -> Path:
-        """:returns: the location of the tox configuration source"""
-        return self._src.path
-
-    def __iter__(self) -> Iterator[str]:
-        """:returns: an iterator that goes through existing environments"""
-        # NOTE: `tee(self._extra_envs)[1]` is necessary for compatibility with
-        # NOTE: Python 3.11 and older versions. Once Python 3.12 is the lowest
-        # NOTE: supported version, it can be changed to
-        # NOTE: `chain.from_iterable(tee(self._extra_envs, 1))`.
-        return chain(self._src.envs(self.core), tee(self._extra_envs)[1])
-
-    def sections(self) -> Iterator[Section]:
-        yield from self._src.sections()
-
-    @override
-    def __repr__(self) -> str:
-        return f"{type(self).__name__}(config_source={self._src!r})"
-
-    def __contains__(self, item: str) -> bool:
-        """:returns: check if an environment already exists"""
-        return any(name == item for name in self)
-
     @classmethod
     def make(cls, parsed: Parsed, pos_args: Sequence[str] | None, source: Source, extra_envs: Iterable[str]) -> Config:
-        """Make a tox configuration object."""
+        """Make a tox configuration object.
+
+        :param parsed: the parsed command line options
+        :param pos_args: the positional arguments passed after ``--``
+        :param source: the source the configuration is read from
+        :param extra_envs: the environments to add to the configured ones
+
+        :returns: the configuration object
+
+        """
         # root is the project root, where the configuration file is at
         # work dir is where we put our own files
         root: Path = source.path.parent if parsed.root_dir is None else parsed.root_dir
@@ -153,21 +96,17 @@ class Config:
             extra_envs=extra_envs,
         )
 
-    @property
-    def options(self) -> Parsed:
-        return self._options
-
-    @property
-    def overrides(self) -> OverrideMap:
-        """:returns: the configuration overrides keyed by their target namespace"""
-        return self._overrides
-
-    def factor_labels(self, env_name: str | None) -> dict[str, FactorGroup]:
-        return self._src.factor_labels(env_name) if isinstance(self._src, FactorLabelSource) else {}
+    def __iter__(self) -> Iterator[str]:
+        """:returns: an iterator that goes through existing environments"""
+        # NOTE: `tee(self._extra_envs)[1]` is necessary for compatibility with
+        # NOTE: Python 3.11 and older versions. Once Python 3.12 is the lowest
+        # NOTE: supported version, it can be changed to
+        # NOTE: `chain.from_iterable(tee(self._extra_envs, 1))`.
+        return chain(self._src.envs(self.core), tee(self._extra_envs)[1])
 
     @property
     def core(self) -> CoreConfigSet:
-        """:returns: the core configuration"""
+        """The core configuration, loaded on first access."""
         if self._core_set is not None:
             return self._core_set
         core_section = self._src.get_core_section()
@@ -176,33 +115,125 @@ class Config:
         self._core_set = core
         return core
 
-    def get_section_config(
-        self,
-        section: Section,
-        base: list[str] | None,
-        of_type: type[T],
-        for_env: str | None,
-        loaders: Sequence[Loader[Any]] | None = None,
-    ) -> T:
-        key = section.key, for_env or "", "-".join(base or [])
+    @property
+    def src_path(self) -> Path:
+        """The location of the tox configuration source."""
+        return self._src.path
+
+    @override
+    def __repr__(self) -> str:
+        return f"{type(self).__name__}(config_source={self._src!r})"
+
+    def __contains__(self, item: str) -> bool:
+        """Check if an environment already exists.
+
+        :param item: the name of the environment to look for
+
+        :returns: whether an environment with that name is defined
+
+        """
+        return any(name == item for name in self)
+
+    @property
+    def work_dir(self) -> Path:
+        """The working directory for this project."""
+        return self._work_dir
+
+    @property
+    def options(self) -> Parsed:
+        """The parsed command line options."""
+        return self._options
+
+    @property
+    def overrides(self) -> OverrideMap:
+        """The configuration overrides keyed by their target namespace."""
+        return self._overrides
+
+    def pos_args(self, to_path: Path | None, *, program_first: bool = False) -> tuple[str, ...] | None:
+        """Get the positional arguments passed after ``--``, with path arguments made relative to a directory.
+
+        :param to_path: the directory the path arguments are made relative to, ``None`` to keep them as they are
+        :param program_first: whether the program comes before the positional arguments
+
+        :returns: the positional arguments, or ``None`` when none were passed
+
+        """
+        if self._pos_args is not None and to_path is not None and Path.cwd() != to_path:
+            # Windows resolves parent segments before following directory links.
+            if sys.platform == "win32":
+                to_path_str = os.path.abspath(str(to_path))  # ruff:ignore[os-path-abspath]  # path as written
+            else:
+                to_path_str = os.path.realpath(to_path)
+            return tuple(
+                self._rewrite_pos_arg(index, arg, to_path_str, program_first=program_first)
+                for index, arg in enumerate(self._pos_args)
+            )
+        return self._pos_args
+
+    @staticmethod
+    def _rewrite_pos_arg(index: int, arg: str, to_path_str: str, *, program_first: bool) -> str:
+        if not arg:
+            return arg
+        path_arg = Path(arg)
+        is_existing_path = Config._is_existing_path(path_arg, arg)
+        # A wrapper can run the first positional value as a program without tox knowing that it does.
+        bare_first_value: bool = is_existing_path and index == 0 and path_arg.name == arg
+        executable_file: bool = (
+            bare_first_value
+            and path_arg.is_file()
+            and os.access(path_arg, os.X_OK)
+            and (os.name != "nt" or path_arg.suffix.lower() in {".bat", ".cmd", ".com", ".exe"})
+        )
+        if bare_first_value and (program_first or executable_file):
+            return arg
+        if is_existing_path and not path_arg.is_absolute():
+            return Config._rewrite_relative_path(arg, to_path_str)
+        return arg
+
+    @staticmethod
+    def _is_existing_path(path_arg: Path, arg: str) -> bool:
         try:
-            return cast("T", self._key_to_conf_set[key])
-        except KeyError:
-            conf_set = of_type(self, section, for_env)
-            self._key_to_conf_set[key] = conf_set
-            if for_env is not None:
-                conf_set.loaders.extend(self.memory_seed_loaders.get(for_env, []))
-            for loader in self._src.get_loaders(section, base, self._overrides, conf_set):
-                conf_set.loaders.append(loader)
-            if loaders is not None:
-                conf_set.loaders.extend(loaders)
-            return conf_set
+            return path_arg.exists()
+        except OSError:
+            logging.debug("could not check if %r is an existing path", redact_argv([arg])[0])
+            return False
+
+    @staticmethod
+    def _rewrite_relative_path(arg: str, to_path_str: str) -> str:
+        # Preserve symlink spelling when normalizing parent segments.
+        path_arg_str: Final[str] = os.path.abspath(arg)  # ruff:ignore[os-path-abspath]
+        try:
+            relative: Final[str] = os.path.relpath(path_arg_str, to_path_str)
+        except ValueError:  # on Windows, relpath fails across drives (e.g. subst mounts)
+            return path_arg_str
+        if relative.startswith("-") and not arg.startswith("-"):
+            return f"{os.curdir}{os.sep}{relative}"
+        return relative
+
+    def sections(self) -> Iterator[Section]:
+        """Iterate over the sections of the configuration source.
+
+        :yields: the sections, in the order the source defines them
+
+        """
+        yield from self._src.sections()
+
+    def factor_labels(self, env_name: str | None) -> dict[str, FactorGroup]:
+        """Get the factor labels defined for an environment.
+
+        :param env_name: the environment name, ``None`` for the core configuration
+
+        :returns: the factor labels, empty when the source does not define factor labels
+
+        """
+        return self._src.factor_labels(env_name) if isinstance(self._src, FactorLabelSource) else {}
 
     def get_env(
         self,
         item: str,
+        # keeps the existing signature
         package: bool = False,  # ruff:ignore[boolean-type-hint-positional-argument, boolean-default-value-positional-argument]
-        loaders: Sequence[Loader[Any]] | None = None,
+        loaders: Sequence[Loader[Any]] | None = None,  # simplint: ignore[SMP602]  # loaders read raw values of any type
     ) -> EnvConfigSet:
         """Return the configuration for a given tox environment (will create if not exist yet).
 
@@ -226,7 +257,45 @@ class Config:
         self._env_to_conf_set[item] = result
         return result
 
+    def get_section_config(
+        self,
+        section: Section,
+        base: list[str] | None,
+        of_type: type[T],
+        for_env: str | None,
+        loaders: Sequence[Loader[Any]] | None = None,  # simplint: ignore[SMP602]  # loaders read raw values of any type
+    ) -> T:
+        """Get the configuration set of a section, creating and caching it on first use.
+
+        :param section: the section to load
+        :param base: the base sections the configuration inherits from
+        :param of_type: the configuration set type to create
+        :param for_env: the environment name, ``None`` for the core configuration
+        :param loaders: extra loaders to read values from, appended after the source loaders
+
+        :returns: the configuration set of the section
+
+        """
+        key = section.key, for_env or "", "-".join(base or [])
+        try:
+            return cast("T", self._key_to_conf_set[key])
+        except KeyError:
+            conf_set = of_type(self, section, for_env)
+            self._key_to_conf_set[key] = conf_set
+            if for_env is not None:
+                conf_set.loaders.extend(self.memory_seed_loaders.get(for_env, []))
+            for loader in self._src.get_loaders(section, base, self._overrides, conf_set):
+                conf_set.loaders.append(loader)
+            if loaders is not None:
+                conf_set.loaders.extend(loaders)
+            return conf_set
+
     def clear_env(self, name: str) -> None:
+        """Forget the configuration loaded for an environment, so it is loaded again when next used.
+
+        :param name: the name of the environment
+
+        """
         section, _, __ = self._src.get_tox_env_section(name)
         self._key_to_conf_set = {
             k: v for k, v in self._key_to_conf_set.items() if not (k[0] == section.key and k[1] == name)
@@ -234,6 +303,13 @@ class Config:
         self._env_to_conf_set.pop(name, None)
 
 
-___all__ = [
+__all__ = [
     "Config",
+    "ConfigSet",
+    "CoreConfigSet",
+    "EnvConfigSet",
+    "FactorLabelSource",
+    "T",
+    "override",
+    "redact_argv",
 ]

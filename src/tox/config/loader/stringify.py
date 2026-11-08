@@ -14,14 +14,33 @@ if TYPE_CHECKING:
     from typing_extensions import TypeIs
 
 
-def stringify_reference(value: object, *, constant: bool) -> str:
+def stringify_reference(  # simplint: ignore[SMP602]  # stringifies any configuration value
+    value: object,  # simplint: ignore[SMP602]  # stringifies any configuration value
+    *,
+    constant: bool,  # simplint: ignore[SMP602]  # stringifies any configuration value
+) -> str:
+    """Convert a value to the text a replacement expands to.
+
+    :param value: the value to convert
+    :param constant: whether the value is a constant of the configuration
+
+    :returns: the text of the value
+
+    """
     as_str: Final[str] = stringify(value)[0]
     if _is_command_argument_value(value) and (not isinstance(value, str) or constant):
         return Arguments(as_str)
     return as_str
 
 
-def stringify(value: object) -> tuple[str, bool]:  # ruff:ignore[too-many-return-statements]
+def stringify(value: object) -> tuple[str, bool]:  # ruff:ignore[too-many-return-statements]  # distinct outcomes  # simplint: ignore[SMP602]  # stringifies any configuration value
+    """Convert a value to text.
+
+    :param value: the value to convert
+
+    :returns: the text of the value, and whether it is built from several entries
+
+    """
     if isinstance(value, str):
         return value, False
     if isinstance(value, (Path, float, int, bool)):

@@ -39,11 +39,11 @@ if TYPE_CHECKING:
 
     from tox.config.loader.api import ConfigLoadArgs
     from tox.config.loader.replacer import MatchArg
-    from tox.config.loader.toml import TomlLoader
     from tox.config.main import Config
     from tox.config.sets import ConfigSet
     from tox.config.source.toml_pyproject import TomlSection
 
+    from . import TomlLoader
     from ._api import TomlTypes
 
 
@@ -52,6 +52,18 @@ class _Directive(Protocol):
 
 
 class Unroll:
+    """Expand the replacement tokens in a TOML value against the configuration it is loaded for.
+
+    :param conf: the configuration the replacements read from
+    :param loader: the loader the value was read by
+    :param args: the arguments of the configuration load
+    :param program_depth: the nesting depth at which the first program word sits, if any
+    :param requirement_entries: whether the value holds requirement entries
+
+    :var factors: the factors active for the environment being loaded
+
+    """
+
     def __init__(
         self,
         conf: Config | None,
@@ -71,7 +83,7 @@ class Unroll:
         self.factors = active_factors(args.env_name)
 
     def __call__(self, value: TomlTypes, depth: int = 0, *, skip_str: bool = False) -> TomlTypes:
-        """Replace all active tokens within value according to the config."""
+        # Replace all active tokens within value according to the config.
         depth += 1
         MatchRecursionError.check(depth, value)
         if isinstance(value, SetEnvReference):
@@ -112,8 +124,7 @@ class Unroll:
             finally:
                 self._program_depth = program_depth
             if isinstance(got, SetEnvReference):
-                extending = isinstance(val, dict) and bool(val.get("extend"))
-                if got.shape != ("array" if extending else "table"):
+                if got.shape != ("array" if (isinstance(val, dict) and bool(val.get("extend"))) else "table"):
                     msg = "set_env arrays require table references or array references with extend=true"
                     raise TypeError(msg)
                 res_list.append(got)
@@ -232,7 +243,7 @@ class Unroll:
         return value
 
     @staticmethod
-    def _to_raw(value: object) -> TomlTypes:
+    def _to_raw(value: object) -> TomlTypes:  # simplint: ignore[SMP602]  # TOML values can have any shape
         if isinstance(value, (PythonDeps, PythonConstraints)):
             value = value.lines(preserve_host_values=True)
         elif isinstance(value, Command):
@@ -252,7 +263,7 @@ def _parse_arg(value: TomlTypes) -> MatchArg:
     return find_replace_expr(value if isinstance(value, MatchExpression) else validate(value, str))
 
 
-def _replace_glob_toml(conf: Config | None, value: dict[str, Any]) -> list[TomlTypes] | str:
+def _replace_glob_toml(conf: Config | None, value: dict[str, TomlTypes]) -> list[TomlTypes] | str:
     pattern = validate(value.get("pattern"), str)
     if not pattern:
         msg = "No pattern was supplied in glob replacement"
@@ -260,7 +271,7 @@ def _replace_glob_toml(conf: Config | None, value: dict[str, Any]) -> list[TomlT
     if conf is not None and not Path(pattern).is_absolute():
         pattern = str(Path(glob.escape(str(conf.core["tox_root"]))) / pattern)
     extending = value.get("extend", False)
-    if matches := sorted(glob.glob(pattern, recursive=True)):  # ruff:ignore[glob]
+    if matches := sorted(glob.glob(pattern, recursive=True)):  # ruff:ignore[glob]  # matches user pattern
         extended: list[TomlTypes] = list(matches)
         return extended if extending else " ".join(matches)
     default = value.get("default")
@@ -270,7 +281,7 @@ def _replace_glob_toml(conf: Config | None, value: dict[str, Any]) -> list[TomlT
 
 
 def _replace_if_toml(
-    value: dict[str, Any], unroll: Unroll, depth: int, factors: set[str], *, skip_str: bool = False
+    value: dict[str, TomlTypes], unroll: Unroll, depth: int, factors: set[str], *, skip_str: bool
 ) -> TomlTypes:
     condition = value.get("condition")
     if not condition or not isinstance(condition, str):
@@ -279,23 +290,20 @@ def _replace_if_toml(
     if "then" not in value:
         msg = "No 'then' value was supplied in if replacement"
         raise MatchError(msg)
-    matched = _evaluate_condition(condition, factors, unroll.args.env_name)
-    return unroll(value["then"] if matched else value.get("else", ""), depth, skip_str=skip_str)
-
-
-def _evaluate_condition(expr: str, factors: set[str], env_name: str | None) -> bool:
-    """Evaluate a condition expression supporting env.VAR, factor.NAME lookups, comparisons, and boolean logic."""
     try:
-        tree = ast.parse(expr, mode="eval")
+        tree = ast.parse(condition, mode="eval")
     except SyntaxError:
-        msg = f"Invalid condition expression: {expr}"
+        msg = f"Invalid condition expression: {condition}"
         raise MatchError(msg) from None
-    return bool(_eval_condition_node(tree.body, expr, factors, env_name))
+    matched = bool(_eval_condition_node(tree.body, condition, factors, unroll.args.env_name))
+    return unroll(value["then"] if matched else value.get("else", ""), depth, skip_str=skip_str)
 
 
 def _eval_condition_node(node: ast.expr, expr: str, factors: set[str], env_name: str | None) -> str | bool:
     if isinstance(node, ast.BoolOp):
-        return _eval_bool_op(node, expr, factors, env_name)
+        if isinstance(node.op, ast.And):
+            return all(bool(_eval_condition_node(v, expr, factors, env_name)) for v in node.values)
+        return any(bool(_eval_condition_node(v, expr, factors, env_name)) for v in node.values)
     if isinstance(node, ast.UnaryOp) and isinstance(node.op, ast.Not):
         return not bool(_eval_condition_node(node.operand, expr, factors, env_name))
     if isinstance(node, ast.Compare):
@@ -306,12 +314,6 @@ def _eval_condition_node(node: ast.expr, expr: str, factors: set[str], env_name:
         return lookup_result
     msg = f"Unsupported expression in condition: {ast.dump(node)}"
     raise MatchError(msg)
-
-
-def _eval_bool_op(node: ast.BoolOp, expr: str, factors: set[str], env_name: str | None) -> bool:
-    if isinstance(node.op, ast.And):
-        return all(bool(_eval_condition_node(v, expr, factors, env_name)) for v in node.values)
-    return any(bool(_eval_condition_node(v, expr, factors, env_name)) for v in node.values)
 
 
 def _eval_compare(node: ast.Compare, expr: str, factors: set[str], env_name: str | None) -> bool:
@@ -352,11 +354,11 @@ def _lookup_namespace(namespace: str, key: str, factors: set[str]) -> str | bool
     raise MatchError(msg)
 
 
-_REFERENCE_PATTERN = re.compile(
+_REFERENCE_PATTERN: Final[re.Pattern[str]] = re.compile(
     r"""
-    (\[(?P<section>.*)])? # default value
+    (?P<section_ref>\[(?P<section>.*)])? # section of the reference
     (?P<key>[-a-zA-Z0-9_]+) # key
-    (:(?P<default>.*))? # default value
+    (?P<default_ref>:(?P<default>.*))? # default value
     $
 """,
     re.VERBOSE,
@@ -364,6 +366,13 @@ _REFERENCE_PATTERN = re.compile(
 
 
 class TomlReplaceLoader(ReplaceReference):
+    """Resolve the references in a string taken from a TOML document.
+
+    :param conf: the configuration the references read from
+    :param loader: the loader the string was read by
+
+    """
+
     def __init__(self, conf: Config, loader: TomlLoader) -> None:
         self.conf = conf
         self.loader = loader
@@ -373,23 +382,43 @@ class TomlReplaceLoader(ReplaceReference):
         # Searching inside brace content mistakes JSON fields for references.
         if match := _REFERENCE_PATTERN.match(value):
             settings = match.groupdict()
-            exception: Exception | None = None
             try:
-                for src in self._config_value_sources(settings["section"], conf_args.env_name):
-                    try:
-                        return self._load_reference_value(src, settings["key"], conf_args)
-                    except KeyError as exc:  # if fails, keep trying maybe another source can satisfy
-                        exception = exc
-            except Exception as exc:  # ruff:ignore[blind-except]
-                exception = exc
-            if exception is not None:
-                if isinstance(exception, KeyError):  # if the lookup failed replace - else keep
-                    default = settings["default"]
-                    if default is not None:
-                        return value.fragment(*match.span("default")) if isinstance(value, HostText) else default
-                    return None  # keep original text, consistent with ini loader behavior
-                raise exception
+                return self._load_first_source(match, conf_args)
+            except KeyError:  # if the lookup failed replace - else keep
+                if (default := settings["default"]) is not None:
+                    return value.fragment(*match.span("default")) if isinstance(value, HostText) else default
+                return None  # keep original text, consistent with ini loader behavior
         return None  # not a reference, such as the {} of a format string
+
+    def _load_first_source(self, match: re.Match[str], conf_args: ConfigLoadArgs) -> str | None:
+        error: KeyError | None = None
+        for src in self._config_value_sources(match["section"], conf_args.env_name):
+            try:
+                return self._load_reference_value(src, match["key"], conf_args)
+            except KeyError as exc:  # if fails, keep trying maybe another source can satisfy
+                error = exc
+        if error is not None:
+            raise error
+        return None
+
+    def _config_value_sources(self, sec: str | None, current_env: str | None) -> Iterator[ConfigSet | RawLoader]:
+        if sec is None:
+            if current_env is not None:  # pragma: no branch  # other outcome untested
+                yield self.conf.get_env(current_env)
+            yield self.conf.core
+            return
+
+        section = cast("TomlSection", self.loader.section)
+        core_prefix = section.core_prefix()
+        env_prefix = section.env_prefix()
+        run_env_base = section.run_env_base()
+        pkg_env_base = section.package_env_base()
+        if sec.startswith(env_prefix) and sec not in {run_env_base, pkg_env_base}:
+            yield self.conf.get_env(sec[len(env_prefix) + len(section.SEP) :])
+        else:
+            yield RawLoader(self.loader, sec)
+        if sec == core_prefix:
+            yield self.conf.core  # try via registered configs
 
     @staticmethod
     def _load_reference_value(src: ConfigSet | RawLoader, key: str, conf_args: ConfigLoadArgs) -> str:
@@ -402,33 +431,17 @@ class TomlReplaceLoader(ReplaceReference):
             constant=src.is_constant(key),
         )
 
-    def _config_value_sources(self, sec: str | None, current_env: str | None) -> Iterator[ConfigSet | RawLoader]:
-        if sec is None:
-            if current_env is not None:  # pragma: no branch
-                yield self.conf.get_env(current_env)
-            yield self.conf.core
-            return
 
-        section = cast("TomlSection", self.loader.section)
-        core_prefix = section.core_prefix()
-        env_prefix = section.env_prefix()
-        run_env_base = section.run_env_base()
-        pkg_env_base = section.package_env_base()
-        if sec.startswith(env_prefix) and sec not in {run_env_base, pkg_env_base}:
-            env = sec[len(env_prefix) + len(section.SEP) :]
-            yield self.conf.get_env(env)
-        else:
-            yield RawLoader(self.loader, sec)
-        if sec == core_prefix:
-            yield self.conf.core  # try via registered configs
-
-
-class RawLoader:
+class RawLoader:  # simplint: ignore[SMP403]  # imported by tox plugins
     def __init__(self, loader: TomlLoader, section: str) -> None:
         self._loader = loader
         self._section = section
 
-    def load(self, item: str, chain: list[str] | None = None) -> Any:  # ruff:ignore[unused-method-argument]
+    def load(  # override signature
+        self,
+        item: str,
+        chain: list[str] | None = None,  # ruff:ignore[unused-method-argument]  # override signature
+    ) -> TomlTypes:
         return self._loader.load_raw_from_root(f"{self._section}{self._loader.section.SEP}{item}")
 
 

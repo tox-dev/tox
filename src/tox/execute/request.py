@@ -15,6 +15,8 @@ if TYPE_CHECKING:
 
 
 class StdinSource(Enum):
+    """Where the standard input of a command comes from."""
+
     OFF = 0  #: input disabled
     USER = 1  #: input via the standard input
     API = 2  #: input via programmatic access
@@ -28,7 +30,7 @@ class StdinSource(Enum):
 class ExecuteRequest:
     """Defines a commands execution request."""
 
-    def __init__(  # ruff:ignore[too-many-arguments]
+    def __init__(  # ruff:ignore[too-many-arguments]  # public signature
         self,
         cmd: Sequence[str | Path],
         cwd: Path,
@@ -65,15 +67,15 @@ class ExecuteRequest:
             allow = None  # if we allow everything we can just disable the check
         self.allow = allow
 
-    @property
-    def shell_cmd(self) -> str:
-        """:returns: the command to run as a shell command"""
-        return self._shell_cmd(redact=False)
+    @override
+    def __repr__(self) -> str:
+        cmd: Final = redact_argv(self.cmd)
+        return f"{self.__class__.__name__}(cmd={cmd!r}, cwd={self.cwd!r}, env=..., stdin={self.stdin!r})"
 
     @property
-    def shell_cmd_redacted(self) -> str:
-        """:returns: the command with URL userinfo and secret-looking inline flag values masked"""
-        return self._shell_cmd(redact=True)
+    def shell_cmd(self) -> str:
+        """The command to run as a shell command."""
+        return self._shell_cmd(redact=False)
 
     def _shell_cmd(self, *, redact: bool) -> str:
         try:
@@ -85,15 +87,22 @@ class ExecuteRequest:
             cmd = redact_argv(cmd)
         return shell_cmd(cmd)
 
-    @override
-    def __repr__(self) -> str:
-        cmd: Final = redact_argv(self.cmd)
-        return f"{self.__class__.__name__}(cmd={cmd!r}, cwd={self.cwd!r}, env=..., stdin={self.stdin!r})"
+    @property
+    def shell_cmd_redacted(self) -> str:
+        """The command with URL userinfo and secret-looking inline flag values masked."""
+        return self._shell_cmd(redact=True)
 
 
 def shell_cmd(cmd: Sequence[str]) -> str:
+    """Convert a command to the string a shell runs.
+
+    :param cmd: the command and its arguments
+
+    :returns: the command as a single string
+
+    """
     if sys.platform == "win32":  # pragma: win32 cover
-        from subprocess import list2cmdline  # ruff:ignore[import-outside-top-level]
+        from subprocess import list2cmdline  # ruff:ignore[import-outside-top-level]  # avoids an import cycle
 
         return list2cmdline(tuple(str(x) for x in cmd))
     # pragma: win32 no cover

@@ -13,8 +13,7 @@ def test_ci_passthrough_present(value: str, tox_project: ToxProjectCreator, monk
     monkeypatch.setenv("CI", value)
     prj = tox_project({"tox.ini": "[testenv]\npackage=skip\ncommands=python -c 'print(0)'\n"})
     execute_calls = prj.patch_execute(lambda _r: 0)
-    result = prj.run("r", "-e", "py")
-    result.assert_success()
+    prj.run("r", "-e", "py").assert_success()
     req = execute_calls.call_args[0][3]
     assert req.env["__TOX_ENVIRONMENT_VARIABLE_ORIGINAL_CI"] == value
 
@@ -23,7 +22,6 @@ def test_ci_passthrough_absent(tox_project: ToxProjectCreator, monkeypatch: pyte
     monkeypatch.delenv("CI", raising=False)
     prj = tox_project({"tox.ini": "[testenv]\npackage=skip\ncommands=python -c 'print(0)'\n"})
     execute_calls = prj.patch_execute(lambda _r: 0)
-    result = prj.run("r", "-e", "py")
-    result.assert_success()
+    prj.run("r", "-e", "py").assert_success()
     req = execute_calls.call_args[0][3]
     assert "__TOX_ENVIRONMENT_VARIABLE_ORIGINAL_CI" not in req.env

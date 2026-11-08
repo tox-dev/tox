@@ -76,7 +76,6 @@ def pkg_with_pdm_backend(
     (tmp_path / "skeleton").mkdir(exist_ok=True)
     (tmp_path / "skeleton" / "__init__.py").touch()
 
-    dist = tmp_path / "dist"
-    pkg_builder(dist, tmp_path, ["sdist"], False)
+    pkg_builder(tmp_path / "dist", tmp_path, ["sdist"], False)
 
     return tmp_path

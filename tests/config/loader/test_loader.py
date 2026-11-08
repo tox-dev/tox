@@ -25,8 +25,7 @@ def test_override_add(flag: str) -> None:
     parsed, _, __, ___, ____ = get_options(flag, "magic=true")
     assert len(parsed.override) == 1
     value = parsed.override[0]
-    assert value.key == "magic"
-    assert value.value == "true"
+    assert (value.key, value.value) == ("magic", "true")
     assert not value.namespace
     assert value.append is False
 
@@ -36,8 +35,7 @@ def test_override_append(flag: str) -> None:
     parsed, _, __, ___, ____ = get_options(flag, "magic+=true")
     assert len(parsed.override) == 1
     value = parsed.override[0]
-    assert value.key == "magic"
-    assert value.value == "true"
+    assert (value.key, value.value) == ("magic", "true")
     assert not value.namespace
     assert value.append is True
 
@@ -105,9 +103,7 @@ def test_override_str_keeps_spacing_when_nothing_is_redacted() -> None:
 )
 def test_override_escaped_dot(raw: str, namespace: str, key: str, value: str, append: bool, expected_str: str) -> None:
     override = Override(raw)
-    assert override.namespace == namespace
-    assert override.key == key
-    assert override.value == value
+    assert (override.namespace, override.key, override.value) == (namespace, key, value)
     assert override.append is append
     assert str(override) == expected_str
 
@@ -123,7 +119,9 @@ def test_override_escaped_dot(raw: str, namespace: str, key: str, value: str, ap
         pytest.param("ns.k+=a=1", {"b": "2"}, {"b": "2", "a": "1"}, id="dict-append"),
     ],
 )
-def test_apply_overrides_to_raw(override: str, raw: object, expected: object) -> None:
+def test_apply_overrides_to_raw(
+    override: str, raw: list[str] | dict[str, str] | str, expected: list[str] | dict[str, str] | str
+) -> None:
     assert apply_overrides_to_raw([Override(override)], "k", raw) == expected
 
 
@@ -217,10 +215,42 @@ def test_override_set_env_value_is_substituted(
     project = tox_project({filename: content, "a.env": "MAGIC=from-file"})
     outcome = project.run("c", "-e", "a", "-k", "set_env", "-x", f"{namespace}.{override}")
     outcome.assert_success()
-    assert [line.strip() for line in outcome.out.splitlines() if line.strip().startswith(("KEEP=", "MAGIC="))] == [
-        *(["KEEP=1"] if "KEEP" in content and override.startswith("set_env+=") else []),
-        *expected,
-    ]
+    assert [line.strip() for line in outcome.out.splitlines() if line.strip().startswith("MAGIC=")] == expected
+
+
+@pytest.mark.parametrize(
+    ("filename", "content", "namespace"),
+    [
+        pytest.param(
+            "tox.toml",
+            'env_list = ["a"]\n[env_run_base]\nset_env = {KEEP = "1", MAGIC = "base"}\n',
+            "env_run_base",
+            id="toml",
+        ),
+        pytest.param("tox.ini", "[tox]\nenv_list = a\n[testenv]\nset_env = KEEP=1\n MAGIC=base\n", "testenv", id="ini"),
+    ],
+)
+@pytest.mark.parametrize(
+    ("override", "expected"),
+    [
+        pytest.param("set_env+=MAGIC={env_name}", ["KEEP=1", "MAGIC=a"], id="append"),
+        pytest.param("set_env=MAGIC={env_name}", ["MAGIC=a"], id="replace"),
+    ],
+)
+def test_override_set_env_keeps_base_entries(
+    tox_project: ToxProjectCreator,
+    filename: str,
+    content: str,
+    namespace: str,
+    override: str,
+    expected: list[str],
+) -> None:
+    project = tox_project({filename: content, "a.env": "MAGIC=from-file"})
+    outcome = project.run("c", "-e", "a", "-k", "set_env", "-x", f"{namespace}.{override}")
+    outcome.assert_success()
+    assert [
+        line.strip() for line in outcome.out.splitlines() if line.strip().startswith(("KEEP=", "MAGIC="))
+    ] == expected
 
 
 @pytest.mark.parametrize(
@@ -280,7 +310,7 @@ def test_override_list_value_substituted_cannot_add_entries(
     assert f"failed to load a.{key}: a substitution within an entry cannot add an entry separator" in outcome.out
 
 
-@pytest.mark.parametrize(
+_BLOCK_PRECEDENCE_FILES: Final[pytest.MarkDecorator] = pytest.mark.parametrize(
     ("filename", "content", "namespace"),
     [
         pytest.param("tox.ini", "[tox]\nenv_list = a\n[testenv]\nset_env = MAGIC=base\n", "testenv", id="ini"),
@@ -289,7 +319,7 @@ def test_override_list_value_substituted_cannot_add_entries(
         ),
     ],
 )
-@pytest.mark.parametrize(
+_BLOCK_PRECEDENCE_OVERRIDES: Final[pytest.MarkDecorator] = pytest.mark.parametrize(
     ("overrides", "expected"),
     [
         pytest.param(["{env:BLOCK}"], ["MAGIC=a", "NEW=a"], id="block-over-base"),
@@ -302,8 +332,11 @@ def test_override_list_value_substituted_cannot_add_entries(
         pytest.param(["file|a.env", "{env:BLOCK}"], ["MAGIC=a", "NEW=a"], id="block-over-file"),
     ],
 )
-@pytest.mark.parametrize("channel", [pytest.param("cli", id="cli"), pytest.param("env", id="tox-override")])
-def test_override_set_env_block_precedence(
+
+
+@_BLOCK_PRECEDENCE_FILES
+@_BLOCK_PRECEDENCE_OVERRIDES
+def test_override_set_env_block_precedence_cli(
     tox_project: ToxProjectCreator,
     monkeypatch: pytest.MonkeyPatch,
     filename: str,
@@ -311,7 +344,6 @@ def test_override_set_env_block_precedence(
     namespace: str,
     overrides: list[str],
     expected: list[str],
-    channel: str,
 ) -> None:
     monkeypatch.delenv("MAGIC", raising=False)
     monkeypatch.setenv("BLOCK", "MAGIC={env_name}\nNEW={env:MAGIC}")
@@ -319,10 +351,32 @@ def test_override_set_env_block_precedence(
     project = tox_project({filename: content, "a.env": "MAGIC=file"})
     monkeypatch.setenv("DISABLED_BLOCK", "MAGIC=disabled; sys_platform == 'nope'\nNEW={env:MAGIC}")
     values = [f"{namespace}.set_env+={value}" for value in overrides]
-    if channel == "env":
-        monkeypatch.setenv("TOX_OVERRIDE", ";".join(values))
-    flags = [item for value in values for item in ("-x", value)] if channel == "cli" else []
-    outcome = project.run("c", "-e", "a", "-k", "set_env", *flags)
+
+    outcome = project.run("c", "-e", "a", "-k", "set_env", *[item for value in values for item in ("-x", value)])
+    outcome.assert_success()
+    assert [
+        line.strip() for line in outcome.out.splitlines() if line.strip().startswith(("MAGIC=", "NEW="))
+    ] == expected
+
+
+@_BLOCK_PRECEDENCE_FILES
+@_BLOCK_PRECEDENCE_OVERRIDES
+def test_override_set_env_block_precedence_tox_override(
+    tox_project: ToxProjectCreator,
+    monkeypatch: pytest.MonkeyPatch,
+    filename: str,
+    content: str,
+    namespace: str,
+    overrides: list[str],
+    expected: list[str],
+) -> None:
+    monkeypatch.delenv("MAGIC", raising=False)
+    monkeypatch.setenv("BLOCK", "MAGIC={env_name}\nNEW={env:MAGIC}")
+    monkeypatch.setenv("SECOND_BLOCK", "MAGIC=second\nNEW={env:MAGIC}")
+    project = tox_project({filename: content, "a.env": "MAGIC=file"})
+    monkeypatch.setenv("DISABLED_BLOCK", "MAGIC=disabled; sys_platform == 'nope'\nNEW={env:MAGIC}")
+    monkeypatch.setenv("TOX_OVERRIDE", ";".join([f"{namespace}.set_env+={value}" for value in overrides]))
+    outcome = project.run("c", "-e", "a", "-k", "set_env")
     outcome.assert_success()
     assert [
         line.strip() for line in outcome.out.splitlines() if line.strip().startswith(("MAGIC=", "NEW="))

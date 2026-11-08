@@ -20,43 +20,12 @@ def pytest_generate_tests(metafunc: pytest.Metafunc) -> None:
                 continue
             filename, classified_content = _classify(lang, content)
             env_names = _find_env_names(filename, classified_content)
+            commands = [("l",)] if env_names == ["__env_base__"] else [("c", "-e", env) for env in env_names]
             marks: list[pytest.MarkDecorator] = []
             if skip_reason := _should_skip(classified_content):
                 marks.append(pytest.mark.skip(reason=skip_reason))
-            params.append(
-                pytest.param(filename, classified_content, env_names, id=f"{rel_file}:{line_no}", marks=marks)
-            )
-        metafunc.parametrize(("filename", "content", "env_names"), params)
-
-
-def test_doc_config_valid(
-    tox_project: ToxProjectCreator,
-    monkeypatch: pytest.MonkeyPatch,
-    filename: str,
-    content: str,
-    env_names: list[str],
-) -> None:
-    for key, value in {
-        "CI": "1",
-        "TAG_NAME": "v1.0",
-        "VERBOSE": "1",
-        "DEBUG": "1",
-        "DEPLOY": "1",
-        "LOCAL": "1",
-        "L": "1",
-        "X": "1",
-        "MODE": "dev",
-    }.items():
-        monkeypatch.setenv(key, value)
-    project = tox_project({filename: content})
-    if env_names == ["__env_base__"]:
-        outcome = project.run("l")
-        outcome.assert_success()
-        return
-    for env in env_names:
-        outcome = project.run("c", "-e", env)
-        outcome.assert_success()
-        assert "# Exception:" not in outcome.out, f"Exception in {env}:\n{outcome.out}"
+            params.append(pytest.param(filename, classified_content, commands, id=f"{rel_file}:{line_no}", marks=marks))
+        metafunc.parametrize(("filename", "content", "commands"), params)
 
 
 def _extract_config_blocks() -> list[tuple[str, int, str, str]]:
@@ -80,24 +49,7 @@ def _extract_config_blocks() -> list[tuple[str, int, str, str]]:
                 directive_indent = len(match.group("indent")) + len(match.group("space")) + 2
                 lang = match.group("lang")
                 line_no = idx + 1
-                idx += 1
-                while idx < len(lines) and not lines[idx].strip():
-                    idx += 1
-                content_lines: list[str] = []
-                while idx < len(lines):
-                    line = lines[idx]
-                    if not line.strip():
-                        content_lines.append("")
-                        idx += 1
-                        continue
-                    current_indent = len(line) - len(line.lstrip())
-                    if current_indent > directive_indent:
-                        content_lines.append(line)
-                        idx += 1
-                    else:
-                        break
-                while content_lines and not content_lines[-1].strip():
-                    content_lines.pop()
+                content_lines, idx = _read_block(lines, idx + 1, directive_indent)
                 if content_lines:
                     results.append((
                         str(rst_path.relative_to(docs_dir.parent)),
@@ -108,6 +60,26 @@ def _extract_config_blocks() -> list[tuple[str, int, str, str]]:
             else:
                 idx += 1
     return results
+
+
+def _read_block(lines: list[str], idx: int, directive_indent: int) -> tuple[list[str], int]:
+    while idx < len(lines) and not lines[idx].strip():
+        idx += 1
+    content_lines: list[str] = []
+    while idx < len(lines):
+        line = lines[idx]
+        if not line.strip():
+            content_lines.append("")
+            idx += 1
+            continue
+        if (len(line) - len(line.lstrip())) > directive_indent:
+            content_lines.append(line)
+            idx += 1
+        else:
+            break
+    while content_lines and not content_lines[-1].strip():
+        content_lines.pop()
+    return content_lines, idx
 
 
 def _is_tox_config(lang: str, content: str) -> bool:
@@ -128,24 +100,26 @@ def _is_tox_config(lang: str, content: str) -> bool:
         return False
     return bool(
         "legacy_tox_ini" in content
-        or re.search(r"^\[tool\.tox", content, re.MULTILINE)
-        or re.search(r"^\[(env|env_run_base|env_pkg_base|env_base)\b", content, re.MULTILINE)
+        or re.search(
+            r"""
+            ^ \[ tool\.tox      # a tox table in a pyproject file
+            """,
+            content,
+            re.MULTILINE | re.VERBOSE,
+        )
+        or re.search(
+            r"""
+            ^ \[                                  # the opening bracket of a table header
+            (env|env_run_base|env_pkg_base|env_base)  # the environment table names
+            \b                                    # the end of the name
+            """,
+            content,
+            re.MULTILINE | re.VERBOSE,
+        )
         or re.search(r"^env_list\s*=", content, re.MULTILINE)
         or re.search(r"^(requires|no_package)\s*=", content, re.MULTILINE)
         or (re.search(r"^\w+\s*=", content, re.MULTILINE) and not first_section)
     )
-
-
-def _replace_python_versions(content: str) -> str:
-    current_major = sys.version_info.major
-    current_minor = sys.version_info.minor
-    current_version = f"{current_major}.{current_minor}"
-    current_py = f"py{current_major}{current_minor}"
-
-    content = re.sub(r"python3\.\d+", f"python{current_version}", content)
-    content = re.sub(r"py\d{2,3}", current_py, content)
-    content = re.sub(r"cpython3\.\d+", f"cpython{current_version}", content)
-    return re.sub(r"(?<=[\s\[\"',=\-])3\.\d+", current_version, content)
 
 
 def _classify(lang: str, content: str) -> tuple[str, str]:
@@ -165,23 +139,19 @@ def _classify(lang: str, content: str) -> tuple[str, str]:
     return "tox.toml", _inject_skip_missing_interpreters_toml(content, r"^")
 
 
-def _inject_skip_missing_interpreters_ini(content: str) -> str:
-    if r"skip_missing_interpreters" in content:
-        return content
-    if not re.search(r"^\[tox(?::tox)?\]", content, re.MULTILINE):
-        return "[tox]\nskip_missing_interpreters = true\n" + content
-    return re.sub(r"(\[tox(?::tox)?\]\n)", r"\1skip_missing_interpreters = true\n", content)
+def _replace_python_versions(content: str) -> str:
+    current_major = sys.version_info.major
+    current_minor = sys.version_info.minor
+    current_version = f"{current_major}.{current_minor}"
+    current_py = f"py{current_major}{current_minor}"
+
+    content = re.sub(r"python3\.\d+", f"python{current_version}", content)
+    content = re.sub(r"py\d{2,3}", current_py, content)
+    content = re.sub(r"cpython3\.\d+", f"cpython{current_version}", content)
+    return re.sub(r"(?<=[\s\[\"',=\-])3\.\d+", current_version, content)
 
 
-def _inject_skip_missing_interpreters_toml(content: str, section_pattern: str) -> str:
-    if r"skip_missing_interpreters" in content:
-        return content
-    if section_pattern == r"^":
-        return "skip_missing_interpreters = true\n" + content
-    return re.sub(section_pattern, r"\1skip_missing_interpreters = true\n", content)
-
-
-def _classify_ini(content: str) -> tuple[str, str]:
+def _classify_ini(content: str) -> tuple[str, str]:  # simplint: ignore[SMP505]  # names the file kind it returns
     if re.search(r"^\[tox:tox\]", content, re.MULTILINE):
         return "setup.cfg", content
     return (
@@ -194,6 +164,22 @@ def _classify_ini(content: str) -> tuple[str, str]:
         )
         else ("tox.ini", f"[testenv]\n{content}")
     )
+
+
+def _inject_skip_missing_interpreters_ini(content: str) -> str:
+    if r"skip_missing_interpreters" in content:
+        return content
+    if not re.search(r"^\[tox(?::tox)?\]", content, re.MULTILINE):
+        return f"[tox]\nskip_missing_interpreters = true\n{content}"
+    return re.sub(r"(\[tox(?::tox)?\]\n)", r"\1skip_missing_interpreters = true\n", content)
+
+
+def _inject_skip_missing_interpreters_toml(content: str, section_pattern: str) -> str:
+    if r"skip_missing_interpreters" in content:
+        return content
+    if section_pattern == r"^":
+        return f"skip_missing_interpreters = true\n{content}"
+    return re.sub(section_pattern, r"\1skip_missing_interpreters = true\n", content)
 
 
 def _wrap_tox_toml_in_pyproject(content: str) -> str:
@@ -225,20 +211,37 @@ def _wrap_tox_toml_in_pyproject(content: str) -> str:
             other_lines.append(line)
     result = "[tool.tox]\n"
     if tox_lines:
-        result += "\n".join(tox_lines) + "\n"
+        result += "\n".join([*tox_lines, ""])
     if other_lines:
-        result += "\n" + "\n".join(other_lines) + "\n"
+        result += "\n".join(["", *other_lines, ""])
     return result
 
 
 def _find_env_names(filename: str, content: str) -> list[str]:
     envs: list[str] = []
     if filename in {"tox.toml", "pyproject.toml"}:
-        if re.search(r"\[(?:tool\.tox\.)?env_base\.", content):
+        if re.search(
+            r"""
+            \[                  # the opening bracket of a table header
+            (?:tool\.tox\.)?    # the optional pyproject prefix
+            env_base\.          # the base environment table
+            """,
+            content,
+            re.VERBOSE,
+        ):
             return ["__env_base__"]
-        for match in re.finditer(r"\[(?:tool\.tox\.)?env\.(?P<name>[^\]]+)\]", content):
-            name = match.group("name").strip('"').strip("'")
-            if name not in envs:
+        for match in re.finditer(
+            r"""
+            \[                       # the opening bracket of a table header
+            (?:tool\.tox\.)?         # the optional pyproject prefix
+            env\.                     # the environment table prefix
+            (?P<name> [^\]]+ )        # the environment name
+            \]                       # the closing bracket of the table header
+            """,
+            content,
+            re.VERBOSE,
+        ):
+            if (name := match.group("name").strip('"').strip("'")) not in envs:
                 envs.append(name)
     elif filename in {"tox.ini", "setup.cfg"}:
         for match in re.finditer(r"\[testenv:(?P<name>[^\]]+)\]", content):
@@ -279,3 +282,29 @@ def _should_skip(content: str) -> str | None:
     ):
         return "tox output format, not input config"
     return None
+
+
+def test_doc_config_valid(
+    tox_project: ToxProjectCreator,
+    monkeypatch: pytest.MonkeyPatch,
+    filename: str,
+    content: str,
+    commands: list[tuple[str, ...]],
+) -> None:
+    for key, value in {
+        "CI": "1",
+        "TAG_NAME": "v1.0",
+        "VERBOSE": "1",
+        "DEBUG": "1",
+        "DEPLOY": "1",
+        "LOCAL": "1",
+        "L": "1",
+        "X": "1",
+        "MODE": "dev",
+    }.items():
+        monkeypatch.setenv(key, value)
+    project = tox_project({filename: content})
+    for command in commands:
+        outcome = project.run(*command)
+        outcome.assert_success()
+        assert "# Exception:" not in outcome.out, f"Exception in {command}:\n{outcome.out}"

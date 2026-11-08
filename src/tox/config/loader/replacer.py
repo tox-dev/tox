@@ -22,19 +22,27 @@ if TYPE_CHECKING:
     from types import UnionType
     from typing import Self
 
-    from tox.config.loader.api import ConfigLoadArgs
     from tox.config.main import Config
     from tox.config.set_env import SetEnv
 
+    from .api import ConfigLoadArgs
 
-LOGGER = logging.getLogger(__name__)
+
+LOGGER: Final[logging.Logger] = logging.getLogger(__name__)  # simplint: ignore[SMP404]  # imported by tox plugins
 
 # split alongside :, unless it is preceded by a single capital letter (Windows drive letters in paths)
-ARG_DELIMITER: Final[str] = ":"
-REPLACE_START: Final[str] = "{"
-REPLACE_END: Final[str] = "}"
-BACKSLASH_ESCAPE_CHARS: Final[tuple[str, ...]] = (ARG_DELIMITER, REPLACE_START, REPLACE_END, "[", "]")
+ARG_DELIMITER: Final[str] = ":"  # simplint: ignore[SMP404]  # imported by tox plugins
+REPLACE_START: Final[str] = "{"  # simplint: ignore[SMP404]  # imported by tox plugins
+REPLACE_END: Final[str] = "}"  # simplint: ignore[SMP404]  # imported by tox plugins
+BACKSLASH_ESCAPE_CHARS: Final[tuple[str, ...]] = (  # simplint: ignore[SMP404]  # imported by tox plugins
+    ARG_DELIMITER,
+    REPLACE_START,
+    REPLACE_END,
+    "[",
+    "]",
+)  # simplint: ignore[SMP404]  # imported by tox plugins
 MAX_REPLACE_DEPTH: Final[int] = 100
+"""Maximum depth of nested replacements, deeper ones are not expanded."""
 # Factor overrides can supply values absent from the configuration without renaming environments.
 _FACTOR_ENV_PREFIX: Final[str] = "TOX_FACTOR_"
 _REQUIREMENT_LINE_BREAKS: Final[str] = r"[\n\r\v\f\x1c-\x1e\x85\u2028\u2029]"
@@ -44,7 +52,15 @@ class MatchRecursionError(ValueError):
     """Could not stabilize on replacement value."""
 
     @staticmethod
-    def check(depth: int, value: Any) -> None:
+    def check(depth: int, value: Any) -> None:  # simplint: ignore[SMP602]  # replacement values have no single type
+        """Raise an error when the replacement depth is beyond the maximum.
+
+        :param depth: the current replacement depth
+        :param value: the value being replaced
+
+        :raises MatchRecursionError: when the depth is beyond the maximum
+
+        """
         if depth > MAX_REPLACE_DEPTH:
             msg = f"Could not expand {value} after recursing {depth} frames"
             raise MatchRecursionError(msg)
@@ -55,10 +71,14 @@ class MatchError(Exception):
 
 
 class RawText(str):  # ruff:ignore[subclass-builtin] # keep the origin through the str replacement interface
+    """Text that is not subject to replacement, as it came from the configuration itself."""
+
     __slots__ = ()
 
 
 class ReplaceReference(ABC):
+    """A reference to a replacement, which knows how to resolve the names it is given."""
+
     @abstractmethod
     def __call__(self, value: str, conf_args: ConfigLoadArgs) -> str | ConfigDefault | None:
         """Perform a reference replacement.
@@ -73,33 +93,52 @@ class ReplaceReference(ABC):
 
 
 MatchArg = Sequence[Union[str, "MatchExpression"]]
+"""The arguments of a replacement, as plain text or as nested replacement expressions."""
 _OtherFragment = TypeVar("_OtherFragment")
 
 
 def find_replace_expr(value: str | MatchExpression) -> MatchArg:
-    """Find all replaceable tokens within value."""
+    """Find all replaceable tokens within value.
+
+    :param value: the text or expression to scan for replaceable tokens
+
+    :returns: the replaceable tokens found, in order
+
+    """
     if isinstance(value, MatchExpression):
         return [value]
     return MatchExpression.parse_and_split_to_terminator(value)[0][0]
 
 
-def replace(
-    conf: Config, reference: ReplaceReference, value: str | MatchExpression, args: ConfigLoadArgs, depth: int = 0
-) -> str:
-    """Replace all active tokens within value according to the config."""
-    return Replacer(conf, reference, conf_args=args, depth=depth).expand(value)
-
-
 def replace_command_lines(
     conf: Config, reference: ReplaceReference, value: str | MatchExpression, args: ConfigLoadArgs
 ) -> str:
-    """Replace all active tokens within value, where each line of value is one command."""
+    """Replace all active tokens within value, where each line of value is one command.
+
+    :param conf: the configuration to resolve the tokens against
+    :param reference: the configuration key the value belongs to
+    :param value: the command lines to expand
+    :param args: the loader arguments that scope the lookup
+
+    :returns: the value with every active token replaced
+
+    """
     replacer: Final[CommandLinesReplacer] = CommandLinesReplacer(conf, reference, conf_args=args)
     replacer.program = True
     return replacer.expand(value)
 
 
 def replace_program(conf: Config, reference: ReplaceReference, value: str, args: ConfigLoadArgs) -> str:
+    """Replace the tokens of a value that names a program to run.
+
+    :param conf: the global config
+    :param reference: the reference the value comes from
+    :param value: the value to replace
+    :param args: env args
+
+    :returns: the value with its replacements resolved
+
+    """
     replacer: Final[Replacer] = Replacer(conf, reference, conf_args=args)
     replacer.program = True
     return replacer.expand(value)
@@ -113,24 +152,31 @@ def replace_requirement_lines(
     *,
     callbacks: RequirementLineCallbacks,
 ) -> str:
+    """Replace the tokens of a requirements value, line by line.
+
+    :param conf: the global config
+    :param reference: the reference the value comes from
+    :param value: the value to replace
+    :param args: env args
+    :param callbacks: the validation and protection callbacks for requirement lines
+
+    :returns: the value with its replacements resolved
+
+    """
     return RequirementLinesReplacer(conf, reference, conf_args=args, callbacks=callbacks).expand(value)
 
 
-def replace_entries(
-    conf: Config,
-    reference: ReplaceReference,
-    value: str | MatchExpression,
-    args: ConfigLoadArgs,
-    *,
-    separators: str = ",\n",
-) -> str:
-    return EntriesReplacer(conf, reference, conf_args=args, separators=separators).expand(value)
-
-
 def replace_for(
-    of_type: type[object] | UnionType,
+    of_type: type[object] | UnionType,  # simplint: ignore[SMP602]  # replacement values have no single type
 ) -> Callable[[Config, ReplaceReference, str | MatchExpression, ConfigLoadArgs], str]:
-    kinds: Final[set[type[object] | UnionType]] = {get_origin(kind) or kind for kind in (of_type, *get_args(of_type))}
+    """Get the replacement function for a value type.
+
+    :param of_type: the type of the value to replace
+
+    :returns: the function that replaces the tokens of a value of that type
+
+    """
+    kinds: Final[set[type | UnionType]] = {get_origin(kind) or kind for kind in (of_type, *get_args(of_type))}
     if of_type == list[Command]:
         return replace
     if EnvList in kinds:
@@ -142,13 +188,68 @@ def replace_for(
     return replace
 
 
+def replace(
+    conf: Config, reference: ReplaceReference, value: str | MatchExpression, args: ConfigLoadArgs, depth: int = 0
+) -> str:
+    """Replace all active tokens within value according to the config.
+
+    :param conf: the configuration to resolve the tokens against
+    :param reference: the configuration key the value belongs to
+    :param value: the text or expression to expand
+    :param args: the loader arguments that scope the lookup
+    :param depth: the current nesting depth, which stops runaway recursive references
+
+    :returns: the value with every active token replaced
+
+    """
+    return Replacer(conf, reference, conf_args=args, depth=depth).expand(value)
+
+
+def replace_entries(  # simplint: ignore[SMP403]  # imported by tox plugins
+    conf: Config,
+    reference: ReplaceReference,
+    value: str | MatchExpression,
+    args: ConfigLoadArgs,
+    *,
+    separators: str = ",\n",
+) -> str:
+    """Replace the tokens of a value that holds a list of entries.
+
+    :param conf: the global config
+    :param reference: the reference the value comes from
+    :param value: the value to replace
+    :param args: env args
+    :param separators: the characters that separate the entries
+
+    :returns: the value with its replacements resolved
+
+    """
+    return EntriesReplacer(conf, reference, conf_args=args, separators=separators).expand(value)
+
+
 def replace_once(conf: Config, reference: ReplaceReference, value: str | MatchExpression, args: ConfigLoadArgs) -> str:
-    """Replace the active tokens within value, but not the tokens within the text they are replaced with."""
+    """Replace the active tokens within value, but not the tokens within the text they are replaced with.
+
+    :param conf: the configuration to resolve the tokens against
+    :param reference: the configuration key the value belongs to
+    :param value: the text or expression whose tokens are replaced once
+    :param args: the loader arguments that scope the lookup
+
+    :returns: the value with its active tokens replaced, without expanding the replacements
+
+    """
     return Replacer(conf, reference, conf_args=args, recursive=False).join(find_replace_expr(value))
 
 
-class MatchExpression:  # ruff:ignore[eq-without-hash]
-    """An expression that is handled specially by the Replacer."""
+class MatchExpression:  # ruff:ignore[eq-without-hash]  # mutable value type
+    """An expression that is handled specially by the Replacer.
+
+    :param expr: the parsed parts of the expression
+    :param term_pos: the position in the source text where the expression ends
+    :param host: whether the expression comes from a host variable
+    :param literal: whether the expression is kept as written
+
+    """
 
     def __init__(
         self, expr: Sequence[MatchArg], term_pos: int | None = None, *, host: bool = False, literal: bool = False
@@ -170,7 +271,7 @@ class MatchExpression:  # ruff:ignore[eq-without-hash]
 
     @classmethod
     def _next_replace_expression(cls, value: str) -> MatchExpression | None:
-        """Process a curly brace replacement expression."""
+        # Process a curly brace replacement expression.
         if value.startswith("[]"):
             # `[]` is shorthand for `{posargs}`
             return MatchExpression(expr=[["posargs"]], term_pos=1)
@@ -210,22 +311,24 @@ class MatchExpression:  # ruff:ignore[eq-without-hash]
 
         This function recursively calls itself via `_next_replace_expression`.
 
+        :param value: the text to tokenize
+        :param terminator: the character that ends the tokenized text
+        :param split: the character that separates multiple arguments
+
+        :returns: the parsed arguments and the position where tokenizing stopped
+
+        :raises MatchError: when the text does not form a valid expression
+
         """
         args = []
         last_arg: list[str | MatchExpression] = []
         pos = 0
 
         while pos < len(value):
-            if len(value) > pos + 1 and value[pos] == "\\":
-                if value[pos + 1] in BACKSLASH_ESCAPE_CHARS:
-                    last_arg.append(cls._fragment(value, pos + 1, pos + 2))
-                    pos += 2
-                    continue
-                if value[pos + 1] == "\\":
-                    # Keep both backslashes for the later shlex pass.
-                    last_arg.append(cls._fragment(value, pos, pos + 2))
-                    pos += 2
-                    continue
+            if (escaped := cls._escaped_fragment(value, pos)) is not None:
+                last_arg.append(escaped)
+                pos += 2
+                continue
             if terminator and value.startswith(terminator, pos):
                 pos += len(terminator)
                 break
@@ -241,15 +344,7 @@ class MatchExpression:  # ruff:ignore[eq-without-hash]
                 pos += (expr.term_pos or 0) + 1
                 last_arg.append(expr)
                 continue
-            # Group plain text to avoid rebuilding origin spans per character.
-            next_pos: int = min(
-                (
-                    at
-                    for char in ("\\", REPLACE_START, "[", terminator, split)
-                    if char and (at := value.find(char, pos + 1)) >= 0
-                ),
-                default=len(value),
-            )
+            next_pos = cls._next_special_position(value, pos, terminator, split)
             last_arg.append(cls._fragment(value, pos, next_pos))
             pos = next_pos
         else:  # fell out of the loop
@@ -258,6 +353,28 @@ class MatchExpression:  # ruff:ignore[eq-without-hash]
                 raise MatchError(msg)
         args.append(last_arg)
         return [_flatten_string_fragments(a) for a in args], pos
+
+    @classmethod
+    def _escaped_fragment(cls, value: str, pos: int) -> str | None:
+        if len(value) > pos + 1 and value[pos] == "\\":
+            if value[pos + 1] in BACKSLASH_ESCAPE_CHARS:
+                return cls._fragment(value, pos + 1, pos + 2)
+            if value[pos + 1] == "\\":
+                # Keep both backslashes for the later shlex pass.
+                return cls._fragment(value, pos, pos + 2)
+        return None
+
+    @staticmethod
+    def _next_special_position(value: str, pos: int, terminator: str, split: str | None) -> int:
+        # Group plain text to avoid rebuilding origin spans per character.
+        return min(
+            (
+                at
+                for char in ("\\", REPLACE_START, "[", terminator, split)
+                if char and (at := value.find(char, pos + 1)) >= 0
+            ),
+            default=len(value),
+        )
 
     @staticmethod
     def _fragment(value: str, start: int, end: int | None = None) -> str:
@@ -281,8 +398,21 @@ def _flatten_string_fragments(fragments: Sequence[str | _OtherFragment]) -> list
 
 
 class Replacer:
-    """Recursively expand MatchExpression against the config and loader."""
+    """Expand the replacement expressions of a value against the configuration.
 
+    :param conf: the configuration the replacements read from
+    :param reference: the reference used to resolve the replacement names
+    :param conf_args: the arguments of the configuration load
+    :param depth: how many replacements deep this replacer runs
+    :param recursive: whether the replacements of replacements are expanded
+
+    :var program: whether the value is a command line, where positional arguments resolve first
+    :var root: the replacer the nested replacers report to
+    :var depth_exhausted: whether a replacement hit the maximum depth
+
+    """
+
+    # Recursively expand MatchExpression against the config and loader.
     def __init__(
         self,
         conf: Config,
@@ -322,18 +452,6 @@ class Replacer:
         )
         return f"{{{ARG_DELIMITER.join(args)}}}"
 
-    def join(self, value: MatchArg) -> str:
-        return HostText.from_parts(self(value))
-
-    def expand(self, value: str | MatchExpression) -> str:
-        if self.depth > MAX_REPLACE_DEPTH:
-            self.root.depth_exhausted = True
-        MatchRecursionError.check(self.depth, value)
-        return self.join_value(find_replace_expr(value))
-
-    def join_value(self, value: MatchArg) -> str:
-        return self.join(value)
-
     def _replace_match(self, value: MatchExpression) -> tuple[str, bool]:
         flattened_args: Final[list[str]] = [self._flatten_arg(arg) for arg in value.expr]
         replace_value: Final[str | ConfigDefault | None] = self._replace_args(flattened_args)
@@ -342,6 +460,19 @@ class Replacer:
         # Preserve unmatched braces for factor expressions such as {py39,py38}-{,dep}.
         literal: Final[str] = f"{REPLACE_START}{ARG_DELIMITER.join(flattened_args)}{REPLACE_END}"
         return HostText(literal) if value.host else literal, False
+
+    def _flatten_arg(self, value: MatchArg) -> str:
+        return self.join(value)
+
+    def join(self, value: MatchArg) -> str:
+        """Join the parts of a replaced value into one value.
+
+        :param value: the parts to join
+
+        :returns: the joined value
+
+        """
+        return HostText.from_parts(self(value))
 
     def _replace_args(self, flattened_args: list[str]) -> str | None:
         # Isolate chain updates from adjacent substitutions (#2869).
@@ -362,15 +493,6 @@ class Replacer:
             except MatchRecursionError as error:
                 LOGGER.warning(str(error))
         return replace_value.text if isinstance(replace_value, ConfigDefault) else replace_value
-
-    def _nested(self, conf_args: ConfigLoadArgs) -> Self:
-        nested: Final[Self] = type(self)(self.conf, self.reference, conf_args, self.depth + 1)
-        nested.program = self.program
-        nested.root = self.root
-        return nested
-
-    def _flatten_arg(self, value: MatchArg) -> str:
-        return self.join(value)
 
     def _resolve_replace(
         self, of_type: str, args: list[str], flattened_args: list[str], conf_args: ConfigLoadArgs
@@ -394,9 +516,46 @@ class Replacer:
             return handler()
         return self.reference(HostText.from_parts(flattened_args, separator=ARG_DELIMITER), conf_args)
 
+    def _nested(self, conf_args: ConfigLoadArgs) -> Self:
+        nested: Final[Self] = type(self)(self.conf, self.reference, conf_args, self.depth + 1)
+        nested.program = self.program
+        nested.root = self.root
+        return nested
+
+    def expand(self, value: str | MatchExpression) -> str:
+        """Resolve the replacements of a value, up to the maximum depth.
+
+        :param value: the value to expand
+
+        :returns: the value with its replacements resolved
+
+        """
+        if self.depth > MAX_REPLACE_DEPTH:
+            self.root.depth_exhausted = True
+        MatchRecursionError.check(self.depth, value)
+        return self.join_value(find_replace_expr(value))
+
+    def join_value(self, value: MatchArg) -> str:
+        """Join the parts of a matched value into one string.
+
+        :param value: the matched value to join
+
+        :returns: the joined string
+
+        """
+        return self.join(value)
+
 
 @dataclasses.dataclass(frozen=True, slots=True, kw_only=True)
 class ConfigDefault:
+    """A default value of a replacement, with the span of the text it stands for.
+
+    :param text: the default text
+    :param start: the index where the text it stands for starts
+    :param stop: the index where the text it stands for ends, ``None`` when it is open ended
+
+    """
+
     text: str
     start: int
     stop: int | None = None
@@ -406,34 +565,11 @@ class ConfigDefault:
         return self.text
 
 
-class CommandLinesReplacer(Replacer):
+class CommandLinesReplacer(Replacer):  # simplint: ignore[SMP403]  # imported by tox plugins
     @override
     def join_value(self, value: MatchArg) -> str:
         parts: Final[Sequence[str | _Replaced]] = _flatten_string_fragments(list(self._split_replaced(value)))
         return self._join_replaced(parts)
-
-    def _join_replaced(self, parts: Sequence[str | _Replaced]) -> str:
-        result: Final[list[str]] = []
-        quote = ""
-        for at, part in enumerate(parts):
-            text = (
-                part.quoted_text
-                if quote and isinstance(part, _Replaced) and part.quoted_text is not None
-                else str(part)
-            )
-            if isinstance(part, _Replaced):
-                if not quote and isinstance(part.text, Arguments):
-                    text = "\n".join(quote_args([line]) if line else line for line in part.text.split("\n"))
-                elif not quote and isinstance(part.text, _GlobMatches):
-                    text = quote_args(part.text.matches)
-                if quote or self._shares_line(parts, at):
-                    text = " ".join(text.splitlines())
-                if quote:
-                    result.append(self._escape_within_quote(quote, text))
-                    continue
-            quote = self._open_quote(quote, text)
-            result.append(text)
-        return "".join(result)
 
     def _split_replaced(self, value: MatchArg) -> Iterator[str | _Replaced]:
         program: Final[bool] = self.program
@@ -513,6 +649,31 @@ class CommandLinesReplacer(Replacer):
             ),
         )
 
+    def _join_replaced(self, parts: Sequence[str | _Replaced]) -> str:
+        result: Final[list[str]] = []
+        quote = ""
+        for at, part in enumerate(parts):
+            if isinstance(part, _Replaced):
+                text = self._replaced_text(part, quote, parts, at)
+                if quote:
+                    result.append(self._escape_within_quote(quote, text))
+                    continue
+            else:
+                text = str(part)
+            quote = self._open_quote(quote, text)
+            result.append(text)
+        return "".join(result)
+
+    def _replaced_text(self, part: _Replaced, quote: str, parts: Sequence[str | _Replaced], at: int) -> str:
+        text = part.quoted_text if quote and part.quoted_text is not None else str(part)
+        if not quote and isinstance(part.text, Arguments):
+            text = "\n".join(quote_args([line]) if line else line for line in part.text.split("\n"))
+        elif not quote and isinstance(part.text, _GlobMatches):
+            text = quote_args(part.text.matches)
+        if quote or self._shares_line(parts, at):
+            text = " ".join(text.splitlines())
+        return text
+
     @staticmethod
     def _shares_line(value: Sequence[str | _Replaced], at: int) -> bool:
         before: Final[str | _Replaced] = value[at - 1] if at else ""
@@ -546,6 +707,8 @@ class CommandLinesReplacer(Replacer):
 
 
 class Arguments(str):  # ruff:ignore[subclass-builtin]  # keep argument values distinct from command text
+    """Text of replacement arguments, kept apart from the command text they are part of."""
+
     __slots__ = ()
 
 
@@ -569,7 +732,7 @@ class _Replaced:
         return self.text
 
 
-class RequirementLinesReplacer(Replacer):
+class RequirementLinesReplacer(Replacer):  # simplint: ignore[SMP403]  # imported by tox plugins
     def __init__(
         self,
         conf: Config,
@@ -618,14 +781,6 @@ class RequirementLinesReplacer(Replacer):
             self._callbacks.validate_options("".join(baseline), result)
         return result
 
-    @override
-    def _nested(self, conf_args: ConfigLoadArgs) -> Self:
-        nested: Final[Self] = type(self)(
-            self.conf, self.reference, conf_args, self.depth + 1, callbacks=self._callbacks
-        )
-        nested.root = self.root
-        return nested
-
     @staticmethod
     def _shares_line(value: MatchArg, at: int) -> bool:
         for part in reversed(value[:at]):
@@ -640,8 +795,23 @@ class RequirementLinesReplacer(Replacer):
                 break
         return False
 
+    @override
+    def _nested(self, conf_args: ConfigLoadArgs) -> Self:
+        nested: Final[Self] = type(self)(
+            self.conf, self.reference, conf_args, self.depth + 1, callbacks=self._callbacks
+        )
+        nested.root = self.root
+        return nested
+
 
 class HostText(RawText):
+    """Text that keeps track of the spans that came from the configuration and of its literal spans.
+
+    :var spans: the spans of the text that came from the configuration
+    :var literal_spans: the spans of the text that is taken literally
+
+    """
+
     __slots__ = ("literal_spans", "spans")
     spans: tuple[tuple[int, int], ...]
     literal_spans: tuple[tuple[int, int], ...]
@@ -659,24 +829,6 @@ class HostText(RawText):
         result.literal_spans = ((0, len(value)),) if literal else literal_spans
         return result
 
-    @classmethod
-    def from_parts(cls, parts: Sequence[str], *, separator: str = "") -> str:
-        spans: list[tuple[int, int]] = []
-        literal_spans: list[tuple[int, int]] = []
-        offset = 0
-        for index, part in enumerate(parts):
-            if isinstance(part, HostText):
-                for part_spans, joined_spans in ((part.spans, spans), (part.literal_spans, literal_spans)):
-                    for start, end in part_spans:
-                        absolute_start, absolute_end = offset + start, offset + end
-                        if joined_spans and joined_spans[-1][1] == absolute_start:
-                            joined_spans[-1] = joined_spans[-1][0], absolute_end
-                        else:
-                            joined_spans.append((absolute_start, absolute_end))
-            offset += len(part) + (len(separator) if index + 1 < len(parts) else 0)
-        joined: Final[str] = separator.join(parts)
-        return cls(joined, spans=tuple(spans), literal_spans=tuple(literal_spans)) if spans else joined
-
     @override
     def splitlines(self, keepends: bool = False) -> list[str]:
         lines: Final[list[str]] = []
@@ -687,11 +839,15 @@ class HostText(RawText):
             offset += len(line)
         return lines
 
-    @override
-    def strip(self, chars: str | None = None) -> str:
-        return self.fragment(len(self) - len(super().lstrip(chars)), len(super().rstrip(chars)))
-
     def fragment(self, start: int, end: int | None = None) -> str:
+        """Get a part of the text, keeping the spans that fall within it.
+
+        :param start: the start index of the part
+        :param end: the end index of the part, the end of the text when ``None``
+
+        :returns: the part of the text
+
+        """
         stop: Final[int] = len(self) if end is None else end
         spans: Final[tuple[tuple[int, int], ...]] = self._fragment_spans(self.spans, start, stop)
         value: Final[str] = super().__getitem__(slice(start, stop))
@@ -709,13 +865,38 @@ class HostText(RawText):
             if span_start < stop and span_end > start
         )
 
+    @override
+    def strip(self, chars: str | None = None) -> str:
+        return self.fragment(len(self) - len(super().lstrip(chars)), len(super().rstrip(chars)))
+
     def covers(self, end: int) -> bool:
+        """Check whether the first span covers the text up to an index.
+
+        :param end: the index to check up to
+
+        :returns: whether the first span covers the text up to that index
+
+        """
         return self.spans[0][0] == 0 and self.spans[0][1] >= end
 
     def covers_literal(self, end: int) -> bool:
+        """Check whether the first literal span covers the text up to an index.
+
+        :param end: the index to check up to
+
+        :returns: whether the first literal span covers the text up to that index
+
+        """
         return bool(self.literal_spans) and self.literal_spans[0][0] == 0 and self.literal_spans[0][1] >= end
 
     def protect(self, protector: _HostValueProtector) -> str:
+        """Protect the spans of the text that came from the configuration, so they are not replaced again.
+
+        :param protector: the protector that escapes the text
+
+        :returns: the protected text
+
+        """
         parts: Final[list[str]] = []
         offset = 0
         for start, end in self.spans:
@@ -729,6 +910,32 @@ class HostText(RawText):
         parts.append(self[offset:])
         return HostText.from_parts(parts)
 
+    @classmethod
+    def from_parts(cls, parts: Sequence[str], *, separator: str = "") -> str:
+        """Join parts into one text, keeping the spans of the parts that are host text.
+
+        :param parts: the parts to join
+        :param separator: the text placed between two parts
+
+        :returns: the joined text
+
+        """
+        spans: list[tuple[int, int]] = []
+        literal_spans: list[tuple[int, int]] = []
+        offset = 0
+        for index, part in enumerate(parts):
+            if isinstance(part, HostText):
+                for part_spans, joined_spans in ((part.spans, spans), (part.literal_spans, literal_spans)):
+                    for start, end in part_spans:
+                        absolute_start, absolute_end = offset + start, offset + end
+                        if joined_spans and joined_spans[-1][1] == absolute_start:
+                            joined_spans[-1] = joined_spans[-1][0], absolute_end
+                        else:
+                            joined_spans.append((absolute_start, absolute_end))
+            offset += len(part) + (len(separator) if index + 1 < len(parts) else 0)
+        joined: Final[str] = separator.join(parts)
+        return cls(joined, spans=tuple(spans), literal_spans=tuple(literal_spans)) if spans else joined
+
 
 class _RequirementOptionsValidator(Protocol):
     def __call__(self, source: str, expanded: str, /) -> None: ...
@@ -740,11 +947,18 @@ class _HostValueProtector(Protocol):
 
 @dataclasses.dataclass(frozen=True, slots=True, kw_only=True)
 class RequirementLineCallbacks:
+    """Callbacks that validate the options of a requirement line and protect its host values.
+
+    :param validate_options: the callback that validates the options of a requirement line
+    :param protect_host_value: the callback that protects the text that came from the configuration
+
+    """
+
     validate_options: _RequirementOptionsValidator
     protect_host_value: _HostValueProtector
 
 
-class EntriesReplacer(Replacer):
+class EntriesReplacer(Replacer):  # simplint: ignore[SMP403]  # imported by tox plugins
     def __init__(
         self,
         conf: Config,
@@ -798,7 +1012,7 @@ class EntriesReplacer(Replacer):
         return nested
 
 
-def replace_pos_args(
+def replace_pos_args(  # simplint: ignore[SMP403]  # imported by tox plugins
     conf: Config, args: list[str], conf_args: ConfigLoadArgs, *, program_first: bool
 ) -> str | ConfigDefault:
     pos_args = load_posargs(conf, conf_args, program_first=program_first)
@@ -811,6 +1025,13 @@ def replace_pos_args(
 
 def quote_args(args: Sequence[str]) -> str:
     # INI settings split lines before parsing quotes.
+    """Quote the arguments so they can be split back into the same arguments.
+
+    :param args: the arguments to quote
+
+    :returns: the arguments as a single command line
+
+    """
     normalized: Final[list[str]] = [" ".join(arg.splitlines()) for arg in args]
     if sys.platform != "win32":
         return shlex.join(normalized)
@@ -819,22 +1040,39 @@ def quote_args(args: Sequence[str]) -> str:
 
 
 def load_posargs(conf: Config, conf_args: ConfigLoadArgs, *, program_first: bool) -> tuple[str, ...] | None:
+    """Get the positional arguments, with paths relative to the change directory when the environment expects paths.
+
+    :param conf: the global config
+    :param conf_args: env args
+    :param program_first: whether the program comes before the positional arguments
+
+    :returns: the positional arguments, or ``None`` when none were given
+
+    """
     to_path: Path | None = None
-    if conf_args.env_name is not None:  # pragma: no branch
+    if conf_args.env_name is not None:  # pragma: no branch  # other outcome untested
         env_conf = conf.get_env(conf_args.env_name)
         try:
-            if env_conf["args_are_paths"] and not _loading_change_dir(conf_args):  # pragma: no branch
+            # other outcome untested
+            if env_conf["args_are_paths"] and not any(  # pragma: no branch  # change_dir is set in most runs
+                entry.endswith(".change_dir") for entry in conf_args.chain
+            ):
                 to_path = env_conf.get("change_dir", Path)
         except KeyError:
             pass
     return conf.pos_args(to_path, program_first=program_first)
 
 
-def _loading_change_dir(conf_args: ConfigLoadArgs) -> bool:
-    return any(entry.endswith(".change_dir") for entry in conf_args.chain)
-
-
 def replace_env(conf: Config | None, args: list[str], conf_args: ConfigLoadArgs) -> str:
+    """Replace an environment variable reference with its value.
+
+    :param conf: the global config, ``None`` when unknown
+    :param args: the arguments of the reference, the variable name first and its default after
+    :param conf_args: env args
+
+    :returns: the value of the variable, or its default
+
+    """
     value: Final[str | ConfigDefault] = _replace_env(conf, args, conf_args)
     # Keep host-value provenance for inline requirement parsing.
     return value if isinstance(value, str) else str(value)
@@ -849,19 +1087,8 @@ def _replace_env(conf: Config | None, args: list[str], conf_args: ConfigLoadArgs
 
     if conf is not None and conf_args.env_name is not None:  # on core no set env support # pragma: no branch
         if new_key not in conf_args.chain:  # check if set env
-            conf_args.chain.append(new_key)
-            env_conf = conf.get_env(conf_args.env_name)
-            try:
-                set_env: SetEnv = env_conf.load("set_env", chain=conf_args.chain)
-            except CircularChainError:
-                if not (
-                    conf_args.chain[-1].endswith(".set_env")
-                    and any(i.endswith(".set_env") for i in conf_args.chain[:-1])
-                ):  # pragma: no branch
-                    raise
-            else:
-                if key in set_env:
-                    return set_env.load(key, conf_args)
+            if (value := _load_set_env(conf, conf_args.env_name, conf_args, key)) is not None:
+                return value
         elif conf_args.chain[-1] != new_key:  # if there's a chain but only self-refers than use os.environ
             circular = ", ".join(i[4:] for i in conf_args.chain[conf_args.chain.index(new_key) :])
             msg = f"circular chain between set env {circular}"
@@ -873,7 +1100,23 @@ def _replace_env(conf: Config | None, args: list[str], conf_args: ConfigLoadArgs
     return ConfigDefault(text=HostText.from_parts(args[1:], separator=ARG_DELIMITER), start=2)
 
 
-def replace_tty(args: list[str]) -> ConfigDefault:
+def _load_set_env(conf: Config, env_name: str, conf_args: ConfigLoadArgs, key: str) -> str | None:
+    conf_args.chain.append(f"env:{key}")
+    env_conf = conf.get_env(env_name)
+    try:
+        set_env: SetEnv = env_conf.load("set_env", chain=conf_args.chain)
+    except CircularChainError:
+        if not (
+            conf_args.chain[-1].endswith(".set_env") and any(i.endswith(".set_env") for i in conf_args.chain[:-1])
+        ):  # pragma: no branch  # other outcome untested
+            raise
+        return None
+    if key in set_env:
+        return set_env.load(key, conf_args)
+    return None
+
+
+def replace_tty(args: list[str]) -> ConfigDefault:  # simplint: ignore[SMP403]  # imported by tox plugins
     selected: Final[int] = 0 if sys.stdout.isatty() else 1
     return ConfigDefault(
         text=args[selected] if len(args) > selected else "",
@@ -882,7 +1125,9 @@ def replace_tty(args: list[str]) -> ConfigDefault:
     )
 
 
-def replace_glob(conf: Config | None, args: list[str]) -> str | ConfigDefault:
+def replace_glob(  # simplint: ignore[SMP403]  # imported by tox plugins
+    conf: Config | None, args: list[str]
+) -> str | ConfigDefault:
     if not args or not args[0]:
         msg = "No pattern was supplied in glob substitution"
         raise MatchError(msg)
@@ -902,7 +1147,7 @@ def replace_glob(conf: Config | None, args: list[str]) -> str | ConfigDefault:
         default_args = args[1:]
     if conf is not None and not Path(pattern).is_absolute():
         pattern = str(Path(glob.escape(str(conf.core["tox_root"]))) / pattern)
-    if matches := sorted(glob.glob(pattern, recursive=True)):  # ruff:ignore[glob]
+    if matches := sorted(glob.glob(pattern, recursive=True)):  # ruff:ignore[glob]  # matches user pattern
         return _GlobMatches(matches)
     return ConfigDefault(
         text=HostText.from_parts(default_args, separator=ARG_DELIMITER), start=3 if is_win_drive else 2
@@ -910,6 +1155,17 @@ def replace_glob(conf: Config | None, args: list[str]) -> str | ConfigDefault:
 
 
 def replace_factor(conf: Config, args: list[str], conf_args: ConfigLoadArgs) -> str:
+    """Replace a factor reference with the value of its factor label.
+
+    :param conf: the global config
+    :param args: the arguments of the reference, the label first and its default after
+    :param conf_args: env args
+
+    :returns: the value of the label for the environment, or its default
+
+    :raises MatchError: when no factor label was supplied
+
+    """
     if not args or not args[0]:
         msg = "No label was supplied in {factor} substitution"
         raise MatchError(msg)
@@ -938,6 +1194,7 @@ __all__ = [
     "MatchRecursionError",
     "RawText",
     "ReplaceReference",
+    "Replacer",
     "RequirementLineCallbacks",
     "find_replace_expr",
     "load_posargs",

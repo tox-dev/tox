@@ -25,6 +25,17 @@ if TYPE_CHECKING:
 
 
 class TomlSection(Section):
+    """A section of the ``tool.tox`` table of a ``pyproject.toml`` file.
+
+    :var SEP: the separator of the parts of a dotted key
+    :var PREFIX: the parts of the key path the table lives under
+    :var ENV: the key of the table with the environment definitions
+    :var ENV_BASE: the key of the table with the base environment definitions
+    :var RUN_ENV_BASE: the key of the table with the base run environment definitions
+    :var PKG_ENV_BASE: the key of the table with the base packaging environment definitions
+
+    """
+
     SEP: str = "."
     PREFIX: tuple[str, ...]
     ENV: Final[str] = "env"
@@ -34,35 +45,48 @@ class TomlSection(Section):
 
     @classmethod
     def test_env(cls, name: str) -> TomlSection:
+        """Get the section of a tox environment.
+
+        :param name: the name of the environment
+
+        :returns: the section of the environment
+
+        """
         return cls(cls.env_prefix(), name)
 
     @classmethod
     def env_prefix(cls) -> str:
+        """Get the dotted prefix of the tox environment tables.
+
+        :returns: the prefix
+
+        """
         return cls.SEP.join((*cls.PREFIX, cls.ENV))
 
     @classmethod
-    def core_prefix(cls) -> str:
-        return cls.SEP.join(cls.PREFIX)
+    def env_base(cls, name: str) -> TomlSection:
+        """Get the section of a base environment definition.
 
-    @classmethod
-    def package_env_base(cls) -> str:
-        return cls.SEP.join((*cls.PREFIX, cls.PKG_ENV_BASE))
+        :param name: the name of the base environment
 
-    @classmethod
-    def run_env_base(cls) -> str:
-        return cls.SEP.join((*cls.PREFIX, cls.RUN_ENV_BASE))
+        :returns: the section of the base environment
+
+        """
+        return cls(cls.env_base_prefix(), name)
 
     @classmethod
     def env_base_prefix(cls) -> str:
-        return cls.SEP.join((*cls.PREFIX, cls.ENV_BASE))
+        """Get the dotted prefix of the base environment tables.
 
-    @classmethod
-    def env_base(cls, name: str) -> TomlSection:
-        return cls(cls.env_base_prefix(), name)
+        :returns: the prefix
+
+        """
+        return cls.SEP.join((*cls.PREFIX, cls.ENV_BASE))
 
     @property
     def keys(self) -> Iterable[str]:
         # Build keys from prefix + name directly, preserving dots in names (e.g. env "py3.11").
+        """The parts of the dotted key path of the section, relative to the global prefix."""
         prefix, name = self._prefix, self._name
         if prefix is None and not name:
             return []
@@ -73,13 +97,52 @@ class TomlSection(Section):
             parts.append(name)
         return parts
 
+    @classmethod
+    def core_prefix(cls) -> str:
+        """Get the dotted prefix of the core table.
+
+        :returns: the prefix
+
+        """
+        return cls.SEP.join(cls.PREFIX)
+
+    @classmethod
+    def package_env_base(cls) -> str:
+        """Get the dotted key of the packaging environment base table.
+
+        :returns: the key
+
+        """
+        return cls.SEP.join((*cls.PREFIX, cls.PKG_ENV_BASE))
+
+    @classmethod
+    def run_env_base(cls) -> str:
+        """Get the dotted key of the run environment base table.
+
+        :returns: the key
+
+        """
+        return cls.SEP.join((*cls.PREFIX, cls.RUN_ENV_BASE))
+
 
 class TomlPyProjectSection(TomlSection):
+    """A section of the ``tool.tox`` table of a ``pyproject.toml`` file.
+
+    :var PREFIX: the parts of the key path the ``tool.tox`` table lives under
+
+    """
+
     PREFIX = ("tool", "tox")
 
 
 class TomlPyProject(Source):
-    """Configuration sourced from a pyproject.toml files."""
+    """Configuration sourced from a pyproject.toml files.
+
+    :param path: the path of the ``pyproject.toml`` file
+
+    :var FILENAME: the name of the file, ``pyproject.toml``
+
+    """
 
     FILENAME = "pyproject.toml"
     _Section: type[TomlSection] = TomlPyProjectSection
@@ -88,10 +151,12 @@ class TomlPyProject(Source):
         if path.name != self.FILENAME or not path.exists():
             raise ValueError
         self._content = tomllib.loads(path.read_text(encoding="utf-8-sig"))
-        try:
-            self._our_content = _table_at(self._content, self._Section.PREFIX)
-        except KeyError as exc:
-            raise MissingRequiredConfigKeyError(path) from exc
+        self._our_content = self._content
+        for key in self._Section.PREFIX:
+            step = self._our_content.get(key)
+            if not isinstance(step, dict):  # a missing key or a scalar where a table is required: not for us
+                raise MissingRequiredConfigKeyError(path)
+            self._our_content = step
         if set(self._our_content.keys()) <= {"legacy_tox_ini"}:  # an empty stub or a legacy pointer holds no config
             raise MissingRequiredConfigKeyError(path)
         env_base = self._our_content.get(self._Section.ENV_BASE, {})
@@ -113,6 +178,13 @@ class TomlPyProject(Source):
         return self._Section(prefix=None, name="")
 
     def factor_labels(self, env_name: str | None) -> dict[str, FactorGroup]:
+        """Get the factor labels defined for an environment.
+
+        :param env_name: the environment name, ``None`` for the core configuration
+
+        :returns: the factor labels
+
+        """
         if env_name in self._env_base_generated:
             return {**self._env_list_labels, **self._env_base_labels[self._env_base_generated[env_name]]}
         return self._factor_labels
@@ -122,7 +194,9 @@ class TomlPyProject(Source):
         return self._Section(section.prefix, section.name)
 
     @override
-    def get_loader(self, section: Section, override_map: OverrideMap) -> Loader[Any] | None:
+    def get_loader(  # simplint: ignore[SMP602]  # loaders read raw values of any type
+        self, section: Section, override_map: OverrideMap
+    ) -> Loader[Any] | None:  # simplint: ignore[SMP602]  # loaders read raw values of any type
         current: TomlTypes = self._our_content
         sec = cast("TomlSection", section)
         for key in sec.keys:
@@ -169,8 +243,7 @@ class TomlPyProject(Source):
     def get_base_sections(self, base: list[str], in_section: Section) -> Iterator[Section]:
         core_prefix = self._Section.core_prefix()
         strip = f"{core_prefix}{self._Section.SEP}" if core_prefix else ""
-        env_base_pfx = self._Section.env_base_prefix()
-        env_base_dot = f"{env_base_pfx}{self._Section.SEP}"
+        env_base_dot = f"{self._Section.env_base_prefix()}{self._Section.SEP}"
         for entry in base:
             if entry.startswith(env_base_dot):
                 yield self._Section.env_base(entry[len(env_base_dot) :])
@@ -182,21 +255,16 @@ class TomlPyProject(Source):
     @override
     def get_tox_env_section(self, item: str) -> tuple[Section, list[str], list[str]]:
         if base_name := self._env_base_generated.get(item):
-            return (
+            return (  # simplint: ignore[SMP528]  # plugin overrides return plain tuples too
                 self._Section.test_env(item),
                 [self._Section.env_base_prefix() + self._Section.SEP + base_name, self._Section.run_env_base()],
                 [self._Section.package_env_base()],
             )
-        return self._Section.test_env(item), [self._Section.run_env_base()], [self._Section.package_env_base()]
-
-
-def _table_at(content: dict[str, TomlTypes], keys: tuple[str, ...]) -> dict[str, TomlTypes]:
-    for key in keys:
-        step = content[key]
-        if not isinstance(step, dict):
-            raise KeyError(key)  # a scalar where a table is required means the config is not for us
-        content = step
-    return content
+        return (  # simplint: ignore[SMP528]  # plugin overrides return plain tuples too
+            self._Section.test_env(item),
+            [self._Section.run_env_base()],
+            [self._Section.package_env_base()],
+        )
 
 
 def _build_env_base_map(
@@ -219,12 +287,12 @@ def _build_env_base_map(
         all_labels[base_name] = base_labels
         if factors_raw and isinstance(factors_raw[0], list | dict):
             expanded: list[list[str]] = []
-            for idx, g in enumerate(factors_raw):
-                values = expand_factor_group(g)
+            for idx, raw_group in enumerate(factors_raw):
+                values = expand_factor_group(raw_group)
                 expanded.append(values)
-                group = FactorGroup(values=values, default=extract_default(g, values))
+                group = FactorGroup(values=values, default=extract_default(raw_group, values))
                 base_labels[str(idx)] = group
-                if (label := extract_label(g)) is not None:
+                if (label := extract_label(raw_group)) is not None:
                     base_labels[label] = group
             names = ["-".join(combo) for combo in product(*expanded)]
         else:
@@ -245,11 +313,11 @@ def _extract_env_list_labels(env_list_raw: TomlTypes) -> dict[str, FactorGroup]:
             raw_groups = item["product"]
             if not isinstance(raw_groups, list):
                 continue
-            for idx, g in enumerate(raw_groups):
-                values = expand_factor_group(g)
-                group = FactorGroup(values=values, default=extract_default(g, values))
+            for idx, raw_group in enumerate(raw_groups):
+                values = expand_factor_group(raw_group)
+                group = FactorGroup(values=values, default=extract_default(raw_group, values))
                 labels[str(idx)] = group
-                if (label := extract_label(g)) is not None:
+                if (label := extract_label(raw_group)) is not None:
                     labels[label] = group
         elif (label := extract_label(item)) is not None:
             values = expand_factor_group(item)
@@ -259,4 +327,6 @@ def _extract_env_list_labels(env_list_raw: TomlTypes) -> dict[str, FactorGroup]:
 
 __all__ = [
     "TomlPyProject",
+    "TomlPyProjectSection",
+    "TomlSection",
 ]

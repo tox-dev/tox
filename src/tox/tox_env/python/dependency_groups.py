@@ -21,6 +21,16 @@ _IncludeGroup = TypedDict("_IncludeGroup", {"include-group": str})
 
 
 def resolve(root: Path, groups: set[str]) -> set[Requirement]:
+    """Resolve the requirements of dependency groups from the ``pyproject.toml`` file.
+
+    :param root: the directory with the ``pyproject.toml`` file
+    :param groups: the names of the dependency groups
+
+    :returns: the requirements of the groups
+
+    :raises Fail: when the file or a group does not exist
+
+    """
     pyproject_file = root / "pyproject.toml"
     if not pyproject_file.exists():
         msg = f"no pyproject.toml found at {pyproject_file} to read dependency groups from"

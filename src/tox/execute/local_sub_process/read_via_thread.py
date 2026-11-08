@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from threading import Event, Thread
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Final
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -12,16 +12,39 @@ if TYPE_CHECKING:
     from typing import Self
 
 
-WAIT_GENERAL = 0.05
+WAIT_GENERAL: Final[float] = 0.05  # simplint: ignore[SMP202, SMP404]  # imported by tox plugins
+"""Seconds to wait for a reader thread to finish before checking again."""
 
 
 class ReadViaThread(ABC):
-    def __init__(self, file_no: int, handler: Callable[[bytes], int], name: str, drain: bool) -> None:  # ruff:ignore[boolean-type-hint-positional-argument]
+    """Read a file descriptor in a thread, and pass what is read to a handler.
+
+    :param file_no: the file descriptor to read from
+    :param handler: the callback that receives what is read
+    :param name: the name of the stream, used to name the thread
+    :param drain: whether to read the remaining content when the reader is exited
+
+    :var stop: the event that asks the reader thread to stop
+    :var thread: the thread that reads the file descriptor
+
+    """
+
+    def __init__(  # keeps the signature
+        self,
+        file_no: int,
+        handler: Callable[[bytes], int],
+        name: str,
+        drain: bool,  # ruff:ignore[boolean-type-hint-positional-argument]  # keeps the signature
+    ) -> None:
         self.file_no = file_no
         self.stop = Event()
         self.thread = Thread(target=self._read_stream, name=f"tox-r-{name}-{file_no}")
         self.handler = handler
         self._on_exit_drain = drain
+
+    @abstractmethod
+    def _read_stream(self) -> None:
+        raise NotImplementedError
 
     def __enter__(self) -> Self:
         self.thread.start()
@@ -40,9 +63,10 @@ class ReadViaThread(ABC):
             self._drain_stream()
 
     @abstractmethod
-    def _read_stream(self) -> None:
-        raise NotImplementedError
-
-    @abstractmethod
     def _drain_stream(self) -> None:
         raise NotImplementedError
+
+
+__all__ = [
+    "ReadViaThread",
+]

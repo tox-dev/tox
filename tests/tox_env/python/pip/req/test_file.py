@@ -3,10 +3,11 @@ from __future__ import annotations
 import os
 import socket
 import sys
+from argparse import Namespace
 from contextlib import contextmanager
 from http.client import HTTPResponse
 from io import BytesIO
-from typing import IO, TYPE_CHECKING, Any, Final
+from typing import IO, TYPE_CHECKING, Final
 
 import pytest
 
@@ -20,7 +21,7 @@ if TYPE_CHECKING:
 
     from tox.pytest import CaptureFixture, MonkeyPatch
 
-_REQ_FILE_TEST_CASES = [
+_REQ_FILE_TEST_CASES: Final[list[pytest.ParameterSet]] = [
     pytest.param("--pre", {"pre": True}, [], ["--pre"], id="pre"),
     pytest.param("--no-index", {"index_url": []}, [], ["--no-index"], id="no-index"),
     pytest.param("--no-index\n-i a\n--no-index", {"index_url": []}, [], ["--no-index"], id="no-index overwrites index"),
@@ -423,13 +424,15 @@ _REQ_FILE_TEST_CASES = [
 
 
 @pytest.mark.parametrize(("req", "opts", "requirements", "as_args"), _REQ_FILE_TEST_CASES)
-def test_req_file(tmp_path: Path, req: str, opts: dict[str, Any], requirements: list[str], as_args: list[str]) -> None:
+def test_req_file(
+    tmp_path: Path, req: str, opts: dict[str, bool | list[str]], requirements: list[str], as_args: list[str]
+) -> None:
     requirements_txt = tmp_path / "req.txt"
     requirements_txt.write_text(req)
     req_file = RequirementsFile(requirements_txt, constraint=False)
     assert req_file.as_root_args == as_args
     assert str(req_file) == f"-r {requirements_txt}"
-    assert vars(req_file.options) == opts
+    assert req_file.options == Namespace(**opts)
     found = [str(i) for i in req_file.requirements]
     assert found == requirements
 
@@ -462,7 +465,7 @@ def test_requirements_env_var_present(monkeypatch: MonkeyPatch, tmp_path: Path) 
     requirements_file = tmp_path / "req.txt"
     requirements_file.write_text("${ENV_VAR} >= 1")
     req_file = RequirementsFile(requirements_file, constraint=False)
-    assert vars(req_file.options) == {}
+    assert req_file.options == Namespace()
     found = [str(i) for i in req_file.requirements]
     assert found == ["beta>=1"]
 
@@ -472,7 +475,7 @@ def test_requirements_env_var_missing(monkeypatch: MonkeyPatch, tmp_path: Path) 
     requirements_file = tmp_path / "req.txt"
     requirements_file.write_text("${ENV_VAR}")
     req_file = RequirementsFile(requirements_file, constraint=False)
-    assert vars(req_file.options) == {}
+    assert req_file.options == Namespace()
     found = [str(i) for i in req_file.requirements]
     assert found == [f".{os.sep}${{ENV_VAR}}"]
 
@@ -489,16 +492,17 @@ def test_requirements_env_var_from_environment_provider(monkeypatch: MonkeyPatch
     assert [str(item) for item in req_file.requirements] == ["beta>=1", f".{os.sep}${{OTHER_VAR}}"]
 
 
-@pytest.mark.parametrize("flag", ["-r", "--requirement"])
+@pytest.mark.parametrize(
+    "flag", [pytest.param("-r", id="dash-r"), pytest.param("--requirement", id="dash-dash-requirement")]
+)
 def test_requirements_txt_transitive(tmp_path: Path, flag: str) -> None:
-    other_req = tmp_path / "other-requirements.txt"
-    other_req.write_text("magic\nmagical")
+    (tmp_path / "other-requirements.txt").write_text("magic\nmagical")
     requirements_file = tmp_path / "req.txt"
     requirements_file.write_text(f"{flag} other-requirements.txt\n{flag} other-requirements.txt")
     req_file = RequirementsFile(requirements_file, constraint=False)
     assert req_file.as_root_args == ["-r", "other-requirements.txt"]
     assert req_file.as_root_args is req_file.as_root_args  # check it's cached
-    assert vars(req_file.options) == {}
+    assert req_file.options == Namespace()
     found = [str(i) for i in req_file.requirements]
     assert found == ["magic", "magical"]
 
@@ -506,11 +510,27 @@ def test_requirements_txt_transitive(tmp_path: Path, flag: str) -> None:
 @pytest.mark.parametrize(
     ("raw", "error"),
     [
-        ("--pre something", "unrecognized arguments: something"),
-        ("--missing", "unrecognized arguments: --missing"),
-        ("--index-url a b", "unrecognized arguments: b"),
-        ("--index-url", "argument -i/--index-url/--pypi-url: expected one argument"),
-        ("-k", "unrecognized arguments: -k"),
+        pytest.param(
+            "--pre something",
+            "unrecognized arguments: something",
+            id="dash-dash-pre-space-something-unrecognized-space-arguments-colon-space-something",
+        ),
+        pytest.param(
+            "--missing",
+            "unrecognized arguments: --missing",
+            id="dash-dash-missing-unrecognized-space-arguments-colon-space-dash-dash-missing",
+        ),
+        pytest.param(
+            "--index-url a b",
+            "unrecognized arguments: b",
+            id="dash-dash-index-dash-url-space-a-space-b-unrecognized-space-arguments-colon-space-b",
+        ),
+        pytest.param(
+            "--index-url",
+            "argument -i/--index-url/--pypi-url: expected one argument",
+            id="dash-dash-index-dash-url-argument-space-dash-i-slash-dash-dash-index-dash-url-slash-dash-dash-pypi-dash-url-colon-space-expected-space-one-space-argument",
+        ),
+        pytest.param("-k", "unrecognized arguments: -k", id="dash-k-unrecognized-space-arguments-colon-space-dash-k"),
     ],
 )
 def test_bad_line(tmp_path: Path, raw: str, capfd: CaptureFixture, error: str) -> None:
@@ -541,17 +561,19 @@ def test_requirements_file_missing(tmp_path: Path) -> None:
         assert req_file.options
 
 
-@pytest.mark.parametrize("flag", ["-c", "--constraint"])
+@pytest.mark.parametrize(
+    "flag", [pytest.param("-c", id="dash-c"), pytest.param("--constraint", id="dash-dash-constraint")]
+)
 def test_constraint_txt_expanded(tmp_path: Path, flag: str) -> None:
-    other_req = tmp_path / "other.txt"
-    other_req.write_text("magic\nmagical\n-i a")
+    (tmp_path / "other.txt").write_text("magic\nmagical\n-i a")
     requirements_file = tmp_path / "req.txt"
     requirements_file.write_text(f"{flag} other.txt\n{flag} other.txt")
     req_file = RequirementsFile(requirements_file, constraint=True)
-    assert req_file.as_root_args == ["-c", "other.txt"]
-    assert vars(req_file.options) == {"index_url": ["a"]}
-    found = [str(i) for i in req_file.requirements]
-    assert found == ["-c magic", "-c magical"]
+    assert (req_file.as_root_args, req_file.options, [str(i) for i in req_file.requirements]) == (
+        ["-c", "other.txt"],
+        Namespace(index_url=["a"]),
+        ["-c magic", "-c magical"],
+    )
 
 
 @pytest.mark.skipif(sys.platform == "win32", reason=r"on windows the escaped \ is overloaded by path separator")
@@ -565,7 +587,7 @@ def test_req_path_with_space_escape(tmp_path: Path) -> None:
     requirements_file.write_text(path)
     req_file = RequirementsFile(requirements_file, constraint=False)
 
-    assert vars(req_file.options) == {}
+    assert req_file.options == Namespace()
     found = [str(i) for i in req_file.requirements]
     assert found == ["c"]
 
@@ -578,20 +600,24 @@ def test_req_path_with_space_quoted(tmp_path: Path) -> None:
     requirements_file.write_text('-r "a b/base.txt"\n-c "a b/constraints.txt"\n--index-url "https://a/simple"')
     req_file: Final[RequirementsFile] = RequirementsFile(requirements_file, constraint=False)
 
-    assert (vars(req_file.options), [str(i) for i in req_file.requirements]) == (
-        {"index_url": ["https://a/simple"]},
-        ["c", "-c d<2"],
-    )
+    assert req_file.options == Namespace(index_url=["https://a/simple"])
+    assert [str(i) for i in req_file.requirements] == ["c", "-c d<2"]
 
 
 @pytest.mark.parametrize(
     "hash_value",
     [
-        "sha256:a",
-        "sha256:xxxxxxxxxx123456789012345678901234567890123456789012345678901234",
+        pytest.param("sha256:a", id="sha256-colon-a"),
+        pytest.param(
+            "sha256:xxxxxxxxxx123456789012345678901234567890123456789012345678901234",
+            id="sha256-colon-xxxxxxxxxx123456789012345678901234567890123456789012345678901234",
+        ),
         (
-            "sha512:thisshouldfail8525e477385ef5ee6cecdc8f8fcc2a79d1b35a9f57ad15c814"
-            "dada670026f41fdd62e5e10b3fd75d6112704a9521c3df105f0b6f3bb11b128a"
+            pytest.param(
+                "sha512:thisshouldfail8525e477385ef5ee6cecdc8f8fcc2a79d1b35a9f57ad15c814"
+                "dada670026f41fdd62e5e10b3fd75d6112704a9521c3df105f0b6f3bb11b128a",
+                id="sha512-colon-thisshouldfail8525e477385ef5ee6cecdc8f8fcc2a79d1b35a9f57ad15c814dada670026f41fdd62e5e10b3fd75d6112704a9521c3df105f0b6f3bb11b128a",
+            )
         ),
     ],
 )
@@ -603,11 +629,17 @@ def test_bad_hash(hash_value: str, tmp_path: Path) -> None:
         assert req_file.requirements
 
 
-@pytest.mark.parametrize("codec", ["utf-8", "utf-16", "utf-32"])
+@pytest.mark.parametrize(
+    "codec",
+    [
+        pytest.param("utf-8", id="utf-dash-8"),
+        pytest.param("utf-16", id="utf-dash-16"),
+        pytest.param("utf-32", id="utf-dash-32"),
+    ],
+)
 def test_custom_file_encoding(codec: str, tmp_path: Path) -> None:
     requirements_file = tmp_path / "r.txt"
-    raw = "art".encode(codec)
-    requirements_file.write_bytes(raw)
+    requirements_file.write_bytes("art".encode(codec))
     req_file = RequirementsFile(requirements_file, constraint=False)
     assert [str(i) for i in req_file.requirements] == ["art"]
 
@@ -624,8 +656,7 @@ def test_parsed_requirement_properties(tmp_path: Path) -> None:
     req = ParsedRequirement("a", {"b": 1}, str(tmp_path), 1)
     assert req.options == {"b": 1}
     assert str(req.requirement) == "a"
-    assert req.from_file == str(tmp_path)
-    assert req.lineno == 1
+    assert (req.from_file, req.lineno) == (str(tmp_path), 1)
 
 
 def test_parsed_requirement_repr_with_opt(tmp_path: Path) -> None:
@@ -637,18 +668,26 @@ def test_parsed_requirement_repr_no_opt(tmp_path: Path) -> None:
     assert repr(ParsedRequirement("a", {}, str(tmp_path), 2)) == "ParsedRequirement(requirement=a)"
 
 
-@pytest.mark.parametrize("flag", ["-r", "--requirement", "-c", "--constraint"])
-def test_req_over_http(tmp_path: Path, flag: str, mocker: MockerFixture) -> None:
-    is_constraint = flag in {"-c", "--constraint"}
+@pytest.mark.parametrize(
+    ("flag", "is_constraint", "req_file_str", "found"),
+    [
+        pytest.param("-r", False, "-r", "a", id="dash-r"),
+        pytest.param("--requirement", False, "-r", "a", id="dash-dash-requirement"),
+        pytest.param("-c", True, "-c", "-c a", id="dash-c"),
+        pytest.param("--constraint", True, "-c", "-c a", id="dash-dash-constraint"),
+    ],
+)
+def test_req_over_http(
+    tmp_path: Path, flag: str, is_constraint: bool, req_file_str: str, found: str, mocker: MockerFixture
+) -> None:
     url_open = mocker.patch("tox.tox_env.python.pip.req.file.urlopen", autospec=True)
     url_open.return_value.__enter__.return_value = BytesIO(b"-i i\na")
     requirements_txt = tmp_path / "req.txt"
     requirements_txt.write_text(f"{flag} https://zopefoundation.github.io/Zope/releases/4.5.5/requirements-full.txt")
     req_file = RequirementsFile(requirements_txt, constraint=is_constraint)
-    assert str(req_file) == f"-{'c' if is_constraint else 'r'} {requirements_txt}"
-    assert vars(req_file.options) == {"index_url": ["i"]}
-    found = [str(i) for i in req_file.requirements]
-    assert found == [f"{'-c ' if is_constraint else ''}a"]
+    assert str(req_file) == f"{req_file_str} {requirements_txt}"
+    assert req_file.options == Namespace(index_url=["i"])
+    assert [str(i) for i in req_file.requirements] == [found]
     # urlopen must be called with a timeout to avoid hanging on slow / unresponsive mirrors
     assert url_open.call_args.kwargs.get("timeout") is not None
 
@@ -687,7 +726,7 @@ def test_req_over_http_slow_drip_hits_deadline(tmp_path: Path, mocker: MockerFix
         response: Final[HTTPResponse] = HTTPResponse(reader)
         response.begin()
         mocker.patch("tox.tox_env.python.pip.req.file.urlopen", autospec=True, return_value=response)
-        mocker.patch("tox.tox_env.python.pip.req.file.monotonic", side_effect=[0, 121])
+        mocker.patch("tox.tox_env.python.pip.req.file.monotonic", autospec=True, side_effect=[0, 121])
         with pytest.raises(ValueError, match=r"https://example\.com/c\.txt took longer than 120 seconds") as exc:
             _ = RequirementsFile(requirements_txt, constraint=False).requirements
         assert "hunter2" not in str(exc.value)
@@ -695,13 +734,16 @@ def test_req_over_http_slow_drip_hits_deadline(tmp_path: Path, mocker: MockerFix
 
 def test_req_over_http_has_req(tmp_path: Path, mocker: MockerFixture) -> None:
     @contextmanager
-    def enter(url: str, timeout: float | None = None) -> Generator[IO[bytes], None, None]:  # ruff:ignore[unused-function-argument]
+    def enter(  # interface signature
+        url: str,
+        timeout: float | None = None,  # ruff:ignore[unused-function-argument]  # interface signature
+    ) -> Generator[IO[bytes], None, None]:
         if url == "https://root.org/a.txt":
             yield BytesIO(b"-r b.txt")
         elif url == "https://root.org/b.txt":
             yield BytesIO(b"-i i\na")
-        else:  # pragma: no cover
-            raise RuntimeError  # pragma: no cover
+        else:  # pragma: no cover  # setup not built by tests
+            raise RuntimeError  # pragma: no cover  # untested error path
 
     mocker.patch("tox.tox_env.python.pip.req.file.urlopen", autospec=True, side_effect=enter)
 
@@ -709,33 +751,69 @@ def test_req_over_http_has_req(tmp_path: Path, mocker: MockerFixture) -> None:
     requirements_txt.write_text("-r https://root.org/a.txt")
     req_file = RequirementsFile(requirements_txt, constraint=False)
 
-    assert vars(req_file.options) == {"index_url": ["i"]}
+    assert req_file.options == Namespace(index_url=["i"])
     found = [str(i) for i in req_file.requirements]
     assert found == ["a"]
 
 
 @pytest.mark.parametrize(
     "loc",
-    ["file://", "file://localhost"],
+    [
+        pytest.param(
+            "file://",
+            id="file-colon-slash-slash",
+            marks=pytest.mark.skipif(sys.platform == "win32", reason="posix file uri"),
+        ),
+        pytest.param(
+            "file:///",
+            id="file-colon-slash-slash-slash-windows",
+            marks=pytest.mark.skipif(sys.platform != "win32", reason="windows file uri"),
+        ),
+        pytest.param(
+            "file://localhost",
+            id="file-colon-slash-slash-localhost",
+            marks=pytest.mark.skipif(sys.platform == "win32", reason="posix file uri"),
+        ),
+        pytest.param(
+            "file://localhost/",
+            id="file-colon-slash-slash-localhost-windows",
+            marks=pytest.mark.skipif(sys.platform != "win32", reason="windows file uri"),
+        ),
+    ],
 )
 def test_requirement_via_file_protocol(tmp_path: Path, loc: str) -> None:
     other_req = tmp_path / "other-requirements.txt"
     other_req.write_text("-i i\na")
     requirements_text = tmp_path / "req.txt"
-    requirements_text.write_text(f"-r {loc}{'/' if sys.platform == 'win32' else ''}{other_req}")
+    requirements_text.write_text(f"-r {loc}{other_req}")
 
     req_file = RequirementsFile(requirements_text, constraint=False)
 
-    assert vars(req_file.options) == {"index_url": ["i"]}
+    assert req_file.options == Namespace(index_url=["i"])
     found = [str(i) for i in req_file.requirements]
     assert found == ["a"]
 
 
-def test_requirement_via_file_protocol_na(tmp_path: Path) -> None:
+@pytest.mark.parametrize(
+    "loc",
+    [
+        pytest.param(
+            "file://magic.com",
+            id="posix",
+            marks=pytest.mark.skipif(sys.platform == "win32", reason="posix file uri"),
+        ),
+        pytest.param(
+            "file://magic.com/",
+            id="windows",
+            marks=pytest.mark.skipif(sys.platform != "win32", reason="windows file uri"),
+        ),
+    ],
+)
+def test_requirement_via_file_protocol_na(tmp_path: Path, loc: str) -> None:
     other_req = tmp_path / "other-requirements.txt"
     other_req.write_text("-i i\na")
     requirements_text = tmp_path / "req.txt"
-    requirements_text.write_text(f"-r file://magic.com{'/' if sys.platform == 'win32' else ''}{other_req}")
+    requirements_text.write_text(f"-r {loc}{other_req}")
 
     req_file = RequirementsFile(requirements_text, constraint=False)
     pattern = r"non-local file URIs are not supported on this platform: 'file://magic\.com\.*"
@@ -743,9 +821,15 @@ def test_requirement_via_file_protocol_na(tmp_path: Path) -> None:
         assert req_file.options
 
 
-@pytest.mark.parametrize("req", ["pre-commit ~= 4", "pre-commit~=4"])
+@pytest.mark.parametrize(
+    "req",
+    [
+        pytest.param("pre-commit ~= 4", id="pre-dash-commit-space-tilde-equal-space-4"),
+        pytest.param("pre-commit~=4", id="pre-dash-commit-tilde-equal-4"),
+    ],
+)
 def test_requirement_with_tilde_equals_not_treated_as_path(tmp_path: Path, req: str) -> None:
-    """Deps with ``~=`` version specifier should not be treated as local paths (#3447)."""
+    # Deps with ``~=`` version specifier should not be treated as local paths (#3447).
     parsed = ParsedRequirement(req, {}, str(tmp_path / "tox.ini"), 1)
     assert str(parsed.requirement) == req
 
@@ -753,6 +837,5 @@ def test_requirement_with_tilde_equals_not_treated_as_path(tmp_path: Path, req: 
 def test_requirement_to_path_one_level_up(tmp_path: Path) -> None:
     other_req = tmp_path / "other.txt"
     other_req.write_text("-e ..")
-    req_file = RequirementsFile(other_req, constraint=False)
-    result = req_file.requirements
+    result = RequirementsFile(other_req, constraint=False).requirements
     assert result[0].requirement == str(tmp_path.parent.resolve())
