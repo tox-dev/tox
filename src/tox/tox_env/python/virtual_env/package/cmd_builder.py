@@ -190,7 +190,9 @@ class VirtualEnvCmdBuilder(VenvCmdBuilder, VirtualEnv):
         return "virtualenv-cmd-builder"
 
 
-class WheelDistribution(Distribution):  # cannot subclass has type Any
+class WheelDistribution(  # simplint: ignore[SMP403]  # imported by tox plugins
+    Distribution
+):  # cannot subclass has type Any  # simplint: ignore[SMP403]  # imported by tox plugins
     def __init__(self, wheel: Path) -> None:
         self._wheel = wheel
         self._dist_name: str | None = None

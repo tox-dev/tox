@@ -233,7 +233,7 @@ class Config:
         item: str,
         # keeps the existing signature
         package: bool = False,  # ruff:ignore[boolean-type-hint-positional-argument, boolean-default-value-positional-argument]
-        loaders: Sequence[Loader[Any]] | None = None,
+        loaders: Sequence[Loader[Any]] | None = None,  # simplint: ignore[SMP602]  # loaders read raw values of any type
     ) -> EnvConfigSet:
         """Return the configuration for a given tox environment (will create if not exist yet).
 
@@ -263,7 +263,7 @@ class Config:
         base: list[str] | None,
         of_type: type[T],
         for_env: str | None,
-        loaders: Sequence[Loader[Any]] | None = None,
+        loaders: Sequence[Loader[Any]] | None = None,  # simplint: ignore[SMP602]  # loaders read raw values of any type
     ) -> T:
         """Get the configuration set of a section, creating and caching it on first use.
 

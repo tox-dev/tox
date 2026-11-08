@@ -239,7 +239,7 @@ class ParsedRequirement:
         return " ".join(result)
 
     @property
-    def options(self) -> dict[str, Any]:
+    def options(self) -> dict[str, Any]:  # simplint: ignore[SMP602]  # pip options hold values of any type
         """The options the requirement was given with."""
         return self._options
 

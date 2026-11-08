@@ -364,7 +364,10 @@ class LocalSubprocessExecuteStatus(ExecuteStatus):
             raise  # pragma: no cover  # untested error path
 
     @staticmethod
-    def _write_stdin_bytes(stdin: Any, bytes_content: bytes) -> None:
+    def _write_stdin_bytes(  # simplint: ignore[SMP602]  # stdin is any file-like object
+        stdin: Any,  # simplint: ignore[SMP602]  # stdin is any file-like object
+        bytes_content: bytes,  # simplint: ignore[SMP602]  # stdin is any file-like object
+    ) -> None:
         if sys.platform == "win32":  # explicit check for mypy  # pragma: win32 cover
             # on Windows we have a PipeHandle object here rather than a file stream
             import _overlapped  # ruff:ignore[import-outside-top-level, import-private-name]
@@ -437,4 +440,5 @@ __all__ = [
     "LocalSubProcessExecutor",
     "LocalSubprocessExecuteFailedStatus",
     "LocalSubprocessExecuteStatus",
+    "ReadViaThread",
 ]

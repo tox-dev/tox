@@ -182,9 +182,9 @@ def _exposed_index(
     )
 
 
-def _lock_exposed_directories(
+def _lock_exposed_directories(  # simplint: ignore[SMP505]  # the staging steps are reviewed by name
     directories: list[_StagingDirectory], exposed: int, work_index: int
-) -> None:  # simplint: ignore[SMP505]  # the staging steps are reviewed by name
+) -> None:
     for index, entry in enumerate(directories[exposed:], start=exposed):
         mode: int = stat.S_IMODE(entry.metadata.st_mode)
         # a fresh work dir is owner-only, which also hides group-writable environments left inside it
@@ -193,9 +193,9 @@ def _lock_exposed_directories(
     _verify_unchanged_staging_path(directories)
 
 
-def _verify_unchanged_staging_path(
+def _verify_unchanged_staging_path(  # simplint: ignore[SMP505]  # the staging steps are reviewed by name
     directories: list[_StagingDirectory],
-) -> None:  # simplint: ignore[SMP505]  # the staging steps are reviewed by name
+) -> None:
     for entry in directories:
         msg: str = f"package staging path {entry.path} can be changed by another account"
         try:
@@ -228,9 +228,9 @@ def _empty_exposed_directory(path: Path, owners: frozenset[int], trust_root: Pat
     )
 
 
-def _kept_entry(
+def _kept_entry(  # simplint: ignore[SMP505]  # names the environment that survives the cleanup
     directory: Path,
-) -> str | None:  # simplint: ignore[SMP505]  # names the environment that survives the cleanup
+) -> str | None:
     # the running environment may live in the work dir; keep it so the provisioned tox can finish
     try:
         relative: Final[Path] = Path(sys.prefix).resolve().relative_to(directory.resolve())

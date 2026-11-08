@@ -91,7 +91,11 @@ class IniSource(Source):
 
     @override
     def get_tox_env_section(self, item: str) -> tuple[Section, list[str], list[str]]:
-        return IniSection.test_env(item), [TEST_ENV_PREFIX], [PKG_ENV_PREFIX]
+        return (  # simplint: ignore[SMP528]  # plugin overrides return plain tuples too
+            IniSection.test_env(item),
+            [TEST_ENV_PREFIX],
+            [PKG_ENV_PREFIX],
+        )
 
     @override
     def envs(self, core_conf: CoreConfigSet) -> Iterator[str]:

@@ -43,6 +43,9 @@ class CliEnv:  # ruff:ignore[eq-without-hash]  # mutable value type
     - A list of specific environments, instantiated with a string that is a comma-separated list of the environment
       names. (These may have spaces on either side of the commas which are removed.) As a sequence this will be a
       sequence of those names.
+
+    The other two forms are:
+
     - "ALL" which is all environments defined by the tox configuration. This is instantiated with ``ALL`` either alone
       or as any element of a comma-separated list; any other environment names are ignored. `is_all()` will be true and
       as a sequence it will be empty. This prints in string representation as ``ALL``.

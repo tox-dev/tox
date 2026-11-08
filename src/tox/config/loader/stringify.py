@@ -14,7 +14,11 @@ if TYPE_CHECKING:
     from typing_extensions import TypeIs
 
 
-def stringify_reference(value: object, *, constant: bool) -> str:
+def stringify_reference(  # simplint: ignore[SMP602]  # stringifies any configuration value
+    value: object,  # simplint: ignore[SMP602]  # stringifies any configuration value
+    *,
+    constant: bool,  # simplint: ignore[SMP602]  # stringifies any configuration value
+) -> str:
     """Convert a value to the text a replacement expands to.
 
     :param value: the value to convert
@@ -29,7 +33,7 @@ def stringify_reference(value: object, *, constant: bool) -> str:
     return as_str
 
 
-def stringify(value: object) -> tuple[str, bool]:  # ruff:ignore[too-many-return-statements]  # distinct outcomes
+def stringify(value: object) -> tuple[str, bool]:  # ruff:ignore[too-many-return-statements]  # distinct outcomes  # simplint: ignore[SMP602]  # stringifies any configuration value
     """Convert a value to text.
 
     :param value: the value to convert

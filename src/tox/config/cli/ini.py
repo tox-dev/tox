@@ -41,7 +41,14 @@ class IniConfig:
         config_file = os.environ.get(self.TOX_CONFIG_FILE_ENV_VAR, None)
         self.is_env_var = config_file is not None
         self.config_file = Path(config_file if config_file is not None else DEFAULT_CONFIG_FILE)
-        self._cache: dict[tuple[str, type[Any] | UnionType], Any] = {}
+        self._cache: dict[
+            tuple[
+                str,
+                type[Any]  # simplint: ignore[SMP602]  # cached and looked-up values have the type of each option
+                | UnionType,  # simplint: ignore[SMP602]  # cached and looked-up values have the type of each option
+            ],  # simplint: ignore[SMP602]  # cached and looked-up values have the type of each option
+            Any,  # simplint: ignore[SMP602]  # cached and looked-up values have the type of each option
+        ] = {}  # simplint: ignore[SMP602]  # cached and looked-up values have the type of each option
         self.has_config_file: bool | None = self.config_file.exists()
         self.ini: IniLoader | None = None
 
@@ -75,7 +82,12 @@ class IniConfig:
             f"(change{'d' if self.is_env_var else ''} via env var {self.TOX_CONFIG_FILE_ENV_VAR})"
         )
 
-    def get(self, key: str, of_type: type[Any] | UnionType) -> Any:
+    def get(  # simplint: ignore[SMP602]  # cached and looked-up values have the type of each option
+        self,
+        key: str,
+        of_type: type[Any]  # simplint: ignore[SMP602]  # cached and looked-up values have the type of each option
+        | UnionType,  # simplint: ignore[SMP602]  # cached and looked-up values have the type of each option
+    ) -> Any:  # simplint: ignore[SMP602]  # cached and looked-up values have the type of each option
         """Get a value from the core section of the config file.
 
         :param key: the configuration key
@@ -98,7 +110,12 @@ class IniConfig:
         self._cache[cache_key] = result
         return result
 
-    def _load_key(self, key: str, of_type: type[Any] | UnionType) -> Any:
+    def _load_key(  # simplint: ignore[SMP602]  # cached and looked-up values have the type of each option
+        self,
+        key: str,
+        of_type: type[Any]  # simplint: ignore[SMP602]  # cached and looked-up values have the type of each option
+        | UnionType,  # simplint: ignore[SMP602]  # cached and looked-up values have the type of each option
+    ) -> Any:  # simplint: ignore[SMP602]  # cached and looked-up values have the type of each option
         if self.ini is None:  # pragma: no cover # this can only happen if we don't call __bool__ first
             return None
         args = ConfigLoadArgs(chain=[key], name=CORE.prefix, env_name=None)

@@ -52,6 +52,18 @@ class _Directive(Protocol):
 
 
 class Unroll:
+    """Expand the replacement tokens in a TOML value against the configuration it is loaded for.
+
+    :param conf: the configuration the replacements read from
+    :param loader: the loader the value was read by
+    :param args: the arguments of the configuration load
+    :param program_depth: the nesting depth at which the first program word sits, if any
+    :param requirement_entries: whether the value holds requirement entries
+
+    :var factors: the factors active for the environment being loaded
+
+    """
+
     def __init__(
         self,
         conf: Config | None,
@@ -231,7 +243,7 @@ class Unroll:
         return value
 
     @staticmethod
-    def _to_raw(value: object) -> TomlTypes:
+    def _to_raw(value: object) -> TomlTypes:  # simplint: ignore[SMP602]  # TOML values can have any shape
         if isinstance(value, (PythonDeps, PythonConstraints)):
             value = value.lines(preserve_host_values=True)
         elif isinstance(value, Command):
@@ -354,6 +366,13 @@ _REFERENCE_PATTERN: Final[re.Pattern[str]] = re.compile(
 
 
 class TomlReplaceLoader(ReplaceReference):
+    """Resolve the references in a string taken from a TOML document.
+
+    :param conf: the configuration the references read from
+    :param loader: the loader the string was read by
+
+    """
+
     def __init__(self, conf: Config, loader: TomlLoader) -> None:
         self.conf = conf
         self.loader = loader

@@ -15,7 +15,10 @@ if TYPE_CHECKING:
 CONVERT: Final[StrConvert] = StrConvert()  # simplint: ignore[SMP404]  # imported by tox plugins
 
 
-def get_env_var(key: str, of_type: type[Any] | UnionType) -> tuple[Any, str] | None:
+def get_env_var(  # simplint: ignore[SMP602]  # the value has the type of the option, which varies
+    key: str,
+    of_type: type[Any] | UnionType,  # simplint: ignore[SMP602]  # the value has the type of the option, which varies
+) -> tuple[Any, str] | None:  # simplint: ignore[SMP602]  # the value has the type of the option, which varies
     """Get the environment variable option.
 
     :param key: the config key requested

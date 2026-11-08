@@ -172,7 +172,9 @@ class InstallPackageAction(Action):
         return self._resolve_path(value.as_posix())
 
 
-logger: Final[logging.Logger] = logging.getLogger(__name__)
+logger: Final[logging.Logger] = logging.getLogger(  # simplint: ignore[SMP102, SMP404]  # imported by tox plugins
+    __name__
+)
 
 
 def execute(  # keeps the signature
@@ -202,7 +204,13 @@ def execute(  # keeps the signature
 
     scheduler_error: list[BaseException] = []
 
-    def _run_thread() -> tuple[Callable[[int, FrameType | None], Any] | int | Handlers | None, bool]:
+    def _run_thread() -> tuple[
+        Callable[[int, FrameType | None], Any]  # simplint: ignore[SMP602]  # signal handlers return any value
+        | int
+        | Handlers
+        | None,  # simplint: ignore[SMP602]  # signal handlers return any value
+        bool,  # simplint: ignore[SMP602]  # signal handlers return any value
+    ]:  # simplint: ignore[SMP602]  # signal handlers return any value
         spinner = ToxSpinner(has_spinner, state, len(to_run_list))
         thread = Thread(
             target=_queue_and_wait,
@@ -325,7 +333,10 @@ def _queue_and_wait(  # ruff:ignore[too-many-arguments]  # public signature
 ) -> None:
     try:
         try:
-            _do_queue_and_wait(state, to_run_list, results, future_to_env, interrupt, max_workers, spinner, live)
+            # an unbounded pool (-p all) sizes to the selection; keep at least one worker so an empty
+            # selection does not raise ValueError from ThreadPoolExecutor
+            workers = max(1, len(to_run_list)) if max_workers is None else max_workers
+            _do_queue_and_wait(state, to_run_list, results, future_to_env, interrupt, workers, spinner, live)
         except BaseException as exception:  # ruff:ignore[blind-except] # re-raised in the main thread
             error.append(exception)
     finally:
@@ -342,15 +353,12 @@ def _do_queue_and_wait(  # ruff:ignore[too-many-arguments]  # public signature
     results: list[ToxEnvRunResult],
     future_to_env: dict[Future[ToxEnvRunResult], ToxEnv],
     interrupt: Event,
-    max_workers: int | None,
+    max_workers: int,
     spinner: ToxSpinner,
     live: bool,  # ruff:ignore[boolean-type-hint-positional-argument]  # keeps the signature
 ) -> None:
     options = state._options  # ruff:ignore[private-member-access]  # internal access
     with spinner:
-        # an unbounded pool (-p all) sizes to the selection; keep at least one worker so an empty
-        # selection does not raise ValueError from ThreadPoolExecutor
-        max_workers = max(1, len(to_run_list)) if max_workers is None else max_workers
         completed: set[str] = set()
         envs_to_run_generator = ready_to_run_envs(state, to_run_list, completed)
 
@@ -406,7 +414,9 @@ def _do_queue_and_wait(  # ruff:ignore[too-many-arguments]  # public signature
                     break
 
 
-def ready_to_run_envs(state: State, to_run: list[str], completed: set[str]) -> Iterator[list[str]]:
+def ready_to_run_envs(  # simplint: ignore[SMP403]  # imported by tox plugins
+    state: State, to_run: list[str], completed: set[str]
+) -> Iterator[list[str]]:  # simplint: ignore[SMP403]  # imported by tox plugins
     # Generate tox environments ready to run.
     order, todo = run_order(state, to_run)
     while order:
@@ -623,7 +633,9 @@ def _print_unused(  # keeps the signature
     )
 
 
-def report(start: float, runs: list[ToxEnvRunResult], *, is_colored: bool, verbosity: int, fail_fast: bool) -> int:
+def report(  # simplint: ignore[SMP403]  # imported by tox plugins
+    start: float, runs: list[ToxEnvRunResult], *, is_colored: bool, verbosity: int, fail_fast: bool
+) -> int:
     def _print(color_: str, message: str) -> None:
         if verbosity:
             print(  # ruff:ignore[print]  # terminal output

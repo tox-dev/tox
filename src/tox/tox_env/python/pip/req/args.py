@@ -15,7 +15,9 @@ _T_contra = TypeVar("_T_contra", contravariant=True)
 
 # stable
 class _SupportsWrite(Protocol[_T_contra]):
-    def write(self, text: _T_contra, /) -> object: ...
+    def write(  # simplint: ignore[SMP602]  # matches the typing protocol of the file-like object
+        self, text: _T_contra, /
+    ) -> object: ...  # simplint: ignore[SMP602]  # matches the typing protocol of the file-like object
 
 
 class _OurArgumentParser(ArgumentParser):
@@ -84,8 +86,6 @@ class AddUniqueAction(Action):  # simplint: ignore[SMP403]  # imported by tox pl
 class BinaryAction(Action):  # simplint: ignore[SMP403]  # imported by tox plugins
     # Every line parses into its own namespace, while pip lets a later line edit the sets of an earlier one, so record
     # the values in order for the merge to apply.
-    """Record the binary option, for each of the lines it appears in."""
-
     @override
     def __call__(
         self,

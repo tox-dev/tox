@@ -25,8 +25,8 @@ if TYPE_CHECKING:
     from .pip.req_file import PythonDeps
 
 
-class PythonPackage(Package):
-    """A package built from a python project."""
+class PythonPackage(Package):  # simplint: ignore[SMP403]  # imported by tox plugins
+    pass
 
 
 class PythonPathPackageWithDeps(PathPackage):

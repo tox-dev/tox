@@ -59,16 +59,16 @@ class Spinner:
     :param stream: the stream the spinner is written to, the standard output when ``None``
     :param total: the number of environments that are expected to run, ``None`` when unknown
 
-    :var CLEAR_LINE: the escape sequence that clears the line
-    :var max_width: the maximum width of the text shown for an environment
-    :var UNICODE_FRAMES: the frames shown when the stream supports Unicode
-    :var ASCII_FRAMES: the frames shown when the stream does not support Unicode
-    :var UNICODE_OUTCOME: the outcome symbols shown when the stream supports Unicode
-    :var ASCII_OUTCOME: the outcome symbols shown when the stream does not support Unicode
-    :var is_colored: whether the outcome symbols are colored
-    :var frames: the frames the spinner cycles through
-    :var outcome: the outcome symbols in use
-    :var print_report: whether the report is printed when the spinner finishes
+    :var CLEAR_LINE: escape sequence that clears the line
+    :var max_width: maximum width of an environment's text
+    :var UNICODE_FRAMES: frames for streams that support Unicode
+    :var ASCII_FRAMES: frames for streams that do not
+    :var UNICODE_OUTCOME: outcome symbols for streams that support Unicode
+    :var ASCII_OUTCOME: outcome symbols for streams that do not
+    :var is_colored: whether outcome symbols are colored
+    :var frames: frames the spinner cycles through
+    :var outcome: outcome symbols in use
+    :var print_report: whether the report is printed when finished
 
     """
 

@@ -35,13 +35,13 @@ class Source(ABC):
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}(path={self.path})"
 
-    def get_loaders(
+    def get_loaders(  # simplint: ignore[SMP602]  # loaders read raw values of any type
         self,
         section: Section,
         base: list[str] | None,
         override_map: OverrideMap,
         conf: ConfigSet,
-    ) -> Iterator[Loader[Any]]:
+    ) -> Iterator[Loader[Any]]:  # simplint: ignore[SMP602]  # loaders read raw values of any type
         """Return a loader that loads settings from a given section name.
 
         :param section: the section to load
@@ -55,7 +55,9 @@ class Source(ABC):
         # loaders are built fresh per config set: their parent chain depends on the base sections, and a section can
         # be redefined with another base (a run env re-created as a package env); the config set is what gets cached
         section = self.transform_section(section)
-        loader: Loader[Any] | None = self.get_loader(section, override_map)
+        loader: Loader[Any] | None = self.get_loader(  # simplint: ignore[SMP602]  # loaders read raw values of any type
+            section, override_map
+        )  # simplint: ignore[SMP602]  # loaders read raw values of any type
         if loader is not None:
             yield loader
 
@@ -88,7 +90,9 @@ class Source(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def get_loader(self, section: Section, override_map: OverrideMap) -> Loader[Any] | None:
+    def get_loader(  # simplint: ignore[SMP602]  # loaders read raw values of any type
+        self, section: Section, override_map: OverrideMap
+    ) -> Loader[Any] | None:  # simplint: ignore[SMP602]  # loaders read raw values of any type
         """Get the loader that reads the values of a section.
 
         :param section: the section to read

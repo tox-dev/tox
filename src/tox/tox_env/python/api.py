@@ -70,7 +70,7 @@ class PythonInfo:
     version: str
     is_64: bool
     platform: str
-    extra: dict[str, Any]
+    extra: dict[str, Any]  # simplint: ignore[SMP602]  # config values have no single type
     free_threaded: bool = False
     debug: bool = False
     machine: str | None = None
@@ -104,8 +104,9 @@ PY_FACTORS_RE: Final[re.Pattern[str]] = re.compile(  # simplint: ignore[SMP404] 
     """,
     re.VERBOSE,
 )
-PY_FACTORS_RE_EXPLICIT_VERSION: Final[re.Pattern[str]] = re.compile(
-    r"""
+PY_FACTORS_RE_EXPLICIT_VERSION: Final[re.Pattern[str]] = (  # simplint: ignore[SMP404]  # imported by tox plugins
+    re.compile(  # simplint: ignore[SMP404]  # imported by tox plugins
+        r"""
     ^
     ( (?P<impl> cpython | pypy ) - )?   # optional interpreter prefix with dash
     (?P<version> [23] \. [0-9]+ )        # explicit major.minor version (Python 2.x or 3.x)
@@ -113,7 +114,8 @@ PY_FACTORS_RE_EXPLICIT_VERSION: Final[re.Pattern[str]] = re.compile(
     (?P<debug> d? )                      # optional debug-build suffix
     $
     """,
-    re.VERBOSE,
+        re.VERBOSE,
+    )
 )
 
 
@@ -579,7 +581,10 @@ class Python(ToxEnv, ABC):
         raise NotImplementedError
 
     @staticmethod
-    def _diff_msg(conf: dict[str, Any], old: dict[str, Any]) -> str:
+    def _diff_msg(  # simplint: ignore[SMP602]  # config values have no single type
+        conf: dict[str, Any],  # simplint: ignore[SMP602]  # config values have no single type
+        old: dict[str, Any],  # simplint: ignore[SMP602]  # config values have no single type
+    ) -> str:
         result: list[str] = []
         # other outcome untested
         if added := [f"{k}={v!r}" for k, v in conf.items() if k not in old]:  # pragma: no branch

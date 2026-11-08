@@ -24,6 +24,16 @@ T = TypeVar("T")  # simplint: ignore[SMP101, SMP404]  # exported, renaming break
 
 
 def validate(val: TomlTypes, of_type: type[T]) -> T:
+    """Check that a TOML value has the given type.
+
+    :param val: the value to check
+    :param of_type: the type the value must have
+
+    :returns: the value, cast to the type
+
+    :raises TypeError: when the value does not have the type
+
+    """
     casting_to = get_origin(of_type) or of_type.__class__
     type_args = get_args(of_type)
     msg = ""
@@ -56,15 +66,6 @@ def _validate_list(val: TomlTypes, entry_type: type) -> str:
     return ""
 
 
-def _describe(value: TomlTypes) -> str:
-    # Substitution can put secret text in values.
-    if value is None or isinstance(value, (bool, int, float)):
-        return repr(value)
-    if isinstance(value, str):
-        return "value of type 'str'"
-    return f"value of type {type(value).__name__!r}"
-
-
 def _validate_dict(val: TomlTypes, key_type: type, value_type: type) -> str:
     if not isinstance(val, dict):
         return f"{_describe(val)} is not dictionary"
@@ -83,6 +84,15 @@ def _validate_union(val: TomlTypes, args: tuple[type, ...]) -> str:
             continue
         return ""
     return f"{_describe(val)} is not union of {', '.join(a.__name__ for a in args)}"
+
+
+def _describe(value: TomlTypes) -> str:
+    # Substitution can put secret text in values.
+    if value is None or isinstance(value, (bool, int, float)):
+        return repr(value)
+    if isinstance(value, str):
+        return "value of type 'str'"
+    return f"value of type {type(value).__name__!r}"
 
 
 def _validate_instance(val: TomlTypes, of_type: type[T]) -> str:

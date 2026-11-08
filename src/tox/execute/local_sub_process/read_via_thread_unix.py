@@ -17,7 +17,9 @@ if TYPE_CHECKING:
 
     from _typeshed import FileDescriptorLike
 
-TIMEOUT_FOR_INTERRUPT: Final[float] = 0.05  # pragma: win32 no cover
+TIMEOUT_FOR_INTERRUPT: Final[float] = (  # simplint: ignore[SMP404]  # imported by tox plugins
+    0.05  # pragma: win32 no cover  # simplint: ignore[SMP404]  # imported by tox plugins
+)
 """Seconds to wait for output before checking whether the reader should stop."""
 READ_CHUNK_SIZE: Final[int] = 32768  # pragma: win32 no cover  # simplint: ignore[SMP404]  # imported by tox plugins
 """Maximum number of bytes read from a stream at once."""

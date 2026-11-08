@@ -12,7 +12,7 @@ class CustomBuildHook(BuildHookInterface):
     def initialize(  # override signature
         self,
         version: str,  # ruff:ignore[unused-method-argument]  # override signature
-        build_data: dict[str, Any],  # ruff:ignore[unused-method-argument]  # override signature
+        build_data: dict[str, Any],  # ruff:ignore[unused-method-argument]  # override signature  # simplint: ignore[SMP602]  # hatchling passes build data of any shape
     ) -> None:
         if self.target_name == "wheel":
             root = Path(self.root)

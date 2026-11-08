@@ -115,9 +115,7 @@ def _create_symlink(man_in_wheel: Path) -> int:
     return 0
 
 
-def _print_manpath_instructions() -> (
-    None
-):  # simplint: ignore[SMP505]  # per-shell instructions read apart from setup_man
+def _print_manpath_instructions() -> None:  # simplint: ignore[SMP505]  # per-shell text, read apart from setup
     # each export line keeps a trailing ":" when MANPATH is unset, so man still searches its default path
     if "fish" in (shell := PurePath(os.environ.get("SHELL", "")).name):
         rc_file = "~/.config/fish/config.fish"

@@ -94,7 +94,7 @@ class _PythonRequirementsFile(RequirementsFile):
     def factory(
         cls,
         root: Path,
-        raw: object,
+        raw: object,  # simplint: ignore[SMP602]  # raw requirement values can be of any type
         environment_provider: EnvironmentProvider | None = None,
     ) -> Self:
         """Create the requirements file that matches the setting, from its value.
@@ -331,7 +331,10 @@ class PythonConstraints(_PythonRequirementsFile):
             raise ValueError(msg)
 
 
-def _factory_type_error(field: str, raw: object) -> str:
+def _factory_type_error(  # simplint: ignore[SMP602]  # raw requirement values can be of any type
+    field: str,
+    raw: object,  # simplint: ignore[SMP602]  # raw requirement values can be of any type
+) -> str:
     expected = "str, list[str], or list[Requirement]"
     if isinstance(raw, list):
         bad_items = ", ".join(

@@ -62,7 +62,7 @@ class PackageToxEnv(ToxEnv, ABC):
         self._envs: set[str] = set()
 
     @override
-    def __getattribute__(self, name: str) -> Any:
+    def __getattribute__(self, name: str) -> Any:  # simplint: ignore[SMP602]  # attribute lookup returns any attribute
         # the packaging class might be used by multiple environments in parallel, hold a lock for operations on it
         obj = object.__getattribute__(self, name)
         if isinstance(obj, MethodType):

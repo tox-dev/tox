@@ -76,7 +76,9 @@ def active_factors(env_name: str | None) -> set[str]:
     return current
 
 
-def find_factor_groups(value: str) -> Iterator[list[tuple[str, bool]]]:
+def find_factor_groups(  # simplint: ignore[SMP403]  # imported by tox plugins
+    value: str,
+) -> Iterator[list[tuple[str, bool]]]:  # simplint: ignore[SMP403]  # imported by tox plugins
     # Transform '{py,!pi}-{a,b},c' to [{'py', 'a'}, {'py', 'b'}, {'pi', 'a'}, {'pi', 'b'}, {'c'}].
     value = expand_ranges(value)
     for env in expand_env_with_negation(value):
@@ -181,8 +183,7 @@ def expand_env_with_negation(value: str) -> Iterator[str]:  # simplint: ignore[S
 
 def name_with_negate(factor: str) -> tuple[str, bool]:  # simplint: ignore[SMP403]  # imported by tox plugins
     negated = is_negated(factor)
-    result = factor[1:] if negated else factor
-    return result, negated
+    return (factor[1:] if negated else factor), negated
 
 
 def is_negated(factor: str) -> bool:  # simplint: ignore[SMP403]  # imported by tox plugins

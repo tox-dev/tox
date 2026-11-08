@@ -184,95 +184,94 @@ class Parsed(Namespace):
     The annotations below declare the type each option has once its command registered it; an option belonging to
     another command is absent at runtime, so shared code paths read it via ``getattr`` with a fallback.
 
-    :var verbose: the number of ``-v`` flags passed
-    :var quiet: the number of ``-q`` flags passed
-    :var colored: ``yes`` when the output is colored, ``no`` otherwise
-    :var stderr_color: the color used for stderr output
-    :var exit_and_dump_after: seconds after which tox dumps its threads and exits, ``0`` disables it
-    :var config_file: the configuration file or folder passed with ``-c``, if any
-    :var work_dir: the tox working directory, if one was given
-    :var root_dir: the project root directory, if one was given
-    :var override: the configuration overrides passed with ``--override``
-    :var command: the name of the sub-command to run
-    :var remainder: the arguments passed after ``--``
-    :var env: the environments selected with ``-e``
-    :var labels: the environment labels selected with ``-m``
-    :var factors: the environment factors selected with ``-f``
-    :var skip_env: the regular expression of environments to exclude
-    :var default_runner: the tox run engine used when an environment does not name one
-    :var result_json: the file the JSON result report is written to, if any
-    :var no_capture: whether output capture is disabled
-    :var hash_seed: the value of ``PYTHONHASHSEED`` for the commands, ``None`` when it is not set
-    :var discover: the Python executables to try first during discovery
-    :var list_dependencies: whether the dependencies installed during environment setup are listed
-    :var recreate: whether environments are recreated before use
-    :var no_test: whether the test commands are skipped
-    :var package_only: whether only the package is built
-    :var install_pkg: the package to install instead of building the project, if any
-    :var fail_fast: whether execution stops after the first environment failure
-    :var develop: whether the package is installed in development mode
-    :var no_recreate_pkg: whether packaging environments are kept when ``recreate`` is set
-    :var skip_pkg_install: whether the package installation is skipped
-    :var skip_env_install: whether dependency and package installation is skipped
-    :var skip_missing_interpreters: whether missing interpreters are skipped, ``config`` defers to the configuration
-    :var parallel: the number of environments run in parallel
-    :var parallel_live: whether the output of parallel environments is shown live
-    :var parallel_no_spinner: whether the spinner is disabled in parallel mode
-    :var no_provision: whether provisioning is skipped and fails instead, or the path its metadata is written to
-    :var no_recreate_provision: whether the provisioning environment is kept when ``recreate`` is set
-    :var devenv_path: the directory of the development environment
-    :var force_dep: the dependency requirements forced into the environments
-    :var site_packages: whether the environments can see the system site packages
-    :var always_copy: whether the environments copy files instead of linking them
-    :var pre: whether pre-release versions are installed
-
     """
 
+    #: the number of ``-v`` flags passed
     verbose: int
+    #: the number of ``-q`` flags passed
     quiet: int
+    #: ``yes`` when the output is colored, ``no`` otherwise
     colored: Literal["yes", "no"]
+    #: the color used for stderr output
     stderr_color: str
+    #: seconds after which tox dumps its threads and exits, ``0`` disables it
     exit_and_dump_after: int
+    #: the configuration file or folder passed with ``-c``, if any
     config_file: Path | None
+    #: the tox working directory, if one was given
     work_dir: Path | None
+    #: the project root directory, if one was given
     root_dir: Path | None
+    #: the configuration overrides passed with ``--override``
     override: list[Override]
+    #: the name of the sub-command to run
     command: str
+    #: the arguments passed after ``--``
     remainder: list[str]
 
+    #: the environments selected with ``-e``
     env: CliEnv
+    #: the environment labels selected with ``-m``
     labels: list[str]
+    #: the environment factors selected with ``-f``
     factors: list[str]
+    #: the regular expression of environments to exclude
     skip_env: str
+    #: the tox run engine used when an environment does not name one
     default_runner: str
 
+    #: the file the JSON result report is written to, if any
     result_json: Path | None
+    #: whether output capture is disabled
     no_capture: bool
+    #: the value of ``PYTHONHASHSEED`` for the commands, ``None`` when it is not set
     hash_seed: int | None
+    #: the Python executables to try first during discovery
     discover: list[str]
+    #: whether the dependencies installed during environment setup are listed
     list_dependencies: bool
 
+    #: whether environments are recreated before use
     recreate: bool
+    #: whether the test commands are skipped
     no_test: bool
+    #: whether only the package is built
     package_only: bool
+    #: the package to install instead of building the project, if any
     install_pkg: Path | None
+    #: whether execution stops after the first environment failure
     fail_fast: bool
+    #: whether the package is installed in development mode
     develop: bool
+    #: whether packaging environments are kept when ``recreate`` is set
     no_recreate_pkg: bool
+    #: whether the package installation is skipped
     skip_pkg_install: bool
+    #: whether dependency and package installation is skipped
     skip_env_install: bool
+    #: whether missing interpreters are skipped, ``config`` defers to the configuration
     skip_missing_interpreters: Literal["config", "true", "false"] | bool  # devenv forces False after parsing
+    #: the number of environments run in parallel
     parallel: int
+    #: whether the output of parallel environments is shown live
     parallel_live: bool
+    #: whether the spinner is disabled in parallel mode
     parallel_no_spinner: bool
 
+    #: whether provisioning is skipped and fails instead, or the path its metadata is written to
     no_provision: bool | str
+    #: whether the provisioning environment is kept when ``recreate`` is set
     no_recreate_provision: bool
+    #: the directory of the development environment
     devenv_path: Path
 
+    #: the dependency requirements forced into the environments
     force_dep: list[Requirement]
+    #: whether the environments can see the system site packages
     site_packages: bool
+    #: whether the environments copy files instead of linking them
     always_copy: bool
+    #: whether pre-release versions are installed
     pre: bool
 
     @property
@@ -344,7 +343,21 @@ class ToxParser(ArgumentParserWithEnvAndConfig):
         self.handlers: dict[str, tuple[ToxParser, Callable[[State], int]]] = {}
         self._arguments: list[ArgumentArgs] = []
         self._groups: list[
-            tuple[tuple[str | None, ...], dict[str, Any], list[tuple[dict[str, Any], list[ArgumentArgs]]]]
+            tuple[
+                tuple[str | None, ...],
+                dict[
+                    str, Any  # simplint: ignore[SMP602]  # argparse option values of any type
+                ],  # simplint: ignore[SMP602]  # argparse option values of any type
+                list[
+                    tuple[
+                        dict[
+                            str,
+                            Any,  # simplint: ignore[SMP602]  # argparse option values of any type
+                        ],
+                        list[ArgumentArgs],  # simplint: ignore[SMP602]  # argparse option values of any type
+                    ]  # simplint: ignore[SMP602]  # argparse option values of any type
+                ],  # simplint: ignore[SMP602]  # argparse option values of any type
+            ]  # simplint: ignore[SMP602]  # argparse option values of any type
         ] = []
         super().__init__(*args, **kwargs)
         if root is True:
@@ -426,7 +439,9 @@ class ToxParser(ArgumentParserWithEnvAndConfig):
         self.handlers[cmd] = content
         for alias in aliases:
             self.handlers[alias] = content
-        defaults: dict[str, Any] = {}
+        defaults: dict[
+            str, Any  # simplint: ignore[SMP602]  # argparse option values of any type
+        ] = {}  # simplint: ignore[SMP602]  # argparse option values of any type
         self._copy_arguments(sub_parser, defaults)
         self._copy_groups(sub_parser, defaults)
         self._add_env_arguments(sub_parser, defaults)
@@ -434,7 +449,13 @@ class ToxParser(ArgumentParserWithEnvAndConfig):
             sub_parser.set_defaults(**defaults)
         return sub_parser
 
-    def _copy_arguments(self, sub_parser: ToxParser, defaults: dict[str, Any]) -> None:
+    def _copy_arguments(  # simplint: ignore[SMP602]  # argparse option values of any type
+        self,
+        sub_parser: ToxParser,
+        defaults: dict[
+            str, Any  # simplint: ignore[SMP602]  # argparse option values of any type
+        ],  # simplint: ignore[SMP602]  # argparse option values of any type
+    ) -> None:
         for args, of_type, kwargs in self._arguments:
             if CORE in sub_parser.inherit:
                 sub_parser.add_argument(*args, of_type=of_type, **kwargs)
@@ -442,7 +463,12 @@ class ToxParser(ArgumentParserWithEnvAndConfig):
                 defaults[self._dest_from(args, kwargs)] = kwargs.get("default")
 
     @staticmethod
-    def _dest_from(args: tuple[str, ...], kwargs: dict[str, Any]) -> str:
+    def _dest_from(  # simplint: ignore[SMP602]  # argparse option values of any type
+        args: tuple[str, ...],
+        kwargs: dict[
+            str, Any  # simplint: ignore[SMP602]  # argparse option values of any type
+        ],  # simplint: ignore[SMP602]  # argparse option values of any type
+    ) -> str:
         if dest := cast("str | None", kwargs.get("dest")):
             return dest
         args_list = list(args)
@@ -452,7 +478,13 @@ class ToxParser(ArgumentParserWithEnvAndConfig):
                 return arg.lstrip("-").replace("-", "_")
         return args[0].lstrip("-").replace("-", "_")
 
-    def _copy_groups(self, sub_parser: ToxParser, defaults: dict[str, Any]) -> None:
+    def _copy_groups(  # simplint: ignore[SMP602]  # argparse option values of any type
+        self,
+        sub_parser: ToxParser,
+        defaults: dict[
+            str, Any  # simplint: ignore[SMP602]  # argparse option values of any type
+        ],  # simplint: ignore[SMP602]  # argparse option values of any type
+    ) -> None:
         for args, kwargs, excl in self._groups:
             if CORE in sub_parser.inherit:
                 group = sub_parser.add_argument_group(*args, **kwargs)
@@ -466,7 +498,11 @@ class ToxParser(ArgumentParserWithEnvAndConfig):
                         defaults[self._dest_from(a_args, a_kwargs)] = a_kwargs.get("default")
 
     def _add_env_arguments(  # ruff:ignore[no-self-use]  # override keeps self
-        self, sub_parser: ToxParser, defaults: dict[str, Any]
+        self,
+        sub_parser: ToxParser,
+        defaults: dict[
+            str, Any  # simplint: ignore[SMP602]  # argparse option values of any type
+        ],  # simplint: ignore[SMP602]  # argparse option values of any type
     ) -> None:
         # Python treats an empty PYTHONHASHSEED as unset
         if (hashseed := os.environ.get("PYTHONHASHSEED", "")) not in {"", "random"}:
@@ -559,17 +595,35 @@ class ToxParser(ArgumentParserWithEnvAndConfig):
         )
 
     @override
-    def add_argument_group(self, *args: Any, **kwargs: Any) -> argparse._ArgumentGroup:
+    def add_argument_group(  # simplint: ignore[SMP602]  # argparse option values of any type
+        self,
+        *args: Any,  # simplint: ignore[SMP602]  # argparse option values of any type
+        **kwargs: Any,  # simplint: ignore[SMP602]  # argparse option values of any type
+    ) -> argparse._ArgumentGroup:
         if self.of_cmd is not None or args in {("positional arguments",), ("optional arguments",)}:
             return super().add_argument_group(*args, **kwargs)
-        excl: list[tuple[dict[str, Any], list[ArgumentArgs]]] = []
+        excl: list[
+            tuple[
+                dict[
+                    str, Any  # simplint: ignore[SMP602]  # argparse option values of any type
+                ],  # simplint: ignore[SMP602]  # argparse option values of any type
+                list[ArgumentArgs],  # simplint: ignore[SMP602]  # argparse option values of any type
+            ]  # simplint: ignore[SMP602]  # argparse option values of any type
+        ] = []  # simplint: ignore[SMP602]  # argparse option values of any type
         group = _RecordingArgumentGroup(self, *args, excl=excl, **kwargs)
         self._action_groups.append(group)  # the same bookkeeping argparse add_argument_group performs
         self._groups.append((args, kwargs, excl))
         return group
 
     @override
-    def add_argument(self, *args: str, of_type: type[Any] | UnionType | None = None, **kwargs: Any) -> Action:
+    def add_argument(  # simplint: ignore[SMP602]  # argparse option values of any type
+        self,
+        *args: str,
+        of_type: type[Any]  # simplint: ignore[SMP602]  # argparse option values of any type
+        | UnionType
+        | None = None,  # simplint: ignore[SMP602]  # argparse option values of any type
+        **kwargs: Any,  # simplint: ignore[SMP602]  # argparse option values of any type
+    ) -> Action:
         result = super().add_argument(*args, **kwargs)
         if self.of_cmd is None and result.dest != "help":
             self._arguments.append((args, of_type, kwargs))
@@ -649,7 +703,10 @@ class _RecordingArgumentGroup(argparse._ArgumentGroup):  # ruff:ignore[private-m
         self._excl = excl
 
     @override
-    def add_mutually_exclusive_group(self, **kwargs: Any) -> _RecordingMutuallyExclusiveGroup:
+    def add_mutually_exclusive_group(  # simplint: ignore[SMP602]  # argparse option values of any type
+        self,
+        **kwargs: Any,  # simplint: ignore[SMP602]  # argparse option values of any type
+    ) -> _RecordingMutuallyExclusiveGroup:
         arguments: list[ArgumentArgs] = []
         self._excl.append((kwargs, arguments))
         group = _RecordingMutuallyExclusiveGroup(self, recorded=arguments, **kwargs)
@@ -666,7 +723,14 @@ class _RecordingMutuallyExclusiveGroup(  # internal access
         self._recorded = recorded
 
     @override
-    def add_argument(self, *args: str, of_type: type[Any] | UnionType | None = None, **kwargs: Any) -> Action:
+    def add_argument(  # simplint: ignore[SMP602]  # argparse option values of any type
+        self,
+        *args: str,
+        of_type: type[Any]  # simplint: ignore[SMP602]  # argparse option values of any type
+        | UnionType
+        | None = None,  # simplint: ignore[SMP602]  # argparse option values of any type
+        **kwargs: Any,  # simplint: ignore[SMP602]  # argparse option values of any type
+    ) -> Action:
         action = super().add_argument(*args, **kwargs)
         self._recorded.append((args, of_type, kwargs))
         return action

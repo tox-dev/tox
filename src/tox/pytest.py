@@ -204,9 +204,9 @@ class ToxProject:
         return f"{type(self).__name__}(path={self.path}) at {id(self)}"
 
     @property
-    def structure(self) -> dict[str, Any]:
+    def structure(self) -> dict[str, Any]:  # simplint: ignore[SMP602]  # the structure holds values of any type
         """The files of the project, nested by directory, as they are on disk."""
-        result: dict[str, Any] = {}
+        result: dict[str, Any] = {}  # simplint: ignore[SMP602]  # the structure holds values of any type
         for dir_name, _, files in os.walk(str(self.path)):
             dir_path = Path(dir_name)
             into = result
@@ -608,7 +608,9 @@ def enable_pip_pypi_access_fixture(  # simplint: ignore[SMP403]  # imported by t
     return previous_url
 
 
-def enable_pypi_server(monkeypatch: pytest.MonkeyPatch, url: str | None) -> None:
+def enable_pypi_server(  # simplint: ignore[SMP403]  # imported by tox plugins
+    monkeypatch: pytest.MonkeyPatch, url: str | None
+) -> None:
     if url is None:  # pragma: no cover # only one of the branches can be hit depending on env
         monkeypatch.delenv("PIP_INDEX_URL", raising=False)
     else:  # pragma: no cover  # setup not built by tests

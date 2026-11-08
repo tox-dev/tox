@@ -17,7 +17,9 @@ if TYPE_CHECKING:
     from tox.config.cli.parser import ToxParser
     from tox.session.state import State
 
-logger: Final[logging.Logger] = logging.getLogger(__name__)
+logger: Final[logging.Logger] = logging.getLogger(  # simplint: ignore[SMP102, SMP404]  # imported by tox plugins
+    __name__
+)  # simplint: ignore[SMP102, SMP404]  # imported by tox plugins
 """Logger of the parallel run."""
 
 ENV_VAR_KEY: Final[str] = "TOX_PARALLEL_ENV"

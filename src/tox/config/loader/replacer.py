@@ -31,10 +31,16 @@ if TYPE_CHECKING:
 LOGGER: Final[logging.Logger] = logging.getLogger(__name__)  # simplint: ignore[SMP404]  # imported by tox plugins
 
 # split alongside :, unless it is preceded by a single capital letter (Windows drive letters in paths)
-ARG_DELIMITER: Final[str] = ":"
-REPLACE_START: Final[str] = "{"
-REPLACE_END: Final[str] = "}"
-BACKSLASH_ESCAPE_CHARS: Final[tuple[str, ...]] = (ARG_DELIMITER, REPLACE_START, REPLACE_END, "[", "]")
+ARG_DELIMITER: Final[str] = ":"  # simplint: ignore[SMP404]  # imported by tox plugins
+REPLACE_START: Final[str] = "{"  # simplint: ignore[SMP404]  # imported by tox plugins
+REPLACE_END: Final[str] = "}"  # simplint: ignore[SMP404]  # imported by tox plugins
+BACKSLASH_ESCAPE_CHARS: Final[tuple[str, ...]] = (  # simplint: ignore[SMP404]  # imported by tox plugins
+    ARG_DELIMITER,
+    REPLACE_START,
+    REPLACE_END,
+    "[",
+    "]",
+)  # simplint: ignore[SMP404]  # imported by tox plugins
 MAX_REPLACE_DEPTH: Final[int] = 100
 """Maximum depth of nested replacements, deeper ones are not expanded."""
 # Factor overrides can supply values absent from the configuration without renaming environments.
@@ -46,7 +52,7 @@ class MatchRecursionError(ValueError):
     """Could not stabilize on replacement value."""
 
     @staticmethod
-    def check(depth: int, value: Any) -> None:
+    def check(depth: int, value: Any) -> None:  # simplint: ignore[SMP602]  # replacement values have no single type
         """Raise an error when the replacement depth is beyond the maximum.
 
         :param depth: the current replacement depth
@@ -161,7 +167,7 @@ def replace_requirement_lines(
 
 
 def replace_for(
-    of_type: type[object] | UnionType,
+    of_type: type[object] | UnionType,  # simplint: ignore[SMP602]  # replacement values have no single type
 ) -> Callable[[Config, ReplaceReference, str | MatchExpression, ConfigLoadArgs], str]:
     """Get the replacement function for a value type.
 
@@ -1119,7 +1125,9 @@ def replace_tty(args: list[str]) -> ConfigDefault:  # simplint: ignore[SMP403]  
     )
 
 
-def replace_glob(conf: Config | None, args: list[str]) -> str | ConfigDefault:
+def replace_glob(  # simplint: ignore[SMP403]  # imported by tox plugins
+    conf: Config | None, args: list[str]
+) -> str | ConfigDefault:
     if not args or not args[0]:
         msg = "No pattern was supplied in glob substitution"
         raise MatchError(msg)

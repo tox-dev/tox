@@ -111,7 +111,9 @@ def _add_dependency(req: Requirement, via: frozenset[Marker], result: list[Requi
         result.append(dep)
 
 
-def extract_extra_markers(req: Requirement) -> tuple[Requirement, set[str | None]]:
+def extract_extra_markers(  # simplint: ignore[SMP403]  # imported by tox plugins
+    req: Requirement,
+) -> tuple[Requirement, set[str | None]]:
     req = deepcopy(req)
     markers: MarkerList = getattr(req.marker, "_markers", []) or []
     new_markers, extra_markers = _split_extra_markers(markers)

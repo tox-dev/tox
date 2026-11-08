@@ -194,7 +194,9 @@ class TomlPyProject(Source):
         return self._Section(section.prefix, section.name)
 
     @override
-    def get_loader(self, section: Section, override_map: OverrideMap) -> Loader[Any] | None:
+    def get_loader(  # simplint: ignore[SMP602]  # loaders read raw values of any type
+        self, section: Section, override_map: OverrideMap
+    ) -> Loader[Any] | None:  # simplint: ignore[SMP602]  # loaders read raw values of any type
         current: TomlTypes = self._our_content
         sec = cast("TomlSection", section)
         for key in sec.keys:
@@ -253,12 +255,16 @@ class TomlPyProject(Source):
     @override
     def get_tox_env_section(self, item: str) -> tuple[Section, list[str], list[str]]:
         if base_name := self._env_base_generated.get(item):
-            return (
+            return (  # simplint: ignore[SMP528]  # plugin overrides return plain tuples too
                 self._Section.test_env(item),
                 [self._Section.env_base_prefix() + self._Section.SEP + base_name, self._Section.run_env_base()],
                 [self._Section.package_env_base()],
             )
-        return self._Section.test_env(item), [self._Section.run_env_base()], [self._Section.package_env_base()]
+        return (  # simplint: ignore[SMP528]  # plugin overrides return plain tuples too
+            self._Section.test_env(item),
+            [self._Section.run_env_base()],
+            [self._Section.package_env_base()],
+        )
 
 
 def _build_env_base_map(

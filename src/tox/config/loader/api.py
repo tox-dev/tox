@@ -141,7 +141,7 @@ class Loader(Convert[T]):
         self.overrides: dict[str, list[Override]] = {}
         for entry in overrides:
             self.overrides.setdefault(entry.key, []).append(entry)
-        self.parent: Loader[Any] | None = None
+        self.parent: Loader[Any] | None = None  # simplint: ignore[SMP602]  # loaders convert raw values of any type
 
     @override
     def __repr__(self) -> str:
@@ -302,7 +302,7 @@ class Loader(Convert[T]):
             msg = f"circular set_env reference {' -> '.join(args.chain)}"
             raise ValueError(msg)
 
-        def factory(value: object) -> SetEnv:
+        def factory(value: object) -> SetEnv:  # simplint: ignore[SMP602]  # loaders convert raw values of any type
             return SetEnv(cast("SetEnvRaw", value), "set_env", args.env_name, conf.core["tox_root"])
 
         result = self.build("set_env", SetEnv, factory, conf, raw, args)
