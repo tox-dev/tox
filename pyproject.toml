@@ -112,7 +112,7 @@ test = [
 type = [
   "mypy>=2.3",
   "pyrefly>=1.2",
-  "ty>=0.0.19",
+  "ty>=0.0.100",
   "types-colorama>=0.4.15",
   "types-docutils>=0.21",
   { include-group = "docs" },
@@ -166,7 +166,7 @@ release-prepare = [
   "towncrier>=25.8",
 ]
 type-min = [
-  "ty>=0.0.19",
+  "ty>=0.0.100",
   "types-colorama>=0.4.15",
   { include-group = "test" },
 ]
