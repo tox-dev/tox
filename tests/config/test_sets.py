@@ -169,7 +169,7 @@ def test_define_custom_set(tox_project: ToxProjectCreator) -> None:
 
 def test_do_not_allow_create_config_set(mocker: MockerFixture) -> None:
     with pytest.raises(TypeError, match="Can't instantiate"):
-        ConfigSet(mocker.create_autospec(Config))  # ty: ignore[missing-argument, call-non-callable] # the test proves the runtime rejects the same invalid call ty reports
+        ConfigSet(mocker.create_autospec(Config))  # ty: ignore[missing-argument, abstract-class-instantiation] # the test proves the runtime rejects the same invalid call ty reports
 
 
 def test_set_env_raises_on_non_str(mocker: MockerFixture) -> None:
