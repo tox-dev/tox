@@ -1176,10 +1176,10 @@ def replace_factor(conf: Config, args: list[str], conf_args: ConfigLoadArgs) -> 
         return default or ""
     if (override := os.environ.get(f"{_FACTOR_ENV_PREFIX}{label}")) is not None:
         return HostText(override, literal=True)
-    env_factors = set(conf_args.env_name.split("-"))
-    for value in group.values:
-        if value in env_factors:
-            return value
+    # a value may itself contain dashes, so match it as a run of name segments; the longest wins, so a-b beats a
+    padded = f"-{conf_args.env_name}-"
+    if matched := max((value for value in group.values if f"-{value}-" in padded), key=len, default=None):
+        return matched
     return default if default is not None else group.default or ""
 
 
