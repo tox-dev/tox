@@ -1551,7 +1551,7 @@ sha256 = "9121e2c1fdb355232495be3194c8dfe87ccc2d5dee45947b78e68f499790d7a7"
 [[packages]]
 name = "installer"
 version = "1.1.0"
-marker = "\"build\" in dependency_groups"
+marker = "\"build\" in dependency_groups or \"dev\" in dependency_groups or \"test\" in dependency_groups or \"type\" in dependency_groups or \"type-min\" in dependency_groups"
 requires-python = ">=3.10"
 index = "https://pypi.org/simple/"
 
@@ -2148,7 +2148,7 @@ sha256 = "edaa16e6c14d7cf395d75d4bbd5a26390f4dc06501a33b4e76282b02cc688a25"
 [[packages]]
 name = "packageurl-python"
 version = "0.17.6"
-marker = "\"build\" in dependency_groups"
+marker = "\"build\" in dependency_groups or \"dev\" in dependency_groups or \"test\" in dependency_groups or \"type\" in dependency_groups or \"type-min\" in dependency_groups"
 requires-python = ">=3.8"
 index = "https://pypi.org/simple/"
 
@@ -3018,7 +3018,7 @@ sha256 = "fb65edfff3541b7ceb3a39be334a0f69f4cb5148287a053e1874748742fda93b"
 [[packages]]
 name = "python-sbom"
 version = "0.1.2"
-marker = "\"build\" in dependency_groups"
+marker = "\"build\" in dependency_groups or \"dev\" in dependency_groups or \"test\" in dependency_groups or \"type\" in dependency_groups or \"type-min\" in dependency_groups"
 requires-python = ">=3.11"
 dependencies = [
     { name = "hatchling" },
@@ -4755,7 +4755,7 @@ sha256 = "3fa599046443d4ca830d06e3d180cd0a675d5871af0a68daa5623318bb4d17e3"
 [[packages]]
 name = "zipremove"
 version = "0.10.0"
-marker = "\"build\" in dependency_groups"
+marker = "\"build\" in dependency_groups or \"dev\" in dependency_groups or \"test\" in dependency_groups or \"type\" in dependency_groups or \"type-min\" in dependency_groups"
 requires-python = "~=3.7"
 index = "https://pypi.org/simple/"
 
