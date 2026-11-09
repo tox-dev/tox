@@ -113,6 +113,31 @@ def test_virtualenv_system_site_packages_change_recreates(
     assert f"include-system-site-packages = {second.lower()}" in cfg
 
 
+@pytest.mark.parametrize(
+    ("first", "second", "reason"),
+    [
+        pytest.param("0", "1", "added system_site_packages=True", id="enable"),
+        pytest.param("1", "0", "removed system_site_packages=True", id="disable"),
+    ],
+)
+def test_virtualenv_system_site_packages_env_change_recreates(
+    tox_project: ToxProjectCreator, monkeypatch: MonkeyPatch, first: str, second: str, reason: str
+) -> None:
+    # the config key stays unset, so the value comes from VIRTUALENV_SYSTEM_SITE_PACKAGES alone
+    proj = tox_project({"tox.ini": "[testenv]\npackage=skip"})
+    monkeypatch.setenv("VIRTUALENV_SYSTEM_SITE_PACKAGES", first)
+    proj.run("r", "-e", "py").assert_success()
+    cfg_path: Final[Path] = proj.path / ".tox" / "py" / "pyvenv.cfg"
+    assert f"include-system-site-packages = {str(first == '1').lower()}" in cfg_path.read_text()
+
+    monkeypatch.setenv("VIRTUALENV_SYSTEM_SITE_PACKAGES", second)
+    result = proj.run("r", "-e", "py")
+
+    result.assert_success()
+    assert f"recreate env because python {reason}" in result.out
+    assert f"include-system-site-packages = {str(second == '1').lower()}" in cfg_path.read_text()
+
+
 def test_virtualenv_cached_before_system_site_packages_reused(tox_project: ToxProjectCreator) -> None:
     proj = tox_project({"tox.ini": "[testenv]\npackage=skip"})
     proj.run("r", "-e", "py").assert_success()
