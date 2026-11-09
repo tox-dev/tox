@@ -1176,6 +1176,8 @@ def replace_factor(conf: Config, args: list[str], conf_args: ConfigLoadArgs) -> 
         return default or ""
     if (override := os.environ.get(f"{_FACTOR_ENV_PREFIX}{label}")) is not None:
         return HostText(override, literal=True)
+    if (value := group.env_values.get(conf_args.env_name)) is not None:
+        return value
     env_factors = set(conf_args.env_name.split("-"))
     for value in group.values:
         if value in env_factors:
