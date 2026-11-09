@@ -286,19 +286,19 @@ def _build_env_base_map(
         base_labels: dict[str, FactorGroup] = {}
         all_labels[base_name] = base_labels
         if factors_raw and isinstance(factors_raw[0], list | dict):
-            expanded: list[list[str]] = []
+            groups: list[FactorGroup] = []
             for idx, raw_group in enumerate(factors_raw):
                 values = expand_factor_group(raw_group)
-                expanded.append(values)
                 group = FactorGroup(values=values, default=extract_default(raw_group, values))
+                groups.append(group)
                 base_labels[str(idx)] = group
                 if (label := extract_label(raw_group)) is not None:
                     base_labels[label] = group
-            names = ["-".join(combo) for combo in product(*expanded)]
+            names = [_record_combo(groups, combo, prefix=base_name) for combo in product(*(g.values for g in groups))]
         else:
-            names = [str(f) for f in factors_raw]
-        for factor_suffix in names:
-            result[f"{base_name}-{factor_suffix}"] = base_name
+            names = [f"{base_name}-{f}" for f in factors_raw]
+        for name in names:
+            result[name] = base_name
     return result, all_labels
 
 
@@ -313,16 +313,28 @@ def _extract_env_list_labels(env_list_raw: TomlTypes) -> dict[str, FactorGroup]:
             raw_groups = item["product"]
             if not isinstance(raw_groups, list):
                 continue
+            groups: list[FactorGroup] = []
             for idx, raw_group in enumerate(raw_groups):
                 values = expand_factor_group(raw_group)
                 group = FactorGroup(values=values, default=extract_default(raw_group, values))
+                groups.append(group)
                 labels[str(idx)] = group
                 if (label := extract_label(raw_group)) is not None:
                     labels[label] = group
+            for combo in product(*(group.values for group in groups)):
+                _record_combo(groups, combo, prefix=None)
         elif (label := extract_label(item)) is not None:
             values = expand_factor_group(item)
             labels[label] = FactorGroup(values=values, default=extract_default(item, values))
     return labels
+
+
+def _record_combo(groups: list[FactorGroup], combo: tuple[str, ...], *, prefix: str | None) -> str:
+    # remember which value each group took, as the same factor can appear in more than one group
+    name: Final[str] = "-".join(combo if prefix is None else (prefix, *combo))
+    for group, value in zip(groups, combo, strict=True):
+        group.env_values[name] = value
+    return name
 
 
 __all__ = [

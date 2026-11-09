@@ -234,6 +234,24 @@ def test_config_in_toml_env_list_keyed_factor_description(tox_project: ToxProjec
     outcome.assert_out_err("[testenv:sync-python-tt]\ndescription = Sync python to tt\n", "")
 
 
+def test_config_in_toml_env_list_keyed_factor_sharing_a_value(tox_project: ToxProjectCreator) -> None:
+    project: Final = tox_project({
+        "tox.toml": textwrap.dedent("""\
+            env_list = [{ product = [["compat"], { client = ["v1", "v2"] }, { server = ["v1", "v2"] }] }]
+
+            [env_run_base]
+            description = "client {factor:client}, server {factor:server}, {factor:0}"
+        """),
+    })
+    outcome: Final = project.run("c", "-e", "compat-v1-v2,compat-v2-v1", "-k", "description")
+    outcome.assert_success()
+    outcome.assert_out_err(
+        "[testenv:compat-v1-v2]\ndescription = client v1, server v2, compat\n\n"
+        "[testenv:compat-v2-v1]\ndescription = client v2, server v1, compat\n",
+        "",
+    )
+
+
 def test_config_in_toml_override_env_without_own_table(tox_project: ToxProjectCreator) -> None:
     project = tox_project({
         "tox.toml": textwrap.dedent("""\

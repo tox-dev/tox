@@ -465,6 +465,26 @@ def test_env_base_factor_labels_with_env_list_product(tox_project: ToxProjectCre
     outcome.assert_out_err("[testenv:task-oci-flask]\ndescription = Run oci on flask\n", "")
 
 
+@pytest.mark.parametrize(
+    ("env_name", "expected"),
+    [
+        pytest.param("migrate-py312-py313", "py312 to py313", id="ascending"),
+        pytest.param("migrate-py313-py312", "py313 to py312", id="descending"),
+        pytest.param("migrate-py313-py313", "py313 to py313", id="same"),
+    ],
+)
+def test_env_base_factor_labels_sharing_a_value(tox_project: ToxProjectCreator, env_name: str, expected: str) -> None:
+    outcome: Final[ToxRunOutcome] = tox_project({
+        "tox.toml": textwrap.dedent("""\
+            [env_base.migrate]
+            factors = [{ source = ["py312", "py313"] }, { target = ["py312", "py313"] }]
+            description = "{factor:source} to {factor:target}"
+        """),
+    }).run("c", "-e", env_name, "-k", "description")
+    outcome.assert_success()
+    outcome.assert_out_err(f"[testenv:{env_name}]\ndescription = {expected}\n", "")
+
+
 def test_env_base_factor_labels_do_not_cross_bases(tox_project: ToxProjectCreator) -> None:
     outcome: Final[ToxRunOutcome] = tox_project({
         "tox.toml": textwrap.dedent("""\
