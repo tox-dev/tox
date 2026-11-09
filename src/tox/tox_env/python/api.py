@@ -244,8 +244,17 @@ class Python(ToxEnv, ABC):
         if match := PY_FACTORS_RE_EXPLICIT_VERSION.match(env_name):
             candidates.append(cls._explicit_version_spec(match.groupdict()))
         else:
-            for factor in env_name.split("-"):
-                if match := PY_FACTORS_RE.match(factor):
+            factors = env_name.split("-")
+            index = 0
+            while index < len(factors):
+                factor = factors[index]
+                index += 1
+                # an interpreter prefix and its explicit version, such as ``pypy-3.10`` in ``pypy-3.10-lint``
+                pair = f"{factor}-{factors[index]}" if index < len(factors) else ""
+                if match := PY_FACTORS_RE_EXPLICIT_VERSION.match(pair):
+                    candidates.append(cls._explicit_version_spec(match.groupdict()))
+                    index += 1
+                elif match := PY_FACTORS_RE.match(factor):
                     candidates.append(factor)
                 elif match := PY_FACTORS_RE_EXPLICIT_VERSION.match(factor):
                     candidates.append(cls._explicit_version_spec(match.groupdict()))
