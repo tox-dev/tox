@@ -5,6 +5,7 @@ requires = [
   "hatch-fancy-pypi-readme>=25.1",
   "hatch-vcs>=0.5",
   "hatchling>=1.29",
+  "python-sbom[hatch]>=0.1.2",
 ]
 
 [project]
@@ -138,6 +139,7 @@ build = [
   "hatch-fancy-pypi-readme>=25.1",
   "hatch-vcs>=0.5",
   "hatchling>=1.29",
+  "python-sbom[hatch]>=0.1.2",
   "setuptools>=80",
 ]
 fix = [
@@ -180,6 +182,7 @@ build.dev-mode-dirs = [
 ]
 build.hooks.custom = {}
 build.hooks.vcs.version-file = "src/tox/version.py"
+build.hooks.python-sbom = {}
 build.targets.wheel.shared-data = { "build/man" = "share/man/man1" }
 build.targets.sdist.include = [
   "/docs/man",
@@ -348,6 +351,9 @@ type = [
   { directory = "packaging", name = "Packaging", showcontent = true },
 ]
 
+[tool.python-sbom]
+supplier = { name = "tox-dev", url = [ "https://github.com/tox-dev" ] }
+
 [tool.nab]
 mode = "universal"
 base-group = "project-runtime"
@@ -360,6 +366,9 @@ packages.release-creator.uploaded-prior-to = 2026-11-02T21:45:00Z
 # python-discovery 1.9.0 is newer than the seven-day cutoff of the committed lock.
 # expires 2026-11-13
 packages.python-discovery.uploaded-prior-to = 2026-10-30T23:24:25Z
+# python-sbom 0.1.2 needs a seven-day cutoff exception.
+# expires 2026-11-15
+packages.python-sbom.uploaded-prior-to = 2026-11-08T17:54:00Z
 
 [tool.simplint]
 docstring-style = "rst"
