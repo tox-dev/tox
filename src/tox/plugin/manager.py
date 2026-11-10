@@ -82,14 +82,6 @@ class Plugin:
         """
         self.manager.hook.tox_add_env_config(env_conf=env_conf, state=state)
 
-    def tox_register_tox_env(self, register: ToxEnvRegister) -> None:
-        """Call the ``tox_register_tox_env`` hook, which registers environment types.
-
-        :param register: the registry of environment types
-
-        """
-        self.manager.hook.tox_register_tox_env(register=register)
-
     def tox_before_run_commands(self, tox_env: ToxEnv) -> None:
         """Call the ``tox_before_run_commands`` hook, before the commands of an environment run.
 
@@ -136,7 +128,7 @@ class Plugin:
         for plugin in self.manager.get_plugins():  # make sure we start with a clean state, repeated in memory run
             self.manager.unregister(plugin)
         self._register_plugins(None if path is None else _load_inline(path))
-        REGISTER._register_tox_env_types(self)  # ruff:ignore[private-member-access]  # internal access
+        self.tox_register_tox_env(register=REGISTER)
 
     def _register_plugins(self, inline: ModuleType | None) -> None:
         from tox.session import state  # ruff:ignore[import-outside-top-level]  # avoids an import cycle
@@ -195,6 +187,14 @@ class Plugin:
         for name in os.environ.get("TOX_DISABLED_EXTERNAL_PLUGINS", "").split(","):
             self.manager.set_blocked(name)
         self.manager.load_setuptools_entrypoints(NAME)
+
+    def tox_register_tox_env(self, register: ToxEnvRegister) -> None:
+        """Call the ``tox_register_tox_env`` hook, which registers environment types.
+
+        :param register: the registry of environment types
+
+        """
+        self.manager.hook.tox_register_tox_env(register=register)
 
 
 def _load_inline(path: Path) -> ModuleType | None:  # used to be able to unregister plugin tests

@@ -7,8 +7,6 @@ from typing import TYPE_CHECKING, Final
 if TYPE_CHECKING:
     from collections.abc import Iterable
 
-    from tox.plugin.manager import Plugin
-
     from .package import PackageToxEnv
     from .runner import RunToxEnv
 
@@ -46,9 +44,6 @@ class ToxEnvRegister:
             msg = "run env must be registered before setting it as default"
             raise ValueError(msg)
         self._default_run_env = value
-
-    def _register_tox_env_types(self, manager: Plugin) -> None:
-        manager.tox_register_tox_env(register=self)
 
     def add_run_env(self, of_type: type[RunToxEnv]) -> None:
         """Define a new run tox environment type.
