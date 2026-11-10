@@ -226,7 +226,7 @@ class RunToxEnv(ToxEnv, ABC):
             for pkg_env in self.package_envs:
                 if pkg_env.conf.get("recreate", bool):
                     with pkg_env.display_context(suspend=self._has_display_suspended):
-                        pkg_env._clean()  # ruff:ignore[private-member-access]  # internal access
+                        pkg_env.clean()
 
     def _run_recreate_commands(self) -> None:
         if not self.conf.get("recreate_commands", list[Command]):
