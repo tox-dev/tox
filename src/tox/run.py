@@ -60,9 +60,7 @@ def main(args: Sequence[str]) -> int:
 
     if (result := provision(state)) is not False:
         return result
-    # internal access
-    handler = state._options.cmd_handlers[state.conf.options.command]  # ruff:ignore[private-member-access]
-    return handler(state)
+    return state.run_command()
 
 
 def setup_state(args: Sequence[str]) -> State:

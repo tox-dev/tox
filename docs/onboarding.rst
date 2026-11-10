@@ -343,28 +343,34 @@ State
 .. list-table::
     :header-rows: 1
 
-    - - Attribute
+    - - Member
       - Type
       - Purpose
     - - ``conf``
       - `Config <https://github.com/tox-dev/tox/blob/main/src/tox/config/main.py>`_
       - Fully materialised tox configuration
-    - - ``_options``
-      - `Parsed <https://github.com/tox-dev/tox/blob/main/src/tox/config/cli/parse.py>`_
-      - CLI parse result
-    - - ``_args``
-      - ``list[str]``
-      - Original CLI args (re-invocation during provisioning)
+    - - ``args``
+      - ``Sequence[str]``
+      - Original command line arguments
     - - ``journal``
       - `Journal <https://github.com/tox-dev/tox/blob/main/src/tox/journal/__init__.py>`_
       - Run journal for ``--result-json``
+    - - ``log_handler``
+      - `ToxHandler <https://github.com/tox-dev/tox/blob/main/src/tox/report.py>`_
+      - Routes run output
     - - ``envs``
       - `EnvSelector <https://github.com/tox-dev/tox/blob/main/src/tox/session/env_select.py>`_
       - Lazily created; single entry point for all env discovery
+    - - ``run_command()``
+      - ``int``
+      - Dispatches the selected command and returns its exit code
 
 The ``envs`` property creates the `EnvSelector
 <https://github.com/tox-dev/tox/blob/main/src/tox/session/env_select.py>`_ on first access — typically when the
 subcommand handler starts iterating environments.
+
+Command handlers use ``state.conf.options`` for parsed CLI values, ``state.log_handler`` for output, and
+``state.journal`` for result recording. ``state.run_command()`` dispatches the selected handler after provisioning.
 
 CliEnv
 ------
