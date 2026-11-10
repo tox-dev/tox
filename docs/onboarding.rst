@@ -538,6 +538,8 @@ session:
   for a tox environment and resolves sections and base inheritance.
 - The ``memory_seed_loaders`` is a ``defaultdict(list[MemoryLoader])`` that injects config values programmatically.
 - The ``env_names()`` method iterates environment names from source and plugin-extended envs.
+- The ``iter_loaded_sections()`` method yields section keys and config sets already created. Schema generation uses it
+  to include plugin sections; it does not load missing sections.
 
 Source discovery
 ----------------

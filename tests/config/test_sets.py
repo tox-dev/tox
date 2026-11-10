@@ -161,6 +161,7 @@ def test_define_custom_set(tox_project: ToxProjectCreator) -> None:
     section = MagicConfigSet.SECTION
     conf = result.state.conf.get_section_config(section, base=["A"], of_type=MagicConfigSet, for_env=None)
     assert (conf["a"], conf["b"]) == (1, "ok")
+    assert ("magic", conf) in result.state.conf.iter_loaded_sections()
     exp = "MagicConfigSet(loaders=[IniLoader(section=magic, overrides={}), IniLoader(section=A, overrides={})])"
     assert repr(conf) == exp
 
