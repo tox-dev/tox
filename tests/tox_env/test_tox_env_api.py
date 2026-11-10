@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import sys
 from shutil import rmtree
 from textwrap import dedent
 from typing import TYPE_CHECKING, Final
@@ -261,8 +262,9 @@ def test_tox_env_pass_env_fails_on_whitespace(tox_project: ToxProjectCreator) ->
 
 @pytest.mark.parametrize("glob", ["*", "?"])
 @pytest.mark.parametrize("char", ["a", "A"])
+@pytest.mark.parametrize("expected", [pytest.param("1:3:3:-" if sys.platform == "win32" else "1:2:3:-", id="platform")])
 def test_tox_env_pass_env_match_ignore_case(
-    tox_project: ToxProjectCreator, char: str, glob: str, monkeypatch: pytest.MonkeyPatch
+    tox_project: ToxProjectCreator, char: str, glob: str, expected: str, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     for key, value in ("A1", "1"), ("a2", "2"), ("A2", "3"), ("B", "4"):
         monkeypatch.setenv(key, value)
@@ -277,7 +279,7 @@ commands = [["python", "-c", "{cmd}"]]
     })
     result = project.run("r")
     result.assert_success()
-    assert "1:2:3:-" in result.out.splitlines()
+    assert expected in result.out.splitlines()
 
 
 def test_disallow_pass_env(tox_project: ToxProjectCreator, monkeypatch: pytest.MonkeyPatch) -> None:

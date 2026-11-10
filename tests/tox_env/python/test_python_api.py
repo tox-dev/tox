@@ -897,7 +897,9 @@ def test_validate_base_python_debug_matches(
         VirtualEnv, "python_spec_for_path", autospec=True, return_value=PythonSpec.from_string_spec(spec)
     )
     base_python = tmp_path / "python3.13"
-    project = tox_project({"tox.toml": f'[env."{env}"]\npackage = "skip"\nbase_python = "{base_python}"\n'})
+    project = tox_project({
+        "tox.toml": f'[env."{env}"]\npackage = "skip"\nbase_python = {json.dumps(str(base_python))}\n'
+    })
     result = project.run("c", "-e", env, "-k", "base_python")
     result.assert_success()
     assert f"base_python = {base_python}\n" in result.out
@@ -913,7 +915,9 @@ def test_validate_base_python_debug_conflicts(
         return_value=PythonSpec.from_string_spec("cpython313-64-x86_64"),
     )
     base_python = tmp_path / "python3.13"
-    project = tox_project({"tox.toml": f'[env.py313d]\npackage = "skip"\nbase_python = "{base_python}"\n'})
+    project = tox_project({
+        "tox.toml": f'[env.py313d]\npackage = "skip"\nbase_python = {json.dumps(str(base_python))}\n'
+    })
     result = project.run("c", "-e", "py313d", "-k", "base_python", raise_on_config_fail=False)
     result.assert_failed(code=-1)
     assert "env name py313d conflicting with base python" in result.out
