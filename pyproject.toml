@@ -370,6 +370,9 @@ packages.python-discovery.uploaded-prior-to = 2026-10-30T23:24:25Z
 # python-sbom 0.1.2 needs a seven-day cutoff exception.
 # expires 2026-11-15
 packages.python-sbom.uploaded-prior-to = 2026-11-08T17:54:00Z
+# ty 0.0.100 needs an exception until the seven-day cutoff includes it.
+# expires 2026-11-17
+packages.ty.uploaded-prior-to = 2026-11-09T20:16:28Z
 
 [tool.simplint]
 docstring-style = "rst"
