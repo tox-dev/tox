@@ -7,8 +7,6 @@ from typing import TYPE_CHECKING, Final
 
 import pytest
 
-from tox.tox_env.api import ToxEnv
-
 if TYPE_CHECKING:
     from pathlib import Path
 
@@ -211,16 +209,34 @@ def test_env_log_redacts_secret_argv_after_open_quote(
     assert "--token=*******" in result.out
 
 
-def test_tox_env_pass_env_literal_exist(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr(os, "environ", {"A": "1"})
-    env = ToxEnv._load_pass_env(["A"])  # ruff:ignore[private-member-access]  # internal state
-    assert env == {"A": "1"}
+def test_tox_env_pass_env_literal_present(tox_project: ToxProjectCreator, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("TOX_PASS_TEST_A", "passed")
+    project = tox_project({
+        "tox.toml": """\
+[env_run_base]
+package = "skip"
+pass_env = ["TOX_PASS_TEST_A"]
+commands = [["python", "-c", "import os; print(os.getenv('TOX_PASS_TEST_A', '-'))"]]
+"""
+    })
+    result = project.run("r")
+    result.assert_success()
+    assert "passed" in result.out.splitlines()
 
 
-def test_tox_env_pass_env_literal_miss(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr(os, "environ", {})
-    env = ToxEnv._load_pass_env(["A"])  # ruff:ignore[private-member-access]  # internal state
-    assert not env
+def test_tox_env_pass_env_literal_missing(tox_project: ToxProjectCreator, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("TOX_PASS_TEST_A", raising=False)
+    project = tox_project({
+        "tox.toml": """\
+[env_run_base]
+package = "skip"
+pass_env = ["TOX_PASS_TEST_A"]
+commands = [["python", "-c", "import os; print(os.getenv('TOX_PASS_TEST_A', '-'))"]]
+"""
+    })
+    result = project.run("r")
+    result.assert_success()
+    assert "-" in result.out.splitlines()
 
 
 def test_tox_env_pass_env_fails_on_whitespace(tox_project: ToxProjectCreator) -> None:
@@ -245,10 +261,23 @@ def test_tox_env_pass_env_fails_on_whitespace(tox_project: ToxProjectCreator) ->
 
 @pytest.mark.parametrize("glob", ["*", "?"])
 @pytest.mark.parametrize("char", ["a", "A"])
-def test_tox_env_pass_env_match_ignore_case(char: str, glob: str, monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr(os, "environ", {"A1": "1", "a2": "2", "A2": "3", "B": "4"})
-    env = ToxEnv._load_pass_env([f"{char}{glob}"])  # ruff:ignore[private-member-access]  # internal state
-    assert env == {"A1": "1", "a2": "2", "A2": "3"}
+def test_tox_env_pass_env_match_ignore_case(
+    tox_project: ToxProjectCreator, char: str, glob: str, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    for key, value in ("A1", "1"), ("a2", "2"), ("A2", "3"), ("B", "4"):
+        monkeypatch.setenv(key, value)
+    cmd = "import os; print(':'.join(os.getenv(k, '-') for k in ('A1', 'a2', 'A2', 'B')))"
+    project = tox_project({
+        "tox.toml": f"""\
+[env_run_base]
+package = "skip"
+pass_env = ["{char}{glob}"]
+commands = [["python", "-c", "{cmd}"]]
+"""
+    })
+    result = project.run("r")
+    result.assert_success()
+    assert "1:2:3:-" in result.out.splitlines()
 
 
 def test_disallow_pass_env(tox_project: ToxProjectCreator, monkeypatch: pytest.MonkeyPatch) -> None:

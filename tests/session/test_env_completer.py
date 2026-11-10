@@ -78,9 +78,10 @@ def test_env_completer_includes_plugin_envs(
     assert "plugin-env" in result
 
 
-def test_register_env_select_attaches_completer() -> None:
+def test_register_env_select_attaches_completer(mocker: MockerFixture) -> None:
     parser = ArgumentParser()
+    add_argument = mocker.spy(parser, "add_argument")
     register_env_select_flags(parser, default=None, multiple=False)
-    action = next(a for a in parser._actions if a.dest == "env")  # ruff:ignore[private-member-access]  # internal state
+    action = add_argument.spy_return_list[0]
     assert hasattr(action, "completer")
     assert action.completer is _env_completer

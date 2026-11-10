@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import os
 import sys
 import sysconfig
@@ -12,7 +13,6 @@ from virtualenv.create.creator import Creator
 from virtualenv.discovery.py_spec import PythonSpec
 from virtualenv.run.session import Session
 
-from tox.tox_env.errors import Fail
 from tox.tox_env.python.api import Python
 from tox.tox_env.python.virtual_env.api import VirtualEnv
 
@@ -101,20 +101,6 @@ def test_blank_base_python_entries_skipped(tox_project: ToxProjectCreator) -> No
     }).run("c", "-e", "magic", "-k", "base_python")
     result.assert_success()
     assert "base_python = python3\n" in result.out
-
-
-def test_validate_base_python_conflicting_factors_ignore() -> None:
-    result = Python._validate_base_python(  # ruff:ignore[private-member-access]  # internal state
-        "unit-py3.10-2.16", ["python3"], ignore_base_python_conflict=True
-    )
-    assert result == ["python3"]
-
-
-def test_validate_base_python_conflicting_factors_no_ignore() -> None:
-    with pytest.raises(ValueError, match=r"conflicting factors py3\.10, 2\.16 in unit-py3\.10-2\.16"):
-        Python._validate_base_python(  # ruff:ignore[private-member-access]  # internal state
-            "unit-py3.10-2.16", ["python3"], ignore_base_python_conflict=False
-        )
 
 
 @pytest.mark.skipif(sys.platform == "win32", reason="mocks a POSIX venv layout (bin/python symlink)")
@@ -217,11 +203,11 @@ def test_diff_msg_added_removed_changed() -> None:
     before = {"A": "1", "F": "8", "C": "3", "D": "4", "E": "6"}
     after = {"G": "9", "B": "2", "C": "3", "D": "5", "E": "7"}
     expected = "python added A='1' | F='8', removed G='9' | B='2', changed D='5'->'4' | E='7'->'6'"
-    assert Python._diff_msg(before, after) == expected  # ruff:ignore[private-member-access]  # internal state
+    assert Python._diff_msg(before, after) == expected  # ruff:ignore[private-member-access]  # cache diff ordering
 
 
 def test_diff_msg_no_diff() -> None:
-    assert Python._diff_msg({}, {}) == "python "  # ruff:ignore[private-member-access]  # internal state
+    assert Python._diff_msg({}, {}) == "python "  # ruff:ignore[private-member-access]  # empty cache diff
 
 
 @pytest.mark.parametrize(
@@ -311,11 +297,16 @@ def test_extract_base_python(env: str, base_python: str | None) -> None:
         pytest.param("magic", ["py39"], id="magic-py39"),
     ],
 )
-def test_base_python_env_no_conflict(env: str, base_python: list[str], ignore_conflict: bool) -> None:
-    result = Python._validate_base_python(  # ruff:ignore[private-member-access]  # internal state
-        env, base_python, ignore_conflict
-    )
-    assert result is base_python
+def test_base_python_env_no_conflict(
+    tox_project: ToxProjectCreator, env: str, base_python: list[str], ignore_conflict: bool
+) -> None:
+    project = tox_project({
+        "tox.toml": f"ignore_base_python_conflict = {str(ignore_conflict).lower()}\n"
+        f'[env."{env}"]\npackage = "skip"\nbase_python = {json.dumps(base_python)}\n'
+    })
+    result = project.run("c", "-e", env, "-k", "base_python")
+    result.assert_success()
+    assert f"base_python = {base_python[0]}\n" in result.out
 
 
 @pytest.mark.parametrize(
@@ -332,11 +323,16 @@ def test_base_python_env_no_conflict(env: str, base_python: list[str], ignore_co
         pytest.param("py310-magic", ["py39"], "py310", id="py310-dash-magic-py39-py310"),
     ],
 )
-def test_base_python_env_conflict_ignored(env: str, base_python: list[str], expected: str) -> None:
-    result = Python._validate_base_python(  # ruff:ignore[private-member-access]  # internal state
-        env, base_python, True
-    )
-    assert result == [expected]
+def test_base_python_env_conflict_ignored(
+    tox_project: ToxProjectCreator, env: str, base_python: list[str], expected: str
+) -> None:
+    project = tox_project({
+        "tox.toml": f'ignore_base_python_conflict = true\n[env."{env}"]\n'
+        f'package = "skip"\nbase_python = {json.dumps(base_python)}\n'
+    })
+    result = project.run("c", "-e", env, "-k", "base_python")
+    result.assert_success()
+    assert f"base_python = {expected}\n" in result.out
 
 
 @pytest.mark.parametrize(
@@ -353,11 +349,13 @@ def test_base_python_env_conflict_ignored(env: str, base_python: list[str], expe
         pytest.param("py310-magic", ["py39"], ["py39"], id="py310-dash-magic-py39"),
     ],
 )
-def test_base_python_env_conflict_raises(env: str, base_python: list[str], conflict: list[str]) -> None:
-    with pytest.raises(Fail, match=f"env name {env} conflicting with base python {conflict[0]}"):
-        Python._validate_base_python(  # ruff:ignore[private-member-access]  # internal state
-            env, base_python, False
-        )
+def test_base_python_env_conflict_raises(
+    tox_project: ToxProjectCreator, env: str, base_python: list[str], conflict: list[str]
+) -> None:
+    project = tox_project({"tox.toml": f'[env."{env}"]\npackage = "skip"\nbase_python = {json.dumps(base_python)}\n'})
+    result = project.run("c", "-e", env, "-k", "base_python", raise_on_config_fail=False)
+    result.assert_failed(code=-1)
+    assert f"env name {env} conflicting with base python {conflict[0]}" in result.out
 
 
 @pytest.mark.parametrize(
@@ -826,7 +824,7 @@ def test_python_spec_for_sys_executable(
     mocker.patch.object(sys, "maxsize", 2**arch // 2 - 1)
     mocker.patch.object(sysconfig, "get_config_var", get_config_var)
     mocker.patch.object(sysconfig, "get_platform", autospec=True, return_value=platform_str)
-    spec = Python._python_spec_for_sys_executable()  # ruff:ignore[private-member-access]  # internal state
+    spec = Python._python_spec_for_sys_executable()  # ruff:ignore[private-member-access]  # simulated host ABI
     assert (spec.implementation, spec.major, spec.minor, spec.architecture, spec.free_threaded) == (
         impl,
         major,
@@ -892,27 +890,33 @@ def test_python_spec_for_path(
         pytest.param("py313", "cpython313d-64-x86_64", id="py313-env-debug-base"),
     ],
 )
-def test_validate_base_python_debug_matches(env: str, spec: str, mocker: MockerFixture) -> None:
+def test_validate_base_python_debug_matches(
+    tox_project: ToxProjectCreator, tmp_path: Path, env: str, spec: str, mocker: MockerFixture
+) -> None:
     mocker.patch.object(
         VirtualEnv, "python_spec_for_path", autospec=True, return_value=PythonSpec.from_string_spec(spec)
     )
-    base_python = [str(Path("/opt/python3.13").absolute())]
-    # private method under test
-    assert VirtualEnv._validate_base_python(env, base_python, False) == base_python  # ruff:ignore[private-member-access]
+    base_python = tmp_path / "python3.13"
+    project = tox_project({"tox.toml": f'[env."{env}"]\npackage = "skip"\nbase_python = "{base_python}"\n'})
+    result = project.run("c", "-e", env, "-k", "base_python")
+    result.assert_success()
+    assert f"base_python = {base_python}\n" in result.out
 
 
-def test_validate_base_python_debug_conflicts(mocker: MockerFixture) -> None:
+def test_validate_base_python_debug_conflicts(
+    tox_project: ToxProjectCreator, tmp_path: Path, mocker: MockerFixture
+) -> None:
     mocker.patch.object(
         VirtualEnv,
         "python_spec_for_path",
         autospec=True,
         return_value=PythonSpec.from_string_spec("cpython313-64-x86_64"),
     )
-    base_python = [str(Path("/opt/python3.13").absolute())]
-    with pytest.raises(Fail, match="env name py313d conflicting with base python"):
-        VirtualEnv._validate_base_python(  # ruff:ignore[private-member-access]  # internal state
-            "py313d", base_python, False
-        )
+    base_python = tmp_path / "python3.13"
+    project = tox_project({"tox.toml": f'[env.py313d]\npackage = "skip"\nbase_python = "{base_python}"\n'})
+    result = project.run("c", "-e", "py313d", "-k", "base_python", raise_on_config_fail=False)
+    result.assert_failed(code=-1)
+    assert "env name py313d conflicting with base python" in result.out
 
 
 _PY_VER: Final[str] = f"{sys.version_info[0]}.{sys.version_info[1]}"

@@ -481,7 +481,7 @@ def test_pty_closes_fds_when_termios_fails(mocker: MockerFixture) -> None:
     openpty_spy = mocker.spy(pty, "openpty")
     close_spy = mocker.spy(os, "close")
 
-    result = execute._pty("stdout")  # ruff:ignore[private-member-access]  # internal state
+    result = execute._pty("stdout")  # ruff:ignore[private-member-access]  # injects termios failure
 
     assert result is None
     main, child = openpty_spy.spy_return
@@ -904,7 +904,7 @@ def test_read_via_thread_drain_no_data() -> None:
     read_fd, write_fd = os.pipe()
     try:
         os.close(write_fd)
-        ReadViaThreadUnix(  # ruff:ignore[private-member-access]  # internal state
+        ReadViaThreadUnix(  # ruff:ignore[private-member-access]  # closed pipe drain
             read_fd, handler, "test", drain=True
         )._drain_stream()
     finally:
