@@ -40,12 +40,12 @@ jobs:
           - {os: {image: macos-26, name: macos}, py: "3.11"}
     steps:
       - name: 📥 Check out code
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        uses: actions/checkout@v7.0.1
         with:
           fetch-depth: 0
           persist-credentials: false
       - name: 🐍 Install uv
-        uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+        uses: astral-sh/setup-uv@v10.3.3
         with:
           version: latest-known
           python-version: "3.15"
@@ -70,7 +70,7 @@ jobs:
           PYTEST_XDIST_AUTO_NUM_WORKERS: 0
       - name: 📤 Upload test timings
         if: ${{ !cancelled() }} # codespell:ignore cancelled
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        uses: actions/upload-artifact@v7.0.2
         with:
           name: junit-${{ matrix.py }}-${{ matrix.os.name }}
           path: .tox/junit.${{ matrix.py }}.xml
@@ -78,7 +78,7 @@ jobs:
           retention-days: 30
   check:
     name: 🔍 tox env
-    uses: tox-dev/github-workflows/.github/workflows/check.yaml@bceb5c005e19823dc8835f536f53f172ae223927 # 6.5.0
+    uses: tox-dev/github-workflows/.github/workflows/check.yaml@bf1c3ab0aa137d307a07aad844d507af73039387 # 6.8.0
     permissions:
       contents: read
     with:
@@ -108,7 +108,7 @@ jobs:
       dry-run: true
   hooks:
     name: 🧹 Hooks under the cooldown
-    uses: tox-dev/github-workflows/.github/workflows/cooled-hooks.yaml@0c4cffd63033d38196319524d101caae1eef925b # 6.7.2
+    uses: tox-dev/github-workflows/.github/workflows/cooled-hooks.yaml@bf1c3ab0aa137d307a07aad844d507af73039387 # 6.8.0
     permissions:
       contents: read
   gate:
@@ -118,6 +118,6 @@ jobs:
     runs-on: ubuntu-26.04
     steps:
       - name: 🚦 Require all needed jobs to pass
-        uses: tox-dev/github-workflows/required-checks@bceb5c005e19823dc8835f536f53f172ae223927 # 6.5.0
+        uses: tox-dev/github-workflows/required-checks@6.8.0
         with:
           needs: ${{ toJSON(needs) }}

@@ -10,12 +10,12 @@ permissions:
 jobs:
   tag-build:
     name: 🏗️ Build
-    uses: tox-dev/github-workflows/.github/workflows/validate-python-release.yaml@13381289334b15375958be7f7438f3c3d860e575 # 6.5.5
+    uses: tox-dev/github-workflows/.github/workflows/validate-python-release.yaml@bf1c3ab0aa137d307a07aad844d507af73039387 # 6.8.0
     permissions:
       contents: read
   notes:
     name: 📝 Render GitHub Release notes
-    uses: tox-dev/github-workflows/.github/workflows/release-notes.yaml@13381289334b15375958be7f7438f3c3d860e575 # 6.5.5
+    uses: tox-dev/github-workflows/.github/workflows/release-notes.yaml@bf1c3ab0aa137d307a07aad844d507af73039387 # 6.8.0
     permissions:
       contents: read
     with:
@@ -33,18 +33,18 @@ jobs:
       id-token: write
     steps:
       - name: 📩 Download distributions
-        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        uses: actions/download-artifact@v8.0.2
         with:
           artifact-ids: ${{ needs.tag-build.outputs.distributions-artifact-id }}
           path: dist/
       - name: 🚀 Publish to PyPI
-        uses: pypa/gh-action-pypi-publish@7245906fb61fa33a13554f9d5fb856fe61758086 # v1.14.3
+        uses: pypa/gh-action-pypi-publish@v1.14.3
         with:
           packages-dir: dist
   github-release:
     name: 🚀 Publish GitHub Release
     needs: [tag-build, publish, notes]
-    uses: tox-dev/github-workflows/.github/workflows/github-release.yaml@13381289334b15375958be7f7438f3c3d860e575 # 6.5.5
+    uses: tox-dev/github-workflows/.github/workflows/github-release.yaml@bf1c3ab0aa137d307a07aad844d507af73039387 # 6.8.0
     permissions:
       contents: write
     with:
