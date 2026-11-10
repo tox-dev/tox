@@ -7,7 +7,7 @@ import re
 import tomllib
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import TYPE_CHECKING, Final, cast
+from typing import TYPE_CHECKING, Final
 
 from packaging.requirements import InvalidRequirement, Requirement
 from packaging.specifiers import InvalidSpecifier, SpecifierSet
@@ -24,7 +24,6 @@ from .runner import add_skip_missing_interpreters_to_core, add_skip_missing_inte
 
 if TYPE_CHECKING:
     from tox.config.main import Config
-    from tox.config.of_type import ConfigDynamicDefinition
     from tox.tox_env.api import ToxEnvCreateArgs
 
 _SCRIPT_METADATA_RE: Final[re.Pattern[str]] = re.compile(
@@ -79,11 +78,7 @@ class Pep723Mixin(Python, RunToxEnv):
                 return [Command(args)]
             return []
 
-        commands_def = cast(  # internal access
-            "ConfigDynamicDefinition[list[Command]]",
-            self.conf._defined["commands"],  # ruff:ignore[private-member-access]  # internal access
-        )
-        commands_def.default = default_commands
+        self.conf.replace_default("commands", default_commands)
         add_skip_missing_interpreters_to_core(self.core, self.options)
         add_skip_missing_interpreters_to_env(self.conf, self.core, self.options)
 

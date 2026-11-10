@@ -611,6 +611,10 @@ When you access ``env_config["deps"]``:
 7. ``post_process`` callback runs (if registered).
 8. The result is cached.
 
+Runners can call ``ConfigSet.replace_default("commands", callback)`` before the first read to change the fallback when
+the user has not configured a value. ``ConfigSet.overwrite("package", "editable-legacy")`` forces a value even when the
+source specified another one, as required when a build backend cannot build editable wheels.
+
 .. _sys-plugins:
 
 Plugin system
