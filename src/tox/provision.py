@@ -133,9 +133,7 @@ def provision(state: State) -> int | bool:
     )
     provision_tox_env = state.conf.core.get("provision_tox_env", str)
     state.conf.memory_seed_loaders[provision_tox_env].append(loader)
-    state.envs._mark_provision(  # ruff:ignore[private-member-access]  # internal access
-        bool(missing), provision_tox_env
-    )
+    state.envs.configure_provision(required=bool(missing), env_name=provision_tox_env)
 
     if not missing:
         if remainder := state.conf.options.remainder:

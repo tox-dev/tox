@@ -744,12 +744,14 @@ class EnvSelector:
             msg = f"cannot run packaging environment(s) {','.join(invalid)}"
             raise HandledError(msg)
 
-    def _mark_provision(  # keeps the signature
-        self,
-        on: bool,  # ruff:ignore[boolean-type-hint-positional-argument]  # keeps the signature
-        provision_tox_env: str,  # keeps the signature
-    ) -> None:
-        self._provision = on, provision_tox_env
+    def configure_provision(self, *, required: bool, env_name: str) -> None:
+        """Select the provision environment and whether it must run first.
+
+        :param required: whether provisioning must run before the selected environments
+        :param env_name: the provision environment name
+
+        """
+        self._provision = required, env_name
 
 
 __all__ = [
