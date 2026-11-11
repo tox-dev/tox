@@ -44,17 +44,17 @@ class StrConvert(Convert[str]):
 
     @staticmethod
     @override
-    def to_set(  # simplint: ignore[SMP602]  # converts strings into any configured type
+    def to_set(
         value: str,
-        of_type: type[Any],  # simplint: ignore[SMP602]  # converts strings into any configured type
+        of_type: type[Any],  # simplint: ignore[imprecise-annotation]  # converts strings into any configured type
     ) -> Iterator[str]:
         yield from StrConvert.to_list(value, of_type)
 
     @staticmethod
     @override
-    def to_list(  # simplint: ignore[SMP602]  # converts strings into any configured type
+    def to_list(
         value: str,
-        of_type: type[Any],  # simplint: ignore[SMP602]  # converts strings into any configured type
+        of_type: type[Any],  # simplint: ignore[imprecise-annotation]  # converts strings into any configured type
     ) -> Iterator[str]:
         splitter = "\n" if (isclass(of_type) and issubclass(of_type, Command)) or "\n" in value else ","
         splitter = splitter.replace("\r", "")
@@ -65,9 +65,11 @@ class StrConvert(Convert[str]):
 
     @staticmethod
     @override
-    def to_dict(  # simplint: ignore[SMP602]  # converts strings into any configured type
+    def to_dict(
         value: str,
-        of_type: tuple[type[Any], type[Any]],  # simplint: ignore[SMP602]  # converts strings into any configured type
+        of_type: tuple[
+            type[Any], type[Any]  # simplint: ignore[imprecise-annotation]  # converts strings into any configured type
+        ],
     ) -> Iterator[tuple[str, str]]:
         for row in value.split("\n"):
             if row.strip():

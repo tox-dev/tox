@@ -8,7 +8,11 @@ from typing import TYPE_CHECKING, Any, Final, cast
 
 from tox.config.loader.section import Section
 from tox.config.loader.toml import TomlLoader
-from tox.config.loader.toml._product import expand_factor_group, extract_default, extract_label
+from tox.config.loader.toml._product import (  # simplint: ignore[private-import-path]  # existing factor helpers
+    expand_factor_group,
+    extract_default,
+    extract_label,
+)
 from tox.config.types import EnvList, FactorGroup, MissingRequiredConfigKeyError
 from tox.report import HandledError
 from tox.util.typing_compat import override
@@ -20,7 +24,7 @@ if TYPE_CHECKING:
     from pathlib import Path
 
     from tox.config.loader.api import Loader, OverrideMap
-    from tox.config.loader.toml._api import TomlTypes
+    from tox.config.loader.toml import TomlTypes
     from tox.config.sets import CoreConfigSet
 
 
@@ -194,9 +198,9 @@ class TomlPyProject(Source):
         return self._Section(section.prefix, section.name)
 
     @override
-    def get_loader(  # simplint: ignore[SMP602]  # loaders read raw values of any type
+    def get_loader(
         self, section: Section, override_map: OverrideMap
-    ) -> Loader[Any] | None:  # simplint: ignore[SMP602]  # loaders read raw values of any type
+    ) -> Loader[Any] | None:  # simplint: ignore[imprecise-annotation]  # loaders read raw values of any type
         current: TomlTypes = self._our_content
         sec = cast("TomlSection", section)
         for key in sec.keys:
@@ -255,12 +259,12 @@ class TomlPyProject(Source):
     @override
     def get_tox_env_section(self, item: str) -> tuple[Section, list[str], list[str]]:
         if base_name := self._env_base_generated.get(item):
-            return (  # simplint: ignore[SMP528]  # plugin overrides return plain tuples too
+            return (
                 self._Section.test_env(item),
                 [self._Section.env_base_prefix() + self._Section.SEP + base_name, self._Section.run_env_base()],
                 [self._Section.package_env_base()],
             )
-        return (  # simplint: ignore[SMP528]  # plugin overrides return plain tuples too
+        return (
             self._Section.test_env(item),
             [self._Section.run_env_base()],
             [self._Section.package_env_base()],

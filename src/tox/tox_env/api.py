@@ -38,7 +38,7 @@ if TYPE_CHECKING:
 
     from .installer import InstallArguments, Installer
 
-LOGGER: Final[logging.Logger] = logging.getLogger(__name__)  # simplint: ignore[SMP404]  # imported by tox plugins
+_LOGGER: Final[logging.Logger] = logging.getLogger(__name__)
 
 
 class ToxEnvCreateArgs(NamedTuple):
@@ -337,7 +337,7 @@ class ToxEnv(ABC):  # ruff:ignore[too-many-public-methods]  # public facade
             return  # pragma: no cover  # untested error path
         env_dir: Final = self.env_dir
         if env_dir.exists() or env_dir.is_symlink():
-            LOGGER.warning("remove tox env folder %s", env_dir)
+            _LOGGER.warning("remove tox env folder %s", env_dir)
             # retract the redirect so nothing points at the environment while it rebuilds
             if self.core.get_optional("venv_redirect", bool) is not False:
                 forget_venv_redirect(self.core.get("tox_root", Path), env_dir)
@@ -379,7 +379,7 @@ class ToxEnv(ABC):  # ruff:ignore[too-many-public-methods]  # public facade
     def _handle_env_tmp_dir(self) -> None:
         env_tmp_dir: Final = self.env_tmp_dir
         if env_tmp_dir.is_symlink() or (env_tmp_dir.exists() and next(env_tmp_dir.iterdir(), None) is not None):
-            LOGGER.debug("clear env temp folder %s", env_tmp_dir)
+            _LOGGER.debug("clear env temp folder %s", env_tmp_dir)
             ensure_empty_dir(env_tmp_dir)
         env_tmp_dir.mkdir(parents=True, exist_ok=True)
 
@@ -501,7 +501,7 @@ class ToxEnv(ABC):  # ruff:ignore[too-many-public-methods]  # public facade
                 repr_cwd = f" {_CWD.relative_to(cwd)}"
             except ValueError:
                 repr_cwd = f" {cwd}"
-        LOGGER.warning("%s%s> %s", run_id, repr_cwd, request.shell_cmd_redacted)
+        _LOGGER.warning("%s%s> %s", run_id, repr_cwd, request.shell_cmd_redacted)
         out_err = self.log_handler.stdout, self.log_handler.stderr
         if executor is None:
             executor = self.executor

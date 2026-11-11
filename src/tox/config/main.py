@@ -25,7 +25,7 @@ if TYPE_CHECKING:
     from .types import FactorGroup
 
 
-T = TypeVar("T", bound=ConfigSet)  # simplint: ignore[SMP101]  # exported, renaming breaks importers
+T = TypeVar("T", bound=ConfigSet)
 """Type variable bound to the configuration set classes."""
 
 
@@ -233,7 +233,8 @@ class Config:
         item: str,
         # keeps the existing signature
         package: bool = False,  # ruff:ignore[boolean-type-hint-positional-argument, boolean-default-value-positional-argument]
-        loaders: Sequence[Loader[Any]] | None = None,  # simplint: ignore[SMP602]  # loaders read raw values of any type
+        loaders: Sequence[Loader[Any]]  # simplint: ignore[imprecise-annotation]  # loaders read raw values of any type
+        | None = None,
     ) -> EnvConfigSet:
         """Return the configuration for a given tox environment (will create if not exist yet).
 
@@ -263,7 +264,8 @@ class Config:
         base: list[str] | None,
         of_type: type[T],
         for_env: str | None,
-        loaders: Sequence[Loader[Any]] | None = None,  # simplint: ignore[SMP602]  # loaders read raw values of any type
+        loaders: Sequence[Loader[Any]]  # simplint: ignore[imprecise-annotation]  # loaders read raw values of any type
+        | None = None,
     ) -> T:
         """Get the configuration set of a section, creating and caching it on first use.
 

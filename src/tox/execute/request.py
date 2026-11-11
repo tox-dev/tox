@@ -102,11 +102,11 @@ def shell_cmd(cmd: Sequence[str]) -> str:
 
     """
     if sys.platform == "win32":  # pragma: win32 cover
-        from subprocess import list2cmdline  # ruff:ignore[import-outside-top-level]  # avoids an import cycle
+        from subprocess import list2cmdline  # ruff:ignore[import-outside-top-level]  # Windows quoting
 
         return list2cmdline(tuple(str(x) for x in cmd))
     # pragma: win32 no cover
-    from shlex import quote as shlex_quote  # ruff:ignore[import-outside-top-level]
+    from shlex import quote as shlex_quote  # ruff:ignore[import-outside-top-level]  # POSIX quoting
 
     return " ".join(shlex_quote(str(x)) for x in cmd)
 

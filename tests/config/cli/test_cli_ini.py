@@ -28,9 +28,9 @@ if TYPE_CHECKING:
 
 
 @pytest.fixture
-def default_options(  # simplint: ignore[SMP602]  # test options hold values of any type
+def default_options(
     mocker: MockerFixture,
-) -> dict[str, Any]:  # simplint: ignore[SMP602]  # test options hold values of any type
+) -> dict[str, Any]:  # simplint: ignore[imprecise-annotation]  # test options hold values of any type
     return {
         "colored": "no",
         "stderr_color": "RED",
@@ -72,7 +72,7 @@ def default_options(  # simplint: ignore[SMP602]  # test options hold values of 
 def test_ini_empty(
     tmp_path: Path,
     core_handlers: dict[str, Callable[[State], int]],
-    default_options: dict[str, Any],  # simplint: ignore[SMP602]  # test options hold values of any type
+    default_options: dict[str, Any],  # simplint: ignore[imprecise-annotation]  # test options hold values of any type
     mocker: MockerFixture,
     monkeypatch: MonkeyPatch,
     content: str,
@@ -115,7 +115,7 @@ def test_bad_cli_ini(
     tmp_path: Path,
     monkeypatch: MonkeyPatch,
     caplog: LogCaptureFixture,
-    default_options: dict[str, Any],  # simplint: ignore[SMP602]  # test options hold values of any type
+    default_options: dict[str, Any],  # simplint: ignore[imprecise-annotation]  # test options hold values of any type
     mocker: MockerFixture,
     error: str,
 ) -> None:
@@ -135,7 +135,7 @@ def test_bad_option_cli_ini(
     tmp_path: Path,
     monkeypatch: MonkeyPatch,
     caplog: LogCaptureFixture,
-    default_options: dict[str, Any],  # simplint: ignore[SMP602]  # test options hold values of any type
+    default_options: dict[str, Any],  # simplint: ignore[imprecise-annotation]  # test options hold values of any type
 ) -> None:
     caplog.set_level(logging.WARNING)
     to = tmp_path / "tox.ini"
@@ -192,6 +192,7 @@ def test_cli_ini_with_utf8_bom(tmp_path: Path, monkeypatch: MonkeyPatch) -> None
         pytest.param("tox.ini", "tox.ini", "[tox]", id="ini"),
         pytest.param("", "setup.cfg", "[tox:tox]", id="cfg-dir"),
         pytest.param("setup.cfg", "setup.cfg", "[tox:tox]", id="cfg"),
+        pytest.param("custom.ini", "custom.ini", "[tox]", id="custom"),
         pytest.param("", "pyproject.toml", '[tool.tox]\nlegacy_tox_ini = """\n[tox]\n"""\n', id="toml-dir"),
         pytest.param("pyproject.toml", "pyproject.toml", '[tool.tox]\nlegacy_tox_ini = """\n[tox]\n"""\n', id="toml"),
     ],

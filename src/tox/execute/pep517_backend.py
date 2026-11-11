@@ -58,7 +58,7 @@ class LocalSubProcessPep517Executor(Execute):
         out: SyncWrite,
         err: SyncWrite,
     ) -> ExecuteInstance:
-        return LocalSubProcessPep517ExecuteInstance(request, options, out, err, self.local_execute(options))
+        return _LocalSubProcessPep517ExecuteInstance(request, options, out, err, self.local_execute(options))
 
     def local_execute(self, options: ExecuteOptions) -> tuple[LocalSubProcessExecuteInstance, ExecuteStatus]:
         """Start the backend process, or return the one already started.
@@ -128,7 +128,7 @@ class LocalSubProcessPep517Executor(Execute):
         self.is_alive = False
 
 
-class LocalSubProcessPep517ExecuteInstance(ExecuteInstance):  # simplint: ignore[SMP403]  # imported by tox plugins
+class _LocalSubProcessPep517ExecuteInstance(ExecuteInstance):
     def __init__(
         self,
         request: ExecuteRequest,

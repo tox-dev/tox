@@ -12,13 +12,15 @@ from venv import create as create_venv
 import pytest
 
 from tox.tox_env.errors import Fail
+
+# These cache failure cases need setup before the public bootstrap call.
 from tox.tox_env.python.virtual_env.subprocess_adapter import (
     SubprocessCreator,
     SubprocessPythonInfo,
     SubprocessSession,
-    _bootstrap_path,  # ruff:ignore[import-private-name]  # sibling module internal
-    _has_correct_virtualenv,  # ruff:ignore[import-private-name]  # sibling module internal
-    _VersionInfo,  # ruff:ignore[import-private-name]  # sibling module internal
+    _bootstrap_path,  # ruff:ignore[import-private-name] # simplint: ignore[private-import-path] # cache setup
+    _has_correct_virtualenv,  # ruff:ignore[import-private-name] # simplint: ignore[private-import-path] # probe failures
+    _VersionInfo,  # ruff:ignore[import-private-name] # simplint: ignore[private-import-path] # field type
     ensure_bootstrap,
     probe_python,
 )

@@ -6,8 +6,9 @@ from typing import TYPE_CHECKING
 import pytest
 
 from tox.config.loader.ini.factor import LATEST_PYTHON_MINOR_MAX, LATEST_PYTHON_MINOR_MIN
-from tox.config.loader.toml._product import (  # ruff:ignore[import-private-name]  # sibling module internal
-    _expand_range,
+
+# Keep factor helpers private while testing them directly.
+from tox.config.loader.toml._product import (  # ruff:ignore[import-private-name]  # simplint: ignore[private-import-path]
     expand_factor_group,
     expand_product,
     extract_default,
@@ -15,7 +16,7 @@ from tox.config.loader.toml._product import (  # ruff:ignore[import-private-name
 )
 
 if TYPE_CHECKING:
-    from tox.config.loader.toml._api import TomlTypes
+    from tox.config.loader.toml import TomlTypes
     from tox.pytest import ToxProjectCreator
 
 
@@ -189,16 +190,16 @@ def test_extract_label_multi_key_dict() -> None:
 
 
 def test_expand_range_closed() -> None:
-    assert _expand_range({"prefix": "py3", "start": 12, "stop": 14}) == ["py312", "py313", "py314"]
+    assert expand_factor_group({"prefix": "py3", "start": 12, "stop": 14}) == ["py312", "py313", "py314"]
 
 
 def test_expand_range_open_stop() -> None:
-    result = _expand_range({"prefix": "py3", "start": 12})
+    result = expand_factor_group({"prefix": "py3", "start": 12})
     assert result == [f"py3{i}" for i in range(12, LATEST_PYTHON_MINOR_MAX + 1)]
 
 
 def test_expand_range_open_start() -> None:
-    result = _expand_range({"prefix": "py3", "stop": 13})
+    result = expand_factor_group({"prefix": "py3", "stop": 13})
     assert result == [f"py3{i}" for i in range(LATEST_PYTHON_MINOR_MIN, 14)]
 
 
@@ -215,7 +216,7 @@ def test_expand_range_open_bound_outside_window(key: str, bound: int) -> None:
 
 def test_expand_range_no_bounds() -> None:
     with pytest.raises(TypeError, match="range must have at least 'start' or 'stop'"):
-        _expand_range({"prefix": "py3"})
+        expand_factor_group({"prefix": "py3"})
 
 
 @pytest.mark.parametrize("key", ["start", "stop"])
@@ -230,7 +231,7 @@ def test_expand_range_no_bounds() -> None:
 )
 def test_expand_range_bound_not_int(key: str, value: TomlTypes) -> None:
     with pytest.raises(TypeError, match=f"range '{key}' must be an integer, got {type(value).__name__}"):
-        _expand_range({"prefix": "py3", "start": 12, "stop": 14, key: value})
+        expand_factor_group({"prefix": "py3", "start": 12, "stop": 14, key: value})
 
 
 def test_expand_product_mixed_list_and_range() -> None:

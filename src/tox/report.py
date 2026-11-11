@@ -33,7 +33,7 @@ LEVELS: Final[dict[int, int]] = {
 }
 """Map of the verbosity levels to the logging levels they select."""
 
-MAX_LEVEL: Final[int] = max(LEVELS.keys())  # simplint: ignore[SMP404]  # imported by tox plugins
+_MAX_LEVEL: Final[int] = max(LEVELS.keys())
 LOGGER: Final[logging.Logger] = logging.getLogger()
 """The root logger, which tox reports through."""
 OutErr = tuple[TextIOWrapper, TextIOWrapper]
@@ -345,7 +345,7 @@ def setup_report(  # keeps the signature
 
 
 def _get_level(verbosity: int) -> int:
-    return LEVELS[min(verbosity, MAX_LEVEL)]
+    return LEVELS[min(verbosity, _MAX_LEVEL)]
 
 
 class HandledError(RuntimeError):

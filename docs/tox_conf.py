@@ -1,4 +1,4 @@
-from __future__ import annotations
+from __future__ import annotations  # ruff:ignore[implicit-namespace-package]  # Sphinx extension module
 
 from typing import TYPE_CHECKING, ClassVar, Final, cast
 

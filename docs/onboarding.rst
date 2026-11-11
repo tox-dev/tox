@@ -398,7 +398,7 @@ After provisioning, the handler is dispatched (see :ref:`exec-entry-points` for 
     handler = state._options.cmd_handlers[state.conf.options.command]
     return handler(state)
 
-Run execution uses ``ready_to_run_envs()`` for topological batch scheduling — environments whose ``depends`` are all
+Run execution uses ``_ready_to_run_envs()`` for topological batch scheduling — environments whose ``depends`` are all
 satisfied are yielded first.
 
 .. _exec-environment-lifecycle:

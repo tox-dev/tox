@@ -43,12 +43,14 @@ class Info:
     @contextmanager
     def compare(
         self,
-        value: Any,  # simplint: ignore[SMP602]  # info values have the type of each field
+        value: Any,  # simplint: ignore[imprecise-annotation]  # info values have the type of each field
         section: str,
         sub_section: str | None = None,
     ) -> Generator[
-        tuple[bool, Any | None], None, None  # simplint: ignore[SMP602]  # info values have the type of each field
-    ]:  # simplint: ignore[SMP602]  # info values have the type of each field
+        tuple[bool, Any | None],  # simplint: ignore[imprecise-annotation]  # info values have the type of each field
+        None,
+        None,
+    ]:
         """Compare new information with the existing one and update if differs.
 
         :param value: the value stored

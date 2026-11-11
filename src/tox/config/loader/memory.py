@@ -27,12 +27,14 @@ class MemoryLoader(Loader[object]):
 
     def __init__(self, **kwargs: Any) -> None:
         super().__init__(Section(prefix="<memory>", name=str(id(self))), [])
-        self.raw: dict[str, Any] = {**kwargs}  # simplint: ignore[SMP602]  # callers store any value in memory
+        self.raw: dict[str, Any] = {  # simplint: ignore[imprecise-annotation]  # callers store any value in memory
+            **kwargs
+        }
 
     @override
     def load_raw(
         self, key: str, conf: Config | None, env_name: str | None
-    ) -> object:  # simplint: ignore[SMP602]  # callers store any value in memory
+    ) -> object:  # simplint: ignore[imprecise-annotation]  # callers store any value in memory
         return self.raw[key]
 
     @override
@@ -41,46 +43,50 @@ class MemoryLoader(Loader[object]):
 
     @staticmethod
     @override
-    def to_bool(value: Any) -> bool:  # simplint: ignore[SMP602]  # callers store any value in memory
+    def to_bool(value: Any) -> bool:  # simplint: ignore[imprecise-annotation]  # callers store any value in memory
         return bool(value)
 
     @staticmethod
     @override
-    def to_str(value: Any) -> str:  # simplint: ignore[SMP602]  # callers store any value in memory
+    def to_str(value: Any) -> str:  # simplint: ignore[imprecise-annotation]  # callers store any value in memory
         return str(value)
 
     @staticmethod
     @override
     def to_list(
-        value: Any,  # simplint: ignore[SMP602]  # callers store any value in memory
-        of_type: type[Any],  # simplint: ignore[SMP602]  # callers store any value in memory
-    ) -> Iterator[Any]:  # simplint: ignore[SMP602]  # callers store any value in memory
+        value: Any,  # simplint: ignore[imprecise-annotation]  # callers store any value in memory
+        of_type: type[Any],  # simplint: ignore[imprecise-annotation]  # callers store any value in memory
+    ) -> Iterator[Any]:  # simplint: ignore[imprecise-annotation]  # callers store any value in memory
         return iter(value)
 
     @staticmethod
     @override
     def to_set(
-        value: Any,  # simplint: ignore[SMP602]  # callers store any value in memory
-        of_type: type[Any],  # simplint: ignore[SMP602]  # callers store any value in memory
-    ) -> Iterator[Any]:  # simplint: ignore[SMP602]  # callers store any value in memory
+        value: Any,  # simplint: ignore[imprecise-annotation]  # callers store any value in memory
+        of_type: type[Any],  # simplint: ignore[imprecise-annotation]  # callers store any value in memory
+    ) -> Iterator[Any]:  # simplint: ignore[imprecise-annotation]  # callers store any value in memory
         return iter(value)
 
     @staticmethod
     @override
     def to_dict(
-        value: Any,  # simplint: ignore[SMP602]  # callers store any value in memory
-        of_type: tuple[type[Any], type[Any]],  # simplint: ignore[SMP602]  # callers store any value in memory
-    ) -> Iterator[tuple[Any, Any]]:  # simplint: ignore[SMP602]  # callers store any value in memory
+        value: Any,  # simplint: ignore[imprecise-annotation]  # callers store any value in memory
+        of_type: tuple[
+            type[Any], type[Any]  # simplint: ignore[imprecise-annotation]  # callers store any value in memory
+        ],
+    ) -> Iterator[tuple[Any, Any]]:  # simplint: ignore[imprecise-annotation]  # callers store any value in memory
         return iter(value.items())
 
     @staticmethod
     @override
-    def to_path(value: Any) -> Path:  # simplint: ignore[SMP602]  # callers store any value in memory
+    def to_path(value: Any) -> Path:  # simplint: ignore[imprecise-annotation]  # callers store any value in memory
         return Path(value)
 
     @staticmethod
     @override
-    def to_command(value: Any) -> Command:  # simplint: ignore[SMP602]  # callers store any value in memory
+    def to_command(
+        value: Any,  # simplint: ignore[imprecise-annotation]  # callers store any value in memory
+    ) -> Command:
         if isinstance(value, Command):
             return value
         if isinstance(value, str):
@@ -90,7 +96,9 @@ class MemoryLoader(Loader[object]):
 
     @staticmethod
     @override
-    def to_env_list(value: Any) -> EnvList:  # simplint: ignore[SMP602]  # callers store any value in memory
+    def to_env_list(
+        value: Any,  # simplint: ignore[imprecise-annotation]  # callers store any value in memory
+    ) -> EnvList:
         if isinstance(value, EnvList):
             return value
         if isinstance(value, str):

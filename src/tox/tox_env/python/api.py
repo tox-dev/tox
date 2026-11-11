@@ -70,7 +70,7 @@ class PythonInfo:
     version: str
     is_64: bool
     platform: str
-    extra: dict[str, Any]  # simplint: ignore[SMP602]  # config values have no single type
+    extra: dict[str, Any]  # simplint: ignore[imprecise-annotation]  # config values have no single type
     free_threaded: bool = False
     debug: bool = False
     machine: str | None = None
@@ -92,7 +92,8 @@ class PythonInfo:
         return f"{self.version_info.major}.{self.version_info.minor}"
 
 
-PY_FACTORS_RE: Final[re.Pattern[str]] = re.compile(  # simplint: ignore[SMP404]  # imported by tox plugins
+#: Matches interpreter factors such as ``py313``.
+PY_FACTORS_RE: Final[re.Pattern[str]] = re.compile(
     r"""
     ^(?!py$)                                               # don't match 'py' as it doesn't provide any info
     (?P<impl>py|pypy|cpython|jython|graalpy|rustpython|ironpython) # the interpreter; most users will simply use 'py'
@@ -104,9 +105,9 @@ PY_FACTORS_RE: Final[re.Pattern[str]] = re.compile(  # simplint: ignore[SMP404] 
     """,
     re.VERBOSE,
 )
-PY_FACTORS_RE_EXPLICIT_VERSION: Final[re.Pattern[str]] = (  # simplint: ignore[SMP404]  # imported by tox plugins
-    re.compile(  # simplint: ignore[SMP404]  # imported by tox plugins
-        r"""
+#: Matches explicit interpreter factors such as ``cpython-3.13``.
+PY_FACTORS_RE_EXPLICIT_VERSION: Final[re.Pattern[str]] = re.compile(
+    r"""
     ^
     ( (?P<impl> cpython | pypy ) - )?   # optional interpreter prefix with dash
     (?P<version> [23] \. [0-9]+ )        # explicit major.minor version (Python 2.x or 3.x)
@@ -114,8 +115,7 @@ PY_FACTORS_RE_EXPLICIT_VERSION: Final[re.Pattern[str]] = (  # simplint: ignore[S
     (?P<debug> d? )                      # optional debug-build suffix
     $
     """,
-        re.VERBOSE,
-    )
+    re.VERBOSE,
 )
 
 
@@ -581,9 +581,9 @@ class Python(ToxEnv, ABC):
         raise NotImplementedError
 
     @staticmethod
-    def _diff_msg(  # simplint: ignore[SMP602]  # config values have no single type
-        conf: dict[str, Any],  # simplint: ignore[SMP602]  # config values have no single type
-        old: dict[str, Any],  # simplint: ignore[SMP602]  # config values have no single type
+    def _diff_msg(
+        conf: dict[str, Any],  # simplint: ignore[imprecise-annotation]  # config values have no single type
+        old: dict[str, Any],  # simplint: ignore[imprecise-annotation]  # config values have no single type
     ) -> str:
         result: list[str] = []
         # other outcome untested
@@ -679,6 +679,8 @@ def add_skip_missing_interpreters_to_env(conf: EnvConfigSet, core: CoreConfigSet
 
 
 __all__ = [
+    "PY_FACTORS_RE",
+    "PY_FACTORS_RE_EXPLICIT_VERSION",
     "NoInterpreter",
     "Python",
     "PythonInfo",

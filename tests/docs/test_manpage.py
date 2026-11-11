@@ -101,44 +101,32 @@ def test_manpage_header_shows_tox(manpage_rendered: str) -> None:
     assert "tox" in first_line.lower()
 
 
-def test_manpage_documents_all_commands() -> None:
-    # private names under test
-    from argparse import _SubParsersAction  # ruff:ignore[import-outside-top-level, import-private-name]
+@pytest.fixture(scope="module")
+def tox_help() -> str:
+    return subprocess.run([sys.executable, "-m", "tox", "--help"], capture_output=True, text=True, check=True).stdout
 
-    # private names under test
-    from tox.config.cli.parse import _get_parser_doc  # ruff:ignore[import-outside-top-level, import-private-name]
 
-    parser = _get_parser_doc()
+def test_manpage_documents_all_commands(tox_help: str) -> None:
     rst = _RST_PATH.read_text(encoding="utf-8")
-    assert parser._subparsers is not None  # ruff:ignore[private-member-access]  # internal state
-    choice_actions = [
-        choice_action
-        for action in parser._subparsers._actions  # ruff:ignore[private-member-access]  # internal state
-        if isinstance(action, _SubParsersAction)
-        for choice_action in action._choices_actions  # ruff:ignore[private-member-access]  # internal state
-    ]
-    for choice_action in choice_actions:
-        assert choice_action.dest in rst, (
-            f"command {choice_action.dest!r} missing from manpage, regenerate with: python tools/generate_manpage.py"
+    names = [line.split()[0] for line in tox_help.split("subcommands:", 1)[1].splitlines() if line.startswith("    ")]
+    assert names
+    for name in names:
+        assert f"**{name}**" in rst, (
+            f"command {name!r} missing from manpage, regenerate with: python tools/generate_manpage.py"
         )
 
 
-def test_manpage_documents_all_options() -> None:
-    # private names under test
-    from argparse import SUPPRESS, _SubParsersAction  # ruff:ignore[import-outside-top-level, import-private-name]
-
-    # private names under test
-    from tox.config.cli.parse import _get_parser_doc  # ruff:ignore[import-outside-top-level, import-private-name]
-
-    parser = _get_parser_doc()
+def test_manpage_documents_all_options(tox_help: str) -> None:
     rst = _RST_PATH.read_text(encoding="utf-8")
-    actions = [
-        action
-        for action in {id(a): a for a in parser._actions}.values()  # ruff:ignore[private-member-access]  # internal state
-        if action.help != SUPPRESS and not isinstance(action, _SubParsersAction) and action.option_strings
+    names = [
+        name.rstrip(",")
+        for line in tox_help.splitlines()
+        if line.startswith("  -")
+        for name in line.strip().split("  ", 1)[0].split()
+        if name.startswith("--")
     ]
-    for action in actions:
-        long_opt = next((o for o in action.option_strings if o.startswith("--")), action.option_strings[0])
-        assert long_opt in rst, (
-            f"option {long_opt!r} missing from manpage, regenerate with: python tools/generate_manpage.py"
+    assert names
+    for name in names:
+        assert f"**{name}**" in rst, (
+            f"option {name!r} missing from manpage, regenerate with: python tools/generate_manpage.py"
         )

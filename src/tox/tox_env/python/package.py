@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, cast
 from packaging.requirements import Requirement
 
 from tox.tox_env.errors import Skip
-from tox.tox_env.package import Package, PackageToxEnv, PathPackage
+from tox.tox_env.package import PackageToxEnv, PathPackage
 from tox.util.typing_compat import override
 
 from .api import NoInterpreter, Python, add_skip_missing_interpreters_to_core, add_skip_missing_interpreters_to_env
@@ -23,10 +23,6 @@ if TYPE_CHECKING:
     from tox.tox_env.runner import RunToxEnv
 
     from .pip.req_file import PythonDeps
-
-
-class PythonPackage(Package):  # simplint: ignore[SMP403]  # imported by tox plugins
-    pass
 
 
 class PythonPathPackageWithDeps(PathPackage):

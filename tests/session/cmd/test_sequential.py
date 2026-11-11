@@ -178,10 +178,10 @@ def test_result_json_sequential(
     assert log_report == expected
 
 
-def get_cmd_exit_run_id(  # simplint: ignore[SMP602]  # the report has any JSON shape
-    report: dict[str, Any],  # simplint: ignore[SMP602]  # the report has any JSON shape
+def get_cmd_exit_run_id(
+    report: dict[str, Any],  # simplint: ignore[imprecise-annotation]  # the report has any JSON shape
     name: str,
-    group: str,  # simplint: ignore[SMP602]  # the report has any JSON shape
+    group: str,
 ) -> list[tuple[int | None, str]]:
     return [(i["retcode"], i["run_id"]) for i in report["testenvs"][name].pop(group)]
 
@@ -746,7 +746,7 @@ def test_interrupt_post_commands_runs_after_sigint(tox_project: ToxProjectCreato
     cmd = ["-c", str(tox_project({"tox.toml": toml}).path / "tox.toml"), "r", "-e", "py"]
     process = Popen([sys.executable, "-m", "tox", *cmd], stdout=PIPE, stderr=PIPE, universal_newlines=True)
     while not marker_main.exists() and (process.poll() is None):
-        sleep(0.05)  # simplint: ignore[SMP808]  # polls a marker the child process writes
+        sleep(0.05)  # simplint: ignore[sleep-in-test]  # polls a marker the child process writes
     process.send_signal(_INTERRUPT_SIGNAL)
     _out, err = process.communicate()
     assert process.returncode != 0
@@ -770,7 +770,7 @@ def test_interrupt_post_commands_not_run_by_default(tox_project: ToxProjectCreat
     cmd = ["-c", str(tox_project({"tox.toml": toml}).path / "tox.toml"), "r", "-e", "py"]
     process = Popen([sys.executable, "-m", "tox", *cmd], stdout=PIPE, stderr=PIPE, universal_newlines=True)
     while not marker_main.exists() and (process.poll() is None):
-        sleep(0.05)  # simplint: ignore[SMP808]  # polls a marker the child process writes
+        sleep(0.05)  # simplint: ignore[sleep-in-test]  # polls a marker the child process writes
     process.send_signal(_INTERRUPT_SIGNAL)
     _out, err = process.communicate()
     assert process.returncode != 0
@@ -801,10 +801,10 @@ def test_second_interrupt_stops_post_commands(tox_project: ToxProjectCreator, tm
     cmd = ["-c", str(tox_project({"tox.toml": toml}).path / "tox.toml"), "r", "-e", "py"]
     process = Popen([sys.executable, "-m", "tox", *cmd], stdout=PIPE, stderr=PIPE, universal_newlines=True)
     while not marker_main.exists() and (process.poll() is None):
-        sleep(0.05)  # simplint: ignore[SMP808]  # polls a marker the child process writes
+        sleep(0.05)  # simplint: ignore[sleep-in-test]  # polls a marker the child process writes
     process.send_signal(_INTERRUPT_SIGNAL)
     while not marker_post_start.exists() and (process.poll() is None):
-        sleep(0.05)  # simplint: ignore[SMP808]  # polls a marker the child process writes
+        sleep(0.05)  # simplint: ignore[sleep-in-test]  # polls a marker the child process writes
     process.send_signal(_INTERRUPT_SIGNAL)
     out, _err = process.communicate()
     assert process.returncode != 0
@@ -857,6 +857,19 @@ def test_teardown_continues_after_failure(tox_project: ToxProjectCreator, mocker
     outcome.assert_failed()
     assert "circular dependency detected" in outcome.out
     assert torn_down == ["a", "b"]
+
+
+def test_unexpected_run_error_reports_internal_error(tox_project: ToxProjectCreator, mocker: MockerFixture) -> None:
+    project = tox_project({"tox.toml": '[env_run_base]\npackage = "skip"\n'})
+    mocker.patch(
+        "tox.plugin.manager.MANAGER.tox_before_run_commands", autospec=True, side_effect=RuntimeError("plugin failed")
+    )
+
+    outcome = project.run("r")
+
+    outcome.assert_failed(code=2)
+    assert "internal error" in outcome.out + outcome.err
+    assert "plugin failed" in outcome.out + outcome.err
 
 
 def test_result_json_marks_skipped(tox_project: ToxProjectCreator) -> None:

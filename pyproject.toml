@@ -217,8 +217,6 @@ lint.ignore = [
   "docstring-missing-exception",               # broken with sphinx docs
   "docstring-missing-returns",                 # no restructuredtext support yet
   "docstring-missing-yields",                  # no restructuredtext support yet
-  "hardcoded-bind-all-interfaces",             # Possible binding to all interfaces
-  "implicit-namespace-package",                # no implicit namespaces here
   "incorrect-blank-line-before-class",         # conflicts with no-blank-line-before-class
   "missing-trailing-comma",                    # conflicts with formatter
   "multi-line-summary-first-line",             # conflicts with multi-line-summary-second-line
@@ -227,21 +225,18 @@ lint.ignore = [
   "single-line-implicit-string-concatenation", # conflicts with formatter
   "subprocess-without-shell-equals-true",      # Using subprocess is alright.
   "suspicious-subprocess-import",              # Using subprocess is alright.
-  "too-many-locals",                           ## Too many local variables
   "too-many-positional-arguments",             ## Too many positional arguments
 ]
 lint.per-file-ignores."src/tox/pytest.py" = [
   "pytest-fixture-autouse", # the plugin's shared setup fixtures are meant to apply to every test
 ]
 lint.per-file-ignores."tests/**/*.py" = [
-  "assert",                               # asserts allowed in tests
-  "D",                                    # don't care about documentation in tests
-  "FBT",                                  # don't care about booleans as positional arguments in tests
-  "implicit-namespace-package",           # no implicit namespace
-  "magic-value-comparison",               # Magic value used in comparison, consider replacing with a constant variable
-  "pytest-fixture-autouse",               # shared setup fixtures are meant to apply to every test
-  "subprocess-without-shell-equals-true", # `subprocess` call: check for execution of untrusted input
-  "too-many-arguments",                   # too many arguments to function definition
+  "assert",                     # asserts allowed in tests
+  "FBT",                        # don't care about booleans as positional arguments in tests
+  "implicit-namespace-package", # no implicit namespace
+  "magic-value-comparison",     # Magic value used in comparison, consider replacing with a constant variable
+  "pytest-fixture-autouse",     # shared setup fixtures are meant to apply to every test
+  "too-many-arguments",         # too many arguments to function definition
 ]
 lint.typing-modules = [ "tox.util.typing_compat" ]
 lint.isort = { known-first-party = [
@@ -309,6 +304,7 @@ ini_options.tmp_path_retention_policy = "failed"
 ini_options.timeout = 30
 
 [tool.coverage]
+run.source = [ "tox" ]
 run.parallel = true
 run.plugins = [
   "covdefaults",

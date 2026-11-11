@@ -152,7 +152,7 @@ def test_keyboard_interrupt(tox_project: ToxProjectCreator, demo_pkg_inline: Pat
     cmd = ["-c", str(proj.path / "tox.ini"), "p", "-p", "1", "-e", f"py,py{sys.version_info[0]},dep"]
     process = Popen([sys.executable, "-m", "tox", *cmd], stdout=PIPE, stderr=PIPE, universal_newlines=True)
     while not marker.exists() and (process.poll() is None):
-        sleep(0.05)  # simplint: ignore[SMP808]  # polls a marker the child process writes
+        sleep(0.05)  # simplint: ignore[sleep-in-test]  # polls a marker the child process writes
     process.send_signal(SIGINT)
     out, err = process.communicate()
     assert process.returncode != 0

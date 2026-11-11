@@ -12,7 +12,7 @@ if TYPE_CHECKING:
     from tox.util.json_types import JsonValue
 
 
-def to_native(value: object) -> JsonValue:  # simplint: ignore[SMP602]  # converts any configuration value to JSON
+def to_native(value: object) -> JsonValue:  # simplint: ignore[imprecise-annotation]  # any config value
     """Convert a value to a type that can be serialized to JSON.
 
     :param value: the value to convert
@@ -29,8 +29,8 @@ def to_native(value: object) -> JsonValue:  # simplint: ignore[SMP602]  # conver
     return _to_native_complex(value)
 
 
-def _to_native_complex(  # simplint: ignore[SMP602]  # converts any configuration value to JSON
-    value: object,  # simplint: ignore[SMP602]  # converts any configuration value to JSON
+def _to_native_complex(
+    value: object,  # simplint: ignore[imprecise-annotation]  # converts any configuration value to JSON
 ) -> JsonValue:
     if isinstance(value, SetEnv):
         return {k: to_native(value.load(k)) for k in sorted(value)}
@@ -43,8 +43,8 @@ def _to_native_complex(  # simplint: ignore[SMP602]  # converts any configuratio
     return _to_native_collection(value)
 
 
-def _to_native_collection(  # simplint: ignore[SMP602]  # converts any configuration value to JSON
-    value: object,  # simplint: ignore[SMP602]  # converts any configuration value to JSON
+def _to_native_collection(
+    value: object,  # simplint: ignore[imprecise-annotation]  # converts any configuration value to JSON
 ) -> JsonValue:
     if isinstance(value, Mapping):
         return {str(k): to_native(v) for k, v in value.items()}

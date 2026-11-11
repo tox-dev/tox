@@ -22,10 +22,10 @@ _FORMATS: Final[list[pytest.ParameterSet]] = [
 
 
 @pytest.mark.parametrize(("fmt", "loader"), _FORMATS)
-def test_basic_structure(  # simplint: ignore[SMP602]  # the loaded JSON has any shape
+def test_basic_structure(
     tox_project: ToxProjectCreator,
     fmt: str,
-    loader: Callable[[str], Any],  # simplint: ignore[SMP602]  # the loaded JSON has any shape
+    loader: Callable[[str], Any],  # simplint: ignore[imprecise-annotation]  # the loaded JSON has any shape
 ) -> None:
     project = tox_project({"tox.ini": "[tox]\nno_package = true\n[testenv]\ncommands = python -c pass"})
     result = project.run("c", "-e", "py", "--format", fmt)
@@ -35,10 +35,10 @@ def test_basic_structure(  # simplint: ignore[SMP602]  # the loaded JSON has any
 
 
 @pytest.mark.parametrize(("fmt", "loader"), _FORMATS)
-def test_core_with_flag(  # simplint: ignore[SMP602]  # the loaded JSON has any shape
+def test_core_with_flag(
     tox_project: ToxProjectCreator,
     fmt: str,
-    loader: Callable[[str], Any],  # simplint: ignore[SMP602]  # the loaded JSON has any shape
+    loader: Callable[[str], Any],  # simplint: ignore[imprecise-annotation]  # the loaded JSON has any shape
 ) -> None:
     result = tox_project({"tox.ini": "[tox]\nno_package = true"}).run("c", "-e", "py", "--core", "--format", fmt)
     result.assert_success()
@@ -46,10 +46,10 @@ def test_core_with_flag(  # simplint: ignore[SMP602]  # the loaded JSON has any 
 
 
 @pytest.mark.parametrize(("fmt", "loader"), _FORMATS)
-def test_no_core_by_default(  # simplint: ignore[SMP602]  # the loaded JSON has any shape
+def test_no_core_by_default(
     tox_project: ToxProjectCreator,
     fmt: str,
-    loader: Callable[[str], Any],  # simplint: ignore[SMP602]  # the loaded JSON has any shape
+    loader: Callable[[str], Any],  # simplint: ignore[imprecise-annotation]  # the loaded JSON has any shape
 ) -> None:
     result = tox_project({"tox.ini": "[tox]\nno_package = true"}).run("c", "-e", "py", "--format", fmt)
     result.assert_success()
@@ -57,10 +57,10 @@ def test_no_core_by_default(  # simplint: ignore[SMP602]  # the loaded JSON has 
 
 
 @pytest.mark.parametrize(("fmt", "loader"), _FORMATS)
-def test_core_with_all_envs(  # simplint: ignore[SMP602]  # the loaded JSON has any shape
+def test_core_with_all_envs(
     tox_project: ToxProjectCreator,
     fmt: str,
-    loader: Callable[[str], Any],  # simplint: ignore[SMP602]  # the loaded JSON has any shape
+    loader: Callable[[str], Any],  # simplint: ignore[imprecise-annotation]  # the loaded JSON has any shape
 ) -> None:
     result = tox_project({"tox.ini": "[tox]\nno_package = true\nenv_list = py"}).run("c", "-e", "ALL", "--format", fmt)
     result.assert_success()
@@ -68,10 +68,10 @@ def test_core_with_all_envs(  # simplint: ignore[SMP602]  # the loaded JSON has 
 
 
 @pytest.mark.parametrize(("fmt", "loader"), _FORMATS)
-def test_key_filtering(  # simplint: ignore[SMP602]  # the loaded JSON has any shape
+def test_key_filtering(
     tox_project: ToxProjectCreator,
     fmt: str,
-    loader: Callable[[str], Any],  # simplint: ignore[SMP602]  # the loaded JSON has any shape
+    loader: Callable[[str], Any],  # simplint: ignore[imprecise-annotation]  # the loaded JSON has any shape
 ) -> None:
     project = tox_project({"tox.ini": "[tox]\nno_package = true\n[testenv]\ncommands = python -c pass"})
     result = project.run("c", "-e", "py", "--format", fmt, "-k", "env_name", "commands")
@@ -83,10 +83,10 @@ def test_key_filtering(  # simplint: ignore[SMP602]  # the loaded JSON has any s
 
 
 @pytest.mark.parametrize(("fmt", "loader"), _FORMATS)
-def test_native_types(  # simplint: ignore[SMP602]  # the loaded JSON has any shape
+def test_native_types(
     tox_project: ToxProjectCreator,
     fmt: str,
-    loader: Callable[[str], Any],  # simplint: ignore[SMP602]  # the loaded JSON has any shape
+    loader: Callable[[str], Any],  # simplint: ignore[imprecise-annotation]  # the loaded JSON has any shape
 ) -> None:
     project = tox_project({"tox.ini": "[tox]\nno_package = true\n[testenv]\npackage = skip"})
     result = project.run("c", "-e", "py", "--format", fmt, "-k", "suicide_timeout", "allowlist_externals")
@@ -97,10 +97,10 @@ def test_native_types(  # simplint: ignore[SMP602]  # the loaded JSON has any sh
 
 
 @pytest.mark.parametrize(("fmt", "loader"), _FORMATS)
-def test_multiple_envs(  # simplint: ignore[SMP602]  # the loaded JSON has any shape
+def test_multiple_envs(
     tox_project: ToxProjectCreator,
     fmt: str,
-    loader: Callable[[str], Any],  # simplint: ignore[SMP602]  # the loaded JSON has any shape
+    loader: Callable[[str], Any],  # simplint: ignore[imprecise-annotation]  # the loaded JSON has any shape
 ) -> None:
     project = tox_project({"tox.ini": "[tox]\nno_package = true\nenv_list = a,b\n[testenv]\npackage = skip"})
     result = project.run("c", "-e", "a,b", "--format", fmt)
@@ -111,10 +111,10 @@ def test_multiple_envs(  # simplint: ignore[SMP602]  # the loaded JSON has any s
 
 
 @pytest.mark.parametrize(("fmt", "loader"), _FORMATS)
-def test_unused_keys(  # simplint: ignore[SMP602]  # the loaded JSON has any shape
+def test_unused_keys(
     tox_project: ToxProjectCreator,
     fmt: str,
-    loader: Callable[[str], Any],  # simplint: ignore[SMP602]  # the loaded JSON has any shape
+    loader: Callable[[str], Any],  # simplint: ignore[imprecise-annotation]  # the loaded JSON has any shape
 ) -> None:
     result = tox_project({"tox.ini": "[testenv:py]\nmagical = yes\nmagic = yes"}).run("c", "-e", "py", "--format", fmt)
     result.assert_success()
@@ -122,10 +122,10 @@ def test_unused_keys(  # simplint: ignore[SMP602]  # the loaded JSON has any sha
 
 
 @pytest.mark.parametrize(("fmt", "loader"), _FORMATS)
-def test_no_unused_with_key_filter(  # simplint: ignore[SMP602]  # the loaded JSON has any shape
+def test_no_unused_with_key_filter(
     tox_project: ToxProjectCreator,
     fmt: str,
-    loader: Callable[[str], Any],  # simplint: ignore[SMP602]  # the loaded JSON has any shape
+    loader: Callable[[str], Any],  # simplint: ignore[imprecise-annotation]  # the loaded JSON has any shape
 ) -> None:
     project = tox_project({"tox.ini": "[testenv:py]\nmagical = yes"})
     result = project.run("c", "-e", "py", "--format", fmt, "-k", "env_name")
@@ -134,11 +134,11 @@ def test_no_unused_with_key_filter(  # simplint: ignore[SMP602]  # the loaded JS
 
 
 @pytest.mark.parametrize(("fmt", "loader"), _FORMATS)
-def test_output_to_file(  # simplint: ignore[SMP602]  # the loaded JSON has any shape
+def test_output_to_file(
     tox_project: ToxProjectCreator,
     fmt: str,
-    loader: Callable[[str], Any],  # simplint: ignore[SMP602]  # the loaded JSON has any shape
-    tmp_path: Path,  # simplint: ignore[SMP602]  # the loaded JSON has any shape
+    loader: Callable[[str], Any],  # simplint: ignore[imprecise-annotation]  # the loaded JSON has any shape
+    tmp_path: Path,
 ) -> None:
     out_file = tmp_path / f"config.{fmt}"
     project = tox_project({"tox.ini": "[tox]\nno_package = true"})
@@ -157,10 +157,10 @@ def test_file_output_no_ansi(tox_project: ToxProjectCreator, fmt: str, tmp_path:
 
 
 @pytest.mark.parametrize(("fmt", "loader"), _FORMATS)
-def test_set_env(  # simplint: ignore[SMP602]  # the loaded JSON has any shape
+def test_set_env(
     tox_project: ToxProjectCreator,
     fmt: str,
-    loader: Callable[[str], Any],  # simplint: ignore[SMP602]  # the loaded JSON has any shape
+    loader: Callable[[str], Any],  # simplint: ignore[imprecise-annotation]  # the loaded JSON has any shape
 ) -> None:
     project = tox_project({"tox.ini": "[tox]\nno_package = true\n[testenv]\nset_env =\n    A=1\n    B=hello"})
     result = project.run("c", "-e", "py", "--format", fmt, "-k", "set_env")
@@ -170,10 +170,10 @@ def test_set_env(  # simplint: ignore[SMP602]  # the loaded JSON has any shape
 
 
 @pytest.mark.parametrize(("fmt", "loader"), _FORMATS)
-def test_deps(  # simplint: ignore[SMP602]  # the loaded JSON has any shape
+def test_deps(
     tox_project: ToxProjectCreator,
     fmt: str,
-    loader: Callable[[str], Any],  # simplint: ignore[SMP602]  # the loaded JSON has any shape
+    loader: Callable[[str], Any],  # simplint: ignore[imprecise-annotation]  # the loaded JSON has any shape
 ) -> None:
     project = tox_project({"tox.ini": "[tox]\nno_package = true\n[testenv]\ndeps =\n    pytest\n    flask>=2.0"})
     result = project.run("c", "-e", "py", "--format", fmt, "-k", "deps")

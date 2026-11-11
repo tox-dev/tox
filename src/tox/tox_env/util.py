@@ -1,4 +1,4 @@
-from __future__ import annotations  # simplint: ignore[SMP104]  # imported by tox plugins
+from __future__ import annotations  # simplint: ignore[catch-all-module]  # shared environment config
 
 from pathlib import Path
 from typing import TYPE_CHECKING

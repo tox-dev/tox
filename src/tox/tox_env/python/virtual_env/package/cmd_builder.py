@@ -155,7 +155,7 @@ class VenvCmdBuilder(PythonPackageToxEnv, ABC):
 
     @staticmethod
     def _wheel_package(path: Path, extras: set[str]) -> WheelPackage:
-        wheel_dist: Final[WheelDistribution] = WheelDistribution(path)
+        wheel_dist: Final[_WheelDistribution] = _WheelDistribution(path)
         metadata: Final[PackageMetadata] = wheel_dist.metadata
         if "Name" not in metadata:
             missing_name_error: Final[str] = f"no Name in the metadata of {path}"
@@ -190,9 +190,7 @@ class VirtualEnvCmdBuilder(VenvCmdBuilder, VirtualEnv):
         return "virtualenv-cmd-builder"
 
 
-class WheelDistribution(  # simplint: ignore[SMP403]  # imported by tox plugins
-    Distribution
-):  # cannot subclass has type Any  # simplint: ignore[SMP403]  # imported by tox plugins
+class _WheelDistribution(Distribution):
     def __init__(self, wheel: Path) -> None:
         self._wheel = wheel
         self._dist_name: str | None = None

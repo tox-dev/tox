@@ -48,7 +48,7 @@ def stable_topological_sort(graph: dict[str, set[str]]) -> list[str]:
     result = [n for n in topology if n in to_order]  # filter out missing nodes we extended
 
     if len(result) < len(to_order):
-        identify_cycle(graph)
+        _identify_cycle(graph)
         msg = "could not order tox environments and failed to detect circle"  # pragma: no cover  # untested error path
         raise ValueError(msg)  # pragma: no cover  # untested error path
     return result
@@ -66,7 +66,7 @@ def _next_ready(need_to_visit: Iterable[str], ready_to_visit: set[str]) -> str |
     return next((node for node in need_to_visit if node in ready_to_visit), None)
 
 
-def identify_cycle(graph: dict[str, set[str]]) -> None:  # simplint: ignore[SMP403]  # imported by tox plugins
+def _identify_cycle(graph: dict[str, set[str]]) -> None:
     path: dict[str, None] = OrderedDict()
     visited = set()
 

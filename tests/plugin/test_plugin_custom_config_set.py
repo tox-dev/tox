@@ -28,9 +28,9 @@ def _custom_config_set(mocker: MockerFixture) -> None:
 
     @impl
     def tox_add_env_config(env_conf: EnvConfigSet, state: State) -> None:
-        def factory(  # simplint: ignore[SMP602]  # test values have any type
+        def factory(
             for_env: str,
-            raw: object,  # simplint: ignore[SMP602]  # test values have any type
+            raw: object,  # simplint: ignore[imprecise-annotation]  # test values have any type
         ) -> DockerConfigSet:
             assert isinstance(raw, str)
             section = Section("docker", raw)

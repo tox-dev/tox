@@ -1,10 +1,11 @@
 from __future__ import annotations
 
 import operator
+import os
 
 import pytest
 
-from tox.util.ci import _ENV_VARS, is_ci  # ruff:ignore[import-private-name]  # sibling module internal
+from tox.util.ci import is_ci
 
 
 @pytest.mark.parametrize(
@@ -27,8 +28,7 @@ from tox.util.ci import _ENV_VARS, is_ci  # ruff:ignore[import-private-name]  # 
     ids=operator.itemgetter(0),
 )
 def test_is_ci(env_var: tuple[str, str | None], monkeypatch: pytest.MonkeyPatch) -> None:
-    for var in _ENV_VARS:
-        monkeypatch.delenv(var, raising=False)
+    monkeypatch.setattr(os, "environ", {})
     monkeypatch.setenv(env_var[0], env_var[1] or "")
     assert is_ci()
 
@@ -46,22 +46,19 @@ def test_is_ci(env_var: tuple[str, str | None], monkeypatch: pytest.MonkeyPatch)
     ids=operator.itemgetter(0),
 )
 def test_is_ci_bad_set(env_var: tuple[str, str], monkeypatch: pytest.MonkeyPatch) -> None:
-    for var in _ENV_VARS:
-        monkeypatch.delenv(var, raising=False)
+    monkeypatch.setattr(os, "environ", {})
     monkeypatch.setenv(env_var[0], env_var[1])
     assert not is_ci()
 
 
 def test_is_ci_not(monkeypatch: pytest.MonkeyPatch) -> None:
-    for var in _ENV_VARS:
-        monkeypatch.delenv(var, raising=False)
+    monkeypatch.setattr(os, "environ", {})
     assert not is_ci()
 
 
 def test_is_ci_not_teamcity_local(monkeypatch: pytest.MonkeyPatch) -> None:
     # pycharm sets this
-    for var in _ENV_VARS:
-        monkeypatch.delenv(var, raising=False)
+    monkeypatch.setattr(os, "environ", {})
 
     monkeypatch.setenv("TEAMCITY_VERSION", "LOCAL")
     assert not is_ci()
@@ -69,8 +66,7 @@ def test_is_ci_not_teamcity_local(monkeypatch: pytest.MonkeyPatch) -> None:
 
 @pytest.mark.parametrize("value", ["false", "0", ""])
 def test_is_ci_generic_flag_opted_out(value: str, monkeypatch: pytest.MonkeyPatch) -> None:
-    for var in _ENV_VARS:
-        monkeypatch.delenv(var, raising=False)
+    monkeypatch.setattr(os, "environ", {})
     monkeypatch.setenv("CI", value)
 
     assert is_ci() is False

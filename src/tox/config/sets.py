@@ -21,7 +21,7 @@ if TYPE_CHECKING:
     from .loader.section import Section
     from .main import Config
 
-V = TypeVar("V")  # simplint: ignore[SMP101, SMP404]  # exported, renaming breaks importers
+V = TypeVar("V")
 
 
 class ConfigSet(ABC):
@@ -38,8 +38,10 @@ class ConfigSet(ABC):
         self._env_name = env_name
         self._conf = conf
         #: active configuration loaders, can alter to change configuration values
-        self.loaders: list[Loader[Any]] = []  # simplint: ignore[SMP602]  # mixed config types
-        self._defined: dict[str, ConfigDefinition[Any]] = {}  # simplint: ignore[SMP602]  # mixed config types
+        self.loaders: list[Loader[Any]] = []  # simplint: ignore[imprecise-annotation]  # mixed config types
+        self._defined: dict[
+            str, ConfigDefinition[Any]  # simplint: ignore[imprecise-annotation]  # mixed config types
+        ] = {}
         self._keys: dict[str, None] = {}
         self._alias: dict[str, str] = {}
         self._final = False
@@ -50,7 +52,9 @@ class ConfigSet(ABC):
         """Register the configuration keys this set provides."""
         raise NotImplementedError
 
-    def __getitem__(self, item: str) -> Any:  # simplint: ignore[SMP602]  # config values have no single type
+    def __getitem__(
+        self, item: str
+    ) -> Any:  # simplint: ignore[imprecise-annotation]  # config values have no single type
         """Get the config value for a given key (will materialize in case of dynamic config).
 
         :param item: the config key
@@ -60,9 +64,9 @@ class ConfigSet(ABC):
         """
         return self.load(item)
 
-    def load(  # simplint: ignore[SMP602]  # config values have no single type
+    def load(
         self, item: str, chain: list[str] | None = None
-    ) -> Any:  # simplint: ignore[SMP602]  # config values have no single type
+    ) -> Any:  # simplint: ignore[imprecise-annotation]  # config values have no single type
         """Get the config value for a given key (will materialize in case of dynamic config).
 
         :param item: the config key
@@ -106,8 +110,8 @@ class ConfigSet(ABC):
     def get_configs(
         self,
     ) -> Generator[
-        ConfigDefinition[Any], None, None  # simplint: ignore[SMP602]  # config values have no single type
-    ]:  # simplint: ignore[SMP602]  # config values have no single type
+        ConfigDefinition[Any], None, None  # simplint: ignore[imprecise-annotation]  # config values have no single type
+    ]:
         """Iterate over the config definitions, one per config.
 
         :yields: the definition of each config, keyed by its first key
@@ -129,7 +133,8 @@ class ConfigSet(ABC):
         default: Callable[[Config, str | None], V],
         desc: str,
         post_process: Callable[[V], V] | None = None,
-        factory: Factory[Any] | None = None,  # simplint: ignore[SMP602]  # config values have no single type
+        factory: Factory[Any]  # simplint: ignore[imprecise-annotation]  # config values have no single type
+        | None = None,
     ) -> ConfigDynamicDefinition[V]: ...
 
     @overload
@@ -140,7 +145,8 @@ class ConfigSet(ABC):
         default: None,
         desc: str,
         post_process: Callable[[V | None], V | None] | None = None,
-        factory: Factory[Any] | None = None,  # simplint: ignore[SMP602]  # config values have no single type
+        factory: Factory[Any]  # simplint: ignore[imprecise-annotation]  # config values have no single type
+        | None = None,
     ) -> ConfigDynamicDefinition[V | None]: ...
 
     @overload
@@ -151,7 +157,8 @@ class ConfigSet(ABC):
         default: V,
         desc: str,
         post_process: Callable[[V], V] | None = None,
-        factory: Factory[Any] | None = None,  # simplint: ignore[SMP602]  # config values have no single type
+        factory: Factory[Any]  # simplint: ignore[imprecise-annotation]  # config values have no single type
+        | None = None,
     ) -> ConfigDynamicDefinition[V]: ...
 
     @overload
@@ -162,7 +169,8 @@ class ConfigSet(ABC):
         default: Callable[[Config, str | None], V],
         desc: str,
         post_process: Callable[[V], V] | None = None,
-        factory: Factory[Any] | None = None,  # simplint: ignore[SMP602]  # config values have no single type
+        factory: Factory[Any]  # simplint: ignore[imprecise-annotation]  # config values have no single type
+        | None = None,
     ) -> ConfigDynamicDefinition[V]: ...
 
     @overload
@@ -173,7 +181,8 @@ class ConfigSet(ABC):
         default: Callable[[Config, str | None], V | None] | V | None,
         desc: str,
         post_process: Callable[[V | None], V | None] | None = None,
-        factory: Factory[Any] | None = None,  # simplint: ignore[SMP602]  # config values have no single type
+        factory: Factory[Any]  # simplint: ignore[imprecise-annotation]  # config values have no single type
+        | None = None,
     ) -> ConfigDynamicDefinition[V | None]: ...
 
     @overload
@@ -184,7 +193,8 @@ class ConfigSet(ABC):
         default: Callable[[Config, str | None], V] | V,
         desc: str,
         post_process: Callable[[V], V] | None = None,
-        factory: Factory[Any] | None = None,  # simplint: ignore[SMP602]  # config values have no single type
+        factory: Factory[Any]  # simplint: ignore[imprecise-annotation]  # config values have no single type
+        | None = None,
     ) -> ConfigDynamicDefinition[V]: ...
 
     def add_config(  # ruff:ignore[too-many-arguments]  # public signature
@@ -194,7 +204,8 @@ class ConfigSet(ABC):
         default: Callable[[Config, str | None], V] | V | None,
         desc: str,
         post_process: Callable[[V], V] | None = None,
-        factory: Factory[Any] | None = None,  # simplint: ignore[SMP602]  # config values have no single type
+        factory: Factory[Any]  # simplint: ignore[imprecise-annotation]  # config values have no single type
+        | None = None,
     ) -> ConfigDynamicDefinition[V]:
         """Add configuration value.
 
@@ -458,11 +469,11 @@ class EnvConfigSet(ConfigSet):
             values.export({"PYTHONIOENCODING": lambda: "utf-8", **self.exported_set_env_loader()})
             return values
 
-        def set_env_factory(  # simplint: ignore[SMP602]  # config values have no single type
-            raw: object,  # simplint: ignore[SMP602]  # config values have no single type
+        def set_env_factory(
+            raw: object,  # simplint: ignore[imprecise-annotation]  # config values have no single type
         ) -> SetEnv:
-            def is_valid_value(  # simplint: ignore[SMP602]  # config values have no single type
-                value: object,  # simplint: ignore[SMP602]  # config values have no single type
+            def is_valid_value(
+                value: object,  # simplint: ignore[imprecise-annotation]  # config values have no single type
             ) -> bool:
                 if isinstance(value, SetEnvValue):
                     return True
