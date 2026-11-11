@@ -4326,28 +4326,28 @@ sha256 = "b854164df26db268af05f49aa5c0344b10e27a494343ff05b1e0bad3b135f5a7"
 
 [[packages]]
 name = "ty"
-version = "0.0.92"
+version = "0.0.100"
 marker = "\"dev\" in dependency_groups or \"type\" in dependency_groups or \"type-min\" in dependency_groups"
 requires-python = ">=3.8"
 index = "https://pypi.org/simple/"
 
 [packages.sdist]
-name = "ty-0.0.92.tar.gz"
-upload-time = 2026-10-26 03:13:58.999066+00:00
-url = "https://files.pythonhosted.org/packages/45/f8/2629d3533019eec56b0008d93198b2cb1575795e017c52759d6ddbdad353/ty-0.0.92.tar.gz"
-size = 8071788
+name = "ty-0.0.100.tar.gz"
+upload-time = 2026-11-09 20:16:27.534294+00:00
+url = "https://files.pythonhosted.org/packages/2a/b4/ac430b910566e28b1cd01faf7ee07ca38bcd7585b30fce8fd25dfc104edc/ty-0.0.100.tar.gz"
+size = 8238916
 
 [packages.sdist.hashes]
-sha256 = "d08ff5d89bb63780e30837446ea08ddae3db73ae0b872a441a5b514d37726459"
+sha256 = "ca75081ead663c077e40b90c38b6e9f039b6d168051e02918a8a1d7ecc4fa0dd"
 
 [[packages.wheels]]
-name = "ty-0.0.92-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl"
-upload-time = 2026-10-26 03:13:31.851841+00:00
-url = "https://files.pythonhosted.org/packages/26/77/6fd2ec1fd78eb783e93b89f1e1aee7fce9095b32dc5f6cc0fc831bd903f4/ty-0.0.92-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl"
-size = 14700747
+name = "ty-0.0.100-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl"
+upload-time = 2026-11-09 20:16:05.195593+00:00
+url = "https://files.pythonhosted.org/packages/b8/56/02b46b2a5f78f6edbd29afde54fce4461dd6462f901974deac0c9c1a987b/ty-0.0.100-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl"
+size = 16749475
 
 [packages.wheels.hashes]
-sha256 = "a9b6b40225ddd0c049b299e0a655ce04d4de594c6cac3fb9c1e020b113494924"
+sha256 = "e23076fd67dc5c740a5cd292f3bbc10b82127dd01df3cb559e12b3144ceef72d"
 
 [[packages]]
 name = "types-colorama"
