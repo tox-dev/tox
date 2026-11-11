@@ -3,6 +3,7 @@ from __future__ import annotations
 import errno
 import os
 import stat
+import subprocess
 import sys
 from pathlib import Path
 from shutil import rmtree
@@ -119,6 +120,40 @@ def test_ensure_empty_dir_replaces_dir_symlink(tmp_path: Path) -> None:
     assert dest.is_dir()
     assert not dest.is_symlink()
     assert (outside / "victim").read_text() == "keep"
+
+
+@pytest.mark.skipif(sys.platform != "win32", reason="junctions exist only on Windows")
+def test_ensure_empty_dir_replaces_junction(tmp_path: Path) -> None:
+    target = tmp_path / "target"
+    target.mkdir()
+    (target / "keep.txt").write_text("keep", encoding="utf-8")
+    dest = tmp_path / "dest"
+    subprocess.run(
+        [os.environ["COMSPEC"], "/c", "mklink", "/J", str(dest), str(target)], check=True, capture_output=True
+    )
+
+    ensure_empty_dir(dest)
+
+    assert (target / "keep.txt").read_text(encoding="utf-8") == "keep"
+    assert dest.is_dir()
+    assert getattr(dest.lstat(), "st_reparse_tag", None) != getattr(stat, "IO_REPARSE_TAG_MOUNT_POINT", None)
+    assert list(dest.iterdir()) == []
+
+
+@pytest.mark.skipif(sys.platform != "win32", reason="junctions exist only on Windows")
+def test_ensure_empty_dir_replaces_dangling_junction(tmp_path: Path) -> None:
+    dest = tmp_path / "dest"
+    target = tmp_path / "missing"
+    subprocess.run(
+        [os.environ["COMSPEC"], "/c", "mklink", "/J", str(dest), str(target)], check=True, capture_output=True
+    )
+
+    ensure_empty_dir(dest)
+
+    assert dest.is_dir()
+    assert getattr(dest.lstat(), "st_reparse_tag", None) != getattr(stat, "IO_REPARSE_TAG_MOUNT_POINT", None)
+    assert list(dest.iterdir()) == []
+    assert not target.exists()
 
 
 @pytest.mark.skipif(sys.platform == "win32", reason="dir_fd is unavailable on Windows")
