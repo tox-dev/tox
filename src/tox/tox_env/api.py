@@ -407,6 +407,10 @@ class ToxEnv(ABC):  # ruff:ignore[too-many-public-methods]  # public facade
     def _done_with_setup(self) -> None:  # ruff:ignore[empty-method-without-abstract-decorator] # empty abstract base class
         ...
 
+    def clean(self) -> None:
+        """Remove the environment so it can be recreated."""
+        self._clean()
+
     def teardown(self) -> None:
         """Tear the environment down, once, and notify the plugins that it is torn down."""
         if not self._run_state["teardown"]:
