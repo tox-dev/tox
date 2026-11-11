@@ -65,7 +65,7 @@ def test_parallel_general(tox_project: ToxProjectCreator, monkeypatch: MonkeyPat
             raise Fail(msg)
         return prev_setup(self)
 
-    prev_setup = ToxEnv._setup_env  # ruff:ignore[private-member-access]  # internal state
+    prev_setup = ToxEnv._setup_env  # ruff:ignore[private-member-access]  # injects one setup failure
     mocker.patch.object(ToxEnv, "_setup_env", autospec=True, side_effect=setup)
     monkeypatch.setenv("PATH", "")
 

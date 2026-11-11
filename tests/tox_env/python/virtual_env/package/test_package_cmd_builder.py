@@ -6,12 +6,17 @@ from typing import TYPE_CHECKING, Final
 from zipfile import ZIP_DEFLATED, ZipFile
 
 import pytest
+from packaging.requirements import Requirement
+
+from tox.config.sets import EnvConfigSet
+from tox.tox_env.python.virtual_env.package.cmd_builder import VenvCmdBuilder
+from tox.tox_env.python.virtual_env.package.pyproject import Pep517VirtualEnvPackager
 
 if TYPE_CHECKING:
     from collections.abc import Callable
     from pathlib import Path
 
-    from pytest_mock import MockType
+    from pytest_mock import MockerFixture, MockType
 
     from tox.pytest import ToxProject, ToxProjectCreator, ToxRunOutcome
 
@@ -377,3 +382,16 @@ def test_build_wheel_external_creates_change_dir(tox_project: ToxProjectCreator)
 
     assert build_dir.is_dir(), result.out
     assert "No such file or directory" not in result.out, result.out
+
+
+def test_cmd_builder_load_deps_for_env(mocker: MockerFixture) -> None:
+    builder = mocker.MagicMock(spec=VenvCmdBuilder)
+    mock_meta_env = mocker.create_autospec(Pep517VirtualEnvPackager, instance=True)
+    mock_meta_env.load_deps_for_env.return_value = [Requirement("requests>=2")]
+    builder._sdist_meta_tox_env = mock_meta_env  # ruff:ignore[private-member-access]  # injects the metadata environment
+    mock_conf = mocker.create_autospec(EnvConfigSet, instance=True)
+
+    result = VenvCmdBuilder.load_deps_for_env(builder, mock_conf)
+
+    assert result == [Requirement("requests>=2")]
+    mock_meta_env.load_deps_for_env.assert_called_once_with(mock_conf)

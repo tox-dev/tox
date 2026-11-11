@@ -75,7 +75,7 @@ def test_config_contains_env(tox_ini_conf: ToxIniCreator) -> None:
 
 def test_config_contains_empty_env_name(empty_config: Config) -> None:
     # a falsy (empty) environment name must still be reported as present, not swallowed by a truthiness check
-    empty_config._extra_envs = [""]  # ruff:ignore[private-member-access]
+    empty_config._extra_envs = [""]  # ruff:ignore[private-member-access]  # empty name cannot be expressed in tox.ini
     assert "" in empty_config
 
 
