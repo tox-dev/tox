@@ -292,8 +292,8 @@ class EnvSelector:
         from tox.plugin.manager import MANAGER  # ruff:ignore[import-outside-top-level]  # avoids an import cycle
 
         self._manager = MANAGER
-        self._log_handler = self._state._options.log_handler  # ruff:ignore[private-member-access]  # internal access
-        self._journal = self._state._journal  # ruff:ignore[private-member-access]  # internal access
+        self._log_handler = state.log_handler
+        self._journal = state.journal
         self._provision: tuple[bool, str] | None = None
 
         self._state.conf.core.add_config("labels", dict[str, EnvList], {}, "core labels")

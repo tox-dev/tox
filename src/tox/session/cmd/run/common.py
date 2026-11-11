@@ -258,7 +258,7 @@ def execute(  # keeps the signature
     finally:
         ordered_results = _order_results(state, results, to_run_list)
         # write the journal
-        write_journal(state.conf.options.result_json, state._journal)  # ruff:ignore[private-member-access]
+        write_journal(state.conf.options.result_json, state.journal)
         # let editors discover an environment
         _record_venv_redirect(state)
         # warn about unused config keys
@@ -302,7 +302,7 @@ class ToxSpinner(Spinner):  # simplint: ignore[SMP403]  # imported by tox plugin
         state: State,
         total: int,  # keeps the signature
     ) -> None:
-        stream = state._options.log_handler.stdout  # ruff:ignore[private-member-access]  # internal access
+        stream = state.log_handler.stdout
         super().__init__(
             # animation frames and erase sequences belong to an interactive terminal, never to redirected output
             enabled=enabled and stream.isatty(),
@@ -357,7 +357,7 @@ def _do_queue_and_wait(  # ruff:ignore[too-many-arguments]  # public signature
     spinner: ToxSpinner,
     live: bool,  # ruff:ignore[boolean-type-hint-positional-argument]  # keeps the signature
 ) -> None:
-    options = state._options  # ruff:ignore[private-member-access]  # internal access
+    options = state.conf.options
     with spinner:
         completed: set[str] = set()
         envs_to_run_generator = ready_to_run_envs(state, to_run_list, completed)
@@ -366,13 +366,13 @@ def _do_queue_and_wait(  # ruff:ignore[too-many-arguments]  # public signature
             spinner.add(tox_env.conf.name)
             return run_one(
                 tox_env,
-                options.parsed.no_test or options.parsed.package_only,
+                options.no_test or options.package_only,
                 suspend_display=live is False,
             )
 
         env_list: list[str] = []
         stop_scheduling = False
-        fail_fast_enabled = options.parsed.fail_fast or any(
+        fail_fast_enabled = options.fail_fast or any(
             cast("RunToxEnv", state.envs[env]).conf["fail_fast"] for env in to_run_list
         )
         with ThreadPoolExecutor(max_workers=max_workers, thread_name_prefix="tox-driver") as executor:
@@ -395,7 +395,7 @@ def _do_queue_and_wait(  # ruff:ignore[too-many-arguments]  # public signature
                     result = _collect_completed(future_to_env, completed_future, interrupt)
                     results.append(result)
                     completed.add(result.name)
-                    if _stops_scheduling(result, fail_fast=options.parsed.fail_fast):
+                    if _stops_scheduling(result, fail_fast=options.fail_fast):
                         # stop scheduling new work but let running environments finish: only a user interrupt
                         # abandons them (cancel only stops futures the executor has not started yet)
                         stop_scheduling = True
@@ -558,12 +558,9 @@ def _handle_one_run_done(  # simplint: ignore[SMP403]  # imported by tox plugins
                 pkg_out_err_list.append(pkg_out_err)
         if not success or tox_env.conf["parallel_show_output"] or state.conf.options.list_dependencies:
             for pkg_out_err in pkg_out_err_list:
-                # internal access, not reached in tests
-                state._options.log_handler.write_out_err(pkg_out_err)  # pragma: no cover  # ruff:ignore[private-member-access]
+                state.log_handler.write_out_err(pkg_out_err)  # pragma: no cover  # failing parallel package build
             if out_err is not None:  # pragma: no branch # first show package build
-                state._options.log_handler.write_out_err(  # ruff:ignore[private-member-access]  # internal access
-                    out_err
-                )
+                state.log_handler.write_out_err(out_err)
 
 
 def _tear_down(tox_env: ToxEnv) -> None:

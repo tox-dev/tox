@@ -16,6 +16,7 @@ if TYPE_CHECKING:
 
     from tox.config.cli.parse import Options
     from tox.config.cli.parser import ToxParser
+    from tox.report import ToxHandler
 
 
 class State:
@@ -42,11 +43,29 @@ class State:
         self._selector: EnvSelector | None = None
 
     @property
+    def log_handler(self) -> ToxHandler:
+        """The handler for run output."""
+        return self._options.log_handler
+
+    @property
+    def journal(self) -> Journal:
+        """The run journal."""
+        return self._journal
+
+    @property
     def envs(self) -> EnvSelector:
         """Access to the tox environments, selected on first access."""
         if self._selector is None:
             self._selector = EnvSelector(self)
         return self._selector
+
+    def run_command(self) -> int:
+        """Run the selected command.
+
+        :returns: the command's exit code
+
+        """
+        return self._options.cmd_handlers[self.conf.options.command](self)
 
 
 @impl
