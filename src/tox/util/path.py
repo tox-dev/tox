@@ -52,6 +52,12 @@ def ensure_empty_dir(path: Path, except_filename: str | None = None) -> None:
     """
     if path.is_symlink():
         path.unlink()
+    elif (
+        sys.platform == "win32"
+        and os.path.lexists(path)
+        and getattr(path.lstat(), "st_reparse_tag", None) == getattr(stat, "IO_REPARSE_TAG_MOUNT_POINT", None)
+    ):
+        path.rmdir()
     if path.exists():
         if path.is_dir():
             directory_flag: Final[int | None] = getattr(os, "O_DIRECTORY", None)
