@@ -117,6 +117,30 @@ class ConfigSet(ABC):
             if key == next(iter(definition.keys)):
                 yield definition
 
+    def replace_default(self, key: str, default: Callable[[Config, str | None], V]) -> None:
+        """Replace a dynamic setting's default before its first read.
+
+        :param key: the setting name
+        :param default: the new default factory
+
+        :raises TypeError: when the setting is a constant
+
+        """
+        definition = self._defined[key]
+        if not isinstance(definition, ConfigDynamicDefinition):
+            msg = f"{key} is a constant and has no default"
+            raise TypeError(msg)
+        definition.default = default
+
+    def overwrite(self, key: str, value: V) -> None:
+        """Force a setting's value, including one supplied by the source.
+
+        :param key: the setting name
+        :param value: the value to use
+
+        """
+        self._defined[key].overwrite(value)
+
     def mark_finalized(self) -> None:
         """Mark the set as final, after which no further configuration can be added."""
         self._final = True

@@ -117,6 +117,31 @@ def test_config_lazy_constant(conf_builder: ConfBuilder) -> None:
     assert lazy_const == 2
 
 
+@pytest.mark.parametrize(
+    ("configured", "expected"),
+    [pytest.param("", 42, id="default"), pytest.param("answer = 7", 7, id="configured")],
+)
+def test_replace_default(conf_builder: ConfBuilder, configured: str, expected: int) -> None:
+    config_set = conf_builder(configured)
+    config_set.add_config("answer", of_type=int, default=0, desc="answer")
+    config_set.replace_default("answer", lambda _conf, _env_name: 42)
+    assert config_set["answer"] == expected
+
+
+def test_replace_default_rejects_constant(conf_builder: ConfBuilder) -> None:
+    config_set = conf_builder("")
+    config_set.add_constant("answer", desc="answer", value=1)
+    with pytest.raises(TypeError, match="answer is a constant and has no default"):
+        config_set.replace_default("answer", lambda _conf, _env_name: 42)
+
+
+def test_overwrite_configured_value(conf_builder: ConfBuilder) -> None:
+    config_set = conf_builder("answer = 7")
+    config_set.add_config("answer", of_type=int, default=0, desc="answer")
+    config_set.overwrite("answer", 42)
+    assert config_set["answer"] == 42
+
+
 def test_config_redefine_constant_fail(conf_builder: ConfBuilder) -> None:
     config_set = conf_builder("path = path")
     config_set.add_constant(keys="path", desc="desc", value="value")
