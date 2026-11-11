@@ -90,12 +90,12 @@ def _run_basic_pass(
 
 def _create_mock_env(mocker: MockerFixture, stderr_color: str | None = None) -> ToxEnv:
     # Create a mock tox environment with no_capture=False to prevent console inheritance.
-    conf = mocker.create_autospec(EnvConfigSet, instance=True)
-    if stderr_color is not None:
-        conf._conf = SimpleNamespace(  # ruff:ignore[private-member-access]  # internal state
-            options=SimpleNamespace(stderr_color=stderr_color)
-        )
-    return mocker.create_autospec(ToxEnv, instance=True, conf=conf, options=SimpleNamespace(no_capture=False))
+    return mocker.create_autospec(
+        ToxEnv,
+        instance=True,
+        conf=mocker.create_autospec(EnvConfigSet, instance=True),
+        options=SimpleNamespace(no_capture=False, stderr_color=stderr_color),
+    )
 
 
 class FakeOutErr:

@@ -242,8 +242,7 @@ class Execute(ABC):
         stderr_color = None
         if self._colored:
             try:
-                cfg_color = env.conf._conf.options.stderr_color  # ruff:ignore[private-member-access]  # internal access
-                stderr_color = getattr(Fore, cfg_color)
+                stderr_color = getattr(Fore, env.options.stderr_color)
             except (AttributeError, KeyError, TypeError):  # many tests have a mocked 'env'
                 stderr_color = Fore.RED
             if sys.platform == "win32" and show:
