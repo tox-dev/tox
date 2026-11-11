@@ -290,6 +290,14 @@ class Config:
                 conf_set.loaders.extend(loaders)
             return conf_set
 
+    def iter_loaded_sections(self) -> Iterator[tuple[str, ConfigSet]]:
+        """Iterate configuration sets created so far.
+
+        :returns: section keys paired with their configuration sets
+
+        """
+        return ((key[0], conf) for key, conf in self._key_to_conf_set.items())
+
     def clear_env(self, name: str) -> None:
         """Forget the configuration loaded for an environment, so it is loaded again when next used.
 

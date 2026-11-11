@@ -55,13 +55,11 @@ def gen_schema(state: State) -> int:
 
     properties = _get_schema(core, path="#/properties")
 
-    # This accesses plugins that register new sections (like tox-gh)
-    # Accessing a private member since this is not exposed yet and the
-    # interface includes the internal storage tuple
+    # Plugins can register sections beyond tox's built-in ones.
     sections = {
         key: conf
-        for s, conf in state.conf._key_to_conf_set.items()  # ruff:ignore[private-member-access]  # internal access
-        if (key := s[0].split(".")[0]) not in {"env_run_base", "env_pkg_base", "env"}
+        for section_key, conf in state.conf.iter_loaded_sections()
+        if (key := section_key.split(".")[0]) not in {"env_run_base", "env_pkg_base", "env"}
     }
     for key, conf in sections.items():
         properties[key] = {
