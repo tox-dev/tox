@@ -39,7 +39,8 @@ def _to_native_complex(
     if isinstance(value, EnvList):
         return value.envs
     if isinstance(value, Command):
-        return value.shell
+        prefix = value.raw_args[: len(value.raw_args) - len(value.args)]
+        return " ".join([*prefix, value.shell])
     return _to_native_collection(value)
 
 

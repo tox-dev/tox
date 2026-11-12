@@ -54,7 +54,8 @@ def stringify(value: object) -> tuple[str, bool]:  # ruff:ignore[too-many-return
     if isinstance(value, EnvList):
         return "\n".join(value.envs), True
     if isinstance(value, Command):
-        return quote_args(value.args), True
+        prefix = value.raw_args[: len(value.raw_args) - len(value.args)]
+        return " ".join([*prefix, quote_args(value.args)]), True
     if isinstance(value, SetEnv):
         return stringify({key: value.load(key) for key in sorted(value)})
     if isinstance(value, (PythonDeps, PythonConstraints)):

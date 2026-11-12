@@ -78,6 +78,13 @@ def test_show_config_commands(tox_project: ToxProjectCreator) -> None:
     )
 
 
+def test_show_config_commands_exit_code_prefix(tox_project: ToxProjectCreator) -> None:
+    ini = "[testenv]\npackage = skip\ncommands =\n    - python -c pass\n    ! python -c fail"
+    outcome = tox_project({"tox.ini": ini}).run("c", "-e", "py", "-k", "commands")
+    outcome.assert_success()
+    outcome.assert_out_err("[testenv:py]\ncommands =\n  - python -c pass\n  ! python -c fail\n", "")
+
+
 def test_show_config_filter_keys(tox_project: ToxProjectCreator) -> None:
     project = tox_project({"tox.ini": "[testenv]\nmagic=yes"})
     outcome = project.run("c", "-e", "py", "-k", "no_package", "env_name", "--core")
