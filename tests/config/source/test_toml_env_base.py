@@ -395,6 +395,27 @@ def test_env_base_keyed_factor_description(tox_project: ToxProjectCreator) -> No
     outcome.assert_out_err("[testenv:sync-python]\ndescription = Sync python artifacts\n", "")
 
 
+@pytest.mark.parametrize(
+    ("env_name", "expected"),
+    [
+        pytest.param("build-flit-core", "flit-core", id="hyphenated"),
+        pytest.param("build-flit", "flit", id="prefix-of-hyphenated"),
+    ],
+)
+def test_env_base_keyed_factor_hyphenated_value(tox_project: ToxProjectCreator, env_name: str, expected: str) -> None:
+    project = tox_project({
+        "tox.toml": textwrap.dedent("""\
+            [env_base.build]
+            factors = [{backend = ["flit", "flit-core"]}]
+            package = "skip"
+            description = "Build with {factor:backend}"
+        """),
+    })
+    outcome = project.run("c", "-e", env_name, "-k", "description")
+    outcome.assert_success()
+    outcome.assert_out_err(f"[testenv:{env_name}]\ndescription = Build with {expected}\n", "")
+
+
 def test_env_base_keyed_factor_two_groups(tox_project: ToxProjectCreator) -> None:
     project = tox_project({
         "tox.toml": textwrap.dedent("""\

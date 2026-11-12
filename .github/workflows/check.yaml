@@ -95,7 +95,9 @@ jobs:
           {"env": "pkg_meta", "os": "windows-2025-vs2026"}
         ]
       tox-install: tox@.
-      exclude-newer-package: python-discovery=2026-10-30T23:24:25Z
+      exclude-newer-package: |
+        python-discovery=2026-10-30T23:24:25Z
+        python-sbom=2026-11-08T17:54:00Z
   release:
     name: 🏷️ Release dry run
     uses: $/.github/workflows/prepare-release.yaml
