@@ -254,6 +254,7 @@ def td_human_readable(seconds: float) -> str:
 
     """
     texts: list[str] = []
+    seconds = round(seconds, 2)  # round first so 59.999 becomes "1 minute", not "60 seconds"
     periods = [
         ("day", 60 * 60 * 24),
         ("hour", 60 * 60),
