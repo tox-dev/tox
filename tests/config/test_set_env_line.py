@@ -30,3 +30,8 @@ def test_split_line(line: str, expected: tuple[str, str, str]) -> None:
 def test_format_line_round_trips_backslash_before_semicolon() -> None:
     line = format_line("WINPATH", r"C:\tools\;C:\bin", "sys_platform == 'win32'")
     assert split_line(line) == ("WINPATH", r"C:\tools\;C:\bin", "sys_platform == 'win32'")
+
+
+def test_format_line_round_trips_value_ending_with_backslash() -> None:
+    line = format_line("WINPATH", "C:\\tools\\", "sys_platform == 'win32'")
+    assert split_line(line) == ("WINPATH", "C:\\tools\\", "sys_platform == 'win32'")
