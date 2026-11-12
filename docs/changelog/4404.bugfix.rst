@@ -1,3 +1,5 @@
 An environment name that combines an interpreter prefix with an explicit version, such as ``pypy-3.10``, now works
 together with other factors. ``pypy-3.10-lint`` or ``tests-cpython-3.13`` used to fail with ``conflicting factors``,
 because the prefix and the version were read as two separate Python factors.
+With ``ignore_base_python_conflict``, such an environment name now takes precedence over ``base_python`` as other Python
+factors already do, so ``pypy-3.10-lint`` runs on ``pypy3.10`` instead of the configured ``base_python``.
