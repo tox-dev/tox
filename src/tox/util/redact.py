@@ -81,16 +81,17 @@ def redact_argv(argv: Sequence[str]) -> list[str]:
 
 
 def _redact_url_userinfo(token: str) -> str:
-    return re.sub(
-        r"""
+    return _REDACT_URL_USERINFO_PATTERN.sub(lambda match: f"{match['scheme']}{'*' * len(match['userinfo'])}@", token)
+
+
+_REDACT_URL_USERINFO_PATTERN: Final[re.Pattern[str]] = re.compile(
+    r"""
         (?P<scheme> [a-zA-Z] [a-zA-Z0-9+.-]* :// )  # the URL scheme
         (?P<userinfo> [^/?#\s]+ )                    # the user and password before the host
         @                                            # the separator before the host
         """,
-        lambda match: f"{match['scheme']}{'*' * len(match['userinfo'])}@",
-        token,
-        flags=re.VERBOSE,
-    )
+    flags=re.VERBOSE,
+)
 
 
 __all__ = [

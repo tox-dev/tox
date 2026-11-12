@@ -960,13 +960,12 @@ def test_pylock_discovery_fallback_uses_real_interpreter(
         ),
     })
     project.patch_execute()
-    discovery: Final[MockType] = mocker.patch(
-        "tox.tox_env.python.runner.DiscoveredPythonInfo", spec=PythonInfo, wraps=PythonInfo
-    )
+    discovery = mocker.spy(PythonInfo, "from_exe")
     project.run("r", "-e", "py").assert_success()
 
-    discovery.from_exe.assert_called_once()
-    assert Path(discovery.from_exe.call_args.args[0]).is_relative_to(project.path / ".tox" / "py")
+    fallback_calls = [call for call in discovery.call_args_list if call.kwargs.get("resolve_to_host") is False]
+    assert len(fallback_calls) == 1
+    assert Path(fallback_calls[0].args[0]).is_relative_to(project.path / ".tox" / "py")
     assert _pylock_txt(project) == "alpha==1.0.0 --hash=sha256:abc123\nbeta==2.0.0 --hash=sha256:def456"
 
 

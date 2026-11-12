@@ -112,26 +112,7 @@ def expand_ranges(value: str) -> str:
             return match.group()
         return f"{expansion}{delimiter}"
 
-    return re.sub(
-        r"""
-        (?P<src>                # outer capture group
-            (?<! [\w.-] )       # only an env or brace item opens a range, so py-django-4-2 stays one name
-            (?:
-                (?P<start> \d+ ) - (?P<end> \d+ ) # closed range: start-end
-                |
-                (?P<open_start> \d+ ) -  # right-open range: start-
-            )
-            |
-            (?<= [{,] ) - (?P<open_end> \d+ )  # left-open range: -end (preceded by { or ,)
-            |
-            \d+                 # single number
-        )
-        (?: , | \} )            # followed by comma or closing brace
-        """,
-        _expand,
-        value,
-        flags=re.VERBOSE,
-    )
+    return _EXPAND_RANGES_PATTERN.sub(_expand, value)
 
 
 def open_minor_range(start: int | None = None, stop: int | None = None) -> list[int]:
@@ -152,28 +133,11 @@ def open_minor_range(start: int | None = None, stop: int | None = None) -> list[
 def _expand_env_with_negation(value: str) -> Iterator[str]:
     # Transform '{py,!pi}-{a,b},c' to ['py-a', 'py-b', '!pi-a', '!pi-b', 'c'].
     for key, group in groupby(
-        re.split(
-            r"""
-            ( (?: \{ [^}]+ \} )+ )  # one or more brace groups
-            |                        # or
-            ,                        # comma separator
-            """,
-            value,
-            flags=re.VERBOSE,
-        ),
+        _EXPAND_ENV_WITH_NEGATION_PATTERN.split(value),
         key=bool,
     ):
         if key:
-            group_str = "".join(group).strip()
-            elements = re.split(
-                r"""
-                \{          # opening brace
-                ( [^}]+ )   # capture contents
-                \}          # closing brace
-                """,
-                group_str,
-                flags=re.VERBOSE,
-            )
+            elements = _ELEMENTS_PATTERN.split("".join(group).strip())
             for variant in product(*[[i.strip() for i in elem.split(",")] for elem in elements]):
                 variant_str = "".join(variant)
                 if not all(_FACTOR_RE.fullmatch(i) for i in variant_str.split("-")):
@@ -196,14 +160,7 @@ def expand_factors(value: str) -> Iterator[tuple[list[list[tuple[str, bool]]] | 
     """
     for line in value.split("\n"):
         factors: list[list[tuple[str, bool]]] | None = None
-        marker_search = re.search(
-            r"""
-            :           # colon separator
-            ( \s | $ )  # followed by whitespace or end of string
-            """,
-            line,
-            re.VERBOSE,
-        )
+        marker_search = _MARKER_SEARCH_PATTERN.search(line)
         marker_at, content = marker_search.start() if marker_search else -1, line
         if marker_at != -1:
             try:
@@ -213,6 +170,54 @@ def expand_factors(value: str) -> Iterator[tuple[list[list[tuple[str, bool]]] | 
             else:
                 content = line[marker_at + 1 :].strip()
         yield factors, content
+
+
+_EXPAND_RANGES_PATTERN: Final[re.Pattern[str]] = re.compile(
+    r"""
+        (?P<src>                # outer capture group
+            (?<! [\w.-] )       # only an env or brace item opens a range, so py-django-4-2 stays one name
+            (?:
+                (?P<start> \d+ ) - (?P<end> \d+ ) # closed range: start-end
+                |
+                (?P<open_start> \d+ ) -  # right-open range: start-
+            )
+            |
+            (?<= [{,] ) - (?P<open_end> \d+ )  # left-open range: -end (preceded by { or ,)
+            |
+            \d+                 # single number
+        )
+        (?: , | \} )            # followed by comma or closing brace
+        """,
+    flags=re.VERBOSE,
+)
+
+
+_EXPAND_ENV_WITH_NEGATION_PATTERN: Final[re.Pattern[str]] = re.compile(
+    r"""
+            ( (?: \{ [^}]+ \} )+ )  # one or more brace groups
+            |                        # or
+            ,                        # comma separator
+            """,
+    flags=re.VERBOSE,
+)
+
+_ELEMENTS_PATTERN: Final[re.Pattern[str]] = re.compile(
+    r"""
+                \{          # opening brace
+                ( [^}]+ )   # capture contents
+                \}          # closing brace
+                """,
+    flags=re.VERBOSE,
+)
+
+
+_MARKER_SEARCH_PATTERN: Final[re.Pattern[str]] = re.compile(
+    r"""
+            :           # colon separator
+            ( \s | $ )  # followed by whitespace or end of string
+            """,
+    re.VERBOSE,
+)
 
 
 def find_envs(value: str) -> Iterator[str]:

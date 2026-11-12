@@ -7,8 +7,8 @@ from itertools import product
 from typing import TYPE_CHECKING, Any, Final, cast
 
 from tox.config.loader.section import Section
-from tox.config.loader.toml import TomlLoader
-from tox.config.loader.toml._product import (  # simplint: ignore[private-import-path]  # existing factor helpers
+from tox.config.loader.toml import (
+    TomlLoader,
     expand_factor_group,
     extract_default,
     extract_label,

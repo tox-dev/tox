@@ -59,10 +59,13 @@ def committed_schema(
     return json.loads(schema_path.read_text(encoding="utf-8"))
 
 
+_IMPLEMENTED_REPLACE_TYPES_PATTERN: Final[re.Pattern[str]] = re.compile(r'replace_type == "([a-z]+)"')
+
+
 @pytest.fixture(scope="session")
 def implemented_replace_types(replace_py: Path) -> set[str]:
     # Replace tokens parsed out of the loader implementation.
-    return set(re.findall(r'replace_type == "([a-z]+)"', replace_py.read_text(encoding="utf-8")))
+    return set(_IMPLEMENTED_REPLACE_TYPES_PATTERN.findall(replace_py.read_text(encoding="utf-8")))
 
 
 @pytest.fixture(scope="session")

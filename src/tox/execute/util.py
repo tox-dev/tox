@@ -11,6 +11,19 @@ if TYPE_CHECKING:
     from collections.abc import Sequence
 
 
+_MATCH_PATTERN: Final[re.Pattern[str]] = re.compile(
+    r"""
+        (?:
+            " (?P<quoted> [^"]+ ) "    # a double-quoted path
+            |
+            (?P<bare> [^ \t]+ )        # an unquoted path up to the first whitespace
+        )
+        (?P<rest> .* )                 # the arguments that follow the path
+        """,
+    re.VERBOSE,
+)
+
+
 def shebang(exe: str) -> list[str] | None:
     """:param exe: the executable
 
@@ -33,18 +46,7 @@ def shebang(exe: str) -> list[str] | None:
     except UnicodeDecodeError:
         return None
     # Match literal shebang paths while keeping tox's quoted path form.
-    match: Final = re.fullmatch(
-        r"""
-        (?:
-            " (?P<quoted> [^"]+ ) "    # a double-quoted path
-            |
-            (?P<bare> [^ \t]+ )        # an unquoted path up to the first whitespace
-        )
-        (?P<rest> .* )                 # the arguments that follow the path
-        """,
-        decoded.strip(),
-        re.VERBOSE,
-    )
+    match: Final = _MATCH_PATTERN.fullmatch(decoded.strip())
     if match is None:
         return None
     try:
@@ -94,19 +96,22 @@ def _escape_percent(value: str) -> str:
 
 def _quote_batch_file_arg(arg: str) -> str:
     # A trailing backslash can escape a quote added by the batch file.
-    if re.fullmatch(r"[\w#$*+\-./:?@\\]*[\w#$*+\-./:?@]", arg):
+    if _QUOTE_BATCH_FILE_ARG_PATTERN.fullmatch(arg):
         return arg
-    escaped: Final[str] = re.sub(
-        r"""
+    escaped: Final[str] = _ESCAPED_PATTERN.sub(lambda match: match["slashes"] * 2 + match["quote"] * 2, arg)
+    return f'"{_escape_percent(escaped)}"'
+
+
+_QUOTE_BATCH_FILE_ARG_PATTERN: Final[re.Pattern[str]] = re.compile(r"[\w#$*+\-./:?@\\]*[\w#$*+\-./:?@]")
+
+_ESCAPED_PATTERN: Final[re.Pattern[str]] = re.compile(
+    r"""
         (?<! \\ )                # the run starts after a character that is not a backslash
         (?P<slashes> \\* )       # backslashes that precede the quote
         (?P<quote> " | \Z )      # a double quote or the end of the argument
         """,
-        lambda match: match["slashes"] * 2 + match["quote"] * 2,
-        arg,
-        flags=re.VERBOSE,
-    )
-    return f'"{_escape_percent(escaped)}"'
+    flags=re.VERBOSE,
+)
 
 
 __all__ = [

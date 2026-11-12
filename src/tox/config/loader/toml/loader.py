@@ -25,7 +25,7 @@ from tox.tox_env.python.pip.req_file import PythonConstraints, PythonDeps
 from tox.util.typing_compat import override
 
 from ._api import TomlTypes
-from ._product import expand_factor_group, expand_product  # simplint: ignore[private-import-path]  # same package
+from ._product import expand_factor_group, expand_product
 from ._replace import TomlReplaceLoader, Unroll
 from ._validate import validate
 

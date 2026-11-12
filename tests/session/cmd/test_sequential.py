@@ -97,6 +97,9 @@ def test_run_sequential_quiet(tox_project: ToxProjectCreator) -> None:
     assert Matches(r"  a: OK \([\d.]+ seconds\)") == reports[-2]
 
 
+_TEST_RESULT_JSON_SEQUENTIAL_PATTERN: Final[re.Pattern[str]] = re.compile(r"^[a-fA-F0-9]{64}$")
+
+
 @pytest.mark.slow
 @pytest.mark.integration
 def test_result_json_sequential(
@@ -161,7 +164,7 @@ def test_result_json_sequential(
     packaging_installed = log_report["testenvs"]["py"].pop("installed_packages")
     assert {i[: i.find("==")] if "@" not in i else "a" for i in packaging_installed} == {"pip", "setuptools", "a"}
     install_package = log_report["testenvs"]["py"].pop("installpkg")
-    assert re.match(r"^[a-fA-F0-9]{64}$", install_package.pop("sha256"))
+    assert _TEST_RESULT_JSON_SEQUENTIAL_PATTERN.match(install_package.pop("sha256"))
     assert install_package == {"basename": "a-1.0-py3-none-any.whl", "type": "file"}
 
     expected = {

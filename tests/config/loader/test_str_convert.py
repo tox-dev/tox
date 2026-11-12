@@ -15,7 +15,7 @@ if TYPE_CHECKING:
 
     from pytest_mock import MockerFixture
 
-    from tox.pytest import MonkeyPatch, SubRequest, ToxProject, ToxProjectCreator, ToxRunOutcome
+    from tox.pytest import MonkeyPatch, ToxProject, ToxProjectCreator, ToxRunOutcome
 
 from typing import Literal
 
@@ -410,7 +410,7 @@ _UNC_PATH_ARGS: Final[list[pytest.ParameterSet]] = [
 
 
 @pytest.fixture(params=["win32", "linux2"])
-def sys_platform(request: SubRequest, mocker: MockerFixture) -> str:
+def sys_platform(request: pytest.FixtureRequest, mocker: MockerFixture) -> str:
     mocker.patch("tox.config.loader.str_convert.sys", mocker.create_autospec(sys, platform=request.param))
     return str(request.param)
 
