@@ -223,6 +223,9 @@ class SetEnv:
                 self._needs_replacement.append(line)
                 return None
             raise
+        if not key:  # an empty name cannot be passed to a child process
+            msg = f"invalid line {line!r} in set_env"
+            raise ValueError(msg)
         return _Assignment(key, value, marker)
 
     def __contains__(self, item: object) -> bool:
@@ -339,7 +342,11 @@ class SetEnv:
             msg = f"invalid line {line_number} in {env_file} for set_env, expected KEY=VALUE"
             raise Fail(msg)
         # Unlike inline set_env, environment files keep semicolons in values.
-        return re.sub(r"^export[ \t]+", "", key.strip()), value.strip()
+        key = re.sub(r"^export[ \t]+", "", key.strip())
+        if not key:  # an empty name cannot be passed to a child process
+            msg = f"invalid line {line_number} in {env_file} for set_env, expected KEY=VALUE"
+            raise Fail(msg)
+        return key, value.strip()
 
     def _expand(
         self, line: str, parents: tuple[str, ...], args: ConfigLoadArgs
