@@ -62,7 +62,7 @@ class Unroll:
 
     :var factors: the factors active for the environment being loaded
 
-    """
+    """  # simplint: ignore[function-docstring]  # existing public docs
 
     def __init__(
         self,
@@ -243,7 +243,7 @@ class Unroll:
         return value
 
     @staticmethod
-    def _to_raw(value: object) -> TomlTypes:  # simplint: ignore[SMP602]  # TOML values can have any shape
+    def _to_raw(value: object) -> TomlTypes:  # simplint: ignore[imprecise-annotation]  # TOML values can have any shape
         if isinstance(value, (PythonDeps, PythonConstraints)):
             value = value.lines(preserve_host_values=True)
         elif isinstance(value, Command):
@@ -371,7 +371,7 @@ class TomlReplaceLoader(ReplaceReference):
     :param conf: the configuration the references read from
     :param loader: the loader the string was read by
 
-    """
+    """  # simplint: ignore[function-docstring]  # existing public docs
 
     def __init__(self, conf: Config, loader: TomlLoader) -> None:
         self.conf = conf
@@ -401,7 +401,7 @@ class TomlReplaceLoader(ReplaceReference):
             raise error
         return None
 
-    def _config_value_sources(self, sec: str | None, current_env: str | None) -> Iterator[ConfigSet | RawLoader]:
+    def _config_value_sources(self, sec: str | None, current_env: str | None) -> Iterator[ConfigSet | _RawLoader]:
         if sec is None:
             if current_env is not None:  # pragma: no branch  # other outcome untested
                 yield self.conf.get_env(current_env)
@@ -416,13 +416,13 @@ class TomlReplaceLoader(ReplaceReference):
         if sec.startswith(env_prefix) and sec not in {run_env_base, pkg_env_base}:
             yield self.conf.get_env(sec[len(env_prefix) + len(section.SEP) :])
         else:
-            yield RawLoader(self.loader, sec)
+            yield _RawLoader(self.loader, sec)
         if sec == core_prefix:
             yield self.conf.core  # try via registered configs
 
     @staticmethod
-    def _load_reference_value(src: ConfigSet | RawLoader, key: str, conf_args: ConfigLoadArgs) -> str:
-        if isinstance(src, RawLoader):
+    def _load_reference_value(src: ConfigSet | _RawLoader, key: str, conf_args: ConfigLoadArgs) -> str:
+        if isinstance(src, _RawLoader):
             return RawText(stringify(src.load(key, conf_args.chain))[0])
         return stringify_reference(
             src.set_env_lines(conf_args.chain)
@@ -432,7 +432,7 @@ class TomlReplaceLoader(ReplaceReference):
         )
 
 
-class RawLoader:  # simplint: ignore[SMP403]  # imported by tox plugins
+class _RawLoader:
     def __init__(self, loader: TomlLoader, section: str) -> None:
         self._loader = loader
         self._section = section

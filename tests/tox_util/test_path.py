@@ -15,7 +15,6 @@ from tox.util.path import ensure_cachedir_tag, ensure_empty_dir, ensure_gitignor
 if TYPE_CHECKING:
     from collections.abc import Iterator
 
-    from _typeshed import StrPath
     from pytest_mock import MockerFixture
 
 
@@ -132,7 +131,7 @@ def test_ensure_empty_dir_keeps_swapped_target(tmp_path: Path, mocker: MockerFix
     (outside / "victim").write_text("keep")
     original_unlink: Final = os.unlink
 
-    def unlink(path: StrPath, *, dir_fd: int | None = None) -> None:
+    def unlink(path: str | os.PathLike[str], *, dir_fd: int | None = None) -> None:
         if Path(path).name == "trigger" and not dest.is_symlink():
             dest.rename(tmp_path / "moved")
             dest.symlink_to(outside, target_is_directory=True)
@@ -156,7 +155,7 @@ def test_ensure_empty_dir_does_not_retry_through_swapped_link(tmp_path: Path, mo
     (outside / "victim").write_text("keep")
     original_unlink: Final = os.unlink
 
-    def unlink(path: StrPath, *, dir_fd: int | None = None) -> None:
+    def unlink(path: str | os.PathLike[str], *, dir_fd: int | None = None) -> None:
         if Path(path).name == "victim" and not sub.is_symlink():
             sub.rename(tmp_path / "moved")
             sub.symlink_to(outside, target_is_directory=True)
@@ -296,7 +295,7 @@ def windows_unlink(mocker: MockerFixture) -> set[str]:
     real_unlink: Final = os.unlink
 
     # POSIX lets the owner unlink a read-only file while Windows refuses, so emulate Windows at the syscall
-    def unlink(path: StrPath, *, dir_fd: int | None = None) -> None:
+    def unlink(path: str | os.PathLike[str], *, dir_fd: int | None = None) -> None:
         if Path(path).name in locked or not os.stat(path, dir_fd=dir_fd, follow_symlinks=False).st_mode & stat.S_IWRITE:
             raise PermissionError(errno.EACCES, "Access is denied", path)
         real_unlink(path, dir_fd=dir_fd)

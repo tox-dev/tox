@@ -41,10 +41,10 @@ _PYLOCK_ENV_TOML: Final[str] = dedent("""\
 
 
 @pytest.mark.parametrize("arg", [pytest.param(object, id="object"), pytest.param([object], id="object-2")])
-def test_pip_install_bad_type(  # simplint: ignore[SMP602]  # test values have any type
+def test_pip_install_bad_type(
     tox_project: ToxProjectCreator,
     capfd: CaptureFixture,
-    arg: Any,  # simplint: ignore[SMP602]  # test values have any type
+    arg: Any,  # simplint: ignore[imprecise-annotation]  # test values have any type
 ) -> None:
     result = tox_project({"tox.ini": ""}).run("l")
     result.assert_success()
@@ -88,10 +88,10 @@ def test_pip_install_empty_command_error(tox_project: ToxProjectCreator) -> None
         pytest.param("list_dependencies_command", lambda pip: pip.installed(), id="list_dependencies_command"),
     ],
 )
-def test_pip_toml_empty_command_error(  # simplint: ignore[SMP602]  # test values have any type
+def test_pip_toml_empty_command_error(
     tox_project: ToxProjectCreator,
     key: str,
-    use: Callable[[Any], object],  # simplint: ignore[SMP602]  # test values have any type
+    use: Callable[[Any], object],  # simplint: ignore[imprecise-annotation]  # test values have any type
 ) -> None:
     pip = tox_project({"tox.toml": f"[env.py]\n{key} = []"}).run("l").state.envs["py"].installer
 

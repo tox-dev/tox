@@ -10,8 +10,8 @@ if TYPE_CHECKING:
 _HERE: Final[Path] = Path(__file__).parent
 
 
-def pytest_collection_modifyitems(  # simplint: ignore[SMP602]  # pytest passes collected items of any type
-    items: Sequence[Any],  # simplint: ignore[SMP602]  # pytest passes collected items of any type
+def pytest_collection_modifyitems(
+    items: Sequence[Any],  # simplint: ignore[imprecise-annotation]  # pytest passes collected items of any type
 ) -> None:
     # automatically apply plugin test to all the test in this suite
     root = str(_HERE)

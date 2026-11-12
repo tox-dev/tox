@@ -1,4 +1,4 @@
-"""Common functionality shared across multiple type of runs."""  # simplint: ignore[SMP104]  # shared by run commands
+"""Shared run behavior."""  # simplint: ignore[catch-all-module]  # used across run commands
 
 from __future__ import annotations
 
@@ -40,7 +40,7 @@ if TYPE_CHECKING:
     from tox.tox_env.runner import RunToxEnv
 
 
-def env_run_create_flags(  # simplint: ignore[SMP102, SMP404]  # imported by tox plugins
+def env_run_create_flags(
     parser: ArgumentParser, mode: Literal["run", "run-parallel", "legacy", "devenv", "config", "depends", "exec"]
 ) -> None:
     """Add the flags that control how the environments of a run are created.
@@ -172,9 +172,7 @@ class InstallPackageAction(Action):
         return self._resolve_path(value.as_posix())
 
 
-logger: Final[logging.Logger] = logging.getLogger(  # simplint: ignore[SMP102, SMP404]  # imported by tox plugins
-    __name__
-)
+_LOGGER: Final[logging.Logger] = logging.getLogger(__name__)
 
 
 def execute(  # keeps the signature
@@ -205,13 +203,15 @@ def execute(  # keeps the signature
     scheduler_error: list[BaseException] = []
 
     def _run_thread() -> tuple[
-        Callable[[int, FrameType | None], Any]  # simplint: ignore[SMP602]  # signal handlers return any value
+        Callable[
+            [int, FrameType | None], Any  # simplint: ignore[imprecise-annotation]  # signal handlers return any value
+        ]
         | int
         | Handlers
-        | None,  # simplint: ignore[SMP602]  # signal handlers return any value
-        bool,  # simplint: ignore[SMP602]  # signal handlers return any value
-    ]:  # simplint: ignore[SMP602]  # signal handlers return any value
-        spinner = ToxSpinner(has_spinner, state, len(to_run_list))
+        | None,
+        bool,
+    ]:
+        spinner = _ToxSpinner(has_spinner, state, len(to_run_list))
         thread = Thread(
             target=_queue_and_wait,
             name="tox-interrupt",
@@ -235,7 +235,7 @@ def execute(  # keeps the signature
         except KeyboardInterrupt:
             previous = signal(SIGINT, Handlers.SIG_IGN)
             spinner.print_report = False  # no need to print reports at this point, final report coming up
-            logger.error(  # ruff:ignore[error-instead-of-exception]  # expected error log
+            _LOGGER.error(  # ruff:ignore[error-instead-of-exception]  # expected error log
                 "[%s] KeyboardInterrupt - teardown started", os.getpid()
             )
             interrupt.set()
@@ -264,7 +264,7 @@ def execute(  # keeps the signature
         # warn about unused config keys
         _warn_unused_config(state)
         # report the outcome
-        exit_code = report(
+        exit_code = _report(
             state.conf.options.start,
             ordered_results,
             is_colored=state.conf.options.is_colored,
@@ -295,7 +295,7 @@ def _env_dirs(state: State) -> dict[str, Path]:
     return {name: state.envs[name].env_dir for name in state.envs.iter(only_active=False)}
 
 
-class ToxSpinner(Spinner):  # simplint: ignore[SMP403]  # imported by tox plugins
+class _ToxSpinner(Spinner):
     def __init__(  # keeps the signature
         self,
         enabled: bool,  # ruff:ignore[boolean-type-hint-positional-argument]  # keeps the signature
@@ -327,7 +327,7 @@ def _queue_and_wait(  # ruff:ignore[too-many-arguments]  # public signature
     interrupt: Event,
     done: Event,
     max_workers: int | None,
-    spinner: ToxSpinner,
+    spinner: _ToxSpinner,
     live: bool,  # ruff:ignore[boolean-type-hint-positional-argument]  # keeps the signature
     error: list[BaseException],
 ) -> None:
@@ -354,13 +354,13 @@ def _do_queue_and_wait(  # ruff:ignore[too-many-arguments]  # public signature
     future_to_env: dict[Future[ToxEnvRunResult], ToxEnv],
     interrupt: Event,
     max_workers: int,
-    spinner: ToxSpinner,
+    spinner: _ToxSpinner,
     live: bool,  # ruff:ignore[boolean-type-hint-positional-argument]  # keeps the signature
 ) -> None:
     options = state._options  # ruff:ignore[private-member-access]  # internal access
     with spinner:
         completed: set[str] = set()
-        envs_to_run_generator = ready_to_run_envs(state, to_run_list, completed)
+        envs_to_run_generator = _ready_to_run_envs(state, to_run_list, completed)
 
         def _run(tox_env: RunToxEnv) -> ToxEnvRunResult:
             spinner.add(tox_env.conf.name)
@@ -414,9 +414,7 @@ def _do_queue_and_wait(  # ruff:ignore[too-many-arguments]  # public signature
                     break
 
 
-def ready_to_run_envs(  # simplint: ignore[SMP403]  # imported by tox plugins
-    state: State, to_run: list[str], completed: set[str]
-) -> Iterator[list[str]]:  # simplint: ignore[SMP403]  # imported by tox plugins
+def _ready_to_run_envs(state: State, to_run: list[str], completed: set[str]) -> Iterator[list[str]]:
     # Generate tox environments ready to run.
     order, todo = run_order(state, to_run)
     while order:
@@ -533,9 +531,9 @@ def _cancel_pending(future_to_env: dict[Future[ToxEnvRunResult], ToxEnv]) -> Non
         pending_future.cancel()
 
 
-def _handle_one_run_done(  # simplint: ignore[SMP403]  # imported by tox plugins
+def _handle_one_run_done(
     result: ToxEnvRunResult,
-    spinner: ToxSpinner,
+    spinner: _ToxSpinner,
     state: State,
     live: bool,  # ruff:ignore[boolean-type-hint-positional-argument]  # keeps the signature
 ) -> None:
@@ -570,7 +568,7 @@ def _tear_down(tox_env: ToxEnv) -> None:
     try:
         tox_env.teardown()
     except (Fail, OSError):  # one environment failing to clean up must not leak the others' resources
-        logger.warning("failed to tear down environment %s", tox_env.conf.name, exc_info=True)
+        _LOGGER.warning("failed to tear down environment %s", tox_env.conf.name, exc_info=True)
 
 
 def _order_results(state: State, results: list[ToxEnvRunResult], to_run_list: list[str]) -> list[ToxEnvRunResult]:
@@ -600,7 +598,7 @@ def _record_venv_redirect(state: State) -> None:
 def _venv_redirect_target(state: State, env_dirs: dict[str, Path]) -> Path | None:
     # the pick depends on the configuration alone, so it stays the same whichever environments ran
     if (pinned := state.conf.core.get_optional("venv_redirect_env", str)) is not None and pinned not in env_dirs:
-        logger.warning("venv_redirect_env names %s, which is not a tox environment", pinned)
+        _LOGGER.warning("venv_redirect_env names %s, which is not a tox environment", pinned)
         return None
     develop = next((name for name in env_dirs if _installs_develop(state.envs[name])), None)
     name = pinned or ("dev" if "dev" in env_dirs else develop)
@@ -633,13 +631,13 @@ def _print_unused(  # keeps the signature
     )
 
 
-def report(  # simplint: ignore[SMP403]  # imported by tox plugins
+def _report(
     start: float,
     runs: list[ToxEnvRunResult],
     *,
     is_colored: bool,
     verbosity: int,
-    fail_fast: bool = False,  # simplint: ignore[SMP506]  # plugins may omit it, as the upstream signature allows
+    fail_fast: bool,
 ) -> int:
     def _print(color_: str, message: str) -> None:
         if verbosity:

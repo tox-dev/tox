@@ -21,7 +21,7 @@ if TYPE_CHECKING:
     from typing import Final, Literal
 
 
-class Replacer(Protocol):
+class Replacer(Protocol):  # simplint: ignore[missing-from-all]  # direct import API
     """Expand the replacements in the value of an environment variable."""
 
     def __call__(self, value: str | MatchExpression, args: ConfigLoadArgs, /, *, recursive: bool = ...) -> str: ...
@@ -506,7 +506,6 @@ class SetEnv:
 
 
 __all__ = [
-    "Replacer",
     "SetEnv",
     "SetEnvEntry",
     "SetEnvRaw",

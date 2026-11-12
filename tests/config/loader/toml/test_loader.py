@@ -14,7 +14,7 @@ from tox.report import HandledError
 if TYPE_CHECKING:
     from types import UnionType
 
-    from tox.config.loader.toml._api import TomlTypes
+    from tox.config.loader.toml import TomlTypes
 
 
 def test_toml_loader_load_raw() -> None:
@@ -50,10 +50,10 @@ _PREFIX: Final[str] = r"failed to load A\.k: "
         pytest.param(["a", "b"], list[Literal["a", "b"]], ["a", "b"], id="list_literal"),
     ],
 )
-def test_toml_loader_ok(  # simplint: ignore[SMP602]  # test values have any type
+def test_toml_loader_ok(
     value: TomlTypes,
     of_type: type | UnionType,
-    expected: object,  # simplint: ignore[SMP602]  # test values have any type
+    expected: object,  # simplint: ignore[imprecise-annotation]  # test values have any type
 ) -> None:
     result = perform_load(value, of_type)
     assert result == expected
@@ -66,7 +66,7 @@ def perform_load(value: TomlTypes, of_type: type[TargetT] | UnionType) -> Target
     return loader.load(key, of_type, factory_na, None, ConfigLoadArgs(None, env_name, env_name))
 
 
-def factory_na(obj: object) -> TargetT:  # simplint: ignore[SMP602]  # test values have any type
+def factory_na(obj: object) -> TargetT:  # simplint: ignore[imprecise-annotation]  # test values have any type
     raise NotImplementedError
 
 

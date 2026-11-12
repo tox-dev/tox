@@ -7,8 +7,8 @@ from tox.util.typing_compat import override
 class EnvDockerConfigSet(ConfigSet):
     @override
     def register_config(self) -> None:
-        def factory(  # simplint: ignore[SMP602]  # the factory accepts any container name
-            container_name: object,  # simplint: ignore[SMP602]  # the factory accepts any container name
+        def factory(
+            container_name: object,  # simplint: ignore[imprecise-annotation]  # the factory accepts any container name
         ) -> str:
             raise NotImplementedError
 

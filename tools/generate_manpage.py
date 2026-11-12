@@ -1,12 +1,19 @@
-"""Generate the static manpage RST from the CLI parser."""
+"""Generate the static manpage RST from the CLI parser."""  # ruff:ignore[implicit-namespace-package]  # standalone script
 
 from __future__ import annotations
 
-# internal access for the manpage generator
-from argparse import SUPPRESS, Action, ArgumentParser, _SubParsersAction  # ruff:ignore[import-private-name]
+# The generated manpage needs argparse's command ordering and help text.
+from argparse import (
+    SUPPRESS,
+    Action,
+    ArgumentParser,
+    _SubParsersAction,  # ruff:ignore[import-private-name] # simplint: ignore[private-import-path] # command info
+)
 from pathlib import Path
 
-from tox.config.cli.parse import _get_parser_doc  # ruff:ignore[import-private-name]  # sibling module internal
+from tox.config.cli.parse import (
+    _get_parser_doc,  # ruff:ignore[import-private-name] # simplint: ignore[private-import-path] # docs parser
+)
 
 
 def main() -> None:
@@ -102,7 +109,7 @@ def _format_option(action: Action) -> str:
     return opts if action.help else ""
 
 
-def _static_sections() -> list[str]:  # simplint: ignore[SMP505]  # the static sections are listed apart from the parser
+def _static_sections() -> list[str]:  # simplint: ignore[single-caller-helper]  # static sections
     return [
         "FILES",
         "-----",

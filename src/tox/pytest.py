@@ -16,7 +16,9 @@ from types import FunctionType, ModuleType, TracebackType
 from typing import TYPE_CHECKING, Any, Final, Protocol, TypeAlias, cast
 
 import pytest
-from _pytest.fixtures import SubRequest  # ruff:ignore[import-private-name]  # sibling module internal
+
+# Preserve the exported SubRequest type for plugins using tox.pytest.
+from _pytest.fixtures import SubRequest  # ruff:ignore[import-private-name] # simplint: ignore[private-import-path]
 from devpi_process import IndexServer
 from virtualenv.info import fs_supports_symlink
 
@@ -204,9 +206,11 @@ class ToxProject:
         return f"{type(self).__name__}(path={self.path}) at {id(self)}"
 
     @property
-    def structure(self) -> dict[str, Any]:  # simplint: ignore[SMP602]  # the structure holds values of any type
+    def structure(
+        self,
+    ) -> dict[str, Any]:  # simplint: ignore[imprecise-annotation]  # the structure holds values of any type
         """The files of the project, nested by directory, as they are on disk."""
-        result: dict[str, Any] = {}  # simplint: ignore[SMP602]  # the structure holds values of any type
+        result: dict[str, Any] = {}  # simplint: ignore[imprecise-annotation]  # the structure holds values of any type
         for dir_name, _, files in os.walk(str(self.path)):
             dir_path = Path(dir_name)
             into = result
@@ -598,19 +602,17 @@ def disable_pip_pypi_access(_invalid_index_fake_port: int, monkeypatch: pytest.M
 
 
 @pytest.fixture(name="enable_pip_pypi_access")
-def enable_pip_pypi_access_fixture(  # simplint: ignore[SMP403]  # imported by tox plugins
+def enable_pip_pypi_access_fixture(
     disable_pip_pypi_access: tuple[str, str | None],
     monkeypatch: pytest.MonkeyPatch,
 ) -> str | None:
     # Set a fake pip index url, tests that want to use a pypi server should create and overwrite this.
     _, previous_url = disable_pip_pypi_access
-    enable_pypi_server(monkeypatch, previous_url)
+    _enable_pypi_server(monkeypatch, previous_url)
     return previous_url
 
 
-def enable_pypi_server(  # simplint: ignore[SMP403]  # imported by tox plugins
-    monkeypatch: pytest.MonkeyPatch, url: str | None
-) -> None:
+def _enable_pypi_server(monkeypatch: pytest.MonkeyPatch, url: str | None) -> None:
     if url is None:  # pragma: no cover # only one of the branches can be hit depending on env
         monkeypatch.delenv("PIP_INDEX_URL", raising=False)
     else:  # pragma: no cover  # setup not built by tests

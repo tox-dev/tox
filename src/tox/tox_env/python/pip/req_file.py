@@ -78,7 +78,7 @@ class _PythonRequirementsFile(RequirementsFile):
         if arg_match is not None:
             line = f"{arg_match} {line[len(arg_match) :]}"
         escape_match = next(
-            (e for e in ONE_ARG_ESCAPE if line.startswith(e) and len(line) > len(e) and line[len(e)].isspace()), None
+            (e for e in _ONE_ARG_ESCAPE if line.startswith(e) and len(line) > len(e) and line[len(e)].isspace()), None
         )
         # a quoted value already keeps its spaces, escaping inside the quotes would add literal backslashes
         if escape_match is not None and (value := line[len(escape_match) + 1 :]).lstrip()[:1] not in {"'", '"'}:
@@ -94,7 +94,7 @@ class _PythonRequirementsFile(RequirementsFile):
     def factory(
         cls,
         root: Path,
-        raw: object,  # simplint: ignore[SMP602]  # raw requirement values can be of any type
+        raw: object,  # simplint: ignore[imprecise-annotation]  # raw requirement values can be of any type
         environment_provider: EnvironmentProvider | None = None,
     ) -> Self:
         """Create the requirements file that matches the setting, from its value.
@@ -331,9 +331,9 @@ class PythonConstraints(_PythonRequirementsFile):
             raise ValueError(msg)
 
 
-def _factory_type_error(  # simplint: ignore[SMP602]  # raw requirement values can be of any type
+def _factory_type_error(
     field: str,
-    raw: object,  # simplint: ignore[SMP602]  # raw requirement values can be of any type
+    raw: object,  # simplint: ignore[imprecise-annotation]  # raw requirement values can be of any type
 ) -> str:
     expected = "str, list[str], or list[Requirement]"
     if isinstance(raw, list):
@@ -344,7 +344,7 @@ def _factory_type_error(  # simplint: ignore[SMP602]  # raw requirement values c
     return f"{field} expected {expected}, got {type(raw).__name__}: {raw!r}"
 
 
-ONE_ARG_ESCAPE: Final[set[str]] = {  # simplint: ignore[SMP202, SMP404]  # imported by tox plugins
+_ONE_ARG_ESCAPE: Final[set[str]] = {  # simplint: ignore[single-user-constant]  # parser option set
     "-c",
     "--constraint",
     "-r",

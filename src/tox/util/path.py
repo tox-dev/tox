@@ -9,7 +9,7 @@ from shutil import rmtree
 from typing import TYPE_CHECKING, Final, Protocol
 
 if TYPE_CHECKING:
-    from _typeshed import ExcInfo
+    from types import TracebackType
 
 
 def ensure_cachedir_tag(work_dir: Path) -> None:
@@ -96,7 +96,9 @@ def _empty_dir_path(path: Path, except_filename: str | None) -> None:
             _unlink(sub_path)
 
 
-def _retry_unlink(func: _FailedCall, path: str, _exc: BaseException | ExcInfo) -> None:
+def _retry_unlink(
+    func: _FailedCall, path: str, _exc: BaseException | tuple[type[BaseException], BaseException, TracebackType | None]
+) -> None:
     # rmtree also reports failed os.open, os.scandir and os.close calls; retrying those cannot help, so they stay behind
     if func is os.unlink:
         with suppress(OSError):

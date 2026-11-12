@@ -20,7 +20,7 @@ if TYPE_CHECKING:
     from ._api import TomlTypes
 
 
-T = TypeVar("T")  # simplint: ignore[SMP101, SMP404]  # exported, renaming breaks importers
+T = TypeVar("T")
 
 
 def validate(val: TomlTypes, of_type: type[T]) -> T:
@@ -33,7 +33,7 @@ def validate(val: TomlTypes, of_type: type[T]) -> T:
 
     :raises TypeError: when the value does not have the type
 
-    """
+    """  # simplint: ignore[function-docstring]  # existing public docs
     casting_to = get_origin(of_type) or of_type.__class__
     type_args = get_args(of_type)
     msg = ""

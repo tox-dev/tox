@@ -1,4 +1,4 @@
-from __future__ import annotations  # simplint: ignore[SMP104]  # extras resolution and sdist extraction for the builder
+from __future__ import annotations  # simplint: ignore[catch-all-module]  # builder helpers
 
 import tarfile
 from copy import deepcopy
@@ -14,7 +14,13 @@ if TYPE_CHECKING:
     from collections.abc import Sequence
     from pathlib import Path
 
-    from packaging._parser import MarkerAtom, MarkerList, Op, Value, Variable
+    from packaging._parser import (  # simplint: ignore[private-import-path]  # marker AST types
+        MarkerAtom,
+        MarkerList,
+        Op,
+        Value,
+        Variable,
+    )
     from packaging.requirements import Requirement
 
 
@@ -36,11 +42,14 @@ def dependencies_with_extras(
 
     """
     return dependencies_with_extras_from_markers(
-        extract_extra_markers(deps), extras, package_name, available_extras=available_extras
+        [_extract_extra_markers(dependency) for dependency in deps],
+        extras,
+        package_name,
+        available_extras=available_extras,
     )
 
 
-def dependencies_with_extras_from_markers(  # simplint: ignore[SMP403]  # imported by tox plugins
+def dependencies_with_extras_from_markers(
     deps_with_markers: list[tuple[Requirement, set[str | None]]],
     extras: set[str],
     package_name: str,
@@ -109,12 +118,6 @@ def _add_dependency(req: Requirement, via: frozenset[Marker], result: list[Requi
     if (dep_str := str(dep)) not in found:
         found.add(dep_str)
         result.append(dep)
-
-
-def extract_extra_markers(  # simplint: ignore[SMP403]  # imported by tox plugins
-    deps: list[Requirement],
-) -> list[tuple[Requirement, set[str | None]]]:
-    return [_extract_extra_markers(d) for d in deps]
 
 
 def _extract_extra_markers(req: Requirement) -> tuple[Requirement, set[str | None]]:

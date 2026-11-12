@@ -33,7 +33,7 @@ if TYPE_CHECKING:
     from tox.config.loader.section import Section
     from tox.config.main import Config
 
-V = TypeVar("V")  # simplint: ignore[SMP101]  # exported from tox.config.loader.ini, renaming breaks importers
+V = TypeVar("V")
 """Type variable for the type of the values the ini loader converts."""
 _COMMENTS: Final[re.Pattern[str]] = re.compile(
     r"""

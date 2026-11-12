@@ -1,1 +1,1 @@
-"""Helpers shared across tox."""  # simplint: ignore[SMP104]  # public package, renaming breaks tox.util imports
+"""Helpers shared across tox."""  # simplint: ignore[catch-all-module]  # public tox.util API

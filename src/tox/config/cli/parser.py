@@ -346,18 +346,18 @@ class ToxParser(ArgumentParserWithEnvAndConfig):
             tuple[
                 tuple[str | None, ...],
                 dict[
-                    str, Any  # simplint: ignore[SMP602]  # argparse option values of any type
-                ],  # simplint: ignore[SMP602]  # argparse option values of any type
+                    str, Any  # simplint: ignore[imprecise-annotation]  # argparse option values of any type
+                ],
                 list[
                     tuple[
                         dict[
                             str,
-                            Any,  # simplint: ignore[SMP602]  # argparse option values of any type
+                            Any,  # simplint: ignore[imprecise-annotation]  # argparse option values of any type
                         ],
-                        list[ArgumentArgs],  # simplint: ignore[SMP602]  # argparse option values of any type
-                    ]  # simplint: ignore[SMP602]  # argparse option values of any type
-                ],  # simplint: ignore[SMP602]  # argparse option values of any type
-            ]  # simplint: ignore[SMP602]  # argparse option values of any type
+                        list[ArgumentArgs],
+                    ]
+                ],
+            ]
         ] = []
         super().__init__(*args, **kwargs)
         if root is True:
@@ -374,7 +374,7 @@ class ToxParser(ArgumentParserWithEnvAndConfig):
 
     def _add_base_options(self) -> None:
         """Argument options that always make sense."""
-        add_core_arguments(self)
+        _add_core_arguments(self)
         self.fix_defaults()
 
     @classmethod
@@ -440,8 +440,8 @@ class ToxParser(ArgumentParserWithEnvAndConfig):
         for alias in aliases:
             self.handlers[alias] = content
         defaults: dict[
-            str, Any  # simplint: ignore[SMP602]  # argparse option values of any type
-        ] = {}  # simplint: ignore[SMP602]  # argparse option values of any type
+            str, Any  # simplint: ignore[imprecise-annotation]  # argparse option values of any type
+        ] = {}
         self._copy_arguments(sub_parser, defaults)
         self._copy_groups(sub_parser, defaults)
         self._add_env_arguments(sub_parser, defaults)
@@ -449,12 +449,12 @@ class ToxParser(ArgumentParserWithEnvAndConfig):
             sub_parser.set_defaults(**defaults)
         return sub_parser
 
-    def _copy_arguments(  # simplint: ignore[SMP602]  # argparse option values of any type
+    def _copy_arguments(
         self,
         sub_parser: ToxParser,
         defaults: dict[
-            str, Any  # simplint: ignore[SMP602]  # argparse option values of any type
-        ],  # simplint: ignore[SMP602]  # argparse option values of any type
+            str, Any  # simplint: ignore[imprecise-annotation]  # argparse option values of any type
+        ],
     ) -> None:
         for args, of_type, kwargs in self._arguments:
             if CORE in sub_parser.inherit:
@@ -463,11 +463,11 @@ class ToxParser(ArgumentParserWithEnvAndConfig):
                 defaults[self._dest_from(args, kwargs)] = kwargs.get("default")
 
     @staticmethod
-    def _dest_from(  # simplint: ignore[SMP602]  # argparse option values of any type
+    def _dest_from(
         args: tuple[str, ...],
         kwargs: dict[
-            str, Any  # simplint: ignore[SMP602]  # argparse option values of any type
-        ],  # simplint: ignore[SMP602]  # argparse option values of any type
+            str, Any  # simplint: ignore[imprecise-annotation]  # argparse option values of any type
+        ],
     ) -> str:
         if dest := cast("str | None", kwargs.get("dest")):
             return dest
@@ -478,12 +478,12 @@ class ToxParser(ArgumentParserWithEnvAndConfig):
                 return arg.lstrip("-").replace("-", "_")
         return args[0].lstrip("-").replace("-", "_")
 
-    def _copy_groups(  # simplint: ignore[SMP602]  # argparse option values of any type
+    def _copy_groups(
         self,
         sub_parser: ToxParser,
         defaults: dict[
-            str, Any  # simplint: ignore[SMP602]  # argparse option values of any type
-        ],  # simplint: ignore[SMP602]  # argparse option values of any type
+            str, Any  # simplint: ignore[imprecise-annotation]  # argparse option values of any type
+        ],
     ) -> None:
         for args, kwargs, excl in self._groups:
             if CORE in sub_parser.inherit:
@@ -501,8 +501,8 @@ class ToxParser(ArgumentParserWithEnvAndConfig):
         self,
         sub_parser: ToxParser,
         defaults: dict[
-            str, Any  # simplint: ignore[SMP602]  # argparse option values of any type
-        ],  # simplint: ignore[SMP602]  # argparse option values of any type
+            str, Any  # simplint: ignore[imprecise-annotation]  # argparse option values of any type
+        ],
     ) -> None:
         # Python treats an empty PYTHONHASHSEED as unset
         if (hashseed := os.environ.get("PYTHONHASHSEED", "")) not in {"", "random"}:
@@ -595,34 +595,34 @@ class ToxParser(ArgumentParserWithEnvAndConfig):
         )
 
     @override
-    def add_argument_group(  # simplint: ignore[SMP602]  # argparse option values of any type
+    def add_argument_group(
         self,
-        *args: Any,  # simplint: ignore[SMP602]  # argparse option values of any type
-        **kwargs: Any,  # simplint: ignore[SMP602]  # argparse option values of any type
+        *args: Any,  # simplint: ignore[imprecise-annotation]  # argparse option values of any type
+        **kwargs: Any,  # simplint: ignore[imprecise-annotation]  # argparse option values of any type
     ) -> argparse._ArgumentGroup:
         if self.of_cmd is not None or args in {("positional arguments",), ("optional arguments",)}:
             return super().add_argument_group(*args, **kwargs)
         excl: list[
             tuple[
                 dict[
-                    str, Any  # simplint: ignore[SMP602]  # argparse option values of any type
-                ],  # simplint: ignore[SMP602]  # argparse option values of any type
-                list[ArgumentArgs],  # simplint: ignore[SMP602]  # argparse option values of any type
-            ]  # simplint: ignore[SMP602]  # argparse option values of any type
-        ] = []  # simplint: ignore[SMP602]  # argparse option values of any type
+                    str, Any  # simplint: ignore[imprecise-annotation]  # argparse option values of any type
+                ],
+                list[ArgumentArgs],
+            ]
+        ] = []
         group = _RecordingArgumentGroup(self, *args, excl=excl, **kwargs)
         self._action_groups.append(group)  # the same bookkeeping argparse add_argument_group performs
         self._groups.append((args, kwargs, excl))
         return group
 
     @override
-    def add_argument(  # simplint: ignore[SMP602]  # argparse option values of any type
+    def add_argument(
         self,
         *args: str,
-        of_type: type[Any]  # simplint: ignore[SMP602]  # argparse option values of any type
+        of_type: type[Any]  # simplint: ignore[imprecise-annotation]  # argparse option values of any type
         | UnionType
-        | None = None,  # simplint: ignore[SMP602]  # argparse option values of any type
-        **kwargs: Any,  # simplint: ignore[SMP602]  # argparse option values of any type
+        | None = None,
+        **kwargs: Any,  # simplint: ignore[imprecise-annotation]  # argparse option values of any type
     ) -> Action:
         result = super().add_argument(*args, **kwargs)
         if self.of_cmd is None and result.dest != "help":
@@ -703,9 +703,9 @@ class _RecordingArgumentGroup(argparse._ArgumentGroup):  # ruff:ignore[private-m
         self._excl = excl
 
     @override
-    def add_mutually_exclusive_group(  # simplint: ignore[SMP602]  # argparse option values of any type
+    def add_mutually_exclusive_group(
         self,
-        **kwargs: Any,  # simplint: ignore[SMP602]  # argparse option values of any type
+        **kwargs: Any,  # simplint: ignore[imprecise-annotation]  # argparse option values of any type
     ) -> _RecordingMutuallyExclusiveGroup:
         arguments: list[ArgumentArgs] = []
         self._excl.append((kwargs, arguments))
@@ -723,23 +723,30 @@ class _RecordingMutuallyExclusiveGroup(  # internal access
         self._recorded = recorded
 
     @override
-    def add_argument(  # simplint: ignore[SMP602]  # argparse option values of any type
+    def add_argument(
         self,
         *args: str,
-        of_type: type[Any]  # simplint: ignore[SMP602]  # argparse option values of any type
+        of_type: type[Any]  # simplint: ignore[imprecise-annotation]  # argparse option values of any type
         | UnionType
-        | None = None,  # simplint: ignore[SMP602]  # argparse option values of any type
-        **kwargs: Any,  # simplint: ignore[SMP602]  # argparse option values of any type
+        | None = None,
+        **kwargs: Any,  # simplint: ignore[imprecise-annotation]  # argparse option values of any type
     ) -> Action:
         action = super().add_argument(*args, **kwargs)
         self._recorded.append((args, of_type, kwargs))
         return action
 
 
-def add_core_arguments(parser: ArgumentParser) -> None:  # simplint: ignore[SMP403]  # imported by tox plugins
-    add_color_flags(parser)
-    add_verbosity_flags(parser)
-    add_exit_and_dump_after(parser)
+def _add_core_arguments(parser: ArgumentParser) -> None:
+    _add_color_flags(parser)
+    _add_verbosity_flags(parser)
+    parser.add_argument(
+        "--exit-and-dump-after",
+        dest="exit_and_dump_after",
+        metavar="seconds",
+        default=0,
+        type=int,
+        help="dump tox threads after n seconds and exit the app - useful to debug when tox hangs, 0 means disabled",
+    )
     parser.add_argument(
         "-c",
         "--conf",
@@ -770,7 +777,7 @@ def add_core_arguments(parser: ArgumentParser) -> None:  # simplint: ignore[SMP4
     )
 
 
-def add_color_flags(parser: ArgumentParser) -> None:  # simplint: ignore[SMP403]  # imported by tox plugins
+def _add_color_flags(parser: ArgumentParser) -> None:
     if os.environ.get("NO_COLOR", ""):
         color = "no"
     elif os.environ.get("FORCE_COLOR", ""):
@@ -796,7 +803,7 @@ def add_color_flags(parser: ArgumentParser) -> None:  # simplint: ignore[SMP403]
     )
 
 
-def add_verbosity_flags(parser: ArgumentParser) -> None:  # simplint: ignore[SMP403]  # imported by tox plugins
+def _add_verbosity_flags(parser: ArgumentParser) -> None:
     from tox.report import LEVELS  # ruff:ignore[import-outside-top-level]  # avoids an import cycle
 
     level_map = "|".join(f"{c}={logging.getLevelName(level)}" for c, level in sorted(LEVELS.items()))
@@ -815,17 +822,6 @@ def add_verbosity_flags(parser: ArgumentParser) -> None:  # simplint: ignore[SMP
         default=DEFAULT_VERBOSITY,
     )
     verbosity.add_argument("-q", "--quiet", action="count", dest="quiet", help="decrease verbosity", default=0)
-
-
-def add_exit_and_dump_after(parser: ArgumentParser) -> None:  # simplint: ignore[SMP403]  # imported by tox plugins
-    parser.add_argument(
-        "--exit-and-dump-after",
-        dest="exit_and_dump_after",
-        metavar="seconds",
-        default=0,
-        type=int,
-        help="dump tox threads after n seconds and exit the app - useful to debug when tox hangs, 0 means disabled",
-    )
 
 
 __all__ = [

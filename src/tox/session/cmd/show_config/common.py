@@ -1,4 +1,4 @@
-from __future__ import annotations  # simplint: ignore[SMP104]  # imported by tox plugins
+from __future__ import annotations  # simplint: ignore[catch-all-module]  # shared show-config output
 
 import os
 from pathlib import Path

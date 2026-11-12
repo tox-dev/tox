@@ -6,6 +6,7 @@ import fnmatch
 import logging
 import os
 import shutil
+import struct
 import sys
 from contextlib import suppress
 from pathlib import Path
@@ -364,13 +365,14 @@ class LocalSubprocessExecuteStatus(ExecuteStatus):
             raise  # pragma: no cover  # untested error path
 
     @staticmethod
-    def _write_stdin_bytes(  # simplint: ignore[SMP602]  # stdin is any file-like object
-        stdin: Any,  # simplint: ignore[SMP602]  # stdin is any file-like object
-        bytes_content: bytes,  # simplint: ignore[SMP602]  # stdin is any file-like object
+    def _write_stdin_bytes(
+        stdin: Any,  # simplint: ignore[imprecise-annotation]  # stdin is any file-like object
+        bytes_content: bytes,
     ) -> None:
         if sys.platform == "win32":  # explicit check for mypy  # pragma: win32 cover
             # on Windows we have a PipeHandle object here rather than a file stream
-            import _overlapped  # ruff:ignore[import-outside-top-level, import-private-name]
+            # CPython exposes overlapped pipe reads only through this module.
+            import _overlapped  # ruff:ignore[import-outside-top-level, import-private-name] # simplint: ignore[private-import-path]
 
             ov = _overlapped.Overlapped(0)
             ov.WriteFile(stdin.handle, bytes_content)
@@ -405,10 +407,9 @@ def _pty(key: str) -> tuple[int, int] | None:
         return None
 
     try:
-        import fcntl  # ruff:ignore[import-outside-top-level]  # avoids an import cycle
-        import pty  # ruff:ignore[import-outside-top-level]  # avoids an import cycle
-        import struct  # ruff:ignore[import-outside-top-level]  # avoids an import cycle
-        import termios  # ruff:ignore[import-outside-top-level]  # avoids an import cycle
+        import fcntl  # ruff:ignore[import-outside-top-level]  # optional POSIX PTY support
+        import pty  # ruff:ignore[import-outside-top-level]  # optional POSIX PTY support
+        import termios  # ruff:ignore[import-outside-top-level]  # optional POSIX PTY support
     except ImportError:  # pragma: no cover  # untested error path
         return None  # cannot proceed on platforms without pty support
 

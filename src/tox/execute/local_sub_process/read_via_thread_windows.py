@@ -9,7 +9,8 @@ from typing import TYPE_CHECKING, Final, cast
 from tox.util.typing_compat import override
 
 if TYPE_CHECKING or sys.platform == "win32":  # pragma: win32 cover
-    import _overlapped  # pragma: win32 cover # ruff:ignore[import-private-name]
+    # CPython exposes overlapped pipe reads only through this module.
+    import _overlapped  # pragma: win32 cover # ruff:ignore[import-private-name] # simplint: ignore[private-import-path]
 
 import time  # pragma: win32 cover
 
@@ -18,9 +19,9 @@ from .read_via_thread import ReadViaThread  # pragma: win32 cover
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-READ_CHUNK_SIZE: Final[int] = 32768  # pragma: win32 cover  # simplint: ignore[SMP404]  # imported by tox plugins
+_READ_CHUNK_SIZE: Final[int] = 32768  # pragma: win32 cover
 """Maximum number of bytes read from a pipe at once."""
-POLL_INTERVAL: Final[float] = 0.05  # pragma: win32 cover  # simplint: ignore[SMP404]  # imported by tox plugins
+_POLL_INTERVAL: Final[float] = 0.05  # pragma: win32 cover
 """Seconds to wait between two checks of a pipe for new output."""
 ERROR_IO_INCOMPLETE: Final[int] = 996  # pragma: win32 cover
 """Windows error code of a read that has not received any data yet."""
@@ -54,7 +55,7 @@ class ReadViaThreadWindows(ReadViaThread):  # pragma: win32 cover
         while not self.stop.is_set():
             ov = _overlapped.Overlapped(0)
             try:
-                ov.ReadFile(self.file_no, READ_CHUNK_SIZE)
+                ov.ReadFile(self.file_no, _READ_CHUNK_SIZE)
             except OSError:
                 break
 
@@ -70,7 +71,7 @@ class ReadViaThreadWindows(ReadViaThread):  # pragma: win32 cover
                         return
                     if self.stop.is_set():  # stop requested while the read is still pending; abandon it
                         return
-                    time.sleep(POLL_INTERVAL)
+                    time.sleep(_POLL_INTERVAL)
 
             if not data:
                 break
@@ -85,7 +86,7 @@ class ReadViaThreadWindows(ReadViaThread):  # pragma: win32 cover
         while True:
             ov = _overlapped.Overlapped(0)
             try:
-                ov.ReadFile(self.file_no, READ_CHUNK_SIZE)
+                ov.ReadFile(self.file_no, _READ_CHUNK_SIZE)
             except OSError:
                 break
 

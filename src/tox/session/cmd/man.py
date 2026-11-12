@@ -79,7 +79,7 @@ def setup_man(state: State) -> int:  # ruff:ignore[unused-function-argument]  # 
     return 0
 
 
-def _check_man_accessible() -> bool:  # simplint: ignore[SMP505]  # separates the man lookup from the instructions
+def _check_man_accessible() -> bool:  # simplint: ignore[single-caller-helper]  # man lookup
     try:
         result = subprocess.run(  # resolved via PATH
             ["man", "tox"],  # ruff:ignore[start-process-with-partial-path]  # resolved via PATH
@@ -115,7 +115,7 @@ def _create_symlink(man_in_wheel: Path) -> int:
     return 0
 
 
-def _print_manpath_instructions() -> None:  # simplint: ignore[SMP505]  # per-shell text, read apart from setup
+def _print_manpath_instructions() -> None:  # simplint: ignore[single-caller-helper]  # shell instructions
     # each export line keeps a trailing ":" when MANPATH is unset, so man still searches its default path
     if "fish" in (shell := PurePath(os.environ.get("SHELL", "")).name):
         rc_file = "~/.config/fish/config.fish"

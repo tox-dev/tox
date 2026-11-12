@@ -306,7 +306,7 @@ def _get_schema(conf: ConfigSet, path: str) -> dict[str, dict[str, JsonValue]]:
 
 
 # one dispatch over all schema types
-def _process_type(of_type: typing.Any) -> dict[str, typing.Any]:  # ruff:ignore[complex-structure, too-many-return-statements, too-many-branches]  # simplint: ignore[SMP602]  # walks any typing construct
+def _process_type(of_type: typing.Any) -> dict[str, typing.Any]:  # ruff:ignore[complex-structure, too-many-return-statements, too-many-branches]  # simplint: ignore[imprecise-annotation]  # walks any typing construct
     if of_type is tox.tox_env.python.pip.req_file.PythonDeps:
         return {
             "oneOf": [

@@ -32,7 +32,7 @@ if TYPE_CHECKING:
     from .state import State
 
 
-LOGGER: Final[logging.Logger] = logging.getLogger(__name__)  # simplint: ignore[SMP404]  # imported by tox plugins
+_LOGGER: Final[logging.Logger] = logging.getLogger(__name__)
 
 
 class CliEnv:  # ruff:ignore[eq-without-hash]  # mutable value type
@@ -237,7 +237,7 @@ def _activate_by_factors(defined_envs: dict[str, _ToxEnvInfo], factors: tuple[se
                 break
 
 
-@dataclass(slots=True, kw_only=True)  # simplint: ignore[SMP701]  # fields change as environments are defined
+@dataclass(slots=True, kw_only=True)  # simplint: ignore[dataclass-frozen]  # fields change as environments are defined
 class _ToxEnvInfo:
     env: PackageToxEnv | RunToxEnv | None  #: the tox environment (None if runner unavailable)
     is_active: bool  #: a flag indicating if the environment is marked as active in the current run
@@ -500,7 +500,7 @@ class EnvSelector:
             self._defined_envs_[name] = _ToxEnvInfo(env=run_env, is_active=is_active)
             pkg_name_type = run_env.get_package_env_types()
         except RunnerUnavailable as exc:
-            LOGGER.warning(
+            _LOGGER.warning(
                 "environment %s marked as unavailable, runner %r is not available",
                 name,
                 str(exc),
@@ -720,7 +720,7 @@ class EnvSelector:
             if self._filter_re is not None and self._filter_re.match(name):
                 if name not in self._warned_about:
                     self._warned_about.add(name)
-                    LOGGER.warning("skip environment %s, matches filter %r", name, self._filter_re.pattern)
+                    _LOGGER.warning("skip environment %s, matches filter %r", name, self._filter_re.pattern)
                 continue
             yield name
 

@@ -38,13 +38,13 @@ def _file_support_encoding(chars: Sequence[str], file: IO[str]) -> bool:
     return False
 
 
-T = TypeVar("T", bound="Spinner")  # simplint: ignore[SMP101, SMP404]  # exported, renaming breaks importers
+T = TypeVar("T", bound="Spinner")
 """Type variable bound to the spinner class, for methods that return the spinner."""
 MISS_DURATION: Final[float] = 0.01
 """Seconds an environment must run for its duration to be shown."""
 
 
-class Outcome(NamedTuple):  # simplint: ignore[SMP403]  # imported by tox plugins
+class _Outcome(NamedTuple):
     ok: str
     fail: str
     skip: str
@@ -76,8 +76,8 @@ class Spinner:
     max_width = 120
     UNICODE_FRAMES: ClassVar[list[str]] = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"]
     ASCII_FRAMES: ClassVar[list[str]] = ["|", "-", "+", "x", "*"]
-    UNICODE_OUTCOME = Outcome(ok="✔", fail="✖", skip="⚠")
-    ASCII_OUTCOME = Outcome(ok="+", fail="!", skip="?")
+    UNICODE_OUTCOME = _Outcome(ok="✔", fail="✖", skip="⚠")
+    ASCII_OUTCOME = _Outcome(ok="+", fail="!", skip="?")
 
     def __init__(
         self,

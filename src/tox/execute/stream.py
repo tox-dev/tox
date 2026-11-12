@@ -93,11 +93,8 @@ class SyncWrite:
         exc_tb: TracebackType | None,
     ) -> None:
         if self._target_enabled:
-            self._cancel()
+            self.timer.cancel()
             self._write(len(self._content))
-
-    def _cancel(self) -> None:
-        self.timer.cancel()
 
     @property
     def text(self) -> str:
@@ -126,7 +123,7 @@ class SyncWrite:
             at = content.rfind(b"\n")
             if at != -1:  # pragma: no branch  # other outcome untested
                 at = len(self._content) - len(content) + at + 1
-        self._cancel()
+        self.timer.cancel()
         try:
             if at != -1:
                 self._write(at)

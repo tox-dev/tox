@@ -53,9 +53,9 @@ def default_tombi_cfg() -> str:
 
 
 @pytest.fixture(scope="session")
-def committed_schema(  # simplint: ignore[SMP602]  # the committed schema has any JSON shape
+def committed_schema(
     schema_path: Path,
-) -> dict[str, Any]:  # simplint: ignore[SMP602]  # the committed schema has any JSON shape
+) -> dict[str, Any]:  # simplint: ignore[imprecise-annotation]  # the committed schema has any JSON shape
     return json.loads(schema_path.read_text(encoding="utf-8"))
 
 
@@ -134,7 +134,9 @@ def test_schema_freshness(
     tox_project: ToxProjectCreator,
     monkeypatch: MonkeyPatch,
     tmp_path: Path,
-    committed_schema: dict[str, Any],  # simplint: ignore[SMP602]  # the committed schema has any JSON shape
+    committed_schema: dict[
+        str, Any  # simplint: ignore[imprecise-annotation]  # the committed schema has any JSON shape
+    ],
 ) -> None:
     monkeypatch.chdir(tmp_path)
     project = tox_project({
@@ -167,8 +169,10 @@ def _subschemas(node: JsonValue, pointer: str = "#") -> Iterator[tuple[str, Mapp
             yield from _subschemas(value, f"{pointer}/{index}")
 
 
-def test_schema_allows_deps_array(  # simplint: ignore[SMP602]  # the committed schema has any JSON shape
-    committed_schema: dict[str, Any],  # simplint: ignore[SMP602]  # the committed schema has any JSON shape
+def test_schema_allows_deps_array(
+    committed_schema: dict[
+        str, Any  # simplint: ignore[imprecise-annotation]  # the committed schema has any JSON shape
+    ],
 ) -> None:
     deps_schema = committed_schema["properties"]["env_run_base"]["properties"]["deps"]
 
@@ -225,7 +229,9 @@ def test_schema_tombi_lint(lint_workspace: LintWorkspace, project_lint_case: _Li
 
 
 def test_schema_covers_every_replace_type(
-    committed_schema: dict[str, Any],  # simplint: ignore[SMP602]  # the committed schema has any JSON shape
+    committed_schema: dict[
+        str, Any  # simplint: ignore[imprecise-annotation]  # the committed schema has any JSON shape
+    ],
     implemented_replace_types: set[str],
     replace_form_content: dict[str, str],
 ) -> None:

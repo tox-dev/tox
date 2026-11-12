@@ -203,9 +203,7 @@ def package_root_project(tox_project: ToxProjectCreator, demo_pkg_inline: Path) 
 
 
 def test_editable_legacy_installs_pkg_env_package_root(package_root_project: ToxProject) -> None:
-    (  # simplint: ignore[SMP602]  # patched backend takes any arguments
-        package_root_project.path / "tox.ini"
-    ).write_text(  # simplint: ignore[SMP602]  # patched backend takes any arguments
+    (package_root_project.path / "tox.ini").write_text(
         "[testenv]\npackage=editable-legacy\n[testenv:.pkg]\npackage_root={tox_root}/service", encoding="utf-8"
     )
     package_root_project.patch_execute(lambda request: 0 if "install" in request.run_id else None)
@@ -425,7 +423,7 @@ def test_pyproject_no_build_editable_fallback(tox_project: ToxProjectCreator, de
     execute_calls = proj.patch_execute(lambda request: 0 if "install" in request.run_id else None)
     result = proj.run("r", "-e", "a,b", "--notest", "--develop")
     result.assert_success()
-    warning = (  # simplint: ignore[SMP602]  # patched backend takes any arguments
+    warning = (
         ".pkg: package config for a, b is editable, however the build backend build does not support PEP-660, "
         "falling back to editable-legacy - change your configuration to it"
     )
@@ -771,11 +769,11 @@ def test_sdist_wheel_rejects_path_traversal(
 
     original_build_sdist = Pep517VirtualEnvFrontend.build_sdist
 
-    def _build_malicious_sdist(  # simplint: ignore[SMP602]  # patched backend takes any arguments
+    def _build_malicious_sdist(
         self: Pep517VirtualEnvFrontend,
-        *args: Any,  # simplint: ignore[SMP602]  # patched backend takes any arguments
-        **kwargs: Any,  # simplint: ignore[SMP602]  # patched backend takes any arguments
-    ) -> object:  # simplint: ignore[SMP602]  # patched backend takes any arguments
+        *args: Any,  # simplint: ignore[imprecise-annotation]  # patched backend takes any arguments
+        **kwargs: Any,  # simplint: ignore[imprecise-annotation]  # patched backend takes any arguments
+    ) -> object:  # simplint: ignore[imprecise-annotation]  # patched backend takes any arguments
         result = original_build_sdist(self, *args, **kwargs)
         buf = io.BytesIO()
         with tarfile.open(fileobj=buf, mode="w:gz") as tar:

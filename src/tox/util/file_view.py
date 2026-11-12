@@ -182,7 +182,7 @@ def _exposed_index(
     )
 
 
-def _lock_exposed_directories(  # simplint: ignore[SMP505]  # the staging steps are reviewed by name
+def _lock_exposed_directories(  # simplint: ignore[single-caller-helper]  # the staging steps are reviewed by name
     directories: list[_StagingDirectory], exposed: int, work_index: int
 ) -> None:
     for index, entry in enumerate(directories[exposed:], start=exposed):
@@ -193,7 +193,7 @@ def _lock_exposed_directories(  # simplint: ignore[SMP505]  # the staging steps 
     _verify_unchanged_staging_path(directories)
 
 
-def _verify_unchanged_staging_path(  # simplint: ignore[SMP505]  # the staging steps are reviewed by name
+def _verify_unchanged_staging_path(  # simplint: ignore[single-caller-helper]  # the staging steps are reviewed by name
     directories: list[_StagingDirectory],
 ) -> None:
     for entry in directories:
@@ -228,9 +228,7 @@ def _empty_exposed_directory(path: Path, owners: frozenset[int], trust_root: Pat
     )
 
 
-def _kept_entry(  # simplint: ignore[SMP505]  # names the environment that survives the cleanup
-    directory: Path,
-) -> str | None:
+def _kept_entry(directory: Path) -> str | None:  # simplint: ignore[single-caller-helper]  # staging choice
     # the running environment may live in the work dir; keep it so the provisioned tox can finish
     try:
         relative: Final[Path] = Path(sys.prefix).resolve().relative_to(directory.resolve())

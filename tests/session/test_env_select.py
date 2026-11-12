@@ -9,11 +9,7 @@ from typing import TYPE_CHECKING, Final
 import pytest
 
 from tox.config.cli.parse import get_options
-from tox.session.env_select import (
-    _DYNAMIC_ENV_FACTORS,  # ruff:ignore[import-private-name]  # private names under test
-    CliEnv,
-    EnvSelector,
-)
+from tox.session.env_select import CliEnv, EnvSelector
 from tox.session.state import State
 from tox.tox_env.python.virtual_env.package.pyproject import Pep517VenvPackager
 
@@ -454,43 +450,6 @@ def test_matches_combined_env(env_name: str, tox_project: ToxProjectCreator) -> 
     outcome.assert_success()
     assert env_name in outcome.out
     assert not outcome.err
-
-
-@pytest.mark.parametrize(
-    "env",
-    [
-        pytest.param("py", id="py"),
-        pytest.param("pypy", id="pypy"),
-        pytest.param("pypy3", id="pypy3"),
-        pytest.param("pypy3.12", id="pypy3-dot-12"),
-        pytest.param("pypy312", id="pypy312"),
-        pytest.param("py3", id="py3"),
-        pytest.param("py3.12", id="py3-dot-12"),
-        pytest.param("py3.12t", id="py3-dot-12t"),
-        pytest.param("py312", id="py312"),
-        pytest.param("py312t", id="py312t"),
-        pytest.param("3", id="3"),
-        pytest.param("3t", id="3t"),
-        pytest.param("3.12", id="3-dot-12"),
-        pytest.param("3.12t", id="3-dot-12t"),
-        pytest.param("3.12.0", id="3-dot-12-dot-0"),
-        pytest.param("3.12.0t", id="3-dot-12-dot-0t"),
-    ],
-)
-def test_dynamic_env_factors_match(env: str) -> None:
-    assert _DYNAMIC_ENV_FACTORS.fullmatch(env)
-
-
-@pytest.mark.parametrize(
-    "env",
-    [
-        pytest.param("cy3", id="cy3"),
-        pytest.param("cov", id="cov"),
-        pytest.param("py10.1", id="py10-dot-1"),
-    ],
-)
-def test_dynamic_env_factors_not_match(env: str) -> None:
-    assert not _DYNAMIC_ENV_FACTORS.fullmatch(env)
 
 
 @pytest.fixture

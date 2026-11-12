@@ -122,8 +122,8 @@ class ConfigLoadArgs:
 OverrideMap = Mapping[str, list[Override]]
 """Overrides grouped by the name of the configuration key they apply to."""
 
-T = TypeVar("T")  # simplint: ignore[SMP101, SMP404]  # exported, renaming breaks importers
-V = TypeVar("V")  # simplint: ignore[SMP101, SMP404]  # exported, renaming breaks importers
+T = TypeVar("T")
+V = TypeVar("V")
 
 
 class Loader(Convert[T]):
@@ -141,7 +141,7 @@ class Loader(Convert[T]):
         self.overrides: dict[str, list[Override]] = {}
         for entry in overrides:
             self.overrides.setdefault(entry.key, []).append(entry)
-        self.parent: Loader[Any] | None = None  # simplint: ignore[SMP602]  # loaders convert raw values of any type
+        self.parent: Loader[Any] | None = None  # simplint: ignore[imprecise-annotation]  # mixed loaders
 
     @override
     def __repr__(self) -> str:
@@ -302,7 +302,9 @@ class Loader(Convert[T]):
             msg = f"circular set_env reference {' -> '.join(args.chain)}"
             raise ValueError(msg)
 
-        def factory(value: object) -> SetEnv:  # simplint: ignore[SMP602]  # loaders convert raw values of any type
+        def factory(
+            value: object,  # simplint: ignore[imprecise-annotation]  # loaders convert mixed values
+        ) -> SetEnv:
             return SetEnv(cast("SetEnvRaw", value), "set_env", args.env_name, conf.core["tox_root"])
 
         result = self.build("set_env", SetEnv, factory, conf, raw, args)

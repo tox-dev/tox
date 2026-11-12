@@ -17,8 +17,8 @@ class _Missing(Enum):
     MISSING = auto()
 
 
-T = TypeVar("T")  # simplint: ignore[SMP101, SMP404]  # exported, renaming breaks importers
-V = TypeVar("V")  # simplint: ignore[SMP101, SMP404]  # exported, renaming breaks importers
+T = TypeVar("T")
+V = TypeVar("V")
 
 Factory = Callable[[object], T] | None  # note the argument is anything, due e.g. memory loader can inject anything
 """Callable that converts a raw value to the target type, or ``None`` when no conversion is needed."""
@@ -68,7 +68,7 @@ class Convert(ABC, Generic[T]):
         self, raw: T, of_type: type[V] | UnionType, factory: Factory[V]
     ) -> V:
         origin = get_origin(of_type) or of_type.__class__
-        result: Any = _Missing.MISSING  # simplint: ignore[SMP602]  # the converted value has the type of the option
+        result: Any = _Missing.MISSING  # simplint: ignore[imprecise-annotation]  # option value
         type_args = get_args(of_type)
         if origin in {list, list}:
             entry_type = type_args[0]

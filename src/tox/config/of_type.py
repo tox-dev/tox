@@ -19,8 +19,8 @@ if TYPE_CHECKING:
     from .main import Config  # pragma: no cover  # setup not built by tests
 
 
-T = TypeVar("T")  # simplint: ignore[SMP101, SMP404]  # exported, renaming breaks importers
-V = TypeVar("V")  # simplint: ignore[SMP101, SMP404]  # exported, renaming breaks importers
+T = TypeVar("T")
+V = TypeVar("V")
 
 
 class ConfigDefinition(ABC, Generic[T]):  # ruff:ignore[eq-without-hash]  # mutable value type

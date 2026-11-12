@@ -13,7 +13,7 @@ from virtualenv.discovery.py_spec import PythonSpec
 from virtualenv.run.session import Session
 
 from tox.tox_env.errors import Fail
-from tox.tox_env.python.api import Python
+from tox.tox_env.python.api import PY_FACTORS_RE, PY_FACTORS_RE_EXPLICIT_VERSION, Python
 from tox.tox_env.python.virtual_env.api import VirtualEnv
 
 if TYPE_CHECKING:
@@ -45,6 +45,11 @@ def test_conflicting_base_python_factor() -> None:
     name = f"py{major}{minor}-py{major}{minor - 1}"
     with pytest.raises(ValueError, match=f"conflicting factors py{major}{minor}, py{major}{minor - 1} in {name}"):
         Python.extract_base_python(name)
+
+
+def test_public_python_factor_patterns() -> None:
+    assert PY_FACTORS_RE.fullmatch("py313")
+    assert PY_FACTORS_RE_EXPLICIT_VERSION.fullmatch("cpython-3.13")
 
 
 def test_conflicting_base_python_factor_explicit_version() -> None:
