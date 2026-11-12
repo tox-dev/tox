@@ -209,6 +209,8 @@ class SetEnv:
 
         :returns: the key, value and marker, or ``None`` when the line is deferred
 
+        :raises ValueError: when the line has an empty name, or a brace in its name
+
         """
         try:
             key, value, marker = split_line(line)
