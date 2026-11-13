@@ -22,7 +22,7 @@ entry_points: Final[str] = f"{dist_info}/entry_points.txt"
 metadata: Final[str] = f"{dist_info}/METADATA"
 wheel: Final[str] = f"{dist_info}/WHEEL"
 record: Final[str] = f"{dist_info}/RECORD"
-content = {
+content: Final[dict[str, str]] = {
     logic: f"def do():\n    print('greetings from {name}')",
     plugin: """
         try:

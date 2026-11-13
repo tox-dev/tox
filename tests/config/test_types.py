@@ -48,7 +48,8 @@ def tests_command_ne() -> None:
     cmd_1 = Command(["python", "-m", "pip", "list"])
     cmd_2 = Command(["-", "python", "-m", "pip", "list"])
     cmd_3 = Command(["!", "python", "-m", "pip", "list"])
-    assert cmd_1 != cmd_2 != cmd_3
+    assert cmd_1 != cmd_2
+    assert cmd_2 != cmd_3
 
 
 def tests_env_list_repr() -> None:
