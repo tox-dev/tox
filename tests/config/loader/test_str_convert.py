@@ -156,7 +156,7 @@ def test_invalid_shell_expression(value: str, expected: list[str]) -> None:
     assert result.args == expected
 
 
-_SIMPLE_ARGS: Final[list[pytest.ParameterSet]] = [
+_SIMPLE_ARGS: Final[tuple[pytest.ParameterSet, ...]] = (
     pytest.param(
         r"foo \"bar\"", ["foo", '"bar"'], id="foo-space-backslash-dquote-bar-backslash-dquote-foo-dquote-bar-dquote"
     ),
@@ -220,13 +220,13 @@ _SIMPLE_ARGS: Final[list[pytest.ParameterSet]] = [
         [r'foo=\\"bar baz\"'],
         id="foo-equal-backslash-backslash-dquote-bar-space-baz-backslash-dquote-foo-equal-backslash-backslash-dquote-bar-space-baz-backslash-dquote",
     ),
-]
-_NEWLINE_ARGS: Final[list[pytest.ParameterSet]] = [
+)
+_NEWLINE_ARGS: Final[tuple[pytest.ParameterSet, ...]] = (
     pytest.param(
         'foo\n"bar\nbaz"', ["foo", "bar\nbaz"], id="foo-newline-dquote-bar-newline-baz-dquote-foo-bar-newline-baz"
     ),
-]
-_INI_CONFIG_NEWLINE_ARGS: Final[list[pytest.ParameterSet]] = [
+)
+_INI_CONFIG_NEWLINE_ARGS: Final[tuple[pytest.ParameterSet, ...]] = (
     pytest.param(
         'foo\\\n    "bar\\\n    baz"',
         ["foobarbaz"],
@@ -257,8 +257,8 @@ _INI_CONFIG_NEWLINE_ARGS: Final[list[pytest.ParameterSet]] = [
         ["foo", "bar", "baz"],
         id="foo-space-backslash-newline-space-space-space-space-bar-space-backslash-newline-space-space-space-space-baz-foo-bar-baz",
     ),
-]
-_WINDOWS_PATH_ARGS: Final[list[pytest.ParameterSet]] = [
+)
+_WINDOWS_PATH_ARGS: Final[tuple[pytest.ParameterSet, ...]] = (
     pytest.param(
         r"X:\\foo\\bar --quuz='baz atan'",
         [r"X:\foo\bar", "--quuz=baz atan"],
@@ -320,7 +320,7 @@ _WINDOWS_PATH_ARGS: Final[list[pytest.ParameterSet]] = [
         ],
         id="quote-cc-space-dash-dash-arg-space-c-colon-backslash-backslash-backslash-backslash-users-backslash-backslash-backslash-backslash-space-dash-dash-arg2-space-dquote-special-colon-backslash-backslash-temp-backslash-backslash-f-space-o-space-o-dquote-space-dash-dash-arg3-equal-dquote-backslash-backslash-backslash-backslash-backslash-backslash-backslash-backslash-foo-backslash-backslash-share-backslash-backslash-path-space-name-dquote-space-dash-dash-arg4-space-special-colon-backslash-backslash-temp-backslash-backslash-space-quote-lbracket-colon-dash-1-rbracket-cc-dash-dash-arg-c-colon-backslash-users-backslash-dash-dash-arg2-special-colon-backslash-temp-backslash-f-space-o-space-o-dash-dash-arg3-equal-backslash-backslash-foo-backslash-share-backslash-path-space-name-dash-dash-arg4-special-colon-backslash-temp-backslash",
     ),
-]
+)
 _WINDOWS_TRAILING_SEP_ARGS: Final[list[pytest.ParameterSet]] = [
     pytest.param(
         r"command path\to\trailing\sep\ -b foo",
@@ -328,7 +328,7 @@ _WINDOWS_TRAILING_SEP_ARGS: Final[list[pytest.ParameterSet]] = [
         id="command-space-path-backslash-to-backslash-trailing-backslash-sep-backslash-space-dash-b-space-foo-command-path-backslash-to-backslash-trailing-backslash-sep-backslash-dash-b-foo",
     ),
 ]
-_WACKY_SLASH_ARGS: Final[list[pytest.ParameterSet]] = [
+_WACKY_SLASH_ARGS: Final[tuple[pytest.ParameterSet, ...]] = (
     pytest.param("\\\\\\", ["\\\\\\"], id="backslash-backslash-backslash-backslash-backslash-backslash"),
     pytest.param(
         '''"\\'\\"''',
@@ -341,7 +341,7 @@ _WACKY_SLASH_ARGS: Final[list[pytest.ParameterSet]] = [
         ["\\", "\\"],
         id="dquote-backslash-backslash-dquote-space-backslash-backslash-backslash-backslash",
     ),
-]
+)
 
 _SPECIAL_WIN32_ARGS: Final[list[pytest.ParameterSet]] = [
     pytest.param(
@@ -361,7 +361,7 @@ _SPECIAL_POSIX_ARGS: Final[list[pytest.ParameterSet]] = [
 ]
 
 
-_WACKY_POSIX_ARGS: Final[list[pytest.ParameterSet]] = [
+_WACKY_POSIX_ARGS: Final[tuple[pytest.ParameterSet, ...]] = (
     pytest.param(
         " \\'\\'\\ '",
         [" \\'\\'\\ '"],
@@ -372,10 +372,10 @@ _WACKY_POSIX_ARGS: Final[list[pytest.ParameterSet]] = [
         "\\'\\ \\\\", ["' \\"], id="backslash-quote-backslash-space-backslash-backslash-quote-space-backslash"
     ),
     pytest.param("\\'\\ ", ["' "], id="backslash-quote-backslash-space-quote-space"),
-]
+)
 
 
-_WACKY_WIN32_ARGS: Final[list[pytest.ParameterSet]] = [
+_WACKY_WIN32_ARGS: Final[tuple[pytest.ParameterSet, ...]] = (
     pytest.param(
         " \\'\\'\\ '",
         ["''\\", "'"],
@@ -388,7 +388,7 @@ _WACKY_WIN32_ARGS: Final[list[pytest.ParameterSet]] = [
         id="backslash-quote-backslash-space-backslash-backslash-quote-space-backslash",
     ),
     pytest.param("\\'\\ ", ["'\\"], id="backslash-quote-backslash-space-quote-space"),
-]
+)
 
 
 _UNC_PATH_ARGS: Final[list[pytest.ParameterSet]] = [

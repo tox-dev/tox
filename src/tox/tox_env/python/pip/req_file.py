@@ -351,7 +351,7 @@ def _factory_type_error(
     return f"{field} expected {expected}, got {type(raw).__name__}: {raw!r}"
 
 
-_ONE_ARG_ESCAPE: Final[set[str]] = {  # simplint: ignore[single-user-constant]  # parser option set
+_ONE_ARG_ESCAPE: Final[frozenset[str]] = frozenset({  # simplint: ignore[single-user-constant]  # parser option set
     "-c",
     "--constraint",
     "-r",
@@ -360,7 +360,7 @@ _ONE_ARG_ESCAPE: Final[set[str]] = {  # simplint: ignore[single-user-constant]  
     "--find-links",
     "-e",
     "--editable",
-}
+})
 ONE_ARG: Final[set[str]] = {
     "-i",
     "--index-url",

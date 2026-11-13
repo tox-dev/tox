@@ -42,7 +42,7 @@ class ConfigDefinition(ABC, Generic[T]):  # ruff:ignore[eq-without-hash]  # muta
     @override
     def __eq__(self, o: object) -> bool:
         if not isinstance(o, ConfigDefinition):
-            return False
+            return NotImplemented
         return (self.keys, self.desc) == (o.keys, o.desc)
 
     @override
@@ -91,7 +91,7 @@ class ConfigConstantDefinition(ConfigDefinition[T]):  # ruff:ignore[eq-without-h
     @override
     def __eq__(self, o: object) -> bool:
         if not isinstance(o, ConfigConstantDefinition):
-            return False
+            return NotImplemented
         return super().__eq__(o) and self.value == o.value
 
     @override
@@ -180,7 +180,7 @@ class ConfigDynamicDefinition(ConfigDefinition[T]):  # ruff:ignore[eq-without-ha
     @override
     def __eq__(self, o: object) -> bool:
         if not isinstance(o, ConfigDynamicDefinition):
-            return False
+            return NotImplemented
         return super().__eq__(o) and (self.of_type, self.default, self.post_process) == (
             o.of_type,
             o.default,

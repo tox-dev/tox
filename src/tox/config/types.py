@@ -50,7 +50,7 @@ class Command:  # ruff:ignore[eq-without-hash]  # mutable value type
     @override
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, Command):
-            return False
+            return NotImplemented
         return (self.args, self.ignore_exit_code, self.invert_exit_code) == (
             other.args,
             other.ignore_exit_code,
@@ -85,7 +85,7 @@ class EnvList:  # ruff:ignore[eq-without-hash]  # mutable value type
     @override
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, EnvList):
-            return False
+            return NotImplemented
         return self.envs == other.envs
 
     @override

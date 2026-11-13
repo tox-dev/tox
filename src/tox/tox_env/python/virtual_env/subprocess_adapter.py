@@ -209,7 +209,7 @@ print(json.dumps({
         if result.returncode != 0:
             return None
         raw = json.loads(result.stdout)
-    except (subprocess.SubprocessError, json.JSONDecodeError, FileNotFoundError, OSError):
+    except (subprocess.SubprocessError, json.JSONDecodeError, OSError):
         return None
     vi = raw["version_info"]
     return SubprocessPythonInfo(
@@ -300,7 +300,7 @@ def _has_correct_virtualenv(python: Path, virtualenv_spec: str) -> bool:
             timeout=30,
             check=False,
         )
-    except (subprocess.SubprocessError, FileNotFoundError, OSError):
+    except (subprocess.SubprocessError, OSError):
         return False
     if result.returncode != 0:
         return False

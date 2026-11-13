@@ -99,7 +99,7 @@ class CliEnv:  # ruff:ignore[eq-without-hash]  # mutable value type
     @override
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, CliEnv):
-            return False
+            return NotImplemented
         return self._names == other._names
 
     @override

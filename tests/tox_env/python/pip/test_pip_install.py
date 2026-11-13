@@ -1504,7 +1504,7 @@ def use_frozen_constraints(request: pytest.FixtureRequest) -> bool:
     return bool(request.param)
 
 
-_PACKAGE_BUILD_RUN_IDS: Final[list[str]] = [
+_PACKAGE_BUILD_RUN_IDS: Final[tuple[str, ...]] = (
     "install_requires",
     "_optional_hooks",
     "get_requires_for_build_wheel",
@@ -1512,7 +1512,7 @@ _PACKAGE_BUILD_RUN_IDS: Final[list[str]] = [
     "install_package_deps",
     "install_package",
     "_exit",
-]
+)
 
 
 @pytest.mark.parametrize(
