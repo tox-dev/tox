@@ -361,7 +361,7 @@ _ONE_ARG_ESCAPE: Final[frozenset[str]] = frozenset({  # simplint: ignore[single-
     "-e",
     "--editable",
 })
-ONE_ARG: Final[set[str]] = {
+ONE_ARG: Final[frozenset[str]] = frozenset({
     "-i",
     "--index-url",
     "--extra-index-url",
@@ -377,7 +377,7 @@ ONE_ARG: Final[set[str]] = {
     "--use-feature",
     "--no-binary",
     "--only-binary",
-}
+})
 """The options of a requirement file that take one argument."""
 
 
