@@ -2324,7 +2324,27 @@ Python virtual environment packaging
     :version_added: 4.0.0
     :default: {env_dir}/dist
 
-    Directory where to put project packages.
+    Directory where to put project packages. This is a setting of the packaging environments (``.pkg`` by default), so
+    run environments do not set it and ``{pkg_dir}`` in a run environment does not resolve to the package directory.
+    To use it there, refer to the packaging environment, for example to upload the built packages:
+
+    .. code-block:: toml
+
+        [env.publish]
+        commands = [["twine", "upload", { replace = "glob", pattern = "{[env:.pkg]pkg_dir}/*", extend = true }]]
+
+    .. code-block:: ini
+
+        [testenv:.pkg]
+        pkg_dir = {tox_root}/dist
+
+        [testenv:publish]
+        commands = twine upload {glob:{[testenv:.pkg]pkg_dir}/*}
+
+    In INI the referenced section must set the value itself, as ``[testenv:.pkg]`` does here. A separate
+    :ref:`wheel_build_env` may build the wheel into a different directory, so set ``pkg_dir`` in ``env_pkg_base``
+    (TOML) or ``[pkgenv]`` (INI) to share one directory between the packaging environments. See :ref:`glob
+    substitution` for the pattern syntax.
 
 For INI ``config_settings_*`` entries, tox reads one ``key=value`` pair per line. A substitution inside one pair cannot
 add another line; a substitution occupying a whole line can supply several pairs.
