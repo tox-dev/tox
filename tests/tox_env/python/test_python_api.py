@@ -513,8 +513,8 @@ def test_python_generate_hash_seed(
     max_seed: int,
 ) -> None:
     monkeypatch.delenv("PYTHONHASHSEED", raising=False)
-    ini = "[testenv]\npackage=skip\ncommands=python -c 'import os; print(os.environ[\"PYTHONHASHSEED\"])'"
     monkeypatch.setattr(os, "environ", {**os.environ, **host_env})
+    ini = "[testenv]\npackage=skip\ncommands=python -c 'import os; print(os.environ[\"PYTHONHASHSEED\"])'"
     result = tox_project({"tox.ini": ini}).run("r", "-e", "py")
     result.assert_success()
     assert 1 <= int(result.out.splitlines()[1]) <= max_seed
@@ -566,17 +566,15 @@ def test_python_set_hash_seed_incorrect(tox_project: ToxProjectCreator) -> None:
 
 
 def test_python_use_hash_seed_from_env(tox_project: ToxProjectCreator, monkeypatch: pytest.MonkeyPatch) -> None:
-    ini = "[testenv]\npackage=skip"
     monkeypatch.setenv("PYTHONHASHSEED", "13")
-    result = tox_project({"tox.ini": ini}).run("c", "-e", "py", "-k", "setenv")
+    result = tox_project({"tox.ini": "[testenv]\npackage=skip"}).run("c", "-e", "py", "-k", "setenv")
     result.assert_success()
     assert "PYTHONHASHSEED=13" in result.out
 
 
 def test_python_hash_seed_from_env_random(tox_project: ToxProjectCreator, monkeypatch: pytest.MonkeyPatch) -> None:
-    ini = "[testenv]\npackage=skip"
     monkeypatch.setenv("PYTHONHASHSEED", "random")
-    result = tox_project({"tox.ini": ini}).run("c", "-e", "py", "-k", "setenv")
+    result = tox_project({"tox.ini": "[testenv]\npackage=skip"}).run("c", "-e", "py", "-k", "setenv")
     result.assert_success()
     assert "PYTHONHASHSEED=" in result.out
 
@@ -584,16 +582,16 @@ def test_python_hash_seed_from_env_random(tox_project: ToxProjectCreator, monkey
 def test_python_hash_seed_from_env_and_override(
     tox_project: ToxProjectCreator, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    ini = "[testenv]\npackage=skip\ncommands=python -c 'import os; print(os.environ.get(\"PYTHONHASHSEED\"))'"
     monkeypatch.setenv("PYTHONHASHSEED", "14")
+    ini = "[testenv]\npackage=skip\ncommands=python -c 'import os; print(os.environ.get(\"PYTHONHASHSEED\"))'"
     result = tox_project({"tox.ini": ini}).run("r", "-e", "py", "--hashseed", "15")
     result.assert_success()
     assert result.out.splitlines()[1] == "15"
 
 
 def test_python_hash_seed_from_env_and_disable(tox_project: ToxProjectCreator, monkeypatch: pytest.MonkeyPatch) -> None:
-    ini = "[testenv]\npackage=skip\ncommands=python -c 'import os; print(os.environ.get(\"PYTHONHASHSEED\"))'"
     monkeypatch.setenv("PYTHONHASHSEED", "16")
+    ini = "[testenv]\npackage=skip\ncommands=python -c 'import os; print(os.environ.get(\"PYTHONHASHSEED\"))'"
     result = tox_project({"tox.ini": ini}).run("r", "-e", "py", "--hashseed", "notset")
     result.assert_success()
     assert result.out.splitlines()[1] == "None"
