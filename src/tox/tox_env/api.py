@@ -614,7 +614,10 @@ class ToxEnv(ABC):  # ruff:ignore[too-many-public-methods]  # public facade
         with log_file.open("wt", encoding="utf-8") as file:
             file.write(f"name: {env_name}\n")
             file.write(f"run_id: {request.run_id}\n")
-            msg = "".join(f"env {env_key}: {redact_value(name=env_key, value=env_value)}\n" for env_key, env_value in sorted(request.env.items()))
+            msg = "".join(
+                f"env {env_key}: {redact_value(name=env_key, value=env_value)}\n"
+                for env_key, env_value in sorted(request.env.items())
+            )
             file.write(msg)
             for meta_key, meta_value in status.metadata.items():
                 file.write(f"metadata {meta_key}: {meta_value}\n")
