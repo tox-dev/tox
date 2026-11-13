@@ -1,7 +1,16 @@
 from __future__ import annotations
 
-from tox.config.loader.api import ConfigLoadArgs, Loader, Override
-from tox.config.loader.replacer import (
+import inspect  # simplint: ignore[init-module-content]  # API path
+import re  # simplint: ignore[init-module-content]  # API path
+from typing import (  # simplint: ignore[init-module-content]  # API path
+    TYPE_CHECKING,
+    Final,
+    TypeVar,
+    cast,
+)
+
+from tox.config.loader.api import ConfigLoadArgs, Loader, Override  # simplint: ignore[init-module-content] API path
+from tox.config.loader.replacer import (  # simplint: ignore[init-module-content] API path
     MatchExpression,
     RequirementLineCallbacks,
     replace_command_lines,
@@ -9,43 +18,182 @@ from tox.config.loader.replacer import (
     replace_once,
     replace_requirement_lines,
 )
-from tox.config.loader.str_convert import StrConvert
-from tox.config.set_env import SetEnv
-from tox.config.types import Command
-from tox.report import HandledError
-from tox.tox_env.errors import Skip
-from tox.tox_env.python.pip.req.file import protect_env_variables
-from tox.tox_env.python.pip.req_file import PythonConstraints, PythonDeps
-from tox.util.typing_compat import override
+from tox.config.loader.str_convert import StrConvert  # simplint: ignore[init-module-content] API path
+from tox.config.set_env import SetEnv  # simplint: ignore[init-module-content] API path
+from tox.config.types import Command  # simplint: ignore[init-module-content] API path
+from tox.report import HandledError  # simplint: ignore[init-module-content] API path
+from tox.tox_env.errors import Skip  # simplint: ignore[init-module-content] API path
+from tox.tox_env.python.pip.req.file import protect_env_variables  # simplint: ignore[init-module-content] API path
+from tox.tox_env.python.pip.req_file import (  # simplint: ignore[init-module-content] API path
+    PythonConstraints,
+    PythonDeps,
+)
+from tox.util.typing_compat import override  # simplint: ignore[init-module-content] API path
 
-from . import factor, replace
-from .factor import filter_for_env
-from .loader import IniLoader, V
-from .replace import ReplaceReferenceIni
+from .factor import filter_for_env  # simplint: ignore[init-module-content] API path
+from .replace import ReplaceReferenceIni  # simplint: ignore[init-module-content] API path
+
+if TYPE_CHECKING:
+    from configparser import ConfigParser, SectionProxy
+    from types import UnionType
+
+    from tox.config.loader.convert import Factory
+    from tox.config.loader.section import Section
+    from tox.config.main import Config
+
+V = TypeVar("V")
+"""Type of values the INI loader converts."""  # simplint: ignore[init-module-content]  # API path
+_COMMENTS: Final[re.Pattern[str]] = re.compile(
+    r"""
+    ( \s )*     # optional leading whitespace
+    (?<! \\ )   # not preceded by backslash
+    \# .*       # hash followed by anything
+    """,
+    re.VERBOSE,
+)
+
+
+class IniLoader(StrConvert, Loader[str]):
+    """Load configuration from an ini section (ini file is a string to string dictionary).
+
+    :param section: the section the values are read from
+    :param parser: the parser that reads the ini file
+    :param overrides: the overrides to apply to the values
+    :param core_section: the core section of the configuration
+    :param section_key: the key of the section in the ini file, if it is not the section name
+
+    """
+
+    def __init__(
+        self,
+        section: Section,
+        parser: ConfigParser,
+        overrides: list[Override],
+        core_section: Section,
+        section_key: str | None = None,
+    ) -> None:
+        key = section_key or section.key
+        # a section the file lacks behaves as an empty one, which still inherits the DEFAULT section like any other
+        self._section_proxy: SectionProxy = parser[key if parser.has_section(key) else parser.default_section]
+        self._parser = parser
+        self.core_section = core_section
+        super().__init__(section, overrides)
+
+    @override
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}(section={self._section.key}, overrides={self.overrides!r})"
+
+    @override
+    def load_raw(self, key: str, conf: Config | None, env_name: str | None) -> str:
+        return self.process_raw(conf, env_name, self._section_proxy[key])
+
+    @staticmethod
+    def process_raw(conf: Config | None, env_name: str | None, value: str) -> str:
+        # strip comments
+        """Strip the comments and the lines of other factors from a raw value.
+
+        :param conf: the global config, ``None`` when loading the global tox config file
+        :param env_name: the environment name, ``None`` when unknown
+        :param value: the raw value
+
+        :returns: the value without comments and without the lines of other factors
+
+        :raises KeyError: when the value has content, but no line applies to the environment
+
+        """
+        elements: list[str] = [
+            _COMMENTS.sub("", line).replace("\\#", "#") for line in value.split("\n") if not line.startswith("#")
+        ]
+        strip_comments = "\n".join(elements).replace("\r", "")
+        if conf is None:  # conf is None when we're loading the global tox configuration file for the CLI
+            factor_filtered = strip_comments  # we don't support factor and replace functionality there
+        else:
+            factor_filtered = filter_for_env(strip_comments, env_name)  # select matching factors
+            if not factor_filtered and strip_comments.strip():
+                raise KeyError(value)
+        return factor_filtered.replace("\\\n", "")
+
+    @override
+    def build(
+        self,
+        key: str,
+        of_type: type[V] | UnionType,
+        factory: Factory[V],
+        conf: Config | None,
+        raw: str,
+        args: ConfigLoadArgs,
+    ) -> V:
+        if conf is None:  # no replacement supported in the core section
+            return self.to(raw, of_type, factory)
+        delay_replace: Final[bool] = inspect.isclass(of_type) and issubclass(of_type, SetEnv)
+
+        def replacer(raw_: str | MatchExpression, args_: ConfigLoadArgs, *, recursive: bool = True) -> str:
+            try:
+                reference: Final[ReplaceReferenceIni] = ReplaceReferenceIni(conf, self)
+                if not recursive:
+                    return replace_once(conf, reference, raw_, args_)
+                if of_type in {PythonDeps, PythonConstraints}:
+                    return replace_requirement_lines(
+                        conf,
+                        reference,
+                        raw_,
+                        args_,
+                        callbacks=RequirementLineCallbacks(
+                            validate_options=PythonDeps.validate_requirement_options,
+                            protect_host_value=protect_env_variables,
+                        ),
+                    )
+                if of_type in {Command, list[Command]}:
+                    return replace_command_lines(conf, reference, raw_, args_)
+                return replace_for(of_type)(conf, reference, raw_, args_)
+            except Exception as exception:
+                if isinstance(exception, (HandledError, Skip)):
+                    raise
+                name = self.core_section.key if args_.env_name is None else args_.env_name
+                msg = f"replace failed in {name}.{key} with {exception!r}"
+                raise HandledError(msg) from exception
+
+        converted: Final[V] = self.to(replacer(raw, args) if not delay_replace else raw, of_type, factory)
+        if delay_replace:
+            cast("SetEnv", converted).use_replacer(replacer, args)  # delay_replace means of_type is SetEnv
+        return converted
+
+    @override
+    def substitute(self, value: str, conf: Config, args: ConfigLoadArgs, *, of_type: type[V] | UnionType) -> str:
+        reference: Final[ReplaceReferenceIni] = ReplaceReferenceIni(conf, self)
+        if of_type in {PythonDeps, PythonConstraints}:
+            return replace_requirement_lines(
+                conf,
+                reference,
+                value,
+                args,
+                callbacks=RequirementLineCallbacks(
+                    validate_options=PythonDeps.validate_requirement_options,
+                    protect_host_value=protect_env_variables,
+                ),
+            )
+        if of_type in {Command, list[Command]}:
+            return replace_command_lines(conf, reference, value, args)
+        return replace_for(of_type)(conf, reference, value, args)
+
+    @override
+    def found_keys(self) -> set[str]:
+        return set(self._section_proxy.keys())
+
+    def get_section(self, name: str) -> SectionProxy | None:
+        # needed for non tox environment replacements
+        """Get a section of the ini file.
+
+        :param name: the name of the section
+
+        :returns: the section, or ``None`` when the file has no such section
+
+        """
+        if self._parser.has_section(name):
+            return self._parser[name]
+        return None
+
 
 __all__ = [
-    "Command",
-    "ConfigLoadArgs",
-    "HandledError",
     "IniLoader",
-    "Loader",
-    "MatchExpression",
-    "Override",
-    "PythonConstraints",
-    "PythonDeps",
-    "ReplaceReferenceIni",
-    "RequirementLineCallbacks",
-    "SetEnv",
-    "Skip",
-    "StrConvert",
-    "V",
-    "factor",
-    "filter_for_env",
-    "override",
-    "protect_env_variables",
-    "replace",
-    "replace_command_lines",
-    "replace_for",
-    "replace_once",
-    "replace_requirement_lines",
 ]

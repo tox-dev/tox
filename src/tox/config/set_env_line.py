@@ -80,7 +80,7 @@ def _unescape_semicolons(value: str) -> str:
         return value.replace("\\;", ";")
     parts: Final[list[str]] = []
     offset = 0
-    for match in re.finditer(r"\\;", value):
+    for match in _MATCH_PATTERN.finditer(value):
         parts.extend((value.fragment(offset, match.start()), value.fragment(match.start() + 1, match.end())))
         offset = match.end()
     parts.append(value.fragment(offset))
@@ -91,6 +91,9 @@ class _SplitLine(NamedTuple):
     key: str
     value: str
     marker: str
+
+
+_MATCH_PATTERN: Final[re.Pattern[str]] = re.compile(r"\\;")
 
 
 def format_line(key: str, value: str, marker: str | None) -> str:

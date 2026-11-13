@@ -23,13 +23,16 @@ from colorama import Fore
 from psutil import AccessDenied
 
 from tox.config.sets import EnvConfigSet
+from tox.execute import local_sub_process as execute
 from tox.execute.api import ExecuteOptions, FinishedExecuteStatus, Outcome
 from tox.execute.local_sub_process import (
     SIG_INTERRUPT,
     LocalSubProcessExecuteInstance,
     LocalSubProcessExecutor,
-    execute,
     read_via_thread_windows,
+)
+from tox.execute.local_sub_process import (
+    __all__ as exported,
 )
 from tox.execute.local_sub_process.read_via_thread_unix import ReadViaThreadUnix
 from tox.execute.request import ExecuteRequest, StdinSource
@@ -43,6 +46,19 @@ if TYPE_CHECKING:
     from tox.pytest import CaptureFixture, LogCaptureFixture, MonkeyPatch, ToxProjectCreator
 
 _EXE_SUFFIX: Final[str] = ".EXE" if sys.platform == "win32" else ""
+
+
+def test_public_exports() -> None:
+    assert set(exported) == {
+        "SIG_INTERRUPT",
+        "LocalSubProcessExecuteInstance",
+        "LocalSubProcessExecutor",
+        "LocalSubprocessExecuteFailedStatus",
+        "LocalSubprocessExecuteStatus",
+    }
+    namespace: dict[str, object] = {}  # simplint: ignore[imprecise-annotation]  # import binds signals and classes
+    exec("from tox.execute.local_sub_process import *", namespace)  # ruff:ignore[exec-builtin]  # literal import tests exports
+    assert set(namespace) - {"__builtins__"} == set(exported)
 
 
 @pytest.mark.parametrize(("out", "err"), [pytest.param("out", "err", id="simple"), pytest.param("", "", id="nothing")])
@@ -363,6 +379,11 @@ def test_local_execute_basic_fail(
     assert metadata.startswith(" pid=")
 
 
+_TEST_COMMAND_DOES_NOT_EXIST_PATTERN: Final[re.Pattern[str]] = re.compile(
+    r".*(No such file or directory|The system cannot find the file specified).*"
+)
+
+
 def test_command_does_not_exist(caplog: LogCaptureFixture, os_env: dict[str, str], mocker: MockerFixture) -> None:
     caplog.set_level(logging.NOTSET)
     executor = LocalSubProcessExecutor(colored=False)
@@ -385,9 +406,7 @@ def test_command_does_not_exist(caplog: LogCaptureFixture, os_env: dict[str, str
     assert not outcome.err
     assert len(caplog.records) == 1
     assert caplog.records[0].levelname == "ERROR"
-    assert re.match(
-        r".*(No such file or directory|The system cannot find the file specified).*", caplog.records[0].message
-    )
+    assert _TEST_COMMAND_DOES_NOT_EXIST_PATTERN.match(caplog.records[0].message)
 
 
 @pytest.fixture(

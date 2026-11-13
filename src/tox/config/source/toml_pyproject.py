@@ -7,8 +7,8 @@ from itertools import product
 from typing import TYPE_CHECKING, Any, Final, cast
 
 from tox.config.loader.section import Section
-from tox.config.loader.toml import TomlLoader
-from tox.config.loader.toml._product import (  # simplint: ignore[private-import-path]  # existing factor helpers
+from tox.config.loader.toml import (
+    TomlLoader,
     expand_factor_group,
     extract_default,
     extract_label,
@@ -134,7 +134,7 @@ class TomlPyProjectSection(TomlSection):
 
     :var PREFIX: the parts of the key path the ``tool.tox`` table lives under
 
-    """
+    """  # simplint: ignore[function-docstring] existing section docs
 
     PREFIX = ("tool", "tox")
 
@@ -331,6 +331,5 @@ def _extract_env_list_labels(env_list_raw: TomlTypes) -> dict[str, FactorGroup]:
 
 __all__ = [
     "TomlPyProject",
-    "TomlPyProjectSection",
     "TomlSection",
 ]

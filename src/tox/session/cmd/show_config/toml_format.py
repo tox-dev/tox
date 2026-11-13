@@ -49,12 +49,11 @@ def colorize(text: str) -> str:
 
     :returns: the colored text
 
-    """
+    """  # simplint: ignore[function-docstring] existing formatter docs
     text = _HEADER_RE.sub(lambda match: f"{Fore.YELLOW}{match.group()}{Fore.RESET}", text)
     return _KEY_RE.sub(rf"{Fore.GREEN}\1{Fore.RESET} =", text)
 
 
 __all__ = [
-    "colorize",
     "show_config_toml",
 ]

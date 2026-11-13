@@ -8,11 +8,22 @@ from typing import Final
 
 import pytest
 
+from tools.generate_manpage import main as generate_manpage
+
 if sys.platform == "win32":
     pytest.skip("man command not available on Windows", allow_module_level=True)
 
 _ROOT: Final[Path] = Path(__file__).parents[2]
 _RST_PATH: Final[Path] = _ROOT / "docs" / "man" / "tox.1.rst"
+
+
+def test_generate_manpage(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setitem(generate_manpage.__globals__, "__file__", str(tmp_path / "tools" / "generate_manpage.py"))
+    generate_manpage()
+    content = (tmp_path / "docs" / "man" / "tox.1.rst").read_text(encoding="utf-8")
+    assert "**run**" in content
+    assert "**--help**" in content
+    assert "ENVIRONMENT VARIABLES" in content
 
 
 @pytest.fixture
@@ -26,6 +37,9 @@ def manpage_troff() -> bytes:
     return publish_string(content, writer=get_writer_class("manpage")(), settings_overrides={"report_level": 5})
 
 
+_MANPAGE_RENDERED_PATTERN: Final[re.Pattern[str]] = re.compile(r".\x08")
+
+
 @pytest.fixture
 def manpage_rendered(manpage_troff: bytes, tmp_path: Path) -> str:
     man_file = tmp_path / "tox.1"
@@ -37,13 +51,11 @@ def manpage_rendered(manpage_troff: bytes, tmp_path: Path) -> str:
         env={"COLUMNS": "200", "LANG": "en_US.UTF-8", "PATH": "/usr/bin:/bin", "MANPAGER": "cat", "PAGER": "cat"},
         check=False,
     )
-    return re.sub(r".\x08", "", result.stdout)
+    return _MANPAGE_RENDERED_PATTERN.sub("", result.stdout)
 
 
-def test_manpage_has_title_header(manpage_troff: bytes) -> None:
-    output = manpage_troff.decode()
-    match = re.search(
-        r"""
+_MATCH_PATTERN: Final[re.Pattern[str]] = re.compile(
+    r"""
         ^ \.TH [ ]                    # the title header macro
         " (?P<program> [^"]* ) "      # the program name
         [ ] " (?P<section> [^"]* ) "  # the manual section
@@ -51,22 +63,32 @@ def test_manpage_has_title_header(manpage_troff: bytes) -> None:
         [ ] " (?P<source> [^"]* ) "   # the source of the page
         [ ] " (?P<manual> [^"]* ) "   # the manual title
         """,
-        output,
-        re.MULTILINE | re.VERBOSE,
-    )
+    re.MULTILINE | re.VERBOSE,
+)
+
+
+def test_manpage_has_title_header(manpage_troff: bytes) -> None:
+    output = manpage_troff.decode()
+    match = _MATCH_PATTERN.search(output)
     assert match is not None, f".TH header not found in:\n{output[:500]}"
     assert (match["program"], match["section"], match["manual"]) == ("tox", "1", "User Commands")
 
 
+_TEST_MANPAGE_HAS_NAME_SECTION_PATTERN: Final[re.Pattern[str]] = re.compile(r"\.SH Name\n(?P<body>.+)")
+
+
 def test_manpage_has_name_section(manpage_troff: bytes) -> None:
-    match = re.search(r"\.SH Name\n(?P<body>.+)", manpage_troff.decode())
+    match = _TEST_MANPAGE_HAS_NAME_SECTION_PATTERN.search(manpage_troff.decode())
     assert match is not None, "Name section not found"
     assert "tox" in match["body"]
     assert "virtualenv-based automation of test activities" in match["body"]
 
 
+_SECTIONS_PATTERN: Final[re.Pattern[str]] = re.compile(r"^\.SH (.+)$", re.MULTILINE)
+
+
 def test_manpage_has_all_sections(manpage_troff: bytes) -> None:
-    sections = re.findall(r"^\.SH (.+)$", manpage_troff.decode(), re.MULTILINE)
+    sections = _SECTIONS_PATTERN.findall(manpage_troff.decode())
     expected = [
         "Name",
         "SYNOPSIS",

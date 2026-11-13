@@ -41,11 +41,10 @@ def colorize(text: str) -> str:
 
     :returns: the colored text
 
-    """
+    """  # simplint: ignore[function-docstring] existing formatter docs
     return _KEY_RE.sub(rf"\g<indent>{Fore.GREEN}\g<key>{Fore.RESET}:", text)
 
 
 __all__ = [
-    "colorize",
     "show_config_json",
 ]

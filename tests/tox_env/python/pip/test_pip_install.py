@@ -18,7 +18,7 @@ if TYPE_CHECKING:
     from pytest_mock import MockerFixture, MockType
     from typing_extensions import TypeIs
 
-    from tox.pytest import CaptureFixture, SubRequest, ToxProject, ToxProjectCreator, ToxRunOutcome
+    from tox.pytest import CaptureFixture, ToxProject, ToxProjectCreator, ToxRunOutcome
     from tox.util.json_types import JsonValue
 
 _PYLOCK_ENV_CONFIG: Final[str] = dedent("""\
@@ -1438,7 +1438,7 @@ def frozen_constraints_project(tox_project: ToxProjectCreator) -> ToxProject:
     ],
 )
 def constrained_mock_project(
-    request: SubRequest,
+    request: pytest.FixtureRequest,
     tox_project: ToxProjectCreator,
     demo_pkg_with_deps: dict[str, str],
     constrain_package_deps: bool,
@@ -1495,12 +1495,12 @@ def demo_pkg_with_deps(demo_pkg_inline: Path) -> dict[str, str]:
 
 
 @pytest.fixture
-def constrain_package_deps(request: SubRequest) -> bool:
+def constrain_package_deps(request: pytest.FixtureRequest) -> bool:
     return bool(request.param)
 
 
 @pytest.fixture
-def use_frozen_constraints(request: SubRequest) -> bool:
+def use_frozen_constraints(request: pytest.FixtureRequest) -> bool:
     return bool(request.param)
 
 

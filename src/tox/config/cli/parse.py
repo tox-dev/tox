@@ -205,11 +205,11 @@ class Options(NamedTuple):
 
 def _get_parser_doc() -> ToxParser:
     # trigger register of tox env types (during normal run we call this later to handle plugins)
-    from tox.plugin.manager import MANAGER  # pragma: no cover  # ruff:ignore[import-outside-top-level]
+    from tox.plugin.manager import MANAGER  # ruff:ignore[import-outside-top-level]  # import cycle
 
     MANAGER.load_plugins(Path.cwd())
 
-    parser = _get_parser()  # pragma: no cover  # setup not built by tests
+    parser = _get_parser()
     # Remove epilog message from help when formatting website docs
     parser.epilog = None
     return parser

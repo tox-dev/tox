@@ -679,8 +679,6 @@ def add_skip_missing_interpreters_to_env(conf: EnvConfigSet, core: CoreConfigSet
 
 
 __all__ = [
-    "PY_FACTORS_RE",
-    "PY_FACTORS_RE_EXPLICIT_VERSION",
     "NoInterpreter",
     "Python",
     "PythonInfo",

@@ -4,7 +4,7 @@ import re
 import sys
 import textwrap
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Final
 
 import pytest
 
@@ -31,21 +31,11 @@ def pytest_generate_tests(metafunc: pytest.Metafunc) -> None:
 def _extract_config_blocks() -> list[tuple[str, int, str, str]]:
     results: list[tuple[str, int, str, str]] = []
     docs_dir = Path(__file__).parents[2] / "docs"
-    code_block_re = re.compile(
-        r"""
-        ^(?P<indent>\s*)        # leading whitespace
-        \.\.(?P<space>\s+)      # RST directive marker
-        code-block::\s+         # code-block directive
-        (?P<lang>toml|ini)      # language
-        \s*$
-        """,
-        re.VERBOSE,
-    )
     for rst_path in sorted(docs_dir.rglob("*.rst")):
         lines = rst_path.read_text(encoding="utf-8").splitlines()
         idx = 0
         while idx < len(lines):
-            if match := code_block_re.match(lines[idx]):
+            if match := _CODE_BLOCK_RE.match(lines[idx]):
                 directive_indent = len(match.group("indent")) + len(match.group("space")) + 2
                 lang = match.group("lang")
                 line_no = idx + 1
@@ -85,12 +75,12 @@ def _read_block(lines: list[str], idx: int, directive_indent: int) -> tuple[list
 def _is_tox_config(lang: str, content: str) -> bool:
     if lang == "ini":
         return bool(
-            re.search(r"^\[tox(?::tox)?\]", content, re.MULTILINE)
-            or re.search(r"^\[testenv", content, re.MULTILINE)
-            or re.search(r"^\[pkgenv", content, re.MULTILINE)
-            or re.search(r"^\[base\]", content, re.MULTILINE)
+            _IS_TOX_CONFIG_PATTERN.search(content)
+            or _IS_TOX_CONFIG_PATTERN_2.search(content)
+            or _IS_TOX_CONFIG_PATTERN_3.search(content)
+            or _IS_TOX_CONFIG_PATTERN_4.search(content)
         )
-    first_section = re.search(r"^\[(?P<section>[^\]]+)\]", content, re.MULTILINE)
+    first_section = _FIRST_SECTION_PATTERN.search(content)
     if first_section and first_section.group("section").split(".")[0].strip('"').strip("'") in {
         "build-system",
         "project",
@@ -100,25 +90,11 @@ def _is_tox_config(lang: str, content: str) -> bool:
         return False
     return bool(
         "legacy_tox_ini" in content
-        or re.search(
-            r"""
-            ^ \[ tool\.tox      # a tox table in a pyproject file
-            """,
-            content,
-            re.MULTILINE | re.VERBOSE,
-        )
-        or re.search(
-            r"""
-            ^ \[                                  # the opening bracket of a table header
-            (env|env_run_base|env_pkg_base|env_base)  # the environment table names
-            \b                                    # the end of the name
-            """,
-            content,
-            re.MULTILINE | re.VERBOSE,
-        )
-        or re.search(r"^env_list\s*=", content, re.MULTILINE)
-        or re.search(r"^(requires|no_package)\s*=", content, re.MULTILINE)
-        or (re.search(r"^\w+\s*=", content, re.MULTILINE) and not first_section)
+        or _IS_TOX_CONFIG_PATTERN_5.search(content)
+        or _IS_TOX_CONFIG_PATTERN_6.search(content)
+        or _IS_TOX_CONFIG_PATTERN_7.search(content)
+        or _IS_TOX_CONFIG_PATTERN_8.search(content)
+        or (_IS_TOX_CONFIG_PATTERN_9.search(content) and not first_section)
     )
 
 
@@ -128,12 +104,12 @@ def _classify(lang: str, content: str) -> tuple[str, str]:
         filename, ini_content = _classify_ini(content)
         return filename, _inject_skip_missing_interpreters_ini(ini_content)
     if "legacy_tox_ini" in content:
-        if not re.search(r"^\[tool\.tox\]", content, re.MULTILINE):
+        if not _CLASSIFY_PATTERN.search(content):
             content = f"[tool.tox]\n{content}"
         return "pyproject.toml", _inject_skip_missing_interpreters_toml(content, r"(\[tool\.tox\]\n)")
-    if re.search(r"^\[tool\.tox", content, re.MULTILINE):
+    if _CLASSIFY_PATTERN_2.search(content):
         return "pyproject.toml", _inject_skip_missing_interpreters_toml(content, r"(\[tool\.tox\]\n)")
-    if re.search(r"^\[dependency-groups\]", content, re.MULTILINE):
+    if _CLASSIFY_PATTERN_3.search(content):
         wrapped = _wrap_tox_toml_in_pyproject(content)
         return "pyproject.toml", _inject_skip_missing_interpreters_toml(wrapped, r"(\[tool\.tox\]\n)")
     return "tox.toml", _inject_skip_missing_interpreters_toml(content, r"^")
@@ -145,22 +121,22 @@ def _replace_python_versions(content: str) -> str:
     current_version = f"{current_major}.{current_minor}"
     current_py = f"py{current_major}{current_minor}"
 
-    content = re.sub(r"python3\.\d+", f"python{current_version}", content)
-    content = re.sub(r"py\d{2,3}", current_py, content)
-    content = re.sub(r"cpython3\.\d+", f"cpython{current_version}", content)
-    return re.sub(r"(?<=[\s\[\"',=\-])3\.\d+", current_version, content)
+    content = _CONTENT_PATTERN.sub(f"python{current_version}", content)
+    content = _REPLACE_PYTHON_VERSIONS_PATTERN.sub(current_py, content)
+    content = _REPLACE_PYTHON_VERSIONS_PATTERN_2.sub(f"cpython{current_version}", content)
+    return _REPLACE_PYTHON_VERSIONS_PATTERN_3.sub(current_version, content)
 
 
 def _classify_ini(content: str) -> tuple[str, str]:  # simplint: ignore[single-caller-helper]  # file kind
-    if re.search(r"^\[tox:tox\]", content, re.MULTILINE):
+    if _CLASSIFY_INI_PATTERN.search(content):
         return "setup.cfg", content
     return (
         ("tox.ini", content)
         if (
-            re.search(r"^\[tox\]", content, re.MULTILINE)
-            or re.search(r"^\[testenv", content, re.MULTILINE)
-            or re.search(r"^\[pkgenv", content, re.MULTILINE)
-            or re.search(r"^\[base\]", content, re.MULTILINE)
+            _CLASSIFY_INI_PATTERN_2.search(content)
+            or _CLASSIFY_INI_PATTERN_3.search(content)
+            or _CLASSIFY_INI_PATTERN_4.search(content)
+            or _CLASSIFY_INI_PATTERN_5.search(content)
         )
         else ("tox.ini", f"[testenv]\n{content}")
     )
@@ -169,9 +145,9 @@ def _classify_ini(content: str) -> tuple[str, str]:  # simplint: ignore[single-c
 def _inject_skip_missing_interpreters_ini(content: str) -> str:
     if r"skip_missing_interpreters" in content:
         return content
-    if not re.search(r"^\[tox(?::tox)?\]", content, re.MULTILINE):
+    if not _INJECT_SKIP_MISSING_INTERPRETERS_INI_PATTERN.search(content):
         return f"[tox]\nskip_missing_interpreters = true\n{content}"
-    return re.sub(r"(\[tox(?::tox)?\]\n)", r"\1skip_missing_interpreters = true\n", content)
+    return _INJECT_SKIP_MISSING_INTERPRETERS_INI_PATTERN_2.sub(r"\1skip_missing_interpreters = true\n", content)
 
 
 def _inject_skip_missing_interpreters_toml(content: str, section_pattern: str) -> str:
@@ -188,7 +164,7 @@ def _wrap_tox_toml_in_pyproject(content: str) -> str:
     in_tox = False
     in_other = False
     for line in content.splitlines():
-        if section_match := re.match(r"^\[(?P<section>[^\]]+)\]", line):
+        if section_match := _WRAP_TOX_TOML_IN_PYPROJECT_PATTERN.match(line):
             section = section_match.group("section")
             if section.startswith(("env", "env_run_base", "env_pkg_base", "env_base")):
                 in_tox, in_other = True, False
@@ -220,31 +196,13 @@ def _wrap_tox_toml_in_pyproject(content: str) -> str:
 def _find_env_names(filename: str, content: str) -> list[str]:
     envs: list[str] = []
     if filename in {"tox.toml", "pyproject.toml"}:
-        if re.search(
-            r"""
-            \[                  # the opening bracket of a table header
-            (?:tool\.tox\.)?    # the optional pyproject prefix
-            env_base\.          # the base environment table
-            """,
-            content,
-            re.VERBOSE,
-        ):
+        if _FIND_ENV_NAMES_PATTERN.search(content):
             return ["__env_base__"]
-        for match in re.finditer(
-            r"""
-            \[                       # the opening bracket of a table header
-            (?:tool\.tox\.)?         # the optional pyproject prefix
-            env\.                     # the environment table prefix
-            (?P<name> [^\]]+ )        # the environment name
-            \]                       # the closing bracket of the table header
-            """,
-            content,
-            re.VERBOSE,
-        ):
+        for match in _MATCH_PATTERN.finditer(content):
             if (name := match.group("name").strip('"').strip("'")) not in envs:
                 envs.append(name)
     elif filename in {"tox.ini", "setup.cfg"}:
-        for match in re.finditer(r"\[testenv:(?P<name>[^\]]+)\]", content):
+        for match in _FIND_ENV_NAMES_PATTERN_2.finditer(content):
             raw = match.group("name")
             if "{" not in raw and raw not in envs:
                 envs.append(raw)
@@ -252,36 +210,145 @@ def _find_env_names(filename: str, content: str) -> list[str]:
 
 
 def _should_skip(content: str) -> str | None:
-    if re.search(
-        r"""
+    if _SHOULD_SKIP_PATTERN.search(content):
+        return "triggers auto-provisioning"
+    if _SHOULD_SKIP_PATTERN_2.search(content):
+        return "references architecture-specific Python"
+    if _SHOULD_SKIP_PATTERN_3.search(content):
+        return "requires specific virtualenv version"
+    if _SHOULD_SKIP_PATTERN_4.search(content):
+        return "tox output format, not input config"
+    return None
+
+
+_CODE_BLOCK_RE: Final[re.Pattern[str]] = re.compile(
+    r"""
+        ^(?P<indent>\s*)        # leading whitespace
+        \.\.(?P<space>\s+)      # RST directive marker
+        code-block::\s+         # code-block directive
+        (?P<lang>toml|ini)      # language
+        \s*$
+        """,
+    re.VERBOSE,
+)
+
+
+_IS_TOX_CONFIG_PATTERN: Final[re.Pattern[str]] = re.compile(r"^\[tox(?::tox)?\]", re.MULTILINE)
+
+_IS_TOX_CONFIG_PATTERN_2: Final[re.Pattern[str]] = re.compile(r"^\[testenv", re.MULTILINE)
+
+_IS_TOX_CONFIG_PATTERN_3: Final[re.Pattern[str]] = re.compile(r"^\[pkgenv", re.MULTILINE)
+
+_IS_TOX_CONFIG_PATTERN_4: Final[re.Pattern[str]] = re.compile(r"^\[base\]", re.MULTILINE)
+
+_FIRST_SECTION_PATTERN: Final[re.Pattern[str]] = re.compile(r"^\[(?P<section>[^\]]+)\]", re.MULTILINE)
+
+_IS_TOX_CONFIG_PATTERN_5: Final[re.Pattern[str]] = re.compile(
+    r"""
+            ^ \[ tool\.tox      # a tox table in a pyproject file
+            """,
+    re.MULTILINE | re.VERBOSE,
+)
+
+_IS_TOX_CONFIG_PATTERN_6: Final[re.Pattern[str]] = re.compile(
+    r"""
+            ^ \[                                  # the opening bracket of a table header
+            (env|env_run_base|env_pkg_base|env_base)  # the environment table names
+            \b                                    # the end of the name
+            """,
+    re.MULTILINE | re.VERBOSE,
+)
+
+_IS_TOX_CONFIG_PATTERN_7: Final[re.Pattern[str]] = re.compile(r"^env_list\s*=", re.MULTILINE)
+
+_IS_TOX_CONFIG_PATTERN_8: Final[re.Pattern[str]] = re.compile(r"^(requires|no_package)\s*=", re.MULTILINE)
+
+_IS_TOX_CONFIG_PATTERN_9: Final[re.Pattern[str]] = re.compile(r"^\w+\s*=", re.MULTILINE)
+
+
+_CLASSIFY_PATTERN: Final[re.Pattern[str]] = re.compile(r"^\[tool\.tox\]", re.MULTILINE)
+
+_CLASSIFY_PATTERN_2: Final[re.Pattern[str]] = re.compile(r"^\[tool\.tox", re.MULTILINE)
+
+_CLASSIFY_PATTERN_3: Final[re.Pattern[str]] = re.compile(r"^\[dependency-groups\]", re.MULTILINE)
+
+
+_CONTENT_PATTERN: Final[re.Pattern[str]] = re.compile(r"python3\.\d+")
+
+_REPLACE_PYTHON_VERSIONS_PATTERN: Final[re.Pattern[str]] = re.compile(r"py\d{2,3}")
+
+_REPLACE_PYTHON_VERSIONS_PATTERN_2: Final[re.Pattern[str]] = re.compile(r"cpython3\.\d+")
+
+_REPLACE_PYTHON_VERSIONS_PATTERN_3: Final[re.Pattern[str]] = re.compile(r"(?<=[\s\[\"',=\-])3\.\d+")
+
+
+_CLASSIFY_INI_PATTERN: Final[re.Pattern[str]] = re.compile(r"^\[tox:tox\]", re.MULTILINE)
+
+_CLASSIFY_INI_PATTERN_2: Final[re.Pattern[str]] = re.compile(r"^\[tox\]", re.MULTILINE)
+
+_CLASSIFY_INI_PATTERN_3: Final[re.Pattern[str]] = re.compile(r"^\[testenv", re.MULTILINE)
+
+_CLASSIFY_INI_PATTERN_4: Final[re.Pattern[str]] = re.compile(r"^\[pkgenv", re.MULTILINE)
+
+_CLASSIFY_INI_PATTERN_5: Final[re.Pattern[str]] = re.compile(r"^\[base\]", re.MULTILINE)
+
+
+_INJECT_SKIP_MISSING_INTERPRETERS_INI_PATTERN: Final[re.Pattern[str]] = re.compile(r"^\[tox(?::tox)?\]", re.MULTILINE)
+
+_INJECT_SKIP_MISSING_INTERPRETERS_INI_PATTERN_2: Final[re.Pattern[str]] = re.compile(r"(\[tox(?::tox)?\]\n)")
+
+
+_WRAP_TOX_TOML_IN_PYPROJECT_PATTERN: Final[re.Pattern[str]] = re.compile(r"^\[(?P<section>[^\]]+)\]")
+
+
+_FIND_ENV_NAMES_PATTERN: Final[re.Pattern[str]] = re.compile(
+    r"""
+            \[                  # the opening bracket of a table header
+            (?:tool\.tox\.)?    # the optional pyproject prefix
+            env_base\.          # the base environment table
+            """,
+    re.VERBOSE,
+)
+
+_MATCH_PATTERN: Final[re.Pattern[str]] = re.compile(
+    r"""
+            \[                       # the opening bracket of a table header
+            (?:tool\.tox\.)?         # the optional pyproject prefix
+            env\.                     # the environment table prefix
+            (?P<name> [^\]]+ )        # the environment name
+            \]                       # the closing bracket of the table header
+            """,
+    re.VERBOSE,
+)
+
+_FIND_ENV_NAMES_PATTERN_2: Final[re.Pattern[str]] = re.compile(r"\[testenv:(?P<name>[^\]]+)\]")
+
+
+_SHOULD_SKIP_PATTERN: Final[re.Pattern[str]] = re.compile(
+    r"""
         requires\s*=\s*\[?[^\]]*   # requires key with optional opening bracket
         (?:tox-uv|virtualenv[<>=!])  # matches tox-uv or virtualenv with version constraint
         """,
-        content,
-        re.VERBOSE | re.MULTILINE,
-    ):
-        return "triggers auto-provisioning"
-    if re.search(
-        r"""
+    re.VERBOSE | re.MULTILINE,
+)
+
+_SHOULD_SKIP_PATTERN_2: Final[re.Pattern[str]] = re.compile(
+    r"""
         base_python\s*=\s*\[?\s*"?  # base_python key (not default_base_python)
         cpython3\.\d+-\d+-(?:arm64|x86_64)  # architecture-specific
         """,
-        content,
-        re.VERBOSE | re.MULTILINE,
-    ):
-        return "references architecture-specific Python"
-    if re.search(r"""virtualenv_spec\s*=""", content, re.MULTILINE):
-        return "requires specific virtualenv version"
-    if re.search(
-        r"""
+    re.VERBOSE | re.MULTILINE,
+)
+
+_SHOULD_SKIP_PATTERN_3: Final[re.Pattern[str]] = re.compile(r"""virtualenv_spec\s*=""", re.MULTILINE)
+
+_SHOULD_SKIP_PATTERN_4: Final[re.Pattern[str]] = re.compile(
+    r"""
         ^commands\s*=\s*\[  # commands key with list
         "[^["]              # flat string list, not nested
         """,
-        content,
-        re.VERBOSE | re.MULTILINE,
-    ):
-        return "tox output format, not input config"
-    return None
+    re.VERBOSE | re.MULTILINE,
+)
 
 
 def test_doc_config_valid(

@@ -163,8 +163,3 @@ def _force_root_deps(env_conf: EnvConfigSet, forced: dict[NormalizedName, Requir
         if (name := canonicalize_name(req.name)) in to_force:
             as_root_args[at] = str(to_force.pop(name))
     as_root_args.extend(str(v) for v in to_force.values())
-
-
-__all__ = [
-    "legacy",
-]
