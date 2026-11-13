@@ -104,6 +104,5 @@ class ReadViaThreadWindows(ReadViaThread):  # pragma: win32 cover
 
 
 __all__ = [
-    "ERROR_IO_INCOMPLETE",
     "ReadViaThreadWindows",
 ]

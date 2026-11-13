@@ -134,7 +134,7 @@ class TomlPyProjectSection(TomlSection):
 
     :var PREFIX: the parts of the key path the ``tool.tox`` table lives under
 
-    """
+    """  # simplint: ignore[function-docstring] existing section docs
 
     PREFIX = ("tool", "tox")
 
@@ -331,6 +331,5 @@ def _extract_env_list_labels(env_list_raw: TomlTypes) -> dict[str, FactorGroup]:
 
 __all__ = [
     "TomlPyProject",
-    "TomlPyProjectSection",
     "TomlSection",
 ]

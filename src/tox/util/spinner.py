@@ -252,7 +252,7 @@ def td_human_readable(seconds: float) -> str:
 
     :returns: the duration as text
 
-    """
+    """  # simplint: ignore[function-docstring] existing duration docs
     texts: list[str] = []
     periods = [
         ("day", 60 * 60 * 24),
@@ -277,5 +277,4 @@ def td_human_readable(seconds: float) -> str:
 __all__ = [
     "MISS_DURATION",
     "Spinner",
-    "td_human_readable",
 ]

@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING, Final, Literal, TypeVar
 import pytest
 
 from tox.config.loader.api import ConfigLoadArgs
+from tox.config.loader.toml import HandledError as TomlHandledError
 from tox.config.loader.toml import TomlLoader
 from tox.config.source.toml_pyproject import TomlPyProjectSection
 from tox.config.types import Command, EnvList
@@ -15,6 +16,13 @@ if TYPE_CHECKING:
     from types import UnionType
 
     from tox.config.loader.toml import TomlTypes
+
+
+def test_handled_error_export() -> None:
+    assert TomlHandledError is HandledError
+    namespace: dict[str, object] = {}  # simplint: ignore[imprecise-annotation]  # import binds classes and types
+    exec("from tox.config.loader.toml import *", namespace)  # ruff:ignore[exec-builtin]  # literal import tests exports
+    assert namespace["HandledError"] is HandledError
 
 
 def test_toml_loader_load_raw() -> None:

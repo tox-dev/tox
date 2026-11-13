@@ -1,19 +1,87 @@
-"""Show materialized configuration of tox environments."""
+"""The ``config`` command that prints the materialized configuration."""
 
 from __future__ import annotations
 
-from tox.plugin import impl
-from tox.session.cmd.run.common import env_run_create_flags
-from tox.session.env_select import CliEnv, register_env_select_flags
+from pathlib import Path  # simplint: ignore[init-module-content]  # API path
+from typing import (  # simplint: ignore[init-module-content]  # API path
+    TYPE_CHECKING,
+    Literal,
+    get_args,
+)
 
-from .command import ConfigFormat, show_config, tox_add_option
+from tox.plugin import impl  # simplint: ignore[init-module-content] API path
+from tox.session.cmd.run.common import env_run_create_flags  # simplint: ignore[init-module-content] API path
+from tox.session.env_select import CliEnv, register_env_select_flags  # simplint: ignore[init-module-content] API path
+
+if TYPE_CHECKING:
+    from tox.config.cli.parser import ToxParser
+    from tox.session.state import State
+
+ConfigFormat = Literal["ini", "json", "toml"]
+"""The formats the configuration can be shown in."""  # simplint: ignore[init-module-content]  # API path
+
+
+@impl
+def tox_add_option(parser: ToxParser) -> None:
+    """Add the ``config`` sub-command to the command line parser.
+
+    :param parser: the parser to add the sub-command to
+
+    """
+    our = parser.add_command("config", ["c"], "show tox configuration", show_config)
+    our.add_argument(
+        "-k",
+        nargs="+",
+        help="list just configuration keys specified",
+        dest="list_keys_only",
+        default=[],
+        metavar="key",
+    )
+    our.add_argument(
+        "--core",
+        action="store_true",
+        help="show core options (by default is hidden unless -e ALL is passed)",
+        dest="show_core",
+    )
+    our.add_argument(
+        "--format",
+        choices=get_args(ConfigFormat),
+        default="ini",
+        help="output format (default: %(default)s)",
+        dest="config_format",
+    )
+    our.add_argument(
+        "-o",
+        "--output-file",
+        of_type=Path,
+        default=None,
+        help="write output to file instead of stdout",
+        dest="output_file",
+    )
+    register_env_select_flags(our, default=CliEnv())
+    env_run_create_flags(our, mode="config")
+
+
+def show_config(state: State) -> int:
+    """Show the configuration in the format selected on the command line.
+
+    :param state: the state of the run
+
+    :returns: the exit code
+
+    """  # simplint: ignore[function-docstring] existing command docs
+    from .ini import show_config_ini  # ruff:ignore[import-outside-top-level]  # avoids an import cycle
+    from .json_format import show_config_json  # ruff:ignore[import-outside-top-level]  # avoids an import cycle
+    from .toml_format import show_config_toml  # ruff:ignore[import-outside-top-level]  # avoids an import cycle
+
+    fmt: ConfigFormat = state.conf.options.config_format
+    if fmt == "json":
+        return show_config_json(state)
+    if fmt == "toml":
+        return show_config_toml(state)
+    return show_config_ini(state)
+
 
 __all__ = [
-    "CliEnv",
-    "ConfigFormat",
-    "env_run_create_flags",
-    "impl",
-    "register_env_select_flags",
-    "show_config",
     "tox_add_option",
 ]

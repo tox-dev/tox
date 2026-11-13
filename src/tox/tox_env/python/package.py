@@ -25,7 +25,7 @@ if TYPE_CHECKING:
     from .pip.req_file import PythonDeps
 
 
-class PythonPathPackageWithDeps(PathPackage):
+class PythonPathPackageWithDeps(PathPackage):  # simplint: ignore[missing-from-all] internal package base
     """A package given by a path, together with the dependencies it declares.
 
     :param path: the path of the package
@@ -193,7 +193,6 @@ __all__ = [
     "EditableLegacyPackage",
     "EditablePackage",
     "PythonPackageToxEnv",
-    "PythonPathPackageWithDeps",
     "SdistPackage",
     "WheelPackage",
 ]

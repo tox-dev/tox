@@ -42,7 +42,7 @@ _ACTION_DEFAULT_SOURCE: Final[MutableMapping[Action, str]] = WeakKeyDictionary()
 """Where an action's default was overridden from (environment variable or user level configuration file)."""
 
 
-class ArgumentParserWithEnvAndConfig(ArgumentParser):
+class ArgumentParserWithEnvAndConfig(ArgumentParser):  # simplint: ignore[missing-from-all] internal parser base
     """Argument parser which updates its defaults by checking the configuration files and environmental variables.
 
     :param args: positional arguments passed to :class:`argparse.ArgumentParser`
@@ -828,7 +828,6 @@ __all__ = [
     "CORE",
     "DEFAULT_VERBOSITY",
     "ENV",
-    "ArgumentParserWithEnvAndConfig",
     "HelpFormatter",
     "Parsed",
     "ToxParser",
