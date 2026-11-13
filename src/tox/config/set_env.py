@@ -78,6 +78,24 @@ SetEnvRaw = (
 _EXTRACT_KEY_VALUE_PATTERN: Final[re.Pattern[str]] = re.compile(r"^export[ \t]+")
 
 
+class _Origin(NamedTuple):
+    name: str
+    env_name: str | None
+    root: Path
+
+
+class _Pending:
+    __slots__ = ("env_files", "lines", "override_keys", "overrides", "references")
+
+    # What `set_env` reads only once a value is asked for, and the keys the overrides set, which stay protected.
+    def __init__(self) -> None:
+        self.env_files: list[tuple[SetEnvValue, set[str]]] = []
+        self.lines: list[str] = []  # lines split only after substitution
+        self.overrides: list[tuple[SetEnv, set[str]]] = []
+        self.override_keys: set[str] = set()
+        self.references: list[dict[str, SetEnvValue | SetEnvEntry] | SetEnvReference] = []
+
+
 class SetEnv:
     """The environment variables of a tox environment, as set by its ``set_env`` setting.
 
@@ -110,19 +128,15 @@ class SetEnv:
         self._exported: dict[str, Callable[[], str]] = {}  # tox's own values, read from settings on first use
         self._defined_keys: set[str] = set()  # keys explicitly defined during parsing (survives load() draining _raw)
         self._markers: dict[str, Marker] = {}  # PEP-496 markers for conditional env vars
-        self._needs_replacement: list[str] = []  # env vars that need replacement
-        self._overrides: list[tuple[SetEnv, set[str]]] = []
-        self._reference_entries: list[dict[str, SetEnvValue | SetEnvEntry] | SetEnvReference] = []
-        self._override_keys: set[str] = set()
+        self._pending = _Pending()
         self._expanding = False
-        self._env_files: list[tuple[SetEnvValue, set[str]]] = []
         self._replacer: Replacer = self._keep_text
-        self._name, self._env_name, self._root = name, env_name, root
+        self._origin = _Origin(name, env_name, root)
         self._args = ConfigLoadArgs([], name, env_name)
         if isinstance(raw, list):
             self._parse_list(raw)
         elif isinstance(raw, SetEnvReference):
-            self._reference_entries = [raw]
+            self._pending.references = [raw]
             self._parse_dict(raw.config.raw(raw.args, resolve=False).items())
         elif isinstance(raw, dict):
             self._parse_dict(raw.items())
@@ -148,7 +162,7 @@ class SetEnv:
             for entry in raw
         )
         if any(isinstance(entry, SetEnvReference) for entry in raw):
-            self._reference_entries = raw.copy()
+            self._pending.references = raw.copy()
             self._parse_dict(
                 (key, value)
                 for entry in entries
@@ -166,7 +180,7 @@ class SetEnv:
                 if "value" in value:
                     self._define(key, value["value"], value.get("marker"), keys_after_file)
             elif key == "file":
-                self._env_files.append((value, keys_after_file := set()))
+                self._pending.env_files.append((value, keys_after_file := set()))
             else:
                 self._define(key, value, None, keys_after_file)
 
@@ -191,7 +205,7 @@ class SetEnv:
             if not line.strip():
                 continue
             if self._is_file_line(line):
-                self._env_files.append((self._parse_file_line(line), keys_after_file := set()))
+                self._pending.env_files.append((self._parse_file_line(line), keys_after_file := set()))
             elif (entry := self._parse_line(line, substituted=substituted)) is not None:
                 key, value, marker = entry
                 self._define(key, value, marker, keys_after_file)
@@ -223,7 +237,7 @@ class SetEnv:
                 raise ValueError(msg)  # ruff:ignore[raise-within-try]  # maps error in try
         except ValueError:
             if any(isinstance(expr, MatchExpression) for expr in find_replace_expr(line)):
-                self._needs_replacement.append(line)
+                self._pending.lines.append(line)
                 return None
             raise
         return _Assignment(key, value, marker)
@@ -244,7 +258,7 @@ class SetEnv:
 
     def _resolve_replacements(self, args: ConfigLoadArgs | None = None) -> None:
         if self._expanding or not (
-            self._env_files or self._needs_replacement or self._overrides or self._reference_entries
+            self._pending.env_files or self._pending.lines or self._pending.overrides or self._pending.references
         ):
             # A lookup made while expanding sees only the keys registered so far.
             return
@@ -253,25 +267,25 @@ class SetEnv:
         self._expanding = True
         try:
             self._resolve_files(args)
-            for line in self._needs_replacement:
+            for line in self._pending.lines:
                 entries.update(self._expand(line, (), args))
             entries = {
                 key: value for key, value in entries.items() if key not in self._raw and key not in self._defined_keys
             }
             # File selectors must see later direct assignments while earlier scopes resolve.
             protected_keys: list[set[str]] = []
-            protected = self._override_keys.copy()
-            for entry in reversed(self._reference_entries):
+            protected = self._pending.override_keys.copy()
+            for entry in reversed(self._pending.references):
                 protected_keys.append(protected.copy())
                 direct = entry.config.raw(entry.args, resolve=False) if isinstance(entry, SetEnvReference) else entry
                 protected.update(
                     key for key, value in direct.items() if key != "file" or not isinstance(value, SetEnvValue)
                 )
-            for entry, protected in zip(self._reference_entries, reversed(protected_keys), strict=True):
+            for entry, protected in zip(self._pending.references, reversed(protected_keys), strict=True):
                 if isinstance(entry, SetEnvReference):
                     values = entry.config.raw(entry.args)
                 else:
-                    block = SetEnv(entry, self._name, self._env_name, self._root)
+                    block = SetEnv(entry, *self._origin)
                     block.use_replacer(self._replacer, args)
                     values = block.raw(args)
                 resolved = {
@@ -280,11 +294,11 @@ class SetEnv:
                         Marker(reference_marker) if (reference_marker := value.get("marker")) else None,
                     )
                     for key, value in values.items()
-                    if key not in self._override_keys
+                    if key not in self._pending.override_keys
                 }
                 entries.update(resolved)
                 self._merge_entries({key: value for key, value in resolved.items() if key not in protected})
-            for block, protected in self._overrides:
+            for block, protected in self._pending.overrides:
                 resolved = {
                     key: (
                         value["value"],
@@ -297,27 +311,27 @@ class SetEnv:
                 self._merge_entries(resolved)
         finally:
             self._expanding = False
-        self._needs_replacement.clear()
-        self._overrides.clear()
-        self._reference_entries.clear()
+        self._pending.lines.clear()
+        self._pending.overrides.clear()
+        self._pending.references.clear()
         self._merge_entries(entries)
         self.changed = True  # loading while iterating can cause these values to be missed
 
     def _resolve_files(self, args: ConfigLoadArgs) -> None:
-        for filename, keys_after in self._env_files:
+        for filename, keys_after in self._pending.env_files:
             for key, value in self._stream_env_file(filename, args):
-                if key not in keys_after and key not in self._override_keys and key not in self._exported:
+                if key not in keys_after and key not in self._pending.override_keys and key not in self._exported:
                     self._raw[key] = value
                     self._materialized.pop(key, None)
                     self._markers.pop(key, None)
-        self._env_files.clear()
+        self._pending.env_files.clear()
 
     def _stream_env_file(self, filename: SetEnvValue, args: ConfigLoadArgs) -> Iterator[tuple[str, str]]:
         # Our rules in the documentation, some upstream environment file rules (we follow mostly the docker one):
         # - https://www.npmjs.com/package/dotenv#rules
         # - https://docs.docker.com/compose/env-file/
         env_file = Path(self._replacer(filename, args.copy()))  # apply any replace options
-        env_file = env_file if env_file.is_absolute() else self._root / env_file
+        env_file = env_file if env_file.is_absolute() else self._origin.root / env_file
         if not env_file.is_file():
             msg = f"{env_file} {'is not a file' if env_file.exists() else 'does not exist'} for set_env"
             raise Fail(msg)
@@ -363,11 +377,11 @@ class SetEnv:
         if (text := self._replacer(line, args, recursive=False)) == line:  # nothing left to substitute, keep it as text
             key, value, marker = split_line(line)
             return {key: (value, Marker(marker) if marker else None)}
-        block = SetEnv(text, self._name, self._env_name, self._root, substituted=True)
+        block = SetEnv(text, *self._origin, substituted=True)
         block.use_replacer(self._replacer, args)
         block._resolve_files(args)
         entries: dict[str, tuple[SetEnvValue, Marker | None]] = {}
-        for nested in block._needs_replacement:  # the block's own lines win over what it pulls in
+        for nested in block._pending.lines:  # the block's own lines win over what it pulls in
             entries.update(self._expand(nested, (*parents, line), args))
         entries.update((key, (value, block._markers.get(key))) for key, value in block._raw.items())
         return entries
@@ -421,7 +435,7 @@ class SetEnv:
             self._materialized[item] = self._exported[item]()
             return self._materialized[item]
         raw = self._raw[item]
-        args = ConfigLoadArgs([], self._name, self._env_name) if args is None else args
+        args = ConfigLoadArgs([], self._origin.name, self._origin.env_name) if args is None else args
         if args.chain[-1:] != [f"env:{item}"]:  # an {env:...} lookup already recorded the key it resolves
             args.chain.append(f"env:{item}")
         result = self._replacer(raw, args)  # apply any replace options
@@ -479,9 +493,9 @@ class SetEnv:
         :param other: the configuration whose blocks are appended to this one
 
         """
-        for _, protected in self._overrides:
+        for _, protected in self._pending.overrides:
             protected.update(other._raw)
-        self._override_keys.update(other._raw)
+        self._pending.override_keys.update(other._raw)
         for key, value in other._raw.items():
             self._materialized.pop(key, None)
             self._raw[key] = value
@@ -490,8 +504,8 @@ class SetEnv:
                 self._markers[key] = other._markers[key]
             else:
                 self._markers.pop(key, None)
-        if other._env_files or other._needs_replacement or other._reference_entries:
-            self._overrides.append((other, set()))
+        if other._pending.env_files or other._pending.lines or other._pending.references:
+            self._pending.overrides.append((other, set()))
         self.changed = True
 
     def update(self, param: Mapping[str, str] | SetEnv, *, override: bool = True) -> None:
