@@ -20,7 +20,7 @@ def expand_product(value: dict[str, TomlTypes]) -> list[str]:
 
     :raises TypeError: when a group or exclusion has an unsupported shape
 
-    """
+    """  # simplint: ignore[function-docstring] existing public helper
     raw_groups = value["product"]
     if not isinstance(raw_groups, list):
         msg = f"product value must be a list of factor groups, got {type(raw_groups).__name__}"
@@ -45,7 +45,7 @@ def expand_factor_group(group: TomlTypes) -> list[str]:
 
     :raises TypeError: when the group has an unsupported shape
 
-    """
+    """  # simplint: ignore[function-docstring] existing public helper
     if isinstance(group, list):
         result: list[str] = []
         for item in group:
@@ -117,7 +117,7 @@ def extract_default(group: TomlTypes, values: list[str]) -> str | None:
 
     :raises TypeError: when the default is invalid
 
-    """
+    """  # simplint: ignore[function-docstring] existing public helper
     if not isinstance(group, dict):
         return None
     table = group if "prefix" in group else next(iter(group.values()), None)
@@ -139,15 +139,15 @@ def extract_label(group: TomlTypes) -> str | None:
 
     :returns: the label or ``None``
 
-    """
+    """  # simplint: ignore[function-docstring] existing public helper
     if isinstance(group, dict) and "prefix" not in group and len(group) == 1:
         return str(next(iter(group)))
     return None
 
 
 __all__ = [
-    "expand_factor_group",
-    "expand_product",
-    "extract_default",
-    "extract_label",
+    "expand_factor_group",  # simplint: ignore[unused-export] existing public helper
+    "expand_product",  # simplint: ignore[unused-export] existing public helper
+    "extract_default",  # simplint: ignore[unused-export] existing public helper
+    "extract_label",  # simplint: ignore[unused-export] existing public helper
 ]

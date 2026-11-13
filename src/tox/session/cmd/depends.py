@@ -67,8 +67,3 @@ def depends(state: State) -> int:
 
     _handle(0, "ALL")
     return 0
-
-
-__all__ = [
-    "depends",
-]

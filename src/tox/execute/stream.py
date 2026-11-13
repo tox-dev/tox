@@ -134,5 +134,4 @@ class SyncWrite:
 
 __all__ = [
     "SyncWrite",
-    "override",
 ]

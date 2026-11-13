@@ -23,13 +23,16 @@ from colorama import Fore
 from psutil import AccessDenied
 
 from tox.config.sets import EnvConfigSet
+from tox.execute import local_sub_process as execute
 from tox.execute.api import ExecuteOptions, FinishedExecuteStatus, Outcome
 from tox.execute.local_sub_process import (
     SIG_INTERRUPT,
     LocalSubProcessExecuteInstance,
     LocalSubProcessExecutor,
-    execute,
     read_via_thread_windows,
+)
+from tox.execute.local_sub_process import (
+    __all__ as exported,
 )
 from tox.execute.local_sub_process.read_via_thread_unix import ReadViaThreadUnix
 from tox.execute.request import ExecuteRequest, StdinSource
@@ -43,6 +46,19 @@ if TYPE_CHECKING:
     from tox.pytest import CaptureFixture, LogCaptureFixture, MonkeyPatch, ToxProjectCreator
 
 _EXE_SUFFIX: Final[str] = ".EXE" if sys.platform == "win32" else ""
+
+
+def test_public_exports() -> None:
+    assert set(exported) == {
+        "SIG_INTERRUPT",
+        "LocalSubProcessExecuteInstance",
+        "LocalSubProcessExecutor",
+        "LocalSubprocessExecuteFailedStatus",
+        "LocalSubprocessExecuteStatus",
+    }
+    namespace: dict[str, object] = {}  # simplint: ignore[imprecise-annotation]  # import binds signals and classes
+    exec("from tox.execute.local_sub_process import *", namespace)  # ruff:ignore[exec-builtin]  # literal import tests exports
+    assert set(namespace) - {"__builtins__"} == set(exported)
 
 
 @pytest.mark.parametrize(("out", "err"), [pytest.param("out", "err", id="simple"), pytest.param("", "", id="nothing")])

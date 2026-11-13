@@ -8,7 +8,7 @@ from typing import Final
 
 import pytest
 
-from tox.config.cli.manpage import main
+from tools.generate_manpage import main as generate_manpage
 
 if sys.platform == "win32":
     pytest.skip("man command not available on Windows", allow_module_level=True)
@@ -17,10 +17,10 @@ _ROOT: Final[Path] = Path(__file__).parents[2]
 _RST_PATH: Final[Path] = _ROOT / "docs" / "man" / "tox.1.rst"
 
 
-def test_generated_manpage_has_cli_commands_and_options(tmp_path: Path) -> None:
-    generated = tmp_path / "tox.1.rst"
-    main(generated)
-    content = generated.read_text(encoding="utf-8")
+def test_generate_manpage(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setitem(generate_manpage.__globals__, "__file__", str(tmp_path / "tools" / "generate_manpage.py"))
+    generate_manpage()
+    content = (tmp_path / "docs" / "man" / "tox.1.rst").read_text(encoding="utf-8")
     assert "**run**" in content
     assert "**--help**" in content
     assert "ENVIRONMENT VARIABLES" in content

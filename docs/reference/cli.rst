@@ -58,5 +58,5 @@ tox ships a Unix man page accessible via ``man tox`` (see :ref:`howto` for setup
 **********************
 
 .. sphinx_argparse_cli::
-    :module: tox.config.cli._parser_factory
-    :func: get_parser_doc
+    :module: tox.config.cli.parse
+    :func: _get_parser_doc

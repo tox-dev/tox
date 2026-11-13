@@ -1,14 +1,261 @@
 from __future__ import annotations
 
+import inspect  # simplint: ignore[init-module-content]  # API path
+import logging  # simplint: ignore[init-module-content]  # API path
+from types import GenericAlias  # simplint: ignore[init-module-content]  # API path
+from typing import (  # simplint: ignore[init-module-content]  # API path
+    TYPE_CHECKING,
+    Any,
+    Final,
+    TypeVar,
+    cast,
+)
+
+from tox.config.loader.api import (  # simplint: ignore[init-module-content]  # API path
+    ConfigLoadArgs,
+    Loader,
+    Override,
+)
+from tox.config.loader.replacer import (  # simplint: ignore[init-module-content]  # API path
+    MatchExpression,
+    MatchRecursionError,
+    RequirementLineCallbacks,
+    replace,
+    replace_command_lines,
+    replace_for,
+    replace_once,
+    replace_requirement_lines,
+)
+from tox.config.loader.str_convert import StrConvert  # simplint: ignore[init-module-content]  # API path
+from tox.config.set_env import SetEnv  # simplint: ignore[init-module-content]  # API path
+from tox.config.types import (  # simplint: ignore[init-module-content]  # API path
+    CircularChainError,
+    Command,
+    EnvList,
+)
+from tox.report import HandledError
+from tox.tox_env.python.pip.req.file import protect_env_variables  # simplint: ignore[init-module-content]  # API path
+from tox.tox_env.python.pip.req_file import (  # simplint: ignore[init-module-content]  # API path
+    PythonConstraints,
+    PythonDeps,
+)
+from tox.util.typing_compat import override  # simplint: ignore[init-module-content]  # API path
+
 from ._api import TomlTypes
-from ._product import expand_factor_group, expand_product, extract_default, extract_label
-from .loader import TomlLoader
+from ._product import (  # simplint: ignore[init-module-content]  # loader uses product helper
+    expand_factor_group,
+    expand_product,
+    extract_default,
+    extract_label,
+)
+from ._replace import TomlReplaceLoader, Unroll  # simplint: ignore[init-module-content]  # API path
+from ._validate import validate  # simplint: ignore[init-module-content]  # API path
+
+if TYPE_CHECKING:
+    from collections.abc import Iterator, Mapping
+    from pathlib import Path
+    from types import UnionType
+
+    from tox.config.loader.convert import Factory
+    from tox.config.loader.section import Section
+    from tox.config.main import Config
+
+_T = TypeVar("_T")
+_V = TypeVar("_V")
+
+
+class TomlLoader(Loader[TomlTypes]):
+    """Load configuration from a pyproject.toml file.
+
+    :param section: the section the values are read from
+    :param overrides: the overrides to apply to the values
+    :param content: the parsed content of the ``tox.toml`` or ``pyproject.toml`` file
+    :param root_content: the parsed content of the root of the file, used by references
+    :param unused_exclude: the keys that are not reported as unused
+
+    """
+
+    def __init__(
+        self,
+        section: Section,
+        overrides: list[Override],
+        content: Mapping[str, TomlTypes],
+        root_content: Mapping[str, TomlTypes],
+        unused_exclude: set[str],
+    ) -> None:
+        self.content = content
+        self._root_content = root_content
+        self._unused_exclude = unused_exclude
+        super().__init__(section, overrides)
+
+    @override
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}({self.section.name}, {self.content!r})"
+
+    @override
+    def load_raw(self, key: str, conf: Config | None, env_name: str | None) -> TomlTypes:
+        return self.content[key]
+
+    def load_raw_from_root(self, path: str) -> TomlTypes:
+        """Get a raw value from the root of the TOML content, by its dotted path.
+
+        :param path: the dotted path of the value
+
+        :returns: the raw value found at that path
+
+        :raises KeyError: when a part of the path is missing or is not a table
+
+        """
+        current = cast("TomlTypes", self._root_content)
+        for key in path.split(self.section.SEP):
+            if isinstance(current, dict):
+                current = current[key]
+            else:
+                msg = f"Failed to load key {key} as not dictionary {current!r}"
+                logging.warning(msg)
+                raise KeyError(msg)
+        return current
+
+    @override
+    def build(
+        self,
+        key: str,
+        of_type: type[_T] | UnionType,
+        factory: Factory[_T],
+        conf: Config | None,
+        raw: TomlTypes,
+        args: ConfigLoadArgs,
+    ) -> _T:
+        delay_replace = inspect.isclass(of_type) and issubclass(of_type, SetEnv)
+        unroll = Unroll(
+            conf=conf,
+            loader=self,
+            args=args,
+            program_depth=2 if of_type == list[Command] else 1 if of_type == Command else None,
+            requirement_entries=of_type in {PythonDeps, PythonConstraints},
+        )
+        result = self.to(unroll(raw, skip_str=True) if delay_replace else unroll(raw), of_type, factory)
+        if delay_replace and conf is not None:  # the core section supports no replacement
+            loader = self
+
+            def _toml_replacer(value: str | MatchExpression, args_: ConfigLoadArgs, *, recursive: bool = True) -> str:
+                try:
+                    return (replace if recursive else replace_once)(conf, TomlReplaceLoader(conf, loader), value, args_)
+                except (CircularChainError, MatchRecursionError) as exception:
+                    msg = f"failed to load {args.env_name}.{key}: {exception}"
+                    raise HandledError(msg) from exception
+
+            cast("SetEnv", result).use_replacer(_toml_replacer, args=args)  # delay_replace means of_type is SetEnv
+        return result
+
+    @override
+    def to(self, raw: TomlTypes, of_type: type[_V] | UnionType, factory: Factory[_V]) -> _V:
+        # Built-in numeric conversion errors quote input that may contain a substituted secret.
+        if isinstance(raw, str) and (of_type is int or of_type is float):
+            try:
+                return super().to(raw, of_type, factory)
+            except ValueError:
+                msg: Final[str] = f"value of type 'str' is not of type {of_type.__name__!r}"
+                raise TypeError(msg) from None
+        return super().to(raw, of_type, factory)
+
+    @override
+    def substitute(self, value: str, conf: Config, args: ConfigLoadArgs, *, of_type: type[_V] | UnionType) -> str:
+        reference: Final[TomlReplaceLoader] = TomlReplaceLoader(conf, self)
+        if of_type in {PythonDeps, PythonConstraints}:
+            return replace_requirement_lines(
+                conf,
+                reference,
+                value,
+                args,
+                callbacks=RequirementLineCallbacks(
+                    validate_options=PythonDeps.validate_requirement_options,
+                    protect_host_value=protect_env_variables,
+                ),
+            )
+        if of_type in {Command, list[Command]}:
+            return replace_command_lines(conf, reference, value, args)
+        return replace_for(of_type)(conf, reference, value, args)
+
+    @override
+    def found_keys(self) -> set[str]:
+        return set(self.content.keys()) - self._unused_exclude
+
+    @staticmethod
+    @override
+    def to_bool(value: TomlTypes) -> bool:
+        return validate(value, bool)
+
+    @staticmethod
+    @override
+    def to_set(value: TomlTypes, of_type: type[_T]) -> Iterator[_T]:
+        return TomlLoader.to_list(value, of_type)
+
+    @staticmethod
+    @override
+    def to_list(value: TomlTypes, of_type: type[_T]) -> Iterator[_T]:
+        result = cast("list[_T]", validate(value, cast("type[list[Any]]", GenericAlias(list, (of_type,)))))
+        if inspect.isclass(of_type) and issubclass(of_type, Command):
+            # a generated command list leaves gaps rather than compacting itself, so drop them here (see #3388)
+            return iter([i for i in result if i])
+        return iter(result)
+
+    @staticmethod
+    @override
+    def to_dict(value: TomlTypes, of_type: tuple[type[_T], type[_V]]) -> Iterator[tuple[_T, _V]]:
+        result = validate(value, cast("type[dict[Any, Any]]", GenericAlias(dict, of_type)))
+        return iter(cast("dict[_T, _V]", result).items())
+
+    @staticmethod
+    @override
+    def to_path(value: TomlTypes) -> Path:
+        return StrConvert.to_path(TomlLoader.to_str(value))
+
+    @staticmethod
+    @override
+    def to_str(value: TomlTypes) -> str:
+        return validate(value, str)
+
+    @staticmethod
+    @override
+    def to_command(value: TomlTypes) -> Command:
+        if not value:
+            msg = f"attempting to parse {value!r} into a command failed"
+            raise ValueError(msg)
+        return Command(args=cast("list[str]", value))  # validated during load in _ensure_type_correct
+
+    @staticmethod
+    @override
+    def to_env_list(value: TomlTypes) -> EnvList:
+        if not isinstance(value, list):
+            msg = f"env_list must be a list, got {type(value).__name__}"
+            raise TypeError(msg)
+        envs: list[str] = []
+        for item in value:
+            if isinstance(item, str):
+                envs.append(item)
+            elif isinstance(item, dict):
+                if "product" in item:
+                    if "prefix" in item:
+                        msg = "env_list dict items cannot combine 'product' with 'prefix'"
+                        raise TypeError(msg)
+                    envs.extend(expand_product(item))
+                else:
+                    envs.extend(expand_factor_group(item))
+            else:
+                msg = (
+                    f"env_list items must be strings, product dicts, range dicts, or labeled dicts, "
+                    f"got {type(item).__name__}"
+                )
+                raise TypeError(msg)
+        return EnvList(envs=envs)
+
 
 __all__ = [
+    "HandledError",
     "TomlLoader",
     "TomlTypes",
     "expand_factor_group",
-    "expand_product",
     "extract_default",
     "extract_label",
 ]

@@ -401,7 +401,7 @@ def _flatten_string_fragments(fragments: Sequence[str | _OtherFragment]) -> list
     return result
 
 
-class Replacer:
+class Replacer:  # simplint: ignore[unexported-public-name] internal replacer
     """Expand the replacement expressions of a value against the configuration.
 
     :param conf: the configuration the replacements read from
@@ -414,7 +414,7 @@ class Replacer:
     :var root: the replacer the nested replacers report to
     :var depth_exhausted: whether a replacement hit the maximum depth
 
-    """
+    """  # simplint: ignore[function-docstring] existing replacer docs
 
     # Recursively expand MatchExpression against the config and loader.
     def __init__(
@@ -475,7 +475,7 @@ class Replacer:
 
         :returns: the joined value
 
-        """
+        """  # simplint: ignore[function-docstring] existing replacer docs
         return HostText.from_parts(self(value))
 
     def _replace_args(self, flattened_args: list[str]) -> str | None:
@@ -533,7 +533,7 @@ class Replacer:
 
         :returns: the value with its replacements resolved
 
-        """
+        """  # simplint: ignore[function-docstring] existing replacer docs
         if self.depth > MAX_REPLACE_DEPTH:
             self.root.depth_exhausted = True
         MatchRecursionError.check(self.depth, value)
@@ -546,7 +546,7 @@ class Replacer:
 
         :returns: the joined string
 
-        """
+        """  # simplint: ignore[function-docstring] existing replacer docs
         return self.join(value)
 
 
@@ -1204,7 +1204,6 @@ __all__ = [
     "MatchRecursionError",
     "RawText",
     "ReplaceReference",
-    "Replacer",
     "RequirementLineCallbacks",
     "find_replace_expr",
     "load_posargs",

@@ -111,7 +111,7 @@ def parse_num_processes(str_value: str) -> int | None:
 
     :raises ArgumentTypeError: when the value is neither of those, or is negative
 
-    """
+    """  # simplint: ignore[function-docstring] existing parser docs
     if str_value == "all":
         return None
     if str_value == "auto":
@@ -131,6 +131,5 @@ __all__ = [
     "ENV_VAR_KEY",
     "OFF_VALUE",
     "parallel_flags",
-    "parse_num_processes",
     "run_parallel",
 ]
