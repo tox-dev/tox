@@ -11,7 +11,7 @@ from contextlib import contextmanager
 from itertools import chain
 from pathlib import Path
 from threading import RLock
-from typing import TYPE_CHECKING, Any, Literal, NoReturn, cast
+from typing import TYPE_CHECKING, Any, Literal, NoReturn, SupportsIndex, cast
 
 from cachetools import cached
 from packaging.requirements import Requirement
@@ -42,7 +42,7 @@ from tox.util.typing_compat import override
 from .util import dependencies_with_extras, safe_extractall
 
 if TYPE_CHECKING:
-    from collections.abc import Generator, Sequence
+    from collections.abc import Callable, Generator, Sequence
 
     from tox.config.sets import EnvConfigSet
     from tox.execute.api import ExecuteStatus
@@ -76,6 +76,23 @@ class ToxBackendFailed(Fail, BackendFailed):
             backend_failed.out,
             backend_failed.err,
         )
+
+    # `BackendFailed.__reduce__` rebuilds through this class's constructor with its own arguments, which this class does
+    # not take; `pickle` and `copy` call `__reduce_ex__` first, so the override goes there.
+    @override
+    def __reduce_ex__(
+        self,
+        protocol: SupportsIndex,
+    ) -> tuple[
+        Callable[[dict[str, int | str | None], str, str], ToxBackendFailed],
+        tuple[dict[str, int | str | None], str, str],
+    ]:
+        result: dict[str, int | str | None] = {"code": self.code, "exc_type": self.exc_type, "exc_msg": self.exc_msg}
+        return _rebuild_backend_failed, (result, self.out, self.err)
+
+
+def _rebuild_backend_failed(result: dict[str, int | str | None], out: str, err: str) -> ToxBackendFailed:
+    return ToxBackendFailed(BackendFailed(result, out, err))
 
 
 class _BuildEditableNotSupportedError(RuntimeError):

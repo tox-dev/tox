@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import copy
 import io
 import json
 import os
@@ -9,10 +10,11 @@ from textwrap import dedent
 from typing import TYPE_CHECKING, Any, Final, Protocol, cast
 
 import pytest
+from pyproject_api import BackendFailed
 
 from tox.execute.local_sub_process import LocalSubprocessExecuteStatus
 from tox.tox_env.python.virtual_env.package import pyproject as pyproject_pkg
-from tox.tox_env.python.virtual_env.package.pyproject import Pep517VirtualEnvFrontend
+from tox.tox_env.python.virtual_env.package.pyproject import Pep517VirtualEnvFrontend, ToxBackendFailed
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -884,3 +886,9 @@ def test_pkg_env_missing_interpreter(
 
     result.assert_failed()
     assert message in result.out.splitlines()
+
+
+def test_backend_failure_survives_copying() -> None:
+    failure = ToxBackendFailed(BackendFailed({"code": 1, "exc_type": "ValueError", "exc_msg": "bad"}, "out", "err"))
+    restored = copy.deepcopy(failure)
+    assert (type(restored), str(restored)) == (ToxBackendFailed, str(failure))
