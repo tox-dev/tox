@@ -16,9 +16,7 @@ from types import FunctionType, ModuleType, TracebackType
 from typing import TYPE_CHECKING, Any, Final, Protocol, TypeAlias, cast
 
 import pytest
-
-# Preserve the exported SubRequest type for plugins using tox.pytest.
-from _pytest.fixtures import SubRequest  # ruff:ignore[import-private-name] # simplint: ignore[private-import-path]
+from _pytest.fixtures import SubRequest  # ruff:ignore[import-private-name]  # simplint: ignore[private-import-path]  # exported for plugins
 from devpi_process import IndexServer
 from virtualenv.info import fs_supports_symlink
 

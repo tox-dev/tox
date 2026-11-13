@@ -343,7 +343,9 @@ def test_get_virtualenv_py_info_raises_on_none(mocker: MockerFixture) -> None:
 
 
 def test_missing_interpreter_discovered_once(tox_project: ToxProjectCreator, mocker: MockerFixture) -> None:
-    session_via_cli_mock = mocker.patch("tox.tox_env.python.virtual_env.api.session_via_cli", wraps=session_via_cli)
+    session_via_cli_mock = mocker.patch(
+        "tox.tox_env.python.virtual_env.api.session_via_cli", autospec=True, wraps=session_via_cli
+    )
     project = tox_project({"tox.ini": "[testenv]\npackage=skip\nbase_python=missing-interp"})
     result = project.run("c", "-e", "py", raise_on_config_fail=False)
     assert "failed to find interpreter for Builtin discover" in result.out

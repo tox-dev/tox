@@ -21,20 +21,29 @@ _PYTHON_BLOCK: Final[re.Pattern[str]] = re.compile(
 )
 
 
+_EXPECTED_PATTERN: Final[re.Pattern[str]] = re.compile(r'return "(?P<info>[^"]+)"')
+
+
 def _version_info_examples() -> list[tuple[str, str]]:
     examples = []
     for rel_path in ("plugin/getting_started.rst", "plugin/howto.rst"):
         for match in _PYTHON_BLOCK.finditer((_DOCS_DIR / rel_path).read_text(encoding="utf-8")):
             code = textwrap.dedent(match.group("body"))
             if "def tox_append_version_info" in code:
-                expected = re.search(r'return "(?P<info>[^"]+)"', code)
+                expected = _EXPECTED_PATTERN.search(code)
                 assert expected is not None
                 examples.append((code, expected.group("info")))
     return examples
 
 
 @pytest.mark.plugin_test
-@pytest.mark.parametrize(("code", "expected"), _version_info_examples(), ids=["getting_started", "howto"])
+@pytest.mark.parametrize(
+    ("code", "expected"),
+    [
+        pytest.param(*case, id=name)
+        for case, name in zip(_version_info_examples(), ("getting_started", "howto"), strict=True)
+    ],
+)
 def test_doc_append_version_info_example(tox_project: ToxProjectCreator, code: str, expected: str) -> None:
     outcome = tox_project({"tox.ini": "", "toxfile.py": code}).run("--version")
     outcome.assert_success()

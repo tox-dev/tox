@@ -31,6 +31,13 @@ if TYPE_CHECKING:
     from .req.file import EnvironmentProvider
 
 
+_ENV_VAR_PATTERN: Final[re.Pattern[str]] = re.compile(r"\$\{[A-Z0-9_]+\}")
+
+_PARTS_PATTERN: Final[re.Pattern[str]] = re.compile(r"\x00\d+\x00")
+
+_ESCAPE_PATTERN: Final[re.Pattern[str]] = re.compile(r"""[\s\\'"]""")
+
+
 class _PythonRequirementsFile(RequirementsFile):
     _CONSTRAINT: ClassVar[bool]
     _FIELD: ClassVar[str]
@@ -148,7 +155,7 @@ class _PythonRequirementsFile(RequirementsFile):
 
     def _expand_env_line(self, line_number: int, line: str) -> str:
         expanded: Final[str] = next(super()._expand_env_variables(iter(((line_number, line),))))[1]
-        env_var_pattern: Final[re.Pattern[str]] = re.compile(r"\$\{[A-Z0-9_]+\}")
+        env_var_pattern: Final[re.Pattern[str]] = _ENV_VAR_PATTERN
         if not env_var_pattern.fullmatch(line):
             marked: Final[str] = unprotect_env_variables(
                 env_var_pattern.sub(lambda match: f"\x00{match.start()}\x00", line)
@@ -192,7 +199,7 @@ class _PythonRequirementsFile(RequirementsFile):
 
     @staticmethod
     def _same_requirement_token(source: str, expanded: str) -> bool:
-        parts: Final[list[str]] = re.split(r"\x00\d+\x00", source)
+        parts: Final[list[str]] = _PARTS_PATTERN.split(source)
         if len(parts) == 1:
             return source == expanded
         return re.fullmatch(".*?".join(re.escape(part) for part in parts), expanded, flags=re.DOTALL) is not None
@@ -235,7 +242,7 @@ class _PythonRequirementsFile(RequirementsFile):
         # separator, so quote instead of escaping.
         if sys.platform == "win32":  # pragma: win32 cover
             return shlex.quote(arg)
-        return re.sub(r"""[\s\\'"]""", r"\\\g<0>", arg) or "''"
+        return _ESCAPE_PATTERN.sub(r"\\\g<0>", arg) or "''"
 
     @override
     def _parse_requirements(self, opt: Namespace, recurse: bool) -> list[ParsedRequirement]:

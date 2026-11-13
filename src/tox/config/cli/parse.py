@@ -11,6 +11,7 @@ from typing import TYPE_CHECKING, Final, NamedTuple
 from tox.config.source import Source, discover_source
 from tox.report import HandledError, ToxHandler, setup_report
 
+from ._parser_factory import get_parser
 from .parser import Parsed, ToxParser
 
 if TYPE_CHECKING:
@@ -161,7 +162,7 @@ def _discover_or_fallback(selected: Parsed, args: Sequence[str], *, completing: 
 
 
 def _get_all(args: Sequence[str]) -> tuple[Parsed, dict[str, Callable[[State], int]]]:
-    tox_parser = _get_parser()
+    tox_parser = get_parser()
     try:
         import argcomplete  # ruff:ignore[import-outside-top-level]  # avoids an import cycle
 
@@ -173,16 +174,6 @@ def _get_all(args: Sequence[str]) -> tuple[Parsed, dict[str, Callable[[State], i
     if getattr(parsed, "no_capture", False) and getattr(parsed, "result_json", None):
         tox_parser.error("argument -i/--no-capture: not allowed with argument --result-json")
     return parsed, {k: p for k, (_, p) in tox_parser.handlers.items()}
-
-
-def _get_parser() -> ToxParser:
-    tox_parser = ToxParser.core()  # load the core options
-    # plus options setup by plugins
-    from tox.plugin.manager import MANAGER  # ruff:ignore[import-outside-top-level]
-
-    MANAGER.tox_add_option(tox_parser)
-    tox_parser.fix_defaults()
-    return tox_parser
 
 
 class Options(NamedTuple):
@@ -201,18 +192,6 @@ class Options(NamedTuple):
     source: Source
     cmd_handlers: dict[str, Callable[[State], int]]
     log_handler: ToxHandler
-
-
-def _get_parser_doc() -> ToxParser:
-    # trigger register of tox env types (during normal run we call this later to handle plugins)
-    from tox.plugin.manager import MANAGER  # pragma: no cover  # ruff:ignore[import-outside-top-level]
-
-    MANAGER.load_plugins(Path.cwd())
-
-    parser = _get_parser()  # pragma: no cover  # setup not built by tests
-    # Remove epilog message from help when formatting website docs
-    parser.epilog = None
-    return parser
 
 
 __all__ = [

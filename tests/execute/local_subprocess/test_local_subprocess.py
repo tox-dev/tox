@@ -363,6 +363,11 @@ def test_local_execute_basic_fail(
     assert metadata.startswith(" pid=")
 
 
+_TEST_COMMAND_DOES_NOT_EXIST_PATTERN: Final[re.Pattern[str]] = re.compile(
+    r".*(No such file or directory|The system cannot find the file specified).*"
+)
+
+
 def test_command_does_not_exist(caplog: LogCaptureFixture, os_env: dict[str, str], mocker: MockerFixture) -> None:
     caplog.set_level(logging.NOTSET)
     executor = LocalSubProcessExecutor(colored=False)
@@ -385,9 +390,7 @@ def test_command_does_not_exist(caplog: LogCaptureFixture, os_env: dict[str, str
     assert not outcome.err
     assert len(caplog.records) == 1
     assert caplog.records[0].levelname == "ERROR"
-    assert re.match(
-        r".*(No such file or directory|The system cannot find the file specified).*", caplog.records[0].message
-    )
+    assert _TEST_COMMAND_DOES_NOT_EXIST_PATTERN.match(caplog.records[0].message)
 
 
 @pytest.fixture(

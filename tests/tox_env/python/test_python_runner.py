@@ -859,7 +859,7 @@ def test_resolve_extras_static_cannot_resolve(tmp_path: Path, pyproject: str, ex
 # kept after test-pruning defense (do not re-nominate): making VenvCmdBuilder.load_deps_for_env return []
 # fails only this test across the whole suite, nothing end-to-end covers the sdist-metadata delegation
 def test_cmd_builder_load_deps_for_env(mocker: MockerFixture) -> None:
-    builder = mocker.MagicMock(spec=VenvCmdBuilder)
+    builder = mocker.create_autospec(VenvCmdBuilder, instance=True)
     mock_meta_env = mocker.create_autospec(Pep517VirtualEnvPackager, instance=True)
     mock_meta_env.load_deps_for_env.return_value = [Requirement("requests>=2")]
     builder._sdist_meta_tox_env = mock_meta_env  # ruff:ignore[private-member-access]  # internal state

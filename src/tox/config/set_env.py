@@ -75,6 +75,9 @@ SetEnvRaw = (
 """The forms the ``set_env`` setting can take in the configuration, before it is loaded."""
 
 
+_EXTRACT_KEY_VALUE_PATTERN: Final[re.Pattern[str]] = re.compile(r"^export[ \t]+")
+
+
 class SetEnv:
     """The environment variables of a tox environment, as set by its ``set_env`` setting.
 
@@ -339,7 +342,7 @@ class SetEnv:
             msg = f"invalid line {line_number} in {env_file} for set_env, expected KEY=VALUE"
             raise Fail(msg)
         # Unlike inline set_env, environment files keep semicolons in values.
-        return re.sub(r"^export[ \t]+", "", key.strip()), value.strip()
+        return _EXTRACT_KEY_VALUE_PATTERN.sub("", key.strip()), value.strip()
 
     def _expand(
         self, line: str, parents: tuple[str, ...], args: ConfigLoadArgs

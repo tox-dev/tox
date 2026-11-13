@@ -18,9 +18,9 @@ from tox.tox_env.python.virtual_env.subprocess_adapter import (
     SubprocessCreator,
     SubprocessPythonInfo,
     SubprocessSession,
-    _bootstrap_path,  # ruff:ignore[import-private-name] # simplint: ignore[private-import-path] # cache setup
-    _has_correct_virtualenv,  # ruff:ignore[import-private-name] # simplint: ignore[private-import-path] # probe failures
-    _VersionInfo,  # ruff:ignore[import-private-name] # simplint: ignore[private-import-path] # field type
+    _bootstrap_path,  # ruff:ignore[import-private-name]  # cache setup
+    _has_correct_virtualenv,  # ruff:ignore[import-private-name]  # probe failures
+    _VersionInfo,  # ruff:ignore[import-private-name]  # field type
     ensure_bootstrap,
     probe_python,
 )

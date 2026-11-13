@@ -6,9 +6,7 @@ from typing import TYPE_CHECKING
 import pytest
 
 from tox.config.loader.ini.factor import LATEST_PYTHON_MINOR_MAX, LATEST_PYTHON_MINOR_MIN
-
-# Keep factor helpers private while testing them directly.
-from tox.config.loader.toml._product import (  # ruff:ignore[import-private-name]  # simplint: ignore[private-import-path]
+from tox.config.loader.toml import (
     expand_factor_group,
     expand_product,
     extract_default,

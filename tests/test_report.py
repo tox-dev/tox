@@ -17,7 +17,7 @@ if TYPE_CHECKING:
     from tox.pytest import CaptureFixture
 
 
-@pytest.mark.parametrize("color", [True, False], ids=["on", "off"])
+@pytest.mark.parametrize("color", [pytest.param(True, id="on"), pytest.param(False, id="off")])
 @pytest.mark.parametrize("verbosity", range(7))
 def test_setup_report(mocker: MockerFixture, capsys: CaptureFixture, verbosity: int, color: bool) -> None:
     color_init = mocker.patch("tox.report.init", autospec=True)

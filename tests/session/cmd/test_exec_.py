@@ -14,7 +14,7 @@ if TYPE_CHECKING:
     from tox.pytest import ToxProject, ToxProjectCreator, ToxRunOutcome
 
 
-@pytest.mark.parametrize("trail", [[], ["--"]], ids=["no_posargs", "empty_posargs"])
+@pytest.mark.parametrize("trail", [pytest.param([], id="no_posargs"), pytest.param(["--"], id="empty_posargs")])
 def test_exec_fail_no_posargs(tox_project: ToxProjectCreator, trail: list[str]) -> None:
     outcome = tox_project({"tox.ini": ""}).run("e", "-e", "py39", *trail)
     outcome.assert_failed()

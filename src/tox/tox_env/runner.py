@@ -6,7 +6,7 @@ import re
 from abc import ABC, abstractmethod
 from hashlib import sha256
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Final
 
 from tox.config.types import Command, EnvList
 from tox.execute import Outcome
@@ -22,6 +22,14 @@ if TYPE_CHECKING:
     from collections.abc import Iterable
 
     from tox.journal import EnvJournal
+
+
+_ENSURE_ONE_LINE_PATTERN: Final[re.Pattern[str]] = re.compile(
+    r"""
+                \s+     # one or more whitespace characters
+                """,
+    flags=re.VERBOSE,
+)
 
 
 class RunToxEnv(ToxEnv, ABC):
@@ -51,14 +59,7 @@ class RunToxEnv(ToxEnv, ABC):
     @override
     def register_config(self) -> None:
         def ensure_one_line(value: str) -> str:
-            return re.sub(
-                r"""
-                \s+     # one or more whitespace characters
-                """,
-                " ",
-                value.replace("\r", "").replace("\n", " "),
-                flags=re.VERBOSE,
-            )
+            return _ENSURE_ONE_LINE_PATTERN.sub(" ", value.replace("\r", "").replace("\n", " "))
 
         self.conf.add_config(
             keys=["description"],

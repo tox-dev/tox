@@ -77,6 +77,11 @@ class PythonInstallerListDependencies(Installer[Python], ABC):
         return result.out.splitlines()
 
 
+_AS_CONSTRAINT_PATTERN: Final[re.Pattern[str]] = re.compile(r"\[[^\]]*\]$")
+
+_INSTALL_PYLOCK_PATTERN: Final[re.Pattern[str]] = re.compile(r"\$\{([A-Z0-9_]+)\}")
+
+
 class Pip(PythonInstallerListDependencies):
     """Pip is a python installer that can install packages as defined by PEP-508 and PEP-517."""
 
@@ -332,7 +337,7 @@ class Pip(PythonInstallerListDependencies):
             named = Requirement(str(req.requirement))
             named.extras = set()
             line = str(named)
-        elif not Pip._pip_can_name(line := re.sub(r"\[[^\]]*\]$", "", str(req.requirement))):
+        elif not Pip._pip_can_name(line := _AS_CONSTRAINT_PATTERN.sub("", str(req.requirement))):
             return None
         return " ".join([line, *(f"--hash {value}" for value in req.options.get("hash", []))])
 
@@ -353,7 +358,7 @@ class Pip(PythonInstallerListDependencies):
         referenced: Final[dict[str, str]] = {
             name: value
             for line in new_reqs
-            for name in re.findall(r"\$\{([A-Z0-9_]+)\}", line)
+            for name in _INSTALL_PYLOCK_PATTERN.findall(line)
             if (value := environment.get(name))
         }
         for name, value in referenced.items():

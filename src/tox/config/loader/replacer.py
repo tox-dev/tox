@@ -569,6 +569,11 @@ class ConfigDefault:
         return self.text
 
 
+_WITHIN_PROGRAM_PATTERN: Final[re.Pattern[str]] = re.compile(r"\S\s")
+
+_ESCAPE_WITHIN_QUOTE_PATTERN: Final[re.Pattern[str]] = re.compile(r'\\(?!\#)|"')
+
+
 class _CommandLinesReplacer(Replacer):
     @override
     def join_value(self, value: MatchArg) -> str:
@@ -589,7 +594,7 @@ class _CommandLinesReplacer(Replacer):
 
     @staticmethod
     def _within_program(text: str) -> bool:
-        return not re.search(r"\S\s", text.rpartition("\n")[2].lstrip().lstrip("-!"))
+        return not _WITHIN_PROGRAM_PATTERN.search(text.rpartition("\n")[2].lstrip().lstrip("-!"))
 
     def _split_part(self, part: str | MatchExpression) -> list[str | _Replaced]:
         if not isinstance(part, MatchExpression):
@@ -691,7 +696,7 @@ class _CommandLinesReplacer(Replacer):
         if quote == "'":
             return text.replace("'", "'\"'\"'")
         # escaped comments are restored before command splitting
-        return re.sub(r'\\(?!\#)|"', r"\\\g<0>", text)
+        return _ESCAPE_WITHIN_QUOTE_PATTERN.sub(r"\\\g<0>", text)
 
     @staticmethod
     def _open_quote(quote: str, text: str) -> str:
@@ -1027,6 +1032,9 @@ def _replace_pos_args(
     )
 
 
+_QUOTE_ARGS_PATTERN: Final[re.Pattern[str]] = re.compile(r"[\s'\"]|\\\\")
+
+
 def quote_args(args: Sequence[str]) -> str:
     # INI settings split lines before parsing quotes.
     """Quote the arguments so they can be split back into the same arguments.
@@ -1040,7 +1048,7 @@ def quote_args(args: Sequence[str]) -> str:
     if sys.platform != "win32":
         return shlex.join(normalized)
     # Windows command splitting keeps a lone backslash, so paths stay unquoted where a value is not split into a command
-    return " ".join(arg if arg and not re.search(r"[\s'\"]|\\\\", arg) else shlex.quote(arg) for arg in normalized)
+    return " ".join(arg if arg and not _QUOTE_ARGS_PATTERN.search(arg) else shlex.quote(arg) for arg in normalized)
 
 
 def load_posargs(conf: Config, conf_args: ConfigLoadArgs, *, program_first: bool) -> tuple[str, ...] | None:
