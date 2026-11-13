@@ -32,12 +32,6 @@ SetEnvValue = str | MatchExpression
 """The value of a single ``set_env`` entry, plain text or a replacement expression."""
 
 
-class _Assignment(NamedTuple):
-    key: str
-    value: str
-    marker: str
-
-
 class SetEnvEntry(TypedDict):
     """A single ``set_env`` value in structured (TOML) form.
 
@@ -76,24 +70,6 @@ SetEnvRaw = (
 
 
 _EXTRACT_KEY_VALUE_PATTERN: Final[re.Pattern[str]] = re.compile(r"^export[ \t]+")
-
-
-class _Origin(NamedTuple):
-    name: str
-    env_name: str | None
-    root: Path
-
-
-class _Pending:
-    __slots__ = ("env_files", "lines", "override_keys", "overrides", "references")
-
-    # What `set_env` reads only once a value is asked for, and the keys the overrides set, which stay protected.
-    def __init__(self) -> None:
-        self.env_files: list[tuple[SetEnvValue, set[str]]] = []
-        self.lines: list[str] = []  # lines split only after substitution
-        self.overrides: list[tuple[SetEnv, set[str]]] = []
-        self.override_keys: set[str] = set()
-        self.references: list[dict[str, SetEnvValue | SetEnvEntry] | SetEnvReference] = []
 
 
 class SetEnv:
@@ -520,6 +496,30 @@ class SetEnv:
             if override or (key not in self._raw and key not in self._materialized):
                 self._materialized[key] = param.load(key) if isinstance(param, SetEnv) else param[key]
                 self.changed = True
+
+
+class _Pending:
+    __slots__ = ("env_files", "lines", "override_keys", "overrides", "references")
+
+    # What `set_env` reads only once a value is asked for, and the keys the overrides set, which stay protected.
+    def __init__(self) -> None:
+        self.env_files: list[tuple[SetEnvValue, set[str]]] = []
+        self.lines: list[str] = []  # lines split only after substitution
+        self.overrides: list[tuple[SetEnv, set[str]]] = []
+        self.override_keys: set[str] = set()
+        self.references: list[dict[str, SetEnvValue | SetEnvEntry] | SetEnvReference] = []
+
+
+class _Origin(NamedTuple):
+    name: str
+    env_name: str | None
+    root: Path
+
+
+class _Assignment(NamedTuple):
+    key: str
+    value: str
+    marker: str
 
 
 __all__ = [

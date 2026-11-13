@@ -144,6 +144,54 @@ def no_color(  # interface signature
 _ProjectFiles: TypeAlias = "dict[str, _ProjectFiles | str | Callable[[], object] | None]"
 
 
+@pytest.fixture(autouse=True, scope="session")
+def enable_pep517_backend_coverage() -> Iterator[None]:
+    try:
+        import coverage  # ruff:ignore[unused-import, import-outside-top-level]  # re-exported
+    except ImportError:  # pragma: no cover  # untested error path
+        yield  # pragma: no cover  # untested error path
+        return  # pragma: no cover  # untested error path
+    # the COV_ env variables needs to be passed on for the PEP-517 backend
+    from .tox_env.python.virtual_env.package.pyproject import (  # ruff:ignore[import-outside-top-level]
+        Pep517VirtualEnvPackager,
+    )
+
+    def default_pass_env(self: Pep517VirtualEnvPackager) -> list[str]:
+        result = previous(self)
+        result.append("COV_*")
+        return result
+
+    # monkey-patch to inject COV_* env vars, session-scoped so mocker unavailable
+    previous = Pep517VirtualEnvPackager._default_pass_env  # ruff:ignore[private-member-access]
+    with pytest.MonkeyPatch.context() as monkey_patch:
+        monkey_patch.setattr(Pep517VirtualEnvPackager, "_default_pass_env", default_pass_env)
+        yield
+
+
+class ToxProjectCreator(Protocol):
+    """Callable that creates a tox project for a test, from its files."""
+
+    def __call__(
+        self,
+        files: dict[str, Any],
+        base: Path | None = None,
+        prj_path: Path | None = None,
+    ) -> ToxProject: ...
+
+
+@pytest.fixture(name="tox_project")
+def init_fixture(
+    tmp_path: Path,
+    capfd: CaptureFixture,
+    monkeypatch: pytest.MonkeyPatch,
+    mocker: MockerFixture,
+) -> ToxProjectCreator:
+    def _init(files: _ProjectFiles, base: Path | None = None, prj_path: Path | None = None) -> ToxProject:
+        return ToxProject(files, base, prj_path or tmp_path / "p", capfd, monkeypatch, mocker)
+
+    return _init
+
+
 class ToxProject:
     """A tox project that is created on disk for a test, from the files it is given.
 
@@ -356,30 +404,6 @@ class ToxProject:
             os.chdir(cur_dir)
 
 
-@pytest.fixture(autouse=True, scope="session")
-def enable_pep517_backend_coverage() -> Iterator[None]:
-    try:
-        import coverage  # ruff:ignore[unused-import, import-outside-top-level]  # re-exported
-    except ImportError:  # pragma: no cover  # untested error path
-        yield  # pragma: no cover  # untested error path
-        return  # pragma: no cover  # untested error path
-    # the COV_ env variables needs to be passed on for the PEP-517 backend
-    from .tox_env.python.virtual_env.package.pyproject import (  # ruff:ignore[import-outside-top-level]
-        Pep517VirtualEnvPackager,
-    )
-
-    def default_pass_env(self: Pep517VirtualEnvPackager) -> list[str]:
-        result = previous(self)
-        result.append("COV_*")
-        return result
-
-    # monkey-patch to inject COV_* env vars, session-scoped so mocker unavailable
-    previous = Pep517VirtualEnvPackager._default_pass_env  # ruff:ignore[private-member-access]
-    with pytest.MonkeyPatch.context() as monkey_patch:
-        monkey_patch.setattr(Pep517VirtualEnvPackager, "_default_pass_env", default_pass_env)
-        yield
-
-
 class ToxRunOutcome:
     """The outcome of running tox in a test project.
 
@@ -509,30 +533,6 @@ class ToxRunOutcome:
             assert match  # ruff:ignore[assert]  # invariant, narrows type
         else:
             assert Matches(pattern, flags=flags) == text  # ruff:ignore[assert]  # invariant, narrows type
-
-
-class ToxProjectCreator(Protocol):
-    """Callable that creates a tox project for a test, from its files."""
-
-    def __call__(
-        self,
-        files: dict[str, Any],
-        base: Path | None = None,
-        prj_path: Path | None = None,
-    ) -> ToxProject: ...
-
-
-@pytest.fixture(name="tox_project")
-def init_fixture(
-    tmp_path: Path,
-    capfd: CaptureFixture,
-    monkeypatch: pytest.MonkeyPatch,
-    mocker: MockerFixture,
-) -> ToxProjectCreator:
-    def _init(files: _ProjectFiles, base: Path | None = None, prj_path: Path | None = None) -> ToxProject:
-        return ToxProject(files, base, prj_path or tmp_path / "p", capfd, monkeypatch, mocker)
-
-    return _init
 
 
 @pytest.fixture

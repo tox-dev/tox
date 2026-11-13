@@ -312,52 +312,6 @@ class Execute(ABC):
         cls._option_class.register_conf(env)
 
 
-class ExecuteInstance(ABC):
-    """An instance of a command execution.
-
-    :param request: the command to execute
-    :param options: the execution options of the command
-    :param out: the sink for the standard output
-    :param err: the sink for the standard error
-
-    """
-
-    def __init__(self, request: ExecuteRequest, options: ExecuteOptions, out: SyncWrite, err: SyncWrite) -> None:
-        self.request = request
-        self.options = options
-        self._out = out
-        self._err = err
-
-    @abstractmethod
-    def __enter__(self) -> ExecuteStatus:
-        raise NotImplementedError
-
-    @abstractmethod
-    def __exit__(
-        self,
-        exc_type: type[BaseException] | None,
-        exc_val: BaseException | None,
-        exc_tb: TracebackType | None,
-    ) -> None:
-        raise NotImplementedError
-
-    @property
-    def out_handler(self) -> ContentHandler:
-        """The callback that receives the standard output of the command."""
-        return self._out.handler
-
-    @property
-    def err_handler(self) -> ContentHandler:
-        """The callback that receives the standard error of the command."""
-        return self._err.handler
-
-    @property
-    @abstractmethod
-    def cmd(self) -> Sequence[str]:
-        """The command line to run."""
-        raise NotImplementedError
-
-
 class Outcome:
     """Result of a command execution.
 
@@ -471,6 +425,52 @@ class Outcome:
     def out_err(self) -> tuple[str, str]:
         """:returns: a tuple of the standard output and standard error"""
         return self.out, self.err
+
+
+class ExecuteInstance(ABC):
+    """An instance of a command execution.
+
+    :param request: the command to execute
+    :param options: the execution options of the command
+    :param out: the sink for the standard output
+    :param err: the sink for the standard error
+
+    """
+
+    def __init__(self, request: ExecuteRequest, options: ExecuteOptions, out: SyncWrite, err: SyncWrite) -> None:
+        self.request = request
+        self.options = options
+        self._out = out
+        self._err = err
+
+    @abstractmethod
+    def __enter__(self) -> ExecuteStatus:
+        raise NotImplementedError
+
+    @abstractmethod
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
+    ) -> None:
+        raise NotImplementedError
+
+    @property
+    def out_handler(self) -> ContentHandler:
+        """The callback that receives the standard output of the command."""
+        return self._out.handler
+
+    @property
+    def err_handler(self) -> ContentHandler:
+        """The callback that receives the standard error of the command."""
+        return self._err.handler
+
+    @property
+    @abstractmethod
+    def cmd(self) -> Sequence[str]:
+        """The command line to run."""
+        raise NotImplementedError
 
 
 __all__ = [

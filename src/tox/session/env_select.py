@@ -35,6 +35,80 @@ if TYPE_CHECKING:
 _LOGGER: Final[logging.Logger] = logging.getLogger(__name__)
 
 
+def register_env_select_flags(
+    parser: ArgumentParser,
+    default: CliEnv | None,
+    # keeps the existing signature
+    multiple: bool = True,  # ruff:ignore[boolean-type-hint-positional-argument, boolean-default-value-positional-argument]
+    # keeps the existing signature
+    group_only: bool = False,  # ruff:ignore[boolean-type-hint-positional-argument, boolean-default-value-positional-argument]
+) -> argparse._ActionsContainer:
+    """Register environment selection flags.
+
+    :param parser: the parser to register to
+    :param default: the default value for env selection
+    :param multiple: allow selecting multiple environments
+    :param group_only: only register group selection flags
+
+    :returns: the argument group the flags are registered on
+
+    """
+    option_group: argparse._ActionsContainer
+    if multiple:
+        option_group = parser.add_argument_group("select target environment(s)")
+        # _MutuallyExclusiveGroup is private in argparse https://github.com/python/cpython/issues/144812
+        add_to: argparse._ActionsContainer = option_group.add_mutually_exclusive_group(required=False)
+    else:
+        option_group = parser
+        add_to = parser
+    if not group_only:
+        if multiple:
+            help_msg = "enumerate (ALL -> all environments, not set -> use <env_list> from config)"
+        else:
+            help_msg = "environment to run"
+        action = add_to.add_argument("-e", dest="env", help=help_msg, default=default, action=_CliEnvAction)
+        if find_spec("argcomplete"):
+            cast("_CliEnvAction", action).completer = _env_completer
+    if multiple:
+        help_msg = "labels to evaluate"
+        add_to.add_argument("-m", dest="labels", metavar="label", help=help_msg, default=[], type=str, nargs="+")
+        help_msg = (
+            "factors to evaluate (passing multiple factors means 'AND', passing this option multiple times means 'OR')"
+        )
+        add_to.add_argument(
+            "-f",
+            dest="factors",
+            metavar="factor",
+            help=help_msg,
+            default=[],
+            type=str,
+            nargs="+",
+            action="append",
+        )
+    help_msg = "exclude all environments selected that match this regular expression"
+    option_group.add_argument("--skip-env", dest="skip_env", metavar="re", help=help_msg, default="", type=str)
+    return add_to
+
+
+class _CliEnvAction(argparse.Action):
+    completer: Callable[[str, Action, ArgumentParser, Namespace], list[str]]
+
+    @override
+    def __call__(
+        self,
+        parser: argparse.ArgumentParser,
+        namespace: argparse.Namespace,
+        values: Any,
+        option_string: str | None = None,
+    ) -> None:
+        new = CliEnv(values)
+        existing = getattr(namespace, self.dest, None)
+        if existing is not None and isinstance(existing, CliEnv) and existing is not self.default:
+            existing += new
+        else:
+            setattr(namespace, self.dest, new)
+
+
 class CliEnv:  # ruff:ignore[eq-without-hash]  # mutable value type
     """The user's selection of tox test environments via ``-e`` or ``env_list`` config.
 
@@ -115,80 +189,6 @@ class CliEnv:  # ruff:ignore[eq-without-hash]  # mutable value type
         return self
 
 
-def register_env_select_flags(
-    parser: ArgumentParser,
-    default: CliEnv | None,
-    # keeps the existing signature
-    multiple: bool = True,  # ruff:ignore[boolean-type-hint-positional-argument, boolean-default-value-positional-argument]
-    # keeps the existing signature
-    group_only: bool = False,  # ruff:ignore[boolean-type-hint-positional-argument, boolean-default-value-positional-argument]
-) -> argparse._ActionsContainer:
-    """Register environment selection flags.
-
-    :param parser: the parser to register to
-    :param default: the default value for env selection
-    :param multiple: allow selecting multiple environments
-    :param group_only: only register group selection flags
-
-    :returns: the argument group the flags are registered on
-
-    """
-    option_group: argparse._ActionsContainer
-    if multiple:
-        option_group = parser.add_argument_group("select target environment(s)")
-        # _MutuallyExclusiveGroup is private in argparse https://github.com/python/cpython/issues/144812
-        add_to: argparse._ActionsContainer = option_group.add_mutually_exclusive_group(required=False)
-    else:
-        option_group = parser
-        add_to = parser
-    if not group_only:
-        if multiple:
-            help_msg = "enumerate (ALL -> all environments, not set -> use <env_list> from config)"
-        else:
-            help_msg = "environment to run"
-        action = add_to.add_argument("-e", dest="env", help=help_msg, default=default, action=_CliEnvAction)
-        if find_spec("argcomplete"):
-            cast("_CliEnvAction", action).completer = _env_completer
-    if multiple:
-        help_msg = "labels to evaluate"
-        add_to.add_argument("-m", dest="labels", metavar="label", help=help_msg, default=[], type=str, nargs="+")
-        help_msg = (
-            "factors to evaluate (passing multiple factors means 'AND', passing this option multiple times means 'OR')"
-        )
-        add_to.add_argument(
-            "-f",
-            dest="factors",
-            metavar="factor",
-            help=help_msg,
-            default=[],
-            type=str,
-            nargs="+",
-            action="append",
-        )
-    help_msg = "exclude all environments selected that match this regular expression"
-    option_group.add_argument("--skip-env", dest="skip_env", metavar="re", help=help_msg, default="", type=str)
-    return add_to
-
-
-class _CliEnvAction(argparse.Action):
-    completer: Callable[[str, Action, ArgumentParser, Namespace], list[str]]
-
-    @override
-    def __call__(
-        self,
-        parser: argparse.ArgumentParser,
-        namespace: argparse.Namespace,
-        values: Any,
-        option_string: str | None = None,
-    ) -> None:
-        new = CliEnv(values)
-        existing = getattr(namespace, self.dest, None)
-        if existing is not None and isinstance(existing, CliEnv) and existing is not self.default:
-            existing += new
-        else:
-            setattr(namespace, self.dest, new)
-
-
 def _env_completer(
     prefix: str,  # ruff:ignore[unused-function-argument]  # interface signature
     action: Action,  # ruff:ignore[unused-function-argument]  # interface signature
@@ -210,38 +210,6 @@ def _env_completer(
         return []
     else:
         return ["ALL", *conf]
-
-
-class _CombinableFactors(NamedTuple):
-    known_envs: set[str]
-    combinable: set[str]
-    all_factors: set[str]
-
-
-def _activate_by_labels(
-    defined_envs: dict[str, _ToxEnvInfo], labels: set[str], label_envs: dict[str, list[str]]
-) -> None:
-    for label in labels:
-        for env_name in label_envs.get(label, []):
-            defined_envs[env_name].is_active = True
-    for env_info in defined_envs.values():
-        if env_info.env is not None and labels.intersection(env_info.env.conf["labels"]):
-            env_info.is_active = True
-
-
-def _activate_by_factors(defined_envs: dict[str, _ToxEnvInfo], factors: tuple[set[str], ...]) -> None:
-    for name, env_info in defined_envs.items():
-        for factor_set in factors:
-            if factor_set.issubset(set(name.split("-"))):
-                env_info.is_active = True
-                break
-
-
-@dataclass(slots=True, kw_only=True)  # simplint: ignore[dataclass-frozen]  # fields change as environments are defined
-class _ToxEnvInfo:
-    env: PackageToxEnv | RunToxEnv | None  #: the tox environment (None if runner unavailable)
-    is_active: bool  #: a flag indicating if the environment is marked as active in the current run
-    package_skip: tuple[str, Skip] | None = None  #: if set the creation of the packaging environment failed
 
 
 _DYNAMIC_ENV_FACTORS: Final[re.Pattern[str]] = re.compile(
@@ -750,6 +718,38 @@ class EnvSelector:
         provision_tox_env: str,  # keeps the signature
     ) -> None:
         self._provision = on, provision_tox_env
+
+
+class _CombinableFactors(NamedTuple):
+    known_envs: set[str]
+    combinable: set[str]
+    all_factors: set[str]
+
+
+@dataclass(slots=True, kw_only=True)  # simplint: ignore[dataclass-frozen]  # fields change as environments are defined
+class _ToxEnvInfo:
+    env: PackageToxEnv | RunToxEnv | None  #: the tox environment (None if runner unavailable)
+    is_active: bool  #: a flag indicating if the environment is marked as active in the current run
+    package_skip: tuple[str, Skip] | None = None  #: if set the creation of the packaging environment failed
+
+
+def _activate_by_labels(
+    defined_envs: dict[str, _ToxEnvInfo], labels: set[str], label_envs: dict[str, list[str]]
+) -> None:
+    for label in labels:
+        for env_name in label_envs.get(label, []):
+            defined_envs[env_name].is_active = True
+    for env_info in defined_envs.values():
+        if env_info.env is not None and labels.intersection(env_info.env.conf["labels"]):
+            env_info.is_active = True
+
+
+def _activate_by_factors(defined_envs: dict[str, _ToxEnvInfo], factors: tuple[set[str], ...]) -> None:
+    for name, env_info in defined_envs.items():
+        for factor_set in factors:
+            if factor_set.issubset(set(name.split("-"))):
+                env_info.is_active = True
+                break
 
 
 __all__ = [

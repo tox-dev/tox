@@ -59,28 +59,6 @@ class ToxEnvCreateArgs(NamedTuple):
     log_handler: ToxHandler
 
 
-class _EnvVars:
-    __slots__ = ("pass_env", "resolving", "values")
-
-    def __init__(self) -> None:
-        # The variables last built, cached until `pass_env` or `set_env` changes.
-        self.values: dict[str, str] | None = None
-        self.pass_env: list[str] = []
-        # Set while `set_env` resolves, which can ask for the variables again.
-        self.resolving = False
-
-
-class _Interruption:
-    __slots__ = ("allow_execution", "forced", "requested", "running")
-
-    def __init__(self) -> None:
-        self.running: dict[int, ExecuteStatus] = {}
-        self.requested = False
-        # A second interrupt stops everything, `commands_post` included.
-        self.forced = False
-        self.allow_execution = False
-
-
 class ToxEnv(ABC):  # ruff:ignore[too-many-public-methods]  # public facade
     """A tox environment."""
 
@@ -715,6 +693,28 @@ class ToxEnv(ABC):  # ruff:ignore[too-many-public-methods]  # public facade
         out.close()
         err.close()
         return out_b, err_b
+
+
+class _EnvVars:
+    __slots__ = ("pass_env", "resolving", "values")
+
+    def __init__(self) -> None:
+        # The variables last built, cached until `pass_env` or `set_env` changes.
+        self.values: dict[str, str] | None = None
+        self.pass_env: list[str] = []
+        # Set while `set_env` resolves, which can ask for the variables again.
+        self.resolving = False
+
+
+class _Interruption:
+    __slots__ = ("allow_execution", "forced", "requested", "running")
+
+    def __init__(self) -> None:
+        self.running: dict[int, ExecuteStatus] = {}
+        self.requested = False
+        # A second interrupt stops everything, `commands_post` included.
+        self.forced = False
+        self.allow_execution = False
 
 
 _CWD: Final[Path] = Path.cwd()

@@ -132,163 +132,6 @@ class ArgumentParserWithEnvAndConfig(ArgumentParser):  # simplint: ignore[missin
         return cast("_N", res)
 
 
-class HelpFormatter(ArgumentDefaultsHelpFormatter):
-    """A help formatter that provides the default value and the source it comes from.
-
-    :param prog: the program name shown in the usage line
-    :param kwargs: keyword arguments passed to :class:`argparse.ArgumentDefaultsHelpFormatter`
-
-    """
-
-    def __init__(self, prog: str, **kwargs: Any) -> None:
-        super().__init__(prog, max_help_position=30, width=240, **kwargs)
-
-    @override
-    def _get_help_string(self, action: Action) -> str | None:
-        text: str = super()._get_help_string(action) or ""
-        if (source := _ACTION_DEFAULT_SOURCE.get(action)) is not None:
-            default = " (default: %(default)s)"
-            if text.endswith(default):  # pragma: no branch  # other outcome untested
-                # escape % as the result goes through one more %-formatting pass with the action variables
-                text = f"{text[: -len(default)]} (default: %(default)s -> from {source.replace('%', '%%')})"
-        return text
-
-    def add_raw_text(self, text: str | None) -> None:
-        """Add help text that is printed as is, without wrapping.
-
-        :param text: the text to add, nothing is added when it is suppressed or ``None``
-
-        """
-
-        def keep(content: str) -> str:
-            return content
-
-        if text is not SUPPRESS and text is not None:
-            self._add_item(keep, [text])
-
-
-ToxParserT = TypeVar("ToxParserT", bound="ToxParser")
-DEFAULT_VERBOSITY: Final[int] = 2
-"""Verbosity used when no verbosity flag is given, an index into the log levels."""
-
-CORE: Final[str] = "core"
-"""Name of the core option group, which every sub-command inherits."""
-ENV: Final[str] = "env"
-"""Name of the environment option group, which sub-commands that select environments inherit."""
-_INHERIT_ALL: Final[frozenset[str]] = frozenset({CORE, ENV})
-
-
-class Parsed(Namespace):
-    """CLI options.
-
-    The annotations below declare the type each option has once its command registered it; an option belonging to
-    another command is absent at runtime, so shared code paths read it via ``getattr`` with a fallback.
-
-    """
-
-    #: the number of ``-v`` flags passed
-    verbose: int
-    #: the number of ``-q`` flags passed
-    quiet: int
-    #: ``yes`` when the output is colored, ``no`` otherwise
-    colored: Literal["yes", "no"]
-    #: the color used for stderr output
-    stderr_color: str
-    #: seconds after which tox dumps its threads and exits, ``0`` disables it
-    exit_and_dump_after: int
-    #: the configuration file or folder passed with ``-c``, if any
-    config_file: Path | None
-    #: the tox working directory, if one was given
-    work_dir: Path | None
-    #: the project root directory, if one was given
-    root_dir: Path | None
-    #: the configuration overrides passed with ``--override``
-    override: list[Override]
-    #: the name of the sub-command to run
-    command: str
-    #: the arguments passed after ``--``
-    remainder: list[str]
-
-    #: the environments selected with ``-e``
-    env: CliEnv
-    #: the environment labels selected with ``-m``
-    labels: list[str]
-    #: the environment factors selected with ``-f``
-    factors: list[str]
-    #: the regular expression of environments to exclude
-    skip_env: str
-    #: the tox run engine used when an environment does not name one
-    default_runner: str
-
-    #: the file the JSON result report is written to, if any
-    result_json: Path | None
-    #: whether output capture is disabled
-    no_capture: bool
-    #: the value of ``PYTHONHASHSEED`` for the commands, ``None`` when it is not set
-    hash_seed: int | None
-    #: the Python executables to try first during discovery
-    discover: list[str]
-    #: whether the dependencies installed during environment setup are listed
-    list_dependencies: bool
-
-    #: whether environments are recreated before use
-    recreate: bool
-    #: whether the test commands are skipped
-    no_test: bool
-    #: whether only the package is built
-    package_only: bool
-    #: the package to install instead of building the project, if any
-    install_pkg: Path | None
-    #: whether execution stops after the first environment failure
-    fail_fast: bool
-    #: whether the package is installed in development mode
-    develop: bool
-    #: whether packaging environments are kept when ``recreate`` is set
-    no_recreate_pkg: bool
-    #: whether the package installation is skipped
-    skip_pkg_install: bool
-    #: whether dependency and package installation is skipped
-    skip_env_install: bool
-    #: whether missing interpreters are skipped, ``config`` defers to the configuration
-    skip_missing_interpreters: Literal["config", "true", "false"] | bool  # devenv forces False after parsing
-    #: the number of environments run in parallel
-    parallel: int
-    #: whether the output of parallel environments is shown live
-    parallel_live: bool
-    #: whether the spinner is disabled in parallel mode
-    parallel_no_spinner: bool
-
-    #: whether provisioning is skipped and fails instead, or the path its metadata is written to
-    no_provision: bool | str
-    #: whether the provisioning environment is kept when ``recreate`` is set
-    no_recreate_provision: bool
-    #: the directory of the development environment
-    devenv_path: Path
-
-    #: the dependency requirements forced into the environments
-    force_dep: list[Requirement]
-    #: whether the environments can see the system site packages
-    site_packages: bool
-    #: whether the environments copy files instead of linking them
-    always_copy: bool
-    #: whether pre-release versions are installed
-    pre: bool
-
-    @property
-    def verbosity(self) -> int:
-        """The reporting verbosity: the ``-v`` count minus the ``-q`` count, never below zero."""
-        result: int = max(self.verbose - self.quiet, 0)
-        return result
-
-    @property
-    def is_colored(self) -> bool:
-        """``True`` when the output is colored."""
-        return self.colored == "yes"
-
-
-ArgumentArgs = tuple[tuple[str, ...], type[Any] | UnionType | None, dict[str, Any]]
-
-
 def _infer_type(action: Action) -> type | UnionType:
     many: Final[bool] = action.nargs in {"+", "*"} or (isinstance(action.nargs, int) and action.nargs >= 1)
     if isinstance(action, argparse._AppendAction):  # ruff:ignore[private-member-access]  # internal access
@@ -313,14 +156,18 @@ def _infer_type(action: Action) -> type | UnionType:
     return of_type
 
 
-def _values_for_option(action: Action) -> int | None:
-    if action.nargs in {"+", "*"}:
-        return None
-    return action.nargs if isinstance(action.nargs, int) else 1
+ToxParserT = TypeVar("ToxParserT", bound="ToxParser")
+DEFAULT_VERBOSITY: Final[int] = 2
+"""Verbosity used when no verbosity flag is given, an index into the log levels."""
+
+CORE: Final[str] = "core"
+"""Name of the core option group, which every sub-command inherits."""
+ENV: Final[str] = "env"
+"""Name of the environment option group, which sub-commands that select environments inherit."""
+_INHERIT_ALL: Final[frozenset[str]] = frozenset({CORE, ENV})
 
 
-def _option_takes_command_as_value(action: Action, index: int, args_list: list[str], commands: Container[str]) -> bool:
-    return action.nargs in {"?", "*"} and index + 1 < len(args_list) and args_list[index + 1] in commands
+ArgumentArgs = tuple[tuple[str, ...], type[Any] | UnionType | None, dict[str, Any]]
 
 
 class ToxParser(ArgumentParserWithEnvAndConfig):
@@ -694,48 +541,6 @@ class ToxParser(ArgumentParserWithEnvAndConfig):
         return None
 
 
-class _RecordingArgumentGroup(argparse._ArgumentGroup):  # ruff:ignore[private-member-access]  # internal access
-    # Argument group that records its exclusive sub-groups so they replay onto later added sub-parsers.
-    def __init__(
-        self, container: ToxParser, *args: Any, excl: list[tuple[dict[str, Any], list[ArgumentArgs]]], **kwargs: Any
-    ) -> None:
-        super().__init__(container, *args, **kwargs)
-        self._excl = excl
-
-    @override
-    def add_mutually_exclusive_group(
-        self,
-        **kwargs: Any,  # simplint: ignore[imprecise-annotation]  # argparse option values of any type
-    ) -> _RecordingMutuallyExclusiveGroup:
-        arguments: list[ArgumentArgs] = []
-        self._excl.append((kwargs, arguments))
-        group = _RecordingMutuallyExclusiveGroup(self, recorded=arguments, **kwargs)
-        self._mutually_exclusive_groups.append(group)  # the same bookkeeping argparse performs
-        return group
-
-
-class _RecordingMutuallyExclusiveGroup(  # internal access
-    argparse._MutuallyExclusiveGroup  # ruff:ignore[private-member-access]  # internal access
-):
-    # Exclusive group that records added arguments so they replay onto later added sub-parsers.
-    def __init__(self, container: _RecordingArgumentGroup, *, recorded: list[ArgumentArgs], **kwargs: Any) -> None:
-        super().__init__(container, **kwargs)
-        self._recorded = recorded
-
-    @override
-    def add_argument(
-        self,
-        *args: str,
-        of_type: type[Any]  # simplint: ignore[imprecise-annotation]  # argparse option values of any type
-        | UnionType
-        | None = None,
-        **kwargs: Any,  # simplint: ignore[imprecise-annotation]  # argparse option values of any type
-    ) -> Action:
-        action = super().add_argument(*args, **kwargs)
-        self._recorded.append((args, of_type, kwargs))
-        return action
-
-
 def _add_core_arguments(parser: ArgumentParser) -> None:
     _add_color_flags(parser)
     _add_verbosity_flags(parser)
@@ -822,6 +627,201 @@ def _add_verbosity_flags(parser: ArgumentParser) -> None:
         default=DEFAULT_VERBOSITY,
     )
     verbosity.add_argument("-q", "--quiet", action="count", dest="quiet", help="decrease verbosity", default=0)
+
+
+class HelpFormatter(ArgumentDefaultsHelpFormatter):
+    """A help formatter that provides the default value and the source it comes from.
+
+    :param prog: the program name shown in the usage line
+    :param kwargs: keyword arguments passed to :class:`argparse.ArgumentDefaultsHelpFormatter`
+
+    """
+
+    def __init__(self, prog: str, **kwargs: Any) -> None:
+        super().__init__(prog, max_help_position=30, width=240, **kwargs)
+
+    @override
+    def _get_help_string(self, action: Action) -> str | None:
+        text: str = super()._get_help_string(action) or ""
+        if (source := _ACTION_DEFAULT_SOURCE.get(action)) is not None:
+            default = " (default: %(default)s)"
+            if text.endswith(default):  # pragma: no branch  # other outcome untested
+                # escape % as the result goes through one more %-formatting pass with the action variables
+                text = f"{text[: -len(default)]} (default: %(default)s -> from {source.replace('%', '%%')})"
+        return text
+
+    def add_raw_text(self, text: str | None) -> None:
+        """Add help text that is printed as is, without wrapping.
+
+        :param text: the text to add, nothing is added when it is suppressed or ``None``
+
+        """
+
+        def keep(content: str) -> str:
+            return content
+
+        if text is not SUPPRESS and text is not None:
+            self._add_item(keep, [text])
+
+
+class Parsed(Namespace):
+    """CLI options.
+
+    The annotations below declare the type each option has once its command registered it; an option belonging to
+    another command is absent at runtime, so shared code paths read it via ``getattr`` with a fallback.
+
+    """
+
+    #: the number of ``-v`` flags passed
+    verbose: int
+    #: the number of ``-q`` flags passed
+    quiet: int
+    #: ``yes`` when the output is colored, ``no`` otherwise
+    colored: Literal["yes", "no"]
+    #: the color used for stderr output
+    stderr_color: str
+    #: seconds after which tox dumps its threads and exits, ``0`` disables it
+    exit_and_dump_after: int
+    #: the configuration file or folder passed with ``-c``, if any
+    config_file: Path | None
+    #: the tox working directory, if one was given
+    work_dir: Path | None
+    #: the project root directory, if one was given
+    root_dir: Path | None
+    #: the configuration overrides passed with ``--override``
+    override: list[Override]
+    #: the name of the sub-command to run
+    command: str
+    #: the arguments passed after ``--``
+    remainder: list[str]
+
+    #: the environments selected with ``-e``
+    env: CliEnv
+    #: the environment labels selected with ``-m``
+    labels: list[str]
+    #: the environment factors selected with ``-f``
+    factors: list[str]
+    #: the regular expression of environments to exclude
+    skip_env: str
+    #: the tox run engine used when an environment does not name one
+    default_runner: str
+
+    #: the file the JSON result report is written to, if any
+    result_json: Path | None
+    #: whether output capture is disabled
+    no_capture: bool
+    #: the value of ``PYTHONHASHSEED`` for the commands, ``None`` when it is not set
+    hash_seed: int | None
+    #: the Python executables to try first during discovery
+    discover: list[str]
+    #: whether the dependencies installed during environment setup are listed
+    list_dependencies: bool
+
+    #: whether environments are recreated before use
+    recreate: bool
+    #: whether the test commands are skipped
+    no_test: bool
+    #: whether only the package is built
+    package_only: bool
+    #: the package to install instead of building the project, if any
+    install_pkg: Path | None
+    #: whether execution stops after the first environment failure
+    fail_fast: bool
+    #: whether the package is installed in development mode
+    develop: bool
+    #: whether packaging environments are kept when ``recreate`` is set
+    no_recreate_pkg: bool
+    #: whether the package installation is skipped
+    skip_pkg_install: bool
+    #: whether dependency and package installation is skipped
+    skip_env_install: bool
+    #: whether missing interpreters are skipped, ``config`` defers to the configuration
+    skip_missing_interpreters: Literal["config", "true", "false"] | bool  # devenv forces False after parsing
+    #: the number of environments run in parallel
+    parallel: int
+    #: whether the output of parallel environments is shown live
+    parallel_live: bool
+    #: whether the spinner is disabled in parallel mode
+    parallel_no_spinner: bool
+
+    #: whether provisioning is skipped and fails instead, or the path its metadata is written to
+    no_provision: bool | str
+    #: whether the provisioning environment is kept when ``recreate`` is set
+    no_recreate_provision: bool
+    #: the directory of the development environment
+    devenv_path: Path
+
+    #: the dependency requirements forced into the environments
+    force_dep: list[Requirement]
+    #: whether the environments can see the system site packages
+    site_packages: bool
+    #: whether the environments copy files instead of linking them
+    always_copy: bool
+    #: whether pre-release versions are installed
+    pre: bool
+
+    @property
+    def verbosity(self) -> int:
+        """The reporting verbosity: the ``-v`` count minus the ``-q`` count, never below zero."""
+        result: int = max(self.verbose - self.quiet, 0)
+        return result
+
+    @property
+    def is_colored(self) -> bool:
+        """``True`` when the output is colored."""
+        return self.colored == "yes"
+
+
+def _option_takes_command_as_value(action: Action, index: int, args_list: list[str], commands: Container[str]) -> bool:
+    return action.nargs in {"?", "*"} and index + 1 < len(args_list) and args_list[index + 1] in commands
+
+
+def _values_for_option(action: Action) -> int | None:
+    if action.nargs in {"+", "*"}:
+        return None
+    return action.nargs if isinstance(action.nargs, int) else 1
+
+
+class _RecordingArgumentGroup(argparse._ArgumentGroup):  # ruff:ignore[private-member-access]  # internal access
+    # Argument group that records its exclusive sub-groups so they replay onto later added sub-parsers.
+    def __init__(
+        self, container: ToxParser, *args: Any, excl: list[tuple[dict[str, Any], list[ArgumentArgs]]], **kwargs: Any
+    ) -> None:
+        super().__init__(container, *args, **kwargs)
+        self._excl = excl
+
+    @override
+    def add_mutually_exclusive_group(
+        self,
+        **kwargs: Any,  # simplint: ignore[imprecise-annotation]  # argparse option values of any type
+    ) -> _RecordingMutuallyExclusiveGroup:
+        arguments: list[ArgumentArgs] = []
+        self._excl.append((kwargs, arguments))
+        group = _RecordingMutuallyExclusiveGroup(self, recorded=arguments, **kwargs)
+        self._mutually_exclusive_groups.append(group)  # the same bookkeeping argparse performs
+        return group
+
+
+class _RecordingMutuallyExclusiveGroup(  # internal access
+    argparse._MutuallyExclusiveGroup  # ruff:ignore[private-member-access]  # internal access
+):
+    # Exclusive group that records added arguments so they replay onto later added sub-parsers.
+    def __init__(self, container: _RecordingArgumentGroup, *, recorded: list[ArgumentArgs], **kwargs: Any) -> None:
+        super().__init__(container, **kwargs)
+        self._recorded = recorded
+
+    @override
+    def add_argument(
+        self,
+        *args: str,
+        of_type: type[Any]  # simplint: ignore[imprecise-annotation]  # argparse option values of any type
+        | UnionType
+        | None = None,
+        **kwargs: Any,  # simplint: ignore[imprecise-annotation]  # argparse option values of any type
+    ) -> Action:
+        action = super().add_argument(*args, **kwargs)
+        self._recorded.append((args, of_type, kwargs))
+        return action
 
 
 __all__ = [

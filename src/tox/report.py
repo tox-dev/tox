@@ -43,94 +43,43 @@ OutErr = tuple[TextIOWrapper, TextIOWrapper]
 _THREAD_PARENT_IDENT: Final[MutableMapping[Thread, int | None]] = WeakKeyDictionary()
 
 
-class _LogThreadLocal(local):
-    # A thread local variable that inherits values from its parent.
-    _ident_to_data: ClassVar[dict[int | None, str]] = {}
-
-    def __init__(self, out_err: OutErr) -> None:
-        self.name = self._ident_to_data.get(_THREAD_PARENT_IDENT.get(current_thread()), "ROOT")
-        self.out_err = out_err
-
-    @property
-    def name(self) -> str:
-        return self._name
-
-    @name.setter
-    def name(self, value: str) -> None:
-        self._name = value
-
-        for ident in self._ident_to_data.keys() - {t.ident for t in enumerate_threads()}:
-            self._ident_to_data.pop(ident)
-        self._ident_to_data[current_thread().ident] = value
-
-    @staticmethod
-    @contextmanager
-    def patch_thread() -> Generator[None, None, None]:
-        # CPython has no parent thread tracking, monkey-patch needed https://github.com/python/cpython/issues/86718
-        def new_start(self: Thread) -> None:
-            _THREAD_PARENT_IDENT[self] = current_thread().ident
-            old_start(self)
-
-        old_start = Thread.start
-        Thread.start = new_start  # type: ignore[method-assign] # no typed way to swap a method, and CPython offers no hook to track the parent thread
-        try:
-            yield
-        finally:
-            Thread.start = old_start  # type: ignore[method-assign] # no typed way to swap a method, and CPython offers no hook to track the parent thread
-
-    @contextmanager
-    def with_name(self, name: str) -> Generator[None, None, None]:
-        previous, self.name = self.name, name
-        try:
-            yield
-        finally:
-            self.name = previous
-
-    @contextmanager
-    def suspend_out_err(  # keeps the signature
-        self,
-        yes: bool,  # ruff:ignore[boolean-type-hint-positional-argument]  # keeps the signature
-        out_err: OutErr | None = None,  # keeps the signature
-    ) -> Generator[OutErr, None, None]:
-        previous_out, previous_err = self.out_err
-        if yes:
-            if out_err is None:  # pragma: no branch  # other outcome untested
-                out = self._make(f"out-{self.name}", previous_out)
-                err = self._make(f"err-{self.name}", previous_err)
-            else:
-                out, err = out_err  # pragma: no cover  # setup not built by tests
-            self.out_err = out, err
-        try:
-            yield self.out_err
-        finally:
-            if yes:
-                self.out_err = previous_out, previous_err
-
-    @staticmethod
-    def _make(prefix: str, based_of: TextIOWrapper) -> TextIOWrapper:
-        return TextIOWrapper(
-            NamedBytesIO(f"{prefix}-{based_of.name}"),
-            encoding=locale.getpreferredencoding(do_setlocale=False),
-            errors="backslashreplace",
-        )
-
-
-class NamedBytesIO(BytesIO):
-    """A bytes buffer with a name, such as the name of the stream it stands for.
-
-    :param name: the name of the buffer
-
-    """
-
-    def __init__(self, name: str) -> None:
-        super().__init__()
-        self.name: str = name
-
-
 if TYPE_CHECKING:
     _STREAM_HANDLER_BASE = logging.StreamHandler[TextIOWrapper]
 else:
     _STREAM_HANDLER_BASE = logging.StreamHandler  # at runtime StreamHandler is not subscriptable
+
+
+def setup_report(  # keeps the signature
+    verbosity: int,
+    is_colored: bool,  # ruff:ignore[boolean-type-hint-positional-argument]  # keeps the signature
+) -> ToxHandler:
+    """Set up the logging of tox.
+
+    :param verbosity: the verbosity of the log output
+    :param is_colored: whether the log output is colored
+
+    :returns: the handler that reports the output
+
+    """
+    for std_stream in (sys.stdout, sys.stderr):
+        if isinstance(std_stream, TextIOWrapper):
+            # Redirected Windows streams may use code pages that cannot encode tox output.
+            std_stream.reconfigure(errors="backslashreplace")
+    for log_handler in list(LOGGER.handlers):  # remove handlers of libraries
+        LOGGER.removeHandler(log_handler)
+    level = _get_level(verbosity)
+    LOGGER.setLevel(level)
+    for name in ("distlib.util", "filelock"):
+        logging.getLogger(name).disabled = True
+    out_err: OutErr = cast("OutErr", (sys.stdout, sys.stderr))
+    handler = ToxHandler(level, is_colored, out_err)
+    LOGGER.addHandler(handler)
+    logging.debug("setup logging to %s on pid %s", logging.getLevelName(level), os.getpid())
+    return handler
+
+
+def _get_level(verbosity: int) -> int:
+    return LEVELS[min(verbosity, _MAX_LEVEL)]
 
 
 class ToxHandler(_STREAM_HANDLER_BASE):
@@ -315,37 +264,88 @@ class ToxHandler(_STREAM_HANDLER_BASE):
         self._setup_level(self._is_colored, level)
 
 
-def setup_report(  # keeps the signature
-    verbosity: int,
-    is_colored: bool,  # ruff:ignore[boolean-type-hint-positional-argument]  # keeps the signature
-) -> ToxHandler:
-    """Set up the logging of tox.
+class _LogThreadLocal(local):
+    # A thread local variable that inherits values from its parent.
+    _ident_to_data: ClassVar[dict[int | None, str]] = {}
 
-    :param verbosity: the verbosity of the log output
-    :param is_colored: whether the log output is colored
+    def __init__(self, out_err: OutErr) -> None:
+        self.name = self._ident_to_data.get(_THREAD_PARENT_IDENT.get(current_thread()), "ROOT")
+        self.out_err = out_err
 
-    :returns: the handler that reports the output
+    @property
+    def name(self) -> str:
+        return self._name
+
+    @name.setter
+    def name(self, value: str) -> None:
+        self._name = value
+
+        for ident in self._ident_to_data.keys() - {t.ident for t in enumerate_threads()}:
+            self._ident_to_data.pop(ident)
+        self._ident_to_data[current_thread().ident] = value
+
+    @staticmethod
+    @contextmanager
+    def patch_thread() -> Generator[None, None, None]:
+        # CPython has no parent thread tracking, monkey-patch needed https://github.com/python/cpython/issues/86718
+        def new_start(self: Thread) -> None:
+            _THREAD_PARENT_IDENT[self] = current_thread().ident
+            old_start(self)
+
+        old_start = Thread.start
+        Thread.start = new_start  # type: ignore[method-assign] # no typed way to swap a method, and CPython offers no hook to track the parent thread
+        try:
+            yield
+        finally:
+            Thread.start = old_start  # type: ignore[method-assign] # no typed way to swap a method, and CPython offers no hook to track the parent thread
+
+    @contextmanager
+    def with_name(self, name: str) -> Generator[None, None, None]:
+        previous, self.name = self.name, name
+        try:
+            yield
+        finally:
+            self.name = previous
+
+    @contextmanager
+    def suspend_out_err(  # keeps the signature
+        self,
+        yes: bool,  # ruff:ignore[boolean-type-hint-positional-argument]  # keeps the signature
+        out_err: OutErr | None = None,  # keeps the signature
+    ) -> Generator[OutErr, None, None]:
+        previous_out, previous_err = self.out_err
+        if yes:
+            if out_err is None:  # pragma: no branch  # other outcome untested
+                out = self._make(f"out-{self.name}", previous_out)
+                err = self._make(f"err-{self.name}", previous_err)
+            else:
+                out, err = out_err  # pragma: no cover  # setup not built by tests
+            self.out_err = out, err
+        try:
+            yield self.out_err
+        finally:
+            if yes:
+                self.out_err = previous_out, previous_err
+
+    @staticmethod
+    def _make(prefix: str, based_of: TextIOWrapper) -> TextIOWrapper:
+        return TextIOWrapper(
+            NamedBytesIO(f"{prefix}-{based_of.name}"),
+            encoding=locale.getpreferredencoding(do_setlocale=False),
+            errors="backslashreplace",
+        )
+
+
+class NamedBytesIO(BytesIO):
+    """A bytes buffer with a name, such as the name of the stream it stands for.
+
+    :param name: the name of the buffer
 
     """
-    for std_stream in (sys.stdout, sys.stderr):
-        if isinstance(std_stream, TextIOWrapper):
-            # Redirected Windows streams may use code pages that cannot encode tox output.
-            std_stream.reconfigure(errors="backslashreplace")
-    for log_handler in list(LOGGER.handlers):  # remove handlers of libraries
-        LOGGER.removeHandler(log_handler)
-    level = _get_level(verbosity)
-    LOGGER.setLevel(level)
-    for name in ("distlib.util", "filelock"):
-        logging.getLogger(name).disabled = True
-    out_err: OutErr = cast("OutErr", (sys.stdout, sys.stderr))
-    handler = ToxHandler(level, is_colored, out_err)
-    LOGGER.addHandler(handler)
-    logging.debug("setup logging to %s on pid %s", logging.getLevelName(level), os.getpid())
-    return handler
 
-
-def _get_level(verbosity: int) -> int:
-    return LEVELS[min(verbosity, _MAX_LEVEL)]
+    def __init__(self, name: str) -> None:
+        super().__init__()
+        self.name: str = name
 
 
 class HandledError(RuntimeError):

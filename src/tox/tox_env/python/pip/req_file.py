@@ -276,6 +276,28 @@ class _PythonRequirementsFile(RequirementsFile):
         return self._unroll
 
 
+def _factory_type_error(
+    field: str,
+    raw: object,  # simplint: ignore[imprecise-annotation]  # raw requirement values can be of any type
+) -> str:
+    expected = "str, list[str], or list[Requirement]"
+    if isinstance(raw, list):
+        bad_items = ", ".join(
+            f"[{i}] {type(item).__name__}" for i, item in enumerate(raw) if not isinstance(item, (str, Requirement))
+        )
+        return f"{field} expected {expected}, got list with invalid items: {bad_items}"
+    return f"{field} expected {expected}, got {type(raw).__name__}: {raw!r}"
+
+
+def _render_options(options: dict[str, bool | str | list[str]]) -> list[str]:
+    # set-valued options (e.g. no_binary) render sorted so the value is stable across hash seeds - the install
+    # cache compares these strings and an order change would force a spurious recreate
+    return [
+        f"{key}={','.join(sorted(cast('set[str]', value))) if isinstance(value, set) else value}"
+        for key, value in options.items()
+    ]
+
+
 class PythonDeps(_PythonRequirementsFile):
     """The dependencies of a tox environment, as set by its ``deps`` setting."""
 
@@ -338,19 +360,6 @@ class PythonConstraints(_PythonRequirementsFile):
             raise ValueError(msg)
 
 
-def _factory_type_error(
-    field: str,
-    raw: object,  # simplint: ignore[imprecise-annotation]  # raw requirement values can be of any type
-) -> str:
-    expected = "str, list[str], or list[Requirement]"
-    if isinstance(raw, list):
-        bad_items = ", ".join(
-            f"[{i}] {type(item).__name__}" for i, item in enumerate(raw) if not isinstance(item, (str, Requirement))
-        )
-        return f"{field} expected {expected}, got list with invalid items: {bad_items}"
-    return f"{field} expected {expected}, got {type(raw).__name__}: {raw!r}"
-
-
 _ONE_ARG_ESCAPE: Final[frozenset[str]] = frozenset({  # simplint: ignore[single-user-constant]  # parser option set
     "-c",
     "--constraint",
@@ -379,15 +388,6 @@ ONE_ARG: Final[frozenset[str]] = frozenset({
     "--only-binary",
 })
 """The options of a requirement file that take one argument."""
-
-
-def _render_options(options: dict[str, bool | str | list[str]]) -> list[str]:
-    # set-valued options (e.g. no_binary) render sorted so the value is stable across hash seeds - the install
-    # cache compares these strings and an order change would force a spurious recreate
-    return [
-        f"{key}={','.join(sorted(cast('set[str]', value))) if isinstance(value, set) else value}"
-        for key, value in options.items()
-    ]
 
 
 __all__ = [

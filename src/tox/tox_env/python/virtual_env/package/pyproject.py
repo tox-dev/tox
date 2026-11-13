@@ -95,11 +95,6 @@ def _rebuild_backend_failed(result: dict[str, int | str | None], out: str, err: 
     return ToxBackendFailed(BackendFailed(result, out, err))
 
 
-class _BuildEditableNotSupportedError(RuntimeError):
-    # raised when build editable is not supported.
-    ...
-
-
 class _ToxCmdStatus(CmdStatus):
     def __init__(self, execute_status: ExecuteStatus) -> None:
         self._execute_status = execute_status
@@ -551,15 +546,6 @@ class Pep517VenvPackager(PythonPackageToxEnv, ABC):
         return self._load_deps(for_env)
 
 
-class Pep517VirtualEnvPackager(Pep517VenvPackager, VirtualEnv):
-    """local file system python virtual environment via the virtualenv package."""
-
-    @staticmethod
-    @override
-    def id() -> str:
-        return "virtualenv-pep-517"
-
-
 class Pep517VirtualEnvFrontend(Frontend):
     """The frontend that runs the PEP 517 build backend in a virtualenv.
 
@@ -681,6 +667,20 @@ class Pep517VirtualEnvFrontend(Frontend):
     @override
     def _wheel_directory(self) -> Generator[Path]:
         yield self._tox_env.pkg_dir  # use our local wheel directory for building wheel
+
+
+class _BuildEditableNotSupportedError(RuntimeError):
+    # raised when build editable is not supported.
+    ...
+
+
+class Pep517VirtualEnvPackager(Pep517VenvPackager, VirtualEnv):
+    """local file system python virtual environment via the virtualenv package."""
+
+    @staticmethod
+    @override
+    def id() -> str:
+        return "virtualenv-pep-517"
 
 
 @impl

@@ -474,6 +474,20 @@ def test_shlex_win32_unc_path_from_ini(tox_project: ToxProjectCreator, value: st
     assert outcome.env_conf("py")["commands"] == [Command(args=expected)]
 
 
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    [
+        *_SIMPLE_ARGS,
+        *_INI_CONFIG_NEWLINE_ARGS,
+        *_WINDOWS_PATH_ARGS,
+        #        *WACKY_SLASH_ARGS,
+    ],
+)
+@pytest.mark.usefixtures("sys_platform")
+def test_shlex_platform_specific_ini(tox_project: ToxProjectCreator, value: str, expected: list[str]) -> None:
+    assert _ini_commands(tox_project, value) == [Command(args=expected)]
+
+
 def _ini_commands(tox_project: ToxProjectCreator, value: str) -> list[Command]:
     project = tox_project(
         {
@@ -489,20 +503,6 @@ def _ini_commands(tox_project: ToxProjectCreator, value: str) -> list[Command]:
     outcome = project.run("c")
     outcome.assert_success()
     return outcome.env_conf("py")["commands"]
-
-
-@pytest.mark.parametrize(
-    ("value", "expected"),
-    [
-        *_SIMPLE_ARGS,
-        *_INI_CONFIG_NEWLINE_ARGS,
-        *_WINDOWS_PATH_ARGS,
-        #        *WACKY_SLASH_ARGS,
-    ],
-)
-@pytest.mark.usefixtures("sys_platform")
-def test_shlex_platform_specific_ini(tox_project: ToxProjectCreator, value: str, expected: list[str]) -> None:
-    assert _ini_commands(tox_project, value) == [Command(args=expected)]
 
 
 @pytest.mark.parametrize("sys_platform", [pytest.param("win32", id="win32")], indirect=True)

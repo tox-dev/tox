@@ -104,10 +104,6 @@ class ConfigConstantDefinition(ConfigDefinition[T]):  # ruff:ignore[eq-without-h
         self.value = value
 
 
-class _Missing(Enum):
-    MISSING = auto()
-
-
 class ConfigDynamicDefinition(ConfigDefinition[T]):  # ruff:ignore[eq-without-hash]  # mutable value type
     """A configuration definition that comes from a source (such as in memory, an ini file, a toml file, etc.).
 
@@ -190,6 +186,10 @@ class ConfigDynamicDefinition(ConfigDefinition[T]):  # ruff:ignore[eq-without-ha
     @override
     def overwrite(self, value: T) -> None:
         self._cache = value
+
+
+class _Missing(Enum):
+    MISSING = auto()
 
 
 __all__ = [
