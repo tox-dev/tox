@@ -78,14 +78,9 @@ class ToxEnv(ABC):  # ruff:ignore[too-many-public-methods]  # public facade
         self._run_state = {"setup": False, "clean": False, "teardown": False}
         self._paths_private: list[Path] = []  #: a property holding the PATH environment variables
         self._hidden_outcomes: list[Outcome] | None = []
-        self._env_vars: dict[str, str] | None = None
-        self._env_vars_pass_env: list[str] = []
-        self._resolving_env_vars: bool = False
+        self._env_vars = _EnvVars()
         self._suspended_out_err: OutErr | None = None
-        self._execute_statuses: dict[int, ExecuteStatus] = {}
-        self._interrupted = False
-        self._fully_interrupted = False
-        self._allow_interrupted_execution = False
+        self._interruption = _Interruption()
         self._log_id = 0
 
     @override
@@ -485,7 +480,8 @@ class ToxEnv(ABC):  # ruff:ignore[too-many-public-methods]  # public facade
         :yields: context manager yielding the command's execution status
 
         """
-        if self._fully_interrupted or (self._interrupted and not self._allow_interrupted_execution):
+        interruption = self._interruption
+        if interruption.forced or (interruption.requested and not interruption.allow_execution):
             raise SystemExit(-2)  # pragma: no cover  # untested error path
         if cwd is None:
             cwd = cast("Path", self.core["tox_root"])
@@ -508,10 +504,10 @@ class ToxEnv(ABC):  # ruff:ignore[too-many-public-methods]  # public facade
         with self._execute_call(executor, out_err, request, show) as execute_status:
             execute_id = id(execute_status)
             try:
-                self._execute_statuses[execute_id] = execute_status
+                self._interruption.running[execute_id] = execute_status
                 yield execute_status
             finally:
-                self._execute_statuses.pop(execute_id)
+                self._interruption.running.pop(execute_id)
         if show and self._hidden_outcomes is not None and execute_status.outcome is not None:
             # if it gets canceled before even starting
             self._hidden_outcomes.append(execute_status.outcome)
@@ -522,7 +518,7 @@ class ToxEnv(ABC):  # ruff:ignore[too-many-public-methods]  # public facade
     @property
     def environment_variables(self) -> dict[str, str]:
         """The environment variables the commands of the environment run with."""
-        if self._resolving_env_vars:
+        if self._env_vars.resolving:
             # Re-entrant call: set_env resolution triggered a substitution (e.g. {env_site_packages_dir})
             # that requires the virtualenv session, which needs environment_variables to be built first.
             # Return pass_env + PATH without set_env to break the cycle.
@@ -531,28 +527,28 @@ class ToxEnv(ABC):  # ruff:ignore[too-many-public-methods]  # public facade
             return result
 
         pass_env = self.conf.get("pass_env", list[str])
-        self._resolving_env_vars = True
+        self._env_vars.resolving = True
         try:
             set_env = self.conf.get("set_env", SetEnv)
         finally:
-            self._resolving_env_vars = False
-        if self._env_vars_pass_env == pass_env and not set_env.changed and self._env_vars is not None:
-            return self._env_vars
+            self._env_vars.resolving = False
+        if self._env_vars.pass_env == pass_env and not set_env.changed and self._env_vars.values is not None:
+            return self._env_vars.values
 
         result = self._load_pass_env(pass_env)
         if disallow := self.conf["disallow_pass_env"]:
             disallow_patterns = [re.compile(fnmatch.translate(e), re.IGNORECASE) for e in disallow]
             result = {k: v for k, v in result.items() if not any(p.match(k) for p in disallow_patterns)}
         # load/paths_env might trigger a load of the environment variables, set result here, returns current state
-        self._env_vars, self._env_vars_pass_env, set_env.changed = result, pass_env.copy(), False
+        self._env_vars.values, self._env_vars.pass_env, set_env.changed = result, pass_env.copy(), False
         # set PATH here in case setting and environment variable requires access to the environment variable PATH
         result["PATH"] = self._make_path()
-        self._resolving_env_vars = True
+        self._env_vars.resolving = True
         try:
             for key in set_env:
                 result[key] = set_env.load(key)
         finally:
-            self._resolving_env_vars = False
+            self._env_vars.resolving = False
         # if set_env modified PATH, re-prepend virtual-env paths (deduped) so they always come first
         if self._paths and "PATH" in set_env:
             result["PATH"] = self._make_path(result["PATH"])
@@ -579,7 +575,7 @@ class ToxEnv(ABC):  # ruff:ignore[too-many-public-methods]  # public facade
     def _paths(self, value: list[Path]) -> None:
         self._paths_private = value
         # Invalidate cached env vars so they rebuild on next access, preserving set_env PATH modifications.
-        self._env_vars = None
+        self._env_vars.values = None
 
     @property
     def _allow_externals(self) -> list[str]:
@@ -614,9 +610,10 @@ class ToxEnv(ABC):  # ruff:ignore[too-many-public-methods]  # public facade
         with log_file.open("wt", encoding="utf-8") as file:
             file.write(f"name: {env_name}\n")
             file.write(f"run_id: {request.run_id}\n")
-            msg = ""
-            for env_key, env_value in sorted(request.env.items()):
-                msg += f"env {env_key}: {redact_value(name=env_key, value=env_value)}\n"
+            msg = "".join(
+                f"env {env_key}: {redact_value(name=env_key, value=env_value)}\n"
+                for env_key, env_value in sorted(request.env.items())
+            )
             file.write(msg)
             for meta_key, meta_value in status.metadata.items():
                 file.write(f"metadata {meta_key}: {meta_value}\n")
@@ -635,13 +632,13 @@ class ToxEnv(ABC):  # ruff:ignore[too-many-public-methods]  # public facade
 
     def interrupt(self) -> None:
         """Interrupt the execution of a tox environment."""
-        if self._interrupted:
+        if self._interruption.requested:
             logging.warning("second interrupt received for tox environment: %s - forcing full stop", self.conf.name)
-            self._fully_interrupted = True
+            self._interruption.forced = True
         else:
             logging.warning("interrupt tox environment: %s", self.conf.name)
-            self._interrupted = True
-        for status in list(self._execute_statuses.values()):
+            self._interruption.requested = True
+        for status in list(self._interruption.running.values()):
             status.interrupt()
 
     @contextmanager
@@ -654,12 +651,12 @@ class ToxEnv(ABC):  # ruff:ignore[too-many-public-methods]  # public facade
         :yields: nothing, ``commands_post`` runs inside the block
 
         """
-        if enabled and self._interrupted and not self._fully_interrupted:
-            self._allow_interrupted_execution = True
+        if enabled and self._interruption.requested and not self._interruption.forced:
+            self._interruption.allow_execution = True
         try:
             yield
         finally:
-            self._allow_interrupted_execution = False
+            self._interruption.allow_execution = False
 
     @contextmanager
     def display_context(  # keeps the signature
@@ -696,6 +693,28 @@ class ToxEnv(ABC):  # ruff:ignore[too-many-public-methods]  # public facade
         out.close()
         err.close()
         return out_b, err_b
+
+
+class _EnvVars:
+    __slots__ = ("pass_env", "resolving", "values")
+
+    def __init__(self) -> None:
+        # The variables last built, cached until `pass_env` or `set_env` changes.
+        self.values: dict[str, str] | None = None
+        self.pass_env: list[str] = []
+        # Set while `set_env` resolves, which can ask for the variables again.
+        self.resolving = False
+
+
+class _Interruption:
+    __slots__ = ("allow_execution", "forced", "requested", "running")
+
+    def __init__(self) -> None:
+        self.running: dict[int, ExecuteStatus] = {}
+        self.requested = False
+        # A second interrupt stops everything, `commands_post` included.
+        self.forced = False
+        self.allow_execution = False
 
 
 _CWD: Final[Path] = Path.cwd()

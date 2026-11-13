@@ -181,15 +181,6 @@ class VenvCmdBuilder(PythonPackageToxEnv, ABC):
             yield self._sdist_meta_tox_env
 
 
-class VirtualEnvCmdBuilder(VenvCmdBuilder, VirtualEnv):
-    """A packaging environment that builds with a command run in a virtualenv."""
-
-    @staticmethod
-    @override
-    def id() -> str:
-        return "virtualenv-cmd-builder"
-
-
 class _WheelDistribution(Distribution):
     def __init__(self, wheel: Path) -> None:
         self._wheel = wheel
@@ -239,6 +230,15 @@ class _WheelDistribution(Distribution):
 @impl
 def tox_register_tox_env(register: ToxEnvRegister) -> None:
     register.add_package_env(VirtualEnvCmdBuilder)
+
+
+class VirtualEnvCmdBuilder(VenvCmdBuilder, VirtualEnv):
+    """A packaging environment that builds with a command run in a virtualenv."""
+
+    @staticmethod
+    @override
+    def id() -> str:
+        return "virtualenv-cmd-builder"
 
 
 __all__ = [

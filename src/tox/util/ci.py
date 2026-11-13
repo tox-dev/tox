@@ -1,10 +1,11 @@
 from __future__ import annotations
 
 import os
+from types import MappingProxyType
 from typing import Final
 
 # per https://adamj.eu/tech/2020/03/09/detect-if-your-tests-are-running-on-ci
-_ENV_VARS: Final[dict[str, str | None]] = {
+_ENV_VARS: Final[MappingProxyType[str, str | None]] = MappingProxyType({
     "CI": None,  # generic flag
     "TF_BUILD": "true",  # Azure Pipelines
     "bamboo.buildKey": None,  # Bamboo
@@ -18,7 +19,7 @@ _ENV_VARS: Final[dict[str, str | None]] = {
     "BUILD_ID": None,  # Hudson
     "TEAMCITY_VERSION": None,  # TeamCity
     "TRAVIS": "true",  # Travis CI
-}
+})
 
 
 def is_ci() -> bool:

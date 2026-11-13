@@ -11,7 +11,7 @@ from contextlib import contextmanager
 from itertools import chain
 from pathlib import Path
 from threading import RLock
-from typing import TYPE_CHECKING, Any, Literal, NoReturn, cast
+from typing import TYPE_CHECKING, Any, Literal, NoReturn, SupportsIndex, cast
 
 from cachetools import cached
 from packaging.requirements import Requirement
@@ -42,7 +42,7 @@ from tox.util.typing_compat import override
 from .util import dependencies_with_extras, safe_extractall
 
 if TYPE_CHECKING:
-    from collections.abc import Generator, Sequence
+    from collections.abc import Callable, Generator, Sequence
 
     from tox.config.sets import EnvConfigSet
     from tox.execute.api import ExecuteStatus
@@ -77,10 +77,22 @@ class ToxBackendFailed(Fail, BackendFailed):
             backend_failed.err,
         )
 
+    # `BackendFailed.__reduce__` rebuilds through this class's constructor with its own arguments, which this class does
+    # not take; `pickle` and `copy` call `__reduce_ex__` first, so the override goes there.
+    @override
+    def __reduce_ex__(
+        self,
+        protocol: SupportsIndex,
+    ) -> tuple[
+        Callable[[dict[str, int | str | None], str, str], ToxBackendFailed],
+        tuple[dict[str, int | str | None], str, str],
+    ]:
+        result: dict[str, int | str | None] = {"code": self.code, "exc_type": self.exc_type, "exc_msg": self.exc_msg}
+        return _rebuild_backend_failed, (result, self.out, self.err)
 
-class _BuildEditableNotSupportedError(RuntimeError):
-    # raised when build editable is not supported.
-    ...
+
+def _rebuild_backend_failed(result: dict[str, int | str | None], out: str, err: str) -> ToxBackendFailed:
+    return ToxBackendFailed(BackendFailed(result, out, err))
 
 
 class _ToxCmdStatus(CmdStatus):
@@ -534,15 +546,6 @@ class Pep517VenvPackager(PythonPackageToxEnv, ABC):
         return self._load_deps(for_env)
 
 
-class Pep517VirtualEnvPackager(Pep517VenvPackager, VirtualEnv):
-    """local file system python virtual environment via the virtualenv package."""
-
-    @staticmethod
-    @override
-    def id() -> str:
-        return "virtualenv-pep-517"
-
-
 class Pep517VirtualEnvFrontend(Frontend):
     """The frontend that runs the PEP 517 build backend in a virtualenv.
 
@@ -664,6 +667,20 @@ class Pep517VirtualEnvFrontend(Frontend):
     @override
     def _wheel_directory(self) -> Generator[Path]:
         yield self._tox_env.pkg_dir  # use our local wheel directory for building wheel
+
+
+class _BuildEditableNotSupportedError(RuntimeError):
+    # raised when build editable is not supported.
+    ...
+
+
+class Pep517VirtualEnvPackager(Pep517VenvPackager, VirtualEnv):
+    """local file system python virtual environment via the virtualenv package."""
+
+    @staticmethod
+    @override
+    def id() -> str:
+        return "virtualenv-pep-517"
 
 
 @impl

@@ -481,17 +481,17 @@ class EnvConfigSet(ConfigSet):
                     return "value" in value and isinstance(value.get("value"), SetEnvValue)
                 return False
 
+            def is_valid_table(
+                value: object,  # simplint: ignore[imprecise-annotation]  # config values have no single type
+            ) -> bool:
+                return isinstance(value, dict) and all(
+                    isinstance(k, str) and is_valid_value(v) for k, v in value.items()
+                )
+
             if not (
                 isinstance(raw, (str, SetEnvReference))
-                or (isinstance(raw, dict) and all(isinstance(k, str) and is_valid_value(v) for k, v in raw.items()))
-                or (
-                    isinstance(raw, list)
-                    and all(
-                        isinstance(e, SetEnvReference)
-                        or (isinstance(e, dict) and all(isinstance(k, str) and is_valid_value(v) for k, v in e.items()))
-                        for e in raw
-                    )
-                )
+                or is_valid_table(raw)
+                or (isinstance(raw, list) and all(isinstance(e, SetEnvReference) or is_valid_table(e) for e in raw))
             ):
                 msg = (
                     f"set_env expected str, dict[str, str], or list[dict[str, str]], got {type(raw).__name__}: {raw!r}"

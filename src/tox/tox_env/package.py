@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import functools
 from abc import ABC, abstractmethod
 from contextlib import nullcontext
 from pathlib import Path
@@ -73,6 +74,7 @@ class PackageToxEnv(ToxEnv, ABC):
 
     @staticmethod
     def _lock_method(thread_lock: RLock, file_lock: BaseFileLock | None, meth: Callable[_P, _R]) -> Callable[_P, _R]:
+        @functools.wraps(meth)
         def _func(*args: _P.args, **kwargs: _P.kwargs) -> _R:
             # A pre-existing package environment link must not redirect the lock file.
             with (

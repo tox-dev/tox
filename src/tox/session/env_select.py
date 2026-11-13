@@ -35,86 +35,6 @@ if TYPE_CHECKING:
 _LOGGER: Final[logging.Logger] = logging.getLogger(__name__)
 
 
-class CliEnv:  # ruff:ignore[eq-without-hash]  # mutable value type
-    """The user's selection of tox test environments via ``-e`` or ``env_list`` config.
-
-    It is in one of three forms:
-
-    - A list of specific environments, instantiated with a string that is a comma-separated list of the environment
-      names. (These may have spaces on either side of the commas which are removed.) As a sequence this will be a
-      sequence of those names.
-
-    The other two forms are:
-
-    - "ALL" which is all environments defined by the tox configuration. This is instantiated with ``ALL`` either alone
-      or as any element of a comma-separated list; any other environment names are ignored. `is_all()` will be true and
-      as a sequence it will be empty. This prints in string representation as ``ALL``.
-    - The default environments as chosen by tox configuration. This is instantiated with `None` as the parameter,
-      `is_default_list()` will be true, and as a sequence this will be empty. This prints in string representation as
-      ``<env_list>``.
-
-    :param value: the selection as given on the command line or in the configuration
-
-    """
-
-    def __init__(self, value: list[str] | str | None = None) -> None:
-        if isinstance(value, str):
-            raw = value
-            try:
-                value = list(extend_factors(raw)) or None
-            except ValueError:
-                value = [v.strip() for v in raw.split(",") if v.strip()] or None
-        self._names: list[str] | None = value
-
-    def __iter__(self) -> Iterator[str]:
-        if not self.is_all and self._names is not None:  # pragma: no branch  # other outcome untested
-            yield from self._names
-
-    @property
-    def is_all(self) -> bool:
-        """Whether all environments were requested with ``ALL``."""
-        return self._names is not None and "ALL" in self._names
-
-    def __bool__(self) -> bool:
-        """A `CliEnv` is `True` if it's not the default set of environments.
-
-        :returns: whether the selection names environments other than the defaults
-
-        """
-        return bool(self._names)
-
-    @override
-    def __str__(self) -> str:
-        return "ALL" if self.is_all else ("<env_list>" if self.is_default_list else ",".join(self))
-
-    @property
-    def is_default_list(self) -> bool:
-        """Whether no environments were requested, so the default list applies."""
-        return not (self._names or [])
-
-    @override
-    def __repr__(self) -> str:
-        return f"{self.__class__.__name__}({'' if self.is_default_list else repr(str(self))})"
-
-    @override
-    def __eq__(self, other: object) -> bool:
-        if not isinstance(other, CliEnv):
-            return False
-        return self._names == other._names
-
-    @override
-    def __ne__(self, other: object) -> bool:
-        return not (self == other)
-
-    def __iadd__(self, other: CliEnv) -> Self:
-        if other._names is not None:
-            if self._names is None:
-                self._names = list(other._names)
-            else:
-                self._names.extend(other._names)
-        return self
-
-
 def register_env_select_flags(
     parser: ArgumentParser,
     default: CliEnv | None,
@@ -189,6 +109,86 @@ class _CliEnvAction(argparse.Action):
             setattr(namespace, self.dest, new)
 
 
+class CliEnv:  # ruff:ignore[eq-without-hash]  # mutable value type
+    """The user's selection of tox test environments via ``-e`` or ``env_list`` config.
+
+    It is in one of three forms:
+
+    - A list of specific environments, instantiated with a string that is a comma-separated list of the environment
+      names. (These may have spaces on either side of the commas which are removed.) As a sequence this will be a
+      sequence of those names.
+
+    The other two forms are:
+
+    - "ALL" which is all environments defined by the tox configuration. This is instantiated with ``ALL`` either alone
+      or as any element of a comma-separated list; any other environment names are ignored. `is_all()` will be true and
+      as a sequence it will be empty. This prints in string representation as ``ALL``.
+    - The default environments as chosen by tox configuration. This is instantiated with `None` as the parameter,
+      `is_default_list()` will be true, and as a sequence this will be empty. This prints in string representation as
+      ``<env_list>``.
+
+    :param value: the selection as given on the command line or in the configuration
+
+    """
+
+    def __init__(self, value: list[str] | str | None = None) -> None:
+        if isinstance(value, str):
+            raw = value
+            try:
+                value = list(extend_factors(raw)) or None
+            except ValueError:
+                value = [v.strip() for v in raw.split(",") if v.strip()] or None
+        self._names: list[str] | None = value
+
+    def __iter__(self) -> Iterator[str]:
+        if not self.is_all and self._names is not None:  # pragma: no branch  # other outcome untested
+            yield from self._names
+
+    @property
+    def is_all(self) -> bool:
+        """Whether all environments were requested with ``ALL``."""
+        return self._names is not None and "ALL" in self._names
+
+    def __bool__(self) -> bool:
+        """A `CliEnv` is `True` if it's not the default set of environments.
+
+        :returns: whether the selection names environments other than the defaults
+
+        """
+        return bool(self._names)
+
+    @override
+    def __str__(self) -> str:
+        return "ALL" if self.is_all else ("<env_list>" if self.is_default_list else ",".join(self))
+
+    @property
+    def is_default_list(self) -> bool:
+        """Whether no environments were requested, so the default list applies."""
+        return not (self._names or [])
+
+    @override
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}({'' if self.is_default_list else repr(str(self))})"
+
+    @override
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, CliEnv):
+            return NotImplemented
+        return self._names == other._names
+
+    @override
+    def __ne__(self, other: object) -> bool:
+        return not (self == other)
+
+    def __iadd__(self, other: CliEnv) -> Self:
+        if other._names is not None:
+            if self._names is None:
+                self._names = list(other._names)
+            else:
+                self._names.extend(other._names)
+        return self
+
+
 def _env_completer(
     prefix: str,  # ruff:ignore[unused-function-argument]  # interface signature
     action: Action,  # ruff:ignore[unused-function-argument]  # interface signature
@@ -210,38 +210,6 @@ def _env_completer(
         return []
     else:
         return ["ALL", *conf]
-
-
-class _CombinableFactors(NamedTuple):
-    known_envs: set[str]
-    combinable: set[str]
-    all_factors: set[str]
-
-
-def _activate_by_labels(
-    defined_envs: dict[str, _ToxEnvInfo], labels: set[str], label_envs: dict[str, list[str]]
-) -> None:
-    for label in labels:
-        for env_name in label_envs.get(label, []):
-            defined_envs[env_name].is_active = True
-    for env_info in defined_envs.values():
-        if env_info.env is not None and labels.intersection(env_info.env.conf["labels"]):
-            env_info.is_active = True
-
-
-def _activate_by_factors(defined_envs: dict[str, _ToxEnvInfo], factors: tuple[set[str], ...]) -> None:
-    for name, env_info in defined_envs.items():
-        for factor_set in factors:
-            if factor_set.issubset(set(name.split("-"))):
-                env_info.is_active = True
-                break
-
-
-@dataclass(slots=True, kw_only=True)  # simplint: ignore[dataclass-frozen]  # fields change as environments are defined
-class _ToxEnvInfo:
-    env: PackageToxEnv | RunToxEnv | None  #: the tox environment (None if runner unavailable)
-    is_active: bool  #: a flag indicating if the environment is marked as active in the current run
-    package_skip: tuple[str, Skip] | None = None  #: if set the creation of the packaging environment failed
 
 
 _DYNAMIC_ENV_FACTORS: Final[re.Pattern[str]] = re.compile(
@@ -750,6 +718,38 @@ class EnvSelector:
         provision_tox_env: str,  # keeps the signature
     ) -> None:
         self._provision = on, provision_tox_env
+
+
+class _CombinableFactors(NamedTuple):
+    known_envs: set[str]
+    combinable: set[str]
+    all_factors: set[str]
+
+
+@dataclass(slots=True, kw_only=True)  # simplint: ignore[dataclass-frozen]  # fields change as environments are defined
+class _ToxEnvInfo:
+    env: PackageToxEnv | RunToxEnv | None  #: the tox environment (None if runner unavailable)
+    is_active: bool  #: a flag indicating if the environment is marked as active in the current run
+    package_skip: tuple[str, Skip] | None = None  #: if set the creation of the packaging environment failed
+
+
+def _activate_by_labels(
+    defined_envs: dict[str, _ToxEnvInfo], labels: set[str], label_envs: dict[str, list[str]]
+) -> None:
+    for label in labels:
+        for env_name in label_envs.get(label, []):
+            defined_envs[env_name].is_active = True
+    for env_info in defined_envs.values():
+        if env_info.env is not None and labels.intersection(env_info.env.conf["labels"]):
+            env_info.is_active = True
+
+
+def _activate_by_factors(defined_envs: dict[str, _ToxEnvInfo], factors: tuple[set[str], ...]) -> None:
+    for name, env_info in defined_envs.items():
+        for factor_set in factors:
+            if factor_set.issubset(set(name.split("-"))):
+                env_info.is_active = True
+                break
 
 
 __all__ = [

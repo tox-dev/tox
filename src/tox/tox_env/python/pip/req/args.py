@@ -20,6 +20,18 @@ class _SupportsWrite(Protocol[_T_contra]):
     ) -> object: ...  # simplint: ignore[imprecise-annotation]  # matches the typing protocol of the file-like object
 
 
+def build_parser() -> ArgumentParser:
+    """Build the parser of the pip requirement file options.
+
+    :returns: the parser
+
+    """
+    parser = _OurArgumentParser(add_help=False, prog="", allow_abbrev=False)
+    _global_options(parser)
+    _req_options(parser)
+    return parser
+
+
 class _OurArgumentParser(ArgumentParser):
     @override
     def print_usage(self, file: _SupportsWrite[str] | None = None) -> None:
@@ -31,18 +43,6 @@ class _OurArgumentParser(ArgumentParser):
         msg = message.lstrip(": ").rstrip()
         msg = msg.removeprefix("error: ")
         raise ValueError(msg)
-
-
-def build_parser() -> ArgumentParser:
-    """Build the parser of the pip requirement file options.
-
-    :returns: the parser
-
-    """
-    parser = _OurArgumentParser(add_help=False, prog="", allow_abbrev=False)
-    _global_options(parser)
-    _req_options(parser)
-    return parser
 
 
 def _global_options(parser: ArgumentParser) -> None:

@@ -25,93 +25,6 @@ if TYPE_CHECKING:
     from python_discovery import MarkerEnvironment
 
 
-@dataclass(slots=True, kw_only=True, frozen=True)
-class _VersionInfo:
-    major: int
-    minor: int
-    micro: int
-    releaselevel: str
-    serial: int
-
-
-@dataclass(slots=True, kw_only=True)
-class SubprocessPythonInfo:
-    """The details of a python interpreter, probed by running it in a subprocess.
-
-    :param implementation: the name of the implementation
-    :param version_info: the version of the interpreter
-    :param version: the full version string
-    :param architecture: the number of bits of the interpreter
-    :param platform: the platform the interpreter runs on
-    :param system_executable: the path of the system executable of the interpreter
-    :param free_threaded: whether the interpreter is a free-threaded build
-    :param debug_build: whether the interpreter is a debug build
-    :param sysconfig_platform: the platform name from ``sysconfig``, ``None`` when unknown
-    :param marker_environment: the environment markers of the interpreter, ``None`` when unknown
-
-    """
-
-    implementation: str
-    version_info: _VersionInfo
-    version: str
-    architecture: int
-    platform: str
-    system_executable: str
-    free_threaded: bool
-    debug_build: bool = False
-    sysconfig_platform: str | None = None
-    marker_environment: MarkerEnvironment | None = None
-
-    @property
-    def machine(self) -> str:
-        """Derive instruction set architecture from sysconfig_platform."""
-        if (plat := self.sysconfig_platform) is None:
-            return ""
-        parts = plat.rsplit("-", 1)
-        return parts[-1] if len(parts) > 1 else ""
-
-
-@dataclass(frozen=True, slots=True, kw_only=True)
-class SubprocessCreator:
-    """Mimics virtualenv Creator + Describe interface using known venv directory layout.
-
-    :param interpreter: the Python interpreter the virtual environment is created with
-
-    """
-
-    _env_dir: Path
-    interpreter: SubprocessPythonInfo
-    _is_win: bool = field(default_factory=lambda: sys.platform == "win32")
-
-    @property
-    def script_dir(self) -> Path:
-        """The directory the scripts of the environment are placed in, the same as its bin directory."""
-        return self.bin_dir
-
-    @property
-    def bin_dir(self) -> Path:
-        """The directory the executables of the environment are placed in."""
-        return self._env_dir / ("Scripts" if self._is_win else "bin")
-
-    @property
-    def platlib(self) -> Path:
-        """The directory of the platform specific libraries of the environment, the same as its purelib directory."""
-        return self.purelib
-
-    @property
-    def purelib(self) -> Path:
-        """The directory of the pure python libraries of the environment."""
-        if self._is_win:
-            return self._env_dir / "Lib" / "site-packages"
-        vi = self.interpreter.version_info
-        return self._env_dir / "lib" / f"python{vi.major}.{vi.minor}" / "site-packages"
-
-    @property
-    def exe(self) -> Path:
-        """The python executable of the environment."""
-        return self.bin_dir / ("python.exe" if self._is_win else "python")
-
-
 class SubprocessSession:
     """Mimics virtualenv Session interface, runs a bootstrapped virtualenv via subprocess.
 
@@ -179,6 +92,47 @@ class SubprocessSession:
         return self._creator
 
 
+@dataclass(frozen=True, slots=True, kw_only=True)
+class SubprocessCreator:
+    """Mimics virtualenv Creator + Describe interface using known venv directory layout.
+
+    :param interpreter: the Python interpreter the virtual environment is created with
+
+    """
+
+    _env_dir: Path
+    interpreter: SubprocessPythonInfo
+    _is_win: bool = field(default_factory=lambda: sys.platform == "win32")
+
+    @property
+    def script_dir(self) -> Path:
+        """The directory the scripts of the environment are placed in, the same as its bin directory."""
+        return self.bin_dir
+
+    @property
+    def bin_dir(self) -> Path:
+        """The directory the executables of the environment are placed in."""
+        return self._env_dir / ("Scripts" if self._is_win else "bin")
+
+    @property
+    def platlib(self) -> Path:
+        """The directory of the platform specific libraries of the environment, the same as its purelib directory."""
+        return self.purelib
+
+    @property
+    def purelib(self) -> Path:
+        """The directory of the pure python libraries of the environment."""
+        if self._is_win:
+            return self._env_dir / "Lib" / "site-packages"
+        vi = self.interpreter.version_info
+        return self._env_dir / "lib" / f"python{vi.major}.{vi.minor}" / "site-packages"
+
+    @property
+    def exe(self) -> Path:
+        """The python executable of the environment."""
+        return self.bin_dir / ("python.exe" if self._is_win else "python")
+
+
 def probe_python(python_path: str, marker_environment: MarkerEnvironment | None = None) -> SubprocessPythonInfo | None:
     """Probe a python interpreter for its details, by running it.
 
@@ -209,7 +163,7 @@ print(json.dumps({
         if result.returncode != 0:
             return None
         raw = json.loads(result.stdout)
-    except (subprocess.SubprocessError, json.JSONDecodeError, FileNotFoundError, OSError):
+    except (subprocess.SubprocessError, json.JSONDecodeError, OSError):
         return None
     vi = raw["version_info"]
     return SubprocessPythonInfo(
@@ -224,6 +178,52 @@ print(json.dumps({
         debug_build=raw.get("debug_build", False),
         sysconfig_platform=raw.get("sysconfig_platform"),
     )
+
+
+@dataclass(slots=True, kw_only=True)
+class SubprocessPythonInfo:
+    """The details of a python interpreter, probed by running it in a subprocess.
+
+    :param implementation: the name of the implementation
+    :param version_info: the version of the interpreter
+    :param version: the full version string
+    :param architecture: the number of bits of the interpreter
+    :param platform: the platform the interpreter runs on
+    :param system_executable: the path of the system executable of the interpreter
+    :param free_threaded: whether the interpreter is a free-threaded build
+    :param debug_build: whether the interpreter is a debug build
+    :param sysconfig_platform: the platform name from ``sysconfig``, ``None`` when unknown
+    :param marker_environment: the environment markers of the interpreter, ``None`` when unknown
+
+    """
+
+    implementation: str
+    version_info: _VersionInfo
+    version: str
+    architecture: int
+    platform: str
+    system_executable: str
+    free_threaded: bool
+    debug_build: bool = False
+    sysconfig_platform: str | None = None
+    marker_environment: MarkerEnvironment | None = None
+
+    @property
+    def machine(self) -> str:
+        """Derive instruction set architecture from sysconfig_platform."""
+        if (plat := self.sysconfig_platform) is None:
+            return ""
+        parts = plat.rsplit("-", 1)
+        return parts[-1] if len(parts) > 1 else ""
+
+
+@dataclass(slots=True, kw_only=True, frozen=True)
+class _VersionInfo:
+    major: int
+    minor: int
+    micro: int
+    releaselevel: str
+    serial: int
 
 
 def ensure_bootstrap(work_dir: Path, virtualenv_spec: str) -> Path:
@@ -300,7 +300,7 @@ def _has_correct_virtualenv(python: Path, virtualenv_spec: str) -> bool:
             timeout=30,
             check=False,
         )
-    except (subprocess.SubprocessError, FileNotFoundError, OSError):
+    except (subprocess.SubprocessError, OSError):
         return False
     if result.returncode != 0:
         return False

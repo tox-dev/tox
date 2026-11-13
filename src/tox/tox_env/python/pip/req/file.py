@@ -93,210 +93,6 @@ _DEFAULT_INDEX_URL: Final[str] = "https://pypi.org/simple"
 _HTTP_BODY_TIMEOUT: Final[int] = 120
 
 
-def _local_requirement(req: str, from_file: str) -> str:
-    root = Path(from_file).parent
-    extras: list[str] = []
-    path = root / req
-    if match := _EXTRA_PATH.fullmatch(Path(req).name):
-        for extra in match["extras"].split(","):
-            extra = extra.strip()  # ruff:ignore[redefined-loop-name]  # loop rebinding intended
-            if not extra:
-                continue
-            if not _EXTRA_ELEMENT.fullmatch(extra):
-                extras = []
-                break
-            extras.append(extra)
-        else:
-            path = root / Path(req).parent / match["path"]
-    extra_part = f"[{','.join(sorted(extras))}]" if extras else ""
-    try:
-        rel_path = str(path.resolve().relative_to(root))
-        if rel_path != "." and (os.sep not in rel_path or rel_path.startswith("-")):
-            rel_path = f".{os.sep}{rel_path}"
-    except ValueError:
-        rel_path = str(path.resolve())
-    return f"{rel_path}{extra_part}"
-
-
-def _merge_requirement_files(base_opt: Namespace, opt: Namespace) -> None:
-    if opt.requirements:
-        if not hasattr(base_opt, "requirements"):
-            base_opt.requirements = []
-        if opt.requirements[0] not in base_opt.requirements:
-            base_opt.requirements.append(opt.requirements[0])
-    if opt.constraints:
-        if not hasattr(base_opt, "constraints"):
-            base_opt.constraints = []
-        if opt.constraints[0] not in base_opt.constraints:
-            base_opt.constraints.append(opt.constraints[0])
-
-
-def _merge_hashes_and_features(base_opt: Namespace, opt: Namespace) -> None:
-    if opt.require_hashes:
-        base_opt.require_hashes = True
-    if opt.features_enabled:
-        if not hasattr(base_opt, "features_enabled"):
-            base_opt.features_enabled = []
-        for feature in opt.features_enabled:
-            if feature not in base_opt.features_enabled:
-                base_opt.features_enabled.append(feature)
-        base_opt.features_enabled.sort()
-
-
-def _merge_index_urls(base_opt: Namespace, opt: Namespace) -> None:
-    # pip ignores every index once --no-index is given, wherever the index options appear
-    if opt.no_index is True or getattr(base_opt, "index_url", None) == []:
-        base_opt.index_url = []
-    elif opt.index_url:
-        if getattr(base_opt, "index_url", []):
-            base_opt.index_url[0] = opt.index_url
-        else:
-            base_opt.index_url = [opt.index_url]
-    if opt.extra_index_url and getattr(base_opt, "index_url", None) != []:
-        if not getattr(base_opt, "index_url", []):
-            base_opt.index_url = [_DEFAULT_INDEX_URL]
-        for url in opt.extra_index_url:
-            if url not in base_opt.index_url:
-                base_opt.index_url.append(url)
-
-
-def _merge_find_links(base_opt: Namespace, opt: Namespace, filename: str) -> None:
-    if opt.find_links:
-        # relative to a requirements file.
-        if not hasattr(base_opt, "find_links"):
-            base_opt.find_links = []
-        value = opt.find_links[0]
-        relative_to_reqs_file = Path(filename).absolute().parent / value
-        if os.path.exists(str(relative_to_reqs_file)):  # ruff:ignore[os-path-exists] # Path.exists fails on win32 <=3.7 with URI
-            value = str(relative_to_reqs_file)  # pragma: no cover  # setup not built by tests
-        if value not in base_opt.find_links:
-            base_opt.find_links.append(value)
-
-
-def _index_option_groups(opt: Namespace) -> Iterator[tuple[str, ...]]:
-    if (index_url := getattr(opt, "index_url", None)) is not None:
-        if index_url:
-            if index_url[0] != _DEFAULT_INDEX_URL:
-                yield "-i", index_url[0]
-            for url in index_url[1:]:
-                yield "--extra-index-url", url
-        else:
-            yield ("--no-index",)
-
-
-def _binary_option_groups(opt: Namespace) -> Iterator[tuple[str, ...]]:
-    # pip drops the --no-binary names it read before an --only-binary :all:, so that one goes first
-    only_binary_first = ":all:" in getattr(opt, "only_binary", ())
-    for name in ("only_binary", "no_binary") if only_binary_first else ("no_binary", "only_binary"):
-        if hasattr(opt, name):
-            yield f"--{name.replace('_', '-')}", ",".join(sorted(getattr(opt, name)))
-
-
-class ParsedRequirement:
-    """A requirement parsed from a requirements file.
-
-    :param req: the requirement text
-    :param options: the options the requirement was given with
-    :param from_file: the path of the file the requirement was read from
-    :param lineno: the line number the requirement was read from
-
-    """
-
-    def __init__(self, req: str, options: dict[str, Any], from_file: str, lineno: int) -> None:
-        req = req.encode("utf-8").decode("utf-8")
-        try:
-            self._requirement: Requirement | Path | str = Requirement(req)
-        except InvalidRequirement:
-            if is_url(req) or any(req.startswith(f"{v}+") and is_url(req[len(v) + 1 :]) for v in VCS):
-                self._requirement = req
-            elif _VERSION_SPECIFIER.search(req):
-                self._requirement = req  # invalid requirement with version specifier — let pip report the error
-            else:
-                self._requirement = _local_requirement(req, from_file)
-        self._options = options
-        self._from_file = from_file
-        self._lineno = lineno
-
-    @override
-    def __repr__(self) -> str:
-        base = f"{self.__class__.__name__}(requirement={self._requirement}, "
-        if self._options:
-            base += f"options={self._options!r}, "
-        return f"{base.rstrip(', ')})"
-
-    @override
-    def __str__(self) -> str:
-        result = []
-        if self.options.get("is_constraint"):
-            result.append("-c")
-        if self.options.get("is_editable"):
-            result.append("-e")
-        result.append(str(self.requirement))
-        for hash_value in self.options.get("hash", []):
-            result.extend(("--hash", hash_value))
-        for setting in self.options.get("config_settings", []):
-            result.extend(("--config-settings", setting))
-        return " ".join(result)
-
-    @property
-    def options(
-        self,
-    ) -> dict[str, Any]:  # simplint: ignore[imprecise-annotation]  # pip options hold values of any type
-        """The options the requirement was given with."""
-        return self._options
-
-    @property
-    def requirement(self) -> Requirement | Path | str:
-        """The requirement, as a packaging requirement."""
-        return self._requirement
-
-    @property
-    def from_file(self) -> str:
-        """The path of the file the requirement was read from."""
-        return self._from_file
-
-    @property
-    def lineno(self) -> int:
-        """The line number the requirement was read from."""
-        return self._lineno
-
-    def as_args(self) -> Iterator[str]:
-        """Get the requirement as the command line arguments pip takes.
-
-        :yields: the arguments
-
-        """
-        if self.options.get("is_editable"):
-            yield "-e"
-        yield str(self._requirement)
-
-
-class _ParsedLine:
-    def __init__(
-        self,
-        filename: str,
-        lineno: int,
-        args: str,
-        opts: Namespace,
-        constraint: bool,  # ruff:ignore[boolean-type-hint-positional-argument]  # keeps the signature
-    ) -> None:
-        self.filename = filename
-        self.lineno = lineno
-        self.opts = opts
-        self.constraint = constraint
-        if args:
-            self.is_requirement = True
-            self.is_editable = False
-            self.requirement = args
-        elif opts.editables:
-            self.is_requirement = True
-            self.is_editable = True
-            # We don't support multiple -e on one line
-            self.requirement = opts.editables[0]
-        else:
-            self.is_requirement = False
-
-
 class RequirementsFile:
     """A requirements file, with the requirements, options and constraints it declares.
 
@@ -666,6 +462,221 @@ class RequirementsFile:
         return text
 
 
+class _ParsedLine:
+    def __init__(
+        self,
+        filename: str,
+        lineno: int,
+        args: str,
+        opts: Namespace,
+        constraint: bool,  # ruff:ignore[boolean-type-hint-positional-argument]  # keeps the signature
+    ) -> None:
+        self.filename = filename
+        self.lineno = lineno
+        self.opts = opts
+        self.constraint = constraint
+        if args:
+            self.is_requirement = True
+            self.is_editable = False
+            self.requirement = args
+        elif opts.editables:
+            self.is_requirement = True
+            self.is_editable = True
+            # We don't support multiple -e on one line
+            self.requirement = opts.editables[0]
+        else:
+            self.is_requirement = False
+
+
+def unprotect_env_variables(text: str) -> str:
+    """Restore the environment variable references protected with :func:`protect_env_variables`.
+
+    :param text: the protected text
+
+    :returns: the text with the references restored
+
+    """
+    return text.replace(f"${_ENV_LITERAL_MARK}{{", "${")
+
+
+class ParsedRequirement:
+    """A requirement parsed from a requirements file.
+
+    :param req: the requirement text
+    :param options: the options the requirement was given with
+    :param from_file: the path of the file the requirement was read from
+    :param lineno: the line number the requirement was read from
+
+    """
+
+    def __init__(self, req: str, options: dict[str, Any], from_file: str, lineno: int) -> None:
+        req = req.encode("utf-8").decode("utf-8")
+        try:
+            self._requirement: Requirement | Path | str = Requirement(req)
+        except InvalidRequirement:
+            if is_url(req) or any(req.startswith(f"{v}+") and is_url(req[len(v) + 1 :]) for v in VCS):
+                self._requirement = req
+            elif _VERSION_SPECIFIER.search(req):
+                self._requirement = req  # invalid requirement with version specifier — let pip report the error
+            else:
+                self._requirement = _local_requirement(req, from_file)
+        self._options = options
+        self._from_file = from_file
+        self._lineno = lineno
+
+    @override
+    def __repr__(self) -> str:
+        base = f"{self.__class__.__name__}(requirement={self._requirement}, "
+        if self._options:
+            base += f"options={self._options!r}, "
+        return f"{base.rstrip(', ')})"
+
+    @override
+    def __str__(self) -> str:
+        result = []
+        if self.options.get("is_constraint"):
+            result.append("-c")
+        if self.options.get("is_editable"):
+            result.append("-e")
+        result.append(str(self.requirement))
+        for hash_value in self.options.get("hash", []):
+            result.extend(("--hash", hash_value))
+        for setting in self.options.get("config_settings", []):
+            result.extend(("--config-settings", setting))
+        return " ".join(result)
+
+    @property
+    def options(
+        self,
+    ) -> dict[str, Any]:  # simplint: ignore[imprecise-annotation]  # pip options hold values of any type
+        """The options the requirement was given with."""
+        return self._options
+
+    @property
+    def requirement(self) -> Requirement | Path | str:
+        """The requirement, as a packaging requirement."""
+        return self._requirement
+
+    @property
+    def from_file(self) -> str:
+        """The path of the file the requirement was read from."""
+        return self._from_file
+
+    @property
+    def lineno(self) -> int:
+        """The line number the requirement was read from."""
+        return self._lineno
+
+    def as_args(self) -> Iterator[str]:
+        """Get the requirement as the command line arguments pip takes.
+
+        :yields: the arguments
+
+        """
+        if self.options.get("is_editable"):
+            yield "-e"
+        yield str(self._requirement)
+
+
+def _local_requirement(req: str, from_file: str) -> str:
+    root = Path(from_file).parent
+    extras: list[str] = []
+    path = root / req
+    if match := _EXTRA_PATH.fullmatch(Path(req).name):
+        for extra in match["extras"].split(","):
+            extra = extra.strip()  # ruff:ignore[redefined-loop-name]  # loop rebinding intended
+            if not extra:
+                continue
+            if not _EXTRA_ELEMENT.fullmatch(extra):
+                extras = []
+                break
+            extras.append(extra)
+        else:
+            path = root / Path(req).parent / match["path"]
+    extra_part = f"[{','.join(sorted(extras))}]" if extras else ""
+    try:
+        rel_path = str(path.resolve().relative_to(root))
+        if rel_path != "." and (os.sep not in rel_path or rel_path.startswith("-")):
+            rel_path = f".{os.sep}{rel_path}"
+    except ValueError:
+        rel_path = str(path.resolve())
+    return f"{rel_path}{extra_part}"
+
+
+def _merge_requirement_files(base_opt: Namespace, opt: Namespace) -> None:
+    if opt.requirements:
+        if not hasattr(base_opt, "requirements"):
+            base_opt.requirements = []
+        if opt.requirements[0] not in base_opt.requirements:
+            base_opt.requirements.append(opt.requirements[0])
+    if opt.constraints:
+        if not hasattr(base_opt, "constraints"):
+            base_opt.constraints = []
+        if opt.constraints[0] not in base_opt.constraints:
+            base_opt.constraints.append(opt.constraints[0])
+
+
+def _merge_hashes_and_features(base_opt: Namespace, opt: Namespace) -> None:
+    if opt.require_hashes:
+        base_opt.require_hashes = True
+    if opt.features_enabled:
+        if not hasattr(base_opt, "features_enabled"):
+            base_opt.features_enabled = []
+        for feature in opt.features_enabled:
+            if feature not in base_opt.features_enabled:
+                base_opt.features_enabled.append(feature)
+        base_opt.features_enabled.sort()
+
+
+def _merge_index_urls(base_opt: Namespace, opt: Namespace) -> None:
+    # pip ignores every index once --no-index is given, wherever the index options appear
+    if opt.no_index is True or getattr(base_opt, "index_url", None) == []:
+        base_opt.index_url = []
+    elif opt.index_url:
+        if getattr(base_opt, "index_url", []):
+            base_opt.index_url[0] = opt.index_url
+        else:
+            base_opt.index_url = [opt.index_url]
+    if opt.extra_index_url and getattr(base_opt, "index_url", None) != []:
+        if not getattr(base_opt, "index_url", []):
+            base_opt.index_url = [_DEFAULT_INDEX_URL]
+        for url in opt.extra_index_url:
+            if url not in base_opt.index_url:
+                base_opt.index_url.append(url)
+
+
+def _merge_find_links(base_opt: Namespace, opt: Namespace, filename: str) -> None:
+    if opt.find_links:
+        # relative to a requirements file.
+        if not hasattr(base_opt, "find_links"):
+            base_opt.find_links = []
+        value = opt.find_links[0]
+        relative_to_reqs_file = Path(filename).absolute().parent / value
+        if os.path.exists(str(relative_to_reqs_file)):  # ruff:ignore[os-path-exists] # Path.exists fails on win32 <=3.7 with URI
+            value = str(relative_to_reqs_file)  # pragma: no cover  # setup not built by tests
+        if value not in base_opt.find_links:
+            base_opt.find_links.append(value)
+
+
+def _index_option_groups(opt: Namespace) -> Iterator[tuple[str, ...]]:
+    if (index_url := getattr(opt, "index_url", None)) is not None:
+        if index_url:
+            if index_url[0] != _DEFAULT_INDEX_URL:
+                yield "-i", index_url[0]
+            for url in index_url[1:]:
+                yield "--extra-index-url", url
+        else:
+            yield ("--no-index",)
+
+
+def _binary_option_groups(opt: Namespace) -> Iterator[tuple[str, ...]]:
+    # pip drops the --no-binary names it read before an --only-binary :all:, so that one goes first
+    only_binary_first = ":all:" in getattr(opt, "only_binary", ())
+    for name in ("only_binary", "no_binary") if only_binary_first else ("no_binary", "only_binary"):
+        if hasattr(opt, name):
+            yield f"--{name.replace('_', '-')}", ",".join(sorted(getattr(opt, name)))
+
+
 class EnvironmentProvider(Protocol):
     """Callable that provides the environment variables that requirements can expand."""
 
@@ -687,17 +698,6 @@ def protect_env_variables(text: str) -> str:
 
     """
     return text.replace("${", f"${_ENV_LITERAL_MARK}{{")
-
-
-def unprotect_env_variables(text: str) -> str:
-    """Restore the environment variable references protected with :func:`protect_env_variables`.
-
-    :param text: the protected text
-
-    :returns: the text with the references restored
-
-    """
-    return text.replace(f"${_ENV_LITERAL_MARK}{{", "${")
 
 
 # Defer pip-style expansion of host values until the inline parser finishes.

@@ -205,12 +205,13 @@ def test_conf_arg(tmp_path: Path, conf_arg: str, filename: str, content: str) ->
     config_file = dest / conf_arg
     source = discover_source(config_file, None)
 
-    Config.make(
+    config = Config.make(
         Parsed(work_dir=dest, override=[], config_file=config_file, root_dir=None),
         pos_args=[],
         source=source,
         extra_envs=(),
     )
+    assert config.src_path == dest / filename
 
 
 @pytest.fixture
