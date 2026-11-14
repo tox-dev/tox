@@ -444,8 +444,8 @@ class ToxParser(ArgumentParserWithEnvAndConfig):
     @override
     def add_argument_group(
         self,
-        *args: Any,  # simplint: ignore[imprecise-annotation]  # argparse option values of any type
-        **kwargs: Any,  # simplint: ignore[imprecise-annotation]  # argparse option values of any type
+        *args: Any,
+        **kwargs: Any,
     ) -> argparse._ArgumentGroup:
         if self.of_cmd is not None or args in {("positional arguments",), ("optional arguments",)}:
             return super().add_argument_group(*args, **kwargs)
@@ -469,7 +469,7 @@ class ToxParser(ArgumentParserWithEnvAndConfig):
         of_type: type[Any]  # simplint: ignore[imprecise-annotation]  # argparse option values of any type
         | UnionType
         | None = None,
-        **kwargs: Any,  # simplint: ignore[imprecise-annotation]  # argparse option values of any type
+        **kwargs: Any,
     ) -> Action:
         result = super().add_argument(*args, **kwargs)
         if self.of_cmd is None and result.dest != "help":
@@ -793,7 +793,7 @@ class _RecordingArgumentGroup(argparse._ArgumentGroup):  # ruff:ignore[private-m
     @override
     def add_mutually_exclusive_group(
         self,
-        **kwargs: Any,  # simplint: ignore[imprecise-annotation]  # argparse option values of any type
+        **kwargs: Any,
     ) -> _RecordingMutuallyExclusiveGroup:
         arguments: list[ArgumentArgs] = []
         self._excl.append((kwargs, arguments))
@@ -817,7 +817,7 @@ class _RecordingMutuallyExclusiveGroup(  # internal access
         of_type: type[Any]  # simplint: ignore[imprecise-annotation]  # argparse option values of any type
         | UnionType
         | None = None,
-        **kwargs: Any,  # simplint: ignore[imprecise-annotation]  # argparse option values of any type
+        **kwargs: Any,
     ) -> Action:
         action = super().add_argument(*args, **kwargs)
         self._recorded.append((args, of_type, kwargs))

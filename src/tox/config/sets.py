@@ -52,9 +52,7 @@ class ConfigSet(ABC):
         """Register the configuration keys this set provides."""
         raise NotImplementedError
 
-    def __getitem__(
-        self, item: str
-    ) -> Any:  # simplint: ignore[imprecise-annotation]  # config values have no single type
+    def __getitem__(self, item: str) -> Any:
         """Get the config value for a given key (will materialize in case of dynamic config).
 
         :param item: the config key
@@ -64,9 +62,7 @@ class ConfigSet(ABC):
         """
         return self.load(item)
 
-    def load(
-        self, item: str, chain: list[str] | None = None
-    ) -> Any:  # simplint: ignore[imprecise-annotation]  # config values have no single type
+    def load(self, item: str, chain: list[str] | None = None) -> Any:
         """Get the config value for a given key (will materialize in case of dynamic config).
 
         :param item: the config key
