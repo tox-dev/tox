@@ -33,6 +33,6 @@ _START_FILE.write_text("", encoding="utf-8")
 _p(f"created {_START_FILE}")
 try:
     while True:
-        time.sleep(0.01)  # simplint: ignore[sleep-in-test]  # keeps the child alive until the parent interrupts it
+        time.sleep(0.01)
 finally:
     _p(f"done {__name__}")

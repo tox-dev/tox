@@ -579,7 +579,7 @@ class Pep517VirtualEnvFrontend(Frontend):
     def _send(
         self,
         cmd: str,
-        **kwargs: Any,  # simplint: ignore[imprecise-annotation]  # the backend error compares values of any type
+        **kwargs: Any,
     ) -> tuple[
         Any, str, str  # simplint: ignore[imprecise-annotation]  # the backend error compares values of any type
     ]:
@@ -651,8 +651,8 @@ class Pep517VirtualEnvFrontend(Frontend):
     def _unexpected_response(
         self,
         cmd: str,
-        got: Any,  # simplint: ignore[imprecise-annotation]  # the backend error compares values of any type
-        expected_type: Any,  # simplint: ignore[imprecise-annotation]  # the backend error compares values of any type
+        got: Any,
+        expected_type: Any,
         out: str,
         err: str,
     ) -> NoReturn:

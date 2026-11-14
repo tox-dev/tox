@@ -668,7 +668,7 @@ class MatchRecursionError(ValueError):
     @staticmethod
     def check(
         depth: int,
-        value: Any,  # simplint: ignore[imprecise-annotation]  # replacement values have no single type
+        value: Any,
     ) -> None:
         """Raise an error when the replacement depth is beyond the maximum.
 

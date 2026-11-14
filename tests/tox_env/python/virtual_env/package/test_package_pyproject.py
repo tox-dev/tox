@@ -773,8 +773,8 @@ def test_sdist_wheel_rejects_path_traversal(
 
     def _build_malicious_sdist(
         self: Pep517VirtualEnvFrontend,
-        *args: Any,  # simplint: ignore[imprecise-annotation]  # patched backend takes any arguments
-        **kwargs: Any,  # simplint: ignore[imprecise-annotation]  # patched backend takes any arguments
+        *args: Any,
+        **kwargs: Any,
     ) -> object:  # simplint: ignore[imprecise-annotation]  # patched backend takes any arguments
         result = original_build_sdist(self, *args, **kwargs)
         buf = io.BytesIO()

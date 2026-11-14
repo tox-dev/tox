@@ -43,7 +43,7 @@ class Info:
     @contextmanager
     def compare(
         self,
-        value: Any,  # simplint: ignore[imprecise-annotation]  # info values have the type of each field
+        value: Any,
         section: str,
         sub_section: str | None = None,
     ) -> Generator[
