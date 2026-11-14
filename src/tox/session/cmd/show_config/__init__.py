@@ -2,23 +2,23 @@
 
 from __future__ import annotations
 
-from pathlib import Path  # simplint: ignore[init-module-content]  # API path
-from typing import (  # simplint: ignore[init-module-content]  # API path
+from pathlib import Path
+from typing import (
     TYPE_CHECKING,
     Literal,
     get_args,
 )
 
-from tox.plugin import impl  # simplint: ignore[init-module-content] API path
-from tox.session.cmd.run.common import env_run_create_flags  # simplint: ignore[init-module-content] API path
-from tox.session.env_select import CliEnv, register_env_select_flags  # simplint: ignore[init-module-content] API path
+from tox.plugin import impl
+from tox.session.cmd.run.common import env_run_create_flags
+from tox.session.env_select import CliEnv, register_env_select_flags
 
 if TYPE_CHECKING:
     from tox.config.cli.parser import ToxParser
     from tox.session.state import State
 
 ConfigFormat = Literal["ini", "json", "toml"]
-"""The formats the configuration can be shown in."""  # simplint: ignore[init-module-content]  # API path
+"""The formats the configuration can be shown in."""
 
 
 @impl
