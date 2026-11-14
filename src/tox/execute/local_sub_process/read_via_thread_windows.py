@@ -10,7 +10,7 @@ from tox.util.typing_compat import override
 
 if TYPE_CHECKING or sys.platform == "win32":  # pragma: win32 cover
     # CPython exposes overlapped pipe reads only through this module.
-    import _overlapped  # pragma: win32 cover # ruff:ignore[import-private-name] # simplint: ignore[private-import-path]
+    import _overlapped  # pragma: win32 cover # ruff:ignore[import-private-name]
 
 import time  # pragma: win32 cover
 

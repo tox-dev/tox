@@ -360,7 +360,7 @@ class PythonConstraints(_PythonRequirementsFile):
             raise ValueError(msg)
 
 
-_ONE_ARG_ESCAPE: Final[frozenset[str]] = frozenset({  # simplint: ignore[single-user-constant]  # parser option set
+_ONE_ARG_ESCAPE: Final[frozenset[str]] = frozenset({
     "-c",
     "--constraint",
     "-r",

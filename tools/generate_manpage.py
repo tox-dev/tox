@@ -7,12 +7,12 @@ from argparse import (
     SUPPRESS,
     Action,
     ArgumentParser,
-    _SubParsersAction,  # ruff:ignore[import-private-name] # simplint: ignore[private-import-path] # command info
+    _SubParsersAction,  # ruff:ignore[import-private-name]  # command info
 )
 from pathlib import Path
 
 from tox.config.cli.parse import (
-    _get_parser_doc,  # ruff:ignore[import-private-name] # simplint: ignore[private-import-path] # docs parser
+    _get_parser_doc,  # ruff:ignore[import-private-name]  # docs parser
 )
 
 
