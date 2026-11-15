@@ -4,7 +4,7 @@ import inspect
 from abc import abstractmethod
 from argparse import ArgumentTypeError
 from collections.abc import Iterable, Mapping
-from contextlib import contextmanager
+from contextlib import contextmanager, suppress
 from typing import TYPE_CHECKING, Any, TypeVar, cast
 
 from tox.plugin import impl
@@ -19,7 +19,7 @@ from .replacer import MatchError
 from .str_convert import StrConvert
 
 if TYPE_CHECKING:
-    from collections.abc import Generator
+    from collections.abc import Callable, Generator
     from types import UnionType
     from typing import Final
 
@@ -172,6 +172,7 @@ class Loader(Convert[T]):
         conf: Config | None,
         args: ConfigLoadArgs,
         all_keys: Iterable[str] = (),
+        fallback: Callable[[], V] | None = None,
     ) -> V:
         """Load a value (raw and then convert).
 
@@ -181,6 +182,7 @@ class Loader(Convert[T]):
         :param conf: the configuration object of this tox session (needed to manifest the value)
         :param args: the config load arguments
         :param all_keys: all alias keys for this config entry (to collect overrides from any alias)
+        :param fallback: load an inherited value when only append overrides supply this key
 
         :returns: the converted type
 
@@ -201,6 +203,9 @@ class Loader(Convert[T]):
         else:
             if not overrides:
                 raise KeyError(key)
+            if fallback is not None and all(entry.append for entry in overrides):
+                with suppress(KeyError):
+                    converted = fallback()
 
         with _handle_bad_value(key, args):
             for entry in overrides:

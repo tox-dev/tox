@@ -12,7 +12,7 @@ from .loader.api import ConfigLoadArgs, Loader
 from .types import CircularChainError
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, Iterable
+    from collections.abc import Callable, Iterable, Iterator
     from types import UnionType
 
     from .loader.convert import Factory
@@ -140,24 +140,9 @@ class ConfigDynamicDefinition(ConfigDefinition[T]):  # ruff:ignore[eq-without-ha
         args: ConfigLoadArgs,
     ) -> T:
         if self._cache is _Missing.MISSING:
-            primary_key, *alias_keys = self.keys
-            for loader in loaders:
-                chain_key = f"{loader.section.key}.{primary_key}"
-                try:
-                    if chain_key in args.chain:
-                        msg = f"circular chain detected {', '.join(args.chain[args.chain.index(chain_key) :])}"
-                        raise CircularChainError(msg)
-                finally:
-                    args.chain.append(chain_key)
-                try:
-                    value = loader.load(primary_key, self.of_type, self.factory, conf, args, all_keys=alias_keys)
-                except KeyError:
-                    continue
-                else:
-                    break
-                finally:
-                    del args.chain[-1]
-            else:
+            try:
+                value = self._load(conf, iter(loaders), args)
+            except KeyError:
                 if callable(self.default):
                     value = cast("Callable[[Config, str | None], T]", self.default)(conf, args.env_name)
                 else:
@@ -167,6 +152,32 @@ class ConfigDynamicDefinition(ConfigDefinition[T]):  # ruff:ignore[eq-without-ha
                 value = self.post_process(value)
             self._cache = value
         return self._cache
+
+    def _load(self, conf: Config, loaders: Iterator[Loader[T]], args: ConfigLoadArgs) -> T:
+        primary_key, *alias_keys = self.keys
+        for loader in loaders:
+            chain_key = f"{loader.section.key}.{primary_key}"
+            try:
+                if chain_key in args.chain:
+                    msg = f"circular chain detected {', '.join(args.chain[args.chain.index(chain_key) :])}"
+                    raise CircularChainError(msg)
+            finally:
+                args.chain.append(chain_key)
+            try:
+                return loader.load(
+                    primary_key,
+                    self.of_type,
+                    self.factory,
+                    conf,
+                    args,
+                    all_keys=alias_keys,
+                    fallback=lambda: self._load(conf, loaders, args),
+                )
+            except KeyError:
+                continue
+            finally:
+                del args.chain[-1]
+        raise KeyError(primary_key)
 
     @override
     def __repr__(self) -> str:
