@@ -35,8 +35,7 @@ def test_env_override_appends_inherited_value(
             value = '{LOCAL="local"}' if is_set_env else '["local"]'
             config += f"{canonical}={value}\n"
         namespace = "env.a"
-    project = tox_project({filename: config})
-    result = project.run("c", "-e", "a,b", "-k", canonical, "-x", f"{namespace}.{key}+={added}")
+    result = tox_project({filename: config}).run("c", "-e", "a,b", "-k", canonical, "-x", f"{namespace}.{key}+={added}")
     result.assert_success()
     selected, sibling = result.out.split("[testenv:b]", 1)
     values = [line.strip() for line in selected.partition("=")[2].splitlines()]
