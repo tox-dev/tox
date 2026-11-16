@@ -54,6 +54,7 @@ _BOMS: Final[tuple[tuple[bytes, str], ...]] = (
     (codecs.BOM_UTF16_BE, "utf-16-be"),
     (codecs.BOM_UTF16_LE, "utf-16-le"),
 )
+_ENCODING_RE: Final[re.Pattern[bytes]] = re.compile(rb"coding[:=]\s*([-\w.]+)")
 _COMMENT_RE: Final[re.Pattern[str]] = re.compile(
     r"""
     # A requirement-file path can contain an escaped space before #.
@@ -276,6 +277,9 @@ class RequirementsFile:
         for bom, encoding in _BOMS:
             if raw.startswith(bom):
                 return raw[len(bom) :].decode(encoding)
+        for line in raw.split(b"\n", 2)[:2]:
+            if line.startswith(b"#") and (match := _ENCODING_RE.search(line)):
+                return raw.decode(match[1].decode("ascii"))
         try:
             return raw.decode("utf-8")
         except UnicodeDecodeError:
