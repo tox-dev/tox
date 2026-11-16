@@ -16,7 +16,6 @@ jobs:
     secrets:
       RELEASE_APP_PRIVATE_KEY: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
     with:
-      commit-message: "build(deps): refresh release lock"
       pull-request-title: "build(deps): refresh full project lock"
       pull-request-body: |-
         Relock `pylock.toml` under the seven-day cooldown.

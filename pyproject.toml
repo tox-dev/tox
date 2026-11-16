@@ -358,16 +358,16 @@ uploaded-prior-to = "P7D"
 decision-order = "stable"
 matrix.python = ">=3.15,<3.16"
 matrix.platforms = [ "linux_x86_64" ]
-# expires 2026-11-17
+# expires 2026-11-24
 packages.release-creator.uploaded-prior-to = 2026-11-02T21:45:00Z
 # python-discovery 1.9.0 is newer than the seven-day cutoff of the committed lock.
-# expires 2026-11-13
+# expires 2026-11-24
 packages.python-discovery.uploaded-prior-to = 2026-10-30T23:24:25Z
 # python-sbom 0.1.2 needs a seven-day cutoff exception.
-# expires 2026-11-15
+# expires 2026-11-24
 packages.python-sbom.uploaded-prior-to = 2026-11-08T17:54:00Z
 # ty 0.0.100 needs an exception until the seven-day cutoff includes it.
-# expires 2026-11-17
+# expires 2026-11-24
 packages.ty.uploaded-prior-to = 2026-11-09T20:16:28Z
 
 [tool.simplint]
