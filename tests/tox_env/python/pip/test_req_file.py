@@ -150,6 +150,15 @@ def test_opt_only_req_file(tmp_path: Path) -> None:
     assert python_deps.options == Namespace(features_enabled=["fast-deps"])
 
 
+@pytest.mark.parametrize("feature", ["inprocess-build-deps", "truststore"])
+def test_deps_use_feature_name_left_to_pip(tmp_path: Path, feature: str) -> None:
+    python_deps = PythonDeps(f"--use-feature={feature}\nsix", tmp_path)
+    assert (python_deps.as_root_args, python_deps.options) == (
+        ["six", "--use-feature", feature],
+        Namespace(features_enabled=[feature]),
+    )
+
+
 @pytest.mark.parametrize(
     ("first", "shown", "pip_args"),
     [
