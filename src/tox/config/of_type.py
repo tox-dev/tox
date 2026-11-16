@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, Generic, TypeVar, cast
 
 from tox.util.typing_compat import override
 
-from .loader.api import ConfigLoadArgs, Loader
+from .loader.api import AppendOverridesError, ConfigLoadArgs, Loader
 from .types import CircularChainError
 
 if TYPE_CHECKING:
@@ -141,6 +141,7 @@ class ConfigDynamicDefinition(ConfigDefinition[T]):  # ruff:ignore[eq-without-ha
     ) -> T:
         if self._cache is _Missing.MISSING:
             primary_key, *alias_keys = self.keys
+            pending: list[AppendOverridesError[T]] = []  # appends waiting for the value of a later loader
             for loader in loaders:
                 chain_key = f"{loader.section.key}.{primary_key}"
                 try:
@@ -151,6 +152,9 @@ class ConfigDynamicDefinition(ConfigDefinition[T]):  # ruff:ignore[eq-without-ha
                     args.chain.append(chain_key)
                 try:
                     value = loader.load(primary_key, self.of_type, self.factory, conf, args, all_keys=alias_keys)
+                except AppendOverridesError as exception:
+                    pending.append(exception)
+                    continue
                 except KeyError:
                     continue
                 else:
@@ -158,15 +162,25 @@ class ConfigDynamicDefinition(ConfigDefinition[T]):  # ruff:ignore[eq-without-ha
                 finally:
                     del args.chain[-1]
             else:
-                if callable(self.default):
-                    value = cast("Callable[[Config, str | None], T]", self.default)(conf, args.env_name)
-                else:
-                    # when the default is None the overloads guarantee T includes None
-                    value = cast("T", self.default)
+                value = self._value_without_loader(conf, args, pending)
+            for appends in reversed(pending):  # the overrides of the more specific loaders apply last
+                value = appends.apply(value)
             if self.post_process is not None:
                 value = self.post_process(value)
             self._cache = value
         return self._cache
+
+    def _value_without_loader(self, conf: Config, args: ConfigLoadArgs, pending: list[AppendOverridesError[T]]) -> T:
+        # when no loader sets the key, the least specific override acts as the value, otherwise the default is used
+        if pending:
+            return pending.pop().fold()
+        return self._default_value(conf, args)
+
+    def _default_value(self, conf: Config, args: ConfigLoadArgs) -> T:
+        if callable(self.default):
+            return cast("Callable[[Config, str | None], T]", self.default)(conf, args.env_name)
+        # when the default is None the overloads guarantee T includes None
+        return cast("T", self.default)
 
     @override
     def __repr__(self) -> str:

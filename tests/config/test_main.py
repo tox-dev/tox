@@ -279,6 +279,49 @@ def test_config_override_cannot_append(tox_ini_conf: ToxIniCreator) -> None:
         conf["foo"]
 
 
+@pytest.mark.parametrize(
+    ("filename", "config", "overrides"),
+    [
+        pytest.param(
+            "tox.ini",
+            "[testenv]\npackage = skip\ndeps = base\nset_env = BASE=1\n[testenv:a]\ndescription = a\n",
+            ["testenv:a.deps+=extra", "testenv:a.set_env+=EXTRA=1"],
+            id="ini",
+        ),
+        pytest.param(
+            "tox.ini",
+            "[tox]\nenv_list = a\n[testenv]\npackage = skip\ndeps = base\nset_env = BASE=1\n",
+            ["testenv:a.deps+=extra", "testenv:a.set_env+=EXTRA=1"],
+            id="ini-no-env-section",
+        ),
+        pytest.param(
+            "tox.toml",
+            '[env_run_base]\npackage = "skip"\ndeps = ["base"]\nset_env = { BASE = "1" }\n[env.a]\ndescription = "a"\n',
+            ["env.a.deps+=extra", "env.a.set_env+=EXTRA=1"],
+            id="toml",
+        ),
+    ],
+)
+def test_config_override_appends_to_inherited_value(
+    tox_project: ToxProjectCreator, filename: str, config: str, overrides: list[str]
+) -> None:
+    flags = [flag for override in overrides for flag in ("-x", override)]
+    result = tox_project({filename: config}).run("c", "-e", "a", "-k", "deps", "set_env", *flags)
+
+    result.assert_success()
+    assert "deps =\n  base\n  extra\n" in result.out, result.out
+    assert "  BASE=1\n  EXTRA=1\n" in result.out, result.out
+
+
+def test_config_override_appends_to_inherited_override(tox_project: ToxProjectCreator) -> None:
+    project = tox_project({"tox.ini": "[testenv]\npackage = skip\n[testenv:a]\ndescription = a\n"})
+
+    result = project.run("c", "-e", "a", "-k", "deps", "-x", "testenv:a.deps+=env", "-x", "testenv.deps+=base")
+
+    result.assert_success()
+    assert result.out == "[testenv:a]\ndeps =\n  base\n  env\n"
+
+
 def test_args_are_paths_when_disabled(tox_project: ToxProjectCreator) -> None:
     ini = "[testenv]\npackage=skip\ncommands={posargs}\nargs_are_paths=False"
     project = tox_project({"tox.ini": ini, "w": {"a.txt": "a"}})

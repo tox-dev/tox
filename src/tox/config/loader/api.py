@@ -5,7 +5,7 @@ from abc import abstractmethod
 from argparse import ArgumentTypeError
 from collections.abc import Iterable, Mapping
 from contextlib import contextmanager
-from typing import TYPE_CHECKING, Any, TypeVar, cast
+from typing import TYPE_CHECKING, Any, Generic, TypeVar, cast
 
 from tox.plugin import impl
 from tox.report import HandledError
@@ -201,6 +201,11 @@ class Loader(Convert[T]):
         else:
             if not overrides:
                 raise KeyError(key)
+            if all(entry.append for entry in overrides):
+                # the value may be inherited from a later loader (such as a base section), append to that
+                with _handle_bad_value(key, args):
+                    appends = [self._build_override(entry, of_type, factory, conf, args) for entry in overrides]
+                raise AppendOverridesError(key, appends)
 
         with _handle_bad_value(key, args):
             for entry in overrides:
@@ -329,6 +334,42 @@ def _handle_bad_value(key: str, args: ConfigLoadArgs) -> Generator[None]:
         raise HandledError(msg) from exception
 
 
+class AppendOverridesError(KeyError, Generic[V]):
+    """Raised by a loader that does not set a key, but has ``key+=value`` overrides for it.
+
+    :param key: the configuration key
+    :param appends: the converted values of the overrides, in order
+
+    """
+
+    def __init__(self, key: str, appends: list[V]) -> None:
+        super().__init__(key, appends)
+        self.appends = appends
+
+    def apply(self, value: V) -> V:
+        """Append the override values to the value another source sets for the key.
+
+        :param value: the value to append to
+
+        :returns: the value with the overrides appended
+
+        """
+        for entry in self.appends:
+            value = _append_override(value, entry)
+        return value
+
+    def fold(self) -> V:
+        """Combine the override values when no other source sets the key, the first one acts as the value.
+
+        :returns: the first override value with the others appended
+
+        """
+        value, *rest = self.appends
+        for entry in rest:
+            value = _append_override(value, entry)
+        return value
+
+
 def _append_override(converted: V, override: V) -> V:
     from tox.config.set_env import SetEnv  # ruff:ignore[import-outside-top-level]  # avoids an import cycle
 
@@ -410,6 +451,7 @@ _STR_CONVERT: Final[StrConvert] = StrConvert()
 
 
 __all__ = [
+    "AppendOverridesError",
     "ConfigLoadArgs",
     "Loader",
     "Override",
