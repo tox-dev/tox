@@ -65,7 +65,7 @@ def _make_tox_wheel(
         from tox.version import version_tuple  # ruff:ignore[import-outside-top-level]  # deferred import
 
         patch_version = version_tuple[2]
-        if isinstance(patch_version, str) and patch_version[:3] == "dev":
+        if isinstance(patch_version, str) and patch_version.startswith("dev"):
             # Version is in the form of 1.23.dev456, we need to increment the 456 part
             version = f"{version_tuple[0]}.{version_tuple[1]}.dev{int(patch_version[3:]) + 1}"
         else:

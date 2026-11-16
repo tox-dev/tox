@@ -226,7 +226,6 @@ lint.ignore = [
   "subprocess-without-shell-equals-true",      # Using subprocess is alright.
   "suspicious-subprocess-import",              # Using subprocess is alright.
   "too-many-positional-arguments",             ## Too many positional arguments
-  "unnecessary-regular-expression-compile",    # conflicts with simplint inline-regex
 ]
 lint.per-file-ignores."src/tox/pytest.py" = [
   "pytest-fixture-autouse", # the plugin's shared setup fixtures are meant to apply to every test

@@ -183,12 +183,6 @@ def test_schema_allows_deps_array(
     assert {"type": "array", "items": {"$ref": "#/definitions/subs"}} in deps_schema["oneOf"]
 
 
-class _LintCase(NamedTuple):
-    filename: str
-    content: str
-    tombi_cfg: str
-
-
 @pytest.fixture
 def project_lint_case(request: pytest.FixtureRequest, repo_root: Path, default_tombi_cfg: str) -> _LintCase:
     # Resolve a parametrized lint case (`filename`, `content`, `tombi_cfg`) by id.
@@ -219,6 +213,12 @@ def project_lint_case(request: pytest.FixtureRequest, repo_root: Path, default_t
         """)
         return _LintCase("pyproject.toml", content, cfg)
     raise ValueError(request.param)
+
+
+class _LintCase(NamedTuple):
+    filename: str
+    content: str
+    tombi_cfg: str
 
 
 @pytest.mark.parametrize(

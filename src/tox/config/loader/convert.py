@@ -12,11 +12,6 @@ from typing import Any, Generic, Literal, TypeVar, Union, cast, get_args, get_or
 
 from tox.config.types import Command, EnvList
 
-
-class _Missing(Enum):
-    MISSING = auto()
-
-
 T = TypeVar("T")
 V = TypeVar("V")
 
@@ -210,6 +205,10 @@ class Convert(ABC, Generic[T]):
 
         """
         raise NotImplementedError
+
+
+class _Missing(Enum):
+    MISSING = auto()
 
 
 __all__ = [

@@ -82,7 +82,7 @@ class IniConfig:
         self,
         key: str,
         of_type: type[Any] | UnionType,  # simplint: ignore[imprecise-annotation]  # option type varies
-    ) -> Any:  # simplint: ignore[imprecise-annotation]  # option value varies
+    ) -> Any:
         """Get a value from the core section of the config file.
 
         :param key: the configuration key
@@ -109,7 +109,7 @@ class IniConfig:
         self,
         key: str,
         of_type: type[Any] | UnionType,  # simplint: ignore[imprecise-annotation]  # option type varies
-    ) -> Any:  # simplint: ignore[imprecise-annotation]  # option value varies
+    ) -> Any:
         if self.ini is None:  # pragma: no cover # this can only happen if we don't call __bool__ first
             return None
         args = ConfigLoadArgs(chain=[key], name=CORE.prefix, env_name=None)

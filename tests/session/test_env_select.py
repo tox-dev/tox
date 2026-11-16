@@ -240,11 +240,11 @@ def test_factor_select_via_env_var(
     env_value: str,
     expect_envs: tuple[str, ...],
 ) -> None:
+    monkeypatch.setenv("TOX_FACTORS", env_value)
     ini = """
         [tox]
         env_list = py3{10,9}-{django20,django21}{-cov,}
         """
-    monkeypatch.setenv("TOX_FACTORS", env_value)
     outcome = tox_project({"tox.ini": ini}).run("l", "--no-desc")
     outcome.assert_success()
     outcome.assert_out_err("{}\n".format("\n".join(expect_envs)), "")

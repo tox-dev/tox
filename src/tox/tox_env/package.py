@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import functools
 from abc import ABC, abstractmethod
 from contextlib import nullcontext
 from pathlib import Path
@@ -62,9 +63,7 @@ class PackageToxEnv(ToxEnv, ABC):
         self._envs: set[str] = set()
 
     @override
-    def __getattribute__(
-        self, name: str
-    ) -> Any:  # simplint: ignore[imprecise-annotation]  # attribute lookup returns any attribute
+    def __getattribute__(self, name: str) -> Any:
         # the packaging class might be used by multiple environments in parallel, hold a lock for operations on it
         obj = object.__getattribute__(self, name)
         if isinstance(obj, MethodType):
@@ -73,6 +72,7 @@ class PackageToxEnv(ToxEnv, ABC):
 
     @staticmethod
     def _lock_method(thread_lock: RLock, file_lock: BaseFileLock | None, meth: Callable[_P, _R]) -> Callable[_P, _R]:
+        @functools.wraps(meth)
         def _func(*args: _P.args, **kwargs: _P.kwargs) -> _R:
             # A pre-existing package environment link must not redirect the lock file.
             with (

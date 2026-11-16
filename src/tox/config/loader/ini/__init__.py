@@ -1,16 +1,16 @@
 from __future__ import annotations
 
-import inspect  # simplint: ignore[init-module-content]  # API path
-import re  # simplint: ignore[init-module-content]  # API path
-from typing import (  # simplint: ignore[init-module-content]  # API path
+import inspect
+import re
+from typing import (
     TYPE_CHECKING,
     Final,
     TypeVar,
     cast,
 )
 
-from tox.config.loader.api import ConfigLoadArgs, Loader, Override  # simplint: ignore[init-module-content] API path
-from tox.config.loader.replacer import (  # simplint: ignore[init-module-content] API path
+from tox.config.loader.api import ConfigLoadArgs, Loader, Override
+from tox.config.loader.replacer import (
     MatchExpression,
     RequirementLineCallbacks,
     replace_command_lines,
@@ -18,20 +18,20 @@ from tox.config.loader.replacer import (  # simplint: ignore[init-module-content
     replace_once,
     replace_requirement_lines,
 )
-from tox.config.loader.str_convert import StrConvert  # simplint: ignore[init-module-content] API path
-from tox.config.set_env import SetEnv  # simplint: ignore[init-module-content] API path
-from tox.config.types import Command  # simplint: ignore[init-module-content] API path
-from tox.report import HandledError  # simplint: ignore[init-module-content] API path
-from tox.tox_env.errors import Skip  # simplint: ignore[init-module-content] API path
-from tox.tox_env.python.pip.req.file import protect_env_variables  # simplint: ignore[init-module-content] API path
-from tox.tox_env.python.pip.req_file import (  # simplint: ignore[init-module-content] API path
+from tox.config.loader.str_convert import StrConvert
+from tox.config.set_env import SetEnv
+from tox.config.types import Command
+from tox.report import HandledError
+from tox.tox_env.errors import Skip
+from tox.tox_env.python.pip.req.file import protect_env_variables
+from tox.tox_env.python.pip.req_file import (
     PythonConstraints,
     PythonDeps,
 )
-from tox.util.typing_compat import override  # simplint: ignore[init-module-content] API path
+from tox.util.typing_compat import override
 
-from .factor import filter_for_env  # simplint: ignore[init-module-content] API path
-from .replace import ReplaceReferenceIni  # simplint: ignore[init-module-content] API path
+from .factor import filter_for_env
+from .replace import ReplaceReferenceIni
 
 if TYPE_CHECKING:
     from configparser import ConfigParser, SectionProxy
@@ -42,7 +42,7 @@ if TYPE_CHECKING:
     from tox.config.main import Config
 
 V = TypeVar("V")
-"""Type of values the INI loader converts."""  # simplint: ignore[init-module-content]  # API path
+"""Type of values the INI loader converts."""
 _COMMENTS: Final[re.Pattern[str]] = re.compile(
     r"""
     ( \s )*     # optional leading whitespace

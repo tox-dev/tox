@@ -7,6 +7,7 @@ import sys
 import tarfile
 from pathlib import Path
 from textwrap import dedent
+from types import MappingProxyType
 from typing import Final
 from zipfile import ZipFile
 
@@ -21,7 +22,7 @@ entry_points: Final[str] = f"{dist_info}/entry_points.txt"
 metadata: Final[str] = f"{dist_info}/METADATA"
 wheel: Final[str] = f"{dist_info}/WHEEL"
 record: Final[str] = f"{dist_info}/RECORD"
-content = {
+content: Final[dict[str, str]] = {
     logic: f"def do():\n    print('greetings from {name}')",
     plugin: """
         try:
@@ -44,7 +45,7 @@ content = {
                 parser.add_argument("--demo-plugin", action="store_true", help="demo plugin flag")
         """,
 }
-metadata_files: Final[dict[str, str]] = {
+metadata_files: Final[MappingProxyType[str, str]] = MappingProxyType({
     entry_points: f"""
         [tox]
         example = {name}.example_plugin""",
@@ -80,7 +81,7 @@ metadata_files: Final[dict[str, str]] = {
         {dist_info}/top_level.txt,,
         {dist_info}/RECORD,,
        """,
-}
+})
 
 
 def get_requires_for_build_wheel(  # interface signature

@@ -10,12 +10,12 @@ from packaging.utils import canonicalize_name
 
 VCS: Final[list[str]] = ["ftp", "ssh", "git", "hg", "bzr", "sftp", "svn"]
 """The names of the version control systems pip accepts in a requirement URL."""
-_VALID_SCHEMAS: Final[list[str]] = [
+_VALID_SCHEMAS: Final[tuple[str, ...]] = (
     "http",
     "https",
     "file",
     *VCS,
-]
+)
 """The URL schemes a requirement can be given with."""
 
 

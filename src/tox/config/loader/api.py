@@ -89,7 +89,7 @@ class Override:  # ruff:ignore[eq-without-hash]  # mutable value type
     @override
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, Override):
-            return False
+            return NotImplemented
         return (self.namespace, self.key, self.value) == (
             other.namespace,
             other.key,

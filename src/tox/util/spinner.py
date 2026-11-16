@@ -24,20 +24,6 @@ if sys.platform == "win32":  # pragma: win32 cover
         _fields_ = [("size", ctypes.c_int), ("visible", ctypes.c_byte)]
 
 
-def _file_support_encoding(chars: Sequence[str], file: IO[str]) -> bool:
-    if (
-        encoding := getattr(file, "encoding", None)
-    ) is not None:  # pragma: no branch  # this should be always set, unless someone passes in something bad
-        try:
-            for char in chars:
-                char.encode(encoding)
-        except UnicodeEncodeError:
-            pass
-        else:
-            return True
-    return False
-
-
 T = TypeVar("T", bound="Spinner")
 """Type variable bound to the spinner class, for methods that return the spinner."""
 MISS_DURATION: Final[float] = 0.01
@@ -243,6 +229,20 @@ class Spinner:
 
         """
         self.finalize(key, f"SKIP {self.outcome.skip}", str(Fore.YELLOW))
+
+
+def _file_support_encoding(chars: Sequence[str], file: IO[str]) -> bool:
+    if (
+        encoding := getattr(file, "encoding", None)
+    ) is not None:  # pragma: no branch  # this should be always set, unless someone passes in something bad
+        try:
+            for char in chars:
+                char.encode(encoding)
+        except UnicodeEncodeError:
+            pass
+        else:
+            return True
+    return False
 
 
 def td_human_readable(seconds: float) -> str:

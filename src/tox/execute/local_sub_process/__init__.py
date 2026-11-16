@@ -2,40 +2,40 @@
 
 from __future__ import annotations
 
-import fnmatch  # simplint: ignore[init-module-content]  # API path
-import logging  # simplint: ignore[init-module-content]  # API path
-import os  # simplint: ignore[init-module-content]  # API path
-import shutil  # simplint: ignore[init-module-content]  # API path
-import struct  # simplint: ignore[init-module-content]  # API path
-import sys  # simplint: ignore[init-module-content]  # API path
-from contextlib import suppress  # simplint: ignore[init-module-content]  # API path
-from pathlib import Path  # simplint: ignore[init-module-content]  # API path
-from subprocess import (  # simplint: ignore[init-module-content]  # API path
+import fnmatch
+import logging
+import os
+import shutil
+import struct
+import sys
+from contextlib import suppress
+from pathlib import Path
+from subprocess import (
     DEVNULL,
     PIPE,
     TimeoutExpired,
 )
-from typing import TYPE_CHECKING, Any, Final  # simplint: ignore[init-module-content]  # API path
+from typing import TYPE_CHECKING, Any, Final
 
-from tox.execute.api import (  # simplint: ignore[init-module-content]  # API path
+from tox.execute.api import (
     Execute,
     ExecuteInstance,
     ExecuteOptions,
     ExecuteStatus,
     FinishedExecuteStatus,
 )
-from tox.execute.request import (  # simplint: ignore[init-module-content]  # API path
+from tox.execute.request import (
     ExecuteRequest,
     StdinSource,
 )
-from tox.execute.util import (  # simplint: ignore[init-module-content]  # API path
+from tox.execute.util import (
     batch_file_command_line,
     is_batch_file,
     shebang,
 )
-from tox.tox_env.errors import Fail  # simplint: ignore[init-module-content]  # API path
-from tox.util.redact import redact_argv  # simplint: ignore[init-module-content]  # API path
-from tox.util.typing_compat import override  # simplint: ignore[init-module-content]  # API path
+from tox.tox_env.errors import Fail
+from tox.util.redact import redact_argv
+from tox.util.typing_compat import override
 
 if TYPE_CHECKING:
     import io
@@ -67,7 +67,7 @@ else:  # pragma: win32 no cover
 
 
 IS_WIN: Final[bool] = sys.platform == "win32"  # simplint: ignore[module-variable-prefix] internal platform flag
-"""Whether tox runs on Windows."""  # simplint: ignore[init-module-content]  # API path
+"""Whether tox runs on Windows."""
 
 
 class LocalSubProcessExecutor(Execute):
@@ -383,13 +383,13 @@ class LocalSubprocessExecuteStatus(ExecuteStatus):
 
     @staticmethod
     def _write_stdin_bytes(
-        stdin: Any,  # simplint: ignore[imprecise-annotation]  # stdin is any file-like object
+        stdin: Any,
         bytes_content: bytes,
     ) -> None:
         if sys.platform == "win32":  # explicit check for mypy  # pragma: win32 cover
             # on Windows we have a PipeHandle object here rather than a file stream
             # CPython exposes overlapped pipe reads only through this module.
-            import _overlapped  # ruff:ignore[import-outside-top-level, import-private-name] # simplint: ignore[private-import-path]
+            import _overlapped  # ruff:ignore[import-outside-top-level, import-private-name]
 
             ov = _overlapped.Overlapped(0)
             ov.WriteFile(stdin.handle, bytes_content)

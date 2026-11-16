@@ -147,7 +147,7 @@ def process_signature(  # ruff:ignore[too-many-arguments]  # public signature
     app: Sphinx,  # ruff:ignore[unused-function-argument]  # interface signature
     objtype: str,
     name: str,  # ruff:ignore[unused-function-argument]  # interface signature
-    obj: Any,  # ruff:ignore[unused-function-argument]  # interface signature  # simplint: ignore[imprecise-annotation]  # Sphinx passes documented objects of any type
+    obj: Any,  # ruff:ignore[unused-function-argument]  # interface signature
     options: Options,
     args: str | None,  # ruff:ignore[unused-function-argument]  # interface signature
     retann: str | None,  # ruff:ignore[unused-function-argument]  # interface signature

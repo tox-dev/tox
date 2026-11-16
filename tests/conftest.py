@@ -68,12 +68,6 @@ if sys.implementation.name == "pypy":
     collect_ignore.append("util/test_spinner.py")
 
 
-class _PrevPy(NamedTuple):
-    prev_ver: str
-    impl: str
-    free_threaded: bool
-
-
 class PatchPrevPy(Protocol):
     def __call__(self, has_prev: bool, free_threaded: bool | None = None, debug: bool | None = None) -> _PrevPy: ...
 
@@ -149,6 +143,12 @@ def patch_prev_py(mocker: MockerFixture) -> PatchPrevPy:
         return _PrevPy(prev_ver, impl, is_free_threaded)
 
     return _func
+
+
+class _PrevPy(NamedTuple):
+    prev_ver: str
+    impl: str
+    free_threaded: bool
 
 
 def pytest_configure(config: pytest.Config) -> None:

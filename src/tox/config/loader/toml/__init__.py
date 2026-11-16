@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-import inspect  # simplint: ignore[init-module-content]  # API path
-import logging  # simplint: ignore[init-module-content]  # API path
-from types import GenericAlias  # simplint: ignore[init-module-content]  # API path
-from typing import (  # simplint: ignore[init-module-content]  # API path
+import inspect
+import logging
+from types import GenericAlias
+from typing import (
     TYPE_CHECKING,
     Any,
     Final,
@@ -11,12 +11,12 @@ from typing import (  # simplint: ignore[init-module-content]  # API path
     cast,
 )
 
-from tox.config.loader.api import (  # simplint: ignore[init-module-content]  # API path
+from tox.config.loader.api import (
     ConfigLoadArgs,
     Loader,
     Override,
 )
-from tox.config.loader.replacer import (  # simplint: ignore[init-module-content]  # API path
+from tox.config.loader.replacer import (
     MatchExpression,
     MatchRecursionError,
     RequirementLineCallbacks,
@@ -26,30 +26,30 @@ from tox.config.loader.replacer import (  # simplint: ignore[init-module-content
     replace_once,
     replace_requirement_lines,
 )
-from tox.config.loader.str_convert import StrConvert  # simplint: ignore[init-module-content]  # API path
-from tox.config.set_env import SetEnv  # simplint: ignore[init-module-content]  # API path
-from tox.config.types import (  # simplint: ignore[init-module-content]  # API path
+from tox.config.loader.str_convert import StrConvert
+from tox.config.set_env import SetEnv
+from tox.config.types import (
     CircularChainError,
     Command,
     EnvList,
 )
 from tox.report import HandledError
-from tox.tox_env.python.pip.req.file import protect_env_variables  # simplint: ignore[init-module-content]  # API path
-from tox.tox_env.python.pip.req_file import (  # simplint: ignore[init-module-content]  # API path
+from tox.tox_env.python.pip.req.file import protect_env_variables
+from tox.tox_env.python.pip.req_file import (
     PythonConstraints,
     PythonDeps,
 )
-from tox.util.typing_compat import override  # simplint: ignore[init-module-content]  # API path
+from tox.util.typing_compat import override
 
 from ._api import TomlTypes
-from ._product import (  # simplint: ignore[init-module-content]  # loader uses product helper
+from ._product import (
     expand_factor_group,
     expand_product,
     extract_default,
     extract_label,
 )
-from ._replace import TomlReplaceLoader, Unroll  # simplint: ignore[init-module-content]  # API path
-from ._validate import validate  # simplint: ignore[init-module-content]  # API path
+from ._replace import TomlReplaceLoader, Unroll
+from ._validate import validate
 
 if TYPE_CHECKING:
     from collections.abc import Iterator, Mapping

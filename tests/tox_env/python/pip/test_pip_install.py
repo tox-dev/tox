@@ -44,7 +44,7 @@ _PYLOCK_ENV_TOML: Final[str] = dedent("""\
 def test_pip_install_bad_type(
     tox_project: ToxProjectCreator,
     capfd: CaptureFixture,
-    arg: Any,  # simplint: ignore[imprecise-annotation]  # test values have any type
+    arg: Any,
 ) -> None:
     result = tox_project({"tox.ini": ""}).run("l")
     result.assert_success()
@@ -1504,7 +1504,7 @@ def use_frozen_constraints(request: pytest.FixtureRequest) -> bool:
     return bool(request.param)
 
 
-_PACKAGE_BUILD_RUN_IDS: Final[list[str]] = [
+_PACKAGE_BUILD_RUN_IDS: Final[tuple[str, ...]] = (
     "install_requires",
     "_optional_hooks",
     "get_requires_for_build_wheel",
@@ -1512,7 +1512,7 @@ _PACKAGE_BUILD_RUN_IDS: Final[list[str]] = [
     "install_package_deps",
     "install_package",
     "_exit",
-]
+)
 
 
 @pytest.mark.parametrize(

@@ -259,6 +259,86 @@ class Unroll:
         return cast("TomlTypes", value)
 
 
+class TomlReplaceLoader(ReplaceReference):
+    """Resolve the references in a string taken from a TOML document.
+
+    :param conf: the configuration the references read from
+    :param loader: the loader the string was read by
+
+    """  # simplint: ignore[function-docstring]  # existing public docs
+
+    def __init__(self, conf: Config, loader: TomlLoader) -> None:
+        self.conf = conf
+        self.loader = loader
+
+    @override
+    def __call__(self, value: str, conf_args: ConfigLoadArgs) -> str | None:
+        # Searching inside brace content mistakes JSON fields for references.
+        if match := _REFERENCE_PATTERN.match(value):
+            settings = match.groupdict()
+            try:
+                return self._load_first_source(match, conf_args)
+            except KeyError:  # if the lookup failed replace - else keep
+                if (default := settings["default"]) is not None:
+                    return value.fragment(*match.span("default")) if isinstance(value, HostText) else default
+                return None  # keep original text, consistent with ini loader behavior
+        return None  # not a reference, such as the {} of a format string
+
+    def _load_first_source(self, match: re.Match[str], conf_args: ConfigLoadArgs) -> str | None:
+        error: KeyError | None = None
+        for src in self._config_value_sources(match["section"], conf_args.env_name):
+            try:
+                return self._load_reference_value(src, match["key"], conf_args)
+            except KeyError as exc:  # if fails, keep trying maybe another source can satisfy
+                error = exc
+        if error is not None:
+            raise error
+        return None
+
+    def _config_value_sources(self, sec: str | None, current_env: str | None) -> Iterator[ConfigSet | _RawLoader]:
+        if sec is None:
+            if current_env is not None:  # pragma: no branch  # other outcome untested
+                yield self.conf.get_env(current_env)
+            yield self.conf.core
+            return
+
+        section = cast("TomlSection", self.loader.section)
+        core_prefix = section.core_prefix()
+        env_prefix = section.env_prefix()
+        run_env_base = section.run_env_base()
+        pkg_env_base = section.package_env_base()
+        if sec.startswith(env_prefix) and sec not in {run_env_base, pkg_env_base}:
+            yield self.conf.get_env(sec[len(env_prefix) + len(section.SEP) :])
+        else:
+            yield _RawLoader(self.loader, sec)
+        if sec == core_prefix:
+            yield self.conf.core  # try via registered configs
+
+    @staticmethod
+    def _load_reference_value(src: ConfigSet | _RawLoader, key: str, conf_args: ConfigLoadArgs) -> str:
+        if isinstance(src, _RawLoader):
+            return RawText(stringify(src.load(key, conf_args.chain))[0])
+        return stringify_reference(
+            src.set_env_lines(conf_args.chain)
+            if isinstance(src, EnvConfigSet) and key in {"set_env", "setenv"}
+            else src.load(key, conf_args.chain),
+            constant=src.is_constant(key),
+        )
+
+
+class _RawLoader:
+    def __init__(self, loader: TomlLoader, section: str) -> None:
+        self._loader = loader
+        self._section = section
+
+    def load(  # override signature
+        self,
+        item: str,
+        chain: list[str] | None = None,  # ruff:ignore[unused-method-argument]  # override signature
+    ) -> TomlTypes:
+        return self._loader.load_raw_from_root(f"{self._section}{self._loader.section.SEP}{item}")
+
+
 def _parse_arg(value: TomlTypes) -> MatchArg:
     return find_replace_expr(value if isinstance(value, MatchExpression) else validate(value, str))
 
@@ -363,86 +443,6 @@ _REFERENCE_PATTERN: Final[re.Pattern[str]] = re.compile(
 """,
     re.VERBOSE,
 )
-
-
-class TomlReplaceLoader(ReplaceReference):
-    """Resolve the references in a string taken from a TOML document.
-
-    :param conf: the configuration the references read from
-    :param loader: the loader the string was read by
-
-    """  # simplint: ignore[function-docstring]  # existing public docs
-
-    def __init__(self, conf: Config, loader: TomlLoader) -> None:
-        self.conf = conf
-        self.loader = loader
-
-    @override
-    def __call__(self, value: str, conf_args: ConfigLoadArgs) -> str | None:
-        # Searching inside brace content mistakes JSON fields for references.
-        if match := _REFERENCE_PATTERN.match(value):
-            settings = match.groupdict()
-            try:
-                return self._load_first_source(match, conf_args)
-            except KeyError:  # if the lookup failed replace - else keep
-                if (default := settings["default"]) is not None:
-                    return value.fragment(*match.span("default")) if isinstance(value, HostText) else default
-                return None  # keep original text, consistent with ini loader behavior
-        return None  # not a reference, such as the {} of a format string
-
-    def _load_first_source(self, match: re.Match[str], conf_args: ConfigLoadArgs) -> str | None:
-        error: KeyError | None = None
-        for src in self._config_value_sources(match["section"], conf_args.env_name):
-            try:
-                return self._load_reference_value(src, match["key"], conf_args)
-            except KeyError as exc:  # if fails, keep trying maybe another source can satisfy
-                error = exc
-        if error is not None:
-            raise error
-        return None
-
-    def _config_value_sources(self, sec: str | None, current_env: str | None) -> Iterator[ConfigSet | _RawLoader]:
-        if sec is None:
-            if current_env is not None:  # pragma: no branch  # other outcome untested
-                yield self.conf.get_env(current_env)
-            yield self.conf.core
-            return
-
-        section = cast("TomlSection", self.loader.section)
-        core_prefix = section.core_prefix()
-        env_prefix = section.env_prefix()
-        run_env_base = section.run_env_base()
-        pkg_env_base = section.package_env_base()
-        if sec.startswith(env_prefix) and sec not in {run_env_base, pkg_env_base}:
-            yield self.conf.get_env(sec[len(env_prefix) + len(section.SEP) :])
-        else:
-            yield _RawLoader(self.loader, sec)
-        if sec == core_prefix:
-            yield self.conf.core  # try via registered configs
-
-    @staticmethod
-    def _load_reference_value(src: ConfigSet | _RawLoader, key: str, conf_args: ConfigLoadArgs) -> str:
-        if isinstance(src, _RawLoader):
-            return RawText(stringify(src.load(key, conf_args.chain))[0])
-        return stringify_reference(
-            src.set_env_lines(conf_args.chain)
-            if isinstance(src, EnvConfigSet) and key in {"set_env", "setenv"}
-            else src.load(key, conf_args.chain),
-            constant=src.is_constant(key),
-        )
-
-
-class _RawLoader:
-    def __init__(self, loader: TomlLoader, section: str) -> None:
-        self._loader = loader
-        self._section = section
-
-    def load(  # override signature
-        self,
-        item: str,
-        chain: list[str] | None = None,  # ruff:ignore[unused-method-argument]  # override signature
-    ) -> TomlTypes:
-        return self._loader.load_raw_from_root(f"{self._section}{self._loader.section.SEP}{item}")
 
 
 __all__ = [

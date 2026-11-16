@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-import json  # simplint: ignore[init-module-content]  # API path
-from pathlib import Path  # simplint: ignore[init-module-content]  # API path
+import json
+from pathlib import Path
 
 from .env import EnvJournal
 from .main import Journal

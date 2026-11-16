@@ -137,16 +137,6 @@ def eval_set_env(tox_project: ToxProjectCreator) -> EvalSetEnv:
     return func
 
 
-def _exported(mocker: MockerFixture) -> dict[str, str]:
-    return {
-        "PIP_USER": "0",
-        "TOX_ENV_DIR": mocker.ANY,
-        "TOX_ENV_NAME": "py",
-        "TOX_WORK_DIR": mocker.ANY,
-        "VIRTUAL_ENV": mocker.ANY,
-    }
-
-
 def test_set_env_default(eval_set_env: EvalSetEnv, mocker: MockerFixture) -> None:
     set_env = eval_set_env("")
     assert {key: set_env.load(key) for key in set_env} == {
@@ -154,6 +144,16 @@ def test_set_env_default(eval_set_env: EvalSetEnv, mocker: MockerFixture) -> Non
         "PIP_DISABLE_PIP_VERSION_CHECK": "1",
         "PYTHONIOENCODING": "utf-8",
         **_exported(mocker),
+    }
+
+
+def _exported(mocker: MockerFixture) -> dict[str, str]:
+    return {
+        "PIP_USER": "0",
+        "TOX_ENV_DIR": mocker.ANY,
+        "TOX_ENV_NAME": "py",
+        "TOX_WORK_DIR": mocker.ANY,
+        "VIRTUAL_ENV": mocker.ANY,
     }
 
 
@@ -1188,15 +1188,15 @@ _TOML_ENV_DEFAULTS: Final[pytest.MarkDecorator] = pytest.mark.parametrize(
 )
 
 
-def _toml_env_table(name: str, default: str) -> str:
-    table = f'{{ replace = "env", name = "{name}", default = \'{default}\' }}'
-    return f'[env_run_base]\npackage = "skip"\nset_env.DATA = {table}\n'
-
-
 @_TOML_ENV_DEFAULTS
 def test_set_env_toml_env_table_unset_uses_default_verbatim(eval_set_env: EvalSetEnv, default: str) -> None:
     set_env = eval_set_env(_toml_env_table("MISSING", default), of_type="toml")
     assert set_env.load("DATA") == default
+
+
+def _toml_env_table(name: str, default: str) -> str:
+    table = f'{{ replace = "env", name = "{name}", default = \'{default}\' }}'
+    return f'[env_run_base]\npackage = "skip"\nset_env.DATA = {table}\n'
 
 
 @_TOML_ENV_DEFAULTS
