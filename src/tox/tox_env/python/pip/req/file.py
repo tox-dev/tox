@@ -164,6 +164,7 @@ class RequirementsFile:
         filename: str,
         constraint: bool,  # ruff:ignore[boolean-type-hint-positional-argument]  # keeps the signature
         recurse: bool,  # ruff:ignore[boolean-type-hint-positional-argument]  # keeps the signature
+        include_chain: tuple[str, ...] = (),
     ) -> Iterator[_ParsedLine]:
         for line in self._parse_file(filename, constraint):
             if not line.is_requirement and (line.opts.requirements or line.opts.constraints):
@@ -177,7 +178,9 @@ class RequirementsFile:
                     req_path = str(Path(filename).parent / req_path)  # do a join so relative paths work
                 if recurse:
                     # internal access within the requirements parser
-                    yield from self._req_parser._parse_and_recurse(req_path, nested_constraint, recurse)  # ruff:ignore[private-member-access]
+                    yield from self._req_parser._parse_and_recurse(  # ruff:ignore[private-member-access]
+                        req_path, nested_constraint, recurse, _extend_include_chain(req_path, include_chain)
+                    )
                 else:
                     line.filename = req_path
                     yield line
@@ -460,6 +463,17 @@ class RequirementsFile:
         for value in sorted(secrets, key=len, reverse=True):  # longest first, as a value may contain another one
             text = text.replace(value, secrets[value])
         return text
+
+
+def _extend_include_chain(req_path: str, include_chain: tuple[str, ...]) -> tuple[str, ...]:
+    if (scheme := get_url_scheme(req_path)) in {"http", "https"}:
+        identity = req_path
+    else:
+        identity = str(Path(url_to_path(req_path) if scheme == "file" else req_path).resolve())
+    if identity in include_chain:
+        msg = f"recursive requirements include: {redact_argv([req_path])[0]}"
+        raise ValueError(msg)
+    return (*include_chain, identity)
 
 
 class _ParsedLine:

@@ -470,6 +470,49 @@ def test_requirements_env_var_present(monkeypatch: MonkeyPatch, tmp_path: Path) 
     assert found == ["beta>=1"]
 
 
+@pytest.mark.parametrize("flag", ["-r", "-c"])
+@pytest.mark.parametrize("spelling", ["relative", "dot-relative", "file-url"])
+def test_recursive_requirement_include(tmp_path: Path, flag: str, spelling: str) -> None:
+    requirements_file = tmp_path / "requirements.txt"
+    included = {
+        "relative": "requirements.txt",
+        "dot-relative": "./requirements.txt",
+        "file-url": requirements_file.as_uri(),
+    }[spelling]
+    requirements_file.write_text(f"{flag} {included}\n")
+    with pytest.raises(ValueError, match="recursive requirements include"):
+        _ = RequirementsFile(requirements_file, constraint=False).requirements
+
+
+def test_indirect_recursive_requirement_include(tmp_path: Path) -> None:
+    (tmp_path / "a.txt").write_text("-r b.txt\n")
+    (tmp_path / "b.txt").write_text("-c a.txt\n")
+    with pytest.raises(ValueError, match="recursive requirements include"):
+        _ = RequirementsFile(tmp_path / "a.txt", constraint=False).requirements
+
+
+def test_shared_requirement_include_is_not_a_cycle(tmp_path: Path) -> None:
+    (tmp_path / "root.txt").write_text("-r a.txt\n-r b.txt\n")
+    (tmp_path / "a.txt").write_text("-r common.txt\nalpha\n")
+    (tmp_path / "b.txt").write_text("-r common.txt\nbeta\n")
+    (tmp_path / "common.txt").write_text("shared\n")
+    requirements = RequirementsFile(tmp_path / "root.txt", constraint=False).requirements
+    assert {str(req) for req in requirements} == {"alpha", "beta", "shared"}
+
+
+def test_recursive_requirement_url_redacts_credentials(tmp_path: Path, mocker: MockerFixture) -> None:
+    url = "https://user:password@example.com/requirements.txt"
+    (tmp_path / "root.txt").write_text(f"-r {url}\n")
+    mocker.patch(
+        "tox.tox_env.python.pip.req.file.urlopen",
+        autospec=True,
+        side_effect=lambda *_a, **_kw: BytesIO(f"-r {url}\n".encode()),
+    )
+    with pytest.raises(ValueError, match="recursive requirements include") as exc:
+        _ = RequirementsFile(tmp_path / "root.txt", constraint=False).requirements
+    assert "user:password" not in str(exc.value)
+
+
 def test_requirements_env_var_missing(monkeypatch: MonkeyPatch, tmp_path: Path) -> None:
     monkeypatch.delenv("ENV_VAR", raising=False)
     requirements_file = tmp_path / "req.txt"
