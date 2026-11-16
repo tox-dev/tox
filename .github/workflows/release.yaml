@@ -10,12 +10,12 @@ permissions:
 jobs:
   tag-build:
     name: 🏗️ Build
-    uses: tox-dev/github-workflows/.github/workflows/validate-python-release.yaml@bf1c3ab0aa137d307a07aad844d507af73039387 # 6.8.0
+    uses: tox-dev/github-workflows/.github/workflows/validate-python-release.yaml@ef0cd88bef592260a48345753b8b509b209ab189 # 6.8.3
     permissions:
       contents: read
   notes:
     name: 📝 Render GitHub Release notes
-    uses: tox-dev/github-workflows/.github/workflows/release-notes.yaml@bf1c3ab0aa137d307a07aad844d507af73039387 # 6.8.0
+    uses: tox-dev/github-workflows/.github/workflows/release-notes.yaml@ef0cd88bef592260a48345753b8b509b209ab189 # 6.8.3
     permissions:
       contents: read
     with:
@@ -44,7 +44,7 @@ jobs:
   github-release:
     name: 🚀 Publish GitHub Release
     needs: [tag-build, publish, notes]
-    uses: tox-dev/github-workflows/.github/workflows/github-release.yaml@bf1c3ab0aa137d307a07aad844d507af73039387 # 6.8.0
+    uses: tox-dev/github-workflows/.github/workflows/github-release.yaml@ef0cd88bef592260a48345753b8b509b209ab189 # 6.8.3
     permissions:
       contents: write
     with:
