@@ -223,9 +223,11 @@ Factor label substitution
 .. versionadded:: 4.49.0
 
 Factor groups can be labeled by using a single-key dict instead of a plain list. The label enables ``{factor:label}``
-substitution in any string value (descriptions, commands, deps, set_env, etc.), resolving to whichever value from the
-labeled group is an active factor in the current environment. Every factor group also receives a positional label
-(``0``, ``1``, ...) automatically.
+substitution in any string value (descriptions, commands, deps, set_env, etc.), resolving to the value the labeled group
+contributed to the current environment name, even when another group lists the same value: with ``source`` and
+``target`` groups both listing ``py312`` and ``py313``, ``migrate-py313-py312`` resolves ``{factor:source}`` to
+``py313`` and ``{factor:target}`` to ``py312``. Every factor group also receives a positional label (``0``, ``1``, ...)
+automatically.
 
 **Named labels** -- use a single-key dict to name a factor group:
 
