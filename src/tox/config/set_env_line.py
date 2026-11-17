@@ -108,7 +108,12 @@ def format_line(key: str, value: str, marker: str | None) -> str:
     """
     escaped_semicolon: Final[str] = r"\;"  # Python 3.11 rejects a backslash inside an f-string expression
     line = f"{key}={value.replace(';', escaped_semicolon)}"
-    return f"{line}; {marker}" if marker else line
+    if not marker:
+        return line
+    # A value ending in a backslash would escape the ";" that introduces the marker, so separate them
+    # with a space, which splitting strips off along with the rest of the surrounding whitespace.
+    separator: Final[str] = " ; " if line.endswith("\\") else "; "
+    return f"{line}{separator}{marker}"
 
 
 __all__ = [
