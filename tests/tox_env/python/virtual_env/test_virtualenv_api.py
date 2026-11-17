@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import os
 import sys
 from pathlib import Path
@@ -88,6 +89,68 @@ def test_virtualenv_flipped_settings(
     assert virtualenv_opt.download is True
     assert virtualenv_opt.copies is True
     assert list(dict.fromkeys(spec for spec in virtualenv_opt.python if spec != "<0")) == ["py3"]
+
+
+@pytest.mark.parametrize(
+    ("first", "second", "reason"),
+    [
+        pytest.param("False", "True", "added system_site_packages=True", id="enable"),
+        pytest.param("True", "False", "removed system_site_packages=True", id="disable"),
+    ],
+)
+def test_virtualenv_system_site_packages_change_recreates(
+    tox_project: ToxProjectCreator, first: str, second: str, reason: str
+) -> None:
+    proj = tox_project({"tox.ini": f"[testenv]\npackage=skip\nsystem_site_packages={first}"})
+    proj.run("r", "-e", "py").assert_success()
+
+    (proj.path / "tox.ini").write_text(f"[testenv]\npackage=skip\nsystem_site_packages={second}\n")
+    result = proj.run("r", "-e", "py")
+
+    result.assert_success()
+    assert f"recreate env because python {reason}" in result.out
+    # virtualenv writes this only while creating the environment
+    cfg: Final[str] = (proj.path / ".tox" / "py" / "pyvenv.cfg").read_text()
+    assert f"include-system-site-packages = {second.lower()}" in cfg
+
+
+@pytest.mark.parametrize(
+    ("first", "second", "reason"),
+    [
+        pytest.param("0", "1", "added system_site_packages=True", id="enable"),
+        pytest.param("1", "0", "removed system_site_packages=True", id="disable"),
+    ],
+)
+def test_virtualenv_system_site_packages_env_change_recreates(
+    tox_project: ToxProjectCreator, monkeypatch: MonkeyPatch, first: str, second: str, reason: str
+) -> None:
+    # the config key stays unset, so the value comes from VIRTUALENV_SYSTEM_SITE_PACKAGES alone
+    proj = tox_project({"tox.ini": "[testenv]\npackage=skip"})
+    monkeypatch.setenv("VIRTUALENV_SYSTEM_SITE_PACKAGES", first)
+    proj.run("r", "-e", "py").assert_success()
+    cfg_path: Final[Path] = proj.path / ".tox" / "py" / "pyvenv.cfg"
+    assert f"include-system-site-packages = {str(first == '1').lower()}" in cfg_path.read_text()
+
+    monkeypatch.setenv("VIRTUALENV_SYSTEM_SITE_PACKAGES", second)
+    result = proj.run("r", "-e", "py")
+
+    result.assert_success()
+    assert f"recreate env because python {reason}" in result.out
+    assert f"include-system-site-packages = {str(second == '1').lower()}" in cfg_path.read_text()
+
+
+def test_virtualenv_cached_before_system_site_packages_reused(tox_project: ToxProjectCreator) -> None:
+    proj = tox_project({"tox.ini": "[testenv]\npackage=skip"})
+    proj.run("r", "-e", "py").assert_success()
+    info: Final[Path] = proj.path / ".tox" / "py" / ".tox-info.json"
+    cached = json.loads(info.read_text())
+    cached["Python"].pop("system_site_packages", None)
+    info.write_text(json.dumps(cached))
+
+    result = proj.run("r", "-e", "py")
+
+    result.assert_success()
+    assert "recreate env" not in result.out
 
 
 def test_virtualenv_base_python_entries_whole_and_in_order(
