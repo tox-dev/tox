@@ -279,6 +279,19 @@ def test_config_override_cannot_append(tox_ini_conf: ToxIniCreator) -> None:
         conf["foo"]
 
 
+def test_config_override_inherited_cannot_append(tox_ini_conf: ToxIniCreator) -> None:
+    conf = tox_ini_conf("[testenv]\nfoo = 1\n[testenv:a]\n", override=[Override("testenv:a.foo+=2")]).get_env("a")
+    conf.add_config("foo", of_type=int, default=0, desc="desc")
+    with pytest.raises(HandledError, match=r"^failed to load a\.foo: Only able to append to lists and dicts$"):
+        conf["foo"]
+
+
+def test_config_override_appends_to_set(tox_ini_conf: ToxIniCreator) -> None:
+    conf = tox_ini_conf("[testenv]\nfoo = a\n", override=[Override("testenv.foo+=b")]).get_env("testenv")
+    conf.add_config("foo", of_type=set[str], default=set(), desc="desc")
+    assert conf["foo"] == {"a", "b"}
+
+
 @pytest.mark.parametrize(
     ("filename", "config", "key", "override", "kept", "added"),
     [
@@ -290,6 +303,15 @@ def test_config_override_cannot_append(tox_ini_conf: ToxIniCreator) -> None:
             "base",
             "added",
             id="ini-no-section",
+        ),
+        pytest.param(
+            "tox.ini",
+            "[tox]\nenv_list=a,b\n[testenv]\npackage=skip\nlabels=base\n",
+            "labels",
+            "testenv:a.labels+=added",
+            "base",
+            "added",
+            id="ini-labels-set",
         ),
         pytest.param(
             "tox.ini",

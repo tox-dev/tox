@@ -339,7 +339,9 @@ def _append_override(converted: V, override: V) -> V:
 
     if isinstance(converted, list) and isinstance(override, list):
         converted.extend(override)
-    elif isinstance(converted, dict) and isinstance(override, dict):
+    elif (isinstance(converted, dict) and isinstance(override, dict)) or (
+        isinstance(converted, set) and isinstance(override, set)
+    ):
         converted.update(override)
     elif isinstance(converted, SetEnv) and isinstance(override, SetEnv):
         converted.extend(override)
