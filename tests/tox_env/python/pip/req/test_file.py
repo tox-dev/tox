@@ -667,15 +667,13 @@ def test_declared_file_encoding(header: bytes, prefix: bytes, tmp_path: Path, mo
     monkeypatch.setattr("tox.tox_env.python.pip.req.file.locale.getpreferredencoding", lambda **_: "utf-8")
     requirements_file = tmp_path / "r.txt"
     requirements_file.write_bytes(prefix + header + b"\nart  # \xe9\n")
-    req_file = RequirementsFile(requirements_file, constraint=False)
-    assert [str(i) for i in req_file.requirements] == ["art"]
+    assert [str(i) for i in RequirementsFile(requirements_file, constraint=False).requirements] == ["art"]
 
 
 def test_declared_file_encoding_takes_precedence_over_utf8(tmp_path: Path) -> None:
     requirements_file = tmp_path / "r.txt"
     requirements_file.write_bytes(b"# coding: latin-1\n-f ./file-\xc3\xa9\nart\n")
-    req_file = RequirementsFile(requirements_file, constraint=False)
-    assert req_file.options.find_links == ["./file-\u00c3\u00a9"]
+    assert RequirementsFile(requirements_file, constraint=False).options.find_links == ["./file-\u00c3\u00a9"]
 
 
 @pytest.mark.parametrize(
@@ -691,6 +689,13 @@ def test_file_encoding_declaration_boundaries(header: bytes, tmp_path: Path) -> 
     requirements_file.write_bytes(header + b"art @ https://example.com/file-\xc3\xa9.whl\n")
     req_file = RequirementsFile(requirements_file, constraint=False)
     assert [str(i) for i in req_file.requirements] == ["art @ https://example.com/file-\u00e9.whl"]
+
+
+def test_declared_unknown_file_encoding(tmp_path: Path) -> None:
+    requirements_file = tmp_path / "r.txt"
+    requirements_file.write_bytes(b"# Encoding: see below\nart\n")
+    with pytest.raises(ValueError, match=r"r\.txt declares unknown encoding see$"):
+        _ = RequirementsFile(requirements_file, constraint=False).requirements
 
 
 def test_parsed_requirement_properties(tmp_path: Path) -> None:

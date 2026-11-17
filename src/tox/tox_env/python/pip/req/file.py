@@ -279,7 +279,12 @@ class RequirementsFile:
                 return raw[len(bom) :].decode(encoding)
         for line in raw.split(b"\n", 2)[:2]:
             if line.startswith(b"#") and (match := _ENCODING_RE.search(line)):
-                return raw.decode(match[1].decode("ascii"))
+                encoding = match[1].decode("ascii")
+                try:
+                    return raw.decode(encoding)
+                except LookupError as exc:
+                    msg = f"requirements file {source} declares unknown encoding {encoding}"
+                    raise ValueError(msg) from exc
         try:
             return raw.decode("utf-8")
         except UnicodeDecodeError:
