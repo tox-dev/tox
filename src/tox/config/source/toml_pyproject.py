@@ -306,6 +306,14 @@ def _build_env_base_map(
     return result, all_labels
 
 
+def _record_combo(groups: list[FactorGroup], combo: tuple[str, ...], *, prefix: str | None) -> str:
+    # remember which value each group took, as the same factor can appear in more than one group
+    name: Final[str] = "-".join(combo if prefix is None else (prefix, *combo))
+    for group, value in zip(groups, combo, strict=True):
+        group.env_values[name] = value
+    return name
+
+
 def _extract_env_list_labels(env_list_raw: TomlTypes) -> dict[str, FactorGroup]:
     if not isinstance(env_list_raw, list):
         return {}
@@ -331,14 +339,6 @@ def _extract_env_list_labels(env_list_raw: TomlTypes) -> dict[str, FactorGroup]:
             values = expand_factor_group(item)
             labels[label] = FactorGroup(values=values, default=extract_default(item, values))
     return labels
-
-
-def _record_combo(groups: list[FactorGroup], combo: tuple[str, ...], *, prefix: str | None) -> str:
-    # remember which value each group took, as the same factor can appear in more than one group
-    name: Final[str] = "-".join(combo if prefix is None else (prefix, *combo))
-    for group, value in zip(groups, combo, strict=True):
-        group.env_values[name] = value
-    return name
 
 
 __all__ = [
