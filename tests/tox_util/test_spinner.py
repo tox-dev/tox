@@ -159,6 +159,8 @@ def test_spinner_stdout_not_unicode(capfd: CaptureFixture, mocker: MockerFixture
         pytest.param(59.999, "1 minute", id="59-dot-999-rounds-up-to-a-minute"),
         pytest.param(119.996, "2 minutes", id="119-dot-996-rounds-up-to-two-minutes"),
         pytest.param(3599.999, "1 hour", id="3599-dot-999-rounds-up-to-an-hour"),
+        pytest.param(60.01, "1 minute 0.01 seconds", id="60-dot-01-keeps-the-hundredth"),
+        pytest.param(86399.999, "1 day", id="86399-dot-999-rounds-up-to-a-day"),
         pytest.param(
             40 * 24 * 60 * 60 + 5 * 60,
             "40 days 5 minutes",

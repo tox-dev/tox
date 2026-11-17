@@ -254,7 +254,8 @@ def td_human_readable(seconds: float) -> str:
 
     """
     texts: list[str] = []
-    seconds = round(seconds, 2)  # round first so 59.999 becomes "1 minute", not "60 seconds"
+    # whole hundredths, so 59.999 rounds up to "1 minute" and no float remainder drops below the shown precision
+    centiseconds = round(seconds * 100)
     periods = [
         ("day", 60 * 60 * 24),
         ("hour", 60 * 60),
@@ -263,13 +264,11 @@ def td_human_readable(seconds: float) -> str:
     ]
     for period_name, period_seconds in periods:
         period_str = None
-        if period_name == "second" and (  # fixed protocol value
-            seconds >= 0.01 or not texts  # ruff:ignore[magic-value-comparison]  # fixed protocol value
-        ):
-            period_str = f"{seconds:.2f}".rstrip("0").rstrip(".")
-        elif seconds >= period_seconds:
-            period_value, seconds = divmod(seconds, period_seconds)
-            period_str = f"{period_value:.0f}"
+        if period_name == "second" and (centiseconds or not texts):  # fixed protocol value
+            period_str = f"{centiseconds / 100:.2f}".rstrip("0").rstrip(".")
+        elif centiseconds >= period_seconds * 100:
+            period_value, centiseconds = divmod(centiseconds, period_seconds * 100)
+            period_str = str(period_value)
         if period_str is not None:
             texts.append(f"{period_str} {period_name}{'' if period_str == '1' else 's'}")
     return " ".join(texts)
