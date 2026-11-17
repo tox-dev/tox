@@ -139,12 +139,14 @@ def test_load_dependency_requirement_many_or_extras(extra: str) -> None:
 @pytest.mark.parametrize(
     ("marker", "extras", "expected"),
     [
-        ('"dev" == extra', {"dev"}, ["six"]),
-        ('"dev" == extra', set(), []),
-        ('"dev" == extra', {"other"}, []),
-        ('"my_extra" == extra', {"my-extra"}, ["six"]),
-        ('python_version < "4" and "dev" == extra', {"dev"}, ['six; python_version < "4"']),
-        ('"dev" == extra or "test" == extra', {"test"}, ["six"]),
+        pytest.param('"dev" == extra', {"dev"}, ["six"], id="selected"),
+        pytest.param('"dev" == extra', set(), [], id="no-extras"),
+        pytest.param('"dev" == extra', {"other"}, [], id="other-extra"),
+        pytest.param('"my_extra" == extra', {"my-extra"}, ["six"], id="normalized-name"),
+        pytest.param(
+            'python_version < "4" and "dev" == extra', {"dev"}, ['six; python_version < "4"'], id="keeps-python-marker"
+        ),
+        pytest.param('"dev" == extra or "test" == extra', {"test"}, ["six"], id="or-expression"),
     ],
 )
 def test_reversed_extra_markers(marker: str, extras: set[str], expected: list[str]) -> None:
