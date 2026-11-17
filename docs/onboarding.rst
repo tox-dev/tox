@@ -604,7 +604,8 @@ When you access ``env_config["deps"]``:
    invoked.
 2. It checks its cache.
 3. Iterates through the attached **loaders** (INI loader, TOML loader, memory loader).
-4. The first loader that has the key returns the raw value.
+4. The first loader that has the key returns the raw value. A loader with only ``+=`` overrides for the key defers to
+   the next loader and appends its overrides to that value.
 5. The raw value is **converted** to the target type (via `Convert
    <https://github.com/tox-dev/tox/blob/main/src/tox/config/loader/convert.py>`_).
 6. **Overrides** from ``--override`` are applied.
