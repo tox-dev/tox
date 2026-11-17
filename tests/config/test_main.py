@@ -294,6 +294,19 @@ def test_config_env_override_cannot_append(tox_ini_conf: ToxIniCreator, example:
 
 
 @pytest.mark.parametrize(
+    ("example", "override", "env"),
+    [
+        pytest.param("[testenv]\nfoo = a\n", "testenv.foo+=b", "testenv", id="same-section"),
+        pytest.param("[testenv]\nfoo = a\n[testenv:a]\n", "testenv:a.foo+=b", "a", id="inherited"),
+    ],
+)
+def test_config_override_appends_to_set(tox_ini_conf: ToxIniCreator, example: str, override: str, env: str) -> None:
+    conf = tox_ini_conf(example, override=[Override(override)]).get_env(env)
+    conf.add_config("foo", of_type=set[str], default=set(), desc="desc")
+    assert conf["foo"] == {"a", "b"}
+
+
+@pytest.mark.parametrize(
     ("filename", "config", "overrides"),
     [
         pytest.param(
