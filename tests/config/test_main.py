@@ -275,14 +275,16 @@ def test_config_override_cannot_append(tox_ini_conf: ToxIniCreator) -> None:
     """
     conf = tox_ini_conf(example, override=[Override("testenv.foo+=2")]).get_env("testenv")
     conf.add_config("foo", of_type=int, default=0, desc="desc")
-    with pytest.raises(HandledError, match=r"failed to load testenv\.foo: Only able to append to lists and dicts"):
+    with pytest.raises(
+        HandledError, match=r"failed to load testenv\.foo: Only able to append to lists, sets and dicts"
+    ):
         conf["foo"]
 
 
 def test_config_override_inherited_cannot_append(tox_ini_conf: ToxIniCreator) -> None:
     conf = tox_ini_conf("[testenv]\nfoo = 1\n[testenv:a]\n", override=[Override("testenv:a.foo+=2")]).get_env("a")
     conf.add_config("foo", of_type=int, default=0, desc="desc")
-    with pytest.raises(HandledError, match=r"^failed to load a\.foo: Only able to append to lists and dicts$"):
+    with pytest.raises(HandledError, match=r"^failed to load a\.foo: Only able to append to lists, sets and dicts$"):
         conf["foo"]
 
 
