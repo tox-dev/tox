@@ -1,2 +1,0 @@
-Create the work directory with owner-only access on POSIX also when no package is built; under a permissive umask it was
-created group-writable, leaving the environments inside it reachable by other accounts.

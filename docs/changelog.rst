@@ -6,6 +6,21 @@
 
 .. towncrier release notes start
 
+.. _release-4-67-15:
+
+**********************
+ 4.67.15 (2026-11-17)
+**********************
+
+.. _release-4-67-15-fixed:
+
+Fixed
+-----
+
+- Create the work directory with owner-only access on POSIX also when no package is built; under a permissive umask it
+  was created group-writable, leaving the environments inside it reachable by other accounts (:pr:`4449`) by
+  :user:`gaborbernat`. (:issue:`4444`)
+
 .. _release-4-67-14:
 
 **********************
