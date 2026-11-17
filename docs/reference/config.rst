@@ -1753,8 +1753,10 @@ Python options
     This determines in practice the Python for what we'll create a virtual isolated environment. Use this to specify the
     Python version for a tox environment. If not specified, the virtual environments factors (e.g. name part) will be
     used to automatically set one. For example, ``py310`` means ``python3.10``, ``py3`` means ``python3`` and ``py``
-    means ``python``. If the name does not match this pattern, :ref:`default_base_python` is consulted, and if that is
-    also not set, the same Python version tox is installed into will be used.
+    means ``python``. An interpreter prefix and a dotted version joined by a dash, such as ``pypy-3.10`` or
+    ``cpython-3.13t``, form one factor, so ``pypy-3.10-lint`` uses ``pypy3.10`` and ``tests-cpython-3.13`` uses
+    ``3.13``. If the name does not match this pattern, :ref:`default_base_python` is consulted, and if that is also not
+    set, the same Python version tox is installed into will be used.
     An explicitly configured empty value fails during configuration. Empty entries in a list are ignored when another
     interpreter remains.
     A base interpreter ending with ``t`` means that only free threaded Python implementations are accepted.
