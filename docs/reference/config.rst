@@ -2624,14 +2624,14 @@ You can specify overrides multiple times on the command line to append multiple 
     .. code-block:: bash
 
        tox -x env_run_base.set_env+=foo=bar -x env_run_base.set_env+=baz=quux
-       tox -x testenv_run_baseenv.deps+=pytest-xdist -x env_run_base.deps+=pytest-covt
+       tox -x env_run_base.deps+=pytest-xdist -x env_run_base.deps+=pytest-cov
 
 .. tab:: INI (deprecated)
 
     .. code-block:: bash
 
        tox -x testenv.set_env+=foo=bar -x testenv.set_env+=baz=quux
-       tox -x testenv.deps+=pytest-xdist -x testenv.deps+=pytest-covt
+       tox -x testenv.deps+=pytest-xdist -x testenv.deps+=pytest-cov
 
 Or reset override and append to that (note the first override is ``=`` and not ``+=``):
 
