@@ -586,8 +586,7 @@ class Python(ToxEnv, ABC):
         old: dict[str, Any],  # simplint: ignore[imprecise-annotation]  # config values have no single type
     ) -> str:
         result: list[str] = []
-        # other outcome untested
-        if added := [f"{k}={v!r}" for k, v in conf.items() if k not in old]:  # pragma: no branch
+        if added := [f"{k}={v!r}" for k, v in conf.items() if k not in old]:
             result.append(f"added {' | '.join(added)}")
         if removed := [f"{k}={v!r}" for k, v in old.items() if k not in conf]:
             result.append(f"removed {' | '.join(removed)}")
