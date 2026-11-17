@@ -6,6 +6,86 @@
 
 .. towncrier release notes start
 
+.. _release-4-67-14:
+
+**********************
+ 4.67.14 (2026-11-17)
+**********************
+
+.. _release-4-67-14-fixed:
+
+Fixed
+-----
+
+- An environment name that combines an interpreter prefix with an explicit version, such as ``pypy-3.10``, now works
+  together with other factors. ``pypy-3.10-lint`` or ``tests-cpython-3.13`` used to fail with ``conflicting factors``,
+  because the prefix and the version were read as two separate Python factors. With ``ignore_base_python_conflict``,
+  such an environment name now takes precedence over ``base_python`` as other Python factors already do, so
+  ``pypy-3.10-lint`` runs on ``pypy3.10`` instead of the configured ``base_python`` (:pr:`4404`) by :user:`syahra712`
+  and :user:`gaborbernat`.
+- A ``set_env`` entry with an empty name, such as ``=value`` in ``tox.ini`` or an environment file, or ``"" = "value"``
+  in a TOML table, now fails as invalid instead of passing an unnamed variable to the commands, which broke them on
+  Windows (:pr:`4423`) by :user:`arindam77` and :user:`gaborbernat`. (:issue:`4422`)
+- When tox writes ``set_env`` entries back out as lines, for example to combine a ``{[section]set_env}`` reference with
+  an ``--override``, a value ending in a backslash no longer swallows the environment marker that follows it, which made
+  a variable scoped to one platform apply everywhere (:pr:`4426`) by :user:`anwang132` and :user:`gaborbernat`.
+  (:issue:`4425`)
+- An environment specific ``--override`` that appends with ``+=``, such as ``testenv:py.deps+=pytest-xdist``, now
+  appends to the value the environment inherits from ``[testenv]`` or ``env_run_base`` instead of replacing it.
+  Appending to a set such as ``labels`` adds to it, and appending to a single value such as ``description`` fails with
+  an error, as it already did within one section (:pr:`4434`) by :user:`hemtilva` and :user:`gaborbernat`.
+  (:issue:`4432`)
+- ``--use-feature`` in ``deps`` or a requirements file now accepts any feature name and leaves the check to pip, instead
+  of rejecting every name other than ``2020-resolver`` and ``fast-deps`` (:pr:`4436`) by :user:`Doomguy-BFG9000` and
+  :user:`gaborbernat`. (:issue:`4435`)
+- A duration just under a whole minute, hour or day, such as 59.999 seconds, is now shown as ``1 minute`` instead of
+  ``60 seconds``, and a hundredth of a second after a whole minute, hour or day, as in ``1 minute 0.01 seconds``, is no
+  longer dropped (:pr:`4420`) by :user:`syahra712` and :user:`gaborbernat`.
+- Changing :ref:`system_site_packages` now recreates the environment. Before, tox reused the existing environment, which
+  kept the old setting because virtualenv applies it only when it creates one. An environment created with the setting
+  on by an earlier tox release is recreated once after upgrading (:pr:`4393`) by :user:`abhishekcpp007` and
+  :user:`gaborbernat`.
+- Honor encoding declarations in the first two lines of requirements files before trying UTF-8 or the locale encoding. A
+  declared encoding Python does not know fails the environment with an error naming the file instead of an internal
+  error (:pr:`4440`) by :user:`Ramji-Purwar` and :user:`gaborbernat`.
+- Recognize reversed extra markers such as ``"dev" == extra`` when selecting package dependencies (:pr:`4397`) by
+  :user:`Jinyong-Li` and :user:`gaborbernat`.
+- Report circular requirements and constraints file includes with a clear error instead of raising ``RecursionError``
+  (:pr:`4439`) by :user:`Ramji-Purwar` and :user:`gaborbernat`.
+- ``tox config`` and ``{[testenv:NAME]commands}`` references now keep the ``-`` and ``!`` exit-code prefixes of
+  commands, so an inherited ignored or inverted command no longer turns into a plain one (:pr:`4421`) by
+  :user:`anubhavlal07` and :user:`gaborbernat`.
+- ``{factor:label}`` now resolves a labeled factor value that contains a dash, such as ``flit-core``, instead of falling
+  back to its default (:pr:`4406`) by :user:`gaborbernat`.
+- ``{factor:label}`` now resolves to the factor the label's group put in the environment name when two groups share a
+  value. Before, with ``factors = [{ source = ["py312", "py313"] }, { target = ["py312", "py313"] }]``, the environment
+  ``migrate-py313-py312`` read ``py312`` for both labels (:pr:`4402`) by :user:`Kernel-Hunter` and :user:`gaborbernat`.
+- tox now treats a Windows junction where a run environment's directory, or its ``log`` or ``tmp`` folder, should live
+  as it treats a symlink: it replaces the junction without touching the files of its target, also when the target is
+  missing. A junction at the environment directory itself makes tox fail with ``is a link where this environment should
+  live`` unless ``-r`` is given, instead of raising ``FileExistsError`` (:pr:`4418`) by :user:`subotac` and
+  :user:`gaborbernat`.
+
+.. _release-4-67-14-documentation:
+
+Documentation
+-------------
+
+- Explain in the ``pkg_dir`` reference that it belongs to packaging environments and show how a run environment refers
+  to it (:pr:`4428`) by :user:`vudigapranav` and :user:`gaborbernat`. (:issue:`4424`)
+- Document that package staging creates the work directory with owner-only access, why a process running as another
+  account then fails to import from an environment, and how to opt out by creating the work directory or changing its
+  mode (:pr:`4448`) by :user:`gaborbernat`. (:issue:`4444`)
+
+.. _release-4-67-14-packaging:
+
+Packaging
+---------
+
+- Every wheel now carries a `PEP 770 <https://peps.python.org/pep-0770/>`_ CycloneDX SBOM in its ``.dist-info/sboms``
+  directory, written at build time by `python-sbom <https://github.com/tox-dev/python-sbom>`_ (:pr:`4403`) by
+  :user:`gaborbernat`.
+
 .. _release-4-67-13:
 
 **********************

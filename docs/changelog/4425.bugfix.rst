@@ -1,3 +1,0 @@
-When tox writes ``set_env`` entries back out as lines, for example to combine a ``{[section]set_env}`` reference with an
-``--override``, a value ending in a backslash no longer swallows the environment marker that follows it, which made a
-variable scoped to one platform apply everywhere.

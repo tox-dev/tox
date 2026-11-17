@@ -1,4 +1,0 @@
-An environment specific ``--override`` that appends with ``+=``, such as ``testenv:py.deps+=pytest-xdist``, now appends
-to the value the environment inherits from ``[testenv]`` or ``env_run_base`` instead of replacing it. Appending to a set
-such as ``labels`` adds to it, and appending to a single value such as ``description`` fails with an error, as it
-already did within one section.
