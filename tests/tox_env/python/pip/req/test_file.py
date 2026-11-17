@@ -152,6 +152,13 @@ _REQ_FILE_TEST_CASES: Final[list[pytest.ParameterSet]] = [
         id="use-feature equal",
     ),
     pytest.param(
+        "--use-feature=inprocess-build-deps",
+        {"features_enabled": ["inprocess-build-deps"]},
+        [],
+        ["--use-feature", "inprocess-build-deps"],
+        id="use-feature name validated by pip",
+    ),
+    pytest.param(
         "--use-feature=fast-deps --use-feature 2020-resolver",
         {"features_enabled": ["2020-resolver", "fast-deps"]},
         [],
