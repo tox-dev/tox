@@ -1,0 +1,3 @@
+Document that package staging creates the work directory with owner-only access, why a process running as another
+account then fails to import from an environment, and how to opt out by creating the work directory or changing its
+mode.
