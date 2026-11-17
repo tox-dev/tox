@@ -508,9 +508,10 @@ def test_recursive_requirement_url_redacts_credentials(tmp_path: Path, mocker: M
         autospec=True,
         side_effect=lambda *_a, **_kw: BytesIO(f"-r {url}\n".encode()),
     )
-    with pytest.raises(ValueError, match="recursive requirements include") as exc:
+    with pytest.raises(
+        ValueError, match=r"^recursive requirements include: https://\*+@example\.com/requirements\.txt$"
+    ):
         _ = RequirementsFile(tmp_path / "root.txt", constraint=False).requirements
-    assert "user:password" not in str(exc.value)
 
 
 def test_requirements_env_var_missing(monkeypatch: MonkeyPatch, tmp_path: Path) -> None:

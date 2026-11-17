@@ -179,7 +179,7 @@ class RequirementsFile:
                 if recurse:
                     # internal access within the requirements parser
                     yield from self._req_parser._parse_and_recurse(  # ruff:ignore[private-member-access]
-                        req_path, nested_constraint, recurse, _extend_include_chain(req_path, include_chain)
+                        req_path, nested_constraint, recurse, self._extend_include_chain(req_path, include_chain)
                     )
                 else:
                     line.filename = req_path
@@ -355,6 +355,17 @@ class RequirementsFile:
         return self
 
     @staticmethod
+    def _extend_include_chain(req_path: str, include_chain: tuple[str, ...]) -> tuple[str, ...]:
+        if (scheme := get_url_scheme(req_path)) in {"http", "https"}:
+            identity = req_path
+        else:
+            identity = str(Path(url_to_path(req_path) if scheme == "file" else req_path).resolve())
+        if identity in include_chain:
+            msg = f"recursive requirements include: {redact_argv([req_path])[0]}"
+            raise ValueError(msg)
+        return (*include_chain, identity)
+
+    @staticmethod
     def _handle_requirement_line(line: _ParsedLine) -> ParsedRequirement:
         # For editable requirements, we don't support per-requirement options, so just return the parsed requirement.
         # get the options that apply to requirements
@@ -463,17 +474,6 @@ class RequirementsFile:
         for value in sorted(secrets, key=len, reverse=True):  # longest first, as a value may contain another one
             text = text.replace(value, secrets[value])
         return text
-
-
-def _extend_include_chain(req_path: str, include_chain: tuple[str, ...]) -> tuple[str, ...]:
-    if (scheme := get_url_scheme(req_path)) in {"http", "https"}:
-        identity = req_path
-    else:
-        identity = str(Path(url_to_path(req_path) if scheme == "file" else req_path).resolve())
-    if identity in include_chain:
-        msg = f"recursive requirements include: {redact_argv([req_path])[0]}"
-        raise ValueError(msg)
-    return (*include_chain, identity)
 
 
 class _ParsedLine:
