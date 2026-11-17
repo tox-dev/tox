@@ -1,0 +1,2 @@
+A ``set_env`` entry with an empty name, such as ``=value`` in ``tox.ini`` or an environment file, or ``"" = "value"`` in
+a TOML table, now fails as invalid instead of passing an unnamed variable to the commands, which broke them on Windows.

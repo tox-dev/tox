@@ -1050,7 +1050,8 @@ Base options
     :keys: set_env, setenv
     :version_added: 1.0
 
-    A dictionary of environment variables to set when running commands in the tox environment.
+    A dictionary of environment variables to set when running commands in the tox environment. Every entry needs a
+    non-empty name: ``=value`` in INI or ``"" = "value"`` in TOML fails.
 
     In addition, there is an option to include an existing environment file. See the different syntax for TOML and INI below.
 
@@ -1101,7 +1102,8 @@ Base options
         - there is no special handling of quotation marks, they are part of the key or value,
         - PEP-508 markers are not supported in environment files, so a ``;`` is a plain value character.
 
-        A line without ``=`` fails with the file path and line number. tox omits the line's text from the error.
+        A line without ``=`` or with an empty name, such as ``=value``, fails with the file path and line number. tox
+        omits the line's text from the error.
 
     **Conditional environment variables**
 

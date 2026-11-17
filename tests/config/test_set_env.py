@@ -58,6 +58,19 @@ def test_set_env_bad_line() -> None:
         SetEnv("A", "py", "py", Path())
 
 
+@pytest.mark.parametrize(
+    "raw",
+    [
+        pytest.param("\nA=1\n =6", id="line"),
+        pytest.param({"A": "1", "": "6"}, id="table"),
+        pytest.param({"": {"value": "6", "marker": "python_version > '2'"}}, id="table-entry"),
+    ],
+)
+def test_set_env_empty_key(raw: SetEnvRaw) -> None:
+    with pytest.raises(ValueError, match=r"^invalid set_env entry with an empty name$"):
+        SetEnv(raw, "py", "py", Path())
+
+
 def test_set_env_invalid_marker_names_the_key_and_the_escape() -> None:
     with pytest.raises(ValueError, match=r"key 'WINPATH'") as exc:
         SetEnv("\nWINPATH = C:\\one;C:\\two", "py", "py", Path())
@@ -397,6 +410,17 @@ def test_set_env_environment_file_unreadable(
     result = project.run("r")
     result.assert_failed(code=1)
     assert f"py: failed with {project.path / 'magic.env'} {reason}" in result.out
+
+
+def test_set_env_environment_file_empty_key(tox_project: ToxProjectCreator) -> None:
+    ini: Final[str] = "[testenv]\npackage=skip\nset_env=file|.env\ncommands=python -c pass"
+    project: Final[ToxProject] = tox_project({"tox.ini": ini, ".env": "VALID=before\n =SENTINEL\n"})
+    result: Final[ToxRunOutcome] = project.run("r", "-e", "py")
+
+    result.assert_failed(code=1)
+    assert f"py: failed with invalid line 2 in {project.path / '.env'} for set_env, expected KEY=VALUE" in result.out
+    assert "SENTINEL" not in f"{result.out}{result.err}"
+    assert "commands[0]>" not in result.out
 
 
 @pytest.mark.parametrize(
@@ -1176,6 +1200,15 @@ def test_set_env_substituted_key_rejects_structure(
     monkeypatch.setenv("KEY_SUFFIX", suffix)
     with pytest.raises(ValueError, match=r"^invalid set_env key 'LABEL_\{env:KEY_SUFFIX\}' after substitution$"):
         eval_set_env("[testenv]\npackage=skip\nset_env=LABEL_{env:KEY_SUFFIX} = ok")
+
+
+@pytest.mark.parametrize("key", [pytest.param("", id="empty"), pytest.param(" \t", id="blank")])
+def test_set_env_substituted_key_rejects_empty_name(
+    eval_set_env: EvalSetEnv, monkeypatch: MonkeyPatch, key: str
+) -> None:
+    monkeypatch.setenv("KEY_NAME", key)
+    with pytest.raises(ValueError, match=r"^invalid set_env key '\{env:KEY_NAME\}' after substitution$"):
+        eval_set_env("[testenv]\npackage=skip\nset_env={env:KEY_NAME} = ok")
 
 
 _TOML_ENV_DEFAULTS: Final[pytest.MarkDecorator] = pytest.mark.parametrize(
