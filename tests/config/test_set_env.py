@@ -58,9 +58,17 @@ def test_set_env_bad_line() -> None:
         SetEnv("A", "py", "py", Path())
 
 
-def test_set_env_empty_key() -> None:
-    with pytest.raises(ValueError, match=r"invalid line ' =6' in set_env"):
-        SetEnv("\nA=1\n =6", "py", "py", Path())
+@pytest.mark.parametrize(
+    "raw",
+    [
+        pytest.param("\nA=1\n =6", id="line"),
+        pytest.param({"A": "1", "": "6"}, id="table"),
+        pytest.param({"": {"value": "6", "marker": "python_version > '2'"}}, id="table-entry"),
+    ],
+)
+def test_set_env_empty_key(raw: SetEnvRaw) -> None:
+    with pytest.raises(ValueError, match=r"^invalid set_env entry with an empty name$"):
+        SetEnv(raw, "py", "py", Path())
 
 
 def test_set_env_invalid_marker_names_the_key_and_the_escape() -> None:
@@ -1192,6 +1200,15 @@ def test_set_env_substituted_key_rejects_structure(
     monkeypatch.setenv("KEY_SUFFIX", suffix)
     with pytest.raises(ValueError, match=r"^invalid set_env key 'LABEL_\{env:KEY_SUFFIX\}' after substitution$"):
         eval_set_env("[testenv]\npackage=skip\nset_env=LABEL_{env:KEY_SUFFIX} = ok")
+
+
+@pytest.mark.parametrize("key", [pytest.param("", id="empty"), pytest.param(" \t", id="blank")])
+def test_set_env_substituted_key_rejects_empty_name(
+    eval_set_env: EvalSetEnv, monkeypatch: MonkeyPatch, key: str
+) -> None:
+    monkeypatch.setenv("KEY_NAME", key)
+    with pytest.raises(ValueError, match=r"^invalid set_env key '\{env:KEY_NAME\}' after substitution$"):
+        eval_set_env("[testenv]\npackage=skip\nset_env={env:KEY_NAME} = ok")
 
 
 _TOML_ENV_DEFAULTS: Final[pytest.MarkDecorator] = pytest.mark.parametrize(

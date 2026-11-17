@@ -68,7 +68,6 @@ SetEnvRaw = (
 )
 """The forms the ``set_env`` setting can take in the configuration, before it is loaded."""
 
-
 _EXTRACT_KEY_VALUE_PATTERN: Final[re.Pattern[str]] = re.compile(r"^export[ \t]+")
 
 
@@ -161,6 +160,9 @@ class SetEnv:
                 self._define(key, value, None, keys_after_file)
 
     def _define(self, key: str, value: SetEnvValue, marker: str | None, keys_after_file: set[str]) -> None:
+        if not key:  # an empty name cannot be passed to a child process
+            msg = "invalid set_env entry with an empty name"
+            raise ValueError(msg)
         self._raw[key] = value
         self._defined_keys.add(key)
         keys_after_file.add(key)
@@ -202,8 +204,6 @@ class SetEnv:
 
         :returns: the key, value and marker, or ``None`` when the line is deferred
 
-        :raises ValueError: when the line has an empty name, or a brace in its name
-
         """
         try:
             key, value, marker = split_line(line)
@@ -218,9 +218,6 @@ class SetEnv:
                 self._pending.lines.append(line)
                 return None
             raise
-        if not key:  # an empty name cannot be passed to a child process
-            msg = f"invalid line {line!r} in set_env"
-            raise ValueError(msg)
         return _Assignment(key, value, marker)
 
     def __contains__(self, item: object) -> bool:
@@ -333,14 +330,12 @@ class SetEnv:
         if "\x00" in line:
             msg = f"invalid line in set_env at {env_file}:{line_number}: NUL character"
             raise Fail(msg)
-        if not sep:  # do not echo the line, it may hold part of a secret value
+        key = _EXTRACT_KEY_VALUE_PATTERN.sub("", key.strip())
+        # an empty name cannot be passed to a child process; do not echo the line, it may hold part of a secret value
+        if not sep or not key:
             msg = f"invalid line {line_number} in {env_file} for set_env, expected KEY=VALUE"
             raise Fail(msg)
         # Unlike inline set_env, environment files keep semicolons in values.
-        key = _EXTRACT_KEY_VALUE_PATTERN.sub("", key.strip())
-        if not key:  # an empty name cannot be passed to a child process
-            msg = f"invalid line {line_number} in {env_file} for set_env, expected KEY=VALUE"
-            raise Fail(msg)
         return key, value.strip()
 
     def _expand(
@@ -353,7 +348,11 @@ class SetEnv:
         if separator:
             key = key.strip()
             expanded_key = self._replacer(key, args)
-            if "=" in expanded_key or any(char in expanded_key for char in "\r\n\v\f\x1c\x1d\x1e\x85\u2028\u2029"):
+            if (
+                not expanded_key.strip()
+                or "=" in expanded_key
+                or any(char in expanded_key for char in "\r\n\v\f\x1c\x1d\x1e\x85\u2028\u2029")
+            ):
                 msg = f"invalid set_env key {key!r} after substitution"
                 raise ValueError(msg)
             value, marker = split_value_marker(rest.strip())
