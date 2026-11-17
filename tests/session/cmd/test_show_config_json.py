@@ -184,6 +184,18 @@ def test_deps(
     assert "flask>=2.0" in deps
 
 
+@pytest.mark.parametrize(("fmt", "loader"), _FORMATS)
+def test_commands_exit_code_prefix(
+    tox_project: ToxProjectCreator,
+    fmt: str,
+    loader: Callable[[str], Any],  # simplint: ignore[imprecise-annotation]  # the loaded JSON has any shape
+) -> None:
+    ini = "[tox]\nno_package = true\n[testenv]\ncommands =\n    - python -c pass\n    ! python -c fail"
+    result = tox_project({"tox.ini": ini}).run("c", "-e", "py", "--format", fmt, "-k", "commands")
+    result.assert_success()
+    assert loader(result.out)["env"]["py"]["commands"] == ["- python -c pass", "! python -c fail"]
+
+
 def test_json_exception(tox_project: ToxProjectCreator) -> None:
     project = tox_project({"tox.ini": "[testenv:a]\nbase_python = missing-python"})
     result = project.run("c", "-e", "a", "--format", "json", "-k", "env_site_packages_dir", raise_on_config_fail=False)

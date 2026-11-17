@@ -82,6 +82,17 @@ def test_replace_section_alone_on_command_line_expands_to_commands(
     assert commands == [["pip", "install", "requests", "pytest>=8"], ["python", "-V"], ["python", "-c", "pass"]]
 
 
+def test_replace_env_without_section_keeps_command_exit_code_prefix(tox_ini_conf: ToxIniCreator) -> None:
+    config = tox_ini_conf(
+        "[tox]\nenv_list = a, b, c\n[testenv]\ncommands =\n  - python -c pass\n  ! python -c fail\n"
+        "[testenv:c]\ncommands = {[testenv:a]commands}\n"
+    )
+    for name in ("a", "c"):
+        config.get_env(name).add_config(keys="commands", of_type=list[Command], default=[], desc="commands")
+    expected = [Command(["-", "python", "-c", "pass"]), Command(["!", "python", "-c", "fail"])]
+    assert config.get_env("c")["commands"] == expected
+
+
 def test_replace_command_circular_fan_out_keeps_following_token(
     load_commands: Callable[[str], list[list[str]]], monkeypatch: pytest.MonkeyPatch
 ) -> None:
