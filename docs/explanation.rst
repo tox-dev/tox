@@ -673,9 +673,9 @@ Example final output:
 .. code-block:: bash
 
     $ tox -e 3.13,3.12,coverage -p all
-    ✔ OK 3.12 in 9.533 seconds
-    ✔ OK 3.13 in 9.96 seconds
-    ✔ OK coverage in 2.0 seconds
+    3.12: OK ✔ in 9.53 seconds
+    3.13: OK ✔ in 9.96 seconds
+    coverage: OK ✔ in 2 seconds
     ___________________________ summary ______________________________________________________
       3.13: commands succeeded
       3.12: commands succeeded
