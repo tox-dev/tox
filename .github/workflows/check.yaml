@@ -78,7 +78,7 @@ jobs:
           retention-days: 30
   check:
     name: 🔍 tox env
-    uses: tox-dev/github-workflows/.github/workflows/check.yaml@ef0cd88bef592260a48345753b8b509b209ab189 # 6.8.3
+    uses: tox-dev/github-workflows/.github/workflows/check.yaml@9334311ad92f91f7f5c937b3ab218da4d317116e # 6.8.4
     permissions:
       contents: read
     with:
@@ -108,7 +108,7 @@ jobs:
       dry-run: true
   hooks:
     name: 🧹 Hooks under the cooldown
-    uses: tox-dev/github-workflows/.github/workflows/cooled-hooks.yaml@ef0cd88bef592260a48345753b8b509b209ab189 # 6.8.3
+    uses: tox-dev/github-workflows/.github/workflows/cooled-hooks.yaml@9334311ad92f91f7f5c937b3ab218da4d317116e # 6.8.4
     permissions:
       contents: read
   gate:
@@ -118,6 +118,6 @@ jobs:
     runs-on: ubuntu-26.04
     steps:
       - name: 🚦 Require all needed jobs to pass
-        uses: tox-dev/github-workflows/required-checks@6.8.3
+        uses: tox-dev/github-workflows/required-checks@6.8.4
         with:
           needs: ${{ toJSON(needs) }}
