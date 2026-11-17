@@ -275,8 +275,80 @@ def test_config_override_cannot_append(tox_ini_conf: ToxIniCreator) -> None:
     """
     conf = tox_ini_conf(example, override=[Override("testenv.foo+=2")]).get_env("testenv")
     conf.add_config("foo", of_type=int, default=0, desc="desc")
-    with pytest.raises(HandledError, match=r"failed to load testenv\.foo: Only able to append to lists and dicts"):
+    with pytest.raises(
+        HandledError, match=r"failed to load testenv\.foo: Only able to append to lists, sets and dicts"
+    ):
         conf["foo"]
+
+
+@pytest.mark.parametrize(
+    ("example", "overrides"),
+    [
+        pytest.param("[testenv]\nfoo = 1\n[testenv:a]\n", ["testenv:a.foo+=2"], id="inherited-value"),
+        pytest.param("[testenv:a]\n", ["testenv.foo+=2", "testenv.foo+=3"], id="override-values"),
+    ],
+)
+def test_config_env_override_cannot_append(tox_ini_conf: ToxIniCreator, example: str, overrides: list[str]) -> None:
+    conf = tox_ini_conf(example, override=[Override(entry) for entry in overrides]).get_env("a")
+    conf.add_config("foo", of_type=int, default=0, desc="desc")
+    with pytest.raises(HandledError, match=r"^failed to load a\.foo: Only able to append to lists, sets and dicts$"):
+        conf["foo"]
+
+
+@pytest.mark.parametrize(
+    ("example", "override", "env"),
+    [
+        pytest.param("[testenv]\nfoo = a\n", "testenv.foo+=b", "testenv", id="same-section"),
+        pytest.param("[testenv]\nfoo = a\n[testenv:a]\n", "testenv:a.foo+=b", "a", id="inherited"),
+    ],
+)
+def test_config_override_appends_to_set(tox_ini_conf: ToxIniCreator, example: str, override: str, env: str) -> None:
+    conf = tox_ini_conf(example, override=[Override(override)]).get_env(env)
+    conf.add_config("foo", of_type=set[str], default=set(), desc="desc")
+    assert conf["foo"] == {"a", "b"}
+
+
+@pytest.mark.parametrize(
+    ("filename", "config", "overrides"),
+    [
+        pytest.param(
+            "tox.ini",
+            "[testenv]\npackage = skip\ndeps = base\nset_env = BASE=1\n[testenv:a]\ndescription = a\n",
+            ["testenv:a.deps+=extra", "testenv:a.set_env+=EXTRA=1"],
+            id="ini",
+        ),
+        pytest.param(
+            "tox.ini",
+            "[tox]\nenv_list = a\n[testenv]\npackage = skip\ndeps = base\nset_env = BASE=1\n",
+            ["testenv:a.deps+=extra", "testenv:a.set_env+=EXTRA=1"],
+            id="ini-no-env-section",
+        ),
+        pytest.param(
+            "tox.toml",
+            '[env_run_base]\npackage = "skip"\ndeps = ["base"]\nset_env = { BASE = "1" }\n[env.a]\ndescription = "a"\n',
+            ["env.a.deps+=extra", "env.a.set_env+=EXTRA=1"],
+            id="toml",
+        ),
+    ],
+)
+def test_config_override_appends_to_inherited_value(
+    tox_project: ToxProjectCreator, filename: str, config: str, overrides: list[str]
+) -> None:
+    flags = [flag for override in overrides for flag in ("-x", override)]
+    result = tox_project({filename: config}).run("c", "-e", "a", "-k", "deps", "set_env", *flags)
+
+    result.assert_success()
+    assert "deps =\n  base\n  extra\n" in result.out, result.out
+    assert "  BASE=1\n  EXTRA=1\n" in result.out, result.out
+
+
+def test_config_override_appends_to_inherited_override(tox_project: ToxProjectCreator) -> None:
+    project = tox_project({"tox.ini": "[testenv]\npackage = skip\n[testenv:a]\ndescription = a\n"})
+
+    result = project.run("c", "-e", "a", "-k", "deps", "-x", "testenv:a.deps+=env", "-x", "testenv.deps+=base")
+
+    result.assert_success()
+    assert result.out == "[testenv:a]\ndeps =\n  base\n  env\n"
 
 
 def test_args_are_paths_when_disabled(tox_project: ToxProjectCreator) -> None:

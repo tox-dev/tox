@@ -5,7 +5,8 @@ from abc import abstractmethod
 from argparse import ArgumentTypeError
 from collections.abc import Iterable, Mapping
 from contextlib import contextmanager
-from typing import TYPE_CHECKING, Any, TypeVar, cast
+from functools import reduce
+from typing import TYPE_CHECKING, Any, Generic, TypeVar, cast
 
 from tox.plugin import impl
 from tox.report import HandledError
@@ -184,7 +185,8 @@ class Loader(Convert[T]):
 
         :returns: the converted type
 
-        :raises KeyError: when the key is not present in any source
+        :raises KeyError: when the key is not present in any source, or, as ``AppendOverridesError``, when the source
+            does not set the key but has only ``key+=value`` overrides for it
         :raises ValueError: when the value cannot be converted to the requested type
 
         """
@@ -201,6 +203,11 @@ class Loader(Convert[T]):
         else:
             if not overrides:
                 raise KeyError(key)
+            if all(entry.append for entry in overrides):
+                # the value may be inherited from a later loader (such as a base section), append to that
+                with _handle_bad_value(key, args):
+                    appends = [self._build_override(entry, of_type, factory, conf, args) for entry in overrides]
+                raise AppendOverridesError(key, appends, args)
 
         with _handle_bad_value(key, args):
             for entry in overrides:
@@ -329,19 +336,61 @@ def _handle_bad_value(key: str, args: ConfigLoadArgs) -> Generator[None]:
         raise HandledError(msg) from exception
 
 
+class AppendOverridesError(KeyError, Generic[V]):
+    """Raised by a loader that does not set a key, but has ``key+=value`` overrides for it.
+
+    :param key: the configuration key
+    :param appends: the converted values of the overrides, in order
+    :param load_args: the config load arguments, to report a value that cannot be appended to
+
+    """
+
+    def __init__(self, key: str, appends: list[V], load_args: ConfigLoadArgs) -> None:
+        super().__init__(key, appends, load_args)
+        self.key = key
+        self.appends = appends
+        self._load_args = load_args
+
+    def apply(self, value: V) -> V:
+        """Append the override values to the value another source sets for the key.
+
+        :param value: the value to append to
+
+        :returns: the value with the overrides appended
+
+        :raises HandledError: when the value cannot be appended to
+
+        """
+        with _handle_bad_value(self.key, self._load_args):
+            return reduce(_append_override, self.appends, value)
+
+    def fold(self) -> V:
+        """Combine the override values when no other source sets the key, the first one acts as the value.
+
+        :returns: the first override value with the others appended
+
+        :raises HandledError: when the override values cannot be appended to each other
+
+        """
+        with _handle_bad_value(self.key, self._load_args):
+            return reduce(_append_override, self.appends)
+
+
 def _append_override(converted: V, override: V) -> V:
     from tox.config.set_env import SetEnv  # ruff:ignore[import-outside-top-level]  # avoids an import cycle
 
     if isinstance(converted, list) and isinstance(override, list):
         converted.extend(override)
-    elif isinstance(converted, dict) and isinstance(override, dict):
+    elif (isinstance(converted, dict) and isinstance(override, dict)) or (
+        isinstance(converted, set) and isinstance(override, set)
+    ):
         converted.update(override)
     elif isinstance(converted, SetEnv) and isinstance(override, SetEnv):
         converted.extend(override)
     elif isinstance(converted, PythonDeps) and isinstance(override, PythonDeps):
         converted += override
     else:
-        msg = "Only able to append to lists and dicts"
+        msg = "Only able to append to lists, sets and dicts"
         raise TypeError(msg)
     return converted
 
@@ -410,6 +459,7 @@ _STR_CONVERT: Final[StrConvert] = StrConvert()
 
 
 __all__ = [
+    "AppendOverridesError",
     "ConfigLoadArgs",
     "Loader",
     "Override",
