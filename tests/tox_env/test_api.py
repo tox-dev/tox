@@ -38,6 +38,18 @@ def test_package_staging_with_permissive_umask(
 
 
 @pytest.mark.skipif(sys.platform == "win32", reason="POSIX directory permissions")
+def test_work_dir_private_without_package(tox_project: ToxProjectCreator) -> None:
+    project: Final[ToxProject] = tox_project({"tox.ini": "[testenv]\npackage=skip"})
+    previous: Final[int] = os.umask(0o002)
+    try:
+        project.run("r", "-e", "py", "--notest").assert_success()
+    finally:
+        os.umask(previous)
+
+    assert stat.S_IMODE((project.path / ".tox").stat().st_mode) == 0o700
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="POSIX directory permissions")
 def test_package_staging_keeps_readable_work_dir(tox_project: ToxProjectCreator, demo_pkg_inline: Path) -> None:
     project: Final[ToxProject] = tox_project({"tox.ini": "[testenv]\npackage=wheel"}, base=demo_pkg_inline)
     work_dir: Final[Path] = project.path / ".tox"

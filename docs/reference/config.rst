@@ -626,11 +626,11 @@ the top level of ``tox.toml``. Placing these options in an environment section (
     configuration file take the value as a literal path, without substitution. See :ref:`howto_out_of_tree_envs` for a
     walk-through and :ref:`work-dir-placement` for the trade-offs.
 
-    On POSIX, a work directory that tox creates for package staging is accessible only by its owner (mode ``0700``).
-    Under a permissive umask such as ``002`` the environments inside it are writable by a group, and the private work
-    directory keeps other accounts from reaching them. A process that runs as another account, such as a helper started
-    through ``sudo`` that drops its privileges, then cannot read an environment and reports ``ModuleNotFoundError`` for
-    an installed package.
+    On POSIX, a work directory that tox creates is accessible only by its owner (mode ``0700``). Under a permissive
+    umask such as ``002`` the environments inside it are writable by a group, and the private work directory keeps
+    other accounts from reaching them. A process that runs as another account, such as a helper started through
+    ``sudo`` that drops its privileges, then cannot read an environment and reports ``ModuleNotFoundError`` for an
+    installed package.
 
     To let other accounts read the environments, create the work directory before the first run, or change its mode
     afterwards. tox keeps the permissions of an existing work directory that only the project's writers can change:

@@ -362,6 +362,8 @@ class ToxEnv(ABC):  # ruff:ignore[too-many-public-methods]  # public facade
         ):
             msg = f"{self.env_dir} is a file where this environment should live and not a redirect tox wrote; delete it"
             raise Fail(msg)
+        # before anything creates it as a parent with the umask: group-writable environments must stay unreachable
+        ensure_private_dir(self.core.get("work_dir", Path))
         conf = {"name": self.conf.name, "type": type(self).__name__}
         with self.cache.compare(conf, ToxEnv.__name__) as (eq, old):
             if eq is False and old is not None:  # pragma: no branch  # recreate if already created and not equals
