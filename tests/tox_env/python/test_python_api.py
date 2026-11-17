@@ -333,6 +333,7 @@ def test_base_python_env_no_conflict(env: str, base_python: list[str], ignore_co
         pytest.param("py310", ["py38", "py39"], "py310", id="py310-py38-py39-py310"),
         pytest.param("py3.11", ["py310"], "py3.11", id="py3-dot-11-py310-py3-dot-11"),
         pytest.param("py310-magic", ["py39"], "py310", id="py310-dash-magic-py39-py310"),
+        pytest.param("pypy-3.10-lint", ["python3.13"], "pypy3.10", id="pypy-dash-3-dot-10-dash-lint-python3-dot-13"),
     ],
 )
 def test_base_python_env_conflict_ignored(env: str, base_python: list[str], expected: str) -> None:
