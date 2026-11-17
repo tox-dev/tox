@@ -358,9 +358,6 @@ uploaded-prior-to = "P7D"
 decision-order = "stable"
 matrix.python = ">=3.15,<3.16"
 matrix.platforms = [ "linux_x86_64" ]
-# ty 0.0.100 needs an exception until the seven-day cutoff includes it.
-# expires 2026-11-24
-packages.ty.uploaded-prior-to = 2026-11-09T20:16:28Z
 
 [tool.simplint]
 docstring-style = "rst"
