@@ -279,6 +279,134 @@ def test_config_override_cannot_append(tox_ini_conf: ToxIniCreator) -> None:
         conf["foo"]
 
 
+@pytest.mark.parametrize(
+    ("filename", "config", "key", "override", "kept", "added"),
+    [
+        pytest.param(
+            "tox.ini",
+            "[tox]\nenv_list=a,b\n[testenv]\npackage=skip\ndeps=base\n",
+            "deps",
+            "testenv:a.deps+=added",
+            "base",
+            "added",
+            id="ini-no-section",
+        ),
+        pytest.param(
+            "tox.ini",
+            "[tox]\nenv_list=a,b\n[testenv]\npackage=skip\ndeps=base\n[testenv:a]\n",
+            "deps",
+            "testenv:a.deps+=added",
+            "base",
+            "added",
+            id="ini-section-without-key",
+        ),
+        pytest.param(
+            "tox.ini",
+            "[tox]\nenv_list=a,b\n[testenv]\npackage=skip\ndeps=base\n[testenv:a]\ndeps=local\n",
+            "deps",
+            "testenv:a.deps+=added",
+            "local",
+            "added",
+            id="ini-own-value",
+        ),
+        pytest.param(
+            "tox.ini",
+            "[tox]\nenv_list=a,b\n[testenv]\npackage=skip\npass_env=BASE\n",
+            "pass_env",
+            "testenv:a.passenv+=ADDED",
+            "BASE",
+            "ADDED",
+            id="ini-pass-env-alias",
+        ),
+        pytest.param(
+            "tox.ini",
+            "[tox]\nenv_list=a,b\n[testenv]\npackage=skip\nset_env=BASE=base\n",
+            "set_env",
+            "testenv:a.setenv+=ADDED=added",
+            "BASE=base",
+            "ADDED=added",
+            id="ini-set-env-alias",
+        ),
+        pytest.param(
+            "tox.toml",
+            'env_list=["a", "b"]\n[env_run_base]\npackage="skip"\ndeps=["base"]\n[env.a]\n',
+            "deps",
+            "env.a.deps+=added",
+            "base",
+            "added",
+            id="toml-table-without-key",
+        ),
+        pytest.param(
+            "tox.toml",
+            'env_list=["a", "b"]\n[env_run_base]\npackage="skip"\ndeps=["base"]\n[env.a]\ndeps=["local"]\n',
+            "deps",
+            "env.a.deps+=added",
+            "local",
+            "added",
+            id="toml-own-value",
+        ),
+        pytest.param(
+            "tox.toml",
+            'env_list=["a", "b"]\n[env_run_base]\npackage="skip"\npass_env=["BASE"]\n',
+            "pass_env",
+            "env.a.pass_env+=ADDED",
+            "BASE",
+            "ADDED",
+            id="toml-pass-env",
+        ),
+        pytest.param(
+            "tox.toml",
+            'env_list=["a", "b"]\n[env_run_base]\npackage="skip"\nset_env={BASE="base"}\n',
+            "set_env",
+            "env.a.set_env+=ADDED=added",
+            "BASE=base",
+            "ADDED=added",
+            id="toml-set-env",
+        ),
+    ],
+)
+def test_env_override_appends_inherited_value(
+    tox_project: ToxProjectCreator, filename: str, config: str, key: str, override: str, kept: str, added: str
+) -> None:
+    result = tox_project({filename: config}).run("c", "-e", "a,b", "-k", key, "-x", override)
+
+    result.assert_success()
+    selected, sibling = (
+        [line.strip() for line in section.partition("=")[2].splitlines()] for section in result.out.split("[testenv:b]")
+    )
+    assert (kept in selected, added in selected, added in sibling) == (True, True, False)
+
+
+@pytest.mark.parametrize(
+    ("overrides", "expected"),
+    [
+        pytest.param(["testenv:a.deps+=one", "testenv:a.deps+=two"], ["base", "one", "two"], id="append-twice"),
+        pytest.param(["testenv:a.deps=one", "testenv:a.deps+=two"], ["one", "two"], id="replace-append"),
+        pytest.param(["testenv:a.deps+=one", "testenv:a.deps=two"], ["two"], id="append-replace"),
+        pytest.param(["testenv.deps+=one", "testenv:a.deps+=two"], ["base", "one", "two"], id="base-append"),
+    ],
+)
+def test_env_override_inherited_sequence(
+    tox_project: ToxProjectCreator, overrides: list[str], expected: list[str]
+) -> None:
+    flags = [flag for override in overrides for flag in ("-x", override)]
+    result = tox_project({"tox.ini": "[tox]\nenv_list=a\n[testenv]\npackage=skip\ndeps=base\n"}).run(
+        "c", "-e", "a", "-k", "deps", *flags
+    )
+
+    result.assert_success()
+    assert [line.strip() for line in result.out.partition("=")[2].splitlines() if line.strip()] == expected
+
+
+def test_env_override_append_explicit_empty_value(tox_project: ToxProjectCreator) -> None:
+    project = tox_project({"tox.ini": "[tox]\nenv_list=a\n[testenv]\npackage=skip\ndeps=base\n[testenv:a]\ndeps=\n"})
+
+    result = project.run("c", "-e", "a", "-k", "deps", "-x", "testenv:a.deps+=added")
+
+    result.assert_success()
+    assert [line.strip() for line in result.out.partition("=")[2].splitlines() if line.strip()] == ["added"]
+
+
 def test_args_are_paths_when_disabled(tox_project: ToxProjectCreator) -> None:
     ini = "[testenv]\npackage=skip\ncommands={posargs}\nargs_are_paths=False"
     project = tox_project({"tox.ini": ini, "w": {"a.txt": "a"}})
