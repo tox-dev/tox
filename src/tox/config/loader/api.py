@@ -185,8 +185,8 @@ class Loader(Convert[T]):
 
         :returns: the converted type
 
-        :raises AppendOverridesError: when the source does not set the key, but has only ``key+=value`` overrides for it
-        :raises KeyError: when the key is not present in any source
+        :raises KeyError: when the key is not present in any source, or, as ``AppendOverridesError``, when the source
+            does not set the key but has only ``key+=value`` overrides for it
         :raises ValueError: when the value cannot be converted to the requested type
 
         """
