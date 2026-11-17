@@ -390,7 +390,7 @@ def _append_override(converted: V, override: V) -> V:
     elif isinstance(converted, PythonDeps) and isinstance(override, PythonDeps):
         converted += override
     else:
-        msg = "Only able to append to lists and dicts"
+        msg = "Only able to append to lists, sets and dicts"
         raise TypeError(msg)
     return converted
 

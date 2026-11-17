@@ -2563,6 +2563,9 @@ You could add additional dependencies by running:
 An append override aimed at one environment, such as ``env.py.deps+=pytest-xdist`` or ``testenv:py.deps+=pytest-xdist``,
 adds to the value that environment inherits from ``env_run_base`` or ``[testenv]`` when it does not set the key itself.
 
+``+=`` extends a list (such as ``deps`` or ``commands``), a set (such as ``labels``), a dictionary or :ref:`set_env`.
+Appending to a single value, such as ``description``, fails.
+
 You could set additional environment variables by running:
 
 .. tab:: TOML
