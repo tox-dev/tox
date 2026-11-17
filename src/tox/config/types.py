@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from collections import OrderedDict
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
 from tox.execute.request import shell_cmd
@@ -103,11 +103,13 @@ class FactorGroup:
 
     :param values: the factor values of the group
     :param default: the value used when no factor is active
+    :param env_values: the value the group takes in each environment its matrix generated
 
     """
 
     values: list[str]
     default: str | None = None
+    env_values: dict[str, str] = field(default_factory=dict)
 
 
 __all__ = [
