@@ -17,7 +17,7 @@ from typing import TYPE_CHECKING, Final, NamedTuple, cast
 from tox.config.set_env import SetEnv
 from tox.execute.request import ExecuteRequest
 from tox.report import HandledError
-from tox.util.path import ensure_cachedir_tag, ensure_empty_dir, ensure_gitignore, ensure_private_dir
+from tox.util.path import ensure_cachedir_tag, ensure_empty_dir, ensure_gitignore, ensure_private_dir, is_junction
 from tox.util.redact import redact_value
 from tox.util.typing_compat import override
 from tox.util.venv_redirect import forget_venv_redirect, release_venv_redirect
@@ -331,7 +331,7 @@ class ToxEnv(ABC):  # ruff:ignore[too-many-public-methods]  # public facade
         if self._run_state["clean"]:  # pragma: no branch  # other outcome untested
             return  # pragma: no cover  # untested error path
         env_dir: Final = self.env_dir
-        if env_dir.exists() or env_dir.is_symlink():
+        if env_dir.exists() or env_dir.is_symlink() or is_junction(env_dir):
             _LOGGER.warning("remove tox env folder %s", env_dir)
             # retract the redirect so nothing points at the environment while it rebuilds
             if self.core.get_optional("venv_redirect", bool) is not False:
@@ -354,9 +354,9 @@ class ToxEnv(ABC):  # ruff:ignore[too-many-public-methods]  # public facade
     def _setup_env(self) -> None:
         # 1. env dir exists
         # 2. contains a runner with the same type.
-        if self.env_dir.is_symlink():
-            symlink_msg: Final = f"{self.env_dir} is a symlink where this environment should live; delete it"
-            raise Fail(symlink_msg)
+        if self.env_dir.is_symlink() or is_junction(self.env_dir):
+            link_msg: Final = f"{self.env_dir} is a link where this environment should live; delete it"
+            raise Fail(link_msg)
         if self.env_dir.is_file() and not release_venv_redirect(
             self.env_dir, lambda target: target.is_relative_to(self.core.get("work_dir", Path))
         ):
@@ -373,7 +373,11 @@ class ToxEnv(ABC):  # ruff:ignore[too-many-public-methods]  # public facade
 
     def _handle_env_tmp_dir(self) -> None:
         env_tmp_dir: Final = self.env_tmp_dir
-        if env_tmp_dir.is_symlink() or (env_tmp_dir.exists() and next(env_tmp_dir.iterdir(), None) is not None):
+        if (
+            env_tmp_dir.is_symlink()
+            or is_junction(env_tmp_dir)
+            or (env_tmp_dir.exists() and next(env_tmp_dir.iterdir(), None) is not None)
+        ):
             _LOGGER.debug("clear env temp folder %s", env_tmp_dir)
             ensure_empty_dir(env_tmp_dir)
         env_tmp_dir.mkdir(parents=True, exist_ok=True)

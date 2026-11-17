@@ -52,11 +52,7 @@ def ensure_empty_dir(path: Path, except_filename: str | None = None) -> None:
     """
     if path.is_symlink():
         path.unlink()
-    elif (
-        sys.platform == "win32"
-        and os.path.lexists(path)
-        and getattr(path.lstat(), "st_reparse_tag", None) == getattr(stat, "IO_REPARSE_TAG_MOUNT_POINT", None)
-    ):
+    elif is_junction(path):  # pragma: win32 cover
         path.rmdir()
     if path.exists():
         if path.is_dir():
@@ -71,6 +67,21 @@ def ensure_empty_dir(path: Path, except_filename: str | None = None) -> None:
             path.mkdir()
     else:
         path.mkdir(parents=True)
+
+
+def is_junction(path: Path) -> bool:
+    """Check whether a path is a Windows junction, which ``Path.is_symlink`` does not report.
+
+    :param path: the path to check
+
+    :returns: ``True`` when the path is a junction, even one whose target is missing
+
+    """
+    return (
+        sys.platform == "win32"
+        and os.path.lexists(path)
+        and getattr(path.lstat(), "st_reparse_tag", None) == getattr(stat, "IO_REPARSE_TAG_MOUNT_POINT", None)
+    )
 
 
 def _empty_dir_fd(path: Path, except_filename: str | None, flags: int) -> None:
@@ -145,4 +156,5 @@ __all__ = [
     "ensure_empty_dir",
     "ensure_gitignore",
     "ensure_private_dir",
+    "is_junction",
 ]
