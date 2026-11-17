@@ -2328,23 +2328,28 @@ Python virtual environment packaging
     run environments do not set it and ``{pkg_dir}`` in a run environment does not resolve to the package directory.
     To use it there, refer to the packaging environment, for example to upload the built packages:
 
-    .. code-block:: toml
+    .. tab:: TOML
 
-        [env.publish]
-        commands = [["twine", "upload", { replace = "glob", pattern = "{[env:.pkg]pkg_dir}/*", extend = true }]]
+       .. code-block:: toml
 
-    .. code-block:: ini
+          [env.publish]
+          commands = [["twine", "upload", { replace = "glob", pattern = "{[env:.pkg]pkg_dir}/*", extend = true }]]
 
-        [testenv:.pkg]
-        pkg_dir = {tox_root}/dist
+    .. tab:: INI (deprecated)
 
-        [testenv:publish]
-        commands = twine upload {glob:{[testenv:.pkg]pkg_dir}/*}
+       .. code-block:: ini
 
-    In INI the referenced section must set the value itself, as ``[testenv:.pkg]`` does here. A separate
-    :ref:`wheel_build_env` may build the wheel into a different directory, so set ``pkg_dir`` in ``env_pkg_base``
-    (TOML) or ``[pkgenv]`` (INI) to share one directory between the packaging environments. See :ref:`glob
-    substitution` for the pattern syntax.
+          [testenv:.pkg]
+          pkg_dir = {tox_root}/dist
+
+          [testenv:publish]
+          commands = twine upload {glob:{[testenv:.pkg]pkg_dir}/*}
+
+    In TOML the reference resolves only when some environment in the configuration builds a package through ``.pkg``;
+    otherwise it stays as literal text. In INI the referenced section must set the value itself, as
+    ``[testenv:.pkg]`` does here. A separate :ref:`wheel_build_env` may build the wheel into a different directory; to
+    share one directory between the packaging environments, set ``pkg_dir`` in ``env_pkg_base`` (TOML) or ``[pkgenv]``
+    (INI), and in INI refer to it as ``{[pkgenv]pkg_dir}``. See :ref:`glob substitution` for the pattern syntax.
 
 For INI ``config_settings_*`` entries, tox reads one ``key=value`` pair per line. A substitution inside one pair cannot
 add another line; a substitution occupying a whole line can supply several pairs.
