@@ -5,6 +5,7 @@ from abc import abstractmethod
 from argparse import ArgumentTypeError
 from collections.abc import Iterable, Mapping
 from contextlib import contextmanager
+from functools import reduce
 from typing import TYPE_CHECKING, Any, Generic, TypeVar, cast
 
 from tox.plugin import impl
@@ -184,6 +185,7 @@ class Loader(Convert[T]):
 
         :returns: the converted type
 
+        :raises AppendOverridesError: when the source does not set the key, but has only ``key+=value`` overrides for it
         :raises KeyError: when the key is not present in any source
         :raises ValueError: when the value cannot be converted to the requested type
 
@@ -205,7 +207,7 @@ class Loader(Convert[T]):
                 # the value may be inherited from a later loader (such as a base section), append to that
                 with _handle_bad_value(key, args):
                     appends = [self._build_override(entry, of_type, factory, conf, args) for entry in overrides]
-                raise AppendOverridesError(key, appends)
+                raise AppendOverridesError(key, appends, args)
 
         with _handle_bad_value(key, args):
             for entry in overrides:
@@ -339,12 +341,15 @@ class AppendOverridesError(KeyError, Generic[V]):
 
     :param key: the configuration key
     :param appends: the converted values of the overrides, in order
+    :param load_args: the config load arguments, to report a value that cannot be appended to
 
     """
 
-    def __init__(self, key: str, appends: list[V]) -> None:
-        super().__init__(key, appends)
+    def __init__(self, key: str, appends: list[V], load_args: ConfigLoadArgs) -> None:
+        super().__init__(key, appends, load_args)
+        self.key = key
         self.appends = appends
+        self._load_args = load_args
 
     def apply(self, value: V) -> V:
         """Append the override values to the value another source sets for the key.
@@ -353,21 +358,22 @@ class AppendOverridesError(KeyError, Generic[V]):
 
         :returns: the value with the overrides appended
 
+        :raises HandledError: when the value cannot be appended to
+
         """
-        for entry in self.appends:
-            value = _append_override(value, entry)
-        return value
+        with _handle_bad_value(self.key, self._load_args):
+            return reduce(_append_override, self.appends, value)
 
     def fold(self) -> V:
         """Combine the override values when no other source sets the key, the first one acts as the value.
 
         :returns: the first override value with the others appended
 
+        :raises HandledError: when the override values cannot be appended to each other
+
         """
-        value, *rest = self.appends
-        for entry in rest:
-            value = _append_override(value, entry)
-        return value
+        with _handle_bad_value(self.key, self._load_args):
+            return reduce(_append_override, self.appends)
 
 
 def _append_override(converted: V, override: V) -> V:

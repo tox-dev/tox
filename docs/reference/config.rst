@@ -2560,6 +2560,9 @@ You could add additional dependencies by running:
 
        tox --override testenv.deps+=pytest-xdist
 
+An append override aimed at one environment, such as ``env.py.deps+=pytest-xdist`` or ``testenv:py.deps+=pytest-xdist``,
+adds to the value that environment inherits from ``env_run_base`` or ``[testenv]`` when it does not set the key itself.
+
 You could set additional environment variables by running:
 
 .. tab:: TOML
