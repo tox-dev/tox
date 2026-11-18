@@ -1,5 +1,21 @@
 from __future__ import annotations
 
+__lazy_modules__ = [
+    "glob",
+    "io",
+    "packaging.requirements",
+    "pathlib",
+    "tarfile",
+    "tox.execute",
+    "tox.session.cmd.run.single",
+    "tox.tox_env.errors",
+    "tox.tox_env.python.pip.req_file",
+    "tox.tox_env.util",
+    "zipfile",
+    f"{__spec__.parent}.pyproject",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
+    f"{__spec__.parent}.util",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
+]
+
 import glob
 import tarfile
 from abc import ABC

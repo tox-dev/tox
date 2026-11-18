@@ -1,5 +1,15 @@
 from __future__ import annotations
 
+__lazy_modules__ = [
+    "contextlib",
+    "json",
+    "logging",
+    "pathlib",
+    "shutil",
+    "typing",
+    f"{__spec__.parent}.path",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
+]
+
 import json
 import logging
 import os

@@ -1,5 +1,12 @@
 from __future__ import annotations
 
+__lazy_modules__ = [
+    "packaging.requirements",
+    "packaging.utils",
+    "tomllib",
+    f"{__spec__.parent}.virtual_env.package.util",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
+]
+
 import tomllib
 from typing import TYPE_CHECKING
 

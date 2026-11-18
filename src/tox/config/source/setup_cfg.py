@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+__lazy_modules__ = ["tox.config.types"]
+
 from typing import TYPE_CHECKING
 
 from tox.config.types import MissingRequiredConfigKeyError

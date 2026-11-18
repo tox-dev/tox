@@ -2,6 +2,27 @@
 
 from __future__ import annotations
 
+__lazy_modules__ = [
+    "filelock",
+    "importlib.metadata",
+    "json",
+    "locale",
+    "logging",
+    "packaging.requirements",
+    "packaging.utils",
+    "packaging.version",
+    "pathlib",
+    "urllib.parse",
+    f"{__spec__.parent}.config.loader.memory",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
+    f"{__spec__.parent}.execute.api",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
+    f"{__spec__.parent}.report",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
+    f"{__spec__.parent}.tox_env.errors",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
+    f"{__spec__.parent}.tox_env.python.pip.req_file",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
+    f"{__spec__.parent}.util.file_view",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
+    f"{__spec__.parent}.util.path",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
+    f"{__spec__.parent}.util.redact",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
+]
+
 import json
 import locale
 import logging

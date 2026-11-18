@@ -2,6 +2,15 @@
 
 from __future__ import annotations
 
+__lazy_modules__ = [
+    "pathlib",
+    "tox.config.types",
+    "tox.execute.api",
+    "tox.report",
+    "tox.tox_env.errors",
+    "tox.tox_env.python.virtual_env.package.pyproject",
+]
+
 import logging
 import time
 from pathlib import Path

@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+__lazy_modules__ = ["tox.util.redact"]
+
 from typing import TYPE_CHECKING
 
 from tox.util.redact import redact_argv

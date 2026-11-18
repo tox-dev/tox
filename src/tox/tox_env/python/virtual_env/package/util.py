@@ -1,5 +1,14 @@
 from __future__ import annotations  # simplint: ignore[catch-all-module]  # builder helpers
 
+__lazy_modules__ = [
+    "copy",
+    "packaging.markers",
+    "packaging.utils",
+    "pathlib",
+    "tarfile",
+    "tox.tox_env.errors",
+]
+
 import tarfile
 from copy import deepcopy
 from pathlib import PurePath

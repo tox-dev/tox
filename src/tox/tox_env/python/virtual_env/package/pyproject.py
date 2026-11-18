@@ -1,5 +1,22 @@
 from __future__ import annotations
 
+__lazy_modules__ = [
+    "cachetools",
+    "collections",
+    "importlib.metadata",
+    "itertools",
+    "logging",
+    "packaging.requirements",
+    "pathlib",
+    "tarfile",
+    "threading",
+    "tox.execute.pep517_backend",
+    "tox.execute.request",
+    "tox.tox_env.python.extras",
+    "tox.util.file_view",
+    f"{__spec__.parent}.util",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
+]
+
 import logging
 import os
 import stat

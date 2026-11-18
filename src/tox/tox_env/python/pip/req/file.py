@@ -2,6 +2,20 @@
 
 from __future__ import annotations
 
+__lazy_modules__ = [
+    "argparse",
+    "locale",
+    "packaging.requirements",
+    "pathlib",
+    "shlex",
+    "tox.config.loader.str_convert",
+    "tox.util.redact",
+    "urllib.parse",
+    "urllib.request",
+    f"{__spec__.parent}.args",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
+    f"{__spec__.parent}.util",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
+]
+
 import codecs
 import locale
 import os

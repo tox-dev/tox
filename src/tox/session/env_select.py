@@ -1,5 +1,24 @@
 from __future__ import annotations
 
+__lazy_modules__ = [
+    "collections",
+    "difflib",
+    "importlib.util",
+    "itertools",
+    "pathlib",
+    "tox.config.cli.parser",
+    "tox.config.loader.ini.factor",
+    "tox.config.main",
+    "tox.config.source.discover",
+    "tox.config.types",
+    "tox.report",
+    "tox.tox_env.api",
+    "tox.tox_env.errors",
+    "tox.tox_env.package",
+    "tox.tox_env.register",
+    "tox.tox_env.runner",
+]
+
 import argparse
 import logging
 import re

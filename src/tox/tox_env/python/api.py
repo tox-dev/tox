@@ -2,6 +2,15 @@
 
 from __future__ import annotations
 
+__lazy_modules__ = [
+    "functools",
+    "logging",
+    "pathlib",
+    "sysconfig",
+    "tox.config.loader.str_convert",
+    "virtualenv.discovery.py_spec",
+]
+
 import logging
 import re
 import sys

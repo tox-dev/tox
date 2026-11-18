@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+__lazy_modules__ = ["argparse", "packaging.requirements", "shlex"]
+
 import re
 import shlex
 import sys

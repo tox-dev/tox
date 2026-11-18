@@ -2,6 +2,24 @@
 
 from __future__ import annotations
 
+__lazy_modules__ = [
+    "asyncio.windows_utils",
+    "contextlib",
+    "fnmatch",
+    "logging",
+    "pathlib",
+    "shutil",
+    "signal",
+    "struct",
+    "subprocess",
+    "tox.execute.request",
+    "tox.execute.util",
+    "tox.tox_env.errors",
+    "tox.util.redact",
+    f"{__spec__.parent}.read_via_thread_unix",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
+    f"{__spec__.parent}.read_via_thread_windows",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
+]
+
 import fnmatch
 import logging
 import os

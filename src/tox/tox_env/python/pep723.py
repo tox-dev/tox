@@ -2,6 +2,19 @@
 
 from __future__ import annotations
 
+__lazy_modules__ = [
+    "logging",
+    "packaging.requirements",
+    "packaging.specifiers",
+    "packaging.version",
+    "pathlib",
+    "tomllib",
+    "tox.config.types",
+    "tox.tox_env.errors",
+    f"{__spec__.parent}.pip.req_file",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
+    f"{__spec__.parent}.runner",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
+]
+
 import logging
 import re
 import tomllib

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+__lazy_modules__ = ["typing"]
+
 import os
 from types import MappingProxyType
 from typing import Final

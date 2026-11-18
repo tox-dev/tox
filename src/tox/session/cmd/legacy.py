@@ -1,5 +1,22 @@
 from __future__ import annotations
 
+__lazy_modules__ = [
+    "packaging.requirements",
+    "packaging.utils",
+    "pathlib",
+    "tox.config.cli.parser",
+    "tox.config.loader.memory",
+    "tox.config.set_env",
+    "tox.session.env_select",
+    "tox.tox_env.python.pip.req_file",
+    f"{__spec__.parent}.devenv",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
+    f"{__spec__.parent}.list_env",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
+    f"{__spec__.parent}.run.common",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
+    f"{__spec__.parent}.run.parallel",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
+    f"{__spec__.parent}.run.sequential",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
+    f"{__spec__.parent}.show_config",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
+]
+
 from pathlib import Path
 from typing import TYPE_CHECKING
 

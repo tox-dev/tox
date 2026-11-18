@@ -2,6 +2,13 @@
 
 from __future__ import annotations
 
+__lazy_modules__ = [
+    "json",
+    "pathlib",
+    f"{__spec__.parent}.env",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
+    f"{__spec__.parent}.main",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
+]
+
 import json
 from pathlib import Path
 

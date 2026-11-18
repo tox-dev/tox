@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+__lazy_modules__ = [f"{__spec__.parent}.loader.replacer"]  # ty: ignore[missing-union-attribute]  # imported modules have a spec
+
 import re
 from typing import TYPE_CHECKING, NamedTuple
 

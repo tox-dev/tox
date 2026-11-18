@@ -1,5 +1,26 @@
 from __future__ import annotations
 
+__lazy_modules__ = [
+    "collections",
+    "collections.abc",
+    "functools",
+    "hashlib",
+    "json",
+    "logging",
+    "operator",
+    "packaging.requirements",
+    "packaging.utils",
+    "pathlib",
+    "tox.config.types",
+    "tox.execute.request",
+    "tox.tox_env.errors",
+    "tox.tox_env.python.package",
+    "tox.tox_env.python.pylock",
+    "urllib.error",
+    "urllib.parse",
+    f"{__spec__.parent}.req_file",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
+]
+
 import hashlib
 import json
 import logging

@@ -1,5 +1,20 @@
 from __future__ import annotations
 
+__lazy_modules__ = [
+    "ast",
+    "glob",
+    "pathlib",
+    "tox.config.loader.api",
+    "tox.config.loader.ini.factor",
+    "tox.config.loader.stringify",
+    "tox.config.set_env",
+    "tox.config.sets",
+    "tox.config.types",
+    "tox.tox_env.python.pip.req.file",
+    "tox.tox_env.python.pip.req_file",
+    f"{__spec__.parent}._validate",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
+]
+
 import ast
 import glob
 import os

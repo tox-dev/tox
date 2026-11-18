@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+__lazy_modules__ = ["colorama", "threading"]
+
 from contextlib import contextmanager
 from threading import Lock, Timer
 from typing import IO, TYPE_CHECKING

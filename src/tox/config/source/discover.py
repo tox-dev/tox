@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+__lazy_modules__ = ["itertools", "logging", "pathlib", "tox.config.types", "tox.report"]
+
 import logging
 from itertools import chain
 from pathlib import Path

@@ -1,5 +1,14 @@
 from __future__ import annotations
 
+__lazy_modules__ = [
+    "collections.abc",
+    "pathlib",
+    "tox.config.set_env",
+    "tox.config.types",
+    "tox.tox_env.python.pip.req_file",
+    f"{__spec__.parent}.replacer",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
+]
+
 from collections.abc import Mapping, Sequence
 from pathlib import Path
 from typing import TYPE_CHECKING, Final

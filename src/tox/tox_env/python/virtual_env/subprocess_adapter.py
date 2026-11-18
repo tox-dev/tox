@@ -2,6 +2,21 @@
 
 from __future__ import annotations
 
+__lazy_modules__ = [
+    "filelock",
+    "hashlib",
+    "json",
+    "logging",
+    "packaging.requirements",
+    "packaging.utils",
+    "pathlib",
+    "shutil",
+    "subprocess",
+    "tempfile",
+    "tox.tox_env.errors",
+    "venv",
+]
+
 import hashlib
 import json
 import logging

@@ -1,5 +1,13 @@
 from __future__ import annotations
 
+__lazy_modules__ = [
+    "itertools",
+    "tox.config.main",
+    "tox.journal",
+    "tox.plugin.manager",
+    f"{__spec__.parent}.env_select",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
+]
+
 import sys
 from itertools import chain, tee
 from typing import TYPE_CHECKING

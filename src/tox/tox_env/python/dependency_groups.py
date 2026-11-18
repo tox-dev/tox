@@ -1,5 +1,14 @@
 from __future__ import annotations
 
+__lazy_modules__ = [
+    "collections",
+    "packaging.markers",
+    "packaging.requirements",
+    "packaging.utils",
+    "tomllib",
+    "tox.tox_env.errors",
+]
+
 import tomllib
 from collections import defaultdict
 from typing import TYPE_CHECKING, TypedDict

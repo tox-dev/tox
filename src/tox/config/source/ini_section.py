@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+__lazy_modules__ = ["tox.config.loader.ini.factor", "typing"]
+
 from typing import Final
 
 from tox.config.loader.ini.factor import extend_factors

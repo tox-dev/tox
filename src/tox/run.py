@@ -2,6 +2,14 @@
 
 from __future__ import annotations
 
+__lazy_modules__ = [
+    "faulthandler",
+    "logging",
+    f"{__spec__.parent}.config.cli.parse",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
+    f"{__spec__.parent}.report",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
+    f"{__spec__.parent}.session.state",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
+]
+
 import faulthandler
 import logging
 import os

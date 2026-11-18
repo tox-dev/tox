@@ -2,6 +2,20 @@
 
 from __future__ import annotations
 
+__lazy_modules__ = [
+    "logging",
+    "pluggy",
+    "tox",
+    "tox.config.loader",
+    "tox.session.cmd.run",
+    "tox.tox_env",
+    "tox.tox_env.python.virtual_env",
+    "tox.tox_env.python.virtual_env.package",
+    "tox.tox_env.register",
+    f"{__spec__.parent}",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
+    f"{__spec__.parent}.inline",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
+]
+
 import logging
 import os
 from typing import TYPE_CHECKING

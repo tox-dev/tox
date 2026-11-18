@@ -1,5 +1,12 @@
 from __future__ import annotations
 
+__lazy_modules__ = [
+    "pathlib",
+    f"{__spec__.parent}.of_type",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
+    f"{__spec__.parent}.set_env",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
+    f"{__spec__.parent}.types",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
+]
+
 import sys
 from abc import ABC, abstractmethod
 from pathlib import Path

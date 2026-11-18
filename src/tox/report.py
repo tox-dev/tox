@@ -2,6 +2,14 @@
 
 from __future__ import annotations
 
+__lazy_modules__ = [
+    "colorama",
+    "locale",
+    "pathlib",
+    "virtualenv.util.subprocess",
+    f"{__spec__.parent}.util.redact",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
+]
+
 import locale
 import logging
 import os

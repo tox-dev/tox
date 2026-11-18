@@ -2,6 +2,16 @@
 
 from __future__ import annotations
 
+__lazy_modules__ = [
+    "contextlib",
+    "filelock",
+    "functools",
+    "pathlib",
+    "threading",
+    "tox.util.path",
+    "types",
+]
+
 import functools
 from abc import ABC, abstractmethod
 from contextlib import nullcontext

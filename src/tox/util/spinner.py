@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+__lazy_modules__ = ["collections", "colorama", "textwrap", "threading"]
+
 import os
 import sys
 import textwrap

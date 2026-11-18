@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+__lazy_modules__ = ["inspect", "itertools", "pathlib", "shlex", "tox.config.types"]
+
 import shlex
 import sys
 from inspect import isclass

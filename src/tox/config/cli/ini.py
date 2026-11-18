@@ -2,6 +2,14 @@
 
 from __future__ import annotations
 
+__lazy_modules__ = [
+    "configparser",
+    "logging",
+    "tox.config.loader.api",
+    "tox.config.loader.ini",
+    "tox.config.source.ini_section",
+]
+
 import logging
 import os
 from configparser import ConfigParser

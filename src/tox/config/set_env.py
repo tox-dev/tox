@@ -1,5 +1,16 @@
 from __future__ import annotations
 
+__lazy_modules__ = [
+    "contextlib",
+    "itertools",
+    "packaging.markers",
+    "pathlib",
+    "tox.report",
+    "tox.tox_env.errors",
+    f"{__spec__.parent}.loader.api",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
+    f"{__spec__.parent}.set_env_line",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
+]
+
 import re
 from contextlib import suppress
 from dataclasses import dataclass

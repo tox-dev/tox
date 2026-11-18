@@ -2,6 +2,14 @@
 
 from __future__ import annotations
 
+__lazy_modules__ = [
+    "configparser",
+    "re",
+    "tox.config.loader.api",
+    "tox.config.loader.stringify",
+    "tox.config.sets",
+]
+
 import re
 from configparser import SectionProxy
 from functools import cache

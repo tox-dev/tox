@@ -1,5 +1,7 @@
 from __future__ import annotations  # simplint: ignore[catch-all-module]  # process launch helpers
 
+__lazy_modules__ = ["pathlib", "shlex", "tox.tox_env.errors"]
+
 import re
 import shlex
 from pathlib import Path

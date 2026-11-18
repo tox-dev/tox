@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+__lazy_modules__ = ["collections", "tox.execute.request"]
+
 from collections import OrderedDict
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
