@@ -1,6 +1,9 @@
 from __future__ import annotations
 
-__lazy_modules__ = ["tomllib", "tox.config.types"]
+__lazy_modules__ = [
+    "tomllib",
+    "tox.config.types",
+]
 
 import tomllib
 from typing import TYPE_CHECKING

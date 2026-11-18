@@ -1,6 +1,10 @@
 from __future__ import annotations
 
-__lazy_modules__ = ["inspect", "tox.config.types", "types"]
+__lazy_modules__ = [
+    "inspect",
+    "tox.config.types",
+    "types",
+]
 
 from inspect import isclass
 from types import UnionType

@@ -7,7 +7,11 @@ version, installed packages, etc.
 
 from __future__ import annotations
 
-__lazy_modules__ = ["json", "pathlib", "tempfile"]
+__lazy_modules__ = [
+    "json",
+    "pathlib",
+    "tempfile",
+]
 
 import json
 import os

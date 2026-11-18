@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
-__lazy_modules__ = ["pathlib", "tox.util.redact"]
+__lazy_modules__ = [
+    "pathlib",
+    "tox.util.redact",
+]
 
 import sys
 from enum import Enum

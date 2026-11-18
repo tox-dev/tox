@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
-__lazy_modules__ = ["tox.session.env_select", f"{__spec__.parent}.common"]  # ty: ignore[missing-union-attribute]  # imported modules have a spec
+__lazy_modules__ = [
+    "tox.session.env_select",
+    f"{__spec__.parent}.common",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
+]
 
 from typing import TYPE_CHECKING
 

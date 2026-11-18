@@ -2,7 +2,11 @@
 
 from __future__ import annotations
 
-__lazy_modules__ = ["pathlib", "tox.session.cmd.run.common", "tox.session.env_select"]
+__lazy_modules__ = [
+    "pathlib",
+    "tox.session.cmd.run.common",
+    "tox.session.env_select",
+]
 
 from pathlib import Path
 from typing import (

@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
-__lazy_modules__ = ["logging", "tox.util.redact"]
+__lazy_modules__ = [
+    "logging",
+    "tox.util.redact",
+]
 
 import logging
 import os

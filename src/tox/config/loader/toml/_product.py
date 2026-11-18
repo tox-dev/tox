@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
-__lazy_modules__ = ["itertools", "tox.config.loader.ini.factor"]
+__lazy_modules__ = [
+    "itertools",
+    "tox.config.loader.ini.factor",
+]
 
 from itertools import product
 from typing import TYPE_CHECKING

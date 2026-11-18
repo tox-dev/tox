@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
-__lazy_modules__ = ["colorama", f"{__spec__.parent}.stream"]  # ty: ignore[missing-union-attribute]  # imported modules have a spec
+__lazy_modules__ = [
+    "colorama",
+    f"{__spec__.parent}.stream",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
+]
 
 import logging
 import sys

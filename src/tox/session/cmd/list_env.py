@@ -2,7 +2,11 @@
 
 from __future__ import annotations
 
-__lazy_modules__ = ["itertools", "tox.config.cli.parser", "tox.session.env_select"]
+__lazy_modules__ = [
+    "itertools",
+    "tox.config.cli.parser",
+    "tox.session.env_select",
+]
 
 from itertools import chain
 from typing import TYPE_CHECKING

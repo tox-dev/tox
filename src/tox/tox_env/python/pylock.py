@@ -1,6 +1,10 @@
 from __future__ import annotations
 
-__lazy_modules__ = ["packaging.pylock", "tomllib", "tox.tox_env.errors"]
+__lazy_modules__ = [
+    "packaging.pylock",
+    "tomllib",
+    "tox.tox_env.errors",
+]
 
 import tomllib
 from dataclasses import dataclass, field

@@ -1,6 +1,12 @@
 from __future__ import annotations
 
-__lazy_modules__ = ["collections", "inspect", "pathlib", "tox.config.types", "types"]
+__lazy_modules__ = [
+    "collections",
+    "inspect",
+    "pathlib",
+    "tox.config.types",
+    "types",
+]
 
 import typing
 from abc import ABC, abstractmethod

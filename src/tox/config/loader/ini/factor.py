@@ -2,7 +2,11 @@
 
 from __future__ import annotations
 
-__lazy_modules__ = ["itertools", "python_discovery", "sysconfig"]
+__lazy_modules__ = [
+    "itertools",
+    "python_discovery",
+    "sysconfig",
+]
 
 import re
 import sys

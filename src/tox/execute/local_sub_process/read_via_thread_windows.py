@@ -2,7 +2,10 @@
 
 from __future__ import annotations  # pragma: win32 cover
 
-__lazy_modules__ = ["_overlapped", "contextlib"]
+__lazy_modules__ = [
+    "_overlapped",
+    "contextlib",
+]
 
 import contextlib  # pragma: win32 cover
 import sys  # pragma: win32 cover

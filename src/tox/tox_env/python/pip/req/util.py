@@ -2,7 +2,12 @@
 
 from __future__ import annotations
 
-__lazy_modules__ = ["packaging.utils", "typing", "urllib.parse", "urllib.request"]
+__lazy_modules__ = [
+    "packaging.utils",
+    "typing",
+    "urllib.parse",
+    "urllib.request",
+]
 
 from typing import Final
 from urllib.parse import urlsplit

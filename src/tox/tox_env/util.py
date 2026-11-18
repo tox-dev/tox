@@ -1,6 +1,9 @@
 from __future__ import annotations  # simplint: ignore[catch-all-module]  # shared environment config
 
-__lazy_modules__ = ["pathlib", "tox.config.types"]
+__lazy_modules__ = [
+    "pathlib",
+    "tox.config.types",
+]
 
 from pathlib import Path
 from typing import TYPE_CHECKING

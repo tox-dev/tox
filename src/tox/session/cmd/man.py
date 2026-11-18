@@ -1,6 +1,9 @@
 from __future__ import annotations
 
-__lazy_modules__ = ["pathlib", "subprocess"]
+__lazy_modules__ = [
+    "pathlib",
+    "subprocess",
+]
 
 import os
 import subprocess

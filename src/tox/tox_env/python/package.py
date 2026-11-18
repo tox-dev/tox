@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
-__lazy_modules__ = ["packaging.requirements", "tox.tox_env.errors"]
+__lazy_modules__ = [
+    "packaging.requirements",
+    "tox.tox_env.errors",
+]
 
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, cast
