@@ -593,7 +593,7 @@ class Pep517VirtualEnvFrontend(Frontend):
             setattr(self, hook, cached(into, key=key)(getattr(self, hook)))
 
     @override
-    def _send(
+    def _send(  # type: ignore[override]  # ty: ignore[incompatible-method-override]  # both results unpack to three fields
         self,
         cmd: str,
         **kwargs: Any,
