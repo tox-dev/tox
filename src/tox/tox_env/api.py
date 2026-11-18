@@ -2,6 +2,21 @@
 
 from __future__ import annotations
 
+__lazy_modules__ = [
+    "fnmatch",
+    "glob",
+    "re",
+    "string",
+    "tox.config.set_env",
+    "tox.execute.request",
+    "tox.report",
+    "tox.util.path",
+    "tox.util.redact",
+    "tox.util.venv_redirect",
+    f"{__spec__.parent}.errors",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
+    f"{__spec__.parent}.info",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
+]
+
 import fnmatch
 import glob
 import logging

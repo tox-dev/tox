@@ -2,6 +2,11 @@
 
 from __future__ import annotations
 
+__lazy_modules__ = [
+    "contextlib",
+    "selectors",
+]
+
 import contextlib  # pragma: win32 no cover
 import errno  # pragma: win32 no cover
 import os  # pragma: win32 no cover

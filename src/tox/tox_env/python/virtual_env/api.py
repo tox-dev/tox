@@ -2,6 +2,22 @@
 
 from __future__ import annotations
 
+__lazy_modules__ = [
+    "contextlib",
+    "io",
+    "pathlib",
+    "python_discovery",
+    "tox.config.loader.str_convert",
+    "tox.execute.local_sub_process",
+    "tox.report",
+    "tox.tox_env.errors",
+    "tox.tox_env.python.pip.pip_install",
+    "virtualenv",
+    "virtualenv.discovery",
+    "virtualenv.discovery.py_spec",
+    f"{__spec__.parent}.subprocess_adapter",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
+]
+
 import os
 import sys
 from abc import ABC

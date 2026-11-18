@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+__lazy_modules__ = ["collections"]
+
 from collections import OrderedDict, defaultdict
 from typing import TYPE_CHECKING
 

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+__lazy_modules__ = ["typing"]
+
 from typing import Final
 
 import pluggy

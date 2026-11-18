@@ -1,5 +1,11 @@
 from __future__ import annotations
 
+__lazy_modules__ = [
+    "colorama",
+    "json",
+    f"{__spec__.parent}.common",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
+]
+
 import json
 import re
 from typing import TYPE_CHECKING, Final

@@ -1,5 +1,21 @@
 from __future__ import annotations
 
+__lazy_modules__ = [
+    "inspect",
+    "logging",
+    "tox.config.loader.replacer",
+    "tox.config.loader.str_convert",
+    "tox.config.set_env",
+    "tox.config.types",
+    "tox.report",
+    "tox.tox_env.python.pip.req.file",
+    "tox.tox_env.python.pip.req_file",
+    "types",
+    f"{__spec__.parent}._product",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
+    f"{__spec__.parent}._replace",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
+    f"{__spec__.parent}._validate",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
+]
+
 import inspect
 import logging
 from types import GenericAlias

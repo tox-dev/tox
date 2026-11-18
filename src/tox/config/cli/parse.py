@@ -2,6 +2,15 @@
 
 from __future__ import annotations
 
+__lazy_modules__ = [
+    "contextlib",
+    "locale",
+    "pathlib",
+    "tox.config.source",
+    "tox.report",
+    f"{__spec__.parent}.parser",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
+]
+
 import locale
 import os
 from contextlib import redirect_stderr, suppress

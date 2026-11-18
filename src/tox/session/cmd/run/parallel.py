@@ -2,6 +2,14 @@
 
 from __future__ import annotations
 
+__lazy_modules__ = [
+    "argparse",
+    "tox.session.env_select",
+    "tox.util.ci",
+    "tox.util.cpu",
+    f"{__spec__.parent}.common",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
+]
+
 import logging
 from argparse import ArgumentParser, ArgumentTypeError
 from typing import TYPE_CHECKING, Final

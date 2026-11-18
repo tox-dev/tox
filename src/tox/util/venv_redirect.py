@@ -2,6 +2,13 @@
 
 from __future__ import annotations
 
+__lazy_modules__ = [
+    "logging",
+    "msvcrt",
+    "pathlib",
+    "secrets",
+]
+
 import ctypes
 import logging
 import ntpath

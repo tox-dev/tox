@@ -1,5 +1,12 @@
 from __future__ import annotations
 
+__lazy_modules__ = [
+    "pathlib",
+    "tox.config.types",
+    f"{__spec__.parent}.section",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
+    f"{__spec__.parent}.str_convert",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
+]
+
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 

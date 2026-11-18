@@ -2,6 +2,16 @@
 
 from __future__ import annotations
 
+__lazy_modules__ = [
+    "pyproject_api",
+    "subprocess",
+    "threading",
+    f"{__spec__.parent}",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
+    f"{__spec__.parent}.local_sub_process",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
+    f"{__spec__.parent}.request",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
+    f"{__spec__.parent}.stream",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
+]
+
 import time
 from subprocess import TimeoutExpired
 from threading import Lock

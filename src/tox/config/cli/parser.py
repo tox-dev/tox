@@ -2,6 +2,18 @@
 
 from __future__ import annotations
 
+__lazy_modules__ = [
+    "colorama",
+    "logging",
+    "pathlib",
+    "random",
+    "tox.plugin",
+    "tox.util.ci",
+    "tox.util.redact",
+    f"{__spec__.parent}.env_var",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
+    f"{__spec__.parent}.ini",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
+]
+
 import argparse
 import logging
 import os

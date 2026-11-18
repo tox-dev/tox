@@ -1,5 +1,16 @@
 from __future__ import annotations
 
+__lazy_modules__ = [
+    "argparse",
+    "functools",
+    "inspect",
+    "tox.report",
+    "tox.tox_env.errors",
+    "tox.tox_env.python.pip.req_file",
+    "tox.util.redact",
+    f"{__spec__.parent}.replacer",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
+]
+
 import inspect
 from abc import abstractmethod
 from argparse import ArgumentTypeError

@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+__lazy_modules__ = ["threading"]
+
 from abc import ABC, abstractmethod
 from threading import Event, Thread
 from typing import TYPE_CHECKING, Final

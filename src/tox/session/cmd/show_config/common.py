@@ -1,5 +1,10 @@
 from __future__ import annotations  # simplint: ignore[catch-all-module]  # shared show-config output
 
+__lazy_modules__ = [
+    "pathlib",
+    "tox.config.loader.native",
+]
+
 import os
 from pathlib import Path
 from typing import TYPE_CHECKING

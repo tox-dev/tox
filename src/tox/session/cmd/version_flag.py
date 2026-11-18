@@ -2,6 +2,14 @@
 
 from __future__ import annotations
 
+__lazy_modules__ = [
+    "argparse",
+    "pathlib",
+    "tox.plugin.manager",
+    "tox.util.typing_compat",
+    "tox.version",
+]
+
 import sys
 from argparse import SUPPRESS, Action, ArgumentParser, Namespace
 from pathlib import Path

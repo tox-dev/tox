@@ -1,5 +1,13 @@
 from __future__ import annotations
 
+__lazy_modules__ = [
+    "colorama",
+    "pathlib",
+    "textwrap",
+    "tox.config.loader.stringify",
+    f"{__spec__.parent}.common",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
+]
+
 import os
 import sys
 from pathlib import Path

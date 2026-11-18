@@ -1,5 +1,14 @@
 from __future__ import annotations
 
+__lazy_modules__ = [
+    "collections",
+    "itertools",
+    "logging",
+    "pathlib",
+    "tox.util.redact",
+    f"{__spec__.parent}.source.api",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
+]
+
 import logging
 import os
 import sys

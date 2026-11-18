@@ -2,6 +2,14 @@
 
 from __future__ import annotations
 
+__lazy_modules__ = [
+    "functools",
+    "glob",
+    "pathlib",
+    "shlex",
+    "tox.config.types",
+]
+
 import dataclasses
 import glob
 import logging

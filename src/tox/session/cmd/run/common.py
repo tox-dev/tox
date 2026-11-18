@@ -2,6 +2,26 @@
 
 from __future__ import annotations
 
+__lazy_modules__ = [
+    "colorama",
+    "concurrent.futures",
+    "fnmatch",
+    "pathlib",
+    "signal",
+    "threading",
+    "tox.config.cli.parser",
+    "tox.config.types",
+    "tox.execute",
+    "tox.journal",
+    "tox.report",
+    "tox.tox_env.errors",
+    "tox.util.graph",
+    "tox.util.venv_redirect",
+    "urllib.parse",
+    "urllib.request",
+    f"{__spec__.parent}.single",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
+]
+
 import logging
 import os
 import time

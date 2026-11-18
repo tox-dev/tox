@@ -1,5 +1,11 @@
 from __future__ import annotations
 
+__lazy_modules__ = [
+    "contextlib",
+    "pathlib",
+    "shutil",
+]
+
 import os
 import stat
 import sys

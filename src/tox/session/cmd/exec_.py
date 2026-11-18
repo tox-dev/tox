@@ -2,6 +2,16 @@
 
 from __future__ import annotations
 
+__lazy_modules__ = [
+    "pathlib",
+    "tox.config.loader.memory",
+    "tox.config.types",
+    "tox.report",
+    "tox.session.env_select",
+    f"{__spec__.parent}.run.common",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
+    f"{__spec__.parent}.run.sequential",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
+]
+
 from pathlib import Path
 from typing import TYPE_CHECKING
 

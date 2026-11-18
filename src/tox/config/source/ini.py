@@ -2,6 +2,16 @@
 
 from __future__ import annotations
 
+__lazy_modules__ = [
+    "collections",
+    "configparser",
+    "itertools",
+    "tox.config.loader.ini",
+    "tox.config.loader.ini.factor",
+    "tox.config.loader.section",
+    "tox.config.types",
+]
+
 from collections import defaultdict
 from configparser import ConfigParser
 from configparser import Error as ConfigParserError

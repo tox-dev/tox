@@ -2,6 +2,18 @@
 
 from __future__ import annotations
 
+__lazy_modules__ = [
+    "json",
+    "packaging.requirements",
+    "packaging.version",
+    "pathlib",
+    "tox.config.cli.parser",
+    "tox.config.set_env",
+    "tox.config.types",
+    "tox.tox_env.python.pip.req_file",
+    "types",
+]
+
 import json
 import sys
 import typing

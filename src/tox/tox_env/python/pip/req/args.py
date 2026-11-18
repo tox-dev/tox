@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+__lazy_modules__ = ["bisect"]
+
 import bisect
 import re
 from argparse import Action, ArgumentParser, ArgumentTypeError, Namespace

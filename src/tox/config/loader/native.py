@@ -1,5 +1,13 @@
 from __future__ import annotations
 
+__lazy_modules__ = [
+    "collections.abc",
+    "pathlib",
+    "tox.config.set_env",
+    "tox.config.types",
+    "tox.tox_env.python.pip.req_file",
+]
+
 from collections.abc import Mapping, Sequence
 from pathlib import Path
 from typing import TYPE_CHECKING

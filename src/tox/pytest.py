@@ -2,6 +2,28 @@
 
 from __future__ import annotations
 
+__lazy_modules__ = [
+    "_pytest.fixtures",
+    "devpi_process",
+    "inspect",
+    "pathlib",
+    "re",
+    "shutil",
+    "socket",
+    "textwrap",
+    "tox.run",
+    "types",
+    "warnings",
+    f"{__spec__.parent}.execute.api",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
+    f"{__spec__.parent}.execute.request",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
+    f"{__spec__.parent}.plugin",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
+    f"{__spec__.parent}.report",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
+    f"{__spec__.parent}.run",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
+    f"{__spec__.parent}.session.cmd.run.parallel",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
+    f"{__spec__.parent}.tox_env",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
+    f"{__spec__.parent}.tox_env.api",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
+]
+
 import inspect
 import os
 import re

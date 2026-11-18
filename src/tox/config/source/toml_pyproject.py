@@ -2,6 +2,14 @@
 
 from __future__ import annotations
 
+__lazy_modules__ = [
+    "itertools",
+    "tomllib",
+    "tox.config.loader.toml",
+    "tox.config.types",
+    "tox.report",
+]
+
 import tomllib
 from itertools import product
 from typing import TYPE_CHECKING, Any, Final, cast

@@ -1,5 +1,17 @@
 from __future__ import annotations
 
+__lazy_modules__ = [
+    "hashlib",
+    "logging",
+    "pathlib",
+    "tox.config.types",
+    "tox.execute",
+    "tox.session.cmd.run.single",
+    f"{__spec__.parent}.errors",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
+    f"{__spec__.parent}.package",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
+    f"{__spec__.parent}.util",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
+]
+
 import logging
 import os
 import re

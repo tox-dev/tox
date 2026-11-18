@@ -1,5 +1,22 @@
 from __future__ import annotations
 
+__lazy_modules__ = [
+    "cachetools",
+    "collections",
+    "importlib.metadata",
+    "itertools",
+    "logging",
+    "packaging.requirements",
+    "pathlib",
+    "tarfile",
+    "threading",
+    "tox.execute.pep517_backend",
+    "tox.execute.request",
+    "tox.tox_env.python.extras",
+    "tox.util.file_view",
+    f"{__spec__.parent}.util",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
+]
+
 import logging
 import os
 import stat
@@ -576,7 +593,7 @@ class Pep517VirtualEnvFrontend(Frontend):
             setattr(self, hook, cached(into, key=key)(getattr(self, hook)))
 
     @override
-    def _send(
+    def _send(  # type: ignore[override]  # ty: ignore[incompatible-method-override]  # both results unpack to three fields
         self,
         cmd: str,
         **kwargs: Any,
