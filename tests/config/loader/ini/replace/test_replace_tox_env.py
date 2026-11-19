@@ -618,12 +618,29 @@ def test_replace_from_tox_other_tox_section_same_name(tox_ini_conf: ToxIniCreato
         pytest.param("testenv:foo-bar", "1", id="testenv-colon-foo-dash-bar-1"),
         pytest.param("foo-bar", "1", id="foo-dash-bar-1"),
         pytest.param("foobar", "1", id="foobar-1"),
+        pytest.param("tool:pytest", "1", id="tool-colon-pytest-1"),
+        pytest.param("coverage:run", "1", id="coverage-colon-run-1"),
+        pytest.param("tool.ruff", "1", id="tool-dot-ruff-1"),
     ],
 )
 def test_replace_valid_section_names(tox_ini_conf: ToxIniCreator, env_name: str, exp: str) -> None:
     conf_a = tox_ini_conf(f"[{env_name}]\na={exp}\n[testenv:a]\nx = {{[{env_name}]a}}").get_env("a")
     conf_a.add_config(keys="x", of_type=str, default="o", desc="o")
     assert conf_a["x"] == exp
+
+
+def test_replace_section_with_colon_or_dot_in_commands(tox_ini_conf: ToxIniCreator) -> None:
+    ini = """
+    [tool:pytest]
+    addopts = -ra
+    [tool.ruff]
+    select = E,F
+    [testenv:a]
+    commands = pytest {[tool:pytest]addopts} --select={[tool.ruff]select}
+    """
+    conf_a = tox_ini_conf(ini).get_env("a")
+    conf_a.add_config(keys="commands", of_type=list[Command], default=[], desc="c")
+    assert conf_a["commands"] == [Command(["pytest", "-ra", "--select=E,F"])]
 
 
 @pytest.mark.parametrize(
