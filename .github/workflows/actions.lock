@@ -7,12 +7,12 @@ workflows:
         - 'actions/checkout@v7.0.1'
         - 'actions/upload-artifact@v7.0.2'
         - 'astral-sh/setup-uv@v10.3.3'
-        - 'tox-dev/github-workflows@6.8.4'
+        - 'tox-dev/github-workflows@6.8.5'
     '.github/workflows/codeql.yaml': []
     '.github/workflows/news.yaml':
         - 'actions/checkout@v7.0.1'
         - 'astral-sh/setup-uv@v10.3.3'
-        - 'tox-dev/github-workflows@6.8.4'
+        - 'tox-dev/github-workflows@6.8.5'
     '.github/workflows/prepare-release.yaml': []
     '.github/workflows/release.yaml':
         - 'actions/download-artifact@v8.0.2'
@@ -55,8 +55,8 @@ dependencies:
         repo_id: 178055147
         uses:
             - 'actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405'
-    'tox-dev/github-workflows@6.8.4':
-        ref: '6.8.4'
-        commit: 'sha1-9334311ad92f91f7f5c937b3ab218da4d317116e'
+    'tox-dev/github-workflows@6.8.5':
+        ref: '6.8.5'
+        commit: 'sha1-b34c57a8a06e7b043c2ddd0b6b7a8a778d7aa8f7'
         owner_id: 20345659
         repo_id: 1426182029
