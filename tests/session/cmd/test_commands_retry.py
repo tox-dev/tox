@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, Final
 import pytest
 
 if TYPE_CHECKING:
-    from tox.pytest import ToxProjectCreator
+    from tox.pytest import ToxProjectCreator, ToxRunOutcome
 
 
 def test_retry_succeeds_after_failure(tox_project: ToxProjectCreator) -> None:
@@ -42,7 +42,7 @@ commands = [["python", "-c", "raise SystemExit(1)"]]
 
 
 def test_retry_warning_masks_secret_flag_value(tox_project: ToxProjectCreator) -> None:
-    result: Final = tox_project({
+    result: Final[ToxRunOutcome] = tox_project({
         "tox.toml": """\
 [env_run_base]
 package = "skip"

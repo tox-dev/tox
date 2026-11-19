@@ -10,7 +10,7 @@ if TYPE_CHECKING:
 
     from tox.config.cli.parser import ToxParser
     from tox.config.sets import ConfigSet
-    from tox.pytest import ToxProject, ToxProjectCreator
+    from tox.pytest import ToxProject, ToxProjectCreator, ToxRunOutcome
     from tox.session.state import State
 
 
@@ -40,10 +40,10 @@ def test_inline_tox_py(tox_project: ToxProjectCreator) -> None:
     ],
 )
 def test_inline_rejects_unselected_plugin(inline_project: ToxProject, tmp_path: Path, args: tuple[str, ...]) -> None:
-    operator: Final = tmp_path / "operator" / "tox.toml"
+    operator: Final[Path] = tmp_path / "operator" / "tox.toml"
     operator.parent.mkdir()
     operator.write_text("[env.test]\npackage = 'skip'\n")
-    result: Final = inline_project.run(*(arg.format(operator=operator) for arg in args))
+    result: Final[ToxRunOutcome] = inline_project.run(*(arg.format(operator=operator) for arg in args))
 
     result.assert_failed()
     assert not (inline_project.path / "imported").exists()
@@ -56,10 +56,10 @@ def test_inline_selected_plugin_loads(inline_project: ToxProject) -> None:
 
 
 def test_inline_compact_flags_keep_selected_config(inline_project: ToxProject, tmp_path: Path) -> None:
-    operator: Final = tmp_path / "operator" / "tox.toml"
+    operator: Final[Path] = tmp_path / "operator" / "tox.toml"
     operator.parent.mkdir()
     operator.write_text("[env.operator]\npackage = 'skip'\n")
-    result: Final = inline_project.run("-vr", "-c", str(operator), "list")
+    result: Final[ToxRunOutcome] = inline_project.run("-vr", "-c", str(operator), "list")
 
     result.assert_success()
     assert "operator" in result.out
@@ -104,12 +104,12 @@ def test_inline_help_invalid_conf_loads_project_plugin(
         def tox_add_option(parser: ToxParser) -> None:
             parser.add_argument("--magic", action="store_true")
 
-    project: Final = tox_project({"toxfile.py": plugin, **files})
+    project: Final[ToxProject] = tox_project({"toxfile.py": plugin, **files})
     cwd: Final[Path] = tmp_path / "cwd"
     cwd.mkdir()
     (cwd / "toxfile.py").write_text("raise RuntimeError('plugin loaded from current directory')")
 
-    result: Final = project.run("--help", "-c", str(project.path / conf), from_cwd=cwd)
+    result: Final[ToxRunOutcome] = project.run("--help", "-c", str(project.path / conf), from_cwd=cwd)
 
     assert (result.code, "--magic" in result.out) == (0, True), repr(result)
 

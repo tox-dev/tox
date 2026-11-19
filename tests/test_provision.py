@@ -776,7 +776,9 @@ def test_provision_unrecognized_args_no_provision(tox_project: ToxProjectCreator
 
 
 def test_provision_unrecognized_args_mask_secret(tox_project: ToxProjectCreator) -> None:
-    result: Final = tox_project({"tox.toml": '[env_run_base]\npackage = "skip"\n'}).run("r", "--api-token=hunter2")
+    result: Final[ToxRunOutcome] = tox_project({"tox.toml": '[env_run_base]\npackage = "skip"\n'}).run(
+        "r", "--api-token=hunter2"
+    )
     result.assert_failed()
     assert "--api-token=*******" in result.out
     assert "hunter2" not in result.out

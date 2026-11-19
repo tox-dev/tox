@@ -25,6 +25,10 @@ if TYPE_CHECKING:
 
     from packaging.utils import NormalizedName
 
+    _ProjectMetadata = TypedDict(
+        "_ProjectMetadata", {"name": str, "optional-dependencies": dict[str, list[str]]}, total=False
+    )
+
 
 _IncludeGroup = TypedDict("_IncludeGroup", {"include-group": str})
 
@@ -57,7 +61,7 @@ def resolve(root: Path, groups: set[str]) -> set[Requirement]:
     for group in groups:
         result = result.union(_resolve_dependency_group(dependency_groups, group, original_names_lookup))
 
-    project: Final = pyproject.get("project", {})
+    project: Final[_ProjectMetadata] = pyproject.get("project", {})
     if not (project_name := project.get("name")):
         return result
     optional_dependencies: Final[dict[str, list[str]]] = {
@@ -172,7 +176,7 @@ def _add_extra_to_deps(
     markers: frozenset[Marker],
     seen_extras: set[tuple[str, frozenset[Marker]]],
 ) -> None:
-    normalized_extra: Final = canonicalize_name(extra)
+    normalized_extra: Final[NormalizedName] = canonicalize_name(extra)
     if (normalized_extra, markers) in seen_extras:
         return
     seen_extras.add((normalized_extra, markers))

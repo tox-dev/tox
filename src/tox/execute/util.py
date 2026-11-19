@@ -52,7 +52,7 @@ def shebang(exe: str) -> list[str] | None:
     except UnicodeDecodeError:
         return None
     # Match literal shebang paths while keeping tox's quoted path form.
-    match: Final = _MATCH_PATTERN.fullmatch(decoded.strip())
+    match: Final[re.Match[str] | None] = _MATCH_PATTERN.fullmatch(decoded.strip())
     if match is None:
         return None
     try:

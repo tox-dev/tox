@@ -15,8 +15,12 @@ from tox.util.path import ensure_cachedir_tag, ensure_empty_dir, ensure_gitignor
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
+    from typing import Protocol
 
     from pytest_mock import MockerFixture
+
+    class _Unlink(Protocol):
+        def __call__(self, path: str | os.PathLike[str], *, dir_fd: int | None = None) -> None: ...
 
 
 def test_ensure_cachedir_tag_creates_file(tmp_path: Path) -> None:
@@ -108,10 +112,10 @@ def test_ensure_empty_dir_unlinks_dir_symlink(tmp_path: Path) -> None:
 
 @pytest.mark.skipif(sys.platform == "win32", reason="creating symlinks needs privileges on Windows")
 def test_ensure_empty_dir_replaces_dir_symlink(tmp_path: Path) -> None:
-    outside: Final = tmp_path / "outside"
+    outside: Final[Path] = tmp_path / "outside"
     outside.mkdir()
     (outside / "victim").write_text("keep")
-    dest: Final = tmp_path / "dest"
+    dest: Final[Path] = tmp_path / "dest"
     dest.symlink_to(outside, target_is_directory=True)
 
     ensure_empty_dir(dest)
@@ -157,14 +161,14 @@ def test_ensure_empty_dir_replaces_dangling_junction(tmp_path: Path) -> None:
 
 @pytest.mark.skipif(sys.platform == "win32", reason="dir_fd is unavailable on Windows")
 def test_ensure_empty_dir_keeps_swapped_target(tmp_path: Path, mocker: MockerFixture) -> None:
-    dest: Final = tmp_path / "dest"
+    dest: Final[Path] = tmp_path / "dest"
     dest.mkdir()
     (dest / "trigger").write_text("")
     (dest / "victim").write_text("")
-    outside: Final = tmp_path / "outside"
+    outside: Final[Path] = tmp_path / "outside"
     outside.mkdir()
     (outside / "victim").write_text("keep")
-    original_unlink: Final = os.unlink
+    original_unlink: Final[_Unlink] = os.unlink
 
     def unlink(path: str | os.PathLike[str], *, dir_fd: int | None = None) -> None:
         if Path(path).name == "trigger" and not dest.is_symlink():
@@ -182,13 +186,13 @@ def test_ensure_empty_dir_keeps_swapped_target(tmp_path: Path, mocker: MockerFix
 
 @pytest.mark.skipif(sys.platform == "win32", reason="dir_fd is unavailable on Windows")
 def test_ensure_empty_dir_does_not_retry_through_swapped_link(tmp_path: Path, mocker: MockerFixture) -> None:
-    sub: Final = tmp_path / "dest" / "sub"
+    sub: Final[Path] = tmp_path / "dest" / "sub"
     sub.mkdir(parents=True)
     (sub / "victim").write_text("")
-    outside: Final = tmp_path / "outside"
+    outside: Final[Path] = tmp_path / "outside"
     outside.mkdir()
     (outside / "victim").write_text("keep")
-    original_unlink: Final = os.unlink
+    original_unlink: Final[_Unlink] = os.unlink
 
     def unlink(path: str | os.PathLike[str], *, dir_fd: int | None = None) -> None:
         if Path(path).name == "victim" and not sub.is_symlink():
@@ -327,7 +331,7 @@ def windows_unlink(mocker: MockerFixture) -> set[str]:
     # Names added to the returned set fail to unlink, like a file another process holds open.
     mocker.patch.object(rmtree, "avoids_symlink_attacks", False)
     locked: Final[set[str]] = set()
-    real_unlink: Final = os.unlink
+    real_unlink: Final[_Unlink] = os.unlink
 
     # POSIX lets the owner unlink a read-only file while Windows refuses, so emulate Windows at the syscall
     def unlink(path: str | os.PathLike[str], *, dir_fd: int | None = None) -> None:

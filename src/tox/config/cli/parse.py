@@ -73,36 +73,36 @@ def _completion_args(args: tuple[str, ...]) -> tuple[tuple[str, ...], str]:
 
 
 def _get_base(args: Sequence[str], completion_current: str | None) -> _BaseOptions:
-    parsed: Final = Parsed()
+    parsed: Final[Parsed] = Parsed()
     with (
         suppress(SystemExit),
         Path(os.devnull).open("w", encoding=locale.getpreferredencoding(do_setlocale=False)) as file_handler,
         redirect_stderr(file_handler),
     ):
         ToxParser.base().parse_known_args(args, namespace=parsed)
-    guess_verbosity: Final = parsed.verbosity
-    handler: Final = setup_report(guess_verbosity, parsed.is_colored)
+    guess_verbosity: Final[int] = parsed.verbosity
+    handler: Final[ToxHandler] = setup_report(guess_verbosity, parsed.is_colored)
     from tox.plugin.manager import MANAGER, Plugin  # ruff:ignore[import-outside-top-level]  # avoids an import cycle
 
     # Built-in and installed plugins can register option values before tox selects an inline plugin.
-    preliminary: Final = Plugin()
+    preliminary: Final[Plugin] = Plugin()
     preliminary.load_plugins(None)
-    pre_parser: Final = ToxParser.core()
+    pre_parser: Final[ToxParser] = ToxParser.core()
     preliminary.tox_add_option(pre_parser)
     pre_parser.fix_defaults()
-    selected: Final = Parsed()
-    completing: Final = completion_current is not None
-    last_option: Final = args[-1] if completing and args and args[-1].startswith("-") else ""
+    selected: Final[Parsed] = Parsed()
+    completing: Final[bool] = completion_current is not None
+    last_option: Final[str] = args[-1] if completing and args and args[-1].startswith("-") else ""
     if _ends_before_discovery(completion_current, last_option):
         MANAGER.load_plugins(None)
         return _BaseOptions(guess_verbosity, handler, _empty_source(None))
-    selection_args: Final = _selection_args(args, completion_current, last_option)
+    selection_args: Final[Sequence[str]] = _selection_args(args, completion_current, last_option)
     try:
         with (
             Path(os.devnull).open("w", encoding=locale.getpreferredencoding(do_setlocale=False)) as file_handler,
             redirect_stderr(file_handler),
         ):
-            unknown: Final = pre_parser.parse_known_args(
+            unknown: Final[list[str]] = pre_parser.parse_known_args(
                 (arg for arg in selection_args if arg not in {"-h", "--help", "--version"}), namespace=selected
             )[1]
     except SystemExit:
@@ -141,15 +141,15 @@ def _empty_source(config_file: Path | None) -> Source:
 
 
 def _selection_args(args: Sequence[str], completion_current: str | None, last_option: str) -> Sequence[str]:
-    bare_option: Final = "=" not in last_option and (
+    bare_option: Final[bool] = "=" not in last_option and (
         last_option.startswith("--") or len(last_option.removeprefix("-")) == 1
     )
-    trailing_option: Final = bool(last_option) and (bool(completion_current) or bare_option)
+    trailing_option: Final[bool] = bool(last_option) and (bool(completion_current) or bare_option)
     return args[:-1] if trailing_option else args
 
 
 def _config_flag_after_unknown(args: Sequence[str], unknown: Sequence[str]) -> bool:
-    first_unknown: Final = next(
+    first_unknown: Final[int] = next(
         (at for at, arg in enumerate(args) if arg in unknown and arg.startswith("-")), len(args)
     )
     return any(

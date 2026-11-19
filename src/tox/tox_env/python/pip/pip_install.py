@@ -219,12 +219,12 @@ class Pip(PythonInstallerListDependencies):
             raise Fail(msg) from None
         new_constraints.extend(new_reqs)
 
-        constraint_options: Final = {
+        constraint_options: Final[dict[str, bool]] = {
             "constrain_package_deps": self.constrain_package_deps,
             "use_frozen_constraints": self.use_frozen_constraints,
         }
         redaction_format: int = 1
-        new: Final = {
+        new: Final[dict[str, JsonValue]] = {
             "redaction_format": redaction_format,
             "options": new_options,
             "requirements": new_requirements,
@@ -340,7 +340,7 @@ class Pip(PythonInstallerListDependencies):
 
     def _write_combined_constraints(self, arguments: PythonDeps) -> None:
         if self.constrain_package_deps and not self.use_frozen_constraints and not self._has_constraints:
-            combined_constraints: Final = [
+            combined_constraints: Final[list[str]] = [
                 line for req in arguments.requirements if (line := self._as_constraint(req)) is not None
             ]
             combined_constraints.extend(

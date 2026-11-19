@@ -1438,13 +1438,15 @@ def test_set_env_include_env_keeps_values_as_data(
     envs: str,
     mocker: MockerFixture,
 ) -> None:
-    message: Final = "subject; 'x' # y\nINJECTED = 1\nfile|missing\u2028OTHER = 2"
+    message: Final[str] = "subject; 'x' # y\nINJECTED = 1\nfile|missing\u2028OTHER = 2"
     monkeypatch.setenv("HOST_MESSAGE", message)
 
-    result: Final = tox_project({f"tox.{of_type}": textwrap.dedent(config)}).run("c", "-k", "set_env", "-e", envs)
+    result: Final[ToxRunOutcome] = tox_project({f"tox.{of_type}": textwrap.dedent(config)}).run(
+        "c", "-k", "set_env", "-e", envs
+    )
 
     result.assert_success()
-    set_env: Final = result.env_conf("py").get("set_env", SetEnv)
+    set_env: Final[SetEnv] = result.env_conf("py").get("set_env", SetEnv)
     assert {key: set_env.load(key) for key in set_env} == {
         "MESSAGE": message,
         "NAME": "py",
@@ -1458,7 +1460,7 @@ def test_set_env_include_env_keeps_values_as_data(
 
 
 def test_set_env_include_env_file_named_by_sibling_key(eval_set_env: EvalSetEnv) -> None:
-    config: Final = """
+    config: Final[str] = """
     [testenv]
     package = skip
     set_env =
@@ -1468,12 +1470,16 @@ def test_set_env_include_env_file_named_by_sibling_key(eval_set_env: EvalSetEnv)
     [testenv:py]
     set_env = {[testenv:other]set_env}
     """
-    set_env: Final = eval_set_env(textwrap.dedent(config), extra_files={"conf": {"other.env": "FROM_FILE=a;b # c"}})
+    set_env: Final[SetEnv] = eval_set_env(
+        textwrap.dedent(config), extra_files={"conf": {"other.env": "FROM_FILE=a;b # c"}}
+    )
     assert set_env.load("FROM_FILE") == "a;b # c"
 
 
 def test_set_env_include_env_without_set_env(eval_set_env: EvalSetEnv) -> None:
-    config: Final = "[testenv]\npackage=skip\n[testenv:other]\n[testenv:py]\nset_env=\n {[testenv:other]set_env}\n A=1"
+    config: Final[str] = (
+        "[testenv]\npackage=skip\n[testenv:other]\n[testenv:py]\nset_env=\n {[testenv:other]set_env}\n A=1"
+    )
     assert eval_set_env(config).load("A") == "1"
 
 

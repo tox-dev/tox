@@ -29,7 +29,7 @@ if TYPE_CHECKING:
     from collections.abc import Callable
     from typing import Final
 
-    from pytest_mock import MockerFixture
+    from pytest_mock import MockerFixture, MockType
 
     from tox.pytest import ToxProjectCreator
 
@@ -214,7 +214,7 @@ def test_subprocess_session_run_nonzero_exit(tmp_path: Path, mocker: MockerFixtu
 
 
 def test_subprocess_session_run_passes_interpreter(tmp_path: Path, mocker: MockerFixture) -> None:
-    info: Final = SubprocessPythonInfo(
+    info: Final[SubprocessPythonInfo] = SubprocessPythonInfo(
         implementation="cpython",
         version_info=_VersionInfo(major=3, minor=11, micro=0, releaselevel="final", serial=0),
         version="3.11.0",
@@ -223,7 +223,7 @@ def test_subprocess_session_run_passes_interpreter(tmp_path: Path, mocker: Mocke
         system_executable="/opt/a:b,c/python",
         free_threaded=False,
     )
-    run_mock: Final = mocker.patch(
+    run_mock: Final[MockType] = mocker.patch(
         "tox.tox_env.python.virtual_env.subprocess_adapter.subprocess.run",
         autospec=True,
         return_value=mocker.create_autospec(subprocess.CompletedProcess, instance=True, returncode=0),

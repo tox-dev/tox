@@ -116,7 +116,7 @@ def test_replace_env_var_circular_fan_out_many(
 ) -> None:
     monkeypatch.setenv("MAGIC", "{env:MAGIC}" * 100)
 
-    result: Final = replace_one("{env:MAGIC}")
+    result: Final[str] = replace_one("{env:MAGIC}")
 
     assert "{env:MAGIC}" in result
     assert len(result) < 1_000_000

@@ -233,7 +233,7 @@ def test_local_execute_basic_pass_show_on_standard_newline_flush(
 def test_local_execute_start_error_masks_secret_flag(
     caplog: LogCaptureFixture, os_env: dict[str, str], mocker: MockerFixture
 ) -> None:
-    request: Final = ExecuteRequest(
+    request: Final[ExecuteRequest] = ExecuteRequest(
         cmd=["--token=hunter2"], cwd=Path.cwd(), env=os_env, stdin=StdinSource.OFF, run_id=""
     )
     with LocalSubProcessExecutor(colored=False).call(
@@ -786,7 +786,7 @@ def test_shebang_resolved_from_request_cwd(
         script.write_text(f"#!{interpreter}")
         script.chmod(script.stat().st_mode | stat.S_IEXEC)
     monkeypatch.chdir(tmp_path / "invoked_from")
-    request: Final = ExecuteRequest(
+    request: Final[ExecuteRequest] = ExecuteRequest(
         cmd=[cmd, "--magic"],
         cwd=tmp_path / "project",
         env={"PATH": path, "TOX_LIMITED_SHEBANG": "1"},
@@ -794,8 +794,10 @@ def test_shebang_resolved_from_request_cwd(
         run_id="run-id",
         allow=[cmd],
     )
-    writer: Final = mocker.create_autospec(SyncWrite)
-    instance: Final = LocalSubProcessExecuteInstance(request, mocker.create_autospec(ExecuteOptions), writer, writer)
+    writer: Final[MockType] = mocker.create_autospec(SyncWrite)
+    instance: Final[LocalSubProcessExecuteInstance] = LocalSubProcessExecuteInstance(
+        request, mocker.create_autospec(ExecuteOptions), writer, writer
+    )
 
     assert instance.cmd == ["/bin/sh", str(tmp_path / "project" / "scripts" / "s"), "--magic"]
 

@@ -26,8 +26,6 @@ if TYPE_CHECKING:
 
 _READ_CHUNK_SIZE: Final[int] = 32768  # pragma: win32 cover
 """Maximum number of bytes read from a pipe at once."""
-_POLL_INTERVAL: Final[float] = 0.05  # pragma: win32 cover
-"""Seconds to wait between two checks of a pipe for new output."""
 ERROR_IO_INCOMPLETE: Final[int] = 996  # pragma: win32 cover
 """Windows error code of a read that has not received any data yet."""
 
@@ -57,6 +55,7 @@ class ReadViaThreadWindows(ReadViaThread):  # pragma: win32 cover
             self._do_read_stream()
 
     def _do_read_stream(self) -> None:
+        poll_interval: float = 0.05
         while not self.stop.is_set():
             ov = _overlapped.Overlapped(0)
             try:
@@ -76,7 +75,7 @@ class ReadViaThreadWindows(ReadViaThread):  # pragma: win32 cover
                         return
                     if self.stop.is_set():  # stop requested while the read is still pending; abandon it
                         return
-                    time.sleep(_POLL_INTERVAL)
+                    time.sleep(poll_interval)
 
             if not data:
                 break

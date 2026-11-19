@@ -927,7 +927,7 @@ def test_env_name_rejects_path_component(
     tox_project: ToxProjectCreator, monkeypatch: MonkeyPatch, files: dict[str, str], name: str
 ) -> None:
     monkeypatch.setenv("TOX_ENVS", name)
-    outcome: Final = tox_project(files).run("l")
+    outcome: Final[ToxRunOutcome] = tox_project(files).run("l")
 
     outcome.assert_failed()
     assert f"environment name {name!r} is not a valid single path component" in outcome.out
@@ -944,14 +944,16 @@ def test_env_name_rejects_path_in_derived_config(
     tox_project: ToxProjectCreator, monkeypatch: MonkeyPatch, files: dict[str, str], args: tuple[str, ...]
 ) -> None:
     monkeypatch.setenv("TOX_ENVS", "..")
-    outcome: Final = tox_project(files).run(*args)
+    outcome: Final[ToxRunOutcome] = tox_project(files).run(*args)
 
     outcome.assert_failed()
     assert "environment name '..' is not a valid single path component" in outcome.out
 
 
 def test_env_name_rejects_path_in_cli_env(tox_project: ToxProjectCreator) -> None:
-    outcome: Final = tox_project({"tox.toml": 'env_list = ["py"]'}).run("r", "-e", ".pkg_external/../outside")
+    outcome: Final[ToxRunOutcome] = tox_project({"tox.toml": 'env_list = ["py"]'}).run(
+        "r", "-e", ".pkg_external/../outside"
+    )
 
     outcome.assert_failed()
     assert "environment name '.pkg_external/../outside' is not a valid single path component" in outcome.out

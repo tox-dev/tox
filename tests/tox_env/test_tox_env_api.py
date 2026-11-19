@@ -47,15 +47,15 @@ def make_link(request: pytest.FixtureRequest) -> Callable[[Path, Path], object]:
 def test_env_link_fails_without_recreate(
     tox_project: ToxProjectCreator, tmp_path: Path, make_link: Callable[[Path, Path], object]
 ) -> None:
-    project: Final = tox_project({"tox.ini": "[testenv]\npackage=skip"})
-    outside: Final = tmp_path / "outside"
+    project: Final[ToxProject] = tox_project({"tox.ini": "[testenv]\npackage=skip"})
+    outside: Final[Path] = tmp_path / "outside"
     outside.mkdir()
     (outside / "keep").write_text("keep")
-    env_dir: Final = project.path / ".tox" / "py"
+    env_dir: Final[Path] = project.path / ".tox" / "py"
     env_dir.parent.mkdir()
     make_link(env_dir, outside)
 
-    result: Final = project.run("r")
+    result: Final[ToxRunOutcome] = project.run("r")
 
     result.assert_failed()
     assert "is a link where this environment should live" in result.out
@@ -93,12 +93,12 @@ def test_env_link_recreated_without_touching_target(
     make_link: Callable[[Path, Path], object],
     target_files: tuple[str, ...],
 ) -> None:
-    project: Final = tox_project({"tox.ini": "[testenv]\npackage=skip"})
-    outside: Final = tmp_path / "outside"
+    project: Final[ToxProject] = tox_project({"tox.ini": "[testenv]\npackage=skip"})
+    outside: Final[Path] = tmp_path / "outside"
     for filename in target_files:
         outside.mkdir()
         (outside / filename).write_text("keep")
-    env_dir: Final = project.path / ".tox" / "py"
+    env_dir: Final[Path] = project.path / ".tox" / "py"
     env_dir.parent.mkdir()
     make_link(env_dir, outside)
 
@@ -121,13 +121,13 @@ def test_env_child_link_replaced_without_touching_target(
     name: str,
     target_files: tuple[str, ...],
 ) -> None:
-    project: Final = tox_project({"tox.ini": "[testenv]\npackage=skip\ncommands=python -c 'print(1)'"})
+    project: Final[ToxProject] = tox_project({"tox.ini": "[testenv]\npackage=skip\ncommands=python -c 'print(1)'"})
     project.run("r").assert_success()
-    outside: Final = tmp_path / "outside"
+    outside: Final[Path] = tmp_path / "outside"
     for filename in target_files:
         outside.mkdir()
         (outside / filename).write_text("keep")
-    child: Final = project.path / ".tox" / "py" / name
+    child: Final[Path] = project.path / ".tox" / "py" / name
     rmtree(child)
     make_link(child, outside)
 

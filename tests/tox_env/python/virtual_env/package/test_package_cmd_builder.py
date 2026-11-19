@@ -342,7 +342,7 @@ def test_tox_install_pkg_with_skip_install(
 
 
 def test_run_installpkg_targz(tox_project: ToxProjectCreator, pkg_with_sdist: Path) -> None:
-    project: Final = tox_project({
+    project: Final[ToxProject] = tox_project({
         "tox.ini": """
      [tox]
     envlist = base, flake8
@@ -352,7 +352,7 @@ def test_run_installpkg_targz(tox_project: ToxProjectCreator, pkg_with_sdist: Pa
     [testenv:flake8]
     """
     })
-    execute_calls: Final = project.patch_execute(lambda request: 0 if "install" in request.run_id else None)
+    execute_calls: Final[MockType] = project.patch_execute(lambda request: 0 if "install" in request.run_id else None)
     project.run(f"--installpkg={pkg_with_sdist}").assert_success()
     assert [
         (i[0][0].conf.name, i[0][3].cmd[-1])
