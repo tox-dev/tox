@@ -141,7 +141,7 @@ def test_config_in_toml_replace_posargs_str_literal(
     tox_project: ToxProjectCreator, monkeypatch: pytest.MonkeyPatch, reference: str
 ) -> None:
     monkeypatch.delenv("MISSING", raising=False)
-    project: Final = tox_project({
+    project: Final[ToxProject] = tox_project({
         "pyproject.toml": f"""
         [tool.tox.shared]
         args = "{{posargs}}"
@@ -152,7 +152,7 @@ def test_config_in_toml_replace_posargs_str_literal(
         description = "{{posargs}}"
         """
     })
-    outcome: Final = project.run("c", "-e", "A", "-k", "commands", "--", "{env_name}")
+    outcome: Final[ToxRunOutcome] = project.run("c", "-e", "A", "-k", "commands", "--", "{env_name}")
     outcome.assert_success()
     assert shlex.split(outcome.env_conf("A")["commands"][0].args[1]) == ["{env_name}"]
 

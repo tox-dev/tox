@@ -469,7 +469,9 @@ def test_shlex_win32_unc_path(value: str, expected: list[str]) -> None:
 @pytest.mark.usefixtures("sys_platform")
 @pytest.mark.parametrize(("value", "expected"), _UNC_PATH_ARGS)
 def test_shlex_win32_unc_path_from_ini(tox_project: ToxProjectCreator, value: str, expected: list[str]) -> None:
-    outcome: Final = tox_project({"tox.ini": f"[testenv]\ncommands = {value}"}).run("c", "-k", "commands")
+    outcome: Final[ToxRunOutcome] = tox_project({"tox.ini": f"[testenv]\ncommands = {value}"}).run(
+        "c", "-k", "commands"
+    )
     outcome.assert_success()
     assert outcome.env_conf("py")["commands"] == [Command(args=expected)]
 

@@ -91,10 +91,10 @@ def is_junction(path: Path) -> bool:
 
 
 def _empty_dir_fd(path: Path, except_filename: str | None, flags: int) -> None:
-    dir_fd: Final = os.open(path, os.O_RDONLY | flags)
+    dir_fd: Final[int] = os.open(path, os.O_RDONLY | flags)
     try:
         with os.scandir(dir_fd) as scan:
-            entries: Final = list(scan)
+            entries: Final[list[os.DirEntry[str]]] = list(scan)
         for entry in entries:
             if entry.name == except_filename:
                 continue

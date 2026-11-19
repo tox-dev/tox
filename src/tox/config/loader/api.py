@@ -33,7 +33,7 @@ from .str_convert import StrConvert
 if TYPE_CHECKING:
     from collections.abc import Generator
     from types import UnionType
-    from typing import Final
+    from typing import Final, Literal
 
     from tox.config.cli.parser import ToxParser
     from tox.config.main import Config
@@ -326,7 +326,7 @@ class Loader(Convert[T]):
             return SetEnv(cast("SetEnvRaw", value), "set_env", args.env_name, conf.core["tox_root"])
 
         result = self.build("set_env", SetEnv, factory, conf, raw, args)
-        shape: Final = result.shape
+        shape: Final[Literal["string", "table", "array"]] = result.shape
         for entry in overrides:
             appended = self._build_override(entry, SetEnv, factory, conf, args)
             if entry.append:

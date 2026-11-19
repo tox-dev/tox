@@ -199,7 +199,7 @@ def test_config_in_toml_env_list_bare_factor(
     tox_project: ToxProjectCreator, filename: str, factor: str, env_name: str, expected: str
 ) -> None:
     prefix, header = {"pyproject.toml": ("tool.tox.", "[tool.tox]"), "tox.toml": ("", "")}[filename]
-    project: Final = tox_project({
+    project: Final[ToxProject] = tox_project({
         filename: f"""
             {header}
             env_list = [{factor}]
@@ -208,7 +208,7 @@ def test_config_in_toml_env_list_bare_factor(
             [{prefix}env.lint]
         """,
     })
-    outcome: Final = project.run("c", "-e", env_name, "-k", "description")
+    outcome: Final[ToxRunOutcome] = project.run("c", "-e", env_name, "-k", "description")
     outcome.assert_success()
     outcome.assert_out_err(f"[testenv:{env_name}]\ndescription = {expected}\n", "")
 
@@ -235,7 +235,7 @@ def test_config_in_toml_env_list_keyed_factor_description(tox_project: ToxProjec
 
 
 def test_config_in_toml_env_list_keyed_factor_sharing_a_value(tox_project: ToxProjectCreator) -> None:
-    project: Final = tox_project({
+    project: Final[ToxProject] = tox_project({
         "tox.toml": textwrap.dedent("""\
             env_list = [{ product = [["compat"], { client = ["v1", "v2"] }, { server = ["v1", "v2"] }] }]
 
@@ -243,7 +243,7 @@ def test_config_in_toml_env_list_keyed_factor_sharing_a_value(tox_project: ToxPr
             description = "client {factor:client}, server {factor:server}, {factor:0}"
         """),
     })
-    outcome: Final = project.run("c", "-e", "compat-v1-v2,compat-v2-v1", "-k", "description")
+    outcome: Final[ToxRunOutcome] = project.run("c", "-e", "compat-v1-v2,compat-v2-v1", "-k", "description")
     outcome.assert_success()
     outcome.assert_out_err(
         "[testenv:compat-v1-v2]\ndescription = client v1, server v2, compat\n\n"

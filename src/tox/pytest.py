@@ -18,7 +18,6 @@ __lazy_modules__ = [
     f"{__spec__.parent}.execute.request",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
     f"{__spec__.parent}.plugin",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
     f"{__spec__.parent}.report",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
-    f"{__spec__.parent}.run",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
     f"{__spec__.parent}.session.cmd.run.parallel",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
     f"{__spec__.parent}.tox_env",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
     f"{__spec__.parent}.tox_env.api",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
@@ -43,13 +42,13 @@ from devpi_process import IndexServer
 from virtualenv.info import fs_supports_symlink
 
 import tox.run
+from tox.run import run as tox_run
+from tox.run import setup_state as previous_setup_state
 
 from .execute.api import Execute, ExecuteInstance, ExecuteOptions, ExecuteStatus, FinishedExecuteStatus, Outcome
 from .execute.request import ExecuteRequest, shell_cmd
 from .plugin import manager
 from .report import LOGGER, OutErr
-from .run import run as tox_run
-from .run import setup_state as previous_setup_state
 from .session.cmd.run.parallel import ENV_VAR_KEY
 from .tox_env import api as tox_env_api
 from .tox_env.api import ToxEnv

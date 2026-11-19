@@ -74,13 +74,13 @@ def test_shell_cmd_redacted_leaves_innocuous_args_alone() -> None:
 
 
 def test_repr_masks_secret_flag_value() -> None:
-    request: Final = ExecuteRequest(
+    request: Final[ExecuteRequest] = ExecuteRequest(
         cmd=["pytest", "--token=hunter2"],
         cwd=Path.cwd(),
         env={},
         stdin=StdinSource.OFF,
         run_id="",
     )
-    representation: Final = repr(request)
+    representation: Final[str] = repr(request)
     assert "hunter2" not in representation
     assert "--token=*******" in representation

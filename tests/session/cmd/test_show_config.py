@@ -207,8 +207,8 @@ def test_show_config_empty_install_command_exception(tox_project: ToxProjectCrea
     ],
 )
 def test_show_config_install_command_toml(tox_project: ToxProjectCreator, filename: str, content: str) -> None:
-    project: Final = tox_project({filename: content})
-    outcome: Final = project.run("c", "-k", "install_command")
+    project: Final[ToxProject] = tox_project({filename: content})
+    outcome: Final[ToxRunOutcome] = project.run("c", "-k", "install_command")
     outcome.assert_success()
     assert "install_command = " in outcome.out
     assert StrConvert.to_command(outcome.out.partition("install_command = ")[2].splitlines()[0]).args == [

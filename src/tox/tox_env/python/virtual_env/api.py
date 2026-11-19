@@ -249,7 +249,10 @@ class VirtualEnv(Python, ABC):
 
     def _create_imported_session(self, env: dict[str, str]) -> Session:
         # virtualenv splits list environment variables on comma and os.pathsep, then rotates the first Python candidate.
-        args: Final = [str(self.env_dir), *(f"--python={spec}" for spec in self.conf.get("base_python", list[str]))]
+        args: Final[list[str]] = [
+            str(self.env_dir),
+            *(f"--python={spec}" for spec in self.conf.get("base_python", list[str])),
+        ]
         try:
             with redirect_stderr(StringIO()):
                 return session_via_cli(args, options=None, setup_logging=False, env=env)

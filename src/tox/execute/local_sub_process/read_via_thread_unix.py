@@ -11,7 +11,7 @@ import contextlib  # pragma: win32 no cover
 import errno  # pragma: win32 no cover
 import os  # pragma: win32 no cover
 import selectors  # pragma: win32 no cover
-from typing import TYPE_CHECKING, Final
+from typing import TYPE_CHECKING
 
 from tox.util.typing_compat import override
 
@@ -19,12 +19,6 @@ from .read_via_thread import ReadViaThread  # pragma: win32 no cover
 
 if TYPE_CHECKING:
     from collections.abc import Callable
-
-
-_TIMEOUT_FOR_INTERRUPT: Final[float] = 0.05  # pragma: win32 no cover
-"""Seconds to wait for output before checking whether the reader should stop."""
-_READ_CHUNK_SIZE: Final[int] = 32768  # pragma: win32 no cover
-"""Maximum number of bytes read from a stream at once."""
 
 
 class ReadViaThreadUnix(ReadViaThread):  # pragma: win32 no cover
@@ -60,9 +54,10 @@ class ReadViaThreadUnix(ReadViaThread):  # pragma: win32 no cover
             selector.close()
 
     def _read_until_eof(self, selector: selectors.DefaultSelector) -> None:
+        timeout_for_interrupt: float = 0.05
         while selector.get_map() and not self.stop.is_set():
             try:
-                ready = selector.select(timeout=_TIMEOUT_FOR_INTERRUPT)
+                ready = selector.select(timeout=timeout_for_interrupt)
             except OSError as exception:
                 if isinstance(exception, OSError) and exception.errno != errno.EINTR:
                     raise
@@ -75,8 +70,9 @@ class ReadViaThreadUnix(ReadViaThread):  # pragma: win32 no cover
                 self._read_chunk(selector, key)
 
     def _read_chunk(self, selector: selectors.DefaultSelector, key: selectors.SelectorKey) -> None:
+        read_chunk_size: int = 32768
         try:
-            data = os.read(key.fd, _READ_CHUNK_SIZE)
+            data = os.read(key.fd, read_chunk_size)
         except OSError as exception:
             if exception.errno == errno.EINTR:
                 return

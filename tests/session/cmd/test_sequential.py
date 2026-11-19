@@ -26,7 +26,7 @@ _INTERRUPT_SIGNAL: Final[int] = signal.CTRL_C_EVENT if sys.platform == "win32" e
 if TYPE_CHECKING:
     from pytest_mock import MockerFixture
 
-    from tox.pytest import ToxProjectCreator
+    from tox.pytest import ToxProject, ToxProjectCreator
 
 
 @pytest.mark.parametrize("prefix", [pytest.param("-", id="dash"), pytest.param("- ", id="dash-space")])
@@ -899,18 +899,18 @@ def test_result_json_creates_missing_parent_dir(tox_project: ToxProjectCreator) 
 
 
 def test_result_json_masks_secret_flag_value(tox_project: ToxProjectCreator) -> None:
-    project: Final = tox_project({
+    project: Final[ToxProject] = tox_project({
         "tox.toml": """\
 [env_run_base]
 package = "skip"
 commands = [["python", "-c", "pass", "--token=hunter2", "--cov=tox"]]
 """
     })
-    result: Final = project.path / "out.json"
+    result: Final[Path] = project.path / "out.json"
 
     project.run("r", "-e", "py", "--result-json", str(result)).assert_success()
 
-    content: Final = result.read_text()
+    content: Final[str] = result.read_text()
     assert "hunter2" not in content
-    command: Final = json.loads(content)["testenvs"]["py"]["test"][0]["command"]
+    command: Final[list[str]] = json.loads(content)["testenvs"]["py"]["test"][0]["command"]
     assert command[1:] == ["-c", "pass", "--token=*******", "--cov=tox"]

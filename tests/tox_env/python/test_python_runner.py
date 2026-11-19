@@ -25,7 +25,7 @@ if TYPE_CHECKING:
 
     from pytest_mock import MockerFixture
 
-    from tox.pytest import ToxProjectCreator
+    from tox.pytest import ToxProject, ToxProjectCreator
 
 
 def test_deps_config_path_req(tox_project: ToxProjectCreator) -> None:
@@ -483,7 +483,7 @@ def test_dependency_groups_extra_names(
     extra_name: str,
     requested_extra: str,
 ) -> None:
-    project: Final = tox_project({
+    project: Final[ToxProject] = tox_project({
         "pyproject.toml": f"""
             [project]
             name = "{project_name}"
@@ -497,7 +497,7 @@ def test_dependency_groups_extra_names(
 
 
 def test_dependency_groups_nested_extra_names(tox_project: ToxProjectCreator) -> None:
-    project: Final = tox_project({
+    project: Final[ToxProject] = tox_project({
         "pyproject.toml": """
             [project]
             name = "Demo_Pkg"
@@ -552,7 +552,7 @@ def test_dependency_groups_nested_extra_names(tox_project: ToxProjectCreator) ->
 def test_dependency_groups_extra_keeps_self_reference_marker(
     tox_project: ToxProjectCreator, extras: str, group: str, expected: set[str]
 ) -> None:
-    project: Final = tox_project({
+    project: Final[ToxProject] = tox_project({
         "pyproject.toml": f"""
             [project]
             name = "demo-pkg"
@@ -566,7 +566,7 @@ def test_dependency_groups_extra_keeps_self_reference_marker(
 
 
 def test_dependency_groups_pyproject_with_utf8_bom(tox_project: ToxProjectCreator) -> None:
-    project: Final = tox_project({"pyproject.toml": '\ufeff[dependency-groups]\ntest = ["first>=1"]\n'})
+    project: Final[ToxProject] = tox_project({"pyproject.toml": '\ufeff[dependency-groups]\ntest = ["first>=1"]\n'})
     assert resolve(project.path, {"test"}) == {Requirement("first>=1")}
 
 
@@ -578,7 +578,7 @@ def test_dependency_groups_pyproject_with_utf8_bom(tox_project: ToxProjectCreato
     ],
 )
 def test_dependency_groups_extra_errors(tox_project: ToxProjectCreator, requirements: str, message: str) -> None:
-    project: Final = tox_project({
+    project: Final[ToxProject] = tox_project({
         "pyproject.toml": f"""
             [project]
             name = "demo-pkg"

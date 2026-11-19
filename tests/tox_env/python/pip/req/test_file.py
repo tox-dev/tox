@@ -596,7 +596,7 @@ def test_bad_line(tmp_path: Path, raw: str, capfd: CaptureFixture, error: str) -
 
 
 def test_bad_line_masks_secret_flag(tmp_path: Path) -> None:
-    requirements_file: Final = tmp_path / "req.txt"
+    requirements_file: Final[Path] = tmp_path / "req.txt"
     requirements_file.write_text("--api-token=hunter2")
     with pytest.raises(ValueError, match="unrecognized arguments") as error:
         _ = RequirementsFile(requirements_file, constraint=False).options

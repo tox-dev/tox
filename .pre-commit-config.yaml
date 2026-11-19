@@ -47,7 +47,7 @@ repos:
         files: ^src/tox/
         exclude: ^src/tox/util/json_types\.py$ # type-only module has no runtime import path
   - repo: https://github.com/gaborbernat/simplint-pre-commit
-    rev: "d14a8917a5f578a176baf72ab9ee76314558769f" # frozen: v0.12.3
+    rev: "6f12a88d7d6ebf3dd09ebddb1e6541e533d4efe0" # frozen: v0.14.2
     hooks:
       - id: simplint
         priority: 6

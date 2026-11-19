@@ -72,7 +72,7 @@ def man_project(
 ) -> ToxProject:
     if sys.platform == "win32":
         pytest.skip("creating symlinks needs privileges on Windows")
-    man_page: Final = tmp_path / "prefix" / "share" / "man" / "man1" / "tox.1"
+    man_page: Final[Path] = tmp_path / "prefix" / "share" / "man" / "man1" / "tox.1"
     man_page.parent.mkdir(parents=True)
     man_page.touch()
     monkeypatch.setattr(sys, "prefix", str(tmp_path / "prefix"))

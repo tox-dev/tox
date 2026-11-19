@@ -51,8 +51,6 @@ _BACKSLASH_ESCAPE_CHARS: Final[tuple[str, ...]] = (
 )
 MAX_REPLACE_DEPTH: Final[int] = 100
 """Maximum depth of nested replacements, deeper ones are not expanded."""
-# Factor overrides can supply values absent from the configuration without renaming environments.
-_FACTOR_ENV_PREFIX: Final[str] = "TOX_FACTOR_"
 _REQUIREMENT_LINE_BREAKS: Final[str] = r"[\n\r\v\f\x1c-\x1e\x85\u2028\u2029]"
 
 
@@ -846,7 +844,8 @@ def replace_factor(conf: Config, args: list[str], conf_args: ConfigLoadArgs) -> 
     group = conf.factor_labels(conf_args.env_name).get(label)
     if group is None or conf_args.env_name is None:
         return default or ""
-    if (override := os.environ.get(f"{_FACTOR_ENV_PREFIX}{label}")) is not None:
+    # Factor overrides can supply values absent from the configuration without renaming environments.
+    if (override := os.environ.get(f"TOX_FACTOR_{label}")) is not None:
         return HostText(override, literal=True)
     if (value := group.env_values.get(conf_args.env_name)) is not None:
         return value

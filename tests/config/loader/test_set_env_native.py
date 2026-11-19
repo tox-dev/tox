@@ -85,7 +85,7 @@ def test_set_env_override_native_toml_rejects_wrong_shape(
 
 
 def test_set_env_native_toml_keeps_literal_values(tox_project: ToxProjectCreator) -> None:
-    value: Final = "  café;#\nsecond line  "
+    value: Final[str] = "  café;#\nsecond line  "
     result = tox_project({
         "tox.toml": tomli_w.dumps({
             "env_run_base": {"set_env": [{"MAGIC": value}]},

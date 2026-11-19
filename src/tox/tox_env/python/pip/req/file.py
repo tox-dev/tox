@@ -493,7 +493,7 @@ class RequirementsFile:
         :returns: the redacted text
 
         """
-        secrets: Final = self._secrets | self._req_parser._secrets  # ruff:ignore[private-member-access]  # nested files
+        secrets: Final[dict[str, str]] = self._secrets | self._req_parser._secrets  # ruff:ignore[private-member-access]  # nested files
         for value in sorted(secrets, key=len, reverse=True):  # longest first, as a value may contain another one
             text = text.replace(value, secrets[value])
         return text

@@ -46,6 +46,7 @@ from tox.util.typing_compat import override
 if TYPE_CHECKING:
     from argparse import Action, ArgumentParser, Namespace
     from collections.abc import Callable, Iterable, Iterator
+    from pathlib import Path
     from typing import Self
 
     from .state import State
@@ -217,7 +218,7 @@ def _env_completer(
     from tox.plugin.manager import MANAGER  # ruff:ignore[import-outside-top-level]  # circular import
 
     try:
-        root_dir: Final = getattr(parsed_args, "root_dir", None)
+        root_dir: Final[Path | None] = getattr(parsed_args, "root_dir", None)
         source = discover_source(getattr(parsed_args, "config_file", None), root_dir)
         conf = Config.make(
             Parsed(override=[], root_dir=root_dir, work_dir=None),

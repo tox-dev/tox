@@ -17,7 +17,7 @@ from tox.tox_env.python.pip.req_file import PythonConstraints, PythonDeps
 if TYPE_CHECKING:
     from pathlib import Path
 
-    from tox.pytest import ToxProjectCreator
+    from tox.pytest import ToxProjectCreator, ToxRunOutcome
 
 _BACKSLASH_ESCAPE: Final[pytest.MarkDecorator] = pytest.mark.skipif(
     sys.platform == "win32", reason=r"on windows the escaped \ is overloaded by path separator"
@@ -240,13 +240,15 @@ def test_unroll_redacts_secret_env_vars(tmp_path: Path, monkeypatch: pytest.Monk
     monkeypatch.setenv("PYPI_TOKEN", "magic")
     monkeypatch.setenv("LONG_PYPI_TOKEN", "magical")
     monkeypatch.setenv("PYPI_HOST", "host")
-    nested: Final = dedent("""\
+    nested: Final[str] = dedent("""\
         --index-url https://ci:${PYPI_TOKEN}@${PYPI_HOST}/simple
         --find-links https://${PYPI_HOST}/${LONG_PYPI_TOKEN}/
         https://ci:${PYPI_TOKEN}@${PYPI_HOST}/a.whl
     """)
     (tmp_path / "nested.txt").write_text(nested)
-    python_deps: Final = PythonDeps(raw="-r nested.txt\nhttps://${LONG_PYPI_TOKEN}@${PYPI_HOST}/b.whl", root=tmp_path)
+    python_deps: Final[PythonDeps] = PythonDeps(
+        raw="-r nested.txt\nhttps://${LONG_PYPI_TOKEN}@${PYPI_HOST}/b.whl", root=tmp_path
+    )
 
     assert python_deps.unroll() == (
         ["index_url=['https://ci:*****@host/simple']", "find_links=['https://host/*******/']"],
@@ -378,7 +380,7 @@ def test_deps_show_option_operand_as_one_operand(tmp_path: Path, raw: str, shown
     ],
 )
 def test_deps_option_operand_round_trip(tmp_path: Path, raw: str, pip_args: list[str]) -> None:
-    python_deps: Final = PythonDeps(f"{raw}\npkg", tmp_path)
+    python_deps: Final[PythonDeps] = PythonDeps(f"{raw}\npkg", tmp_path)
     assert python_deps.as_root_args == ["pkg", *pip_args]
     assert PythonDeps(stringify(python_deps)[0], tmp_path).as_root_args == ["pkg", *pip_args]
     assert StrConvert.to_command(" ".join(["pip", *python_deps.lines()])).args == ["pip", *pip_args, "pkg"]
@@ -403,7 +405,7 @@ def test_deps_reference_in_command_keeps_substituted_operand(
     ini: Final[str] = (
         f"[testenv:inherits]\n[testenv]\ndeps =\n  -f {{env:WHEELS}}\n  pkg\ncommands = pip download {reference}"
     )
-    result: Final = tox_project({"tox.ini": ini}).run("c", "-e", "py", "-k", "commands")
+    result: Final[ToxRunOutcome] = tox_project({"tox.ini": ini}).run("c", "-e", "py", "-k", "commands")
     result.assert_success()
     assert [command.args for command in result.env_conf("py")["commands"]] == [
         ["pip", "download", "-f", "wheels --index-url=https://x/simple", "pkg"]
