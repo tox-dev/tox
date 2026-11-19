@@ -1,0 +1,3 @@
+A TOML ``{[table]key}`` reference to a table whose name only starts with ``env``, such as ``[envvars]``,
+``[tool.tox.environment]`` or an ``env_base`` template, now reads the key from that table. It used to be looked up as an
+environment, so the reference was left in the value unresolved.
