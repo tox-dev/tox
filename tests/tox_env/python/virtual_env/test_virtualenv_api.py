@@ -534,3 +534,28 @@ def test_virtualenv_spec_subprocess_missing_interpreter(
     result.assert_failed()
     assert "could not find python interpreter" in result.out
     ensure_bootstrap.assert_not_called()  # a missing interpreter must skip without bootstrapping
+
+
+@pytest.mark.parametrize(
+    ("files", "expected"),
+    [
+        pytest.param({"tox.ini": ""}, "skip", id="no-project"),
+        pytest.param({"tox.ini": "", "pyproject.toml": ""}, "sdist", id="project-in-tox-root"),
+        pytest.param({"tox.ini": "[tox]\npackage_root = sub", "sub": {"pyproject.toml": ""}}, "sdist", id="pyproject"),
+        pytest.param({"tox.ini": "[tox]\npackage_root = sub", "sub": {"setup.py": ""}}, "sdist", id="setup-py"),
+        pytest.param({"tox.ini": "[tox]\nsetupdir = sub", "sub": {"setup.cfg": ""}}, "sdist", id="setupdir-alias"),
+        pytest.param({"tox.toml": 'package_root = "sub"', "sub": {"pyproject.toml": ""}}, "sdist", id="toml"),
+        pytest.param(
+            {"tox.ini": "[tox]\npackage_root = sub", "pyproject.toml": "", "sub": {"README": ""}},
+            "skip",
+            id="project-only-outside-package-root",
+        ),
+        pytest.param({"tox.ini": "[tox]\npackage_root = missing"}, "sdist", id="missing-package-root"),
+    ],
+)
+def test_default_package_follows_package_root(
+    tox_project: ToxProjectCreator, files: dict[str, str | dict[str, str]], expected: str
+) -> None:
+    result = tox_project(files).run("c", "-e", "py", "-k", "package")
+    result.assert_success()
+    assert result.env_conf("py")["package"] == expected

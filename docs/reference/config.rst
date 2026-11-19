@@ -2130,7 +2130,8 @@ Python run
 
     When option can be one of ``wheel``, ``sdist``, ``sdist-wheel``, ``editable``, ``editable-legacy``, ``deps-only``,
     ``skip``, or ``external``. If :ref:`use_develop` is set this becomes a constant of ``editable``. If
-    :ref:`skip_install` is set this becomes a constant of ``skip``.
+    :ref:`skip_install` is set this becomes a constant of ``skip``. Otherwise it defaults to ``sdist``, or to ``skip``
+    when :ref:`package_root` holds no ``pyproject.toml``, ``setup.py`` or ``setup.cfg``.
 
     When ``deps-only`` is selected, tox installs the package's dependencies (including any requested :ref:`extras`) but
     does **not** build or install the package itself. This is useful for environments that need the same dependencies as
