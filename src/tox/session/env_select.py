@@ -448,15 +448,17 @@ class EnvSelector:
                 or factor in combinable
             ):
                 found_factors.add(factor)
+                factors[factor] = factor
             else:
                 closest = get_close_matches(factor, all_factors, n=1)
-                suggestion = closest[0] if closest else None
-                factors[factor] = None if suggestion == factor else suggestion
+                factors[factor] = closest[0] if closest else None
         if not set(factors) - found_factors:
             return False, None
-        suggested = (
-            None if any(i is None for i in factors.values()) else "-".join(cast("Iterable[str]", factors.values()))
-        )
+        if any(i is None for i in factors.values()):
+            suggested = None
+        else:
+            candidate = "-".join(cast("Iterable[str]", factors.values()))
+            suggested = None if candidate == env else candidate
         return True, suggested
 
     @staticmethod

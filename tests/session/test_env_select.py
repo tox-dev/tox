@@ -531,6 +531,29 @@ def test_suggest_env(tox_project: ToxProjectCreator) -> None:
     assert outcome.out == msg
 
 
+def test_suggest_env_partial_factor_misspelling(tox_project: ToxProjectCreator) -> None:
+    tox_ini = f"""
+        [tox]
+        env_list = release, alpha-py3{_MINOR}
+        [testenv]
+        package = skip
+        [testenv:beta-lint]
+        package = skip
+    """
+    proj = tox_project({"tox.ini": tox_ini})
+    outcome = proj.run("r", "-e", f"alpha-p3{_MINOR},beta-lnt,bta-lint")
+    outcome.assert_failed(code=-2)
+
+    assert not outcome.err
+    msg = (
+        "ROOT: HandledError| provided environments not found in configuration file:\n"
+        f"alpha-p3{_MINOR} - did you mean alpha-py3{_MINOR}?\n"
+        "beta-lnt - did you mean beta-lint?\n"
+        "bta-lint - did you mean beta-lint?\n"
+    )
+    assert outcome.out == msg
+
+
 @pytest.mark.parametrize(
     "run_args",
     [

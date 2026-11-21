@@ -1,0 +1,2 @@
+Suggest closest matching environments for ``-e`` selections when only some factors are misspelled or when environments
+are defined in section headers - by :user:`abhishekrajv7-cmd`.
