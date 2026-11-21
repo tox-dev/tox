@@ -531,6 +531,18 @@ def test_suggest_env(tox_project: ToxProjectCreator) -> None:
     assert outcome.out == msg
 
 
+def test_suggest_env_keeps_valid_factors(tox_project: ToxProjectCreator) -> None:
+    proj = tox_project({"tox.ini": f"[testenv:alpha-py3{_MINOR}]\n[testenv:beta-lint]\n"})
+    outcome = proj.run("r", "-e", f"alpha-p3{_MINOR},beta-lnt,beta-magic")
+    outcome.assert_failed(code=-2)
+
+    msg = (
+        "ROOT: HandledError| provided environments not found in configuration file:\n"
+        f"alpha-p3{_MINOR} - did you mean alpha-py3{_MINOR}?\nbeta-lnt - did you mean beta-lint?\nbeta-magic\n"
+    )
+    assert outcome.out == msg
+
+
 @pytest.mark.parametrize(
     "run_args",
     [
