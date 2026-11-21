@@ -540,8 +540,7 @@ def test_suggest_env_partial_factor_misspelling(tox_project: ToxProjectCreator) 
         [testenv:beta-lint]
         package = skip
     """
-    proj = tox_project({"tox.ini": tox_ini})
-    outcome = proj.run("r", "-e", f"alpha-p3{_MINOR},beta-lnt,bta-lint")
+    outcome = tox_project({"tox.ini": tox_ini}).run("r", "-e", f"alpha-p3{_MINOR},beta-lnt,bta-lint")
     outcome.assert_failed(code=-2)
 
     assert not outcome.err
