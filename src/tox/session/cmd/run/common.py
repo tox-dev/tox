@@ -281,8 +281,7 @@ def execute(  # keeps the signature
         try:
             write_journal(state.conf.options.result_json, state._journal)  # ruff:ignore[private-member-access]
         except OSError as exception:
-            result_json = state.conf.options.result_json
-            msg = f"failed to write result json to {result_json}: {exception}"
+            msg = f"failed to write result json to {state.conf.options.result_json}: {exception}"
             if scheduler_error:  # keep the original failure and only report this one
                 _LOGGER.error(msg)  # ruff:ignore[error-instead-of-exception]  # expected error log
             else:
