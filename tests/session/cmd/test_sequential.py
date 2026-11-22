@@ -702,6 +702,15 @@ def test_fail_fast_respects_ignore_outcome(tox_project: ToxProjectCreator) -> No
     assert "IGNORED FAIL" in result.out
 
 
+def test_result_json_parent_not_creatable(tox_project: ToxProjectCreator) -> None:
+    proj = tox_project({"tox.ini": "[testenv]\npackage=skip\ncommands=python --version"})
+    blocker = proj.path / "blocker"
+    blocker.write_text("not a directory")
+    result = proj.run("r", "--result-json", str(blocker / "out.json"))
+    result.assert_failed(code=-2)  # -2 is the handled-error exit code (254 on the CLI)
+    assert "failed to write result json" in result.out
+
+
 def test_no_capture_with_result_json_fails(tox_project: ToxProjectCreator) -> None:
     ini = "[testenv]\npackage=skip\ncommands=python --version"
     tox_project({"tox.ini": ini}).run("r", "-e", "py", "--no-capture", "--result-json", "result.json").assert_failed()

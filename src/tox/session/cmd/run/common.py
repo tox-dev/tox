@@ -278,7 +278,15 @@ def execute(  # keeps the signature
     finally:
         ordered_results = _order_results(state, results, to_run_list)
         # write the journal
-        write_journal(state.conf.options.result_json, state._journal)  # ruff:ignore[private-member-access]
+        try:
+            write_journal(state.conf.options.result_json, state._journal)  # ruff:ignore[private-member-access]
+        except OSError as exception:
+            result_json = state.conf.options.result_json
+            msg = f"failed to write result json to {result_json}: {exception}"
+            if scheduler_error:  # keep the original failure and only report this one
+                _LOGGER.error(msg)  # ruff:ignore[error-instead-of-exception]  # expected error log
+            else:
+                raise HandledError(msg) from exception
         # let editors discover an environment
         _record_venv_redirect(state)
         # warn about unused config keys
