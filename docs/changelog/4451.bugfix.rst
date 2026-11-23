@@ -1,1 +1,0 @@
-Resolve TOML string references such as ``{[envvars]label}`` to ordinary tables whose names begin with ``env``.

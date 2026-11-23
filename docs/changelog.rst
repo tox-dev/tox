@@ -6,6 +6,38 @@
 
 .. towncrier release notes start
 
+.. _release-4-67-16:
+
+**********************
+ 4.67.16 (2026-11-23)
+**********************
+
+.. _release-4-67-16-fixed:
+
+Fixed
+-----
+
+- Resolve TOML string references such as ``{[envvars]label}`` to ordinary tables whose names begin with ``env``
+  (:pr:`4452`) by :user:`mansur-akhmadi` and :user:`gaborbernat`. (:issue:`4451`)
+- Detect build files in :ref:`package_root` when choosing the default :ref:`package` for virtualenv environments
+  (:pr:`4455`) by :user:`mansur-akhmadi` and :user:`gaborbernat`. (:issue:`4454`)
+- Suggest ``alpha-py312`` for ``tox -e alpha-p312`` when ``alpha-py312`` is a configured environment (:pr:`4460`) by
+  :user:`arindam77` and :user:`gaborbernat`. (:issue:`4458`)
+- Accept uppercase and mixed-case hexadecimal digits in requirements-file ``--hash`` digests (:pr:`4463`) by
+  :user:`xixi-box` and :user:`gaborbernat`. (:issue:`4462`)
+- Report the output path and filesystem error when tox cannot write the file requested by ``--result-json`` (:pr:`4461`)
+  by :user:`qianeric-backup` and :user:`gaborbernat`.
+- Resolve INI references to section names containing colons or dots, such as ``{[tool:pytest]addopts}`` (:pr:`4453`) by
+  :user:`Yshuro` and :user:`gaborbernat`.
+
+.. _release-4-67-16-performance:
+
+Performance
+-----------
+
+- Defer imports until the modules are needed on Python 3.15, reducing startup time for common CLI operations
+  (:pr:`4450`) by :user:`gaborbernat`.
+
 .. _release-4-67-15:
 
 **********************
