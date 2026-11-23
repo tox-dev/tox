@@ -44,9 +44,17 @@ class VirtualEnvRunner(VirtualEnv, PythonRun):
     @override
     def default_pkg_type(self) -> str:
         tox_root = self.core.get("tox_root", Path)
-        if not (any((tox_root / i).exists() for i in ("pyproject.toml", "setup.py", "setup.cfg"))):
-            return "skip"
-        return super().default_pkg_type
+        build_files = ("pyproject.toml", "setup.py", "setup.cfg")
+        if any((tox_root / filename).exists() for filename in build_files):
+            return super().default_pkg_type
+        package_root = self.core.package_root_for_discovery()
+        if (
+            package_root is not None
+            and package_root != tox_root
+            and any((package_root / filename).exists() for filename in build_files)
+        ):
+            return super().default_pkg_type
+        return "skip"
 
     @staticmethod
     @override

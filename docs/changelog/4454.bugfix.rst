@@ -1,0 +1,1 @@
+Detect build files in :ref:`package_root` when choosing the default :ref:`package` for virtualenv environments.
