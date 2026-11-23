@@ -384,6 +384,9 @@ your configuration and accidentally run ``tox -e py3.10-lint``, tox will detect 
 environment name with a ``did you mean py310-lint?`` message rather than silently falling back to the base test
 environment.
 
+Tox can also suggest a name when only one factor has a typo. For example, if you define ``py310-lint``, running ``tox -e
+py310-lnt`` can suggest ``py310-lint``.
+
 .. _platform-specification:
 
 **************************************

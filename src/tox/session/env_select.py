@@ -392,15 +392,15 @@ class EnvSelector:
         return getattr(self._state.conf.options, "env", None)
 
     def _ensure_envs_valid(self) -> None:
-        known_envs, combinable, all_factors = self._combinable_factors()
+        factors = self._combinable_factors()
         invalid_envs: dict[str, str | None] = {}
         for env in self._cli_envs or []:
-            if env.startswith(".pkg_external") or env in known_envs:
+            if env.startswith(".pkg_external") or env in factors.known_envs:
                 continue
-            if (normalized_env := self._normalize_env_name(env)) != env and normalized_env in known_envs:
+            if (normalized_env := self._normalize_env_name(env)) != env and normalized_env in factors.known_envs:
                 invalid_envs[env] = normalized_env
                 continue
-            is_invalid, suggestion = self._invalid_env_suggestion(env, combinable, all_factors)
+            is_invalid, suggestion = self._invalid_env_suggestion(env, normalized_env, factors)
             if is_invalid:
                 invalid_envs[env] = suggestion
         if invalid_envs:
@@ -437,28 +437,58 @@ class EnvSelector:
                 normalized_factors.append(factor)
         return "-".join(normalized_factors)
 
-    @staticmethod
-    def _invalid_env_suggestion(env: str, combinable: set[str], all_factors: set[str]) -> tuple[bool, str | None]:
-        factors: dict[str, str | None] = dict.fromkeys(env.split("-"), None)
-        found_factors: set[str] = set()
-        for factor in factors:
-            if (
-                _DYNAMIC_ENV_FACTORS.fullmatch(factor)
-                or _PY_PRE_RELEASE_FACTOR.fullmatch(factor)
-                or factor in combinable
-            ):
-                found_factors.add(factor)
-                factors[factor] = factor
-            else:
-                closest = get_close_matches(factor, all_factors, n=1)
-                factors[factor] = closest[0] if closest else None
-        if not set(factors) - found_factors:
+    def _invalid_env_suggestion(
+        self, env: str, normalized_env: str, factors: _CombinableFactors
+    ) -> tuple[bool, str | None]:
+        names = env.split("-")
+        invalid = {factor for factor in names if not factors.is_combinable(factor)}
+        if not invalid:
             return False, None
-        suggested = (
-            None if any(i is None for i in factors.values()) else "-".join(cast("Iterable[str]", factors.values()))
-        )
-        # valid factors are kept as they are, so do not suggest the name that was given
-        return True, None if suggested == env else suggested
+
+        all_factors = factors.all_factors
+        matches = {factor: get_close_matches(factor, all_factors, n=len(all_factors)) for factor in invalid}
+        known_envs = factors.known_envs
+        if suggestion := self._suggest_known_env(env, normalized_env, matches, known_envs):
+            return True, suggestion
+
+        corrections: dict[str, str] = {}
+        for factor, close in matches.items():
+            combinable = (match for match in close if all(factors.is_combinable(part) for part in match.split("-")))
+            if (candidate := next(combinable, None)) is None:
+                return True, None
+            corrections[factor] = candidate
+        suggestion = "-".join(corrections.get(factor, factor) for factor in names)
+        if suggestion not in known_envs and (normalized := self._normalize_env_name(suggestion)) in known_envs:
+            return True, normalized
+        return True, suggestion
+
+    def _suggest_known_env(
+        self, env: str, normalized_env: str, matches: dict[str, list[str]], known_envs: set[str]
+    ) -> str | None:
+        matching_factors: list[tuple[str | None, set[str]]] = [
+            (factor, set(matches[factor])) if factor in matches else (None, {factor, normalized})
+            for factor, normalized in zip(env.split("-"), normalized_env.split("-"), strict=True)
+        ]
+        candidates = [name for name in known_envs if self._matches_known_env(name.split("-"), matching_factors)]
+        closest = get_close_matches(env, candidates, n=1, cutoff=0)
+        return closest[0] if closest else None
+
+    @staticmethod
+    def _matches_known_env(parts: list[str], matching_factors: list[tuple[str | None, set[str]]]) -> bool:
+        offsets = {0}
+        for index, (misspelled, alternatives) in enumerate(matching_factors):
+            # Each remaining requested factor needs at least one component.
+            last_end = len(parts) - len(matching_factors) + index + 1
+            next_offsets = {start + 1 for start in offsets if start < last_end and parts[start] in alternatives}
+            if misspelled is not None:
+                for start in offsets:
+                    for end in range(start + 2, last_end + 1):
+                        if get_close_matches(misspelled, ["-".join(parts[start:end])], n=1):
+                            next_offsets.add(end)
+            if not next_offsets:
+                return False
+            offsets = next_offsets
+        return len(parts) in offsets
 
     @staticmethod
     def _raise_invalid_envs(invalid_envs: dict[str, str | None]) -> None:
@@ -745,6 +775,13 @@ class _CombinableFactors(NamedTuple):
     known_envs: set[str]
     combinable: set[str]
     all_factors: set[str]
+
+    def is_combinable(self, factor: str) -> bool:
+        return (
+            factor in self.combinable
+            or _DYNAMIC_ENV_FACTORS.fullmatch(factor) is not None
+            or _PY_PRE_RELEASE_FACTOR.fullmatch(factor) is not None
+        )
 
 
 @dataclass(slots=True, kw_only=True)  # simplint: ignore[dataclass-frozen]  # fields change as environments are defined
