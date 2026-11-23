@@ -1046,6 +1046,30 @@ def test_pip_install_requirements_file_deps(tox_project: ToxProjectCreator) -> N
     assert execute_calls.call_args[0][3].cmd == ["python", "-I", "-m", "pip", "install", "b", "-r", "r.txt"]
 
 
+@pytest.mark.parametrize(("algorithm", "length"), [("sha256", 64), ("sha384", 96), ("sha512", 128)])
+@pytest.mark.parametrize(
+    "digits",
+    [pytest.param("ab", id="lowercase"), pytest.param("AB", id="uppercase"), pytest.param("aB", id="mixed-case")],
+)
+def test_pip_install_requirements_file_hash_case(
+    tox_project: ToxProjectCreator, algorithm: str, length: int, digits: str
+) -> None:
+    hash_value = f"{algorithm}:{digits * (length // 2)}"
+    project = tox_project({
+        "tox.ini": "[testenv]\ndeps=-r r.txt\nskip_install=true",
+        "r.txt": f"example==1 --hash={hash_value}\n",
+    })
+    execute_calls = project.patch_execute(lambda request: 0 if request.run_id == "install_deps" else None)
+
+    project.run("r").assert_success()
+
+    install_commands = [call[0][3].cmd for call in execute_calls.call_args_list if call[0][3].run_id == "install_deps"]
+    assert install_commands == [["python", "-I", "-m", "pip", "install", "-r", "r.txt"]]
+    cache: Final[JsonValue] = json.loads((project.path / ".tox" / "py" / ".tox-info.json").read_text())
+    assert _is_install_cache(cache)
+    assert cache["PythonRun"]["deps"]["requirements"] == [f"example==1 --hash {hash_value}"]
+
+
 @pytest.fixture
 def secret_requirements_project(tox_project: ToxProjectCreator, monkeypatch: pytest.MonkeyPatch) -> ToxProject:
     monkeypatch.setenv("PYPI_TOKEN", "magic-one")

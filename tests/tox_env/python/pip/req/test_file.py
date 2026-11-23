@@ -659,6 +659,7 @@ def test_req_path_with_space_quoted(tmp_path: Path) -> None:
     "hash_value",
     [
         pytest.param("sha256:a", id="sha256-colon-a"),
+        pytest.param(f"SHA256:{'a' * 64}", id="uppercase-algorithm"),
         pytest.param(
             "sha256:xxxxxxxxxx123456789012345678901234567890123456789012345678901234",
             id="sha256-colon-xxxxxxxxxx123456789012345678901234567890123456789012345678901234",

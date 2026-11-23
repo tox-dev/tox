@@ -132,9 +132,9 @@ _HASH: Final[re.Pattern[str]] = re.compile(
     r"""
     sha
     (
-        256 : [a-f0-9]{64}      # SHA-256 hash
-        | 384 : [a-f0-9]{96}    # SHA-384 hash
-        | 512 : [a-f0-9]{128}   # SHA-512 hash
+        256 : [a-fA-F0-9]{64}      # SHA-256 hash
+        | 384 : [a-fA-F0-9]{96}    # SHA-384 hash
+        | 512 : [a-fA-F0-9]{128}   # SHA-512 hash
     )
     """,
     re.VERBOSE,
