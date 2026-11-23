@@ -656,9 +656,32 @@ def test_req_path_with_space_quoted(tmp_path: Path) -> None:
 
 
 @pytest.mark.parametrize(
+    ("algorithm", "length"),
+    [
+        pytest.param("sha256", 64, id="sha256"),
+        pytest.param("sha384", 96, id="sha384"),
+        pytest.param("sha512", 128, id="sha512"),
+    ],
+)
+@pytest.mark.parametrize(
+    "digits",
+    [pytest.param("ab", id="lowercase"), pytest.param("AB", id="uppercase"), pytest.param("aB", id="mixed-case")],
+)
+def test_hash_digest_case(tmp_path: Path, algorithm: str, length: int, digits: str) -> None:
+    hash_value = f"{algorithm}:{digits * (length // 2)}"
+    requirements = tmp_path / "req.txt"
+    requirements.write_text(f"attrs --hash={hash_value}\n", encoding="utf-8")
+
+    assert [str(requirement) for requirement in RequirementsFile(requirements, constraint=False).requirements] == [
+        f"attrs --hash {hash_value.lower()}",
+    ]
+
+
+@pytest.mark.parametrize(
     "hash_value",
     [
         pytest.param("sha256:a", id="sha256-colon-a"),
+        pytest.param(f"SHA256:{'a' * 64}", id="uppercase-algorithm"),
         pytest.param(
             "sha256:xxxxxxxxxx123456789012345678901234567890123456789012345678901234",
             id="sha256-colon-xxxxxxxxxx123456789012345678901234567890123456789012345678901234",

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import os
+from hashlib import sha256
 from textwrap import dedent
 from typing import TYPE_CHECKING, Any, Final, TypedDict
 from zipfile import ZipFile
@@ -1044,6 +1045,60 @@ def test_pip_install_requirements_file_deps(tox_project: ToxProjectCreator) -> N
     assert "py: recreate env because requirements removed: a" in result_third.out, result_third.out
     assert execute_calls.call_count == 1
     assert execute_calls.call_args[0][3].cmd == ["python", "-I", "-m", "pip", "install", "b", "-r", "r.txt"]
+
+
+@pytest.fixture
+def hashed_wheel_project(tox_project: ToxProjectCreator) -> ToxProject:
+    return tox_project({
+        "tox.ini": """
+            [testenv]
+            package = skip
+            deps = -r requirements.txt
+            commands = python -c 'from demo_pkg_inline import do; do()'
+        """,
+    })
+
+
+@pytest.mark.parametrize(
+    ("digest_suffix", "exit_code", "output"),
+    [
+        pytest.param(b"", 0, "greetings from demo_pkg_inline", id="matching-digest"),
+        pytest.param(b"other content", 1, "DO NOT MATCH THE HASHES", id="mismatched-digest"),
+    ],
+)
+def test_pip_install_requirements_file_hash_case(
+    hashed_wheel_project: ToxProject, demo_pkg_inline_wheel: Path, digest_suffix: bytes, exit_code: int, output: str
+) -> None:
+    digest = sha256(demo_pkg_inline_wheel.read_bytes() + digest_suffix).hexdigest().upper()
+    (hashed_wheel_project.path / "requirements.txt").write_text(
+        f"--no-index\n{demo_pkg_inline_wheel.as_uri()} --hash=sha256:{digest}\n", encoding="utf-8"
+    )
+
+    result = hashed_wheel_project.run("r")
+
+    assert result.code == exit_code, result
+    assert output in result.out + result.err, result
+
+
+def test_pip_install_reuses_env_when_only_digest_case_changes(
+    hashed_wheel_project: ToxProject, demo_pkg_inline_wheel: Path
+) -> None:
+    digest = sha256(demo_pkg_inline_wheel.read_bytes()).hexdigest()
+    assert digest != digest.upper()
+    requirement = f"--no-index\n{demo_pkg_inline_wheel.as_uri()} --hash=sha256:"
+    requirements = hashed_wheel_project.path / "requirements.txt"
+    requirements.write_text(f"{requirement}{digest}\n", encoding="utf-8")
+    original = hashed_wheel_project.run("r")
+    original.assert_success()
+    marker = original.state.envs["py"].env_dir / "marker"
+    marker.touch()
+
+    requirements.write_text(f"{requirement}{digest.upper()}\n", encoding="utf-8")
+    result = hashed_wheel_project.run("r")
+
+    result.assert_success()
+    assert marker.is_file(), result
+    assert "install_deps>" not in result.out, result
 
 
 @pytest.fixture

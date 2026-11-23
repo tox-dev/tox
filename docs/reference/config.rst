@@ -2049,6 +2049,11 @@ Python run
     A referenced requirements file may use pip's per-requirement ``--config-settings`` (``-C``) option. Put the option
     in that file, on the requirement line; it is not supported on a ``deps`` entry itself.
 
+    In a requirements file, ``--hash`` takes a lowercase algorithm name and a full hex digest. tox accepts ``sha256``,
+    ``sha384``, and ``sha512`` digests in either case or mixed case. tox compares digests in lowercase when deciding whether
+    to reinstall dependencies. pip verifies the digest against the artifact. If you pin pip with ``VIRTUALENV_PIP``, use
+    `pip 24.2 or newer <https://pip.pypa.io/en/stable/news/#v24-2>`_ for case-insensitive hash verification.
+
     tox rejects requirement and constraint files larger than 10 MiB. For HTTP(S) files, it checks a 120-second deadline
     between response body reads. A server that sends HTTP framing bytes slowly can delay the check.
 
