@@ -242,12 +242,26 @@ location can be changed via the ``TOX_CONFIG_FILE`` environment variable.
     # Use wheel packaging for this run
     TOX_OVERRIDE=env_run_base.package=wheel tox run -e 3.13
 
-**CLI override**: The ``-x`` (or ``--override``) flag overrides any configuration value:
+**CLI override**: The ``-x`` (or ``--override``) flag overrides any configuration value. Name the section the way your
+configuration file does: ``env.3.13`` in ``tox.toml``, ``tool.tox.env.3.13`` in ``pyproject.toml`` and ``testenv:3.13``
+in ``tox.ini``. An override naming a section the file does not have changes nothing.
 
-.. code-block:: bash
+.. tab:: TOML
 
-    # Force editable install for a specific environment
-    tox run -e 3.13 -x "testenv:3.13.package=editable"
+    .. code-block:: bash
+
+         # Force editable install for a specific environment (tox.toml)
+         tox run -e 3.13 -x "env.3.13.package=editable"
+
+         # The same in pyproject.toml
+         tox run -e 3.13 -x "tool.tox.env.3.13.package=editable"
+
+.. tab:: INI (deprecated)
+
+    .. code-block:: bash
+
+         # Force editable install for a specific environment
+         tox run -e 3.13 -x "testenv:3.13.package=editable"
 
 tox substitutes into an override value, so it reaches the same values a configuration file can:
 
