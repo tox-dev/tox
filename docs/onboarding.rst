@@ -811,6 +811,8 @@ Optional structured JSON output is enabled by ``--result-json <path>``:
 - `EnvJournal <https://github.com/tox-dev/tox/blob/main/src/tox/journal/env.py>`_ (per-environment) records metadata and
   execution outcomes (command, stdout, stderr, exit code, elapsed time).
 
+If tox cannot write the file, it reports the path and filesystem error and returns a failure status.
+
 *****************************
  Part 4: Reference Materials
 *****************************

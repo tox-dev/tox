@@ -55,6 +55,7 @@ if TYPE_CHECKING:
     from collections.abc import Callable, Iterator, Sequence
     from types import FrameType
 
+    from tox.config.cli.parser import Parsed
     from tox.session.state import State
     from tox.tox_env.api import ToxEnv
     from tox.tox_env.runner import RunToxEnv
@@ -210,6 +211,8 @@ def execute(  # keeps the signature
 
     :returns: the exit code
 
+    :raises HandledError: if the result JSON file cannot be written
+
     """
     interrupt, done = Event(), Event()
     results: list[ToxEnvRunResult] = []
@@ -271,36 +274,21 @@ def execute(  # keeps the signature
         return None, False
 
     previous, has_previous = None, False
+    run_finished = False
     try:
         previous, has_previous = _run_thread()
         if scheduler_error:
             raise scheduler_error[0]
+        run_finished = True
     finally:
-        ordered_results = _order_results(state, results, to_run_list)
-        # write the journal
         try:
-            write_journal(state.conf.options.result_json, state._journal)  # ruff:ignore[private-member-access]
-        except OSError as exception:
-            msg = f"failed to write result json to {state.conf.options.result_json}: {exception}"
-            if scheduler_error:  # keep the original failure and only report this one
-                _LOGGER.error(msg)  # ruff:ignore[error-instead-of-exception]  # expected error log
-            else:
-                raise HandledError(msg) from exception
-        # let editors discover an environment
-        _record_venv_redirect(state)
-        # warn about unused config keys
-        _warn_unused_config(state)
-        # report the outcome
-        exit_code = _report(
-            state.conf.options.start,
-            ordered_results,
-            is_colored=state.conf.options.is_colored,
-            verbosity=state.conf.options.verbosity,
-            fail_fast=state.conf.options.fail_fast
-            or any(cast("RunToxEnv", state.envs[env]).conf["fail_fast"] for env in to_run_list),
-        )
-        if has_previous:
-            signal(SIGINT, previous)
+            exit_code, journal_error = _finalize_run(state, results, to_run_list, run_finished=run_finished)
+        finally:
+            if has_previous:
+                signal(SIGINT, previous)
+    if journal_error is not None:
+        msg = f"could not write --result-json to {state.conf.options.result_json}: {journal_error}"
+        raise HandledError(msg) from journal_error
     return exit_code
 
 
@@ -598,6 +586,38 @@ def _tear_down(tox_env: ToxEnv) -> None:
         _LOGGER.warning("failed to tear down environment %s", tox_env.conf.name, exc_info=True)
 
 
+def _finalize_run(
+    state: State, results: list[ToxEnvRunResult], to_run_list: list[str], *, run_finished: bool
+) -> tuple[int, OSError | None]:
+    ordered_results = _order_results(state, results, to_run_list)
+    journal_error: OSError | None = None
+    try:
+        write_journal(
+            state.conf.options.result_json,
+            state._journal,  # ruff:ignore[private-member-access]  # session journal
+        )
+    except OSError as exception:
+        journal_error = exception
+    report_finished = False
+    try:
+        _record_venv_redirect(state)
+        _warn_unused_config(state)
+        exit_code = _report(
+            state.conf.options,
+            ordered_results,
+            journal_failed=journal_error is not None,
+            fail_fast=state.conf.options.fail_fast
+            or any(cast("RunToxEnv", state.envs[env]).conf["fail_fast"] for env in to_run_list),
+        )
+        report_finished = True
+    finally:
+        if journal_error is not None and not (run_finished and report_finished):
+            _LOGGER.error(  # keep the pending run error
+                "could not write --result-json to %s: %s", state.conf.options.result_json, journal_error
+            )
+    return exit_code, journal_error
+
+
 def _order_results(state: State, results: list[ToxEnvRunResult], to_run_list: list[str]) -> list[ToxEnvRunResult]:
     name_to_run = {r.name: r for r in results}
     ordered: list[ToxEnvRunResult] = [
@@ -659,33 +679,31 @@ def _print_unused(  # keeps the signature
 
 
 def _report(
-    start: float,
+    options: Parsed,
     runs: list[ToxEnvRunResult],
     *,
-    is_colored: bool,
-    verbosity: int,
+    journal_failed: bool,
     fail_fast: bool,
 ) -> int:
     def _print(color_: str, message: str) -> None:
-        if verbosity:
+        if options.verbosity:
             print(  # ruff:ignore[print]  # terminal output
-                f"{color_ if is_colored else ''}{message}{Fore.RESET if is_colored else ''}"
+                f"{color_ if options.is_colored else ''}{message}{Fore.RESET if options.is_colored else ''}"
             )
 
     successful, skipped = [], []
     for run in runs:
         successful.append(run.code == Outcome.OK or run.ignore_outcome or run.unavailable)
         skipped.append(run.skipped)
-        # durations are shown from verbosity 2
-        duration_individual = [o.elapsed for o in run.outcomes] if verbosity >= 2 else []  # ruff:ignore[magic-value-comparison]
+        duration_individual = [o.elapsed for o in run.outcomes] if options.verbosity >= DEFAULT_VERBOSITY else []
         extra = f"+cmd[{','.join(f'{i:.2f}' for i in duration_individual)}]" if duration_individual else ""
         setup = run.duration - sum(duration_individual)
         msg, color = _get_outcome_message(run)
         out = f"  {run.name}: {msg} ({run.duration:.2f}{f'=setup[{setup:.2f}]{extra}' if extra else ''} seconds)"
         _print(color, out)
 
-    duration = time.monotonic() - start
-    if all(successful) and not all(skipped):
+    duration = time.monotonic() - options.start
+    if not journal_failed and all(successful) and not all(skipped):
         _print(Fore.GREEN, f"  congratulations :) ({duration:.2f} seconds)")
         return Outcome.OK
     _print(Fore.RED, f"  evaluation failed :( ({duration:.2f} seconds)")
