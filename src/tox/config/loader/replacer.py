@@ -862,14 +862,16 @@ class ConfigDefault:
     """A default value of a replacement, with the span of the text it stands for.
 
     :param text: the default text
-    :param start: the index where the text it stands for starts
-    :param stop: the index where the text it stands for ends, ``None`` when it is open ended
+    :param start: the argument index or text offset where the default starts
+    :param stop: the argument index where the default ends, ``None`` when it is open ended
+    :param start_is_offset: whether the start is an offset in the joined arguments
 
     """
 
     text: str
     start: int
     stop: int | None = None
+    start_is_offset: bool = False
 
     @override
     def __str__(self) -> str:
@@ -915,12 +917,7 @@ class _CommandLinesReplacer(Replacer):
             flattened_args[0], flattened_args[1:], flattened_args, conf_args
         )
         if isinstance(replaced, ConfigDefault):
-            default_parts: Final[list[str | _Replaced]] = []
-            for at, arg in enumerate(args[replaced.start : replaced.stop]):
-                if at:
-                    default_parts.append(_ARG_DELIMITER)
-                default_parts.extend(arg)
-            return default_parts
+            return self._default_parts(replaced, args, flattened_args)
         if (expanded := self._expand_raw(replaced, conf_args)) is not None:
             return [expanded]
         if replaced is not None:
@@ -938,6 +935,58 @@ class _CommandLinesReplacer(Replacer):
             unresolved_parts.extend(arg)
         unresolved_parts.append(_REPLACE_END)
         return unresolved_parts
+
+    @classmethod
+    def _default_parts(
+        cls, default: ConfigDefault, args: list[list[str | _Replaced]], flattened_args: list[str]
+    ) -> list[str | _Replaced]:
+        if default.start_is_offset:
+            offset = default.start
+            for index, text in enumerate(flattened_args):
+                if offset <= len(text):
+                    args = args[index:]
+                    if offset:
+                        prefix = _ARG_DELIMITER.join([*flattened_args[:index], text[:offset]])
+                        args[0] = cls._trim_default_arg(args[0], offset, quote=cls._open_quote("", prefix))
+                    break
+                offset -= len(text) + len(_ARG_DELIMITER)
+        else:
+            args = args[default.start : default.stop]
+        parts: list[str | _Replaced] = []
+        for at, arg in enumerate(args):
+            if at:
+                parts.append(_ARG_DELIMITER)
+            parts.extend(arg)
+        return parts
+
+    @staticmethod
+    def _trim_default_arg(parts: list[str | _Replaced], offset: int, *, quote: str) -> list[str | _Replaced]:
+        for index, part in enumerate(parts):
+            if not offset:
+                return parts[index:]
+            text = str(part)
+            if offset < len(text):
+                if isinstance(part, _Replaced):
+                    return [part.reference_default(offset, quote=quote), *parts[index + 1 :]]
+                return [text[offset:], *parts[index + 1 :]]
+            offset -= len(text)
+        return []
+
+    @staticmethod
+    def _open_quote(quote: str, text: str) -> str:
+        escaped = False
+        for char in text:
+            if char == "\n":
+                quote, escaped = "", False
+            elif escaped:
+                escaped = False
+            elif char == "\\" and quote != "'":
+                escaped = True
+            elif char == quote:
+                quote = ""
+            elif not quote and char in {"'", '"'}:
+                quote = char
+        return quote
 
     def _expand_raw(self, replaced: str | None, conf_args: ConfigLoadArgs) -> _Replaced | None:
         if not (
@@ -1005,22 +1054,6 @@ class _CommandLinesReplacer(Replacer):
         # escaped comments are restored before command splitting
         return _ESCAPE_WITHIN_QUOTE_PATTERN.sub(r"\\\g<0>", text)
 
-    @staticmethod
-    def _open_quote(quote: str, text: str) -> str:
-        escaped = False
-        for char in text:
-            if char == "\n":
-                quote, escaped = "", False
-            elif escaped:
-                escaped = False
-            elif char == "\\" and quote != "'":
-                escaped = True
-            elif char == quote:
-                quote = ""
-            elif not quote and char in {"'", '"'}:
-                quote = char
-        return quote
-
 
 @dataclasses.dataclass(frozen=True, slots=True, kw_only=True)
 class _Replaced:
@@ -1030,6 +1063,16 @@ class _Replaced:
     @override
     def __str__(self) -> str:
         return self.text
+
+    def reference_default(self, offset: int, *, quote: str) -> _Replaced:
+        if (quoted := self.quoted_text) is not None:
+            # Shell quoting changes delimiter offsets while keeping their order.
+            quoted = quoted.split(_ARG_DELIMITER, self.text.count(_ARG_DELIMITER, 0, offset))[-1]
+        suffix = self.text[offset:]
+        return _Replaced(
+            text=Arguments(suffix) if isinstance(self.text, Arguments) else quote + suffix,
+            quoted_text=quoted,
+        )
 
 
 class Arguments(str):  # ruff:ignore[subclass-builtin]  # keep argument values distinct from command text

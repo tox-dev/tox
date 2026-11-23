@@ -3190,14 +3190,11 @@ Substitution for values from other sections
 
 .. versionadded:: 1.4
 
-Values from other sections can be referred to via:
+Use ``{[sectionname]valuename}`` to share a value across INI sections. Section names can contain colons and dots. For
+example, ``{[tool:pytest]addopts}`` reads ``addopts`` from ``[tool:pytest]``. Use ``{[tool:pytest]addopts:-ra}`` to
+supply ``-ra`` if the section or option is missing.
 
-::
-
-    {[sectionname]valuename}
-
-which you can use to avoid repetition of config values. You can put default values in one section and reference them in
-others to avoid repeating the same values:
+Define shared dependencies once and include them in each environment that needs them.
 
 .. code-block:: ini
 

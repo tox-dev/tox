@@ -612,34 +612,155 @@ def test_replace_from_tox_other_tox_section_same_name(tox_ini_conf: ToxIniCreato
 
 
 @pytest.mark.parametrize(
-    ("env_name", "exp"),
+    "section",
     [
-        pytest.param("testenv:foobar", "1", id="testenv-colon-foobar-1"),
-        pytest.param("testenv:foo-bar", "1", id="testenv-colon-foo-dash-bar-1"),
-        pytest.param("foo-bar", "1", id="foo-dash-bar-1"),
-        pytest.param("foobar", "1", id="foobar-1"),
-        pytest.param("tool:pytest", "1", id="tool-colon-pytest-1"),
-        pytest.param("coverage:run", "1", id="coverage-colon-run-1"),
-        pytest.param("tool.ruff", "1", id="tool-dot-ruff-1"),
+        pytest.param("testenv:foobar", id="environment"),
+        pytest.param("testenv:foo-bar", id="environment-with-factor"),
+        pytest.param("foo-bar", id="dash"),
+        pytest.param("foobar", id="letters"),
+        pytest.param("tool:pytest", id="colon"),
+        pytest.param("tool.ruff", id="dot"),
+        pytest.param("tool.coverage:run", id="colon-and-dot"),
     ],
 )
-def test_replace_valid_section_names(tox_ini_conf: ToxIniCreator, env_name: str, exp: str) -> None:
-    conf_a = tox_ini_conf(f"[{env_name}]\na={exp}\n[testenv:a]\nx = {{[{env_name}]a}}").get_env("a")
-    conf_a.add_config(keys="x", of_type=str, default="o", desc="o")
-    assert conf_a["x"] == exp
+def test_replace_valid_section_names(tox_ini_conf: ToxIniCreator, section: str) -> None:
+    env_config = tox_ini_conf(f"[{section}]\na=1\n[testenv:a]\nx = {{[{section}]a}}").get_env("a")
+    env_config.add_config(keys="x", of_type=str, default="", desc="x")
+    assert env_config["x"] == "1"
+
+
+def test_replace_section_with_space_keeps_literal(tox_ini_conf: ToxIniCreator) -> None:
+    env_config = tox_ini_conf("[tool pytest]\naddopts = -ra\n[testenv:a]\nx = {[tool pytest]addopts}").get_env("a")
+    env_config.add_config(keys="x", of_type=str, default="", desc="x")
+    assert env_config["x"] == "{[tool pytest]addopts}"
+
+
+def test_replace_missing_key_in_section_with_punctuation_uses_default(tox_ini_conf: ToxIniCreator) -> None:
+    env_config = tox_ini_conf("[tool.pytest:options]\n[testenv:a]\nx = {[tool.pytest:options]addopts:-ra}").get_env("a")
+    env_config.add_config(keys="x", of_type=str, default="", desc="x")
+    assert env_config["x"] == "-ra"
+
+
+@pytest.mark.parametrize(
+    "section",
+    [
+        pytest.param("tool.pytest:options", id="colon"),
+        pytest.param(r"tool.pytest\:options", id="escaped-colon"),
+        pytest.param("{[reference]section}", id="nested-section-name"),
+    ],
+)
+def test_replace_missing_command_key_uses_default(tox_ini_conf: ToxIniCreator, section: str) -> None:
+    env_config = tox_ini_conf(f"""
+    [tool.pytest:options]
+    [reference]
+    section = tool.pytest:options
+    value = ignore:deprecated warning
+    [testenv:a]
+    commands = pytest -W "{{[{section}]addopts:{{[reference]value}}}}"
+    """).get_env("a")
+    env_config.add_config(keys="commands", of_type=list[Command], default=[], desc="commands")
+    assert env_config["commands"] == [Command(["pytest", "-W", "ignore:deprecated warning"])]
+
+
+@pytest.mark.parametrize(
+    ("substitution", "expected"),
+    [
+        pytest.param("{[vars]missing:{env:TOX_TEST_FALLBACK}}", "sentence", id="trailing-newline"),
+        pytest.param("{{[vars]lookup}}", "-W ignore", id="nested-reference"),
+        pytest.param(r"{[vars]missing\:-W ignore}", "-W ignore", id="escaped-default-delimiter"),
+        pytest.param("{{[vars]empty}}", "", id="nested-empty-default"),
+        pytest.param("{{[vars]empty}{[vars]fallback}}", "warning details", id="fragment-boundary"),
+    ],
+)
+def test_config_command_uses_reference_fallback(
+    tox_project: ToxProjectCreator, monkeypatch: pytest.MonkeyPatch, substitution: str, expected: str
+) -> None:
+    monkeypatch.setenv("TOX_TEST_FALLBACK", "sentence\n")
+    config = f"""
+        [vars]
+        lookup = [tool:pytest]missing:-W ignore
+        empty = [tool:pytest]missing:
+        fallback = warning details
+        [testenv:a]
+        package = skip
+        commands = echo "{substitution}"
+    """
+
+    outcome = tox_project({"tox.ini": config}).run("c", "-e", "a", "-k", "commands")
+
+    outcome.assert_success()
+    assert outcome.env_conf("a")["commands"] == [Command(["echo", expected])]
+
+
+def test_replace_reference_default_keeps_literal_argument(example: EnvConfigCreator) -> None:
+    env_config = example("commands = echo {{values}}")
+    env_config.add_constant(keys="values", desc="values", value=["missing:one two"])
+    env_config.add_config(keys="commands", of_type=list[Command], default=[], desc="commands")
+    assert env_config["commands"] == [Command(["echo", "one two"])]
+
+
+def test_replace_reference_default_keeps_quoted_posargs(tox_project: ToxProjectCreator) -> None:
+    project = tox_project({"tox.ini": '[testenv:a]\npackage = skip\ncommands = echo "{missing{posargs}}"\n'})
+    outcome = project.run("c", "-e", "a", "-k", "commands", "--", ":some", "two words")
+    outcome.assert_success()
+    assert outcome.env_conf("a")["commands"] == [Command(["echo", "some two words"])]
+
+
+@pytest.mark.parametrize("posarg", [pytest.param("two words", id="space"), pytest.param("two: words", id="colon")])
+def test_replace_nested_reference_default_keeps_quoted_posargs(tox_project: ToxProjectCreator, posarg: str) -> None:
+    project = tox_project({
+        "tox.ini": """
+        [vars]
+        lookup = [testenv:{posargs}]missing:{posargs}
+        [testenv:a]
+        package = skip
+        commands = echo "{{[vars]lookup}}"
+    """
+    })
+    outcome = project.run("c", "-e", "a", "-k", "commands", "--", posarg)
+    outcome.assert_success()
+    assert outcome.env_conf("a")["commands"] == [Command(["echo", posarg])]
+
+
+@pytest.mark.parametrize(
+    ("variables", "reference", "posargs"),
+    [
+        pytest.param(
+            "lookup = [testenv:{posargs}",
+            "{{[vars]lookup}}",
+            ("name]missing:two words",),
+            id="posarg",
+        ),
+        pytest.param(
+            "prefix = [testenv:'\nsuffix = name]missing:two words'",
+            "{{[vars]prefix}{[vars]suffix}}",
+            (),
+            id="separate-fragments",
+        ),
+    ],
+)
+def test_replace_nested_reference_default_keeps_one_argument(
+    tox_project: ToxProjectCreator, variables: str, reference: str, posargs: tuple[str, ...]
+) -> None:
+    config = f"[vars]\n{variables}\n[testenv:a]\npackage = skip\ncommands = echo {reference}\n"
+    outcome = tox_project({"tox.ini": config}).run("c", "-e", "a", "-k", "commands", "--", *posargs)
+    outcome.assert_success()
+    assert outcome.env_conf("a")["commands"] == [Command(["echo", "two words"])]
 
 
 def test_replace_section_with_colon_or_dot_in_commands(tox_ini_conf: ToxIniCreator) -> None:
-    conf_a = tox_ini_conf("""
+    env_config = tox_ini_conf("""
     [tool:pytest]
     addopts = -ra
     [tool.ruff]
     select = E,F
     [testenv:a]
-    commands = pytest {[tool:pytest]addopts} --select={[tool.ruff]select}
+    commands =
+        pytest {[tool:pytest]addopts}
+        ruff check --select={[tool.ruff]select}
     """).get_env("a")
-    conf_a.add_config(keys="commands", of_type=list[Command], default=[], desc="c")
-    assert conf_a["commands"] == [Command(["pytest", "-ra", "--select=E,F"])]
+    env_config.add_config(keys="commands", of_type=list[Command], default=[], desc="commands")
+    assert env_config["commands"] == [Command(["pytest", "-ra"]), Command(["ruff", "check", "--select=E,F"])]
 
 
 @pytest.mark.parametrize(
