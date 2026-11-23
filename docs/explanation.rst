@@ -115,8 +115,8 @@ The primary tox states are:
        3.13: commands succeeded
        ERROR:   3.12: commands failed
 
-   Only if all environments ran successfully tox will return exit code ``0`` (success). In this case you'll also see the
-   message ``congratulations :)``.
+   When a run succeeds, tox prints ``congratulations :)`` and returns exit code ``0``. If tox cannot write a requested
+   ``--result-json`` file, the run fails even if the environments succeeded.
 
 Environment variable handling
 =============================
@@ -729,7 +729,8 @@ The fail-fast behavior:
 - Respects environment dependencies defined via :ref:`depends` -- dependent environments will not run if a dependency
   fails with fail-fast enabled.
 - Environments not yet started are skipped with exit code -2 and marked as ``SKIP`` in the output.
-- The overall tox exit code will be the exit code of the first failed environment.
+- Tox returns a failing environment's exit code unless tox itself encounters an error, such as a failed write to the
+  ``--result-json`` file.
 
 ***************************
  Configuration inheritance
