@@ -532,6 +532,81 @@ def test_suggest_env(tox_project: ToxProjectCreator) -> None:
 
 
 @pytest.mark.parametrize(
+    ("requested", "expected"),
+    [
+        pytest.param(f"alpha-p3{_MINOR}", f"alpha-p3{_MINOR} - did you mean alpha-py3{_MINOR}?", id="env-list"),
+        pytest.param(f"py3.{_MINOR}-chck", f"py3.{_MINOR}-chck - did you mean py3{_MINOR}-check?", id="dotted-python"),
+        pytest.param("release-lnt", "release-lnt - did you mean release-lint?", id="combinable-factors"),
+        pytest.param("cargo-tst", "cargo-tst - did you mean cargo-tast?", id="prefer-configured"),
+        pytest.param("beta-lnt", "beta-lnt - did you mean beta-lint?", id="section"),
+        pytest.param("alphabeta-lnt", "alphabeta-lnt - did you mean alpha-beta-lint?", id="compound-factor"),
+        pytest.param("betalint", "betalint - did you mean beta-lint?", id="missing-hyphen"),
+        pytest.param("bta-lint", "bta-lint - did you mean beta-lint?", id="section-first-factor"),
+        pytest.param("team-team-lnt", "team-team-lnt - did you mean team-team-lint?", id="repeated-factor"),
+        pytest.param("beta-magic", "beta-magic", id="no-close-factor"),
+        pytest.param("team-release-lnt", "team-release-lnt", id="invalid-candidate"),
+    ],
+)
+def test_suggest_env_keeps_valid_factors(tox_project: ToxProjectCreator, requested: str, expected: str) -> None:
+    ini = f"""
+        [tox]
+        env_list=release,lint,alpha-py3{_MINOR},cargo-tast,test
+        [testenv:alpha-beta-lint]
+        [testenv:beta-lint]
+        [testenv:beta-p3{_MINOR}]
+        [testenv:team-team-lint]
+        [testenv:py3{_MINOR}-check]
+    """
+    outcome = tox_project({"tox.ini": ini}).run("r", "-e", requested)
+    outcome.assert_failed(code=-2)
+    output = f"ROOT: HandledError| provided environments not found in configuration file:\n{expected}\n"
+    outcome.assert_out_err(output, "")
+
+
+@pytest.mark.parametrize(
+    ("ini", "requested", "expected"),
+    [
+        pytest.param(
+            "[testenv:alpha-beta]\n[testenv:alpha-betas]\n[testenv:alpha-betas-lint]\n",
+            "alphabeta-lint",
+            "alpha-betas-lint",
+            id="configured-alternative",
+        ),
+        pytest.param(
+            "[tox]\nenv_list = alpha,beta,lint,alpha-beta\n",
+            "alphabeta-lint",
+            "alpha-beta-lint",
+            id="combinable-compound",
+        ),
+        pytest.param(
+            "[testenv:build-docs-py314-type-check-lint]\n",
+            "builddocs-py314-typecheck-lnt",
+            "build-docs-py314-type-check-lint",
+            id="multiple-compound-factors",
+        ),
+        pytest.param(
+            "[tox]\nenv_list = lint,docs-py3.12,py312-lint\n",
+            "p3.-lint",
+            "py312-lint",
+            id="normalized-fallback",
+        ),
+    ],
+)
+def test_suggest_selectable_env(tox_project: ToxProjectCreator, ini: str, requested: str, expected: str) -> None:
+    project = tox_project({"tox.ini": ini})
+    outcome = project.run("c", "-e", requested, "-k", "description")
+    outcome.assert_failed(code=-2)
+    output = (
+        "ROOT: HandledError| provided environments not found in configuration file:\n"
+        f"{requested} - did you mean {expected}?\n"
+    )
+    outcome.assert_out_err(output, "")
+    selected = project.run("c", "-e", expected, "-k", "description")
+    selected.assert_success()
+    assert f"[testenv:{expected}]\n" in selected.out
+
+
+@pytest.mark.parametrize(
     "run_args",
     [
         pytest.param(["-e", "available"], id="only-available-requested"),
