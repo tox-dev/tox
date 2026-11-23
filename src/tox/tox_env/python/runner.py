@@ -135,7 +135,7 @@ class PythonRun(Python, RunToxEnv, ABC):
             if self.conf["use_develop"] or getattr(self.options, "develop", False):
                 self.conf.add_constant(["package"], desc, "editable")
             else:
-                self.conf.add_config(keys="package", of_type=str, default=self.default_pkg_type, desc=desc)
+                self.conf.add_config(keys="package", of_type=str, default=lambda *_: self.default_pkg_type, desc=desc)
 
         return self.pkg_type != "skip"
 

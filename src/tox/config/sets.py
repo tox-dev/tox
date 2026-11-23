@@ -2,6 +2,8 @@ from __future__ import annotations
 
 __lazy_modules__ = [
     "pathlib",
+    "tox.report",
+    f"{__spec__.parent}.loader.replacer",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
     f"{__spec__.parent}.of_type",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
     f"{__spec__.parent}.set_env",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
     f"{__spec__.parent}.types",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
@@ -12,8 +14,10 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, TypeVar, cast, get_origin, overload
 
+from tox.report import HandledError
 from tox.util.typing_compat import override
 
+from .loader.replacer import MatchError
 from .of_type import ConfigConstantDefinition, ConfigDefinition, ConfigDynamicDefinition, ConfigLoadArgs
 from .set_env import SetEnv, SetEnvRaw, SetEnvReference, SetEnvValue
 from .types import EnvList
@@ -78,6 +82,8 @@ class ConfigSet(ABC):
         :returns: the configuration value
 
         """
+        if self._env_name is not None or item in {"package_env", "isolated_build_env"}:
+            self._conf.reject_package_discovery()
         return self._defined[item].__call__(  # ruff:ignore[unnecessary-dunder-call]  # explicit dunder call
             self._conf, self.loaders, ConfigLoadArgs(chain, self.name, self.env_name)
         )
@@ -438,6 +444,18 @@ class CoreConfigSet(ConfigSet):
         env_name: str | None,  # ruff:ignore[unused-method-argument]  # override signature
     ) -> Path:
         return self.get("work_dir", Path) / ".tmp"
+
+    def package_root_for_discovery(self) -> Path | None:
+        """Resolve the package root without populating live configuration caches.
+
+        :returns: the package root, or ``None`` if it cannot resolve before environment setup
+
+        """
+        with self._conf.package_discovery():
+            try:
+                return self.get("package_root", Path)
+            except (HandledError, MatchError):
+                return None
 
     @override
     def _on_duplicate_conf(self, key: str, definition: ConfigDefinition[V]) -> None:

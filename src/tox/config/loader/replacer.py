@@ -581,6 +581,7 @@ class Replacer:  # simplint: ignore[unexported-public-name] internal replacer
         replace_value: Final[str | ConfigDefault | None] = self._replace_args(flattened_args)
         if replace_value is not None:
             return replace_value if isinstance(replace_value, str) else replace_value.text, True
+        self.conf.reject_package_discovery()
         # Preserve unmatched braces for factor expressions such as {py39,py38}-{,dep}.
         literal: Final[str] = f"{_REPLACE_START}{_ARG_DELIMITER.join(flattened_args)}{_REPLACE_END}"
         return HostText(literal) if value.host else literal, False

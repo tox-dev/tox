@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 import sys
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 import pytest
@@ -21,8 +22,6 @@ from tox.tox_env.register import ToxEnvRegister
 from tox.util.typing_compat import override
 
 if TYPE_CHECKING:
-    from pathlib import Path
-
     import pluggy
     from pytest_mock import MockerFixture
 
@@ -395,3 +394,42 @@ def test_disable_external_plugins(
     result.assert_success()
     assert ("dummy plugin A called" in result.out) == expect_a
     assert ("dummy plugin B called" in result.out) == expect_b
+
+
+@pytest.mark.parametrize(
+    "build_root",
+    [
+        pytest.param("{[env..pkg]env_dir}", id="direct-reference"),
+        pytest.param("{build_location}", id="plugin-callback"),
+    ],
+)
+def test_package_root_reference_preserves_packaging_base(
+    tox_project: ToxProjectCreator, mocker: MockerFixture, build_root: str
+) -> None:
+    @impl
+    def tox_add_env_config(state: State) -> None:
+        state.conf.core.add_config(
+            "build_location",
+            of_type=Path,
+            default=lambda *_: state.conf.get_env(".pkg").get("env_dir", Path),
+            desc="package builder directory",
+        )
+
+    register_inline_plugin(mocker, tox_add_env_config)
+    project = tox_project({
+        "tox.toml": f"""
+            env_list = ["preflight", "py"]
+            package_root = "{build_root}/service"
+
+            [env.preflight]
+            [env.py]
+            package = "sdist"
+
+            [env_pkg_base]
+            env_dir = "{{tox_root}}/builder"
+        """,
+        "builder": {"service": {"pyproject.toml": ""}},
+    })
+    result = project.run("c", "-k", "package")
+    result.assert_success()
+    assert result.state.conf.get_env(".pkg").get("package_root", Path) == project.path / "builder" / "service"

@@ -43,13 +43,18 @@ class VirtualEnvRunner(VirtualEnv, PythonRun):
     @property
     @override
     def default_pkg_type(self) -> str:
-        package_root = self.core.get("package_root", Path)
-        # A missing package_root keeps the build, so a mistyped path fails loudly rather than skipping the package.
-        if package_root.is_dir() and not any(
-            (package_root / i).exists() for i in ("pyproject.toml", "setup.py", "setup.cfg")
+        tox_root = self.core.get("tox_root", Path)
+        build_files = ("pyproject.toml", "setup.py", "setup.cfg")
+        if any((tox_root / filename).exists() for filename in build_files):
+            return super().default_pkg_type
+        package_root = self.core.package_root_for_discovery()
+        if (
+            package_root is not None
+            and package_root != tox_root
+            and any((package_root / filename).exists() for filename in build_files)
         ):
-            return "skip"
-        return super().default_pkg_type
+            return super().default_pkg_type
+        return "skip"
 
     @staticmethod
     @override

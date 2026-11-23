@@ -1,3 +1,1 @@
-The default :ref:`package` of a virtualenv environment now looks for ``pyproject.toml``, ``setup.py`` or ``setup.cfg``
-in :ref:`package_root` rather than in :ref:`tox_root`. A project whose build files live in a ``package_root``
-subdirectory was silently tested without installing the package (``package = skip``).
+Detect build files in :ref:`package_root` when choosing the default :ref:`package` for virtualenv environments.

@@ -136,6 +136,7 @@ class ConfigDynamicDefinition(ConfigDefinition[T]):  # ruff:ignore[eq-without-ha
         self.post_process = post_process
         self.factory = factory
         self._cache: T | _Missing = _Missing.MISSING
+        self._overwritten = False
 
     @override
     def __call__(
@@ -144,36 +145,38 @@ class ConfigDynamicDefinition(ConfigDefinition[T]):  # ruff:ignore[eq-without-ha
         loaders: list[Loader[T]],
         args: ConfigLoadArgs,
     ) -> T:
-        if self._cache is _Missing.MISSING:
-            primary_key, *alias_keys = self.keys
-            pending: list[AppendOverridesError[T]] = []  # appends waiting for the value of a later loader
-            for loader in loaders:
-                chain_key = f"{loader.section.key}.{primary_key}"
-                try:
-                    if chain_key in args.chain:
-                        msg = f"circular chain detected {', '.join(args.chain[args.chain.index(chain_key) :])}"
-                        raise CircularChainError(msg)
-                finally:
-                    args.chain.append(chain_key)
-                try:
-                    value = loader.load(primary_key, self.of_type, self.factory, conf, args, all_keys=alias_keys)
-                except AppendOverridesError as exception:
-                    pending.append(exception)
-                    continue
-                except KeyError:
-                    continue
-                else:
-                    break
-                finally:
-                    del args.chain[-1]
+        if self._cache is not _Missing.MISSING and (self._overwritten or not conf.in_package_discovery):
+            return self._cache
+        primary_key, *alias_keys = self.keys
+        pending: list[AppendOverridesError[T]] = []  # appends waiting for the value of a later loader
+        for loader in loaders:
+            chain_key = f"{loader.section.key}.{primary_key}"
+            try:
+                if chain_key in args.chain:
+                    msg = f"circular chain detected {', '.join(args.chain[args.chain.index(chain_key) :])}"
+                    raise CircularChainError(msg)
+            finally:
+                args.chain.append(chain_key)
+            try:
+                value = loader.load(primary_key, self.of_type, self.factory, conf, args, all_keys=alias_keys)
+            except AppendOverridesError as exception:
+                pending.append(exception)
+                continue
+            except KeyError:
+                continue
             else:
-                value = self._value_without_loader(conf, args, pending)
-            for appends in reversed(pending):  # the overrides of the more specific loaders apply last
-                value = appends.apply(value)
-            if self.post_process is not None:
-                value = self.post_process(value)
+                break
+            finally:
+                del args.chain[-1]
+        else:
+            value = self._value_without_loader(conf, args, pending)
+        for appends in reversed(pending):  # the overrides of the more specific loaders apply last
+            value = appends.apply(value)
+        if self.post_process is not None:
+            value = self.post_process(value)
+        if not conf.in_package_discovery:
             self._cache = value
-        return self._cache
+        return value
 
     def _value_without_loader(self, conf: Config, args: ConfigLoadArgs, pending: list[AppendOverridesError[T]]) -> T:
         # when no loader sets the key, the least specific override acts as the value, otherwise the default is used
@@ -189,7 +192,11 @@ class ConfigDynamicDefinition(ConfigDefinition[T]):  # ruff:ignore[eq-without-ha
 
     @override
     def __repr__(self) -> str:
-        values = ((k, v) for k, v in self.__dict__.items() if k not in {"post_process", "_cache"} and v is not None)
+        values = (
+            (k, v)
+            for k, v in self.__dict__.items()
+            if k not in {"post_process", "_cache", "_overwritten"} and v is not None
+        )
         return f"{type(self).__name__}({', '.join(f'{k}={v}' for k, v in values)})"
 
     @override
@@ -205,6 +212,7 @@ class ConfigDynamicDefinition(ConfigDefinition[T]):  # ruff:ignore[eq-without-ha
     @override
     def overwrite(self, value: T) -> None:
         self._cache = value
+        self._overwritten = True
 
 
 class _Missing(Enum):

@@ -47,6 +47,24 @@ def test_config_path(conf_builder: ConfBuilder) -> None:
     assert path_materialize == Path("path")
 
 
+def test_package_root_discovery_leaves_core_cache_empty(tox_ini_conf: ToxIniCreator) -> None:
+    core = tox_ini_conf("[tox]").core
+    loader = MemoryLoader(package_root=Path("service root"))
+    core.loaders.insert(0, loader)
+    discovered = core.package_root_for_discovery()
+    loader.raw["package_root"] = Path("updated")
+    root = core.get("tox_root", Path)
+    assert (discovered, core.get("package_root", Path)) == (root / "service root", root / "updated")
+
+
+def test_package_root_discovery_preserves_explicit_overwrite(tox_ini_conf: ToxIniCreator) -> None:
+    core = tox_ini_conf("[tox]").core
+    root = core.get("tox_root", Path)
+    definition = core.add_config("package_root", of_type=Path, default=root / "default", desc="package root")
+    definition.overwrite(root / "overwritten")
+    assert core.package_root_for_discovery() == root / "overwritten"
+
+
 def test_config_set(conf_builder: ConfBuilder) -> None:
     config_set = conf_builder("set = 1\n 2\n 3")
     config_set.add_config(keys="set", of_type=set[int], default=set(), desc="set")

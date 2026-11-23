@@ -2,9 +2,11 @@ from __future__ import annotations
 
 __lazy_modules__ = [
     "collections",
+    "contextvars",
     "itertools",
     "logging",
     "pathlib",
+    "tox.report",
     "tox.util.redact",
     f"{__spec__.parent}.source.api",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
 ]
@@ -13,10 +15,13 @@ import logging
 import os
 import sys
 from collections import OrderedDict, defaultdict
+from contextlib import contextmanager
+from contextvars import ContextVar
 from itertools import chain, tee
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Final, TypeVar, cast
 
+from tox.report import HandledError
 from tox.util.redact import redact_argv
 from tox.util.typing_compat import override
 
@@ -24,7 +29,7 @@ from .sets import ConfigSet, CoreConfigSet, EnvConfigSet
 from .source.api import FactorLabelSource
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable, Iterator, Sequence
+    from collections.abc import Generator, Iterable, Iterator, Sequence
 
     from .cli.parser import Parsed
     from .loader.api import Loader, OverrideMap
@@ -75,6 +80,7 @@ class Config:
         self._key_to_conf_set: dict[tuple[str, str, str], ConfigSet] = OrderedDict()
         self._env_to_conf_set: dict[str, EnvConfigSet] = {}
         self._core_set: CoreConfigSet | None = None
+        self._package_discovery: ContextVar[bool] = ContextVar("package_discovery", default=False)
         self.memory_seed_loaders: defaultdict[str, list[MemoryLoader]] = defaultdict(list)
 
     @classmethod
@@ -107,11 +113,27 @@ class Config:
 
     def __iter__(self) -> Iterator[str]:
         """:returns: an iterator that goes through existing environments"""
+        self.reject_package_discovery()
         # NOTE: `tee(self._extra_envs)[1]` is necessary for compatibility with
         # NOTE: Python 3.11 and older versions. Once Python 3.12 is the lowest
         # NOTE: supported version, it can be changed to
         # NOTE: `chain.from_iterable(tee(self._extra_envs, 1))`.
         return chain(self._src.envs(self.core), tee(self._extra_envs)[1])
+
+    def reject_package_discovery(self) -> None:
+        """Stop discovery when a setting cannot resolve yet.
+
+        :raises HandledError: if package discovery is active
+
+        """
+        if self.in_package_discovery:
+            msg = "package root cannot resolve before environment setup"
+            raise HandledError(msg)
+
+    @property
+    def in_package_discovery(self) -> bool:
+        """Whether the current lookup is choosing a package mode."""
+        return self._package_discovery.get()
 
     @property
     def core(self) -> CoreConfigSet:
@@ -157,6 +179,19 @@ class Config:
     def overrides(self) -> OverrideMap:
         """The configuration overrides keyed by their target namespace."""
         return self._overrides
+
+    @contextmanager
+    def package_discovery(self) -> Generator[None, None, None]:
+        """Resolve core settings without caching values or defining environments.
+
+        :yields: control while discovery mode is active
+
+        """
+        token = self._package_discovery.set(True)
+        try:
+            yield
+        finally:
+            self._package_discovery.reset(token)
 
     def pos_args(self, to_path: Path | None, *, program_first: bool = False) -> tuple[str, ...] | None:
         """Get the positional arguments passed after ``--``, with path arguments made relative to a directory.
@@ -254,6 +289,7 @@ class Config:
         :returns: the tox environments config
 
         """
+        self.reject_package_discovery()
         if item in self._env_to_conf_set:
             return self._env_to_conf_set[item]
         section, base_test, base_pkg = self._src.get_tox_env_section(item)
@@ -291,6 +327,7 @@ class Config:
         try:
             return cast("T", self._key_to_conf_set[key])
         except KeyError:
+            self.reject_package_discovery()
             conf_set = of_type(self, section, for_env)
             self._key_to_conf_set[key] = conf_set
             if for_env is not None:
