@@ -2834,25 +2834,31 @@ These additional rules are active for native TOML configuration files.
 
 String elements (excluding keys) will be transformed according to the :ref:`Substitutions <substitution>` section.
 
+.. _toml-string-references:
+
 String substitution references
 ==============================
 
 .. versionadded:: 4.21
 
-Within strings values from other sections can be referred to via ``{[<table>]<key>}``:
-
-which you can use to avoid repetition of config values. You can put default values in one section and reference them in
-others to avoid repeating the same values:
+The environment below reads its description from another TOML table with a ``{[table]key}`` reference.
 
 .. code-block:: toml
 
-    [extra]
-    ok = "o"
-    [env.B]
-    description = "{[extra]ok}"
+    [envvars]
+    label = "Unit tests"
 
-If the target table is one of the tox environments variable substitution will be applied on the replaced value,
-otherwise the text will be inserted as is (e.g., here with extra).
+    [env.unit]
+    description = "{[envvars]label}"
+
+In ``pyproject.toml``, use the full table path, such as ``{[tool.tox.envvars]label}`` for ``[tool.tox.envvars]``.
+
+A reference to ``[env.<name>]`` in ``tox.toml`` or ``[tool.tox.env.<name>]`` in ``pyproject.toml`` uses the referenced
+environment's configuration and substitutions. For an ordinary table such as ``[envvars]``, tox reads the key directly
+and resolves substitutions in the environment that uses the reference.
+
+An ``env_base`` template reference reads keys defined in the template. Reference a generated environment to read an
+inherited value or to reach a template whose name contains a literal dot.
 
 Configuration reference
 =======================
@@ -3844,8 +3850,8 @@ or via ``{name}`` in INI.
       - OS path separator (``/`` or ``\``).
     - - ``{:}``
       - OS path list separator (``:`` or ``;``).
-    - - ``{[section]key}`` *(INI only)*
-      - Value of ``key`` from ``[section]`` (cross-section reference).
+    - - ``{[section]key}``
+      - Value of ``key`` from an INI section or a :ref:`TOML table <toml-string-references>`.
 
 For TOML-specific replacement syntax (``replace = "ref"``, ``replace = "posargs"``, ``replace = "env"``, ``replace =
 "glob"``, ``replace = "if"``), see :ref:`pyproject-toml-native`.

@@ -172,15 +172,31 @@ def test_config_in_toml_replace_from_section_absolute(
     project = toml_project(
         f"""
         [${{prefix}}{table}]
-        ok = "o"
+        value = "{{env_name}}"
         {extra}
         [${{prefix}}env.B]
-        description = "{{[${{prefix}}{table}]ok}}"
+        description = "{{[${{prefix}}{table}]value}}"
         """
     )
     outcome = project.run("c", "-e", "B", "-k", "description")
     outcome.assert_success()
-    outcome.assert_out_err("[testenv:B]\ndescription = o\n", "")
+    outcome.assert_out_err("[testenv:B]\ndescription = B\n", "")
+
+
+def test_config_in_toml_replace_from_template_uses_only_its_keys(toml_project: _TomlProjectCreator) -> None:
+    project = toml_project(
+        """
+        [${prefix}env_run_base]
+        description = "inherited"
+        [${prefix}env_base.T]
+        factors = [["x"]]
+        [${prefix}env.B]
+        description = "{[${prefix}env_base.T]description:default}"
+        """
+    )
+    outcome = project.run("c", "-e", "B", "-k", "description")
+    outcome.assert_success()
+    outcome.assert_out_err("[testenv:B]\ndescription = default\n", "")
 
 
 def test_config_in_toml_replace_from_bare_env_table_uses_default(toml_project: _TomlProjectCreator) -> None:
