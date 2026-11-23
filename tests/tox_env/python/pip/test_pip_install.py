@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import os
+from hashlib import sha256
 from textwrap import dedent
 from typing import TYPE_CHECKING, Any, Final, TypedDict
 from zipfile import ZipFile
@@ -1046,28 +1047,58 @@ def test_pip_install_requirements_file_deps(tox_project: ToxProjectCreator) -> N
     assert execute_calls.call_args[0][3].cmd == ["python", "-I", "-m", "pip", "install", "b", "-r", "r.txt"]
 
 
-@pytest.mark.parametrize(("algorithm", "length"), [("sha256", 64), ("sha384", 96), ("sha512", 128)])
+@pytest.fixture
+def hashed_wheel_project(tox_project: ToxProjectCreator) -> ToxProject:
+    return tox_project({
+        "tox.ini": """
+            [testenv]
+            package = skip
+            deps = -r requirements.txt
+            commands = python -c 'from demo_pkg_inline import do; do()'
+        """,
+    })
+
+
 @pytest.mark.parametrize(
-    "digits",
-    [pytest.param("ab", id="lowercase"), pytest.param("AB", id="uppercase"), pytest.param("aB", id="mixed-case")],
+    ("digest_suffix", "exit_code", "output"),
+    [
+        pytest.param(b"", 0, "greetings from demo_pkg_inline", id="matching-digest"),
+        pytest.param(b"other content", 1, "DO NOT MATCH THE HASHES", id="mismatched-digest"),
+    ],
 )
 def test_pip_install_requirements_file_hash_case(
-    tox_project: ToxProjectCreator, algorithm: str, length: int, digits: str
+    hashed_wheel_project: ToxProject, demo_pkg_inline_wheel: Path, digest_suffix: bytes, exit_code: int, output: str
 ) -> None:
-    hash_value = f"{algorithm}:{digits * (length // 2)}"
-    project = tox_project({
-        "tox.ini": "[testenv]\ndeps=-r r.txt\nskip_install=true",
-        "r.txt": f"example==1 --hash={hash_value}\n",
-    })
-    execute_calls = project.patch_execute(lambda request: 0 if request.run_id == "install_deps" else None)
+    digest = sha256(demo_pkg_inline_wheel.read_bytes() + digest_suffix).hexdigest().upper()
+    (hashed_wheel_project.path / "requirements.txt").write_text(
+        f"--no-index\n{demo_pkg_inline_wheel.as_uri()} --hash=sha256:{digest}\n", encoding="utf-8"
+    )
 
-    project.run("r").assert_success()
+    result = hashed_wheel_project.run("r")
 
-    install_commands = [call[0][3].cmd for call in execute_calls.call_args_list if call[0][3].run_id == "install_deps"]
-    assert install_commands == [["python", "-I", "-m", "pip", "install", "-r", "r.txt"]]
-    cache: Final[JsonValue] = json.loads((project.path / ".tox" / "py" / ".tox-info.json").read_text())
-    assert _is_install_cache(cache)
-    assert cache["PythonRun"]["deps"]["requirements"] == [f"example==1 --hash {hash_value}"]
+    assert result.code == exit_code, result
+    assert output in result.out + result.err, result
+
+
+def test_pip_install_reuses_env_when_only_digest_case_changes(
+    hashed_wheel_project: ToxProject, demo_pkg_inline_wheel: Path
+) -> None:
+    digest = sha256(demo_pkg_inline_wheel.read_bytes()).hexdigest()
+    assert digest != digest.upper()
+    requirement = f"--no-index\n{demo_pkg_inline_wheel.as_uri()} --hash=sha256:"
+    requirements = hashed_wheel_project.path / "requirements.txt"
+    requirements.write_text(f"{requirement}{digest}\n", encoding="utf-8")
+    original = hashed_wheel_project.run("r")
+    original.assert_success()
+    marker = original.state.envs["py"].env_dir / "marker"
+    marker.touch()
+
+    requirements.write_text(f"{requirement}{digest.upper()}\n", encoding="utf-8")
+    result = hashed_wheel_project.run("r")
+
+    result.assert_success()
+    assert marker.is_file(), result
+    assert "install_deps>" not in result.out, result
 
 
 @pytest.fixture
