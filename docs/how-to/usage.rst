@@ -2114,7 +2114,8 @@ The INI format is deprecated -- migrate existing projects to TOML. Here is how c
 - Commands are list-of-lists: ``commands = [["pytest", "tests"]]`` vs ``commands = pytest tests``
 - Positional arguments use replacement objects: ``{ replace = "posargs", default = ["tests"] }`` vs ``{posargs:tests}``
 - Environment variables in ``set_env`` use ``{ replace = "env", name = "VAR" }`` vs ``{env:VAR}``
-- Section references use ``{ replace = "ref", ... }`` vs ``{[section]key}``
+- TOML supports :ref:`string references <toml-string-references>` and structured references with ``{ replace = "ref",
+  ... }``
 - Factor conditions use ``{ replace = "if", condition = "factor.NAME", ... }`` vs ``NAME:``
 - Generative environment lists use structured dicts (bare ``{ prefix, start, stop }`` for a single axis, ``{ product =
   [...] }`` for matrices) vs ``{a,b}-{c,d}`` brace expansion

@@ -155,18 +155,55 @@ def test_config_in_toml_replace_from_env_section_absolute(toml_project: _TomlPro
     outcome.assert_out_err("[testenv:B]\ndescription = A\n", "")
 
 
-def test_config_in_toml_replace_from_section_absolute(toml_project: _TomlProjectCreator) -> None:
+@pytest.mark.parametrize(
+    ("table", "extra"),
+    [
+        pytest.param("extra", "", id="extra"),
+        pytest.param("envvars", "", id="envvars"),
+        pytest.param("environment", "", id="environment"),
+        pytest.param("env_base.T", 'factors = [["x"]]', id="env-base"),
+        pytest.param("env_run_base", "", id="env-run-base"),
+        pytest.param("env_pkg_base", "", id="env-pkg-base"),
+    ],
+)
+def test_config_in_toml_replace_from_section_absolute(
+    toml_project: _TomlProjectCreator, table: str, extra: str
+) -> None:
     project = toml_project(
-        """
-        [${prefix}extra]
-        ok = "o"
-        [${prefix}env.B]
-        description = "{[${prefix}extra]ok}"
+        f"""
+        [${{prefix}}{table}]
+        value = "{{env_name}}"
+        {extra}
+        [${{prefix}}env.B]
+        description = "{{[${{prefix}}{table}]value}}"
         """
     )
     outcome = project.run("c", "-e", "B", "-k", "description")
     outcome.assert_success()
-    outcome.assert_out_err("[testenv:B]\ndescription = o\n", "")
+    outcome.assert_out_err("[testenv:B]\ndescription = B\n", "")
+
+
+def test_config_in_toml_replace_from_template_uses_only_its_keys(toml_project: _TomlProjectCreator) -> None:
+    project = toml_project(
+        """
+        [${prefix}env_run_base]
+        description = "inherited"
+        [${prefix}env_base.T]
+        factors = [["x"]]
+        [${prefix}env.B]
+        description = "{[${prefix}env_base.T]description:default}"
+        """
+    )
+    outcome = project.run("c", "-e", "B", "-k", "description")
+    outcome.assert_success()
+    outcome.assert_out_err("[testenv:B]\ndescription = default\n", "")
+
+
+def test_config_in_toml_replace_from_bare_env_table_uses_default(toml_project: _TomlProjectCreator) -> None:
+    project = toml_project('[${prefix}env.B]\ndescription = "{[${prefix}env]B:d}"')
+    outcome = project.run("c", "-e", "B", "-k", "description")
+    outcome.assert_success()
+    outcome.assert_out_err("[testenv:B]\ndescription = d\n", "")
 
 
 @pytest.mark.parametrize("filename", ["tox.toml", "pyproject.toml"])

@@ -318,15 +318,13 @@ class TomlReplaceLoader(ReplaceReference):
             return
 
         section = cast("TomlSection", self.loader.section)
-        core_prefix = section.core_prefix()
         env_prefix = section.env_prefix()
-        run_env_base = section.run_env_base()
-        pkg_env_base = section.package_env_base()
-        if sec.startswith(env_prefix) and sec not in {run_env_base, pkg_env_base}:
-            yield self.conf.get_env(sec[len(env_prefix) + len(section.SEP) :])
+        env_section_prefix = env_prefix + section.SEP
+        if sec == env_prefix or sec.startswith(env_section_prefix):
+            yield self.conf.get_env(sec[len(env_section_prefix) :])
         else:
             yield _RawLoader(self.loader, sec)
-        if sec == core_prefix:
+        if sec == section.core_prefix():
             yield self.conf.core  # try via registered configs
 
     @staticmethod
