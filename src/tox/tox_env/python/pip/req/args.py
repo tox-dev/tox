@@ -130,12 +130,11 @@ def _validate_hash(value: str) -> str:
 
 _HASH: Final[re.Pattern[str]] = re.compile(
     r"""
-    # A digest uses two hex digits per byte.
     sha
     (?:
-        256 : [a-fA-F0-9]{64}
-        | 384 : [a-fA-F0-9]{96}
-        | 512 : [a-fA-F0-9]{128}
+        256 : [a-fA-F0-9]{64}      # SHA-256 hash
+        | 384 : [a-fA-F0-9]{96}    # SHA-384 hash
+        | 512 : [a-fA-F0-9]{128}   # SHA-512 hash
     )
     """,
     re.VERBOSE,
