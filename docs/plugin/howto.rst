@@ -76,6 +76,7 @@ hook receives the exit code and the list of :class:`~tox.execute.api.Outcome` ob
 
 .. code-block:: python
 
+    import logging
     import time
 
     from tox.execute import Outcome
@@ -96,10 +97,8 @@ hook receives the exit code and the list of :class:`~tox.execute.api.Outcome` ob
         tox_env: ToxEnv, exit_code: int, outcomes: list[Outcome]
     ) -> None:
         elapsed = time.monotonic() - _start
-        tox_env.conf.core["report"].verbosity0(
-            f"{tox_env.conf['env_name']} finished in {elapsed:.1f}s "
-            f"(exit code {exit_code})",
-        )
+        # shown by default, tox prefixes the line with the environment name
+        logging.warning("commands finished in %.1fs (exit code %d)", elapsed, exit_code)
 
 *********************************
  Intercept package installations
@@ -252,26 +251,26 @@ tox maps its ``-v`` / ``-q`` flags to standard logging levels:
     - - Flags
       - Logging level
       - Notes
-    - - ``-q`` (quiet)
+    - - ``-qq``
       - ``CRITICAL``
       - Almost nothing is shown.
-    - - *(default)*
+    - - ``-q`` (quiet)
       - ``ERROR``
       - Only errors are shown.
-    - - ``-v``
+    - - *(default)*
       - ``WARNING``
       - Warnings and above are shown. This is the first level that appears in normal output.
-    - - ``-vv``
+    - - ``-v``
       - ``INFO``
       - Informational messages appear.
-    - - ``-vvv``
+    - - ``-vv``
       - ``DEBUG``
       - Debug messages appear, along with timestamps and source file locations.
 
 .. tip::
 
-    For messages that should be visible during normal usage (e.g. ``tox -v``), use ``logging.warning()``. Use
-    ``logging.info()`` for detail that is only useful when diagnosing issues.
+    For messages that should be visible during normal usage (a plain ``tox run``), use ``logging.warning()``. Use
+    ``logging.info()`` for detail that is only useful when diagnosing issues; it appears with ``-v``.
 
 Coloring
 ========
@@ -301,7 +300,7 @@ For other levels (including ``ERROR``), the entire line is colored, so inline fo
 Debug output
 ============
 
-At ``-vvv`` (``DEBUG`` level), tox adds extra metadata to every log line:
+At ``-vv`` (``DEBUG`` level), tox adds extra metadata to every log line:
 
 - elapsed time in milliseconds
 - one-letter level indicator (``D``, ``I``, ``W``, ``E``, ``C``)
@@ -324,9 +323,9 @@ Complete example
 
     @impl
     def tox_before_run_commands(tox_env: ToxEnv) -> None:
-        # Visible at -vv or higher
+        # Visible at -v or higher
         logger.info("preparing environment %s", tox_env.name)
-        # Visible at -v or higher, with dimmed plugin name prefix
+        # Visible by default, with dimmed plugin name prefix
         logger.warning(
             "%s%s> %s", "", __package__, f"running pre-checks for {tox_env.name}"
         )

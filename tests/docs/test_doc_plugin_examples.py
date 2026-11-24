@@ -48,3 +48,18 @@ def test_doc_append_version_info_example(tox_project: ToxProjectCreator, code: s
     outcome = tox_project({"tox.ini": "", "toxfile.py": code}).run("--version")
     outcome.assert_success()
     assert f"toxfile.py {expected}" in outcome.out
+
+
+@pytest.mark.plugin_test
+def test_doc_run_commands_example(tox_project: ToxProjectCreator) -> None:
+    howto: Final[str] = (_DOCS_DIR / "plugin" / "howto.rst").read_text(encoding="utf-8")
+    code: Final[str] = next(
+        textwrap.dedent(match.group("body"))
+        for match in _PYTHON_BLOCK.finditer(howto)
+        if "def tox_after_run_commands(" in match.group("body")
+    )
+    tox_ini: Final[str] = "[testenv]\npackage = skip\ncommands = python -c 'print(1)'\n"
+    outcome = tox_project({"tox.ini": tox_ini, "toxfile.py": code}).run("r", "-e", "py")
+    outcome.assert_success()
+    assert "py: commands finished in " in outcome.out
+    assert "(exit code 0)" in outcome.out
