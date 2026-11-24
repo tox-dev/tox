@@ -302,6 +302,12 @@ class RequirementsFile:
                 except LookupError as exc:
                     msg = f"requirements file {source} declares unknown encoding {encoding}"
                     raise ValueError(msg) from exc
+                except UnicodeDecodeError as exc:
+                    msg = (
+                        f"requirements file {source} declares encoding {encoding} "
+                        "but its content cannot be decoded with it"
+                    )
+                    raise ValueError(msg) from exc
         try:
             return raw.decode("utf-8")
         except UnicodeDecodeError:
