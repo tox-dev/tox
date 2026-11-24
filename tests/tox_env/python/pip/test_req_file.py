@@ -193,13 +193,15 @@ def test_deps_factory_invalid_list(tmp_path: Path) -> None:
 @pytest.mark.parametrize(
     "suffix",
     [
-        pytest.param("\n--find-links=/tmp/other", id="line-break"),
+        pytest.param("\ncontinued", id="line-break"),
         pytest.param("\\", id="line-continuation"),
     ],
 )
 def test_provision_requirement_entry_cannot_change_lines(tmp_path: Path, suffix: str) -> None:
+    requirement = Requirement("plug @ file:///tmp/plug.whl#fragment")
+    requirement.url = f"{requirement.url}{suffix}"
     with pytest.raises(ValueError, match="a requirement entry cannot contain a line break or end in a backslash"):
-        PythonDeps.factory(tmp_path, [Requirement(f"plug @ file:///tmp/plug.whl#{suffix}")])
+        PythonDeps.factory(tmp_path, [requirement])
 
 
 def test_deps_factory_invalid_type(tmp_path: Path) -> None:
