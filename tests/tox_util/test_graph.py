@@ -37,6 +37,15 @@ def test_topological_order_cycle() -> None:
         stable_topological_sort(graph)
 
 
+def test_topological_order_cycle_reached_from_outside() -> None:
+    graph: dict[str, set[str]] = OrderedDict()
+    graph["A"] = {"B"}
+    graph["B"] = {"C"}
+    graph["C"] = {"B"}
+    with pytest.raises(ValueError, match=r"^B \| C$"):
+        stable_topological_sort(graph)
+
+
 def test_topological_complex() -> None:
     graph: dict[str, set[str]] = OrderedDict()
     graph["A"] = {"B", "C"}

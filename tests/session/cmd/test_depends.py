@@ -249,6 +249,16 @@ def test_depends_circular(tox_project: ToxProjectCreator) -> None:
     assert "circular dependency detected between environments: a | b" in outcome.out, outcome.out
 
 
+def test_depends_circular_names_only_the_cycle(tox_project: ToxProjectCreator) -> None:
+    ini = "[tox]\nenv_list = a,b,c\n[testenv]\npackage = skip\n[testenv:a]\ndepends = b\n[testenv:b]\ndepends = c\n"
+    ini += "[testenv:c]\ndepends = b\n"
+
+    outcome = tox_project({"tox.ini": ini}).run("de")
+
+    outcome.assert_failed(code=-2)
+    assert "circular dependency detected between environments: b | c" in outcome.out, outcome.out
+
+
 def test_depends_circular_run(tox_project: ToxProjectCreator) -> None:
     ini = "[tox]\nenv_list = a,b\n[testenv]\npackage = skip\n[testenv:a]\ndepends = b\n[testenv:b]\ndepends = a\n"
 
