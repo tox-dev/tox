@@ -185,14 +185,6 @@ def _get_all(args: Sequence[str]) -> tuple[Parsed, dict[str, Callable[[State], i
     return parsed, {k: p for k, (_, p) in tox_parser.handlers.items()}
 
 
-def _validate_directory_options(parser: ToxParser, parsed: Parsed) -> None:
-    # a file at these paths used to fail later while creating the work directory, with a traceback
-    for flag, name in (("--root", "root_dir"), ("--workdir", "work_dir")):
-        path: Path | None = getattr(parsed, name, None)
-        if path is not None and (path.is_symlink() or path.exists()) and not path.is_dir():
-            parser.error(f"argument {flag}: {path} is not a directory")
-
-
 def _get_parser() -> ToxParser:
     tox_parser = ToxParser.core()  # load the core options
     # plus options setup by plugins
@@ -201,6 +193,14 @@ def _get_parser() -> ToxParser:
     MANAGER.tox_add_option(tox_parser)
     tox_parser.fix_defaults()
     return tox_parser
+
+
+def _validate_directory_options(parser: ToxParser, parsed: Parsed) -> None:
+    # a file at these paths used to fail later while creating the work directory, with a traceback
+    for flag, name in (("--root", "root_dir"), ("--workdir", "work_dir")):
+        path: Path | None = getattr(parsed, name, None)
+        if path is not None and (path.is_symlink() or path.exists()) and not path.is_dir():
+            parser.error(f"argument {flag}: {path} is not a directory")
 
 
 class Options(NamedTuple):
