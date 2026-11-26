@@ -8,6 +8,8 @@ import pytest
 from tox.config.cli.parse import get_options
 
 if TYPE_CHECKING:
+    from pathlib import Path
+
     from tox.config.cli.parse import Options
     from tox.pytest import CaptureFixture
 
@@ -62,3 +64,16 @@ def test_verbosity(arg: str) -> None:
 def test_multi_value_option_keeps_all_values(args: tuple[str, ...], command: str, factors: list[list[str]]) -> None:
     result: Final[Options] = get_options(*args)
     assert (result.parsed.command, result.parsed.factors) == (command, factors)
+
+
+@pytest.mark.parametrize("flag", ["--root", "--workdir"])
+def test_directory_option_rejects_a_file(flag: str, tmp_path: Path, capsys: CaptureFixture) -> None:
+    file_path = tmp_path / "a_file"
+    file_path.write_text("")
+
+    with pytest.raises(SystemExit) as context:
+        get_options(flag, str(file_path))
+
+    assert context.value.code == 2
+    _out, err = capsys.readouterr()
+    assert f"argument {flag}: {file_path} is not a directory" in err
