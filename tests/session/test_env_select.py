@@ -564,6 +564,21 @@ def test_suggest_env_keeps_valid_factors(tox_project: ToxProjectCreator, request
 
 
 @pytest.mark.parametrize(
+    ("requested", "expected"),
+    [
+        pytest.param(f"py3{_MINOR}-", f"py3{_MINOR}-", id="trailing-hyphen"),
+        pytest.param(f"py3{_MINOR}--lint", f"py3{_MINOR}--lint", id="double-hyphen"),
+    ],
+)
+def test_empty_factor_rejected(tox_project: ToxProjectCreator, requested: str, expected: str) -> None:
+    ini = f"[tox]\nenv_list=py3{_MINOR},py3{_MINOR}-lint\n"
+    outcome = tox_project({"tox.ini": ini}).run("r", "-e", requested)
+    outcome.assert_failed(code=-2)
+    output = f"ROOT: HandledError| provided environments not found in configuration file:\n{expected}\n"
+    outcome.assert_out_err(output, "")
+
+
+@pytest.mark.parametrize(
     ("ini", "requested", "expected"),
     [
         pytest.param(

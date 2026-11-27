@@ -777,7 +777,9 @@ class _CombinableFactors(NamedTuple):
     all_factors: set[str]
 
     def is_combinable(self, factor: str) -> bool:
-        return (
+        # the dynamic factor pattern also matches the empty string (it allows both the interpreter prefix and the
+        # version to be omitted), so exclude it explicitly - an empty factor is never a valid combination
+        return bool(factor) and (
             factor in self.combinable
             or _DYNAMIC_ENV_FACTORS.fullmatch(factor) is not None
             or _PY_PRE_RELEASE_FACTOR.fullmatch(factor) is not None
