@@ -704,6 +704,7 @@ class EnvSelector:
                 env_info.is_active = False  # if any was selected reset
             # ignore labels when provisioning will occur
             if labels and (self._provision is None or not self._provision[0]):
+                self._ensure_labels_valid(labels)
                 _activate_by_labels(self._defined_envs_, labels, self._state.conf.core["labels"])
             if factors:  # if matches mark it active
                 _activate_by_factors(self._defined_envs_, factors)
@@ -714,6 +715,21 @@ class EnvSelector:
         # so that `-f foo-bar` and `-f foo bar` are treated equivalently
         raw_factors = getattr(self._state.conf.options, "factors", [])
         return tuple({f for factor in factor_list for f in factor.split("-")} for factor_list in raw_factors)
+
+    def _ensure_labels_valid(self, labels: set[str]) -> None:
+        assert self._defined_envs_ is not None  # ruff:ignore[assert]  # invariant, narrows type
+        known = set(self._state.conf.core["labels"])
+        for env_info in self._defined_envs_.values():
+            if env_info.env is not None:
+                known.update(env_info.env.conf["labels"])
+        if not (unknown := sorted(labels - known)):
+            return
+        msg = "provided labels not found in configuration file:"
+        for label in unknown:
+            msg += f"\n{label}"
+            if suggestion := get_close_matches(label, sorted(known), n=1):
+                msg += f" - did you mean {suggestion[0]}?"
+        raise HandledError(msg)
 
     def iter(
         self,
