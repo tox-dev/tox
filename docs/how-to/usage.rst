@@ -387,6 +387,9 @@ environment.
 Tox can also suggest a name when only one factor has a typo. For example, if you define ``py310-lint``, running ``tox -e
 py310-lnt`` can suggest ``py310-lint``.
 
+A stray dash gets the same treatment: with ``py310-lint`` defined, ``tox -e py310--lint`` suggests ``py310-lint`` and
+``tox -e py310-`` suggests ``py310``.
+
 .. _platform-specification:
 
 **************************************

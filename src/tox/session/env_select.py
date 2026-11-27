@@ -397,12 +397,16 @@ class EnvSelector:
         for env in self._cli_envs or []:
             if env.startswith(".pkg_external") or env in factors.known_envs:
                 continue
-            if (normalized_env := self._normalize_env_name(env)) != env and normalized_env in factors.known_envs:
+            # an empty factor (py310-, py310--lint) is a stray dash, so suggest from the name without it
+            stripped = "-".join(filter(None, env.split("-")))
+            if (normalized_env := self._normalize_env_name(stripped)) != env and normalized_env in factors.known_envs:
                 invalid_envs[env] = normalized_env
                 continue
-            is_invalid, suggestion = self._invalid_env_suggestion(env, normalized_env, factors)
+            is_invalid, suggestion = self._invalid_env_suggestion(stripped, normalized_env, factors)
             if is_invalid:
                 invalid_envs[env] = suggestion
+            elif stripped != env:
+                invalid_envs[env] = stripped
         if invalid_envs:
             self._raise_invalid_envs(invalid_envs)
 
@@ -777,9 +781,7 @@ class _CombinableFactors(NamedTuple):
     all_factors: set[str]
 
     def is_combinable(self, factor: str) -> bool:
-        # the dynamic factor pattern also matches the empty string (it allows both the interpreter prefix and the
-        # version to be omitted), so exclude it explicitly - an empty factor is never a valid combination
-        return bool(factor) and (
+        return (
             factor in self.combinable
             or _DYNAMIC_ENV_FACTORS.fullmatch(factor) is not None
             or _PY_PRE_RELEASE_FACTOR.fullmatch(factor) is not None

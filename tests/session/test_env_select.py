@@ -545,6 +545,10 @@ def test_suggest_env(tox_project: ToxProjectCreator) -> None:
         pytest.param("team-team-lnt", "team-team-lnt - did you mean team-team-lint?", id="repeated-factor"),
         pytest.param("beta-magic", "beta-magic", id="no-close-factor"),
         pytest.param("team-release-lnt", "team-release-lnt", id="invalid-candidate"),
+        pytest.param(f"py3{_MINOR}-", f"py3{_MINOR}- - did you mean py3{_MINOR}?", id="trailing-dash"),
+        pytest.param(f"py3{_MINOR}--check", f"py3{_MINOR}--check - did you mean py3{_MINOR}-check?", id="double-dash"),
+        pytest.param("beta--lnt", "beta--lnt - did you mean beta-lint?", id="double-dash-typo"),
+        pytest.param("-", "-", id="only-dash"),
     ],
 )
 def test_suggest_env_keeps_valid_factors(tox_project: ToxProjectCreator, requested: str, expected: str) -> None:
@@ -558,20 +562,6 @@ def test_suggest_env_keeps_valid_factors(tox_project: ToxProjectCreator, request
         [testenv:py3{_MINOR}-check]
     """
     outcome = tox_project({"tox.ini": ini}).run("r", "-e", requested)
-    outcome.assert_failed(code=-2)
-    output = f"ROOT: HandledError| provided environments not found in configuration file:\n{expected}\n"
-    outcome.assert_out_err(output, "")
-
-
-@pytest.mark.parametrize(
-    ("requested", "expected"),
-    [
-        pytest.param(f"py3{_MINOR}-", f"py3{_MINOR}-", id="trailing-hyphen"),
-        pytest.param(f"py3{_MINOR}--lint", f"py3{_MINOR}--lint", id="double-hyphen"),
-    ],
-)
-def test_empty_factor_rejected(tox_project: ToxProjectCreator, requested: str, expected: str) -> None:
-    outcome = tox_project({"tox.ini": f"[tox]\nenv_list=py3{_MINOR},py3{_MINOR}-lint\n"}).run("r", "-e", requested)
     outcome.assert_failed(code=-2)
     output = f"ROOT: HandledError| provided environments not found in configuration file:\n{expected}\n"
     outcome.assert_out_err(output, "")
