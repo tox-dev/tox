@@ -1,1 +1,2 @@
-Reject requested environment names that contain an empty factor (trailing or doubled hyphen, e.g. ``py310-`` or ``py310--lint``) instead of silently creating an environment.
+Reject requested environment names that contain an empty factor (trailing or doubled hyphen, e.g. ``py310-`` or
+``py310--lint``) instead of silently creating an environment.
