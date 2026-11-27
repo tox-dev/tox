@@ -8,7 +8,6 @@ __lazy_modules__ = [
     "functools",
     "pathlib",
     "threading",
-    "tox.util.path",
     "types",
 ]
 
@@ -22,10 +21,9 @@ from typing import TYPE_CHECKING, Any, Final, ParamSpec, TypeVar
 
 from filelock import BaseFileLock, FileLock
 
-from tox.util.path import ensure_private_dir
 from tox.util.typing_compat import override
 
-from .api import ToxEnv, ToxEnvCreateArgs
+from .api import ToxEnv, ToxEnvCreateArgs, ensure_tox_dir
 
 _P = ParamSpec("_P")
 _R = TypeVar("_R")
@@ -103,7 +101,7 @@ class PackageToxEnv(ToxEnv, ABC):
         env_dir: Final[Path] = self.conf.get("env_dir", Path)
         self._file_lock = FileLock(env_dir / "file.lock")
         if not env_dir.is_symlink():
-            ensure_private_dir(env_dir)
+            ensure_tox_dir(env_dir)
         self.conf.add_config(
             keys=["package_root", "setupdir"],
             of_type=Path,

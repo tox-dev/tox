@@ -1,2 +1,2 @@
-Report a ``--root`` or ``--workdir`` path that is not a directory as a regular tox error instead of failing with a
-traceback while creating the work directory.
+Report a file in place of the work directory (from ``--workdir``, ``work_dir`` or a stray ``.tox`` file), or a file
+passed as ``--root`` with the work directory under it, as a tox error instead of a traceback.

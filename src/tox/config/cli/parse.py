@@ -181,11 +181,6 @@ def _get_all(args: Sequence[str]) -> tuple[Parsed, dict[str, Callable[[State], i
     parsed.remainder = unknown
     if getattr(parsed, "no_capture", False) and getattr(parsed, "result_json", None):
         tox_parser.error("argument -i/--no-capture: not allowed with argument --result-json")
-    # a file at these paths used to fail later while creating the work directory, with a traceback
-    for flag, name in (("--root", "root_dir"), ("--workdir", "work_dir")):
-        path: Path | None = getattr(parsed, name, None)
-        if path is not None and (path.is_symlink() or path.exists()) and not path.is_dir():
-            tox_parser.error(f"argument {flag}: {path} is not a directory")
     return parsed, {k: p for k, (_, p) in tox_parser.handlers.items()}
 
 
