@@ -545,6 +545,10 @@ def test_suggest_env(tox_project: ToxProjectCreator) -> None:
         pytest.param("team-team-lnt", "team-team-lnt - did you mean team-team-lint?", id="repeated-factor"),
         pytest.param("beta-magic", "beta-magic", id="no-close-factor"),
         pytest.param("team-release-lnt", "team-release-lnt", id="invalid-candidate"),
+        pytest.param(f"py3{_MINOR}-", f"py3{_MINOR}- - did you mean py3{_MINOR}?", id="trailing-dash"),
+        pytest.param(f"py3{_MINOR}--check", f"py3{_MINOR}--check - did you mean py3{_MINOR}-check?", id="double-dash"),
+        pytest.param("beta--lnt", "beta--lnt - did you mean beta-lint?", id="double-dash-typo"),
+        pytest.param("-", "-", id="only-dash"),
     ],
 )
 def test_suggest_env_keeps_valid_factors(tox_project: ToxProjectCreator, requested: str, expected: str) -> None:
