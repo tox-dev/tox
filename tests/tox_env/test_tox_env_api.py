@@ -62,6 +62,36 @@ def test_env_link_fails_without_recreate(
     assert (outside / "keep").read_text() == "keep"
 
 
+@pytest.mark.parametrize(
+    ("core", "args", "work_dir"),
+    [
+        pytest.param("", (), ".tox", id="default"),
+        pytest.param("work_dir = a_file", (), "a_file", id="config"),
+        pytest.param("", ("--workdir", "a_file"), "a_file", id="cli"),
+        pytest.param("", ("--workdir", "a_file/sub"), "a_file/sub", id="cli-under-file"),
+    ],
+)
+def test_work_dir_blocked_by_file(
+    tox_project: ToxProjectCreator, core: str, args: tuple[str, ...], work_dir: str
+) -> None:
+    blocker: Final[str] = work_dir.split("/", maxsplit=1)[0]
+    project: Final[ToxProject] = tox_project({"tox.ini": f"[tox]\n{core}\n[testenv]\npackage=skip", blocker: ""})
+
+    result: Final[ToxRunOutcome] = project.run(*args, "r")
+
+    result.assert_failed()
+    assert f"cannot create the directory {project.path / work_dir}: a file is in the way" in result.out
+
+
+def test_package_env_dir_blocked_by_file(tox_project: ToxProjectCreator) -> None:
+    project: Final[ToxProject] = tox_project({"tox.ini": "[tox]\nenv_list = py\n", "setup.py": "", ".tox": ""})
+
+    result: Final[ToxRunOutcome] = project.run("l")
+
+    result.assert_failed()
+    assert f"cannot create the directory {project.path / '.tox' / '.pkg'}: a file is in the way" in result.out
+
+
 @pytest.mark.skipif(os.name == "nt", reason="creating symlinks needs privileges on Windows")
 @pytest.mark.parametrize(
     ("command", "expected_success"),

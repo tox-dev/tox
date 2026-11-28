@@ -16,6 +16,7 @@ __lazy_modules__ = [
     f"{__spec__.parent}.config.loader.memory",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
     f"{__spec__.parent}.execute.api",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
     f"{__spec__.parent}.report",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
+    f"{__spec__.parent}.tox_env.api",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
     f"{__spec__.parent}.tox_env.errors",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
     f"{__spec__.parent}.tox_env.python.pip.req_file",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
     f"{__spec__.parent}.util.file_view",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
@@ -41,6 +42,7 @@ from .config.loader.memory import MemoryLoader
 from .execute.api import StdinSource
 from .plugin import impl
 from .report import HandledError
+from .tox_env.api import ensure_tox_dir
 from .tox_env.errors import Skip
 from .tox_env.python.pip.req_file import PythonDeps
 from .util.file_view import PACKAGE_STAGING_DIR, repair_staging_path
@@ -138,7 +140,7 @@ def provision(state: State) -> int | bool:
     core = state.conf.core
     try:
         repair_staging_path(core["temp_dir"] / PACKAGE_STAGING_DIR, core["tox_root"], core["work_dir"])
-    except PermissionError as exc:
+    except (PermissionError, NotADirectoryError) as exc:
         raise HandledError(str(exc)) from exc
 
     requires = state.conf.core.get("requires", list[Requirement])
@@ -271,6 +273,8 @@ def _origin_fragment_matches(info: dict[str, JsonValue], fragment: str) -> bool:
 
 def run_provision(name: str, state: State) -> int:
     tox_env: PythonRun = cast("PythonRun", state.envs[name])
+    # virtualenv builds the provisioning environment inside it, and fails with a traceback when a file is in the way
+    ensure_tox_dir(tox_env.core["work_dir"])
     env_python = tox_env.env_python()
     logging.info("will run in a automatically provisioned python environment under %s", env_python)
     lock_path = tox_env.env_dir / "file.lock"
