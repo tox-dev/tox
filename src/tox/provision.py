@@ -138,7 +138,7 @@ def provision(state: State) -> int | bool:
     core = state.conf.core
     try:
         repair_staging_path(core["temp_dir"] / PACKAGE_STAGING_DIR, core["tox_root"], core["work_dir"])
-    except OSError as exc:
+    except PermissionError as exc:
         raise HandledError(str(exc)) from exc
 
     requires = state.conf.core.get("requires", list[Requirement])

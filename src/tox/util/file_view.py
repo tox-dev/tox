@@ -113,7 +113,8 @@ def repair_staging_path(temp_path: Path, trust_root: Path, work_dir: Path) -> No
         staging_parts: Final[tuple[str, ...]] = temp_path.relative_to(work_dir).parts
     except ValueError:
         return
-    if ".." in {*work_parts, *staging_parts}:
+    # a root tox has not created yet holds no staging path to repair
+    if ".." in {*work_parts, *staging_parts} or not trust_root.exists():
         return
 
     directory_flag: Final[int | None] = getattr(os, "O_DIRECTORY", None)
