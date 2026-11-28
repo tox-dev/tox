@@ -772,6 +772,13 @@ def test_declared_unknown_file_encoding(tmp_path: Path) -> None:
         _ = RequirementsFile(requirements_file, constraint=False).requirements
 
 
+def test_declared_file_encoding_undecodable_content(tmp_path: Path) -> None:
+    requirements_file = tmp_path / "r.txt"
+    requirements_file.write_bytes(b"# coding: ascii\nart  # \xe9\n")
+    with pytest.raises(ValueError, match=r"r\.txt declares encoding ascii but its content cannot be decoded with it"):
+        _ = RequirementsFile(requirements_file, constraint=False).requirements
+
+
 def test_parsed_requirement_properties(tmp_path: Path) -> None:
     req = ParsedRequirement("a", {"b": 1}, str(tmp_path), 1)
     assert req.options == {"b": 1}
