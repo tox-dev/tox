@@ -762,6 +762,12 @@ def test_provision_reports_entry_owned_by_other_account(tox_project: ToxProjectC
     assert planted.read_bytes() == b"planted"
 
 
+def test_provision_accepts_missing_root(tox_project: ToxProjectCreator, tmp_path: Path) -> None:
+    project = tox_project({"tox.toml": '[env_run_base]\npackage = "skip"\n'})
+
+    project.run("l", "--root", str(tmp_path / "missing")).assert_success()
+
+
 def test_provision_unrecognized_args_no_provision(tox_project: ToxProjectCreator) -> None:
     # When provisioning is not needed, unknown CLI args should still error.
     proj = tox_project({
