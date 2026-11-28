@@ -21,6 +21,16 @@ def test_override_incorrect(flag: str, capsys: CaptureFixture) -> None:
 
 
 @pytest.mark.parametrize("flag", ["-x", "--override"])
+@pytest.mark.parametrize("value", ["=1", "+=1", ".=1", "magic.=1"])
+def test_override_incorrect_missing_key(flag: str, value: str, capsys: CaptureFixture) -> None:
+    with pytest.raises(SystemExit):
+        get_options(flag, value)
+    out, err = capsys.readouterr()
+    assert not out
+    assert f"override {value} has no key in it" in err
+
+
+@pytest.mark.parametrize("flag", ["-x", "--override"])
 def test_override_add(flag: str) -> None:
     parsed, _, __, ___, ____ = get_options(flag, "magic=true")
     assert len(parsed.override) == 1

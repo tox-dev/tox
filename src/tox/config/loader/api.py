@@ -65,6 +65,9 @@ class Override:  # ruff:ignore[eq-without-hash]  # mutable value type
             self.append = True
 
         parts = self._split_on_unescaped_dot(key)
+        if not parts[-1]:
+            msg = f"override {value} has no key in it"
+            raise ArgumentTypeError(msg)
         self._namespace_parts = parts[:-1]
         self.namespace = ".".join(self._namespace_parts)
         self.key = parts[-1]
