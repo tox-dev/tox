@@ -6,6 +6,46 @@
 
 .. towncrier release notes start
 
+.. _release-4-67-17:
+
+**********************
+ 4.67.17 (2026-11-28)
+**********************
+
+.. _release-4-67-17-fixed:
+
+Fixed
+-----
+
+- Reject requested environment names with a stray dash, such as ``py310-`` or ``py310--lint``, and suggest the name
+  without it, instead of creating an environment with that name (:pr:`4476`) by :user:`lau0708` and :user:`gaborbernat`.
+  (:issue:`4475`)
+- A requirements file whose declared encoding (PEP 263 coding cookie) cannot decode its content now raises a descriptive
+  error naming the file and the declared encoding, instead of surfacing a raw ``UnicodeDecodeError`` (:pr:`4468`) by
+  :user:`waw666waw666` and :user:`gaborbernat`.
+- Accept a ``--root`` directory that does not exist again, instead of failing with ``FileNotFoundError`` (:pr:`4472`) by
+  :user:`qianeric-backup` and :user:`gaborbernat`.
+- Reject an override that has no key, such as ``-x =1``, instead of silently ignoring it. In ``TOX_OVERRIDE`` or the
+  user configuration file, such an entry now makes tox warn and ignore that list, as an entry without ``=`` already does
+  (:pr:`4473`) by :user:`qianeric-backup` and :user:`gaborbernat`.
+- Report a file in place of the work directory (from ``--workdir``, ``work_dir`` or a stray ``.tox`` file), or a file
+  passed as ``--root`` with the work directory under it, as a tox error instead of a traceback (:pr:`4474`) by
+  :user:`ChaseZhang-ai` and :user:`gaborbernat`.
+- Report labels given to ``-m`` or ``TOX_LABELS`` that no environment defines, with a suggestion for a close match,
+  instead of selecting nothing (:pr:`4478`) by :user:`chiruu12` and :user:`gaborbernat`.
+
+.. _release-4-67-17-documentation:
+
+Documentation
+-------------
+
+- Fix the ``tox_after_run_commands`` example in the plugin how-to, which failed the environment with an
+  ``AttributeError``, and correct the verbosity flags listed for each logging level (:pr:`4466`) by :user:`mmporong` and
+  :user:`gaborbernat`.
+- Give the ``-x`` example in the override how-to the section names for ``tox.toml``, ``pyproject.toml`` and ``tox.ini``,
+  since an override that spells the section for another file format changes nothing (:pr:`4464`) by :user:`JROtto5` and
+  :user:`gaborbernat`.
+
 .. _release-4-67-16:
 
 **********************

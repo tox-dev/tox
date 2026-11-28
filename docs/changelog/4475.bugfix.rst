@@ -1,2 +1,0 @@
-Reject requested environment names with a stray dash, such as ``py310-`` or ``py310--lint``, and suggest the name
-without it, instead of creating an environment with that name.
