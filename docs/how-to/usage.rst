@@ -244,7 +244,7 @@ location can be changed via the ``TOX_CONFIG_FILE`` environment variable.
 
 **CLI override**: The ``-x`` (or ``--override``) flag overrides any configuration value. Name the section the way your
 configuration file does: ``env.3.13`` in ``tox.toml``, ``tool.tox.env.3.13`` in ``pyproject.toml`` and ``testenv:3.13``
-in ``tox.ini``. An override naming a section the file does not have changes nothing.
+in ``tox.ini``. An override that spells the section for another file format changes nothing.
 
 .. tab:: TOML
 
