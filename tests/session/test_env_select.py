@@ -171,6 +171,48 @@ def test_label_core_and_trait(tox_project: ToxProjectCreator) -> None:
     outcome.assert_out_err("py310\npy39\nflake8\ntype\n", "")
 
 
+@pytest.mark.parametrize("command", ["l", "r"])
+def test_label_unknown_fails(tox_project: ToxProjectCreator, command: str) -> None:
+    ini = """
+        [tox]
+        env_list = py310, flake8
+        labels =
+            static = flake8
+        [testenv]
+        package = skip
+        labels = test
+        """
+    outcome = tox_project({"tox.ini": ini}).run(command, "-m", "statc", "nothing")
+    outcome.assert_failed(code=-2)
+    assert "provided labels not found in configuration file:\nnothing\nstatc - did you mean static?" in outcome.out
+
+
+def test_label_unknown_via_env_var_fails(tox_project: ToxProjectCreator, monkeypatch: MonkeyPatch) -> None:
+    monkeypatch.setenv("TOX_LABELS", "unknown")
+    ini = """
+        [tox]
+        env_list = py310, py39
+        labels =
+            old = py39
+        """
+    outcome = tox_project({"tox.ini": ini}).run("l", "--no-desc")
+    outcome.assert_failed(code=-2)
+    assert "provided labels not found in configuration file:\nunknown" in outcome.out
+
+
+def test_label_on_unavailable_env_accepted(tox_project: ToxProjectCreator) -> None:
+    ini = """
+        [tox]
+        env_list = a, b
+        [testenv]
+        package = skip
+        [testenv:b]
+        runner = not-installed
+        labels = special
+        """
+    tox_project({"tox.ini": ini}).run("l", "-m", "special").assert_success()
+
+
 @pytest.mark.parametrize(
     ("selection_arguments", "expect_envs"),
     [
@@ -257,7 +299,6 @@ def test_factor_select_via_env_var(
         pytest.param("new", ("py310",), id="new"),
         pytest.param("old;new", ("py310", "py39"), id="both"),
         pytest.param("", ("py310", "py39"), id="empty"),
-        pytest.param("unknown", (), id="unknown"),
     ],
 )
 def test_label_select_via_env_var(
