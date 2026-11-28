@@ -72,20 +72,23 @@ def _identify_cycle(graph: dict[str, set[str]]) -> None:
     path: dict[str, None] = OrderedDict()
     visited = set()
 
-    def visit(vertex: str) -> dict[str, None] | None:
+    def visit(vertex: str) -> list[str] | None:
         if vertex in visited:
             return None
         visited.add(vertex)
         path[vertex] = None
         for neighbor in graph.get(vertex, ()):
-            if neighbor in path or visit(neighbor):
-                return path
+            if neighbor in path:
+                nodes = list(path)
+                return nodes[nodes.index(neighbor) :]  # the path may lead into the cycle from outside of it
+            if (cycle := visit(neighbor)) is not None:
+                return cycle
         del path[vertex]
         return None
 
     for node in graph:  # pragma: no branch # we never get here if the graph is empty
         if (result := visit(node)) is not None:
-            msg = f"{' | '.join(result.keys())}"
+            msg = " | ".join(result)
             raise ValueError(msg)
 
 
