@@ -200,6 +200,19 @@ def test_label_unknown_via_env_var_fails(tox_project: ToxProjectCreator, monkeyp
     assert "provided labels not found in configuration file:\nunknown" in outcome.out
 
 
+def test_label_on_unavailable_env_accepted(tox_project: ToxProjectCreator) -> None:
+    ini = """
+        [tox]
+        env_list = a, b
+        [testenv]
+        package = skip
+        [testenv:b]
+        runner = not-installed
+        labels = special
+        """
+    tox_project({"tox.ini": ini}).run("l", "-m", "special").assert_success()
+
+
 @pytest.mark.parametrize(
     ("selection_arguments", "expect_envs"),
     [

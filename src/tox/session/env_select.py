@@ -722,7 +722,8 @@ class EnvSelector:
         for env_info in self._defined_envs_.values():
             if env_info.env is not None:
                 known.update(env_info.env.conf["labels"])
-        if not (unknown := sorted(labels - known)):
+        # an environment whose runner is missing never registers its labels, so any unknown label may be one of them
+        if not (unknown := sorted(labels - known)) or self._unavailable_envs:
             return
         msg = "provided labels not found in configuration file:"
         for label in unknown:
